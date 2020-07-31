@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import os
+import json
 import sys
 import pytest
 from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, ip, hostname, scale
+from auto_config import pool_name, ip, hostname, scale, user, password
 from functions import GET, POST, PUT, DELETE, SSH_TEST, wait_on_job
 
 try:
@@ -199,7 +200,47 @@ def test_15_verify_activedirectory_data_of_(request, data):
         assert results.json()[data] == payload[data], results.text
 
 
-def test_16_setting_up_smb(request):
+@pytest.mark.dependency(name="kerberos_verified")
+def test_16_kerberos_keytab_verify(request):
+    depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
+    cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    if results['result'] is True:
+        kt = json.loads(results['output'].strip())
+        assert len(kt) != 0, results['output']
+
+
+def test_17_kerberos_restart_verify(request):
+    """
+    This tests our ability to re-kinit using our machine account.
+    """
+    depends(request, ["kerberos_verified"])
+    cmd = 'rm /etc/krb5.keytab'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    cmd = 'midclt call kerberos.stop'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    cmd = 'midclt call kerberos.start'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
+    results = SSH_TEST(cmd, user, password, ip)
+    kt = json.loads(results['output'].strip())
+    assert results['result'] is True, results['output']
+    if results['result'] is True:
+        assert len(kt) != 0, results['output']
+
+    cmd = 'midclt call kerberos._klist_test'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['output'].strip() == 'True'
+
+
+def test_18_setting_up_smb(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global payload, results
     payload = {
@@ -211,12 +252,12 @@ def test_16_setting_up_smb(request):
 
 
 @pytest.mark.parametrize('data', ["description", "guest"])
-def test_17_verify_the_value_of_put_smb_object_value_of_(request, data):
+def test_19_verify_the_value_of_put_smb_object_value_of_(request, data):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     assert results.json()[data] == payload[data], results.text
 
 
-def test_18_get_smb_data(request):
+def test_20_get_smb_data(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global results
     results = GET("/smb/")
@@ -224,12 +265,12 @@ def test_18_get_smb_data(request):
 
 
 @pytest.mark.parametrize('data', ["description", "guest"])
-def test_19_verify_the_value_of_get_smb_object_(request, data):
+def test_21_verify_the_value_of_get_smb_object_(request, data):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     assert results.json()[data] == payload[data], results.text
 
 
-def test_20_creating_a_smb_share_on_smb_path(request):
+def test_22_creating_a_smb_share_on_smb_path(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global payload, results, smb_id
     payload = {
@@ -245,12 +286,12 @@ def test_20_creating_a_smb_share_on_smb_path(request):
 
 
 @pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "streams"])
-def test_21_verify_the_value_of_the_created_sharing_smb_object_(request, data):
+def test_23_verify_the_value_of_the_created_sharing_smb_object_(request, data):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     assert results.json()[data] == payload[data], results.text
 
 
-def test_22_get_sharing_smb_from_id(request):
+def test_24_get_sharing_smb_from_id(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global results
     results = GET(f"/sharing/smb/id/{smb_id}/")
@@ -258,24 +299,24 @@ def test_22_get_sharing_smb_from_id(request):
 
 
 @pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "streams"])
-def test_23_verify_the_value_of_get_sharing_smb_object_(request, data):
+def test_25_verify_the_value_of_get_sharing_smb_object_(request, data):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     assert results.json()[data] == payload[data], results.text
 
 
-def test_24_enable_cifs_service(request):
+def test_26_enable_cifs_service(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = PUT("/service/id/cifs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
-def test_25_checking_to_see_if_clif_service_is_enabled(request):
+def test_27_checking_to_see_if_clif_service_is_enabled(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is True, results.text
 
 
-def test_26_starting_cifs_service(request):
+def test_28_starting_cifs_service(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
@@ -283,14 +324,14 @@ def test_26_starting_cifs_service(request):
     sleep(1)
 
 
-def test_27_checking_to_see_if_nfs_service_is_running(request):
+def test_29_checking_to_see_if_nfs_service_is_running(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
 @bsd_host_cfg
-def test_28_creating_smb_mountpoint(request):
+def test_30_creating_smb_mountpoint(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = SSH_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -298,7 +339,7 @@ def test_28_creating_smb_mountpoint(request):
 
 
 @bsd_host_cfg
-def test_29_store_AD_credentials_in_a_file_for_mount_smbfs(request):
+def test_31_store_AD_credentials_in_a_file_for_mount_smbfs(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'echo "[TESTNAS:ADUSER]" > ~/.nsmbrc && '
     cmd += 'echo "password=12345678" >> ~/.nsmbrc'
@@ -307,7 +348,7 @@ def test_29_store_AD_credentials_in_a_file_for_mount_smbfs(request):
 
 
 @bsd_host_cfg
-def test_30_mounting_SMB(request):
+def test_32_mounting_SMB(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'mount_smbfs -N -I %s -W AD03 ' % ip
     cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
@@ -316,7 +357,7 @@ def test_30_mounting_SMB(request):
 
 
 @bsd_host_cfg
-def test_31_creating_SMB_file(request):
+def test_33_creating_SMB_file(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -324,7 +365,7 @@ def test_31_creating_SMB_file(request):
 
 
 @bsd_host_cfg
-def test_32_moving_SMB_file(request):
+def test_34_moving_SMB_file(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -332,7 +373,7 @@ def test_32_moving_SMB_file(request):
 
 
 @bsd_host_cfg
-def test_33_copying_SMB_file(request):
+def test_35_copying_SMB_file(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -340,7 +381,7 @@ def test_33_copying_SMB_file(request):
 
 
 @bsd_host_cfg
-def test_34_deleting_SMB_file_1_2(request):
+def test_36_deleting_SMB_file_1_2(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -348,7 +389,7 @@ def test_34_deleting_SMB_file_1_2(request):
 
 
 @bsd_host_cfg
-def test_35_deleting_SMB_file_2_2(request):
+def test_37_deleting_SMB_file_2_2(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -356,7 +397,7 @@ def test_35_deleting_SMB_file_2_2(request):
 
 
 @bsd_host_cfg
-def test_36_unmounting_SMB(request):
+def test_38_unmounting_SMB(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = SSH_TEST('umount "%s"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -365,14 +406,14 @@ def test_36_unmounting_SMB(request):
 
 # Delete tests
 @bsd_host_cfg
-def test_37_removing_SMB_mountpoint(request):
+def test_39_removing_SMB_mountpoint(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
-def test_38_leave_activedirectory(request):
+def test_40_leave_activedirectory(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global payload, results
     payload = {
@@ -383,21 +424,21 @@ def test_38_leave_activedirectory(request):
     assert results.status_code == 200, results.text
 
 
-def test_39_get_activedirectory_state(request):
+def test_41_get_activedirectory_state(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-def test_40_get_activedirectory_started_after_leaving_AD(request):
+def test_42_get_activedirectory_started_after_leaving_AD(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
-def test_41_re_enable_activedirectory(request):
+def test_43_re_enable_activedirectory(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global payload, results, job_id
     payload = {
@@ -412,13 +453,13 @@ def test_41_re_enable_activedirectory(request):
     job_id = results.json()['job_id']
 
 
-def test_42_verify_job_id_is_successfull(request):
+def test_44_verify_job_id_is_successfull(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_43_get_activedirectory_state(request):
+def test_45_get_activedirectory_state(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global results
     results = GET('/activedirectory/get_state/')
@@ -426,14 +467,14 @@ def test_43_get_activedirectory_state(request):
     assert results.json() == 'HEALTHY', results.text
 
 
-def test_44_get_activedirectory_started(request):
+def test_46_get_activedirectory_started(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-def test_45_get_activedirectory_data(request):
+def test_47_get_activedirectory_data(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global results
     results = GET('/activedirectory/')
@@ -441,7 +482,7 @@ def test_45_get_activedirectory_data(request):
 
 
 @pytest.mark.parametrize('data', ad_object_list)
-def test_46_verify_activedirectory_data_of_(request, data):
+def test_48_verify_activedirectory_data_of_(request, data):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     if data == 'domainname':
         assert results.json()[data].lower() == payload[data], results.text
@@ -452,7 +493,7 @@ def test_46_verify_activedirectory_data_of_(request, data):
 # Testing OSX
 # Mount share on OSX system and create a test file
 @osx_host_cfg
-def test_47_Create_mount_point_for_SMB_on_OSX_system(request):
+def test_49_Create_mount_point_for_SMB_on_OSX_system(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -460,7 +501,7 @@ def test_47_Create_mount_point_for_SMB_on_OSX_system(request):
 
 
 @osx_host_cfg
-def test_48_Mount_SMB_share_on_OSX_system(request):
+def test_50_Mount_SMB_share_on_OSX_system(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME
     cmd += '%s@%s/%s" "%s"' % (ADPASSWORD, ip, SMB_NAME, MOUNTPOINT)
@@ -469,7 +510,7 @@ def test_48_Mount_SMB_share_on_OSX_system(request):
 
 
 @osx_host_cfg
-def test_49_Create_file_on_SMB_share_via_OSX_to_test_permissions(request):
+def test_51_Create_file_on_SMB_share_via_OSX_to_test_permissions(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -478,7 +519,7 @@ def test_49_Create_file_on_SMB_share_via_OSX_to_test_permissions(request):
 
 # Move test file to a new location on the SMB share
 @osx_host_cfg
-def test_50_Moving_SMB_test_file_into_a_new_directory(request):
+def test_52_Moving_SMB_test_file_into_a_new_directory(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
     cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
@@ -489,7 +530,7 @@ def test_50_Moving_SMB_test_file_into_a_new_directory(request):
 
 # Delete test file and test directory from SMB share
 @osx_host_cfg
-def test_51_Deleting_test_file_and_directory_from_SMB_share(request):
+def test_53_Deleting_test_file_and_directory_from_SMB_share(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
     cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
@@ -498,7 +539,7 @@ def test_51_Deleting_test_file_and_directory_from_SMB_share(request):
 
 
 @osx_host_cfg
-def test_52_Verifying_that_test_file_directory_successfully_removed(request):
+def test_54_Verifying_that_test_file_directory_successfully_removed(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -507,7 +548,7 @@ def test_52_Verifying_that_test_file_directory_successfully_removed(request):
 
 # Clean up mounted SMB share
 @osx_host_cfg
-def test_53_Unmount_SMB_share(request):
+def test_55_Unmount_SMB_share(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -516,7 +557,7 @@ def test_53_Unmount_SMB_share(request):
 
 # Delete tests
 @osx_host_cfg
-def test_54_Removing_SMB_mountpoint(request):
+def test_56_Removing_SMB_mountpoint(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -524,7 +565,7 @@ def test_54_Removing_SMB_mountpoint(request):
 
 
 # put all code to disable and delete under here
-def test_55_disable_activedirectory(request):
+def test_57_disable_activedirectory(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global payload, results
     payload = {
@@ -534,21 +575,21 @@ def test_55_disable_activedirectory(request):
     assert results.status_code == 200, results.text
 
 
-def test_56_get_activedirectory_state(request):
+def test_58_get_activedirectory_state(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-def test_57_get_activedirectory_started_after_disabling_AD(request):
+def test_59_get_activedirectory_started_after_disabling_AD(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
-def test_58_re_enable_activedirectory(request):
+def test_60_re_enable_activedirectory(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global payload, results, job_id
     payload = {
@@ -559,13 +600,13 @@ def test_58_re_enable_activedirectory(request):
     job_id = results.json()['job_id']
 
 
-def test_59_verify_job_id_is_successfull(request):
+def test_61_verify_job_id_is_successfull(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_60_get_activedirectory_state(request):
+def test_62_get_activedirectory_state(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global results
     results = GET('/activedirectory/get_state/')
@@ -573,14 +614,14 @@ def test_60_get_activedirectory_state(request):
     assert results.json() == 'HEALTHY', results.text
 
 
-def test_61_get_activedirectory_started(request):
+def test_63_get_activedirectory_started(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-def test_62_leave_activedirectory(request):
+def test_64_leave_activedirectory(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global payload, results
     payload = {
@@ -591,33 +632,33 @@ def test_62_leave_activedirectory(request):
     assert results.status_code == 200, results.text
 
 
-def test_63_get_activedirectory_state(request):
+def test_65_get_activedirectory_state(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-def test_64_get_activedirectory_started_after_living(request):
+def test_66_get_activedirectory_started_after_living(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
-def test_65_disable_cifs_service_at_boot(request):
+def test_67_disable_cifs_service_at_boot(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_66_checking_to_see_if_clif_service_is_enabled_at_boot(request):
+def test_68_checking_to_see_if_clif_service_is_enabled_at_boot(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_67_stoping_clif_service(request):
+def test_69_stoping_clif_service(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
@@ -625,19 +666,19 @@ def test_67_stoping_clif_service(request):
     sleep(1)
 
 
-def test_68_checking_if_cifs_is_stop(request):
+def test_70_checking_if_cifs_is_stop(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_69_destroying_ad_dataset_for_smb(request):
+def test_71_destroying_ad_dataset_for_smb(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
-def test_70_configure_setting_domain_hostname_and_dns(request):
+def test_72_configure_setting_domain_hostname_and_dns(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     global payload
     payload = {
