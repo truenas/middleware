@@ -57,7 +57,8 @@ SAMPLE_AUX = [
 
 
 @pytest.mark.dependency(name="SMB_DATASET_CREATED")
-def test_001_creating_smb_dataset():
+def test_001_creating_smb_dataset(request):
+    depends(request, ["pool_04"], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB"
