@@ -42,6 +42,7 @@ class IdmapBackend(enum.Enum):
             'unix_primary_group': {"required": False, "default": False},
             'unix_nss_info': {"required": False, "default": False},
         },
+        'has_secrets': False,
         'services': ['AD'],
     }
     AUTORID = {
@@ -55,6 +56,7 @@ class IdmapBackend(enum.Enum):
             'readonly': {"required": False, "default": False},
             'ignore_builtin': {"required": False, "default": False},
         },
+        'has_secrets': False,
         'services': ['AD'],
     }
     LDAP = {
@@ -64,9 +66,11 @@ class IdmapBackend(enum.Enum):
             'ldap_base_dn': {"required": True, "default": None},
             'ldap_user_dn': {"required": True, "default": None},
             'ldap_url': {"required": True, "default": None},
+            'ldap_user_dn_password': {"required": False, "default": None},
             'ssl': {"required": False, "default": SSL.NOSSL.value},
             'readonly': {"required": False, "default": False},
         },
+        'has_secrets': True,
         'services': ['AD', 'LDAP'],
     }
     NSS = {
@@ -76,6 +80,7 @@ class IdmapBackend(enum.Enum):
         'parameters': {
             'linked_service': {"required": False, "default": "LOCAL_ACCOUNT"},
         },
+        'has_secrets': False,
         'services': ['AD'],
     }
     RFC2307 = {
@@ -92,10 +97,11 @@ class IdmapBackend(enum.Enum):
             'ldap_domain': {"required": False, "default": None},
             'ldap_url': {"required": False, "default": None},
             'ldap_user_dn': {"required": True, "default": None},
-            'ldap_user_dn_password': {"required": True, "default": None},
+            'ldap_user_dn_password': {"required": False, "default": None},
             'ldap_realm': {"required": False, "default": None},
             'ssl': {"required": False, "default": SSL.NOSSL.value},
         },
+        'has_secrets': True,
         'services': ['AD', 'LDAP'],
     }
     RID = {
@@ -105,6 +111,7 @@ class IdmapBackend(enum.Enum):
         'parameters': {
             'sssd_compat': {"required": False, "default": False},
         },
+        'has_secrets': False,
         'services': ['AD'],
     }
     TDB = {
@@ -146,6 +153,9 @@ class IdmapBackend(enum.Enum):
                     ret[ds].append(x.name)
 
         return ret
+
+    def stores_secret(self):
+        return self.value['has_secrets']
 
 
 class IdmapDomainModel(sa.Model):
@@ -386,7 +396,11 @@ class IdmapDomainService(CRUDService):
                             f'for the system domain type {data["name"]}')
 
         if data['range_high'] < data['range_low']:
+            """
+            If we don't exit at this point further range() operations will raise an IndexError.
+            """
             verrors.add(f'{schema_name}.range_low', 'Idmap high range must be greater than idmap low range')
+            return
 
         configured_domains = await self.query()
         ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
@@ -457,7 +471,7 @@ class IdmapDomainService(CRUDService):
             Int('certificate', null=True),
             Dict(
                 'options',
-                Str('schema_mode'),
+                Str('schema_mode', enum=['RFC2307', 'SFU', 'SFU20']),
                 Bool('unix_primary_group'),
                 Bool('unix_nss_info'),
                 Int('rangesize', validators=[Range(min=10000, max=1000000000)]),
@@ -465,15 +479,15 @@ class IdmapDomainService(CRUDService):
                 Bool('ignore_builtin'),
                 Str('ldap_base_dn'),
                 Str('ldap_user_dn'),
-                Str('ldap_user_dn_password'),
+                Str('ldap_user_dn_password', private=True),
                 Str('ldap_url'),
                 Str('ssl', enum=[x.value for x in SSL]),
                 Str('linked_service', enum=['LOCAL_ACCOUNT', 'LDAP', 'NIS']),
                 Str('ldap_server'),
-                Str('ldap_realm'),
+                Bool('ldap_realm'),
                 Str('bind_path_user'),
                 Str('bind_path_group'),
-                Str('user_cn'),
+                Bool('user_cn'),
                 Str('cn_realm'),
                 Str('ldap_domain'),
                 Str('ldap_url'),
@@ -564,6 +578,8 @@ class IdmapDomainService(CRUDService):
 
         `ldap_user_dn` defines the user DN to be used for authentication.
 
+        `ldap_user_dn_password` is the password to be used for LDAP authentication.
+
         `realm` defines the realm to use in the user and group names. This is only required when using cn_realm together with
          a stand-alone ldap server.
 
@@ -592,6 +608,19 @@ class IdmapDomainService(CRUDService):
                         'generate LDAP traffic. Certificates do not apply.')
         verrors.check()
 
+        if data['options'].get('ldap_user_dn_password'):
+            try:
+                DSType[data["name"]]
+                domain = (await self.middleware.call("smb.config"))['workgroup']
+            except KeyError:
+                domain = data["name"]
+
+            secret = data['options'].pop('ldap_user_dn_password')
+
+            await self.middleware.call("directoryservices.set_ldap_secret",
+                                       domain, secret)
+            await self.middleware.call("directoryservices.backup_secrets")
+
         final_options = IdmapBackend[data['idmap_backend']].defaults()
         final_options.update(data['options'])
         data['options'] = final_options
@@ -617,6 +646,13 @@ class IdmapDomainService(CRUDService):
         """
         old = await self._get_instance(id)
         new = old.copy()
+        if data.get('idmap_backend') and data['idmap_backend'] != old['idmap_backend']:
+            """
+            Remove options from previous backend because they are almost certainly
+            not valid for the new backend.
+            """
+            new['options'] = {}
+
         new.update(data)
         tmp = data.copy()
         verrors = ValidationErrors()
@@ -634,6 +670,11 @@ class IdmapDomainService(CRUDService):
             new['range_low'] = await self.get_sssd_low_range(new['name'])
             new['range_high'] = new['range_low'] + 100000000
 
+        if new['idmap_backend'] == 'AUTORID' and new['name'] != 'DS_TYPE_ACTIVEDIRECTORY':
+            verrors.add("idmap_domain_update.idmap_backend",
+                        "AUTORID is only permitted for the default idmap backend for "
+                        "the active directory directory service (DS_TYPE_ACTIVEDIRECTORY).")
+
         await self.validate('idmap_domain_update', new, verrors)
         await self.validate_options('idmap_domain_update', new, verrors, ['MISSING'])
         tmp['idmap_backend'] = new['idmap_backend']
@@ -646,9 +687,22 @@ class IdmapDomainService(CRUDService):
                         'generate LDAP traffic. Certificates do not apply.')
         verrors.check()
         await self.prune_keys(new)
-        final_options = IdmapBackend[data['idmap_backend']].defaults()
+        final_options = IdmapBackend[new['idmap_backend']].defaults()
         final_options.update(new['options'])
         new['options'] = final_options
+
+        if new['options'].get('ldap_user_dn_password'):
+            try:
+                DSType[new["name"]]
+                domain = (await self.middleware.call("smb.config"))['workgroup']
+            except KeyError:
+                domain = new["name"]
+
+            secret = new['options'].pop('ldap_user_dn_password')
+            await self.middleware.call("directoryservices.set_ldap_secret",
+                                       domain, secret)
+            await self.middleware.call("directoryservices.backup_secrets")
+
         await self.idmap_compress(new)
         await self.middleware.call(
             'datastore.update',
@@ -657,7 +711,8 @@ class IdmapDomainService(CRUDService):
             new,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('idmap.clear_idmap_cache')
+        cache_job = await self.middleware.call('idmap.clear_idmap_cache')
+        await cache_job.wait()
         return await self._get_instance(id)
 
     @accepts(Int('id'))
