@@ -1143,7 +1143,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
     if [ ${_dlv:=0} -ne 0 ]; then
         _msg="${_msg}Please reboot, and change BIOS boot order to *not* boot over network."
     else
-        _msg="${_msg}Please reboot and remove the installation media."
+        _msg="${_msg}Please reboot, then remove the installation media."
     fi
     if ${INTERACTIVE}; then
 	dialog --msgbox "$_msg" 6 74
