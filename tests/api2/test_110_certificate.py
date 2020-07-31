@@ -33,7 +33,7 @@ def test_create_idmap_certificate():
             'ldap_url': '',
             'ldap_user_dn': '',
             'ldap_user_dn_password': '',
-            'ldap_realm':'',
+            'ldap_realm': False,
         }
     }
     results = POST('/idmap/', payload)
