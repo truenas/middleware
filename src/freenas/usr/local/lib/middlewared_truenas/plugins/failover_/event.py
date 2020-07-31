@@ -97,6 +97,10 @@ def run_async(cmd):
     return
 
 
+class IgnoreFailoverEvent(Exception):
+    pass
+
+
 class FailoverService(Service):
 
     @private
@@ -108,10 +112,14 @@ class FailoverService(Service):
 
     @private
     def event(self, ifname, vhid, event):
+        refresh = True
         try:
             return self._event(ifname, vhid, event)
+        except IgnoreFailoverEvent:
+            refresh = False
         finally:
-            self.middleware.call_sync('failover.status_refresh')
+            if refresh:
+                self.middleware.call_sync('failover.status_refresh')
 
     @private
     def generate_failover_data(self):
@@ -154,7 +162,7 @@ class FailoverService(Service):
         if ifname in fobj['internal_interfaces']:
             self.logger.warning(
                 f'Ignoring event:{event} on internal interface {ifname}')
-            return
+            raise IgnoreFailoverEvent()
 
         if event == 'forcetakeover':
             forcetakeover = True
@@ -172,7 +180,7 @@ class FailoverService(Service):
                     open(state_file, 'w').close()
                 else:
                     self.logger.warn('Failover event already being processed, ignoring.')
-                    return
+                    raise IgnoreFailoverEvent()
 
             # TODO python any
             if not forcetakeover:
@@ -184,7 +192,7 @@ class FailoverService(Service):
 
                 if not SENTINEL:
                     self.logger.warn('Ignoring state change on non-critical interface %s.', ifname)
-                    return
+                    raise IgnoreFailoverEvent()
 
                 if fobj['disabled']:
                     if not fobj['master']:
