@@ -41,6 +41,9 @@ class KRB_AppDefaults(enum.Enum):
     def __str__(self):
         return self.value[0]
 
+    def parm(self):
+        return self.value[0]
+
 
 class KRB_LibDefaults(enum.Enum):
     DEFAULT_REALM = ('default_realm', 'realm')
@@ -77,6 +80,9 @@ class KRB_LibDefaults(enum.Enum):
     FCC_MIT_TICKETFLAGS = ('fcc-mit-ticketflags', 'boolean')
 
     def __str__(self):
+        return self.value[0]
+
+    def parm(self):
         return self.value[0]
 
 
