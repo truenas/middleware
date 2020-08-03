@@ -69,7 +69,7 @@ class NetworkConfigurationService(ConfigService):
         # hostname_local will be used when the hostname of the current machine
         # needs to be used so it works with either FreeNAS or TrueNAS
         data['hostname_local'] = data['hostname']
-        if self.middleware.call_sync('system.is_freenas'):
+        if not self.middleware.call_sync('failover.licensed'):
             data.pop('hostname_b')
             data.pop('hostname_virtual')
         else:
@@ -208,10 +208,7 @@ class NetworkConfigurationService(ConfigService):
         config = await self.config()
         new_config = config.copy()
 
-        if not (
-                not await self.middleware.call('system.is_freenas') and
-                await self.middleware.call('failover.licensed')
-        ):
+        if not await self.middleware.call('failover.licensed'):
             for key in ['hostname_virtual', 'hostname_b']:
                 data.pop(key, None)
 
@@ -390,19 +387,19 @@ class InterfaceService(CRUDService):
             i['int_interface']: i
             for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
         }
-        is_freenas = self.middleware.call_sync('system.is_freenas')
-        if not is_freenas:
+        licensed = self.middleware.call_sync('failover.licensed')
+        if licensed:
             internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
         for name, iface in netif.list_interfaces().items():
             if iface.cloned and name not in configs:
                 continue
-            if not is_freenas and name in internal_ifaces:
+            if licensed and name in internal_ifaces:
                 continue
             iface_extend_kwargs = {}
             if osc.IS_LINUX:
                 iface_extend_kwargs = dict(media=True)
             try:
-                data[name] = self.iface_extend(iface.__getstate__(**iface_extend_kwargs), configs, is_freenas)
+                data[name] = self.iface_extend(iface.__getstate__(**iface_extend_kwargs), configs, licensed)
             except OSError:
                 self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
@@ -422,12 +419,12 @@ class InterfaceService(CRUDService):
                 'active_media_subtype': '',
                 'supported_media': [],
                 'media_options': [],
-                'carp_config': [],
-            }, configs, is_freenas, fake=True)
+                'carp_config' if osc.IS_FREEBSD else 'vrrp_config': [],
+            }, configs, licensed, fake=True)
         return filter_list(list(data.values()), filters, options)
 
     @private
-    def iface_extend(self, iface_state, configs, is_freenas, fake=False):
+    def iface_extend(self, iface_state, configs, licensed, fake=False):
 
         itype = self.middleware.call_sync('interface.type', iface_state)
 
@@ -445,7 +442,7 @@ class InterfaceService(CRUDService):
             'mtu': None,
         }
 
-        if not is_freenas:
+        if licensed:
             iface.update({
                 'failover_critical': False,
                 'failover_vhid': None,
@@ -467,7 +464,7 @@ class InterfaceService(CRUDService):
             'disable_offload_capabilities': config['int_disable_offload_capabilities'],
         })
 
-        if not is_freenas:
+        if licensed:
             iface.update({
                 'failover_critical': config['int_critical'],
                 'failover_vhid': config['int_vhid'],
@@ -565,13 +562,13 @@ class InterfaceService(CRUDService):
                     'address': alias['alias_v6address'],
                     'netmask': int(alias['alias_v6netmaskbit']),
                 })
-            if not is_freenas and alias['alias_v4address_b']:
+            if licensed and alias['alias_v4address_b']:
                 iface['failover_aliases'].append({
                     'type': 'INET',
                     'address': alias['alias_v4address_b'],
                     'netmask': int(alias['alias_v4netmaskbit']),
                 })
-            if not is_freenas and alias['alias_vip']:
+            if licensed and alias['alias_vip']:
                 iface['failover_virtual_aliases'].append({
                     'type': 'INET',
                     'address': alias['alias_vip'],
@@ -647,7 +644,7 @@ class InterfaceService(CRUDService):
         self._original_datastores.clear()
 
     async def __check_failover_disabled(self):
-        if await self.middleware.call('system.is_freenas'):
+        if not await self.middleware.call('failover.licensed'):
             return
         if await self.middleware.call('failover.status') == 'SINGLE':
             return
@@ -1319,10 +1316,8 @@ class InterfaceService(CRUDService):
         await self._common_validation(
             verrors, 'interface_update', new, iface['type'], update=iface
         )
-        failover_licensed = not await self.middleware.call('system.is_freenas') and await self.middleware.call(
-            'failover.licensed'
-        )
-        if failover_licensed and iface.get('disable_offload_capabilities') != new.get('disable_offload_capabilities'):
+        licensed = await self.middleware.call('failover.licensed')
+        if licensed and iface.get('disable_offload_capabilities') != new.get('disable_offload_capabilities'):
             if not new['disable_offload_capabilities']:
                 if iface['name'] in await self.middleware.call('interface.to_disable_evil_nic_capabilities', False):
                     verrors.add(
@@ -1447,12 +1442,10 @@ class InterfaceService(CRUDService):
             raise
 
         if new.get('disable_offload_capabilities') != iface.get('disable_offload_capabilities'):
-            failover_licensed = not await self.middleware.call('system.is_freenas') and await self.middleware.call(
-                'failover.licensed'
-            )
+            licensed = await self.middleware.call('failover.licensed')
             if new['disable_offload_capabilities']:
                 await self.middleware.call('interface.disable_capabilities', iface['name'])
-                if failover_licensed:
+                if licensed:
                     try:
                         await self.middleware.call(
                             'failover.call_remote', 'interface.disable_capabilities', [iface['name']]
@@ -1464,7 +1457,7 @@ class InterfaceService(CRUDService):
             else:
                 capabilities = await self.middleware.call('interface.nic_capabilities')
                 await self.middleware.call('interface.enable_capabilities', iface['name'], capabilities)
-                if failover_licensed:
+                if licensed:
                     try:
                         await self.middleware.call(
                             'failover.call_remote', 'interface.enable_capabilities', [iface['name'], capabilities]
@@ -1779,7 +1772,7 @@ class InterfaceService(CRUDService):
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair']
-        if not await self.middleware.call('system.is_freenas'):
+        if await self.middleware.call('failover.licensed'):
             internal_interfaces.extend(await self.middleware.call('failover.internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
 

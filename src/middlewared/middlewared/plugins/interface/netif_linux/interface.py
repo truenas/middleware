@@ -110,7 +110,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
             'media_options': None,
             'link_address': self.link_address.address.address if self.link_address is not None else '',
             'aliases': [i.__getstate__(stats=address_stats) for i in self.addresses],
-            'carp_config': None,
+            'vrrp_config': None,
         }
 
         if media:
