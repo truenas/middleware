@@ -339,7 +339,7 @@ class Enclosures(object):
         blacklist = [
             "VirtualSES",
         ]
-        if system_info["system_product"].startswith("TRUENAS-"):
+        if system_info["system_product"] and system_info["system_product"].startswith("TRUENAS-"):
             blacklist.append("AHCI SGPIO Enclosure 2.00")
 
         self.__enclosures = []
