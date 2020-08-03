@@ -28,6 +28,7 @@ logging.getLogger('passlib.registry').setLevel(logging.INFO)
 
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
+FAILOVER_LOGFILE = '/root/syslog/failover.log'
 logging.TRACE = 6
 
 
@@ -214,6 +215,11 @@ class Logger(object):
                     'handlers': ['zettarepl_file'],
                     'propagate': False,
                 },
+                'failover': {
+                    'level': 'NOTSET',
+                    'handlers': ['failover_file'],
+                    'propagate': False,
+                },
             },
             'handlers': {
                 'file': {
@@ -235,6 +241,16 @@ class Logger(object):
                     'backupCount': 5,
                     'encoding': 'utf-8',
                     'formatter': 'zettarepl_file',
+                },
+                'failover_file': {
+                    'level': 'DEBUG',
+                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'filename': FAILOVER_LOGFILE,
+                    'mode': 'a',
+                    'maxBytes': 10485760,
+                    'backupCount': 5,
+                    'encoding': 'utf-8',
+                    'formatter': 'file',
                 },
             },
             'formatters': {
@@ -276,6 +292,12 @@ class Logger(object):
             pass
         try:
             os.chmod(ZETTAREPL_LOGFILE, 0o640)
+        except OSError:
+            pass
+        try:
+            dirname = os.dirname(FAILOVER_LOGFILE)
+            os.makedirs(dirname, exist_ok=True)
+            os.chmod(FAILOVER_LOGFILE, 0o640)
         except OSError:
             pass
 

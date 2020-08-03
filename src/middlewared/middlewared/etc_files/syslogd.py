@@ -21,9 +21,6 @@ else:
     LOG_FILTER_PREFIX = "f_freebsd_"
     LOG_SOURCE = "s_src"
 
-FENCED_LOG = '/root/syslog/fenced.log'
-FAILOVER_LOG = '/root/syslog/failover.log'
-
 
 def generate_syslog_remote_destination(middleware, advanced_config):
     result = ""
@@ -175,13 +172,11 @@ def generate_ha_syslog(middleware):
             newsyslog_conf = f.read()
 
         newsyslog_conf += f"{controller_file}               640  10   200 @0101T JC\n"
-        newsyslog_conf += f"{FENCED_LOG}                 640  10   200   *     JC\n"
-        newsyslog_conf += f"{FAILOVER_LOG}               640  10   200   *     JC\n"
         with open("/etc/newsyslog.conf", "w") as f:
             f.write(newsyslog_conf)
     else:
         with open("/etc/logrotate.d/truenas-ha", "w") as f:
-            for file in [controller_file, FENCED_LOG, FAILOVER_LOG]:
+            for file in [controller_file]:
                 f.write(textwrap.dedent(f"""\
                     {file} {{
                         daily
