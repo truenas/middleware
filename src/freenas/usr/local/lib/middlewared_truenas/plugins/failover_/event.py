@@ -577,6 +577,7 @@ class FailoverService(Service):
 
                 self.run_call('service.restart', 'collectd', {'ha_propagate': False})
                 self.run_call('service.restart', 'syslogd', {'ha_propagate': False})
+                self.run_call('service.restart', 'mdns', {'ha_propagate': False})
 
                 for i in (
                     'smartd', 'ftp', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp', 'webdav',
@@ -761,6 +762,7 @@ class FailoverService(Service):
 
                 self.run_call('failover.status_refresh')
                 self.run_call('service.restart', 'syslogd', {'ha_propagate': False})
+                self.run_call('service.stop', 'mdns', {'ha_propagate': False})
 
                 self.run_call('etc.generate', 'cron')
 
