@@ -297,7 +297,6 @@ class Logger(object):
         try:
             dirname = os.dirname(FAILOVER_LOGFILE)
             os.makedirs(dirname, exist_ok=True)
-            os.chmod(FAILOVER_LOGFILE, 0o640)
         except OSError:
             pass
 
