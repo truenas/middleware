@@ -15,6 +15,7 @@ import random
 import shlex
 import shutil
 import string
+import stat
 import subprocess
 import time
 
@@ -294,7 +295,6 @@ class UserService(CRUDService):
                         'path': dest_file,
                         'uid': data['uid'],
                         'gid': group['gid'],
-                        'options': {'recursive': True}
                     })
 
             data['sshpubkey'] = sshpubkey
@@ -336,6 +336,12 @@ class UserService(CRUDService):
             user['group'] = group['id']
 
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
+
+        try:
+            st = os.stat(user.get("home", "/nonexistent")).st_mode
+            old_mode = f'{stat.S_IMODE(st):03o}'
+        except FileNotFoundError:
+            old_mode = None
 
         home = data.get('home') or user['home']
         has_home = home != '/nonexistent'
@@ -383,11 +389,18 @@ class UserService(CRUDService):
         if home_copy and not os.path.isdir(user['home']):
             try:
                 os.makedirs(user['home'])
-                await self.middleware.call('filesystem.chown', {
+                mode_to_set = user.get('home_mode')
+                if not mode_to_set:
+                    mode_to_set = '700' if old_mode is None else old_mode
+
+                perm_job = await self.middleware.call('filesystem.setperm', {
                     'path': user['home'],
                     'uid': user['uid'],
                     'gid': group['bsdgrp_gid'],
+                    'mode': mode_to_set,
+                    'options': {'stripacl': True},
                 })
+                await perm_job.wait()
             except OSError:
                 self.logger.warn('Failed to chown homedir', exc_info=True)
             if not os.path.isdir(user['home']):
