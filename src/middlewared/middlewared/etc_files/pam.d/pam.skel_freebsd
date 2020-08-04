@@ -4,7 +4,8 @@
     def setup_skel():
         if not os.path.islink('/etc/skel'):
             try:
-                os.rmdir('/etc/skel')
+                if os.path.isdir('/etc/skel'):
+                    os.rmdir('/etc/skel')
                 os.symlink('/usr/share/skel', '/etc/skel')
             except Exception:
                 middleware.logger.warning("Failed to set up skel directory "
