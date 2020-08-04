@@ -1798,8 +1798,10 @@ class DiskService(CRUDService):
             # The GPT header takes about 34KB + alignment, round it to 100
             if size - 100 <= swapgb * 1024 * 1024:
                 raise CallError(f'Your disk size must be higher than {swapgb}GB')
+            sectorsize = g.provider.sectorsize or 512
         else:
             self.logger.error(f'Unable to determine size of {disk}')
+            sectorsize = 512
 
         job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)
         job.wait_sync()
@@ -1807,7 +1809,7 @@ class DiskService(CRUDService):
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
 
         # Calculate swap size.
-        swapsize = swapgb * 1024 * 1024 * 2
+        swapsize = swapgb * 1024 * 1024 * 1024 / sectorsize
         # Round up to nearest whole integral multiple of 128
         # so next partition starts at mutiple of 128.
         swapsize = (int((swapsize + 127) / 128)) * 128
