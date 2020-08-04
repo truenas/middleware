@@ -1684,7 +1684,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
             if not activated_pool:
                 return results
             if activated_pool == query_dataset or query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
-                for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
+                for j in await self.middleware.call('jail.query', [['OR', [('state', '=', 'up'), ('boot', '=', 1)]]]):
                     results.append({'id': j['host_hostuuid']})
 
         return results
