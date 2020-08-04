@@ -227,12 +227,29 @@ class ZFSPoolService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
-    @accepts(Str('pool'), Str('label'))
-    def detach(self, name, label):
+    @accepts(Str('pool'), Str('label'), Dict('options', Bool('clear_label', default=False)))
+    def detach(self, name, label, options):
         """
         Detach device `label` from the pool `pool`.
         """
-        self.__zfs_vdev_operation(name, label, lambda target: target.detach())
+        self.detach_remove_impl('detach', name, label, options)
+
+    def detach_remove_impl(self, op, name, label, options):
+        def impl(target):
+            getattr(target, op)()
+            if options['clear_label']:
+                self.clear_label(target.path)
+        self.__zfs_vdev_operation(name, label, impl)
+
+    @accepts(Str('device'))
+    def clear_label(self, device):
+        """
+        Clear label from `device`.
+        """
+        try:
+            libzfs.clear_label(device)
+        except (libzfs.ZFSException, OSError) as e:
+            raise CallError(str(e))
 
     @accepts(Str('pool'), Str('label'))
     def offline(self, name, label):
@@ -250,12 +267,12 @@ class ZFSPoolService(CRUDService):
         """
         self.__zfs_vdev_operation(name, label, lambda target, *args: target.online(*args), expand)
 
-    @accepts(Str('pool'), Str('label'))
-    def remove(self, name, label):
+    @accepts(Str('pool'), Str('label'), Dict('options', Bool('clear_label', default=False)))
+    def remove(self, name, label, options):
         """
         Remove device `label` from the pool `pool`.
         """
-        self.__zfs_vdev_operation(name, label, lambda target: target.remove())
+        self.detach_remove_impl('remove', name, label, options)
 
     @accepts(Str('pool'), Str('label'), Str('dev'))
     def replace(self, name, label, dev):
