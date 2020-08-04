@@ -185,6 +185,7 @@ get_physical_disks_list()
     local _boot=$(glabel status | awk '/iso9660\/(FREE|TRUE)NAS/ { print $3 }')
     local _disk
 
+    VAL=""
     for _disk in $(sysctl -n kern.disks)
     do
 	if [ "${_disk}" = "${_boot}" ]; then
@@ -262,7 +263,7 @@ new_install_verify()
 WARNING:
 EOD
 
-    if [ "$_type" = "upgrade" -a "$_upgradetype" = "inplace" ] ; then
+    if [ "$_upgradetype" = "inplace" ] ; then
       echo "- This will install into existing zpool on ${_disks}." >> ${_tmpfile}
     else
       echo "- This will erase ALL partitions and data on ${_disks}." >> ${_tmpfile}
@@ -799,6 +800,11 @@ fail()
     abort
 }
 
+doing_upgrade()
+{
+    test -d /tmp/data_preserved
+}
+
 menu_install()
 {
     local _action
@@ -974,7 +980,7 @@ menu_install()
     trap "fail ${_action} ${_realdisks}" EXIT
     set -e
 
-    if [ ${_do_upgrade} -eq 1 ]
+    if [ "${_upgrade_type}" = "inplace" ]
     then
         /etc/rc.d/dmesg start
     else
@@ -992,7 +998,7 @@ menu_install()
     # Hack #2
     ls $(get_product_path) > /dev/null
 
-    if [ ${_do_upgrade} -eq 1 -a "${_upgrade_type}" = "inplace" ]
+    if [ "${_upgrade_type}" = "inplace" ]
     then
       # Set the boot-environment name
       BENAME="default-`date +%Y%m%d-%H%M%S`"
@@ -1036,7 +1042,7 @@ menu_install()
       mount_disk /tmp/data
     fi
 
-    if [ -d /tmp/data_preserved ]; then
+    if doing_upgrade; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
 	# We still need the newer version we are upgrading to's
 	# factory-v1.db, else issuing a factory-restore on the
@@ -1055,7 +1061,7 @@ menu_install()
 
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
-    if [ "${_do_upgrade}" -ne 0 ]; then
+    if doing_upgrade; then
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
 	fi
@@ -1106,7 +1112,7 @@ menu_install()
     zpool set bootfs=${BOOT_POOL}/ROOT/${BENAME} ${BOOT_POOL}
     install_loader /tmp/data ${_realdisks}
 
-    if [ -d /tmp/data_preserved ]; then
+    if doing_upgrade; then
 	# Instead of sentinel files, let's just migrate!
 	# Unfortunately, this doesn't seem to work well.
 	# This should be investigated.
@@ -1118,7 +1124,7 @@ menu_install()
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
 	${INTERACTIVE} && dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
-    elif [ "${_do_upgrade}" -eq 0 ]; then
+    else
 	if [ -n "${_password}" ]; then
 		# Set the root password
 		chroot /tmp/data /etc/netcli reset_root_pw "${_password}"
