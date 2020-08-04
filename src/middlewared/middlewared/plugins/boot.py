@@ -123,7 +123,7 @@ class BootService(Service):
         """
         Detach given `dev` from boot pool.
         """
-        await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev)
+        await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
 
     @accepts(Str('label'), Str('dev'))
     async def replace(self, label, dev):
