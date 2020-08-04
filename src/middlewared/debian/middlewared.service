@@ -2,8 +2,8 @@
 Description=TrueNAS Middleware
 DefaultDependencies=no
 
-Wants=dbus.socket
-After=dbus.socket
+Wants=ix-conf.service dbus.socket
+After=ix-conf.service dbus.socket
 Before=reboot.target shutdown.target halt.target
 Conflicts=reboot.target shutdown.target halt.target
 

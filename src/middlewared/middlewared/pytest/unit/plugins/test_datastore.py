@@ -300,7 +300,7 @@ class StringModel(Model):
     __tablename__ = 'test_string'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    string = sa.Column(sa.String(100))
+    string = sa.Column(sa.String(100), nullable=True)
 
 
 @pytest.mark.parametrize("filter,ids", [
@@ -310,6 +310,11 @@ class StringModel(Model):
     ([("string", "in", ["Ipsum", "dolor"])], [2]),
     ([("string", "nin", ["Ipsum", "dolor"])], [1]),
 
+    ([("string", "in", [None, "Ipsum"])], [2, 3]),
+    ([("string", "nin", [None, "Ipsum"])], [1]),
+    ([("string", "in", [None])], [3]),
+    ([("string", "nin", [None])], [1, 2]),
+
     ([("string", "^", "Lo")], [1]),
     ([("string", "$", "um")], [2]),
 ])
@@ -318,6 +323,7 @@ async def test__string_filters(filter, ids):
     async with datastore_test() as ds:
         await ds.execute("INSERT INTO test_string VALUES (1, 'Lorem')")
         await ds.execute("INSERT INTO test_string VALUES (2, 'Ipsum')")
+        await ds.execute("INSERT INTO test_string VALUES (3, NULL)")
 
         assert [row["id"] for row in await ds.query("test.string", filter)] == ids
 

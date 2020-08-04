@@ -208,12 +208,16 @@ class SslService(PseudoServiceBase):
 class SysconsService(SimpleService):
     name = "syscons"
 
-    etc = ["rc"]
+    etc = ["rc"] if osc.IS_FREEBSD else ["keyboard"]
     restartable = True
 
     freebsd_rc = "syscons"
 
-    # FIXME: Linux
+    async def get_state(self):
+        return ServiceState(True, [])
+
+    async def _restart_linux(self):
+        await run(["setupcon"], check=False)
 
 
 class SysctlService(PseudoServiceBase):

@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 from datetime import datetime, date, timezone
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
@@ -377,22 +378,26 @@ class SystemService(Service):
         Returns the type of the product.
 
         CORE - TrueNAS Core, community version
+        SCALE - TrueNAS SCALE, community version
         ENTERPRISE - TrueNAS Enterprise, appliance version
-        SCALE - TrueNAS SCALE
+        SCALE_ENTERPRISE - TrueNAS SCALE Enterprise, appliance version
         """
+        linux = osc.IS_LINUX
+
         if self.__product_type is None:
-            if osc.IS_LINUX:
-                self.__product_type = 'SCALE'
-                return self.__product_type
+
             hardware = await self.middleware.call('failover.hardware')
             if hardware != 'MANUAL':
-                self.__product_type = 'ENTERPRISE'
+                if linux:
+                    self.__product_type = 'SCALE_ENTERPRISE'
+                else:
+                    self.__product_type = 'ENTERPRISE'
             else:
-                license = await self.middleware.run_in_thread(self._get_license)
-                self.__product_type = 'CORE' if (
-                    not license or
-                    license['model'].lower().startswith('freenas')
-                ) else 'ENTERPRISE'
+                if linux:
+                    self.__product_type = 'SCALE'
+                else:
+                    self.__product_type = 'CORE'
+
         return self.__product_type
 
     @no_auth_required
@@ -518,6 +523,8 @@ class SystemService(Service):
         except Exception:
             raise CallError('This is not a valid license.')
 
+        prev_product_type = self.middleware.call_sync('system.product_type')
+
         with open(LICENSE_FILE, 'w+') as f:
             f.write(license)
 
@@ -527,7 +534,7 @@ class SystemService(Service):
         if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
             Path('/data/truenas-eula-pending').touch(exist_ok=True)
         self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update'), wait=False,
+            self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )
 
     @accepts()
@@ -747,7 +754,7 @@ class SystemService(Service):
                 with requests.get(url, stream=True) as r:
                     for i in r.iter_content(chunk_size=1048576):
                         if standby_debug.tell() > 20971520:
-                            raise CallError(f'Standby debug file is bigger than 20MiB.')
+                            raise CallError('Standby debug file is bigger than 20MiB.')
                         standby_debug.write(i)
 
         debug_job.wait_sync()
@@ -761,7 +768,7 @@ class SystemService(Service):
             # so they can be downloaded at once.
             try:
                 if os.stat(debug_job.result).st_size > 20971520:
-                    raise CallError(f'Debug file is bigger than 20MiB.')
+                    raise CallError('Debug file is bigger than 20MiB.')
             except FileNotFoundError:
                 raise CallError('Debug file was not found, try again.')
 
@@ -1055,15 +1062,29 @@ class SystemGeneralService(ConfigService):
 
     @private
     async def _initialize_kbdmap_choices(self):
-        """Populate choices from /usr/share/vt/keymaps/INDEX.keymaps"""
-        index = "/usr/share/vt/keymaps/INDEX.keymaps"
+        if osc.IS_FREEBSD:
+            with open("/usr/share/vt/keymaps/INDEX.keymaps", 'rb') as f:
+                d = f.read().decode('utf8', 'ignore')
+            _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
+            self._kbdmap_choices = {name: desc for name, desc in _all}
 
-        if not os.path.exists(index):
-            return []
-        with open(index, 'rb') as f:
-            d = f.read().decode('utf8', 'ignore')
-        _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
-        self._kbdmap_choices = {name: desc for name, desc in _all}
+        if osc.IS_LINUX:
+            with open("/usr/share/X11/xkb/rules/xorg.lst", "r") as f:
+                key = None
+                items = defaultdict(list)
+                for line in f.readlines():
+                    line = line.rstrip()
+                    if line.startswith("! "):
+                        key = line[2:]
+                    if line.startswith("  "):
+                        items[key].append(re.split(r"\s+", line.lstrip(), 1))
+
+            choices = dict(items["layout"])
+            for variant, desc in items["variant"]:
+                lang, title = desc.split(": ", 1)
+                choices[f"{lang}.{variant}"] = title
+
+            self._kbdmap_choices = dict(sorted(choices.items(), key=lambda t: t[1]))
 
     @accepts()
     async def kbdmap_choices(self):
@@ -1515,17 +1536,17 @@ class SystemHealthEventSource(EventSource):
         if delay < 5:
             return
 
-        cp_time = sysctl.filter('kern.cp_time')[0].value
+        cp_time = psutil.cpu_times()
         cp_old = cp_time
 
         while not self._cancel.is_set():
             time.sleep(delay)
 
-            cp_time = sysctl.filter('kern.cp_time')[0].value
-            cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_time, cp_old)))
+            cp_time = psutil.cpu_times()
+            cp_diff = type(cp_time)(*map(lambda x: x[0] - x[1], zip(cp_time, cp_old)))
             cp_old = cp_time
 
-            cpu_percent = round((sum(cp_diff[:3]) / sum(cp_diff)) * 100, 2)
+            cpu_percent = round(((sum(cp_diff) - cp_diff.idle) / sum(cp_diff)) * 100, 2)
 
             pools = self.middleware.call_sync(
                 'cache.get_or_put',
@@ -1547,6 +1568,10 @@ async def firstboot(middleware):
         # Delete sentinel file before making clone as we
         # we do not want the clone to have the file in it.
         os.unlink(FIRST_INSTALL_SENTINEL)
+
+        if await middleware.call('system.product_type') == 'ENTERPRISE':
+            config = await middleware.call('datastore.config', 'system.advanced')
+            await middleware.call('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
 
         # Creating pristine boot environment from the "default"
         initial_install_be = 'Initial-Install'
@@ -1612,6 +1637,11 @@ async def update_timeout_value(middleware, *args):
                 sysctl.filter('kern.init_shutdown_timeout')[0], 'value', timeout_value
             )
         )
+
+
+async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
+    if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
+        await middleware.call('system.advanced.update', {'autotune': True})
 
 
 async def setup(middleware):
@@ -1683,3 +1713,5 @@ async def setup(middleware):
     CRASH_DIR = '/data/crash'
     os.makedirs(CRASH_DIR, exist_ok=True)
     os.chmod(CRASH_DIR, 0o775)
+
+    middleware.register_hook('system.post_license_update', hook_license_update, sync=False)

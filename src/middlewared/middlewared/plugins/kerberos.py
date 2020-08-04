@@ -41,6 +41,9 @@ class KRB_AppDefaults(enum.Enum):
     def __str__(self):
         return self.value[0]
 
+    def parm(self):
+        return self.value[0]
+
 
 class KRB_LibDefaults(enum.Enum):
     DEFAULT_REALM = ('default_realm', 'realm')
@@ -77,6 +80,9 @@ class KRB_LibDefaults(enum.Enum):
     FCC_MIT_TICKETFLAGS = ('fcc-mit-ticketflags', 'boolean')
 
     def __str__(self):
+        return self.value[0]
+
+    def parm(self):
         return self.value[0]
 
 
@@ -948,10 +954,10 @@ class KerberosKeytabService(CRUDService):
         """
         Generate list of Kerberos principals that are not the AD machine account.
         """
-        smb = await self.middleware.call('smb.config')
+        ad = await self.middleware.call('activedirectory.config')
         pruned_list = []
         for i in keytab_list:
-            if smb['netbiosname'].upper() not in i['principal'].upper():
+            if ad['netbiosname'].upper() not in i['principal'].upper():
                 pruned_list.append(i)
 
         return pruned_list

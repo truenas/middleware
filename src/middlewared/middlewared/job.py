@@ -232,6 +232,7 @@ class Job(object):
         self.exc_info = None
         self.aborted = False
         self.state = State.WAITING
+        self.description = None
         self.progress = {
             'percent': None,
             'description': None,
@@ -250,6 +251,12 @@ class Job(object):
         if self.options["check_pipes"]:
             for pipe in self.options["pipes"]:
                 self.check_pipe(pipe)
+
+        if self.options["description"]:
+            try:
+                self.description = self.options["description"](*args)
+            except Exception:
+                logger.error("Error setting job description", exc_info=True)
 
     def check_pipe(self, pipe):
         if getattr(self.pipes, pipe) is None:
@@ -288,6 +295,10 @@ class Job(object):
         self.state = State.__members__[state]
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
             self.time_finished = datetime.utcnow()
+
+    def set_description(self, description):
+        self.description = description
+        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     def set_progress(self, percent, description=None, extra=None):
         if percent is not None:
@@ -463,6 +474,7 @@ class Job(object):
             'id': self.id,
             'method': self.method_name,
             'arguments': self.middleware.dump_args(self.args, method=self.method),
+            'description': self.description,
             'logs_path': self.logs_path,
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,

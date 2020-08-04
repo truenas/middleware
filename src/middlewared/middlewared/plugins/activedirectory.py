@@ -37,6 +37,18 @@ class neterr(enum.Enum):
     NOTJOINED = 2
     FAULT = 3
 
+    def to_status(errstr):
+        errors_to_rejoin = [
+            '0xfffffff6',
+            'The name provided is not a properly formed account name',
+            'The attempted logon is invalid.'
+        ]
+        for err in errors_to_rejoin:
+            if err in errstr:
+                return neterr.NOTJOINED
+
+        return neterr.FAULT
+
 
 class SRV(enum.Enum):
     DOMAINCONTROLLER = '_ldap._tcp.dc._msdcs.'
@@ -921,10 +933,7 @@ class ActiveDirectoryService(ConfigService):
             with open(f"{SMBPath.LOGDIR.platform()}/domain_testjoin_{int(datetime.datetime.now().timestamp())}.log", "w") as f:
                 f.write(errout)
 
-            if '0xfffffff6' in errout or 'The name provided is not a properly formed account name' in errout:
-                return neterr.NOTJOINED
-            else:
-                return neterr.FAULT
+            return neterr.to_status(errout)
 
         return neterr.JOINED
 

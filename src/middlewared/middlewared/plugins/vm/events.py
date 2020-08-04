@@ -10,7 +10,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
     @private
     def setup_libvirt_events(self):
-        self._check_connection_alive()
+        self._check_setup_connection()
 
         def callback(conn, dom, event, detail, opaque):
             """

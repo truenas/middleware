@@ -135,7 +135,7 @@ class RealtimeEventSource(EventSource):
                             core = int(core)
                             for temp, value in temps.items():
                                 if 'input' in temp:
-                                    data['cpu']['temperature'][core] = value
+                                    data['cpu']['temperature'][core] = 2732 + int(value * 10)
                                     break
 
             if osc.IS_FREEBSD:

@@ -1,0 +1,14 @@
+[Unit]
+Description=Extract /conf/base
+DefaultDependencies=no
+
+Wants=systemd-remount-fs.service
+After=systemd-remount-fs.service
+
+[Service]
+Type=oneshot
+ExecStart=rm -rf /var/log
+ExecStart=cp -a /conf/base/var/log /var/
+
+[Install]
+WantedBy=multi-user.target

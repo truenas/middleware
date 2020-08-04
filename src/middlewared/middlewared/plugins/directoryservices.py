@@ -8,6 +8,7 @@ from base64 import b64encode, b64decode
 from middlewared.schema import accepts
 from middlewared.service import Service, private
 from middlewared.plugins.smb import SMBCmd, SMBPath
+from middlewared.service_exception import CallError
 from middlewared.utils import run
 from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
 
@@ -73,18 +74,29 @@ class DirectorySecrets(object):
         if not bytes_passwd_chng:
             self.logger.warning("Failed to retrieve last password change time for domain "
                                 "[%s] from domain secrets. Directory service functionality "
-                                "may be impacted.")
+                                "may be impacted.", domain)
             return None
 
         passwd_chg_ts = struct.unpack("<L", bytes_passwd_chng)[0]
         return passwd_chg_ts
+
+    def set_ldap_secret(self, domain, secret):
+        self.tdb.transaction_start()
+        tdb_key = f'SECRETS/GENERIC/IDMAP_LDAP_{domain.upper()}/{secret}'.encode()
+        tdb_data = secret.encode() + b"\x00"
+        try:
+            self.tdb.store(tdb_key, tdb_data)
+        except Exception as e:
+            self.tdb.transaction_cancel()
+            raise CallError(f"Failed to ldap secrets: {e}")
+
+        self.tdb.transaction_commit()
 
     def dump(self):
         ret = {}
         self.tdb.read_lock_all()
         for entry in self.tdb:
             ret.update({entry.decode(): (b64encode(self.tdb.get(entry))).decode()})
-            self.logger.debug("entry: %s", ret[entry.decode()])
 
         self.tdb.read_unlock_all()
         return ret
@@ -217,7 +229,7 @@ class DirectoryServices(Service):
                 self.logger.debug("Skipping secrets backup on standby controller.")
                 return
 
-            ngc = self.middleware.call_sync("network.configuratoin.config")
+            ngc = self.middleware.call_sync("network.configuration.config")
             netbios_name = ngc["hostname_virtual"]
         else:
             netbios_name = self.middleware.call_sync('smb.config')['netbiosname_local']
@@ -295,6 +307,14 @@ class DirectoryServices(Service):
         return rv
 
     @private
+    def set_ldap_secret(self, domain, secret):
+        ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
+        with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
+            rv = s.set_ldap_secret(domain, secret)
+
+        return rv
+
+    @private
     def get_last_password_change(self, domain=None):
         """
         Returns unix timestamp of last password change according to
@@ -310,7 +330,7 @@ class DirectoryServices(Service):
             passwd_ts = s.last_password_change(domain)
 
         db_secrets = self.get_db_secrets()
-        server_secrets = db_secrets.get(f"{smb_config['netbiosname_local']}$")
+        server_secrets = db_secrets.get(f"{smb_config['netbiosname_local'].upper()}$")
         if server_secrets is None:
             return {"dbconfig": None, "secrets": passwd_ts}
 
@@ -347,6 +367,7 @@ class DirectoryServices(Service):
         ldap_enabled = ldap_conf['enable']
         ad_enabled = (await self.middleware.call("activedirectory.config"))['enable']
         workgroup = (await self.middleware.call("smb.config"))["workgroup"]
+        is_kerberized = ad_enabled
 
         if not ldap_enabled and not ad_enabled:
             return
@@ -376,10 +397,22 @@ class DirectoryServices(Service):
                                 "attempting to restore secrets from configuration file.")
             self.middleware.call("smb.store_ldap_admin_password")
 
+        if ldap_enabled and ldap_conf['kerberos_realm']:
+            is_kerberized = True
+
         gencache_flush = await run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
         if gencache_flush.returncode != 0:
             self.logger.warning("Failed to clear the SMB gencache after re-initializing "
                                 "directory services: [%s]", gencache_flush.stderr.decode())
+
+        await self.middleware.call('etc.generate', 'nss')
+        if is_kerberized:
+            try:
+                await self.middleware.call('kerberos.start')
+            except CallError:
+                self.logger.warning("Failed to start kerberos after directory service "
+                                    "initialization. Services dependent on kerberos may"
+                                    "not work correctly.", exc_info=True)
 
 
 def setup(middleware):

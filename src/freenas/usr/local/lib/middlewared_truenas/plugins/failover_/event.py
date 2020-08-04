@@ -12,6 +12,7 @@ import multiprocessing
 import os
 import sqlite3
 import subprocess
+import logging
 try:
     import sysctl
 except ImportError:
@@ -76,6 +77,8 @@ WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
 # FAILOVER_EVENT prevents them both from starting fenced or
 # importing volumes or whatnot.
 
+logger = logging.getLogger('failover')
+
 
 def run(cmd, stderr=False):
     proc = subprocess.Popen(
@@ -97,6 +100,10 @@ def run_async(cmd):
     return
 
 
+class IgnoreFailoverEvent(Exception):
+    pass
+
+
 class FailoverService(Service):
 
     @private
@@ -104,14 +111,18 @@ class FailoverService(Service):
         try:
             return self.middleware.call_sync(method, *args)
         except Exception as e:
-            self.logger.error('Failed to run %s:%r: %s', method, args, e)
+            logger.error('Failed to run %s:%r: %s', method, args, e)
 
     @private
     def event(self, ifname, vhid, event):
+        refresh = True
         try:
             return self._event(ifname, vhid, event)
+        except IgnoreFailoverEvent:
+            refresh = False
         finally:
-            self.middleware.call_sync('failover.status_refresh')
+            if refresh:
+                self.middleware.call_sync('failover.status_refresh')
 
     @private
     def generate_failover_data(self):
@@ -120,6 +131,7 @@ class FailoverService(Service):
         pools = self.middleware.call_sync('pool.query')
         interfaces = self.middleware.call_sync('interface.query')
         internal_ints = self.middleware.call_sync('failover.internal_interfaces')
+        boot_disks = ",".join(self.middleware.call_sync('boot.get_disks'))
 
         data = {
             'disabled': failovercfg['disabled'],
@@ -138,6 +150,7 @@ class FailoverService(Service):
                 ])
             ],
             'internal_interfaces': internal_ints,
+            'boot_disks': boot_disks,
         }
 
         for i in filter_list(interfaces, [('failover_critical', '=', True)]):
@@ -152,9 +165,9 @@ class FailoverService(Service):
 
         # We ignore events on the p2p heartbeat connection
         if ifname in fobj['internal_interfaces']:
-            self.logger.warning(
+            logger.warning(
                 f'Ignoring event:{event} on internal interface {ifname}')
-            return
+            raise IgnoreFailoverEvent()
 
         if event == 'forcetakeover':
             forcetakeover = True
@@ -171,8 +184,8 @@ class FailoverService(Service):
                 if not os.path.exists(state_file):
                     open(state_file, 'w').close()
                 else:
-                    self.logger.warn('Failover event already being processed, ignoring.')
-                    return
+                    logger.warning('Failover event already being processed, ignoring.')
+                    raise IgnoreFailoverEvent()
 
             # TODO python any
             if not forcetakeover:
@@ -183,21 +196,21 @@ class FailoverService(Service):
                             SENTINEL = True
 
                 if not SENTINEL:
-                    self.logger.warn('Ignoring state change on non-critical interface %s.', ifname)
-                    return
+                    logger.warning('Ignoring state change on non-critical interface %s.', ifname)
+                    raise IgnoreFailoverEvent()
 
                 if fobj['disabled']:
                     if not fobj['master']:
-                        self.logger.warn('Failover disabled. Assuming backup.')
+                        logger.warning('Failover disabled. Assuming backup.')
                         return
                     else:
                         try:
                             status = self.middleware.call_sync('failover.call_remote', 'failover.status')
                             if status == 'MASTER':
-                                self.logger.warn('Other node is already active, assuming backup.')
+                                logger.warning('Other node is already active, assuming backup.')
                                 return
                         except Exception:
-                            self.logger.info('Failed to contact the other node', exc_info=True)
+                            logger.info('Failed to contact the other node', exc_info=True)
 
                         masterret = False
                         for vol in fobj['volumes'] + fobj['phrasedvolumes']:
@@ -209,16 +222,16 @@ class FailoverService(Service):
                                     for interface in fobj['groups'][group]:
                                         error, output = run(f"ifconfig {interface} | grep 'carp:' | awk '{{print $4}}'")
                                         for vhid in output.split():
-                                            self.logger.warn('Setting advskew to 0 on interface %s', interface)
+                                            logger.warning('Setting advskew to 0 on interface %s', interface)
                                             run(f'ifconfig {interface} vhid {vhid} advskew 0')
-                                self.logger.warn('Failover disabled.  Assuming active.')
+                                logger.warning('Failover disabled.  Assuming active.')
                                 run(f'touch {FAILOVER_OVERRIDE}')
                                 # interfaces advskew have been changed, switch event
                                 event = 'MASTER'
                                 break
                         if masterret is False:
                             # All pools are already imported
-                            self.logger.warn('All pools already imported, ignoring.')
+                            logger.warning('All pools already imported, ignoring.')
                             return
 
             open(HEARTBEAT_BARRIER, 'a+').close()
@@ -244,9 +257,9 @@ class FailoverService(Service):
     def carp_master(self, fobj, ifname, vhid, event, user_override, forcetakeover):
 
         if forcetakeover:
-            self.logger.warn('Starting force takeover.')
+            logger.warning('Starting force takeover.')
         else:
-            self.logger.warn('Entering MASTER on %s', ifname)
+            logger.warning('Entering MASTER on %s', ifname)
 
         if not user_override and not forcetakeover:
             sleeper = fobj['timeout']
@@ -279,13 +292,13 @@ class FailoverService(Service):
                             sleeper = 2
 
             if sleeper != 0:
-                self.logger.warn('Sleeping %s seconds and rechecking %s', sleeper, ifname)
+                logger.warning('Sleeping %s seconds and rechecking %s', sleeper, ifname)
                 time.sleep(sleeper)
                 error, output = run(
                     f"ifconfig {ifname} | grep 'carp:' | grep 'vhid {vhid} ' | awk '{{print $2}}'"
                 )
                 if output != 'MASTER':
-                    self.logger.warn('%s became %s. Previous event ignored.', ifname, output)
+                    logger.warning('%s became %s. Previous event ignored.', ifname, output)
                     return
 
         if os.path.exists(FAILOVER_ASSUMED_MASTER) or forcetakeover:
@@ -295,7 +308,7 @@ class FailoverService(Service):
                     continue
                 error, output = run(f"ifconfig {iface} | grep 'carp:' | awk '{{print $4}}'")
                 for vhid in list(output.split()):
-                    self.logger.warn('Setting advskew to 1 on interface %s', iface)
+                    logger.warning('Setting advskew to 1 on interface %s', iface)
                     run(f'ifconfig {iface} vhid {vhid} advskew 1')
             if not forcetakeover:
                 return
@@ -319,7 +332,7 @@ class FailoverService(Service):
                 ignoreall &= ignore
 
             if ignoreall:
-                self.logger.warn(
+                logger.warning(
                     'Ignoring UP state on %s because we still have interfaces that are'
                     ' BACKUP.', ifname
                 )
@@ -365,10 +378,10 @@ class FailoverService(Service):
                     "|grep BACKUP | wc -l".format(intiface)
                 )
 
-                self.logger.warn('Status: %s:%s:%s', status0, status1, status2)
+                logger.warning('Status: %s:%s:%s', status0, status1, status2)
 
                 if status0 != 'MASTER':
-                    self.logger.warn('Promoted then demoted, quitting.')
+                    logger.warning('Promoted then demoted, quitting.')
                     # Just in case.  Demote ourselves.
                     run(f'ifconfig {ifname} vhid {vhid} advskew 206')
                     try:
@@ -387,30 +400,35 @@ class FailoverService(Service):
                 # For reboots, /tmp is cleared by virtue of being a memory device.
                 # If someone does a kill -9 on the script while it's running the lockfile
                 # will get left dangling.
-                self.logger.warn('Acquired failover master lock')
-                self.logger.warn('Starting fenced')
+                logger.warning('Acquired failover master lock')
+                logger.warning('Starting fenced')
                 if not user_override and not fasttrack and not forcetakeover:
-                    error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced')
+                    error, output = run(
+                        f'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced -ed "{fobj["boot_disks"]}"'
+                    )
                 else:
                     error, output = run(
-                        'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced --force'
+                        f'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced --force -ed "{fobj["boot_disks"]}"'
                     )
 
                 if error:
                     if error == 1:
-                        self.logger.warn('Can not register keys on disks!')
+                        logger.warning('Can not register keys on disks!')
                         run(f'ifconfig {ifname} vhid {vhid} advskew 201')
                     elif error == 2:
-                        self.logger.warn('Remote fenced is running!')
+                        logger.warning('Remote fenced is running!')
                         run(f'ifconfig {ifname} vhid {vhid} advskew 202')
                     elif error == 3:
-                        self.logger.warn('Can not reserve all disks!')
+                        logger.warning('Can not reserve all disks!')
                         run(f'ifconfig {ifname} vhid {vhid} advskew 203')
+                    elif error == 4:
+                        logger.warning('Can not exclude all disks!')
+                        run(f'ifconfig {ifname} vhid {vhid} advskew 204')
                     elif error == 5:
-                        self.logger.warn('Fencing daemon encountered an unexpected fatal error!')
+                        logger.warning('Fencing daemon encountered an unexpected fatal error!')
                         run(f'ifconfig {ifname} vhid {vhid} advskew 205')
                     else:
-                        self.logger.warn('This should never happen: %d', error)
+                        logger.warning('This should never happen: %d', error)
                         run(f'ifconfig {ifname} vhid {vhid} advskew 204')
                     try:
                         os.unlink(ELECTING_FILE)
@@ -427,7 +445,7 @@ class FailoverService(Service):
                             continue
                         error, output = run(f"ifconfig {iface} | grep 'carp:' | awk '{{print $4}}'")
                         for vhid in list(output.split()):
-                            self.logger.warn('Setting advskew to 1 on interface %s', iface)
+                            logger.warning('Setting advskew to 1 on interface %s', iface)
                             run(f'ifconfig {iface} vhid {vhid} advskew 1')
 
                 open(IMPORTING_FILE, 'w').close()
@@ -452,31 +470,31 @@ class FailoverService(Service):
                     ):
                         run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
 
-                self.logger.warn('Beginning volume imports.')
+                logger.warning('Beginning volume imports.')
 
                 attach_all_job = self.middleware.call_sync('failover.attach_all_geli_providers')
                 attach_all_job.wait_sync()
                 if attach_all_job.error:
-                    self.logger.error('Failed to attach geli providers: %s', attach_all_job.error)
+                    logger.error('Failed to attach geli providers: %s', attach_all_job.error)
 
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
                 for volume in fobj['volumes']:
-                    self.logger.warn('Importing %s', volume)
+                    logger.warning('Importing %s', volume)
                     # TODO: try to import using cachefile and then fallback without if it fails
                     error, output = run('zpool import -o cachefile=none -m -R /mnt -f {}'.format(
                         volume,
                     ), stderr=True)
                     if error:
-                        self.logger.error('Failed to import %s: %s', volume, output)
+                        logger.error('Failed to import %s: %s', volume, output)
                         open(FAILED_FILE, 'w').close()
                     else:
                         unlock_job = self.middleware.call_sync('failover.unlock_zfs_datasets', volume)
                         unlock_job.wait_sync()
                         if unlock_job.error:
-                            self.logger.error('Failed to unlock ZFS encrypted datasets: %s', unlock_job.error)
+                            logger.error('Failed to unlock ZFS encrypted datasets: %s', unlock_job.error)
                         elif unlock_job.result['failed']:
-                            self.logger.error(
+                            logger.error(
                                 'Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed'])
                             )
                     run(f'zpool set cachefile=/data/zfs/zpool.cache {volume}')
@@ -498,8 +516,8 @@ class FailoverService(Service):
                 except Exception:
                     pass
 
-                self.logger.warn('Volume imports complete.')
-                self.logger.warn('Restarting services.')
+                logger.warning('Volume imports complete.')
+                logger.warning('Restarting services.')
                 self.run_call('failover.status_refresh')
                 FREENAS_DB = '/data/freenas-v1.db'
                 conn = sqlite3.connect(FREENAS_DB)
@@ -531,14 +549,16 @@ class FailoverService(Service):
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "iscsitarget"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
-                    self.run_call('service.start', 'iscsitarget')
+                    # Do not restart iscsitarget as it is not necessary (but breaks FC connections)
+                    if not self.middleware.call_sync('service.started', 'iscsitarget'):
+                        self.run_call('service.start', 'iscsitarget')
 
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
                     self.run_call('service.restart', 'afp', {'ha_propagate': False})
 
-                self.logger.warn('Service restarts complete.')
+                logger.warning('Service restarts complete.')
 
                 # TODO: This is 4 years old at this point.  Is it still needed?
                 # There appears to be a small lag if we allow NFS traffic right away. During
@@ -549,7 +569,7 @@ class FailoverService(Service):
 
                 run('/sbin/pfctl -d')
 
-                self.logger.warn('Allowing network traffic.')
+                logger.warning('Allowing network traffic.')
                 run_async('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
 
                 try:
@@ -562,7 +582,7 @@ class FailoverService(Service):
                 # sync disks is disabled on passive node
                 self.run_call('disk.sync_all')
 
-                self.logger.warn('Syncing enclosure')
+                logger.warning('Syncing enclosure')
                 self.run_call('enclosure.sync_zpool')
 
                 self.run_call('service.restart', 'collectd', {'ha_propagate': False})
@@ -591,13 +611,13 @@ class FailoverService(Service):
 
                 conn.close()
 
-                self.logger.warn('Failover event complete.')
+                logger.warning('Failover event complete.')
         except AlreadyLocked:
-            self.logger.warn('Failover event handler failed to aquire master lockfile')
+            logger.warning('Failover event handler failed to aquire master lockfile')
 
     @private
     def carp_backup(self, fobj, ifname, vhid, event, user_override):
-        self.logger.warn('Entering BACKUP on %s', ifname)
+        logger.warning('Entering BACKUP on %s', ifname)
 
         if not user_override:
             sleeper = fobj['timeout']
@@ -623,13 +643,13 @@ class FailoverService(Service):
                         sleeper = 2
 
             if sleeper != 0:
-                self.logger.warn('Sleeping %s seconds and rechecking %s', sleeper, ifname)
+                logger.warning('Sleeping %s seconds and rechecking %s', sleeper, ifname)
                 time.sleep(sleeper)
                 error, output = run(
                     f"ifconfig {ifname} | grep 'carp:' | awk '{{print $2}}'"
                 )
                 if output == 'MASTER':
-                    self.logger.warn(
+                    logger.warning(
                         'Ignoring state on %s because it changed back to MASTER after '
                         '%s seconds.', ifname, sleeper,
                     )
@@ -654,7 +674,7 @@ class FailoverService(Service):
             ignoreall &= ignore
 
         if ignoreall:
-            self.logger.warn(
+            logger.warning(
                 'Ignoring DOWN state on %s because we still have interfaces that '
                 'are UP.', ifname)
             return False
@@ -666,20 +686,20 @@ class FailoverService(Service):
                 # For reboots, /tmp is cleared by virtue of being a memory device.
                 # If someone does a kill -9 on the script while it's running the lockfile
                 # will get left dangling.
-                self.logger.warn('Acquired failover backup lock')
+                logger.warning('Acquired failover backup lock')
                 run('pkill -9 -f fenced')
 
                 for iface in fobj['non_crit_interfaces']:
                     error, output = run(f"ifconfig {iface} | grep 'carp:' | awk '{{print $4}}'")
                     for vhid in output.split():
-                        self.logger.warn('Setting advskew to 100 on non-critical interface %s', iface)
+                        logger.warning('Setting advskew to 100 on non-critical interface %s', iface)
                         run(f'ifconfig {iface} vhid {vhid} advskew 100')
 
                 for group in fobj['groups']:
                     for interface in fobj['groups'][group]:
                         error, output = run(f"ifconfig {interface} | grep 'carp:' | awk '{{print $4}}'")
                         for vhid in output.split():
-                            self.logger.warn('Setting advskew to 100 on critical interface %s', interface)
+                            logger.warning('Setting advskew to 100 on critical interface %s', interface)
                             run(f'ifconfig {interface} vhid {vhid} advskew 100')
 
                 run('/sbin/pfctl -ef /etc/pf.conf.block')
@@ -704,7 +724,7 @@ class FailoverService(Service):
                     os.fsync(fd)
                     os.close(fd)
                 except EnvironmentError as err:
-                    self.logger.warn(err)
+                    logger.warning(err)
 
                 run('watchdog -t 4')
 
@@ -726,14 +746,14 @@ class FailoverService(Service):
                     error, output = run(f'zpool list {volume}')
                     if not error:
                         volumes = True
-                        self.logger.warn('Exporting %s', volume)
+                        logger.warning('Exporting %s', volume)
                         error, output = run(f'zpool export -f {volume}')
                         if error:
                             # the zpool status here is extranious.  The sleep
                             # is going to run off the watchdog and the system will reboot.
                             run(f'zpool status {volume}')
                             time.sleep(5)
-                        self.logger.warn('Exported %s', volume)
+                        logger.warning('Exported %s', volume)
 
                 run('watchdog -t 0')
                 try:
@@ -775,29 +795,17 @@ class FailoverService(Service):
                     if ret and ret[0]['srv_enable']:
                         self.run_call(f'service.{verb}', i, {'ha_propagate': False})
 
-                detach_all_job = self.middleware.call_sync('failover.encryption_detachall')
-                detach_all_job.wait_sync()
-                if detach_all_job.error:
-                    self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
+                if len(fobj['phrasedvolumes']):
+                    detach_all_job = self.middleware.call_sync('failover.encryption_detachall')
+                    detach_all_job.wait_sync()
+                    if detach_all_job.error:
+                        logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
-                master_system_version = self.middleware.call_sync(
-                    'failover.call_remote', 'system.info'
-                )['version'].split('-')
-                if len(master_system_version) > 1 and master_system_version[1].startswith('11'):
-                    passphrase = self.middleware.call_sync('failover.call_remote', 'failover.encryption_getkey')
-                    self.middleware.call_sync(
-                        'failover.update_encryption_keys', {
-                            'pools': [
-                                {'name': p['name'], 'passphrase': passphrase or ''}
-                                for p in self.middleware.call_sync('pool.query', [('encrypt', '=', 2)])
-                            ],
-                            'sync_keys': False,
-                        }
-                    )
-                else:
-                    self.middleware.call_sync('failover.call_remote', 'failover.sync_keys_to_remote_node')
+                # Sync GELI and/or ZFS encryption keys from MASTER node
+                self.middleware.call_sync('failover.sync_keys_from_remote_node')
+
         except AlreadyLocked:
-            self.logger.warn('Failover event handler failed to acquire backup lockfile')
+            logger.warning('Failover event handler failed to acquire backup lockfile')
 
 
 async def devd_carp_hook(middleware, data):

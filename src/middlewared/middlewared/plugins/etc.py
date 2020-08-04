@@ -110,6 +110,9 @@ class EtcService(Service):
         'grub': [
             {'type': 'py', 'path': 'grub', 'platform': 'Linux', 'checkpoint': 'post_init'},
         ],
+        'keyboard': [
+            {'type': 'mako', 'path': 'default/keyboard', 'platform': 'Linux'},
+        ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
@@ -170,7 +173,7 @@ class EtcService(Service):
             {
                 'type': 'mako',
                 'local_path': 'local/apache24/httpd.conf',
-                'path': f'{APACHE_DIR}/httpd.conf',
+                'path': f'{APACHE_DIR}/{"httpd" if osc.IS_FREEBSD else "apache2"}.conf',
             },
             {
                 'type': 'mako',
