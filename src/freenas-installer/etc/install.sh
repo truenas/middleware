@@ -858,7 +858,7 @@ menu_install()
     fi
 
     # Make sure we are working from a clean slate.
-    cleanup 2>&1 >/dev/null
+    cleanup >/dev/null 2>&1
 
     if ${INTERACTIVE}; then
 	pre_install_check || return 0
