@@ -294,7 +294,6 @@ class UserService(CRUDService):
                         'path': dest_file,
                         'uid': data['uid'],
                         'gid': group['gid'],
-                        'options': {'recursive': True}
                     })
 
             data['sshpubkey'] = sshpubkey
