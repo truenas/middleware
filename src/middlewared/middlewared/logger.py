@@ -184,6 +184,11 @@ class ErrorProneRotatingFileHandler(logging.handlers.RotatingFileHandler):
             # involves logging
             pass
 
+    def doRollover(self):
+        super().doRollover()
+        # We must reconfigure stderr/stdout streams after rollover
+        reconfigure_logging()
+
 
 class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
@@ -318,7 +323,13 @@ def reconfigure_logging(handler_name='file'):
     if handler:
         stream = handler.stream
         handler.stream = handler._open()
-        if sys.stdout is stream:
+        # We want to reassign stdout/stderr if its not the default one or closed
+        # which will happen on log file rotation.
+        try:
+            if sys.stdout.fileno() != 1 or sys.stderr.fileno() != 2:
+                raise ValueError()
+        except ValueError:
+            # ValueError can be raise if file handler is closed
             sys.stdout = handler.stream
             sys.stderr = handler.stream
         try:
