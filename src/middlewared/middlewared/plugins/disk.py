@@ -15,6 +15,7 @@ from xml.etree import ElementTree
 
 from bsd import geom, getswapinfo
 import cam
+from nvme import get_nsid
 from lxml import etree
 
 from middlewared.common.camcontrol import camcontrol_list
@@ -1170,7 +1171,7 @@ class DiskService(CRUDService):
         if _advconfig is None:
             _advconfig = await self.middleware.call('system.advanced.config')
 
-        devname = f'/dev/{disk_name}'
+        devname = await self.middleware.call('disk.sed_dev_name', disk_name)
         # We need two states to tell apart when disk was successfully unlocked
         locked = None
         unlocked = None
@@ -1224,7 +1225,7 @@ class DiskService(CRUDService):
         if unlocked:
             try:
                 # Disk needs to be retasted after unlock
-                with open(devname, 'wb'):
+                with open(f'/dev/{disk_name}', 'wb'):
                     pass
             except OSError:
                 pass
@@ -1242,7 +1243,7 @@ class DiskService(CRUDService):
         SETUP_FAILED - Initial setup call failed
         SUCCESS - Setup successfully completed
         """
-        devname = f'/dev/{disk_name}'
+        devname = await self.middleware.call('disk.sed_dev_name', disk_name)
 
         cp = await run('sedutil-cli', '--isValidSED', devname, check=False)
         if b' SED ' not in cp.stdout:
@@ -1270,6 +1271,14 @@ class DiskService(CRUDService):
             return 'SETUP_FAILED'
 
         return 'SUCCESS'
+
+    @private
+    def sed_dev_name(self, disk_name):
+        if disk_name.startswith("nvd"):
+            nvme = get_nsid(f"/dev/{disk_name}")
+            return f"/dev/{nvme}"
+
+        return f"/dev/{disk_name}"
 
     async def __multipath_create(self, name, consumers, mode=None):
         """
