@@ -12,6 +12,7 @@ class CollectdWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "Collectd Warning"
 
+    @classmethod
     def format(cls, args):
         return args
 
@@ -21,6 +22,7 @@ class CollectdCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Collectd Critical Alert"
 
+    @classmethod
     def format(cls, args):
         return args
 
