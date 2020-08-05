@@ -144,7 +144,7 @@ class UPSService(SystemServiceService):
             if not data.get(field):
                 verrors.add(f'{schema}.{field}', 'This field is required.')
             elif re.search(r'[ #]', data[field], re.I):
-                verrors.add(f'{schema}.{field}', 'Spaces or number signs are not allowed')
+                verrors.add(f'{schema}.{field}', 'Spaces or number signs are not allowed.')
 
         mode = data.get('mode')
         if mode == 'MASTER':
