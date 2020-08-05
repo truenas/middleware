@@ -906,6 +906,7 @@ class CloudSyncService(CRUDService):
         """
         Deletes cloud_sync entry `id`.
         """
+        await self.middleware.call("cloudsync.abort", id)
         await self.middleware.call("datastore.delete", "tasks.cloudsync", id)
         await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", id)
         await self.middleware.call("service.restart", "cron")
