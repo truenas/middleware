@@ -13,7 +13,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT, SSH_TEST
-from auto_config import scale, ha, password, user, ip
+from auto_config import pool_name, scale, ha, password, user, ip
 if scale is True:
     shell = '/bin/bash'
 else:
@@ -31,6 +31,7 @@ home_files = {
     "~/.ssh": "0o40700",
     "~/.ssh/authorized_keys": "0o100600",
 }
+
 
 @pytest.mark.dependency(name="user_01")
 def test_01_get_next_uid():
@@ -282,7 +283,7 @@ def test_30_homedir_acl_stripped(request):
     time.sleep(1)
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/testuser2')
     assert results.status_code == 200, results.text
-    assert results.json()['acl'] == False, results.text
+    assert results.json()['acl'] is False, results.text
 
 
 @pytest.mark.parametrize('to_test', home_files.keys())
