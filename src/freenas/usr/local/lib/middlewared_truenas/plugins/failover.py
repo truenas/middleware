@@ -482,9 +482,18 @@ class FailoverService(ConfigService):
             reasons.append('NO_VIP')
         try:
             assert self.middleware.call_sync('failover.remote_connected') is True
-            # This only matters if it has responded to 'ping', otherwise
-            # there is no reason to even try
-            if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
+
+            # if the remote node panic's (this happens on failover event if we cant export the
+            # zpool in 4 seconds on freeBSD systems (linux reboots silently by design)
+            # then the p2p interface stays "UP" and the websocket remains open.
+            # At this point, we have to wait for the TCP timeout (60 seconds default).
+            # This means the assert line up above will return `True`.
+            # However, any `call_remote` method will hang because the websocket is still
+            # open but hasn't closed due to the default TCP timeout window. This can be painful
+            # on failover events because it delays the process of restarting services in a timely
+            # manner. To work around this, we place a `timeout` of 5 seconds on the system.ready
+            # call. This essentially bypasses the TCP timeout window.
+            if not self.middleware.call_sync('failover.call_remote', 'system.ready', [], {'timeout': 5}):
                 reasons.append('NO_SYSTEM_READY')
 
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
