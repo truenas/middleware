@@ -1605,7 +1605,8 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         #    2. the node in the chassis is marked as the master_node in the webUI
         #      (because failover has been disabled in the webUI)
         cur_status = await middleware.call('failover.status')
-        if cur_status == 'MASTER' or (await middleware.call('failover.config'))['master']:
+        config = await middleware.call('failover.config')
+        if cur_status == 'MASTER' or (config['master'] and config['disabled']):
 
             # In the event HA is configured and the end-user deletes
             # an interface, we need to sync the database over to the
