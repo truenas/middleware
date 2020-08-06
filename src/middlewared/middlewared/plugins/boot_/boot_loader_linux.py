@@ -11,12 +11,17 @@ from .boot_loader_base import BootLoaderBase
 class BootService(Service, BootLoaderBase):
 
     async def install_loader(self, dev):
+        if "nvme" in dev:
+            partition = f'{dev}p2'
+        else:
+            partition = f'{dev}2'
+
         await run('grub-install', '--target=i386-pc', f'/dev/{dev}')
-        await run('mkdosfs', '-F', '32', '-s', '1', '-n', 'EFI', f'/dev/{dev}2')
+        await run('mkdosfs', '-F', '32', '-s', '1', '-n', 'EFI', f'/dev/{partition}')
         with tempfile.TemporaryDirectory() as tmpdirname:
             efi_dir = os.path.join(tmpdirname, 'efi')
             os.makedirs(efi_dir)
-            await run('mount', '-t', 'vfat', f'/dev/{dev}2', efi_dir)
+            await run('mount', '-t', 'vfat', f'/dev/{partition}', efi_dir)
             await run(
                 'grub-install', '--target=x86_64-efi', f'--efi-directory={efi_dir}',
                 '--bootloader-id=debian', '--recheck', '--no-floppy',
