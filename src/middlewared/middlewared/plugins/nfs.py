@@ -26,7 +26,7 @@ class NFSService(SystemServiceService):
     @private
     async def nfs_extend(self, nfs):
         nfs["v4_krb_enabled"] = (
-            nfs["v4_krb"] or await self.middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+            nfs["v4_krb"] or bool(await self.middleware.call("datastore.query", "directoryservice.kerberoskeytab"))
         )
         nfs["userd_manage_gids"] = nfs.pop("16")
         return nfs
@@ -105,7 +105,7 @@ class NFSService(SystemServiceService):
         verrors = ValidationErrors()
 
         new_v4_krb_enabled = (
-            new["v4_krb"] or await self.middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+            new["v4_krb"] or bool(await self.middleware.call("datastore.query", "directoryservice.kerberoskeytab"))
         )
 
         if new["v4"] and new_v4_krb_enabled and not await self.middleware.call("system.is_freenas"):
