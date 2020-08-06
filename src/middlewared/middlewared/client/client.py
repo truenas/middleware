@@ -136,21 +136,23 @@ class WSClient(WebSocketClient):
 
         if self.sock:
 
-            # enable keepalives on the socket
-            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+            # TCP keepalive settings don't apply to local unix sockets
+            if 'ws+unix' not in self.url:
+                # enable keepalives on the socket
+                self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 
-            # If the other node panics then the socket will
-            # remain open and we'll have to wait until the
-            # TCP timeout value expires (60 seconds default).
-            # To account for this:
-            #   1. if the socket is idle for 1 seconds
-            #   2. send a keepalive packet every 1 second
-            #   3. for a maximum up to 5 times
-            #
-            # after 5 times (5 seconds of no response), the socket will be closed
-            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 1)
-            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
-            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
+                # If the other node panics then the socket will
+                # remain open and we'll have to wait until the
+                # TCP timeout value expires (60 seconds default).
+                # To account for this:
+                #   1. if the socket is idle for 1 seconds
+                #   2. send a keepalive packet every 1 second
+                #   3. for a maximum up to 5 times
+                #
+                # after 5 times (5 seconds of no response), the socket will be closed
+                self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 1)
+                self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
+                self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
 
             # if we're able to connect put socket in blocking mode
             # until all operations complete or error is raised
