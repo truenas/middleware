@@ -1510,11 +1510,12 @@ class SystemHealthEventSource(EventSource):
         while not self._cancel.is_set():
             try:
                 self._check_update = self.middleware.call_sync('update.check_available')['status']
-                self._cancel.wait(timeout=60 * 60 * 24)
             except Exception:
                 self.middleware.logger.warn(
                     'Failed to check avaiable update for system.health event', exc_info=True,
                 )
+            finally:
+                self._cancel.wait(timeout=60 * 60 * 24)
 
     def pools_statuses(self):
         return {
