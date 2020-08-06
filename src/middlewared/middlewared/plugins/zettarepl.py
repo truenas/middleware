@@ -260,6 +260,24 @@ class ZettareplService(Service):
     def is_running(self):
         return self.process is not None and self.process.is_alive()
 
+    def notify_definition(self, definition, hold_tasks):
+        self.hold_tasks = hold_tasks
+
+        task_ids = (
+            {f"periodic_snapshot_{k}" for k in definition["periodic-snapshot-tasks"]} |
+            {f"replication_{k}" for k in definition["replication-tasks"]} |
+            set(hold_tasks.keys())
+        )
+        for task_id in list(self.state.keys()):
+            if task_id not in task_ids:
+                self.state.pop(task_id, None)
+        for task_id in list(self.last_snapshot.keys()):
+            if task_id not in task_ids:
+                self.last_snapshot.pop(task_id, None)
+        for task_id in list(self.serializable_state.keys()):
+            if f"replication_task_{task_id}" not in task_ids:
+                self.serializable_state.pop(task_id, None)
+
     def get_state(self):
         if self.error:
             return {"error": self.error}
@@ -317,7 +335,7 @@ class ZettareplService(Service):
                 if self.observer_queue_reader is None:
                     self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
 
-                self.hold_tasks = hold_tasks
+                self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
     def stop(self):
         with self.lock:
@@ -351,7 +369,7 @@ class ZettareplService(Service):
             self.middleware.call_sync("zettarepl.start")
             self.queue.put(("tasks", definition))
 
-        self.hold_tasks = hold_tasks
+        self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
     async def run_periodic_snapshot_task(self, id):
         try:
