@@ -194,6 +194,7 @@ class UserService(Service):
                     "microsoft_account": False,
                     "group": group["id"],
                     "attributes": {},
+                    "smb": False,
                 }
                 existing_user["id"] = self.middleware.call_sync(
                     "datastore.insert",
