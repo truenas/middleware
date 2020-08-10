@@ -17,6 +17,7 @@ import errno
 import hashlib
 import re
 import os
+import secrets
 import subprocess
 import sysctl
 import uuid
@@ -834,8 +835,8 @@ class iSCSITargetExtentService(CRUDService):
                     lid = 0
                 return f'{mac[:15-max(3, len(str(lid)))]}{lid:03}'[:15]
             except Exception:
-                self.logger.error('Failed to generate serial, using a default', exc_info=True)
-                return '10000001'
+                self.logger.error('Failed to generate serial, generating a random default', exc_info=True)
+                return secrets.token_hex()[:15]
         else:
             return serial
 
