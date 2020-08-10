@@ -767,8 +767,8 @@ class InterfaceService(CRUDService):
             ),
         ], default=[]),
         Bool('failover_critical', default=False),
-        Int('failover_group'),
-        Int('failover_vhid', validators=[Range(min=1, max=255)]),
+        Int('failover_group', null=True),
+        Int('failover_vhid', null=True, validators=[Range(min=1, max=255)]),
         List('failover_aliases', items=[Ref('interface_alias')]),
         List('failover_virtual_aliases', items=[Ref('interface_alias')]),
         List('bridge_members'),
@@ -920,6 +920,16 @@ class InterfaceService(CRUDService):
         else:
             filters = []
 
+        validation_attrs = {
+            'alias': ['Active node IP address', ' cannot be changed.', ' is required when configuring HA'],
+            'failover_aliases': ['Standby node IP address', ' cannot be changed.', ' is required when configuring HA'],
+            'failover_virtual_aliases': ['Virtual IP address', ' cannot be changed.', ' is required when configuring HA'],
+            'failover_group': ['Failover group number', ' cannot be changed.' ' is required when configuring HA'],
+            'mtu': ['MTU', ' cannot be changed.'],
+            'ipv4_dhcp': ['DHCP', ' cannot be changed.'],
+            'ipv6_auto': ['Autconfig for IPv6', ' cannot be changed.'],
+        }
+
         ifaces = {
             i['name']: i
             for i in await self.middleware.call('interface.query', filters)
@@ -963,13 +973,14 @@ class InterfaceService(CRUDService):
 
         if itype == 'PHYSICAL':
             if data['name'] in lag_used:
-                for i in ('aliases', 'mtu', 'ipv4_dhcp', 'ipv6_auto'):
-                    if data.get(i):
+                lag_name = lag_used.get(data['name'])
+                for k, v in validation_attrs.items():
+                    if data.get(k):
                         verrors.add(
-                            f'{schema_name}.{i}',
-                            f'Interface in use by {data["name"]}. Attribute {i} cannot be changed'
-                            ' on members interfaces.',
+                            f'{schema_name}.{k}',
+                            f'Interface in use by {lag_name}. {str(v[0]) + str(v[1])}'
                         )
+
         elif itype == 'BRIDGE':
             if 'name' in data:
                 try:
@@ -1075,35 +1086,45 @@ class InterfaceService(CRUDService):
                     'Failover needs to be disabled to perform network configuration changes.'
                 )
 
-                if len(data.get('aliases', [])) != len(data.get('failover_aliases', [])):
+                # have to make sure that active, standby and virtual ip addresses are equal
+                active_node_ips = len(data.get('aliases', []))
+                standby_node_ips = len(data.get('failover_aliases', []))
+                virtual_node_ips = len(data.get('failover_virtual_aliases', []))
+                are_equal = active_node_ips == standby_node_ips == virtual_node_ips
+                if not are_equal:
                     verrors.add(
                         f'{schema_name}.failover_aliases',
-                        'Quanity of IPs must match between the controllers.'
+                        'You must specify an active, standby and virtual IP address.'
                     )
 
                 if not update:
-                    failover_attrs = set(['failover_group', 'failover_aliases', 'failover_vhid'])
+                    failover_attrs = set(
+                        [k for k, v in validation_attrs.items() if k not in ('mtu', 'ipv4_dhcp', 'ipv6_auto')]
+                    )
                     configured_attrs = set([i for i in failover_attrs if data.get(i)])
 
                     if configured_attrs:
                         for i in failover_attrs - configured_attrs:
-                            if i == 'failover_group':
-                                verrors.add(
-                                    f'{schema_name}.{i}',
-                                    'A failover group number is required when configuring HA.',
-                                )
-                            if i == 'failover_aliases':
-                                verrors.add(
-                                    f'{schema_name}.{i}',
-                                    'A virtual IP address is required when configuring HA.'
-                                )
-                            if i == 'failover_vhid':
-                                verrors.add(
-                                    f'{schema_name}.{i}',
-                                    'A virtual host ID is required when configuring HA.'
-                                )
+                            verrors.add(
+                                f'{schema_name}.{i}',
+                                f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
+                            )
 
-                elif update.get('failover_vhid') != data['failover_vhid']:
+                # can't remove VHID and not GROUP
+                if not data['failover_vhid'] and data['failover_group']:
+                    verrors.add(
+                        f'{schema_name}.failover_vhid',
+                        'Removing only the VHID is not allowed.'
+                    )
+
+                # can't remove GROUP and not VHID
+                if not data['failover_group'] and data['failover_vhid']:
+                    verrors.add(
+                        f'{schema_name}.failover_group',
+                        'Removing only the failover group is not allowed.'
+                    )
+
+                if update.get('failover_vhid') != data['failover_vhid']:
                     used_vhids = set()
                     for v in (await self.middleware.call(
                         'interface.scan_vrrp', data['name'], None, 5,
