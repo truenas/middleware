@@ -9,6 +9,7 @@ import pwd
 import socket
 import subprocess
 import threading
+import time
 
 from dns import resolver
 from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
@@ -1139,6 +1140,7 @@ class ActiveDirectoryService(ConfigService):
         ad['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
         ad['bindname'] = data.get("username", "")
         ad['bindpw'] = data.get("password", "")
+        ad['kerberos_principal'] = ''
 
         await self.middleware.call('kerberos.do_kinit', ad)
 
@@ -1155,12 +1157,26 @@ class ActiveDirectoryService(ConfigService):
                 await self.middleware.call('kerberos.keytab.delete', krb_princ[0]['id'])
 
         await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
-        await self.middleware.call('activedirectory.stop')
+
+        if netads.returncode == 0:
+            try:
+                pdir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
+                ts = time.time()
+                os.rename(f"{pdir}/secrets.tdb", f"{pdir}/secrets.tdb.bak.{int(ts)}")
+                await self.middleware.call("directoryservices.backup_secrets")
+            except Exception:
+                self.logger.debug("Failed to remove stale secrets file.", exc_info=True)
+
+        await self.middleware.call('activedirectory.update', {'enable': False, 'site': None})
         if smb_ha_mode == 'LEGACY' and (await self.middleware.call('failover.status')) == 'MASTER':
             try:
                 await self.middleware.call('failover.call_remote', 'activedirectory.leave', [data])
             except Exception:
                 self.logger.warning("Failed to leave AD domain on passive storage controller.", exc_info=True)
+
+        flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
+        if flush.returncode != 0:
+            self.logger.warning("Failed to flush samba's general cache after leaving Active Directory.")
 
         self.logger.debug("Successfully left domain: %s", ad['domainname'])
 
