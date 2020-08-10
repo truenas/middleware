@@ -150,6 +150,9 @@ def test_07_restore_cloud_sync(request, env, task):
     })
     assert result.status_code == 200, result.text
 
+    result = DELETE(f"/cloudsync/id/{result.json()['id']}/")
+    assert result.status_code == 200, result.text
+
 
 def test_97_delete_cloud_sync(request, env, task):
     depends(request, ["pool_04"], scope="session")
