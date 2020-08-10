@@ -380,3 +380,20 @@ def test_42_destroying_home_dataset(request):
     depends(request, ["HOME_DS_CREATED"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
+
+
+def test_43_check_no_builtin_smb_users():
+    """
+    We have builtin SMB groups, but should have no builtin
+    users. Failure here may indicate an issue with builtin user
+    synchronization code in middleware. Failure to catch this
+    may lead to accidentally granting SMB access to builtin
+    accounts.
+    """
+    result = GET(
+        '/user', payload={
+            'query-filters': [['builtin', '=', True], ['smb', '=', True]],
+            'query-options': {'count': True},
+        }
+    )
+    assert  result.json() == 0, result.text
