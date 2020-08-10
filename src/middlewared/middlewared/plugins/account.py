@@ -1027,13 +1027,16 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
+        add_groupmap = False
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
         verrors.check()
+        old_smb = group['smb']
 
         group.update(data)
         group.pop('users', None)
+        new_smb = group['smb']
 
         if 'name' in data and data['name'] != group['group']:
             if g := (await self.middleware.call('smb.groupmap_list')).get(group['group']):
@@ -1043,8 +1046,14 @@ class GroupService(CRUDService):
                 )
 
             group['group'] = group.pop('name')
+            if new_smb:
+                add_groupmap = True
         else:
             group.pop('name', None)
+            if new_smb and not old_smb:
+                add_groupmap = True
+            elif old_smb and not new_smb:
+                await self.middleware.call('smb.groupmap_delete', {"ntgroup": group['group']})
 
         group = await self.group_compress(group)
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
@@ -1061,7 +1070,11 @@ class GroupService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        if group['smb']:
+        """
+        "net groupmap" checks for existence of group prior to creating new groupmaps. This section
+        must occur after user reload.
+        """
+        if add_groupmap:
             await self.middleware.call('smb.groupmap_add', group['group'])
 
         return pk
@@ -1107,7 +1120,10 @@ class GroupService(CRUDService):
             # bigger than 1, it means we have a gap and can use it.
             if i['gid'] - last_gid > 1:
                 return last_gid + 1
-            last_gid = i['gid']
+
+            if i['gid'] > last_gid:
+                last_gid = i['gid']
+
         return last_gid + 1
 
     @accepts(Dict(
