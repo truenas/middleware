@@ -132,6 +132,11 @@ class UsageService(Service):
             },
         }
 
+    async def gather_ha_stats(self, context):
+        return {
+            'ha_licensed': await self.middleware.call('failover.licensed'),
+        }
+
     async def gather_cloud_services(self, context):
         return {
             'cloud_services': list({
