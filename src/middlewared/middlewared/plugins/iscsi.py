@@ -827,7 +827,7 @@ class iSCSITargetExtentService(CRUDService):
                        )[0]
                 mac = nic['state']['link_address'].replace(':', '').strip()
 
-                ltg = await self.query([], {'order_by': ['id']})
+                ltg = await self.middleware.call('datastore.query', self._config.datastore, [], {'order_by': ['id']})
                 if len(ltg) > 0:
                     lid = ltg[-1]['id']
                 else:
