@@ -383,9 +383,14 @@ class UserService(CRUDService):
 
         # Do not allow attributes to be changed for builtin user
         if user['builtin']:
-            for i in ('group', 'home', 'home_mode', 'uid', 'username'):
+            for i in ('group', 'home', 'home_mode', 'uid', 'username', 'smb'):
                 if i in data:
                     verrors.add(f'user_update.{i}', 'This attribute cannot be changed')
+
+        if not user['smb'] and data.get('smb') and not data.get('password'):
+            # Changing from non-smb user to smb user requires re-entering password.
+            verrors.add('user_update.smb',
+                        'Password must be changed in order to enable SMB authentication')
 
         verrors.check()
 
@@ -402,6 +407,17 @@ class UserService(CRUDService):
                                           old_val, exc_info=True)
 
                 must_change_pdb_entry = True
+
+        if user['smb'] is True and data.get('smb') is False:
+            try:
+                must_change_pdb_entry = False
+                await self.middleware.call("smb.remove_passdb_user", user['username'])
+            except Exception:
+                self.logger.debug("Failed to remove passdb entry for user [%s]",
+                                  user['username'], exc_info=True)
+
+        if user['smb'] is False and data.get('smb') is True:
+            must_change_pdb_entry = True
 
         # Copy the home directory if it changed
         if (
