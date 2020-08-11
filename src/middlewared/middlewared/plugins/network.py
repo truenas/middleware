@@ -765,7 +765,7 @@ class InterfaceService(CRUDService):
         ], default=[]),
         Bool('failover_critical', default=False),
         Int('failover_group'),
-        Int('failover_vhid'),
+        Int('failover_vhid', validators=[Range(min=1, max=255)]),
         List('failover_aliases', items=[Ref('interface_alias')]),
         List('failover_virtual_aliases', items=[Ref('interface_alias')]),
         List('bridge_members'),
