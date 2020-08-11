@@ -281,7 +281,7 @@ class ZettareplService(Service):
                 if self.observer_queue_reader is None:
                     self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
 
-                self.middleware.call_sync("zettarepl.set_hold_tasks", hold_tasks)
+                self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
     def stop(self):
         with self.lock:
@@ -319,7 +319,7 @@ class ZettareplService(Service):
             self.middleware.call_sync("zettarepl.start")
             self.queue.put(("tasks", definition))
 
-        self.middleware.call_sync("zettarepl.set_hold_tasks", hold_tasks)
+        self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
     async def run_periodic_snapshot_task(self, id):
         try:
