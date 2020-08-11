@@ -145,7 +145,7 @@ def test_07_restore_cloud_sync(env, task):
     restore_id = result.json()['id']
 
 
-def test_08_delete_restore_cloudsync():
+def test_08_delete_restore_cloudsync(env):
     result = DELETE(f"/cloudsync/id/{restore_id}/")
     assert result.status_code == 200, result.text
 

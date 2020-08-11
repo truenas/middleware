@@ -13,7 +13,7 @@ import sysctl
 import time
 
 from fenced.disks import Disk, Disks
-from fenced.exceptions import PanicExit
+from fenced.exceptions import PanicExit, ExcludeDisksError
 
 logger = logging.getLogger(__name__)
 LICENSE_FILE = '/data/license'
@@ -23,14 +23,16 @@ class ExitCode(enum.IntEnum):
     REGISTER_ERROR = 1
     REMOTE_RUNNING = 2
     RESERVE_ERROR = 3
+    EXCLUDE_DISKS_ERROR = 4
     UNKNOWN = 5
     ALREADY_RUNNING = 6
 
 
 class Fence(object):
 
-    def __init__(self, interval):
+    def __init__(self, interval, exclude_disks):
         self._interval = interval
+        self._exclude_disks = exclude_disks
         self._disks = Disks(self)
         self._reload = False
         self.hostid = None
@@ -55,9 +57,23 @@ class Fence(object):
         unsupported = []
         remote_keys = set()
 
+        disks = sysctl.filter('kern.disks')[0].value.split()
+
+        # Running fenced exluding all disks is not allowed
+        if not len(set(disks) - set(self._exclude_disks)):
+            raise ExcludeDisksError('Excluding all disks is not allowed')
+
         # TODO: blacklist disks used by dumpdev
-        for i in sysctl.filter('kern.disks')[0].value.split():
+        for i in disks:
+            # Only care about da and nvd devices
             if not i.startswith(('da', 'nvd')):
+                continue
+            # You can pass an "--exclude-disks" argument to fenced
+            # to exclude disks from getting SCSI reservations.
+            # fenced is called in 12+ with the exclusion flag
+            # because the newer generation M-series are going to
+            # have NVMe boot drives
+            if i in self._exclude_disks:
                 continue
             try:
                 disk = Disk(self, i)
