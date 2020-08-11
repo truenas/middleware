@@ -1,5 +1,5 @@
 TrueNAS CORE/Enterprise/SCALE main source repo
-=============
+==============
 
 Want to contribute or collaborate? Join our [Slack instance](https://www.ixsystems.com/community/threads/collaborator-community-slack-instance.85717/ "Slack Instance"). 
 
