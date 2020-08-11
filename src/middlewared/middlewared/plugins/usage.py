@@ -137,6 +137,18 @@ class UsageService(Service):
             'ha_licensed': await self.middleware.call('failover.licensed'),
         }
 
+    async def gather_directory_service_stats(self, context):
+        config = await self.middleware.call('ldap.config')
+        return {
+            'directory_services': {
+                'state': await self.middleware.call('directoryservices.get_state'),
+                'ldap': {
+                    'kerberos_realm_populated': bool(config['kerberos_realm']),
+                    'has_samba_schema': config['has_samba_schema'],
+                },
+            },
+        }
+
     async def gather_cloud_services(self, context):
         return {
             'cloud_services': list({
