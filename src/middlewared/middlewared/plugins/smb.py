@@ -1132,6 +1132,10 @@ class SharingSMBService(SharingService):
             return
 
         active_shares = await self.query([('locked', '=', False), ('enabled', '=', True)])
+        for share in active_shares:
+            if share['home']:
+                share['name'] = 'homes'
+
         registry_shares = await self.middleware.call('sharing.smb.reg_listshares')
         cf_active = set([x['name'].casefold() for x in active_shares])
         cf_reg = set([x.casefold() for x in registry_shares])
