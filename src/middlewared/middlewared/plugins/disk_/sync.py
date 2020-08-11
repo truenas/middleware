@@ -91,7 +91,7 @@ class DiskService(Service, ServiceChangeMixin):
                 ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
             } for ok, ov in sys_disks.items()
         }
-        self.logger.info(f'Found disks: {log_info}')
+        self.logger.info('Found disks: %r', log_info)
 
         seen_disks = {}
         serials = []
