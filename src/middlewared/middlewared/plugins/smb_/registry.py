@@ -328,9 +328,6 @@ class SharingSMBService(Service):
                     'mangled names': 'no'
                 })
 
-        if data['timemachine']:
-            conf["fruit:time machine"] = "yes"
-
         if data['purpose'] == 'ENHANCED_TIMEMACHINE':
             data['vfsobjects'].append('tmprotect')
         elif data['purpose'] == 'WORM_DROPBOX':
@@ -353,6 +350,10 @@ class SharingSMBService(Service):
                 "streams_xattr:prefix": "user.",
                 "streams_xattr:store_stream_type": "no"
             })
+
+        if data['timemachine']:
+            conf["fruit:time machine"] = "yes"
+            conf["fruit:locking"] = "none"
 
         nfs_path_list = []
 
