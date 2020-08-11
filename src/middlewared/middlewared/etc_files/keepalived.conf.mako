@@ -22,7 +22,7 @@
 %>\
 % if node != 'MANUAL':
 global_defs {
-    vrrp_notify_fifo /tmp/vrrpd.fifo
+    vrrp_notify_fifo /var/run/vrrpd.fifo
 }
     % for i in info:
 vrrp_instance ${i['int_interface']} {
