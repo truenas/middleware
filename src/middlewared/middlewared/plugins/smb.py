@@ -927,6 +927,10 @@ class SharingSMBService(SharingService):
     async def close_share(self, share_name):
         c = await run([SMBCmd.SMBCONTROL.value, 'smbd', 'close-share', share_name], check=False)
         if c.returncode != 0:
+            if "Can't find pid" in c.stderr.decode():
+                # smbd is not running. Don't log error message.
+                return
+
             self.logger.warn('Failed to close smb share [%s]: [%s]',
                              share_name, c.stderr.decode().strip())
 
