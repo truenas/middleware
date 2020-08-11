@@ -128,6 +128,7 @@ class FailoverService(Service):
         pools = self.middleware.call_sync('pool.query')
         interfaces = self.middleware.call_sync('interface.query')
         internal_ints = self.middleware.call_sync('failover.internal_interfaces')
+        boot_disks = ",".join(self.middleware.call_sync('boot.get_disks'))
 
         data = {
             'disabled': failovercfg['disabled'],
@@ -146,6 +147,7 @@ class FailoverService(Service):
                 ])
             ],
             'internal_interfaces': internal_ints,
+            'boot_disks': boot_disks,
         }
 
         for i in filter_list(interfaces, [('failover_critical', '=', True)]):
@@ -398,10 +400,12 @@ class FailoverService(Service):
                 self.logger.warn('Acquired failover master lock')
                 self.logger.warn('Starting fenced')
                 if not user_override and not fasttrack and not forcetakeover:
-                    error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced')
+                    error, output = run(
+                        f'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced -ed "{fobj["boot_disks"]}"'
+                    )
                 else:
                     error, output = run(
-                        'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced --force'
+                        f'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced --force -ed "{fobj["boot_disks"]}"'
                     )
 
                 if error:
@@ -414,6 +418,9 @@ class FailoverService(Service):
                     elif error == 3:
                         self.logger.warn('Can not reserve all disks!')
                         run(f'ifconfig {ifname} vhid {vhid} advskew 203')
+                    elif error == 4:
+                        self.logger.warn('Can not exclude all disks!')
+                        run(f'ifconfig {ifname} vhid {vhid} advskew 204')
                     elif error == 5:
                         self.logger.warn('Fencing daemon encountered an unexpected fatal error!')
                         run(f'ifconfig {ifname} vhid {vhid} advskew 205')
