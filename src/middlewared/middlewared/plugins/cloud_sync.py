@@ -933,7 +933,6 @@ class CloudSyncService(TaskPathService):
         await self.middleware.call("datastore.update", "tasks.cloudsync", id, cloud_sync)
         await self.middleware.call("service.restart", "cron")
 
-        cloud_sync = await self.extend(cloud_sync)
         return await self.get_instance(id)
 
     @accepts(Int("id"))
@@ -941,6 +940,7 @@ class CloudSyncService(TaskPathService):
         """
         Deletes cloud_sync entry `id`.
         """
+        await self.middleware.call("cloudsync.abort", id)
         await self.middleware.call("datastore.delete", "tasks.cloudsync", id)
         await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", id)
         await self.middleware.call("service.restart", "cron")
