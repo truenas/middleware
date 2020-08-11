@@ -68,12 +68,9 @@ class DiskService(Service, ServiceChangeMixin):
         Synchronize all disks with the cache in database.
         """
         # Skip sync disks on standby node
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP'
-        ):
-            return
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return
 
         if osc.IS_FREEBSD:
             for i in range(10):
@@ -86,7 +83,15 @@ class DiskService(Service, ServiceChangeMixin):
                 self.logger.warning('Starting disk.sync_all when devd is not connected yet')
 
         sys_disks = await self.middleware.call('device.get_disks')
-        self.logger.info('Found disks: %r', sys_disks)
+
+        # output logging information to middlewared.log in case we sync disks
+        # when not all the disks have been resolved
+        log_info = {
+            ok: {
+                ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
+            } for ok, ov in sys_disks.items()
+        }
+        self.logger.info('Found disks: %r', log_info)
 
         seen_disks = {}
         serials = []
