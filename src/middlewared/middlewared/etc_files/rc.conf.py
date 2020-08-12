@@ -153,6 +153,10 @@ def services_config(middleware, context):
 
 
 def nfs_config(middleware, context):
+    # nfs.extend() method checks contents of keytab for
+    # nfs service principal name entries. Ensure that
+    # system keytab is generated before this point.
+    middleware.call_sync('etc.generate', 'kerberos')
     nfs = middleware.call_sync('nfs.config')
 
     mountd_flags = ['-rS']
