@@ -844,7 +844,14 @@ class SharingSMBService(CRUDService):
         """
         share = await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
+        try:
+            await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
+        except Exception:
+            self.logger.debug("Failed to delete share ACL for [%s]. Stale entries may "
+                              "impact share security if share with identical name added "
+                              "at a later time.",
+                              share['name'] if not share['home'] else 'homes', exc_info=True)
+
         await self.middleware.call('etc.generate', 'smb_share')
         await self._service_change('cifs', 'reload')
         return result
