@@ -353,8 +353,166 @@ def test_013_config_is_empty(request):
     assert results.json() == 0, results.text
 
 
+"""
+Following battery of tests validate behavior of registry
+with regard to homes shares
+"""
+
+@pytest.mark.dependency(name="HOME_SHARE_CREATED")
+def test_014_create_homes_share(request):
+    depends(request, ["SMB_DATASET_CREATED"])
+    smb_share = "HOME_CREATE"
+    global home_id
+    payload = {
+        "comment": "My Test SMB Share",
+        "path": f"{smb_path}/{smb_share}",
+        "home": True,
+        "purpose": "NO_PRESET",
+        "name": smb_share,
+    }
+    results = POST("/sharing/smb/", payload)
+    assert results.status_code == 200, results.text
+    home_id = results.json()['id']
+
+
+def test_015_verify_homeshare_in_registry(request):
+    """
+    When the "home" checkbox is checked, the share
+    _must_ be added to the SMB running configuration with
+    the name "homes". This is a share name has special
+    behavior in Samba. This test verifies that the
+    share was added to the configuration with the
+    correct name.
+    """
+    depends(request, ["HOME_SHARE_CREATED"])
+    has_homes_share = False
+    cmd = 'midclt call sharing.smb.reg_listshares'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    if results['result'] is not True:
+        return
+
+    reg_shares = json.loads(results['output'].strip())
+    for share in reg_shares:
+        if share.casefold() == "homes".casefold():
+            has_homes_share = True
+
+    assert has_homes_share is True, results['output']
+
+
+def test_016_convert_to_non_homes_share(request):
+    depends(request, ["HOME_SHARE_CREATED"])
+    results = PUT(f"/sharing/smb/id/{home_id}/",
+                  {"home": False})
+    assert results.status_code == 200, results.text
+
+
+def test_017_verify_non_home_share_in_registry(request):
+    """
+    Unchecking "homes" should result in the "homes" share
+    definition being removed and replaced with a new share
+    name.
+    """
+    depends(request, ["HOME_SHARE_CREATED"])
+    has_non_homes_share = False
+    cmd = 'midclt call sharing.smb.reg_listshares'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    if results['result'] is not True:
+        return
+
+    reg_shares = json.loads(results['output'].strip())
+    for share in reg_shares:
+        if share.casefold() == "HOME_CREATE".casefold():
+            has_homes_share = True
+
+    assert has_homes_share is True, results['output']
+
+
+def test_018_convert_back_to_homes_share(request):
+    depends(request, ["HOME_SHARE_CREATED"])
+    results = PUT(f"/sharing/smb/id/{home_id}/",
+                  {"home": True})
+    assert results.status_code == 200, results.text
+
+
+def test_019_verify_homeshare_in_registry(request):
+    """
+    One final test to confirm that changing back to
+    a "homes" share reverts us to having a proper
+    share definition for this special behavior.
+    """
+    depends(request, ["HOME_SHARE_CREATED"])
+    has_homes_share = False
+    cmd = 'midclt call sharing.smb.reg_listshares'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    if results['result'] is not True:
+        return
+
+    reg_shares = json.loads(results['output'].strip())
+    for share in reg_shares:
+        if share.casefold() == "homes".casefold():
+            has_homes_share = True
+
+    assert has_homes_share is True, results['output']
+
+
+def test_020_registry_has_single_entry(request):
+    """
+    By the point we've reached this test, the share
+    definition has switched several times. This test
+    verifies that we're properly removing the old share.
+    """
+    depends(request, ["HOME_SHARE_CREATED"])
+    cmd = 'midclt call sharing.smb.reg_listshares'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    reg_shares = json.loads(results['output'].strip())
+    assert len(reg_shares) == 1, results['output']
+
+
+def test_021_registry_rebuild_homes(request):
+    """
+    Abusive test.
+    In this test we run behind middleware's back and
+    delete a our homes share from the registry, and then
+    attempt to rebuild by registry sync method. This
+    method is called (among other places) when the CIFS
+    service reloads.
+    """
+    depends(request, ["HOME_SHARE_CREATED"])
+    cmd = 'net conf delshare HOMES'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    payload = {"service": "cifs"}
+    results = POST("/service/reload/", payload)
+    assert results.status_code == 200, results.text
+
+    has_homes_share = False
+    cmd = 'midclt call sharing.smb.reg_listshares'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    if results['result'] is not True:
+        return
+
+    reg_shares = json.loads(results['output'].strip())
+    for share in reg_shares:
+        if share.casefold() == "homes".casefold():
+            has_homes_share = True
+
+    assert has_homes_share is True, results['output']
+
+
+def test_022_delete_home_share(request):
+    depends(request, ["HOME_SHARE_CREATED"])
+    results = DELETE(f"/sharing/smb/id/{home_id}")
+    assert results.status_code == 200, results.text
+
+
 # Check destroying a SMB dataset
-def test_14_destroying_smb_dataset(request):
+def test_023_destroying_smb_dataset(request):
     depends(request, ["SMB_DATASET_CREATED"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
