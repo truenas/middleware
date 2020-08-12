@@ -1,5 +1,5 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Str
+from middlewared.schema import Bool, Str
 
 
 class GoogleDriveRcloneRemote(BaseRcloneRemote):
@@ -18,6 +18,10 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
     ]
     credentials_oauth = True
     refresh_credentials = ["token"]
+
+    task_schema = [
+        Bool("alternate_export", title="Use an alternate set of export URLs for drive documents", default=False),
+    ]
 
     async def get_credentials_extra(self, credentials):
         if credentials["attributes"].get("team_drive"):
