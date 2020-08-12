@@ -34,6 +34,7 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.validators import validate_attributes
 from middlewared.utils import bisect, load_modules, load_classes
+from middlewared.utils.python import get_middlewared_dir
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY = "IMMEDIATELY"
@@ -173,7 +174,7 @@ class AlertService(Service):
     async def load(self):
         is_freenas = await self.middleware.call("system.is_freenas")
 
-        main_sources_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "alert", "source")
+        main_sources_dir = os.path.join(get_middlewared_dir(), "alert", "source")
         sources_dirs = [os.path.join(overlay_dir, "alert", "source") for overlay_dir in self.middleware.overlay_dirs]
         sources_dirs.insert(0, main_sources_dir)
         for sources_dir in sources_dirs:

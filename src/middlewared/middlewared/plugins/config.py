@@ -11,12 +11,12 @@ import tempfile
 
 from datetime import datetime
 
-import middlewared
 from middlewared.schema import Bool, Dict, accepts
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.pool import GELI_KEYPATH
 from middlewared.utils import osc
+from middlewared.utils.python import get_middlewared_dir
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
@@ -150,9 +150,7 @@ class ConfigService(Service):
             finally:
                 conn.close()
             if alembic_version is not None:
-                for root, dirs, files in os.walk(
-                        os.path.join(os.path.dirname(middlewared.__file__), "alembic", "versions")
-                ):
+                for root, dirs, files in os.walk(os.path.join(get_middlewared_dir(), "alembic", "versions")):
                     found = False
                     for name in files:
                         if name.endswith(".py"):
