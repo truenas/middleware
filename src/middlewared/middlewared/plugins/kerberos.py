@@ -1042,6 +1042,18 @@ class KerberosKeytabService(CRUDService):
         return sorted(kerberos_principals)
 
     @private
+    async def has_nfs_principal(self):
+        """
+        This method checks whether the kerberos keytab contains an nfs service principal
+        """
+        principals = await self.kerberos_principal_choices()
+        for p in principals:
+            if p.startswith("nfs/"):
+                return True
+
+        return False
+
+    @private
     async def store_samba_keytab(self):
         """
         Samba will automatically generate system keytab entries for the AD machine account
