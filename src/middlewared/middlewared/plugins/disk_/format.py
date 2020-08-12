@@ -25,7 +25,7 @@ class DiskService(Service):
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
 
         # Calculate swap size.
-        swapsize = swapgb * 1024 * 1024 * 2
+        swapsize = swapgb * 1024 * 1024 * 1024 / (disk_details["sectorsize"] or 512)
         # Round up to nearest whole integral multiple of 128
         # so next partition starts at mutiple of 128.
         swapsize = (int((swapsize + 127) / 128)) * 128
