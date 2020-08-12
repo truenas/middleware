@@ -613,7 +613,7 @@ class CredentialsService(CRUDService):
         """
         tasks = await self.middleware.call("cloudsync.query", [["credential", "=", id]])
         if tasks:
-            raise CallError(f"This credential is used by cloud sync task {tasks[0]['description']}")
+            raise CallError(f"This credential is used by cloud sync task {tasks[0]['description'] or tasks[0]['id']}")
 
         await self.middleware.call(
             "datastore.delete",
