@@ -39,7 +39,7 @@ class PoolService(Service):
                 })
                 devname = await self.middleware.call(
                     'disk.encrypt', devname, disk_encryption_options['enc_keypath'],
-                    disk_encryption_options['passphrase_path']
+                    disk_encryption_options.get('passphrase_path')
                 )
             formatted += 1
             job.set_progress(15, f'Formatting disks ({formatted}/{len(disks)})')
