@@ -3985,7 +3985,7 @@ def parse_lsof(lsof, dirs):
             pass
 
         if line.startswith("n"):
-            path = line[1:]
+            path = line[1:].split(" (")[0]
             if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
                 if pid is not None and command is not None:
                     pids[pid] = command
