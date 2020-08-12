@@ -398,6 +398,10 @@ class InterfaceService(CRUDService):
             iface_extend_kwargs = {}
             if osc.IS_LINUX:
                 iface_extend_kwargs = dict(media=True)
+
+                if licensed:
+                    vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
+                    iface_extend_kwargs.update(dict(vrrp_config=vrrp_config))
             try:
                 data[name] = self.iface_extend(iface.__getstate__(**iface_extend_kwargs), configs, licensed)
             except OSError:

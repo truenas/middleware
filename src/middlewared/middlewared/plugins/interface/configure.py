@@ -100,6 +100,8 @@ class InterfaceService(Service):
                         if cc.vhid == carp_vhid:
                             advskew = cc.advskew
                         break
+            else:
+                vrrp_vip = data.get('int_vip', None)
 
             addrs_database.add(self.alias_to_addr(vip_data))
 
@@ -166,6 +168,9 @@ class InterfaceService(Service):
 
                 # FIXME: change py-netif to accept str() key
                 iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
+        else:
+            if vrrp_vip:
+                iface.vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):

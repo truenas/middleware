@@ -8,6 +8,7 @@ from .bits import InterfaceFlags, InterfaceLinkState
 from .lagg import LaggMixin
 from .utils import bitmask_to_set, run
 from .vlan import VlanMixin
+from .vrrp import VrrpMixin
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ CLONED_PREFIXES = [
 ]
 
 
-class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
+class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
     def __init__(self, name):
         self.name = name
 
@@ -91,7 +92,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
         except IndexError:
             return None
 
-    def __getstate__(self, address_stats=False, media=False):
+    def __getstate__(self, address_stats=False, media=False, vrrp_config=None):
         state = {
             'name': self.name,
             'orig_name': self.orig_name,
@@ -110,7 +111,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
             'media_options': None,
             'link_address': self.link_address.address.address if self.link_address is not None else '',
             'aliases': [i.__getstate__(stats=address_stats) for i in self.addresses],
-            'vrrp_config': None,
+            'vrrp_config': vrrp_config,
         }
 
         if media:
