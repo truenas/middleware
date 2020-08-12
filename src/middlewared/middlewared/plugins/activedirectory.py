@@ -1012,18 +1012,12 @@ class ActiveDirectoryService(ConfigService):
                 keytab so that the NFS principal will be available for gssd.
                 """
                 job.set_progress(60, 'Adding NFS Principal entries.')
-                must_update_trust_pw = await self._net_ads_setspn([
-                    f'nfs/{ad["netbiosname"].upper()}.{ad["domainname"]}',
-                    f'nfs/{ad["netbiosname"].upper()}'
-                ])
-                if must_update_trust_pw:
-                    try:
-                        await self.change_trust_account_pw()
-                    except Exception as e:
-                        self.logger.debug(
-                            "Failed to change trust password after setting NFS SPN: [%s]."
-                            "This may impact kerberized NFS sessions until the next scheduled trust account password change", e
-                        )
+
+                try:
+                    await self.add_nfs_spn(ad)
+                except Exception:
+                    self.logger.warning("Failed to add NFS spn to active directory "
+                                        "computer object.", exc_info=True)
 
                 job.set_progress(70, 'Storing computer account keytab.')
                 kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
@@ -1351,7 +1345,7 @@ class ActiveDirectoryService(ConfigService):
         Only automatically add NFS SPN entries on domain join
         if kerberized nfsv4 is enabled.
         """
-        if not (await self.middleware.call('nfs.config'))['v4_krb_enabled']:
+        if not (await self.middleware.call('nfs.config'))['v4_krb']:
             return False
 
         for spn in spn_list:
@@ -1360,9 +1354,8 @@ class ActiveDirectoryService(ConfigService):
                 'add', spn
             ], check=False)
             if netads.returncode != 0:
-                self.logger.debug('Failed to set spn entry [%s]: %s',
-                                  spn, netads.stderr.decode().strip())
-                return False
+                raise CallError('failed to set spn entry '
+                                f'[{spn}]: {netads.stderr.decode().strip()}')
 
         return True
 
@@ -1399,6 +1392,22 @@ class ActiveDirectoryService(ConfigService):
             raise CallError(
                 f"Failed to update trust password: [{netads.stderr.decode().strip()}]"
             )
+
+    @private
+    async def add_nfs_spn(self, ad=None):
+        if ad is None:
+            ad = await self.config()
+
+        ok = await self._net_ads_setspn([
+            f'nfs/{ad["netbiosname"].upper()}.{ad["domainname"]}',
+            f'nfs/{ad["netbiosname"].upper()}'
+        ])
+        if not ok:
+            return False
+
+        await self.change_trust_account_pw()
+
+        return True
 
     @accepts()
     async def domain_info(self):

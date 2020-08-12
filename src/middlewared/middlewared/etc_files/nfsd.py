@@ -5,13 +5,13 @@ from middlewared.utils import run
 logger = logging.getLogger(__name__)
 
 
-async def get_exports(config, shares, kerberos_keytabs):
+async def get_exports(config, shares, has_nfs_principal):
     result = []
 
     if config["v4"]:
         if config["v4_krb"]:
             result.append("V4: / -sec=krb5:krb5i:krb5p")
-        elif kerberos_keytabs:
+        elif has_nfs_principal:
             result.append("V4: / -sec=sys:krb5:krb5i:krb5p")
         else:
             result.append("V4: / -sec=sys")
@@ -77,9 +77,9 @@ async def render(service, middleware):
 
     shares = await middleware.call("sharing.nfs.query", [["enabled", "=", True]])
 
-    kerberos_keytabs = await middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+    has_nfs_principal = await middleware.call('kerberos.keytab.has_nfs_principal')
 
     with open("/etc/exports", "w") as f:
-        f.write(await get_exports(config, shares, kerberos_keytabs))
+        f.write(await get_exports(config, shares, has_nfs_principal))
 
     await run("service", "mountd", "quietreload", check=False)
