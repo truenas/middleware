@@ -706,7 +706,7 @@ class SystemService(Service):
 
         return (
             await self.middleware.call('system.dmidecode_info')
-        )['system-serial'] or None
+        )['system-serial-number'] or None
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @job()
