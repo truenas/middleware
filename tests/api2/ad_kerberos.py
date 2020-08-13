@@ -424,7 +424,132 @@ def test_27_modify_base_krb5_libdefaults_aux_knownfail(request):
     assert results.status_code == 422, results.text
 
 
-def test_28_leave_activedirectory(request):
+def test_28_verify_no_nfs_principals(request):
+    depends(request, ["KRB5_IS_HEALTHY"])
+    cmd = 'midclt call kerberos.keytab.has_nfs_principal'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    assert results['output'].strip() == 'False'
+
+
+def test_29_check_nfs_exports_sec(request):
+    """
+    First NFS exports check. In this situation we are joined to
+    AD and therefore have a keytab. We do not at this point have
+    an NFS SPN entry. Expected security with v4 is:
+    "V4: / -sec=sys"
+    """
+    depends(request, ["KRB5_IS_HEALTHY"])
+    payload = {"v4": True}
+    results = PUT("/nfs/", payload)
+    assert results.status_code == 200, results.text
+
+    cmd = 'midclt call etc.generate nfsd'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    expected_sec = "V4: / -sec=sys"
+    cmd = f'grep "{expected_sec}" /etc/exports'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    assert results['output'].strip() == expected_sec, results['output']
+
+
+@pytest.mark.dependency(name="V4_KRB_ENABLED")
+def test_30_enable_krb5_nfs4(request):
+    depends(request, ["KRB5_IS_HEALTHY"])
+    payload = {"v4_krb": True}
+    results = PUT("/nfs/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_31_add_krb_spn(request):
+    """
+    Force AD plugin to add NFS spns for further testing.
+    This should still be possible because the initial domain
+    join involved obtaining a kerberos ticket with elevated
+    privileges.
+    """
+    depends(request, ["V4_KRB_ENABLED"])
+    cmd = 'midclt call activedirectory.add_nfs_spn'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_32_verify_has_nfs_principals(request):
+    depends(request, ["V4_KRB_ENABLED"])
+    cmd = 'midclt call kerberos.keytab.has_nfs_principal'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    assert results['output'].strip() == 'True'
+
+
+def test_33_verify_ad_nfs_parameters(request):
+    depends(request, ["V4_KRB_ENABLED"])
+    cmd = 'midclt call smb.getparm "winbind use default domain" GLOBAL'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    if not results['result']:
+        return
+    assert results['output'].strip() == "True"
+
+
+def test_34_check_nfs_exports_sec(request):
+    """
+    Second NFS exports check. We now have an NFS SPN entry
+    Expected security with is:
+    "V4: / -sec=krb5:krb5i:krb5p"
+    """
+    cmd = 'midclt call etc.generate nfsd'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    expected_sec = "V4: / -sec=krb5:krb5i:krb5p"
+    cmd = f'grep "{expected_sec}" /etc/exports'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    assert results['output'].strip() == expected_sec, results['output']
+
+
+def test_35_disable_krb5_nfs4(request):
+    """
+    v4_krb_enabled should still be True after this
+    disabling v4_krb because we still have an nfs
+    service principal in our keytab.
+    """
+    depends(request, ["V4_KRB_ENABLED"])
+    payload = {"v4_krb": False}
+    results = PUT("/nfs/", payload)
+    assert results.status_code == 200, results.text
+    v4_krb_enabled = results.json()['v4_krb_enabled']
+    assert v4_krb_enabled is True, results.text
+
+
+def test_36_check_nfs_exports_sec(request):
+    """
+    Second NFS exports check. We now have an NFS SPN entry
+    but v4_krb is disabled.
+    Expected security with is:
+    "V4: / -sec=sys:krb5:krb5i:krb5p"
+    """
+    cmd = 'midclt call etc.generate nfsd'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    expected_sec = "V4: / -sec=sys:krb5:krb5i:krb5p"
+    cmd = f'grep "{expected_sec}" /etc/exports'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    assert results['output'].strip() == expected_sec, results['output']
+
+
+def test_37_cleanup_nfs_settings(request):
+    payload = {"v4": False}
+    results = PUT("/nfs/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_38_leave_activedirectory(request):
     depends(request, ["JOINED_AD"])
     global payload, results
     payload = {
@@ -435,14 +560,14 @@ def test_28_leave_activedirectory(request):
     assert results.status_code == 200, results.text
 
 
-def test_29_remove_site(request):
+def test_39_remove_site(request):
     depends(request, ["JOINED_AD"])
-    payload = {"site": None}
+    payload = {"site": None, "use_default_domain": False}
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_30_reset_dns(request):
+def test_40_reset_dns(request):
     depends(request, ["SET_DNS"])
     global payload
     payload = {
@@ -455,7 +580,15 @@ def test_30_reset_dns(request):
     assert results.status_code == 200, results.text
 
 
-def test_31_check_ad_machine_account_deleted_after_ad_leave(request):
+def test_41_verify_v4_krb_enabled_is_false(request):
+    depends(request, ["V4_KRB_ENABLED"])
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    v4_krb_enabled = results.json()['v4_krb_enabled']
+    assert v4_krb_enabled is False, results.text
+
+
+def test_42_check_ad_machine_account_deleted_after_ad_leave(request):
     depends(request, ["AD_IS_HEALTHY"])
     results = GET('/kerberos/keytab/?name=AD_MACHINE_ACCOUNT')
     assert results.status_code == 200, results.text
