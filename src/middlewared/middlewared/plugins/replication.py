@@ -289,7 +289,6 @@ class ReplicationService(CRUDService):
 
         await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
 
-        await self.middleware.call("service.restart", "cron")
         await self.middleware.call("zettarepl.update_tasks")
 
         return await self._get_instance(id)
@@ -372,7 +371,6 @@ class ReplicationService(CRUDService):
 
         await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
 
-        await self.middleware.call("service.restart", "cron")
         await self.middleware.call("zettarepl.update_tasks")
 
         return await self._get_instance(id)
@@ -403,7 +401,6 @@ class ReplicationService(CRUDService):
             id
         )
 
-        await self.middleware.call("service.restart", "cron")
         await self.middleware.call("zettarepl.update_tasks")
 
         return response
@@ -791,7 +788,6 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'storage.replication', attachment['id'])
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
     async def toggle(self, attachments, enabled):
@@ -799,7 +795,6 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
             await self.middleware.call('datastore.update', 'storage.replication', attachment['id'],
                                        {'repl_enabled': enabled})
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
 
