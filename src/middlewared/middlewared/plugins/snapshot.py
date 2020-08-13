@@ -149,7 +149,6 @@ class PeriodicSnapshotTaskService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
         return await self._get_instance(data['id'])
@@ -229,7 +228,6 @@ class PeriodicSnapshotTaskService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
         return await self._get_instance(id)
@@ -273,7 +271,6 @@ class PeriodicSnapshotTaskService(CRUDService):
             id
         )
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
         return response
@@ -333,14 +330,12 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'storage.task', attachment['id'])
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
             await self.middleware.call('datastore.update', 'storage.task', attachment['id'], {'task_enabled': enabled})
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
 
