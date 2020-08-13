@@ -5,10 +5,10 @@ from middlewared.utils import run
 logger = logging.getLogger(__name__)
 
 
-async def get_exports(middleware, config, shares, kerberos_keytabs):
+async def get_exports(middleware, config, shares, has_nfs_principal):
     result = []
 
-    sec = await middleware.call("nfs.sec", config, kerberos_keytabs)
+    sec = await middleware.call("nfs.sec", config, has_nfs_principal)
     if sec:
         result.append(f"V4: / -sec={':'.join(sec)}")
 
@@ -80,9 +80,9 @@ async def render(service, middleware):
 
     shares = await middleware.call("sharing.nfs.query", [["enabled", "=", True]])
 
-    kerberos_keytabs = await middleware.call("kerberos.keytab.query")
+    has_nfs_principal = await middleware.call('kerberos.keytab.has_nfs_principal')
 
     with open("/etc/exports", "w") as f:
-        f.write(await get_exports(middleware, config, shares, kerberos_keytabs))
+        f.write(await get_exports(middleware, config, shares, has_nfs_principal))
 
     await run("service", "mountd", "quietreload", check=False)
