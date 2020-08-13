@@ -3,14 +3,12 @@ import json
 import requests
 import simplejson
 import socket
-import subprocess
 import time
 
 from middlewared.pipe import Pipes
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen
 from middlewared.validators import Email
 
 ADDRESS = 'support-proxy.ixsystems.com'
@@ -186,7 +184,7 @@ class SupportService(ConfigService):
             required_attrs = ('type', 'username', 'password')
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
-            data['serial'] = (await (await Popen(['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE)).communicate())[0].decode().split('\n')[0].upper()
+            data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
             license = (await self.middleware.call('system.info'))['license']
             if license:
                 data['company'] = license['customer_name']
