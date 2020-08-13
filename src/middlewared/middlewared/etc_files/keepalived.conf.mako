@@ -7,6 +7,7 @@
             'Chassis position could not be determined.'
             ' Keepalived config not generated.'
         )
+	raise FileShouldNotExist()
 
     config = middleware.call_sync('failover.config')
 
@@ -20,11 +21,10 @@
 
     info = middleware.call_sync('interface.query')
 %>\
-% if node != 'MANUAL':
 global_defs {
     vrrp_notify_fifo /var/run/vrrpd.fifo
 }
-    % for i in info:
+% for i in info:
 vrrp_instance ${i['id']} {
     state BACKUP
     advert_int % advert_int
@@ -33,16 +33,15 @@ vrrp_instance ${i['id']} {
     priority 254
     version 3
     unicast_src_ip ${i['aliases'][0]['address']}
-    % for i in ${i['failover_aliases']}
     unicast_peer {
+    % for i in ${i['failover_aliases']}
         ${i['address']}
-    }
     % endfor
-    % for i in ${i['failover_virtual_aliases']}
+    }
     virtual_address {
+    % for i in ${i['failover_virtual_aliases']}
         ${i['address']}
+    % endfor
     }
-    % endfor
-    % endfor
 }
-% endif
+% endfor
