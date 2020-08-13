@@ -4,10 +4,11 @@ import os
 from middlewared.service import Service
 import middlewared.sqlalchemy as sa
 from middlewared.utils import load_modules
+from middlewared.utils.python import get_middlewared_dir
 
 
 def load_migrations(middleware):
-    main_sources_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "migration")
+    main_sources_dir = os.path.join(get_middlewared_dir(), "migration")
     sources_dirs = [os.path.join(overlay_dir, "migration") for overlay_dir in middleware.overlay_dirs]
     sources_dirs.insert(0, main_sources_dir)
 

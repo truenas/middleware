@@ -7,6 +7,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import load_modules, load_classes, Popen, run
+from middlewared.utils.python import get_middlewared_dir
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_attributes
 
@@ -1214,8 +1215,7 @@ class CloudSyncService(TaskPathService):
 
 
 remote_classes = []
-for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
-                                        "rclone", "remote")):
+for module in load_modules(os.path.join(get_middlewared_dir(), "rclone", "remote")):
     for cls in load_classes(module, BaseRcloneRemote, []):
         remote_classes.append(cls)
         for method_name in cls.extra_methods:
