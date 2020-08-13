@@ -10,6 +10,9 @@ from middlewared.utils import osc, run
 from middlewared.validators import Port, Range
 
 
+PROTOCOLS = ['UDP', 'UDP4', 'UDP6', 'TCP', 'TCP4', 'TCP6']
+
+
 class OpenVPN:
     CIPHERS = {}
     DIGESTS = {}
@@ -421,7 +424,7 @@ class OpenVPNServerService(SystemServiceService):
             Str('cipher', null=True),
             Str('compression', null=True, enum=['LZO', 'LZ4']),
             Str('device_type', enum=['TUN', 'TAP']),
-            Str('protocol', enum=['UDP', 'TCP']),
+            Str('protocol', enum=PROTOCOLS),
             Str('tls_crypt_auth', null=True),
             Str('topology', null=True, enum=['NET30', 'P2P', 'SUBNET']),
             update=True
@@ -581,7 +584,7 @@ class OpenVPNClientService(SystemServiceService):
             Str('cipher', null=True),
             Str('compression', null=True, enum=['LZO', 'LZ4']),
             Str('device_type', enum=['TUN', 'TAP']),
-            Str('protocol', enum=['UDP', 'TCP']),
+            Str('protocol', enum=PROTOCOLS),
             Str('remote'),
             Str('tls_crypt_auth', null=True),
             update=True
