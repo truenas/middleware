@@ -3,7 +3,7 @@
 #
 # PAM configuration for the "login" service
 #
-<%namespace name="pam" file="pam.inc" />
+<%namespace name="pam" file="pam.inc.mako" />
 <%
         dsp = pam.getDirectoryServicePam(middleware=middleware, file='login')
 %>
