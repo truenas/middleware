@@ -1,7 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
 import errno
-import os
 import socket
 import ssl
 import uuid
@@ -122,8 +121,6 @@ class VMWareService(CRUDService):
             new,
         )
 
-        await self.middleware.run_in_thread(self._cleanup_legacy_alerts)
-
         return await self._get_instance(id)
 
     @accepts(
@@ -139,8 +136,6 @@ class VMWareService(CRUDService):
             self._config.datastore,
             id
         )
-
-        await self.middleware.run_in_thread(self._cleanup_legacy_alerts)
 
         return response
 
@@ -639,10 +634,3 @@ class VMWareService(CRUDService):
 
     def _delete_vmware_login_failed_alert(self, vmsnapobj):
         self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
-
-    def _cleanup_legacy_alerts(self):
-        for f in ("/var/tmp/.vmwaresnap_fails", "/var/tmp/.vmwarelogin_fails", "/var/tmp/.vmwaresnapdelete_fails"):
-            try:
-                os.unlink(f)
-            except Exception:
-                pass
