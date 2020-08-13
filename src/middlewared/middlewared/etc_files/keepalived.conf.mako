@@ -32,7 +32,6 @@ vrrp_instance ${i['id']} {
     virtual_router_id 20
     priority 254
     version 3
-    unicast_src_ip ${i['aliases'][0]['address']}
     unicast_peer {
     % for i in ${i['failover_aliases']}
         ${i['address']}
