@@ -33,13 +33,13 @@ vrrp_instance ${i['id']} {
     priority 254
     version 3
     unicast_peer {
-    % for i in ${i['failover_aliases']}
-        ${i['address']}
+    % for j in ${i['failover_aliases']}
+        ${j['address']}
     % endfor
     }
     virtual_address {
-    % for i in ${i['failover_virtual_aliases']}
-        ${i['address']}
+    % for j in ${i['failover_virtual_aliases']}
+        ${j['address']}
     % endfor
     }
 }
