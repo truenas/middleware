@@ -1,11 +1,4 @@
-import pickle as pickle
-
-from lockfile import LockFile
-
-from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
-
-VMWARE_FAILS = "/var/tmp/.vmwaresnap_fails"
-VMWARESNAPDELETE_FAILS = "/var/tmp/.vmwaresnapdelete_fails"
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert
 
 
 class VMWareSnapshotCreateFailedAlertClass(AlertClass, OneShotAlertClass):
@@ -36,52 +29,3 @@ class VMWareSnapshotDeleteFailedAlertClass(AlertClass, OneShotAlertClass):
 
     async def delete(self, alerts, query):
         pass
-
-
-class LegacyVMWareSnapshotFailedAlertSource(ThreadedAlertSource):
-    def check_sync(self):
-        try:
-            with LockFile(VMWARE_FAILS):
-                with open(VMWARE_FAILS, "rb") as f:
-                    fails = pickle.load(f)
-        except Exception:
-            return
-
-        alerts = []
-        for snapname, vms in list(fails.items()):
-            for vm in vms:
-                alerts.append(Alert(
-                    VMWareSnapshotCreateFailedAlertClass,
-                    {
-                        "snapshot": snapname,
-                        "vm": vm,
-                        "hostname": "<hostname>",
-                        "error": "Error",
-                    }
-                ))
-        return alerts
-
-
-class LegacyVMWareSnapshotDeleteFailAlertSource(ThreadedAlertSource):
-    def check_sync(self):
-        try:
-            with LockFile(VMWARESNAPDELETE_FAILS):
-                with open(VMWARESNAPDELETE_FAILS, "rb") as f:
-                    fails = pickle.load(f)
-        except Exception:
-            return
-
-        alerts = []
-        for snapname, vms in list(fails.items()):
-            for vm in vms:
-                alerts.append(Alert(
-                    VMWareSnapshotDeleteFailedAlertClass,
-                    {
-                        "snapshot": snapname,
-                        "vm": vm,
-                        "hostname": "<hostname>",
-                        "error": "Error",
-                    }
-                ))
-
-        return alerts
