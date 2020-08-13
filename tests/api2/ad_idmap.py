@@ -87,8 +87,15 @@ def test_04_verify_the_job_id_is_successful(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
+def test_05_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["AD_ENABLED"])
+    cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
 @pytest.mark.dependency(name="AD_IS_HEALTHY")
-def test_05_get_activedirectory_state(request):
+def test_06_get_activedirectory_state(request):
     """
     Issue no-effect operation on DC's netlogon share to
     verify that domain join is alive.
@@ -99,7 +106,7 @@ def test_05_get_activedirectory_state(request):
 
 
 @pytest.mark.dependency(name="GATHERED_BACKEND_OPTIONS")
-def test_06_get_idmap_backend_options(request):
+def test_07_get_idmap_backend_options(request):
     """
     Create large set of SMB shares for testing registry.
     """
@@ -116,7 +123,7 @@ def test_06_get_idmap_backend_options(request):
 
 
 @pytest.mark.parametrize('backend', BACKENDS)
-def test_07_test_backend_options(request, backend):
+def test_08_test_backend_options(request, backend):
     """
     Tests for backend options are performend against
     the backend for the domain we're joined to
@@ -272,7 +279,7 @@ def test_07_test_backend_options(request, backend):
             assert secret == decoded_sec, stored_sec
 
 
-def test_08_clear_idmap_cache(request):
+def test_09_clear_idmap_cache(request):
     depends(request, ["JOINED_AD"])
     results = GET("/idmap/clear_idmap_cache")
     assert results.status_code == 200, results.text
@@ -281,7 +288,7 @@ def test_08_clear_idmap_cache(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_09_idmap_overlap_fail(request):
+def test_10_idmap_overlap_fail(request):
     """
     It should not be possible to set an idmap range for a new
     domain that overlaps an existing one.
@@ -298,7 +305,7 @@ def test_09_idmap_overlap_fail(request):
     assert results.status_code == 422, results.text
 
 
-def test_10_idmap_default_domain_name_change_fail(request):
+def test_11_idmap_default_domain_name_change_fail(request):
     """
     It should not be possible to change the name of a
     default idmap domain.
@@ -315,7 +322,7 @@ def test_10_idmap_default_domain_name_change_fail(request):
     assert results.status_code == 422, results.text
 
 
-def test_11_idmap_low_high_range_inversion_fail(request):
+def test_13_idmap_low_high_range_inversion_fail(request):
     """
     It should not be possible to set an idmap low range
     that is greater than its high range.
@@ -333,7 +340,7 @@ def test_11_idmap_low_high_range_inversion_fail(request):
 
 
 @pytest.mark.dependency(name="CREATED_NEW_DOMAIN")
-def test_12_idmap_new_domain(request):
+def test_13_idmap_new_domain(request):
     depends(request, ["JOINED_AD"])
     global dom_id
     cmd = 'midclt call idmap.get_next_idmap_range'
@@ -353,7 +360,7 @@ def test_12_idmap_new_domain(request):
     dom_id = results.json()['id']
 
 
-def test_13_idmap_new_domain_duplicate_fail(request):
+def test_14_idmap_new_domain_duplicate_fail(request):
     """
     It should not be possible to create a new domain that
     has a name conflict with an existing one.
@@ -375,7 +382,7 @@ def test_13_idmap_new_domain_duplicate_fail(request):
     assert results.status_code == 422, results.text
 
 
-def test_14_idmap_new_domain_autorid_fail(request):
+def test_15_idmap_new_domain_autorid_fail(request):
     """
     It should only be possible to set AUTORID on
     default domain.
@@ -389,7 +396,7 @@ def test_14_idmap_new_domain_autorid_fail(request):
     assert results.status_code == 422, f"[update: {dom_id}]: {results.text}"
 
 
-def test_15_idmap_delete_new_domain(request):
+def test_16_idmap_delete_new_domain(request):
     """
     It should only be possible to set AUTORID on
     default domain.
@@ -399,7 +406,7 @@ def test_15_idmap_delete_new_domain(request):
     assert results.status_code == 200, f"[delete: {dom_id}]: {results.text}"
 
 
-def test_16_leave_activedirectory(request):
+def test_17_leave_activedirectory(request):
     depends(request, ["JOINED_AD"])
     global payload, results
     payload = {
@@ -410,14 +417,21 @@ def test_16_leave_activedirectory(request):
     assert results.status_code == 200, results.text
 
 
-def test_17_remove_site(request):
+def test_18_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["AD_ENABLED"])
+    cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
+def test_19_remove_site(request):
     depends(request, ["JOINED_AD"])
     payload = {"site": None}
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_18_reset_dns(request):
+def test_20_reset_dns(request):
     depends(request, ["SET_DNS"])
     global payload
     payload = {
