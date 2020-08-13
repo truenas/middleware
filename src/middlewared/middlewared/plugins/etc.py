@@ -29,7 +29,7 @@ class MakoRenderer(object):
             # Mako is not asyncio friendly so run it within a thread
             def do():
                 # Split the path into template name and directory
-                name = os.path.basename(path)
+                name = os.path.basename(path) + ".mako"
                 dir = os.path.dirname(path)
 
                 # This will be where we search for templates
@@ -133,7 +133,7 @@ class EtcService(Service):
                 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
         'pam': [
-            {'type': 'mako', 'path': os.path.join('pam.d', f), 'platform': 'FreeBSD'}
+            {'type': 'mako', 'path': os.path.join('pam.d', f[:-5]), 'platform': 'FreeBSD'}
             for f in os.listdir(
                 os.path.realpath(
                     os.path.join(
@@ -148,7 +148,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/proftpd'},
         ],
         'kdump': [
-            {'type': 'mako', 'path': 'default/kdump-tools.mako', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/kdump-tools', 'platform': 'Linux'},
         ],
         'rc': [
             {'type': 'py', 'path': 'rc.conf', 'platform': 'FreeBSD'},
@@ -167,7 +167,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {'type': 'mako', 'path': 'scst.conf.mako', 'platform': 'Linux', 'checkpoint': 'pool_import'}
+            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'}
         ],
         'webdav': [
             {
@@ -199,7 +199,7 @@ class EtcService(Service):
                 'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
                 'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
             },
-            {'type': 'mako', 'path': 'default/rrdcached.mako', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux'},
         ],
         'docker': [
             {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': 'pool_import'},
@@ -222,7 +222,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
             {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
             {
-                'type': 'mako', 'path': 'local/nut/nut.conf.mako', 'owner': 'root',
+                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root',
                 'group': UPS_GROUP, 'mode': 0o440, 'platform': 'Linux',
             },
             {'type': 'py', 'path': 'local/nut/ups_perms'}
@@ -267,7 +267,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/inadyn.conf'}
         ],
         'aliases': [
-            {'type': 'mako', 'path': 'mail/aliases' if osc.IS_FREEBSD else 'aliases', 'local_path': 'mail/aliases.mako'}
+            {'type': 'mako', 'path': 'mail/aliases' if osc.IS_FREEBSD else 'aliases', 'local_path': 'mail/aliases'}
         ],
         'ttys': [
             {'type': 'mako', 'path': 'ttys', 'platform': 'FreeBSD'},
@@ -331,8 +331,6 @@ class EtcService(Service):
                 if osc.IS_LINUX:
                     if entry_path.startswith('local/'):
                         entry_path = entry_path[len('local/'):]
-                if entry['type'] == 'mako' and entry_path.endswith('.mako'):
-                    entry_path = entry_path[:-len('.mako')]
                 outfile = f'/etc/{entry_path}'
                 try:
                     rendered = await renderer.render(path)
