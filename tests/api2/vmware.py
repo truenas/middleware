@@ -8,8 +8,8 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST
-
+from functions import GET, POST, SSH_TEST
+from auto_config import ip, user, password
 vmw_credentials = pytest.mark.skipif(all(['VMWARE_HOST' in os.environ,
                                           'VMWARE_USERNAME' in os.environ,
                                           'VMWARE_PASSWORD' in os.environ]
@@ -38,3 +38,10 @@ def test_02_create_vmware(data):
     results = POST('/vmware/get_datastores/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
+
+
+@vmw_credentials
+def test_03_verify_vmware_get_datastore_do_not_leak_password_in_middleware_log():
+    cmd = f"""grep -R "{os.environ['VMWARE_PASSWORD']}" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
