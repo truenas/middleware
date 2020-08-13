@@ -239,6 +239,7 @@ def test_26_get_next_uid_for_homes_check():
     next_uid = results.json()
 
 
+@pytest.mark.dependency(name="HOME_DS_CREATED")
 def test_27_creating_home_dataset(request):
     """
     SMB share_type is selected for this test so that
@@ -331,6 +332,7 @@ def test_33_homedir_testfile_create(request):
 
 @pytest.mark.dependency(name="HOMEDIR2_EXISTS")
 def test_34_homedir_move_new_directory(request):
+    depends(request, ["HOMEDIR_EXISTS"])
     payload = {
         "home": f'/mnt/{dataset}/new_home',
     }
