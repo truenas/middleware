@@ -97,7 +97,8 @@ class EtcService(Service):
             {'type': 'py', 'path': 'afpd', 'checkpoint': 'pool_import'},
         ],
         'cron': [
-            {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'cron.d/middlewared', 'local_path': 'cron.d/middlewared.mako',
+             'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
         ],
         'ctld': [
