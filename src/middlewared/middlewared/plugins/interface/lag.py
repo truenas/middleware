@@ -17,7 +17,7 @@ class InterfaceService(Service):
         except KeyError:
             iface = None
         else:
-            first_port = next(iface.ports)
+            first_port = next(iter(iface.ports))
             if first_port is None or first_port[0] != members[0]['lagg_physnic']:
                 self.logger.info('Destroying existing %s as its first port has changed', name)
                 netif.destroy_interface(name)
