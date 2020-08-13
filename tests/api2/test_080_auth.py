@@ -26,7 +26,7 @@ def test_01_check_valid_root_user_authentication():
 
 
 def test_02_verify_auth_does_not_leak_password_into_middleware_log():
-    cmd = f"""grep -R "{password}'" /var/log/middlewared.log"""
+    cmd = f"""grep -R "{password}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
