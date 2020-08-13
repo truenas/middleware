@@ -16,8 +16,8 @@ class SensorService(Service):
     @filterable
     async def query(self, filters, options):
         baseboard_manufacturer = (
-            (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors="ignore")
-        ).strip()
+            await self.middleware.call('system.dmidecode_info')
+        )['baseboard-manufacturer']
 
         failover_hardware = await self.middleware.call("failover.hardware")
 

@@ -1496,15 +1496,20 @@ def show_ip():
 
 
 def netcli_title():
-    proc = subprocess.Popen(['dmidecode', '-s', 'system-product-name'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-    product = proc.communicate()[0].strip()
-    proc = subprocess.Popen(['dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-    serial = proc.communicate()[0].strip()
+
+    product = ''
+    serial = ''
+    version = ''
+
     try:
         with Client() as c:
+            data = c.call('system.dmidecode_info')
+            product = data['system-product-name']
+            serial = data['system-serial-number']
             version = c.call('system.version') + ' | '
     except Exception:
-        version = ''
+        pass
+
     return f'{product} | {version}{serial}'
 
 

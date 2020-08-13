@@ -6,7 +6,6 @@
 
 from collections import defaultdict
 from datetime import date, timedelta
-import subprocess
 import textwrap
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
@@ -50,12 +49,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         if license is None:
             return Alert(LicenseAlertClass, "Your TrueNAS has no license, contact support.")
 
-        proc = subprocess.Popen([
-            '/usr/local/sbin/dmidecode',
-            '-s', 'system-serial-number',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        serial = proc.communicate()[0].split('\n', 1)[0].strip()
-
+        serial = self.middleware.call_sync('system.dmidecode_info')['system-serial-number']
         if license['system_serial'] != serial and license['system_serial_ha'] != serial:
             alerts.append(Alert(LicenseAlertClass, 'System serial does not match license.'))
 

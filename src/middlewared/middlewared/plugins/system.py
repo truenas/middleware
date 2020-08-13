@@ -357,10 +357,59 @@ class SystemAdvancedService(ConfigService):
 class SystemService(Service):
 
     HOST_ID = None
+    DMIDECODE_CACHE = {
+        'ecc-memory': None,
+        'baseboard-manufacturer': None,
+        'baseboard-product-name': None,
+        'system-manufacturer': None,
+        'system-product-name': None,
+        'system-serial-number': None,
+        'system-version': None,
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__product_type = None
+
+    @private
+    async def dmidecode_info(self):
+
+        """
+        dmidecode data is mostly static so cache the results
+        """
+
+        if self.DMIDECODE_CACHE['ecc-memory'] is None:
+            # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
+            # After discussing with nap, we determined that checking -t 17 did not work well with some systems,
+            # so we check -t 16 now only to see if it reports ECC memory
+            ecc = bool(RE_ECC_MEMORY.findall((await run(['dmidecode', '-t', '16'])).stdout.decode(errors='ignore')))
+            self.DMIDECODE_CACHE['ecc-memory'] = ecc
+
+        if self.DMIDECODE_CACHE['baseboard-manufacturer'] is None:
+            bm = ((await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['baseboard-manufacturer'] = bm
+
+        if self.DMIDECODE_CACHE['baseboard-product-name'] is None:
+            bpn = ((await run(["dmidecode", "-s", "baseboard-product-name"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['baseboard-product-name'] = bpn
+
+        if self.DMIDECODE_CACHE['system-manufacturer'] is None:
+            sm = ((await run(["dmidecode", "-s", "system-manufacturer"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['system-manufacturer'] = sm
+
+        if self.DMIDECODE_CACHE['system-product-name'] is None:
+            spn = ((await run(["dmidecode", "-s", "system-product-name"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['system-product-name'] = spn
+
+        if self.DMIDECODE_CACHE['system-serial-number'] is None:
+            ssn = ((await run(["dmidecode", "-s", "system-serial-number"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['system-serial-number'] = ssn
+
+        if self.DMIDECODE_CACHE['system-version'] is None:
+            sv = ((await run(["dmidecode", "-s", "system-version"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['system-version'] = sv
+
+        return self.DMIDECODE_CACHE
 
     @no_auth_required
     @accepts()
@@ -583,30 +632,13 @@ class SystemService(Service):
 
         serial = await self._system_serial()
 
-        product = (await(await Popen(
-            ['dmidecode', '-s', 'system-product-name'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
-
-        product_version = (await(await Popen(
-            ['dmidecode', '-s', 'system-version'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
-
-        manufacturer = (await(await Popen(
-            ['dmidecode', '-s', 'system-manufacturer'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
+        dmidecode = await self.middleware.call('system.dmidecode_info')
 
         birthday_date = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
         if birthday_date == datetime(1970, 1, 1):
             birthday_date = None
-        timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
-        # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
-        # After discussing with nap, we determined that checking -t 17 did not work well with some systems,
-        # so we check -t 16 now only to see if it reports ECC memory
-        ecc_memory = bool(RE_ECC_MEMORY.findall((await run(['dmidecode', '-t', '16'])).stdout.decode()))
+        timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         return {
             'version': self.version(),
@@ -619,15 +651,15 @@ class SystemService(Service):
             'uptime': uptime,
             'uptime_seconds': time.time() - psutil.boot_time(),
             'system_serial': serial,
-            'system_product': product,
-            'system_product_version': product_version,
+            'system_product': dmidecode['system-product-name'] if dmidecode['system-product-name'] else None,
+            'system_product_version': dmidecode['system-version'] if dmidecode['system-version'] else None,
             'license': await self.middleware.run_in_thread(self._get_license),
             'boottime': datetime.fromtimestamp(psutil.boot_time(), timezone.utc),
             'datetime': datetime.utcnow(),
             'birthday': birthday_date,
             'timezone': timezone_setting,
-            'system_manufacturer': manufacturer,
-            'ecc_memory': ecc_memory,
+            'system_manufacturer': dmidecode['system-manufacturer'] if dmidecode['system-manufacturer'] else None,
+            'ecc_memory': dmidecode['ecc-memory'],
         }
 
     @private
@@ -671,10 +703,10 @@ class SystemService(Service):
 
     @private
     async def _system_serial(self):
-        return (await(await Popen(
-            ['dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
+
+        return (
+            await self.middleware.call('system.dmidecode_info')
+        )['system-serial'] or None
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @job()

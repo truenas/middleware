@@ -1,4 +1,4 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -12,7 +12,6 @@ import os
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
 EULA_PENDING_PATH = "/data/truenas-eula-pending"
@@ -88,18 +87,14 @@ class TrueNASService(Service):
         TRUENAS-UNKNOWN
         """
 
-        chassis = await run('dmidecode', '-s', 'system-product-name', check=False)
-        chassis = chassis.stdout.decode(errors='ignore').split('\n', 1)[0].strip()
-        if chassis == 'TRUENAS-MINI':
-            return 'TRUENAS-UNKNOWN'
+        data = await self.middleware.call('system.dmidecode_info')
+        chassis = data['system-product-name']
         if chassis.startswith(('TRUENAS-M', 'TRUENAS-X', 'TRUENAS-Z')):
             return chassis
         # We don't match a burned in name for a M, X or Z series.  Let's catch
         # the case where we are a M, X or Z. (shame on you production!)
-        motherboard = await run('dmidecode', '-s', 'baseboard-manufacturer', check=False)
-        motherboard = motherboard.stdout.decode(errors='ignore').split('\n', 1)[0].strip()
-        motherboard_model = await run('dmidecode', '-s', 'baseboard-product-name', check=False)
-        motherboard_model = motherboard_model.stdout.decode(errors='ignore').split('\n', 1)[0].strip()
+        motherboard = data['baseboard-manufacturer']
+        motherboard_model = data['baseboard-product-name']
         if motherboard_model == 'X11DPi-NT' or motherboard_model == 'X11SPi-TF':
             return 'TRUENAS-M'
         if motherboard_model == 'iXsystems TrueNAS X10':

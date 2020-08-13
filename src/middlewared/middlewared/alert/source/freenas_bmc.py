@@ -24,14 +24,11 @@ class FreeNASBMCAlertSource(ThreadedAlertSource):
     products = ("CORE",)
 
     def check_sync(self):
-        systemname = subprocess.run(
-            ["dmidecode", "-s", "system-product-name"],
-            capture_output=True, text=True,
-        ).stdout.strip()
-        boardname = subprocess.run(
-            ["dmidecode", "-s", "baseboard-product-name"],
-            capture_output=True, text=True,
-        ).stdout.strip()
+
+        data = self.middleware.call_sync('system.dmidecode_info')
+        systemname = data['system-product-name']
+        boardname = data['baseboard-product-name']
+
         if "freenas" in systemname.lower() and boardname == "C2750D4I":
             mcinfo = subprocess.run(
                 ["ipmitool", "mc", "info"],
