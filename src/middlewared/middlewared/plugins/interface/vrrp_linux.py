@@ -26,7 +26,7 @@ class VrrpService(Service):
         # if there are no VIPs then there is no reason to continue
         if not configured_vips:
             self.logger.warning(
-                f'No VIPs have been configured for {ifname}.'
+                'No VIPs have been configured for %s.', ifname
             )
             return
 
@@ -40,7 +40,7 @@ class VrrpService(Service):
                 data = json.loads(data.stdout.decode())
             except Exception:
                 self.logger.error(
-                    f'Unable to parse address information for {ifname}.',
+                    'Unable to parse address information for %s.', ifname,
                     exc_info=True
                 )
                 return

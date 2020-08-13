@@ -1,5 +1,5 @@
 <%
-    licensed = middleware.call_sync('failover.licensed'):
+    licensed = middleware.call_sync('failover.licensed')
     node = middleware.call_sync('failover.node')
 
     if licensed and node == 'MANUAL':
@@ -18,34 +18,31 @@
         # uses centisecond intervals by default
         advert_int = round(((128 * config['timeout']) / 385), 2)
 
-    info = middleware.call_sync('datastore.query', 'network_interfaces')
+    info = middleware.call_sync('interface.query')
 %>\
 % if node != 'MANUAL':
 global_defs {
     vrrp_notify_fifo /var/run/vrrpd.fifo
 }
     % for i in info:
-vrrp_instance ${i['int_interface']} {
+vrrp_instance ${i['id']} {
     state BACKUP
     advert_int % advert_int
     nopreempt
     virtual_router_id 20
     priority 254
     version 3
-    % if node == 'A':
-    unicast_src_ip ${i['int_ipv4address']}
+    unicast_src_ip ${i['aliases'][0]['address']}
+    % for i in ${i['failover_aliases']}
     unicast_peer {
-        ${i['int_ipv4address_b']}
+        ${i['address']}
     }
-    % elif node == 'B':
-    unicast_src_ip ${i['int_ipv4address_b']}
-    unicast_peer {
-        ${i['int_ipv4address']}
-    }
-    % endif
+    % endfor
+    % for i in ${i['failover_virtual_aliases']}
     virtual_address {
-        ${i['int_vip']} dev ${i['int_interface']}
+        ${i['address']}
     }
+    % endfor
     % endfor
 }
 % endif
