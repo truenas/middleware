@@ -8,8 +8,8 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST
-from auto_config import password, user
+from functions import POST, SSH_TEST
+from auto_config import password, user, ip
 
 invalid_users = [
     {'username': 'root', 'password': '123'},
@@ -17,7 +17,7 @@ invalid_users = [
 ]
 
 
-def test_01_check_valid_root_user_authentification():
+def test_01_check_valid_root_user_authentication():
     payload = {"username": user,
                "password": password}
     results = POST("/auth/check_user/", payload)
@@ -25,15 +25,21 @@ def test_01_check_valid_root_user_authentification():
     assert results.json() is True, results.text
 
 
+def test_02_verify_auth_does_not_leak_password_into_middleware_log():
+    cmd = f"""grep -R "{password}" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
 @pytest.mark.parametrize('data_user', invalid_users)
-def test_02_auth_check_invalid_user(data_user):
+def test_03_auth_check_invalid_user(data_user):
     results = POST('/auth/check_user/', data_user)
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
 @pytest.mark.parametrize('data_random', [None, 1000, 2000, 3000, 4000, 5000])
-def test_03_auth_generate_token(data_random):
+def test_04_auth_generate_token(data_random):
     results = POST('/auth/generate_token/', {'ttl': data_random})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), str) is True, results.text

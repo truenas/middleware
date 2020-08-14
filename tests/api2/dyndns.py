@@ -9,7 +9,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 from config import *
-from functions import GET, POST, PUT
+from auto_config import ip, user, password
+from functions import GET, POST, PUT, SSH_TEST
 
 Reason = 'NOIPUSERNAME, NOIPPASSWORD and NOIPHOST' \
     ' are missing in ixautomation.conf'
@@ -55,7 +56,7 @@ def test_04_Updating_Settings_for_Custom_Provider():
     global test
     results = PUT('/dyndns/', {
         'username': 'foo',
-        'password': 'bar',
+        'password': 'abcd1234',
         'provider': 'default@dyndns.org',
         'domain': ['foobar']})
     assert results.status_code == 200, results.text
@@ -67,7 +68,16 @@ def test_05_Check_that_API_reports_dyndns_service():
     assert results.status_code == 200, results.text
 
 
-def test_06_Check_that_API_reports_dynsdns_configuration_as_saved():
+def test_06_verify_dyndhs_do_not_leak_password_in_middleware_log():
+    if noip_test_cfg is True:
+        cmd = f"""grep -R "{NOIPPASSWORD}" /var/log/middlewared.log"""
+    else:
+        cmd = """grep -R "abcd1234" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
+def test_07_Check_that_API_reports_dynsdns_configuration_as_saved():
     results = GET('/dyndns/')
     assert results.status_code == 200, results.text
     data = results.json()
@@ -81,18 +91,18 @@ def test_06_Check_that_API_reports_dynsdns_configuration_as_saved():
         assert data['domain'] == ['foobar']
 
 
-def test_07_Enable_dyns_service():
+def test_08_Enable_dyns_service():
     results = PUT('/service/id/dynamicdns/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
-def test_08_Check_to_see_if_dyndns_service_is_enabled_at_boot():
+def test_09_Check_to_see_if_dyndns_service_is_enabled_at_boot():
     results = GET('/service?service=dynamicdns')
     assert results.json()[0]['enable'] is True, results.text
 
 
 @noip_test_cfg
-def test_09_Starting_dyndns_service():
+def test_10_Starting_dyndns_service():
     results = POST('/service/start/',
                    {'service': 'dynamicdns',
                     'service-control': {'onetime': True}})
@@ -101,6 +111,6 @@ def test_09_Starting_dyndns_service():
 
 
 @noip_test_cfg
-def test_10_Checking_to_see_if_dyndns_service_is_running():
+def test_11_Checking_to_see_if_dyndns_service_is_running():
     results = GET('/service?service=dynamicdns')
     assert results.json()[0]['state'] == 'RUNNING', results.text

@@ -134,7 +134,7 @@ cfg_file.close()
 
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
 from functions import SSH_TEST
-# Setup ssh agent befor starting test.
+# Setup ssh agent before starting test.
 setup_ssh_agent()
 if path.isdir(dotsshPath) is False:
     makedirs(dotsshPath)
@@ -186,7 +186,7 @@ if api == "1.0":
     for i in get_tests():
         if testName is not None and testName != i:
             continue
-        call([f"py.test-{version}", "-v", "--junitxml",
+        call([f"pytest-{version}", "-v", "--junitxml",
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
         ) + [f"api1/{i}.py"])
@@ -194,7 +194,7 @@ elif api == "2.0":
     for i in get_tests():
         if testName is not None and testName != i:
             continue
-        call([f"py.test-{version}", "-v", "--junitxml",
+        call([f"pytest-{version}", "-v", "--junitxml",
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
         ) + [f"api2/{i}.py"])
@@ -213,13 +213,13 @@ if not path.exists(artifacts):
 for log in logs_list:
     get_file(log, artifacts, 'root', 'testing', ip)
 
-# get dmesg and put it in artifacs
+# get dmesg and put it in artifacts
 results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/dmesg', 'w')
 dmsg.writelines(results['output'])
 dmsg.close()
 
-# get core.get_jobs and put it in artifacs
+# get core.get_jobs and put it in artifacts
 results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/core_get_job', 'w')
 dmsg.writelines(results['output'])
