@@ -30,6 +30,19 @@ class VrrpService(Service):
             )
             return
 
+        # need to check aliases (if any)
+        aliases = self.middleware.call_sync(
+            'datastore.query',
+            'network.alias',
+            [('alias_interface_id', '=', info[0]['id'])],
+        )
+        aliases = [
+            i['alias_vip'] for i in aliases if i['alias_vip']
+        ]
+
+        # add the aliases
+        configured_vips += aliases
+
         # get current addresses on `ifname` in json form
         data = subprocess.run(
             ['ip', '-j', 'addr', 'show', ifname],
@@ -44,6 +57,11 @@ class VrrpService(Service):
                     exc_info=True
                 )
                 return
+        else:
+            self.logger.error(
+                'Failed to list IP address information for %s.', ifname
+            )
+            return
 
         # now get the current IP addresses on the interface
         iface_addrs = [
