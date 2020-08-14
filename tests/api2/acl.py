@@ -9,6 +9,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
+from pytest_dependency import depends
 
 ACLTEST_DATASET = f'{pool_name}/acltest'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
@@ -81,6 +82,81 @@ default_acl = [
         "perms": {"BASIC": "FULL_CONTROL"},
         "flags": {"BASIC": "INHERIT"}
     }
+]
+
+function_testing_acl_deny = [
+    {
+        "tag": "owner@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "group@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "everyone@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+]
+
+function_testing_acl_allow = [
+    {
+        "tag": "owner@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "group@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    }
+]
+
+
+ACL_USER = "acltesting"
+ACL_PWD = "acltesting"
+
+# base64-encoded samba DOSATTRIB xattr
+DOSATTRIB_XATTR = "CTB4MTAAAAMAAwAAABEAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABimX3sSqfTAQAAAAAAAAAACg=="
+
+IMPLEMENTED_DENY = [
+    "READ_ATTRIBUTES",
+    "WRITE_ATTRIBUTES",
+    "DELETE",
+    "DELETE_CHILD",
+    "FULL_DELETE",
+    "EXECUTE",
+    "READ_DATA",
+    "WRITE_DATA",
+    "READ_ACL",
+    "WRITE_ACL",
+    "WRITE_OWNER",
+]
+
+IMPLEMENTED_ALLOW = [
+    "READ_DATA",
+    "WRITE_DATA",
+    "DELETE",
+    "DELETE_CHILD",
+    "EXECUTE",
+    "WRITE_OWNER",
+    "READ_ATTRIBUTES",
+    "WRITE_ATTRIBUTES",
+    "READ_ACL",
+    "WRITE_ACL",
 ]
 
 JOB_ID = None
@@ -438,7 +514,340 @@ def test_19_delete_child_dataset():
     assert result.status_code == 200, result.text
 
 
-def test_20_delete_dataset():
+def test_20_get_next_uid_for_acluser():
+    results = GET('/user/get_next_uid/')
+    assert results.status_code == 200, results.text
+    global next_uid
+    next_uid = results.json()
+
+
+@pytest.mark.dependency(name="ACL_USER_CREATED")
+def test_21_creating_shareuser_to_test_acls():
+    global acluser_id
+    payload = {
+        "username": ACL_USER,
+        "full_name": "ACL User",
+        "group_create": True,
+        "groups": [1],
+        "password": ACL_PWD,
+        "uid": next_uid,
+        "shell": "/bin/csh"}
+    results = POST("/user/", payload)
+    assert results.status_code == 200, results.text
+    acluser_id = results.json()
+
+
+@pytest.mark.dependency(name="HAS_TESTFILE")
+def test_22_prep_testfile(request):
+    depends(request, ["ACL_USER_CREATED"])
+    cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+"""
+The following tests verify that DENY ACEs are functioning correctly.
+Deny ace will be prepended to base ACL that grants FULL_CONTROL.
+
+#define VREAD_NAMED_ATTRS       000000200000 /* not used */
+#define VWRITE_NAMED_ATTRS      000000400000 /* not used */
+#define VDELETE_CHILD           000001000000
+#define VREAD_ATTRIBUTES        000002000000 /* permission to stat(2) */
+#define VWRITE_ATTRIBUTES       000004000000 /* change {m,c,a}time */
+#define VDELETE                 000010000000
+#define VREAD_ACL               000020000000 /* read ACL and file mode */
+#define VWRITE_ACL              000040000000 /* change ACL and/or file mode */
+#define VWRITE_OWNER            000100000000 /* change file owner */
+#define VSYNCHRONIZE            000200000000 /* not used */
+
+Some tests must be skipped due to lack of implementation in VFS.
+"""
+
+
+@pytest.mark.parametrize('perm', IMPLEMENTED_DENY)
+def test_23_test_acl_function_deny(perm, request):
+    """
+    Iterate through available permissions and prepend
+    deny ACE denying that particular permission to the
+    acltest user, then attempt to perform an action that
+    should result in failure.
+    """
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+
+    if perm == "FULL_DELETE":
+        to_deny = {"DELETE_CHILD": True, "DELETE": True}
+    else:
+        to_deny = {perm: True}
+
+    payload_acl = [{
+        "tag": "USER",
+        "id": next_uid,
+        "type": "DENY",
+        "perms": to_deny,
+        "flags": {"BASIC": "INHERIT"}
+    }]
+    payload_acl.extend(function_testing_acl_deny)
+    result = POST(
+        f'/pool/dataset/id/{dataset_url}/permission/', {
+            'acl': payload_acl,
+            'group': 'wheel',
+            'user': 'root',
+            'options': {'recursive': True},
+        }
+    )
+    assert result.status_code == 200, result.text
+    JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != 'SUCCESS':
+        return
+
+    if perm == "EXECUTE":
+        cmd = f'cd /mnt/{ACLTEST_DATASET}'
+
+    elif perm == "READ_ATTRIBUTES":
+        cmd = f'stat /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm in ["DELETE", "DELETE_CHILD", "FULL_DELETE"]:
+        cmd = f'rm /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "READ_DATA":
+        cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_DATA":
+        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_ATTRIBUTES":
+        cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "READ_ACL":
+        cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_ACL":
+        cmd = f'setfacl -b /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_OWNER":
+        cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    else:
+        # This should never happen.
+        cmd = "touch /var/empty/ERROR"
+
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    """
+    Per RFC5661 Section 6.2.1.3.2, deletion is permitted if either
+    DELETE_CHILD is permitted on parent, or DELETE is permitted on
+    file. This means that it should succeed when tested in isolation,
+    but fail when combined.
+    """
+    errstr = f'cmd: {cmd}, res: {results["output"]}, to_deny {to_deny}'
+    if perm in ["DELETE", "DELETE_CHILD"]:
+        assert results['result'] is True, errstr
+
+        # unfortunately, we now need to recreate our testfile.
+        cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+
+        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+
+    else:
+        assert results['result'] is False, errstr
+
+
+@pytest.mark.parametrize('perm', IMPLEMENTED_ALLOW)
+def test_24_test_acl_function_allow(perm, request):
+    """
+    Iterate through available permissions and prepend
+    allow ACE permitting that particular permission to the
+    acltest user, then attempt to perform an action that
+    should result in success.
+    """
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+
+    """
+    Some extra permissions bits must be set for these tests
+    EXECUTE so that we can traverse to the path in question
+    and READ_ATTRIBUTES because most of the utilites we use
+    for testing have to stat(2) the files.
+    """
+    to_allow = {perm: True}
+    if perm != "EXECUTE":
+        to_allow["EXECUTE"] = True
+
+    if perm != "READ_ATTRIBUTES":
+        to_allow["READ_ATTRIBUTES"] = True
+
+    if perm == "WRITE_ACL":
+        to_allow["READ_ACL"] = True
+
+    payload_acl = [{
+        "tag": "USER",
+        "id": next_uid,
+        "type": "ALLOW",
+        "perms": to_allow,
+        "flags": {"BASIC": "INHERIT"}
+    }]
+    payload_acl.extend(function_testing_acl_allow)
+    result = POST(
+        f'/pool/dataset/id/{dataset_url}/permission/', {
+            'acl': payload_acl,
+            'group': 'nobody',
+            'user': 'root',
+            'options': {'recursive': True},
+        }
+    )
+    assert result.status_code == 200, result.text
+    JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != 'SUCCESS':
+        return
+
+    if perm == "EXECUTE":
+        cmd = f'cd /mnt/{ACLTEST_DATASET}'
+
+    elif perm == "READ_ATTRIBUTES":
+        cmd = f'stat /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm in ["DELETE", "DELETE_CHILD", "FULL_DELETE"]:
+        cmd = f'rm /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "READ_DATA":
+        cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_DATA":
+        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_ATTRIBUTES":
+        cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "READ_ACL":
+        cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_ACL":
+        cmd = f'setfacl -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_OWNER":
+        cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    else:
+        # This should never happen.
+        cmd = "touch /var/empty/ERROR"
+
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+    assert results['result'] is True, errstr
+    if perm in ["DELETE", "DELETE_CHILD"]:
+        # unfortunately, we now need to recreate our testfile.
+        cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+
+        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+
+
+@pytest.mark.parametrize('perm', IMPLEMENTED_ALLOW)
+def test_25_test_acl_function_omit(perm, request):
+    """
+    Iterate through available permissions and add permissions
+    required for an explicit ALLOW of that ACE from the previous
+    test to succeed. This sets the stage to have success hinge
+    on presence of the particular permissions bit. Then we omit
+    it. This should result in a failure.
+    """
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+
+    """
+    Some extra permissions bits must be set for these tests
+    EXECUTE so that we can traverse to the path in question
+    and READ_ATTRIBUTES because most of the utilites we use
+    for testing have to stat(2) the files.
+    """
+    to_allow = {}
+    if perm != "EXECUTE":
+        to_allow["EXECUTE"] = True
+
+    if perm != "READ_ATTRIBUTES":
+        to_allow["READ_ATTRIBUTES"] = True
+
+    if perm == "WRITE_ACL":
+        to_allow["READ_ACL"] = True
+
+    payload_acl = [{
+        "tag": "USER",
+        "id": next_uid,
+        "type": "ALLOW",
+        "perms": to_allow,
+        "flags": {"BASIC": "INHERIT"}
+    }]
+    payload_acl.extend(function_testing_acl_allow)
+    result = POST(
+        f'/pool/dataset/id/{dataset_url}/permission/', {
+            'acl': payload_acl,
+            'group': 'nobody',
+            'user': 'root',
+            'options': {'recursive': True},
+        }
+    )
+    assert result.status_code == 200, result.text
+    JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != 'SUCCESS':
+        return
+
+    if perm == "EXECUTE":
+        cmd = f'cd /mnt/{ACLTEST_DATASET}'
+
+    elif perm == "READ_ATTRIBUTES":
+        cmd = f'stat /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm in ["DELETE", "DELETE_CHILD", "FULL_DELETE"]:
+        cmd = f'rm /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "READ_DATA":
+        cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_DATA":
+        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_ATTRIBUTES":
+        cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "READ_ACL":
+        cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_ACL":
+        cmd = f'setfacl -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    elif perm == "WRITE_OWNER":
+        cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
+
+    else:
+        # This should never happen.
+        cmd = "touch /var/empty/ERROR"
+
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+    assert results['result'] is False, errstr
+
+
+def test_29_deleting_homedir_user(request):
+    depends(request, ["ACL_USER_CREATED"])
+    results = DELETE(f"/user/id/{acluser_id}/", {"delete_group": True})
+    assert results.status_code == 200, results.text
+
+
+def test_30_delete_dataset():
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )
