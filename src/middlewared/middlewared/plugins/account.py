@@ -384,7 +384,7 @@ class UserService(CRUDService):
         # Do not allow attributes to be changed for builtin user
         if user['builtin']:
             for i in ('group', 'home', 'home_mode', 'uid', 'username', 'smb'):
-                if i in data:
+                if i in data and data[i] != user[i]:
                     verrors.add(f'user_update.{i}', 'This attribute cannot be changed')
 
         if not user['smb'] and data.get('smb') and not data.get('password'):
