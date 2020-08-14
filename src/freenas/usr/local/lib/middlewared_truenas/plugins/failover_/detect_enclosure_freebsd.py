@@ -17,38 +17,33 @@ class EnclosureDetectionService(Service):
     def detect(self):
 
         # First check if this is a BHYVE HA instance
-        manufacturer = subprocess.run(
-            ['dmidecode', '-s', 'system-product-name'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        manufacturer = self.middleware.call_sync(
+            'system.dmidecode_info'
+        )['system-product-name']
 
-        if manufacturer.stdout:
-            manufacturer = manufacturer.stdout.strip()
+        if manufacturer == 'BHYVE':
+            devlist = subprocess.run(
+                ['/sbin/camcontrol', 'devlist'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
 
-            if manufacturer == b'BHYVE':
-                devlist = subprocess.run(
-                    ['/sbin/camcontrol', 'devlist'],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
+            if devlist.stdout:
+                devlist = devlist.stdout.decode(errors='ignore', encoding='utf8').strip()
 
-                if devlist.stdout:
-                    devlist = devlist.stdout.decode(errors='ignore', encoding='utf8').strip()
+                # We only return BHYVE as the type of hardware
+                # when this is specifically being run on a
+                # BHYVE HA instance that iXsystems uses internally.
+                ids = ['TrueNAS_A', 'TrueNAS_B']
+                if any(x in devlist for x in ids):
+                    self.HARDWARE = manufacturer
 
-                    # We only return BHYVE as the type of hardware
-                    # when this is specifically being run on a
-                    # BHYVE HA instance that iXsystems uses internally.
-                    ids = ['TrueNAS_A', 'TrueNAS_B']
-                    if any(x in devlist for x in ids):
-                        self.HARDWARE = 'BHYVE'
+                    if 'TrueNAS_A' in devlist:
+                        self.NODE = 'A'
+                    elif 'TrueNAS_B' in devlist:
+                        self.NODE = 'B'
 
-                        if 'TrueNAS_A' in devlist:
-                            self.NODE = 'A'
-                        elif 'TrueNAS_B' in devlist:
-                            self.NODE = 'B'
-
-                        return self.HARDWARE, self.NODE
+                    return self.HARDWARE, self.NODE
 
         # We're not BHYVE if we get here so identify the
         # hardware platform accordingly.
