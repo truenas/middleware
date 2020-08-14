@@ -450,6 +450,10 @@ class SystemService(Service):
 
         return self.__product_type
 
+    @private
+    async def is_enterprise(self):
+        return await self.middleware.call('system.product_type') in ['ENTERPRISE', 'SCALE_ENTERPRISE']
+
     @no_auth_required
     @accepts()
     async def product_name(self):
