@@ -1,4 +1,5 @@
 import asyncio
+from collections import deque
 import contextlib
 import enum
 import errno
@@ -407,6 +408,14 @@ class PoolService(CRUDService):
                     disk = self.middleware.call_sync('disk.label_to_disk', *args)
                 x['device'] = device
                 x['disk'] = disk
+
+            guid = x.get('guid')
+            if guid is not None:
+                unavail_disk = None
+                if x.get('status') == 'UNAVAIL':
+                    unavail_disk = self.middleware.call_sync('disk.disk_by_zfs_guid', guid)
+                x['unavail_disk'] = unavail_disk
+
             for key in x:
                 if key == 'type' and isinstance(x[key], str):
                     x[key] = x[key].upper()
@@ -416,6 +425,16 @@ class PoolService(CRUDService):
             for i, entry in enumerate(x):
                 x[i] = self._topology(x[i], {'geom_scan': False})
         return x
+
+    @private
+    def flatten_topology(self, topology):
+        d = deque(sum(topology.values(), []))
+        result = []
+        while d:
+            vdev = d.popleft()
+            result.append(vdev)
+            d.extend(vdev["children"])
+        return result
 
     @private
     def pool_extend(self, pool):
