@@ -125,7 +125,6 @@ function_testing_acl_allow = [
     }
 ]
 
-
 ACL_USER = "acltesting"
 ACL_PWD = "acltesting"
 
@@ -528,7 +527,6 @@ def test_21_creating_shareuser_to_test_acls():
         "username": ACL_USER,
         "full_name": "ACL User",
         "group_create": True,
-        "groups": [1],
         "password": ACL_PWD,
         "uid": next_uid,
         "shell": "/bin/csh"}
@@ -789,6 +787,7 @@ def test_25_test_acl_function_omit(perm, request):
         "perms": to_allow,
         "flags": {"BASIC": "INHERIT"}
     }]
+
     payload_acl.extend(function_testing_acl_allow)
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
@@ -838,6 +837,270 @@ def test_25_test_acl_function_omit(perm, request):
 
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+    assert results['result'] is False, errstr
+
+
+@pytest.mark.parametrize('perm', IMPLEMENTED_ALLOW)
+def test_25_test_acl_function_allow_restrict(perm, request):
+    """
+    Iterate through implemented allow permissions and verify that
+    they grant no more permissions than intended. Some bits cannot
+    be tested in isolation effectively using built in utilities.
+    """
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+
+    """
+    Some extra permissions bits must be set for these tests
+    EXECUTE so that we can traverse to the path in question
+    and READ_ATTRIBUTES because most of the utilites we use
+    for testing have to stat(2) the files.
+    """
+    to_allow = {}
+    tests_to_skip = []
+    tests_to_skip.append(perm)
+
+    if perm != "EXECUTE":
+        to_allow["EXECUTE"] = True
+        tests_to_skip.append("EXECUTE")
+
+    if perm != "READ_ATTRIBUTES":
+        to_allow["READ_ATTRIBUTES"] = True
+        tests_to_skip.append("READ_ATTRIBUTES")
+
+    if perm == "DELETE_CHILD":
+        tests_to_skip.append("DELETE")
+
+    payload_acl = [{
+        "tag": "USER",
+        "id": next_uid,
+        "type": "ALLOW",
+        "perms": to_allow,
+        "flags": {"BASIC": "INHERIT"}
+    }]
+    payload_acl.extend(function_testing_acl_allow)
+    result = POST(
+        f'/pool/dataset/id/{dataset_url}/permission/', {
+            'acl': payload_acl,
+            'group': 'nobody',
+            'user': 'root',
+            'options': {'recursive': True},
+        }
+    )
+    assert result.status_code == 200, result.text
+    JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != 'SUCCESS':
+        return
+
+    if "EXECUTE" not in tests_to_skip:
+        cmd = f'cd /mnt/{ACLTEST_DATASET}'
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+        assert results['result'] is False, errstr
+
+    if "DELETE" not in tests_to_skip:
+        cmd = f'rm /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+        assert results['result'] is False, errstr
+        if results['result'] is True:
+            # File must be re-created. Kernel ACL inheritance routine
+            # will ensure that new file has right ACL.
+            cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
+            results = SSH_TEST(cmd, user, password, ip)
+            assert results['result'] is True, results['output']
+
+            cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
+            results = SSH_TEST(cmd, user, password, ip)
+            assert results['result'] is True, results['output']
+
+    if "READ_DATA" not in tests_to_skip:
+        cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+        assert results['result'] is False, errstr
+
+    if "WRITE_DATA" not in tests_to_skip:
+        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+        assert results['result'] is False, errstr
+
+    if "WRITE_ATTRIBUTES" not in tests_to_skip:
+        cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+        assert results['result'] is False, errstr
+
+    if "READ_ACL" not in tests_to_skip:
+        cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+        assert results['result'] is False, errstr
+
+    if "WRITE_ACL" not in tests_to_skip:
+        cmd = f'setfacl -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+        assert results['result'] is False, errstr
+
+    if "WRITE_OWNER" not in tests_to_skip:
+        cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
+        assert results['result'] is False, errstr
+
+
+def test_26_file_execute_deny(request):
+    """
+    Base permset with everyone@ FULL_CONTROL, but ace added on
+    top explictly denying EXECUTE. Attempt to execute file should fail.
+    """
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    payload_acl = [
+        {
+            "tag": "USER",
+            "id": next_uid,
+            "type": "DENY",
+            "perms": {"EXECUTE": True},
+            "flags": {"FILE_INHERIT": True}
+        },
+        {
+            "tag": "USER",
+            "id": next_uid,
+            "type": "ALLOW",
+            "perms": {"EXECUTE": True},
+            "flags": {"BASIC": "NOINHERIT"}
+        },
+    ]
+    payload_acl.extend(function_testing_acl_deny)
+    result = POST(
+        f'/pool/dataset/id/{dataset_url}/permission/', {
+            'acl': payload_acl,
+            'group': 'wheel',
+            'user': 'root',
+            'options': {'recursive': True},
+        }
+    )
+    assert result.status_code == 200, result.text
+    JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != 'SUCCESS':
+        return
+
+    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {payload_acl}'
+    assert results['result'] is False, errstr
+
+
+def test_27_file_execute_allow(request):
+    """
+    Verify that setting execute allows file execution. READ_DATA and
+    READ_ATTRIBUTES are also granted beecause we need to be able to
+    stat and read our test script.
+    """
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    payload_acl = [
+        {
+            "tag": "USER",
+            "id": next_uid,
+            "type": "ALLOW",
+            "perms": {
+                "EXECUTE": True,
+                "READ_DATA": True,
+                "READ_ATTRIBUTES": True
+            },
+            "flags": {"FILE_INHERIT": True}
+        },
+        {
+            "tag": "USER",
+            "id": next_uid,
+            "type": "ALLOW",
+            "perms": {"EXECUTE": True},
+            "flags": {"BASIC": "NOINHERIT"}
+        },
+    ]
+    payload_acl.extend(function_testing_acl_allow)
+    result = POST(
+        f'/pool/dataset/id/{dataset_url}/permission/', {
+            'acl': payload_acl,
+            'group': 'wheel',
+            'user': 'root',
+            'options': {'recursive': True},
+        }
+    )
+    assert result.status_code == 200, result.text
+    JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != 'SUCCESS':
+        return
+
+    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {payload_acl}'
+    assert results['result'] is True, errstr
+
+
+def test_28_file_execute_omit(request):
+    """
+    Grant user all permissions except EXECUTE. Attempt to execute
+    file should fail.
+    """
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    payload_acl = [
+        {
+            "tag": "USER",
+            "id": next_uid,
+            "type": "ALLOW",
+            "perms": base_permset.copy(),
+            "flags": {"FILE_INHERIT": True}
+        },
+        {
+            "tag": "USER",
+            "id": next_uid,
+            "type": "ALLOW",
+            "perms": {"EXECUTE": True},
+            "flags": {"BASIC": "NOINHERIT"}
+        },
+    ]
+    payload_acl.extend(function_testing_acl_allow)
+    # at this point the user's ACE has all perms set
+    # remove execute.
+    payload_acl[0]['perms']['EXECUTE'] = False
+    result = POST(
+        f'/pool/dataset/id/{dataset_url}/permission/', {
+            'acl': payload_acl,
+            'group': 'wheel',
+            'user': 'root',
+            'options': {'recursive': True},
+        }
+    )
+    assert result.status_code == 200, result.text
+    JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != 'SUCCESS':
+        return
+
+    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+    cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {payload_acl}'
     assert results['result'] is False, errstr
 
 
