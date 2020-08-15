@@ -196,7 +196,7 @@ class EtcService(Service):
         ],
         'keepalived': [
             {
-                'type': 'py',
+                'type': 'mako',
                 'path': 'keepalived/keepalived.conf',
                 'local_path': 'keepalived.conf.mako',
                 'platform': 'Linux',
