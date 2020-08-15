@@ -1140,7 +1140,7 @@ def test_29_deleting_homedir_user(request):
     assert results.status_code == 200, results.text
 
 
-deftest_30_delete_dataset(request):
+def test_30_delete_dataset(request):
     depends(request, ["pool_04"], scope="session")
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
