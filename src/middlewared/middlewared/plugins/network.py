@@ -207,6 +207,7 @@ class NetworkConfigurationService(ConfigService):
         """
         config = await self.config()
         new_config = config.copy()
+        is_ha = True
 
         if not (
                 not await self.middleware.call('system.is_freenas') and
@@ -214,11 +215,19 @@ class NetworkConfigurationService(ConfigService):
         ):
             for key in ['hostname_virtual', 'hostname_b']:
                 data.pop(key, None)
+            is_ha = False
 
         new_config.update(data)
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
-        if verrors:
-            raise verrors
+        if is_ha and config['hostname_virtual'] != new_config['hostname_virtual']:
+            ad_enabled = await self.middleware.call('activedirectory.get_state') != "DISABLED"
+            if ad_enabled:
+                verrors.add('global_confiugration_update.hostname_virtual',
+                            'This parameter may not be changed after joining Active Directory (AD). '
+                            'If it must be changed, the proper procedure is to leave the AD domain '
+                            'and then alter the parameter before re-joining the domain.')
+
+        verrors.check()
 
         new_config['domains'] = ' '.join(new_config.get('domains', []))
         new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))

@@ -594,6 +594,15 @@ class SMBService(SystemServiceService):
         new.update(data)
 
         verrors = ValidationErrors()
+        ad_enabled = (await self.middleware.call('activedirectory.get_state') != "DISABLED")
+        if ad_enabled:
+            for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
+                if old[i] != new[i]:
+                    verrors.add(f'smb_update.{i}',
+                                'This parameter may not be changed after joining Active Directory (AD). '
+                                'If it must be changed, the proper procedure is to leave the AD domain '
+                                'and then alter the parameter before re-joining the domain.')
+
         await self.validate_smb(new, verrors)
         verrors.check()
 
