@@ -5,7 +5,7 @@ class VolumeStatusAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.CRITICAL
     title = "Pool Status Is Not Healthy"
-    text = "Pool %(volume)s state is %(state)s: %(status)s."
+    text = "Pool %(volume)s state is %(state)s: %(status)s%(devices)s"
 
     hardware = True
 
@@ -20,12 +20,25 @@ class VolumeStatusAlertSource(AlertSource):
             if not pool["is_decrypted"]:
                 continue
 
-            if not pool['healthy']:
-                if not (await self.middleware.call("system.is_freenas")):
+            if not pool["healthy"]:
+                if await self.middleware.call("system.is_enterprise"):
                     try:
                         await self.middleware.call("enclosure.sync_zpool", pool["name"])
                     except Exception:
                         pass
+
+                bad_vdevs = []
+                for vdev in await self.middleware.call("pool.flatten_topology", pool["topology"]):
+                    if vdev["type"] == "DISK" and vdev["status"] != "ONLINE":
+                        name = vdev["guid"]
+                        if vdev.get("unavail_disk"):
+                            name = f'{vdev["unavail_disk"]["model"]} {vdev["unavail_disk"]["serial"]}'
+                        bad_vdevs.append(f"Disk {name} is {vdev['status']}")
+                if bad_vdevs:
+                    devices = (f"<br>The following devices are not healthy:"
+                               f"<ul><li>{'</li><li>'.join(bad_vdevs)}</li></ul>")
+                else:
+                    devices = ""
 
                 alerts.append(Alert(
                     VolumeStatusAlertClass,
@@ -33,13 +46,14 @@ class VolumeStatusAlertSource(AlertSource):
                         "volume": pool["name"],
                         "state": pool["status"],
                         "status": pool["status_detail"],
+                        "devices": devices,
                     }
                 ))
 
         return alerts
 
     async def enabled(self):
-        if not (await self.middleware.call("system.is_freenas")):
+        if await self.middleware.call("system.is_enterprise"):
             status = await self.middleware.call("failover.status")
             return status in ("MASTER", "SINGLE")
 
