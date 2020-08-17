@@ -570,8 +570,7 @@ class FilesystemService(Service):
         if mode:
             os.chmod(data['path'], mode)
 
-        if uid or gid:
-            os.chown(data['path'], uid, gid)
+        os.chown(data['path'], uid, gid)
 
         if not options['recursive']:
             job.set_progress(100, 'Finished setting permissions.')
