@@ -3304,13 +3304,13 @@ class PoolDatasetService(CRUDService):
         pjob = None
 
         verrors = ValidationErrors()
-        if user:
+        if user is not None:
             try:
                 uid = (await self.middleware.call('dscache.get_uncached_user', user))['pw_uid']
             except Exception as e:
                 verrors.add('pool_dataset_permission.user', str(e))
 
-        if group:
+        if group is not None:
             try:
                 gid = (await self.middleware.call('dscache.get_uncached_group', group))['gr_gid']
             except Exception as e:
