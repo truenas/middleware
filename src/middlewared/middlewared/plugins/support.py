@@ -124,6 +124,8 @@ class SupportService(ConfigService):
         Returns a dict with the category name as a key and id as value.
         """
 
+        self.middleware.call_sync('network.general.will_perform_activity', 'support')
+
         sw_name = 'freenas' if self.middleware.call_sync('system.is_freenas') else 'truenas'
         try:
             r = requests.post(
@@ -175,6 +177,8 @@ class SupportService(ConfigService):
         For FreeNAS `criticality`, `environment`, `phone`, `name` and `email` attributes are not required.
         For TrueNAS `username`, `password` and `type` attributes are not required.
         """
+
+        await self.middleware.call('network.general.will_perform_activity', 'support')
 
         job.set_progress(1, 'Gathering data')
 
@@ -306,6 +310,8 @@ class SupportService(ConfigService):
         Method to attach a file to a existing ticket.
         """
 
+        await self.middleware.call('network.general.will_perform_activity', 'support')
+
         sw_name = 'freenas' if await self.middleware.call('system.is_freenas') else 'truenas'
 
         if 'username' in data:
@@ -331,3 +337,7 @@ class SupportService(ConfigService):
 
         if data['error']:
             raise CallError(data['message'], errno.EINVAL)
+
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'support', 'Support')

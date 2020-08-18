@@ -114,6 +114,9 @@ class UpdateService(Service):
         Returns available trains dict and the currently configured train as well as the
         train of currently booted environment.
         """
+
+        self.middleware.call_sync('network.general.will_perform_activity', 'update')
+
         data = self.middleware.call_sync('datastore.config', 'system.update')
 
         trains_data = self.middleware.call_sync('update.get_trains_data')
@@ -316,6 +319,7 @@ class UpdateService(Service):
 
     @private
     async def download_update(self, *args):
+        await self.middleware.call('network.general.will_perform_activity', 'update')
         success = await self.middleware.call('update.download_impl', *args)
         await self.middleware.call('alert.alert_source_clear_run', 'HasUpdate')
         return success
@@ -429,3 +433,7 @@ class UpdateService(Service):
         current_version = "-".join(self.middleware.call_sync("system.info")["version"].split("-")[1:])
         snapshot = f'update--{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}--{current_version}'
         subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
+
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'update', 'Update')

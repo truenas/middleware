@@ -22,7 +22,10 @@ class UsageService(Service):
     async def start(self):
         retries = self.FAILED_RETRIES
         while retries:
-            if not (await self.middleware.call('system.general.config'))['usage_collection']:
+            if not (
+                (await self.middleware.call('system.general.config'))['usage_collection'] and
+                await self.middleware.call('network.general.can_perform_activity', 'usage')
+            ):
                 break
 
             try:
@@ -504,6 +507,7 @@ async def setup(middleware):
     now = datetime.utcnow()
     event_loop = asyncio.get_event_loop()
 
+    await middleware.call('network.general.register_activity', 'usage', 'Anonymous usage statistics')
     event_loop.call_at(
         random.uniform(1, (
             now.replace(hour=23, minute=59, second=59) - now

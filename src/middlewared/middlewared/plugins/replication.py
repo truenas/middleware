@@ -806,6 +806,7 @@ async def on_zettarepl_state_changed(middleware, id, fields):
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', ReplicationFSAttachmentDelegate(middleware))
+    await middleware.call('network.general.register_activity', 'replication', 'Replication')
 
     middleware.event_register('replication.query', 'Replication task state')
     middleware.register_hook('zettarepl.state_change', on_zettarepl_state_changed)

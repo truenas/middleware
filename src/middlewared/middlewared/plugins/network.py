@@ -13,6 +13,7 @@ from collections import defaultdict
 import contextlib
 import ipaddress
 import itertools
+import json
 import os
 import platform
 import re
@@ -55,6 +56,7 @@ class NetworkConfigurationModel(sa.Model):
     gc_domains = sa.Column(sa.Text(), default='')
     gc_service_announcement = sa.Column(sa.JSON(type=dict), default={'mdns': True, 'wsdd': True, "netbios": False})
     gc_hostname_virtual = sa.Column(sa.String(120), nullable=True)
+    gc_activity = sa.Column(sa.JSON(type=dict))
 
 
 class NetworkConfigurationService(ConfigService):
@@ -179,6 +181,10 @@ class NetworkConfigurationService(ConfigService):
             Bool('netwait_enabled'),
             List('netwait_ip', items=[Str('netwait_ip')]),
             Str('hosts'),
+            Dict('activity',
+                 Str('type', enum=['ALLOW', 'DENY'], required=True),
+                 List('activities', items=[Str('activity')], required=True),
+                 strict=True),
             update=True
         )
     )
@@ -244,20 +250,17 @@ class NetworkConfigurationService(ConfigService):
         new_config['domains'] = new_config['domains'].split()
         new_config['netwait_ip'] = new_config['netwait_ip'].split()
 
-        netwait_ip_set = set(new_config.pop('netwait_ip', []))
-        old_netwait_ip_set = set(config.pop('netwait_ip', []))
-        old_service_announcement = config.pop('service_announcement')
-        data_changed = netwait_ip_set != old_netwait_ip_set
+        def set_(data):
+            data = dict(
+                data,
+                domains=json.dumps(sorted(list(set('domains'))), sort_keys=True),
+                service_announcement=None,
+                netwait_ip=json.dumps(sorted(list(set('netwait_ip'))), sort_keys=True),
+                activity=json.dumps(data['activity'], sort_keys=True),
+            )
+            return set(data.items())
 
-        if not data_changed:
-            domains_set = set(new_config.pop('domains', []))
-            old_domains_set = set(config.pop('domains', []))
-            data_changed = domains_set != old_domains_set
-
-        if (
-                data_changed or
-                len(set(new_config.items()) ^ set(config.items())) > 0
-        ):
+        if len(set_(new_config) ^ set_(config)) > 0:
             services_to_reload = ['hostname']
             if (
                     new_config['domain'] != config['domain'] or
@@ -297,8 +300,11 @@ class NetworkConfigurationService(ConfigService):
                     {'data': {'httpproxy': new_config['httpproxy']}}
                 )
 
+            if new_config['activity'] != config['activity']:
+                await self.middleware.call('zettarepl.update_tasks')
+
         for srv, enabled in service_announcement.items():
-            if enabled != old_service_announcement[srv]:
+            if enabled != config['service_announcement'][srv]:
                 await self.middleware.call(
                     "service.start" if enabled else "service.stop", ANNOUNCE_SRV[srv]
                 )

@@ -884,6 +884,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 'alert',
                 # Migrate users and groups ASAP
                 'account',
+                # Replication plugin needs to be initialized before zettarepl in order to register network activity
+                'replication',
             ]
             try:
                 return beginning.index(plugin)

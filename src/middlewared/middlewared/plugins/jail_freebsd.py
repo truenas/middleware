@@ -237,6 +237,7 @@ class PluginService(CRUDService):
         `branch` is the FreeNAS repository branch to use as the base for the `plugin_repository`. The default is to
         use the current system version. Example: 11.3-RELEASE.
         """
+        self.middleware.call_sync('network.general.will_perform_activity', 'jail')
         data['plugin_repository'] = data.get('plugin_repository') or self.default_repo()
         self.middleware.call_sync('jail.check_dataset_existence')
         verrors = ValidationErrors()
@@ -360,6 +361,7 @@ class PluginService(CRUDService):
         """
         List available plugins which can be fetched for `plugin_repository`.
         """
+        self.middleware.call_sync('network.general.will_perform_activity', 'jail')
         default_branch = self.get_version()
         default_repo = self.default_repo()
         options['branch'] = options.get('branch') or default_branch
@@ -479,6 +481,7 @@ class PluginService(CRUDService):
     @private
     @job(lock='plugin_versions')
     def retrieve_plugin_versions(self, job, plugins):
+        self.middleware.call_sync('network.general.will_perform_activity', 'jail')
         return IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins)
 
     @private
@@ -1087,6 +1090,7 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
+        self.middleware.call_sync('network.general.will_perform_activity', 'jail')
         release = options.get('release', None)
         https = options.pop('https', False)
         name = options.pop('name')
@@ -1716,6 +1720,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', JailFSAttachmentDelegate(middleware))
+    await middleware.call('network.general.register_activity', 'jail', 'Plugin registry')
     middleware.register_hook('pool.pre_lock', jail_pool_pre_lock)
     middleware.event_subscribe('system', __event_system)
     ioc_common.set_interactive(False)
