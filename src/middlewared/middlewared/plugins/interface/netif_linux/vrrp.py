@@ -10,7 +10,13 @@ class VrrpMixin:
     @property
     def vrrp_config(self):
 
-        return self.data
+        try:
+            return self.data
+        except AttributeError:
+            # Interface class doesn't initialize
+            # this class on inheritance so return None
+            # until this attribute is explicitly configured
+            return None
 
     @vrrp_config.setter
     def vrrp_config(self, data):

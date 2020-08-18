@@ -25,9 +25,6 @@ class VrrpService(Service):
 
         # if there are no VIPs then there is no reason to continue
         if not configured_vips:
-            self.logger.warning(
-                'No VIPs have been configured for %s.', ifname
-            )
             return
 
         # need to check aliases (if any)
@@ -69,16 +66,14 @@ class VrrpService(Service):
         ]
 
         addrs = []
-        addr = {
-            'address': None,
-            'state': None,
-        }
         # check if the configured VIP is on the interface
         for i in configured_vips:
             if i in iface_addrs:
+                addr = {}
                 addr['address'] = i
                 addr['state'] = 'MASTER'
             else:
+                addr = {}
                 addr['state'] = 'BACKUP'
 
             addrs.append(addr)
