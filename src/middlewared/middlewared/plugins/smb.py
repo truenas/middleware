@@ -409,8 +409,12 @@ class SMBService(SystemServiceService):
 
         # Following hack will be removed once we make our own samba package
         if osc.IS_LINUX:
-            os.remove("/etc/samba/smb.conf")
-            os.symlink("/etc/smb4.conf", "etc/samba/smb.conf")
+            try:
+                os.remove("/etc/samba/smb.conf")
+            except FileNotFoundError:
+                pass
+
+            os.symlink("/etc/smb4.conf", "/etc/samba/smb.conf")
 
         """
         Many samba-related tools will fail if they are unable to initialize
