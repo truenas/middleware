@@ -110,7 +110,7 @@ def generate_ha_syslog(middleware):
 
     os.makedirs("/root/syslog", mode=0o755, exist_ok=True)
 
-    with open("/etc/local/syslog-ng.conf") as f:
+    with open(SYSLOG_NG_CONF) as f:
         syslog_conf = f.read()
 
     syslog_conf += textwrap.dedent(f"""\
