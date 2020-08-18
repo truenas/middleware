@@ -149,7 +149,7 @@ cfg_file.close()
 
 call(
     [
-        f"py.test-{version}",
+        f"pytest-{version}",
         "-v",
         "--junitxml",
         'results/api_v2_tests_result.xml',
