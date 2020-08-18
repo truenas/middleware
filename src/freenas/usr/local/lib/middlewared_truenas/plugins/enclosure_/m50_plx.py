@@ -16,7 +16,7 @@ class EnclosureService(Service):
     @private
     def m50_plx_enclosures(self):
         system_product = self.middleware.call_sync("system.info")["system_product"]
-        if not ("TRUENAS-M50" in system_product or "TRUENAS-M60" in system_product):
+        if system_product is None or not ("TRUENAS-M50" in system_product or "TRUENAS-M60" in system_product):
             return []
 
         nvme_to_nvd = {}
