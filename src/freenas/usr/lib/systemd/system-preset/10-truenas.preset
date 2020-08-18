@@ -38,6 +38,8 @@ disable kubelet*
 disable openvpn*
 disable nvidia-*
 disable libvirt*
+disable k3s*
+disable cni*
 
 # We want middlewared to import pools
 disable zfs-mount.service
