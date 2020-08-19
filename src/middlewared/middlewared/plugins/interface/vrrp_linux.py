@@ -9,7 +9,7 @@ class VrrpService(Service):
 
     class Config:
         private = True
-        namespace_aliases = 'interfaces'
+        namespace_alias = 'interfaces'
 
     def vrrp_config(self, ifname):
 

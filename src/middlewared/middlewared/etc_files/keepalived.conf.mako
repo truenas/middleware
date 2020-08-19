@@ -35,11 +35,11 @@ global_defs {
 }
 % for i in info:
 vrrp_instance ${i['id']} {
-    interface ${['id']}
+    interface ${i['id']}
     state BACKUP
     % for j in advert_int:
     advert_int ${j}
-    $ endfor
+    % endfor
     nopreempt
     virtual_router_id 20
     priority 254
@@ -49,7 +49,7 @@ vrrp_instance ${i['id']} {
         ${j['address']}
     % endfor
     }
-    virtual_address {
+    virtual_ipaddress {
     % for j in i['failover_virtual_aliases']:
         ${j['address']}
     % endfor
