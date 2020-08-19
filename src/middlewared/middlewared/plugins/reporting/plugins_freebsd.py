@@ -188,12 +188,21 @@ class DiskGeomQueuePlugin(GeomStatBase, RRDBase):
 class NFSStatPlugin(RRDBase):
 
     plugin = 'nfsstat-server'
-    title = 'NFS Stats'
-    vertical_label = 'Bytes'
+    title = 'NFS Stats (Operations)'
+    vertical_label = 'Operations/s'
     rrd_types = (
         ('nfsstat-read', 'value', None),
-        ('nfsstat-read_bytes', 'value', None),
         ('nfsstat-write', 'value', None),
+    )
+
+
+class NFSStatBytesPlugin(RRDBase):
+
+    plugin = 'nfsstat-server'
+    title = 'NFS Stats (Bytes)'
+    vertical_label = 'Bytes/s'
+    rrd_types = (
+        ('nfsstat-read_bytes', 'value', None),
         ('nfsstat-write_bytes', 'value', None),
     )
 
