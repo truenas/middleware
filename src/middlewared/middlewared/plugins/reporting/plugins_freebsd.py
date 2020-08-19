@@ -192,7 +192,9 @@ class NFSStatPlugin(RRDBase):
     vertical_label = 'Bytes'
     rrd_types = (
         ('nfsstat-read', 'value', None),
+        ('nfsstat-read_bytes', 'value', None),
         ('nfsstat-write', 'value', None),
+        ('nfsstat-write_bytes', 'value', None),
     )
 
 
