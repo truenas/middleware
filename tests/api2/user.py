@@ -32,6 +32,30 @@ home_files = {
     "~/.ssh/authorized_keys": "0o100600",
 }
 
+home_acl = [
+    {
+        "tag": "owner@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "group@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "everyone@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "TRAVERSE"},
+        "flags": {"BASIC": "NOINHERIT"}
+    },
+]
+
 
 def test_01_get_next_uid():
     results = GET('/user/get_next_uid/')
@@ -244,6 +268,16 @@ def test_30_creating_home_dataset():
     }
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
+
+    results = POST(
+        f'/pool/dataset/id/{dataset_url}/permission/', {
+            'acl': home_acl,
+        }
+    )
+    assert results.status_code == 200, results.text
+    perm_job = results.json()
+    job_status = wait_on_job(perm_job, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @pytest.mark.dependency(name="USER_CREATED")
