@@ -292,7 +292,7 @@ def test_23_creating_a_smb_share_on_smb_path(request):
     smb_id = results.json()['id']
 
 
-@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "vfsobjects"])
+@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok"])
 def test_24_verify_the_value_of_the_created_sharing_smb_object_(request, data):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     assert results.json()[data] == payload[data], results.text
@@ -305,7 +305,7 @@ def test_25_get_sharing_smb_from_id(request):
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "vfsobjects"])
+@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok"])
 def test_26_verify_the_value_of_get_sharing_smb_object_(request, data):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     assert results.json()[data] == payload[data], results.text
