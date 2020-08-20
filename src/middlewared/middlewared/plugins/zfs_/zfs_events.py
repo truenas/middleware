@@ -1,6 +1,8 @@
 import asyncio
+from collections import defaultdict
 import libzfs
 import threading
+import time
 
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
@@ -115,6 +117,8 @@ async def devd_zfs_hook(middleware, data):
     ):
         asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
 
+deadman_throttle = defaultdict(list)
+
 
 async def zfs_events(middleware, data):
     event_id = data['class']
@@ -128,10 +132,19 @@ async def zfs_events(middleware, data):
     if event_id == 'sysevent.fs.zfs.scrub_finish':
         await scrub_finished(middleware, data.get('pool'))
     elif event_id == 'ereport.fs.zfs.deadman':
-        asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
-            'vdev': data.get('vdev_path', '<unknown>'),
-            'pool': data.get('pool', '<unknown>'),
-        }))
+        vdev = data.get('vdev_path', '<unknown>')
+        pool = data.get('pool', '<unknown>')
+        now = time.monotonic()
+        interval = 300
+        max_items = 5
+        deadman_throttle[pool] = list(filter(lambda t: t > now - interval, deadman_throttle[pool]))
+        if len(deadman_throttle[pool]) < max_items:
+            asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
+                'vdev': vdev,
+                'pool': pool,
+            }))
+        deadman_throttle[pool].append(now)
+        deadman_throttle[pool] = deadman_throttle[pool][-max_items:]
     elif event_id == 'resource.fs.zfs.statechange':
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
     elif event_id in (
