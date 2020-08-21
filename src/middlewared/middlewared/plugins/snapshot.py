@@ -95,11 +95,13 @@ class PeriodicSnapshotTaskService(CRUDService):
         """
         Create a Periodic Snapshot Task
 
-        Create a Periodic Snapshot Task that will take snapshots of specified `dataset` at specified `schedule`.
+        Create a Periodic Snapshot Task that will take snapshots of specified `dataset` or `zvol` at specified `schedule`.
         Recursive snapshots can be created if `recursive` flag is enabled. You can `exclude` specific child datasets
-        from snapshot.
+        or zvols from the snapshot.
         Snapshots will be automatically destroyed after a certain amount of time, specified by
         `lifetime_value` and `lifetime_unit`.
+        If multiple periodic tasks create snapshots at the same time (for example hourly and daily at 00:00) the snapshot
+        will be kept until the last of these tasks reaches its expiry time. 
         Snapshots will be named according to `naming_schema` which is a `strftime`-like template for snapshot name
         and must contain `%Y`, `%m`, `%d`, `%H` and `%M`.
 
@@ -302,14 +304,14 @@ class PeriodicSnapshotTaskService(CRUDService):
         if not data['recursive'] and data['exclude']:
             verrors.add(
                 'exclude',
-                'Excluding datasets is not necessary for non-recursive periodic snapshot tasks'
+                'Excluding datasets or zvols is not necessary for non-recursive periodic snapshot tasks'
             )
 
         for i, v in enumerate(data['exclude']):
             if not v.startswith(f'{data["dataset"]}/'):
                 verrors.add(
                     f'exclude.{i}',
-                    'Excluded dataset should be a child of selected dataset'
+                    'Excluded dataset or zvol should be a child or other descendant of selected dataset'
                 )
 
         return verrors
