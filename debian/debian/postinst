@@ -20,6 +20,11 @@ systemctl disable nvidia-persistenced
 
 # Update alternatives
 update-alternatives --install "/usr/sbin/sendmail" sendmail "/etc/find_alias_for_smtplib.sh" "10"
+# We will be using legacy iptables until k3s introduces fixes upstream to properly handle iptables
+update-alternatives --set iptables /usr/sbin/iptables-legacy
+update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+update-alternatives --set arptables /usr/sbin/arptables-legacy
+update-alternatives --set ebtables /usr/sbin/ebtables-legacy
 
 # Copy to /conf/base
 for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf /var/log; do
