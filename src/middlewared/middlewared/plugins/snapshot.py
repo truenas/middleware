@@ -294,13 +294,13 @@ class PeriodicSnapshotTaskService(CRUDService):
         if data['dataset'] not in (await self.middleware.call('pool.filesystem_choices')):
             verrors.add(
                 'dataset',
-                'Invalid ZFS dataset'
+                'ZFS dataset or zvol not found'
             )
 
         if not data['recursive'] and data['exclude']:
             verrors.add(
                 'exclude',
-                'Excluding datasets has no sense for non-recursive periodic snapshot tasks'
+                'Excluding datasets is not necessary for non-recursive periodic snapshot tasks'
             )
 
         for i, v in enumerate(data['exclude']):
