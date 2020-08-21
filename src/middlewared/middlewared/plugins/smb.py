@@ -114,6 +114,7 @@ class SMBSharePreset(enum.Enum):
     }}
     ENHANCED_TIMEMACHINE = {"verbose_name": "Multi-user time machine", "params": {
         'path_suffix': '%U',
+        'timemachine': True,
         'auxsmbconf': '\n'.join([
             'ixnas:zfs_auto_homedir=true',
             'ixnas:default_user_quota=1T',
