@@ -10,7 +10,9 @@ RE_IS_NOT_A_NATIVE_SERVICE = re.compile(r"(.+)\.service is not a native service,
 async def render(service, middleware):
     services = []
     services_enabled = {}
-    for service in await middleware.call("datastore.query", "services.services", [], {"prefix": "srv_"}):
+    for service in await middleware.call(
+        "datastore.query", "services.services", [["service", "nin", ["kubernetes"]]], {"prefix": "srv_"}
+    ):
         for unit in await middleware.call("service.systemd_units", service["service"]):
             services.append(unit)
             services_enabled[unit] = service["enable"]
