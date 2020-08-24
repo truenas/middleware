@@ -342,7 +342,7 @@ class SystemDatasetService(ConfigService):
             (f'{pool}/.system/{i}', i) for i in [
                 'cores', 'samba4', f'syslog-{uuid}',
                 f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services'
-            ] + (['services/docker'] if osc.IS_LINUX else [])
+            ]
         ]
 
     async def __nfsv4link(self, config):
