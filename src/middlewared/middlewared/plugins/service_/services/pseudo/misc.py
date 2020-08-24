@@ -264,8 +264,6 @@ class SystemDatasetsService(PseudoServiceBase):
         if not systemdataset:
             return None
 
-        if osc.IS_LINUX:
-            await self.middleware.call("etc.generate", "docker")
         if systemdataset["syslog"]:
             await self.middleware.call("service.restart", "syslogd")
 

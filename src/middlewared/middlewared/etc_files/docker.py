@@ -7,6 +7,8 @@ def render(service, middleware):
     if not config['pool']:
         return
 
+    # TODO: Add GPU support
+
     os.makedirs('/etc/docker', exist_ok=True)
     with open('/etc/docker/daemon.json', 'w') as f:
         f.write(json.dumps({
