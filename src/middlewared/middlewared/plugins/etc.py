@@ -296,7 +296,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'wireguard/wg0.conf'}
         ],
         'k3s': [
-            {'type': 'mako', 'path': 'rancher/k3s/k3s.service.env', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'rancher/k3s/flags', 'platform': 'Linux', 'checkpoint': None},
             {'type': 'py', 'path': 'cni/kube-router', 'platform': 'Linux', 'checkpoint': None},
         ]
     }
