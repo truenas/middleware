@@ -294,6 +294,9 @@ class EtcService(Service):
         ],
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/wg0.conf'}
+        ],
+        'k3s': [
+            {'type': 'mako', 'path': 'rancher/k3s/k3s.service.env', 'platform': 'Linux', 'checkpoint': None},
         ]
     }
     LOCKS = defaultdict(asyncio.Lock)

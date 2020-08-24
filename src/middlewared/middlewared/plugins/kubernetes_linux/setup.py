@@ -21,7 +21,7 @@ class KubernetesService(Service):
         1) Ensure specified pool is configured
         2) Create / update ix-applications dataset
         3) Setup CRI
-        4)
+        4) Write out specified environment file
         """
         config = self.middleware.call_sync('kubernetes.config')
         if not await self.middleware.call_sync('pool.query', [['name', '=', config['pool']]]):
