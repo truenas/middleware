@@ -21,7 +21,7 @@ class KubernetesService(Service):
         1) Ensure specified pool is configured
         2) Create / update ix-applications dataset
         3) Setup CRI
-        4) Write out specified environment file
+        4) Generate related k3s config files
         """
         config = self.middleware.call_sync('kubernetes.config')
         if not await self.middleware.call_sync('pool.query', [['name', '=', config['pool']]]):
@@ -30,3 +30,4 @@ class KubernetesService(Service):
         self.middleware.call_sync('kubernetes.create_update_k8s_datasets')
 
         self.middleware.call_sync('etc.generate', 'docker')
+        self.middleware.call_sync('etc.generate', 'k3s')
