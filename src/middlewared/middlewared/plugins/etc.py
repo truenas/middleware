@@ -297,6 +297,7 @@ class EtcService(Service):
         ],
         'k3s': [
             {'type': 'mako', 'path': 'rancher/k3s/k3s.service.env', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'cni/kube-router', 'platform': 'Linux', 'checkpoint': None},
         ]
     }
     LOCKS = defaultdict(asyncio.Lock)
