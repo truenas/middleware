@@ -6,35 +6,13 @@ import yaml
 def render(middleware):
     config = middleware.call_sync('kubernetes.config')
     os.makedirs('/etc/cni/net.d/kube-router.d', exist_ok=True)
-    write_kube_router_conf(config)
+    write_kube_router_conf(config, middleware)
     write_kube_router_kubeconfig(config)
 
 
-def write_kube_router_conf(config):
+def write_kube_router_conf(config, middleware):
     with open('/etc/cni/net.d/10-kuberouter.conflist', 'w') as f:
-        f.write(json.dumps({
-            'cniVersion': '0.3.0',
-            'name': 'ix-net',
-            'plugins': [
-                {
-                    'bridge': 'kube-bridge',
-                    'ipam': {
-                        'subnet': config['cluster_cidr'],
-                        'type': 'host-local',
-                    },
-                    'isDefaultGateway': True,
-                    'name': 'kubernetes',
-                    'type': 'bridge',
-                },
-                {
-                    'capabilities': {
-                        'portMappings': True,
-                        'snat': True,
-                    },
-                    'type': 'portmap',
-                }
-            ]
-        }))
+        f.write(json.dumps(middleware.call_sync('k8s.cni.kube_router_config')))
 
 
 def write_kube_router_kubeconfig(config):
