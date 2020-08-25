@@ -1,4 +1,3 @@
-from kubernetes_asyncio import client
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 
@@ -12,9 +11,8 @@ class KubernetesNodeService(ConfigService):
 
     async def config(self):
         try:
-            async with (await api_client()) as api:
-                v1 = client.CoreV1Api(api)
-                return {'node_configured': True, **((await nodes.get_node(v1)).to_dict())}
+            async with api_client({'node': True}) as (api, context):
+                return {'node_configured': True, **(context['node'].to_dict())}
         except Exception as e:
             return {'node_configured': False, 'error': str(e)}
 
@@ -31,18 +29,14 @@ class KubernetesNodeService(ConfigService):
         )
     )
     async def add_taints(self, taints):
-        async with (await api_client(())) as api:
-            v1 = client.CoreV1Api(api)
-            node = await nodes.get_node(v1)
+        async with api_client({'node': True}) as (api, context):
             for taint in taints:
-                await nodes.add_taint(v1, taint, node)
+                await nodes.add_taint(context['core_api'], taint, context['node'])
 
     @accepts(
         List('remove_taints', items=[Str('taint_key')]),
     )
     async def remove_taints(self, taint_keys):
-        async with (await api_client(())) as api:
-            v1 = client.CoreV1Api(api)
-            node = await nodes.get_node(v1)
+        async with api_client({'node': True}) as (api, context):
             for taint_key in taint_keys:
-                await nodes.remove_taint(v1, taint_key, node)
+                await nodes.remove_taint(context['core_api'], taint_key, context['node'])
