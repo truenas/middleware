@@ -1,4 +1,7 @@
+import errno
 from base64 import b64decode
+
+from middlewared.service import CallError
 
 
 async def get_service_account_tokens_cas(api_client, service_account):
@@ -11,3 +14,13 @@ async def get_service_account_tokens_cas(api_client, service_account):
             'ca': s_obj.data.get('ca.crt'),
         })
     return details
+
+
+async def get_service_account(api_client, service_account_name):
+    accounts = await api_client.list_service_account_for_all_namespaces(
+        field_selector=f'metadata.name={service_account_name}'
+    )
+    if not accounts.items:
+        raise CallError(f'Unable to find "{service_account_name}" service account', errno=errno.ENOENT)
+    else:
+        return accounts.items[0]
