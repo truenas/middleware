@@ -333,6 +333,9 @@ class SharingSMBService(Service):
         elif data['purpose'] == 'WORM_DROPBOX':
             data['vfsobjects'].append('worm')
 
+        if data['streams']:
+            data['vfsobjects'].append('streams_xattr')
+
         conf["vfs objects"] = await self.order_vfs_objects(data['vfsobjects'])
 
         if gl['fruit_enabled']:
