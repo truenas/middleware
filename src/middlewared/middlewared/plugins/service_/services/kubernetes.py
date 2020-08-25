@@ -7,7 +7,7 @@ from middlewared.service import CallError
 from .base import SimpleService
 
 
-class UPSService(SimpleService):
+class KubernetesService(SimpleService):
     name = 'kubernetes'
     etc = []
     systemd_unit = 'k3s'
@@ -31,13 +31,18 @@ class UPSService(SimpleService):
         if not await self.middleware.call('pool.query', [['name', '=', config['pool']]]):
             raise CallError(f'"{config["pool"]}" pool not found.', errno=errno.ENOENT)
 
-        await self.create_update_k8s_datasets(config)
+        await self.create_update_k8s_datasets(config['dataset'])
 
         await self.middleware.call('etc.generate', 'docker')
         await self.middleware.call('etc.generate', 'k3s')
 
     async def _start_linux(self):
         await self._systemd_unit('docker', 'start')
+        # FIXME: Please do this in a better way
+        #  For now if the images have been imported already, it will take on average 1 second to complete
+        await self.middleware.call(
+            'docker.images.load_images_from_file', '/usr/local/share/docker_images/docker-images.tar'
+        )
         await self._systemd_unit('cni-dhcp', 'start')
         await self._unit_action('Start')
 

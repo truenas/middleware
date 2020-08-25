@@ -3,6 +3,7 @@ from .cifs import CIFSService
 from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
+from .kubernetes import KubernetesService
 from .lldp import LLDPService
 from .mdns import MDNSService
 from .netbios import NetBIOSService
@@ -78,6 +79,7 @@ all_services = [
     NisService,
     CollectDService,
     RRDCacheDService,
+    KubernetesService,
     LibvirtdService,
     CronService,
     DiskService,
