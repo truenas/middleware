@@ -80,4 +80,3 @@ async def setup(middleware):
         middleware.register_hook("zfs.pool.events", zfs_events_hook)
 
     middleware.register_hook("pool.post_create_or_update", hook)
-    middleware.register_hook("pool.post_import", hook)
