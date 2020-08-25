@@ -95,13 +95,13 @@ class PeriodicSnapshotTaskService(CRUDService):
         """
         Create a Periodic Snapshot Task
 
-        Create a Periodic Snapshot Task that will take snapshots of specified `dataset` or `zvol` at specified `schedule`.
+        Create a Periodic Snapshot Task that will take snapshots of specified `dataset` at specified `schedule`.
         Recursive snapshots can be created if `recursive` flag is enabled. You can `exclude` specific child datasets
         or zvols from the snapshot.
         Snapshots will be automatically destroyed after a certain amount of time, specified by
         `lifetime_value` and `lifetime_unit`.
         If multiple periodic tasks create snapshots at the same time (for example hourly and daily at 00:00) the snapshot
-        will be kept until the last of these tasks reaches its expiry time. 
+        will be kept until the last of these tasks reaches its expiry time.
         Snapshots will be named according to `naming_schema` which is a `strftime`-like template for snapshot name
         and must contain `%Y`, `%m`, `%d`, `%H` and `%M`.
 
