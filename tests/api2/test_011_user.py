@@ -58,7 +58,7 @@ home_acl = [
 
 
 @pytest.mark.dependency(name="user_01")
-def test_01_get_next_uid():
+def test_01_get_next_uid(request):
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
     global next_uid
@@ -79,7 +79,7 @@ def test_02_creating_user_testuser(request):
         "username": "testuser",
         "full_name": "Test User",
         "group_create": True,
-        "password": "test",
+        "password": "test1234",
         "uid": next_uid,
         "smb": False,
         "shell": shell
@@ -89,12 +89,19 @@ def test_02_creating_user_testuser(request):
     user_id = results.json()
 
 
-def test_03_look_user_is_created(request):
+def test_03_verify_post_user_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["user_01"])
+    cmd = """grep -R "test1234" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
+def test_04_look_user_is_created(request):
     depends(request, ["user_02", "user_01"])
     assert len(GET('/user?username=testuser').json()) == 1
 
 
-def test_04_check_user_exists():
+def test_05_check_user_exists(request):
     """
     get_user_obj is a wrapper around the pwd module.
     This check verifies that the user is _actually_ created.
@@ -110,33 +117,33 @@ def test_04_check_user_exists():
         assert pw['pw_shell'] == shell, results.text
 
 
-def test_05_get_user_info(request):
+def test_06_get_user_info(request):
     depends(request, ["user_02", "user_01"])
     global userinfo
     userinfo = GET(f'/user/id/{user_id}').json()
 
 
-def test_06_look_user_name(request):
+def test_07_look_user_name(request):
     depends(request, ["user_02", "user_01"])
     assert userinfo["username"] == "testuser"
 
 
-def test_07_look_user_full_name(request):
+def test_08_look_user_full_name(request):
     depends(request, ["user_02", "user_01"])
     assert userinfo["full_name"] == "Test User"
 
 
-def test_08_look_user_uid(request):
+def test_09_look_user_uid(request):
     depends(request, ["user_02", "user_01"])
     assert userinfo["uid"] == next_uid
 
 
-def test_09_look_user_shell(request):
+def test_10_look_user_shell(request):
     depends(request, ["user_02", "user_01"])
     assert userinfo["shell"] == shell
 
 
-def test_10_add_employee_id_and_team_special_attributes(request):
+def test_11_add_employee_id_and_team_special_attributes(request):
     depends(request, ["user_02", "user_01"])
     payload = {
         'key': 'Employee ID',
@@ -148,7 +155,7 @@ def test_10_add_employee_id_and_team_special_attributes(request):
     assert results.status_code == 200, results.text
 
 
-def test_11_get_new_next_uid(request):
+def test_12_get_new_next_uid(request):
     depends(request, ["user_02", "user_01"])
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
@@ -156,12 +163,12 @@ def test_11_get_new_next_uid(request):
     new_next_uid = results.json()
 
 
-def test_12_next_and_new_next_uid_not_equal(request):
+def test_13_next_and_new_next_uid_not_equal(request):
     depends(request, ["user_02", "user_01"])
     assert new_next_uid != next_uid
 
 
-def test_13_setting_user_groups(request):
+def test_14_setting_user_groups(request):
     depends(request, ["user_02", "user_01"])
     payload = {'groups': [group_id]}
     GET('/user?username=testuser').json()[0]['id']
@@ -171,7 +178,7 @@ def test_13_setting_user_groups(request):
 
 # Update tests
 # Update the testuser
-def test_14_updating_user_testuser_info(request):
+def test_15_updating_user_testuser_info(request):
     depends(request, ["user_02", "user_01"])
     payload = {"full_name": "Test Renamed",
                "password": "testing123",
@@ -180,35 +187,42 @@ def test_14_updating_user_testuser_info(request):
     assert results.status_code == 200, results.text
 
 
-def test_15_get_user_new_info(request):
+def test_16_verify_put_user_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["user_02", "user_01"])
+    cmd = """grep -R "testing123" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
+def test_17_get_user_new_info(request):
     depends(request, ["user_02", "user_01"])
     global userinfo
     userinfo = GET('/user?username=testuser').json()[0]
 
 
-def test_16_look_user_full_name(request):
+def test_18_look_user_full_name(request):
     depends(request, ["user_02", "user_01"])
     assert userinfo["full_name"] == "Test Renamed"
 
 
-def test_17_look_user_new_uid(request):
+def test_19_look_user_new_uid(request):
     depends(request, ["user_02", "user_01"])
     assert userinfo["uid"] == new_next_uid
 
 
-def test_18_look_user_groups(request):
+def test_20_look_user_groups(request):
     depends(request, ["user_02", "user_01"])
     assert userinfo["groups"] == [group_id]
 
 
-def test_19_remove_old_team_special_atribute(request):
+def test_21_remove_old_team_special_atribute(request):
     depends(request, ["user_02", "user_01"])
     payload = 'Team'
     results = POST(f"/user/id/{user_id}/pop_attribute/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_20_add_new_team_to_special_atribute(request):
+def test_22_add_new_team_to_special_atribute(request):
     depends(request, ["user_02", "user_01"])
     payload = {'key': 'Team', 'value': 'QA'}
     results = POST(f"/user/id/{user_id}/set_attribute/", payload)
@@ -216,23 +230,23 @@ def test_20_add_new_team_to_special_atribute(request):
 
 
 # Delete the testuser
-def test_21_deleting_user_testuser(request):
+def test_23_deleting_user_testuser(request):
     depends(request, ["user_02", "user_01"])
     results = DELETE(f"/user/id/{user_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
 
-def test_22_look_user_is_delete(request):
+def test_24_look_user_is_delete(request):
     depends(request, ["user_02", "user_01"])
     assert len(GET('/user?username=testuser').json()) == 0
 
 
-def test_23_has_root_password(request):
+def test_25_has_root_password(request):
     depends(request, ["user_02", "user_01"])
     assert GET('/user/has_root_password/', anonymous=True).json() is True
 
 
-def test_24_get_next_uid_for_shareuser(request):
+def test_26_get_next_uid_for_shareuser(request):
     depends(request, ["user_02", "user_01"])
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
@@ -240,8 +254,8 @@ def test_24_get_next_uid_for_shareuser(request):
     next_uid = results.json()
 
 
-@pytest.mark.dependency(name="user_24")
-def test_25_creating_shareuser_to_test_sharing(request):
+@pytest.mark.dependency(name="user_27")
+def test_27_creating_shareuser_to_test_sharing(request):
     depends(request, ["user_02", "user_01"])
     payload = {
         "username": "shareuser",
@@ -256,7 +270,13 @@ def test_25_creating_shareuser_to_test_sharing(request):
     assert results.status_code == 200, results.text
 
 
-def test_26_get_next_uid_for_homes_check():
+def test_28_verify_post_user_do_not_leak_password_in_middleware_log(request):
+    cmd = """grep -R "testing" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
+def test_29_get_next_uid_for_homes_check(request):
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
     global next_uid
@@ -264,7 +284,7 @@ def test_26_get_next_uid_for_homes_check():
 
 
 @pytest.mark.dependency(name="HOME_DS_CREATED")
-def test_27_creating_home_dataset(request):
+def test_30_creating_home_dataset(request):
     """
     SMB share_type is selected for this test so that
     we verify that ACL is being stripped properly from
@@ -290,14 +310,14 @@ def test_27_creating_home_dataset(request):
 
 
 @pytest.mark.dependency(name="USER_CREATED")
-def test_28_creating_user_with_homedir(request):
+def test_31_creating_user_with_homedir(request):
     depends(request, ["HOME_DS_CREATED"])
     global user_id
     payload = {
         "username": "testuser2",
         "full_name": "Test User2",
         "group_create": True,
-        "password": "test",
+        "password": "test1234",
         "uid": next_uid,
         "shell": shell,
         "sshpubkey": "canary",
@@ -309,7 +329,14 @@ def test_28_creating_user_with_homedir(request):
     user_id = results.json()
 
 
-def test_29_smb_user_passb_entry_exists(request):
+def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["USER_CREATED"])
+    cmd = """grep -R "test1234" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
+def test_33_smb_user_passb_entry_exists(request):
     depends(request, ["USER_CREATED"])
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
@@ -327,13 +354,13 @@ def test_29_smb_user_passb_entry_exists(request):
 
 
 @pytest.mark.dependency(name="HOMEDIR_EXISTS")
-def test_30_homedir_exists(request):
+def test_34_homedir_exists(request):
     depends(request, ["USER_CREATED"])
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/testuser2')
     assert results.status_code == 200, results.text
 
 
-def test_31_homedir_acl_stripped(request):
+def test_35_homedir_acl_stripped(request):
     depends(request, ["HOMEDIR_EXISTS"])
     # Homedir permissions changes are backgrounded.
     # one second sleep should be sufficient for them to complete.
@@ -344,7 +371,7 @@ def test_31_homedir_acl_stripped(request):
 
 
 @pytest.mark.parametrize('to_test', home_files.keys())
-def test_32_homedir_check_perm(to_test, request):
+def test_36_homedir_check_perm(to_test, request):
     depends(request, ["HOMEDIR_EXISTS"])
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/testuser2/{to_test[2:]}')
     assert results.status_code == 200, results.text
@@ -352,7 +379,7 @@ def test_32_homedir_check_perm(to_test, request):
     assert results.json()['uid'] == next_uid, results.text
 
 
-def test_33_homedir_testfile_create(request):
+def test_37_homedir_testfile_create(request):
     depends(request, ["HOMEDIR_EXISTS"])
     testfile = f'/mnt/{dataset}/testuser2/testfile.txt'
 
@@ -365,7 +392,7 @@ def test_33_homedir_testfile_create(request):
 
 
 @pytest.mark.dependency(name="HOMEDIR2_EXISTS")
-def test_34_homedir_move_new_directory(request):
+def test_38_homedir_move_new_directory(request):
     depends(request, ["HOMEDIR_EXISTS"])
     payload = {
         "home": f'/mnt/{dataset}/new_home',
@@ -378,7 +405,7 @@ def test_34_homedir_move_new_directory(request):
 
 
 @pytest.mark.parametrize('to_test', home_files.keys())
-def test_35_after_move_check_perm(to_test, request):
+def test_39_after_move_check_perm(to_test, request):
     depends(request, ["HOMEDIR2_EXISTS"])
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/new_home/{to_test[2:]}')
     assert results.status_code == 200, results.text
@@ -386,13 +413,13 @@ def test_35_after_move_check_perm(to_test, request):
     assert results.json()['uid'] == next_uid, results.text
 
 
-def test_36_testfile_successfully_moved(request):
+def test_40_testfile_successfully_moved(request):
     depends(request, ["HOMEDIR2_EXISTS"])
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/new_home/testfile.txt')
     assert results.status_code == 200, results.text
 
 
-def test_37_lock_smb_user(request):
+def test_41_lock_smb_user(request):
     depends(request, ["USER_CREATED"])
     payload = {
         "locked": True,
@@ -401,7 +428,7 @@ def test_37_lock_smb_user(request):
     assert results.status_code == 200, results.text
 
 
-def test_38_verify_locked_smb_user_is_disabled(request):
+def test_42_verify_locked_smb_user_is_disabled(request):
     """
     This test verifies that the passdb user is disabled
     when "locked" is set to True.
@@ -422,7 +449,7 @@ def test_38_verify_locked_smb_user_is_disabled(request):
         assert my_entry["Account Flags"] == "[DU         ]", str(my_entry)
 
 
-def test_39_convert_to_non_smb_user(request):
+def test_43_convert_to_non_smb_user(request):
     depends(request, ["USER_CREATED"])
     payload = {
         "smb": False,
@@ -431,7 +458,7 @@ def test_39_convert_to_non_smb_user(request):
     assert results.status_code == 200, results.text
 
 
-def test_40_verify_absent_from_passdb(request):
+def test_44_verify_absent_from_passdb(request):
     """
     This test verifies that the user no longer appears
     in Samba's passdb after "smb" is set to False.
@@ -450,21 +477,21 @@ def test_40_verify_absent_from_passdb(request):
     assert my_entry is None, results['output']
 
 
-def test_41_deleting_homedir_user(request):
+def test_45_deleting_homedir_user(request):
     depends(request, ["USER_CREATED"])
     results = DELETE(f"/user/id/{user_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.dependency(name="NON_SMB_USER_CREATED")
-def test_42_creating_non_smb_user(request):
+def test_46_creating_non_smb_user(request):
     depends(request, ["HOME_DS_CREATED"])
     global user_id
     payload = {
         "username": "testuser3",
         "full_name": "Test User3",
         "group_create": True,
-        "password": "test",
+        "password": "testabcd",
         "uid": next_uid,
         "smb": False
     }
@@ -473,7 +500,13 @@ def test_42_creating_non_smb_user(request):
     user_id = results.json()
 
 
-def test_43_verify_non_smb_user_absent_from_passdb(request):
+def test_47_verify_post_user_do_not_leak_password_in_middleware_log(request):
+    cmd = """grep -R "testabcd" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
+def test_48_verify_non_smb_user_absent_from_passdb(request):
     """
     Creating new user with "smb" = False must not
     result in a passdb entry being generated.
@@ -492,7 +525,7 @@ def test_43_verify_non_smb_user_absent_from_passdb(request):
     assert my_entry is None, results['output']
 
 
-def test_44_convert_to_smb_knownfail(request):
+def test_49_convert_to_smb_knownfail(request):
     """
     SMB auth for local users relies stored NT hash. We only generate this hash
     for SMB users. This means that converting from non-SMB to SMB requires
@@ -507,17 +540,23 @@ def test_44_convert_to_smb_knownfail(request):
     assert results.status_code == 422, results.text
 
 
-def test_45_convert_to_smb_user(request):
+def test_50_convert_to_smb_user(request):
     depends(request, ["NON_SMB_USER_CREATED"])
     payload = {
         "smb": True,
-        "password": "test",
+        "password": "testabcd1234",
     }
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 200, results.text
 
 
-def test_46_converted_smb_user_passb_entry_exists(request):
+def test_51_verify_put_user_do_not_leak_password_in_middleware_log(request):
+    cmd = """grep -R "testabcd1234" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
+
+
+def test_52_converted_smb_user_passb_entry_exists(request):
     """
     At this point the non-SMB user has been converted to an SMB user. Verify
     that a passdb entry was appropriately generated.
@@ -538,19 +577,19 @@ def test_46_converted_smb_user_passb_entry_exists(request):
         assert my_entry["Account Flags"] == "[U          ]", str(my_entry)
 
 
-def test_47_deleting_non_smb_user(request):
+def test_53_deleting_non_smb_user(request):
     depends(request, ["NON_SMB_USER_CREATED"])
     results = DELETE(f"/user/id/{user_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
 
-def test_48_destroying_home_dataset(request):
+def test_54_destroying_home_dataset(request):
     depends(request, ["HOME_DS_CREATED"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
-def test_43_check_no_builtin_smb_users():
+def test_55_check_no_builtin_smb_users(request):
     """
     We have builtin SMB groups, but should have no builtin
     users. Failure here may indicate an issue with builtin user
@@ -564,4 +603,4 @@ def test_43_check_no_builtin_smb_users():
             'query-options': {'count': True},
         }
     )
-    assert  result.json() == 0, result.text
+    assert result.json() == 0, result.text

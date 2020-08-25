@@ -7,7 +7,8 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, PUT
+from functions import GET, POST, PUT, SSH_TEST
+from auto_config import ip, user, password
 
 
 global IPMI_LOADED
@@ -49,7 +50,13 @@ def test_06_update_ipmi_interface():
                 'ipaddress': '10.20.21.115',
                 'netmask': '23',
                 'gateway': '10.20.20.1',
-                'password': 'test'
+                'password': 'abcd1234'
             }
         )
         assert result.status_code == 200, result.text
+
+
+def test_07_verify_ipmi_channels_do_not_leak_password_in_middleware_log():
+    cmd = """grep -R "abcd1234" /var/log/middlewared.log"""
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, str(results['output'])
