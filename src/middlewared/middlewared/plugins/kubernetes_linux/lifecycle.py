@@ -18,6 +18,7 @@ class KubernetesService(Service):
             'k8s.node.add_taints', [{'key': 'ix-taint', 'effect': e} for e in ('NoSchedule', 'NoExecute')]
         )
         await self.configure_multus()
+        await self.middleware.call('k8s.node.remove_taints', ['ix-taint'])
 
     @private
     async def configure_multus(self):
