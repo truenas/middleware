@@ -214,9 +214,19 @@ class SMBService(SystemServiceService):
     @private
     async def smb_extend(self, smb):
         """Extend smb for netbios."""
-        smb['netbiosname_local'] = smb['netbiosname']
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
-            smb['netbiosname_local'] = smb['netbiosname_b']
+
+        ha_mode = SMBHAMODE[(await self.get_smb_ha_mode())]
+
+        if ha_mode == SMBHAMODE.STANDALONE:
+            smb['netbiosname_local'] = smb['netbiosname']
+
+        elif ha_mode == SMBHAMODE.LEGACY:
+            failover_node = await self.middleware.call('failover.node')
+            smb['netbiosname_local'] = smb['netbiosname'] if failover_node == 'A' else smb['netbiosname_b']
+
+        elif ha_mode == SMBHAMODE.UNIFIED:
+            ngc = await self.middleware.call('network.configuration.config')
+            smb['netbiosname_local'] = ngc['hostname_virtual']
 
         smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
 
@@ -505,7 +515,12 @@ class SMBService(SystemServiceService):
             1. They contain invalid characters for NetBIOS protocol
             2. The name is identical to the NetBIOS workgroup.
             """
-            if not i:
+            if not new.get(i):
+                """
+                Skip validation on NULL or empty string. If parameter is required for
+                the particular server configuration, then a separate validation error
+                will be added in a later validation step.
+                """
                 continue
 
             if i == 'netbiosalias':
@@ -535,6 +550,34 @@ class SMBService(SystemServiceService):
             for idx, item in enumerate(new['bindip']):
                 if item not in bindip_choices:
                     verrors.add(f'smb_update.bindip.{idx}', f'IP address [{item}] is not a configured address for this server')
+
+        if not new.get('workgroup'):
+            verrors.add('smb_update.workgroup', 'workgroup field is required.')
+
+        if not new.get('netbiosname'):
+            verrors.add('smb_update.netbiosname', 'NetBIOS name is required.')
+
+        ha_mode = SMBHAMODE[(await self.get_smb_ha_mode())]
+        if ha_mode == SMBHAMODE.LEGACY:
+            if not new.get('netbiosname_b'):
+                verrors.add('smb_update.netbiosname_b',
+                            'NetBIOS name for B controller is required while '
+                            'system dataset is located on boot pool.')
+            if len(new['netbiosalias']) == 0:
+                verrors.add('smb_update.netbiosalias',
+                            'At least one netbios alias is required for active '
+                            'controller while system dataset is located on '
+                            'boot pool.')
+
+        elif ha_mode == SMBHAMODE.UNIFIED:
+            if not new.get('netbiosname_local'):
+                verrors.add('smb_update.netbiosname',
+                            'Virtual Hostname is required for SMB configuration '
+                            'on high-availability servers.')
+
+            elif not await self.__validate_netbios_name(new['netbiosname_local']):
+                verrors.add('smb_update.netbiosname',
+                            'Virtual hostname does not conform to NetBIOS naming standards.')
 
         for i in ('filemask', 'dirmask'):
             if not new[i]:
