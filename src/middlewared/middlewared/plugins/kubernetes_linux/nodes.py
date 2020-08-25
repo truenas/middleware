@@ -1,23 +1,24 @@
 from kubernetes_asyncio import client
 from middlewared.schema import Dict, List, Str
-from middlewared.service import accepts, CRUDService, filterable
+from middlewared.service import accepts, CallError, ConfigService, filterable
 
 from .k8s import api_client, nodes
 
 
-class KubernetesNodeService(CRUDService):
+class KubernetesNodeService(ConfigService):
 
     class Config:
         namespace = 'k8s.node'
 
-    @filterable
-    async def query(self, filters=None, options=None):
-        async with (await api_client()) as api:
-            v1 = client.CoreV1Api(api)
-            return [n.to_dict() for n in await v1.list_node_with_http_info()]
+    async def config(self):
+        try:
+            async with (await api_client()) as api:
+                v1 = client.CoreV1Api(api)
+                return {'node_configured': True, **((await nodes.get_node(v1)).to_dict())}
+        except Exception as e:
+            return {'node_configured': False, 'error': str(e)}
 
     @accepts(
-        Str('node_name'),
         List(
             'add_taint',
             items=[Dict(
@@ -29,8 +30,8 @@ class KubernetesNodeService(CRUDService):
             default=[],
         )
     )
-    async def add_taints(self, node_name, taints):
+    async def add_taints(self, taints):
         async with (await api_client(())) as api:
             v1 = client.CoreV1Api(api)
             for taint in taints:
-                await nodes.add_taint(v1, taint, node_name=node_name)
+                await nodes.add_taint(v1, taint)
