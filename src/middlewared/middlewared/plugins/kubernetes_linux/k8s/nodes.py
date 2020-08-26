@@ -19,7 +19,12 @@ async def add_taint(api_client, taint_dict, node_object=None):
 
     node_object = await get_node(api_client, node_object)
 
-    existing_taints = [t.to_dict() for t in (node_object.spec.taints or [])]
+    existing_taints = []
+    for taint in map(lambda t: t.to_dict(),  (node_object.spec.taints or [])):
+        if all(taint[k] == taint_dict[k] for k in ('key', 'effect', 'value')):
+            return
+        existing_taints.append(taint)
+
     await api_client.patch_node(
         name=node_object.metadata.name, body={'spec': {'taints': existing_taints + [taint_dict]}}
     )
@@ -29,12 +34,15 @@ async def remove_taint(api_client, taint_key, node_object=None):
     node_object = await get_node(api_client, node_object)
     taints = node_object.spec.taints or []
 
+    indexes = []
     for index, taint in enumerate(taints):
         if taint.key == taint_key:
-            found_index = index
-            break
-    else:
+            indexes.append(index)
+
+    if not indexes:
         raise CallError(f'Unable to find taint with "{taint_key}" key')
 
-    taints.pop(found_index)
+    for index in sorted(indexes, reverse=True):
+        taints.pop(index)
+
     await api_client.patch_node(name=node_object.metadata.name, body={'spec': {'taints': taints}})

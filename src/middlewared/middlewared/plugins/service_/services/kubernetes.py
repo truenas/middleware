@@ -47,7 +47,7 @@ class KubernetesService(SimpleService):
         await self._unit_action('Start')
 
     async def after_start(self):
-        asyncio.ensure_future(self.middleware.call('kubernetes.after_start'))
+        asyncio.ensure_future(self.middleware.call('kubernetes.post_start'))
 
     async def before_stop(self):
         # TODO: Drain the node so that it starts evicting pods

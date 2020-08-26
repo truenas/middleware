@@ -23,7 +23,7 @@ class KubernetesService(Service):
     @private
     async def configure_multus(self):
         config = await self.middleware.call('kubernetes.config')
-        if not all(k in (config['multus_config'] or {}) for k in ('ca', 'token')):
+        if not all(k in (config['cni_config'].get('multus') or {}) for k in ('ca', 'token')):
             async with api_client() as (api, context):
                 while True:
                     try:
@@ -36,8 +36,9 @@ class KubernetesService(Service):
                 account_details = await service_accounts.get_service_account_tokens_cas(
                     context['core_api'], svc_account
                 )
+                config['cni_config']['multus'] = account_details[0]
                 await self.middleware.call(
-                    'datastore.update', 'services.kubernetes', config['id'], {'multus_config': account_details[0]}
+                    'datastore.update', 'services.kubernetes', config['id'], config['cni_config']
                 )
         await self.middleware.call('etc.generate', 'multus')
 
