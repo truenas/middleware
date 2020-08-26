@@ -1,9 +1,8 @@
 import binascii
 try:
-    import bsd
     from bsd import acl
 except ImportError:
-    bsd = acl = None
+    acl = None
 import errno
 import enum
 import grp
@@ -14,10 +13,13 @@ import shutil
 import subprocess
 import stat as pystat
 
+import psutil
+
 from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accepts
 from middlewared.service import private, CallError, Service, job
 from middlewared.utils import filter_list, osc
+from middlewared.utils.path import is_child
 from middlewared.plugins.smb import SMBBuiltin
 
 OS_TYPE_FREEBSD = 0x01
@@ -343,14 +345,32 @@ class FilesystemService(Service):
             CallError(ENOENT) - Path not found
         """
         try:
-            statfs = bsd.statfs(path)
+            st = os.statvfs(path)
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
+
+        for partition in sorted(psutil.disk_partitions(), key=lambda p: len(p.mountpoint), reverse=True):
+            if is_child(os.path.realpath(path), partition.mountpoint):
+                break
+        else:
+            raise CallError('Unable to find mountpoint.')
+
         return {
-            **statfs.__getstate__(),
-            'total_bytes': statfs.total_blocks * statfs.blocksize,
-            'free_bytes': statfs.free_blocks * statfs.blocksize,
-            'avail_bytes': statfs.avail_blocks * statfs.blocksize,
+            'flags': [],
+            'fstype': partition.fstype,
+            'source': partition.device,
+            'dest': partition.mountpoint,
+            'blocksize': st.f_frsize,
+            'total_blocks': st.f_blocks,
+            'free_blocks': st.f_bfree,
+            'avail_blocks': st.f_bavail,
+            'files': st.f_files,
+            'free_files': st.f_ffree,
+            'name_max': st.f_namemax,
+            'fsid': [],
+            'total_bytes': st.f_blocks * st.f_frsize,
+            'free_bytes': st.f_bfree * st.f_frsize,
+            'avail_bytes': st.f_bavail * st.f_frsize,
         }
 
     def __convert_to_basic_permset(self, permset):
