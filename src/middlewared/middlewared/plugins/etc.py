@@ -301,6 +301,7 @@ class EtcService(Service):
         ],
         'multus': [
             {'type': 'py', 'path': 'cni/multus', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'mako', 'path': 'cni/net.d/multus.d/multus.kubeconfig', 'platform': 'Linux', 'checkpoint': None},
         ],
     }
     LOCKS = defaultdict(asyncio.Lock)
