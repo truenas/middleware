@@ -738,21 +738,6 @@ class JailService(CRUDService):
                                 jail['ip4_addr'] = f'{interface}|ERROR'
                         else:
                             jail['ip4_addr'] = 'DHCP (not running)'
-
-                    if jail['state'] == 'up':
-                        try:
-                            jail['jid'] = su.check_output(
-                                [
-                                    'jls', '-j',
-                                    f'ioc-{jail["host_hostuuid"].replace(".", "_")}',
-                                    'jid'
-                                ]
-                            ).decode().strip()
-                        except su.CalledProcessError:
-                            jail['jid'] = 'ERROR'
-                    else:
-                        jail['jid'] = None
-
                     jails.append(jail)
         except ioc_exceptions.JailMisconfigured as e:
             self.logger.error(e, exc_info=True)
