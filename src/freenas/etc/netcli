@@ -856,6 +856,7 @@ Acceptable formats are 255.255.255.0,
 def reset_root_pw(*args):
     print()
     print(_("Changing password for root"))
+    print(_("This action will disable 2FA"))
     print()
 
     if not args:
@@ -877,12 +878,14 @@ def reset_root_pw(*args):
             with Client() as c:
                 user_id = c.call("user.query", [["username", "=", "root"]], {"get": True})["id"]
                 c.call("user.update", user_id, {"password": p1})
+                c.call("auth.twofactor.update", {"enabled": False})
         except (FileNotFoundError, ConnectionRefusedError):
             from middlewared.plugins.account import crypted_password
             conn = sqlite3.connect(FREENAS_DB)
             c = conn.cursor()
             c.execute("UPDATE account_bsdusers SET bsdusr_unixhash = ? WHERE bsdusr_username = 'root'",
                       (crypted_password(p1),))
+            c.execute("UPDATE system.twofactorauthentication SET enabled = 0")
             conn.commit()
             conn.close()
         print()
