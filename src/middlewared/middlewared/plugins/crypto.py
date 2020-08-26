@@ -1390,7 +1390,7 @@ class CertificateService(CRUDService):
 
         max_progress = (progress * 4) - progress - (progress * 4 / 5)
 
-        dns_mapping = {d.replace('*.', ''): v for d, v in domain_names_dns_mapping.items()}
+        dns_mapping = {d.replace('*.', '').split('DNS:', 1)[-1]: v for d, v in domain_names_dns_mapping.items()}
         for authorization_resource in order.authorizations:
             try:
                 status = False
