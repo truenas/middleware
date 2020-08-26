@@ -49,7 +49,7 @@ class DiskService(Service):
 
 async def devd_zfs_hook(middleware, data):
     if data.get("type") in (
-        "misc.fs.zfs.config_sync",
+        "sysevent.fs.zfs.config_sync",
     ):
         await middleware.call(
             "disk.sync_zfs_guid",

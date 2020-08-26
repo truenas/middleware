@@ -113,7 +113,7 @@ async def devd_zfs_hook(middleware, data):
         'ATTACH',
         'DETACH',
         'resource.fs.zfs.removed',
-        'misc.fs.zfs.config_sync',
+        'sysevent.fs.zfs.config_sync',
     ):
         asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
 
