@@ -13,7 +13,7 @@ def render(service, middleware):
     os.makedirs('/etc/docker', exist_ok=True)
     with open('/etc/docker/daemon.json', 'w') as f:
         f.write(json.dumps({
-            'data-root': os.path.join(config['dataset'], 'docker'),
+            'data-root': os.path.join('/mnt', config['dataset'], 'docker'),
             'exec-opts': ['native.cgroupdriver=cgroupfs'],
             'iptables': False,
             'bridge': 'none',

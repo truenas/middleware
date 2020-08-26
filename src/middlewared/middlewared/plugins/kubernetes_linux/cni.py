@@ -23,15 +23,12 @@ class KubernetesCNIService(Service):
                     'name': 'kubernetes',
                     'type': 'bridge',
                 },
-                await self.port_mapping_config(),
+                {
+                    'capabilities': {
+                        'portMappings': True,
+                        'snat': True,
+                    },
+                    'type': 'portmap',
+                },
             ]
-        }
-
-    async def port_mapping_config(self):
-        return {
-            'capabilities': {
-                'portMappings': True,
-                'snat': True,
-            },
-            'type': 'portmap',
         }

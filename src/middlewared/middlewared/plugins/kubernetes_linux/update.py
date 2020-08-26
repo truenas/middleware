@@ -18,7 +18,7 @@ class KubernetesModel(sa.Model):
     cluster_dns_ip = sa.Column(sa.String(128), default='172.17.0.10')
     route_configuration = sa.Column(sa.JSON(type=dict))
     node_ip = sa.Column(sa.String(128), default='0.0.0.0')
-    multus_config = sa.Column(sa.JSON(type=dict))
+    cni_config = sa.Column(sa.JSON(type=dict))
 
 
 class KubernetesService(SystemServiceService):
@@ -26,6 +26,7 @@ class KubernetesService(SystemServiceService):
     class Config:
         datastore = 'services.kubernetes'
         datastore_extend = 'kubernetes.k8s_extend'
+        service_model = 'kubernetes'
         service_verb = 'restart'
         service_verb_sync = False
 
@@ -59,11 +60,12 @@ class KubernetesService(SystemServiceService):
     )
     async def do_update(self, data):
         old_config = await self.config()
-        old_config.pop('dataset')
+        for k in ('dataset', 'cni_config'):
+            old_config.pop(k)
         config = old_config.copy()
         config.update(data)
 
-        await self.validate_data(data, 'kubernetes_update')
+        await self.validate_data(config, 'kubernetes_update')
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             await self._update_service(old_config, config)

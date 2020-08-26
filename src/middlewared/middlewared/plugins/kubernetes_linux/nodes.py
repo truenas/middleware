@@ -23,7 +23,7 @@ class KubernetesNodeService(ConfigService):
                 'taint',
                 Str('key', required=True, empty=False),
                 Str('value', null=True, default=None),
-                Str('effect', required=True, empty=False, enum=['NoSchedule', 'NoExecutable'])
+                Str('effect', required=True, empty=False, enum=['NoSchedule', 'NoExecute'])
             )],
             default=[],
         )

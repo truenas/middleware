@@ -3,9 +3,9 @@ import json
 import yaml
 
 
-def render(middleware):
+def render(service, middleware):
     config = middleware.call_sync('kubernetes.config')
-    if not all(k in (config['multus_config'] or {}) for k in ('ca', 'token')):
+    if not all(k in (config['cni_config'].get('multus') or {}) for k in ('ca', 'token')):
         return
 
     os.makedirs('/etc/cni/net.d/multus.d', exist_ok=True)
@@ -18,10 +18,7 @@ def render(middleware):
             'logLevel': 'debug',
             'LogFile': '/var/log/multus.log',
             'kubeconfig': '/etc/cni/net.d/multus.d/multus.kubeconfig',
-            'delegates': [
-                middleware.call_sync('k8s.cni.kube_router_config'),
-                middleware.call_sync('k8s.cni.port_mapping_config'),
-            ]
+            'delegates': [middleware.call_sync('k8s.cni.kube_router_config')]
         }))
 
     with open('/etc/cni/net.d/multus.d/multus.kubeconfig', 'w') as f:
@@ -31,14 +28,14 @@ def render(middleware):
             'clusters': {
                 'name': 'local',
                 'cluster': {
-                    'certificate-authority-data': config['multus_config']['ca'],
+                    'certificate-authority-data': config['cni_config']['multus']['ca'],
                     'server': 'https://127.0.0.1:6443',
                 }
             },
             'users': {
                 'name': 'multus',
                 'user': {
-                    'token': config['multus_config']['token'],
+                    'token': config['cni_config']['multus']['token'],
                 }
             },
             'contexts': {

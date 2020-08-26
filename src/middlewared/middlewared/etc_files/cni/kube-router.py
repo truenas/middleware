@@ -3,7 +3,7 @@ import os
 import yaml
 
 
-def render(middleware):
+def render(service, middleware):
     config = middleware.call_sync('kubernetes.config')
     os.makedirs('/etc/cni/net.d/kube-router.d', exist_ok=True)
     write_kube_router_conf(config, middleware)

@@ -26,7 +26,7 @@ def upgrade():
         sa.Column('cluster_dns_ip', sa.String(length=128), nullable=False),
         sa.Column('route_configuration', sa.TEXT(), nullable=True),
         sa.Column('node_ip', sa.String(length=128), nullable=False),
-        sa.Column('multus_config', sa.TEXT(), nullable=True),
+        sa.Column('cni_config', sa.TEXT(), nullable=True),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_services_kubernetes')),
     )
 
