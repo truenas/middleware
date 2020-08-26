@@ -226,7 +226,7 @@ class DiskService(Service, ServiceChangeMixin):
 
     @private
     async def process_datastore_event(self, type, kwargs):
-        if type == "CHANGED":
+        if type == "CHANGED" and "fields" in kwargs:
             if kwargs["fields"]["expiretime"] is not None:
                 if kwargs["fields"]["identifier"] not in self.expired_disks:
                     self.expired_disks.add(kwargs["fields"]["identifier"])
