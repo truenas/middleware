@@ -11,12 +11,18 @@ class KubernetesService(Service):
     async def post_start(self):
         # TODO: Add support for migrations
         await asyncio.sleep(5)
-        await self.middleware.call(
-            'k8s.node.add_taints', [{'key': 'ix-startup-taint', 'effect': e} for e in ('NoSchedule', 'NoExecute')]
-        )
+        await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-start', 'effect': 'NoExecute'}])
+        node_config = await self.middleware.call('k8s.node.config')
+        if not node_config['node_configured']:
+            # TODO: Raise an alert
+            raise CallError('Unable to configure node.')
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('service.start', 'kuberouter')
-        await self.middleware.call('k8s.node.remove_taints', ['ix-startup-taint'])
+        await self.middleware.call(
+            'k8s.node.remove_taints', [
+                k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
+            ]
+        )
 
     @private
     async def validate_k8s_fs_setup(self):

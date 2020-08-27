@@ -22,8 +22,8 @@ class KubernetesService(SimpleService):
         asyncio.ensure_future(self.middleware.call('kubernetes.post_start'))
 
     async def before_stop(self):
-        # TODO: Drain the node so that it starts evicting pods
-        pass
+        await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-stop', 'effect': 'NoExecute'}])
+        await asyncio.sleep(10)
 
     async def _stop_linux(self):
         await self._systemd_unit('kube-router', 'stop')
