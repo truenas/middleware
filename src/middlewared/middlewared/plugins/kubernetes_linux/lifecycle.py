@@ -2,8 +2,6 @@ import asyncio
 
 from middlewared.service import private, Service
 
-from .k8s import api_client, service_accounts
-
 
 class KubernetesService(Service):
 
@@ -17,30 +15,8 @@ class KubernetesService(Service):
         await self.middleware.call(
             'k8s.node.add_taints', [{'key': 'ix-taint', 'effect': e} for e in ('NoSchedule', 'NoExecute')]
         )
-        await self.configure_multus()
+        await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('k8s.node.remove_taints', ['ix-taint'])
-
-    @private
-    async def configure_multus(self):
-        config = await self.middleware.call('kubernetes.config')
-        if not all(k in (config['cni_config'].get('multus') or {}) for k in ('ca', 'token')):
-            async with api_client() as (api, context):
-                while True:
-                    try:
-                        svc_account = await service_accounts.get_service_account(context['core_api'], 'multus')
-                    except Exception:
-                        # TODO: Let's handle this gracefully with events please
-                        await asyncio.sleep(5)
-                    else:
-                        break
-                account_details = await service_accounts.get_service_account_tokens_cas(
-                    context['core_api'], svc_account
-                )
-                config['cni_config']['multus'] = account_details[0]
-                await self.middleware.call(
-                    'datastore.update', 'services.kubernetes', config['id'], config['cni_config']
-                )
-        await self.middleware.call('etc.generate', 'multus')
 
 
 async def _event_system(middleware, event_type, args):
