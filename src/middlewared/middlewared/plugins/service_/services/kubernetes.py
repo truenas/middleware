@@ -19,21 +19,10 @@ class KubernetesService(SimpleService):
                 await self.middleware.call('pool.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
 
     async def before_start(self):
-        """
-        # TODO: Please account for locked datasets
-        We will be going along the following steps to setup k3s cluster:
-        1) Ensure specified pool is configured
-        2) Create / update ix-applications dataset
-        3) Setup CRI
-        4) Generate related k3s config files
-        """
         config = await self.middleware.call('kubernetes.config')
-        if not await self.middleware.call('pool.query', [['name', '=', config['pool']]]):
-            raise CallError(f'"{config["pool"]}" pool not found.', errno=errno.ENOENT)
-
+        await self.middleware.call('kubernetes.validate_k8s_fs_setup')
         await self.create_update_k8s_datasets(config['dataset'])
-
-        await self.middleware.call('etc.generate', 'docker')
+        await self.middleware.call('kubernetes.setup_cri')
         await self.middleware.call('etc.generate', 'k3s')
 
     async def _start_linux(self):

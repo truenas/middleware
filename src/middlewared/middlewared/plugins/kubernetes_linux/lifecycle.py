@@ -1,22 +1,30 @@
 import asyncio
+import errno
 
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 
 
 class KubernetesService(Service):
 
     @private
     async def post_start(self):
-        # TODO:
-        #  We will be tainting node here to make sure pods are not schedule-able / executable
-        #  Any kind of migrations will be performed and then finally the taint will be removed from node
-        #  so it can run pods
-        #  We will also configure multus here after k8s is up and multus service account has been created
+        # TODO: Add support for migrations
         await self.middleware.call(
             'k8s.node.add_taints', [{'key': 'ix-taint', 'effect': e} for e in ('NoSchedule', 'NoExecute')]
         )
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('k8s.node.remove_taints', ['ix-taint'])
+
+    @private
+    async def setup_cri(self):
+        await self.middleware.call('etc.generate', 'docker')
+
+    @private
+    async def validate_k8s_fs_setup(self):
+        # TODO: Please account for locked datasets
+        config = await self.middleware.call('kubernetes.config')
+        if not await self.middleware.call('pool.query', [['name', '=', config['pool']]]):
+            raise CallError(f'"{config["pool"]}" pool not found.', errno=errno.ENOENT)
 
 
 async def _event_system(middleware, event_type, args):
