@@ -5,6 +5,9 @@ from middlewared.service import CallError, private, CRUDService
 from middlewared.utils import Popen
 
 
+DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
+
+
 class DockerImagesService(CRUDService):
 
     class Config:
@@ -20,3 +23,7 @@ class DockerImagesService(CRUDService):
         stderr = (await cp.communicate())[1]
         if cp.returncode:
             raise CallError(f'Failed to load images from file: {stderr.decode()}')
+
+    @private
+    async def load_default_images(self):
+        await self.load_images_from_file(DEFAULT_DOCKER_IMAGES_PATH)
