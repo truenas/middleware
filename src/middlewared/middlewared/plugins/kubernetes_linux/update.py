@@ -38,7 +38,7 @@ class KubernetesService(SystemServiceService):
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
 
-        if not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
+        if data['pool'] and not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
             verrors.add(f'{schema}.pool', 'Please provide a valid pool configured in the system.')
 
         if ipaddress.ip_address(data['cluster_dns_ip']) not in ipaddress.ip_network(data['service_cidr']):
@@ -49,7 +49,7 @@ class KubernetesService(SystemServiceService):
     @accepts(
         Dict(
             'kubernetes_update',
-            Str('pool', empty=False),
+            Str('pool', empty=False, null=True),
             IPAddr('cluster_cidr', cidr=True),
             IPAddr('service_cidr', cidr=True),
             IPAddr('cluster_dns_ip'),
@@ -67,6 +67,9 @@ class KubernetesService(SystemServiceService):
         await self.validate_data(config, 'kubernetes_update')
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
+            if not config['pool']:
+                config['cni_config'] = {}
+
             await self.middleware.call(
                 'datastore.update', self._config.datastore, old_config['id'], config,
             )
