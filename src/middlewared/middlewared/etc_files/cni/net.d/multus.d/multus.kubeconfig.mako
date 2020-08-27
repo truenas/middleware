@@ -1,6 +1,6 @@
 <%
     config = middleware.call_sync('kubernetes.config')
-    if not all(k in (config['cni_config'].get('multus') or {}) for k in ('ca', 'token')):
+    if not middleware.call_sync('k8s.cni.validate_cni_integrity', 'multus', config):
         middleware.logger.debug('Multus CNI configuration not generated due to missing credentials.')
         raise FileShouldNotExist()
     multus = config['cni_config']['multus']
