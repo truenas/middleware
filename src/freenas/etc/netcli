@@ -885,7 +885,7 @@ def reset_root_pw(*args):
             c = conn.cursor()
             c.execute("UPDATE account_bsdusers SET bsdusr_unixhash = ? WHERE bsdusr_username = 'root'",
                       (crypted_password(p1),))
-            c.execute("UPDATE system.twofactorauthentication SET enabled = 0")
+            c.execute("UPDATE system_twofactorauthentication SET enabled = 0")
             conn.commit()
             conn.close()
         print()
