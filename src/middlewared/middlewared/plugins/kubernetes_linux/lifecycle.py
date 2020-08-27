@@ -35,23 +35,23 @@ class KubernetesService(Service):
     @private
     @lock('kubernetes_status_change')
     async def status_change(self, config, old_config):
-        if config['pool'] != old_config['pool']:
-            k3s_running = await self.middleware.call('service.started', 'kubernetes')
+        k3s_running = await self.middleware.call('service.started', 'kubernetes')
+        if config['pool'] and config['pool'] != old_config['pool']:
+            await self.setup_pool()
             if not k3s_running:
                 await self.middleware.call('service.start', 'docker')
                 await asyncio.sleep(5)
-            await self.setup_pool()
-            if not k3s_running:
+                await self.middleware.call('docker.images.load_default_images')
                 await self.middleware.call('service.stop', 'docker')
             else:
-                await self.middleware.call('service.restart', 'kubernetes')
+                asyncio.ensure_future(self.middleware.call('service.restart', 'kubernetes'))
+        if not config['pool'] and k3s_running:
+            asyncio.ensure_future(self.middleware.call('service.stop', 'kubernetes'))
 
     @private
     async def setup_pool(self):
-        # This expects docker to be running
         config = await self.middleware.call('kubernetes.config')
         await self.create_update_k8s_datasets(config['dataset'])
-        await self.middleware.call('docker.images.load_default_images')
 
     @private
     async def create_update_k8s_datasets(self, k8s_ds):
