@@ -26,7 +26,8 @@ class KubernetesCNIService(ConfigService):
                         context['core_api'], config[cni]['service_account']
                     )
 
-            await self.middleware.call('datastore.update', 'services.kubernetes', kube_config['id'], cni_config)
+        await self.middleware.call('datastore.update', 'services.kubernetes', kube_config['id'], cni_config)
+        await self.middleware.call('etc.generate', 'cni')
 
     async def validate_cni_integrity(self, cni, config=None):
         config = config or await self.middleware.call('kubernetes.config')
