@@ -297,7 +297,6 @@ class EtcService(Service):
         ],
         'k3s': [
             {'type': 'py', 'path': 'rancher/k3s/flags', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'py', 'path': 'cni/kube-router', 'platform': 'Linux', 'checkpoint': None},
         ],
         'cni': [
             {'type': 'py', 'path': 'cni/multus', 'platform': 'Linux', 'checkpoint': None},
