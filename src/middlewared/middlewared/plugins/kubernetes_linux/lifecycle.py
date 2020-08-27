@@ -25,6 +25,13 @@ class KubernetesService(Service):
         if not await self.middleware.call('pool.query', [['name', '=', config['pool']]]):
             raise CallError(f'"{config["pool"]}" pool not found.', errno=errno.ENOENT)
 
+        k8s_datasets = set(await self.kubernetes_datasets(config['dataset']))
+        diff = {
+            d['id'] for d in await self.middleware.call('pool.dataset.query', [['id', 'in', list(k8s_datasets)]])
+        } ^ k8s_datasets
+        if diff:
+            raise CallError(f'Missing "{", ".join(diff)}" dataset(s) required for starting kubernetes.')
+
     @private
     @lock('kubernetes_status_change')
     async def status_change(self, config, old_config):
@@ -48,9 +55,13 @@ class KubernetesService(Service):
 
     @private
     async def create_update_k8s_datasets(self, k8s_ds):
-        for dataset in [k8s_ds] + [os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases')]:
+        for dataset in await self.kubernetes_datasets(k8s_ds):
             if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
                 await self.middleware.call('pool.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
+
+    @private
+    async def kubernetes_datasets(self, k8s_ds):
+        return [k8s_ds] + [os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases')]
 
 
 async def _event_system(middleware, event_type, args):
