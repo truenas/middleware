@@ -1,5 +1,6 @@
 from .afp import AFPService
 from .cifs import CIFSService
+from .docker import DockerService
 from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
@@ -55,6 +56,7 @@ from .pseudo.misc import (
 all_services = [
     AFPService,
     CIFSService,
+    DockerService,
     DynamicDNSService,
     FTPService,
     ISCSITargetService,
