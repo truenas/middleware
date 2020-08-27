@@ -68,7 +68,7 @@ class KubernetesService(SystemServiceService):
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             await self.middleware.call(
-                'datastore.update', f'services.{self._config.datastore}', old_config['id'], config,
+                'datastore.update', self._config.datastore, old_config['id'], config,
             )
             await self.middleware.call('kubernetes.status_change', config, old_config)
 

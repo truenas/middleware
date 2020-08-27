@@ -26,6 +26,7 @@ class KubernetesService(SimpleService):
         pass
 
     async def _stop_linux(self):
+        await self._systemd_unit('kube-router', 'stop')
         await self._unit_action('Stop')
         await self._systemd_unit('cni-dhcp', 'stop')
         await self.middleware.call('service.stop', 'docker')

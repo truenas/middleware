@@ -10,11 +10,13 @@ class KubernetesService(Service):
     @private
     async def post_start(self):
         # TODO: Add support for migrations
+        await asyncio.sleep(5)
         await self.middleware.call(
-            'k8s.node.add_taints', [{'key': 'ix-taint', 'effect': e} for e in ('NoSchedule', 'NoExecute')]
+            'k8s.node.add_taints', [{'key': 'ix-startup-taint', 'effect': e} for e in ('NoSchedule', 'NoExecute')]
         )
         await self.middleware.call('k8s.cni.setup_cni')
-        await self.middleware.call('k8s.node.remove_taints', ['ix-taint'])
+        await self.middleware.call('service.start', 'kuberouter')
+        await self.middleware.call('k8s.node.remove_taints', ['ix-startup-taint'])
 
     @private
     async def validate_k8s_fs_setup(self):
@@ -30,6 +32,7 @@ class KubernetesService(Service):
             k3s_running = await self.middleware.call('service.started', 'kubernetes')
             if not k3s_running:
                 await self.middleware.call('service.start', 'docker')
+                await asyncio.sleep(5)
             await self.setup_pool()
             if not k3s_running:
                 await self.middleware.call('service.stop', 'docker')
