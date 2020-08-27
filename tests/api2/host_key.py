@@ -3,10 +3,11 @@
 import pytest
 import sys
 import os
+import requests
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, SSH_TEST, ping_host
+from functions import GET, POST, SSH_TEST, ping_host
 from auto_config import user, ip
 
 
@@ -18,18 +19,28 @@ def test_01_get_ssh_keyscan_before_reboot():
     output_before = results['output']
 
 
-@pytest.mark.timeout(600)
-def test_02_reboot_and_wait_for_ping():
+def test_02_reboot_system():
     payload = {
         "delay": 0
     }
     results = POST("/system/reboot/", payload)
     assert results.status_code == 200, results.text
+
+
+@pytest.mark.timeout(600)
+def test_03_wait_for_middleware_to_be_online():
     while ping_host(ip, 1) is True:
         sleep(5)
     while ping_host(ip, 1) is not True:
         sleep(5)
     sleep(10)
+    status_code = 0
+    while status_code != 200:
+        try:
+            status_code = GET('/system/info/').status_code
+        except requests.exceptions.ConnectionError:
+            sleep(1)
+            continue
 
 
 def test_03_get_ssh_keyscan_after_reboot():
