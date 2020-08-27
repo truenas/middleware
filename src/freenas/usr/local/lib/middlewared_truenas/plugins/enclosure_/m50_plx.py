@@ -1,3 +1,4 @@
+import os
 import re
 
 from middlewared.service import Service, private
@@ -25,7 +26,10 @@ class EnclosureService(Service):
                 n = int(disk["devname"][len("nvd"):])
             except ValueError:
                 continue
-            nvme = get_nsid(f"/dev/{disk['devname']}")
+            nvd = f"/dev/{disk['devname']}"
+            if not os.path.exists(nvd):
+                continue
+            nvme = get_nsid(nvd)
             if nvme is not None:
                 nvme_to_nvd[int(nvme[4:])] = n
 
