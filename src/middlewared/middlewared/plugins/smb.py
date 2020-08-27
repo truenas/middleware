@@ -1003,6 +1003,12 @@ class SharingSMBService(SharingService):
         libsmbconf expects to be provided with key-value pairs.
         """
         verrors = ValidationErrors()
+        aux_blacklist = [
+            'state directory',
+            'private directory',
+            'private dir',
+            'cache directory',
+        ]
         for entry in data.splitlines():
             if entry == '' or entry.startswith(('#', ';')):
                 continue
@@ -1014,6 +1020,13 @@ class SharingSMBService(SharingService):
                     f'Auxiliary parameters must be in the format of "key = value": {entry}'
                 )
                 continue
+
+            if kv[0].strip() in aux_blacklist:
+                verrors.add(
+                    f'{schema_name}.auxsmbconf',
+                    f'{kv[0]} is a blacklisted auxiliary parameter. Changes to this parameter '
+                    'are not permitted.'
+                )
 
         verrors.check()
 
