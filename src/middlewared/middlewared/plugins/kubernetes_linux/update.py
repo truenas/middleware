@@ -3,9 +3,8 @@ import os
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Dict, Int, IPAddr, Str
-from middlewared.service import accepts, SystemServiceService, private, ValidationErrors
-from middlewared.validators import Range
+from middlewared.schema import Dict, IPAddr, Str
+from middlewared.service import accepts, job, private, SystemServiceService, ValidationErrors
 
 
 class KubernetesModel(sa.Model):
@@ -51,14 +50,14 @@ class KubernetesService(SystemServiceService):
         Dict(
             'kubernetes_update',
             Str('pool', empty=False),
-            Int('netmask', validators=[Range(min=0, max=128)]),
             IPAddr('cluster_cidr', cidr=True),
             IPAddr('service_cidr', cidr=True),
             IPAddr('cluster_dns_ip'),
             update=True,
         )
     )
-    async def do_update(self, data):
+    @job(lock='kubernetes_update')
+    async def do_update(self, job, data):
         old_config = await self.config()
         for k in ('dataset', 'cni_config'):
             old_config.pop(k)
@@ -68,6 +67,9 @@ class KubernetesService(SystemServiceService):
         await self.validate_data(config, 'kubernetes_update')
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
-            await self._update_service(old_config, config)
+            await self.middleware.call(
+                'datastore.update', f'services.{self._config.datastore}', old_config['id'], config,
+            )
+            await self.middleware.call('kubernetes.status_change', config, old_config)
 
         return await self.config()
