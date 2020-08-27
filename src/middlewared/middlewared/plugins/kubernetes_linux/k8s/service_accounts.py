@@ -1,3 +1,4 @@
+import asyncio
 import errno
 from base64 import b64decode
 
@@ -26,3 +27,15 @@ async def get_service_account(api_client, service_account_name):
         raise CallError(f'Unable to find "{service_account_name}" service account', errno=errno.ENOENT)
     else:
         return accounts.items[0]
+
+
+async def get_service_account_details(self, api_client, svc_account):
+    while True:
+        try:
+            svc_account = await get_service_account(api_client, svc_account)
+        except Exception:
+            # TODO: Let's handle this gracefully with events please
+            await asyncio.sleep(5)
+        else:
+            break
+    return (await get_service_account_tokens_cas(api_client, svc_account))[0]
