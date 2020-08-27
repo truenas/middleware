@@ -94,9 +94,18 @@ class SMBService(SystemServiceService):
     @private
     async def smb_extend(self, smb):
         """Extend smb for netbios."""
-        smb['netbiosname_local'] = smb['netbiosname']
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
-            smb['netbiosname_local'] = smb['netbiosname_b']
+        ha_mode = SMBHAMODE[(await self.get_smb_ha_mode())]
+
+        if ha_mode == SMBHAMODE.STANDALONE:
+            smb['netbiosname_local'] = smb['netbiosname']
+
+        elif ha_mode == SMBHAMODE.LEGACY:
+            failover_node = await self.middleware.call('failover.node')
+            smb['netbiosname_local'] = smb['netbiosname'] if failover_node == 'A' else smb['netbiosname_b']
+
+        elif ha_mode == SMBHAMODE.UNIFIED:
+            ngc = await self.middleware.call('network.configuration.config')
+            smb['netbiosname_local'] = ngc['hostname_virtual']
 
         for i in ('aio_enable', 'aio_rs', 'aio_ws'):
             smb.pop(i, None)
@@ -651,6 +660,13 @@ class SMBService(SystemServiceService):
 
         verrors = ValidationErrors()
 
+        aux_blacklist = [
+            'state directory',
+            'private directory',
+            'private dir',
+            'cache directory',
+        ]
+
         if data.get('unixcharset') and data['unixcharset'] not in await self.unixcharset_choices():
             verrors.add(
                 'smb_update.unixcharset',
@@ -670,6 +686,34 @@ class SMBService(SystemServiceService):
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
+
+        if not new.get('workgroup'):
+            verrors.add('smb_update.workgroup', 'workgroup field is required.')
+
+        if not new.get('netbiosname'):
+            verrors.add('smb_update.netbiosname', 'NetBIOS name is required.')
+
+        ha_mode = SMBHAMODE[(await self.get_smb_ha_mode())]
+        if ha_mode == SMBHAMODE.LEGACY:
+            if not new.get('netbiosname_b'):
+                verrors.add('smb_update.netbiosname_b',
+                            'NetBIOS name for B controller is required while '
+                            'system dataset is located on boot pool.')
+            if len(new['netbiosalias']) == 0:
+                verrors.add('smb_update.netbiosalias',
+                            'At least one netbios alias is required for active '
+                            'controller while system dataset is located on '
+                            'boot pool.')
+
+        elif ha_mode == SMBHAMODE.UNIFIED:
+            if not new.get('netbiosname_local'):
+                verrors.add('smb_update.netbiosname',
+                            'Virtual Hostname is required for SMB configuration '
+                            'on high-availability servers.')
+
+            elif not await self.__validate_netbios_name(new['netbiosname_local']):
+                verrors.add('smb_update.netbiosname',
+                            'Virtual hostname does not conform to NetBIOS naming standards.')
 
         if data.get('bindip'):
             bindip_choices = list((await self.bindip_choices()).keys())
@@ -697,6 +741,18 @@ class SMBService(SystemServiceService):
                                 'This parameter may not be changed after joining Active Directory (AD). '
                                 'If it must be changed, the proper procedure is to leave the AD domain '
                                 'and then alter the parameter before re-joining the domain.')
+
+        for entry in new['smb_options'].splitlines():
+            kv = entry.split('=')
+            if len(kv) == 0:
+                continue
+
+            if kv[0].strip() in aux_blacklist:
+                verrors.add(
+                    'smb_update.smb_options',
+                    f'{kv[0]} is a blacklisted auxiliary parameter. Changes to this parameter '
+                    'are not permitted.'
+                )
 
         verrors.check()
 
