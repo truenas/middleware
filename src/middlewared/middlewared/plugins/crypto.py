@@ -1,3 +1,4 @@
+import copy
 import datetime
 import dateutil
 import dateutil.parser
@@ -1332,13 +1333,24 @@ class CertificateService(CRUDService):
         # Ensure that there is an authenticator for each domain in the CSR
         domains = self.middleware.call_sync('certificate.get_domain_names', csr_data['id'])
         dns_authenticator_ids = [o['id'] for o in self.middleware.call_sync('acme.dns.authenticator.query')]
+
+        dns_mapping_copy = copy.deepcopy(data['dns_mapping'])
+        # We will normalise domain authenticators to ensure consistency between SAN "DNS:*" prefixes
+        for domain in data['dns_mapping']:
+            if ':' in domain and domain.split(':', 1)[-1] not in dns_mapping_copy:
+                dns_mapping_copy[domain.split(':', 1)[-1]] = dns_mapping_copy[domain]
+            elif ':' not in domain:
+                normalised_san = ':'.join(self.middleware.call_sync('cryptokey.normalize_san', [domain]))
+                if normalised_san not in dns_mapping_copy:
+                    dns_mapping_copy[normalised_san] = domain
+
         for domain in domains:
-            if domain not in data['dns_mapping']:
+            if domain not in dns_mapping_copy:
                 verrors.add(
                     'acme_create.dns_mapping',
                     f'Please provide DNS authenticator id for {domain}'
                 )
-            elif data['dns_mapping'][domain] not in dns_authenticator_ids:
+            elif dns_mapping_copy[domain] not in dns_authenticator_ids:
                 verrors.add(
                     'acme_create.dns_mapping',
                     f'Provided DNS Authenticator id for {domain} does not exist'
@@ -1372,7 +1384,7 @@ class CertificateService(CRUDService):
         else:
             job.set_progress(progress, 'New order for certificate issuance placed')
 
-            self.handle_authorizations(job, progress, order, data['dns_mapping'], acme_client, key)
+            self.handle_authorizations(job, progress, order, dns_mapping_copy, acme_client, key)
 
             try:
                 # Polling for a maximum of 10 minutes while trying to finalize order
@@ -1390,7 +1402,7 @@ class CertificateService(CRUDService):
 
         max_progress = (progress * 4) - progress - (progress * 4 / 5)
 
-        dns_mapping = {d.replace('*.', '').split('DNS:', 1)[-1]: v for d, v in domain_names_dns_mapping.items()}
+        dns_mapping = {d.replace('*.', '').split(':', 1)[-1]: v for d, v in domain_names_dns_mapping.items()}
         for authorization_resource in order.authorizations:
             try:
                 status = False
