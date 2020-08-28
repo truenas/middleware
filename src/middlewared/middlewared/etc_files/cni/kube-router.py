@@ -3,9 +3,7 @@ import os
 
 
 def render(service, middleware):
-    if not middleware.call_sync(
-        'k8s.cni.validate_cni_integrity', 'kube_router', middleware.call_sync('kubernetes.config')
-    ):
+    if not middleware.call_sync('k8s.cni.validate_cni_integrity', 'kube_router'):
         return
 
     os.makedirs('/etc/cni/net.d/kube-router.d', exist_ok=True)

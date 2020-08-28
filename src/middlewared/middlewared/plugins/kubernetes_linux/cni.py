@@ -16,7 +16,7 @@ class KubernetesCNIService(ConfigService):
         }
 
     async def setup_cni(self):
-        kube_config = await self.middleware.call('kubernetes.config')
+        kube_config = await self.middleware.call('datastore.query', 'services.kubernetes', [], {'get': True})
         config = await self.config()
         async with api_client() as (api, context):
             cni_config = kube_config['cni_config']
@@ -30,9 +30,10 @@ class KubernetesCNIService(ConfigService):
             'datastore.update', 'services.kubernetes', kube_config['id'], {'cni_config': cni_config}
         )
         await self.middleware.call('etc.generate', 'cni')
+        await self.middleware.call('service.start', 'kuberouter')
 
     async def validate_cni_integrity(self, cni, config=None):
-        config = config or await self.middleware.call('kubernetes.config')
+        config = config or await self.middleware.call('datastore.query', 'services.kubernetes', [], {'get': True})
         return all(k in (config['cni_config'].get(cni) or {}) for k in ('ca', 'token'))
 
     async def kube_router_config(self):

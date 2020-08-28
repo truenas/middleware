@@ -17,7 +17,6 @@ class KubernetesService(Service):
             # TODO: Raise an alert
             raise CallError(f'Unable to configure node: {node_config["error"]}')
         await self.middleware.call('k8s.cni.setup_cni')
-        await self.middleware.call('service.start', 'kuberouter')
         await self.middleware.call(
             'k8s.node.remove_taints', [
                 k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
@@ -48,8 +47,9 @@ class KubernetesService(Service):
         if not config['pool']:
             return
 
-        if config['dataset']:
+        if await self.middleware.call('pool.dataset.query', [['id', '=', config['dataset']]]):
             await self.middleware.call('zfs.dataset.delete', config['dataset'], {'force': True, 'recursive': True})
+
         await self.setup_pool()
         await self.middleware.call('service.start', 'docker')
         # This is necessary because docker daemon requires a couple of seconds after starting to initialise itself

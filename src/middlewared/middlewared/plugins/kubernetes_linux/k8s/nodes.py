@@ -20,7 +20,7 @@ async def add_taint(api_client, taint_dict, node_object=None):
     node_object = await get_node(api_client, node_object)
 
     existing_taints = []
-    for taint in map(lambda t: t.to_dict(),  (node_object.spec.taints or [])):
+    for taint in map(lambda t: t.to_dict(), (node_object.spec.taints or [])):
         if all(taint[k] == taint_dict[k] for k in ('key', 'effect', 'value')):
             return
         existing_taints.append(taint)

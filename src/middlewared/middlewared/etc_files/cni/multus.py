@@ -3,8 +3,7 @@ import json
 
 
 def render(service, middleware):
-    config = middleware.call_sync('kubernetes.config')
-    if not middleware.call_sync('k8s.cni.validate_cni_integrity', 'multus', config):
+    if not middleware.call_sync('k8s.cni.validate_cni_integrity', 'multus'):
         return
 
     os.makedirs('/etc/cni/net.d/multus.d', exist_ok=True)

@@ -29,6 +29,7 @@ class KubernetesService(ConfigService):
     @private
     async def k8s_extend(self, data):
         data['dataset'] = os.path.join(data['pool'], 'ix-applications') if data['pool'] else None
+        data.pop('cni_config')
         return data
 
     @private
@@ -56,8 +57,7 @@ class KubernetesService(ConfigService):
     @job(lock='kubernetes_update')
     async def do_update(self, job, data):
         old_config = await self.config()
-        for k in ('dataset', 'cni_config'):
-            old_config.pop(k)
+        old_config.pop('dataset')
         config = old_config.copy()
         config.update(data)
 

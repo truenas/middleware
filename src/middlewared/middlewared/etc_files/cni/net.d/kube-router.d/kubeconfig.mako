@@ -1,6 +1,6 @@
 <%
     config = middleware.call_sync('kubernetes.config')
-    if not middleware.call_sync('k8s.cni.validate_cni_integrity', 'kube_router', config):
+    if not middleware.call_sync('k8s.cni.validate_cni_integrity', 'kube_router'):
         middleware.logger.debug('Kube-router CNI configuration not generated due to missing credentials.')
         raise FileShouldNotExist()
     kube_router = config['cni_config']['kube_router']
