@@ -77,6 +77,9 @@ class mDNSService(object):
             else:
                 return False
 
+        if self.service == 'AFPOVERTCP':
+            return any(filter_list(self.service_info, [('service', '=', 'afp'), ('state', '=', 'RUNNING')]))
+
         if self.service == 'SMB':
             return any(filter_list(self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]))
 
@@ -317,6 +320,9 @@ def get_hostname(middleware):
             return ngc['hostname_virtual']
         elif failover_status == 'BACKUP':
             return None
+        else:
+            return ngc['hostname_local']
+
     else:
         return ngc['hostname_local']
 
