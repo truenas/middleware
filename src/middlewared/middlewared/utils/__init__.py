@@ -10,6 +10,7 @@ import re
 import sys
 import subprocess
 import threading
+import logging
 from datetime import datetime, timedelta
 from itertools import chain
 from functools import wraps
@@ -18,6 +19,8 @@ from threading import Lock
 
 from middlewared.schema import Schemas
 from middlewared.service_exception import MatchNotFound
+
+logger = logging.getLogger(__name__)
 
 # For freenasOS
 if '/usr/local/lib' not in sys.path:
@@ -168,7 +171,7 @@ def _run_command(user, commandline, q, rv):
 
 
 def run_command_with_user_context(commandline, user, callback):
-    q = Queue()
+    q = Queue(maxsize=100)
     rv = Value('i')
     stdout = b''
     p = Process(
@@ -185,6 +188,11 @@ def run_command_with_user_context(commandline, user, callback):
             callback(get)
         except queue.Empty:
             pass
+        except Exception:
+            logger.error('Unhandled exception', exc_info=True)
+            p.kill()
+            raise
+
     p.join()
 
     return subprocess.CompletedProcess(
