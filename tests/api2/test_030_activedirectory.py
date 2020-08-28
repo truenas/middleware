@@ -198,6 +198,7 @@ def test_15_get_activedirectory_data(request):
     assert results.status_code == 200, results.text
 
 
+@pytest.mark.parametrize('data', ad_object_list)
 def test_16_verify_activedirectory_data_of_(request, data):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     if data == 'domainname':
@@ -257,6 +258,7 @@ def test_19_setting_up_smb(request):
     assert results.status_code == 200, results.text
 
 
+@pytest.mark.parametrize('data', ["description", "guest"])
 def test_20_verify_the_value_of_put_smb_object_value_of_(request, data):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     assert results.json()[data] == payload[data], results.text
