@@ -8,6 +8,7 @@ class KubernetesNodeService(ConfigService):
 
     class Config:
         namespace = 'k8s.node'
+        private = True
 
     async def config(self):
         try:

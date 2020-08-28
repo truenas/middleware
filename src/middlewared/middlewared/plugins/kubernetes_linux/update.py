@@ -4,7 +4,7 @@ import os
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Dict, IPAddr, Str
-from middlewared.service import accepts, job, private, SystemServiceService, ValidationErrors
+from middlewared.service import accepts, job, private, ConfigService, ValidationErrors
 
 
 class KubernetesModel(sa.Model):
@@ -20,14 +20,11 @@ class KubernetesModel(sa.Model):
     cni_config = sa.Column(sa.JSON(type=dict))
 
 
-class KubernetesService(SystemServiceService):
+class KubernetesService(ConfigService):
 
     class Config:
         datastore = 'services.kubernetes'
         datastore_extend = 'kubernetes.k8s_extend'
-        service_model = 'kubernetes'
-        service_verb = 'restart'
-        service_verb_sync = False
 
     @private
     async def k8s_extend(self, data):
@@ -67,12 +64,8 @@ class KubernetesService(SystemServiceService):
         await self.validate_data(config, 'kubernetes_update')
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
-            if not config['pool']:
-                config['cni_config'] = {}
-
-            await self.middleware.call(
-                'datastore.update', self._config.datastore, old_config['id'], config,
-            )
-            await self.middleware.call('kubernetes.status_change', config, old_config)
+            config['cni_config'] = {}
+            await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
+            await self.middleware.call('kubernetes.status_change')
 
         return await self.config()
