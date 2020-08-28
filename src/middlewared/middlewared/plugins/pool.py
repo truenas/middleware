@@ -493,7 +493,7 @@ class PoolService(CRUDService):
             'encryption_options',
             Bool('generate_key', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
-            Str('algorithm', default='AES-256-GCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
+            Str('algorithm', default='AES-256-CCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
             Str('passphrase', default=None, null=True, empty=False, private=True),
             Str('key', default=None, null=True, validators=[Range(min=64, max=64)], private=True),
             register=True
