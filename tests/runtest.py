@@ -167,7 +167,7 @@ def get_tests():
         ev = ['delete_user']
     else:
         sv = ['ssh', 'interfaces', 'network', 'pool_dataset_encryption', 'pool', 'user']
-        ev = ['update', 'delete_interfaces', 'delete_user']
+        ev = ['host_key', 'update', 'delete_interfaces', 'delete_user']
     for filename in listdir(apidir):
         if filename.endswith('.py') and not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
