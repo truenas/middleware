@@ -69,7 +69,7 @@ def _run_command(user, commandline, q, rv):
 
 
 def run_command_with_user_context(commandline, user, callback):
-    q = Queue()
+    q = Queue(maxsize=100)
     rv = Value('i')
     stdout = b''
     p = Process(
@@ -86,6 +86,11 @@ def run_command_with_user_context(commandline, user, callback):
             callback(get)
         except queue.Empty:
             pass
+        except Exception:
+            logger.error('Unhandled exception', exc_info=True)
+            p.kill()
+            raise
+
     p.join()
 
     return subprocess.CompletedProcess(
