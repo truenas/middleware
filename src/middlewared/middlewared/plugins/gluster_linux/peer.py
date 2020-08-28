@@ -22,9 +22,14 @@ class GlusterPeerService(CRUDService):
         try:
             result = method(host) if host else method()
         except GlusterCmdException as e:
+            # the gluster cli utility will return stderr
+            # to stdout and vice versa on certain failures.
+            # account for this and decode appropriately
             rc, out, err = e.args[0]
             err = err if err else out
-            raise CallError(f'{err.decode().strip()}')
+            if isinstance(err, bytes):
+                err = err.decode()
+            raise CallError(f'{err.strip()}')
         except Exception:
             raise
 
