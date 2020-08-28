@@ -337,7 +337,7 @@ class CompoundService(Service):
     def _part_config(self, part):
         # datastore fields are related to CRUDService only, allow not repeating them for other parts
         return {k: v for k, v in part._config.__dict__.items()
-                if not k.startswith('__') and not k.startswith(('datastore', 'service_'))}
+                if not k.startswith('__') and not k.startswith('datastore')}
 
 
 class ConfigService(ServiceChangeMixin, Service):

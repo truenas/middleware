@@ -15,7 +15,7 @@ class KubernetesService(Service):
         node_config = await self.middleware.call('k8s.node.config')
         if not node_config['node_configured']:
             # TODO: Raise an alert
-            raise CallError('Unable to configure node.')
+            raise CallError(f'Unable to configure node: {node_config["error"]}')
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('service.start', 'kuberouter')
         await self.middleware.call(
@@ -40,19 +40,23 @@ class KubernetesService(Service):
 
     @private
     @lock('kubernetes_status_change')
-    async def status_change(self, config, old_config):
-        k3s_running = await self.middleware.call('service.started', 'kubernetes')
-        if config['pool'] and config['pool'] != old_config['pool']:
-            await self.setup_pool()
-            if not k3s_running:
-                await self.middleware.call('service.start', 'docker')
-                await asyncio.sleep(5)
-                await self.middleware.call('docker.images.load_default_images')
-                await self.middleware.call('service.stop', 'docker')
-            else:
-                asyncio.ensure_future(self.middleware.call('service.restart', 'kubernetes'))
-        if not config['pool'] and k3s_running:
-            asyncio.ensure_future(self.middleware.call('service.stop', 'kubernetes'))
+    async def status_change(self):
+        config = await self.middleware.call('kubernetes.config')
+        if await self.middleware.call('service.started', 'kubernetes'):
+            await self.middleware.call('service.stop', 'kubernetes')
+
+        if not config['pool']:
+            return
+
+        if config['dataset']:
+            await self.middleware.call('zfs.dataset.delete', config['dataset'], {'force': True, 'recursive': True})
+        await self.setup_pool()
+        await self.middleware.call('service.start', 'docker')
+        # This is necessary because docker daemon requires a couple of seconds after starting to initialise itself
+        # properly, if we try to load images without the delay that will fail and will only correct after a restart
+        await asyncio.sleep(5)
+        await self.middleware.call('docker.images.load_default_images')
+        asyncio.ensure_future(self.middleware.call('service.start', 'kubernetes'))
 
     @private
     async def setup_pool(self):
@@ -72,9 +76,8 @@ class KubernetesService(Service):
 
 async def _event_system(middleware, event_type, args):
 
-    if args['id'] == 'ready' and (
-        await middleware.call('service.query', [['service', '=', 'kubernetes']], {'get': True})
-    )['enable']:
+    if args['id'] == 'ready' and (await middleware.call('kubernetes.config'))['pool']:
+        await middleware.call('kubernetes.validate_k8s_fs_setup')
         asyncio.ensure_future(middleware.call('service.start', 'kubernetes'))
     elif args['id'] == 'shutdown' and await middleware.call('service.started', 'kubernetes'):
         asyncio.ensure_future(middleware.call('service.stop', 'kubernetes'))
