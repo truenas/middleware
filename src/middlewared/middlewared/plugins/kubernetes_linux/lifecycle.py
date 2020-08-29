@@ -10,7 +10,7 @@ class KubernetesService(Service):
     @private
     async def post_start(self):
         # TODO: Add support for migrations
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-start', 'effect': 'NoExecute'}])
         node_config = await self.middleware.call('k8s.node.config')
         if not node_config['node_configured']:
