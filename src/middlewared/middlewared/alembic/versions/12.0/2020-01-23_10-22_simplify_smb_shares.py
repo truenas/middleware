@@ -70,7 +70,7 @@ def upgrade():
             fruit_enabled = True
 
         if share['cifs_showhiddenfiles']:
-            aux_params.append('hide dot files = yes')
+            aux_params.append('hide dot files = no')
 
         if share['cifs_guestonly']:
             aux_params.append('guest only = yes')
