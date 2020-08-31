@@ -35,7 +35,6 @@ class KubernetesService(Service):
 
     @private
     async def validate_k8s_fs_setup(self):
-        # TODO: Please account for locked datasets
         config = await self.middleware.call('kubernetes.config')
         if not await self.middleware.call('pool.query', [['name', '=', config['pool']]]):
             raise CallError(f'"{config["pool"]}" pool not found.', errno=errno.ENOENT)
@@ -46,6 +45,15 @@ class KubernetesService(Service):
         } ^ k8s_datasets
         if diff:
             raise CallError(f'Missing "{", ".join(diff)}" dataset(s) required for starting kubernetes.')
+
+        locked_datasets = [
+            d['id'] for d in await self.middleware.call('zfs.dataset.locked_datasets')
+            if d['mountpoint'].startswith(f'{config["dataset"]}/') or d['mountpoint'] == config['dataset']
+        ]
+        if locked_datasets:
+            raise CallError(
+                f'Please unlock following dataset(s) before starting kubernetes: {", ".join(locked_datasets)}'
+            )
 
     @private
     @lock('kubernetes_status_change')
@@ -61,6 +69,17 @@ class KubernetesService(Service):
             await self.middleware.call('zfs.dataset.delete', config['dataset'], {'force': True, 'recursive': True})
 
         await self.setup_pool()
+        try:
+            await self.status_change_internal()
+        except Exception:
+            await self.middleware.call('alert.oneshot_create', 'ApplicationsConfigurationFailed', None)
+            raise
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
+
+    @private
+    async def status_change_internal(self):
+        await self.validate_k8s_fs_setup()
         await self.middleware.call('service.start', 'docker')
         # This is necessary because docker daemon requires a couple of seconds after starting to initialise itself
         # properly, if we try to load images without the delay that will fail and will only correct after a restart
@@ -87,7 +106,6 @@ class KubernetesService(Service):
 async def _event_system(middleware, event_type, args):
 
     if args['id'] == 'ready' and (await middleware.call('kubernetes.config'))['pool']:
-        await middleware.call('kubernetes.validate_k8s_fs_setup')
         asyncio.ensure_future(middleware.call('service.start', 'kubernetes'))
     elif args['id'] == 'shutdown' and await middleware.call('service.started', 'kubernetes'):
         asyncio.ensure_future(middleware.call('service.stop', 'kubernetes'))
