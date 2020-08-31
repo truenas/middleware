@@ -642,7 +642,10 @@ class UserService(CRUDService):
             # bigger than 1, it means we have a gap and can use it.
             if i['uid'] - last_uid > 1:
                 return last_uid + 1
-            last_uid = i['uid']
+
+            if i['uid'] > last_uid:
+                last_uid = i['uid']
+
         return last_uid + 1
 
     @no_auth_required
