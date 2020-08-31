@@ -8,6 +8,9 @@ class KubernetesService(SimpleService):
     etc = ['k3s']
     systemd_unit = 'k3s'
 
+    async def before_start(self):
+        await self.middleware.call('kubernetes.validate_k8s_fs_setup')
+
     async def _start_linux(self):
         await self.middleware.call('service.start', 'docker')
         await self._systemd_unit('cni-dhcp', 'start')
