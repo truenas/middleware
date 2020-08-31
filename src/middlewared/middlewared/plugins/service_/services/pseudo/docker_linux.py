@@ -1,4 +1,4 @@
-from .base import SimpleService
+from middlewared.plugins.service_.services.base import SimpleService
 
 
 class DockerService(SimpleService):
