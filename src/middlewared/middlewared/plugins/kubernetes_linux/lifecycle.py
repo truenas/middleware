@@ -11,10 +11,20 @@ class KubernetesService(Service):
     async def post_start(self):
         # TODO: Add support for migrations
         await asyncio.sleep(10)
+        # 10 secs should be enough for the node to come up online and kube-api servers to start accepting calls.
+        try:
+            await self.post_start_internal()
+        except Exception:
+            await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', None)
+            raise
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
+
+    @private
+    async def post_start_internal(self):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-start', 'effect': 'NoExecute'}])
         node_config = await self.middleware.call('k8s.node.config')
         if not node_config['node_configured']:
-            # TODO: Raise an alert
             raise CallError(f'Unable to configure node: {node_config["error"]}')
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call(

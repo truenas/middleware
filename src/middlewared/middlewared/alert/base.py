@@ -92,6 +92,7 @@ class DismissableAlertClass:
 
 
 class AlertCategory(enum.Enum):
+    APPLICATIONS = "APPLICATIONS"
     CERTIFICATES = "CERTIFICATES"
     DIRECTORY_SERVICE = "DIRECTORY_SERVICE"
     HA = "HA"
