@@ -6,6 +6,7 @@ import socket
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Range
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -370,6 +371,12 @@ class SharingNFSService(SharingService):
     async def validate(self, data, schema_name, verrors, old=None):
         if data["alldirs"] and len(data["paths"]) > 1:
             verrors.add(f"{schema_name}.alldirs", "This option can only be used for shares that contain single path")
+
+        # need to make sure that the nfs share is within the zpool mountpoint
+        for idx, i in enumerate(data["paths"]):
+            await check_path_resides_within_volume(
+                verrors, self.middleware, f'{schema_name}.paths.{idx}', i
+            )
 
         await self.middleware.run_in_thread(self.validate_paths, data, schema_name, verrors)
 
