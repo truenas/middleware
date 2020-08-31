@@ -1,5 +1,6 @@
 import asyncio
 import errno
+import json
 import os
 
 from middlewared.service import CallError, lock, private, Service
@@ -57,25 +58,37 @@ class KubernetesService(Service):
 
     @private
     @lock('kubernetes_status_change')
-    async def status_change(self):
-        config = await self.middleware.call('kubernetes.config')
-        if await self.middleware.call('service.started', 'kubernetes'):
-            await self.middleware.call('service.stop', 'kubernetes')
+    def status_change(self):
+        config = self.middleware.call_sync('kubernetes.config')
+        if self.middleware.call_sync('service.started', 'kubernetes'):
+            self.middleware.call_sync('service.stop', 'kubernetes')
 
         if not config['pool']:
             return
 
-        if await self.middleware.call('pool.dataset.query', [['id', '=', config['dataset']]]):
-            await self.middleware.call('zfs.dataset.delete', config['dataset'], {'force': True, 'recursive': True})
+        config_path = os.path.join('/mnt', config['dataset'], 'config.json')
+        clean_start = True
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                on_disk_config = json.loads(f.read())
+            clean_start = not all(
+                config[k] == on_disk_config.get(k) for k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
+            )
 
-        await self.setup_pool()
+        if clean_start and self.middleware.call_sync('pool.dataset.query', [['id', '=', config['dataset']]]):
+            self.middleware.call_sync('zfs.dataset.delete', config['dataset'], {'force': True, 'recursive': True})
+
+        self.middleware.call_sync('kubernetes.setup_pool')
         try:
-            await self.status_change_internal()
+            self.middleware.call_sync('kubernetes.status_change_internal')
         except Exception:
-            await self.middleware.call('alert.oneshot_create', 'ApplicationsConfigurationFailed', None)
+            self.middleware.call_sync('alert.oneshot_create', 'ApplicationsConfigurationFailed', None)
             raise
         else:
-            await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
+            with open(config_path, 'w') as f:
+                f.write(json.dumps(config))
+
+            self.middleware.call_sync('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
 
     @private
     async def status_change_internal(self):
