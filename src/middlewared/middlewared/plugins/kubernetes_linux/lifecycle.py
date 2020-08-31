@@ -3,7 +3,7 @@ import errno
 import json
 import os
 
-from middlewared.service import CallError, lock, private, Service
+from middlewared.service import CallError, private, Service
 
 
 class KubernetesService(Service):
@@ -57,7 +57,6 @@ class KubernetesService(Service):
             )
 
     @private
-    @lock('kubernetes_status_change')
     def status_change(self):
         config = self.middleware.call_sync('kubernetes.config')
         if self.middleware.call_sync('service.started', 'kubernetes'):

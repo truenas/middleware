@@ -34,7 +34,6 @@ async def get_service_account_details(api_client, svc_account):
         try:
             svc_account = await get_service_account(api_client, svc_account)
         except Exception:
-            # TODO: Let's handle this gracefully with events please
             await asyncio.sleep(5)
         else:
             break
