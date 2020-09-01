@@ -15,8 +15,8 @@ class KubernetesService(Service):
         # 10 secs should be enough for the node to come up online and kube-api servers to start accepting calls.
         try:
             await self.post_start_internal()
-        except Exception:
-            await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', None)
+        except Exception as e:
+            await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {'error': str(e)})
             raise
         else:
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
@@ -80,8 +80,8 @@ class KubernetesService(Service):
         self.middleware.call_sync('kubernetes.setup_pool')
         try:
             self.middleware.call_sync('kubernetes.status_change_internal')
-        except Exception:
-            self.middleware.call_sync('alert.oneshot_create', 'ApplicationsConfigurationFailed', None)
+        except Exception as e:
+            self.middleware.call_sync('alert.oneshot_create', 'ApplicationsConfigurationFailed', {'error': str(e)})
             raise
         else:
             with open(config_path, 'w') as f:
