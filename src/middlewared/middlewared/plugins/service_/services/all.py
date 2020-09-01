@@ -1,8 +1,10 @@
 from .afp import AFPService
 from .cifs import CIFSService
+from .docker_linux import DockerService
 from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
+from .kuberouter_linux import KubeRouterService
 from .kubernetes_linux import KubernetesService
 from .lldp import LLDPService
 from .mdns import MDNSService
@@ -24,8 +26,6 @@ from .keepalived import KeepalivedService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
-from .pseudo.docker_linux import DockerService
-from .pseudo.kuberouter_linux import KubeRouterService
 from .pseudo.libvirtd import LibvirtdService
 from .pseudo.misc import (
     CronService,
