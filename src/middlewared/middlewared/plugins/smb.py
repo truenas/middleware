@@ -152,7 +152,7 @@ class SMBSharePreset(enum.Enum):
             'ixnas:zfs_auto_homedir=true'
         ])
     }}
-    WORM_DROPBOX = {"verbose_name": "Files become readonly of SMB after 5 minutes", "params": {
+    WORM_DROPBOX = {"verbose_name": "SMB WORM. Files become readonly via SMB after 5 minutes", "params": {
         'path_suffix': '',
         'auxsmbconf': '\n'.join([
             'worm:grace_period = 300',
