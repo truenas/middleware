@@ -10,8 +10,8 @@ import random
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface, ip
-from functions import GET, PUT, POST, DELETE
+from auto_config import interface, ip, ha
+from functions import GET, PUT, POST
 
 aliases = {'address': ip}
 
@@ -45,7 +45,6 @@ def test_02_get_interface_aliases_ip():
         if ip in aliases_list['address']:
             interface_ip = aliases_list['address']
     assert interface_ip == ip, results.text
-
 
 
 def test_03_get_interface_aliases_broadcast_ip():
@@ -106,6 +105,9 @@ def test_08_set_main_interface_ipv4_to_false():
             }
         ]
     }
+
+    if ha is False:
+        payload['disable_offload_capabilities'] = True
     results = PUT(f'/interface/id/{interface}/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
