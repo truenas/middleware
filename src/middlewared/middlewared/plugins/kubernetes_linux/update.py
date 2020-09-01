@@ -42,6 +42,9 @@ class KubernetesService(ConfigService):
         if ipaddress.ip_address(data['cluster_dns_ip']) not in ipaddress.ip_network(data['service_cidr']):
             verrors.add(f'{schema}.cluster_dns_ip', 'Must be in range of "service_cidr".')
 
+        if data['node_ip'] not in await self.bindip_choices():
+            verrors.add(f'{schema}.node_ip', 'Please provide a valid IP address.')
+
         verrors.check()
 
     @accepts(
@@ -51,6 +54,7 @@ class KubernetesService(ConfigService):
             IPAddr('cluster_cidr', cidr=True),
             IPAddr('service_cidr', cidr=True),
             IPAddr('cluster_dns_ip'),
+            IPAddr('node_ip'),
             update=True,
         )
     )
@@ -69,3 +73,14 @@ class KubernetesService(ConfigService):
             await self.middleware.call('kubernetes.status_change')
 
         return await self.config()
+
+    @accepts()
+    async def bindip_choices(self):
+        """
+        Returns ip choices for Kubernetes service to use
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'static': True, 'any': True}
+            )
+        }
