@@ -12,9 +12,16 @@ sys.path.append(apifolder)
 from functions import GET, POST, PUT
 from auto_config import ha
 
-
 services = ['afp', 'cifs', 'nfs', 'snmp', 'tftp', 'webdav', 'lldp']
-all_service = GET('/service/', controller_a=ha).json()
+
+all_services = []
+for service in GET('/service/', controller_a=ha).json():
+    all_services.append(service['id'])
+
+
+@pytest.fixture(scope='module')
+def services_list():
+    return {}
 
 
 def test_01_service_query():
@@ -23,21 +30,29 @@ def test_01_service_query():
     assert isinstance(results.json(), list) is True
 
 
-@pytest.mark.parametrize('svc', all_service)
-def test_02_service_update(svc):
-    results = PUT(f'/service/id/{svc["id"]}', {'enable': svc['enable']})
+@pytest.mark.parametrize('svc', all_services)
+def test_02_get_service_info_for(svc, services_list):
+    results = GET(f'/service/id/{svc}/')
+    assert results.status_code == 200, results.text
+    services_list[svc] = results.json()
+
+
+@pytest.mark.parametrize('svc', all_services)
+def test_03_service_update(svc, services_list):
+    payload = {'enable': services_list[svc]['enable']}
+    results = PUT(f'/service/id/{svc}/', payload)
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('svc', all_service)
-def test_03_looking_service_enable(svc):
-    results = GET(f'/service/id/{svc["id"]}')
+@pytest.mark.parametrize('svc', all_services)
+def test_04_looking_service_enable(svc, services_list):
+    results = GET(f'/service/id/{svc}/')
     assert results.status_code == 200, results.text
-    assert results.json()['enable'] == svc['enable'], results.text
+    assert results.json()['enable'] == services_list[svc]['enable'], results.text
 
 
 @pytest.mark.parametrize('svc', services)
-def test_04_start_service(svc):
+def test_05_start_service(svc):
     results = POST('/service/start/', {'service': svc})
     assert results.status_code == 200, results.text
     assert results.json() is True
@@ -45,14 +60,14 @@ def test_04_start_service(svc):
 
 
 @pytest.mark.parametrize('svc', services)
-def test_05_looking_if_service_is_running(svc):
+def test_06_looking_if_service_is_running(svc):
     results = GET(f'/service/?service={svc}')
     assert results.status_code == 200, results.text
     assert results.json()[0]['state'] == 'RUNNING', results.text
 
 
 @pytest.mark.parametrize('svc', services)
-def test_06_service_stop(svc):
+def test_07_service_stop(svc):
     results = POST('/service/stop/', {'service': svc})
     assert results.status_code == 200, results.text
     assert results.json() is False
@@ -60,7 +75,7 @@ def test_06_service_stop(svc):
 
 
 @pytest.mark.parametrize('svc', services)
-def test_05_looking_if_service_is_stopped(svc):
+def test_08_looking_if_service_is_stopped(svc):
     results = GET(f'/service/?service={svc}')
     assert results.status_code == 200, results.text
     assert results.json()[0]['state'] == 'STOPPED', results.text

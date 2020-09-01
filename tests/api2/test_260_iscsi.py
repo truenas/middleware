@@ -218,22 +218,13 @@ def test_17_Deleting_file(request):
 def test_18_verifiying_iscsi_session_on_freenas(request):
     depends(request, ["pool_04"], scope="session")
     try:
-        PUT("/ssh", {
-            'rootlogin': True
-        })
-        PUT("/service/id/ssh", {
-            'enable': True
-        })
-        POST("/service/start", {
-            'service': 'ssh',
-        })
         result = SSH_TEST('ctladm islist', user, password, ip)
         assert result['result'] is True, result['output']
     except AssertionError as e:
         raise AssertionError(f'Could not verify iscsi session on freenas : {e}')
     else:
-        iscsi_con_ip = return_output('cat /tmp/.sshCmdTestStdOut | awk \'$2 == "%s" {print $2}\'' % BSD_HOST)
-        assert iscsi_con_ip.strip() == BSD_HOST, 'No active session on FreeNAS for iSCSI'
+        iscsi_con_ip = result['output']
+        assert BSD_HOST in iscsi_con_ip, 'No active session on FreeNAS for iSCSI'
 
 
 @bsd_host_cfg
