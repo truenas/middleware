@@ -23,4 +23,5 @@ def render(service, middleware):
             'data-dir': os.path.join('/mnt', config['dataset'], 'k3s'),
             'kube-controller-manager-arg': kube_controller_args,
             'node-ip': config['node_ip'],
+            'service-node-port-range': '9000-65535',
         }))
