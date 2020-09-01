@@ -87,11 +87,11 @@
             validated_bind_ips = []
             for address in db['cifs']['bindip']:
                 if allowed_ips.get(address):
-                    validated_bind_ips.append(interface)
+                    validated_bind_ips.append(address)
                 else:
-                    middleware.logger.warning("IP address [%s] is no longer in use "
-                                              "and should be removed from SMB configuration.",
-                                              interface)
+                    logger.warning("IP address [%s] is no longer in use "
+                                   "and should be removed from SMB configuration.",
+                                   address)
 
             if validated_bind_ips:
                 bindips = (db['cifs']['bindip'])
@@ -282,10 +282,10 @@
                     missing_keys.append(key)
 
             if missing_keys:
-                self.logger.warning("Idmap backend for domain [%s] lacks "
-                                    "required configuration option(s): %s. User "
-                                    "authentication and apects of domain integration "
-                                    "may be negatively impacted.", domain, missing_keys)
+                logger.warning("Idmap backend for domain [%s] lacks "
+                               "required configuration option(s): %s. User "
+                               "authentication and apects of domain integration "
+                               "may be negatively impacted.", domain, missing_keys)
 
         def add_idmap_domain(pc, db, idmap, autorid_enabled=False):
             """
