@@ -6,7 +6,7 @@ class ApplicationsConfigurationFailedAlertClass(AlertClass, OneShotAlertClass):
     level = AlertLevel.CRITICAL
     category = AlertCategory.APPLICATIONS
     title = 'Unable to Configure Applications'
-    text = 'Failed to configure kubernetes cluster for Applications'
+    text = 'Failed to configure kubernetes cluster for Applications: %(error)s'
 
     async def create(self, args):
         return Alert(ApplicationsConfigurationFailedAlertClass, args)
@@ -20,7 +20,7 @@ class ApplicationsStartFailedAlertClass(AlertClass, OneShotAlertClass):
     level = AlertLevel.CRITICAL
     category = AlertCategory.APPLICATIONS
     title = 'Unable to Start Applications'
-    text = 'Failed to start kubernetes cluster for Applications'
+    text = 'Failed to start kubernetes cluster for Applications: %(error)s'
 
     async def create(self, args):
         return Alert(ApplicationsStartFailedAlertClass, args)
