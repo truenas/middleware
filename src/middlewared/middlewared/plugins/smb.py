@@ -1026,17 +1026,27 @@ class SharingSMBService(SharingService):
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
+        """
+        Path is a required key in almost all cases. There is a special edge case for LDAP
+        [homes] shares. In this case we allow an empty path. Samba interprets this to mean
+        that the path should be dynamically set to the user's home directory on the LDAP server.
+        Local user auth to SMB shares is prohibited when LDAP is enabled with a samba schema.
+        """
         home_result = await self.home_exists(
             data['home'], schema_name, verrors, old)
 
         if home_result:
             verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
-        elif not home_result and not data['path']:
-            verrors.add(f'{schema_name}.path', 'This field is required.')
 
         if data['path']:
             await self.validate_path_field(data, schema_name, verrors)
+        elif not data['home']:
+            verrors.add(f'{schema_name}.path', 'This field is required.')
+        else:
+            ldap = await self.middleware.call('ldap.config')
+            if not ldap['enable'] or not ldap['has_samba_schema']:
+                verrors.add(f'{schema_name}.path', 'This field is required.')
 
         if data['auxsmbconf']:
             try:
