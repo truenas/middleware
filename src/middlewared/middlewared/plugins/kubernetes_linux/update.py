@@ -60,6 +60,27 @@ class KubernetesService(ConfigService):
     )
     @job(lock='kubernetes_update')
     async def do_update(self, job, data):
+        """
+        `pool` must be a valid ZFS pool configured in the system. Kubernetes service will initialise the pool by
+        creating datasets under `pool_name/ix-applications`.
+
+        `cluster_cidr` is the CIDR to be used for default NAT network between workloads.
+
+        `service_cidr` is the CIDR to be used for kubernetes services which are an abstraction and refer to a
+        logically set of kubernetes pods.
+
+        `cluster_dns_ip` is the IP of the DNS server running for the kubernetes cluster. It must be in the range
+        of `service_cidr`.
+
+        Specifying values for `cluster_cidr`, `service_cidr` and `cluster_dns_ip` are permanent and a subsequent change
+        requires re-initialisation of the applications. To clarify, system will destroy old `ix-applications` dataset
+        and any data within it when any of the values for the above configuration change.
+
+        `node_ip` is the IP address which the kubernetes cluster will assign to the TrueNAS node. It defaults to
+        0.0.0.0 and the cluster in this case will automatically manage which IP address to use for managing traffic
+        for default NAT network. If it is desired that traffic uses a certain interface / ip address, that IP address
+        can be specified and the NAT network will use related IP address and it's routes to manage the traffic.
+        """
         old_config = await self.config()
         old_config.pop('dataset')
         config = old_config.copy()
@@ -77,7 +98,7 @@ class KubernetesService(ConfigService):
     @accepts()
     async def bindip_choices(self):
         """
-        Returns ip choices for Kubernetes service to use
+        Returns ip choices for Kubernetes service to use.
         """
         return {
             d['address']: d['address'] for d in await self.middleware.call(
