@@ -170,7 +170,7 @@ def get_tests():
             sv = ['ssh', 'pool', 'user']
             ev = ['update', 'delete_user']
         else:
-            sv = ['ssh', 'interfaces', 'network', 'pool', 'user']
+            sv = ['ssh', 'network', 'interfaces', 'pool', 'user']
             ev = ['update', 'delete_interfaces', 'delete_user']
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
