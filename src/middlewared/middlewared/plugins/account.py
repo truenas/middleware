@@ -18,6 +18,7 @@ import string
 import stat
 import subprocess
 import time
+from pathlib import Path
 
 SKEL_PATH = '/usr/share/skel/'
 
@@ -645,8 +646,18 @@ class UserService(CRUDService):
             )
 
         if 'home' in data:
+            p = Path(data['home'])
+            if not p.is_absolute():
+                verrors.add(f'{schema}.home', '"Home Directory" must be an absolute path.')
+                return
+
+            if p.is_file():
+                verrors.add(f'{schema}.home', '"Home Directory" cannot be a file.')
+                return
+
             if ':' in data['home']:
                 verrors.add(f'{schema}.home', '"Home Directory" cannot contain colons (:).')
+
             if data['home'] != '/nonexistent':
                 if not data['home'].startswith('/mnt/'):
                     verrors.add(
@@ -663,11 +674,26 @@ class UserService(CRUDService):
                         f'The path for the home directory "({data["home"]})" '
                         'must include a volume or dataset.'
                     )
+                elif len(p.resolve().parents) == 2:
+                    verrors.add(
+                        f'{schema}.home',
+                        f'The specified path is a ZFS pool mountpoint "({data["home"]})" '
+                    )
 
         if 'home_mode' in data:
             try:
                 o = int(data['home_mode'], 8)
                 assert o & 0o777 == o
+                if o & (stat.S_IRUSR) == 0:
+                    verrors.add(
+                        f'{schema}.home_mode',
+                        'Home directory must be readable by User.'
+                    )
+                if o & (stat.S_IXUSR) == 0:
+                    verrors.add(
+                        f'{schema}.home_mode',
+                        'Home directory must be executable by User.'
+                    )
             except (AssertionError, ValueError, TypeError):
                 verrors.add(
                     f'{schema}.home_mode',
