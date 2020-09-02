@@ -32,7 +32,7 @@ class Fence(object):
 
     def __init__(self, interval, exclude_disks):
         self._interval = interval
-        self._exclude_disks = exclude_disks
+        self._exclude_disks = exclude_disks.split(',') if exclude_disks else exclude_disks
         self._disks = Disks(self)
         self._reload = False
         self.hostid = None
@@ -68,6 +68,7 @@ class Fence(object):
             # Only care about da and nvd devices
             if not i.startswith(('da', 'nvd')):
                 continue
+
             # You can pass an "--exclude-disks" argument to fenced
             # to exclude disks from getting SCSI reservations.
             # fenced is called in 12+ with the exclusion flag
@@ -75,6 +76,7 @@ class Fence(object):
             # have NVMe boot drives
             if i in self._exclude_disks:
                 continue
+
             try:
                 disk = Disk(self, i)
                 remote_keys.update(disk.get_keys()[1])
