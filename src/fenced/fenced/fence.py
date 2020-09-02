@@ -58,6 +58,7 @@ class Fence(object):
         remote_keys = set()
 
         disks = sysctl.filter('kern.disks')[0].value.split()
+        disks = [i for i in disks if i.startswith(('da', 'nvd'))]
 
         # Running fenced exluding all disks is not allowed
         if not len(set(disks) - set(self._exclude_disks)):
@@ -65,9 +66,6 @@ class Fence(object):
 
         # TODO: blacklist disks used by dumpdev
         for i in disks:
-            # Only care about da and nvd devices
-            if not i.startswith(('da', 'nvd')):
-                continue
 
             # You can pass an "--exclude-disks" argument to fenced
             # to exclude disks from getting SCSI reservations.
