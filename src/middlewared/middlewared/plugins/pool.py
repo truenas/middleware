@@ -283,7 +283,9 @@ class PoolService(CRUDService):
     @accepts(List('types', items=[Str('type', enum=['FILESYSTEM', 'VOLUME'])], default=['FILESYSTEM', 'VOLUME']))
     async def filesystem_choices(self, types):
         """
-        Returns all available datasets, except system datasets.
+        Returns all available datasets, except the following:
+            1. system datasets
+            2. glusterfs datasets
 
         .. examples(websocket)::
 
@@ -312,6 +314,7 @@ class PoolService(CRUDService):
             y['name'] for y in await self.middleware.call(
                 'zfs.dataset.query',
                 [
+                    ('name', 'rnin', '.glusterfs'),
                     ('name', 'rnin', '.system'),
                     ('pool', 'in', vol_names),
                     ('type', 'in', types),
