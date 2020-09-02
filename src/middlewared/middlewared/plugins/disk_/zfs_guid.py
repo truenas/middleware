@@ -53,7 +53,7 @@ async def devd_zfs_hook(middleware, data):
     ):
         await middleware.call(
             "disk.sync_zfs_guid",
-            await middleware.call("pool.query", [["name", "=", data["pool_name"]]], {"get": True}),
+            await middleware.call("pool.query", [["name", "=", data["pool"]]], {"get": True}),
         )
 
 
