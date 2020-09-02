@@ -13,6 +13,12 @@ class KubernetesService(SimpleService):
         await self.middleware.call('service.start', 'docker')
         await self._systemd_unit('cni-dhcp', 'start')
 
+    async def _start_linux(self):
+        await self._unit_action('Start')
+        # First time when k8s is started, it takes a bit more time to initialise itself properly
+        # and we need to have sleep here so that after start is called and not dismissed
+        await asyncio.sleep(5)
+
     async def after_start(self):
         asyncio.ensure_future(self.middleware.call('kubernetes.post_start'))
 
