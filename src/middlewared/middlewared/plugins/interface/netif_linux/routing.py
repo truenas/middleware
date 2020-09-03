@@ -2,9 +2,11 @@
 import enum
 import ipaddress
 import logging
+import os
 import socket
 
 import bidict
+from collections import defaultdict
 from pyroute2 import IPRoute
 
 from .address.ipv6 import ipv6_netmask_to_prefixlen
@@ -18,12 +20,13 @@ ip = IPRoute()
 
 
 class Route:
-    def __init__(self, network, netmask, gateway=None, interface=None, flags=None):
+    def __init__(self, network, netmask, gateway=None, interface=None, flags=None, table_id=None):
         self.network = ipaddress.ip_address(network)
         self.netmask = ipaddress.ip_address(netmask)
         self.gateway = ipaddress.ip_address(gateway) if gateway else None
         self.interface = interface or None
         self.flags = flags or set()
+        self.table_id = table_id
 
     def __getstate__(self):
         return {
@@ -31,7 +34,8 @@ class Route:
             'netmask': str(self.netmask),
             'gateway': str(self.gateway) if self.gateway else None,
             'interface': self.interface,
-            'flags': [x.name for x in self.flags]
+            'flags': [x.name for x in self.flags],
+            'table_id': self.table_id,
         }
 
     @property
@@ -51,11 +55,33 @@ class Route:
         return (
             self.network == other.network and
             self.netmask == other.netmask and
-            self.gateway == other.gateway
+            self.gateway == other.gateway and
+            self.table_id == other.table_id
         )
 
     def __hash__(self):
         return hash((self.network, self.netmask, self.gateway))
+
+
+class RouteTable:
+    def __init__(self, table_id, table_name, routes):
+        self.table_id = table_id
+        self.table_name = table_name
+        self.routes = routes
+
+    @property
+    def is_reserved(self):
+        return self.table_id in (255, 254, 253, 0)
+
+    def __eq__(self, other):
+        return self.table_id == other.table_id
+
+    def __getstate__(self):
+        return {
+            "id": self.table_id,
+            "name": self.table_name,
+            "routes": [r.__getstate__() for r in self.routes],
+        }
 
 
 class RouteFlags(enum.IntEnum):
@@ -112,9 +138,28 @@ class RoutingTable:
                 netmask,
                 ipaddress.ip_address(attrs["RTA_GATEWAY"]) if "RTA_GATEWAY" in attrs else None,
                 interfaces[attrs["RTA_OIF"]] if "RTA_OIF" in attrs else None,
+                table_id=attrs["RTA_TABLE"],
             ))
 
         return result
+
+    @property
+    def routing_tables(self):
+        if not os.path.exists("/etc/iproute2/rt_tables"):
+            return []
+
+        routes = defaultdict(list)
+        for r in self.routes:
+            routes[r.table_id].append(r)
+
+        with open("/etc/iproute2/rt_tables", "r") as f:
+            return {
+                t["name"]: RouteTable(t["id"], t["name"], routes[t["id"]])
+                for t in map(lambda v: {"id": int(v.split()[0].strip()), "name": v.split()[1].strip()}, filter(
+                    lambda v: v.strip() and not v.startswith("#") and v.split()[0].strip().isdigit(),
+                    f.readlines()
+                ))
+            }
 
     @property
     def default_route_ipv4(self):
