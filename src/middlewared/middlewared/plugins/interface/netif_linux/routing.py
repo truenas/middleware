@@ -199,6 +199,9 @@ class RoutingTable:
         if route.interface is not None:
             kwargs["oif"] = self._interfaces().inv[route.interface]
 
+        if route.table_id is not None:
+            kwargs["table"] = route.table_id
+
         ip.route(op, **kwargs)
 
 
