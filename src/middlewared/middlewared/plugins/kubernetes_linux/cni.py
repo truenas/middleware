@@ -1,4 +1,5 @@
 import asyncio
+import ipaddress
 import subprocess
 
 from middlewared.plugins.interface.netif import netif
@@ -74,6 +75,24 @@ class KubernetesCNIService(ConfigService):
         for route in filter(lambda r: (r.interface or '') == 'kube-bridge', rt.routes_internal(table_filter=254)):
             route.table_id = kube_router_table.table_id
             rt.add(route)
+        self.add_user_route_to_kube_router_table()
+
+    def add_user_route_to_kube_router_table(self):
+        # User route is a default route for kube router table which is going to be
+        # used for traffic going outside k8s cluster via pods
+        config = self.middleware.call_sync('kubernetes.config')
+        if not config['route_v4'] and not config['route_v6']:
+            return
+
+        rt = netif.RoutingTable()
+        kube_router_table = rt.routing_tables['kube-router']
+        for k in filter(lambda k: config[k], ('route_v4', 'route_v6')):
+            data = config[k]
+            factory = ipaddress.IPv4Address if k.endswith('v4') else ipaddress.IPv6Address
+            rt.add(netif.Route(
+                factory(0), factory(0), ipaddress.ip_address(data['gateway']), data['interface'],
+                table_id=kube_router_table.table_id,
+            ))
 
     def cleanup_cni(self):
         # We want to remove all CNI related configuration when k8s stops
