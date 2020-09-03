@@ -1,4 +1,5 @@
 # -*- coding=utf-8 -*-
+import collections
 import enum
 import ipaddress
 import logging
@@ -20,13 +21,18 @@ ip = IPRoute()
 
 
 class Route:
-    def __init__(self, network, netmask, gateway=None, interface=None, flags=None, table_id=None):
+    def __init__(
+        self, network, netmask, gateway=None, interface=None, flags=None,
+        table_id=None, preferred_source=None, scope=None,
+    ):
         self.network = ipaddress.ip_address(network)
         self.netmask = ipaddress.ip_address(netmask)
         self.gateway = ipaddress.ip_address(gateway) if gateway else None
         self.interface = interface or None
         self.flags = flags or set()
         self.table_id = table_id
+        self.scope = scope
+        self.preferred_source = preferred_source
 
     def __getstate__(self):
         return {
@@ -36,6 +42,8 @@ class Route:
             'interface': self.interface,
             'flags': [x.name for x in self.flags],
             'table_id': self.table_id,
+            'scope': self.scope,
+            'preferred_source': self.preferred_source,
         }
 
     @property
@@ -150,6 +158,8 @@ class RoutingTable:
                 ipaddress.ip_address(attrs["RTA_GATEWAY"]) if "RTA_GATEWAY" in attrs else None,
                 interfaces[attrs["RTA_OIF"]] if "RTA_OIF" in attrs else None,
                 table_id=attrs["RTA_TABLE"],
+                preferred_source=attrs.get("RTA_PREFSRC"),
+                scope=r["scope"],
             ))
 
         return result
@@ -201,11 +211,18 @@ class RoutingTable:
             raise RuntimeError()
 
         kwargs = dict(dst=f"{route.network}/{prefixlen}", gateway=str(route.gateway) if route.gateway else None)
-        if route.interface is not None:
-            kwargs["oif"] = self._interfaces().inv[route.interface]
-
-        if route.table_id is not None:
-            kwargs["table"] = route.table_id
+        for key, value in map(
+            lambda v: [v[0], v[1]() if isinstance(v[1], collections.abc.Callable) else v[1]],
+            filter(
+                lambda v: v[2] if len(v) == 3 else v[1], (
+                    ("oif", lambda: self._interfaces().inv[route.interface], route.interface is not None),
+                    ("table", route.table_id),
+                    ("scope", route.scope),
+                    ("prefsrc", route.preferred_source),
+                )
+            )
+        ):
+            kwargs[key] = value
 
         ip.route(op, **kwargs)
 
