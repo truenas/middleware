@@ -1,3 +1,4 @@
+import asyncio
 import subprocess
 
 from middlewared.plugins.interface.netif import netif
@@ -34,6 +35,8 @@ class KubernetesCNIService(ConfigService):
         )
         await self.middleware.call('etc.generate', 'cni')
         await self.middleware.call('service.start', 'kuberouter')
+        await asyncio.sleep(5)
+        await self.middleware.call('k8s.cni.add_routes_to_kube_router_table')
 
     async def validate_cni_integrity(self, cni, config=None):
         config = config or await self.middleware.call('datastore.query', 'services.kubernetes', [], {'get': True})
@@ -64,6 +67,13 @@ class KubernetesCNIService(ConfigService):
                 },
             ]
         }
+
+    def add_routes_to_kube_router_table(self):
+        rt = netif.RoutingTable()
+        kube_router_table = rt.routing_tables['kube-router']
+        for route in filter(lambda r: (r.interface or '') == 'kube-bridge', rt.routes_internal(table_filter=254)):
+            route.table_id = kube_router_table.table_id
+            rt.add(route)
 
     def cleanup_cni(self):
         # We want to remove all CNI related configuration when k8s stops
