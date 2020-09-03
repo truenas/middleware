@@ -157,7 +157,7 @@ class RoutingTable:
     @property
     def routing_tables(self):
         if not os.path.exists("/etc/iproute2/rt_tables"):
-            return []
+            return {}
 
         with open("/etc/iproute2/rt_tables", "r") as f:
             return {

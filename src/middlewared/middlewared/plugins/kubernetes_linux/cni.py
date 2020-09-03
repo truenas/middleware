@@ -1,4 +1,7 @@
-from middlewared.service import ConfigService
+import subprocess
+
+from middlewared.plugins.interface.netif import netif
+from middlewared.service import CallError, ConfigService
 
 from .k8s import api_client, service_accounts
 
@@ -61,3 +64,22 @@ class KubernetesCNIService(ConfigService):
                 },
             ]
         }
+
+    def cleanup_cni(self):
+        # We want to remove all CNI related configuration when k8s stops
+        # We will clean configuration done by kube-router now
+        # Below command will cleanup iptables rules and other ipvs bits changed by kube-router
+        cp = subprocess.Popen(['kube-router', '--cleanup-config'], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        stderr = cp.communicate()[1]
+        if cp.returncode:
+            raise CallError(f'Failed to cleanup kube-router configuration: {stderr.decode()}')
+
+        tables = netif.RoutingTable().routing_tables
+        for t_name in filter(lambda t: t in tables, ('kube-router', 'kube-router-dsr')):
+            table = tables[t_name]
+            table.flush_routes()
+            table.flush_rules()
+
+        interfaces = netif.list_interfaces()
+        for iface in map(lambda n: interfaces[n], filter(lambda n: n in interfaces, ('kube-bridge', 'kube-dummy-if'))):
+            self.middleware.call_sync('interface.unconfigure', iface, [], [])
