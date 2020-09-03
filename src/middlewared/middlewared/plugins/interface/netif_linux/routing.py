@@ -75,6 +75,12 @@ class RouteTable:
     def routes(self):
         return RoutingTable().routes_internal(self.table_id)
 
+    def flush_routes(self):
+        ip.flush_routes(table=self.table_id)
+
+    def flush_rules(self):
+        ip.flush_rules(table=self.table_id)
+
     def __eq__(self, other):
         return self.table_id == other.table_id
 
