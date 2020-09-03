@@ -30,3 +30,5 @@ class KubernetesService(SimpleService):
         await self._systemd_unit('kube-router', 'stop')
         await self._systemd_unit('cni-dhcp', 'stop')
         await self.middleware.call('service.stop', 'docker')
+        # This is necessary to ensure that docker umounts datasets and shuts down cleanly
+        await asyncio.sleep(5)
