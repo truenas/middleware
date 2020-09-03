@@ -200,8 +200,7 @@ class RoutingTable:
         else:
             raise RuntimeError()
 
-        kwargs = dict(dst=f"{route.network}/{prefixlen}",
-                      gateway=str(route.gateway))
+        kwargs = dict(dst=f"{route.network}/{prefixlen}", gateway=str(route.gateway) if route.gateway else None)
         if route.interface is not None:
             kwargs["oif"] = self._interfaces().inv[route.interface]
 
