@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["Route", "RouteFlags", "RoutingTable", "RouteTable", "IPRoute", "IPRules"]
 
+DEFAULT_TABLE_ID = 254  # This is the default table named as "main" and most of what we do happens here
 ip = IPRoute()
 
 
@@ -164,13 +165,13 @@ class RoutingTable:
     @property
     def default_route_ipv4(self):
         f = list(filter(lambda r: int(r.network) == 0 and int(r.netmask) == 0 and r.af == AddressFamily.INET,
-                        self.routes))
+                        self.routes_internal(DEFAULT_TABLE_ID)))
         return f[0] if len(f) > 0 else None
 
     @property
     def default_route_ipv6(self):
         f = list(filter(lambda r: int(r.network) == 0 and int(r.netmask) == 0 and r.af == AddressFamily.INET6,
-                        self.routes))
+                        self.routes_internal(DEFAULT_TABLE_ID)))
         return f[0] if len(f) > 0 else None
 
     def add(self, route):
