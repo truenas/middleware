@@ -54,8 +54,7 @@ class Route:
         return (
             self.network == other.network and
             self.netmask == other.netmask and
-            self.gateway == other.gateway and
-            self.table_id == other.table_id
+            self.gateway == other.gateway
         )
 
     def __hash__(self):
@@ -73,7 +72,7 @@ class RouteTable:
 
     @property
     def routes(self):
-        return list(filter(lambda r: r.table_id == self.table_id, RoutingTable().routes))
+        return RoutingTable().routes_internal(self.table_id)
 
     def __eq__(self, other):
         return self.table_id == other.table_id
@@ -117,10 +116,13 @@ RTM_F_CLONED = 0x200
 class RoutingTable:
     @property
     def routes(self):
+        return self.routes_internal()
+
+    def routes_internal(self, table_filter=None):
         interfaces = self._interfaces()
 
         result = []
-        for r in ip.get_routes():
+        for r in ip.get_routes(table=table_filter):
             if r["flags"] & RTM_F_CLONED:
                 continue
 
