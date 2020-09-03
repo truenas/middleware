@@ -1532,6 +1532,11 @@ class InterfaceService(CRUDService):
             if vlans:
                 raise CallError(f'The following VLANs depend on this interface: {vlans}')
 
+        if osc.IS_LINUX:
+            config = await self.middleware.call('kubernetes.config')
+            if any(config[k] == oid for k in ('route_v4_interface', 'route_v6_interface')):
+                raise CallError('Interface is in use by kubernetes')
+
         await self.delete_network_interface(oid)
 
         return oid
