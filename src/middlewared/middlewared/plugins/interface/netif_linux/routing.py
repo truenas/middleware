@@ -197,3 +197,34 @@ class RoutingTable:
             kwargs["oif"] = self._interfaces().inv[route.interface]
 
         ip.route(op, **kwargs)
+
+
+class Rule:
+    def __init__(self, table, priority, source, destination):
+        self.table = table
+        self.priority = priority
+        self.source = source
+        self.destination = destination
+
+    def __getstate__(self):
+        return {
+            'table': self.table.__getstate__(),
+            'priority': self.priority,
+            'source': self.source,
+            'destination': self.destination,
+        }
+
+
+class IPRules:
+    def __iter__(self):
+        tables = {t.table_id: t for t in RoutingTable().routing_tables.values()}
+        for rule in filter(lambda r: r['table'] in tables, ip.get_rules()):
+            attrs = rule['attrs']
+            priority = next((t.value for t in attrs if t.name == 'FRA_PRIORITY'), None)
+            if not priority and rule['table'] == 255:
+                priority = 0
+            yield Rule(
+                tables[rule['table']], priority, *[
+                    next((t.value for t in attrs if t.name == k), None) for k in ('FRA_SRC', 'FRA_DST')
+                ]
+            )
