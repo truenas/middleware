@@ -1,13 +1,15 @@
 import contextlib
 import ipaddress
 import os
+import shutil
 import yaml
 
 
-FLAGS_PATH = '/etc/rancher/k3s/flags.yaml'
+FLAGS_PATH = '/etc/rancher/k3s/config.yaml'
 
 
 def render(service, middleware):
+    shutil.rmtree('/etc/cni/net.d', ignore_errors=True)
     config = middleware.call_sync('kubernetes.config')
     if not config['pool']:
         with contextlib.suppress(OSError):
@@ -23,5 +25,5 @@ def render(service, middleware):
             'data-dir': os.path.join('/mnt', config['dataset'], 'k3s'),
             'kube-controller-manager-arg': kube_controller_args,
             'node-ip': config['node_ip'],
-            'service-node-port-range': '9000-65535',
+            'kube-apiserver-arg': 'service-node-port-range=9000-65535',
         }))

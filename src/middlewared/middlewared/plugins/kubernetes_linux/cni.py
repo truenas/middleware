@@ -37,7 +37,7 @@ class KubernetesCNIService(ConfigService):
         await self.middleware.call('etc.generate', 'cni')
         await self.middleware.call('service.start', 'kuberouter')
         await asyncio.sleep(5)
-        await self.middleware.call('k8s.cni.add_routes_to_kube_router_table')
+        await self.middleware.call('k8s.cni.add_user_route_to_kube_router_table')
 
     async def validate_cni_integrity(self, cni, config=None):
         config = config or await self.middleware.call('datastore.query', 'services.kubernetes', [], {'get': True})
@@ -77,7 +77,6 @@ class KubernetesCNIService(ConfigService):
             if route in kube_router_table.routes:
                 continue
             rt.add(route)
-        self.add_user_route_to_kube_router_table()
 
     def add_user_route_to_kube_router_table(self):
         # User route is a default route for kube router table which is going to be
