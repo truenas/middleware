@@ -81,16 +81,15 @@ class KubernetesCNIService(ConfigService):
         # User route is a default route for kube router table which is going to be
         # used for traffic going outside k8s cluster via pods
         config = self.middleware.call_sync('kubernetes.config')
-        if not config['route_v4'] and not config['route_v6']:
+        if all(not config[k] for k in config if k.startswith('route_v')):
             return
 
         rt = netif.RoutingTable()
         kube_router_table = rt.routing_tables['kube-router']
-        for k in filter(lambda k: config[k], ('route_v4', 'route_v6')):
-            data = config[k]
+        for k in filter(lambda k: config[f'{k}_gateway'] and config[f'{k}_interface'], ('route_v4', 'route_v6')):
             factory = ipaddress.IPv4Address if k.endswith('v4') else ipaddress.IPv6Address
             rt.add(netif.Route(
-                factory(0), factory(0), ipaddress.ip_address(data['gateway']), data['interface'],
+                factory(0), factory(0), ipaddress.ip_address(config[f'{k}_gateway']), config[f'{k}_interface'],
                 table_id=kube_router_table.table_id,
             ))
 

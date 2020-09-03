@@ -15,8 +15,10 @@ class KubernetesModel(sa.Model):
     cluster_cidr = sa.Column(sa.String(128), default='172.16.0.0/16')
     service_cidr = sa.Column(sa.String(128), default='172.17.0.0/16')
     cluster_dns_ip = sa.Column(sa.String(128), default='172.17.0.10')
-    route_v4 = sa.Column(sa.JSON(type=dict))
-    route_v6 = sa.Column(sa.JSON(type=dict))
+    route_v4_interface = sa.Column(sa.String(128), nullable=True)
+    route_v4_gateway = sa.Column(sa.String(128), nullable=True)
+    route_v6_interface = sa.Column(sa.String(128), nullable=True)
+    route_v6_gateway = sa.Column(sa.String(128), nullable=True)
     node_ip = sa.Column(sa.String(128), default='0.0.0.0')
     cni_config = sa.Column(sa.JSON(type=dict))
 
@@ -46,13 +48,28 @@ class KubernetesService(ConfigService):
         if data['node_ip'] not in await self.bindip_choices():
             verrors.add(f'{schema}.node_ip', 'Please provide a valid IP address.')
 
-        interfaces = {i['name']: i for i in await self.middleware.call('interface.query')}
-        for k in filter(
-            lambda k: k in data and data[k]['interface'] not in interfaces, ('route_v4', 'route_v6')
-        ):
-            verrors.add(f'{schema}.{k}.interface', 'Please specify a valid interface.')
+        for k, _ in await self.validate_interfaces(data):
+            verrors.add(f'{schema}.{k}', 'Please specify a valid interface.')
+
+        for k in ('route_v4_', 'route_v6_'):
+            gateway = data[f'{k}_gateway']
+            interface = data[f'{k}_interface']
+            if (not gateway and not interface) or (gateway and interface):
+                continue
+            for k2 in ('gateway', 'interface'):
+                verrors.add(f'{schema}.{k}{k2}', f'{k}_gateway and {k}_interface must be specified together.')
 
         verrors.check()
+
+    @private
+    async def validate_interfaces(self, data):
+        errors = []
+        interfaces = {i['name']: i for i in await self.middleware.call('interface.query')}
+        for k in filter(
+            lambda k: k in data and data[k] not in interfaces, ('route_v4_interface', 'route_v6_interface')
+        ):
+            errors.append((k, data[k]))
+        return errors
 
     @accepts(
         Dict(
@@ -62,16 +79,10 @@ class KubernetesService(ConfigService):
             IPAddr('service_cidr', cidr=True),
             IPAddr('cluster_dns_ip'),
             IPAddr('node_ip'),
-            Dict(
-                'route_v4',
-                Str('interface', required=True),
-                IPAddr('gateway', required=True, v6=False),
-            ),
-            Dict(
-                'route_v6',
-                Str('interface', required=True),
-                IPAddr('gateway', required=True, v4=False),
-            ),
+            Str('route_v4_interface', null=True),
+            Str('route_v4_gateway', null=True, v6=False),
+            Str('route_v6_interface', null=True),
+            IPAddr('route_v6_gateway', null=True, v4=False),
             update=True,
         )
     )
@@ -99,21 +110,14 @@ class KubernetesService(ConfigService):
         can be specified and the NAT network will use related IP address and it's routes to manage the traffic.
         """
         old_config = await self.config()
-        for k in ('dataset', 'route_v4', 'route_v6'):
-            old_config.pop(k)
+        old_config.pop('dataset')
         config = old_config.copy()
         config.update(data)
 
         await self.validate_data(config, 'kubernetes_update')
 
-        route_v4 = config.pop('route_v4', None)
-        route_v6 = config.pop('route_v6', None)
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             config['cni_config'] = {}
-            if route_v4:
-                config['route_v4'] = route_v4
-            if route_v6:
-                config['route_v6'] = route_v6
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('kubernetes.status_change')
 
