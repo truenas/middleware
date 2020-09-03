@@ -14,7 +14,7 @@ from .address.types import AddressFamily
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Route", "RouteFlags", "RoutingTable", "RouteTable", "IPRoute", "IPRules"]
+__all__ = ["Route", "RouteFlags", "RoutingTable", "RouteTable", "IPRoute"]
 
 DEFAULT_TABLE_ID = 254  # This is the default table named as "main" and most of what we do happens here
 ip = IPRoute()
@@ -225,41 +225,3 @@ class RoutingTable:
             kwargs[key] = value
 
         ip.route(op, **kwargs)
-
-
-class Rule:
-    def __init__(self, table, priority, source, destination):
-        self.table = table
-        self.priority = priority
-        self.source = source
-        self.destination = destination
-
-    def __getstate__(self):
-        return {
-            "table": self.table.__getstate__(),
-            "priority": self.priority,
-            "source": self.source,
-            "destination": self.destination,
-        }
-
-    def delete(self):
-        ip.flush_rules(priority=self.priority)
-
-
-class IPRules:
-    def __iter__(self):
-        tables = {t.table_id: t for t in RoutingTable().routing_tables.values()}
-        for rule in filter(lambda r: r["table"] in tables, ip.get_rules()):
-            attrs = rule["attrs"]
-            priority = next((t.value for t in attrs if t.name == "FRA_PRIORITY"), None)
-            if not priority:
-                if rule["table"] == 255:
-                    priority = 0
-                else:
-                    continue
-
-            yield Rule(
-                tables[rule["table"]], priority, *[
-                    next((t.value for t in attrs if t.name == k), None) for k in ("FRA_SRC", "FRA_DST")
-                ]
-            )

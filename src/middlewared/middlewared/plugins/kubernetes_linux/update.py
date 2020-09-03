@@ -51,13 +51,13 @@ class KubernetesService(ConfigService):
         for k, _ in await self.validate_interfaces(data):
             verrors.add(f'{schema}.{k}', 'Please specify a valid interface.')
 
-        for k in ('route_v4_', 'route_v6_'):
+        for k in ('route_v4', 'route_v6'):
             gateway = data[f'{k}_gateway']
             interface = data[f'{k}_interface']
             if (not gateway and not interface) or (gateway and interface):
                 continue
             for k2 in ('gateway', 'interface'):
-                verrors.add(f'{schema}.{k}{k2}', f'{k}_gateway and {k}_interface must be specified together.')
+                verrors.add(f'{schema}.{k}_{k2}', f'{k}_gateway and {k}_interface must be specified together.')
 
         verrors.check()
 
@@ -66,7 +66,7 @@ class KubernetesService(ConfigService):
         errors = []
         interfaces = {i['name']: i for i in await self.middleware.call('interface.query')}
         for k in filter(
-            lambda k: k in data and data[k] not in interfaces, ('route_v4_interface', 'route_v6_interface')
+            lambda k: data[k] and data[k] not in interfaces, ('route_v4_interface', 'route_v6_interface')
         ):
             errors.append((k, data[k]))
         return errors
