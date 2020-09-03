@@ -55,7 +55,7 @@ class KubernetesService(Service):
             raise CallError(
                 f'Please unlock following dataset(s) before starting kubernetes: {", ".join(locked_datasets)}'
             )
-        iface_errors = await self.middleware.call('kubernetes.validate_interfaces')
+        iface_errors = await self.middleware.call('kubernetes.validate_interfaces', config)
         if iface_errors:
             raise CallError(f'Unable to lookup configured interfaces: {", ".join([v[1] for v in iface_errors])}')
 

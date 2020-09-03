@@ -74,6 +74,8 @@ class KubernetesCNIService(ConfigService):
         kube_router_table = rt.routing_tables['kube-router']
         for route in filter(lambda r: (r.interface or '') == 'kube-bridge', rt.routes_internal(table_filter=254)):
             route.table_id = kube_router_table.table_id
+            if route in kube_router_table.routes:
+                continue
             rt.add(route)
         self.add_user_route_to_kube_router_table()
 
