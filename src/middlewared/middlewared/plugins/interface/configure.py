@@ -8,7 +8,7 @@ import re
 from .netif import netif
 from .type_base import InterfaceType
 
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 from middlewared.utils import osc
 
 
@@ -230,6 +230,12 @@ class InterfaceService(Service):
 
     @private
     def unconfigure(self, iface, cloned_interfaces, parent_interfaces):
+        if isinstance(iface, str):
+            name = iface
+            iface = netif.list_interfaces().get(name)
+            if not iface:
+                raise CallError(f'Unable to locate {name} interface')
+
         name = iface.name
 
         # Interface not in database lose addresses
