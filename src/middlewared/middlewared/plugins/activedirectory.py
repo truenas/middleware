@@ -1873,8 +1873,8 @@ class WBStatusThread(threading.Thread):
         self.state = new_state
 
     def read_messages(self):
-        while not self.finished.is_set():
-            with open('/var/run/samba4/.wb_fifo') as f:
+        with open('/var/run/samba4/.wb_fifo') as f:
+            while not self.finished.is_set():
                 data = f.read()
                 for msg in data.splitlines():
                     self.parse_msg(msg)
