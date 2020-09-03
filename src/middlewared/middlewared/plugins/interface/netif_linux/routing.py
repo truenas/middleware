@@ -13,7 +13,7 @@ from .address.types import AddressFamily
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Route", "RouteFlags", "RoutingTable"]
+__all__ = ["Route", "RouteFlags", "RoutingTable", "RouteTable", "IPRoute", "IPRules"]
 
 ip = IPRoute()
 
@@ -224,10 +224,12 @@ class IPRules:
         for rule in filter(lambda r: r["table"] in tables, ip.get_rules()):
             attrs = rule["attrs"]
             priority = next((t.value for t in attrs if t.name == "FRA_PRIORITY"), None)
-            if not priority and rule["table"] == 255:
-                priority = 0
-            else:
-                continue
+            if not priority:
+                if rule["table"] == 255:
+                    priority = 0
+                else:
+                    continue
+
             yield Rule(
                 tables[rule["table"]], priority, *[
                     next((t.value for t in attrs if t.name == k), None) for k in ("FRA_SRC", "FRA_DST")
