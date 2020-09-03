@@ -6,7 +6,6 @@ import os
 import socket
 
 import bidict
-from collections import defaultdict
 from pyroute2 import IPRoute
 
 from .address.ipv6 import ipv6_netmask_to_prefixlen
@@ -64,14 +63,17 @@ class Route:
 
 
 class RouteTable:
-    def __init__(self, table_id, table_name, routes):
+    def __init__(self, table_id, table_name):
         self.table_id = table_id
         self.table_name = table_name
-        self.routes = routes
 
     @property
     def is_reserved(self):
         return self.table_id in (255, 254, 253, 0)
+
+    @property
+    def routes(self):
+        return list(filter(lambda r: r.table_id == self.table_id, RoutingTable().routes))
 
     def __eq__(self, other):
         return self.table_id == other.table_id
@@ -148,13 +150,9 @@ class RoutingTable:
         if not os.path.exists("/etc/iproute2/rt_tables"):
             return []
 
-        routes = defaultdict(list)
-        for r in self.routes:
-            routes[r.table_id].append(r)
-
         with open("/etc/iproute2/rt_tables", "r") as f:
             return {
-                t["name"]: RouteTable(t["id"], t["name"], routes[t["id"]])
+                t["name"]: RouteTable(t["id"], t["name"])
                 for t in map(lambda v: {"id": int(v.split()[0].strip()), "name": v.split()[1].strip()}, filter(
                     lambda v: v.strip() and not v.startswith("#") and v.split()[0].strip().isdigit(),
                     f.readlines()
