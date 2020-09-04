@@ -49,10 +49,6 @@ from middlewared.utils import start_daemon_thread
 import middlewared.utils.osc as osc
 from middlewared.utils.string import make_sentence
 
-INVALID_DATASETS = (
-    re.compile(r"freenas-boot($|/)"),
-    re.compile(r"[^/]+/\.system($|/)")
-)
 SSH_EXCEPTIONS = (socket.timeout, paramiko.ssh_exception.NoValidConnectionsError, paramiko.ssh_exception.SSHException,
                   IOError, OSError)
 
