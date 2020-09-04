@@ -24,20 +24,22 @@ class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
         return attachment['pool']
 
     async def delete(self, attachments):
-        await self.middleware.call('service.stop', 'kubernetes')
+        await self.stop(attachments)
 
     async def toggle(self, attachments, enabled):
-        action = 'start' if enabled else 'stop'
-        try:
-            await self.middleware.call(f'service.{action}', 'kubernetes')
-        except Exception as e:
-            self.middleware.logger.error('Unable to %r kubernetes: %s', action, e)
+        await getattr(self, 'start' if enabled else 'stop')(attachments)
 
     async def stop(self, attachments):
-        await self.middleware.call('service.stop', 'kubernetes')
+        try:
+            await self.middleware.call('service.stop', 'kubernetes')
+        except Exception as e:
+            self.middleware.logger.error('Failed to stop kubernetes: %s', e)
 
     async def start(self, attachments):
-        await self.middleware.call('service.start', 'kubernetes')
+        try:
+            await self.middleware.call('service.start', 'kubernetes')
+        except Exception:
+            self.middleware.logger.error('Failed to start kubernetes')
 
 
 async def setup(middleware):
