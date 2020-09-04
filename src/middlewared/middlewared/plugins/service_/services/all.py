@@ -80,7 +80,6 @@ all_services = [
     WSDService,
     KeepalivedService,
     ActiveDirectoryService,
-    KubeRouterService,
     LdapService,
     NisService,
     CollectDService,
