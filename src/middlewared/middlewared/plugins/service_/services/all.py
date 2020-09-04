@@ -1,11 +1,13 @@
+from middlewared.utils import osc
+
 from .afp import AFPService
 from .cifs import CIFSService
-from .docker_linux import DockerService
+from .docker import DockerService
 from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
-from .kuberouter_linux import KubeRouterService
-from .kubernetes_linux import KubernetesService
+from .kuberouter import KubeRouterService
+from .kubernetes import KubernetesService
 from .lldp import LLDPService
 from .mdns import MDNSService
 from .netbios import NetBIOSService
@@ -57,7 +59,6 @@ from .pseudo.misc import (
 all_services = [
     AFPService,
     CIFSService,
-    DockerService,
     DynamicDNSService,
     FTPService,
     ISCSITargetService,
@@ -78,12 +79,10 @@ all_services = [
     WSDService,
     KeepalivedService,
     ActiveDirectoryService,
-    KubeRouterService,
     LdapService,
     NisService,
     CollectDService,
     RRDCacheDService,
-    KubernetesService,
     LibvirtdService,
     CronService,
     DiskService,
@@ -111,3 +110,9 @@ all_services = [
     TtysService,
     UserService,
 ]
+if osc.IS_LINUX:
+    all_services.extend([
+        DockerService,
+        KubernetesService,
+        KubeRouterService,
+    ])
