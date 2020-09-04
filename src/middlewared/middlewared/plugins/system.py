@@ -1,6 +1,6 @@
 import asyncio
 from collections import defaultdict
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
@@ -367,23 +367,79 @@ class SystemService(Service):
         'system-version': None,
     }
 
-    CPU_MODEL = None
+    CPU_INFO = {
+        'cpu_model': None,
+        'core_count': None,
+    }
+
+    MEM_INFO = {
+        'physmem_size': None,
+    }
+
+    BIRTHDAY_DATE = {
+        'date': None,
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__product_type = None
 
     @private
-    async def cpu_model_info(self):
+    async def birthday(self):
+
+        if self.BIRTHDAY_DATE['date'] is None:
+            birth = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
+            if birth != datetime(1970, 1, 1):
+                self.BIRTHDAY_DATE['date'] = birth
+
+        return self.BIRTHDAY_DATE
+
+    @private
+    async def mem_info(self):
+
+        if self.MEM_INFO['physmem_size'] is None:
+            # physmem doesn't change after boot so cache the results
+            self.MEM_INFO['physmem_size'] = psutil.virtual_memory().total
+
+        return self.MEM_INFO
+
+    @private
+    async def cpu_info(self):
 
         """
-        CPU model doesn't change after boot so cache the results
+        CPU info doesn't change after boot so cache the results
         """
 
-        if self.CPU_MODEL is None:
-            self.CPU_MODEL = osc.get_cpu_model()
+        if self.CPU_INFO['cpu_model'] is None:
+            self.CPU_INFO['cpu_model'] = osc.get_cpu_model()
 
-        return self.CPU_MODEL
+        if self.CPU_INFO['core_count'] is None:
+            self.CPU_INFO['core_count'] = psutil.cpu_count(logical=True)
+
+        return self.CPU_INFO
+
+    @private
+    async def time_info(self):
+
+        time_info = {}
+
+        if osc.IS_FREEBSD:
+            time_constant = time.CLOCK_UPTIME
+        else:
+            time_constant = time.CLOCK_MONOTONIC_RAW
+
+        uptime_seconds = time.clock_gettime(time_constant)
+        uptime = str(timedelta(seconds=uptime_seconds))
+        current_time = time.time()
+        boot_time = datetime.fromtimestamp((current_time - uptime_seconds))
+        date_time = datetime.fromtimestamp(current_time, timezone.utc)
+
+        time_info['uptime_seconds'] = uptime_seconds
+        time_info['uptime'] = uptime
+        time_info['boot_time'] = boot_time
+        time_info['datetime'] = date_time
+
+        return time_info
 
     @private
     async def dmidecode_info(self):
@@ -614,39 +670,30 @@ class SystemService(Service):
         if buildtime:
             buildtime = datetime.fromtimestamp(int(buildtime)),
 
-        uptime = (await (await Popen(
-            ['env', '-u', 'TZ', 'uptime'], stdout=subprocess.PIPE
-        )).communicate())[0].decode().split(',')
-        uptime = ', '.join([uptime[i].strip() for i in range(2)])
-
-        serial = await self._system_serial()
-
+        time_info = await self.middleware.call('system.time_info')
         dmidecode = await self.middleware.call('system.dmidecode_info')
-        cpu_model = await self.middleware.call('system.cpu_model_info')
-
-        birthday_date = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
-        if birthday_date == datetime(1970, 1, 1):
-            birthday_date = None
-
+        cpu_info = await self.middleware.call('system.cpu_info')
+        mem_info = await self.middleware.call('system.mem_info')
+        birthday = await self.middleware.call('system.birthday')
         timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         return {
             'version': self.version(),
             'buildtime': buildtime,
             'hostname': socket.gethostname(),
-            'physmem': psutil.virtual_memory().total,
-            'model': cpu_model,
-            'cores': psutil.cpu_count(logical=True),
+            'physmem': mem_info['physmem_size'],
+            'model': cpu_info['cpu_model'],
+            'cores': cpu_info['core_count'],
             'loadavg': os.getloadavg(),
-            'uptime': uptime,
-            'uptime_seconds': time.time() - psutil.boot_time(),
-            'system_serial': serial,
+            'uptime': time_info['uptime'],
+            'uptime_seconds': time_info['uptime_seconds'],
+            'system_serial': dmidecode['system-serial-number'] if dmidecode['system-serial-number'] else None,
             'system_product': dmidecode['system-product-name'] if dmidecode['system-product-name'] else None,
             'system_product_version': dmidecode['system-version'] if dmidecode['system-version'] else None,
             'license': await self.middleware.run_in_thread(self._get_license),
-            'boottime': datetime.fromtimestamp(psutil.boot_time()),
-            'datetime': datetime.utcnow(),
-            'birthday': birthday_date,
+            'boottime': time_info['boot_time'],
+            'datetime': time_info['datetime'],
+            'birthday': birthday['date'],
             'timezone': timezone_setting,
             'system_manufacturer': dmidecode['system-manufacturer'] if dmidecode['system-manufacturer'] else None,
             'ecc_memory': dmidecode['ecc-memory'],
@@ -681,13 +728,6 @@ class SystemService(Service):
         if license and name in license['features']:
             return True
         return False
-
-    @private
-    async def _system_serial(self):
-
-        return (
-            await self.middleware.call('system.dmidecode_info')
-        )['system-serial-number'] or None
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @job()
@@ -1475,39 +1515,36 @@ class SystemGeneralService(ConfigService):
 
 
 async def _update_birthday_data(middleware, birthday=None):
-    middleware.logger.debug('Synchronization/update birthday data')
-    # Check if it is exists already
-    system_obj = await middleware.call('system.info')
-    birthday_obj = system_obj['birthday']
-    if birthday_obj is not None:
-        # Already setted before.
+
+    birthday = (await middleware.call('system.info'))['birthday']
+    if birthday is not None:
+        # already been set
         return
 
-    # If it is not defined yet, it will try to define
+    # get current time and use as birthday
     if birthday is None:
         birthday = await middleware.call('system.sync_clock')
 
-    if birthday is not None:
-        # Update System Settings
+        middleware.logger.debug('Updating birthday data')
+        # update db with new birthday
         settings = await middleware.call('datastore.config', 'system.settings')
         await middleware.call('datastore.update', 'system.settings', settings['id'], {
             'stg_birthday': birthday,
         })
 
 
-# Update Birthday Date
 async def _update_birthday(middleware):
-    # Sync clock
-    middleware.logger.debug('Synchronization the clock for system birthday')
+
     birthday = None
     timeout = 3600 * 24
 
     middleware.register_hook('interface.post_sync', _update_birthday_data)
 
+    middleware.logger.debug('Waiting for clock sync to update system birthday')
     while birthday is None:
         birthday = await middleware.call('system.sync_clock')
 
-        # Wait until be able to sync the clock
+        # sleep for 1 day and try again
         if birthday is None:
             await asyncio.sleep(timeout)
 
@@ -1521,11 +1558,10 @@ async def _event_system(middleware, event_type, args):
     if args['id'] == 'ready':
         SYSTEM_READY = True
 
-        # Check if birthday is already setted
-        system_obj = await middleware.call('system.info')
-        birthday = system_obj['birthday']
+        # Check if birthday is already set
+        birthday = (await middleware.call('system.info'))['birthday']
 
-        # If it is not defined yet, it will try to define
+        # try to set birthday in background
         if birthday is None:
             asyncio.ensure_future(_update_birthday(middleware))
 
