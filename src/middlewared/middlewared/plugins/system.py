@@ -367,9 +367,23 @@ class SystemService(Service):
         'system-version': None,
     }
 
+    CPU_MODEL = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__product_type = None
+
+    @private
+    async def cpu_model_info(self):
+
+        """
+        CPU model doesn't change after boot so cache the results
+        """
+
+        if self.CPU_MODEL is None:
+            self.CPU_MODEL = osc.get_cpu_model()
+
+        return self.CPU_MODEL
 
     @private
     async def dmidecode_info(self):
@@ -608,6 +622,7 @@ class SystemService(Service):
         serial = await self._system_serial()
 
         dmidecode = await self.middleware.call('system.dmidecode_info')
+        cpu_model = await self.middleware.call('system.cpu_model_info')
 
         birthday_date = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
         if birthday_date == datetime(1970, 1, 1):
@@ -620,7 +635,7 @@ class SystemService(Service):
             'buildtime': buildtime,
             'hostname': socket.gethostname(),
             'physmem': psutil.virtual_memory().total,
-            'model': osc.get_cpu_model(),
+            'model': cpu_model,
             'cores': psutil.cpu_count(logical=True),
             'loadavg': os.getloadavg(),
             'uptime': uptime,
