@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable
+    CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable, job
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
@@ -8,7 +8,6 @@ from middlewared.utils.osc import IS_FREEBSD
 from middlewared.validators import Email
 from middlewared.plugins.smb import SMBBuiltin
 
-import asyncio
 import binascii
 import crypt
 import errno
@@ -19,7 +18,6 @@ import shlex
 import shutil
 import string
 import stat
-import subprocess
 import time
 
 SKEL_PATH = '/usr/share/skel/'
@@ -458,17 +456,6 @@ class UserService(CRUDService):
         if user['builtin']:
             home_mode = None
 
-        def set_home_mode():
-            if home_mode is not None:
-                try:
-                    # Strip ACL before chmod. This is required when aclmode = restricted
-                    setfacl = subprocess.run(['/bin/setfacl', '-b', user['home']], check=False)
-                    if setfacl.returncode != 0 and setfacl.stderr:
-                        self.logger.debug('Failed to strip ACL: %s', setfacl.stderr.decode())
-                    os.chmod(user['home'], int(home_mode, 8))
-                except OSError:
-                    self.logger.warn('Failed to set homedir mode', exc_info=True)
-
         try:
             update_sshpubkey_args = [
                 home_old if home_copy else user['home'], user, group['bsdgrp_group'],
@@ -486,17 +473,21 @@ class UserService(CRUDService):
                         self.logger.error('Failed to sync root ssh pubkey to standby node', exc_info=True)
 
         if home_copy:
-            def do_home_copy():
-                try:
-                    command = f"/bin/cp -a {shlex.quote(home_old) + '/'} {shlex.quote(user['home'] + '/')}"
-                    subprocess.run(["/usr/bin/su", "-", user["username"], "-c", command], check=True)
-                except subprocess.CalledProcessError as e:
-                    self.logger.warn(f"Failed to copy homedir: {e}")
-                set_home_mode()
+            """
+            Background copy of user home directoy to new path as the user in question.
+            """
+            await self.middleware.call('user.do_home_copy', home_old, user['home'], user['username'], home_mode, user['uid'])
 
-            asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
-        elif has_home:
-            asyncio.ensure_future(self.middleware.run_in_thread(set_home_mode))
+        elif has_home and home_mode is not None:
+            """
+            A non-recursive call to set permissions should return almost immediately.
+            """
+            perm_job = await self.middleware.call('filesystem.setperm', {
+                'path': user['home'],
+                'mode': home_mode,
+                'options': {'stripacl': True},
+            })
+            await perm_job.wait()
 
         user.pop('sshpubkey', None)
         await self.__set_password(user)
@@ -691,6 +682,26 @@ class UserService(CRUDService):
 
         root = await self.middleware.call('user.query', [('username', '=', 'root')], {'get': True})
         await self.middleware.call('user.update', root['id'], {'password': password})
+
+    @private
+    @job(lock=lambda args: f'copy_home_to_{args[1]}')
+    async def do_home_copy(self, job, home_old, home_new, username, new_mode, uid):
+        if new_mode is not None:
+            perm_job = await self.middleware.call('filesystem.setperm', {
+                'uid': uid,
+                'path': home_new,
+                'mode': new_mode,
+                'options': {'stripacl': True},
+            })
+            await perm_job.wait()
+
+        if home_old == '/nonexistent':
+            return
+
+        command = f"/bin/cp -a {shlex.quote(home_old) + '/'} {shlex.quote(home_new + '/')}"
+        do_copy = await run(["/usr/bin/su", "-", username, "-c", command], check=False)
+        if do_copy.returncode != 0:
+            raise CallError(f"Failed to copy homedir [{home_old}] to [{home_new}]: {do_copy.stderr.decode()}")
 
     async def __common_validation(self, verrors, data, schema, pk=None):
 
