@@ -137,6 +137,24 @@ network_func()
 	netstat -nrW
 	section_footer
 
+	if is_linux; then
+		section_header "Complete Routing tables (ip route show table all)"
+		ip route show table all
+		section_footer
+
+		section_header "IP Rules (ip rule list)"
+		ip rule list
+		section_footer
+
+		section_header "Iptables Rules (iptables-save)"
+		iptables-save
+		section_footer
+
+		section_header "IPVS rules (ipvsadm -L)"
+		ipvsadm -L
+		section_footer
+	fi
+
 	section_header "ARP entries (arp -an)"
 	arp -an
 	section_footer
