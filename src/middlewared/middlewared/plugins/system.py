@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
@@ -356,7 +356,6 @@ class SystemAdvancedService(ConfigService):
 
 class SystemService(Service):
 
-    HOST_ID = None
     DMIDECODE_CACHE = {
         'ecc-memory': None,
         'baseboard-manufacturer': None,
@@ -367,9 +366,70 @@ class SystemService(Service):
         'system-version': None,
     }
 
+    CPU_INFO = {
+        'cpu_model': None,
+        'core_count': None,
+    }
+
+    MEM_INFO = {
+        'physmem_size': None,
+    }
+
+    BIRTHDAY_DATE = {
+        'date': None,
+    }
+
+    HOST_ID = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__product_type = None
+
+    @private
+    async def birthday(self):
+
+        if self.BIRTHDAY_DATE['date'] is None:
+            birth = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
+            if birth != datetime(1970, 1, 1):
+                self.BIRTHDAY_DATE['date'] = birth
+
+        return self.BIRTHDAY_DATE
+
+    @private
+    async def mem_info(self):
+
+        if self.MEM_INFO['physmem_size'] is None:
+            # physmem doesn't change after boot so cache the results
+            self.MEM_INFO['physmem_size'] = psutil.virtual_memory().total
+
+        return self.MEM_INFO
+
+    @private
+    async def cpu_info(self):
+
+        """
+        CPU info doesn't change after boot so cache the results
+        """
+
+        if self.CPU_INFO['cpu_model'] is None:
+            self.CPU_INFO['cpu_model'] = osc.get_cpu_model()
+
+        if self.CPU_INFO['core_count'] is None:
+            self.CPU_INFO['core_count'] = psutil.cpu_count()
+
+        return self.CPU_INFO
+
+    @private
+    async def time_info(self):
+        uptime_seconds = time.clock_gettime(time.CLOCK_UPTIME)
+        current_time = time.time()
+
+        return {
+            'uptime_seconds': uptime_seconds,
+            'uptime': str(timedelta(seconds=uptime_seconds)),
+            'boot_time': datetime.fromtimestamp(psutil.boot_time(), timezone.utc),
+            'datetime': datetime.fromtimestamp(current_time, timezone.utc),
+        }
 
     @private
     async def dmidecode_info(self):
@@ -386,27 +446,39 @@ class SystemService(Service):
             self.DMIDECODE_CACHE['ecc-memory'] = ecc
 
         if self.DMIDECODE_CACHE['baseboard-manufacturer'] is None:
-            bm = ((await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors='ignore')).strip()
+            bm = (
+                (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['baseboard-manufacturer'] = bm
 
         if self.DMIDECODE_CACHE['baseboard-product-name'] is None:
-            bpn = ((await run(["dmidecode", "-s", "baseboard-product-name"], check=False)).stdout.decode(errors='ignore')).strip()
+            bpn = (
+                (await run(["dmidecode", "-s", "baseboard-product-name"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['baseboard-product-name'] = bpn
 
         if self.DMIDECODE_CACHE['system-manufacturer'] is None:
-            sm = ((await run(["dmidecode", "-s", "system-manufacturer"], check=False)).stdout.decode(errors='ignore')).strip()
+            sm = (
+                (await run(["dmidecode", "-s", "system-manufacturer"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['system-manufacturer'] = sm
 
         if self.DMIDECODE_CACHE['system-product-name'] is None:
-            spn = ((await run(["dmidecode", "-s", "system-product-name"], check=False)).stdout.decode(errors='ignore')).strip()
+            spn = (
+                (await run(["dmidecode", "-s", "system-product-name"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['system-product-name'] = spn
 
         if self.DMIDECODE_CACHE['system-serial-number'] is None:
-            ssn = ((await run(["dmidecode", "-s", "system-serial-number"], check=False)).stdout.decode(errors='ignore')).strip()
+            ssn = (
+                (await run(["dmidecode", "-s", "system-serial-number"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['system-serial-number'] = ssn
 
         if self.DMIDECODE_CACHE['system-version'] is None:
-            sv = ((await run(["dmidecode", "-s", "system-version"], check=False)).stdout.decode(errors='ignore')).strip()
+            sv = (
+                (await run(["dmidecode", "-s", "system-version"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['system-version'] = sv
 
         return self.DMIDECODE_CACHE
@@ -625,38 +697,30 @@ class SystemService(Service):
         """
         Returns basic system information.
         """
-        uptime = (await (await Popen(
-            ['env', '-u', 'TZ', 'uptime'], stdout=subprocess.PIPE
-        )).communicate())[0].decode().split(',')
-        uptime = ', '.join([uptime[i].strip() for i in range(2)])
-
-        serial = await self._system_serial()
-
+        time_info = await self.middleware.call('system.time_info')
         dmidecode = await self.middleware.call('system.dmidecode_info')
-
-        birthday_date = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
-        if birthday_date == datetime(1970, 1, 1):
-            birthday_date = None
-
+        cpu_info = await self.middleware.call('system.cpu_info')
+        mem_info = await self.middleware.call('system.mem_info')
+        birthday = await self.middleware.call('system.birthday')
         timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         return {
             'version': self.version(),
             'buildtime': await self.middleware.call('system.build_time'),
             'hostname': socket.gethostname(),
-            'physmem': psutil.virtual_memory().total,
-            'model': osc.get_cpu_model(),
-            'cores': psutil.cpu_count(logical=True),
+            'physmem': mem_info['physmem_size'],
+            'model': cpu_info['cpu_model'],
+            'cores': cpu_info['core_count'],
             'loadavg': os.getloadavg(),
-            'uptime': uptime,
-            'uptime_seconds': time.time() - psutil.boot_time(),
-            'system_serial': serial,
+            'uptime': time_info['uptime'],
+            'uptime_seconds': time_info['uptime_seconds'],
+            'system_serial': dmidecode['system-serial-number'] if dmidecode['system-serial-number'] else None,
             'system_product': dmidecode['system-product-name'] if dmidecode['system-product-name'] else None,
             'system_product_version': dmidecode['system-version'] if dmidecode['system-version'] else None,
             'license': await self.middleware.run_in_thread(self._get_license),
-            'boottime': datetime.fromtimestamp(psutil.boot_time(), timezone.utc),
-            'datetime': datetime.utcnow(),
-            'birthday': birthday_date,
+            'boottime': time_info['boot_time'],
+            'datetime': time_info['datetime'],
+            'birthday': birthday['date'],
             'timezone': timezone_setting,
             'system_manufacturer': dmidecode['system-manufacturer'] if dmidecode['system-manufacturer'] else None,
             'ecc_memory': dmidecode['ecc-memory'],
@@ -664,11 +728,7 @@ class SystemService(Service):
 
     @private
     async def is_ix_hardware(self):
-        product = (await(await Popen(
-            ['dmidecode', '-s', 'system-product-name'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
-
+        product = (await self.middleware.call('system.info'))['system_product']
         return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
 
     # Sync the clock
@@ -700,13 +760,6 @@ class SystemService(Service):
         if license and name in license['features']:
             return True
         return False
-
-    @private
-    async def _system_serial(self):
-
-        return (
-            await self.middleware.call('system.dmidecode_info')
-        )['system-serial-number'] or None
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @job()
@@ -1474,39 +1527,36 @@ class SystemGeneralService(ConfigService):
 
 
 async def _update_birthday_data(middleware, birthday=None):
-    middleware.logger.debug('Synchronization/update birthday data')
-    # Check if it is exists already
-    system_obj = await middleware.call('system.info')
-    birthday_obj = system_obj['birthday']
-    if birthday_obj is not None:
-        # Already setted before.
+
+    birthday = (await middleware.call('system.info'))['birthday']
+    if birthday is not None:
+        # already been set
         return
 
-    # If it is not defined yet, it will try to define
+    # get current time and use as birthday
     if birthday is None:
         birthday = await middleware.call('system.sync_clock')
 
-    if birthday is not None:
-        # Update System Settings
+        middleware.logger.debug('Updating birthday data')
+        # update db with new birthday
         settings = await middleware.call('datastore.config', 'system.settings')
         await middleware.call('datastore.update', 'system.settings', settings['id'], {
             'stg_birthday': birthday,
         })
 
 
-# Update Birthday Date
 async def _update_birthday(middleware):
-    # Sync clock
-    middleware.logger.debug('Synchronization the clock for system birthday')
+
     birthday = None
     timeout = 3600 * 24
 
     middleware.register_hook('interface.post_sync', _update_birthday_data)
 
+    middleware.logger.debug('Waiting for clock sync to update system birthday')
     while birthday is None:
         birthday = await middleware.call('system.sync_clock')
 
-        # Wait until be able to sync the clock
+        # sleep for 1 day and try again
         if birthday is None:
             await asyncio.sleep(timeout)
 
@@ -1519,19 +1569,12 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
-        if osc.IS_LINUX and os.path.exists(FIRST_INSTALL_SENTINEL):
-            cp = await run('update-grub', check=False, encoding='utf-8', errors='ignore')
-            if cp.returncode:
-                middleware.logger.error('Failed to update grub configuration: %s', cp.stderr)
-            os.unlink(FIRST_INSTALL_SENTINEL)
-
-        # Check if birthday is already setted
-        system_obj = await middleware.call('system.info')
-        birthday = system_obj['birthday']
-
-        # If it is not defined yet, it will try to define
+        # Check if birthday is already set
+        birthday = (await middleware.call('system.info'))['birthday']
         if birthday is None:
+            # try to set birthday in background
             asyncio.ensure_future(_update_birthday(middleware))
+
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
