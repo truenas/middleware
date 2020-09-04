@@ -10,6 +10,7 @@ from .device_info_base import DeviceInfoBase
 from middlewared.service import private, Service
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
+RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')
 RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
 
@@ -59,6 +60,8 @@ class DeviceService(Service, DeviceInfoBase):
 
         for block_device in pyudev.Context().list_devices(subsystem='block', DEVTYPE='disk'):
             if block_device.sys_name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
+                continue
+            if RE_NVME_PRIVATE_NAMESPACE.match(block_device.sys_name):
                 continue
             device_type = os.path.join('/sys/block', block_device.sys_name, 'device/type')
             if os.path.exists(device_type):
