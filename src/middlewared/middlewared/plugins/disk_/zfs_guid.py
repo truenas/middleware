@@ -23,8 +23,13 @@ class DiskService(Service):
     async def sync_zfs_guid(self, pool_id_or_pool):
         if isinstance(pool_id_or_pool, dict):
             pool = pool_id_or_pool
+        elif isinstance(pool_id_or_pool, str):
+            pool = await self.middleware.call("pool.query", [["name", "=", pool_id_or_pool]], {"get": True})
         else:
             pool = await self.middleware.call("pool.get_instance", pool_id_or_pool)
+
+        if pool["topology"] is None:
+            return
 
         disk_to_guid = bidict.bidict()
         for vdev in await self.middleware.call("pool.flatten_topology", pool["topology"]):
@@ -51,10 +56,10 @@ async def devd_zfs_hook(middleware, data):
     if data.get("type") in (
         "sysevent.fs.zfs.config_sync",
     ):
-        await middleware.call(
-            "disk.sync_zfs_guid",
-            await middleware.call("pool.query", [["name", "=", data["pool"]]], {"get": True}),
-        )
+        try:
+            await middleware.call("disk.sync_zfs_guid", data["pool"])
+        except MatchNotFound:
+            pass
 
 
 async def zfs_events_hook(middleware, data):
@@ -63,10 +68,10 @@ async def zfs_events_hook(middleware, data):
     if event_id in [
         "sysevent.fs.zfs.config_sync",
     ]:
-        await middleware.call(
-            "disk.sync_zfs_guid",
-            await middleware.call("pool.query", [["name", "=", data["pool"]]], {"get": True}),
-        )
+        try:
+            await middleware.call("disk.sync_zfs_guid", data["pool"])
+        except MatchNotFound:
+            pass
 
 
 async def hook(middleware, pool):
