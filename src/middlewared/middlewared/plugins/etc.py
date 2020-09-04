@@ -202,7 +202,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux'},
         ],
         'docker': [
-            {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': 'pool_import'},
+            {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': None},
         ],
         'inetd': [
             {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}

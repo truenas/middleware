@@ -33,10 +33,10 @@ class KubernetesService(Service):
                 k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
             ]
         )
-        # We should wait for 5-10 seconds so that pods are scheduled and start executing on the node as it is
+        # We should wait for around 20 seconds so that pods are scheduled and start executing on the node as it is
         # then that kube-router configures routes in the main table which we would like to add to kube-router table
         # because it's internal traffic will also be otherwise advertised to the default route specified
-        await asyncio.sleep(5)
+        await asyncio.sleep(20)
         await self.middleware.call('k8s.cni.add_routes_to_kube_router_table')
 
     @private
