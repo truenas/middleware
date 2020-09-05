@@ -106,8 +106,16 @@ class KubernetesService(ConfigService):
 
         `node_ip` is the IP address which the kubernetes cluster will assign to the TrueNAS node. It defaults to
         0.0.0.0 and the cluster in this case will automatically manage which IP address to use for managing traffic
-        for default NAT network. If it is desired that traffic uses a certain interface / ip address, that IP address
-        can be specified and the NAT network will use related IP address and it's routes to manage the traffic.
+        for default NAT network.
+
+        By default kubernetes pods will be using default gateway of the system for outward traffic. This might
+        not be desirable for certain users who want to separate NAT traffic over a specific interface / route. System
+        will create a L3 network which will be routing the traffic towards default gateway for NAT.
+
+        If users want to restrict traffic over a certain gateway / interface, they can specify a default route
+        for the NAT traffic. `route_v4_interface` and `route_v4_gateway` will set a default route for the kubernetes
+        cluster IPv4 traffic. Similarly `route_v6_interface` and 'route_v6_gateway` can be used to specify default
+        route for IPv6 traffic.
         """
         old_config = await self.config()
         old_config.pop('dataset')
