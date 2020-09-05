@@ -1,8 +1,10 @@
 import os
+import time
 
 from middlewared.utils import start_daemon_thread
 
 VRRP_FIFO_FILE = '/var/run/vrrpd.fifo'
+TIMEOUT = 2
 
 
 def vrrp_fifo_listen(middleware):
@@ -14,11 +16,16 @@ def vrrp_fifo_listen(middleware):
         pass
 
     while True:
-        with open(VRRP_FIFO_FILE) as f:
-            middleware.logger.info('vrrp fifo connection established')
-            # all vrrp messages are terminated with a newline
-            for line in f:
-                middleware.call_hook_sync('vrrp.fifo', data=line)
+        try:
+            with open(VRRP_FIFO_FILE) as f:
+                middleware.logger.info('vrrp fifo connection established')
+                # all vrrp messages are terminated with a newline
+                for line in f:
+                    middleware.call_hook_sync('vrrp.fifo', data=line)
+        except Exception:
+            middleware.logger.error('vrrp fifo connection not established, retrying')
+            # sleep for `TIMEOUT` before trying to open FIFO and send event again
+            time.sleep(TIMEOUT)
 
 
 def setup(middleware):

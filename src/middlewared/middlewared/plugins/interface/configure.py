@@ -33,7 +33,7 @@ class InterfaceService(Service):
 
         has_ipv6 = data['int_ipv6auto'] or False
 
-        if self.middleware.call_sync('failover.licensed'):
+        if self.middleware.call_sync('system.product_type') in ('ENTERPRISE', 'SCALE_ENTERPRISE'):
             if self.middleware.call_sync('failover.node') == 'B':
                 ipv4_field = 'int_ipv4address_b'
                 ipv6_field = 'int_ipv6address'
