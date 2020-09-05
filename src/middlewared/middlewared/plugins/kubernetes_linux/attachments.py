@@ -16,15 +16,15 @@ class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
 
         query_dataset = os.path.relpath(path, '/mnt')
         if query_dataset == k8s_config['dataset'] or query_dataset.startswith(f'{k8s_config["dataset"]}/'):
-            results.append({'pool': k8s_config['dataset']})
+            results.append({'id': k8s_config['pool']})
 
         return results
 
     async def get_attachment_name(self, attachment):
-        return attachment['pool']
+        return attachment['id']
 
     async def delete(self, attachments):
-        await self.stop(attachments)
+        await self.middleware.call('kubernetes.update', {'pool': None})
 
     async def toggle(self, attachments, enabled):
         await getattr(self, 'start' if enabled else 'stop')(attachments)
