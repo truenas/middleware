@@ -142,7 +142,7 @@ class FailoverService(Service):
         try:
             return self.middleware.call_sync(method, *args)
         except Exception as e:
-            logger.error('Failed to run %s:%r:%r %s', method, args, e)
+            logger.error('Failed to run %s:%r:%s', method, args, e)
 
     def event(self, ifname, event):
 
@@ -227,12 +227,10 @@ class FailoverService(Service):
                 ('OR', [
                     ('method', '=', 'failover.events.vrrp_master'),
                     ('method', '=', 'failover.events.vrrp_backup')
-                ])
+                ]),
+                ('state', '=', 'RUNNING'),
             ]
         )
-
-        # only care about RUNNING events
-        current_events = [i for i in current_events if i['state'] == 'RUNNING']
         for i in current_events:
             if i['method'] == 'failover.events.vrrp_master':
                 # if the incoming event is also a MASTER event then log it and ignore
@@ -254,9 +252,7 @@ class FailoverService(Service):
 
     def _event(self, ifname, event):
 
-        forcetakeover = False
-        if event == 'forcetakeover':
-            forcetakeover = True
+        forcetakeover = (event == 'forcetakeover')
 
         # generate data to be used during the failover event
         fobj = self.generate_failover_data()
@@ -282,7 +278,10 @@ class FailoverService(Service):
 
             # this section needs to run as quick as possible so we check if the remote
             # client is even connected before we try and start doing remote_calls
-            remote_connected = self.run_call('failover.remote_connected')
+            try:
+                remote_connected = self.run_call('failover.remote_connected')
+            except Exception:
+                remote_connected = False
 
             # if the other controller is already master, then assume backup
             if remote_connected:
@@ -292,9 +291,8 @@ class FailoverService(Service):
 
             # ensure the zpools are imported
             needs_imported = False
-            for vol in fobj['volumes']:
-                zpool = self.run_call('pool.query', [('name', '=', vol['name'])], {'get': True})
-                if zpool['status'] != 'ONLINE':
+            for pool in self.run_call('pool.query', [('name', 'in', [i['name'] for i in fobj['volumes']])]):
+                if pool['status'] == 'OFFLINE':
                     needs_imported = True
                     break
 
