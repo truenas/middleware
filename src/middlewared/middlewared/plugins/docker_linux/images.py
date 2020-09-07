@@ -4,7 +4,8 @@ import os
 
 from datetime import datetime
 
-from middlewared.service import CallError, filterable, private, CRUDService
+from middlewared.schema import Dict, Str
+from middlewared.service import accepts, CallError, filterable, private, CRUDService
 from middlewared.utils import filter_list
 
 
@@ -35,8 +36,34 @@ class DockerImagesService(CRUDService):
                 })
         return filter_list(results, filters, options)
 
+    @accepts(
+        Dict(
+            'image_pull',
+            Dict(
+                'docker_authentication',
+                Str('username', required=True),
+                Str('password', required=True),
+                default=None,
+                null=True,
+            ),
+            Str('from_image', required=True),
+            Str('tag', default=None, null=True),
+        )
+    )
+    async def pull(self, data):
+        await self.docker_checks()
+        async with aiodocker.Docker() as docker:
+            try:
+                response = await docker.images.pull(
+                    from_image=data['from_image'], tag=data['tag'], auth=data['docker_authentication']
+                )
+            except aiodocker.DockerError as e:
+                raise CallError(f'Failed to pull image: {e.message}')
+        return response
+
     @private
     async def load_images_from_file(self, path):
+        await self.docker_checks()
         if not os.path.exists(path):
             raise CallError(f'"{path}" path does not exist.', errno=errno.ENOENT)
 
@@ -53,3 +80,8 @@ class DockerImagesService(CRUDService):
     @private
     async def load_default_images(self):
         await self.load_images_from_file(DEFAULT_DOCKER_IMAGES_PATH)
+
+    @private
+    async def docker_checks(self):
+        if not await self.middleware.call('service.started', 'docker'):
+            raise CallError('Docker service is not running')
