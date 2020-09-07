@@ -4,7 +4,7 @@ import os
 
 from datetime import datetime
 
-from middlewared.schema import Dict, Str
+from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, filterable, private, CRUDService
 from middlewared.utils import filter_list
 
@@ -53,6 +53,7 @@ class DockerImagesService(CRUDService):
     async def pull(self, data):
         await self.docker_checks()
         async with aiodocker.Docker() as docker:
+            docker.images.delete()
             try:
                 response = await docker.images.pull(
                     from_image=data['from_image'], tag=data['tag'], auth=data['docker_authentication']
@@ -60,6 +61,18 @@ class DockerImagesService(CRUDService):
             except aiodocker.DockerError as e:
                 raise CallError(f'Failed to pull image: {e.message}')
         return response
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'options',
+            Bool('force', default=False),
+        )
+    )
+    async def do_delete(self, id, options):
+        await self.docker_checks()
+        async with aiodocker.Docker() as docker:
+            await docker.images.delete(name=id, force=options['force'])
 
     @private
     async def load_images_from_file(self, path):
