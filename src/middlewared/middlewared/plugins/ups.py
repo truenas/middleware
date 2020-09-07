@@ -19,6 +19,9 @@ if osc.IS_FREEBSD:
 elif osc.IS_LINUX:
     DRIVER_BIN_DIR = '/lib/nut'
 
+RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
+RE_UPS_STATUS = re.compile(r'ups.status: (.*)')
+
 
 class UPSModel(sa.Model):
     __tablename__ = 'services_ups'
@@ -265,21 +268,22 @@ class UPSService(SystemServiceService):
     async def upssched_event(self, notify_type):
         config = await self.config()
         upsc_identifier = config['complete_identifier']
+        cp = await run('upsc', upsc_identifier, check=False)
+        if cp.returncode:
+            stats_output = ''
+            self.logger.error('Failed to retrieve ups information: %s', cp.stderr.decode())
+        else:
+            stats_output = cp.stdout.decode()
+
+        if RE_TEST_IN_PROGRESS.search(stats_output):
+            self.logger.debug('Self test is in progress and %r notify event should be ignored', notify_type)
+            return
+
         if notify_type.lower() == 'shutdown':
             # Before we start FSD with upsmon, lets ensure that ups is not ONLINE (OL).
             # There are cases where battery/charger issues can result in ups.status being "OL LB" at the
             # same time. This will ensure that we don't initiate a shutdown if ups is OL.
-            stats_output = (
-                await run(
-                    'upsc', upsc_identifier,
-                    check=False
-                )
-            ).stdout
-
-            ups_status = re.findall(
-                fr'ups.status: (.*)',
-                '' if not stats_output else stats_output.decode()
-            )
+            ups_status = RE_UPS_STATUS.findall(stats_output)
             if ups_status and 'ol' in ups_status[0].lower():
                 self.middleware.logger.debug(
                     f'Shutdown not initiated as ups.status ({ups_status[0]}) indicates '
