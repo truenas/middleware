@@ -51,9 +51,17 @@ class DockerImagesService(CRUDService):
         )
     )
     async def pull(self, data):
+        """
+        `from_image` is the name of the image to pull. Format for the name is "registry/repo/image" where
+        registry may be omitted and it will default to docker registry in this case.
+
+        `tag` specifies tag of the image and defaults to `null`. In case of `null` it will retrieve all the tags
+        of the image.
+
+        `docker_authentication` should be specified if image to retrieved is under a private repository.
+        """
         await self.docker_checks()
         async with aiodocker.Docker() as docker:
-            docker.images.delete()
             try:
                 response = await docker.images.pull(
                     from_image=data['from_image'], tag=data['tag'], auth=data['docker_authentication']
@@ -70,6 +78,9 @@ class DockerImagesService(CRUDService):
         )
     )
     async def do_delete(self, id, options):
+        """
+        `options.force` should be used to force delete an image even if it's in use by a stopped container.
+        """
         await self.docker_checks()
         async with aiodocker.Docker() as docker:
             await docker.images.delete(name=id, force=options['force'])
