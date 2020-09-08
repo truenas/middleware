@@ -24,7 +24,7 @@ NEW_BOOT_POOL="boot-pool"
 
 is_truenas()
 {
-	dmidecode -s system-product-name | grep -qi "truenas"
+	dmidecode -s system-product-name | grep -i "truenas" | grep -qv MINI
 	return $?
 }
 
