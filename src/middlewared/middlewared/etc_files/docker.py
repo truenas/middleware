@@ -1,14 +1,44 @@
 import json
 import os
+import re
 import subprocess
+
+
+RE_LDCONFIG = re.compile(r'@/sbin/ldconfig')
+
+
+def nvidia_configuration(middleware):
+    # this needs to happen for nvidia gpu to work properly for docker containers
+    # https://github.com/NVIDIA/nvidia-docker/issues/854#issuecomment-572175484
+    nvidia_config_path = '/etc/nvidia-container-runtime/config.toml'
+    if not os.path.exists(nvidia_config_path):
+        return {}
+
+    with open(nvidia_config_path, 'r') as f:
+        data = RE_LDCONFIG.sub('/sbin/ldconfig', f.read())
+
+    with open(nvidia_config_path, 'w') as f:
+        f.write(data)
+
+    return {
+        'runtimes': {'nvidia': {'path': '/usr/bin/nvidia-container-runtime', 'runtimeArgs': []}},
+        'default-runtime': 'nvidia',
+    }
+
+
+def gpu_configuration(middleware):
+    available_gpu = middleware.call_sync('hardware.available_gpu')
+
+    if available_gpu['vendor'] == 'NVIDIA':
+        return nvidia_configuration(middleware)
+
+    return {}
 
 
 def render(service, middleware):
     config = middleware.call_sync('kubernetes.config')
     if not config['pool']:
         return
-
-    # TODO: Add GPU support
 
     # We need to do this so that proxy changes are respected by systemd on docker daemon start
     subprocess.run(['systemctl', 'daemon-reload'], capture_output=True, check=True)
@@ -20,4 +50,5 @@ def render(service, middleware):
             'exec-opts': ['native.cgroupdriver=cgroupfs'],
             'iptables': False,
             'bridge': 'none',
+            **gpu_configuration(middleware),
         }))
