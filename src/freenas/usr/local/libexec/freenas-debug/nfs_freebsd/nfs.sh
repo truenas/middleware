@@ -78,19 +78,11 @@ nfs_func()
 	nfsstat
 	section_footer
 
-	section_header "nfsstat -c"
-	nfsstat -c
-	section_footer
-
-	section_header "nfsstat -s"
-	nfsstat -s
-	section_footer
-
 	section_header "nfsv4 locks: nfsdumpstate"
 	nfsdumpstate
 	section_footer
 
-	section_header "Configuration"
+	section_header "Middleware Configuration"
 	midclt call nfs.config | jq
 	midclt call sharing.nfs.query | jq
 	section_footer
