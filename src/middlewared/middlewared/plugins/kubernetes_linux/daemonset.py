@@ -1,6 +1,6 @@
 from kubernetes_asyncio import client
 
-from middlewared.schema import Dict, Str
+from middlewared.schema import Dict, Ref, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -26,14 +26,28 @@ class KubernetesDaemonsetService(CRUDService):
             'daemonset_create',
             Str('namespace', required=True),
             Dict('body', additional_attrs=True, required=True),
+            register=True
         )
     )
     async def do_create(self, data):
         async with api_client() as (api, context):
             try:
-                context['apps_api'].create_namespaced_daemon_set(namespace=data['namespace'], body=data['body'])
+                await context['apps_api'].create_namespaced_daemon_set(namespace=data['namespace'], body=data['body'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create daemonset: {e}')
+
+    @accepts(
+        Str('name'),
+        Ref('daemonset_create'),
+    )
+    async def do_update(self, name, data):
+        async with api_client() as (api, context):
+            try:
+                await context['apps_api'].patch_namespaced_daemon_set(
+                    name, namespace=data['namespace'], body=data['body']
+                )
+            except client.exceptions.ApiException as e:
+                raise CallError(f'Unable to patch {name} daemonset: {e}')
 
     @accepts(
         Str('name'),
