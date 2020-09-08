@@ -786,6 +786,7 @@ class UserService(CRUDService):
                     verrors.add(
                         f'{schema}.home',
                         'Path component for "Home Directory" is currently encrypted and locked'
+                    )
                 elif len(p.resolve().parents) == 2:
                     verrors.add(
                         f'{schema}.home',
