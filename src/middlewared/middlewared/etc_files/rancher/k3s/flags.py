@@ -14,6 +14,7 @@ def render(service, middleware):
     if not config['pool']:
         with contextlib.suppress(OSError):
             os.unlink(FLAGS_PATH)
+        return
 
     kube_controller_args = f'node-cidr-mask-size={ipaddress.ip_network(config["cluster_cidr"]).prefixlen}'
     os.makedirs('/etc/rancher/k3s', exist_ok=True)

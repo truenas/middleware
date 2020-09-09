@@ -80,7 +80,7 @@ class KubernetesService(ConfigService):
             IPAddr('cluster_dns_ip'),
             IPAddr('node_ip'),
             Str('route_v4_interface', null=True),
-            Str('route_v4_gateway', null=True, v6=False),
+            IPAddr('route_v4_gateway', null=True, v6=False),
             Str('route_v6_interface', null=True),
             IPAddr('route_v6_gateway', null=True, v4=False),
             update=True,
