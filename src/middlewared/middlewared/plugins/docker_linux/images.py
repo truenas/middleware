@@ -1,4 +1,5 @@
 import aiodocker
+import errno
 import os
 
 from middlewared.service import CallError, private, CRUDService
@@ -15,7 +16,7 @@ class DockerImagesService(CRUDService):
     @private
     async def load_images_from_file(self, path):
         if not os.path.exists(path):
-            raise CallError(f'"{path}" path does not exist.')
+            raise CallError(f'"{path}" path does not exist.', errno=errno.ENOENT)
 
         client = aiodocker.Docker()
         resp = []
