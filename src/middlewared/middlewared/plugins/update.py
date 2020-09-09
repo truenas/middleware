@@ -744,7 +744,7 @@ class UpdateService(Service):
         mddev = prov.text
 
         subprocess.run(
-            ['umount', f'/dev/label/{UPLOAD_LABEL}'], capture_output=True, check=False,
+            ['umount', UPLOAD_LOCATION], capture_output=True, check=False,
         )
         cp = subprocess.run(
             ['mdconfig', '-d', '-u', mddev],
