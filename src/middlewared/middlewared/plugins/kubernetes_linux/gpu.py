@@ -49,7 +49,7 @@ class KubernetesGPUService(Service):
             self.logger.error('Unable to configure GPU for node: %s', e)
 
     async def setup_internal(self):
-        gpu = await self.middleware.call('hardware.available_gpu')
+        gpu = await self.middleware.call('device.get_info', 'GPU')
         to_remove = list(GPU_CONFIG.keys())
         daemonsets = {
             f'{d["metadata"]["namespace"]}_{d["metadata"]["name"]}': d
