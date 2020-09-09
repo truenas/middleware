@@ -1,10 +1,6 @@
 import json
 import os
-import re
 import subprocess
-
-
-RE_LDCONFIG = re.compile(r'@/sbin/ldconfig')
 
 
 def nvidia_configuration(middleware):
@@ -15,10 +11,10 @@ def nvidia_configuration(middleware):
         return {}
 
     with open(nvidia_config_path, 'r') as f:
-        data = RE_LDCONFIG.sub('/sbin/ldconfig', f.read())
+        data = f.read()
 
     with open(nvidia_config_path, 'w') as f:
-        f.write(data)
+        f.write(data.replace('@/sbin/ldconfig', '/sbin/ldconfig'))
 
     return {
         'runtimes': {'nvidia': {'path': '/usr/bin/nvidia-container-runtime', 'runtimeArgs': []}},
@@ -27,7 +23,7 @@ def nvidia_configuration(middleware):
 
 
 def gpu_configuration(middleware):
-    available_gpu = middleware.call_sync('hardware.available_gpu')
+    available_gpu = middleware.call_sync('device.get_info', 'GPU')
 
     if available_gpu['vendor'] == 'NVIDIA':
         return nvidia_configuration(middleware)
