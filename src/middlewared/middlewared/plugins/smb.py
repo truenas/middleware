@@ -498,6 +498,15 @@ class SMBService(SystemServiceService):
         if entry == bsduser[0]['smbhash']:
             return
 
+        """
+        If an invalid global auxiliary parameter is present
+        in the smb.conf, then pdbedit will write error messages
+        to stdout (two for each invalid parameter, separated by \n).
+        The last line of output in this case will be the passdb entry
+        in smbpasswd format (-Lw). This is the reason why we pre-emptively
+        splitlines() and use last element of resulting list for our checks.
+        """
+        entry = entry.splitlines()[-1]
         entry = entry.split(':')
 
         if smbpasswd_string[3] != entry[3]:
@@ -747,12 +756,28 @@ class SMBService(SystemServiceService):
             if len(kv) == 0:
                 continue
 
-            if kv[0].strip() in aux_blacklist:
+            auxparam = kv[0].strip()
+            if auxparam in aux_blacklist:
                 verrors.add(
                     'smb_update.smb_options',
                     f'{kv[0]} is a blacklisted auxiliary parameter. Changes to this parameter '
                     'are not permitted.'
                 )
+
+            elif ':' not in auxparam:
+                """
+                lib/param does not validate params containing a colon.
+                this dump_a_parameter() wraps the respective lpctx function
+                in samba that checks the known parameter table (after skipping strings
+                containing a colon).
+                """
+                try:
+                    param.LoadParm('/usr/local/etc/smb4.conf').dump_a_parameter(auxparam)
+                except RuntimeError as e:
+                    verrors.add(
+                        'smb_update.smb_options',
+                        str(e)
+                    )
 
         verrors.check()
 
