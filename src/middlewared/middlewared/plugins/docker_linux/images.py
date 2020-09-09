@@ -58,7 +58,7 @@ class DockerImagesService(CRUDService):
         `tag` specifies tag of the image and defaults to `null`. In case of `null` it will retrieve all the tags
         of the image.
 
-        `docker_authentication` should be specified if image to retrieved is under a private repository.
+        `docker_authentication` should be specified if image to be retrieved is under a private repository.
         """
         await self.docker_checks()
         async with aiodocker.Docker() as docker:

@@ -28,7 +28,6 @@ from .keepalived import KeepalivedService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
-from .pseudo.kuberouter import KubeRouterService
 from .pseudo.libvirtd import LibvirtdService
 from .pseudo.misc import (
     CronService,
