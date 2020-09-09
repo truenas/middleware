@@ -948,7 +948,7 @@ class ActiveDirectoryService(ConfigService):
             ], check=False)
             if netads.returncode != 0:
                 raise CallError('failed to set spn entry '
-                                f'[{spn}]: {netads.stderr.decode().strip()}')
+                                f'[{spn}]: {netads.stdout.decode().strip()}')
 
         return True
 
