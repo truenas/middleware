@@ -9,7 +9,7 @@ MappingSlot = namedtuple("MappingSlot", ["num", "slot", "identify"])
 
 
 MAPPINGS = [
-    ProductMapping(re.compile(r"FREENAS-MINI-3.0-E\+?$"), [
+    ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-E\+?$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(0, 0, False),
             MappingSlot(0, 1, False),
@@ -19,7 +19,7 @@ MAPPINGS = [
             MappingSlot(0, 4, False),
         ]),
     ]),
-    ProductMapping(re.compile(r"FREENAS-MINI-3.0-X$"), [
+    ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-X$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(0, 0, False),
             MappingSlot(0, 1, False),
@@ -30,7 +30,7 @@ MAPPINGS = [
             MappingSlot(1, 3, False),
         ]),
     ]),
-    ProductMapping(re.compile(r"FREENAS-MINI-3.0-X\+$"), [
+    ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-X\+$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(0, 0, False),
             MappingSlot(0, 1, False),
@@ -41,7 +41,7 @@ MAPPINGS = [
             MappingSlot(0, 6, False),
         ]),
     ]),
-    ProductMapping(re.compile(r"FREENAS-MINI-3.0-XL\+$"), [
+    ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-XL\+$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(1, 4, False),
             MappingSlot(0, 0, False),
