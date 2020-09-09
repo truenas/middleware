@@ -253,22 +253,22 @@ class NetworkConfigurationService(ConfigService):
         def set_(data):
             data = dict(
                 data,
-                domains=json.dumps(sorted(list(set('domains'))), sort_keys=True),
+                domains=set(data['domains']),
                 service_announcement=None,
-                netwait_ip=json.dumps(sorted(list(set('netwait_ip'))), sort_keys=True),
+                netwait_ip=set(data['netwait_ip']),
                 activity=json.dumps(data['activity'], sort_keys=True),
             )
             return set(data.items())
 
         if len(set_(new_config) ^ set_(config)) > 0:
-            services_to_reload = ['hostname']
+            services_to_reload = ['resolvconf']
             if (
                     new_config['domain'] != config['domain'] or
                     new_config['nameserver1'] != config['nameserver1'] or
                     new_config['nameserver2'] != config['nameserver2'] or
                     new_config['nameserver3'] != config['nameserver3']
             ):
-                services_to_reload.append('resolvconf')
+                services_to_reload.append('hostname')
 
             if (
                     new_config['ipv4gateway'] != config['ipv4gateway'] or
