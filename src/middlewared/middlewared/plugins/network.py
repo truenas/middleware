@@ -258,14 +258,14 @@ class NetworkConfigurationService(ConfigService):
                 data_changed or
                 len(set(new_config.items()) ^ set(config.items())) > 0
         ):
-            services_to_reload = ['hostname']
+            services_to_reload = ['resolvconf']
             if (
                     new_config['domain'] != config['domain'] or
                     new_config['nameserver1'] != config['nameserver1'] or
                     new_config['nameserver2'] != config['nameserver2'] or
                     new_config['nameserver3'] != config['nameserver3']
             ):
-                services_to_reload.append('resolvconf')
+                services_to_reload.append('hostname')
 
             if (
                     new_config['ipv4gateway'] != config['ipv4gateway'] or
