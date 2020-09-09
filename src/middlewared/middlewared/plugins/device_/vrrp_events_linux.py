@@ -29,4 +29,7 @@ def vrrp_fifo_listen(middleware):
 
 
 def setup(middleware):
-    start_daemon_thread(target=vrrp_fifo_listen, args=(middleware,))
+
+    # only run on licensed systems
+    if middleware.call_sync('failover.licensed'):
+        start_daemon_thread(target=vrrp_fifo_listen, args=(middleware,))
