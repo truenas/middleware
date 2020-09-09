@@ -12,7 +12,11 @@ async def api_client(context=None, api_client_kwargs=None):
     context = context or {}
     context['core_api'] = True
     api_cl = ApiClient(**(api_client_kwargs or {}))
-    user_context = {'core_api': client.CoreV1Api(api_cl), 'apps_api': client.AppsV1Api(api_cl)}
+    user_context = {
+        'core_api': client.CoreV1Api(api_cl),
+        'apps_api': client.AppsV1Api(api_cl),
+        'storage_api': client.StorageV1Api(api_cl),
+    }
     for k in filter(lambda k: context[k], context):
         if k == 'node':
             user_context[k] = await get_node(user_context['core_api'])
