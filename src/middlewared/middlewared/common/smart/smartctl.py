@@ -68,7 +68,10 @@ async def get_smartctl_args(middleware, devices, disk):
 
     # HP Smart Array Controller
     if driver.startswith("ciss"):
-        return [f"/dev/{driver}{controller_id}", "-d", f"cciss,{channel_no}"]
+        args = [f"/dev/{driver}{controller_id}", "-d", f"cciss,{channel_no}"]
+        p = await smartctl(args + ["-i"], check=False)
+        if (p.returncode & 0b11) == 0:
+            return args
 
     if driver.startswith(("twa", "twe", "tws")):
         p = await run(["/usr/local/sbin/tw_cli", f"/c{controller_id}", "show"], encoding="utf8")
