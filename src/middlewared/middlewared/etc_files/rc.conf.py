@@ -102,6 +102,13 @@ def lldp_config(middleware, context):
     yield f'ladvd_flags="{" ".join(ladvd_flags)}"'
 
 
+def service_announcement(middleware, context):
+    announce = middleware.call_sync("network.configuration.config")["service_announcement"]
+    yield f'nmbd_enable="{"YES" if announce["netbios"] else "NO"}"'
+    yield f'avahi_daemon_enable="{"YES" if announce["mdns"] else "NO"}"'
+    yield f'wsdd_enable="{"YES" if announce["wsd"] else "NO"}"'
+
+
 def services_config(middleware, context):
     services = middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'})
 
@@ -140,7 +147,7 @@ def services_config(middleware, context):
         'iscsitarget': ['ctld'],
         'lldp': ['ladvd'],
         'ssh': ['openssh'],
-        'cifs': ['samba_server', 'smbd', 'nmbd', 'winbindd']
+        'cifs': ['samba_server', 'smbd', 'winbindd']
     })
 
     for service in services:
@@ -431,6 +438,7 @@ def render(service, middleware):
     rcs = []
     for i in (
         services_config,
+        service_announcement,
         collectd_config,
         geli_config,
         host_config,
