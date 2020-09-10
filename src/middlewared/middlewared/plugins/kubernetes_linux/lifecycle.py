@@ -16,12 +16,17 @@ class KubernetesService(Service):
                 await asyncio.sleep(2)
 
         try:
-            try:
-                await asyncio.wait_for(node_online(self.middleware), timeout=10)
-            except asyncio.TimeoutError:
-                config = await self.middleware.call('k8s.node.config')
-                if not config['node_configured']:
-                    raise CallError(f'Unable to configure node: {config["error"]}')
+            timeout = 10
+            while timeout > 0:
+                node_config = await self.middleware.call('k8s.node.config')
+                if node_config['node_configured']:
+                    break
+                else:
+                    await asyncio.sleep(2)
+                    timeout -= 2
+
+            if not node_config['node_configured']:
+                raise CallError(f'Unable to configure node: {node_config["error"]}')
             await self.post_start_internal()
         except Exception as e:
             await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {'error': str(e)})
@@ -39,6 +44,8 @@ class KubernetesService(Service):
                 k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
             ]
         )
+        # FIXME: Let's please remove the sleep and check on pods to see that they have started executing once
+        # we add support to retrieve workloads
         # We should wait for around 20 seconds so that pods are scheduled and start executing on the node as it is
         # then that kube-router configures routes in the main table which we would like to add to kube-router table
         # because it's internal traffic will also be otherwise advertised to the default route specified
