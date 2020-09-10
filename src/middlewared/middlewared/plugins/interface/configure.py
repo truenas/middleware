@@ -33,19 +33,17 @@ class InterfaceService(Service):
 
         has_ipv6 = data['int_ipv6auto'] or False
 
-        if (
-            not self.middleware.call_sync('system.is_freenas') and
-            self.middleware.call_sync('failover.node') == 'B'
-        ):
-            ipv4_field = 'int_ipv4address_b'
-            ipv6_field = 'int_ipv6address'
-            alias_ipv4_field = 'alias_v4address_b'
-            alias_ipv6_field = 'alias_v6address_b'
-        else:
-            ipv4_field = 'int_ipv4address'
-            ipv6_field = 'int_ipv6address'
-            alias_ipv4_field = 'alias_v4address'
-            alias_ipv6_field = 'alias_v6address'
+        if self.middleware.call_sync('system.product_type') in ('ENTERPRISE', 'SCALE_ENTERPRISE'):
+            if self.middleware.call_sync('failover.node') == 'B':
+                ipv4_field = 'int_ipv4address_b'
+                ipv6_field = 'int_ipv6address'
+                alias_ipv4_field = 'alias_v4address_b'
+                alias_ipv6_field = 'alias_v6address_b'
+            else:
+                ipv4_field = 'int_ipv4address'
+                ipv6_field = 'int_ipv6address'
+                alias_ipv4_field = 'alias_v4address'
+                alias_ipv6_field = 'alias_v6address'
 
         dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
         if dhclient_running and data['int_dhcp']:
@@ -78,15 +76,34 @@ class InterfaceService(Service):
                 }))
                 has_ipv6 = True
 
-        carp_vhid = carp_pass = None
+        # if there is a VIP, and this is a freeBSD system, then
+        # we need to configure the VHID.
+        #
+        # if there is a VIP, and this is a linux system, then
+        # we dont need a "VRID" (VHID equivalent) because we use
+        # unicast VRRP advertisements
         if data['int_vip']:
-            addrs_database.add(self.alias_to_addr({
+            vip_data = {
                 'address': data['int_vip'],
                 'netmask': '32',
-                'vhid': data['int_vhid'],
-            }))
-            carp_vhid = data['int_vhid']
-            carp_pass = data['int_pass'] or None
+            }
+
+            if osc.IS_FREEBSD:
+                carp_vhid = data.get('int_vhid', None)
+                carp_pass = data.get('int_pass', None)
+
+                vip_data['vhid'] = carp_vhid
+
+                if carp_vhid:
+                    advskew = None
+                    for cc in iface.carp_config:
+                        if cc.vhid == carp_vhid:
+                            advskew = cc.advskew
+                        break
+            else:
+                vrrp_vip = data.get('int_vip', None)
+
+            addrs_database.add(self.alias_to_addr(vip_data))
 
         for alias in aliases:
             if alias[alias_ipv4_field]:
@@ -101,18 +118,15 @@ class InterfaceService(Service):
                 }))
 
             if alias['alias_vip']:
-                addrs_database.add(self.alias_to_addr({
+                alias_vip_data = {
                     'address': alias['alias_vip'],
                     'netmask': '32',
-                    'vhid': data['int_vhid'],
-                }))
+                }
 
-        if carp_vhid:
-            advskew = None
-            for cc in iface.carp_config:
-                if cc.vhid == carp_vhid:
-                    advskew = cc.advskew
-                    break
+                if osc.IS_FREEBSD:
+                    alias_vip_data['vhid'] = data['int_vhid']
+
+                addrs_database.add(self.alias_to_addr(alias_vip_data))
 
         if has_ipv6:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
@@ -137,22 +151,26 @@ class InterfaceService(Service):
                     self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
                     iface.replace_address(addr)
 
-        # carp must be configured after removing addresses
-        # in case removing the address removes the carp
-        if carp_vhid:
-            if self.middleware.call_sync('failover.licensed') and not advskew:
-                if 'NO_FAILOVER' in self.middleware.call_sync('failover.disabled_reasons'):
-                    if self.middleware.call_sync('failover.vip.get_states')[0]:
+        if osc.IS_FREEBSD:
+            # carp must be configured after removing addresses
+            # in case removing the address removes the carp
+            if carp_vhid:
+                if self.middleware.call_sync('failover.licensed') and not advskew:
+                    if 'NO_FAILOVER' in self.middleware.call_sync('failover.disabled_reasons'):
+                        if self.middleware.call_sync('failover.vip.get_states')[0]:
+                            advskew = 20
+                        else:
+                            advskew = 80
+                    elif self.middleware.call_sync('failover.node') == 'A':
                         advskew = 20
                     else:
                         advskew = 80
-                elif self.middleware.call_sync('failover.node') == 'A':
-                    advskew = 20
-                else:
-                    advskew = 80
 
-            # FIXME: change py-netif to accept str() key
-            iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
+                # FIXME: change py-netif to accept str() key
+                iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
+        else:
+            if vrrp_vip:
+                iface.vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):

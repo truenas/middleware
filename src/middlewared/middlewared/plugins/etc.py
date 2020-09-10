@@ -194,6 +194,16 @@ class EtcService(Service):
         'pf': [
             {'type': 'py', 'path': 'pf', 'platform': 'FreeBSD'},
         ],
+        'keepalived': [
+            {
+                'type': 'mako',
+                'path': 'keepalived/keepalived.conf',
+                'user': 'root', 'group': 'root', 'mode': 0o644,
+                'local_path': 'keepalived.conf.mako',
+                'platform': 'Linux',
+            },
+
+        ],
         'collectd': [
             {
                 'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
