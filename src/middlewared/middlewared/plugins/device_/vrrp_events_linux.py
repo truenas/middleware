@@ -15,7 +15,7 @@ def vrrp_hook_license_update(middleware, prev_product_type, *args, **kwargs):
     # get new product_type
     new_product_type = middleware.call_sync('system.product_type')
 
-    if prev_product_type != 'SCALE_ENTERPRISE' and new_product_type = 'SCALE_ENTERPRISE':
+    if prev_product_type != 'SCALE_ENTERPRISE' and new_product_type == 'SCALE_ENTERPRISE':
         if VRRP_THREAD is None:
             VRRP_THREAD = start_daemon_thread(target=vrrp_fifo_listen, args=(middleware,))
 
