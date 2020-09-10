@@ -3695,6 +3695,7 @@ class PoolDatasetService(CRUDService):
     async def kill_processes(self, oid, control_services, max_tries=5):
         need_restart_services = []
         need_stop_services = []
+        midpid = os.getpid()
         for process in await self.middleware.call('pool.dataset.processes', oid):
             service = process.get('service')
             if service is not None:
@@ -3716,6 +3717,11 @@ class PoolDatasetService(CRUDService):
                 return
 
             for process in processes:
+                if process["pid"] == midpid:
+                    self.logger.warning("The main middleware process %r (%r) currently is holding dataset %r",
+                                        process['pid'], process['cmdline'], oid)
+                    continue
+
                 service = process.get('service')
                 if service is not None:
                     if any(attachment_delegate.service == service for attachment_delegate in self.attachment_delegates):
