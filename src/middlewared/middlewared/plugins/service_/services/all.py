@@ -19,6 +19,7 @@ from .truecommand import TruecommandService
 from .ups import UPSService
 from .webdav import WebDAVService
 from .wsd import WSDService
+from .keepalived import KeepalivedService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -71,6 +72,7 @@ all_services = [
     UPSService,
     WebDAVService,
     WSDService,
+    KeepalivedService,
     ActiveDirectoryService,
     LdapService,
     NisService,
