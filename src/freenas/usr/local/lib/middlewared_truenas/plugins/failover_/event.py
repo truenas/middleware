@@ -558,6 +558,8 @@ class FailoverService(Service):
                 if ret and ret[0] == 1:
                     self.run_call('service.restart', 'afp', {'ha_propagate': False})
 
+                self.run_call('zettarepl.update_tasks')
+
                 logger.warning('Service restarts complete.')
 
                 # TODO: This is 4 years old at this point.  Is it still needed?
