@@ -18,6 +18,7 @@ from middlewared.utils import osc
 
 BUILDTIME = None
 VERSION = None
+MID_PID = None
 
 logger = logging.getLogger(__name__)
 
@@ -245,6 +246,14 @@ def sw_version():
         version = osc.get_app_version()
         VERSION = version['fullname']
     return VERSION
+
+
+def middleware_pid():
+    global MID_PID
+    if MID_PID is None:
+        with open('/var/run/middlewared.pid', 'r') as f:
+            MID_PID = int(f.read().strip())
+    return MID_PID
 
 
 def sw_version_is_stable():
