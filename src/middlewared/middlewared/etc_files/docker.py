@@ -24,7 +24,6 @@ def nvidia_configuration(middleware):
 
 def gpu_configuration(middleware):
     available_gpu = middleware.call_sync('device.get_info', 'GPU')
-
     if available_gpu['vendor'] == 'NVIDIA':
         return nvidia_configuration(middleware)
 
