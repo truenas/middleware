@@ -739,6 +739,11 @@ class CloudSyncService(CRUDService):
     async def _validate(self, verrors, name, data):
         await self._basic_validate(verrors, name, data)
 
+        try:
+            await self.middleware.run_in_thread(check_local_path, data["path"])
+        except CallError as e:
+            verrors.add(f"{name}.path", e.errmsg)
+
         for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
             if limit1["time"] >= limit2["time"]:
                 verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
