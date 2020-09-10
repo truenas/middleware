@@ -13,7 +13,6 @@ from collections import defaultdict
 import contextlib
 import ipaddress
 import itertools
-import json
 import os
 import platform
 import re
@@ -68,18 +67,21 @@ class NetworkConfigurationService(ConfigService):
 
     @private
     def network_config_extend(self, data):
+
         # hostname_local will be used when the hostname of the current machine
-        # needs to be used so it works with either FreeNAS or TrueNAS
+        # needs to be used so it works with either TrueNAS CORE or ENTERPRISE
         data['hostname_local'] = data['hostname']
-        if not self.middleware.call_sync('failover.licensed'):
+
+        if not self.middleware.call_sync('system.is_enterprise'):
             data.pop('hostname_b')
             data.pop('hostname_virtual')
         else:
-            node = self.middleware.call_sync('failover.node')
-            if node == 'B':
+            if self.middleware.call_sync('failover.node') == 'B':
                 data['hostname_local'] = data['hostname_b']
+
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
+
         return data
 
     @private
@@ -213,18 +215,20 @@ class NetworkConfigurationService(ConfigService):
         """
         config = await self.config()
         new_config = config.copy()
-        is_ha = True
 
-        if not await self.middleware.call('failover.licensed'):
-            for key in ['hostname_virtual', 'hostname_b']:
-                data.pop(key, None)
-            is_ha = False
-
-        new_config.update(data)
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
-        if is_ha and config['hostname_virtual'] != new_config['hostname_virtual']:
-            ad_enabled = await self.middleware.call('activedirectory.get_state') != "DISABLED"
-            if ad_enabled:
+
+        # we need to check if the `hostname_virtual` parameter changed in a couple places
+        # in this method, so go ahead and set it here
+        virt_hostname_changed = False
+        if new_config.get('hostname_b', False):
+            virt_hostname_changed = config['hostname_virtual'] != new_config['hostname_virtual']
+
+        # if this is an HA system and the virtual_hostname has changed we need to make sure
+        # that if the system is joined to AD they leave the domain first and then change
+        # that parameter
+        if virt_hostname_changed:
+            if await self.middleware.call('activedirectory.get_state') != "DISABLED":
                 verrors.add('global_confiugration_update.hostname_virtual',
                             'This parameter may not be changed after joining Active Directory (AD). '
                             'If it must be changed, the proper procedure is to leave the AD domain '
@@ -232,10 +236,11 @@ class NetworkConfigurationService(ConfigService):
 
         verrors.check()
 
-        new_config['domains'] = ' '.join(new_config.get('domains', []))
-        new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
-        new_config.pop('hostname_local', None)
+        # pop the `hostname_local` key since that's created in the _extend method
+        # and doesn't exist in the database
+        new_hostname = new_config.pop('hostname_local', None)
 
+        # update the db
         await self.middleware.call(
             'datastore.update',
             'network.globalconfiguration',
@@ -243,64 +248,52 @@ class NetworkConfigurationService(ConfigService):
             new_config,
             {'prefix': 'gc_'}
         )
-        service_announcement = new_config.pop('service_announcement')
-        new_config['domains'] = new_config['domains'].split()
-        new_config['netwait_ip'] = new_config['netwait_ip'].split()
 
-        def set_(data):
-            data = dict(
-                data,
-                domains=set(data['domains']),
-                service_announcement=None,
-                netwait_ip=set(data['netwait_ip']),
-                activity=json.dumps(data['activity'], sort_keys=True),
-            )
-            return set(data.items())
+        # set this here because we call it twice below
+        domainname_changed = new_config['domain'] != config['domain']
 
-        if len(set_(new_config) ^ set_(config)) > 0:
-            services_to_reload = ['resolvconf']
-            if (
-                    new_config['domain'] != config['domain'] or
-                    new_config['nameserver1'] != config['nameserver1'] or
-                    new_config['nameserver2'] != config['nameserver2'] or
-                    new_config['nameserver3'] != config['nameserver3']
-            ):
-                services_to_reload.append('hostname')
+        # hostname, domain name, search domain(s) or dns server(s) have changed
+        # so we reload the `resolvconf` service which actually sets the
+        # `hostname` too
+        if (
+            new_hostname != config['hostname_local'] or
+            domainname_changed or
+            new_config['domains'] != config['domains'] or
+            new_config['nameserver1'] != config['nameserver1'] or
+            new_config['nameserver2'] != config['nameserver2'] or
+            new_config['nameserver3'] != config['nameserver3']
+        ):
+            await self.middleware.call('service.reload', 'resolvconf')
 
-            if (
-                    new_config['ipv4gateway'] != config['ipv4gateway'] or
-                    new_config['ipv6gateway'] != config['ipv6gateway']
-            ):
-                services_to_reload.append('networkgeneral')
-                await self.middleware.call('route.sync')
+        # default gateway has changed
+        if (
+            new_config['ipv4gateway'] != config['ipv4gateway'] or
+            new_config['ipv6gateway'] != config['ipv6gateway']
+        ):
+            await self.middleware.call('route.sync')
 
-            restart_nfs = False
-            if (
-                    'hostname_virtual' in new_config.keys() and
-                    (
-                        new_config['hostname_virtual'] != config['hostname_virtual'] or
-                        new_config['domain'] != config['domain']
-                    )
-            ):
-                restart_nfs = True
-
-            for service_to_reload in services_to_reload:
-                await self.middleware.call('service.reload', service_to_reload)
-            if restart_nfs:
+        # if virtual_hostname (only HA) or domain name changed
+        # then restart nfs service if it's enabled and running
+        # and we have a nfs principal in the keytab
+        if virt_hostname_changed or domainname_changed:
+            if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
                 await self._service_change('nfs', 'restart')
 
-            if new_config['httpproxy'] != config['httpproxy']:
-                await self.middleware.call(
-                    'core.event_send',
-                    'network.config',
-                    'CHANGED',
-                    {'data': {'httpproxy': new_config['httpproxy']}}
-                )
+        # proxy server has changed
+        if new_config['httpproxy'] != config['httpproxy']:
+            await self.middleware.call(
+                'core.event_send',
+                'network.config',
+                'CHANGED',
+                {'data': {'httpproxy': new_config['httpproxy']}}
+            )
 
-            if new_config['activity'] != config['activity']:
-                await self.middleware.call('zettarepl.update_tasks')
+        # allowing outbound network activity has been changed
+        if new_config['activity'] != config['activity']:
+            await self.middleware.call('zettarepl.update_tasks')
 
-        for srv, enabled in service_announcement.items():
+        # handle the various service announcement daemons
+        for srv, enabled in new_config['service_announcement'].items():
             if enabled != config['service_announcement'][srv]:
                 await self.middleware.call(
                     "service.start" if enabled else "service.stop", ANNOUNCE_SRV[srv]
