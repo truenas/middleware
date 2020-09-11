@@ -199,7 +199,7 @@ class EtcService(Service):
                 'type': 'mako',
                 'path': 'keepalived/keepalived.conf',
                 'user': 'root', 'group': 'root', 'mode': 0o644,
-                'local_path': 'keepalived.conf.mako',
+                'local_path': 'keepalived.conf',
                 'platform': 'Linux',
             },
 
