@@ -248,14 +248,6 @@ def sw_version():
     return VERSION
 
 
-def middleware_pid():
-    global MID_PID
-    if MID_PID is None:
-        with open('/var/run/middlewared.pid', 'r') as f:
-            MID_PID = int(f.read().strip())
-    return MID_PID
-
-
 def sw_version_is_stable():
     version = osc.get_app_version()
     return version['stable']
