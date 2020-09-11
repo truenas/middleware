@@ -41,7 +41,7 @@ def vrrp_fifo_listen(middleware):
             time.sleep(TIMEOUT)
 
 
-def setup(middleware):
+async def setup(middleware):
 
     global VRRP_THREAD
 
@@ -50,6 +50,6 @@ def setup(middleware):
     middleware.register_hook('system.post_license_update', vrrp_hook_license_update, sync=False)
 
     # only run on licensed systems
-    if middleware.call_sync('failover.licensed'):
+    if await middleware.call('failover.licensed'):
         if VRRP_THREAD is None:
             VRRP_THREAD = start_daemon_thread(target=vrrp_fifo_listen, args=(middleware,))
