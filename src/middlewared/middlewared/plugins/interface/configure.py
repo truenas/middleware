@@ -33,17 +33,18 @@ class InterfaceService(Service):
 
         has_ipv6 = data['int_ipv6auto'] or False
 
-        if self.middleware.call_sync('system.product_type') in ('ENTERPRISE', 'SCALE_ENTERPRISE'):
-            if self.middleware.call_sync('failover.node') == 'B':
-                ipv4_field = 'int_ipv4address_b'
-                ipv6_field = 'int_ipv6address'
-                alias_ipv4_field = 'alias_v4address_b'
-                alias_ipv6_field = 'alias_v6address_b'
-            else:
-                ipv4_field = 'int_ipv4address'
-                ipv6_field = 'int_ipv6address'
-                alias_ipv4_field = 'alias_v4address'
-                alias_ipv6_field = 'alias_v6address'
+        if (
+            self.middleware.call_sync('system.is_enterprise') and self.middleware.call_sync('failover.node') == 'B'
+        ):
+            ipv4_field = 'int_ipv4address_b'
+            ipv6_field = 'int_ipv6address'
+            alias_ipv4_field = 'alias_v4address_b'
+            alias_ipv6_field = 'alias_v6address_b'
+        else:
+            ipv4_field = 'int_ipv4address'
+            ipv6_field = 'int_ipv6address'
+            alias_ipv4_field = 'alias_v4address'
+            alias_ipv6_field = 'alias_v6address'
 
         dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
         if dhclient_running and data['int_dhcp']:
@@ -82,6 +83,7 @@ class InterfaceService(Service):
         # if there is a VIP, and this is a linux system, then
         # we dont need a "VRID" (VHID equivalent) because we use
         # unicast VRRP advertisements
+        vrrp_vip = data.get('int_vip', None)
         if data['int_vip']:
             vip_data = {
                 'address': data['int_vip'],
@@ -100,8 +102,6 @@ class InterfaceService(Service):
                         if cc.vhid == carp_vhid:
                             advskew = cc.advskew
                         break
-            else:
-                vrrp_vip = data.get('int_vip', None)
 
             addrs_database.add(self.alias_to_addr(vip_data))
 
