@@ -128,7 +128,9 @@ class KubernetesService(Service):
 
     @private
     async def kubernetes_datasets(self, k8s_ds):
-        return [k8s_ds] + [os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases', 'default_volumes')]
+        return [k8s_ds] + [
+            os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases', 'default_volumes', 'catalogs')
+        ]
 
 
 async def _event_system(middleware, event_type, args):
