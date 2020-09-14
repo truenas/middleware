@@ -126,7 +126,8 @@ class PoolService(Service):
             )
             await run('partprobe', os.path.join('/dev', part_data['disk']))
         else:
-            await run('camcontrol', 'reprobe', part_data['disk'])
+            if not part_data['disk'].startswith('nvd'):
+                await run('camcontrol', 'reprobe', part_data['disk'])
             await run('gpart', 'recover', part_data['disk'])
             await run('gpart', 'resize', '-a', '4k', '-i', str(partition_number), part_data['disk'])
 
