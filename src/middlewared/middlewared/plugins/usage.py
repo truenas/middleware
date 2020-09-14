@@ -63,7 +63,7 @@ class UsageService(Service):
     def gather(self):
         datasets = self.middleware.call_sync('zfs.dataset.query')
         context = {
-            'network': self.middleware.call_sync('interfaces.query'),
+            'network': self.middleware.call_sync('interface.query'),
             'root_datasets': {},
             'zvols': [],
             'datasets': {},

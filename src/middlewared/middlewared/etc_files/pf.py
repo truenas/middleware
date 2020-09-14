@@ -24,7 +24,7 @@ def render(service, middleware):
                 pass
         return
 
-    interfaces = middleware.call_sync('interfaces.query')
+    interfaces = middleware.call_sync('interface.query')
 
     ips = list(map(
         lambda x: x['address'],
