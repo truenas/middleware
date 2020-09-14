@@ -83,6 +83,7 @@ class InterfaceService(Service):
         # if there is a VIP, and this is a linux system, then
         # we dont need a "VRID" (VHID equivalent) because we use
         # unicast VRRP advertisements
+        vrrp_vip = data.get('int_vip', None)
         if data['int_vip']:
             vip_data = {
                 'address': data['int_vip'],
@@ -101,8 +102,6 @@ class InterfaceService(Service):
                         if cc.vhid == carp_vhid:
                             advskew = cc.advskew
                         break
-            else:
-                vrrp_vip = data.get('int_vip', None)
 
             addrs_database.add(self.alias_to_addr(vip_data))
 
