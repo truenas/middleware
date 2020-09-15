@@ -1060,20 +1060,20 @@ class InterfaceService(CRUDService):
                         )
 
             # can't remove VHID and not GROUP
-            if not data['failover_vhid'] and data['failover_group']:
+            if not data.get('failover_vhid') and data.get('failover_group'):
                 verrors.add(
                     f'{schema_name}.failover_vhid',
                     'Removing only the VHID is not allowed.'
                 )
 
             # can't remove GROUP and not VHID
-            if not data['failover_group'] and data['failover_vhid']:
+            if not data.get('failover_group') and data.get('failover_vhid'):
                 verrors.add(
                     f'{schema_name}.failover_group',
                     'Removing only the failover group is not allowed.'
                 )
 
-            if update.get('failover_vhid') != data['failover_vhid']:
+            if update.get('failover_vhid') != data.get('failover_vhid'):
                 # FIXME: lazy load because of TrueNAS
                 from freenasUI.tools.vhid import scan_for_vrrp
                 used_vhids = await self.middleware.run_in_thread(
