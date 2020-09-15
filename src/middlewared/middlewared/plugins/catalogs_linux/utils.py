@@ -31,6 +31,7 @@ def get_repo(destination):
 
 def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
     with GIT_LOCK[repository_uri]:
+        os.makedirs(parent_dir, exist_ok=True)
         destination = os.path.join(parent_dir, convert_repository_to_path(repository_uri))
         repo = get_repo(destination)
         clone_repo = bool(repo)

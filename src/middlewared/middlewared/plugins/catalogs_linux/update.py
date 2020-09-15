@@ -12,6 +12,7 @@ CATALOGS = [
     {
         'label': 'OFFICIAL',
         'repository': 'https://github.com/sonicaj/charts.git',
+        'branch': 'master',
     }
 ]
 
