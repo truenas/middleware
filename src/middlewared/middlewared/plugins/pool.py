@@ -1222,21 +1222,22 @@ class PoolService(CRUDService):
                 higher_prio = True
 
         if higher_prio:
-            resilver_delay = 0
+            # resilver_delay = 0
             resilver_min_time_ms = 9000
-            scan_idle = 0
+            # scan_idle = 0
         else:
-            resilver_delay = 2
+            # resilver_delay = 2
             resilver_min_time_ms = 3000
-            scan_idle = 50
+            # scan_idle = 50
 
         if osc.IS_LINUX:
             with open('/sys/module/zfs/parameters/zfs_resilver_min_time_ms', 'w') as f:
                 f.write(str(resilver_min_time_ms))
         else:
-            sysctl.filter('vfs.zfs.resilver_delay')[0].value = resilver_delay
+            # Commented sysctls not available in OpenZFS (yet?)
+            # sysctl.filter('vfs.zfs.resilver_delay')[0].value = resilver_delay
             sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
-            sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
+            # sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
 
     @accepts()
     @job()
