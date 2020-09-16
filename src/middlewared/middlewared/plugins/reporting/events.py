@@ -1,3 +1,5 @@
+from collections import defaultdict
+import glob
 import itertools
 import json
 import psutil
@@ -138,16 +140,15 @@ class RealtimeEventSource(EventSource):
                                     data['cpu']['temperature'][core] = 2732 + int(value * 10)
                                     break
 
+            # Interface related statistics
+            data['interfaces'] = defaultdict(dict)
+            retrieve_stat = {'rx_bytes': 'received_bytes', 'tx_bytes': 'sent_bytes'}
             if osc.IS_FREEBSD:
-                # Interface related statistics
-                data['interfaces'] = {}
-                retrieve_stat_keys = ['received_bytes', 'sent_bytes']
                 for iface in netif.list_interfaces().values():
                     for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
                         addr_data = addr.__getstate__(stats=True)
                         stats_time = time.time()
-                        data['interfaces'][iface.name] = {}
-                        for k in retrieve_stat_keys:
+                        for k in retrieve_stat.values():
                             traffic_stats = addr_data['stats'][k]
                             if last_interface_stats.get(iface.name):
                                 traffic_stats = traffic_stats - last_interface_stats[iface.name][k]
@@ -160,6 +161,31 @@ class RealtimeEventSource(EventSource):
                             }
                             data['interfaces'][iface.name].update(details_dict)
                         last_interface_stats[iface.name] = {**data['interfaces'][iface.name], 'stats_time': stats_time}
+            else:
+                stats_time = time.time()
+                for i in glob.glob('/sys/class/net/*/statistics'):
+                    iface_name = i.replace('/sys/class/net/', '').split('/')[0]
+                    for stat, name in retrieve_stat.items():
+                        with open(f'{i}/{stat}', 'r') as f:
+                            value = int(f.read())
+                        data['interfaces'][iface_name][name] = value
+                        traffic_stats = None
+                        if (
+                            last_interface_stats.get(iface_name) and
+                            name in last_interface_stats[iface_name]
+                        ):
+                            traffic_stats = value - last_interface_stats[iface_name][name]
+                            traffic_stats = int(
+                                traffic_stats / (
+                                    stats_time - last_interface_stats[iface_name]['stats_time']
+                                )
+                            )
+                        data['interfaces'][iface_name][f'{retrieve_stat[stat]}_rate'] = traffic_stats
+                    last_interface_stats[iface_name] = {
+                        **data['interfaces'][iface_name],
+                        'stats_time': stats_time,
+                    }
+
             self.send_event('ADDED', fields=data)
             time.sleep(2)
 
