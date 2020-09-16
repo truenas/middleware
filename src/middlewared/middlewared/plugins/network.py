@@ -1073,7 +1073,7 @@ class InterfaceService(CRUDService):
                     'Removing only the failover group is not allowed.'
                 )
 
-            if update.get('failover_vhid') != data.get('failover_vhid'):
+            if update and update.get('failover_vhid') != data.get('failover_vhid'):
                 # FIXME: lazy load because of TrueNAS
                 from freenasUI.tools.vhid import scan_for_vrrp
                 used_vhids = await self.middleware.run_in_thread(
