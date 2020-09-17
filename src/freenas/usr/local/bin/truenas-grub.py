@@ -2,6 +2,7 @@
 import sqlite3
 
 from middlewared.plugins.config import FREENAS_DATABASE
+from middlewared.utils import osc
 
 
 def dict_factory(cursor, row):
@@ -35,5 +36,10 @@ if __name__ == "__main__":
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
     config.append("")
 
-    with open("/etc/default/grub.d/truenas.cfg", 'w') as f:
+    if osc.IS_FREEBSD:
+        path = "/usr/local/etc/default/grub"
+    else:
+        path = "/etc/default/grub.d/truenas.cfg"
+
+    with open(path, "w") as f:
         f.write("\n".join(config))
