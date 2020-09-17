@@ -49,6 +49,11 @@ BAD_UPGRADES = {
 
 
 def compare_trains(t1, t2):
+    if 'scale' in t1.lower() and 'scale' not in t2.lower():
+        return CompareTrainsResult.MAJOR_DOWNGRADE
+    if 'scale' not in t1.lower() and 'scale' in t2.lower():
+        return CompareTrainsResult.MAJOR_UPGRADE
+
     v1 = parse_train_name(t1)
     v2 = parse_train_name(t2)
 
