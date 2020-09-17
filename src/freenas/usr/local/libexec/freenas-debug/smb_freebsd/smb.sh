@@ -139,7 +139,7 @@ smb_func()
 	section_footer
 
 	section_header "Local users in passdb.tdb"
-	pdbedit -Lv
+	midclt call smb.passdb_list true | jq
 	section_footer
 
 	section_header "Database Dump"
