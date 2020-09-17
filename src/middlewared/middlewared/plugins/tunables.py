@@ -54,7 +54,7 @@ class TunableService(CRUDService):
 
     @accepts(Dict(
         'tunable_create',
-        Str('var', validators=[Match(r'^[\w\.]+$')], required=True),
+        Str('var', validators=[Match(r'^[\w\.\-]+$')], required=True),
         Str('value', required=True),
         Str('type', enum=TUNABLE_TYPES, required=True),
         Str('comment'),
