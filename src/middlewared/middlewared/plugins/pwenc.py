@@ -15,6 +15,8 @@ PWENC_CHECK = 'Donuts!'
 
 class PWEncService(Service):
 
+    secret = None
+
     class Config:
         private = True
 
@@ -26,6 +28,7 @@ class PWEncService(Service):
         with open(PWENC_FILE_SECRET, 'wb') as f:
             os.chmod(PWENC_FILE_SECRET, 0o600)
             f.write(secret)
+        self.reset_secret_cache()
 
         settings = self.middleware.call_sync('datastore.config', 'system.settings')
         self.middleware.call_sync('datastore.update', 'system.settings', settings['id'], {
@@ -54,10 +57,17 @@ class PWEncService(Service):
         except (IOError, ValueError):
             return False
 
-    @staticmethod
-    def get_secret():
-        with open(PWENC_FILE_SECRET, 'rb') as f:
-            return f.read()
+    @classmethod
+    def get_secret(cls):
+        if cls.secret is None:
+            with open(PWENC_FILE_SECRET, 'rb') as f:
+                cls.secret = f.read()
+
+        return cls.secret
+
+    @classmethod
+    def reset_secret_cache(cls):
+        cls.secret = None
 
     def encrypt(self, data):
         return encrypt(data)
