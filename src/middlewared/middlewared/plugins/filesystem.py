@@ -20,6 +20,7 @@ from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accept
 from middlewared.service import private, CallError, Service, job
 from middlewared.utils import filter_list, osc
 from middlewared.utils.path import is_child
+from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.smb import SMBBuiltin
 
 OS_TYPE_FREEBSD = 0x01
@@ -267,6 +268,8 @@ class FilesystemService(Service):
         mode = options.get('mode')
         if mode:
             os.chmod(path, mode)
+        if path == PWENC_FILE_SECRET:
+            self.middleware.call_sync('pwenc.reset_secret_cache')
         return True
 
     @private
