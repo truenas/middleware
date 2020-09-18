@@ -310,11 +310,16 @@ class SystemDatasetService(ConfigService):
                 if dataset_quota and datasets_prop[dataset]['quota']['value'] != '1G':
                     update_props_dict['quota'] = {'value': '1G'}
                 if update_props_dict:
-                    await self.middleware.call(
-                        'zfs.dataset.update',
-                        dataset,
-                        {'properties': update_props_dict},
-                    )
+                    try:
+                        await self.middleware.call(
+                            'zfs.dataset.update',
+                            dataset,
+                            {'properties': update_props_dict},
+                        )
+                    except Exception:
+                        self.logger.warning("Failed to update ZFS properties on dataset [%s]."
+                                            dataset, exc_info=True)
+
         return createdds
 
     async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
