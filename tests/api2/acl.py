@@ -45,10 +45,10 @@ base_flagset = {
 BASIC_PERMS = ["READ", "TRAVERSE", "MODIFY", "FULL_CONTROL"]
 BASIC_FLAGS = ["INHERIT", "NOINHERIT"]
 TEST_FLAGS = [
-     'DIRECTORY_INHERIT',
-     'FILE_INHERIT',
-     'INHERIT_ONLY',
-     'NO_PROPAGATE_INHERIT'
+    'DIRECTORY_INHERIT',
+    'FILE_INHERIT',
+    'INHERIT_ONLY',
+    'NO_PROPAGATE_INHERIT'
 ]
 
 INHERIT_FLAGS_BASIC = {
@@ -125,8 +125,8 @@ function_testing_acl_allow = [
     }
 ]
 
-ACL_USER = "acltesting"
-ACL_PWD = "acltesting"
+ACL_USER = "acluser"
+ACL_PWD = "aclabcd1234"
 
 # base64-encoded samba DOSATTRIB xattr
 DOSATTRIB_XATTR = "CTB4MTAAAAMAAwAAABEAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABimX3sSqfTAQAAAAAAAAAACg=="
@@ -395,10 +395,12 @@ def test_12_recursive_no_traverse():
 
     # check on dir 1. Entry 1 should have INHERIT flag added, and
     # INHERIT_ONLY should be set to False at this depth.
-    results = POST('/filesystem/getacl/', {
-                       'path': f'/mnt/{ACLTEST_DATASET}/dir1',
-                       'simplified': False
-                   })
+    results = POST(
+        '/filesystem/getacl/', {
+            'path': f'/mnt/{ACLTEST_DATASET}/dir1',
+            'simplified': False
+        }
+    )
     assert results.status_code == 200, results.text
     theacl = results.json()['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
@@ -409,10 +411,12 @@ def test_12_recursive_no_traverse():
 
     # check on dir 2 - the no propogate inherit flag should have taken
     # effect and ACL length should be 1
-    results = POST('/filesystem/getacl/', {
-                       'path': f'/mnt/{ACLTEST_DATASET}/dir1/dir2',
-                       'simplified': False
-                   })
+    results = POST(
+        '/filesystem/getacl/', {
+            'path': f'/mnt/{ACLTEST_DATASET}/dir1/dir2',
+            'simplified': False
+        }
+    )
     assert results.status_code == 200, results.text
     theacl = results.json()['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
