@@ -864,7 +864,7 @@ class InterfaceService(CRUDService):
             filters = []
 
         validation_attrs = {
-            'alias': ['Active node IP address', ' cannot be changed.', ' is required when configuring HA'],
+            'aliases': ['Active node IP address', ' cannot be changed.', ' is required when configuring HA'],
             'failover_aliases': ['Standby node IP address', ' cannot be changed.', ' is required when configuring HA'],
             'failover_virtual_aliases': ['Virtual IP address', ' cannot be changed.', ' is required when configuring HA'],
             'failover_group': ['Failover group number', ' cannot be changed.' ' is required when configuring HA'],
