@@ -1,8 +1,10 @@
+import textwrap
+
 import boto3
 from botocore.client import Config
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Bool, Str
+from middlewared.schema import Bool, Int, Str
 
 
 class S3RcloneRemote(BaseRcloneRemote):
@@ -22,6 +24,10 @@ class S3RcloneRemote(BaseRcloneRemote):
         Str("region", title="Region", default=""),
         Bool("skip_region", title="Endpoint does not support regions", default=False),
         Bool("signatures_v2", title="Use v2 signatures", default=False),
+        Int("max_upload_parts", title="Maximum number of parts in a multipart upload", description=textwrap.dedent("""\
+            This option defines the maximum number of multipart chunks to use when doing a multipart upload.
+            This can be useful if a service does not support the AWS S3 specification of 10,000 chunks (e.g. Scaleway).
+        """), default=10000),
     ]
 
     task_schema = [
@@ -57,6 +63,15 @@ class S3RcloneRemote(BaseRcloneRemote):
                     self._get_client(credentials).get_bucket_location, Bucket=task["attributes"]["bucket"]
                 )
                 task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
+
+    async def get_credentials_extra(self, credentials):
+        result = {}
+
+        if (credentials["attributes"].get("endpoint") or "").rstrip("/").endswith(".scw.cloud"):
+            if credentials["attributes"].get("max_upload_parts", 10000) == 10000:
+                result["max_upload_parts"] = 1000
+
+        return result
 
     async def get_task_extra(self, task):
         result = dict(encryption="", server_side_encryption=task["attributes"].get("encryption") or "")
