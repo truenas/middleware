@@ -649,7 +649,7 @@ class PoolService(CRUDService):
         formatted_disks = await self.middleware.call('pool.format_disks', job, disks)
 
         options = {
-            'feature@lz4_compress': 'enabled',
+            'feature@zstd_compress': 'enabled',
             'altroot': '/mnt',
             'cachefile': ZPOOL_CACHE_FILE,
             'failmode': 'continue',
@@ -658,7 +658,7 @@ class PoolService(CRUDService):
         }
 
         fsoptions = {
-            'compression': 'lz4',
+            'compression': 'zstd',
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
             **encryption_dict
