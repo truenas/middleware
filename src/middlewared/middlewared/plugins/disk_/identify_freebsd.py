@@ -23,6 +23,8 @@ class DiskService(Service, DiskIdentifyBase):
         if klass:
             for g in filter(lambda v: v.name == name, klass.geoms):
                 for p in g.providers:
+                    if p.config is None:
+                        continue
                     if p.config['rawtype'] in await self.middleware.call('disk.get_valid_zfs_partition_type_uuids'):
                         return f'{{uuid}}{p.config["rawuuid"]}'
 

@@ -375,6 +375,9 @@ class DiskService(Service, DiskEncryptionBase):
 
         for g in klass_part.geoms:
             for p in g.providers:
+                if p.config is None:
+                    continue
+
                 if p.config['type'] != 'freebsd-zfs':
                     continue
 
