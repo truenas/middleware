@@ -20,6 +20,7 @@ from .ups import UPSService
 from .webdav import WebDAVService
 from .wsd import WSDService
 from .keepalived import KeepalivedService
+from .glusterd import GlusterdService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -73,6 +74,7 @@ all_services = [
     WebDAVService,
     WSDService,
     KeepalivedService,
+    GlusterdService,
     ActiveDirectoryService,
     LdapService,
     NisService,
