@@ -63,10 +63,11 @@ class VMSupervisorBase(LibvirtConnectionMixin):
 
     def status(self):
         domain = self.domain
+        domain_state = DomainState(domain.state()[0])
         return {
             'state': 'STOPPED' if not domain.isActive() else 'RUNNING',
-            'pid': None if not domain.isActive() else self.domain.ID(),
-            'domain_state': DomainState(domain.state()[0]).name,
+            'pid': self.domain.ID() if domain_state == DomainState.RUNNING else None,
+            'domain_state': domain_state.name,
         }
 
     def __define_domain(self):
