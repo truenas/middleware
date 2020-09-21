@@ -118,6 +118,12 @@ class SSHKeyPair(KeychainCredentialType):
 
     async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
         if attributes["private_key"]:
+            # TODO: It would be best if we use crypto plugin for this but as of right now we don't have support
+            #  for openssh keys -
+            #  https://stackoverflow.com/questions/59029092/how-to-load-openssh-private-key-using-cryptography-python-module
+            #  so we keep on using ssh-keygen for now until that is properly supported in cryptography module.
+
+            attributes["private_key"] = (attributes["private_key"].strip()) + "\n"
             with tempfile.NamedTemporaryFile("w+") as f:
                 os.chmod(f.name, 0o600)
 
