@@ -1073,6 +1073,23 @@ class InterfaceService(CRUDService):
                     'Removing only the failover group is not allowed.'
                 )
 
+            # creating a "failover" lagg interface on HA systems and trying
+            # to mark it "critical for failover" isn't allowed as it can cause
+            # delays in the failover process. (Sometimes failure entirely.)
+            # However, using this type of lagg interface for "non-critical"
+            # workloads (i.e. webUI management) is acceptable.
+            if itype == 'LINK_AGGREGATION':
+                # there is a chance that we have failover lagg ints marked critical
+                # for failover in the db so to prevent the webUI from disallowing
+                # the user to update those interfaces, we'll only enforce this on
+                # newly created laggs.
+                if not update:
+                    if data.get('failover_critical') and data.get('lag_protocol') == 'FAILOVER':
+                        verrors.add(
+                            f'{schema_name}.failover_critical',
+                            'A lagg interface using the "Failover" protocol is not allowed to be marked critical for failover.'
+                        )
+
             if update and update.get('failover_vhid') != data.get('failover_vhid'):
                 # FIXME: lazy load because of TrueNAS
                 from freenasUI.tools.vhid import scan_for_vrrp
