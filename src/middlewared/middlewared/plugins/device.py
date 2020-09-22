@@ -4,9 +4,9 @@ from middlewared.service import Service
 
 class DeviceService(Service):
 
-    @accepts(Str('type', enum=['SERIAL', 'DISK']))
+    @accepts(Str('type', enum=['SERIAL', 'DISK', 'GPU']))
     async def get_info(self, _type):
         """
-        Get info for SERIAL/DISK device types.
+        Get info for SERIAL/DISK/GPU device types.
         """
         return await self.middleware.call(f'device.get_{_type.lower()}s')

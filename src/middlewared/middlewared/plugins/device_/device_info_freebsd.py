@@ -120,3 +120,6 @@ class DeviceService(Service, DeviceInfoBase):
 
     async def get_storage_devices_topology(self):
         return await camcontrol_list()
+
+    async def get_gpus(self):
+        raise NotImplementedError()

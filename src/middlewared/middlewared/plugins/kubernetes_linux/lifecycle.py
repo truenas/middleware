@@ -39,6 +39,8 @@ class KubernetesService(Service):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-start', 'effect': 'NoExecute'}])
         node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call('k8s.cni.setup_cni')
+        await self.middleware.call('k8s.gpu.setup')
+        await self.middleware.call('k8s.storage_class.setup_default_storage_class')
         await self.middleware.call(
             'k8s.node.remove_taints', [
                 k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
@@ -133,7 +135,7 @@ class KubernetesService(Service):
 
     @private
     async def kubernetes_datasets(self, k8s_ds):
-        return [k8s_ds] + [os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases')]
+        return [k8s_ds] + [os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases', 'default_volumes')]
 
 
 async def _event_system(middleware, event_type, args):
