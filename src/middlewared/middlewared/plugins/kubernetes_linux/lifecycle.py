@@ -11,12 +11,8 @@ class KubernetesService(Service):
     @private
     async def post_start(self):
         # TODO: Add support for migrations
-        async def node_online(middleware):
-            while not (await middleware.call('k8s.node.config'))['node_configured']:
-                await asyncio.sleep(2)
-
         try:
-            timeout = 10
+            timeout = 20
             while timeout > 0:
                 node_config = await self.middleware.call('k8s.node.config')
                 if node_config['node_configured']:
