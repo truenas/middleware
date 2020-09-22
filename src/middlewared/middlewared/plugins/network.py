@@ -1521,6 +1521,11 @@ class InterfaceService(CRUDService):
             if vlans:
                 raise CallError(f'The following VLANs depend on this interface: {vlans}')
 
+        if osc.IS_LINUX:
+            config = await self.middleware.call('kubernetes.config')
+            if any(config[k] == oid for k in ('route_v4_interface', 'route_v6_interface')):
+                raise CallError('Interface is in use by kubernetes')
+
         await self.delete_network_interface(oid)
 
         return oid
@@ -1803,7 +1808,7 @@ class InterfaceService(CRUDService):
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
-        internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair']
+        internal_interfaces = await self.middleware.call('interface.internal_interfaces')
         if await self.middleware.call('failover.licensed'):
             internal_interfaces.extend(await self.middleware.call('failover.internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
@@ -2372,7 +2377,7 @@ async def attach_interface(middleware, iface):
         return
 
     # We dont handle the following interfaces in middlewared
-    if iface.startswith(('epair', 'tun', 'tap')):
+    if iface.startswith(('epair', 'tun', 'tap', 'veth', 'kube-bridge')):
         return
 
     iface = await middleware.call('interface.query', [('name', '=', iface)])

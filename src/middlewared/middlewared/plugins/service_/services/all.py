@@ -1,8 +1,13 @@
+from middlewared.utils import osc
+
 from .afp import AFPService
 from .cifs import CIFSService
+from .docker import DockerService
 from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
+from .kuberouter import KubeRouterService
+from .kubernetes import KubernetesService
 from .lldp import LLDPService
 from .mdns import MDNSService
 from .netbios import NetBIOSService
@@ -105,3 +110,9 @@ all_services = [
     TtysService,
     UserService,
 ]
+if osc.IS_LINUX:
+    all_services.extend([
+        DockerService,
+        KubernetesService,
+        KubeRouterService,
+    ])

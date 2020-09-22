@@ -212,7 +212,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux'},
         ],
         'docker': [
-            {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': 'pool_import'},
+            {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': None},
         ],
         'inetd': [
             {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
@@ -294,7 +294,16 @@ class EtcService(Service):
         ],
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/wg0.conf'}
-        ]
+        ],
+        'k3s': [
+            {'type': 'py', 'path': 'rancher/k3s/flags', 'platform': 'Linux', 'checkpoint': None},
+        ],
+        'cni': [
+            {'type': 'py', 'path': 'cni/multus', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'cni/kube-router', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'mako', 'path': 'cni/net.d/multus.d/multus.kubeconfig', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'mako', 'path': 'cni/net.d/kube-router.d/kubeconfig', 'platform': 'Linux', 'checkpoint': None},
+        ],
     }
     LOCKS = defaultdict(asyncio.Lock)
 
