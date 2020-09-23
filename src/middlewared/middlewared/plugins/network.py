@@ -214,7 +214,8 @@ class NetworkConfigurationService(ConfigService):
         Discovery support.
         """
         config = await self.config()
-        new_config = data.copy()
+        new_config = config.copy()
+        new_config.update(data)
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
