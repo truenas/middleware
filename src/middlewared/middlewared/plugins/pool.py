@@ -2735,7 +2735,7 @@ class PoolDatasetService(CRUDService):
         Int('refquota_critical', validators=[Range(0, 100)]),
         Int('reservation'),
         Int('refreservation'),
-        Int('special_small_block_size', validators=[Range(min=512)]),
+        Int('special_small_block_size'),
         Int('copies'),
         Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
         Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
@@ -3070,6 +3070,15 @@ class PoolDatasetService(CRUDService):
             for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
+
+            c_value = data.get('special_small_block_size')
+            if 'special_small_block_size' in data and not (
+                c_value == 0 or 512 <= data['special_small_block_size'] <= 1048576 or c_value % 512 == 0
+            ):
+                verrors.add(
+                    f'{schema}.special_small_block_size',
+                    'This field can be 0 or multiple of 512, up to 1048576'
+                )
         elif data['type'] == 'VOLUME':
             if mode == 'CREATE' and 'volsize' not in data:
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
