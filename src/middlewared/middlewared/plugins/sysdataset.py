@@ -297,13 +297,23 @@ class SystemDatasetService(ConfigService):
             i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
         }
         for dataset in datasets:
-            dataset_quota = {'quota': '1G'} if dataset.endswith('/cores') else {}
+            is_cores_ds = dataset.endswith('/cores')
+            dataset_quota = {'quota': '1G'} if is_cores_ds else {}
             if dataset not in datasets_prop:
                 await self.middleware.call('zfs.dataset.create', {
                     'name': dataset,
                     'properties': {'mountpoint': 'legacy', **dataset_quota},
                 })
                 createdds = True
+            elif is_cores_ds and datasets_prop[dataset]['written']['parsed'] > 1024 ** 3:
+                try:
+                    await self.middleware.call('zfs.dataset.delete', dataset)
+                    await self.middleware.call('zfs.dataset.create', {
+                        'name': dataset,
+                        'properties': {'mountpoint': 'legacy', **dataset_quota},
+                    })
+                except Exception:
+                    self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
             else:
                 update_props_dict = {}
                 if datasets_prop[dataset]['mountpoint']['value'] != 'legacy':
