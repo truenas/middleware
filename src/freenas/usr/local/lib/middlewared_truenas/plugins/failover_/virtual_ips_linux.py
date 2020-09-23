@@ -96,10 +96,10 @@ class DetectVirtualIpStates(Service):
 
         for name in interfaces:
             if name not in local[0] and name in remote[0]:
-                errors.append('Interface "%s" is MASTER on standby node', name)
+                errors.append(f'Interface "{name}" is MASTER on standby node')
             if name in local[1] and name in remote[1]:
-                errors.append('Interface "%s" is BACKUP on both nodes', name)
+                errors.append(f'Interface "{name}" is BACKUP on both nodes')
             if name in local[0] and name in remote[0]:
-                errors.append('Interface "%s" is MASTER on both nodes', name)
+                errors.append(f'Interface "{name}" is MASTER on both nodes')
 
         return errors
