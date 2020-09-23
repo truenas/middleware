@@ -112,9 +112,6 @@ class KubernetesService(Service):
     async def status_change_internal(self):
         await self.validate_k8s_fs_setup()
         await self.middleware.call('service.start', 'docker')
-        # This is necessary because docker daemon requires a couple of seconds after starting to initialise itself
-        # properly, if we try to load images without the delay that will fail and will only correct after a restart
-        await asyncio.sleep(5)
         await self.middleware.call('docker.images.load_default_images')
         asyncio.ensure_future(self.middleware.call('service.start', 'kubernetes'))
 
