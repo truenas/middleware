@@ -14,10 +14,16 @@ class KubernetesService(SimpleService):
         await self._systemd_unit('cni-dhcp', 'start')
 
     async def _start_linux(self):
-        await self._unit_action('Start')
+        await super()._start_linux()
+        timeout = 20
         # First time when k8s is started, it takes a bit more time to initialise itself properly
         # and we need to have sleep here so that after start is called post_start is not dismissed
-        await asyncio.sleep(5)
+        while timeout > 0:
+            if not await self.middleware.call('service.started', 'kubernetes'):
+                await asyncio.sleep(2)
+                timeout -= 2
+            else:
+                break
 
     async def after_start(self):
         asyncio.ensure_future(self.middleware.call('kubernetes.post_start'))
