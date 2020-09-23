@@ -27,7 +27,7 @@ def create_interface(name):
 
 
 def destroy_interface(name):
-    if name.startswith(("bond", "br", "vlan")):
+    if name.startswith(("bond", "br", "vlan", "kube-bridge")):
         run(["ip", "link", "delete", name])
     else:
         run(["ip", "link", "set", name, "down"])
