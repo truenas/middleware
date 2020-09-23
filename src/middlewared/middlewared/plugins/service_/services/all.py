@@ -26,6 +26,7 @@ from .webdav import WebDAVService
 from .wsd import WSDService
 from .keepalived import KeepalivedService
 from .glusterd import GlusterdService
+from .glustereventsd import GlusterEventsdService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -78,8 +79,6 @@ all_services = [
     UPSService,
     WebDAVService,
     WSDService,
-    KeepalivedService,
-    GlusterdService,
     ActiveDirectoryService,
     LdapService,
     NisService,
@@ -114,6 +113,9 @@ all_services = [
 ]
 if osc.IS_LINUX:
     all_services.extend([
+        KeepalivedService,
+        GlusterdService,
+        GlusterEventsdService,
         DockerService,
         KubernetesService,
         KubeRouterService,
