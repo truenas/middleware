@@ -214,7 +214,7 @@ class NetworkConfigurationService(ConfigService):
         Discovery support.
         """
         config = await self.config()
-        new_config = config.copy()
+        new_config = data.copy()
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
@@ -239,6 +239,10 @@ class NetworkConfigurationService(ConfigService):
         # pop the `hostname_local` key since that's created in the _extend method
         # and doesn't exist in the database
         new_hostname = new_config.pop('hostname_local', None)
+
+        # normalize the `domains` and `netwait_ip` keys
+        new_config['domains'] = ' '.join(new_config.get('domains', []))
+        new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
 
         # update the db
         await self.middleware.call(
