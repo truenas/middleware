@@ -15,18 +15,18 @@ class CatalogService(Service):
             if not self.middleware.call_sync('catalog.update_git_repository', catalog):
                 raise CallError(f'Unable to clone "{label}" catalog. Please refer to logs.')
 
-        categories = {'charts': {}, 'test': {}}
-        for category in filter(lambda c: os.path.exists(os.path.join(catalog['location'], c)), categories):
-            category_path = os.path.join(catalog['location'], category)
+        trains = {'charts': {}, 'test': {}}
+        for train in filter(lambda c: os.path.exists(os.path.join(catalog['location'], c)), trains):
+            category_path = os.path.join(catalog['location'], train)
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
                 item_location = os.path.join(category_path, item)
-                categories[category][item] = {
+                trains[train][item] = {
                     'name': item,
                     'location': item_location,
                     **self.item_details(item_location)
                 }
 
-        return categories
+        return trains
 
     @private
     def item_details(self, item_path):
@@ -35,6 +35,9 @@ class CatalogService(Service):
         # Each directory under item path represents a version of the item and we need to retrieve details
         # for each version available under the item
         item_data = {'versions': {}}
+        with open(os.path.join(item_path, 'item.yaml'), 'r') as f:
+            item_data.update(yaml.load(f.read()))
+
         for version in filter(lambda p: os.path.isdir(os.path.join(item_path, p)), os.listdir(item_path)):
             item_data['versions'][version] = self.item_version_details(os.path.join(item_path, version))
         return item_data
