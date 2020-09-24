@@ -128,6 +128,8 @@ class KubernetesService(ConfigService):
             config['cni_config'] = {}
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('kubernetes.status_change')
+            if config['pool'] != old_config['pool']:
+                await self.middleware.call('catalog.sync_catalogs')
 
         return await self.config()
 
