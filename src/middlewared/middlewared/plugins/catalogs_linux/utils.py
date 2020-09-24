@@ -34,7 +34,7 @@ def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
         os.makedirs(parent_dir, exist_ok=True)
         destination = os.path.join(parent_dir, convert_repository_to_path(repository_uri))
         repo = get_repo(destination)
-        clone_repo = bool(repo)
+        clone_repo = not bool(repo)
         if repo:
             # We will try to checkout branch and do a git pull, if any of these operations fail, we will
             # clone the repository again. Why they might fail is if user has been manually playing with the repo
