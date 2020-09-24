@@ -11,12 +11,8 @@ class KubernetesService(Service):
     @private
     async def post_start(self):
         # TODO: Add support for migrations
-        async def node_online(middleware):
-            while not (await middleware.call('k8s.node.config'))['node_configured']:
-                await asyncio.sleep(2)
-
         try:
-            timeout = 10
+            timeout = 60
             while timeout > 0:
                 node_config = await self.middleware.call('k8s.node.config')
                 if node_config['node_configured']:
@@ -116,9 +112,6 @@ class KubernetesService(Service):
     async def status_change_internal(self):
         await self.validate_k8s_fs_setup()
         await self.middleware.call('service.start', 'docker')
-        # This is necessary because docker daemon requires a couple of seconds after starting to initialise itself
-        # properly, if we try to load images without the delay that will fail and will only correct after a restart
-        await asyncio.sleep(5)
         await self.middleware.call('docker.images.load_default_images')
         asyncio.ensure_future(self.middleware.call('service.start', 'kubernetes'))
 

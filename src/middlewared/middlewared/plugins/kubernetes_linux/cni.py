@@ -36,7 +36,19 @@ class KubernetesCNIService(ConfigService):
         )
         await self.middleware.call('etc.generate', 'cni')
         await self.middleware.call('service.start', 'kuberouter')
-        await asyncio.sleep(5)
+
+        rt = netif.RoutingTable()
+        timeout = 60
+        while timeout > 0:
+            if 'kube-router' not in rt.routing_tables:
+                await asyncio.sleep(2)
+                timeout -= 2
+            else:
+                break
+
+        if 'kube-router' not in rt.routing_tables:
+            raise CallError('Unable to locate kube-router routing table. Please refer to kuberouter logs.')
+
         await self.middleware.call('k8s.cni.add_user_route_to_kube_router_table')
 
     async def validate_cni_integrity(self, cni, config=None):
