@@ -38,7 +38,7 @@ class KubernetesCNIService(ConfigService):
         await self.middleware.call('service.start', 'kuberouter')
 
         rt = netif.RoutingTable()
-        timeout = 10
+        timeout = 60
         while timeout > 0:
             if 'kube-router' not in rt.routing_tables:
                 await asyncio.sleep(2)
