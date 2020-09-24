@@ -1,0 +1,2 @@
+#!/bin/sh
+midclt call update.freebsd_grub true
