@@ -88,6 +88,11 @@ class Match:
         return Match(self.pattern, self.flags, self.explanation)
 
 
+class Hostname(Match):
+    def __init__(self, explanation=None):
+        super().__init__(r'^[a-zA-Z\.\-\0-9]+$', explanation=explanation)
+
+
 class Or:
     def __init__(self, *validators):
         self.validators = validators
