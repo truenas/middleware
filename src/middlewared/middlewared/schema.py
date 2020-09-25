@@ -235,7 +235,10 @@ class Dataset(Path):
         super().__init__(*args, **kwargs)
 
 
-class Dir(Path):
+class HostPath(Path):
+
+    def validate_internal(self, verrors, value):
+        pass
 
     def validate(self, value):
         if value is None:
@@ -246,33 +249,25 @@ class Dir(Path):
         if value:
             if not os.path.exists(value):
                 verrors.add(self.name, "This path does not exist.", errno.ENOENT)
-            elif not os.path.isdir(value):
-                verrors.add(self.name, "This path is not a directory.", errno.ENOTDIR)
+            self.validate_internal(verrors, value)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         return super().validate(value)
 
 
-class File(Path):
+class Dir(HostPath):
 
-    def validate(self, value):
-        if value is None:
-            return
+    def validate_internal(self, verrors, value):
+        if not os.path.isdir(value):
+            verrors.add(self.name, "This path is not a directory.", errno.ENOTDIR)
 
-        verrors = ValidationErrors()
 
-        if value:
-            if not os.path.exists(value):
-                verrors.add(self.name, "This path does not exist.", errno.ENOENT)
-            elif not os.path.isfile(value):
-                verrors.add(self.name, "This path is not a file.", errno.EISDIR)
+class File(HostPath):
 
-        if verrors:
-            raise verrors
-
-        return super().validate(value)
+    def validate_internal(self, verrors, value):
+        if not os.path.isfile(value):
+            verrors.add(self.name, "This path is not a file.", errno.EISDIR)
 
 
 class IPAddr(Str):
