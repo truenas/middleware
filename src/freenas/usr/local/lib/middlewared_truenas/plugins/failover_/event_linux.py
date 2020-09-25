@@ -344,7 +344,7 @@ class FailoverService(Service):
             self.run_call('failover.fenced.stop')
 
             logger.warning('Forcefully starting fenced')
-            fenced_error = self.run_call('failover.fenced.force')
+            fenced_error = self.run_call('failover.fenced.start', True)
         else:
             # if we're here then we need to check a couple things before we start fenced
             # and start the process of becoming master
@@ -385,7 +385,7 @@ class FailoverService(Service):
 
         # starting fenced daemon failed....which is bad
         # emit an error and exit
-        if fenced_error:
+        if fenced_error != 0:
             if fenced_error == 1:
                 logger.error('Failed to register keys on disks, exiting!')
             elif fenced_error == 2:

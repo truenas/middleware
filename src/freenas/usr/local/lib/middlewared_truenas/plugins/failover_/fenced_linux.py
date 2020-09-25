@@ -9,16 +9,36 @@ class FencedForceService(Service):
         private = True
         namespace = 'failover.fenced'
 
-    def start(self):
+    def start(self, force=False):
 
-        # TODO
-        # Return False always until fenced daemon
-        # can be written to work on Linux.
-        return False
+        # get the boot disks so fenced doesn't try to
+        # place reservations on the boot drives
+        boot_disks = ""
+        try:
+            boot_disks = ",".join(self.middleware.call_sync('boot.get_disks'))
+        except Exception:
+            self.middleware.logger.warning(
+                'Failed to get boot disks for fenced', exc_info=True
+            )
+            # just because we can't grab the boot disks from middleware
+            # doesn't mean we should fail to start fenced since it
+            # (ultimately) prevents data corruption on HA systems
+            pass
 
-    def force(self):
+        # build the shell command include the "force" option
+        # if requested
+        cmd = ['fenced', '-ed', boot_disks]
+        if force:
+            cmd.append('-f')
 
-        return False
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        out, err = proc.communicate()
+
+        return proc.returncode
 
     def stop(self):
 
