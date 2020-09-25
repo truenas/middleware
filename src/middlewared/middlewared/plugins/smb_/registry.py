@@ -156,7 +156,7 @@ class SharingSMBService(Service):
     @private
     async def order_vfs_objects(self, vfs_objects):
         vfs_objects_special = ('catia', 'zfs_space', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
-                               'noacl', 'ixnas', 'zfsacl', 'crossrename', 'recycle')
+                               'noacl', 'ixnas', 'acl_xattr', 'zfsacl', 'crossrename', 'recycle')
 
         vfs_objects_ordered = []
 
@@ -280,7 +280,7 @@ class SharingSMBService(Service):
         if osc.IS_FREEBSD:
             data['vfsobjects'] = ['aio_fbsd']
         else:
-            data['vfsobjects'] = []
+            data['vfsobjects'] = ['io_uring']
 
         if data['comment']:
             conf["comment"] = data['comment']
@@ -303,8 +303,10 @@ class SharingSMBService(Service):
                 data['vfsobjects'].append('ixnas')
             else:
                 data['vfsobjects'].append('acl_xattr')
-        else:
+        elif osc.IS_FREEBSD:
             data['vfsobjects'].append('noacl')
+        else:
+            conf["nt acl support"] = "no"
 
         if data['recyclebin']:
             # crossrename is required for 'recycle' to work across sub-datasets
@@ -313,8 +315,7 @@ class SharingSMBService(Service):
             data['vfsobjects'].extend(['recycle', 'crossrename'])
 
         if data['shadowcopy'] or data['fsrvp']:
-            if osc.IS_FREEBSD:
-                data['vfsobjects'].append('shadow_copy_zfs')
+            data['vfsobjects'].append('shadow_copy_zfs')
 
         if data['durablehandle']:
             conf.update({
@@ -323,7 +324,7 @@ class SharingSMBService(Service):
                 "posix locking": "no",
             })
 
-        if data['fsrvp'] and osc.IS_FREEBSD:
+        if data['fsrvp']:
             data['vfsobjects'].append('zfs_fsrvp')
             conf.update({
                 "shadow:ignore_empty_snaps": "false",

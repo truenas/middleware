@@ -74,9 +74,9 @@ class SMBPath(enum.Enum):
     PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4/private', 0o700, True)
     LEGACYSTATE = ('/root/samba', '/root/samba', 0o755, True)
     LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private', 0o700, True)
-    MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/msg.sock', 0o700, False)
+    MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/private/msg.sock', 0o700, False)
     RUNDIR = ('/var/run/samba4', '/var/run/samba', 0o755, True)
-    LOCKDIR = ('/var/lock', '/var/lock', 0o755, True)
+    LOCKDIR = ('/var/lock', '/var/lock/samba4', 0o755, True)
     LOGDIR = ('/var/log/samba4', '/var/log/samba', 0o755, True)
     IPCSHARE = ('/var/tmp', '/tmp', 0o1777, True)
 
@@ -107,7 +107,7 @@ class SMBSharePreset(enum.Enum):
         'aapl_name_mangling': False,
         'acl': True,
         'durablehandle': True,
-        'shadowcopy': osc.IS_FREEBSD,  # shadowcopy only available for FreeBSD (for now)
+        'shadowcopy': True,
         'streams': True,
         'fsrvp': False,
         'auxsmbconf': '',
@@ -747,8 +747,7 @@ class SharingSMBService(SharingService):
         Bool('aapl_name_mangling', default=False),
         Bool('acl', default=True),
         Bool('durablehandle', default=True),
-        # shadowcopy only available for FreeBSD (for now)
-        Bool('shadowcopy', default=osc.IS_FREEBSD),
+        Bool('shadowcopy', default=True),
         Bool('streams', default=True),
         Bool('fsrvp', default=False),
         Str('auxsmbconf', max_length=None, default=''),
@@ -1088,18 +1087,6 @@ class SharingSMBService(SharingService):
                 f'{schema_name}.name',
                 f'{data["name"]} is a reserved section name, please select another one'
             )
-
-        if osc.IS_LINUX:
-            if data['shadowcopy']:
-                verrors.add(
-                    f'{schema_name}.shadowcopy',
-                    'ZFS shadow copy support is not yet implemented in TrueNAS scale'
-                )
-            if data['fsrvp']:
-                verrors.add(
-                    f'{schema_name}.fsrvp',
-                    'ZFS fsrvp support is not yet implemented in TrueNAS scale'
-                )
 
         if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
             verrors.add(f'{schema_name}.name',

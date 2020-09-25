@@ -120,6 +120,7 @@
                 'max log size': '51200',
                 'load printers': 'No',
                 'printing': 'bsd',
+                'printcap name': '/dev/null',
                 'disable spoolss': 'Yes',
                 'dos filemode': 'Yes',
                 'kernel change notify': 'No',
@@ -129,8 +130,7 @@
                 'log level': f"{db['loglevel']} auth_json_audit:3@/var/log/samba4/auth_audit.log",
                 'obey pam restrictions': 'True' if pam_is_required(db) else 'False',
             })
-            if osc.IS_FREEBSD:
-                pc.update({'enable web service discovery': 'True'})
+            pc.update({'enable web service discovery': 'True'})
 
             if not db['ad']['enable'] and middleware.call_sync('user.query', [('microsoft_account', '=', True)], {"count": True}):
                 pc.update({
