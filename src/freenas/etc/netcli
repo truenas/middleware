@@ -98,7 +98,7 @@ class NICChoices(object):
 
         # Remove internal interfaces for failover
         with Client() as c:
-            if not c.call('system.is_freenas'):
+            if c.call('system.is_enterprise'):
                 for iface in c.call('failover.internal_interfaces'):
                     if iface in self._NIClist:
                         self._NIClist.remove(iface)
@@ -336,7 +336,7 @@ class FailoverIsEnabledException(Exception):
 def ensure_failover_is_disabled():
     with Client() as c:
         if (
-                not c.call('system.is_freenas') and
+                c.call('system.is_enterprise') and
                 c.call('failover.licensed') and
                 not c.call('failover.config')['disabled']
         ):
@@ -431,15 +431,15 @@ def get_lagg_proto():
     proto = False
 
     with Client() as c:
-        is_freenas = c.call('system.is_freenas')
+        is_enterprise = c.call('system.is_enterprise')
         failover_licensed = False
-        if not is_freenas:
+        if is_enterprise:
             failover_licensed = c.call('failover.licensed')
 
     while True:
         protos = { }
         types = LAGGType
-        if  not is_freenas and failover_licensed:
+        if is_enterprise and failover_licensed:
             types = list(filter(lambda x: x[0] != 'failover', types))
         for i, t in enumerate(types):
             protos[i] = t[0]
@@ -603,9 +603,9 @@ def configure_interface():
             break
 
     with Client() as c:
-        is_freenas = c.call('system.is_freenas')
+        is_enterprise = c.call('system.is_enterprise')
         failover_node = failover_licensed = False
-        if not is_freenas:
+        if is_enterprise:
             failover_licensed = c.call('failover.licensed')
             failover_node = c.call('failover.node')
 
@@ -616,7 +616,7 @@ def configure_interface():
             int_name = input(int_name_prompt)
             if not int_name and iface.int_name:
                 int_name = iface.int_name
-            if not is_freenas and failover_licensed:
+            if is_enterprise and failover_licensed:
                 if failover_node == 'A':
                     ip_label = "IPv4 Address (This TrueNAS Controller)"
                     ip_b_label = "IPv4 Address (TrueNAS Controller 2)"
@@ -1516,14 +1516,14 @@ def main_menu():
     try:
         with Client() as c:
             support_available = c.call('support.is_available')
-            is_freenas = c.call('system.is_freenas')
-            if not is_freenas:
+            is_enterprise = c.call('system.is_enterprise')
+            if is_enterprise:
                 failover_status = c.call('failover.status')
     except Exception:
         support_available = False
-        is_freenas = True
+        is_enterprise = True
 
-    if not is_freenas and support_available:
+    if is_enterprise and support_available:
         menu.insert(12, [ _("Toggle automatic support alerts to iXsystems"), automatic_ix_alert ])
 
     menu_map = {}
@@ -1538,7 +1538,7 @@ def main_menu():
                 sys.exit(0)
 
     while True:
-        if not is_freenas and os.path.exists('/tmp/.failover_needop'):
+        if is_enterprise and os.path.exists('/tmp/.failover_needop'):
             """
             Currently we can have multiple pools.
             Because one encrypted pool failed to import does not mean the node
@@ -1581,7 +1581,7 @@ def main_menu():
                     time.sleep(5)
                     continue
 
-        if not is_freenas:
+        if is_enterprise:
             print(netcli_title())
 
         print()
