@@ -1281,8 +1281,7 @@ def configure_default_route(*args):
     while True:
         yes = input(_("Configure IPv4 Default Route? (y/n)"))
         if yes.lower().startswith("y"):
-            configure_ipv4_default_route(gc)
-            need_save = True
+            need_save = configure_ipv4_default_route(gc)
             break
         elif yes.lower().startswith("n"):
             break
@@ -1290,8 +1289,7 @@ def configure_default_route(*args):
     while True:
         yes = input(_("Configure IPv6 Default Route? (y/n)"))
         if yes.lower().startswith("y"):
-            configure_ipv6_default_route(gc)
-            need_save = True
+            need_save = configure_ipv6_default_route(gc)
             break
         elif yes.lower().startswith("n"):
             break
@@ -1300,7 +1298,7 @@ def configure_default_route(*args):
         print(_("Restarting routing:"), end=' ')
         try:
             with Client() as c:
-                c.call('service.reload', 'networkgeneral')
+                c.call('route.sync')
         except:
             print(_("Failed"))
             return False
@@ -1526,7 +1524,7 @@ def main_menu():
                 failover_status = c.call('failover.status')
     except Exception:
         support_available = False
-        is_enterprise = True
+        is_enterprise = False
 
     if is_enterprise and support_available:
         menu.insert(12, [ _("Toggle automatic support alerts to iXsystems"), automatic_ix_alert ])
