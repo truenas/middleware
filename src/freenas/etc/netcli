@@ -616,15 +616,20 @@ def configure_interface():
             int_name = input(int_name_prompt)
             if not int_name and iface.int_name:
                 int_name = iface.int_name
-            if is_enterprise and failover_licensed:
-                if failover_node == 'A':
-                    ip_label = "IPv4 Address (This TrueNAS Controller)"
-                    ip_b_label = "IPv4 Address (TrueNAS Controller 2)"
+            if is_enterprise:
+                if failover_licensed:
+                    if failover_node == 'A':
+                        ip_label = "IPv4 Address (This TrueNAS Controller)"
+                        ip_b_label = "IPv4 Address (TrueNAS Controller 2)"
+                    else:
+                        ip_label = "IPv4 Address (TrueNAS Controller 1)"
+                        ip_b_label = "IPv4 Address (This TrueNAS Controller)"
+                    ip_prompt = prompt(ip_label, iface.int_ipv4address)
+                    ip_b_prompt = prompt(ip_b_label, iface.int_ipv4address_b)
                 else:
-                    ip_label = "IPv4 Address (TrueNAS Controller 1)"
-                    ip_b_label = "IPv4 Address (This TrueNAS Controller)"
-                ip_prompt = prompt(ip_label, iface.int_ipv4address)
-                ip_b_prompt = prompt(ip_b_label, iface.int_ipv4address_b)
+                    ip_prompt = prompt(
+                        "IPv4 Address", iface.int_ipv4address if failover_node == 'A' else iface.int_ipv4address_b
+                    )
             else:
                 ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
 
