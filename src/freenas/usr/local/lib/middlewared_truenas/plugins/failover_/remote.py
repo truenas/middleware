@@ -116,7 +116,7 @@ class RemoteClient(object):
         try:
             if not self.connected.wait(timeout=20):
                 if self.remote_ip is None:
-                    raise CallError('Unable to determine remote node IP', errno.EBADRPC)
+                    raise CallError('Unable to determine remote node IP', errno.EHOSTUNREACH)
                 raise CallError('Remote connection unavailable', errno.ECONNREFUSED)
             return self.client.call(*args, **kwargs)
         except AttributeError as e:
@@ -187,7 +187,7 @@ class FailoverService(Service):
         elif node == 'B':
             remote = '169.254.10.1'
         else:
-            raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
+            raise CallError(f'Node {node} invalid for call_remote', errno.EHOSTUNREACH)
         return remote
 
     @accepts(
