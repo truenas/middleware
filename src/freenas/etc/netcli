@@ -773,13 +773,13 @@ Acceptable formats are 255.255.255.0,
             break
 
     while True:
-        if failover_licensed:
+        if not failover_licensed:
             break
         yes = input(_("Configure failover settings? (y/n) "))
         if yes.lower().startswith("y"):
 
             while True:
-                vip_prompt = prompt("Virtual IP", iface.int_vip)
+                vip_prompt = prompt("Virtual IP (Do not give a netmask)", iface.int_vip)
                 vip = input(vip_prompt)
                 if not vip and iface.int_vip:
                     vip = iface.int_vip
