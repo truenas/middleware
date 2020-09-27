@@ -49,6 +49,11 @@ from middlewared.utils import start_daemon_thread
 import middlewared.utils.osc as osc
 from middlewared.utils.string import make_sentence
 
+INVALID_DATASETS = (
+    re.compile(r"boot-pool($|/)"),
+    re.compile(r"freenas-boot($|/)"),
+    re.compile(r"[^/]+/\.system($|/)")
+)
 SSH_EXCEPTIONS = (socket.timeout, paramiko.ssh_exception.NoValidConnectionsError, paramiko.ssh_exception.SSHException,
                   IOError, OSError)
 
@@ -373,16 +378,10 @@ class ZettareplService(Service):
         except SSH_EXCEPTIONS as e:
             raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
-        boot_pool = await self.middleware.call("boot.pool_name")
-
-        invalid_datasets = (
-            re.compile(rf"{boot_pool}/?"),
-        )
-
         return [
             ds
             for ds in datasets
-            if not any(r.match(ds) for r in invalid_datasets)
+            if not any(r.match(ds) for r in INVALID_DATASETS)
         ]
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
