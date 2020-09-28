@@ -10,7 +10,7 @@ from middlewared.service import accepts, CallError, private, Service
 class CatalogService(Service):
 
     @accepts(Str('label'))
-    def catalog_items(self, label):
+    def items(self, label):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         if not os.path.exists(catalog['location']):
             if not self.middleware.call_sync('catalog.update_git_repository', catalog):
