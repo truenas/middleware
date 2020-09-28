@@ -20,7 +20,7 @@
         advert_int = round(((128 * config['timeout']) / 385), 2)
 
     info = middleware.call_sync('interface.query')
-    info = [i for i in info if len(i['aliases'])]
+    info = [i for i in info if len(i['failover_virtual_aliases'])]
 
     if not info:
         middleware.logger.error(

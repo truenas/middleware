@@ -46,13 +46,11 @@ class FailoverService(PseudoServiceBase):
 
     restartable = True
 
+    # this is a NO-OP on SCALE HA by design
     async def restart(self):
         if osc.IS_FREEBSD:
             await self.middleware.call('etc.generate', 'pf')
             await freebsd_service("devd", "restart")
-
-        if osc.IS_LINUX:
-            await self.middleware.call('service.reload', 'keepalived')
 
 
 class KmipService(PseudoServiceBase):
