@@ -109,6 +109,7 @@ class AlertCategory(enum.Enum):
 
 
 alert_category_names = {
+    AlertCategory.APPLICATIONS: "Applications",
     AlertCategory.CERTIFICATES: "Certificates",
     AlertCategory.DIRECTORY_SERVICE: "Directory Service",
     AlertCategory.HA: "High-Availability",
