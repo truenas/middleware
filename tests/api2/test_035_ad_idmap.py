@@ -42,11 +42,10 @@ dom_id = None
 
 @pytest.mark.dependency(name="GOT_DNS")
 def test_01_get_nameserver1_and_nameserver2():
-    global nameserver1, nameserver2
+    global nameserver1
     results = GET("/network/configuration/")
     assert results.status_code == 200, results.text
     nameserver1 = results.json()['nameserver1']
-    nameserver2 = results.json()['nameserver2']
 
 
 @pytest.mark.dependency(name="SET_DNS")
@@ -436,8 +435,6 @@ def test_20_reset_dns(request):
     global payload
     payload = {
         "nameserver1": nameserver1,
-        "nameserver2": nameserver2,
-        "nameserver3": ""
     }
     global results
     results = PUT("/network/configuration/", payload)
