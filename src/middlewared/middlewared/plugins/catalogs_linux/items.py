@@ -67,7 +67,10 @@ class CatalogService(Service):
             self._normalise_question(question)
 
     def _normalise_question(self, question):
-        for attr in itertools.chain(*[question.get(k, []) for k in ('attrs', 'items', 'subquestions')]):
+        schema = question['schema']
+        for attr in itertools.chain(
+            *[d.get(k, []) for d, k in zip((schema, schema, question), ('attrs', 'items', 'subquestions'))]
+        ):
             self._normalise_question(attr)
 
         if '$ref' not in question['schema']:

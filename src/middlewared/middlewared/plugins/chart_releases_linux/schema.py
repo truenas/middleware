@@ -16,9 +16,9 @@ def get_schema(variable_details):
     schema_details = variable_details['schema']
     schema_class = mapping[schema_details['type']]
     if schema_class != Dict:
-        obj = schema_class(schema_details['variable'])
+        obj = schema_class(variable_details['variable'])
     else:
-        obj = schema_class(schema_details['variable'], *[get_schema(var) for var in variable_details['attrs']])
+        obj = schema_class(variable_details['variable'], *[get_schema(var) for var in schema_details['attrs']])
 
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
     for k in filter(lambda k: k in schema_details, ('required', 'default', 'private', 'enum')):
@@ -35,6 +35,6 @@ def get_schema(variable_details):
                 obj.validators.append(Match(schema_details['valid_chars']))
 
     if schema_class == List:
-        obj.items = [get_schema(i) for i in variable_details['items']]
+        obj.items = [get_schema(i) for i in schema_details['items']]
 
     return obj
