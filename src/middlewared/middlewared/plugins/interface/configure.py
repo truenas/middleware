@@ -141,6 +141,9 @@ class InterfaceService(Service):
 
         # Remove addresses configured and not in database
         for addr in addrs_configured:
+            # keepalived service is responsible for deleting the VIP
+            if str(addr.address) == vrrp_vip:
+                continue
             if has_ipv6 and str(addr.address).startswith('fe80::'):
                 continue
             if addr not in addrs_database:
@@ -170,10 +173,17 @@ class InterfaceService(Service):
                 iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
         else:
             if vrrp_vip:
+                if not self.middleware.call_sync('service.started', 'keepalived'):
+                    self.middleware.call_sync('service.start', 'keepalived')
+                else:
+                    self.middleware.call_sync('service.reload', 'keepalived')
                 iface.vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
+            # keepalived service is responsible for adding the VIP
+            if str(addr.address) == vrrp_vip:
+                continue
             self.logger.debug('{}: adding {}'.format(name, addr))
             iface.add_address(addr)
 
