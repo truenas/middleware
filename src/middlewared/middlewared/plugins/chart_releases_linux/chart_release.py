@@ -30,6 +30,6 @@ class ChartReleaseService(CRUDService):
         item_details = catalog['trains'][data['train']][data['item']]['versions'][data['version']]
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
-        await self.middleware.call('chart.release.validate_values', data['values'])
+        await self.middleware.call('chart.release.validate_values', item_details, data)
         # TODO: Validate if the release name has not been already used, let's do that once we have query
         # in place
