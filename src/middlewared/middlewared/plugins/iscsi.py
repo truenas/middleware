@@ -406,8 +406,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
         if groups:
             usages.append(
-                'Authorized access of {id} is being used by following target(s): '
-                f'{", ".join(g["iscsi_target"]["id"] for g in groups)}'
+                f'Authorized access of {id} is being used by following target(s): '
+                f'{", ".join(str(g["iscsi_target"]["id"]) for g in groups)}'
             )
 
         return {'in_use': bool(usages), 'usages': '\n'.join(usages)}
