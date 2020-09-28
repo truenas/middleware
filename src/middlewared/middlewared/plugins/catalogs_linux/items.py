@@ -1,3 +1,4 @@
+import itertools
 import markdown
 import os
 import yaml
@@ -54,4 +55,27 @@ class CatalogService(Service):
             with open(os.path.join(version_path, filename), 'r') as f:
                 version_data[key] = parser(f.read())
 
+        # We will normalise questions now so that if they have any references, we render them accordingly
+        # like a field referring to available interfaces on the system
+        self.normalise_questions(version_data['questions'])
+
         return version_data
+
+    @private
+    def normalise_questions(self, questions):
+        for question in questions:
+            self._normalise_question(question)
+
+    def _normalise_question(self, question):
+        for attr in itertools.chain(*[question.get(k, []) for k in ('attrs', 'items', 'subquestions')]):
+            self._normalise_question(attr)
+
+        if '$ref' not in question['schema']:
+            return
+
+        data = {}
+        for ref in question['schema']['$ref']:
+            if ref == 'definitions/interfaces':
+                data['enum'] = [d['id'] for d in self.middleware.call_sync('interface.query')]
+
+        question['schema'].update(data)
