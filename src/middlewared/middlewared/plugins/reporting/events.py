@@ -148,9 +148,9 @@ class RealtimeEventSource(EventSource):
                         stats_time = time.time()
                         data['interfaces'][iface.name] = {}
                         for k in retrieve_stat_keys:
-                            traffic_stats = addr_data['stats'][k]
+                            traffic_stats = 0
                             if last_interface_stats.get(iface.name):
-                                traffic_stats = traffic_stats - last_interface_stats[iface.name][k]
+                                traffic_stats = addr_data['stats'][k] - last_interface_stats[iface.name][k]
                                 traffic_stats = int(
                                     traffic_stats / (time.time() - last_interface_stats[iface.name]['stats_time'])
                                 )
