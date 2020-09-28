@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-#+
-# Copyright 2010 iXsystems, Inc.
+#
+# Copyright 2020 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,11 @@ import traceback
 import ipaddr
 import sqlite3
 
+from middlewared.client import Client
+
+from requests.packages.urllib3 import poolmanager
+from requests.packages.urllib3.connectionpool import HTTPSConnectionPool
+
 # Only root can run it.
 if os.geteuid() != 0:
     exit("This command must be run with root privileges.")
@@ -48,14 +53,6 @@ if os.geteuid() != 0:
 FREENAS_DATA_PATH = "/data"
 FREENAS_DB = os.path.join(FREENAS_DATA_PATH, "freenas-v1.db")
 IS_LINUX = platform.system().lower() == 'linux'
-
-_ = lambda s: s
-
-from middlewared.client import Client
-
-from requests.packages.urllib3 import poolmanager
-from requests.packages.urllib3.connectionpool import HTTPSConnectionPool
-
 LAGGType = (
     ('failover', 'Failover'),
     ('lacp', 'LACP'),
@@ -63,6 +60,10 @@ LAGGType = (
     ('roundrobin', 'Round Robin'),
     ('none', 'None'),
 )
+
+
+def _(s):
+    return s
 
 
 class NICChoices(object):
@@ -98,7 +99,7 @@ class NICChoices(object):
 
         # Remove internal interfaces for failover
         with Client() as c:
-            if not c.call('system.is_freenas'):
+            if c.call('system.is_enterprise'):
                 for iface in c.call('failover.internal_interfaces'):
                     if iface in self._NIClist:
                         self._NIClist.remove(iface)
@@ -335,11 +336,7 @@ class FailoverIsEnabledException(Exception):
 
 def ensure_failover_is_disabled():
     with Client() as c:
-        if (
-                not c.call('system.is_freenas') and
-                c.call('failover.licensed') and
-                not c.call('failover.config')['disabled']
-        ):
+        if c.call('failover.licensed') and not c.call('failover.config')['disabled']:
             raise FailoverIsEnabledException()
 
 
@@ -355,13 +352,17 @@ class HTTPSConnectionPoolNoWarn(HTTPSConnectionPool):
         # Force connect early to allow us to validate the connection.
         if not getattr(conn, 'sock', None):  # AppEngine might not have  ` .sock`
             conn.connect()
+
+
 poolmanager.pool_classes_by_scheme['https'] = HTTPSConnectionPoolNoWarn
 
 
 def quad_to_cidr(quad):
-    vals = { 0:True, 128:True, 192:True,
-             224:True, 240:True, 248:True,
-             252:True, 254:True, 255:True }
+    vals = {
+        0: True, 128: True, 192: True,
+        224: True, 240: True, 248: True,
+        252: True, 254: True, 255: True
+    }
 
     count = 0
     octets = quad.split('.')
@@ -418,7 +419,7 @@ def get_nic(choices=None):
             print("%d) %s" % (i + 1, nics[i]))
 
         _input = input(_("Select an interface (q to quit): "))
-        if _input.isdigit() and int(_input) in range(1, len(nics)+1):
+        if _input.isdigit() and int(_input) in range(1, len(nics) + 1):
             nic = nics[int(_input) - 1]
             break
         elif _input.lower().startswith("q"):
@@ -431,22 +432,22 @@ def get_lagg_proto():
     proto = False
 
     with Client() as c:
-        is_freenas = c.call('system.is_freenas')
+        is_enterprise = c.call('system.is_enterprise')
         failover_licensed = False
-        if not is_freenas:
+        if is_enterprise:
             failover_licensed = c.call('failover.licensed')
 
     while True:
-        protos = { }
+        protos = {}
         types = LAGGType
-        if  not is_freenas and failover_licensed:
+        if is_enterprise and failover_licensed:
             types = list(filter(lambda x: x[0] != 'failover', types))
         for i, t in enumerate(types):
             protos[i] = t[0]
             print("%d) %s" % (i + 1, protos[i]))
 
         _input = input(_("Select a lagg protocol (q to quit): "))
-        if _input.isdigit() and int(_input) in range(1, len(protos)+1):
+        if _input.isdigit() and int(_input) in range(1, len(protos) + 1):
             proto = protos[int(_input) - 1]
             break
         elif _input.lower().startswith("q"):
@@ -489,13 +490,13 @@ def configure_interface():
             print("%d) %s" % (i + 1, nics[i]))
 
         _input = input(_("Select an interface (q to quit): "))
-        if _input.isdigit() and int(_input) in range(1, len(nics)+1):
+        if _input.isdigit() and int(_input) in range(1, len(nics) + 1):
             nic = nics[int(_input) - 1]
             break
         elif _input.lower().startswith("q"):
             return True
 
-    iface = Interfaces.objects.filter(int_interface = nic)
+    iface = Interfaces.objects.filter(int_interface=nic)
     if iface:
         iface = iface[0]
     else:
@@ -511,14 +512,14 @@ def configure_interface():
             try:
                 with Client() as c:
                     c.call('service.start', 'network')
-            except:
+            except Exception:
                 print(_("Failed"))
             print(_("ok"))
             print(_("Restarting routing:"), end=' ')
             try:
                 with Client() as c:
                     c.call('service.reload', 'networkgeneral')
-            except:
+            except Exception:
                 print(_("Failed"))
             print(_("ok"))
             return True
@@ -532,7 +533,7 @@ def configure_interface():
         if _input.startswith("y"):
             print(_("Removing interface configuration:"), end=' ')
             try:
-                if iface.id != None:
+                if iface.id is not None:
                     iface.int_ipv4address = ''
                     iface.int_ipv4address_b = ''
                     iface.int_v4netmaskbit = ''
@@ -553,14 +554,14 @@ def configure_interface():
             try:
                 with Client() as c:
                     c.call('service.start', 'network')
-            except:
+            except Exception:
                 print(_("Failed"))
             print(_("ok"))
             print(_("Restarting routing:"), end=' ')
             try:
                 with Client() as c:
                     c.call('service.reload', 'networkgeneral')
-            except:
+            except Exception:
                 print(_("Failed"))
             print(_("ok"))
             return True
@@ -580,8 +581,8 @@ def configure_interface():
                     int_name = iface.int_name
                 iface.int_interface = nic
                 iface.int_dhcp = True
-                iface.int_ipv4address =  ''
-                iface.int_ipv4address_b =  ''
+                iface.int_ipv4address = ''
+                iface.int_ipv4address_b = ''
                 iface.int_v4netmaskbit = ''
                 iface.int_v6netmaskbit = ''
                 iface.int_ipv6address = ''
@@ -603,9 +604,9 @@ def configure_interface():
             break
 
     with Client() as c:
-        is_freenas = c.call('system.is_freenas')
+        is_enterprise = c.call('system.is_enterprise')
         failover_node = failover_licensed = False
-        if not is_freenas:
+        if is_enterprise:
             failover_licensed = c.call('failover.licensed')
             failover_node = c.call('failover.node')
 
@@ -616,15 +617,20 @@ def configure_interface():
             int_name = input(int_name_prompt)
             if not int_name and iface.int_name:
                 int_name = iface.int_name
-            if not is_freenas and failover_licensed:
-                if failover_node == 'A':
-                    ip_label = "IPv4 Address (This TrueNAS Controller)"
-                    ip_b_label = "IPv4 Address (TrueNAS Controller 2)"
+            if is_enterprise:
+                if failover_licensed:
+                    if failover_node == 'A':
+                        ip_label = "IPv4 Address (This TrueNAS Controller)"
+                        ip_b_label = "IPv4 Address (TrueNAS Controller 2)"
+                    else:
+                        ip_label = "IPv4 Address (TrueNAS Controller 1)"
+                        ip_b_label = "IPv4 Address (This TrueNAS Controller)"
+                    ip_prompt = prompt(ip_label, iface.int_ipv4address)
+                    ip_b_prompt = prompt(ip_b_label, iface.int_ipv4address_b)
                 else:
-                    ip_label = "IPv4 Address (TrueNAS Controller 1)"
-                    ip_b_label = "IPv4 Address (This TrueNAS Controller)"
-                ip_prompt = prompt(ip_label, iface.int_ipv4address)
-                ip_b_prompt = prompt(ip_b_label, iface.int_ipv4address_b)
+                    ip_prompt = prompt(
+                        "IPv4 Address", iface.int_ipv4address if failover_node == 'A' else iface.int_ipv4address_b
+                    )
             else:
                 ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
 
@@ -665,16 +671,18 @@ def configure_interface():
                             continue
                         ip_b, mask = ip_b.split('/')
                     break
-                except:
+                except Exception:
                     mask = input(mask_prompt)
                     if mask.startswith("/"):
                         mask = mask.lstrip("/")
                     if not mask and iface.int_v4netmaskbit:
                         mask = iface.int_v4netmaskbit
                         break
-                    elif re.match(r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9]"
-                                   "[0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|"
-                                   "[01]?[0-9][0-9]?)$", mask):
+                    elif re.match(
+                        r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9]"
+                        "[0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|"
+                        "[01]?[0-9][0-9]?)$", mask
+                    ):
                         try:
                             ipaddr.IPAddress(mask, version=4)
                         except ValueError:
@@ -708,7 +716,7 @@ Acceptable formats are 255.255.255.0,
             print(_("Saving interface configuration:"), end=' ')
             try:
                 iface.save()
-            except:
+            except Exception:
                 print(_("Failed"))
                 return False
             print(_("Ok"))
@@ -735,7 +743,7 @@ Acceptable formats are 255.255.255.0,
                     print(_("Invalid value entered"))
                     continue
                 ip, mask = ip.split('/')
-            except:
+            except Exception:
                 while True:
                     mask = input(mask_prompt)
                     if not mask and iface.int_v6netmaskbit:
@@ -756,7 +764,7 @@ Acceptable formats are 255.255.255.0,
             print(_("Saving interface configuration:"), end=' ')
             try:
                 iface.save()
-            except:
+            except Exception:
                 print(_("Failed"))
                 return False
             print(_("Ok"))
@@ -768,13 +776,13 @@ Acceptable formats are 255.255.255.0,
             break
 
     while True:
-        if failover_licensed:
+        if not failover_licensed:
             break
         yes = input(_("Configure failover settings? (y/n) "))
         if yes.lower().startswith("y"):
 
             while True:
-                vip_prompt = prompt("Virtual IP", iface.int_vip)
+                vip_prompt = prompt("Virtual IP (Do not give a netmask)", iface.int_vip)
                 vip = input(vip_prompt)
                 if not vip and iface.int_vip:
                     vip = iface.int_vip
@@ -824,7 +832,7 @@ Acceptable formats are 255.255.255.0,
             print(_("Saving interface configuration:"), end=' ')
             try:
                 iface.save()
-            except:
+            except Exception:
                 print(_("Failed"))
                 return False
             print(_("Ok"))
@@ -840,7 +848,7 @@ Acceptable formats are 255.255.255.0,
         try:
             with Client() as c:
                 c.call('service.start', 'network')
-        except:
+        except Exception:
             print(_("Failed"))
         print(_("ok"))
     if need_restart == "DHCP":
@@ -848,10 +856,11 @@ Acceptable formats are 255.255.255.0,
         try:
             with Client() as c:
                 c.call('service.reload', 'networkgeneral')
-        except:
+        except Exception:
             print(_("Failed"))
         print(_("ok"))
         return True
+
 
 def reset_root_pw(*args):
     print()
@@ -861,7 +870,10 @@ def reset_root_pw(*args):
 
     if not args:
         waituser = True
-        prompt = lambda y: (getpass.getpass(), getpass.getpass(y))
+
+        def prompt(y):
+            return (getpass.getpass(), getpass.getpass(y))
+
         while True:
             p1, p2 = prompt(_('Retype password: '))
             if p1 == p2:
@@ -903,8 +915,9 @@ def reset_root_pw(*args):
 
 
 def reset_factory_defaults(*args):
-    a = input(_('The configuration will be erased and reset to defaults. Are you sure?')
-                  + '(yes/no): ')
+    a = input(
+        _('The configuration will be erased and reset to defaults. Are you sure?') + '(yes/no): '
+    )
     if a.lower().startswith('y'):
         try:
             with Client() as c:
@@ -917,9 +930,9 @@ def reset_factory_defaults(*args):
 def configure_lagg_interface(*args):
 
     menu = [
-        [ _("Create Link Aggregation"), create_lagg_interface ],
-        [ _("Delete Link Aggregation"), delete_lagg_interface ],
-              ]
+        [_("Create Link Aggregation"), create_lagg_interface],
+        [_("Delete Link Aggregation"), delete_lagg_interface],
+    ]
     menu_map = {}
     menu_max = 0
     for item in menu:
@@ -932,7 +945,6 @@ def configure_lagg_interface(*args):
         for index in menu_map:
             print("%d) %s" % (index, menu_map[index][0]))
 
-
         _input = input(_("Enter an option from 1-%d (enter q to quit): ") % (menu_max))
         if _input.isdigit() and int(_input) in range(1, menu_max + 1):
             ch = int(_input)
@@ -942,6 +954,7 @@ def configure_lagg_interface(*args):
         elif _input.lower().startswith("q"):
             return False
         continue
+
 
 def create_lagg_interface():
     lagg_index = 0
@@ -958,24 +971,30 @@ def create_lagg_interface():
         return True
 
     lagg_name = 'lagg%d' % lagg_index
-    iface = Interfaces(int_interface = lagg_name, int_name = lagg_name,
-        int_dhcp = False, int_ipv6auto = False)
+    iface = Interfaces(
+        int_interface=lagg_name,
+        int_name=lagg_name,
+        int_dhcp=False,
+        int_ipv6auto=False,
+    )
 
     print(_("Saving interface configuration:"), end=' ')
     try:
         iface.save()
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("Ok"))
 
-    lagg_iface = LAGGInterface(lagg_interface = iface,
-                               lagg_protocol = lagg_proto)
+    lagg_iface = LAGGInterface(
+        lagg_interface=iface,
+        lagg_protocol=lagg_proto,
+    )
 
     print(_("Saving Link Aggregation configuration:"), end=' ')
     try:
         lagg_iface.save()
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("Ok"))
@@ -992,7 +1011,7 @@ def create_lagg_interface():
         print(_("Saving Link Aggregation member configuration:"), end=' ')
         try:
             lagg_iface_member.save()
-        except:
+        except Exception:
             print(_("Failed"))
             return False
         print(_("Ok"))
@@ -1003,7 +1022,7 @@ def create_lagg_interface():
     try:
         with Client() as c:
             c.call('service.start', 'network')
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("ok"))
@@ -1028,9 +1047,7 @@ def delete_lagg_interface():
         print()
 
         for idx, li in enumerate(lagg_interfaces):
-            lagg_index = int(re.split('([0-9]+)$', str(li.lagg_interface))[1]) + 1
             lagg_map[idx + 1] = li
-
             print("%d) lagg%s" % (idx + 1, re.split('([0-9]+)$', str(li.lagg_interface))[1]))
 
         print()
@@ -1045,11 +1062,10 @@ def delete_lagg_interface():
             return False
         continue
 
-
     print(_("Deleting lagg interface:"), end=' ')
     try:
         lagg.delete()
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("Ok"))
@@ -1057,11 +1073,10 @@ def delete_lagg_interface():
     try:
         with Client() as c:
             c.call('service.start', 'network')
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("ok"))
-
 
     return True
 
@@ -1069,9 +1084,9 @@ def delete_lagg_interface():
 def configure_vlan(*args):
 
     menu = [
-        [ _("Create VLAN Interface"), create_vlan ],
-        [ _("Delete VLAN Interface"), delete_vlan ],
-              ]
+        [_("Create VLAN Interface"), create_vlan],
+        [_("Delete VLAN Interface"), delete_vlan],
+    ]
     menu_map = {}
     menu_max = 0
     for item in menu:
@@ -1083,7 +1098,6 @@ def configure_vlan(*args):
 
         for index in menu_map:
             print("%d) %s" % (index, menu_map[index][0]))
-
 
         _input = input(_("Enter an option from 1-%d (enter q to quit): ") % (menu_max))
         if _input.isdigit() and int(_input) in range(1, menu_max + 1):
@@ -1103,21 +1117,22 @@ def create_vlan():
     # Select parent interface
     while True:
         nics = []
-        choices = NICChoices(novlan=True,exclude_configured=False)
+        choices = NICChoices(novlan=True, exclude_configured=False)
         for i, c in enumerate(choices):
             nics.append(c[0])
             print("%2d) %s" % (i + 1, nics[i]))
 
         _input = input(_("Select a parent interface (q to quit): "))
-        if _input.isdigit() and int(_input) in range(1, len(nics)+1):
+        if _input.isdigit() and int(_input) in range(1, len(nics) + 1):
             vlan_pint = nics[int(_input) - 1]
             break
         elif _input.lower().startswith("q"):
             return True
     # Get interface name
     while True:
-        vlan_vint = input(_("Enter an interface name ")
-                              + _("(vlanX) or a to abort: "))
+        vlan_vint = input(
+            _("Enter an interface name ") + _("(vlanX) or a to abort: ")
+        )
         if vlan_vint == "a":
             return
         reg = re.search(r'vlan(\d+)', vlan_vint)
@@ -1160,7 +1175,7 @@ def create_vlan():
             if 'up' not in vlan_interface.int_options:
                 vlan_interface.int_options += ' up'
                 vlan_interface.save()
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("Ok"))
@@ -1168,7 +1183,7 @@ def create_vlan():
     try:
         with Client() as c:
             c.call('service.start', 'network')
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("ok"))
@@ -1209,11 +1224,10 @@ def delete_vlan():
             return False
         continue
 
-
     print(_("Deleting VLAN interface:"), end=' ')
     try:
         vlan.delete()
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("Ok"))
@@ -1236,7 +1250,7 @@ def configure_ipv4_default_route(gc):
         print(_("Saving IPv4 gateway:"), end=' ')
         try:
             gc.save()
-        except:
+        except Exception:
             print(_("Failed"))
             return False
         print(_("Ok"))
@@ -1244,6 +1258,7 @@ def configure_ipv4_default_route(gc):
     else:
         print(_("No default route entered."))
         return False
+
 
 def configure_ipv6_default_route(gc):
     gwprompt = prompt(_("IPv6 Default Route"), gc.gc_ipv6gateway)
@@ -1259,7 +1274,7 @@ def configure_ipv6_default_route(gc):
         print(_("Saving IPv6 gateway:"), end=' ')
         try:
             gc.save()
-        except:
+        except Exception:
             print(_("Failed"))
             return False
         print(_("Ok"))
@@ -1267,6 +1282,7 @@ def configure_ipv6_default_route(gc):
     else:
         print(_("No default route entered."))
         return False
+
 
 def configure_default_route(*args):
     gc = GlobalConfiguration.objects.all()
@@ -1276,8 +1292,7 @@ def configure_default_route(*args):
     while True:
         yes = input(_("Configure IPv4 Default Route? (y/n)"))
         if yes.lower().startswith("y"):
-            configure_ipv4_default_route(gc)
-            need_save = True
+            need_save = configure_ipv4_default_route(gc)
             break
         elif yes.lower().startswith("n"):
             break
@@ -1285,8 +1300,7 @@ def configure_default_route(*args):
     while True:
         yes = input(_("Configure IPv6 Default Route? (y/n)"))
         if yes.lower().startswith("y"):
-            configure_ipv6_default_route(gc)
-            need_save = True
+            need_save = configure_ipv6_default_route(gc)
             break
         elif yes.lower().startswith("n"):
             break
@@ -1295,8 +1309,8 @@ def configure_default_route(*args):
         print(_("Restarting routing:"), end=' ')
         try:
             with Client() as c:
-                c.call('service.reload', 'networkgeneral')
-        except:
+                c.call('route.sync')
+        except Exception:
             print(_("Failed"))
             return False
         print(_("ok"))
@@ -1330,7 +1344,7 @@ def configure_static_routes(*args):
     print(_("Saving static route:"), end=' ')
     try:
         sr.save()
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("ok"))
@@ -1338,7 +1352,7 @@ def configure_static_routes(*args):
         print(_("Restarting routing:"), end=' ')
         with Client() as c:
             c.call('service.reload', 'networkgeneral')
-    except:
+    except Exception:
         print(_("Failed"))
         return False
     print(_("ok"))
@@ -1401,7 +1415,7 @@ def configure_dns(*args):
         print(_("Saving DNS configuration:"), end=' ')
         try:
             gc.save()
-        except:
+        except Exception:
             print(_("Failed"))
             return False
         print(_("ok"))
@@ -1410,11 +1424,12 @@ def configure_dns(*args):
         try:
             with Client() as c:
                 c.call('service.reload', 'networkgeneral')
-        except:
+        except Exception:
             print(_("Failed"))
             return False
         print(_("ok"))
         return True
+
 
 def shell(*args):
     return os.system("/usr/bin/su -l root")
@@ -1449,6 +1464,7 @@ def reboot(*args):
             return False
         if ret.lower().startswith("n"):
             return False
+
 
 def shutdown(*args):
     while True:
@@ -1499,32 +1515,32 @@ def netcli_title():
 
 def main_menu():
     menu = [
-        [ _("Configure Network Interfaces"), configure_interface_stub ],
-        [ _("Configure Link Aggregation"), configure_lagg_interface ],
-        [ _("Configure VLAN Interface"), configure_vlan ],
-        [ _("Configure Default Route"), configure_default_route ],
-        [ _("Configure Static Routes"), configure_static_routes ],
-        [ _("Configure DNS"), configure_dns ],
-        [ _("Reset Root Password"), reset_root_pw ],
-        [ _("Reset Configuration to Defaults"), reset_factory_defaults ],
-        [ _("Shell"), shell ],
-        [ _("Reboot"), reboot ],
-        [ _("Shut Down"), shutdown],
+        [_("Configure Network Interfaces"), configure_interface_stub],
+        [_("Configure Link Aggregation"), configure_lagg_interface],
+        [_("Configure VLAN Interface"), configure_vlan],
+        [_("Configure Default Route"), configure_default_route],
+        [_("Configure Static Routes"), configure_static_routes],
+        [_("Configure DNS"), configure_dns],
+        [_("Reset Root Password"), reset_root_pw],
+        [_("Reset Configuration to Defaults"), reset_factory_defaults],
+        [_("Shell"), shell],
+        [_("Reboot"), reboot],
+        [_("Shut Down"), shutdown],
     ]
 
     failover_status = 'SINGLE'
     try:
         with Client() as c:
             support_available = c.call('support.is_available')
-            is_freenas = c.call('system.is_freenas')
-            if not is_freenas:
+            is_enterprise = c.call('system.is_enterprise')
+            if is_enterprise:
                 failover_status = c.call('failover.status')
     except Exception:
         support_available = False
-        is_freenas = True
+        is_enterprise = False
 
-    if not is_freenas and support_available:
-        menu.insert(12, [ _("Toggle automatic support alerts to iXsystems"), automatic_ix_alert ])
+    if is_enterprise and support_available:
+        menu.insert(12, [_("Toggle automatic support alerts to iXsystems"), automatic_ix_alert])
 
     menu_map = {}
     menu_max = 0
@@ -1538,7 +1554,7 @@ def main_menu():
                 sys.exit(0)
 
     while True:
-        if not is_freenas and os.path.exists('/tmp/.failover_needop'):
+        if is_enterprise and os.path.exists('/tmp/.failover_needop'):
             """
             Currently we can have multiple pools.
             Because one encrypted pool failed to import does not mean the node
@@ -1581,7 +1597,7 @@ def main_menu():
                     time.sleep(5)
                     continue
 
-        if not is_freenas:
+        if is_enterprise:
             print(netcli_title())
 
         print()
@@ -1594,7 +1610,7 @@ def main_menu():
 
         try:
             show_ip()
-        except:
+        except Exception:
             pass
 
         try:
@@ -1613,10 +1629,8 @@ def main_menu():
                 input()
 
 
-#
-#	No signal handling here, it is assumed that this script
-#	will be setup in /etc/ttys, so we just exit ;-).
-#
+# No signal handling here, it is assumed that this script
+# will be setup in /etc/ttys, so we just exit ;-).
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -1626,7 +1640,7 @@ if __name__ == '__main__':
                 with Client() as c:
                     console = c.call('system.advanced.config')['consolemenu']
             except Exception:
-                    console = True
+                console = True
             if console:
                 main_menu()
             else:
