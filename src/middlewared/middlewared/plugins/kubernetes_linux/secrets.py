@@ -15,9 +15,11 @@ class KubernetesSecretService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
+        options = options or {}
+        list_args = options.get('extra', {}).get('list_kwargs', {})
         async with api_client() as (api, context):
             return filter_list(
-                [d.to_dict() for d in (await context['core_api'].list_secret_for_all_namespaces()).items],
+                [d.to_dict() for d in (await context['core_api'].list_secret_for_all_namespaces(**list_args)).items],
                 filters, options
             )
 
