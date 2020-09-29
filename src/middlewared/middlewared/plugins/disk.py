@@ -13,6 +13,8 @@ import sysctl
 import tempfile
 from xml.etree import ElementTree
 
+import async_timeout
+
 from bsd import geom, getswapinfo
 import cam
 from nvme import get_nsid
@@ -769,21 +771,25 @@ class DiskService(CRUDService):
         ))
 
     async def __get_temperature(self, disk, smartctl_args):
-        if disk.startswith('da') and not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
-            try:
-                temperature = await self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
-                if temperature is not None:
-                    return temperature
-            except Exception:
-                pass
+        try:
+            async with async_timeout.timeout(15):
+                if disk.startswith('da') and not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
+                    try:
+                        temperature = await self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
+                        if temperature is not None:
+                            return temperature
+                    except Exception:
+                        pass
 
-        cp = await smartctl(smartctl_args + ['-a'], check=False, stderr=subprocess.STDOUT,
-                            encoding='utf8', errors='ignore')
-        if (cp.returncode & 0b11) != 0:
-            self.logger.trace('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
+                cp = await smartctl(smartctl_args + ['-a'], check=False, stderr=subprocess.STDOUT,
+                                    encoding='utf8', errors='ignore')
+                if (cp.returncode & 0b11) != 0:
+                    self.logger.trace('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
+                    return None
+
+                return get_temperature(cp.stdout)
+        except asyncio.TimeoutError:
             return None
-
-        return get_temperature(cp.stdout)
 
     @private
     @accepts(Str('name'))
