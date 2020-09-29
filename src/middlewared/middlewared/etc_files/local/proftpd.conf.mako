@@ -39,6 +39,9 @@ AllowForeignAddress ${'on' if ftp['fxp'] else 'off'}
 % if ftp['masqaddress']:
     MasqueradeAddress ${ftp['masqaddress']}
 % endif
+% if IS_LINUX:
+LoadModule mod_ident.c
+% endif
 IdentLookups ${'on' if ftp['ident'] else 'off'}
 UseReverseDNS ${'on' if ftp['reversedns'] else 'off'}
 % if ftp['passiveportsmin']:
