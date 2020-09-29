@@ -1,4 +1,3 @@
-import copy
 import itertools
 
 from middlewared.service import private, Service
@@ -13,13 +12,9 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def validate_values(self, item_version_details, data):
-        default_values = item_version_details['values']
-        new_values = copy.deepcopy(default_values)
-        new_values.update(data['values'])
-
+    async def validate_values(self, item_version_details, new_values):
         verrors = validate_attributes(
-            [get_schema(q) for q in item_version_details['questions']], {'values': new_values}
+            [get_schema(q) for q in item_version_details['questions']], {'values': new_values}, attr_key='values'
         )
         verrors.check()
 
