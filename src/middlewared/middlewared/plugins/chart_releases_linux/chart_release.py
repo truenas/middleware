@@ -84,6 +84,20 @@ class ChartReleaseService(CRUDService):
                 await self.middleware.call('zfs.dataset.delete', release_ds, {'recursive': True, 'force': True})
             raise
 
+    @accepts(Str('release_name'))
+    async def do_delete(self, release_name):
+        # For delete we will uninstall the release first and then remove the associated datasets
+        # TODO: Add validation after query is in place
+        await self.middleware.call('kubernetes.validate_k8s_setup')
+        cp = await run(['helm', 'uninstall', release_name, '-n', CHART_NAMESPACE], check=False)
+        if cp.returncode:
+            raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
+
+        k8s_config = await self.middleware.call('kubernetes.config')
+        release_ds = os.path.join(k8s_config['dataset'], 'releases', release_name)
+        if await self.middleware.call('pool.dataset.query', [['id', '=', release_ds]]):
+            await self.middleware.call('zfs.dataset.delete', release_ds, {'recursive': True, 'force': True})
+
     @private
     async def release_datasets(self, release_dataset):
         return [release_dataset] + [os.path.join(release_dataset, k) for k in ('charts', 'volumes')]
