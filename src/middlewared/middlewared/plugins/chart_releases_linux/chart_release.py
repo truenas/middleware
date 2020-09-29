@@ -55,6 +55,9 @@ class ChartReleaseService(CRUDService):
     )
     async def do_create(self, data):
         await self.middleware.call('kubernetes.validate_k8s_setup')
+        if await self.middleware.call('chart.release.query', [['id', '=', data['release_name']]]):
+            raise CallError(f'Chart release with {data["release_name"]} already exists.')
+
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', data['catalog']]], {'get': True, 'extra': {'item_details': True}}
         )
@@ -114,8 +117,9 @@ class ChartReleaseService(CRUDService):
     @accepts(Str('release_name'))
     async def do_delete(self, release_name):
         # For delete we will uninstall the release first and then remove the associated datasets
-        # TODO: Add validation after query is in place
         await self.middleware.call('kubernetes.validate_k8s_setup')
+        await self.get_instance(release_name)
+
         cp = await run(['helm', 'uninstall', release_name, '-n', CHART_NAMESPACE], check=False)
         if cp.returncode:
             raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
