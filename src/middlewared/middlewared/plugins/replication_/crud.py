@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, Int, Path, Str
+from middlewared.schema import accepts, Dataset, Dict, Int, Str
 from middlewared.service import item_method, Service
 
 
@@ -10,7 +10,7 @@ class ReplicationService(Service):
         Dict(
             "replication_restore",
             Str("name", required=True),
-            Path("target_dataset", required=True, empty=False),
+            Dataset("target_dataset", required=True),
             strict=True,
         )
     )
