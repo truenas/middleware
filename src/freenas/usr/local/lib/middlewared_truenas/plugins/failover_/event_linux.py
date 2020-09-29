@@ -634,11 +634,11 @@ class FailoverService(Service):
                 time.sleep(5)
         except ZpoolExportTimeout:
             # have to enable the "magic" sysrq triggers
-            with open('/proc/sys/kernel/sysrq') as f:
+            with open('/proc/sys/kernel/sysrq', 'w') as f:
                 f.write('1')
 
             # now violently reboot
-            with open('/proc/sysrq-trigger') as f:
+            with open('/proc/sysrq-trigger', 'w') as f:
                 f.write('b')
 
         # We also remove this file here, because on boot we become BACKUP if the other
