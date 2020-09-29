@@ -1,11 +1,14 @@
+import base64
 import copy
+import gzip
+import json
 import os
 import shutil
 import tempfile
 import yaml
 
 from middlewared.schema import accepts, Dict, Str
-from middlewared.service import CallError, CRUDService, private
+from middlewared.service import CallError, CRUDService, filterable, filter_list, private
 
 from .utils import CHART_NAMESPACE, run
 
@@ -14,6 +17,30 @@ class ChartReleaseService(CRUDService):
 
     class Config:
         namespace = 'chart.release'
+
+    @filterable
+    def query(self, filters=None, options=None):
+        if not self.middleware.call_sync('service.started', 'kubernetes'):
+            return []
+
+        # TODO: Let's skip getting history as of right now but when we add support for rollback, let's do that
+        release_secrets = {}
+        for release_secret in self.middleware.call_sync(
+            'k8s.secret.query', [['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '=', CHART_NAMESPACE]]
+        ):
+            release = json.loads(
+                gzip.decompress(base64.b64decode(base64.b64decode(release_secret['data']['release']))).decode()
+            )
+            chart_data = release.pop('chart')
+            release['chart_metadata'] = chart_data['metadata']
+            release.pop('manifest')
+            release['id'] = release['name']
+            if release['name'] not in release_secrets:
+                release_secrets[release['name']] = release
+            elif release_secrets[release['name']]['version'] < release['version']:
+                release_secrets[release['name']] = release
+
+        return filter_list(list(release_secrets.values()), filters, options)
 
     @accepts(
         Dict(
