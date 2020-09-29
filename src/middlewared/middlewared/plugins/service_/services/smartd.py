@@ -21,6 +21,7 @@ class SMARTDService(SimpleService):
     freebsd_procname = "smartd"
 
     systemd_unit = "smartmontools"
+    systemd_async_start = True
 
     async def _get_state_freebsd(self):
         result = await super()._get_state_freebsd()
