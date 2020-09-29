@@ -27,7 +27,7 @@ import traceback
 
 import collectd
 
-from middlewared.client import Client
+from middlewared.client import Client, CallTimeout
 
 READ_INTERVAL = 300.0
 
@@ -65,6 +65,8 @@ class DiskTemp(object):
             for disk, temp in temperatures.items():
                 if temp is not None:
                     self.dispatch_value(disk, 'temperature', temp, data_type='temperature')
+        except CallTimeout:
+            collectd.error("Timeout collecting disk temperatures")
         except Exception:
             collectd.error(traceback.format_exc())
 
