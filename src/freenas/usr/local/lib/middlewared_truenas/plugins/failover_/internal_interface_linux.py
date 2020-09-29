@@ -85,3 +85,7 @@ class InternalInterfaceService(Service):
                 'address': internal_ip,
                 'netmask': '24',
             }))
+
+        # testing shows that the z-series interface is not brought up automatically
+        # so we need to up the interface after we apply the IP address
+        iface.up()
