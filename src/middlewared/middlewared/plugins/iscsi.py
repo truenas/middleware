@@ -1639,14 +1639,19 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
         return is_child(resource[self.path_field], os.path.join('zvol', os.path.relpath(path, '/mnt')))
 
     async def delete(self, attachments):
-        lun_ids = []
+        orphan_targets_ids = set()
         for attachment in attachments:
             for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
+                orphan_targets_ids.add(te['target'])
                 await self.middleware.call('datastore.delete', 'services.iscsitargettoextent', te['id'])
-                lun_ids.append(te['lunid'])
 
             await self.middleware.call('datastore.delete', 'services.iscsitargetextent', attachment['id'])
             await self.remove_alert(attachment)
+
+        for te in await self.middleware.call('iscsi.targetextent.query', [['target', 'in', orphan_targets_ids]]):
+            orphan_targets_ids.discard(te['target'])
+        for target_id in orphan_targets_ids:
+            await self.middleware.call('iscsi.target.delete', target_id, True)
 
         await self._service_change('iscsitarget', 'reload')
 
