@@ -1,4 +1,5 @@
 import base64
+import collections
 import copy
 import gzip
 import json
@@ -24,6 +25,12 @@ class ChartReleaseService(CRUDService):
             return []
 
         # TODO: Let's skip getting history as of right now but when we add support for rollback, let's do that
+        deployments = collections.defaultdict(list)
+        for d in self.middleware.call_sync(
+            'k8s.deployment.query', [['metadata.labels.app\\.kubernetes\\.io/managed-by', '=', 'Helm']]
+        ):
+            deployments[d['metadata']['labels']['app.kubernetes.io/instance']].append(d)
+
         release_secrets = {}
         for release_secret in self.middleware.call_sync(
             'k8s.secret.query', [['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '=', CHART_NAMESPACE]]
@@ -35,6 +42,7 @@ class ChartReleaseService(CRUDService):
             release['chart_metadata'] = chart_data['metadata']
             release.pop('manifest')
             release['id'] = release['name']
+            release['deployments'] = deployments[release['id']]
             if release['name'] not in release_secrets:
                 release_secrets[release['name']] = release
             elif release_secrets[release['name']]['version'] < release['version']:
