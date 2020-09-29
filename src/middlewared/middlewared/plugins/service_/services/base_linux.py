@@ -28,6 +28,7 @@ if IS_LINUX:
 class SimpleServiceLinux:
     systemd_unit = NotImplemented
     systemd_extra_units = []
+    systemd_async_start = False
 
     async def _get_state_linux(self):
         return await self.middleware.run_in_thread(self._get_state_linux_sync)
@@ -35,8 +36,10 @@ class SimpleServiceLinux:
     def _get_state_linux_sync(self):
         unit = self._get_systemd_unit()
 
-        if unit.Unit.ActiveState == b"active":
+        state = unit.Unit.ActiveState
+        if state == b"active" or (self.systemd_async_start and state == b"activating"):
             return ServiceState(True, list(filter(None, [unit.MainPID])))
+
         else:
             return ServiceState(False, [])
 
