@@ -19,6 +19,7 @@ class ChartReleaseService(CRUDService):
         )
     )
     async def do_create(self, data):
+        await self.middleware.call('kubernetes.validate_k8s_setup')
         catalog = await self.middleware.call('catalog.get_instance', data['catalog'])
         if data['train'] not in catalog['trains']:
             raise CallError(f'Unable to locate "{data["train"]}" catalog train.')
@@ -33,3 +34,9 @@ class ChartReleaseService(CRUDService):
         await self.middleware.call('chart.release.validate_values', item_details, data)
         # TODO: Validate if the release name has not been already used, let's do that once we have query
         # in place
+
+        # Now that we have completed validation for the item in question wrt values provided,
+        # we will now perform the following steps
+        # 1) Create release datasets
+        # 2)
+        k8s_config = await self.middleware.call('kubernetes.config')

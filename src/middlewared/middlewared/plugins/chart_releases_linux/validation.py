@@ -1,7 +1,7 @@
 import copy
 import itertools
 
-from middlewared.service import private, Service, ValidationErrors
+from middlewared.service import private, Service
 from middlewared.validators import validate_attributes
 
 from .schema import get_schema
