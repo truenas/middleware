@@ -20,35 +20,27 @@ class ChartReleaseService(CRUDService):
         namespace = 'chart.release'
 
     @filterable
-    def query(self, filters=None, options=None):
-        if not self.middleware.call_sync('service.started', 'kubernetes'):
+    async def query(self, filters=None, options=None):
+        if not await self.middleware.call('service.started', 'kubernetes'):
             return []
 
-        # TODO: Let's skip getting history as of right now but when we add support for rollback, let's do that
         deployments = collections.defaultdict(list)
-        for d in self.middleware.call_sync(
+        for d in await self.middleware.call(
             'k8s.deployment.query', [['metadata.labels.app\\.kubernetes\\.io/managed-by', '=', 'Helm']]
         ):
             deployments[d['metadata']['labels']['app.kubernetes.io/instance']].append(d)
 
-        release_secrets = {}
-        for release_secret in self.middleware.call_sync(
-            'k8s.secret.query', [['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '=', CHART_NAMESPACE]]
-        ):
-            release = json.loads(
-                gzip.decompress(base64.b64decode(base64.b64decode(release_secret['data']['release']))).decode()
-            )
-            chart_data = release.pop('chart')
-            release['chart_metadata'] = chart_data['metadata']
-            release.pop('manifest')
-            release['id'] = release['name']
-            release['deployments'] = deployments[release['id']]
-            if release['name'] not in release_secrets:
-                release_secrets[release['name']] = release
-            elif release_secrets[release['name']]['version'] < release['version']:
-                release_secrets[release['name']] = release
+        release_secrets = await self.middleware.call('chart.release.releases_secrets')
+        releases = []
+        for name, release in release_secrets.items():
+            release_data = release['releases'].pop(0)
+            release_data.update({
+                'history': release['releases'],
+                'deployments': deployments[name],
+            })
+            releases.append(release_data)
 
-        return filter_list(list(release_secrets.values()), filters, options)
+        return filter_list(releases, filters, options)
 
     @accepts(
         Dict(
@@ -115,6 +107,7 @@ class ChartReleaseService(CRUDService):
                 )
             if cp.returncode:
                 raise CallError(f'Failed to install catalog item: {cp.stderr}')
+
         except Exception:
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed. TODO: do this after query

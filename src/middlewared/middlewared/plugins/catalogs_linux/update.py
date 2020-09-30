@@ -2,15 +2,15 @@ import os
 
 from copy import deepcopy
 
-from middlewared.service import CRUDService, filterable
+from middlewared.service import CRUDService, filterable, private
 from middlewared.utils import filter_list
 
 from .utils import convert_repository_to_path
 
-
+OFFICIAL_LABEL = 'OFFICIAL'
 CATALOGS = [
     {
-        'label': 'OFFICIAL',
+        'label': OFFICIAL_LABEL,
         'repository': 'https://github.com/sonicaj/charts.git',
         'branch': 'master',
     }
@@ -35,3 +35,7 @@ class CatalogService(CRUDService):
                 catalog['trains'] = await self.middleware.call('catalog.items', catalog['label'])
 
         return filter_list(catalogs, filters, options)
+
+    @private
+    async def official_catalog_label(self):
+        return OFFICIAL_LABEL
