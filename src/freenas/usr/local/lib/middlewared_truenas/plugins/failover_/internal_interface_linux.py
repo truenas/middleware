@@ -40,9 +40,7 @@ class InternalInterfaceService(Service):
     @private
     async def pre_sync(self):
 
-        hardware = await self.middleware.call('failover.hardware')
-        if hardware == 'MANUAL':
-            self.logger.error('HA hardware detection failed.')
+        if not await self.middleware.call('system.is_enterprise'):
             return
 
         node = await self.middleware.call('failover.node')
@@ -57,6 +55,7 @@ class InternalInterfaceService(Service):
         iface = await self.middleware.call('failover.internal_interfaces')
         if not iface:
             self.logger.error('Internal interface not found.')
+            return
 
         iface = iface[0]
 
