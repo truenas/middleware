@@ -8,6 +8,8 @@
             ' Keepalived config not generated.'
         )
 	raise FileShouldNotExist()
+    elif not licensed:
+	return
 
     config = middleware.call_sync('failover.config')
 
