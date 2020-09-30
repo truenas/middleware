@@ -1,8 +1,6 @@
-import base64
 import collections
 import copy
-import gzip
-import json
+import enum
 import os
 import shutil
 import tempfile
@@ -12,6 +10,10 @@ from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, filter_list, private
 
 from .utils import CHART_NAMESPACE, run
+
+
+class Resources(enum.Enum):
+    DEPLOYMENTS = 'deployments'
 
 
 class ChartReleaseService(CRUDService):
@@ -24,11 +26,18 @@ class ChartReleaseService(CRUDService):
         if not await self.middleware.call('service.started', 'kubernetes'):
             return []
 
-        deployments = collections.defaultdict(list)
-        for d in await self.middleware.call(
-            'k8s.deployment.query', [['metadata.labels.app\\.kubernetes\\.io/managed-by', '=', 'Helm']]
-        ):
-            deployments[d['metadata']['labels']['app.kubernetes.io/instance']].append(d)
+        options = options or {}
+        extra = copy.deepcopy(options.get('extra', {}))
+        get_resources = extra.get('retrieve_resources')
+        if get_resources:
+            resources = {r.name: collections.defaultdict(list) for r in Resources}
+            for resource, namespace, r_filters in (
+                (Resources.DEPLOYMENTS, 'k8s.deployment', [
+                    ['metadata.labels.app\\.kubernetes\\.io/managed-by', '=', 'Helm']
+                ]),
+            ):
+                for r_data in await self.middleware.call(f'{namespace}.query', r_filters):
+                    resources[resource.name][r_data['metadata']['labels']['app.kubernetes.io/instance']].append(r_data)
 
         release_secrets = await self.middleware.call('chart.release.releases_secrets')
         releases = []
@@ -36,8 +45,9 @@ class ChartReleaseService(CRUDService):
             release_data = release['releases'].pop(0)
             release_data.update({
                 'history': release['releases'],
-                'deployments': deployments[name],
             })
+            if get_resources:
+                release_data['resources'] = resources
             releases.append(release_data)
 
         return filter_list(releases, filters, options)
