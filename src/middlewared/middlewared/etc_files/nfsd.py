@@ -28,7 +28,7 @@ async def get_exports(middleware, config, shares, has_nfs_principal):
 
 def build_share(config, share):
     if share["paths"]:
-        result = list(share["paths"])
+        result = [p.rstrip("/") for p in share["paths"]]
 
         if share["alldirs"]:
             result.append("-alldirs")
