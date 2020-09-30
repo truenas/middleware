@@ -2,7 +2,7 @@ from datetime import time
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
+from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, Str
 from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
@@ -70,9 +70,9 @@ class PeriodicSnapshotTaskService(CRUDService):
     @accepts(
         Dict(
             'periodic_snapshot_create',
-            Path('dataset', required=True),
+            Dataset('dataset', required=True),
             Bool('recursive', required=True),
-            List('exclude', items=[Path('item', empty=False)], default=[]),
+            List('exclude', items=[Dataset('item')], default=[]),
             Int('lifetime_value', required=True),
             Str('lifetime_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
             Str('naming_schema', required=True, validators=[ReplicationSnapshotNamingSchema()]),

@@ -2,7 +2,7 @@ from datetime import datetime, time
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
+from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, Str
 from middlewared.service import item_method, job, private, CallError, CRUDService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
@@ -142,10 +142,10 @@ class ReplicationService(CRUDService):
             Int("netcat_active_side_port_min", null=True, default=None, validators=[Port()]),
             Int("netcat_active_side_port_max", null=True, default=None, validators=[Port()]),
             Str("netcat_passive_side_connect_address", null=True, default=None),
-            List("source_datasets", items=[Path("dataset", empty=False)], required=True, empty=False),
-            Path("target_dataset", required=True, empty=False),
+            List("source_datasets", items=[Dataset("dataset")], required=True, empty=False),
+            Dataset("target_dataset", required=True),
             Bool("recursive", required=True),
-            List("exclude", items=[Path("dataset", empty=False)], default=[]),
+            List("exclude", items=[Dataset("dataset")], default=[]),
             Bool("properties", default=True),
             Bool("replicate", default=False),
             List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
@@ -675,7 +675,7 @@ class ReplicationService(CRUDService):
 
     @accepts(
         List("datasets", empty=False, items=[
-            Path("dataset", empty=False),
+            Dataset("dataset")
         ]),
         List("naming_schema", empty=False, items=[
             Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])
@@ -707,8 +707,8 @@ class ReplicationService(CRUDService):
 
     @accepts(
         Str("direction", enum=["PUSH", "PULL"], required=True),
-        List("source_datasets", items=[Path("dataset", empty=False)], required=True, empty=False),
-        Path("target_dataset", required=True, empty=False),
+        List("source_datasets", items=[Dataset("dataset")], required=True, empty=False),
+        Dataset("target_dataset", required=True),
         Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
         Int("ssh_credentials", null=True, default=None),
     )

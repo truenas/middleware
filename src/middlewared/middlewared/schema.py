@@ -208,16 +208,34 @@ class Str(EnumMixin, Attribute):
 
 class Path(Str):
 
+    def __init__(self, *args, **kwargs):
+        self.forwarding_slash = kwargs.pop('forwarding_slash', True)
+        super().__init__(*args, **kwargs)
+
     def clean(self, value):
         value = super().clean(value)
 
         if value is None:
             return value
 
-        return os.path.normpath(value.strip().strip("/").strip())
+        value = value.strip()
+
+        if self.forwarding_slash:
+            value = value.rstrip("/")
+        else:
+            value = value.strip("/")
+
+        return os.path.normpath(value.strip())
 
 
-class Dir(Str):
+class Dataset(Path):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('empty', False)
+        kwargs.setdefault('forwarding_slash', False)
+        super().__init__(*args, **kwargs)
+
+
+class Dir(Path):
 
     def validate(self, value):
         if value is None:
@@ -237,7 +255,7 @@ class Dir(Str):
         return super().validate(value)
 
 
-class File(Str):
+class File(Path):
 
     def validate(self, value):
         if value is None:
