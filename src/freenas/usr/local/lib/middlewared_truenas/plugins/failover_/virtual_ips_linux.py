@@ -95,8 +95,6 @@ class DetectVirtualIpStates(Service):
             errors.append('There are no failover interfaces')
 
         for name in interfaces:
-            if name not in local[0] and name in remote[0]:
-                errors.append(f'Interface "{name}" is MASTER on standby node')
             if name in local[1] and name in remote[1]:
                 errors.append(f'Interface "{name}" is BACKUP on both nodes')
             if name in local[0] and name in remote[0]:
