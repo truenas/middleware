@@ -50,9 +50,14 @@ class ChartReleaseService(CRUDService):
         release_secrets = await self.middleware.call('chart.release.releases_secrets')
         releases = []
         for name, release in release_secrets.items():
+            release_secret = release['secrets'][0]
             release_data = release['releases'].pop(0)
             release_data.update({
                 'history': release['releases'],
+                'catalog': release_secret['metadata']['labels'].get(
+                    'catalog', await self.middleware.call('catalog.official_catalog_label')
+                ),
+                'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test')
             })
             if get_resources:
                 release_data['resources'] = {r.name: resources[r.name][name] for r in Resources}
@@ -139,6 +144,9 @@ class ChartReleaseService(CRUDService):
                 )
             else:
                 await self.middleware.call('k8s.storage_class.create', storage_class)
+
+            # TODO: Let's see doing this with k8s possibly making it more robust
+            await self.middleware.call('chart.release.update_unlabelled_secrets_for_release', data['release_name'])
         except Exception:
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed ( it is possible this might have happened )

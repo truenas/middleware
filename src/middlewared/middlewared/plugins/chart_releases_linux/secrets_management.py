@@ -45,3 +45,24 @@ class ChartReleaseService(Service):
             )
 
         return release_secrets
+
+    @private
+    async def update_unlabelled_secrets_for_release(self, release, catalog, catalog_train):
+        await self.label_unlabelled_secrets(
+            (await self.middleware.call('chart.release.releases_secrets'))[release]['untagged'],
+            catalog, catalog_train,
+        )
+
+    @private
+    async def label_unlabelled_secrets(self, secrets, catalog, catalog_train):
+        for secret in secrets:
+            name = secret['metadata']['name']
+            namespace = secret['metadata']['namespace']
+            labels = secret['metadata']['labels']
+            labels.update({
+                'catalog': catalog,
+                'catalog_train': catalog_train,
+            })
+            await self.middleware.call(
+                'k8s.secret.update', name, {'namespace': namespace, 'body': {'metadata': {'labels': labels}}}
+            )
