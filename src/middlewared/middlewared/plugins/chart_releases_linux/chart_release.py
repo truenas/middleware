@@ -55,6 +55,10 @@ class ChartReleaseService(CRUDService):
         release_secrets = await self.middleware.call('chart.release.releases_secrets')
         releases = []
         for name, release in release_secrets.items():
+            config = {}
+            for release_data in reversed(release['releases']):
+                config.update(release_data['config'])
+
             release_secret = release['secrets'][0]
             release_data = release['releases'].pop(0)
             release_data.update({
@@ -63,7 +67,8 @@ class ChartReleaseService(CRUDService):
                     'catalog', await self.middleware.call('catalog.official_catalog_label')
                 ),
                 'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test'),
-                'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name)
+                'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name),
+                'config': config,
             })
             if get_resources:
                 release_data['resources'] = {
@@ -187,8 +192,7 @@ class ChartReleaseService(CRUDService):
             )
 
         version_details = await self.middleware.call('catalog.item_version_details', chart_path)
-        config = copy.deepcopy(release['config'])
-        config.update(data['values'])
+        config = data['values']
         await self.middleware.call('chart.release.validate_values', version_details, config)
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))
