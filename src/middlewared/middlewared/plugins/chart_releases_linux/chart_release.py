@@ -102,6 +102,7 @@ class ChartReleaseService(CRUDService):
         # 1) Create release datasets
         # 2) Copy chart version into release/charts dataset
         # 3) Install the helm chart
+        # 4) Create storage class
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
         try:
@@ -127,6 +128,17 @@ class ChartReleaseService(CRUDService):
             if cp.returncode:
                 raise CallError(f'Failed to install catalog item: {cp.stderr}')
 
+            storage_class = await self.middleware.call('k8s.storage_class.retrieve_storage_class_manifest')
+            storage_class_name = f'ix-storage_class-{data["release_name"]}'
+            storage_class['metadata']['name'] = storage_class_name
+            storage_class['parameters']['poolname'] = os.path.join(release_ds, 'volumes')
+            if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', data['release_name']]]):
+                # It should not exist already, but even if it does, that's not fatal
+                await self.middleware.call(
+                    'k8s.storage_class.update', f'ix-storage_class-{data["release_name"]}', storage_class
+                )
+            else:
+                await self.middleware.call('k8s.storage_class.create', storage_class)
         except Exception:
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed. TODO: do this after query

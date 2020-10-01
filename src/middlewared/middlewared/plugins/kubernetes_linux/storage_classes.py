@@ -55,17 +55,12 @@ class KubernetesStorageClassService(CRUDService):
 
     async def setup_default_storage_class_internal(self):
         storage_ds = os.path.join((await self.middleware.call('kubernetes.config'))['dataset'], 'default_volumes')
-        config = {
-            'apiVersion': 'storage.k8s.io/v1',
-            'kind': 'StorageClass',
-            'metadata': {
-                'name': DEFAULT_STORAGE_CLASS,
-                'annotations': {'storageclass.kubernetes.io/is-default-class': 'true'}
-            },
-            'parameters': {'fstype': 'zfs', 'poolname': storage_ds},
-            'provisioner': 'zfs.csi.openebs.io',
-            'allowVolumeExpansion': True,
-        }
+        config = await self.retrieve_storage_class_manifest()
+        config['metadata'].update({
+            'name': DEFAULT_STORAGE_CLASS,
+            'annotations': {'storageclass.kubernetes.io/is-default-class': 'true'},
+        })
+        config['parameters']['poolname'] = storage_ds
 
         if await self.query([
             ['metadata.annotations.storageclass\\.kubernetes\\.io/is-default-class', '=', 'true'],
@@ -74,3 +69,16 @@ class KubernetesStorageClassService(CRUDService):
             await self.middleware.call('k8s.storage_class.update', DEFAULT_STORAGE_CLASS, config)
         else:
             await self.middleware.call('k8s.storage_class.create', config)
+
+    async def retrieve_storage_class_manifest(self):
+        return {
+            'apiVersion': 'storage.k8s.io/v1',
+            'kind': 'StorageClass',
+            'metadata': {
+                'name': None,
+                'annotations': {'storageclass.kubernetes.io/is-default-class': 'true'}
+            },
+            'parameters': {'fstype': 'zfs', 'poolname': None},
+            'provisioner': 'zfs.csi.openebs.io',
+            'allowVolumeExpansion': True,
+        }
