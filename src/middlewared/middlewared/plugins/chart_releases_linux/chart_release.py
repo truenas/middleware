@@ -27,6 +27,7 @@ class ChartReleaseService(CRUDService):
         if not await self.middleware.call('service.started', 'kubernetes'):
             return []
 
+        k8s_config = await self.middleware.call('kubernetes.config')
         options = options or {}
         extra = copy.deepcopy(options.get('extra', {}))
         get_resources = extra.get('retrieve_resources')
@@ -57,7 +58,8 @@ class ChartReleaseService(CRUDService):
                 'catalog': release_secret['metadata']['labels'].get(
                     'catalog', await self.middleware.call('catalog.official_catalog_label')
                 ),
-                'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test')
+                'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test'),
+                'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name)
             })
             if get_resources:
                 release_data['resources'] = {r.name: resources[r.name][name] for r in Resources}
@@ -99,8 +101,6 @@ class ChartReleaseService(CRUDService):
         new_values = copy.deepcopy(default_values)
         new_values.update(data['values'])
         await self.middleware.call('chart.release.validate_values', item_details, new_values)
-        # TODO: Validate if the release name has not been already used, let's do that once we have query
-        # in place
 
         # Now that we have completed validation for the item in question wrt values provided,
         # we will now perform the following steps
@@ -165,6 +165,35 @@ class ChartReleaseService(CRUDService):
             if await self.middleware.call('pool.dataset.query', [['id', '=', release_ds]]):
                 await self.middleware.call('zfs.dataset.delete', release_ds, {'recursive': True, 'force': True})
             raise
+
+    @accepts(
+        Str('chart_release'),
+        Dict(
+            'chart_release_update',
+            Dict('values', additional_attrs=True),
+        )
+    )
+    async def do_update(self, chart_release, data):
+        release = await self.get_instance(chart_release)
+        chart_path = os.path.join(release['path'], 'charts', release['chart_metadata']['version'])
+        if not os.path.exists(chart_path):
+            raise CallError(
+                f'Unable to locate {chart_path!r} chart version for updating {chart_release!r} chart release'
+            )
+
+        version_details = await self.middleware.call('catalog.item_version_details', chart_path)
+        config = copy.deepcopy(release['config'])
+        config.update(data['values'])
+        await self.middleware.call('chart.release.validate_values', version_details, config)
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(yaml.dump(config))
+            f.flush()
+
+            cp = await run(
+                ['helm', 'upgrade', chart_release, chart_path, '-n', CHART_NAMESPACE, '-f', f.name], check=False
+            )
+            if cp.returncode:
+                raise CallError(f'Failed to update chart release: {cp.stderr.decode()}')
 
     @accepts(Str('release_name'))
     async def do_delete(self, release_name):
