@@ -80,7 +80,7 @@ class SupportService(ConfigService):
         Returns whether Proactive Support is available for this product type and current license.
         """
 
-        if await self.middleware.call('system.is_freenas'):
+        if not await self.middleware.call('system.is_enterptise'):
             return False
 
         license = (await self.middleware.call('system.info'))['license']
@@ -126,7 +126,7 @@ class SupportService(ConfigService):
 
         self.middleware.call_sync('network.general.will_perform_activity', 'support')
 
-        sw_name = 'freenas' if self.middleware.call_sync('system.is_freenas') else 'truenas'
+        sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
         try:
             r = requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
@@ -182,7 +182,7 @@ class SupportService(ConfigService):
 
         job.set_progress(1, 'Gathering data')
 
-        sw_name = 'freenas' if await self.middleware.call('system.is_freenas') else 'truenas'
+        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
 
         if sw_name == 'freenas':
             required_attrs = ('type', 'username', 'password')
@@ -246,10 +246,7 @@ class SupportService(ConfigService):
                 'system.debug', pipes=Pipes(output=self.middleware.pipe()),
             )
 
-            not_freenas = not (await self.middleware.call('system.is_freenas'))
-            if not_freenas:
-                not_freenas &= await self.middleware.call('failover.licensed')
-            if not_freenas:
+            if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.licensed'):
                 debug_name = 'debug-{}.tar'.format(time.strftime('%Y%m%d%H%M%S'))
             else:
                 debug_name = 'debug-{}-{}.txz'.format(
@@ -312,7 +309,7 @@ class SupportService(ConfigService):
 
         await self.middleware.call('network.general.will_perform_activity', 'support')
 
-        sw_name = 'freenas' if await self.middleware.call('system.is_freenas') else 'truenas'
+        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
 
         if 'username' in data:
             data['user'] = data.pop('username')
