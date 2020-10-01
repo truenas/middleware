@@ -5,6 +5,7 @@ except ImportError:
     acl = None
 import errno
 import enum
+import functools
 import grp
 import os
 import pwd
@@ -14,6 +15,10 @@ import subprocess
 import stat as pystat
 
 import psutil
+try:
+    import pyinotify
+except ImportError:
+    pyinotify = None
 
 from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accepts
@@ -1128,22 +1133,59 @@ class FileFollowTailEventSource(EventSource):
             self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
             f.seek(fsize)
 
-            kqueue = select.kqueue()
+            if osc.IS_FREEBSD:
+                gen = self._follow_freebsd(f)
+            else:
+                gen = self._follow_linux(path, f)
 
-            ev = [select.kevent(
-                f.fileno(),
-                filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
-                fflags=select.KQ_NOTE_DELETE | select.KQ_NOTE_EXTEND | select.KQ_NOTE_WRITE | select.KQ_NOTE_ATTRIB,
-            )]
-            kqueue.control(ev, 0, 0)
+            for data in gen:
+                self.send_event('ADDED', fields={'data': data})
 
-            while not self._cancel.is_set():
-                events = kqueue.control([], 1, 1)
-                if not events:
-                    continue
-                # TODO: handle other file operations other than just extend/write
-                self.send_event('ADDED', fields={'data': f.read()})
+    def _follow_freebsd(self, f):
+        kqueue = select.kqueue()
+
+        ev = [select.kevent(
+            f.fileno(),
+            filter=select.KQ_FILTER_VNODE,
+            flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
+            fflags=select.KQ_NOTE_DELETE | select.KQ_NOTE_EXTEND | select.KQ_NOTE_WRITE | select.KQ_NOTE_ATTRIB,
+        )]
+        kqueue.control(ev, 0, 0)
+
+        while not self._cancel.is_set():
+            events = kqueue.control([], 1, 1)
+            if not events:
+                continue
+            # TODO: handle other file operations other than just extend/write
+            yield f.read()
+
+    def _follow_linux(self, path, f):
+        queue = []
+        watch_manager = pyinotify.WatchManager()
+        notifier = pyinotify.Notifier(watch_manager)
+        watch_manager.add_watch(path, pyinotify.IN_MODIFY, functools.partial(self._follow_linux_callback, queue, f))
+
+        data = f.read()
+        if data:
+            yield data
+
+        while not self._cancel.is_set():
+            notifier.process_events()
+
+            data = "".join(queue)
+            if data:
+                yield data
+            queue[:] = []
+
+            if notifier.check_events():
+                notifier.read_events()
+
+        notifier.stop()
+
+    def _follow_linux_callback(self, queue, f, event):
+        data = f.read()
+        if data:
+            queue.append(data)
 
 
 def setup(middleware):
