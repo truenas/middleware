@@ -70,13 +70,12 @@ group = 'root' if scale else 'wheel'
 
 
 @pytest.mark.dependency(name="ad_01")
-def test_01_get_nameserver1_and_nameserver2(request):
+def test_01_get_nameserver1(request):
     depends(request, ["pool_04"], scope="session")
-    global nameserver1, nameserver2
+    global nameserver1
     results = GET("/network/configuration/")
     assert results.status_code == 200, results.text
     nameserver1 = results.json()['nameserver1']
-    nameserver2 = results.json()['nameserver2']
 
 
 @pytest.mark.dependency(name="ad_02")
@@ -85,8 +84,6 @@ def test_02_set_nameserver_for_ad(request):
     global payload
     payload = {
         "nameserver1": ADNameServer,
-        "nameserver2": nameserver1,
-        "nameserver3": nameserver2
     }
     global results
     results = PUT("/network/configuration/", payload)
@@ -711,8 +708,6 @@ def test_76_configure_setting_domain_hostname_and_dns(request):
     global payload
     payload = {
         "nameserver1": nameserver1,
-        "nameserver2": nameserver2,
-        "nameserver3": ""
     }
     global results
     results = PUT("/network/configuration/", payload)
