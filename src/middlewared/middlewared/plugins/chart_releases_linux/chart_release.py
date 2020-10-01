@@ -14,6 +14,7 @@ from .utils import CHART_NAMESPACE, run
 
 class Resources(enum.Enum):
     DEPLOYMENTS = 'deployments'
+    PODS = 'pods'
 
 
 class ChartReleaseService(CRUDService):
@@ -31,13 +32,20 @@ class ChartReleaseService(CRUDService):
         get_resources = extra.get('retrieve_resources')
         if get_resources:
             resources = {r.name: collections.defaultdict(list) for r in Resources}
-            for resource, namespace, r_filters in (
-                (Resources.DEPLOYMENTS, 'k8s.deployment', [
-                    ['metadata.labels.app\\.kubernetes\\.io/managed-by', '=', 'Helm']
-                ]),
+            for resource, namespace, r_filters, n_func in (
+                (
+                    Resources.DEPLOYMENTS, 'k8s.deployment', [
+                        ['metadata.labels.app\\.kubernetes\\.io/managed-by', '=', 'Helm'],
+                    ], lambda r: r['metadata']['labels']['app.kubernetes.io/instance']
+                ),
+                (
+                    Resources.PODS, 'k8s.pod', [['metadata.labels.app\\.kubernetes\\.io/instance', '!=', None]],
+                    lambda r: r['metadata']['labels']['app.kubernetes.io/instance']
+                ),
             ):
+                r_filters += [['metadata.namespace', '=', CHART_NAMESPACE]]
                 for r_data in await self.middleware.call(f'{namespace}.query', r_filters):
-                    resources[resource.name][r_data['metadata']['labels']['app.kubernetes.io/instance']].append(r_data)
+                    resources[resource.name][n_func(r_data)].append(r_data)
 
         release_secrets = await self.middleware.call('chart.release.releases_secrets')
         releases = []
@@ -47,7 +55,8 @@ class ChartReleaseService(CRUDService):
                 'history': release['releases'],
             })
             if get_resources:
-                release_data['resources'] = resources
+                release_data['resources'] = {r.name: resources[r.name][name] for r in Resources}
+
             releases.append(release_data)
 
         return filter_list(releases, filters, options)
