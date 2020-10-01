@@ -9,7 +9,7 @@ import yaml
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, filter_list, private
 
-from .utils import CHART_NAMESPACE, run
+from .utils import CHART_NAMESPACE, run, get_storage_class_name
 
 
 class Resources(enum.Enum):
@@ -32,6 +32,10 @@ class ChartReleaseService(CRUDService):
         extra = copy.deepcopy(options.get('extra', {}))
         get_resources = extra.get('retrieve_resources')
         if get_resources:
+            storage_classes = collections.defaultdict(lambda: None)
+            for storage_class in await self.middleware.call('k8s.storage_class.query'):
+                storage_classes[storage_class['metadata']['name']] = storage_class
+
             resources = {r.name: collections.defaultdict(list) for r in Resources}
             for resource, namespace, r_filters, n_func in (
                 (
@@ -62,7 +66,10 @@ class ChartReleaseService(CRUDService):
                 'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name)
             })
             if get_resources:
-                release_data['resources'] = {r.name: resources[r.name][name] for r in Resources}
+                release_data['resources'] = {
+                    'storage_class': storage_classes[get_storage_class_name(name)],
+                    **{r.name: resources[r.name][name] for r in Resources},
+                }
 
             releases.append(release_data)
 
@@ -110,7 +117,7 @@ class ChartReleaseService(CRUDService):
         # 4) Create storage class
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
-        storage_class_name = f'ix-storage_class-{data["release_name"]}'
+        storage_class_name = get_storage_class_name(data['release_name'])
         try:
             for dataset in await self.release_datasets(release_ds):
                 if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
@@ -139,9 +146,7 @@ class ChartReleaseService(CRUDService):
             storage_class['parameters']['poolname'] = os.path.join(release_ds, 'volumes')
             if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
                 # It should not exist already, but even if it does, that's not fatal
-                await self.middleware.call(
-                    'k8s.storage_class.update', f'ix-storage_class-{data["release_name"]}', storage_class
-                )
+                await self.middleware.call('k8s.storage_class.update', storage_class_name, storage_class)
             else:
                 await self.middleware.call('k8s.storage_class.create', storage_class)
 
