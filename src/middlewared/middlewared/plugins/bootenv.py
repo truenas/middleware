@@ -43,6 +43,7 @@ class BootEnvService(CRUDService):
                 'name': name,
                 'active': fields[1],
                 'activated': 'n' in fields[1].lower(),
+                'can_activate': False,
                 'mountpoint': fields[2],
                 'space': None if osc.IS_LINUX else fields[3],
                 'created': datetime.strptime(fields[3 if osc.IS_LINUX else 4], '%Y-%m-%d %H:%M'),
@@ -121,6 +122,14 @@ class BootEnvService(CRUDService):
 
                 be['space'] = f'{round(float(be["space"][:-1]), 2)}{be["space"][-1]}'
 
+                if osc.IS_FREEBSD:
+                    be['can_activate'] = 'truenas:kernel_version' not in ds['properties']
+                if osc.IS_LINUX:
+                    be['can_activate'] = (
+                        'truenas:kernel_version' in ds['properties'] or
+                        'truenas:12' in ds['properties']
+                    )
+
             results.append(be)
         return filter_list(results, filters, options)
 
@@ -130,6 +139,10 @@ class BootEnvService(CRUDService):
         """
         Activates boot environment `id`.
         """
+        be = self.middleware.call_sync('bootenv.query', [['id', '=', oid]], {'get': True})
+        if not be['can_activate']:
+            raise CallError('This BE cannot be activated')
+
         try:
             subprocess.run([self.BE_TOOL, 'activate', oid], capture_output=True, text=True, check=True)
         except subprocess.CalledProcessError as cpe:

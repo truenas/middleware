@@ -79,6 +79,9 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		oath-toolkit>0:security/oath-toolkit \
 		avahi-app>0:net/avahi-app \
 		dmidecode>0:sysutils/dmidecode \
+		grub2>0:sysutils/grub2 \
+		grub2-x86_64-efi>0:sysutils/grub2-x86_64-efi \
+		squashfs-tools>0:sysutils/squashfs-tools \
 		${PYTHON_PKGNAMEPREFIX}packaging>0:devel/py-packaging@${PY_FLAVOR} \
 		rclone>0:net/rclone \
 		ifstat>0:net/ifstat \

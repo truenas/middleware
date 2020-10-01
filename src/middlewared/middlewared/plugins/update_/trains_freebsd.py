@@ -116,6 +116,9 @@ class UpdateService(Service):
                 'sequence': train.LastSequence(),
             }
 
+        scale_trains = self.middleware.call_sync('update.get_scale_trains_data')
+        trains.update(**scale_trains['trains'])
+
         return {
             'trains': trains,
             'current_train': conf.CurrentTrain(),
@@ -146,6 +149,10 @@ class UpdateService(Service):
 
     @private
     def check_train(self, train):
+        if 'SCALE' in train:
+            old_version = self.middleware.call_sync('system.version').split('-', 1)[1]
+            return self.middleware.call_sync('update.get_scale_update', train, old_version)
+
         handler = CheckUpdateHandler()
         manifest = CheckForUpdates(
             diff_handler=handler.diff_call,

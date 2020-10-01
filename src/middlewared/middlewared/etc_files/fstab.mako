@@ -8,12 +8,14 @@
 			base = f.read()
 	else:
 		base = ''
+
+	boot_pool_name = middleware.call_sync('boot.pool_name')
 %>\
 % if base:
 ${base}
 % endif
 % if IS_LINUX:
-boot-pool/grub /boot/grub	zfs	relatime,defaults	0	0
+${boot_pool_name}/grub /boot/grub	zfs	relatime,defaults	0	0
 % else:
 fdescfs	/dev/fd	fdescfs rw	0 0
 % endif
