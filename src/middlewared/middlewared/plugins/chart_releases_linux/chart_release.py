@@ -105,6 +105,7 @@ class ChartReleaseService(CRUDService):
         # 4) Create storage class
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
+        storage_class_name = f'ix-storage_class-{data["release_name"]}'
         try:
             for dataset in await self.release_datasets(release_ds):
                 if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
@@ -129,10 +130,9 @@ class ChartReleaseService(CRUDService):
                 raise CallError(f'Failed to install catalog item: {cp.stderr}')
 
             storage_class = await self.middleware.call('k8s.storage_class.retrieve_storage_class_manifest')
-            storage_class_name = f'ix-storage_class-{data["release_name"]}'
             storage_class['metadata']['name'] = storage_class_name
             storage_class['parameters']['poolname'] = os.path.join(release_ds, 'volumes')
-            if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', data['release_name']]]):
+            if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
                 # It should not exist already, but even if it does, that's not fatal
                 await self.middleware.call(
                     'k8s.storage_class.update', f'ix-storage_class-{data["release_name"]}', storage_class
@@ -141,7 +141,19 @@ class ChartReleaseService(CRUDService):
                 await self.middleware.call('k8s.storage_class.create', storage_class)
         except Exception:
             # Do a rollback here
-            # Let's uninstall the release as well if it did get installed. TODO: do this after query
+            # Let's uninstall the release as well if it did get installed ( it is possible this might have happened )
+            if await self.query([['id', '=', data['release_name']]]):
+                try:
+                    await self.do_delete(data['release_name'])
+                except Exception as e:
+                    self.middleware.logger.error('Failed to uninstall helm chart release: %s', e)
+
+            if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
+                try:
+                    await self.middleware.call('k8s.storage_class.delete', storage_class_name)
+                except Exception as e:
+                    self.middleware.logger.error('Failed to remove %r storage class: %s', storage_class_name, e)
+
             if await self.middleware.call('pool.dataset.query', [['id', '=', release_ds]]):
                 await self.middleware.call('zfs.dataset.delete', release_ds, {'recursive': True, 'force': True})
             raise
