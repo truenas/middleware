@@ -279,6 +279,7 @@ class Logger(object):
     def _set_output_file(self):
         """Set the output format for file log."""
         try:
+            os.makedirs(os.path.dirname(FAILOVER_LOGFILE), mode=0o755, exist_ok=True)
             dictConfig(self.DEFAULT_LOGGING)
         except Exception:
             # If something happens during system dataset reconfiguration, we have the chance of not having
@@ -295,11 +296,6 @@ class Logger(object):
             pass
         try:
             os.chmod(ZETTAREPL_LOGFILE, 0o640)
-        except OSError:
-            pass
-        try:
-            dirname = os.path.dirname(FAILOVER_LOGFILE)
-            os.makedirs(dirname, exist_ok=True)
         except OSError:
             pass
 
