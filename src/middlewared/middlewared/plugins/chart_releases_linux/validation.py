@@ -3,7 +3,7 @@ import itertools
 from middlewared.service import private, Service
 from middlewared.validators import validate_attributes
 
-from .schema import get_schema
+from .utils import get_schema
 
 
 class ChartReleaseService(Service):

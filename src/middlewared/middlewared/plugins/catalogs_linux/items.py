@@ -78,7 +78,7 @@ class CatalogService(Service):
 
         data = {}
         for ref in question['schema']['$ref']:
-            if ref == 'definitions/interfaces':
+            if ref == 'definitions/interface':
                 data['enum'] = [d['id'] for d in self.middleware.call_sync('interface.query')]
 
         question['schema'].update(data)
