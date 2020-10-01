@@ -48,6 +48,9 @@ UseReverseDNS ${'on' if ftp['reversedns'] else 'off'}
     PassivePorts  ${ftp['passiveportsmin']} ${ftp['passiveportsmax']}
 % endif
 
+% if IS_LINUX:
+AuthOrder mod_auth_unix.c
+% endif
 % if ftp['onlyanonymous']:
     % if ftp['anonpath'] and os.path.isdir(ftp['anonpath']):
         <Anonymous ${ftp['anonpath']}>
