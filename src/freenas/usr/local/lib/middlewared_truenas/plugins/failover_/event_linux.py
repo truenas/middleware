@@ -156,8 +156,8 @@ class FailoverService(Service):
         try:
             for vol in volumes:
                 if vol['status'] != 'OFFLINE':
-                    self.middleware.call_sync('zfs.pool.export', vol, {'force': True})
-                    logger.info('Exported "%s"', vol)
+                    self.middleware.call_sync('zfs.pool.export', vol['name'], {'force': True})
+                    logger.info('Exported "%s"', vol['name'])
         except Exception as e:
             # catch any exception that could be raised
             # We sleep for 5 seconds here because this is
@@ -165,8 +165,8 @@ class FailoverService(Service):
             # for self.ZPOOL_EXPORT_TIMEOUT and if this
             # thread is_alive(), then we violently reboot
             # the node
-            logger.error('Error exporting "{}" with error {}'.format(vol, e))
-            time.sleep(5)
+            logger.error('Error exporting "%s" with error %s', vol['name'], e)
+            time.sleep(self.ZPOOL_EXPORT_TIMEOUT + 1)
 
     def generate_failover_data(self):
 
