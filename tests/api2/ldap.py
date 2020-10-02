@@ -7,7 +7,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT
 
-BSDReason = 'LDAPBASEDN, LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD,' \
+Reason = 'LDAPBASEDN, LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD,' \
     ' LDAPHOSTNAME are missing'
 try:
     from config import (
@@ -16,9 +16,9 @@ try:
         LDAPBINDPASSWORD,
         LDAPHOSTNAME,
     )
-    ldap_test_cfg = pytest.mark.skipif(False, reason=BSDReason)
+    ldap_test_cfg = pytest.mark.skipif(False, reason=Reason)
 except ImportError:
-    ldap_test_cfg = pytest.mark.skipif(True, reason=BSDReason)
+    ldap_test_cfg = pytest.mark.skipif(True, reason=Reason)
 
 
 def test_01_get_ldap():

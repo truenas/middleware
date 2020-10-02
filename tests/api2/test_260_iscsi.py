@@ -9,29 +9,23 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-
 from auto_config import ip, user, password, pool_name
-# SHOULD IMPORT FOLLOWING VARIABLES - BSD_HOST, BSD_PASSWORD, BSD_USERNAME
-from config import *
-from functions import PUT, POST, GET, SSH_TEST, return_output, DELETE
+from functions import PUT, POST, GET, SSH_TEST, DELETE
 
-global DEVICE_NAME
+
+try:
+    Reason = 'BSD host configuration is missing in ixautomation.conf'
+    from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
+    bsd_host_cfg = pytest.mark.skipif(False, reason=Reason)
+except ImportError:
+    bsd_host_cfg = pytest.mark.skipif(True, reason=Reason)
 
 MOUNTPOINT = '/tmp/iscsi'
-
+global DEVICE_NAME
 DEVICE_NAME = ""
 TARGET_NAME = "iqn.1994-09.freenasqa:target0"
-Reason = "BRIDGEHOST is missing in ixautomation.conf"
-BSDReason = 'BSD host configuration is missing in ixautomation.conf'
-
-bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
-                                       "BSD_USERNAME" in locals(),
-                                       "BSD_PASSWORD" in locals()
-                                       ]) is False, reason=BSDReason)
 
 
-# Create tests
-# Add iSCSI initator
 def test_01_Add_iSCSI_initiator():
     payload = {
         'comment': 'Default initiator',
@@ -63,7 +57,7 @@ def test_03_Add_ISCSI_target():
     payload = {
         'name': TARGET_NAME,
         'groups': [
-            {'portal': 1}
+            {'portal': portal_id}
         ]
     }
     results = POST("/iscsi/target/", payload)
@@ -140,19 +134,16 @@ def test_09_Connecting_to_iSCSI_target(request):
 
 
 @bsd_host_cfg
-def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
-    depends(request, ["pool_04"], scope="session")
+@pytest.mark.timeout(10)
+def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name():
     while True:
-        SSH_TEST('iscsictl -L', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-        state = 'cat /tmp/.sshCmdTestStdOut | '
-        state += 'awk \'$2 == "%s:3620" {print $3}\'' % ip
-        iscsi_state = return_output(state)
-        if iscsi_state == "Connected:":
-            dev = 'cat /tmp/.sshCmdTestStdOut | '
-            dev += 'awk \'$2 == "%s:3620" {print $4}\'' % ip
-            iscsi_dev = return_output(dev)
+        cmd = f'iscsictl -L | grep {ip}:3620'
+        results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+        assert results['result'] is True, results['output']
+        iscsictl_list = results['output'].strip().split()
+        if iscsictl_list[2] == "Connected:":
             global DEVICE_NAME
-            DEVICE_NAME = iscsi_dev
+            DEVICE_NAME = iscsictl_list[3]
             assert True
             break
         sleep(3)
@@ -160,9 +151,10 @@ def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
 
 @bsd_host_cfg
 def test_11_Format_the_target_volume(request):
-    depends(request, ["pool_04"], scope="session")
-    results = SSH_TEST('newfs "/dev/%s"' % DEVICE_NAME,
-                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    cmd = f'umount "/media/{DEVICE_NAME}"'
+    SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    cmd2 = f'newfs "/dev/{DEVICE_NAME}"'
+    results = SSH_TEST(cmd2, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
@@ -218,36 +210,33 @@ def test_17_Deleting_file(request):
 def test_18_verifiying_iscsi_session_on_freenas(request):
     depends(request, ["pool_04"], scope="session")
     try:
-        result = SSH_TEST('ctladm islist', user, password, ip)
-        assert result['result'] is True, result['output']
+        results = SSH_TEST('ctladm islist', user, password, ip)
+        assert results['result'] is True, results['output']
+        hostname = SSH_TEST('hostname', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)['output'].strip()
     except AssertionError as e:
         raise AssertionError(f'Could not verify iscsi session on freenas : {e}')
     else:
-        iscsi_con_ip = result['output']
-        assert BSD_HOST in iscsi_con_ip, 'No active session on FreeNAS for iSCSI'
+        assert hostname in results['output'], 'No active session on FreeNAS for iSCSI'
 
 
 @bsd_host_cfg
-def test_19_Unmounting_iSCSI_volume(request):
-    depends(request, ["pool_04"], scope="session")
-    results = SSH_TEST('umount "%s"' % MOUNTPOINT,
-                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+def test_19_Unmounting_iSCSI_volume():
+    cmd = f'umount "{MOUNTPOINT}"'
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_20_Removing_iSCSI_volume_mountpoint(request):
-    depends(request, ["pool_04"], scope="session")
-    results = SSH_TEST('rm -rf "%s"' % MOUNTPOINT,
-                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+def test_20_Removing_iSCSI_volume_mountpoint():
+    cmd = 'rm -rf "MOUNTPOINT"'
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 def test_21_Disconnect_iSCSI_target(request):
-    depends(request, ["pool_04"], scope="session")
-    results = SSH_TEST('iscsictl -R -t %s' % TARGET_NAME,
-                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    cmd = f'iscsictl -R -t {TARGET_NAME}'
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
