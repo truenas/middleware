@@ -80,6 +80,11 @@ class ChartReleaseService(CRUDService):
 
         return filter_list(releases, filters, options)
 
+    @private
+    async def normalise_and_validate_values(self, item_details, values, update):
+        attrs = await self.middleware.call('chart.release.validate_values', item_details, values)
+        return await self.middleware.call('chart.release.get_normalised_values', attrs, values, update)
+
     @accepts(
         Dict(
             'chart_release_create',
@@ -112,7 +117,7 @@ class ChartReleaseService(CRUDService):
         default_values = item_details['values']
         new_values = copy.deepcopy(default_values)
         new_values.update(data['values'])
-        await self.middleware.call('chart.release.validate_values', item_details, new_values)
+        new_values = await self.normalise_and_validate_values(item_details, new_values, False)
 
         # Now that we have completed validation for the item in question wrt values provided,
         # we will now perform the following steps
@@ -192,8 +197,10 @@ class ChartReleaseService(CRUDService):
             )
 
         version_details = await self.middleware.call('catalog.item_version_details', chart_path)
-        config = data['values']
-        await self.middleware.call('chart.release.validate_values', version_details, config)
+        config = release['config']
+        config.update(data['values'])
+        config = await self.normalise_and_validate_values(version_details, config, True)
+
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))
             f.flush()

@@ -13,9 +13,8 @@ class ChartReleaseService(Service):
 
     @private
     async def validate_values(self, item_version_details, new_values):
-        verrors = validate_attributes(
-            [get_schema(q) for q in item_version_details['questions']], {'values': new_values}, attr_key='values'
-        )
+        attrs = [get_schema(q) for q in item_version_details['questions']]
+        verrors = validate_attributes(attrs, {'values': new_values}, attr_key='values')
         verrors.check()
 
         # If schema is okay, we see if we have question specific validation to be performed
@@ -23,6 +22,8 @@ class ChartReleaseService(Service):
             await self.validate_question(verrors, question)
 
         verrors.check()
+
+        return attrs
 
     @private
     async def validate_question(self, verrors, question):
