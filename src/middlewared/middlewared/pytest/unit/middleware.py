@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from asynctest import CoroutineMock, Mock
 
@@ -15,6 +16,8 @@ class Middleware(dict):
 
         self.call_hook = CoroutineMock()
         self.call_hook_inline = Mock()
+
+        self.logger = logging.getLogger("middlewared")
 
     async def _call(self, name, serviceobj, method, args, app=None):
         to_resolve = [getattr(serviceobj, attr) for attr in dir(serviceobj) if attr != 'query']
