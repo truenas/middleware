@@ -84,7 +84,7 @@ def test_08_verify_ldap_state_after_is_enabled_after_enabling_ldap():
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), str), results.text
-    assert results.json() == "ENABLED", results.text
+    assert results.json() == "HEALTHY", results.text
 
 
 @ldap_test_cfg
