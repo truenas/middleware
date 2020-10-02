@@ -81,9 +81,13 @@ class ChartReleaseService(CRUDService):
         return filter_list(releases, filters, options)
 
     @private
-    async def normalise_and_validate_values(self, item_details, values, update):
+    async def normalise_and_validate_values(self, item_details, values, update, release_name):
         attrs = await self.middleware.call('chart.release.validate_values', item_details, values)
-        return await self.middleware.call('chart.release.get_normalised_values', attrs, values, update)
+        return await self.middleware.call(
+            'chart.release.get_normalised_values', attrs, values, update, {
+                'release_name': release_name,
+            }
+        )
 
     @accepts(
         Dict(
@@ -117,7 +121,7 @@ class ChartReleaseService(CRUDService):
         default_values = item_details['values']
         new_values = copy.deepcopy(default_values)
         new_values.update(data['values'])
-        new_values = await self.normalise_and_validate_values(item_details, new_values, False)
+        new_values = await self.normalise_and_validate_values(item_details, new_values, False, data['release_name'])
 
         # Now that we have completed validation for the item in question wrt values provided,
         # we will now perform the following steps
@@ -127,7 +131,7 @@ class ChartReleaseService(CRUDService):
         # 4) Create storage class
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
-        storage_class_name = get_storage_class_name(data['release_name'])
+        storage_class_name = await get_storage_class_name(data['release_name'])
         try:
             for dataset in await self.release_datasets(release_ds):
                 if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
@@ -161,7 +165,10 @@ class ChartReleaseService(CRUDService):
                 await self.middleware.call('k8s.storage_class.create', storage_class)
 
             # TODO: Let's see doing this with k8s possibly making it more robust
-            await self.middleware.call('chart.release.update_unlabelled_secrets_for_release', data['release_name'])
+            await self.middleware.call(
+                'chart.release.update_unlabelled_secrets_for_release',
+                data['release_name'], data['catalog'], data['train'],
+            )
         except Exception:
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed ( it is possible this might have happened )
@@ -199,7 +206,7 @@ class ChartReleaseService(CRUDService):
         version_details = await self.middleware.call('catalog.item_version_details', chart_path)
         config = release['config']
         config.update(data['values'])
-        config = await self.normalise_and_validate_values(version_details, config, True)
+        config = await self.normalise_and_validate_values(version_details, config, True, chart_release)
 
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))

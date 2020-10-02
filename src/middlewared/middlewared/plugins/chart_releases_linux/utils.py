@@ -23,7 +23,7 @@ async def run(*args, **kwargs):
 
 
 async def get_storage_class_name(release):
-    return f'ix-storage_class-{release}'
+    return f'ix-storage-class-{release}'
 
 
 def get_schema(variable_details):
@@ -34,6 +34,7 @@ def get_schema(variable_details):
     else:
         obj = schema_class(variable_details['variable'], *[get_schema(var) for var in schema_details['attrs']])
 
+    obj.ref = schema_details.get('$ref', [])
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
     for k in filter(lambda k: k in schema_details, ('required', 'default', 'private', 'enum')):
         setattr(obj, k, schema_details[k])
@@ -52,3 +53,7 @@ def get_schema(variable_details):
         obj.items = [get_schema(i) for i in schema_details['items']]
 
     return obj
+
+
+def get_network_attachment_definition_name(release, count):
+    return f'ix-{release}-{count}'
