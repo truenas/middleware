@@ -3,7 +3,7 @@ import os
 import time
 import contextlib
 import shutil
-import signal
+import threading
 import logging
 from collections import defaultdict
 
@@ -38,16 +38,6 @@ class AllZpoolsFailedToImport(Exception):
     """
     This is raised if all zpools failed to
     import when becoming master.
-    """
-    pass
-
-
-class ZpoolExportTimeout(Exception):
-
-    """
-    This is raised if we can't export the
-    zpool(s) from the system when becoming
-    BACKUP
     """
     pass
 
@@ -141,6 +131,9 @@ class FailoverService(Service):
     def run_call(self, method, *args):
         try:
             return self.middleware.call_sync(method, *args)
+        except IgnoreFailoverEvent:
+            # `self.validate()` calls this method
+            raise
         except Exception as e:
             logger.error('Failed to run %s:%r:%s', method, args, e)
 
@@ -157,9 +150,23 @@ class FailoverService(Service):
             if refresh:
                 self.run_call('failover.status_refresh')
 
-    def _zpool_export_sig_alarm(self, sig, tb):
+    def _export_zpools(self, volumes):
 
-        raise ZpoolExportTimeout()
+        # export the zpool(s)
+        try:
+            for vol in volumes:
+                if vol['status'] != 'OFFLINE':
+                    self.middleware.call_sync('zfs.pool.export', vol, {'force': True})
+                    logger.info('Exported "%s"', vol)
+        except Exception as e:
+            # catch any exception that could be raised
+            # We sleep for 5 seconds here because this is
+            # in its own thread. The calling thread waits
+            # for self.ZPOOL_EXPORT_TIMEOUT and if this
+            # thread is_alive(), then we violently reboot
+            # the node
+            logger.error('Error exporting "{}" with error {}'.format(vol, e))
+            time.sleep(5)
 
     def generate_failover_data(self):
 
@@ -235,7 +242,7 @@ class FailoverService(Service):
             if i['method'] == 'failover.events.vrrp_master':
                 # if the incoming event is also a MASTER event then log it and ignore
                 if event in ('MASTER', 'forcetakeover'):
-                    logger.warning(
+                    logger.info(
                         'A failover MASTER event is already being processed, ignoring.'
                     )
                     raise IgnoreFailoverEvent()
@@ -243,7 +250,7 @@ class FailoverService(Service):
             if i['method'] == 'failover.events.vrrp_backup':
                 # if the incoming event is also a BACKUP event then log it and ignore
                 if event == 'BACKUP':
-                    logger.warning(
+                    logger.info(
                         'A failover BACKUP event is already being processed, ignoring.'
                     )
                     raise IgnoreFailoverEvent()
@@ -252,12 +259,10 @@ class FailoverService(Service):
 
     def _event(self, ifname, event):
 
-        forcetakeover = (event == 'forcetakeover')
-
         # generate data to be used during the failover event
         fobj = self.generate_failover_data()
 
-        if not forcetakeover:
+        if event != 'forcetakeover':
             if fobj['disabled'] and not fobj['master']:
                 # if forcetakeover is false, and failover is disabled
                 # and we're not set as the master controller, then
@@ -276,37 +281,16 @@ class FailoverService(Service):
                 )
                 raise IgnoreFailoverEvent()
 
-            # this section needs to run as quick as possible so we check if the remote
-            # client is even connected before we try and start doing remote_calls
-            try:
-                remote_connected = self.run_call('failover.remote_connected')
-            except Exception:
-                remote_connected = False
-
-            # if the other controller is already master, then assume backup
-            if remote_connected:
-                if self.run_call('failover.call_remote', 'failover.status') == 'MASTER':
-                    logger.warning('Other node is already MASTER, assuming BACKUP.')
-                    raise IgnoreFailoverEvent()
-
-            # ensure the zpools are imported
             needs_imported = False
             for pool in self.run_call('pool.query', [('name', 'in', [i['name'] for i in fobj['volumes']])]):
                 if pool['status'] == 'OFFLINE':
                     needs_imported = True
                     break
 
-            # means all zpools are already imported so nothing else to do
-            if not needs_imported:
-                logger.warning('Failover disabled but zpool(s) are already imported. Assuming MASTER.')
-                return
-            # means at least 1 of the zpools are not imported so act accordingly
-            else:
-                # set the event to MASTER
-                event = 'MASTER'
-                # set force_fenced to True so that it's called with the --force option which
-                # guarantees the disks will be reserved by this controller
-                force_fenced = needs_imported
+            # means all zpools are already imported
+            if event == 'MASTER' and not needs_imported:
+                logger.warning('Received a MASTER event but zpools are already imported, ignoring.')
+                raise IgnoreFailoverEvent()
 
         # if we get here then the last verification step that
         # we need to do is ensure there aren't any current ongoing failover events
@@ -314,18 +298,14 @@ class FailoverService(Service):
 
         # start the MASTER failover event
         if event in ('MASTER', 'forcetakeover'):
-            return self.run_call(
-                'failover.events.vrrp_master', fobj, ifname, event, force_fenced, forcetakeover
-            )
+            return self.run_call('failover.events.vrrp_master', fobj, ifname, event)
 
         # start the BACKUP failover event
         elif event == 'BACKUP':
-            return self.run_call(
-                'failover.events.vrrp_backup', fobj, ifname, event, force_fenced
-            )
+            return self.run_call('failover.events.vrrp_backup', fobj, ifname, event)
 
     @job(lock='vrrp_master')
-    def vrrp_master(self, job, fobj, ifname, event, force_fenced, forcetakeover):
+    def vrrp_master(self, job, fobj, ifname, event):
 
         # vrrp does the "election" for us. If we've gotten this far
         # then the specified timeout for NOT receiving an advertisement
@@ -336,7 +316,7 @@ class FailoverService(Service):
         job.set_progress(None, description='ELECTING')
 
         fenced_error = None
-        if forcetakeover or force_fenced:
+        if event == 'forcetakeover':
             # reserve the disks forcefully ignoring if the other node has the disks
             logger.warning('Forcefully taking over as the MASTER node.')
 
@@ -554,7 +534,7 @@ class FailoverService(Service):
         return self.FAILOVER_RESULT
 
     @job(lock='vrrp_backup')
-    def vrrp_backup(self, job, fobj, ifname, event, force_fenced):
+    def vrrp_backup(self, job, fobj, ifname, event):
 
         # we need to check a couple things before we stop fenced
         # and start the process of becoming backup
@@ -615,24 +595,20 @@ class FailoverService(Service):
                 f.flush()  # be sure it goes straight to disk
                 os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
 
-        # set a countdown = to self.ZPOOL_EXPORT_TIMEOUT.
+        # export zpools in a thread and set a timeout to
+        # to `self.ZPOOL_EXPORT_TIMEOUT`.
         # if we can't export the zpool(s) in this timeframe,
         # we send the 'b' character to the /proc/sysrq-trigger
         # to trigger an immediate reboot of the system
         # https://www.kernel.org/doc/html/latest/admin-guide/sysrq.html
-        signal.signal(signal.SIGALRM, self._zpool_export_sig_alarm)
-        try:
-            signal.alarm(self.ZPOOL_EXPORT_TIMEOUT)
-            # export the zpool(s)
-            try:
-                for vol in fobj['volumes']:
-                    self.run_call('zfs.pool.export', vol['name'], {'force': True})
-                    logger.info('Exported "%s"', vol['name'])
-            except Exception:
-                # catch any exception that could be raised
-                # We sleep for 5 seconds to cause the signal timeout to occur.
-                time.sleep(5)
-        except ZpoolExportTimeout:
+        export_thread = threading.Thread(
+            target=self._export_zpools,
+            name='failover_export_zpools',
+            args=(fobj['volumes'])
+        )
+        export_thread.start()
+        export_thread.join(timeout=self.ZPOOL_EXPORT_TIMEOUT)
+        if export_thread.is_alive():
             # have to enable the "magic" sysrq triggers
             with open('/proc/sys/kernel/sysrq', 'w') as f:
                 f.write('1')
