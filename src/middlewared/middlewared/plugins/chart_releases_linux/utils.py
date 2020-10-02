@@ -1,6 +1,6 @@
 import os
 
-from middlewared.schema import Bool, Dict, HostPath, Int, List, Str
+from middlewared.schema import Bool, Dict, HostPath, Int, IPAddr, List, Str
 from middlewared.utils import run as _run
 from middlewared.validators import Match, Range
 
@@ -12,6 +12,7 @@ mapping = {
     'hostpath': HostPath,
     'list': List,
     'dict': Dict,
+    'ipaddr':  IPAddr,
 }
 
 CHART_NAMESPACE = 'default'
@@ -36,7 +37,10 @@ def get_schema(variable_details):
 
     obj.ref = schema_details.get('$ref', [])
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
-    for k in filter(lambda k: k in schema_details, ('required', 'default', 'private', 'enum')):
+    for k in filter(
+        lambda k: k in schema_details,
+        ('required', 'default', 'private', 'enum', 'ipv4', 'ipv6', 'cidr')
+    ):
         setattr(obj, k, schema_details[k])
 
     if schema_class in (Str, Int):
