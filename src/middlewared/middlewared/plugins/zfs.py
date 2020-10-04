@@ -1011,9 +1011,6 @@ class ZFSSnapshot(CRUDService):
     def do_create(self, data):
         """
         Take a snapshot from a given dataset.
-
-        Returns:
-            bool: True if succeed otherwise False.
         """
 
         dataset = data['dataset']
@@ -1052,6 +1049,8 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as err:
             self.logger.error(f'Failed to snapshot {dataset}@{name}: {err}')
             raise CallError(f'Failed to snapshot {dataset}@{name}: {err}')
+        else:
+            return self.middleware.call_sync('zfs.snapshot.get_instance', f'{dataset}@{name}')
         finally:
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
@@ -1093,6 +1092,8 @@ class ZFSSnapshot(CRUDService):
                 snap.delete(defer=options['defer'])
         except libzfs.ZFSException as e:
             raise CallError(str(e))
+        else:
+            return True
 
     @accepts(Dict(
         'snapshot_clone',
