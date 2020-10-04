@@ -2,7 +2,7 @@ import os
 
 from itertools import chain
 
-from middlewared.schema import Bool, Dict, HostPath, Int, IPAddr, List, Str
+from middlewared.schema import Bool, Dict, HostPath, Int, IPAddr, List, Path, Str
 from middlewared.utils import run as _run
 from middlewared.validators import Match, Range
 
@@ -11,13 +11,18 @@ mapping = {
     'string': Str,
     'int': Int,
     'boolean': Bool,
+    'path': Path,
     'hostpath': HostPath,
     'list': List,
     'dict': Dict,
-    'ipaddr':  IPAddr,
+    'ipaddr': IPAddr,
 }
 
 CHART_NAMESPACE = 'default'
+RESERVED_NAMES = [
+    ('ixExternalInterfacesConfiguration', list),
+    ('ixExternalInterfacesConfigurationNames', list),
+]
 
 
 async def run(*args, **kwargs):

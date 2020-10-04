@@ -5,16 +5,13 @@ from collections import Callable
 from middlewared.schema import Dict, List
 from middlewared.service import private, Service, ValidationErrors
 
-from .utils import get_network_attachment_definition_name
+from .utils import get_network_attachment_definition_name, RESERVED_NAMES
 
+# TODO: Let's please think of a better way to accomplish this as a whole
 
 REF_MAPPING = {
-    'normalise/interfaceConfiguration': 'interface_configuration'
+    'normalise/interfaceConfiguration': 'interface_configuration',
 }
-RESERVED_NAMES = [
-    ('externalInterfacesConfiguration', list),
-    ('externalInterfacesConfigurationNames', list),
-]
 
 
 class ChartReleaseService(Service):
@@ -80,7 +77,7 @@ class ChartReleaseService(Service):
     async def normalise_interface_configuration(self, attr, value, complete_config, context):
         assert isinstance(attr, Dict) is True
         name = get_network_attachment_definition_name(
-            context['release_name'], len(complete_config['externalInterfacesConfiguration'])
+            context['release_name'], len(complete_config['ixExternalInterfacesConfiguration'])
         )
         host_iface = value['hostInterface']
         iface_conf = {
@@ -111,7 +108,7 @@ class ChartReleaseService(Service):
 
         iface_conf['ipam'] = ipam_config
 
-        complete_config['externalInterfacesConfiguration'].append(json.dumps(iface_conf))
-        complete_config['externalInterfacesConfigurationNames'].append(name)
+        complete_config['ixExternalInterfacesConfiguration'].append(json.dumps(iface_conf))
+        complete_config['ixExternalInterfacesConfigurationNames'].append(name)
 
         return value

@@ -114,4 +114,3 @@ class KubernetesCronJobService(CRUDService):
                 await context['cronjob_batch_api'].delete_namespaced_cron_job(name, options['namespace'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete job: {e}')
-

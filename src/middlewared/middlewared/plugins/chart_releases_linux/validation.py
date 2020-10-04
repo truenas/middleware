@@ -4,7 +4,7 @@ from middlewared.schema import Dict
 from middlewared.service import private, Service
 from middlewared.validators import validate_attributes
 
-from .utils import get_schema, update_conditional_validation
+from .utils import get_schema, update_conditional_validation, RESERVED_NAMES
 
 
 class ChartReleaseService(Service):
@@ -14,6 +14,9 @@ class ChartReleaseService(Service):
 
     @private
     async def validate_values(self, item_version_details, new_values):
+        for k in RESERVED_NAMES:
+            new_values.pop(k[0], None)
+
         attrs = list(itertools.chain.from_iterable(get_schema(q) for q in item_version_details['questions']))
         verrors = validate_attributes(
             attrs, {'values': new_values}, attr_key='values', dict_kwargs={
