@@ -569,6 +569,7 @@ class Dict(Attribute):
 
     def __init__(self, name, *attrs, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
+        self.conditional_validation = kwargs.pop('conditional_validation', {})
         self.strict = kwargs.pop('strict', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
@@ -580,6 +581,16 @@ class Dict(Attribute):
         self.attrs = {}
         for i in attrs:
             self.attrs[i.name] = i
+
+        for k, v in self.conditional_validation.items():
+            if k not in self.attrs:
+                raise ValueError(f'Specified attribute {k!r} not found.')
+            for k_v in ('value', 'attrs'):
+                if k_v not in v:
+                    raise ValueError(f'Conditional validation must have {k_v} specified.')
+            for attr in v['attrs']:
+                if attr not in self.attrs:
+                    raise ValueError(f'Specified attribute {attr} not found.')
 
         if self.strict:
             for attr in self.attrs.values():
@@ -595,6 +606,15 @@ class Dict(Attribute):
     def has_private(self):
         return self.private or any(i.has_private() for i in self.attrs.values())
 
+    def get_attrs_to_skip(self, data):
+        skip_attrs = {}
+        for attr, attr_data in filter(
+            lambda k, v: k in data and data[k] != v['value'], self.conditional_validation.items()
+        ):
+            skip_attrs.update({k: attr for k in attr_data['attrs']})
+
+        return skip_attrs
+
     def clean(self, data):
         data = super().clean(data)
 
@@ -608,10 +628,17 @@ class Dict(Attribute):
         if not isinstance(data, dict):
             raise Error(self.name, 'A dict was expected')
 
+        skip_attrs = self.get_attrs_to_skip(data)
         for key, value in list(data.items()):
             if not self.additional_attrs:
                 if key not in self.attrs:
                     raise Error(key, 'Field was not expected')
+                if key in skip_attrs:
+                    raise Error(
+                        key,
+                        f'Field was not expected as {skip_attrs[key]!r} does not equal to '
+                        f'{self.conditional_validation[key]["value"]!r}'
+                    )
 
             attr = self.attrs.get(key)
             if not attr:
