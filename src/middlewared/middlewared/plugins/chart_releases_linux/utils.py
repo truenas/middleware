@@ -39,28 +39,28 @@ def update_conditional_validation(dict_obj, variable_details):
     return dict_obj
 
 
-def get_schema(variable_details, value):
+def get_schema(variable_details):
     schema_details = variable_details['schema']
     schema_class = mapping[schema_details['type']]
+
+    # Validation is ensured at chart level to ensure that we don't have enum for say boolean
+    obj_kwargs = {k: schema_details[k] for k in filter(
+        lambda k: k in schema_details,
+        ('required', 'default', 'private', 'enum', 'ipv4', 'ipv6', 'cidr')
+    )}
+
     if schema_class != Dict:
-        obj = schema_class(variable_details['variable'])
+        obj = schema_class(variable_details['variable'], **obj_kwargs)
     else:
-        value = value or {}
         obj = schema_class(
             variable_details['variable'],
-            *list(chain.from_iterable(get_schema(var, value.get(var['variable'])) for var in schema_details['attrs']))
+            *list(chain.from_iterable(get_schema(var) for var in schema_details['attrs'])), **obj_kwargs
         )
-        update_conditional_validation(obj, variable_details)
+        obj = update_conditional_validation(obj, variable_details)
 
     result = []
 
     obj.ref = schema_details.get('$ref', [])
-    # Validation is ensured at chart level to ensure that we don't have enum for say boolean
-    for k in filter(
-        lambda k: k in schema_details,
-        ('required', 'default', 'private', 'enum', 'ipv4', 'ipv6', 'cidr')
-    ):
-        setattr(obj, k, schema_details[k])
 
     if schema_class in (Str, Int):
         range_vars = ['min', 'max'] if schema_class == Int else ['min_length', 'max_length']
@@ -73,11 +73,11 @@ def get_schema(variable_details, value):
                 obj.validators.append(Match(schema_details['valid_chars']))
 
     if schema_class == List:
-        obj.items = list(chain.from_iterable(get_schema(i, None) for i in schema_details['items']))
+        obj.items = list(chain.from_iterable(get_schema(i) for i in schema_details['items']))
         # To make sure that subquestions are added correctly for list, we would have to iterate over the schema
         # again as we can't judge in the first go which value of the list maps to which item
     elif 'subquestions' in schema_details:
-        result.extend(list(chain.from_iterable(get_schema(i, None) for i in schema_details['subquestions'])))
+        result.extend(list(chain.from_iterable(get_schema(i) for i in schema_details['subquestions'])))
 
     result.insert(0, obj)
     return result

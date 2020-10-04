@@ -102,6 +102,13 @@ class ChartReleaseService(Service):
         ipam_config = {}
         if ipam['type'] == 'dhcp':
             ipam_config['type'] = 'dhcp'
+        else:
+            ipam_config.update({
+                'type': 'static',
+                'addresses': [{'address': i} for i in ipam['staticIPConfigurations']],
+                'routes': [{'dst': d['destination'], 'gw': d['gateway']} for d in ipam['staticRoutes']]
+            })
+
         iface_conf['ipam'] = ipam_config
 
         complete_config['externalInterfacesConfiguration'].append(json.dumps(iface_conf))

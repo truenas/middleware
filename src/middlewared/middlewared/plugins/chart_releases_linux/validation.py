@@ -14,13 +14,13 @@ class ChartReleaseService(Service):
 
     @private
     async def validate_values(self, item_version_details, new_values):
-        attrs = list(itertools.chain.from_iterable(
-            get_schema(q, new_values.get(q['variable'])) for q in item_version_details['questions']
-        ))
+        attrs = list(itertools.chain.from_iterable(get_schema(q) for q in item_version_details['questions']))
         verrors = validate_attributes(
-            attrs, {'values': new_values}, attr_key='values', dict_kwargs=update_conditional_validation(
-                Dict('attrs'), {'schema': {'attrs': item_version_details['questions']}}
-            ).conditional_validation
+            attrs, {'values': new_values}, attr_key='values', dict_kwargs={
+                'conditional_validation': update_conditional_validation(
+                    Dict('attrs'), {'schema': {'attrs': item_version_details['questions']}}
+                ).conditional_validation,
+            }
         )
         verrors.check()
 
