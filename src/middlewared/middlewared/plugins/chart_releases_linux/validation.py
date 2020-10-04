@@ -1,9 +1,10 @@
 import itertools
 
+from middlewared.schema import Dict
 from middlewared.service import private, Service
 from middlewared.validators import validate_attributes
 
-from .utils import get_schema
+from .utils import get_schema, update_conditional_validation
 
 
 class ChartReleaseService(Service):
@@ -13,8 +14,14 @@ class ChartReleaseService(Service):
 
     @private
     async def validate_values(self, item_version_details, new_values):
-        attrs = [get_schema(q) for q in item_version_details['questions']]
-        verrors = validate_attributes(attrs, {'values': new_values}, attr_key='values')
+        attrs = list(itertools.chain.from_iterable(
+            get_schema(q, new_values.get(q['variable'])) for q in item_version_details['questions']
+        ))
+        verrors = validate_attributes(
+            attrs, {'values': new_values}, attr_key='values', dict_kwargs=update_conditional_validation(
+                Dict('attrs'), {'schema': {'attrs': item_version_details['questions']}}
+            ).conditional_validation
+        )
         verrors.check()
 
         # If schema is okay, we see if we have question specific validation to be performed

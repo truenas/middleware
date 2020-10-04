@@ -1,5 +1,7 @@
 import os
 
+from itertools import chain
+
 from middlewared.schema import Bool, Dict, HostPath, Int, IPAddr, List, Str
 from middlewared.utils import run as _run
 from middlewared.validators import Match, Range
@@ -27,13 +29,30 @@ async def get_storage_class_name(release):
     return f'ix-storage-class-{release}'
 
 
-def get_schema(variable_details):
+def update_conditional_validation(dict_obj, variable_details):
+    schema = variable_details['schema']
+    for var in filter(lambda k: 'show_subquestion_if' in k['schema'], schema['attrs']):
+        var_schema = var['schema']
+        dict_obj.conditional_validation[var['variable']] = {
+            'value': var_schema['show_subquestions_if'], 'attrs': [a['variable'] for a in var_schema['subquestions']]
+        }
+    return dict_obj
+
+
+def get_schema(variable_details, value):
     schema_details = variable_details['schema']
     schema_class = mapping[schema_details['type']]
     if schema_class != Dict:
         obj = schema_class(variable_details['variable'])
     else:
-        obj = schema_class(variable_details['variable'], *[get_schema(var) for var in schema_details['attrs']])
+        value = value or {}
+        obj = schema_class(
+            variable_details['variable'],
+            *list(chain.from_iterable(get_schema(var, value.get(var['variable'])) for var in schema_details['attrs']))
+        )
+        update_conditional_validation(obj, variable_details)
+
+    result = []
 
     obj.ref = schema_details.get('$ref', [])
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
@@ -54,9 +73,14 @@ def get_schema(variable_details):
                 obj.validators.append(Match(schema_details['valid_chars']))
 
     if schema_class == List:
-        obj.items = [get_schema(i) for i in schema_details['items']]
+        obj.items = list(chain.from_iterable(get_schema(i, None) for i in schema_details['items']))
+        # To make sure that subquestions are added correctly for list, we would have to iterate over the schema
+        # again as we can't judge in the first go which value of the list maps to which item
+    elif 'subquestions' in schema_details:
+        result.extend(list(chain.from_iterable(get_schema(i, None) for i in schema_details['subquestions'])))
 
-    return obj
+    result.insert(0, obj)
+    return result
 
 
 def get_network_attachment_definition_name(release, count):
