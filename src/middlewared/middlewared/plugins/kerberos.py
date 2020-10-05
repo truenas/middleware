@@ -1025,9 +1025,12 @@ class KerberosKeytabService(CRUDService):
         """
         Keytabs typically have multiple entries for same principal (differentiated by enc_type).
         Since the enctype isn't relevant in this situation, only show unique principal names.
-        _ktutil_list() will raise exception if system keytab doesn't exist. In this case, return
-        empty list.
+
+        Return empty list if system keytab doesn't exist.
         """
+        if not os.path.exists(keytab['SYSTEM'].value):
+            return []
+
         try:
             keytab_list = await self._ktutil_list()
         except Exception as e:
