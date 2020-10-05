@@ -23,7 +23,7 @@ plugin_list = list(plugin_index.keys())
 repos_url2 = 'https://github.com/ericbsd/iocage-plugin-index.git'
 index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/12.0-RELEASE/INDEX'
 plugin_index2 = GET(index_url2).json()
-plugin_list2 = list(plugin_index.keys())
+plugin_list2 = list(plugin_index2.keys())
 
 plugin_objects = [
     "id",
