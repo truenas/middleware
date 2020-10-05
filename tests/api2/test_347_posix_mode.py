@@ -9,9 +9,10 @@ import stat
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password
+from auto_config import ip, pool_name, user, password, scale
 from pytest_dependency import depends
 
+group = 'nogroup' if scale else 'nobody'
 MODE_DATASET = f'{pool_name}/modetest'
 dataset_url = MODE_DATASET.replace('/', '%2F')
 
@@ -78,7 +79,7 @@ def test_04_verify_setting_mode_bits_nonrecursive(request, mode_bit):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': new_mode,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody'
         }
     )
@@ -130,7 +131,7 @@ def test_06_verify_setting_mode_bits_recursive_no_traverse(request, mode_bit):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': new_mode,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody',
             'options': {'recursive': True}
         }
@@ -172,7 +173,7 @@ def test_08_verify_traverse_to_child_dataset(request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': 777,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody',
             'options': {'recursive': True, 'traverse': True}
         }
@@ -364,7 +365,7 @@ def test_11_test_directory_owner_bits_function_allow(mode_bit, request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': f'{new_mode:03o}',
-            'group': 'nobody',
+            'group': group,
             'user': MODE_USER
         }
     )

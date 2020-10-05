@@ -8,9 +8,10 @@ import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password
+from auto_config import ip, pool_name, user, password, scale
 from pytest_dependency import depends
 
+group = 'nogroup' if scale else 'nobody'
 ACLTEST_DATASET = f'{pool_name}/acltest'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
 
@@ -45,10 +46,10 @@ base_flagset = {
 BASIC_PERMS = ["READ", "TRAVERSE", "MODIFY", "FULL_CONTROL"]
 BASIC_FLAGS = ["INHERIT", "NOINHERIT"]
 TEST_FLAGS = [
-     'DIRECTORY_INHERIT',
-     'FILE_INHERIT',
-     'INHERIT_ONLY',
-     'NO_PROPAGATE_INHERIT'
+    'DIRECTORY_INHERIT',
+    'FILE_INHERIT',
+    'INHERIT_ONLY',
+    'NO_PROPAGATE_INHERIT'
 ]
 
 INHERIT_FLAGS_BASIC = {
@@ -175,6 +176,7 @@ def test_02_create_dataset(request):
     )
     assert result.status_code == 200, result.text
 
+
 @pytest.mark.dependency(name="HAS_NFS4_ACLS")
 def test_03_get_acltype(request):
     depends(request, ["DATASET_CREATED"])
@@ -188,12 +190,13 @@ def test_03_get_acltype(request):
     if result.json()['acltype'] != "NFS4":
         pytest.skip("Incorrect ACL type")
 
+
 def test_04_basic_set_acl_for_dataset(request):
     depends(request, ["HAS_NFS4_ACLS"])
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody'
         }
     )
@@ -202,6 +205,7 @@ def test_04_basic_set_acl_for_dataset(request):
     JOB_ID = result.json()
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
 
 def test_05_get_filesystem_getacl(request):
     depends(request, ["HAS_NFS4_ACLS"])
@@ -246,7 +250,7 @@ def test_08_set_basic_permsets(request, permset):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody'
         }
     )
@@ -272,7 +276,7 @@ def test_09_set_basic_flagsets(request, flagset):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody'
         }
     )
@@ -304,7 +308,7 @@ def test_10_set_advanced_permset(request, perm):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody'
         }
     )
@@ -334,7 +338,7 @@ def test_11_set_advanced_flagset(request, flag):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody'
         }
     )
@@ -399,7 +403,7 @@ def test_13_recursive_no_traverse(request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody',
             'options': {'recursive': True}
         }
@@ -418,10 +422,12 @@ def test_13_recursive_no_traverse(request):
 
     # check on dir 1. Entry 1 should have INHERIT flag added, and
     # INHERIT_ONLY should be set to False at this depth.
-    results = POST('/filesystem/getacl/', {
-                       'path': f'/mnt/{ACLTEST_DATASET}/dir1',
-                       'simplified': False
-                   })
+    results = POST(
+        '/filesystem/getacl/', {
+            'path': f'/mnt/{ACLTEST_DATASET}/dir1',
+            'simplified': False
+        }
+    )
     assert results.status_code == 200, results.text
     theacl = results.json()['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
@@ -432,10 +438,12 @@ def test_13_recursive_no_traverse(request):
 
     # check on dir 2 - the no propogate inherit flag should have taken
     # effect and ACL length should be 1
-    results = POST('/filesystem/getacl/', {
-                       'path': f'/mnt/{ACLTEST_DATASET}/dir1/dir2',
-                       'simplified': False
-                   })
+    results = POST(
+        '/filesystem/getacl/', {
+            'path': f'/mnt/{ACLTEST_DATASET}/dir1/dir2',
+            'simplified': False
+        }
+    )
     assert results.status_code == 200, results.text
     theacl = results.json()['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
@@ -458,7 +466,7 @@ def test_14_recursive_with_traverse(request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody',
             'options': {'recursive': True, 'traverse': True}
         }
@@ -484,7 +492,7 @@ def test_15_strip_acl_from_dataset(request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': '777',
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody',
             'options': {'stripacl': True, 'recursive': True}
         }
@@ -726,7 +734,7 @@ def test_24_test_acl_function_allow(perm, request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': payload_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'root',
             'options': {'recursive': True},
         }
@@ -822,7 +830,7 @@ def test_25_test_acl_function_omit(perm, request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': payload_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'root',
             'options': {'recursive': True},
         }
@@ -911,7 +919,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': payload_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'root',
             'options': {'recursive': True},
         }

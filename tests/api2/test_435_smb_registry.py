@@ -11,13 +11,14 @@ import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user
+from auto_config import ip, pool_name, password, user, scale
 from pytest_dependency import depends
 
 dataset = f"{pool_name}/smb-reg"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "REGISTRYTEST"
 smb_path = "/mnt/" + dataset
+group = 'nogroup' if scale else 'nobody'
 
 SHARES = [f'{SMB_NAME}_{i}' for i in range(0, 25)]
 SHARE_DICT = {}
@@ -77,7 +78,7 @@ def test_002_changing_dataset_permissions_of_smb_dataset(request):
     payload = {
         'acl': [],
         'mode': '777',
-        'group': 'nobody',
+        'group': group,
         'user': 'nobody',
         'options': {'stripacl': True, 'recursive': True}
     }
@@ -359,6 +360,7 @@ Following battery of tests validate behavior of registry
 with regard to homes shares
 """
 
+
 @pytest.mark.dependency(name="HOME_SHARE_CREATED")
 def test_014_create_homes_share(request):
     depends(request, ["SMB_DATASET_CREATED"])
@@ -415,7 +417,7 @@ def test_017_verify_non_home_share_in_registry(request):
     name.
     """
     depends(request, ["HOME_SHARE_CREATED"])
-    has_non_homes_share = False
+    has_homes_share = False
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
