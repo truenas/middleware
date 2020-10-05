@@ -953,7 +953,7 @@ class CertificateService(CRUDService):
             if ':' in domain and domain.split(':', 1)[-1] not in dns_mapping_copy:
                 dns_mapping_copy[domain.split(':', 1)[-1]] = dns_mapping_copy[domain]
             elif ':' not in domain:
-                normalised_san = ':'.join(self.middleware.call_sync('cryptokey.normalize_san', [domain]))
+                normalised_san = ':'.join(self.middleware.call_sync('cryptokey.normalize_san', [domain])[0])
                 if normalised_san not in dns_mapping_copy:
                     dns_mapping_copy[normalised_san] = domain
 
