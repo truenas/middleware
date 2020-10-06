@@ -32,9 +32,11 @@ def render(service, middleware):
 
     map_acls_mode = False
     ds_type = None
-    afp_config = "/etc/afp.conf"
     if osc.IS_FREEBSD:
-        afp_config = f'/usr/local{afp_config}'
+        afp_config = '/usr/local/etc/afp.conf'
+    else:
+        afp_config = '/etc/netatalk/afp.conf'
+
     cf_contents = []
 
     afp = Struct(middleware.call_sync('datastore.query', 'services.afp', [], {'get': True}))
