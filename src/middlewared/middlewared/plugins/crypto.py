@@ -1014,7 +1014,8 @@ class CertificateService(CRUDService):
                 'KeyUsage': {
                     'enabled': True,
                     'extension_critical': True,
-                    'digital_signature': True
+                    'digital_signature': True,
+                    'key_agreement': True,
                 }
             },
             'key_length': 2048,
