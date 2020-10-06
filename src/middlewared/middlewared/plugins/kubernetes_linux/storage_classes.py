@@ -78,7 +78,7 @@ class KubernetesStorageClassService(CRUDService):
                 'name': None,
                 'annotations': {'storageclass.kubernetes.io/is-default-class': 'true'}
             },
-            'parameters': {'fstype': 'zfs', 'poolname': None},
+            'parameters': {'fstype': 'zfs', 'poolname': None, 'shared': 'yes'},
             'provisioner': 'zfs.csi.openebs.io',
             'allowVolumeExpansion': True,
         }
