@@ -116,17 +116,13 @@ def test_09_Connecting_to_iSCSI_target():
 @bsd_host_cfg
 def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name():
     while True:
-        SSH_TEST('iscsictl -L', BSD_USERNAME, BSD_PASSWORD,
-                 BSD_HOST)
-        state = 'cat /tmp/.sshCmdTestStdOut | '
-        state += 'awk \'$2 == "%s:3620" {print $3}\'' % ip
-        iscsi_state = return_output(state)
-        if iscsi_state == "Connected:":
-            dev = 'cat /tmp/.sshCmdTestStdOut | '
-            dev += 'awk \'$2 == "%s:3620" {print $4}\'' % ip
-            iscsi_dev = return_output(dev)
+        cmd = f'iscsictl -L | grep {ip}:3620'
+        results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+        assert results['result'] is True, results['output']
+        iscsictl_list = results['output'].strip().split()
+        if iscsictl_list[2] == "Connected:":
             global DEVICE_NAME
-            DEVICE_NAME = iscsi_dev
+            DEVICE_NAME = iscsictl_list[3]
             assert True
             break
         sleep(3)
@@ -281,6 +277,6 @@ def test_29_Delete_iSCSI_extent():
 
 
 # Remove iSCSI portal
-def test_29_Delete_iSCSI_extent():
+def test_29_Delete_iSCSI_portal():
     results = DELETE("/services/iscsi/portal/1/", None)
     assert results.status_code == 204, results.text
