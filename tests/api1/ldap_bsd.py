@@ -23,7 +23,7 @@ SMB_PATH = f"/mnt/{pool_name}/{DATASET}"
 VOL_GROUP = "qa"
 Reason = "BRIDGEHOST, LDAPBASEDN and LDAPHOSTNAME are missing "
 Reason += "in ixautomation.conf"
-BSDReason = 'BSD host configuration is missing in ixautomation.conf'
+BSDReason = 'skip BSD test'
 
 ldap_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                         "LDAPBASEDN" in locals(),
@@ -41,10 +41,7 @@ up_ldap_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                            "MOUNTPOINT" in locals()
                                            ]) is False, reason=Reason)
 
-bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
-                                       "BSD_USERNAME" in locals(),
-                                       "BSD_PASSWORD" in locals()
-                                       ]) is False, reason=BSDReason)
+bsd_host_cfg = pytest.mark.skip(reason=BSDReason)
 
 
 # Create tests
@@ -327,15 +324,11 @@ def test_33_Removing_SMB_share_on_SMB_PATH():
 
 
 # Disable LDAP
-@up_ldap_test_cfg
+@ldap_test_cfg
 def test_34_Disabling_LDAPd():
-    payload = {"ldap_basedn": LDAPBASEDN2,
-               "ldap_binddn": LDAPBINDDN2,
-               "ldap_bindpw": LDAPBINDPASSWORD2,
-               "ldap_netbiosname_a": BRIDGEHOST,
-               "ldap_hostname": LDAPHOSTNAME2,
-               "ldap_has_samba_schema": True,
-               "ldap_enable": False}
+    payload = {
+        "ldap_enable": False
+    }
     results = PUT("/directoryservice/ldap/1/", payload)
     assert results.status_code == 200, results.text
 

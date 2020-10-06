@@ -278,15 +278,11 @@ def test_26_Removing_SMB_share_on_SMB_PATH():
 
 
 # Disable LDAP
-@up_ldap_test_cfg
+@ldap_test_cfg
 def test_27_Disabling_LDAP():
-    payload = {"ldap_basedn": LDAPBASEDN2,
-               "ldap_binddn": LDAPBINDDN2,
-               "ldap_bindpw": LDAPBINDPASSWORD2,
-               "ldap_netbiosname_a": BRIDGEHOST,
-               "ldap_hostname": LDAPHOSTNAME2,
-               "ldap_has_samba_schema": True,
-               "ldap_enable": False}
+    payload = {
+        "ldap_enable": False
+    }
     results = PUT("/directoryservice/ldap/1/", payload)
     assert results.status_code == 200, results.text
 
