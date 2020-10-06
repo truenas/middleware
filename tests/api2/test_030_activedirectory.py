@@ -17,13 +17,15 @@ except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
 
+BSDReason = 'Avoid runing BSD ssh test'
 
-BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 try:
     from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
     bsd_host_cfg = pytest.mark.skipif(False, reason=BSDReason)
 except ImportError:
     bsd_host_cfg = pytest.mark.skipif(True, reason=BSDReason)
+# Override ssh test for BSD. BSD test for AD might get remove in the future.
+bsd_host_cfg = pytest.mark.skipif(True, reason=BSDReason)
 
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 try:
