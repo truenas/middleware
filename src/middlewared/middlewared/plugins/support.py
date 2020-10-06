@@ -82,7 +82,7 @@ class SupportService(ConfigService):
         Returns whether Proactive Support is available for this product type and current license.
         """
 
-        if not await self.middleware.call('system.is_enterptise'):
+        if not await self.middleware.call('system.is_enterprise'):
             return False
 
         license = (await self.middleware.call('system.info'))['license']
