@@ -45,10 +45,10 @@ base_flagset = {
 BASIC_PERMS = ["READ", "TRAVERSE", "MODIFY", "FULL_CONTROL"]
 BASIC_FLAGS = ["INHERIT", "NOINHERIT"]
 TEST_FLAGS = [
-     'DIRECTORY_INHERIT',
-     'FILE_INHERIT',
-     'INHERIT_ONLY',
-     'NO_PROPAGATE_INHERIT'
+    'DIRECTORY_INHERIT',
+    'FILE_INHERIT',
+    'INHERIT_ONLY',
+    'NO_PROPAGATE_INHERIT'
 ]
 
 INHERIT_FLAGS_BASIC = {
@@ -125,8 +125,8 @@ function_testing_acl_allow = [
     }
 ]
 
-ACL_USER = "acltesting"
-ACL_PWD = "acltesting"
+ACL_USER = "acluser"
+ACL_PWD = "acl1234"
 
 # base64-encoded samba DOSATTRIB xattr
 DOSATTRIB_XATTR = "CTB4MTAAAAMAAwAAABEAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABimX3sSqfTAQAAAAAAAAAACg=="
@@ -173,6 +173,7 @@ def test_02_create_dataset():
     )
     assert result.status_code == 200, result.text
 
+
 @pytest.mark.dependency(name="HAS_NFS4_ACLS")
 def test_03_get_acltype():
     global results
@@ -184,6 +185,7 @@ def test_03_get_acltype():
     assert result.status_code == 200, results.text
     if result.json()['acltype'] != "NFS4":
         pytest.skip("Incorrect ACL type")
+
 
 def test_04_basic_set_acl_for_dataset(request):
     depends(request, ["HAS_NFS4_ACLS"])
@@ -199,6 +201,7 @@ def test_04_basic_set_acl_for_dataset(request):
     JOB_ID = result.json()
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
 
 def test_05_get_filesystem_getacl(request):
     depends(request, ["HAS_NFS4_ACLS"])
@@ -415,10 +418,12 @@ def test_13_recursive_no_traverse(request):
 
     # check on dir 1. Entry 1 should have INHERIT flag added, and
     # INHERIT_ONLY should be set to False at this depth.
-    results = POST('/filesystem/getacl/', {
-                       'path': f'/mnt/{ACLTEST_DATASET}/dir1',
-                       'simplified': False
-                   })
+    results = POST(
+        '/filesystem/getacl/', {
+            'path': f'/mnt/{ACLTEST_DATASET}/dir1',
+            'simplified': False
+        }
+    )
     assert results.status_code == 200, results.text
     theacl = results.json()['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
@@ -429,10 +434,12 @@ def test_13_recursive_no_traverse(request):
 
     # check on dir 2 - the no propogate inherit flag should have taken
     # effect and ACL length should be 1
-    results = POST('/filesystem/getacl/', {
-                       'path': f'/mnt/{ACLTEST_DATASET}/dir1/dir2',
-                       'simplified': False
-                   })
+    results = POST(
+        '/filesystem/getacl/', {
+            'path': f'/mnt/{ACLTEST_DATASET}/dir1/dir2',
+            'simplified': False
+        }
+    )
     assert results.status_code == 200, results.text
     theacl = results.json()['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
