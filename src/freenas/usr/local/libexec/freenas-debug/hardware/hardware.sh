@@ -29,12 +29,8 @@
 
 get_physical_disks_list()
 {
-	if is_linux; then
-		lsblk -ndo path | grep -v '^/dev/sr'
-	else
-		sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
-			| sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
-	fi
+	sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
+		| sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
 }
 
 
@@ -44,17 +40,17 @@ hardware_directory() { echo "Hardware"; }
 
 hardware_linux()
 {
-	section_header "Hardware"
+	section_header "CPU and Memory information"
 
-	echo "Machine class: $(uname -m)"
+	echo "CPU architecture: $(uname -m)"
 
-	echo "Machine model: $(lscpu | grep 'Model name' | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')"
+	echo "CPU model: $(lscpu | grep 'Model name' | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')"
 
 	echo "Number of active CPUs: $(grep -c 'model name' /proc/cpuinfo)"
 
 	echo "Number of CPUs online: $(lscpu -p=online | grep -v "^#" | grep -c "Y")"
 
-	echo "Current CPU frequency: $(lscpu | grep 'CPU MHz' | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')"
+	echo "Current average CPU frequency: $(lscpu | grep 'CPU MHz' | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//') MHz"
 
 	echo "Physical Memory: $(getconf -a | grep PAGES | awk 'BEGIN {total = 1} {if (NR == 1 || NR == 3) total *=$NF} END {print total / 1024 / 1024 / 1024" GiB"}')"
 
@@ -62,14 +58,6 @@ hardware_linux()
 
 	section_header "lspci -vvvD"
 	lspci -vvvD
-	section_footer
-
-	section_header "lshw -businfo"
-	lshw -businfo
-	section_footer
-
-	section_header "lshw"
-	lshw
 	section_footer
 
 	section_header "usb-devices"
@@ -80,19 +68,13 @@ hardware_linux()
 	dmidecode
 	section_footer
 
-	section_header "lsblk -o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,ROTA,SCHED,RQ-SIZE,RA,WSAME,HCTL"
-	lsblk -o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,ROTA,SCHED,RQ-SIZE,RA,WSAME,HCTL
+	section_header "lsblk -o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,ROTA,SCHED,RQ-SIZE,RA,WSAME,HCTL,PATH"
+	lsblk -o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,ROTA,SCHED,RQ-SIZE,RA,WSAME,HCTL,PATH
 	section_footer
 
-	for disk in $(get_physical_disks_list)
-	do
-		output=$(sg_vpd --page=di "$disk" 2> /dev/null)
-		if [ $? -eq 0 ]; then
-			section_header "sg_vpd --page=di $disk"
-			echo "$output"
-			section_footer
-		fi
-	done
+	section_header "Disk information (device.retrieve_disks_data)"
+	midclt call device.retrieve_disks_data | jq
+	section_footer
 }
 
 hardware_freebsd()
