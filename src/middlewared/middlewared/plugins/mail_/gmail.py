@@ -16,6 +16,9 @@ class GmailService:
     def __eq__(self, other):
         return isinstance(other, GmailService) and self.config["oauth"] == other.config["oauth"]
 
+    def close(self):
+        self.service.close()
+
 
 class MailService(Service):
     gmail_service = None
@@ -23,6 +26,8 @@ class MailService(Service):
     @private
     async def gmail_initialize(self):
         config = await self.middleware.call("mail.config")
+        if self.gmail_service is not None:
+            self.gmail_service.close()
         self.gmail_service = await self.middleware.call("mail.gmail_build_service", config)
 
     @private
@@ -45,6 +50,9 @@ class MailService(Service):
         gmail_service.service.users().messages().send(userId="me", body={
             "raw": base64.urlsafe_b64encode(message.as_string().encode("ascii")).decode("ascii"),
         }).execute()
+
+        if gmail_service != self.gmail_service:
+            gmail_service.close()
 
 
 async def setup(middleware):
