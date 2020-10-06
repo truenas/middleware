@@ -3063,7 +3063,7 @@ class PoolDatasetService(CRUDService):
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
         try:
-            rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+            await self.middleware.call('zfs.dataset.update', id, {'properties': props})
         except ZFSSetPropertyError as e:
             verrors = ValidationErrors()
             verrors.add_child('pool_dataset_update', self.__handle_zfs_set_property_error(e, properties_definitions))
@@ -3073,7 +3073,7 @@ class PoolDatasetService(CRUDService):
             if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
                 await self._service_change('iscsitarget', 'reload')
 
-        return rv
+        return await self.get_instance(id)
 
     async def __common_validation(self, verrors, schema, data, mode):
         assert mode in ('CREATE', 'UPDATE')
