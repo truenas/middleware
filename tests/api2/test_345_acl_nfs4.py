@@ -126,8 +126,8 @@ function_testing_acl_allow = [
     }
 ]
 
-ACL_USER = "acltesting"
-ACL_PWD = "acltesting"
+ACL_USER = "acluser"
+ACL_PWD = "acl1234"
 
 # base64-encoded samba DOSATTRIB xattr
 DOSATTRIB_XATTR = "CTB4MTAAAAMAAwAAABEAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABimX3sSqfTAQAAAAAAAAAACg=="
