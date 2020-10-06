@@ -228,6 +228,13 @@ class ChartReleaseService(CRUDService):
         if cp.returncode:
             raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
 
+        storage_class_name = await get_storage_class_name(release_name)
+        if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
+            try:
+                await self.middleware.call('k8s.storage_class.delete', storage_class_name)
+            except Exception as e:
+                self.middleware.logger.error('Failed to remove %r storage class: %s', storage_class_name, e)
+
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', release_name)
         if await self.middleware.call('pool.dataset.query', [['id', '=', release_ds]]):
