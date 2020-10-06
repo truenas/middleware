@@ -1,3 +1,4 @@
+import asyncio
 import collections
 import copy
 import enum
@@ -36,7 +37,7 @@ class ChartReleaseService(CRUDService):
             for storage_class in await self.middleware.call('k8s.storage_class.query'):
                 storage_classes[storage_class['metadata']['name']] = storage_class
 
-            resources = {r.name: collections.defaultdict(list) for r in Resources}
+            resources = {r.value: collections.defaultdict(list) for r in Resources}
             for resource, namespace, r_filters, n_func in (
                 (
                     Resources.DEPLOYMENTS, 'k8s.deployment', [
@@ -50,7 +51,7 @@ class ChartReleaseService(CRUDService):
             ):
                 r_filters += [['metadata.namespace', '=', CHART_NAMESPACE]]
                 for r_data in await self.middleware.call(f'{namespace}.query', r_filters):
-                    resources[resource.name][n_func(r_data)].append(r_data)
+                    resources[resource.value][n_func(r_data)].append(r_data)
 
         release_secrets = await self.middleware.call('chart.release.releases_secrets')
         releases = []
@@ -73,7 +74,7 @@ class ChartReleaseService(CRUDService):
             if get_resources:
                 release_data['resources'] = {
                     'storage_class': storage_classes[get_storage_class_name(name)],
-                    **{r.name: resources[r.name][name] for r in Resources},
+                    **{r.value: resources[r.value][name] for r in Resources},
                 }
 
             releases.append(release_data)
@@ -222,11 +223,22 @@ class ChartReleaseService(CRUDService):
     async def do_delete(self, release_name):
         # For delete we will uninstall the release first and then remove the associated datasets
         await self.middleware.call('kubernetes.validate_k8s_setup')
-        await self.get_instance(release_name)
+        release = await self.query([['id', '=', release_name]], {'extra': {'retrieve_resources': True}, 'get': True})
+        pods = release['resources'][Resources.PODS.value]
 
         cp = await run(['helm', 'uninstall', release_name, '-n', CHART_NAMESPACE], check=False)
         if cp.returncode:
             raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
+
+        # wait for release to uninstall properly, helm right now does not support a flag for this but
+        # a feature request is open in the community https://github.com/helm/helm/issues/2378
+        while await self.middleware.call(
+            'k8s.pod.query', [
+                ['metadata.name', 'in', [p['metadata']['name'] for p in pods]],
+                ['metadata.namespace', '=', CHART_NAMESPACE],
+            ],
+        ):
+            await asyncio.sleep(5)
 
         storage_class_name = await get_storage_class_name(release_name)
         if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
