@@ -22,9 +22,6 @@ import pickle
 import smtplib
 import socket
 import syslog
-import time
-
-from requests_oauthlib import OAuth2Session
 
 
 class QueueItem(object):
@@ -130,9 +127,7 @@ class MailService(ConfigService):
         Dict('oauth',
              Str('client_id', required=True),
              Str('client_secret', required=True),
-             Str('access_token', required=True),
              Str('refresh_token', required=True),
-             Str('token_uri', required=True),
              null=True,
              private=True),
         register=True,
@@ -165,12 +160,6 @@ class MailService(ConfigService):
                 'This field is required when SMTP authentication is enabled',
             )
 
-        if new['smtp'] and new['oauth']:
-            verrors.add(
-                'mail_update.oauth',
-                'OAuth should be disabled when SMTP username/password authentication is enabled'
-            )
-
         self.__password_verify(new['pass'], 'mail_update.pass', verrors)
 
         if verrors:
@@ -178,8 +167,7 @@ class MailService(ConfigService):
 
         await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
 
-        if new['oauth']:
-            self.oauth_access_token = None
+        await self.middleware.call('mail.gmail_initialize')
 
         return await self.config()
 
@@ -250,9 +238,6 @@ class MailService(ConfigService):
          }
         ]
         """
-
-        if config:
-            self.oauth_access_token = None
 
         product_name = self.middleware.call_sync('system.product_name')
 
@@ -404,19 +389,22 @@ class MailService(ConfigService):
 
         syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
         try:
-            server = self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname)
-            # NOTE: Don't do this.
-            #
-            # If smtplib.SMTP* tells you to run connect() first, it's because the
-            # mailserver it tried connecting to via the outgoing server argument
-            # was unreachable and it tried to connect to 'localhost' and barfed.
-            # This is because FreeNAS doesn't run a full MTA.
-            # else:
-            #    server.connect()
-            headers = '\n'.join([f'{k}: {v}' for k, v in msg._headers])
-            syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
-            server.sendmail(from_addr.encode(), to, msg.as_string())
-            server.quit()
+            if config['oauth']:
+                self.middleware.call_sync('mail.gmail_send', msg, config)
+            else:
+                server = self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname)
+                # NOTE: Don't do this.
+                #
+                # If smtplib.SMTP* tells you to run connect() first, it's because the
+                # mailserver it tried connecting to via the outgoing server argument
+                # was unreachable and it tried to connect to 'localhost' and barfed.
+                # This is because FreeNAS doesn't run a full MTA.
+                # else:
+                #    server.connect()
+                headers = '\n'.join([f'{k}: {v}' for k, v in msg._headers])
+                syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
+                server.sendmail(from_addr.encode(), to, msg.as_string())
+                server.quit()
         except Exception as e:
             # Don't spam syslog with these messages. They should only end up in the
             # test-email pane.
@@ -460,19 +448,6 @@ class MailService(ConfigService):
                 server.starttls()
         if config['smtp']:
             server.login(config['user'], config['pass'])
-        elif config['oauth']:
-            if self.oauth_access_token is None or time.monotonic() + 300 >= self.oauth_access_token_expires_at:
-                session = OAuth2Session(config['oauth']['client_id'])
-                access_token = session.refresh_token(config['oauth']['token_uri'],
-                                                     config['oauth']['refresh_token'],
-                                                     client_id=config['oauth']['client_id'],
-                                                     client_secret=config['oauth']['client_secret'])
-                self.oauth_access_token_expires_at = time.monotonic() + access_token['expires_in']
-                self.oauth_access_token = access_token['access_token']
-
-            auth_string = f'user={config["fromemail"]}\1auth=Bearer {self.oauth_access_token}\1\1'
-            auth_string = base64.b64encode(auth_string.encode('ascii')).decode('ascii')
-            server.docmd('AUTH', f'XOAUTH2 {auth_string}')
 
         return server
 
