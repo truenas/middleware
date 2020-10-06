@@ -143,6 +143,13 @@ class OpenVPN:
                     )
 
             if mode == 'client':
+                if not cert['common']:
+                    # This is required for openvpn clients - https://community.openvpn.net/openvpn/ticket/81
+                    # Otherwise we get "VERIFY ERROR: could not extract CN from X509 subject string"
+                    verrors.add(
+                        f'{schema}.client_certificate',
+                        'Client certificate requires common name (CN) to be set to verify properly.'
+                    )
                 if not any(
                     k in (extensions.get('KeyUsage') or '')
                     for k in ('Digital Signature', 'Key Agreement')
