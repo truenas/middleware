@@ -10,7 +10,7 @@ Conflicts=systemd-networkd.service
 
 [Service]
 Type=oneshot
-ExecStart=-midclt -t 60 call failover.internal_interface.pre_sync true
+ExecStart=-midclt -t 60 call failover.internal_interface.pre_sync
 ExecStart=-midclt -t 120 call interface.sync true
 ExecStartPost=midclt call etc.generate_checkpoint interface_sync
 StandardOutput=null
