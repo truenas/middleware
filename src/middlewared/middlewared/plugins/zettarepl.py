@@ -544,6 +544,12 @@ class ZettareplService(Service):
                 "logging-level": (replication_task["logging_level"] or "NOTSET").lower(),
             }
 
+            if replication_task["encryption"]:
+                definition["encryption"] = {
+                    "key": replication_task["encryption_key"],
+                    "key-format": replication_task["encryption_key_format"],
+                    "key-location": replication_task["encryption_key_location"],
+                }
             if replication_task["naming_schema"]:
                 definition["naming-schema"] = replication_task["naming_schema"]
             if replication_task["also_include_naming_schema"]:
