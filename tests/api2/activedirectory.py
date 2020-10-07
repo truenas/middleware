@@ -17,14 +17,12 @@ except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
 
-BSDReason = 'Avoid runing BSD ssh test'
+BSDReason = 'BSD_HOST is not setup for SSH_TEST'
 try:
     from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
     bsd_host_cfg = pytest.mark.skipif(False, reason=BSDReason)
 except ImportError:
     bsd_host_cfg = pytest.mark.skipif(True, reason=BSDReason)
-# Override ssh test for BSD. BSD test for AD might get remove in the future.
-bsd_host_cfg = pytest.mark.skipif(True, reason=BSDReason)
 
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 try:
@@ -62,7 +60,7 @@ ad_object_list = [
     "enable"
 ]
 
-MOUNTPOINT = "/tmp/ad-test"
+MOUNTPOINT = f"/tmp/ad-{hostname}"
 dataset = f"{pool_name}/ad-bsd"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestShare"
@@ -252,6 +250,7 @@ def test_19_setting_up_smb(request):
     payload = {
         "description": "Test FreeNAS Server",
         "guest": "nobody",
+        "enable_smb1": True
     }
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
@@ -347,8 +346,8 @@ def test_31_creating_smb_mountpoint(request):
 @bsd_host_cfg
 def test_32_store_AD_credentials_in_a_file_for_mount_smbfs(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
-    cmd = 'echo "[TESTNAS:ADUSER]" > ~/.nsmbrc && '
-    cmd += 'echo "password=12345678" >> ~/.nsmbrc'
+    cmd = f'echo "[{ip}:{ADUSERNAME.upper()}]" > ~/.nsmbrc && '
+    cmd += f'echo "password={ADPASSWORD}" >> ~/.nsmbrc'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
@@ -356,8 +355,8 @@ def test_32_store_AD_credentials_in_a_file_for_mount_smbfs(request):
 @bsd_host_cfg
 def test_33_mounting_SMB(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
-    cmd = 'mount_smbfs -N -I %s -W AD03 ' % ip
-    cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
+    cmd = f'mount_smbfs -N -I {ip} -W AD01 -U {ADUSERNAME} ' \
+        f'"//{ADUSERNAME}@{ip}/{SMB_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
