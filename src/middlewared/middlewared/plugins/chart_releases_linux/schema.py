@@ -25,19 +25,13 @@ class ChartReleaseService(Service):
             assert isinstance(getattr(self, f'normalise_{method}'), Callable) is True
 
     @private
-    async def get_normalised_values(self, attrs, values, update, context):
-        # TODO: Add proper subquestions support ensuring it's supported at all relevant places
+    async def get_normalised_values(self, dict_obj, values, update, context):
         for k in RESERVED_NAMES:
             # We reset reserved names from configuration as these are automatically going to
             # be added by middleware during the process of normalising the values
             values[k[0]] = k[1]()
 
-        for attr in attrs:
-            if not update and attr.name not in values and attr.default:
-                values[attr.name] = attr.default
-            if attr.name not in values:
-                continue
-
+        for attr in filter(lambda v: v.name in values, dict_obj.attrs.values()):
             values[attr.name] = await self.normalise_question(attr, values[attr.name], update, values, context)
 
         return values

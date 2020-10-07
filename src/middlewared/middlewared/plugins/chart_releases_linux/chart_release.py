@@ -93,9 +93,9 @@ class ChartReleaseService(CRUDService):
 
     @private
     async def normalise_and_validate_values(self, item_details, values, update, release_name):
-        attrs = await self.middleware.call('chart.release.validate_values', item_details, values, update)
+        dict_obj = await self.middleware.call('chart.release.validate_values', item_details, values, update)
         return await self.middleware.call(
-            'chart.release.get_normalised_values', attrs, values, update, {
+            'chart.release.get_normalised_values', dict_obj, values, update, {
                 'release_name': release_name,
             }
         )
@@ -144,7 +144,6 @@ class ChartReleaseService(CRUDService):
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
         storage_class_name = await get_storage_class_name(data['release_name'])
         try:
-            raise Exception('error out')
             for dataset in await self.release_datasets(release_ds):
                 if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
                     await self.middleware.call('pool.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
