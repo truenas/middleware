@@ -8,6 +8,7 @@ import os
 from croniter import croniter
 
 from middlewared.service_exception import ValidationErrors
+from middlewared.utils import filter_list
 
 NOT_PROVIDED = object()
 
@@ -585,7 +586,7 @@ class Dict(Attribute):
         for k, v in self.conditional_validation.items():
             if k not in self.attrs:
                 raise ValueError(f'Specified attribute {k!r} not found.')
-            for k_v in ('value', 'attrs'):
+            for k_v in ('filters', 'attrs'):
                 if k_v not in v:
                     raise ValueError(f'Conditional validation must have {k_v} specified.')
             for attr in v['attrs']:
@@ -609,7 +610,7 @@ class Dict(Attribute):
     def get_attrs_to_skip(self, data):
         skip_attrs = {}
         for attr, attr_data in filter(
-            lambda k, v: k in data and data[k] != v['value'], self.conditional_validation.items()
+            lambda k, v: k in data and not filter_list([data], v['filters']), self.conditional_validation.items()
         ):
             skip_attrs.update({k: attr for k in attr_data['attrs']})
 
@@ -636,8 +637,7 @@ class Dict(Attribute):
                 if key in skip_attrs:
                     raise Error(
                         key,
-                        f'Field was not expected as {skip_attrs[key]!r} does not equal to '
-                        f'{self.conditional_validation[key]["value"]!r}'
+                        f'Field was not expected as {skip_attrs[key]!r} does not equal to filters specified.'
                     )
 
             attr = self.attrs.get(key)
