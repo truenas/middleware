@@ -8,7 +8,7 @@ import tempfile
 import yaml
 
 from middlewared.schema import accepts, Dict, Str
-from middlewared.service import CallError, CRUDService, filterable, filter_list, private
+from middlewared.service import CallError, CRUDService, filterable, filter_list, job, private
 
 from .utils import CHART_NAMESPACE, run, get_storage_class_name
 
@@ -184,19 +184,13 @@ class ChartReleaseService(CRUDService):
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed ( it is possible this might have happened )
             if await self.query([['id', '=', data['release_name']]]):
-                try:
-                    await self.do_delete(data['release_name'])
-                except Exception as e:
-                    self.middleware.logger.error('Failed to uninstall helm chart release: %s', e)
+                delete_job = await self.middleware.call('chart.release.delete', data['release_name'])
+                await delete_job.wait()
+                if delete_job.error:
+                    self.logger.error('Failed to uninstall helm chart release: %s', delete_job.error)
+            else:
+                await self.remove_storage_class_and_dataset(data['release_name'])
 
-            if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
-                try:
-                    await self.middleware.call('k8s.storage_class.delete', storage_class_name)
-                except Exception as e:
-                    self.middleware.logger.error('Failed to remove %r storage class: %s', storage_class_name, e)
-
-            if await self.middleware.call('pool.dataset.query', [['id', '=', release_ds]]):
-                await self.middleware.call('zfs.dataset.delete', release_ds, {'recursive': True, 'force': True})
             raise
 
     @accepts(
@@ -230,7 +224,8 @@ class ChartReleaseService(CRUDService):
                 raise CallError(f'Failed to update chart release: {cp.stderr.decode()}')
 
     @accepts(Str('release_name'))
-    async def do_delete(self, release_name):
+    @job(lock=lambda args: f'chart_release_delete_{args[0]}')
+    async def do_delete(self, job, release_name):
         # For delete we will uninstall the release first and then remove the associated datasets
         await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.query([['id', '=', release_name]], {'extra': {'retrieve_resources': True}, 'get': True})
@@ -240,6 +235,7 @@ class ChartReleaseService(CRUDService):
         if cp.returncode:
             raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
 
+        job.set_progress(50, f'Uninstalled {release_name}')
         # wait for release to uninstall properly, helm right now does not support a flag for this but
         # a feature request is open in the community https://github.com/helm/helm/issues/2378
         while await self.middleware.call(
@@ -248,18 +244,29 @@ class ChartReleaseService(CRUDService):
                 ['metadata.namespace', '=', CHART_NAMESPACE],
             ],
         ):
+            job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
             await asyncio.sleep(5)
 
+        await self.remove_storage_class_and_dataset(release_name, job)
+
+        job.set_progress(100, f'{release_name!r} chart release deleted')
+
+    @private
+    async def remove_storage_class_and_dataset(self, release_name, job=None):
         storage_class_name = await get_storage_class_name(release_name)
         if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
+            if job:
+                job.set_progress(85, f'Removing {release_name!r} storage class')
             try:
                 await self.middleware.call('k8s.storage_class.delete', storage_class_name)
             except Exception as e:
-                self.middleware.logger.error('Failed to remove %r storage class: %s', storage_class_name, e)
+                self.logger.error('Failed to remove %r storage class: %s', storage_class_name, e)
 
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', release_name)
         if await self.middleware.call('pool.dataset.query', [['id', '=', release_ds]]):
+            if job:
+                job.set_progress(95, f'Removing {release_ds!r} dataset')
             await self.middleware.call('zfs.dataset.delete', release_ds, {'recursive': True, 'force': True})
 
     @private
