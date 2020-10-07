@@ -7,10 +7,11 @@ from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 import middlewared.service
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
-from .utils import osc, start_daemon_thread, sw_version, LoadPluginsMixin
+from .utils import osc, start_daemon_thread, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
+from .utils.plugins import LoadPluginsMixin
 from .utils.profile import profile_wrap
 from .utils.run_in_thread import RunInThreadMixin
 from .utils.service.call import ServiceCallMixin

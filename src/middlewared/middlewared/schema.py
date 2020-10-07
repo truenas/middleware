@@ -9,6 +9,7 @@ from croniter import croniter
 from datetime import datetime, time
 
 from middlewared.service_exception import ValidationErrors
+from middlewared.utils import filter_list
 
 NOT_PROVIDED = object()
 
@@ -608,7 +609,6 @@ class Dict(Attribute):
         return self.private or any(i.has_private() for i in self.attrs.values())
 
     def get_attrs_to_skip(self, data):
-        from middlewared.utils import filter_list
         skip_attrs = defaultdict(set)
         for attr, attr_data in filter(
             lambda k: not filter_list([data], k[1]['filters']), self.conditional_validation.items()

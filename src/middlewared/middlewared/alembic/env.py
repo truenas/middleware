@@ -10,7 +10,7 @@ from sqlalchemy import engine_from_config, ForeignKeyConstraint, pool
 
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.sqlalchemy import JSON, Model
-from middlewared.utils import load_modules, osc
+from middlewared.utils.plugins import load_modules, osc
 from middlewared.utils.python import get_middlewared_dir
 
 # freenasOS
