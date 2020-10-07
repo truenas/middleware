@@ -50,12 +50,7 @@ class ChartReleaseService(Service):
             return value
 
         if isinstance(question_attr, Dict):
-            for attr in question_attr.attrs.values():
-                if not update and attr.name not in value and attr.default:
-                    value[attr.name] = attr.default
-                if attr.name not in value:
-                    continue
-
+            for attr in filter(lambda v: v.name in value, question_attr.attrs.values()):
                 value[attr.name] = await self.normalise_question(
                     attr, value[attr.name], update, complete_config, context
                 )

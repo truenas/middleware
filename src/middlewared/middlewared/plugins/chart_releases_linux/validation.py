@@ -13,7 +13,7 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def validate_values(self, item_version_details, new_values):
+    async def validate_values(self, item_version_details, new_values, update):
         for k in RESERVED_NAMES:
             new_values.pop(k[0], None)
 
@@ -22,7 +22,7 @@ class ChartReleaseService(Service):
             attrs, {'values': new_values}, attr_key='values', dict_kwargs={
                 'conditional_validation': update_conditional_validation(
                     Dict('attrs'), {'schema': {'attrs': item_version_details['questions']}}
-                ).conditional_validation,
+                ).conditional_validation, 'update': update,
             }
         )
         verrors.check()

@@ -197,7 +197,7 @@ def validate_attributes(schema, data, additional_attrs=False, attr_key="attribut
     verrors = ValidationErrors()
     dict_kwargs = dict_kwargs or {}
 
-    schema = Dict("attributes", *schema, additional_attrs=additional_attrs, dict_kwargs=dict_kwargs)
+    schema = Dict("attributes", *schema, additional_attrs=additional_attrs, **dict_kwargs)
 
     try:
         data[attr_key] = schema.clean(data[attr_key])

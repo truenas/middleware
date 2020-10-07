@@ -652,7 +652,7 @@ class Dict(Attribute):
         # Do not make any field and required and not populate default values
         if not self.update:
             for attr in list(self.attrs.values()):
-                if attr.name not in data and (
+                if attr.name not in data and attr.name not in skip_attrs and (
                     attr.required or attr.has_default
                 ):
                     data[attr.name] = attr.clean(NOT_PROVIDED)
