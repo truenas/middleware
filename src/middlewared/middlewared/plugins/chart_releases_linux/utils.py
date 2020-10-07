@@ -36,11 +36,20 @@ async def get_storage_class_name(release):
 
 def update_conditional_validation(dict_obj, variable_details):
     schema = variable_details['schema']
-    for var in filter(lambda k: 'show_subquestion_if' in k['schema'], schema['attrs']):
+    for var in filter(lambda k: any(c in k['schema'] for c in ('show_subquestion_if', 'show_if')), schema['attrs']):
         var_schema = var['schema']
-        dict_obj.conditional_validation[var['variable']] = {
-            'value': var_schema['show_subquestions_if'], 'attrs': [a['variable'] for a in var_schema['subquestions']]
-        }
+        attrs = []
+        filters = []
+        if 'show_subquestion_if' in var_schema:
+            filters.append([var['variable'], '=', var_schema['show_subquestion_if']])
+            attrs.extend([a['variable'] for a in var_schema['subquestions']])
+
+        if 'show_if' in var_schema:
+            filters.extend(var_schema['show_if'])
+            attrs.append(var['variable'])
+
+        dict_obj.conditional_validation[var['variable']] = {'filters': filters, 'attrs': attrs}
+
     return dict_obj
 
 

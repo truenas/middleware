@@ -1,11 +1,12 @@
 import asyncio
 import copy
-from datetime import datetime, time
 import errno
 import ipaddress
 import os
 
+from collections import defaultdict
 from croniter import croniter
+from datetime import datetime, time
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils import filter_list
@@ -608,11 +609,12 @@ class Dict(Attribute):
         return self.private or any(i.has_private() for i in self.attrs.values())
 
     def get_attrs_to_skip(self, data):
-        skip_attrs = {}
+        skip_attrs = defaultdict(set)
         for attr, attr_data in filter(
             lambda k, v: k in data and not filter_list([data], v['filters']), self.conditional_validation.items()
         ):
-            skip_attrs.update({k: attr for k in attr_data['attrs']})
+            for k in attr_data['attrs']:
+                skip_attrs[k].update({attr})
 
         return skip_attrs
 
@@ -637,7 +639,8 @@ class Dict(Attribute):
                 if key in skip_attrs:
                     raise Error(
                         key,
-                        f'Field was not expected as {skip_attrs[key]!r} does not equal to filters specified.'
+                        'Field was not expected because of conditional validation specified for '
+                        f'{", ".join(skip_attrs[key])!r}.'
                     )
 
             attr = self.attrs.get(key)
