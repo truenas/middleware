@@ -14,6 +14,7 @@ from .utils import CHART_NAMESPACE, run, get_storage_class_name
 
 
 class Resources(enum.Enum):
+    CRONJOBS = 'cronjobs'
     DEPLOYMENTS = 'deployments'
     JOBS = 'jobs'
     PODS = 'pods'
@@ -51,6 +52,10 @@ class ChartReleaseService(CRUDService):
                 ),
                 (
                     Resources.JOBS, 'k8s.job', [['metadata.labels.app\\.kubernetes\\.io/instance', '!=', None]],
+                    lambda r: r['metadata']['labels']['app.kubernetes.io/instance']
+                ),
+                (
+                    Resources.CRONJOBS, 'k8s.cronjob', [['metadata.labels.app\\.kubernetes\\.io/instance', '!=', None]],
                     lambda r: r['metadata']['labels']['app.kubernetes.io/instance']
                 ),
             ):
