@@ -20,7 +20,7 @@ try:
 except ImportError:
     bsd_host_cfg = pytest.mark.skipif(True, reason=Reason)
 
-MOUNTPOINT = '/tmp/iscsi'
+MOUNTPOINT = f'/tmp/iscsi-{hostname}'
 global DEVICE_NAME
 DEVICE_NAME = ""
 TARGET_NAME = "iqn.1994-09.freenasqa:target0"
