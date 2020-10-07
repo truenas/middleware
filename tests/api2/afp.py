@@ -15,8 +15,8 @@ from functions import dns_service_resolve
 from auto_config import ip, pool_name, hostname, ha
 from config import *
 
-if "BRIDGEHOST" in locals():
-    MOUNTPOINT = f"/tmp/afp{BRIDGEHOST}"
+
+MOUNTPOINT = f"/tmp/afp-{hostname}"
 dataset = f"{pool_name}/afp"
 dataset_url = dataset.replace('/', '%2F')
 AFP_NAME = "MyAFPShare"
@@ -25,9 +25,6 @@ VOL_GROUP = "wheel"
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
-mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                         "MOUNTPOINT" in locals()
-                                         ]) is False, reason=Reason)
 
 osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        "OSX_USERNAME" in locals(),
@@ -165,7 +162,6 @@ def test_19_verify_adisk_mdns_service_record():
 
 # have to wait for the volume api
 # Mount share on OSX system and create a test file
-@mount_test_cfg
 @osx_host_cfg
 def test_20_create_mount_point_for_afp_on_osx_system():
     cmd = f'mkdir -p "{MOUNTPOINT}"'
@@ -173,7 +169,6 @@ def test_20_create_mount_point_for_afp_on_osx_system():
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_21_mount_afp_share_on_osx_system():
     cmd = f'mount -t afp "afp://{ip}/{AFP_NAME}" "{MOUNTPOINT}"'
@@ -181,7 +176,6 @@ def test_21_mount_afp_share_on_osx_system():
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_22_create_file_on_afp_share_via_osx_to_test_permissions():
     cmd = f'touch "{MOUNTPOINT}/testfile.txt"'
@@ -190,7 +184,6 @@ def test_22_create_file_on_afp_share_via_osx_to_test_permissions():
 
 
 # Move test file to a new location on the AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_23_moving_afp_test_file_into_a_new_directory():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
@@ -200,7 +193,6 @@ def test_23_moving_afp_test_file_into_a_new_directory():
 
 
 # Delete test file and test directory from AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_24_deleting_test_file_and_directory_from_afp_share():
     cmd = f'rm -f "{MOUNTPOINT}/tmp/testfile.txt" && rmdir "{MOUNTPOINT}/tmp"'
@@ -208,7 +200,6 @@ def test_24_deleting_test_file_and_directory_from_afp_share():
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_25_verifying_test_file_directory_were_successfully_removed():
     cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
@@ -217,7 +208,6 @@ def test_25_verifying_test_file_directory_were_successfully_removed():
 
 
 # Clean up mounted AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_26_unmount_afp_share():
     cmd = f"umount -f '{MOUNTPOINT}'"
@@ -245,7 +235,6 @@ def test_28_checking_to_see_if_afp_service_is_enabled():
 
 
 # Update tests
-@mount_test_cfg
 @osx_host_cfg
 def test_30_mount_afp_share_on_osx_system():
     cmd = f'mount -t afp "afp://{ip}/{AFP_NAME}" "{MOUNTPOINT}"'
@@ -253,7 +242,6 @@ def test_30_mount_afp_share_on_osx_system():
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_31_create_file_on_afp_share_via_osx_to_test_permissions():
     cmd = f'touch "{MOUNTPOINT}/testfile.txt"'
@@ -262,7 +250,6 @@ def test_31_create_file_on_afp_share_via_osx_to_test_permissions():
 
 
 # Move test file to a new location on the AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_32_moving_afp_test_file_into_a_new_directory():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
@@ -272,7 +259,6 @@ def test_32_moving_afp_test_file_into_a_new_directory():
 
 
 # Delete test file and test directory from AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_33_deleting_test_file_and_directory_from_afp_share():
     cmd = f'rm -f "{MOUNTPOINT}/tmp/testfile.txt" && rmdir "{MOUNTPOINT}/tmp"'
@@ -280,7 +266,6 @@ def test_33_deleting_test_file_and_directory_from_afp_share():
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_34_verifying_test_file_directory_were_successfully_removed():
     cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
@@ -289,7 +274,6 @@ def test_34_verifying_test_file_directory_were_successfully_removed():
 
 
 # Clean up mounted AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_35_unmount_afp_share():
     cmd = f'umount -f "{MOUNTPOINT}"'
@@ -298,7 +282,6 @@ def test_35_unmount_afp_share():
 
 
 # Delete tests
-@mount_test_cfg
 @osx_host_cfg
 def test_36_removing_SMB_mountpoint():
     cmd = f'test -d "{MOUNTPOINT}" && rmdir "{MOUNTPOINT}" || exit 0'
