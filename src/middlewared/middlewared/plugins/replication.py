@@ -60,6 +60,10 @@ class ReplicationModel(sa.Model):
     repl_state = sa.Column(sa.Text(), default="{}")
     repl_properties = sa.Column(sa.Boolean(), default=True)
     repl_replicate = sa.Column(sa.Boolean())
+    repl_encryption = sa.Column(sa.Boolean())
+    repl_encryption_key = sa.Column(sa.EncryptedText(), nullable=True)
+    repl_encryption_key_format = sa.Column(sa.String(120), nullable=True)
+    repl_encryption_key_location = sa.Column(sa.Text(), nullable=True)
 
     repl_periodic_snapshot_tasks = sa.relationship('PeriodicSnapshotTaskModel',
                                                    secondary=lambda: ReplicationPeriodicSnapshotTaskModel.__table__)
@@ -148,6 +152,10 @@ class ReplicationService(CRUDService):
             List("exclude", items=[Path("dataset", empty=False)], default=[]),
             Bool("properties", default=True),
             Bool("replicate", default=False),
+            Bool("encryption", default=False),
+            Str("encryption_key", null=True, default=None),
+            Str("encryption_key_format", enum=["HEX", "PASSPHRASE"], null=True, default=None),
+            Str("encryption_key_location", null=True, default=None),
             List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
                  validators=[Unique()]),
             List("naming_schema", items=[
@@ -553,6 +561,11 @@ class ReplicationService(CRUDService):
 
             if not data["properties"]:
                 verrors.add("properties", "This option is required for full filesystem replication")
+
+        if data["encryption"]:
+            for k in ["encryption_key", "encryption_key_format", "encryption_key_location"]:
+                if data[k] is None:
+                    verrors.add(k, "This property is required when remote dataset encryption is enabled")
 
         if data["schedule"]:
             if not data["auto"]:
