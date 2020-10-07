@@ -44,6 +44,11 @@ class ChartReleaseService(Service):
 
     @private
     async def normalise_question(self, question_attr, value, update, complete_config, context):
+        if value is None and isinstance(question_attr, (Dict, List)):
+            # This shows that the value provided has been explicitly specified as null and if validation
+            # was okay with it, we shouldn't try to normalise it
+            return value
+
         if isinstance(question_attr, Dict):
             for attr in question_attr.attrs.values():
                 if not update and attr.name not in value and attr.default:

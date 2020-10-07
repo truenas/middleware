@@ -36,12 +36,12 @@ async def get_storage_class_name(release):
 
 def update_conditional_validation(dict_obj, variable_details):
     schema = variable_details['schema']
-    for var in filter(lambda k: any(c in k['schema'] for c in ('show_subquestion_if', 'show_if')), schema['attrs']):
+    for var in filter(lambda k: any(c in k['schema'] for c in ('show_subquestions_if', 'show_if')), schema['attrs']):
         var_schema = var['schema']
         attrs = []
         filters = []
-        if 'show_subquestion_if' in var_schema:
-            filters.append([var['variable'], '=', var_schema['show_subquestion_if']])
+        if 'show_subquestions_if' in var_schema:
+            filters.append([var['variable'], '=', var_schema['show_subquestions_if']])
             attrs.extend([a['variable'] for a in var_schema['subquestions']])
 
         if 'show_if' in var_schema:
@@ -60,7 +60,7 @@ def get_schema(variable_details):
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
     obj_kwargs = {k: schema_details[k] for k in filter(
         lambda k: k in schema_details,
-        ('required', 'default', 'private', 'enum', 'ipv4', 'ipv6', 'cidr')
+        ('required', 'default', 'private', 'enum', 'ipv4', 'ipv6', 'cidr', 'null')
     )}
 
     if schema_class != Dict:
