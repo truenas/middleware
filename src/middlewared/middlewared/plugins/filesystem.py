@@ -25,37 +25,6 @@ from middlewared.utils import filter_list, osc
 from middlewared.utils.path import is_child
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 
-OS_TYPE_FREEBSD = 0x01
-OS_TYPE_LINUX = 0x02
-OS_FLAG = int(osc.IS_FREEBSD) + (int(osc.IS_LINUX) << 1)
-
-
-class ACLType(enum.Enum):
-    NFS4 = (OS_TYPE_FREEBSD, ['tag', 'id', 'perms', 'flags', 'type'])
-    POSIX1E = (OS_TYPE_FREEBSD | OS_TYPE_LINUX, ['default', 'tag', 'id', 'perms'])
-    RICH = (OS_TYPE_LINUX,)
-    SAMBA = (OS_TYPE_LINUX,)
-
-    def validate(self, theacl):
-        errors = []
-        ace_keys = self.value[1]
-        if not self.value[0] & OS_FLAG:
-            errors.append("The host operating system does not support"
-                          f"ACLType [{self.name}]")
-
-        if self != ACLType.NFS4 and theacl.get('nfs41flags'):
-            errors.append(f"NFS41 ACL flags are not valid for ACLType [{self.name}]")
-
-        for idx, entry in enumerate(theacl['dacl']):
-            extra = set(entry.keys()) - set(ace_keys)
-            missing = set(ace_keys) - set(entry.keys())
-            if extra:
-                errors.append(f"ACL entry [{idx}] contains invalid extra key(s): {extra}")
-            if missing:
-                errors.append(f"ACL entry [{idx}] is missing required keys(s): {missing}")
-
-        return {"is_valid": len(errors) == 0, "errors": errors}
-
 
 class FilesystemService(Service):
 
