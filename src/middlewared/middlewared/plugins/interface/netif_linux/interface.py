@@ -50,7 +50,11 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
 
     @mtu.setter
     def mtu(self, mtu):
+        up = InterfaceFlags.UP in self.flags
         run(["ip", "link", "set", "dev", self.name, "mtu", str(mtu)])
+        if up:
+            self.down()
+            self.up()
 
     @property
     def cloned(self):

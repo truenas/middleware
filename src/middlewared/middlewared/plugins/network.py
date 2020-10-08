@@ -973,7 +973,7 @@ class InterfaceService(CRUDService):
         )
 
         bridge_used = {}
-        for k, v in filter(lambda x: x[0].startswith('bridge'), ifaces.items()):
+        for k, v in filter(lambda x: x[0].startswith('br'), ifaces.items()):
             for port in (v.get('bridge_members') or []):
                 bridge_used[port] = k
         vlan_used = {
@@ -1072,7 +1072,7 @@ class InterfaceService(CRUDService):
                         f'{schema_name}.vlan_parent_interface',
                         f'Interface {parent} is currently in use by {lag_used[parent]}.',
                     )
-                elif parent.startswith('bridge'):
+                elif parent.startswith('br'):
                     verrors.add(
                         f'{schema_name}.vlan_parent_interface',
                         'Bridge interfaces are not allowed.',
@@ -1793,7 +1793,7 @@ class InterfaceService(CRUDService):
 
         # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
         for interface in sorted(
-            filter(lambda i: not i.startswith('bridge'), interfaces), key=lambda x: x.startswith('vlan')
+            filter(lambda i: not i.startswith('br'), interfaces), key=lambda x: x.startswith('vlan')
         ):
             try:
                 await self.sync_interface(interface, wait_dhcp, sync_interface_opts[interface])
@@ -1985,7 +1985,7 @@ class RouteService(Service):
                     interface
                     for interface in netif.list_interfaces().keys()
                     if not (
-                        re.match("^(bridge|epair|ipfw|lo)[0-9]+", interface) or
+                        re.match("^(br|bridge|epair|ipfw|lo)[0-9]+", interface) or
                         ":" in interface
                     )
                 ]
