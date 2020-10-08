@@ -2,7 +2,7 @@ import os
 
 from itertools import chain
 
-from middlewared.schema import Bool, Dict, HostPath, Int, IPAddr, List, Path, Str
+from middlewared.schema import Bool, Cron, Dict, HostPath, Int, IPAddr, List, Path, Str
 from middlewared.utils import run as _run
 from middlewared.validators import Match, Range
 
@@ -16,6 +16,7 @@ mapping = {
     'list': List,
     'dict': Dict,
     'ipaddr': IPAddr,
+    'cron': Cron,
 }
 
 CHART_NAMESPACE = 'default'
@@ -63,14 +64,15 @@ def get_schema(variable_details):
         ('required', 'default', 'private', 'enum', 'ipv4', 'ipv6', 'cidr', 'null')
     )}
 
-    if schema_class != Dict:
+    if schema_class not in (Cron, Dict):
         obj = schema_class(variable_details['variable'], **obj_kwargs)
     else:
         obj = schema_class(
             variable_details['variable'],
-            *list(chain.from_iterable(get_schema(var) for var in schema_details['attrs'])), **obj_kwargs
+            *list(chain.from_iterable(get_schema(var) for var in schema_details.get('attrs', []))), **obj_kwargs
         )
-        obj = update_conditional_validation(obj, variable_details)
+        if schema_class == Dict:
+            obj = update_conditional_validation(obj, variable_details)
 
     result = []
 

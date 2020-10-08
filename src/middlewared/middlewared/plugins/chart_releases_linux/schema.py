@@ -2,7 +2,7 @@ import json
 
 from collections import Callable
 
-from middlewared.schema import Dict, List
+from middlewared.schema import Cron, Dict, List
 from middlewared.service import private, Service, ValidationErrors
 
 from .utils import get_network_attachment_definition_name, RESERVED_NAMES
@@ -43,7 +43,7 @@ class ChartReleaseService(Service):
             # was okay with it, we shouldn't try to normalise it
             return value
 
-        if isinstance(question_attr, Dict):
+        if isinstance(question_attr, Dict) and not isinstance(question_attr, Cron):
             for attr in filter(lambda v: v.name in value, question_attr.attrs.values()):
                 value[attr.name] = await self.normalise_question(
                     attr, value[attr.name], update, complete_config, context
