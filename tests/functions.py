@@ -237,10 +237,19 @@ def return_output(command):
         return output[0].strip()
 
 
+def cmd_test(command):
+    process = run(command, stdout=PIPE, universal_newlines=True)
+    output = process.stdout
+    if process.returncode != 0:
+        return {'result': False, 'output': output}
+    else:
+        return {'result': True, 'output': output}
+
+
 def start_ssh_agent():
     process = run(['ssh-agent', '-s'], stdout=PIPE, universal_newlines=True)
-    torecompil = 'SSH_AUTH_SOCK=(?P<socket>[^;]+).*SSH_AGENT_PID=(?P<pid>\d+)'
-    OUTPUT_PATTERN = re.compile(torecompil, re.MULTILINE | re.DOTALL)
+    to_recompile = 'SSH_AUTH_SOCK=(?P<socket>[^;]+).*SSH_AGENT_PID=(?P<pid>\d+)'
+    OUTPUT_PATTERN = re.compile(to_recompile, re.MULTILINE | re.DOTALL)
     match = OUTPUT_PATTERN.search(process.stdout)
     if match is None:
         return False
