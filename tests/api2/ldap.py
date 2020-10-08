@@ -33,8 +33,8 @@ except ImportError:
 MOUNTPOINT = f"/tmp/ldap-{hostname}"
 dataset = f"{pool_name}/ldap-test"
 dataset_url = dataset.replace('/', '%2F')
-SMB_NAME = "TestLDAPShare"
-SMB_PATH = f"/mnt/{dataset}"
+smb_name = "TestLDAPShare"
+smb_path = f"/mnt/{dataset}"
 VOL_GROUP = "wheel"
 
 
@@ -110,7 +110,7 @@ def test_09_verify_ldap_enable_is_true():
     assert results.json()["enable"] is True, results.text
 
 
-def test_20_creating_ldap_dataset_for_smb():
+def test_10_creating_ldap_dataset_for_smb():
     results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
@@ -142,8 +142,8 @@ def test_13_creating_a_smb_share_on_smb_path():
     global smb_id
     payload = {
         "comment": "My Test SMB Share",
-        "path": SMB_PATH,
-        "name": SMB_NAME,
+        "path": smb_path,
+        "name": smb_name,
         "guestok": True,
         "vfsobjects": ["streams_xattr"]
     }
@@ -190,24 +190,36 @@ def test_19_store_ldap_credentials_for_mount_smbfs():
 @ldap_test_cfg
 def test_20_mount_smb_share_with_mount_smbfs_and_ldap_credentials():
     cmd = f'mount_smbfs -N -I {ip} -W LDAP -U {LDAPUSER} ' \
-        f'//{LDAPUSER}@{ip}/{SMB_NAME} {MOUNTPOINT}'
+        f'//{LDAPUSER}@{ip}/{smb_name} {MOUNTPOINT}'
     results = cmd_test(cmd)
     assert results['result'] is True, results['output']
 
 
 @ldap_test_cfg
-def test_19_umount_ldap_smb_share():
+def test_21_creating_testfile_in_the_ldap_mounted_share():
+    results = cmd_test(f"touch {MOUNTPOINT}/testfile.txt")
+    assert results['result'] is True, results['output']
+
+
+@ldap_test_cfg
+def test_22_verify_testfile_exit_with_filesystem_stat():
+    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    assert results.status_code == 200, results.text
+
+
+@ldap_test_cfg
+def test_23_umount_ldap_smb_share():
     results = cmd_test(f'umount -f {MOUNTPOINT}')
     assert results['result'] is True, results['output']
 
 
 @ldap_test_cfg
-def test_20_verify_ldap_smb_share_was_unmounted():
+def test_24_verify_ldap_smb_share_was_unmounted():
     results = cmd_test(f'mount | grep -qv {MOUNTPOINT}')
     assert results['result'] is True, results['output']
 
 
-def test_21_disable_smb_1():
+def test_25_disable_smb_1():
     global payload, results
     payload = {
         "enable_smb1": False
