@@ -79,6 +79,7 @@ class ChartReleaseService(CRUDService):
                 ),
                 'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test'),
                 'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name),
+                'dataset': os.path.join(k8s_config['dataset'], 'releases', name),
                 'config': config,
             })
             if get_resources:

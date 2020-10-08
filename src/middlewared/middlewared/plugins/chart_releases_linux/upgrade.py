@@ -74,6 +74,17 @@ class ChartReleaseService(Service):
         await self.middleware.run_in_thread(lambda: shutil.rmtree(chart_path, ignore_errors=True))
         await self.middleware.run_in_thread(lambda: shutil.copytree(catalog_item['location'], chart_path))
 
+        # If a snapshot of the volumes already exist with the same name in case of a failed upgrade, we will remove
+        # it as we want the current point in time being reflected in the snapshot
+        volumes_ds = os.path.join(release['dataset'], 'volumes')
+        snap_name = f'{volumes_ds}@{current_chart["version"]}'
+        if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
+            await self.middleware.call('zfs.snapshot.delete', snap_name)
+
+        await self.middleware.call(
+            'zfs.snapshot.create', {'dataset': volumes_ds, 'name': current_chart['version']}
+        )
+
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))
             f.flush()
