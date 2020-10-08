@@ -1,0 +1,85 @@
+import os
+import shutil
+import tempfile
+import yaml
+
+from pkg_resources import parse_version
+
+from middlewared.schema import Dict, Str
+from middlewared.service import accepts, CallError, Service, ValidationErrors
+
+from .utils import CHART_NAMESPACE, clean_values_for_upgrade, run
+
+
+class ChartReleaseService(Service):
+
+    class Config:
+        namespace = 'chart.release'
+
+    @accepts(
+        Str('release_name'),
+        Dict(
+            'upgrade_options',
+            Dict('values', additional_attrs=True),
+            Str('item_version', required=True),
+        )
+    )
+    async def upgrade(self, release_name, options):
+        release = await self.middleware.call('chart.release.get_instance', release_name)
+        catalog = await self.middleware.call(
+            'catalog.query', [['id', '=', release['catalog']]], {'get': True, 'extra': {'item_details': True}},
+        )
+
+        new_version = options['item_version']
+        current_chart = release['chart_metadata']
+        chart = current_chart['name']
+        if release['catalog_train'] not in catalog['trains']:
+            raise CallError(f'Unable to locate {release["catalog_train"]!r} catalog train in {release["catalog"]!r}')
+        if chart not in catalog['trains'][release['catalog_train']]:
+            raise CallError(
+                f'Unable to locate {chart!r} catalog item in {release["catalog"]!r} '
+                f'catalog\'s {release["catalog_train"]!r} train.'
+            )
+
+        if new_version not in catalog['trains'][release['catalog_train']][chart]['versions']:
+            raise CallError(f'Unable to locate specified {new_version!r} item version.')
+
+        verrors = ValidationErrors()
+        if parse_version(new_version) <= parse_version(current_chart['version']):
+            verrors.add(
+                'upgrade_options.item_version',
+                f'Upgrade version must be greater then {current_chart["version"]!r} current version.'
+            )
+
+        # TODO: Do min/max scale version checks
+        verrors.check()
+        # We will be performing validation for values specified. Why we want to allow user to specify values here
+        # is because the upgraded catalog item version might have different schema which potentially means that
+        # upgrade won't work or even if new k8s are resources are created/deployed, they won't necessarily function
+        # as they should because of changed params or expecting new params
+        # One tricky bit which we need to account for first is removing any key from current configured values
+        # which the upgraded release will potentially not support. So we can safely remove those as otherwise
+        # validation will fail as new schema does not expect those keys.
+        catalog_item = catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
+        config = clean_values_for_upgrade(release['config'], catalog_item['questions'])
+        config.update(options['values'])
+
+        config = await self.middleware.call(
+            'chart.release.normalise_and_validate_values', catalog_item, config, False, release_name
+        )
+
+        # We have validated configuration now
+
+        chart_path = os.path.join(release['path'], 'charts', new_version)
+        await self.middleware.run_in_thread(lambda: shutil.rmtree(chart_path, ignore_errors=True))
+        await self.middleware.run_in_thread(lambda: shutil.copytree(catalog_item['location'], chart_path))
+
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(yaml.dump(config))
+            f.flush()
+
+            cp = await run(
+                ['helm', 'upgrade', release_name, chart_path, '-n', CHART_NAMESPACE, '-f', f.name], check=False
+            )
+            if cp.returncode:
+                raise CallError(f'Failed to upgrade chart release to {new_version!r}: {cp.stderr.decode()}')

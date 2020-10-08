@@ -1,5 +1,6 @@
 import os
 
+from copy import deepcopy
 from itertools import chain
 
 from middlewared.schema import Bool, Cron, Dict, HostPath, Int, IPAddr, List, Path, Str
@@ -97,6 +98,29 @@ def get_schema(variable_details):
 
     result.insert(0, obj)
     return result
+
+
+def clean_value_of_attr_for_upgrade(orig_value, variable):
+    value = deepcopy(orig_value)
+    valid_attrs = {v['variable']: v for v in variable['schema']['attrs']}
+    for k, v in orig_value.items():
+        if k not in valid_attrs:
+            value.pop(k)
+        if isinstance(v, dict) and valid_attrs[k]['schema']['type'] == 'dict':
+            value[k] = clean_value_of_attr_for_upgrade(v, valid_attrs[k])
+
+    return value
+
+
+def clean_values_for_upgrade(original_values, questions_details):
+    return clean_value_of_attr_for_upgrade(
+        original_values, {
+            'schema': {
+                'type': 'dict',
+                'attrs': questions_details,
+            }
+        }
+    )
 
 
 def get_network_attachment_definition_name(release, count):
