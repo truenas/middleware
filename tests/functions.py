@@ -238,7 +238,7 @@ def return_output(command):
 
 
 def cmd_test(command):
-    process = run(command, stdout=PIPE, universal_newlines=True)
+    process = run(command, shell=True, stdout=PIPE, universal_newlines=True)
     output = process.stdout
     if process.returncode != 0:
         return {'result': False, 'output': output}
