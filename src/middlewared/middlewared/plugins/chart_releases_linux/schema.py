@@ -51,7 +51,7 @@ class ChartReleaseService(Service):
 
         if isinstance(question_attr, List):
             for index, item in enumerate(value):
-                attr = get_list_item_from_value(item, question_attr)
+                _, attr = get_list_item_from_value(item, question_attr)
                 if attr:
                     value[index] = await self.normalise_question(attr, item, update, complete_config, context)
 

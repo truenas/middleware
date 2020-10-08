@@ -4,7 +4,12 @@ from middlewared.schema import Dict
 from middlewared.service import private, Service
 from middlewared.validators import validate_attributes
 
-from .utils import get_schema, update_conditional_validation, RESERVED_NAMES
+from .utils import get_schema, get_list_item_from_value, update_conditional_validation, RESERVED_NAMES
+
+
+validation_mapping = {
+    'validations/persistentVolumeClaims': 'persistent_volume_claims',
+}
 
 
 class ChartReleaseService(Service):
@@ -34,21 +39,33 @@ class ChartReleaseService(Service):
         # If schema is okay, we see if we have question specific validation to be performed
         for question in item_version_details['questions']:
             await self.validate_question(verrors, question)
+        questions = item_version_details['questions']
+        for key in new_values:
+            await self.validate_question(verrors, new_values[key], questions[key], dict_obj.attrs[key])
 
         verrors.check()
 
         return dict_obj
 
     @private
-    async def validate_question(self, verrors, question):
+    async def validate_question(self, verrors, value, question, var_attr):
         schema = question['schema']
-        for attr in itertools.chain(
-            *[d.get(k, []) for d, k in zip((schema, schema, question), ('attrs', 'items', 'subquestions'))]
-        ):
-            await self.validate_question(verrors, attr)
 
-        if not any(k.startswith('validations/') for k in schema.get('$ref', [])):
-            return
+        # TODO: Add nested support for subquestions
+        if schema['type'] == 'dict':
+            dict_attrs = {v['variable']: v for v in schema['attrs']}
+            for k in filter(lambda k: k in dict_attrs, value):
+                await self.validate_question(verrors, value[k], dict_attrs[k], var_attr.attrs[k])
 
-        for validator_def in filter(lambda k: k.startswith('validations/'), schema['$ref']):
-            pass
+        elif schema['type'] == 'list':
+            for index, item in enumerate(value):
+                item_index, attr = get_list_item_from_value(item, var_attr)
+                if attr:
+                    await self.validate_question(verrors, item, schema['items'][item_index], attr)
+
+        for validator_def in filter(lambda k: k in validation_mapping, schema.get('$ref', [])):
+            verrors.extend(await self.middleware.call(
+                f'chart.release.validate_{validation_mapping[validator_def]}', verrors, value, question)
+            )
+
+        return verrors

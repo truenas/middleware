@@ -129,10 +129,10 @@ def get_network_attachment_definition_name(release, count):
 
 
 def get_list_item_from_value(value, question_attr):
-    for attr in question_attr.items:
+    for index, attr in enumerate(question_attr.items):
         try:
             attr.validate(value)
         except ValidationErrors:
             pass
         else:
-            return attr
+            return index, attr
