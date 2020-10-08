@@ -34,6 +34,8 @@ class ChartReleaseService(CRUDService):
         options = options or {}
         extra = copy.deepcopy(options.get('extra', {}))
         get_resources = extra.get('retrieve_resources')
+        get_history = extra.get('history')
+
         if get_resources:
             storage_classes = collections.defaultdict(lambda: None)
             for storage_class in await self.middleware.call('k8s.storage_class.query'):
@@ -63,17 +65,21 @@ class ChartReleaseService(CRUDService):
                 for r_data in await self.middleware.call(f'{namespace}.query', r_filters):
                     resources[resource.value][n_func(r_data)].append(r_data)
 
-        release_secrets = await self.middleware.call('chart.release.releases_secrets')
+        release_secrets = await self.middleware.call('chart.release.releases_secrets', extra)
         releases = []
         for name, release in release_secrets.items():
             config = {}
-            for release_data in reversed(release['releases']):
-                config.update(release_data['config'])
+            release_data = release['releases'].pop(0)
+            cur_version = release_data['chart_metadata']['version']
+
+            for rel_data in filter(
+                lambda r: r['chart_metadata']['version'] == cur_version,
+                reversed(release['releases'])
+            ):
+                config.update(rel_data['config'])
 
             release_secret = release['secrets'][0]
-            release_data = release['releases'].pop(0)
             release_data.update({
-                'history': release['releases'],
                 'catalog': release_secret['metadata']['labels'].get(
                     'catalog', await self.middleware.call('catalog.official_catalog_label')
                 ),
@@ -87,6 +93,8 @@ class ChartReleaseService(CRUDService):
                     'storage_class': storage_classes[get_storage_class_name(name)],
                     **{r.value: resources[r.value][name] for r in Resources},
                 }
+            if get_history:
+                release_data['history'] = release['history']
 
             releases.append(release_data)
 

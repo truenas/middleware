@@ -3,6 +3,7 @@ import json
 
 from base64 import b64decode
 from collections import defaultdict
+from copy import deepcopy
 
 from middlewared.service import private, Service
 
@@ -15,8 +16,10 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def releases_secrets(self):
-        release_secrets = defaultdict(lambda: dict({'untagged': [], 'secrets': [], 'releases': []}))
+    async def releases_secrets(self, options=None):
+        options = options or {}
+
+        release_secrets = defaultdict(lambda: dict({'untagged': [], 'secrets': [], 'releases': [], 'history': {}}))
         secrets = await self.middleware.call(
             'k8s.secret.query', [['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '=', CHART_NAMESPACE]]
         )
@@ -43,6 +46,14 @@ class ChartReleaseService(Service):
             release_secrets[release]['secrets'].sort(
                 key=lambda d: int(d['metadata']['labels']['version']), reverse=True
             )
+            if not options.get('history'):
+                continue
+
+            cur_version = release_secrets[release]['releases'][0]['chart_metadata']['version']
+            for rel in release_secrets[release]['releases']:
+                rel_chart_version = rel['chart_metadata']['version']
+                if rel_chart_version != cur_version and rel_chart_version not in release_secrets[release]['history']:
+                    release_secrets[release]['history'][rel_chart_version] = deepcopy(rel)
 
         return release_secrets
 
