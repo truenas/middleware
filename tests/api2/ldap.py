@@ -110,12 +110,12 @@ def test_09_verify_ldap_enable_is_true():
     assert results.json()["enable"] is True, results.text
 
 
-def test_20_creating_ldap_dataset_for_smb(request):
+def test_20_creating_ldap_dataset_for_smb():
     results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
 
-def test_11_changing_ldap_dataset_permission(request):
+def test_11_changing_ldap_dataset_permission():
     global job_id_09
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', {
         'acl': [],
@@ -127,7 +127,7 @@ def test_11_changing_ldap_dataset_permission(request):
     job_id_09 = results.json()
 
 
-def test_12_setting_up_smb_1_for_freebsd(request):
+def test_12_setting_up_smb_1_for_freebsd():
     global payload, results
     payload = {
         "description": "Test FreeNAS Server",
@@ -138,7 +138,7 @@ def test_12_setting_up_smb_1_for_freebsd(request):
     assert results.status_code == 200, results.text
 
 
-def test_13_creating_a_smb_share_on_smb_path(request):
+def test_13_creating_a_smb_share_on_smb_path():
     global smb_id
     payload = {
         "comment": "My Test SMB Share",
@@ -152,23 +152,23 @@ def test_13_creating_a_smb_share_on_smb_path(request):
     smb_id = results.json()['id']
 
 
-def test_14_enable_cifs_service(request):
+def test_14_enable_cifs_service():
     results = PUT("/service/id/cifs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
-def test_15_verify_if_clif_service_is_enabled(request):
+def test_15_verify_if_clif_service_is_enabled():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is True, results.text
 
 
-def test_16_starting_cifs_service(request):
+def test_16_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_17_verify_if_cifs_service_is_running(request):
+def test_17_verify_if_cifs_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
@@ -207,8 +207,33 @@ def test_20_verify_ldap_smb_share_was_unmounted():
     assert results['result'] is True, results['output']
 
 
+def test_21_disable_smb_1():
+    global payload, results
+    payload = {
+        "enable_smb1": False
+    }
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_22_stopping_cifs_service():
+    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    results = POST("/service/stop/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_23_verify_if_cifs_service_stopped():
+    results = GET("/service?service=cifs")
+    assert results.json()[0]["state"] == "STOPPED", results.text
+
+
+def test_24_delete_the_smb_share_for_ldap_testing():
+    results = DELETE(f"/sharing/smb/id/{smb_id}")
+    assert results.status_code == 200, results.text
+
+
 @ldap_test_cfg
-def test_21_disabling_ldap():
+def test_25_disabling_ldap():
     payload = {
         "enable": False
     }
@@ -217,7 +242,7 @@ def test_21_disabling_ldap():
 
 
 @ldap_test_cfg
-def test_22_verify_ldap_state_after_is_enabled_after_disabling_ldap():
+def test_26_verify_ldap_state_after_is_enabled_after_disabling_ldap():
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), str), results.text
@@ -225,11 +250,11 @@ def test_22_verify_ldap_state_after_is_enabled_after_disabling_ldap():
 
 
 @ldap_test_cfg
-def test_23_verify_ldap_enable_is_false():
+def test_27_verify_ldap_enable_is_false():
     results = GET("/ldap/")
     assert results.json()["enable"] is False, results.text
 
 
-def test_24_destroying_ad_dataset_for_smb(request):
+def test_28_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
