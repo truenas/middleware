@@ -4,7 +4,6 @@ try:
 except ImportError:
     acl = None
 import errno
-import enum
 import functools
 import grp
 import os

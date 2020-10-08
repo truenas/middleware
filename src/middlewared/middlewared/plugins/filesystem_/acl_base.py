@@ -1,6 +1,6 @@
 import enum
 from middlewared.service import accepts, job, ServicePartBase
-from middlewared.schema import Bool, Dict, Int, List, Str, UnixPerm, accepts
+from middlewared.schema import Bool, Dict, Int, List, Str, UnixPerm
 from middlewared.utils import osc
 
 OS_TYPE_FREEBSD = 0x01
@@ -407,4 +407,3 @@ class ACLBase(ServicePartBase):
         be placed at the top of the ACL. Optionally may pass `share_type` to argument
         to get share-specific template ACL.
         """
-
