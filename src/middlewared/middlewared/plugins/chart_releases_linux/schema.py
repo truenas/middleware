@@ -5,7 +5,7 @@ from collections import Callable
 from middlewared.schema import Cron, Dict, List
 from middlewared.service import private, Service, ValidationErrors
 
-from .utils import get_network_attachment_definition_name, RESERVED_NAMES
+from .utils import get_list_item_from_value, get_network_attachment_definition_name, RESERVED_NAMES
 
 # TODO: Let's please think of a better way to accomplish this as a whole
 
@@ -51,14 +51,9 @@ class ChartReleaseService(Service):
 
         if isinstance(question_attr, List):
             for index, item in enumerate(value):
-                for attr in question_attr.items:
-                    try:
-                        attr.validate(item)
-                    except ValidationErrors:
-                        pass
-                    else:
-                        value[index] = await self.normalise_question(attr, item, update, complete_config, context)
-                        break
+                attr = get_list_item_from_value(item, question_attr)
+                if attr:
+                    value[index] = await self.normalise_question(attr, item, update, complete_config, context)
 
         for ref in filter(lambda k: k in REF_MAPPING, question_attr.ref):
             value = await self.middleware.call(

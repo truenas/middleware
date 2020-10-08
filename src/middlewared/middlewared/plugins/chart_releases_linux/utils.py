@@ -4,6 +4,7 @@ from copy import deepcopy
 from itertools import chain
 
 from middlewared.schema import Bool, Cron, Dict, HostPath, Int, IPAddr, List, Path, Str
+from middlewared.service import ValidationErrors
 from middlewared.utils import run as _run
 from middlewared.validators import Match, Range
 
@@ -125,3 +126,13 @@ def clean_values_for_upgrade(original_values, questions_details):
 
 def get_network_attachment_definition_name(release, count):
     return f'ix-{release}-{count}'
+
+
+def get_list_item_from_value(value, question_attr):
+    for attr in question_attr.items:
+        try:
+            attr.validate(value)
+        except ValidationErrors:
+            pass
+        else:
+            return attr
