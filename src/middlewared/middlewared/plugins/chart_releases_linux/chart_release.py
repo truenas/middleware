@@ -1,24 +1,14 @@
 import asyncio
-import collections
 import copy
-import enum
-import itertools
 import os
 import shutil
 import tempfile
 import yaml
 
 from middlewared.schema import accepts, Dict, Str
-from middlewared.service import CallError, CRUDService, filterable, filter_list, job, private
+from middlewared.service import CallError, CRUDService, filterable, job, private
 
-from .utils import CHART_NAMESPACE, run, get_namespace, get_storage_class_name
-
-
-class Resources(enum.Enum):
-    CRONJOBS = 'cronjobs'
-    DEPLOYMENTS = 'deployments'
-    JOBS = 'jobs'
-    PODS = 'pods'
+from .utils import run, get_namespace, get_storage_class_name
 
 
 class ChartReleaseService(CRUDService):
@@ -28,78 +18,7 @@ class ChartReleaseService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
-        if not await self.middleware.call('service.started', 'kubernetes'):
-            return []
-
-        k8s_config = await self.middleware.call('kubernetes.config')
-        options = options or {}
-        extra = copy.deepcopy(options.get('extra', {}))
-        get_resources = extra.get('retrieve_resources')
-        get_history = extra.get('history')
-
-        if get_resources:
-            storage_classes = collections.defaultdict(lambda: None)
-            for storage_class in await self.middleware.call('k8s.storage_class.query'):
-                storage_classes[storage_class['metadata']['name']] = storage_class
-
-            resources = {r.value: collections.defaultdict(list) for r in Resources}
-            for resource, namespace, r_filters, n_func in (
-                (
-                    Resources.DEPLOYMENTS, 'k8s.deployment', [
-                        ['metadata.labels.app\\.kubernetes\\.io/managed-by', '=', 'Helm'],
-                    ], lambda r: r['metadata']['labels']['app.kubernetes.io/instance']
-                ),
-                (
-                    Resources.PODS, 'k8s.pod', [['metadata.labels.app\\.kubernetes\\.io/instance', '!=', None]],
-                    lambda r: r['metadata']['labels']['app.kubernetes.io/instance']
-                ),
-                (
-                    Resources.JOBS, 'k8s.job', [['metadata.labels.app\\.kubernetes\\.io/instance', '!=', None]],
-                    lambda r: r['metadata']['labels']['app.kubernetes.io/instance']
-                ),
-                (
-                    Resources.CRONJOBS, 'k8s.cronjob', [['metadata.labels.app\\.kubernetes\\.io/instance', '!=', None]],
-                    lambda r: r['metadata']['labels']['app.kubernetes.io/instance']
-                ),
-            ):
-                r_filters += [['metadata.namespace', '=', CHART_NAMESPACE]]
-                for r_data in await self.middleware.call(f'{namespace}.query', r_filters):
-                    resources[resource.value][n_func(r_data)].append(r_data)
-
-        release_secrets = await self.middleware.call('chart.release.releases_secrets', extra)
-        releases = []
-        for name, release in release_secrets.items():
-            config = {}
-            release_data = release['releases'].pop(0)
-            cur_version = release_data['chart_metadata']['version']
-
-            for rel_data in filter(
-                lambda r: r['chart_metadata']['version'] == cur_version,
-                itertools.chain(reversed(release['releases']), [release_data])
-            ):
-                config.update(rel_data['config'])
-
-            release_secret = release['secrets'][0]
-            release_data.update({
-                'catalog': release_secret['metadata']['labels'].get(
-                    'catalog', await self.middleware.call('catalog.official_catalog_label')
-                ),
-                'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test'),
-                'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name),
-                'dataset': os.path.join(k8s_config['dataset'], 'releases', name),
-                'config': config,
-            })
-            if get_resources:
-                release_data['resources'] = {
-                    'storage_class': storage_classes[get_storage_class_name(name)],
-                    **{r.value: resources[r.value][name] for r in Resources},
-                }
-            if get_history:
-                release_data['history'] = release['history']
-
-            releases.append(release_data)
-
-        return filter_list(releases, filters, options)
+        return await self.middleware.call('chart.release.query_releases', filters, options)
 
     @private
     async def normalise_and_validate_values(self, item_details, values, update, release_name):
@@ -193,7 +112,7 @@ class ChartReleaseService(CRUDService):
         except Exception:
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed ( it is possible this might have happened )
-            if await self.query([['id', '=', data['release_name']]]):
+            if await self.middleware.call('chart.release.query', [['id', '=', data['release_name']]]):
                 delete_job = await self.middleware.call('chart.release.delete', data['release_name'])
                 await delete_job.wait()
                 if delete_job.error:

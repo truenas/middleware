@@ -16,20 +16,18 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def releases_secrets(self, options=None):
+    def releases_secrets(self, options=None):
         options = options or {}
 
-        release_secrets = defaultdict(lambda: dict({'untagged': [], 'secrets': [], 'releases': [], 'history': {}}))
-        secrets = await self.middleware.call(
+        release_secrets = defaultdict(lambda: dict({'untagged': [], 'releases': [], 'history': {}}))
+        secrets = self.middleware.call_sync(
             'k8s.secret.query', [
                 ['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]
             ]
         )
         for release_secret in secrets:
             data = release_secret.pop('data')
-            release = await self.middleware.run_in_thread(lambda: json.loads(
-                gzip.decompress(b64decode(b64decode(data['release']))).decode()
-            ))
+            release = json.loads(gzip.decompress(b64decode(b64decode(data['release']))).decode())
             name = release['name']
             if any(k not in release_secret['metadata']['labels'] for k in ('catalog', 'catalog_train')):
                 release_secrets[name]['untagged'].append(release_secret)
@@ -38,16 +36,16 @@ class ChartReleaseService(Service):
             release.update({
                 'chart_metadata': release.pop('chart')['metadata'],
                 'id': name,
+                'catalog': release_secret['metadata']['labels'].get(
+                    'catalog', self.middleware.call_sync('catalog.official_catalog_label')
+                ),
+                'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test'),
             })
 
-            release_secrets[name]['secrets'].append(release_secret)
             release_secrets[name]['releases'].append(release)
 
         for release in release_secrets:
             release_secrets[release]['releases'].sort(key=lambda d: d['version'], reverse=True)
-            release_secrets[release]['secrets'].sort(
-                key=lambda d: int(d['metadata']['labels']['version']), reverse=True
-            )
             if not options.get('history'):
                 continue
 

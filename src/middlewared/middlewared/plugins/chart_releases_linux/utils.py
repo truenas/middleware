@@ -22,7 +22,6 @@ mapping = {
 }
 
 CHART_NAMESPACE_PREFIX = 'ix-'
-CHART_NAMESPACE = 'default'
 RESERVED_NAMES = [
     ('ixExternalInterfacesConfiguration', list),
     ('ixExternalInterfacesConfigurationNames', list),
