@@ -76,7 +76,7 @@ class ChartReleaseService(Service):
 
         # If a snapshot of the volumes already exist with the same name in case of a failed upgrade, we will remove
         # it as we want the current point in time being reflected in the snapshot
-        volumes_ds = os.path.join(release['dataset'], 'volumes')
+        volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
         snap_name = f'{volumes_ds}@{current_chart["version"]}'
         if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
             await self.middleware.call('zfs.snapshot.delete', snap_name)
