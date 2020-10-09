@@ -10,12 +10,11 @@ from functions import (
     PUT,
     POST,
     DELETE,
+    SSH_TEST,
     cmd_test
 )
-from auto_config import pool_name, ip, hostname
+from auto_config import pool_name, ip, hostname, user, password
 
-Reason = 'LDAPBASEDN, LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD,' \
-    ' LDAPHOSTNAME are missing'
 try:
     from config import (
         LDAPBASEDN,
@@ -25,9 +24,9 @@ try:
         LDAPUSER,
         LDAPPASSWORD
     )
-    ldap_test_cfg = pytest.mark.skipif(False, reason=Reason)
 except ImportError:
-    ldap_test_cfg = pytest.mark.skipif(True, reason=Reason)
+    Reason = 'LDAP* variable are not setup in config.py'
+    pytestmark = pytest.mark.skipif(True, reason=Reason)
 
 
 MOUNTPOINT = f"/tmp/ldap-{hostname}"
@@ -80,7 +79,6 @@ def test_06_get_ldap_ssl_choices():
     assert idmap_backend.issubset(set(results.json())), results.text
 
 
-@ldap_test_cfg
 def test_07_setup_and_enabling_ldap():
     payload = {
         "basedn": LDAPBASEDN,
@@ -90,13 +88,13 @@ def test_07_setup_and_enabling_ldap():
             LDAPHOSTNAME
         ],
         "has_samba_schema": True,
+        "ssl": "ON",
         "enable": True
     }
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
 
 
-@ldap_test_cfg
 def test_08_verify_ldap_state_after_is_enabled_after_enabling_ldap():
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
@@ -104,7 +102,6 @@ def test_08_verify_ldap_state_after_is_enabled_after_enabling_ldap():
     assert results.json() == "HEALTHY", results.text
 
 
-@ldap_test_cfg
 def test_09_verify_ldap_enable_is_true():
     results = GET("/ldap/")
     assert results.json()["enable"] is True, results.text
@@ -127,25 +124,23 @@ def test_11_changing_ldap_dataset_permission():
     job_id_09 = results.json()
 
 
-def test_12_setting_up_smb_1_for_freebsd():
+def test_12_setting_up_for_testing():
     global payload, results
     payload = {
         "description": "Test FreeNAS Server",
-        "guest": "nobody",
-        "enable_smb1": True
     }
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_13_creating_a_smb_share_on_smb_path():
+def test_13_creating_a_smb_share_to_test_ldap():
     global smb_id
     payload = {
         "comment": "My Test SMB Share",
         "path": smb_path,
         "name": smb_name,
-        "guestok": True,
-        "vfsobjects": ["streams_xattr"]
+        "guestok": False,
+        "vfsobjects": ["streams_xattr", "ixnas"]
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
@@ -173,59 +168,53 @@ def test_17_verify_if_cifs_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-@ldap_test_cfg
-def test_18_creating_ldap_mountpoint():
-    results = cmd_test(f'mkdir -p "{MOUNTPOINT}" && sync')
+def test_18_verify_that_the_ldap_user_is_listed_with_pdbedit():
+    results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is True, results['output']
 
 
-@ldap_test_cfg
-def test_19_store_ldap_credentials_for_mount_smbfs():
-    cmd = f'echo "[{ip}:{LDAPUSER.upper()}]" > ~/.nsmbrc && '
-    cmd += f'echo "password={LDAPPASSWORD}" >> ~/.nsmbrc'
+def test_19_verify_smbclient_connect_to_the_smb_share_with_ldap():
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
     results = cmd_test(cmd)
     assert results['result'] is True, results['output']
 
 
-@ldap_test_cfg
-def test_20_mount_smb_share_with_mount_smbfs_and_ldap_credentials():
-    cmd = f'mount_smbfs -N -I {ip} -W LDAP -U {LDAPUSER} ' \
-        f'//{LDAPUSER}@{ip}/{smb_name} {MOUNTPOINT}'
+def test_20_create_a_testfile_and_send_it_to_the_smb_share_with_ldap():
+    cmd_test('touch testfile.txt')
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD}' \
+        ' -c "put testfile.txt testfile.txt"'
     results = cmd_test(cmd)
     assert results['result'] is True, results['output']
 
 
-@ldap_test_cfg
-def test_21_creating_testfile_in_the_ldap_mounted_share():
-    results = cmd_test(f"touch {MOUNTPOINT}/testfile.txt")
-    assert results['result'] is True, results['output']
-
-
-@ldap_test_cfg
-def test_22_verify_testfile_exit_with_filesystem_stat():
+def test_21_verify_testfile_exit_with_in_the_nas_filesystem_stat():
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
-@ldap_test_cfg
-def test_23_umount_ldap_smb_share():
-    results = cmd_test(f'umount -f {MOUNTPOINT}')
-    assert results['result'] is True, results['output']
-
-
-@ldap_test_cfg
-def test_24_verify_ldap_smb_share_was_unmounted():
-    results = cmd_test(f'mount | grep -qv {MOUNTPOINT}')
-    assert results['result'] is True, results['output']
-
-
-def test_25_disable_smb_1():
-    global payload, results
+def test_22_set_has_samba_schema_to_false():
     payload = {
-        "enable_smb1": False
+        "has_samba_schema": False
     }
-    results = PUT("/smb/", payload)
+    results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
+
+
+def test_23_restarting_cifs_service_after_changing_has_samba_schema():
+    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    results = POST("/service/restart/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_24_verify_that_the_ldap_user_is_not_listed_with_pdbedit():
+    results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
+    assert results['result'] is False, results['output']
+
+
+def test_25_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_false():
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
+    results = cmd_test(cmd)
+    assert results['result'] is False, results['output']
 
 
 def test_22_stopping_cifs_service():
@@ -244,7 +233,6 @@ def test_24_delete_the_smb_share_for_ldap_testing():
     assert results.status_code == 200, results.text
 
 
-@ldap_test_cfg
 def test_25_disabling_ldap():
     payload = {
         "enable": False
@@ -253,7 +241,6 @@ def test_25_disabling_ldap():
     assert results.status_code == 200, results.text
 
 
-@ldap_test_cfg
 def test_26_verify_ldap_state_after_is_enabled_after_disabling_ldap():
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
@@ -261,7 +248,6 @@ def test_26_verify_ldap_state_after_is_enabled_after_disabling_ldap():
     assert results.json() == "DISABLED", results.text
 
 
-@ldap_test_cfg
 def test_27_verify_ldap_enable_is_false():
     results = GET("/ldap/")
     assert results.json()["enable"] is False, results.text
