@@ -1,3 +1,4 @@
+import enum
 import os
 
 from copy import deepcopy
@@ -27,6 +28,15 @@ RESERVED_NAMES = [
     ('ixExternalInterfacesConfigurationNames', list),
     ('ixVolumes', list),
 ]
+
+
+class Resources(enum.Enum):
+    CRONJOB = 'cronjobs'
+    DEPLOYMENT = 'deployments'
+    JOB = 'jobs'
+    PERSISTENT_VOLUME_CLAIM = 'persistent_volume_claims'
+    POD = 'pods'
+    STATEFULSET = 'statefulsets'
 
 
 def get_namespace(release_name):

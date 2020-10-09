@@ -1,22 +1,12 @@
 import collections
 import copy
-import enum
 import itertools
 import os
 
 from middlewared.service import private, Service
 from middlewared.utils import filter_list
 
-from .utils import CHART_NAMESPACE_PREFIX, get_storage_class_name
-
-
-class Resources(enum.Enum):
-    CRONJOB = 'cronjobs'
-    DEPLOYMENT = 'deployments'
-    JOB = 'jobs'
-    PERSISTENT_VOLUME_CLAIM = 'persistent_volume_claims'
-    POD = 'pods'
-    STATEFULSET = 'statefulsets'
+from .utils import CHART_NAMESPACE_PREFIX, get_storage_class_name, Resources
 
 
 class ChartReleaseService(Service):
