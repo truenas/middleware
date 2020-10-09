@@ -64,7 +64,7 @@ class ChartReleaseService(Service):
         config = clean_values_for_upgrade(release['config'], catalog_item['questions'])
         config.update(options['values'])
 
-        config = await self.middleware.call(
+        config, context = await self.middleware.call(
             'chart.release.normalise_and_validate_values', catalog_item, config, False, release_name
         )
 
@@ -84,6 +84,8 @@ class ChartReleaseService(Service):
         await self.middleware.call(
             'zfs.snapshot.create', {'dataset': volumes_ds, 'name': current_chart['version']}
         )
+
+        await self.middleware.call('chart.release.perform_actions', context)
 
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))

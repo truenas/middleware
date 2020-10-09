@@ -21,11 +21,15 @@ class ChartReleaseService(CRUDService):
         return await self.middleware.call('chart.release.query_releases', filters, options)
 
     @private
-    async def normalise_and_validate_values(self, item_details, values, update, release_name):
+    async def normalise_and_validate_values(self, item_details, values, update, release_ds):
         dict_obj = await self.middleware.call('chart.release.validate_values', item_details, values, update)
         return await self.middleware.call(
             'chart.release.get_normalised_values', dict_obj, values, update, {
-                'release_name': release_name,
+                'release': {
+                    'name': release_ds.split('/')[-1],
+                    'dataset': release_ds,
+                    'path': os.path.join('/mnt', release_ds),
+                },
                 'actions': [],
             }
         )

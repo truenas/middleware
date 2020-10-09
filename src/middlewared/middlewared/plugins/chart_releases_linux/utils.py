@@ -25,6 +25,7 @@ CHART_NAMESPACE_PREFIX = 'ix-'
 RESERVED_NAMES = [
     ('ixExternalInterfacesConfiguration', list),
     ('ixExternalInterfacesConfigurationNames', list),
+    ('ixVolumes', list),
 ]
 
 

@@ -1,4 +1,6 @@
+import copy
 import json
+import os
 
 from collections import Callable
 
@@ -11,6 +13,7 @@ from .utils import get_list_item_from_value, get_network_attachment_definition_n
 
 REF_MAPPING = {
     'normalise/interfaceConfiguration': 'interface_configuration',
+    'normalise/ixVolume': 'ix_volume',
 }
 
 
@@ -66,7 +69,7 @@ class ChartReleaseService(Service):
     async def normalise_interface_configuration(self, attr, value, complete_config, context):
         assert isinstance(attr, Dict) is True
         name = get_network_attachment_definition_name(
-            context['release_name'], len(complete_config['ixExternalInterfacesConfiguration'])
+            context['release']['name'], len(complete_config['ixExternalInterfacesConfiguration'])
         )
         host_iface = value['hostInterface']
         iface_conf = {
@@ -99,5 +102,25 @@ class ChartReleaseService(Service):
 
         complete_config['ixExternalInterfacesConfiguration'].append(json.dumps(iface_conf))
         complete_config['ixExternalInterfacesConfigurationNames'].append(name)
+
+        return value
+
+    @private
+    async def normalise_ix_volume(self, attr, value, complete_config, context):
+        assert isinstance(attr, Dict) is True
+
+        action_dict = next((d for d in context['actions'] if d['method'] == 'update_volumes_for_release'), None)
+        if not action_dict:
+            context['actions'].append({
+                'method': 'update_volumes_for_release',
+                'args': [copy.deepcopy(context['release']), [value['datasetName']]],
+            })
+        else:
+            action_dict['args'][-1].append(value['datasetName'])
+
+        complete_config['ixVolumes'].append({
+            'hostPath': os.path.join(context['release']['path'], 'volumes/ix_volumes', value['datasetName']),
+            'mountPath': value['mountPath'],
+        })
 
         return value
