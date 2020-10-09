@@ -21,7 +21,9 @@ class ChartReleaseService(Service):
     )
     async def rollback(self, release_name, options):
         release = await self.middleware.call(
-            'chart.release.query', [['id', '=', release_name]], {'extra': {'history': True}, 'get': True}
+            'chart.release.query', [['id', '=', release_name]], {
+                'extra': {'history': True, 'retrieve_resources': True}, 'get': True,
+            }
         )
         rollback_version = options['item_version']
         if rollback_version not in release['history']:
@@ -37,8 +39,9 @@ class ChartReleaseService(Service):
 
         history_ver = str(release['history'][rollback_version]['version'])
         # TODO: Upstream helm does not have ability to force stop a release, until we have that ability
-        #  let's just add a warning for the user in UI that he/she should scale down his/her deployments
-        #  before rollback
+        #  let's just try to do a best effort to scale down scaleable workloads and then scale them back up
+
+        scale_stats = await self.middleware.call('chart.release.scale', release_name, {'replica_count': 0})
 
         command = []
         if options['force']:
@@ -61,6 +64,10 @@ class ChartReleaseService(Service):
                 'recursive': True,
                 'recursive_clones': True,
             }
+        )
+
+        await self.middleware.call(
+            'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale']
         )
 
         return await self.middleware.call('chart.release.get_instance', release_name)

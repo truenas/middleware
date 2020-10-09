@@ -62,9 +62,9 @@ class ChartReleaseService(Service):
 
     @private
     async def scale_release_internal(self, resources, replicas=None, replica_counts=None):
-        if replicas and replica_counts:
+        if replicas is not None and replica_counts:
             raise CallError('Only one of "replicas" or "replica_counts" should be specified')
-        elif not replicas and not replica_counts:
+        elif replicas is None and not replica_counts:
             raise CallError('Either one of "replicas" or "replica_counts" must be specified')
 
         assert bool(resources or replica_counts) is True
