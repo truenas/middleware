@@ -71,6 +71,7 @@ class ChartReleaseService(Service):
             if get_resources:
                 release_data['resources'] = {
                     'storage_class': storage_classes[get_storage_class_name(name)],
+                    'host_path_volumes': await self.host_path_volumes(resources[Resources.POD.value][name]),
                     **{r.value: resources[r.value][name] for r in Resources},
                 }
             if get_history:
@@ -79,3 +80,12 @@ class ChartReleaseService(Service):
             releases.append(release_data)
 
         return filter_list(releases, filters, options)
+
+    @private
+    async def host_path_volumes(self, pods):
+        host_path_volumes = []
+        for pod in pods:
+            for volume in filter(lambda v: v.get('host_path'), pod['spec']['volumes']):
+                host_path_volumes.append(copy.deepcopy(volume))
+
+        return host_path_volumes
