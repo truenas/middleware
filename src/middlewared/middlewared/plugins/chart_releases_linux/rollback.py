@@ -33,14 +33,28 @@ class ChartReleaseService(Service):
         if not await self.middleware.run_in_thread(lambda: os.path.exists(chart_path)):
             raise CallError(f'Unable to locate {chart_path!r} path for rolling back')
 
-        snap_name = f'{os.path.join(release["dataset"], "volumes/ix_volumes")}@{rollback_version}'
+        ix_volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
+        snap_name = f'{ix_volumes_ds}@{rollback_version}'
         if not await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]) and not options['force']:
             raise CallError(f'Unable to locate {snap_name!r} snapshot for {release_name!r} volumes')
 
-        history_ver = str(release['history'][rollback_version]['version'])
+        history_item = release['history'][rollback_version]
+        current_dataset_paths = {
+            os.path.join('/mnt', d['id']) for d in await self.middleware.call(
+                'pool.dataset.query', [['id', '^', f'{ix_volumes_ds}/']]
+            )
+        }
+        history_datasets = {d['hostPath'] for d in history_item['config'].get('ixVolumes', [])}
+        if history_datasets - current_dataset_paths:
+            raise CallError(
+                'Please specify a rollback version where following iX Volumes are not being used as they don\'t '
+                f'exist anymore: {", ".join(d.split("/")[-1] for d in history_datasets - current_dataset_paths)}'
+            )
+
+        history_ver = str(history_item['version'])
+
         # TODO: Upstream helm does not have ability to force stop a release, until we have that ability
         #  let's just try to do a best effort to scale down scaleable workloads and then scale them back up
-
         scale_stats = await self.middleware.call('chart.release.scale', release_name, {'replica_count': 0})
 
         command = []
