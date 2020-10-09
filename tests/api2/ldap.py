@@ -13,7 +13,7 @@ from functions import (
     SSH_TEST,
     cmd_test
 )
-from auto_config import pool_name, ip, hostname, user, password
+from auto_config import pool_name, ip, user, password
 
 try:
     from config import (
@@ -28,8 +28,6 @@ except ImportError:
     Reason = 'LDAP* variable are not setup in config.py'
     pytestmark = pytest.mark.skipif(True, reason=Reason)
 
-
-MOUNTPOINT = f"/tmp/ldap-{hostname}"
 dataset = f"{pool_name}/ldap-test"
 dataset_url = dataset.replace('/', '%2F')
 smb_name = "TestLDAPShare"
@@ -173,7 +171,7 @@ def test_18_verify_that_the_ldap_user_is_listed_with_pdbedit():
     assert results['result'] is True, results['output']
 
 
-def test_19_verify_smbclient_connect_to_the_smb_share_with_ldap():
+def test_19_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_on():
     cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
     results = cmd_test(cmd)
     assert results['result'] is True, results['output']
@@ -187,7 +185,7 @@ def test_20_create_a_testfile_and_send_it_to_the_smb_share_with_ldap():
     assert results['result'] is True, results['output']
 
 
-def test_21_verify_testfile_exit_with_in_the_nas_filesystem_stat():
+def test_21_verify_testfile_exit_with_in_the_smb_share_with_filesystem_stat():
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
 
@@ -217,23 +215,92 @@ def test_25_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_f
     assert results['result'] is False, results['output']
 
 
-def test_22_stopping_cifs_service():
+def test_26_set_has_samba_schema_true_and_ssl_START_TLS():
+    payload = {
+        "has_samba_schema": True,
+        "ssl": "START_TLS",
+    }
+    results = PUT("/ldap/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_27_starting_cifs_service_after_changing_ssl_to_START_TLS():
+    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    results = POST("/service/restart/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_28_verify_if_cifs_service_is_running():
+    results = GET("/service?service=cifs")
+    assert results.json()[0]["state"] == "RUNNING", results.text
+
+
+def test_29_verify_that_the_ldap_user_is_listed_with_pdbedit():
+    results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_30_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_START_TLS():
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
+    results = cmd_test(cmd)
+    assert results['result'] is True, results['output']
+
+
+def test_31_remove_the_testfile_from_smb_share_with_ldap_with_ssl_START_TLS():
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD}' \
+        ' -c "rm testfile.txt"'
+    results = cmd_test(cmd)
+    assert results['result'] is True, results['output']
+    cmd_test('rm testfile.txt')
+
+
+def test_32_verify_testfile_is_removed_from_the_smb_share_with_filesystem_stat():
+    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    assert results.status_code == 422, results.text
+
+
+def test_33_set_has_samba_schema_to_false():
+    payload = {
+        "has_samba_schema": False
+    }
+    results = PUT("/ldap/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_34_restarting_cifs_service_after_changing_has_samba_schema():
+    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    results = POST("/service/restart/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_35_verify_that_the_ldap_user_is_not_listed_with_pdbedit():
+    results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
+    assert results['result'] is False, results['output']
+
+
+def test_36_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_false():
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
+    results = cmd_test(cmd)
+    assert results['result'] is False, results['output']
+
+
+def test_37_stopping_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_23_verify_if_cifs_service_stopped():
+def test_38_verify_if_cifs_service_stopped():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
-def test_24_delete_the_smb_share_for_ldap_testing():
+def test_39_delete_the_smb_share_for_ldap_testing():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_25_disabling_ldap():
+def test_40_disabling_ldap():
     payload = {
         "enable": False
     }
@@ -241,18 +308,18 @@ def test_25_disabling_ldap():
     assert results.status_code == 200, results.text
 
 
-def test_26_verify_ldap_state_after_is_enabled_after_disabling_ldap():
+def test_41_verify_ldap_state_after_is_enabled_after_disabling_ldap():
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), str), results.text
     assert results.json() == "DISABLED", results.text
 
 
-def test_27_verify_ldap_enable_is_false():
+def test_42_verify_ldap_enable_is_false():
     results = GET("/ldap/")
     assert results.json()["enable"] is False, results.text
 
 
-def test_28_destroying_ad_dataset_for_smb():
+def test_43_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
