@@ -135,7 +135,7 @@ def generate_dual_nvdimm_config(middleware):
         current_vers = version.parse(data['system-version'])
         minimum_vers = version.Version('3.0')
     except Exception as e:
-        middleware.logger.error('Failed determning hardware version with error: %s', e)
+        middleware.logger.error('Failed determining hardware version with error: %s', e)
         return
 
     if product.startswith('TRUENAS-M') and current_vers.major >= minimum_vers.major:
