@@ -202,4 +202,6 @@ class ChartReleaseService(CRUDService):
 
     @private
     async def release_datasets(self, release_dataset):
-        return [release_dataset] + [os.path.join(release_dataset, k) for k in ('charts', 'volumes')]
+        return [release_dataset] + [
+            os.path.join(release_dataset, k) for k in ('charts', 'volumes', 'volumes/ix_volumes')
+        ]
