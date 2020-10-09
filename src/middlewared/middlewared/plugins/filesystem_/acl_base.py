@@ -177,6 +177,14 @@ class ACLDefault(enum.Enum):
             'perms': {"READ": False, "WRITE": False, "EXECUTE": False},
         }
     ]}
+    OPEN = NFS4_OPEN if osc.IS_FREEBSD else POSIX_OPEN
+    RESTRICTED = NFS4_RESTRICTED if osc.IS_FREEBSD else POSIX_RESTRICTED
+    HOME = NFS4_HOME if osc.IS_FREEBSD else POSIX_RESTRICTED
+
+    def options():
+        rv = [x.name for x in ACLDefault]
+        rv.extend(['OPEN', 'RESTRICTED', 'HOME'])
+        return rv
 
 
 class ACLBase(ServicePartBase):
@@ -397,7 +405,7 @@ class ACLBase(ServicePartBase):
         """
 
     @accepts(
-        Str('acl_type', default='NFS4_OPEN' if osc.IS_FREEBSD else 'POSIX_OPEN', enum=[x.name for x in ACLDefault]),
+        Str('acl_type', default='OPEN', enum=ACLDefault.options()),
         Str('share_type', default='NONE', enum=['NONE', 'AFP', 'SMB', 'NFS']),
     )
     async def get_default_acl(self, acl_type, share_type):
