@@ -36,7 +36,7 @@ class ChartReleaseService(Service):
         verrors.check()
 
         # If schema is okay, we see if we have question specific validation to be performed
-        questions = item_version_details['questions']
+        questions = {v['variable']: v for v in item_version_details['questions']}
         for key in new_values:
             await self.validate_question(verrors, new_values[key], questions[key], dict_obj.attrs[key], schema_name)
 
@@ -50,14 +50,14 @@ class ChartReleaseService(Service):
         schema_name = f'{schema_name}.{question["variable"]}'
 
         # TODO: Add nested support for subquestions
-        if schema['type'] == 'dict':
+        if schema['type'] == 'dict' and value:
             dict_attrs = {v['variable']: v for v in schema['attrs']}
             for k in filter(lambda k: k in dict_attrs, value):
                 await self.validate_question(
                     verrors, value[k], dict_attrs[k], var_attr.attrs[k], f'{schema_name}.{k}',
                 )
 
-        elif schema['type'] == 'list':
+        elif schema['type'] == 'list' and value:
             for index, item in enumerate(value):
                 item_index, attr = get_list_item_from_value(item, var_attr)
                 if attr:
@@ -78,3 +78,4 @@ class ChartReleaseService(Service):
         for index, pvc in enumerate(value):
             if pvc['name'] in used_names:
                 verrors.add(f'{schema_name}.{index}.name', 'Names for PVC\'s must be unique')
+            used_names.add(pvc['name'])

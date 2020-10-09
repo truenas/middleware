@@ -60,3 +60,5 @@ class ChartReleaseService(Service):
                 'recursive_clones': True,
             }
         )
+
+        return await self.middleware.call('chart.release.get_instance', release_name)

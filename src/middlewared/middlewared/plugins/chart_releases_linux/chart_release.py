@@ -2,6 +2,7 @@ import asyncio
 import collections
 import copy
 import enum
+import itertools
 import os
 import shutil
 import tempfile
@@ -74,7 +75,7 @@ class ChartReleaseService(CRUDService):
 
             for rel_data in filter(
                 lambda r: r['chart_metadata']['version'] == cur_version,
-                reversed(release['releases'])
+                itertools.chain(reversed(release['releases']), [release_data])
             ):
                 config.update(rel_data['config'])
 
@@ -201,6 +202,8 @@ class ChartReleaseService(CRUDService):
                 await self.remove_storage_class_and_dataset(data['release_name'])
 
             raise
+        else:
+            return await self.get_instance(data['release_name'])
 
     @accepts(
         Str('chart_release'),
@@ -232,6 +235,8 @@ class ChartReleaseService(CRUDService):
             if cp.returncode:
                 raise CallError(f'Failed to update chart release: {cp.stderr.decode()}')
 
+        return await self.get_instance(chart_release)
+
     @accepts(Str('release_name'))
     @job(lock=lambda args: f'chart_release_delete_{args[0]}')
     async def do_delete(self, job, release_name):
@@ -259,6 +264,7 @@ class ChartReleaseService(CRUDService):
         await self.remove_storage_class_and_dataset(release_name, job)
 
         job.set_progress(100, f'{release_name!r} chart release deleted')
+        return True
 
     @private
     async def remove_storage_class_and_dataset(self, release_name, job=None):

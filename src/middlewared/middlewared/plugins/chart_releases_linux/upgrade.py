@@ -94,3 +94,5 @@ class ChartReleaseService(Service):
             )
             if cp.returncode:
                 raise CallError(f'Failed to upgrade chart release to {new_version!r}: {cp.stderr.decode()}')
+
+        return await self.middleware.call('chart.release.get_instance', release_name)

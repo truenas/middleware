@@ -3,7 +3,7 @@ import json
 from collections import Callable
 
 from middlewared.schema import Cron, Dict, List
-from middlewared.service import private, Service, ValidationErrors
+from middlewared.service import private, Service
 
 from .utils import get_list_item_from_value, get_network_attachment_definition_name, RESERVED_NAMES
 
