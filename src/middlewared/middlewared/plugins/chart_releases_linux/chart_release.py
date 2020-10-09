@@ -11,7 +11,7 @@ import yaml
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, filter_list, job, private
 
-from .utils import CHART_NAMESPACE, run, get_storage_class_name
+from .utils import CHART_NAMESPACE, run, get_namespace, get_storage_class_name
 
 
 class Resources(enum.Enum):
@@ -169,7 +169,7 @@ class ChartReleaseService(CRUDService):
                 cp = await run(
                     [
                         'helm', 'install', data['release_name'], chart_path, '-n',
-                        CHART_NAMESPACE, '--create-namespace', '-f', f.name,
+                        get_namespace(data['release_name']), '--create-namespace', '-f', f.name,
                     ],
                     check=False,
                 )
@@ -230,7 +230,8 @@ class ChartReleaseService(CRUDService):
             f.flush()
 
             cp = await run(
-                ['helm', 'upgrade', chart_release, chart_path, '-n', CHART_NAMESPACE, '-f', f.name], check=False
+                ['helm', 'upgrade', chart_release, chart_path, '-n', get_namespace(chart_release), '-f', f.name],
+                check=False,
             )
             if cp.returncode:
                 raise CallError(f'Failed to update chart release: {cp.stderr.decode()}')
@@ -242,10 +243,9 @@ class ChartReleaseService(CRUDService):
     async def do_delete(self, job, release_name):
         # For delete we will uninstall the release first and then remove the associated datasets
         await self.middleware.call('kubernetes.validate_k8s_setup')
-        release = await self.query([['id', '=', release_name]], {'extra': {'retrieve_resources': True}, 'get': True})
-        pods = release['resources'][Resources.PODS.value]
+        await self.get_instance(release_name)
 
-        cp = await run(['helm', 'uninstall', release_name, '-n', CHART_NAMESPACE], check=False)
+        cp = await run(['helm', 'uninstall', release_name, '-n', get_namespace(release_name)], check=False)
         if cp.returncode:
             raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
 
@@ -253,10 +253,7 @@ class ChartReleaseService(CRUDService):
         # wait for release to uninstall properly, helm right now does not support a flag for this but
         # a feature request is open in the community https://github.com/helm/helm/issues/2378
         while await self.middleware.call(
-            'k8s.pod.query', [
-                ['metadata.name', 'in', [p['metadata']['name'] for p in pods]],
-                ['metadata.namespace', '=', CHART_NAMESPACE],
-            ],
+            'k8s.pod.query', [['metadata.namespace', '=', get_namespace(release_name)]],
         ):
             job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
             await asyncio.sleep(5)

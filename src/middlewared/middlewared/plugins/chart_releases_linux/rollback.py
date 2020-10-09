@@ -3,7 +3,7 @@ import os
 from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, Service
 
-from .utils import CHART_NAMESPACE, run
+from .utils import get_namespace, run
 
 
 class ChartReleaseService(Service):
@@ -45,8 +45,10 @@ class ChartReleaseService(Service):
             command.append('--force')
 
         cp = await run(
-            ['helm', 'rollback', release_name, history_ver, '-n', CHART_NAMESPACE, '--recreate-pods'] + command,
-            check=False,
+            [
+                'helm', 'rollback', release_name, history_ver, '-n',
+                get_namespace(release_name), '--recreate-pods'
+            ] + command, check=False,
         )
         if cp.returncode:
             raise CallError(

@@ -8,7 +8,7 @@ from pkg_resources import parse_version
 from middlewared.schema import Dict, Str
 from middlewared.service import accepts, CallError, Service, ValidationErrors
 
-from .utils import CHART_NAMESPACE, clean_values_for_upgrade, run
+from .utils import clean_values_for_upgrade, get_namespace, run
 
 
 class ChartReleaseService(Service):
@@ -90,7 +90,8 @@ class ChartReleaseService(Service):
             f.flush()
 
             cp = await run(
-                ['helm', 'upgrade', release_name, chart_path, '-n', CHART_NAMESPACE, '-f', f.name], check=False
+                ['helm', 'upgrade', release_name, chart_path, '-n', get_namespace(release_name), '-f', f.name],
+                check=False,
             )
             if cp.returncode:
                 raise CallError(f'Failed to upgrade chart release to {new_version!r}: {cp.stderr.decode()}')

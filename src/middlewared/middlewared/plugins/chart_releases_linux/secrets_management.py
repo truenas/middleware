@@ -7,7 +7,7 @@ from copy import deepcopy
 
 from middlewared.service import private, Service
 
-from .utils import CHART_NAMESPACE
+from .utils import CHART_NAMESPACE_PREFIX
 
 
 class ChartReleaseService(Service):
@@ -21,7 +21,9 @@ class ChartReleaseService(Service):
 
         release_secrets = defaultdict(lambda: dict({'untagged': [], 'secrets': [], 'releases': [], 'history': {}}))
         secrets = await self.middleware.call(
-            'k8s.secret.query', [['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '=', CHART_NAMESPACE]]
+            'k8s.secret.query', [
+                ['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]
+            ]
         )
         for release_secret in secrets:
             data = release_secret.pop('data')

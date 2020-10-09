@@ -21,11 +21,16 @@ mapping = {
     'cron': Cron,
 }
 
+CHART_NAMESPACE_PREFIX = 'ix-'
 CHART_NAMESPACE = 'default'
 RESERVED_NAMES = [
     ('ixExternalInterfacesConfiguration', list),
     ('ixExternalInterfacesConfigurationNames', list),
 ]
+
+
+def get_namespace(release_name):
+    return f'{CHART_NAMESPACE_PREFIX}{release_name}'
 
 
 async def run(*args, **kwargs):
