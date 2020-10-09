@@ -66,14 +66,14 @@ class ChartReleaseService(CRUDService):
             raise CallError(f'Unable to locate "{data["version"]}" catalog item version.')
 
         item_details = catalog['trains'][data['train']][data['item']]['versions'][data['version']]
+        k8s_config = await self.middleware.call('kubernetes.config')
+        release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         default_values = item_details['values']
         new_values = copy.deepcopy(default_values)
         new_values.update(data['values'])
-        new_values, context = await self.normalise_and_validate_values(
-            item_details, new_values, False, data['release_name']
-        )
+        new_values, context = await self.normalise_and_validate_values(item_details, new_values, False, release_ds)
 
         # Now that we have completed validation for the item in question wrt values provided,
         # we will now perform the following steps
@@ -81,8 +81,6 @@ class ChartReleaseService(CRUDService):
         # 2) Copy chart version into release/charts dataset
         # 3) Install the helm chart
         # 4) Create storage class
-        k8s_config = await self.middleware.call('kubernetes.config')
-        release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
         storage_class_name = await get_storage_class_name(data['release_name'])
         try:
             for dataset in await self.release_datasets(release_ds):
@@ -158,7 +156,7 @@ class ChartReleaseService(CRUDService):
         version_details = await self.middleware.call('catalog.item_version_details', chart_path)
         config = release['config']
         config.update(data['values'])
-        config, context = await self.normalise_and_validate_values(version_details, config, True, chart_release)
+        config, context = await self.normalise_and_validate_values(version_details, config, True, release['dataset'])
 
         await self.perform_actions(context)
 

@@ -65,7 +65,7 @@ class ChartReleaseService(Service):
         config.update(options['values'])
 
         config, context = await self.middleware.call(
-            'chart.release.normalise_and_validate_values', catalog_item, config, False, release_name
+            'chart.release.normalise_and_validate_values', catalog_item, config, False, release['dataset'],
         )
 
         # We have validated configuration now
