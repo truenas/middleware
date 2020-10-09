@@ -128,7 +128,7 @@ def generate_ec2_config(middleware):
 
 
 def generate_dual_nvdimm_config(middleware):
-    data = middleware.call_sync('system.dmidecode_info')['system-product-name']
+    data = middleware.call_sync('system.dmidecode_info')
 
     product = data['system-product-name']
     try:
