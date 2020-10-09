@@ -34,7 +34,7 @@ class ChartReleaseService(Service):
         for attr in filter(lambda v: v.name in values, dict_obj.attrs.values()):
             values[attr.name] = await self.normalise_question(attr, values[attr.name], update, values, context)
 
-        return values
+        return values, context
 
     @private
     async def normalise_question(self, question_attr, value, update, complete_config, context):

@@ -26,8 +26,14 @@ class ChartReleaseService(CRUDService):
         return await self.middleware.call(
             'chart.release.get_normalised_values', dict_obj, values, update, {
                 'release_name': release_name,
+                'actions': [],
             }
         )
+
+    @private
+    async def perform_actions(self, context):
+        for action in context['actions']:
+            await self.middleware.call(f'chart.release.{action["method"]}', *action['args'])
 
     @accepts(
         Dict(
@@ -61,7 +67,9 @@ class ChartReleaseService(CRUDService):
         default_values = item_details['values']
         new_values = copy.deepcopy(default_values)
         new_values.update(data['values'])
-        new_values = await self.normalise_and_validate_values(item_details, new_values, False, data['release_name'])
+        new_values, context = await self.normalise_and_validate_values(
+            item_details, new_values, False, data['release_name']
+        )
 
         # Now that we have completed validation for the item in question wrt values provided,
         # we will now perform the following steps
@@ -79,6 +87,10 @@ class ChartReleaseService(CRUDService):
 
             chart_path = os.path.join('/mnt', release_ds, 'charts', data['version'])
             await self.middleware.run_in_thread(lambda: shutil.copytree(item_details['location'], chart_path))
+
+            # Before finally installing the release, we will perform any actions which might be required
+            # for the release to function like creating/deleting ix-volumes
+            await self.perform_actions(context)
 
             with tempfile.NamedTemporaryFile(mode='w+') as f:
                 f.write(yaml.dump(new_values))
@@ -142,7 +154,9 @@ class ChartReleaseService(CRUDService):
         version_details = await self.middleware.call('catalog.item_version_details', chart_path)
         config = release['config']
         config.update(data['values'])
-        config = await self.normalise_and_validate_values(version_details, config, True, chart_release)
+        config, context = await self.normalise_and_validate_values(version_details, config, True, chart_release)
+
+        await self.perform_actions(context)
 
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))
