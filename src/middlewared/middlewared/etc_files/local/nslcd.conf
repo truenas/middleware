@@ -4,6 +4,8 @@
 #
 <%
         ldap = middleware.call_sync('ldap.config')
+        aux = []
+        min_uid = 1000
         if ldap:
             certpath = None
             if ldap['certificate']:
@@ -18,6 +20,15 @@
             ldap = None
 
         ldap_enabled = ldap['enable']
+        for param in ldap['auxiliary_parameters'].splitlines():
+            param = param.strip()
+            if not param.startswith('nss_min_uid'):
+                aux.append(param)
+            else:
+                try:
+                    min_uid = param.split()[1]
+                except Exception:
+                    pass
 %>
 % if ldap_enabled:
     uri 	${' '.join(ldap['uri_list'])}
@@ -47,7 +58,9 @@
     timelimit	${ldap['timeout']}
     bind_timelimit ${ldap['dns_timeout']}
     map passwd loginShell /bin/sh
-  % if ldap['auxiliary_parameters']:
-    ${ldap['auxiliary_parameters']}
+  % if aux:
+    ${'\n'.join(aux)}
   % endif
+    nss_min_uid ${min_uid}
+    nss_initgroups_ignoreusers ALLLOCAL
 % endif
