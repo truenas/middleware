@@ -4,7 +4,8 @@ from middlewared.schema import Dict
 from middlewared.service import private, Service
 from middlewared.validators import validate_attributes
 
-from .utils import get_schema, get_list_item_from_value, update_conditional_validation, RESERVED_NAMES
+from .schema import get_schema, get_list_item_from_value, update_conditional_validation
+from .utils import RESERVED_NAMES
 
 
 validation_mapping = {

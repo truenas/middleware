@@ -9,7 +9,8 @@ from pkg_resources import parse_version
 from middlewared.schema import Dict, Str
 from middlewared.service import accepts, CallError, Service, ValidationErrors
 
-from .utils import clean_values_for_upgrade, get_namespace, run
+from .schema import clean_values_for_upgrade
+from .utils import get_namespace, run
 
 
 class ChartReleaseService(Service):
