@@ -47,7 +47,7 @@ smartd_daemon_prestart()
 smartd_daemon_start()
 {
 	check_startmsgs && echo "Starting $name."
-	/usr/sbin/daemon -f ${command} -n ${smartd_daemon_flags} ${command_args}
+	PATH="$PATH:/usr/local/sbin:/usr/local/bin" /usr/sbin/daemon -f ${command} -n ${smartd_daemon_flags} ${command_args}
 }
 
 smartd_daemon_reload()
