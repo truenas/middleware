@@ -7,6 +7,10 @@ from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, private, Service
 
 
+NORMALISE_KEYS = ['min_scale_version', 'max_scale_version']
+ITEM_KEYS = ['icon_url'] + NORMALISE_KEYS
+
+
 class CatalogService(Service):
 
     @accepts(
@@ -41,27 +45,36 @@ class CatalogService(Service):
 
     @private
     def item_details(self, item_path):
-        # TODO: Discuss how we should map icon file
-        # TODO: Add min/max TN version
         # Each directory under item path represents a version of the item and we need to retrieve details
         # for each version available under the item
         item_data = {'versions': {}}
         with open(os.path.join(item_path, 'item.yaml'), 'r') as f:
             item_data.update(yaml.load(f.read()))
 
+        item_data.update({k: item_data.get(k) for k in ITEM_KEYS})
+
         for version in filter(lambda p: os.path.isdir(os.path.join(item_path, p)), os.listdir(item_path)):
-            item_data['versions'][version] = self.item_version_details(os.path.join(item_path, version))
+            item_data['versions'][version] = self.item_version_details(
+                os.path.join(item_path, version), item_data,
+            )
         return item_data
 
     @private
-    def item_version_details(self, version_path):
+    def item_version_details(self, version_path, item_data):
         version_data = {'location': version_path}
         for key, filename, parser in (
+            ('version_config', 'item.yaml', yaml.load),
             ('values', 'values.yaml', yaml.load),
             ('questions', 'questions.yaml', yaml.load),
             ('app_readme', 'app-readme.md', markdown.markdown),
             ('detailed_readme', 'README.md', markdown.markdown),
         ):
+            if key == 'version_config':
+                version_data[key] = {k: item_data.get(k) for k in NORMALISE_KEYS}
+
+            if not os.path.exists(os.path.join(version_path, filename)):
+                continue
+
             with open(os.path.join(version_path, filename), 'r') as f:
                 version_data[key] = parser(f.read())
 
