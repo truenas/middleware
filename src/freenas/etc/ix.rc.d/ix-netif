@@ -100,24 +100,45 @@ _interface_config()
 	fi
 
 	local IFS=\|
-	# Note: ipv4/ipv6 are supposed in ip/masklen format.
+	local ipv6_autoconfig="NO"
 
-	# Traverse the network interface table and generate rc.conf style
-	# configuration.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
-	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass critical group options; do
+	# Traverse the network_interface table and network_aliases table to generate rc.conf style configuration
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_ipv6address_b, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6addr_b ipv6netmask int_vip int_vhid int_pass critical group options; do
+
+		# means we are licensed but HA hardware detection failed
 		if [ ${configure_ifaces} -ne 1 ]; then
 			continue;
 		fi
+
+		# check if we're the B node in an HA system
 		if [ "$(ha_node)" = "B" ]; then
 			ipv4addr=${ipv4addr_b}
+			ipv6addr=${ipv6addr_b}
 		fi
-		echo -n ifconfig_${interface}=\"
+
+		# check if it is ipv4 or ipv6 address
+		if [ -n "${ipv4addr}" ]; then
+			echo -n ifconfig_${interface}=\"
+		elif [ -n "${ipv6addr}" ]; then
+			echo -n ifconfig_${interface}_ipv6=\"
+		fi
+
+		# check if ipv4 dhcp or ipv6 autoconfig is turned on
 		if [ "${dodhcp}" = "1" ]; then
 			echo -n "DHCP"
-		elif [ -n "${ipv4addr}" ]; then
-			echo -n "inet ${ipv4addr}/${ipv4netmask} "
+		elif [ "${doipv6auto}" = "1" ]; then
+			echo -n "inet6 accept_rtadv"
+			ipv6_autoconfig="YES"
 		fi
+
+		# if no ipv4 dhcp or ipv6 autoconfig, configure the IP statically
+		if [ -n "${ipv4addr}" ]; then
+			echo -n "inet ${ipv4addr}/${ipv4netmask} "
+		elif [ -n "${ipv6addr}" ]; then
+			echo -n "inet6 ${ipv6addr} prefixlen ${ipv6netmask} "
+		fi
+
 		# Hook to support lagg(4) interfaces
 		lagg_id=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_lagginterface WHERE lagg_interface_id = ${interface_id}"`
 		if [ -n "${lagg_id}" ]; then
@@ -128,70 +149,88 @@ _interface_config()
 				echo -n " laggport ${lagg_physnic}"
 			done
 		fi
+
+		# apply any end-user given options to the interface
 		if [ -n "${options}" ]; then
 			echo -n " ${options}"
 		fi
 		echo \"
 
-		if [ "${int_vip}" != "" ]; then
+		# configure the VIP on HA systems
+		if [ -n "${int_vip}" ]; then
+
+			# configure the CARP password
 			if [ -n "${int_pass}" ]; then
 				int_passopt=" pass ${int_pass}"
 			else
 				int_passopt=""
 			fi
+
+			# set CARP advskew to 1 if we're master node
 			if [ "${failover_status}" = "MASTER" ]; then
 				carp1_skew="1"
 			fi
-			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
+
+			# setup the CARP address
+			if [ -n "${ipv4addr}" ]; then
+				echo -n "ifconfig_${interface}_alias0=\"inet ${int_vip}/32 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}"
+			elif [ -n "${ipv6addr}" ]; then
+				echo -n "ifconfig_${interface}_alias0=\"inet6 ${int_vip} prefixlen 128 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}"
+			fi
+
+			# setup the failover critical group info
 			if [ -n "${critical}" ]; then
 				echo -n " descr CriticalGroup${group}"
 			fi
 			echo \"
+
 			eval counter_${interface}=1
 
 		fi
 
-		local aliases has_ipv6
-		aliases=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_vip, alias_v4address, alias_v4address_b, alias_v4netmaskbit, alias_v6address, alias_v6address_b, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
-		while read alias_id v4vip v4addr v4addr_b v4netmask v6addr v6addr_b v6netmask; do
+		# handle the extra aliases on the interface (if any)
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_vip, alias_v4address, alias_v4address_b, alias_v4netmaskbit, alias_v6address, alias_v6address_b, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
+		while read alias_id a_vip v4addr v4addr_b v4netmask v6addr v6addr_b v6netmask; do
 			eval counter=\${counter_${interface}:-0}
 			if [ "$(ha_node)" = "B" ]; then
 				v4addr=${v4addr_b}
 				v6addr=${v6addr_b}
 			fi
-			if [ -n "${int_vhid}" -a -n "${v4vip}" ]; then
-				echo "ifconfig_${interface}_alias${counter}=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${v4vip}/32\""
-				counter=$((counter+1))
+
+			# configure the extra CARP aliases
+			if [ -n "${int_vhid}" -a -n "${a_vip}" ]; then
+				if [ -n "${v4addr}" ]; then
+					echo "ifconfig_${interface}_alias${counter}=\"inet ${a_vip}/32 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}\""
+					counter=$((counter+1))
+				elif [ -n "${v6addr}" ]; then
+					echo "ifconfig_${interface}_alias${counter}=\"inet6 ${a_vip} prefixlen 128 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}\""
+					counter=$((counter+1))
+				fi
 			fi
+
+			# configure the extra aliases
 			if [ -n "${v4addr}" ]; then
 				echo "ifconfig_${interface}_alias${counter}=\"inet ${v4addr}/${v4netmask}\""
 				counter=$((counter+1))
 			fi
 			if [ -n "${v6addr}" ]; then
-				echo "ifconfig_${interface}_alias${counter}=\"inet6 ${v6addr}/${v6netmask}\""
+				echo "ifconfig_${interface}_alias${counter}=\"inet6 ${v6addr} prefixlen ${v6netmask}\""
 				counter=$((counter+1))
 			fi
 			eval "counter_${interface}=\${counter}"
-		done)
-		echo ${aliases}
-		has_ipv6=$(echo ${aliases}|grep -c inet6)
+		done
 
-		if [ "$doipv6auto" = "1" ]; then
-			echo ifconfig_${interface}_ipv6=\"inet6 accept_rtadv auto_linklocal\"
-                        echo rtsold_enable=\"YES\"
-		else
-			if [ -n "${ipv6addr}" ]; then
-				echo ifconfig_${interface}_ipv6=\"inet6 ${ipv6addr}/${ipv6netmask} auto_linklocal\"
-                        elif [ ${has_ipv6} -gt 0 ]; then
-                                echo ifconfig_${interface}_ipv6=\"inet6 auto_linklocal\"
-                        fi
-		fi
 		if [ -n "${lagg_id}" ]; then
 			cloned_interfaces="${cloned_interfaces} ${interface}"
 			echo "cloned_interfaces=\"${cloned_interfaces}\""
 		fi
 	done
 
+	# if ipv6 autoconfig has been enabled for any interface
+	# we need to turn on the router solicitation daemon
+	if [ "${ipv6_autoconfig}" = "YES" ]; then
+		echo rtsold_enable=\"YES\"
+	fi
 
 	#
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \

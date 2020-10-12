@@ -37,7 +37,7 @@ class InterfaceService(Service):
             self.middleware.call_sync('system.is_enterprise') and self.middleware.call_sync('failover.node') == 'B'
         ):
             ipv4_field = 'int_ipv4address_b'
-            ipv6_field = 'int_ipv6address'
+            ipv6_field = 'int_ipv6address_b'
             alias_ipv4_field = 'alias_v4address_b'
             alias_ipv6_field = 'alias_v6address_b'
         else:
@@ -59,37 +59,34 @@ class InterfaceService(Service):
                     }))
                 else:
                     self.logger.info('Unable to get address from dhclient')
-            if data[ipv6_field] and has_ipv6 is False:
+            if data[ipv6_field] and not has_ipv6:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv6_field],
                     'netmask': data['int_v6netmaskbit'],
                 }))
+                has_ipv6 = True
         else:
             if data[ipv4_field] and not data['int_dhcp']:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv4_field],
                     'netmask': data['int_v4netmaskbit'],
                 }))
-            if data[ipv6_field] and has_ipv6 is False:
+            if data[ipv6_field] and not has_ipv6:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv6_field],
                     'netmask': data['int_v6netmaskbit'],
                 }))
                 has_ipv6 = True
 
-        # if there is a VIP, and this is a freeBSD system, then
-        # we need to configure the VHID.
-        #
-        # if there is a VIP, and this is a linux system, then
-        # we dont need a "VRID" (VHID equivalent) because we use
-        # unicast VRRP advertisements
-        vrrp_vip = data.get('int_vip', None)
-        if data['int_vip']:
+        # configure CARP/VRRP
+        has_vip = data.get('int_vip', False)
+        if has_vip:
             vip_data = {
                 'address': data['int_vip'],
-                'netmask': '32',
+                'netmask': '32' if not has_ipv6 else '128',
             }
 
+            # linux doesn't use `carp_vhid` or `carp_pass` attributes
             if osc.IS_FREEBSD:
                 carp_vhid = data.get('int_vhid', None)
                 carp_pass = data.get('int_pass', None)
@@ -120,7 +117,7 @@ class InterfaceService(Service):
             if alias['alias_vip']:
                 alias_vip_data = {
                     'address': alias['alias_vip'],
-                    'netmask': '32',
+                    'netmask': '32' if not has_ipv6 else '128',
                 }
 
                 if osc.IS_FREEBSD:
@@ -142,7 +139,7 @@ class InterfaceService(Service):
         # Remove addresses configured and not in database
         for addr in addrs_configured:
             # keepalived service is responsible for deleting the VIP
-            if str(addr.address) == vrrp_vip:
+            if has_vip and str(addr.address) == data['int_vip']:
                 continue
             if has_ipv6 and str(addr.address).startswith('fe80::'):
                 continue
@@ -172,7 +169,7 @@ class InterfaceService(Service):
                 # FIXME: change py-netif to accept str() key
                 iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
         else:
-            if vrrp_vip:
+            if has_vip:
                 if not self.middleware.call_sync('service.started', 'keepalived'):
                     self.middleware.call_sync('service.start', 'keepalived')
                 else:
@@ -182,7 +179,7 @@ class InterfaceService(Service):
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
             # keepalived service is responsible for adding the VIP
-            if str(addr.address) == vrrp_vip:
+            if has_vip and str(addr.address) == data['int_vip']:
                 continue
             self.logger.debug('{}: adding {}'.format(name, addr))
             iface.add_address(addr)

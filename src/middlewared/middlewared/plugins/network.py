@@ -44,10 +44,10 @@ class NetworkConfigurationModel(sa.Model):
     gc_hostname_b = sa.Column(sa.String(120), nullable=True)
     gc_domain = sa.Column(sa.String(120), default='local')
     gc_ipv4gateway = sa.Column(sa.String(42), default='')
-    gc_ipv6gateway = sa.Column(sa.String(42), default='')
-    gc_nameserver1 = sa.Column(sa.String(42), default='')
-    gc_nameserver2 = sa.Column(sa.String(42), default='')
-    gc_nameserver3 = sa.Column(sa.String(42), default='')
+    gc_ipv6gateway = sa.Column(sa.String(45), default='')
+    gc_nameserver1 = sa.Column(sa.String(45), default='')
+    gc_nameserver2 = sa.Column(sa.String(45), default='')
+    gc_nameserver3 = sa.Column(sa.String(45), default='')
     gc_httpproxy = sa.Column(sa.String(255))
     gc_netwait_enabled = sa.Column(sa.Boolean(), default=False)
     gc_netwait_ip = sa.Column(sa.String(300))
@@ -314,11 +314,11 @@ class NetworkAliasModel(sa.Model):
     alias_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'), index=True)
     alias_v4address = sa.Column(sa.String(42), default='')
     alias_v4netmaskbit = sa.Column(sa.String(3), default='')
-    alias_v6address = sa.Column(sa.String(42), default='')
+    alias_v6address = sa.Column(sa.String(45), default='')
     alias_v6netmaskbit = sa.Column(sa.String(3), default='')
-    alias_vip = sa.Column(sa.String(42), default='')
+    alias_vip = sa.Column(sa.String(45), default='')
     alias_v4address_b = sa.Column(sa.String(42), default='')
-    alias_v6address_b = sa.Column(sa.String(42), default='')
+    alias_v6address_b = sa.Column(sa.String(45), default='')
 
 
 class NetworkBridgeModel(sa.Model):
@@ -340,9 +340,10 @@ class NetworkInterfaceModel(sa.Model):
     int_ipv4address_b = sa.Column(sa.String(42), default='')
     int_v4netmaskbit = sa.Column(sa.String(3), default='')
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
-    int_ipv6address = sa.Column(sa.String(42), default='')
-    int_v6netmaskbit = sa.Column(sa.String(4), default='')
-    int_vip = sa.Column(sa.String(42), nullable=True)
+    int_ipv6address = sa.Column(sa.String(45), default='')
+    int_ipv6address_b = sa.Column(sa.String(45), default='')
+    int_v6netmaskbit = sa.Column(sa.String(3), default='')
+    int_vip = sa.Column(sa.String(45), nullable=True)
     int_vhid = sa.Column(sa.Integer(), nullable=True)
     int_pass = sa.Column(sa.String(100))
     int_critical = sa.Column(sa.Boolean(), default=False)
@@ -493,11 +494,24 @@ class InterfaceService(CRUDService):
                     'address': config['int_ipv4address_b'],
                     'netmask': int(config['int_v4netmaskbit']),
                 })
+            if config['int_ipv6address_b']:
+                iface['failover_aliases'].append({
+                    'type': 'INET6',
+                    'address': config['int_ipv6address_b'],
+                    'netmask': int(config['int_ipv6netmaskbit']),
+                })
             if config['int_vip']:
+
+                netmask = 32
+                ip_type = 'INET'
+                if config['int_ipv6address'] or config['int_ipv6address_b']:
+                    netmask = 128
+                    ip_type = 'INET6'
+
                 iface['failover_virtual_aliases'].append({
-                    'type': 'INET',
+                    'type': ip_type,
                     'address': config['int_vip'],
-                    'netmask': 32,
+                    'netmask': netmask,
                 })
 
         if itype == InterfaceType.BRIDGE:
@@ -579,18 +593,32 @@ class InterfaceService(CRUDService):
                     'address': alias['alias_v6address'],
                     'netmask': int(alias['alias_v6netmaskbit']),
                 })
-            if ha_hardware and alias['alias_v4address_b']:
-                iface['failover_aliases'].append({
-                    'type': 'INET',
-                    'address': alias['alias_v4address_b'],
-                    'netmask': int(alias['alias_v4netmaskbit']),
-                })
-            if ha_hardware and alias['alias_vip']:
-                iface['failover_virtual_aliases'].append({
-                    'type': 'INET',
-                    'address': alias['alias_vip'],
-                    'netmask': 32,
-                })
+            if ha_hardware:
+                if alias['alias_v4address_b']:
+                    iface['failover_aliases'].append({
+                        'type': 'INET',
+                        'address': alias['alias_v4address_b'],
+                        'netmask': int(alias['alias_v4netmaskbit']),
+                    })
+                if alias['alias_v6address_b']:
+                    iface['failover_aliases'].append({
+                        'type': 'INET6',
+                        'address': alias['alias_v6address_b'],
+                        'netmask': int(alias['alias_v6netmaskbit']),
+                    })
+                if alias['alias_vip']:
+
+                    netmask = 32
+                    ip_type = 'INET'
+                    if alias['alias_v6address'] or alias['alias_v6address_b']:
+                        netmask = 128
+                        ip_type = 'INET6'
+
+                    iface['failover_virtual_aliases'].append({
+                        'type': ip_type,
+                        'address': alias['alias_vip'],
+                        'netmask': netmask,
+                    })
 
         return iface
 
@@ -1124,32 +1152,33 @@ class InterfaceService(CRUDService):
                                 f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
                             )
 
-                # can't remove VHID and not GROUP
-                if not data['failover_vhid'] and data['failover_group']:
-                    verrors.add(
-                        f'{schema_name}.failover_vhid',
-                        'Removing only the VHID is not allowed.'
-                    )
-
-                # can't remove GROUP and not VHID
-                if not data['failover_group'] and data['failover_vhid']:
-                    verrors.add(
-                        f'{schema_name}.failover_group',
-                        'Removing only the failover group is not allowed.'
-                    )
-
-                if update.get('failover_vhid') != data['failover_vhid']:
-                    used_vhids = set()
-                    for v in (await self.middleware.call(
-                        'interface.scan_vrrp', data['name'], None, 5,
-                    )).values():
-                        used_vhids.update(set(v))
-                    if data['failover_vhid'] in used_vhids:
-                        used_vhids = ', '.join([str(i) for i in used_vhids])
+                if osc.IS_FREEBSD:
+                    # can't remove VHID and not GROUP
+                    if not data['failover_vhid'] and data['failover_group']:
                         verrors.add(
                             f'{schema_name}.failover_vhid',
-                            f'The following VHIDs are already in use: {used_vhids}.'
+                            'Removing only the VHID is not allowed.'
                         )
+
+                    # can't remove GROUP and not VHID
+                    if not data['failover_group'] and data['failover_vhid']:
+                        verrors.add(
+                            f'{schema_name}.failover_group',
+                            'Removing only the failover group is not allowed.'
+                        )
+
+                    if update.get('failover_vhid') != data['failover_vhid']:
+                        used_vhids = set()
+                        for v in (await self.middleware.call(
+                            'interface.scan_vrrp', data['name'], None, 5,
+                        )).values():
+                            used_vhids.update(set(v))
+                        if data['failover_vhid'] in used_vhids:
+                            used_vhids = ', '.join([str(i) for i in used_vhids])
+                            verrors.add(
+                                f'{schema_name}.failover_vhid',
+                                f'The following VHIDs are already in use: {used_vhids}.'
+                            )
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data.get('aliases') or []):
@@ -1182,8 +1211,10 @@ class InterfaceService(CRUDService):
         If FreeBSD, then generate a CARP password of length 16 chars.
 
         If Linux, then generate a VRRP password of length 8 chars.
-        VRRP only allows 8 char long passwords for the type of
-        authentication that is used.
+        VRRP only supports 8 char length passwords.
+
+        NOTE: we do not use the password on Linux as it doesn't
+        provide any benefit and is not recommended to be used.
         """
 
         passwd = ''
