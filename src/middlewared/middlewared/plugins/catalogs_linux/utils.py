@@ -8,6 +8,8 @@ import threading
 from collections import defaultdict
 from git.exc import GitCommandError
 
+from middlewared.service import CallError
+
 
 GIT_LOCK = defaultdict(threading.Lock)
 logger = logging.getLogger('catalog_utils')
@@ -29,7 +31,7 @@ def get_repo(destination):
         return git.Repo(destination)
 
 
-def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
+def pull_clone_repository(repository_uri, parent_dir, branch, depth=None, raise_exception=False):
     with GIT_LOCK[repository_uri]:
         os.makedirs(parent_dir, exist_ok=True)
         destination = os.path.join(parent_dir, convert_repository_to_path(repository_uri))
@@ -39,23 +41,31 @@ def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
             # We will try to checkout branch and do a git pull, if any of these operations fail, we will
             # clone the repository again. Why they might fail is if user has been manually playing with the repo
             try:
-                for action, params in (('checkout', [branch]), ('pull', [])):
-                    getattr(repo.git, action)(*params)
+                repo.git.checkout(branch)
+                repo.git.pull()
             except GitCommandError as e:
-                logger.error('Failed to %r %r repository: %s', action, repository_uri, e)
+                logger.error('Failed to checkout branch / pull %r repository: %s', repository_uri, e)
                 clone_repo = True
 
         if clone_repo:
             try:
                 repo = clone_repository(repository_uri, destination, depth)
             except GitCommandError as e:
-                logger.error('Failed to clone %r repository at %r destination: %r', repository_uri, destination, e)
+                msg = f'Failed to clone {repository_uri!r} repository at {destination!r} destination: {e}'
+                logger.error(msg)
+                if raise_exception:
+                    raise CallError(msg)
+
                 return False
             else:
                 try:
                     repo.git.checkout(branch)
                 except GitCommandError as e:
-                    logger.error('Failed to checkout %r branch for %r repository: %s', branch, repository_uri, e)
+                    msg = f'Failed to checkout {branch!r} branch for {repository_uri!r} repository: {e}'
+                    logger.error(msg)
+                    if raise_exception:
+                        raise CallError(msg)
+
                     return False
 
         return True

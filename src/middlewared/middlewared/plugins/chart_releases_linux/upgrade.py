@@ -1,3 +1,4 @@
+import errno
 import os
 import shutil
 import tempfile
@@ -34,11 +35,14 @@ class ChartReleaseService(Service):
         current_chart = release['chart_metadata']
         chart = current_chart['name']
         if release['catalog_train'] not in catalog['trains']:
-            raise CallError(f'Unable to locate {release["catalog_train"]!r} catalog train in {release["catalog"]!r}')
+            raise CallError(
+                f'Unable to locate {release["catalog_train"]!r} catalog train in {release["catalog"]!r}',
+                errno=errno.ENOENT,
+            )
         if chart not in catalog['trains'][release['catalog_train']]:
             raise CallError(
                 f'Unable to locate {chart!r} catalog item in {release["catalog"]!r} '
-                f'catalog\'s {release["catalog_train"]!r} train.'
+                f'catalog\'s {release["catalog_train"]!r} train.', errno=errno.ENOENT
             )
 
         if new_version not in catalog['trains'][release['catalog_train']][chart]['versions']:
@@ -48,7 +52,7 @@ class ChartReleaseService(Service):
         if parse_version(new_version) <= parse_version(current_chart['version']):
             verrors.add(
                 'upgrade_options.item_version',
-                f'Upgrade version must be greater then {current_chart["version"]!r} current version.'
+                f'Upgrade version must be greater than {current_chart["version"]!r} current version.'
             )
 
         # TODO: Do min/max scale version checks

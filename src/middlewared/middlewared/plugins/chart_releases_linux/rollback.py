@@ -1,3 +1,4 @@
+import errno
 import os
 
 from middlewared.schema import Bool, Dict, Str
@@ -27,16 +28,20 @@ class ChartReleaseService(Service):
         )
         rollback_version = options['item_version']
         if rollback_version not in release['history']:
-            raise CallError(f'Unable to find {rollback_version!r} item version in {release_name!r} history')
+            raise CallError(
+                f'Unable to find {rollback_version!r} item version in {release_name!r} history', errno=errno.ENOENT
+            )
 
         chart_path = os.path.join(release['path'], 'charts', rollback_version)
         if not await self.middleware.run_in_thread(lambda: os.path.exists(chart_path)):
-            raise CallError(f'Unable to locate {chart_path!r} path for rolling back')
+            raise CallError(f'Unable to locate {chart_path!r} path for rolling back', errno=errno.ENOENT)
 
         ix_volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
         snap_name = f'{ix_volumes_ds}@{rollback_version}'
         if not await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]) and not options['force']:
-            raise CallError(f'Unable to locate {snap_name!r} snapshot for {release_name!r} volumes')
+            raise CallError(
+                f'Unable to locate {snap_name!r} snapshot for {release_name!r} volumes', errno=errno.ENOENT
+            )
 
         history_item = release['history'][rollback_version]
         current_dataset_paths = {

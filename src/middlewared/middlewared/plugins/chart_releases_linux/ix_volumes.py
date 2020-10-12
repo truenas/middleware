@@ -1,3 +1,4 @@
+import errno
 import os
 
 from middlewared.schema import Str
@@ -31,7 +32,7 @@ class ChartReleaseService(Service):
 
         volume_ds = os.path.join(release['dataset'], 'volumes/ix_volumes', volume_name)
         if not await self.middleware.call('pool.dataset.query', [['id', '=', volume_ds]]):
-            raise CallError(f'Unable to locate {volume_name!r} volume')
+            raise CallError(f'Unable to locate {volume_name!r} volume', errno=errno.ENOENT)
 
         used_host_path_volumes = {v['host_path'].get('path', '') for v in release['resources']['host_path_volumes']}
         if os.path.join('/mnt', volume_ds) in used_host_path_volumes:

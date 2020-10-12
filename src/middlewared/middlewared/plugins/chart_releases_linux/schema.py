@@ -12,8 +12,8 @@ from .utils import get_list_item_from_value, get_network_attachment_definition_n
 # TODO: Let's please think of a better way to accomplish this as a whole
 
 REF_MAPPING = {
-    'normalise/interfaceConfiguration': 'interface_configuration',
-    'normalise/ixVolume': 'ix_volume',
+    'normalize/interfaceConfiguration': 'interface_configuration',
+    'normalize/ixVolume': 'ix_volume',
 }
 
 

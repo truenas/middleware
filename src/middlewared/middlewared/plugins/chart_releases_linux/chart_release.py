@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import errno
 import os
 import shutil
 import tempfile
@@ -53,17 +54,17 @@ class ChartReleaseService(CRUDService):
     async def do_create(self, data):
         await self.middleware.call('kubernetes.validate_k8s_setup')
         if await self.middleware.call('chart.release.query', [['id', '=', data['release_name']]]):
-            raise CallError(f'Chart release with {data["release_name"]} already exists.')
+            raise CallError(f'Chart release with {data["release_name"]} already exists.', errno=errno.EEXIST)
 
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', data['catalog']]], {'get': True, 'extra': {'item_details': True}}
         )
         if data['train'] not in catalog['trains']:
-            raise CallError(f'Unable to locate "{data["train"]}" catalog train.')
+            raise CallError(f'Unable to locate "{data["train"]}" catalog train.', errno=errno.ENOENT)
         if data['item'] not in catalog['trains'][data['train']]:
-            raise CallError(f'Unable to locate "{data["item"]}" catalog item.')
+            raise CallError(f'Unable to locate "{data["item"]}" catalog item.', errno=errno.ENOENT)
         if data['version'] not in catalog['trains'][data['train']][data['item']]['versions']:
-            raise CallError(f'Unable to locate "{data["version"]}" catalog item version.')
+            raise CallError(f'Unable to locate "{data["version"]}" catalog item version.', errno=errno.ENOENT)
 
         item_details = catalog['trains'][data['train']][data['item']]['versions'][data['version']]
         k8s_config = await self.middleware.call('kubernetes.config')
@@ -150,7 +151,8 @@ class ChartReleaseService(CRUDService):
         chart_path = os.path.join(release['path'], 'charts', release['chart_metadata']['version'])
         if not os.path.exists(chart_path):
             raise CallError(
-                f'Unable to locate {chart_path!r} chart version for updating {chart_release!r} chart release'
+                f'Unable to locate {chart_path!r} chart version for updating {chart_release!r} chart release',
+                errno=errno.ENOENT
             )
 
         version_details = await self.middleware.call('catalog.item_version_details', chart_path)

@@ -38,5 +38,8 @@ class CatalogService(Service):
             raise CallError(error_str)
 
     @private
-    def update_git_repository(self, catalog):
-        return pull_clone_repository(catalog['repository'], os.path.dirname(catalog['location']), catalog['branch'])
+    def update_git_repository(self, catalog, raise_exception=False):
+        return pull_clone_repository(
+            catalog['repository'], os.path.dirname(catalog['location']), catalog['branch'],
+            raise_exception=raise_exception,
+        )

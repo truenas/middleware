@@ -4,7 +4,7 @@ import os
 import yaml
 
 from middlewared.schema import Str
-from middlewared.service import accepts, CallError, private, Service
+from middlewared.service import accepts, private, Service
 
 
 class CatalogService(Service):
@@ -13,8 +13,7 @@ class CatalogService(Service):
     def items(self, label):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         if not os.path.exists(catalog['location']):
-            if not self.middleware.call_sync('catalog.update_git_repository', catalog):
-                raise CallError(f'Unable to clone "{label}" catalog. Please refer to logs.')
+            self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
         trains = {'charts': {}, 'test': {}}
         for train in filter(lambda c: os.path.exists(os.path.join(catalog['location'], c)), trains):
