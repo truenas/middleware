@@ -3,16 +3,25 @@ import markdown
 import os
 import yaml
 
-from middlewared.schema import Str
+from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, private, Service
 
 
 class CatalogService(Service):
 
-    @accepts(Str('label'))
-    def items(self, label):
+    @accepts(
+        Str('label'),
+        Dict(
+            'options',
+            Bool('cache', default=True),
+        )
+    )
+    def items(self, label, options):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
-        if not os.path.exists(catalog['location']):
+
+        if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
+            return self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+        else:
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
         trains = {'charts': {}, 'test': {}}
@@ -25,6 +34,8 @@ class CatalogService(Service):
                     'location': item_location,
                     **self.item_details(item_location)
                 }
+
+        self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
 
         return trains
 

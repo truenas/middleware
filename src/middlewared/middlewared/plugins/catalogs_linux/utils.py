@@ -16,7 +16,6 @@ logger = logging.getLogger('catalog_utils')
 
 
 def convert_repository_to_path(git_repository_uri):
-    # Following is the logic which iocage uses to ensure unique directory names for each uri
     return git_repository_uri.split('://', 1)[-1].replace('/', '_').replace('.', '_')
 
 

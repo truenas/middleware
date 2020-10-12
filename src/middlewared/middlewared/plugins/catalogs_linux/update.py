@@ -11,7 +11,7 @@ OFFICIAL_LABEL = 'OFFICIAL'
 CATALOGS = [
     {
         'label': OFFICIAL_LABEL,
-        'repository': 'https://github.com/sonicaj/charts.git',
+        'repository': 'https://github.com/truenas/charts.git',
         'branch': 'master',
     }
 ]
@@ -32,7 +32,9 @@ class CatalogService(CRUDService):
                 'id': catalog['label'],
             })
             if extra.get('item_details'):
-                catalog['trains'] = await self.middleware.call('catalog.items', catalog['label'])
+                catalog['trains'] = await self.middleware.call(
+                    'catalog.items', catalog['label'], {'cache': extra.get('cache', True)},
+                )
 
         return filter_list(catalogs, filters, options)
 
