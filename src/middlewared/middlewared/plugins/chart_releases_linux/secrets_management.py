@@ -18,12 +18,11 @@ class ChartReleaseService(Service):
     @private
     def releases_secrets(self, options=None):
         options = options or {}
+        namespace_filter = options.get('namespace_filter') or ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]
 
         release_secrets = defaultdict(lambda: dict({'untagged': [], 'releases': [], 'history': {}}))
         secrets = self.middleware.call_sync(
-            'k8s.secret.query', [
-                ['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]
-            ]
+            'k8s.secret.query', [['type', '=', 'helm.sh/release.v1'], namespace_filter]
         )
         for release_secret in secrets:
             data = release_secret.pop('data')
@@ -41,6 +40,8 @@ class ChartReleaseService(Service):
                 ),
                 'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test'),
             })
+            if options.get('retrieve_secret_metadata'):
+                release['secret_metadata'] = deepcopy(release_secret['metadata'])
 
             release_secrets[name]['releases'].append(release)
 
