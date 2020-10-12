@@ -65,7 +65,7 @@ class ChartReleaseService(Service):
         # which the upgraded release will potentially not support. So we can safely remove those as otherwise
         # validation will fail as new schema does not expect those keys.
         catalog_item = catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
-        config = clean_values_for_upgrade(release['config'], catalog_item['questions'])
+        config = clean_values_for_upgrade(release['config'], catalog_item['schema']['questions'])
         config.update(options['values'])
 
         config, context = await self.middleware.call(

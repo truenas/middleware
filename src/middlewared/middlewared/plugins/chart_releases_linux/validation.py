@@ -23,9 +23,11 @@ class ChartReleaseService(Service):
             new_values.pop(k[0], None)
 
         schema_name = f'chart_release_{"update" if update else "create"}'
-        attrs = list(itertools.chain.from_iterable(get_schema(q) for q in item_version_details['questions']))
+        attrs = list(itertools.chain.from_iterable(get_schema(q) for q in item_version_details['schema']['questions']))
         dict_obj = update_conditional_validation(
-            Dict(schema_name, *attrs, update=update), {'schema': {'attrs': item_version_details['questions']}}
+            Dict(schema_name, *attrs, update=update), {
+                'schema': {'attrs': item_version_details['schema']['questions']}
+            }
         )
 
         verrors = validate_attributes(
@@ -36,7 +38,7 @@ class ChartReleaseService(Service):
         verrors.check()
 
         # If schema is okay, we see if we have question specific validation to be performed
-        questions = {v['variable']: v for v in item_version_details['questions']}
+        questions = {v['variable']: v for v in item_version_details['schema']['questions']}
         for key in new_values:
             await self.validate_question(verrors, new_values[key], questions[key], dict_obj.attrs[key], schema_name)
 

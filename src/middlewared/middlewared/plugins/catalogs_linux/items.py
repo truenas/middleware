@@ -65,7 +65,7 @@ class CatalogService(Service):
         for key, filename, parser in (
             ('version_config', 'item.yaml', yaml.load),
             ('values', 'values.yaml', yaml.load),
-            ('questions', 'questions.yaml', yaml.load),
+            ('schema', 'questions.yaml', yaml.load),
             ('app_readme', 'app-readme.md', markdown.markdown),
             ('detailed_readme', 'README.md', markdown.markdown),
         ):
@@ -80,7 +80,7 @@ class CatalogService(Service):
 
         # We will normalise questions now so that if they have any references, we render them accordingly
         # like a field referring to available interfaces on the system
-        self.normalise_questions(version_data['questions'])
+        self.normalise_questions(version_data['schema']['questions'])
 
         return version_data
 
