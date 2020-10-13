@@ -58,15 +58,32 @@ class RealtimeEventSource(EventSource):
             data['virtual_memory'] = psutil.virtual_memory()._asdict()
 
             # ZFS ARC Size (raw value is in Bytes)
+            hits = 0
+            misses = 0
             data['zfs'] = {}
             if osc.IS_FREEBSD:
+                hits = sysctl.filter('kstat.zfs.misc.arcstats.hits')[0].value
+                misses = sysctl.filter('kstat.zfs.misc.arcstats.misses')[0].value
+                data['zfs']['arc_max_size'] = sysctl.filter('kstat.zfs.misc.arcstats.c_max')[0].value
                 data['zfs']['arc_size'] = sysctl.filter('kstat.zfs.misc.arcstats.size')[0].value
             elif osc.IS_LINUX:
                 with open('/proc/spl/kstat/zfs/arcstats') as f:
-                    rv = f.read()
-                    for line in rv.split('\n'):
-                        if line.startswith('size'):
-                            data['zfs']['arc_size'] = int(line.strip().split()[-1])
+                    for line in f.readlines()[2:]:
+                        if line.strip():
+                            name, type, value = line.strip().split()
+                            if name == 'hits':
+                                hits = int(value)
+                            if name == 'misses':
+                                misses = int(value)
+                            if name == 'c_max':
+                                data['zfs']['arc_max_size'] = int(value)
+                            if name == 'size':
+                                data['zfs']['arc_size'] = int(value)
+            total = hits + misses
+            if total > 0:
+                data['zfs']['cache_hit_ratio'] = hits / total
+            else:
+                data['zfs']['cache_hit_ratio'] = 0
 
             data['cpu'] = {}
             # Get CPU usage %
