@@ -20,6 +20,7 @@ if ha and "virtual_ip" in os.environ:
 else:
     from auto_config import ip
 
+
 group = 'root' if scale else 'wheel'
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"

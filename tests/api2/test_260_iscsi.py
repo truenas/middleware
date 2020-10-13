@@ -9,7 +9,7 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip, user, password, pool_name
+from auto_config import ip, user, password, pool_name, hostname
 from functions import PUT, POST, GET, SSH_TEST, DELETE
 
 
