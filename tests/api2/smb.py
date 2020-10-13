@@ -16,7 +16,7 @@ from auto_config import ip, pool_name, password, user, hostname, ha
 from config import *
 
 
-MOUNTPOINT = "/tmp/smb-cifs"
+MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
 dataset = f"{pool_name}/smb-cifs"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestCifsSMB"
