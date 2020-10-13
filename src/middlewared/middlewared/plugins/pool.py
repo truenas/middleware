@@ -2778,7 +2778,7 @@ class PoolDatasetService(CRUDService):
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('acltype', enum=['NOACL', 'NFS4ACL', 'POSIXACL']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
-        Str('xattr', enum=['ON', 'SA']),
+        Str('xattr', enum=['ON', 'SA'], default='SA'),
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
@@ -2842,8 +2842,6 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             if osc.IS_FREEBSD:
                 data['aclmode'] = 'RESTRICTED'
-
-            data['xattr'] = 'SA'
 
         if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
             verrors.add(
@@ -2955,7 +2953,7 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
-        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB':
+        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and data['acltype'] == "NFS4ACL":
             await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
 
         return await self.get_instance(data['id'])
