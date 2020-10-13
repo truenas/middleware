@@ -100,6 +100,13 @@ class SystemDatasetService(ConfigService):
 
         verrors = ValidationErrors()
         if new['pool'] and new['pool'] != await self.middleware.call('boot.pool_name'):
+            ad_enabled = (self.middleware.call('activedirectory.get_state')) != 'DISABLED'
+            if ad_enabled:
+                verrors.add(
+                    'sysdataset_update.pool',
+                    'System dataset location may not be moved while the Active Directory service is enabled.',
+                    errno.EPERM
+                )
             pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
             if not pool:
                 verrors.add(
