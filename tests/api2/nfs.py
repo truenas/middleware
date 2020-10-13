@@ -11,19 +11,11 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
-from auto_config import ip, pool_name, user, password, scale
+from auto_config import ip, pool_name, user, password, scale, hostname
 from config import *
 
-<<<<<<< HEAD
 group = 'root' if scale else 'wheel'
-
-if "BRIDGEHOST" in locals():
-    MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
-=======
-
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
->>>>>>> 88a98855dc... fix activedirectory BSD mount_smbfs
-
 dataset = f"{pool_name}/nfs"
 dataset_url = dataset.replace('/', '%2F')
 NFS_PATH = "/mnt/" + dataset
