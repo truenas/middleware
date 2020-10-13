@@ -46,7 +46,7 @@ class CPUTempPlugin(RRDBase):
             cputemp_file = self.__get_cputemp_file__(n)
             a = [
                 f'DEF:s_avg{n}={cputemp_file}:value:AVERAGE',
-                f'CDEF:avg{n}=s_avg{0},10,/,273.15,-',
+                f'CDEF:avg{n}=s_avg{n},10,/,273.15,-',
                 f'XPORT:avg{n}:cputemp{n}'
             ]
             args.extend(a)
