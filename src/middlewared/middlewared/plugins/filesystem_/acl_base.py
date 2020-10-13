@@ -182,9 +182,7 @@ class ACLDefault(enum.Enum):
     HOME = NFS4_HOME if osc.IS_FREEBSD else POSIX_RESTRICTED
 
     def options():
-        rv = [x.name for x in ACLDefault]
-        rv.extend(['OPEN', 'RESTRICTED', 'HOME'])
-        return rv
+        return [ACLDefault.__members__.keys()]
 
 
 class ACLBase(ServicePartBase):
