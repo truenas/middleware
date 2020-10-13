@@ -119,9 +119,8 @@ class ChartReleaseService(CRUDService):
             else:
                 await self.middleware.call('k8s.storage_class.create', storage_class)
 
-            # TODO: Let's see doing this with k8s possibly making it more robust
             await self.middleware.call(
-                'chart.release.update_unlabelled_secrets_for_release',
+                'chart.release.sync_secrets_for_release',
                 data['release_name'], data['catalog'], data['train'],
             )
         except Exception:
@@ -172,6 +171,10 @@ class ChartReleaseService(CRUDService):
             )
             if cp.returncode:
                 raise CallError(f'Failed to update chart release: {cp.stderr.decode()}')
+
+        await self.middleware.call(
+            'chart.release.sync_secrets_for_release', chart_release, release['catalog'], release['catalog_train'],
+        )
 
         return await self.get_instance(chart_release)
 
