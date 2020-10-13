@@ -82,6 +82,26 @@ class NetworkConfigurationService(ConfigService):
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
 
+        data['state'] = {
+            'ipv4gateway': '',
+            'ipv6gateway': '',
+            'nameserver1': '',
+            'nameserver2': '',
+            'nameserver3': '',
+        }
+        summary = self.middleware.call_sync('network.general.summary')
+        for default_route in summary['default_routes']:
+            try:
+                ipaddress.IPv4Address(default_route)
+            except ValueError:
+                if not data['state']['ipv6gateway']:
+                    data['state']['ipv6gateway'] = default_route
+            else:
+                if not data['state']['ipv4gateway']:
+                    data['state']['ipv4gateway'] = default_route
+        for i, nameserver in enumerate(summary['nameservers'][:3]):
+            data['state'][f'nameserver{i + 1}'] = nameserver
+
         return data
 
     @private
@@ -214,6 +234,8 @@ class NetworkConfigurationService(ConfigService):
         Discovery support.
         """
         config = await self.config()
+        config.pop('state')
+
         new_config = config.copy()
         new_config.update(data)
 
