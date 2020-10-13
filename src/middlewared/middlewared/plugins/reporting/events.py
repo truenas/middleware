@@ -9,6 +9,8 @@ import time
 from middlewared.event import EventSource
 from middlewared.utils import osc
 
+from .iostat import DiskStats
+
 if osc.IS_FREEBSD:
     import sysctl
     import netif
@@ -50,6 +52,8 @@ class RealtimeEventSource(EventSource):
         cp_time_last = None
         cp_times_last = None
         last_interface_stats = {}
+        if osc.IS_LINUX:
+            disk_stats = DiskStats()
 
         while not self._cancel.is_set():
             data = {}
@@ -185,6 +189,9 @@ class RealtimeEventSource(EventSource):
                         **data['interfaces'][iface_name],
                         'stats_time': stats_time,
                     }
+
+            if osc.IS_LINUX:
+                data['disks'] = disk_stats.get()
 
             self.send_event('ADDED', fields=data)
             time.sleep(2)
