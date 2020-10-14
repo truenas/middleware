@@ -7,8 +7,7 @@ from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, private, Service
 
 
-NORMALISE_KEYS = ['min_scale_version', 'max_scale_version']
-ITEM_KEYS = ['icon_url'] + NORMALISE_KEYS
+ITEM_KEYS = ['icon_url']
 
 
 class CatalogService(Service):
@@ -60,7 +59,7 @@ class CatalogService(Service):
         return item_data
 
     @private
-    def item_version_details(self, version_path, item_data):
+    def item_version_details(self, version_path):
         version_data = {'location': version_path, 'required_features': []}
         for key, filename, parser in (
             ('version_config', 'item.yaml', yaml.load),
@@ -69,9 +68,6 @@ class CatalogService(Service):
             ('app_readme', 'app-readme.md', markdown.markdown),
             ('detailed_readme', 'README.md', markdown.markdown),
         ):
-            if key == 'version_config':
-                version_data[key] = {k: item_data.get(k) for k in NORMALISE_KEYS}
-
             if not os.path.exists(os.path.join(version_path, filename)):
                 continue
 

@@ -56,8 +56,11 @@ class ChartReleaseService(Service):
                 f'Upgrade version must be greater than {current_chart["version"]!r} current version.'
             )
 
-        # TODO: Do min/max scale version checks
         verrors.check()
+
+        catalog_item = catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
+        await self.middleware.call('catalog.version_supported_error_check', catalog_item)
+
         # We will be performing validation for values specified. Why we want to allow user to specify values here
         # is because the upgraded catalog item version might have different schema which potentially means that
         # upgrade won't work or even if new k8s are resources are created/deployed, they won't necessarily function
@@ -65,7 +68,6 @@ class ChartReleaseService(Service):
         # One tricky bit which we need to account for first is removing any key from current configured values
         # which the upgraded release will potentially not support. So we can safely remove those as otherwise
         # validation will fail as new schema does not expect those keys.
-        catalog_item = catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
         config = clean_values_for_upgrade(release['config'], catalog_item['schema']['questions'])
         config.update(options['values'])
 

@@ -36,6 +36,9 @@ class ChartReleaseService(Service):
         if not await self.middleware.run_in_thread(lambda: os.path.exists(chart_path)):
             raise CallError(f'Unable to locate {chart_path!r} path for rolling back', errno=errno.ENOENT)
 
+        chart_details = await self.middleware.call('catalog.item_version_details', chart_path)
+        await self.middleware.call('catalog.version_supported_error_check', chart_details)
+
         ix_volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
         snap_name = f'{ix_volumes_ds}@{rollback_version}'
         if not await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]) and not options['force']:
