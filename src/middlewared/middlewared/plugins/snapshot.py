@@ -343,6 +343,14 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
         await self.middleware.call('zettarepl.update_tasks')
 
 
+async def on_zettarepl_state_changed(middleware, id, fields):
+    if id.startswith('periodic_snapshot_task_'):
+        task_id = int(id.split('_')[-1])
+        middleware.send_event('pool.snapshottask.query', 'CHANGED', id=task_id, fields={'state': fields})
+
+
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate',
                           PeriodicSnapshotTaskFSAttachmentDelegate(middleware))
+
+    middleware.register_hook('zettarepl.state_change', on_zettarepl_state_changed)
