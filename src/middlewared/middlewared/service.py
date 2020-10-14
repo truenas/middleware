@@ -246,6 +246,8 @@ class ServiceBase(type):
             'datastore_prefix': '',
             'datastore_extend': None,
             'datastore_extend_context': None,
+            'event_register': True,
+            'event_send': True,
             'service': None,
             'service_model': None,
             'service_verb': 'reload',
@@ -335,9 +337,9 @@ class CompoundService(Service):
                 methods_parts[name] = part
 
     def _part_config(self, part):
-        # datastore fields are related to CRUDService only, allow not repeating them for other parts
+        # datastore and event fields are related to CRUDService only, allow not repeating them for other parts
         return {k: v for k, v in part._config.__dict__.items()
-                if not k.startswith('__') and not k.startswith('datastore')}
+                if not k.startswith('__') and not k.startswith('datastore') and not k.startswith('event')}
 
 
 class ConfigService(ServiceChangeMixin, Service):
@@ -416,6 +418,14 @@ class CRUDService(ServiceChangeMixin, Service):
     CRUD stands for Create Retrieve Update Delete.
     """
 
+    def __init__(self, middleware):
+        super().__init__(middleware)
+        if self._config.event_register:
+            self.middleware.event_register(
+                f'{self._config.namespace}.query',
+                f'Sent on {self._config.namespace} changes.',
+            )
+
     @private
     async def get_options(self, options):
         options = options or {}
@@ -460,6 +470,9 @@ class CRUDService(ServiceChangeMixin, Service):
             f'{self._config.namespace}.create', self, self.do_create, [data], app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_create', rv)
+        if self._config.event_send:
+            if isinstance(rv, dict) and 'id' in rv:
+                self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=rv['id'], fields=rv)
         return rv
 
     @pass_app(rest=True)
@@ -468,6 +481,9 @@ class CRUDService(ServiceChangeMixin, Service):
             f'{self._config.namespace}.update', self, self.do_update, [id, data], app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
+        if self._config.event_send:
+            if isinstance(rv, dict) and 'id' in rv:
+                self.middleware.send_event(f'{self._config.namespace}.query', 'CHANGED', id=rv['id'], fields=rv)
         return rv
 
     @pass_app(rest=True)
@@ -476,6 +492,8 @@ class CRUDService(ServiceChangeMixin, Service):
             f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args), app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_delete', rv)
+        if self._config.event_send:
+            self.middleware.send_event(f'{self._config.namespace}.query', 'CHANGED', id=id, cleared=True)
         return rv
 
     @private
