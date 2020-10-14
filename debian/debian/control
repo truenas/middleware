@@ -42,6 +42,7 @@ Depends: acl,
          systemd-coredump,
          tftpd-hpa,
          tmux,
+         truenas-binaries,
          truenas-webui,
          usrmerge,
 # Wireguard needs to be fixed because it needs extra dependencies to build the module during install
