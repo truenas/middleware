@@ -67,6 +67,8 @@ class ChartReleaseService(CRUDService):
             raise CallError(f'Unable to locate "{data["version"]}" catalog item version.', errno=errno.ENOENT)
 
         item_details = catalog['trains'][data['train']][data['item']]['versions'][data['version']]
+        await self.middleware.call('catalog.version_supported_error_check', item_details)
+
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
         # The idea is to validate the values provided first and if it passes our validation test, we
