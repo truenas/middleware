@@ -11,9 +11,9 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user, scale
+from auto_config import ip, pool_name, password, user, scale, hostname
 
-MOUNTPOINT = "/tmp/smb-cifs"
+MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
 dataset = f"{pool_name}/smb-cifs"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestCifsSMB"
