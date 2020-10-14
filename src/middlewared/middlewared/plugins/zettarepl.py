@@ -27,7 +27,7 @@ from zettarepl.observer import (
     PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
     ReplicationTaskScheduled, ReplicationTaskStart, ReplicationTaskSnapshotStart, ReplicationTaskSnapshotProgress,
     ReplicationTaskSnapshotSuccess,
-    ReplicationTaskSuccess, ReplicationTaskError
+    ReplicationTaskDataProgress, ReplicationTaskSuccess, ReplicationTaskError,
 )
 from zettarepl.replication.task.dataset import get_target_dataset
 from zettarepl.scheduler.clock import Clock
@@ -338,6 +338,9 @@ class ZettareplService(Service):
         channels = self.replication_jobs_channels[f"task_{id}"]
         channel = queue.Queue()
         channels.append(channel)
+        snapshot_start_message = None
+        snapshot_progress_message = None
+        data_progress_message = None
         try:
             while True:
                 message = channel.get()
@@ -346,22 +349,20 @@ class ZettareplService(Service):
                     job.logs_fd.write(message.log.encode("utf8", "ignore") + b"\n")
 
                 if isinstance(message, ReplicationTaskSnapshotStart):
-                    job.set_progress(
-                        100 * (message.snapshots_sent / message.snapshots_total),
-                        f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
-                        f"{message.dataset}@{message.snapshot}",
-                    )
+                    snapshot_start_message = message
+                    snapshot_progress_message = None
+                    self._set_replication_task_progress(job, snapshot_start_message, snapshot_progress_message,
+                                                        data_progress_message)
 
                 if isinstance(message, ReplicationTaskSnapshotProgress):
-                    job.set_progress(
-                        100 * (
-                            (message.snapshots_sent + message.bytes_sent / message.bytes_total) /
-                            message.snapshots_total
-                        ),
-                        f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
-                        f"{message.dataset}@{message.snapshot} ({humanfriendly.format_size(message.bytes_sent)} / "
-                        f"{humanfriendly.format_size(message.bytes_total)})",
-                    )
+                    snapshot_progress_message = message
+                    self._set_replication_task_progress(job, snapshot_start_message, snapshot_progress_message,
+                                                        data_progress_message)
+
+                if isinstance(message, ReplicationTaskDataProgress):
+                    data_progress_message = message
+                    self._set_replication_task_progress(job, snapshot_start_message, snapshot_progress_message,
+                                                        data_progress_message)
 
                 if isinstance(message, ReplicationTaskSuccess):
                     return
@@ -370,6 +371,38 @@ class ZettareplService(Service):
                     raise CallError(make_sentence(message.error))
         finally:
             channels.remove(channel)
+
+    def _set_replication_task_progress(self, job, snapshot_start_message, snapshot_progress_message,
+                                       data_progress_message):
+        if snapshot_start_message is None:
+            return
+
+        if snapshot_progress_message is None:
+            message = snapshot_start_message
+            progress = 100 * (message.snapshots_sent / message.snapshots_total)
+            text = (
+                f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
+                f"{message.dataset}@{message.snapshot}"
+            )
+        else:
+            message = snapshot_progress_message
+            progress = 100 * (
+                (message.snapshots_sent + message.bytes_sent / message.bytes_total) /
+                message.snapshots_total
+            )
+            text = (
+                f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
+                f"{message.dataset}@{message.snapshot} ({humanfriendly.format_size(message.bytes_sent)} / "
+                f"{humanfriendly.format_size(message.bytes_total)})"
+            )
+
+        if data_progress_message is not None:
+            text += (
+                f" [total {humanfriendly.format_size(data_progress_message.dst_size)} of "
+                f"{humanfriendly.format_size(data_progress_message.src_size)}]"
+            )
+
+        job.set_progress(progress, text)
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
@@ -763,6 +796,24 @@ class ZettareplService(Service):
                 if isinstance(message, ReplicationTaskSnapshotSuccess):
                     self.middleware.call_sync("zettarepl.set_last_snapshot", f"replication_{message.task_id}",
                                               f"{message.dataset}@{message.snapshot}")
+
+                    for channel in self.replication_jobs_channels[message.task_id]:
+                        channel.put(message)
+
+                if isinstance(message, ReplicationTaskDataProgress):
+                    task_id = f"replication_{message.task_id}"
+                    try:
+                        state = self.middleware.call_sync("zettarepl.get_internal_task_state", task_id)
+                    except KeyError:
+                        pass
+                    else:
+                        if state["state"] == "RUNNING" and "progress" in state:
+                            state["progress"].update({
+                                "root_dataset": message.dataset,
+                                "src_size": message.src_size,
+                                "dst_size": message.dst_size,
+                            })
+                            self.middleware.call_sync("zettarepl.set_state", task_id, state)
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
