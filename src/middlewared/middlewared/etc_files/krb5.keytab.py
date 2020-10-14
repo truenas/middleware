@@ -7,7 +7,7 @@ from middlewared.utils import run
 logger = logging.getLogger(__name__)
 kdir = "/etc/kerberos"
 keytabfile = "/etc/krb5.keytab"
-ktutil_cmd = "/usr/sbin/ktutil"
+ktutil_cmd = "ktutil"
 
 
 async def write_keytab(db_keytabname, db_keytabfile):
