@@ -130,7 +130,7 @@ def test_12_creating_a_smb_share_to_test_ldap():
         "path": smb_path,
         "name": smb_name,
         "guestok": False,
-        "vfsobjects": ["streams_xattr", "ixnas"]
+        "streams": True
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
@@ -148,7 +148,7 @@ def test_14_verify_if_clif_service_is_enabled():
 
 
 def test_15_starting_cifs_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
 
@@ -191,7 +191,7 @@ def test_21_set_has_samba_schema_to_false():
 
 
 def test_22_restarting_cifs_service_after_changing_has_samba_schema():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
 
@@ -217,7 +217,7 @@ def test_25_set_has_samba_schema_true_and_ssl_START_TLS():
 
 
 def test_26_starting_cifs_service_after_changing_ssl_to_START_TLS():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
 
@@ -260,7 +260,7 @@ def test_32_set_has_samba_schema_to_false():
 
 
 def test_33_restarting_cifs_service_after_changing_has_samba_schema():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
 
@@ -277,7 +277,7 @@ def test_35_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_f
 
 
 def test_36_stopping_cifs_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
