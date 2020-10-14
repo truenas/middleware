@@ -61,7 +61,7 @@ class CatalogService(Service):
 
     @private
     def item_version_details(self, version_path, item_data):
-        version_data = {'location': version_path}
+        version_data = {'location': version_path, 'required_features': []}
         for key, filename, parser in (
             ('version_config', 'item.yaml', yaml.load),
             ('values', 'values.yaml', yaml.load),
@@ -80,27 +80,30 @@ class CatalogService(Service):
 
         # We will normalise questions now so that if they have any references, we render them accordingly
         # like a field referring to available interfaces on the system
-        self.normalise_questions(version_data['schema']['questions'])
+        self.normalise_questions(version_data)
+
+        version_data['supported'] = self.middleware.call_sync('catalog.version_supported', version_data)
 
         return version_data
 
     @private
-    def normalise_questions(self, questions):
-        for question in questions:
-            self._normalise_question(question)
+    def normalise_questions(self, version_data):
+        for question in version_data['schema']['questions']:
+            self._normalise_question(question, version_data)
 
-    def _normalise_question(self, question):
+    def _normalise_question(self, question, version_data):
         schema = question['schema']
         for attr in itertools.chain(
             *[d.get(k, []) for d, k in zip((schema, schema, question), ('attrs', 'items', 'subquestions'))]
         ):
-            self._normalise_question(attr)
+            self._normalise_question(attr, version_data)
 
         if '$ref' not in question['schema']:
             return
 
         data = {}
         for ref in question['schema']['$ref']:
+            version_data['required_features'].append(ref)
             if ref == 'definitions/interface':
                 data['enum'] = [d['id'] for d in self.middleware.call_sync('interface.query')]
 
