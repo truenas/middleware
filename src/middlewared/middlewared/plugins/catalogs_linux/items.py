@@ -53,24 +53,18 @@ class CatalogService(Service):
         item_data.update({k: item_data.get(k) for k in ITEM_KEYS})
 
         for version in filter(lambda p: os.path.isdir(os.path.join(item_path, p)), os.listdir(item_path)):
-            item_data['versions'][version] = self.item_version_details(
-                os.path.join(item_path, version), item_data,
-            )
+            item_data['versions'][version] = self.item_version_details(os.path.join(item_path, version))
         return item_data
 
     @private
     def item_version_details(self, version_path):
         version_data = {'location': version_path, 'required_features': []}
         for key, filename, parser in (
-            ('version_config', 'item.yaml', yaml.load),
             ('values', 'values.yaml', yaml.load),
             ('schema', 'questions.yaml', yaml.load),
             ('app_readme', 'app-readme.md', markdown.markdown),
             ('detailed_readme', 'README.md', markdown.markdown),
         ):
-            if not os.path.exists(os.path.join(version_path, filename)):
-                continue
-
             with open(os.path.join(version_path, filename), 'r') as f:
                 version_data[key] = parser(f.read())
 

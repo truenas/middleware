@@ -89,7 +89,7 @@ class ChartReleaseService(Service):
             await self.middleware.call('zfs.snapshot.delete', snap_name)
 
         await self.middleware.call(
-            'zfs.snapshot.create', {'dataset': volumes_ds, 'name': current_chart['version']}
+            'zfs.snapshot.create', {'dataset': volumes_ds, 'name': current_chart['version'], 'recursive': True}
         )
 
         await self.middleware.call('chart.release.perform_actions', context)

@@ -15,12 +15,9 @@ SUPPORTED_FEATURES = {
 
 class CatalogService(Service):
 
-    class Config:
-        namespace = 'chart.release'
-
     @private
     async def version_supported(self, version_details):
-        return bool(set(version_details['required_features']) - SUPPORTED_FEATURES)
+        return not bool(set(version_details['required_features']) - SUPPORTED_FEATURES)
 
     @private
     def get_feature_map(self):
@@ -58,13 +55,12 @@ class CatalogService(Service):
         for index, feature in enumerate(missing_features):
             train_message = ''
             for k, v in mapping[feature].items():
-                train_message += f'For {k.upper()!r}: minimum SCALE version: {v["min"]}'
+                train_message += f'\nFor {k.capitalize()!r} train:\nMinimum SCALE version: {v["min"]}\n'
                 if v.get('max'):
-                    train_message += f', maximum SCALE version: {v["max"]}'
+                    train_message += f'Maximum SCALE version: {v["max"]}'
                 else:
-                    train_message += f', maximum SCALE version: Latest available {k.upper()!r} release'
-                train_message += '\n'
+                    train_message += f'Maximum SCALE version: Latest available {k.capitalize()!r} release'
 
-            error_str += f'{index}) {feature}{f" ({train_message})" if train_message else ""}'
+            error_str += f'{index}) {feature}{f"{train_message}" if train_message else ""}\n\n'
 
         raise CallError(error_str)

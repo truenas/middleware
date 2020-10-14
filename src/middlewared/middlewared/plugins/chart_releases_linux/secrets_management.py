@@ -74,7 +74,7 @@ class ChartReleaseService(Service):
         # have a different chart version.
         to_remove = []
         seen_versions = set()
-        for release_data in secrets_data:
+        for release_data in secrets_data[release]['releases']:
             rel_version = release_data['chart_metadata']['version']
             if rel_version in seen_versions:
                 to_remove.append(release_data['secret_metadata']['name'])
