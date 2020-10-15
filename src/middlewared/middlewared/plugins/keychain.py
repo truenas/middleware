@@ -523,13 +523,13 @@ class KeychainCredentialService(CRUDService):
                 try:
                     return process_ssh_keyscan_output(proc.stdout)
                 except Exception:
-                    raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}") from None
+                    raise CallError(f"ssh-keyscan failed: {proc.stdout + proc.stderr}") from None
             elif proc.stderr:
-                raise CallError(f"ssh-keyscan failed: {proc.stderr!r}")
+                raise CallError(f"ssh-keyscan failed: {proc.stderr}")
             else:
                 raise CallError("SSH timeout")
         else:
-            raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}")
+            raise CallError(f"ssh-keyscan failed: {proc.stdout + proc.stderr}")
 
     @accepts(Dict(
         "keychain_remote_ssh_semiautomatic_setup",
