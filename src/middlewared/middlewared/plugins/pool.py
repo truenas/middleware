@@ -2778,7 +2778,7 @@ class PoolDatasetService(CRUDService):
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('acltype', enum=['NOACL', 'NFS4ACL', 'POSIXACL']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
-        Str('xattr', enum=['ON', 'SA'], default='SA'),
+        Str('xattr', enum=['ON', 'SA']),
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
@@ -2835,8 +2835,11 @@ class PoolDatasetService(CRUDService):
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
-        if osc.IS_LINUX and not data.get('acltype') and data['type'] == 'FILESYSTEM':
-            data['acltype'] = 'POSIXACL'
+        if osc.IS_LINUX and and data['type'] == 'FILESYSTEM':
+            if not data.get('acltype'):
+                data['acltype'] = 'POSIXACL'
+            if not data.get('xattr'):
+                data['xattr'] = 'SA'
 
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
