@@ -2835,7 +2835,7 @@ class PoolDatasetService(CRUDService):
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
-        if osc.IS_LINUX and and data['type'] == 'FILESYSTEM':
+        if osc.IS_LINUX and data['type'] == 'FILESYSTEM':
             if not data.get('acltype'):
                 data['acltype'] = 'POSIXACL'
             if not data.get('xattr'):
