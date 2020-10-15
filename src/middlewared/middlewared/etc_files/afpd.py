@@ -130,7 +130,6 @@ def render(service, middleware):
             cf_contents.append("\tldap name attr = %s\n" % "sAMAccountName")
             cf_contents.append("\tldap group attr = %s\n" % "sAMAccountName")
 
-    cf_contents.append("\tlog file = %s\n" % "/var/log/afp.log")
     cf_contents.append("\tlog level = default:%s\n" % AFPLogLevel[afp.afp_srv_loglevel].value)
     cf_contents.append("\n")
 
