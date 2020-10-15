@@ -12,7 +12,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import pool_name, scale, ha
+from auto_config import pool_name, scale, ha, hostname
 from config import *
 
 if ha and "virtual_ip" in os.environ:
@@ -20,8 +20,7 @@ if ha and "virtual_ip" in os.environ:
 else:
     from auto_config import ip
 
-if "BRIDGEHOST" in locals():
-    MOUNTPOINT = f"/tmp/afp{BRIDGEHOST}"
+MOUNTPOINT = f"/tmp/afp-{hostname}"
 dataset = f"{pool_name}/afp"
 dataset_url = dataset.replace('/', '%2F')
 AFP_NAME = "MyAFPShare"
@@ -30,9 +29,6 @@ group = 'root' if scale else 'wheel'
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
-mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                         "MOUNTPOINT" in locals()
-                                         ]) is False, reason=Reason)
 
 osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        "OSX_USERNAME" in locals(),
@@ -153,7 +149,6 @@ def test_15_creating_a_afp_share_on_afp_path(request):
 
 # have to wait for the volume api
 # Mount share on OSX system and create a test file
-@mount_test_cfg
 @osx_host_cfg
 def test_16_create_mount_point_for_afp_on_osx_system(request):
     depends(request, ["pool_04"], scope="session")
@@ -162,7 +157,6 @@ def test_16_create_mount_point_for_afp_on_osx_system(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_17_mount_afp_share_on_osx_system(request):
     depends(request, ["pool_04"], scope="session")
@@ -171,7 +165,6 @@ def test_17_mount_afp_share_on_osx_system(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_18_create_file_on_afp_share_via_osx_to_test_permissions(request):
     depends(request, ["pool_04"], scope="session")
@@ -181,7 +174,6 @@ def test_18_create_file_on_afp_share_via_osx_to_test_permissions(request):
 
 
 # Move test file to a new location on the AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_19_moving_afp_test_file_into_a_new_directory(request):
     depends(request, ["pool_04"], scope="session")
@@ -192,7 +184,6 @@ def test_19_moving_afp_test_file_into_a_new_directory(request):
 
 
 # Delete test file and test directory from AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_20_deleting_test_file_and_directory_from_afp_share(request):
     depends(request, ["pool_04"], scope="session")
@@ -201,7 +192,6 @@ def test_20_deleting_test_file_and_directory_from_afp_share(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_21_verifying_test_file_directory_were_successfully_removed(request):
     depends(request, ["pool_04"], scope="session")
@@ -211,7 +201,6 @@ def test_21_verifying_test_file_directory_were_successfully_removed(request):
 
 
 # Clean up mounted AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_22_unmount_afp_share(request):
     depends(request, ["pool_04"], scope="session")
@@ -243,7 +232,6 @@ def test_25_checking_to_see_if_afp_service_is_enabled(request):
 
 
 # Update tests
-@mount_test_cfg
 @osx_host_cfg
 def test_26_mount_afp_share_on_osx_system(request):
     depends(request, ["pool_04"], scope="session")
@@ -252,7 +240,6 @@ def test_26_mount_afp_share_on_osx_system(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_27_create_file_on_afp_share_via_osx_to_test_permissions(request):
     depends(request, ["pool_04"], scope="session")
@@ -262,7 +249,6 @@ def test_27_create_file_on_afp_share_via_osx_to_test_permissions(request):
 
 
 # Move test file to a new location on the AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_28_moving_afp_test_file_into_a_new_directory(request):
     depends(request, ["pool_04"], scope="session")
@@ -273,7 +259,6 @@ def test_28_moving_afp_test_file_into_a_new_directory(request):
 
 
 # Delete test file and test directory from AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_29_deleting_test_file_and_directory_from_afp_share(request):
     depends(request, ["pool_04"], scope="session")
@@ -282,7 +267,6 @@ def test_29_deleting_test_file_and_directory_from_afp_share(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @osx_host_cfg
 def test_30_verifying_test_file_directory_were_successfully_removed(request):
     depends(request, ["pool_04"], scope="session")
@@ -292,7 +276,6 @@ def test_30_verifying_test_file_directory_were_successfully_removed(request):
 
 
 # Clean up mounted AFP share
-@mount_test_cfg
 @osx_host_cfg
 def test_31_unmount_afp_share(request):
     depends(request, ["pool_04"], scope="session")
@@ -302,7 +285,6 @@ def test_31_unmount_afp_share(request):
 
 
 # Delete tests
-@mount_test_cfg
 @osx_host_cfg
 def test_32_removing_SMB_mountpoint(request):
     depends(request, ["pool_04"], scope="session")

@@ -12,7 +12,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
-from auto_config import pool_name, user, password, scale, ha
+from auto_config import pool_name, user, password, scale, ha, hostname
 from config import *
 
 if ha and "virtual_ip" in os.environ:
@@ -20,20 +20,14 @@ if ha and "virtual_ip" in os.environ:
 else:
     from auto_config import ip
 
+
 group = 'root' if scale else 'wheel'
-
-if "BRIDGEHOST" in locals():
-    MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
-
+MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"
 dataset_url = dataset.replace('/', '%2F')
 NFS_PATH = "/mnt/" + dataset
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
-
-mount_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                         "MOUNTPOINT" in locals()
-                                         ]) is False, reason=Reason)
 
 bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        "BSD_USERNAME" in locals(),
@@ -129,7 +123,6 @@ def test_10_checking_if_sysctl_vfs_nfsd_server_max_nfsvers_is_4(request):
     assert results['output'].strip() == '4', results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 # Now check if we can mount NFS / create / rename / copy / delete / umount
 def test_11_creating_nfs_mountpoint(request):
@@ -139,7 +132,6 @@ def test_11_creating_nfs_mountpoint(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_12_mounting_nfs(request):
     depends(request, ["pool_04"], scope="session")
@@ -150,7 +142,6 @@ def test_12_mounting_nfs(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_13_creating_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
@@ -160,7 +151,6 @@ def test_13_creating_nfs_file(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_14_moving_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
@@ -169,7 +159,6 @@ def test_14_moving_nfs_file(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_15_copying_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
@@ -178,7 +167,6 @@ def test_15_copying_nfs_file(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_16_deleting_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
@@ -187,7 +175,6 @@ def test_16_deleting_nfs_file(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_17_unmounting_nfs(request):
     depends(request, ["pool_04"], scope="session")
@@ -196,7 +183,6 @@ def test_17_unmounting_nfs(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_18_removing_nfs_mountpoint(request):
     depends(request, ["pool_04"], scope="session")
@@ -226,7 +212,6 @@ def test_21_checking_to_see_if_nfs_service_is_enabled(request):
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-@mount_test_cfg
 @bsd_host_cfg
 # Now check if we can mount NFS / create / rename / copy / delete / umount
 def test_22_creating_nfs_mountpoint(request):
@@ -236,7 +221,6 @@ def test_22_creating_nfs_mountpoint(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_23_mounting_nfs(request):
     depends(request, ["pool_04"], scope="session")
@@ -247,7 +231,6 @@ def test_23_mounting_nfs(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_24_creating_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
@@ -257,7 +240,6 @@ def test_24_creating_nfs_file(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_25_moving_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
@@ -266,7 +248,6 @@ def test_25_moving_nfs_file(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_26_copying_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
@@ -275,7 +256,6 @@ def test_26_copying_nfs_file(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_27_deleting_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
@@ -284,7 +264,6 @@ def test_27_deleting_nfs_file(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_28_unmounting_nfs(request):
     depends(request, ["pool_04"], scope="session")
@@ -293,7 +272,6 @@ def test_28_unmounting_nfs(request):
     assert results['result'] is True, results['output']
 
 
-@mount_test_cfg
 @bsd_host_cfg
 def test_29_removing_nfs_mountpoint(request):
     depends(request, ["pool_04"], scope="session")

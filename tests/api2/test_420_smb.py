@@ -12,9 +12,9 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user, scale
+from auto_config import ip, pool_name, password, user, scale, hostname
 
-MOUNTPOINT = "/tmp/smb-cifs"
+MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
 dataset = f"{pool_name}/smb-cifs"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestCifsSMB"
@@ -77,7 +77,7 @@ root_path_verification = {
 # Create tests
 @pytest.mark.dependency(name="smb_001")
 def test_001_setting_auxilary_parameters_for_mount_smbfs(request):
-    depends(request, ["user_24"], scope="session")
+    depends(request, ["shareuser"], scope="session")
     toload = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
     payload = {
         "smb_options": toload,
@@ -100,7 +100,7 @@ def test_002_creating_smb_dataset(request):
 
 @pytest.mark.dependency(name="smb_003")
 def test_003_changing_dataset_permissions_of_smb_dataset(request):
-    depends(request, ["user_24", "pool_04", "smb_001"], scope="session")
+    depends(request, ["shareuser", "pool_04", "smb_001"], scope="session")
     global job_id
     payload = {
         "acl": smb_acl,
@@ -202,6 +202,7 @@ def test_014_verify_testfile_exist_on_freenas(request):
 @bsd_host_cfg
 @pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_015_get_filesystem_stat_from_testfilet_and_verify(request, stat):
+    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
     assert results.json()[stat] == guest_path_verification[stat], results.text
@@ -268,6 +269,7 @@ def test_022_verify_testfile_exist_on_freenas(request):
 @bsd_host_cfg
 @pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_023_get_filesystem_stat_from_testfilet_and_verify(request, stat):
+    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
     assert results.json()[stat] == guest_path_verification[stat], results.text
@@ -335,6 +337,7 @@ def test_030_verify_testfile2_exist_on_freenas(request):
 @bsd_host_cfg
 @pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_031_get_filesystem_stat_from_testfilet2_and_verify(request, stat):
+    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/testfile2.txt')
     assert results.status_code == 200, results.text
     assert results.json()[stat] == guest_path_verification[stat], results.text
@@ -359,6 +362,7 @@ def test_033_verify_testfile2_exist_on_freenas(request):
 @bsd_host_cfg
 @pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_034_get_filesystem_stat_from_testfilet2_and_verify(request, stat):
+    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/testfile2.txt')
     assert results.status_code == 200, results.text
     assert results.json()[stat] == guest_path_verification[stat], results.text
@@ -391,6 +395,7 @@ def test_037_verify__the_tmp_directory_exist_on_freenas(request):
 @bsd_host_cfg
 @pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_038_get_filesystem_stat_from_tmp_directory_and_verify(request, stat):
+    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/tmp')
     assert results.status_code == 200, results.text
     assert results.json()[stat] == guest_path_verification[stat], results.text
@@ -415,6 +420,7 @@ def test_040_verify_testfile2_is_in_tmp_directory_on_freenas(request):
 @bsd_host_cfg
 @pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_041_get_filesystem_stat_from_testfile2_in_tmp_and_verify(request, stat):
+    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/tmp/testfile2.txt')
     assert results.status_code == 200, results.text
     assert results.json()[stat] == guest_path_verification[stat], results.text
@@ -505,6 +511,7 @@ def test_051_verify_testfile_exist_on_freenas(request):
 @bsd_host_cfg
 @pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_052_get_filesystem_stat_from_testfile_and_verify(request, stat):
+    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
     assert results.json()[stat] == guest_path_verification[stat], results.text
@@ -537,6 +544,7 @@ def test_055_verify_testfile_exist_on_freenas_after_unmout(request):
 @bsd_host_cfg
 @pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_056_get_filesystem_stat_from_testfile_and_verify(request, stat):
+    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
     assert results.json()[stat] == guest_path_verification[stat], results.text
