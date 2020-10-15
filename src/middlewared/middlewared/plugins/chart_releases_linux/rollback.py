@@ -17,6 +17,7 @@ class ChartReleaseService(Service):
         Dict(
             'rollback_options',
             Bool('force', default=False),
+            Bool('rollback_snapshot', default=True),
             Str('item_version', required=True),
         )
     )
@@ -39,14 +40,16 @@ class ChartReleaseService(Service):
         chart_details = await self.middleware.call('catalog.item_version_details', chart_path)
         await self.middleware.call('catalog.version_supported_error_check', chart_details)
 
+        history_item = release['history'][rollback_version]
+        history_ver = str(history_item['version'])
+
         ix_volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
-        snap_name = f'{ix_volumes_ds}@{rollback_version}'
+        snap_name = f'{ix_volumes_ds}@{history_ver}'
         if not await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]) and not options['force']:
             raise CallError(
                 f'Unable to locate {snap_name!r} snapshot for {release_name!r} volumes', errno=errno.ENOENT
             )
 
-        history_item = release['history'][rollback_version]
         current_dataset_paths = {
             os.path.join('/mnt', d['id']) for d in await self.middleware.call(
                 'pool.dataset.query', [['id', '^', f'{ix_volumes_ds}/']]
@@ -58,8 +61,6 @@ class ChartReleaseService(Service):
                 'Please specify a rollback version where following iX Volumes are not being used as they don\'t '
                 f'exist anymore: {", ".join(d.split("/")[-1] for d in history_datasets - current_dataset_paths)}'
             )
-
-        history_ver = str(history_item['version'])
 
         # TODO: Upstream helm does not have ability to force stop a release, until we have that ability
         #  let's just try to do a best effort to scale down scaleable workloads and then scale them back up
@@ -80,17 +81,18 @@ class ChartReleaseService(Service):
                 raise CallError(
                     f'Failed to rollback {release_name!r} chart release to {rollback_version!r}: {cp.stderr.decode()}'
                 )
+        finally:
+            await self.middleware.call(
+                'chart.release.sync_secrets_for_release', release_name, release['catalog'], release['catalog_train']
+            )
 
+        if options['rollback_snapshot']:
             await self.middleware.call(
                 'zfs.snapshot.rollback', snap_name, {
                     'force': options['force'],
                     'recursive': True,
                     'recursive_clones': True,
                 }
-            )
-        finally:
-            await self.middleware.call(
-                'chart.release.sync_secrets_for_release', release_name, release['catalog'], release['catalog_train']
             )
 
         await self.middleware.call(
