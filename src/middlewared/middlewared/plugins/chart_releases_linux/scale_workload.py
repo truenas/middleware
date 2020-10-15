@@ -73,7 +73,9 @@ class ChartReleaseService(Service):
 
         for resource in SCALEABLE_RESOURCES:
             for workload in resources[resource.value]:
-                replica_count = replica_counts[resource.value].get(workload['metadata']['name']) or replicas
+                replica_count = replica_counts[resource.value].get(
+                    workload['metadata']['name'], {}
+                ).get('replicas') or replicas
 
                 await self.middleware.call(
                     f'k8s.{resource.name.lower()}.update', workload['metadata']['name'], {
