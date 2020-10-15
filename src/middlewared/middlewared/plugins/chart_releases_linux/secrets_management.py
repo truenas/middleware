@@ -4,6 +4,7 @@ import json
 from base64 import b64decode
 from collections import defaultdict
 from copy import deepcopy
+from pkg_resources import parse_version
 
 from middlewared.service import private, Service
 
@@ -74,9 +75,10 @@ class ChartReleaseService(Service):
         # have a different chart version.
         to_remove = []
         seen_versions = set()
+        current_version = secrets_data[release]['releases'][0]['chart_metadata']['version']
         for release_data in secrets_data[release]['releases']:
             rel_version = release_data['chart_metadata']['version']
-            if rel_version in seen_versions:
+            if parse_version(rel_version) > parse_version(current_version) or rel_version in seen_versions:
                 to_remove.append(release_data['secret_metadata']['name'])
 
             seen_versions.add(rel_version)

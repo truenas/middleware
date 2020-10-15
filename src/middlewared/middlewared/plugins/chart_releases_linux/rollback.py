@@ -69,24 +69,29 @@ class ChartReleaseService(Service):
         if options['force']:
             command.append('--force')
 
-        cp = await run(
-            [
-                'helm', 'rollback', release_name, history_ver, '-n',
-                get_namespace(release_name), '--recreate-pods'
-            ] + command, check=False,
-        )
-        if cp.returncode:
-            raise CallError(
-                f'Failed to rollback {release_name!r} chart release to {rollback_version!r}: {cp.stderr.decode()}'
+        try:
+            cp = await run(
+                [
+                    'helm', 'rollback', release_name, history_ver, '-n',
+                    get_namespace(release_name), '--recreate-pods'
+                ] + command, check=False,
             )
+            if cp.returncode:
+                raise CallError(
+                    f'Failed to rollback {release_name!r} chart release to {rollback_version!r}: {cp.stderr.decode()}'
+                )
 
-        await self.middleware.call(
-            'zfs.snapshot.rollback', snap_name, {
-                'force': options['force'],
-                'recursive': True,
-                'recursive_clones': True,
-            }
-        )
+            await self.middleware.call(
+                'zfs.snapshot.rollback', snap_name, {
+                    'force': options['force'],
+                    'recursive': True,
+                    'recursive_clones': True,
+                }
+            )
+        finally:
+            await self.middleware.call(
+                'chart.release.sync_secrets_for_release', release_name, release['catalog'], release['catalog_train']
+            )
 
         await self.middleware.call(
             'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale']
