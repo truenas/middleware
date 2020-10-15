@@ -359,3 +359,14 @@ def reconfigure_logging():
             stream.close()
         except Exception:
             pass
+
+
+def stop_logging():
+    for name, handler in logging._handlers.items():
+        if not isinstance(handler, ErrorProneRotatingFileHandler):
+            continue
+
+        try:
+            handler.stream.close()
+        except Exception:
+            pass

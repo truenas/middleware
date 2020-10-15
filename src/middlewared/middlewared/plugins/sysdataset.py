@@ -344,8 +344,8 @@ class SystemDatasetService(ConfigService):
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
                 await run('umount', '-f', dataset)
-            except subprocess.CalledProcessError:
-                self.logger.warning('Unable to umount %r', dataset)
+            except subprocess.CalledProcessError as e:
+                raise CallError(f'Unable to umount {dataset}: {e.stderr.decode()}')
 
     def __get_datasets(self, pool, uuid):
         return [(f'{pool}/.system', '')] + [
@@ -416,6 +416,9 @@ class SystemDatasetService(ConfigService):
             path = '/tmp/system.new'
             if not os.path.exists('/tmp/system.new'):
                 os.mkdir('/tmp/system.new')
+            else:
+                # Make sure we clean up any previous attempts
+                await run('umount', '-R', path, check=False)
         else:
             path = SYSDATASET_PATH
         await self.__mount(_to, config['uuid'], path=path)
@@ -429,6 +432,11 @@ class SystemDatasetService(ConfigService):
             if osc.IS_LINUX:
                 await self.middleware.call('cache.put', 'use_syslog_dataset', False)
                 await self.middleware.call('service.restart', 'syslogd')
+
+            # Middleware itself will log to syslog dataset.
+            # This may be prone to a race condition since we dont wait the workers to stop
+            # logging, however all the work before umount seems to make it seamless.
+            await self.middleware.call('core.stop_logging')
 
             for i in restart:
                 await self.middleware.call('service.stop', i)
