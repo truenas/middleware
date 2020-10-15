@@ -22,7 +22,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
-from middlewared.logger import Logger, reconfigure_logging
+from middlewared.logger import Logger, reconfigure_logging, stop_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 from middlewared.utils.type import copy_function_metadata
@@ -1089,6 +1089,13 @@ class CoreService(Service):
         self.middleware.fileapp.register_job(job.id)
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
+    def __kill_multiprocessing(self):
+        # We need to kill this because multiprocessing has passed it stderr fd which is /var/log/middlewared.log
+        if osc.IS_LINUX:
+            for process in psutil.process_iter(attrs=["cmdline"]):
+                if "from multiprocessing.resource_tracker import main" in " ".join(process.info["cmdline"]):
+                    process.kill()
+
     @private
     def reconfigure_logging(self):
         """
@@ -1097,14 +1104,16 @@ class CoreService(Service):
         of the new location
         """
         reconfigure_logging()
-
-        # We need to kill this because multiprocessing has passed it stderr fd which is /var/log/middlewared.log
-        if osc.IS_LINUX:
-            for process in psutil.process_iter(attrs=["cmdline"]):
-                if "from multiprocessing.resource_tracker import main" in " ".join(process.info["cmdline"]):
-                    process.kill()
+        self.__kill_multiprocessing()
 
         self.middleware.send_event('core.reconfigure_logging', 'CHANGED')
+
+    @private
+    def stop_logging(self):
+        stop_logging()
+        self.__kill_multiprocessing()
+
+        self.middleware.send_event('core.reconfigure_logging', 'CHANGED', fields={'stop': True})
 
     @private
     @accepts(Dict(
