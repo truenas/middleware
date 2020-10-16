@@ -47,6 +47,7 @@ STATUS_DESC = [
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
+ES24F_REGEX = re.compile(r"(ECStream|iX) 2024J([ps])")
 
 
 class EnclosureLabelModel(sa.Model):
@@ -528,10 +529,14 @@ class Enclosure(object):
                 self.controller = True
             else:
                 self.model = "E16"
+        elif self.encname.startswith("HGST H4102-J"):
+            self.model = "ES102"
         elif self.encname.startswith("CELESTIC R0904"):
             self.model = "ES60"
         elif ES24_REGEX.match(self.encname):
             self.model = "ES24"
+        elif ES24F_REGEX.match(self.encname):
+            self.model = "ES24F"
         elif self.encname.startswith("CELESTIC X2012"):
             self.model = "ES12"
 
