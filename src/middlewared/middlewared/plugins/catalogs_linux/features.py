@@ -9,6 +9,7 @@ SUPPORTED_FEATURES = {
     'normalize/interfaceConfiguration',
     'normalize/ixVolume',
     'definitions/interface',
+    'definitions/gpuConfiguration',
     'validations/persistentVolumeClaims',
 }
 
