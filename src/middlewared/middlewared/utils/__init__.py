@@ -378,7 +378,7 @@ class LoadPluginsMixin(object):
         self._services_aliases = {}
 
     def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None):
-        from middlewared.service import Service, CompoundService, CRUDService, ConfigService, SystemServiceService
+        from middlewared.service import Service, CompoundService, ABSTRACT_SERVICES
 
         services = []
         main_plugins_dir = os.path.realpath(os.path.join(
@@ -397,7 +397,7 @@ class LoadPluginsMixin(object):
                 if on_module_begin:
                     on_module_begin(mod)
 
-                services.extend(load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)))
+                services.extend(load_classes(mod, Service, ABSTRACT_SERVICES))
 
                 if on_module_end:
                     on_module_end(mod)
