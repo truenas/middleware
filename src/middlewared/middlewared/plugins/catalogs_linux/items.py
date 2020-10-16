@@ -96,5 +96,17 @@ class CatalogService(Service):
             version_data['required_features'].append(ref)
             if ref == 'definitions/interface':
                 data['enum'] = [d['id'] for d in self.middleware.call_sync('interface.query')]
+            elif ref == 'definitions/gpuConfiguration':
+                data['attrs'] = []
+                for gpu, quantity in self.middleware.call_sync('k8s.gpu.available_gpus').items():
+                    data['attrs'].append({
+                        'variable': gpu,
+                        'label': 'GPU Resource',
+                        'schema': {
+                            'type': 'int',
+                            'required': True,
+                            'max': int(quantity),
+                        }
+                    })
 
         question['schema'].update(data)
