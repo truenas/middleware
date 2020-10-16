@@ -62,13 +62,13 @@ class NFSService(SystemServiceService):
         """
         return {
             d['address']: d['address'] for d in await self.middleware.call(
-                'interface.ip_in_use', {'static': True, 'any': True}
+                'interface.ip_in_use', {'static': True}
             )
         }
 
     @private
     async def bindip(self, config):
-        bindip = config['bindip']
+        bindip = [addr for addr in config['bindip'] if addr not in ['0.0.0.0', '::']]
         if osc.IS_LINUX:
             bindip = bindip[:1]
 
