@@ -41,6 +41,10 @@ class KubernetesGPUService(Service):
         private = True
         namespace = 'k8s.gpu'
 
+    async def available_gpus(self):
+        node_config = await self.middleware.call('k8s.node.config')
+        return {k: v for k, v in node_config['status']['capacity'].items() if k.endswith('/gpu')}
+
     async def setup(self):
         try:
             await self.setup_internal()
