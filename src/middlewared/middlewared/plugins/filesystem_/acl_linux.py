@@ -236,7 +236,7 @@ class FilesystemService(Service, ACLBase):
 
     @private
     def setacl_nfs4(self, job, data):
-        raise CallError('NFSv4 ACLs are not yet implemented.', errno.EOPNOTSUP)
+        raise CallError('NFSv4 ACLs are not yet implemented.', errno.ENOTSUP)
 
     @private
     def setacl_posix1e(self, job, data):
