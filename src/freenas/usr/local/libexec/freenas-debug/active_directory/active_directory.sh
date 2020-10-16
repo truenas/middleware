@@ -26,13 +26,16 @@
 #
 #####################################################################
 
+SMBCONF=${SAMBA_CONF:-"/etc/smb4.conf"}
+PATH_KRB5_CONFIG=${PATH_KRB5_CONFIG:-"/etc/krb5.conf"}
+PATH_NS_CONF=${PATH_NS_CONF:-"/etc/nsswitch.conf"}
 
 active_directory_opt() { echo a; }
 active_directory_help() { echo "Dump Active Directory Configuration"; }
 active_directory_directory() { echo "ActiveDirectory"; }
 active_directory_func()
 {
-	local AD_CONF=$(midclt call activedirectory.config | jq 'del(.bindpw)')
+	AD_CONF=$(midclt call activedirectory.config | jq 'del(.bindpw)')
 	local domainname=$(echo ${AD_CONF} | jq ".domainname")
 	local onoff=$(echo ${AD_CONF} | jq ".enable")
 	local enabled="DISABLED"
@@ -49,7 +52,7 @@ active_directory_func()
 	section_footer
 
 	section_header "Active Directory Run Status"
-	service samba_server onestatus
+	service winbindd status
 	section_header
 
 	#
@@ -98,12 +101,8 @@ active_directory_func()
 	#
 	#	Dump samba configuration
 	#
-	section_header "${SAMBA_CONF}"
-	sc "${SAMBA_CONF}"
-	section_footer
-
-	section_header "${SAMBA_SHARE_CONF}"
-	sc "${SAMBA_SHARE_CONF}"
+	section_header "${SMBCONF}"
+	sc "${SMBCONF}"
 	section_footer
 
 	#
@@ -117,7 +116,7 @@ active_directory_func()
 	#	List kerberos keytab entries
 	#
 	section_header "Kerberos Principals - 'ktutil'"
-	ktutil list
+	midclt call kerberos.keytab.kerberos_principal_choices
 	section_footer
 
 	#
