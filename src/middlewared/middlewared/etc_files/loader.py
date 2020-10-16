@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import sysctl
+from packaging import version
 
 from middlewared.utils.io import write_if_changed
 
@@ -20,13 +21,18 @@ def generate_loader_config(middleware):
         generate_ha_loader_config,
         generate_ec2_config,
         generate_truenas_logo,
+        generate_dual_nvdimm_config,
     ]
     if middleware.call_sync("system.is_freenas"):
         generators.append(generate_xen_loader_config)
 
     config = []
     for generator in generators:
-        config.extend(generator(middleware) or [])
+        try:
+            config.extend(generator(middleware) or [])
+        except Exception as e:
+            middleware.logger.error("Failed to load generator: %r with error: %s", generator, e)
+            continue
 
     return config
 
@@ -122,6 +128,32 @@ def generate_ec2_config(middleware):
             'boot_multicons="YES"',
             'hint.atkbd.0.disabled="1"',
             'hint.atkbdc.0.disabled="1"',
+        ]
+
+
+def generate_dual_nvdimm_config(middleware):
+    data = middleware.call_sync('system.dmidecode_info')
+
+    product = data['system-product-name']
+
+    # 0123456789 is the default value from supermicro.
+    # Before the version 3 hardware, we were not changing
+    # this value so ignore it to prevent an error on every
+    # boot
+    if product == '0123456789':
+        return
+
+    try:
+        current_vers = version.parse(data['system-version'])
+        minimum_vers = version.Version('3.0')
+    except Exception as e:
+        middleware.logger.error('Failed determining hardware version with error: %s', e)
+        return
+
+    if product.startswith('TRUENAS-M') and current_vers.major >= minimum_vers.major:
+        return [
+            'hint.ntb_hw.0.split=1',
+            'hint.ntb_hw.0.config="ntb_pmem:1:4:0,ntb_pmem:1:4:0,ntb_transport"'
         ]
 
 
