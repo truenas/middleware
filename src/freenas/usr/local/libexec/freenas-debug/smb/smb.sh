@@ -26,7 +26,8 @@
 #
 #####################################################################
 
-
+SMBCONF=${SAMBA_CONF:-"/etc/smb4.conf"}
+SMBSHARECONF=${SAMBA_SHARE_CONF:-"/etc/smb4_share.conf"}
 smb_opt() { echo C; }
 smb_help() { echo "Dump SMB Configuration"; }
 smb_directory() { echo "SMB"; }
@@ -74,11 +75,11 @@ smb_func()
 	#
 	#	Dump samba configuration
 	#
-	section_header "${SAMBA_CONF}"
-	sc "${SAMBA_CONF}"
+	section_header "${SMBCONF}"
+	sc "${SMBCONF}"
 	section_footer
 
-	section_header "${SAMBA_SHARE_CONF}"
+	section_header "${SMBSHARECONF}"
 	net conf list
 	section_footer
 

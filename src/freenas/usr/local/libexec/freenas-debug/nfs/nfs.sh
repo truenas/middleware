@@ -1,6 +1,6 @@
 #!/bin/sh
 #+
-# Copyright 2017 iXsystems, Inc.
+# Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,77 +26,77 @@
 #
 #####################################################################
 
-afp_opt() { echo f; }
-afp_help() { echo "Dump AFP Configuration"; }
-afp_directory() { echo "AFP"; }
-afp_func()
-{
-	local afp_onoff
-	
-	afp_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		srv_enable
-	FROM
-		services_services
-	WHERE
-		srv_service = 'afp'
-	ORDER BY
-		-id
-	LIMIT 1
-	")
 
-	afp_enabled="not start on boot."
-	if [ "${afp_onoff}" = "1" ]
-	then
-		afp_enabled="start on boot."
+nfs_opt() { echo N; }
+nfs_help() { echo "Dump NFS Configuration"; }
+nfs_directory() { echo "NFS"; }
+nfs_func()
+{
+
+	local onoff
+
+        onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+        SELECT
+                srv_enable
+        FROM
+                services_services
+        WHERE
+                srv_service = 'nfs'
+        ORDER BY
+                -id
+        LIMIT 1
+        ")
+
+        enabled="not start on boot."
+        if [ "${onoff}" = "1" ]
+        then
+                enabled="start on boot."
+        fi
+
+        section_header "NFS Boot Status"
+        echo "NFS will ${enabled}"
+        section_footer
+
+	section_header "NFS Run Status"
+	service nfs-ganesha status
+	section_footer
+
+	section_header "/etc/hosts"
+	sc "/etc/hosts"
+	section_footer
+
+	section_header "/etc/exports"
+	sc /etc/exports
+	section_footer
+
+	section_header "rpcinfo -p"
+	rpcinfo -p
+	section_footer
+
+	section_header "nfsstat"
+	nfsstat
+	section_footer
+
+	if is_linux; then
+		section_header "/etc/ganesha/gluster.conf"
+		sc "/etc/ganesha/gluster.conf"
+		section_footer
+
+		section_header "/etc/ganesha/vfs.conf"
+		sc "/etc/ganesha/vfs.conf"
+		section_footer
+
+		section_header "/etc/ganesha/ganesha.conf"
+		sc "/etc/ganesha/ganesha.conf"
+		section_footer
+	else
+		section_header "nfsv4 locks: nfsdumpstate"
+		nfsdumpstate
+		section_footer
 	fi
 
-	section_header "AFP boot status"
-	echo "AFP will ${afp_enabled}"
-	section_footer
-
-
-	section_header "AFP run status"
-	service netatalk onestatus
-	section_footer
-
-	#
-	#	Dump AFP version info
-	#
-	section_header "afpd -V"
-	afpd -V
-	section_footer
-
-	#
-	#	Dump AFP configuration
-	#
-	section_header "/usr/local/etc/afp.conf"
-	sc /usr/local/etc/afp.conf
-	section_footer
-
-	local IFS="|"
-
-	#
-	#       Dump AFP shares
-	#
-	section_header "AFP Shares & Permissions"
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		afp_path,
-		afp_name
-	FROM
-		sharing_afp_share
-	ORDER BY
-		-id
-	" | while read -r afp_path afp_name
-	do
-		printf "\n"
-		getfacl "${afp_path}"
-	done
-	section_footer
-
-	section_header "AFP Configuration"
-	midclt call afp.config | jq
-	midclt call sharing.afp.query | jq
+	section_header "Middleware Configuration"
+	midclt call nfs.config | jq
+	midclt call sharing.nfs.query | jq
 	section_footer
 }
