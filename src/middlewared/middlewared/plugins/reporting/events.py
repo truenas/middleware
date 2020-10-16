@@ -3,6 +3,7 @@ import glob
 import itertools
 import json
 import psutil
+import re
 import subprocess
 import time
 
@@ -16,12 +17,19 @@ if osc.IS_FREEBSD:
     import netif
 
 
+MEGABIT = 131072
+RE_BASE = re.compile(r'([0-9]+)base')
+RE_MBS = re.compile(r'([0-9]+)Mb/s')
+
+
 class RealtimeEventSource(EventSource):
 
     """
     Retrieve real time statistics for CPU, network,
     virtual memory and zfs arc.
     """
+
+    INTERFACE_SPEEDS_CACHE_INTERLVAL = 300
 
     @staticmethod
     def get_cpu_usages(cp_diff):
@@ -47,11 +55,50 @@ class RealtimeEventSource(EventSource):
         data['usage'] = ((cp_total - cp_diff[idle]) / cp_total) * 100
         return data
 
+    def get_interface_speeds(self):
+        speeds = {}
+
+        interfaces = self.middleware.call_sync('interface.query')
+        for interface in interfaces:
+            if m := RE_BASE.match(interface['state']['active_media_subtype']):
+                speeds[interface['name']] = int(m.group(1)) * MEGABIT
+            elif m := RE_MBS.match(interface['state']['active_media_subtype']):
+                speeds[interface['name']] = int(m.group(1)) * MEGABIT
+
+        types = ['BRIDGE', 'LINK_AGGREGATION', 'VLAN']
+        for interface in sorted([i for i in interfaces if i['type'] in types], key=lambda i: types.index(i['type'])):
+            speed = None
+
+            if interface['type'] == 'BRIDGE':
+                member_speeds = [speeds.get(member) for member in interface['bridge_members'] if speeds.get(member)]
+                if member_speeds:
+                    speed = max(member_speeds)
+
+            if interface['type'] == 'LINK_AGGREGATION':
+                port_speeds = [speeds.get(port) for port in interface['lag_ports'] if speeds.get(port)]
+                if port_speeds:
+                    if interface['lag_protocol'] in ['LACP', 'LOADBALANCE', 'ROUNDROBIN']:
+                        speed = sum(port_speeds)
+                    else:
+                        speed = min(port_speeds)
+
+            if interface['type'] == 'VLAN':
+                speed = speeds.get(interface['vlan_parent_interface'])
+
+            if speed:
+                speeds[interface['name']] = speed
+
+        return speeds
+
     def run(self):
 
         cp_time_last = None
         cp_times_last = None
         last_interface_stats = {}
+        last_interface_speeds = {
+            'time': time.monotonic(),
+            'speeds': self.get_interface_speeds(),
+        }
         if osc.IS_LINUX:
             disk_stats = DiskStats()
 
@@ -162,10 +209,16 @@ class RealtimeEventSource(EventSource):
                                     break
 
             # Interface related statistics
+            if last_interface_speeds['time'] < time.monotonic() - self.INTERFACE_SPEEDS_CACHE_INTERLVAL:
+                last_interface_speeds.update({
+                    'time': time.monotonic(),
+                    'speeds': self.get_interface_speeds(),
+                })
             data['interfaces'] = defaultdict(dict)
             retrieve_stat = {'rx_bytes': 'received_bytes', 'tx_bytes': 'sent_bytes'}
             if osc.IS_FREEBSD:
                 for iface in netif.list_interfaces().values():
+                    data['interfaces'][iface.name]['speed'] = last_interface_speeds['speeds'].get(iface.name)
                     for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
                         addr_data = addr.__getstate__(stats=True)
                         stats_time = time.time()
@@ -186,6 +239,7 @@ class RealtimeEventSource(EventSource):
                 stats_time = time.time()
                 for i in glob.glob('/sys/class/net/*/statistics'):
                     iface_name = i.replace('/sys/class/net/', '').split('/')[0]
+                    data['interfaces'][iface_name]['speed'] = last_interface_speeds['speeds'].get(iface_name)
                     for stat, name in retrieve_stat.items():
                         with open(f'{i}/{stat}', 'r') as f:
                             value = int(f.read())
