@@ -61,6 +61,10 @@ do-install:
 	#
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
+	${MV} ${STAGEDIR}/usr/local/bin.freebsd/* ${STAGEDIR}/usr/local/bin/
+	${RM} -rf ${STAGEDIR}/usr/local/bin.freebsd
+	${MV} ${STAGEDIR}/usr/local/sbin.freebsd/* ${STAGEDIR}/usr/local/sbin/
+	${RM} -rf ${STAGEDIR}/usr/local/sbin.freebsd
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
 		| ${GREP} -v "/debian/" \
 		| ${GREP} -v "/netcli.sh" \
