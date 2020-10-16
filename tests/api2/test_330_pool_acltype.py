@@ -17,7 +17,7 @@ def test_01_verify_default_acltype_from_pool_dataset_with_api(request):
     depends(request, ["pool_04"], scope="session")
     results = GET(f'/pool/dataset/id/{pool_name}/')
     assert results.status_code == 200, results.text
-    assert results.json()['acltype']['rawvalue'] == 'posixacl', results.text
+    assert results.json()['acltype']['rawvalue'] == 'posix', results.text
 
 
 def test_02_verify_default_acltype_from_pool_dataset_with_zfs_get(request):
@@ -25,7 +25,7 @@ def test_02_verify_default_acltype_from_pool_dataset_with_zfs_get(request):
     cmd = f"zfs get acltype {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert 'posixacl' in results['output'], results['output']
+    assert 'posix' in results['output'], results['output']
 
 
 def test_03_create_test1_dataset_to_verify_inherit_parent_acltype(request):
@@ -42,7 +42,7 @@ def test_04_verify_test1_dataset_inherited_parent_acltype_with_api(request):
     depends(request, ["pool_04"], scope="session")
     results = GET(f'/pool/dataset/id/{test1_dataset.replace("/", "%2F")}/')
     assert results.status_code == 200, results.text
-    assert results.json()['acltype']['rawvalue'] == 'posixacl', results.text
+    assert results.json()['acltype']['rawvalue'] == 'posix', results.text
 
 
 def test_05_verify_test1_dataset_inherited_parent_acltype_with_zfs_get(request):
@@ -50,7 +50,7 @@ def test_05_verify_test1_dataset_inherited_parent_acltype_with_zfs_get(request):
     cmd = f"zfs get acltype {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert 'posixacl' in results['output'], results['output']
+    assert 'posix' in results['output'], results['output']
 
 
 def test_06_delete_test1_dataset(request):
