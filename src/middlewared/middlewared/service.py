@@ -1280,3 +1280,7 @@ class CoreService(Service):
                 self._environ[k] = v
 
         self.middleware.send_event('core.environ', 'CHANGED', fields=update)
+
+
+ABSTRACT_SERVICES = (ConfigService, CRUDService, SystemServiceService, SharingTaskService, SharingService,
+                     TaskPathService)
