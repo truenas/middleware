@@ -28,7 +28,11 @@ def generate_loader_config(middleware):
 
     config = []
     for generator in generators:
-        config.extend(generator(middleware) or [])
+        try:
+            config.extend(generator(middleware) or [])
+        except Exception as e:
+            middleware.logger.error("Failed to load generator with error: %s", e)
+            continue
 
     return config
 
@@ -128,11 +132,19 @@ def generate_ec2_config(middleware):
 
 
 def generate_dual_nvdimm_config(middleware):
-    data = middleware.call_sync('system.dmidecode_info')
+    data = middleware.call_sync('system.info')
 
-    product = data['system-product-name']
+    product = data['system_product']
+
+    # 0123456789 is the default value from supermicro.
+    # Before the version 3 hardware, we were not changing
+    # this value so ignore it to prevent an error on every
+    # boot
+    if product == '0123456789':
+        return
+
     try:
-        current_vers = version.parse(data['system-version'])
+        current_vers = version.parse(data['system_product_version'])
         minimum_vers = version.Version('3.0')
     except Exception as e:
         middleware.logger.error('Failed determining hardware version with error: %s', e)
