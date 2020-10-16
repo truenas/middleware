@@ -31,7 +31,7 @@ def generate_loader_config(middleware):
         try:
             config.extend(generator(middleware) or [])
         except Exception as e:
-            middleware.logger.error("Failed to load generator with error: %s", e)
+            middleware.logger.error("Failed to load generator: %r with error: %s", generator, e)
             continue
 
     return config
