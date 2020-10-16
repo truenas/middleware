@@ -60,6 +60,9 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
 
         return self.client.call(method, *params, timeout=timeout, **kwargs)
 
+    def event_register(self, *args, **kwargs):
+        pass
+
     def send_event(self, name, event_type, **kwargs):
         with Client(py_exceptions=True) as c:
             return c.call('core.event_send', name, event_type, kwargs)
