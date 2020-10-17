@@ -11,10 +11,11 @@ from middlewared.utils import run
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
 RE_DISK_ROTATION_RATE = re.compile(r'\s*Nominal\s*rotation\s*rate:\s*(.*)')
-RE_GPU_VENDOR = re.compile(r'description:\s*VGA compatible controller[\s\S]*vendor:\s*(.*)')
 RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')
 RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
+NVIDIA_PCI_ID = '10de::'
+VGA_CLASS_ID = '0300'
 
 
 class DeviceService(Service, DeviceInfoBase):
@@ -252,22 +253,22 @@ class DeviceService(Service, DeviceInfoBase):
         return topology
 
     async def get_gpus(self):
+
         if self.GPU:
             return self.GPU
 
         not_available = {'available': False, 'vendor': None}
-        cp = await run(['lshw', '-numeric', '-C', 'display'], check=False)
-        if cp.returncode:
-            self.logger.error('Unable to retrieve GPU details: %s', cp.stderr.decode())
+
+        # we only support nvidia GPUs at the moment
+        cmd = ['lspci', '-d', NVIDIA_PCI_ID + VGA_CLASS_ID]
+        vga = await run(cmd, check=False)
+        if vga.returncode:
+            self.logger.error('Unable to retrieve GPU details: %s', vga.stderr.decode())
             return not_available
 
-        vendor = RE_GPU_VENDOR.findall(cp.stdout.decode())
-        if not vendor:
-            self.GPU = not_available
+        if 'nvidia' in vga.stdout.decode().lower():
+            self.GPU = {'available': True, 'vendor': 'NVIDIA'}
         else:
-            # We only support nvidia based GPU's right now based on equipment available
-            if 'nvidia' in vendor[0].lower():
-                self.GPU = {'available': True, 'vendor': 'NVIDIA'}
-            else:
-                self.GPU = not_available
+            self.GPU = not_available
+
         return self.GPU
