@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import textwrap
+import pathlib
 
 
 def parse_train_name(name):
@@ -333,12 +334,27 @@ class UpdateService(Service):
     @job(lock='updatemanual')
     def manual(self, job, path):
         """
-        Apply manual update of file `path`.
+        Update the system using a manual update file.
+
+        `path` must be the absolute path to the update file.
         """
-        dest_extracted = os.path.join(os.path.dirname(path), '.update')
+
+        update_file = pathlib.Path(path)
+
+        # make sure absolute path was given
+        if not update_file.is_absolute():
+            raise CallError('Absolute path must be provided.', errno.ENOENT)
+
+        # make sure file exists
+        if not update_file.exists():
+            raise CallError('File does not exist.', errno.ENOENT)
+
+        # dest_extracted is only used on freebsd and ignored on linux
+        dest_extracted = os.path.join(str(update_file.parent), '.update')
+
         try:
             try:
-                self.middleware.call_sync('update.install_manual_impl', job, path, dest_extracted)
+                self.middleware.call_sync('update.install_manual_impl', job, str(update_file.absolute()), dest_extracted)
             except Exception as e:
                 self.logger.debug('Applying manual update failed', exc_info=True)
                 raise CallError(str(e), errno.EFAULT)
