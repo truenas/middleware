@@ -250,6 +250,7 @@ class PoolService(CRUDService):
         datastore = 'storage.volume'
         datastore_extend = 'pool.pool_extend'
         datastore_prefix = 'vol_'
+        event_send = False
 
     @item_method
     @accepts(
@@ -756,6 +757,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
+        self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
         return pool
 
     @private
