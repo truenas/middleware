@@ -74,12 +74,15 @@ class UsageService(Service):
             context['datasets'][ds['id']] = ds
         return context
 
-    def gather(self):
+    def gather(self, restrict_usage=None):
         context = self.get_gather_context()
+        restrict_usage = restrict_usage or []
 
         return json.dumps(
             {
-                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f))
+                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f)) and (
+                    not restrict_usage or f in restrict_usage
+                )
                 for k, v in self.middleware.call_sync(f'usage.{f}', context).items()
             }, sort_keys=True
         )
@@ -272,14 +275,16 @@ class UsageService(Service):
 
         return {'network': {**bridges, **lags, **phys, **vlans}}
 
-    async def gather_system(self, context):
+    async def gather_system_version(self, context):
         system = await self.middleware.call('system.info')
+        return {'version': system['version']}
+
+    async def gather_system(self, context):
         platform = 'TrueNAS-{}'.format(await self.middleware.call(
             'system.product_type'
         ))
 
         usage_version = 1
-        version = system['version']
         datasets = await self.middleware.call(
             'zfs.dataset.query', [('type', '!=', 'VOLUME')], {'count': True}
         )
@@ -297,7 +302,6 @@ class UsageService(Service):
             'system_hash': await self.middleware.call('system.host_id'),
             'platform': platform,
             'usage_version': usage_version,
-            'version': version,
             'system': [{'users': users, 'snapshots': snapshots, 'zvols': zvols, 'datasets': datasets}]
         }
 
