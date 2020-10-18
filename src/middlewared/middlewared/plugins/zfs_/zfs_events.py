@@ -159,7 +159,7 @@ async def zfs_events(middleware, data):
         if not pool:
             return
 
-        middleware.send_event('pool.dataset.query', 'CHANGED', id=pool['id'], fields=pool)
+        middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
 
     elif event_id in (
         'sysevent.fs.zfs.config_sync',
@@ -170,13 +170,16 @@ async def zfs_events(middleware, data):
         # for this reason we must react to certain types of ZFS events to keep
         # it in sync every time there is a change.
         asyncio.ensure_future(middleware.call('disk.swaps_configure'))
-        if event_id == 'sysevent.fs.zfs.config_sync' and data.get('pool'):
+        if event_id == 'sysevent.fs.zfs.config_sync' and data.get('pool') and data.get('pool_guid'):
             # This event is issued whenever a vdev change is done to a pool
+            # Checking pool_guid ensures that we do not do this on creation/deletion of pool as we expect the
+            # relevant event to be handled from the service endpoints because there are other operations related
+            # to create/delete which when done, we consider the create/delete operation as complete
             pool = await retrieve_pool_from_db(middleware, data['pool'])
             if not pool:
                 return
 
-            middleware.send_event('pool.dataset.query', 'CHANGED', id=pool['id'], fields=pool)
+            middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
     elif (
         event_id == 'sysevent.fs.zfs.history_event' and data.get('history_dsname') and data.get('history_internal_name')
     ):
@@ -203,7 +206,7 @@ async def zfs_events(middleware, data):
         pool = await retrieve_pool_from_db(middleware, data['pool'])
         if not pool:
             return
-        middleware.send_event('pool.dataset.query', 'CHANGED', id=pool['id'], fields=pool)
+        middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
 
 
 def setup(middleware):
