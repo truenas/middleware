@@ -22,17 +22,19 @@ class UsageService(Service):
     async def start(self):
         retries = self.FAILED_RETRIES
         while retries:
-            if not (
-                (await self.middleware.call('system.general.config'))['usage_collection'] and
-                await self.middleware.call('network.general.can_perform_activity', 'usage')
-            ):
+            if not await self.middleware.call('network.general.can_perform_activity', 'usage'):
                 break
+
+            if (await self.middleware.call('system.general.config'))['usage_collection']:
+                restrict_usage = []
+            else:
+                restrict_usage = ['gather_total_capacity', 'gather_system_version']
 
             try:
                 async with aiohttp.ClientSession(raise_for_status=True) as session:
                     await session.post(
                         'https://usage.freenas.org/submit',
-                        data=await self.middleware.call('usage.gather'),
+                        data=await self.middleware.call('usage.gather', restrict_usage),
                         headers={'Content-type': 'application/json'},
                         proxy=os.environ.get('http_proxy'),
                     )
@@ -92,7 +94,7 @@ class UsageService(Service):
     def gather_total_capacity(self, context):
         return {
             'total_capacity': sum(
-                d['used']['parsed'] + d['available']['parsed']
+                d['properties']['used']['parsed'] + d['properties']['available']['parsed']
                 for d in context['root_datasets'].values()
             )
         }
