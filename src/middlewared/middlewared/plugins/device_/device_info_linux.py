@@ -176,10 +176,11 @@ class DeviceService(Service, DeviceInfoBase):
                 disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
             # get lunid
-            if disk.get('tran') == 'nvme':
-                disk['lunid'] = disk_data['wwn'].lstrip('eui.')
-            else:
-                disk['lunid'] = disk_data['wwn'].lstrip('0x')
+            if disk_data['wwn']:
+                if disk.get('tran') == 'nvme':
+                    disk['lunid'] = disk_data['wwn'].lstrip('eui.')
+                else:
+                    disk['lunid'] = disk_data['wwn'].lstrip('0x')
 
         if not disk['size'] and os.path.exists(os.path.join(disk_sys_path, 'size')):
             with open(os.path.join(disk_sys_path, 'size'), 'r') as f:
