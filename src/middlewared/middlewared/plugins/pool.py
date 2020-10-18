@@ -1581,6 +1581,7 @@ class PoolService(CRUDService):
         asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
+        self.middleware.send_event('pool.query', 'CHANGED', id=oid, cleared=True)
 
     @item_method
     @accepts(Int('id'))
