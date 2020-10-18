@@ -168,7 +168,7 @@ async def zfs_events(middleware, data):
                 'pool.dataset.query', 'ADDED' if event_type == 'create' else 'CHANGED', id=ds_id, fields=ds_data
             )
         elif event_type == 'destroy':
-            middleware.send_event('pool.dataset.query', 'CHANGED', id=id, cleared=True)
+            middleware.send_event('pool.dataset.query', 'CHANGED', id=ds_id, cleared=True)
 
             await middleware.call(
                 'pool.dataset.delete_encrypted_datasets_from_db', [
