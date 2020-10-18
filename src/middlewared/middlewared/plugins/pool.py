@@ -1889,6 +1889,7 @@ class PoolDatasetService(CRUDService):
 
     class Config:
         namespace = 'pool.dataset'
+        event_send = False
 
     @accepts()
     async def encryption_algorithm_choices(self):

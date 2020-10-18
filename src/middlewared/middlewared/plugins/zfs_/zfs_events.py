@@ -157,16 +157,25 @@ async def zfs_events(middleware, data):
         # it in sync every time there is a change.
         asyncio.ensure_future(middleware.call('disk.swaps_configure'))
     elif (
-        event_id == 'sysevent.fs.zfs.history_event' and data.get(
-            'history_internal_name'
-        ) == 'destroy' and data.get('history_dsname')
+        event_id == 'sysevent.fs.zfs.history_event' and data.get('history_dsname') and data.get('history_internal_name')
     ):
-        await middleware.call(
-            'pool.dataset.delete_encrypted_datasets_from_db', [
-                ['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]
-            ]
-        )
-        await middleware.call_hook('dataset.post_delete', data['history_dsname'])
+        # we need to send events for dataset creation/updating/deletion in case it's done via cli
+        event_type = data['history_internal_name']
+        ds_id = data['history_dsname']
+        if event_type in ('create', 'set'):
+            ds_data = await middleware.call('pool.dataset.get_instance', ds_id)
+            middleware.send_event(
+                'pool.dataset.query', 'ADDED' if event_type == 'create' else 'CHANGED', id=ds_id, fields=ds_data
+            )
+        elif event_type == 'destroy':
+            middleware.send_event('pool.dataset.query', 'CHANGED', id=ds_id, cleared=True)
+
+            await middleware.call(
+                'pool.dataset.delete_encrypted_datasets_from_db', [
+                    ['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]
+                ]
+            )
+            await middleware.call_hook('dataset.post_delete', data['history_dsname'])
 
 
 def setup(middleware):
