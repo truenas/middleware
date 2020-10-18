@@ -84,6 +84,14 @@ class UsageService(Service):
             }, sort_keys=True
         )
 
+    def gather_total_capacity(self, context):
+        return {
+            'total_capacity': sum(
+                d['used']['parsed'] + d['available']['parsed']
+                for d in context['root_datasets'].values()
+            )
+        }
+
     def gather_backup_data(self, context):
         backed = {
             'cloudsync': 0,
