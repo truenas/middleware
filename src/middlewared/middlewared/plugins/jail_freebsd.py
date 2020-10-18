@@ -1489,6 +1489,10 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_update:{args[0]}")
     def update_to_latest_patch(self, job, jail, update_pkgs=False):
         """Updates specified jail to latest patch level."""
+        return self.update_to_latest_patch_internal(job, jail, update_pkgs, True)
+
+    @private
+    def update_to_latest_patch_internal(self, job, jail, update_pkgs, update_jail):
         job.set_progress(0, f'Updating {jail}')
         msg_queue = deque(maxlen=10)
 
@@ -1520,7 +1524,7 @@ class JailService(CRUDService):
             jail,
             callback=progress_callback
         )
-        iocage.update(update_pkgs)
+        iocage.update(update_pkgs, update_jail)
 
         return True
 
