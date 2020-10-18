@@ -197,6 +197,13 @@ async def zfs_events(middleware, data):
                 ]
             )
             await middleware.call_hook('dataset.post_delete', data['history_dsname'])
+    elif (
+        event_id == 'sysevent.fs.zfs.history_event' and not data.get('history_dsname') and data.get('pool')
+    ):
+        pool = await retrieve_pool_from_db(middleware, data['pool'])
+        if not pool:
+            return
+        middleware.send_event('pool.dataset.query', 'CHANGED', id=pool['id'], fields=pool)
 
 
 def setup(middleware):
