@@ -120,6 +120,14 @@ async def devd_zfs_hook(middleware, data):
 deadman_throttle = defaultdict(list)
 
 
+async def retrieve_pool_from_db(middleware, pool_name):
+    pool = await middleware.call('pool.query', [['name', '=', pool_name]])
+    if not pool:
+        # If we have no record of the pool, let's skip sending any event please
+        return
+    return pool[0]
+
+
 async def zfs_events(middleware, data):
     event_id = data['class']
     if event_id in ('sysevent.fs.zfs.resilver_start', 'sysevent.fs.zfs.scrub_start'):
@@ -147,6 +155,12 @@ async def zfs_events(middleware, data):
         deadman_throttle[pool] = deadman_throttle[pool][-max_items:]
     elif event_id == 'resource.fs.zfs.statechange':
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
+        pool = await retrieve_pool_from_db(middleware, data.get('pool'))
+        if not pool:
+            return
+
+        middleware.send_event('pool.dataset.query', 'CHANGED', id=pool['id'], fields=pool)
+
     elif event_id in (
         'sysevent.fs.zfs.config_sync',
         'sysevent.fs.zfs.pool_destroy',
@@ -158,11 +172,9 @@ async def zfs_events(middleware, data):
         asyncio.ensure_future(middleware.call('disk.swaps_configure'))
         if event_id == 'sysevent.fs.zfs.config_sync' and data.get('pool'):
             # This event is issued whenever a vdev change is done to a pool
-            pool = await middleware.call('pool.query', [['name', '=', data['pool']]])
+            pool = await retrieve_pool_from_db(middleware, data['pool'])
             if not pool:
-                # If we have no record of the pool, let's skip sending any event please
                 return
-            pool = pool[0]
 
             middleware.send_event('pool.dataset.query', 'CHANGED', id=pool['id'], fields=pool)
     elif (
