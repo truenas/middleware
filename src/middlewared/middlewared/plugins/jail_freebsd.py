@@ -471,6 +471,17 @@ class PluginService(CRUDService):
             for branch in re.findall(r'refs/heads/(.*)', cp.stdout)
         }
 
+    @accepts(
+        Str('jail'),
+        Bool('update_jail', default=True)
+    )
+    @job(lock=lambda args: f'jail_update:{args[0]}')
+    async def update(self, job, jail, update_jail=True):
+        """
+        Updates specified plugin to latest available plugin version and optionally update plugin to latest patch level.
+        """
+        return await self.middleware.call('jail.update_to_latest_patch_internal', job, jail, False, update_jail)
+
     @periodic(interval=86400)
     @private
     def periodic_plugin_update(self):
