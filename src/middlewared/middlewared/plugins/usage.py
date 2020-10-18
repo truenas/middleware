@@ -58,7 +58,7 @@ class UsageService(Service):
 
         return True
 
-    def gather(self):
+    def get_gather_context(self):
         datasets = self.middleware.call_sync('zfs.dataset.query')
         context = {
             'network': self.middleware.call_sync('interfaces.query'),
@@ -72,6 +72,10 @@ class UsageService(Service):
             elif ds['type'] == 'VOLUME':
                 context['zvols'].append(ds)
             context['datasets'][ds['id']] = ds
+        return context
+
+    def gather(self):
+        context = self.get_gather_context()
 
         return json.dumps(
             {
