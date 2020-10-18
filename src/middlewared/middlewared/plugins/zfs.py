@@ -1107,7 +1107,7 @@ class ZFSSnapshot(CRUDService):
             return True
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
-            return False
+            raise CallError(f'Failed to clone snapshot: {err}')
 
     @accepts(
         Str('id'),
