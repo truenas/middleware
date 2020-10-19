@@ -17,7 +17,10 @@ class ChartReleaseService(Service):
 
     @accepts()
     async def scaleable_resources(self):
-        return {r.name for r in SCALEABLE_RESOURCES}
+        """
+        Returns choices for types of workloads which can be scaled up/down.
+        """
+        return {r.name: r.name for r in SCALEABLE_RESOURCES}
 
     @accepts(
         Str('release_name'),
@@ -27,6 +30,11 @@ class ChartReleaseService(Service):
         )
     )
     async def scale(self, release_name, options):
+        """
+        Scale a `release_name` chart release to `scale_options.replica_count` specified.
+
+        This will scale deployments/statefulset to replica count specified.
+        """
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
         )

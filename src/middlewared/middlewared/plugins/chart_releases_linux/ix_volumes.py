@@ -26,6 +26,9 @@ class ChartReleaseService(Service):
         Str('volume_name'),
     )
     async def remove_ix_volume(self, release_name, volume_name):
+        """
+        Remove `volume_name` ix_volume from `release_name` chart release.
+        """
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
         )

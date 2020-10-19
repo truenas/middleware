@@ -53,6 +53,20 @@ class ChartReleaseService(CRUDService):
     )
     @job(lock=lambda args: f'chart_release_create_{args[0]["release_name"]}')
     async def do_create(self, job, data):
+        """
+        Create a chart release for a catalog item.
+
+        `release_name` is the name which will be used to identify the created chart release.
+
+        `catalog` is a valid catalog id where system will look for catalog `item` details.
+
+        `train` is which train to look for under `catalog` i.e stable / testing etc.
+
+        `version` specifies the catalog `item` version.
+
+        `values` is configuration specified for the catalog item version in question which will be used to
+        create the chart release.
+        """
         await self.middleware.call('kubernetes.validate_k8s_setup')
         if await self.middleware.call('chart.release.query', [['id', '=', data['release_name']]]):
             raise CallError(f'Chart release with {data["release_name"]} already exists.', errno=errno.EEXIST)
@@ -155,6 +169,12 @@ class ChartReleaseService(CRUDService):
         )
     )
     async def do_update(self, chart_release, data):
+        """
+        Update an existing chart release.
+
+        `values` is configuration specified for the catalog item version in question which will be used to
+        create the chart release.
+        """
         release = await self.get_instance(chart_release)
         chart_path = os.path.join(release['path'], 'charts', release['chart_metadata']['version'])
         if not os.path.exists(chart_path):
@@ -190,6 +210,12 @@ class ChartReleaseService(CRUDService):
     @accepts(Str('release_name'))
     @job(lock=lambda args: f'chart_release_delete_{args[0]}')
     async def do_delete(self, job, release_name):
+        """
+        Delete existing chart release.
+
+        This will delete the chart release from the kubernetes cluster and also remove any associated volumes / data.
+        To clarify, host path volumes will not be deleted which live outside the chart release dataset.
+        """
         # For delete we will uninstall the release first and then remove the associated datasets
         await self.middleware.call('kubernetes.validate_k8s_setup')
         await self.get_instance(release_name)

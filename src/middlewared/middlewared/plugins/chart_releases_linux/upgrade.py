@@ -27,6 +27,17 @@ class ChartReleaseService(Service):
         )
     )
     async def upgrade(self, release_name, options):
+        """
+        Upgrade `release_name` chart release.
+
+        `upgrade_options.item_version` specifies to which item version chart release should be upgraded to.
+
+        During upgrade, `upgrade_options.values` can be specified to apply configuration changes for configuration
+        changes for the chart release in question.
+
+        For upgrade, system will automatically take a snapshot of `ix_volumes` in question which can be used to
+        rollback later on.
+        """
         release = await self.middleware.call('chart.release.get_instance', release_name)
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', release['catalog']]], {'get': True, 'extra': {'item_details': True}},

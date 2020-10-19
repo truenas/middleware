@@ -22,6 +22,21 @@ class ChartReleaseService(Service):
         )
     )
     async def rollback(self, release_name, options):
+        """
+        Rollback a chart release to a previous chart version.
+
+        `item_version` is version which we want to rollback a chart release to.
+
+        `rollback_snapshot` is a boolean value which when set will rollback snapshots of ix_volumes.
+
+        `force` is a boolean passed to helm for rollback of a chart release and also used for rolling back snapshots
+        of ix_volumes.
+
+        It should be noted that rollback is not possible if a chart release is using persistent volume claims
+        as they are immutable.
+        Rollback is only functional for the actual configuration of the release at the `item_version` specified and
+        any associated `ix_volumes`.
+        """
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {
                 'extra': {'history': True, 'retrieve_resources': True}, 'get': True,
