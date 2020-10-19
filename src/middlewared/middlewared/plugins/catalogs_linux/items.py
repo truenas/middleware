@@ -104,7 +104,6 @@ class CatalogService(Service):
                         'label': 'GPU Resource',
                         'schema': {
                             'type': 'int',
-                            'required': True,
                             'max': int(quantity),
                         }
                     })

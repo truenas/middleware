@@ -51,7 +51,8 @@ class ChartReleaseService(CRUDService):
             Str('version', required=True),
         )
     )
-    async def do_create(self, data):
+    @job(lock=lambda args: f'chart_release_create_{args[0]["release_name"]}')
+    async def do_create(self, job, data):
         await self.middleware.call('kubernetes.validate_k8s_setup')
         if await self.middleware.call('chart.release.query', [['id', '=', data['release_name']]]):
             raise CallError(f'Chart release with {data["release_name"]} already exists.', errno=errno.EEXIST)
@@ -78,6 +79,8 @@ class ChartReleaseService(CRUDService):
         new_values.update(data['values'])
         new_values, context = await self.normalise_and_validate_values(item_details, new_values, False, release_ds)
 
+        job.set_progress(25, 'Initial Validation completed')
+
         # Now that we have completed validation for the item in question wrt values provided,
         # we will now perform the following steps
         # 1) Create release datasets
@@ -96,6 +99,8 @@ class ChartReleaseService(CRUDService):
             # Before finally installing the release, we will perform any actions which might be required
             # for the release to function like creating/deleting ix-volumes
             await self.perform_actions(context)
+
+            job.set_progress(75, 'Installing Catalog Item')
 
             with tempfile.NamedTemporaryFile(mode='w+') as f:
                 f.write(yaml.dump(new_values))
@@ -121,6 +126,7 @@ class ChartReleaseService(CRUDService):
             else:
                 await self.middleware.call('k8s.storage_class.create', storage_class)
 
+            job.set_progress(95, 'Syncing chart release secrets')
             await self.middleware.call(
                 'chart.release.sync_secrets_for_release',
                 data['release_name'], data['catalog'], data['train'],
@@ -138,6 +144,7 @@ class ChartReleaseService(CRUDService):
 
             raise
         else:
+            job.set_progress(100, 'Chart release created')
             return await self.get_instance(data['release_name'])
 
     @accepts(
