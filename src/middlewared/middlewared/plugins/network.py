@@ -580,6 +580,7 @@ class InterfaceService(CRUDService):
                     'address': config['int_ipv4address'],
                     'netmask': int(config['int_v4netmaskbit']),
                 })
+        if not config['int_ipv6auto']:
             if config['int_ipv6address']:
                 iface['aliases'].append({
                     'type': 'INET6',
