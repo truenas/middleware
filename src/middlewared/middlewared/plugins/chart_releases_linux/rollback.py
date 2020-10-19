@@ -1,8 +1,11 @@
 import errno
 import os
+import shutil
+
+from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, Str
-from middlewared.service import accepts, CallError, Service
+from middlewared.service import accepts, CallError, private, Service
 
 from .utils import get_namespace, run
 
@@ -101,6 +104,12 @@ class ChartReleaseService(Service):
                 'chart.release.sync_secrets_for_release', release_name, release['catalog'], release['catalog_train']
             )
 
+        # We are going to remove old chart version copies
+        await self.middleware.call(
+            'chart.release.remove_old_upgraded_chart_version_copies',
+            os.path.join(release['path'], 'charts'), rollback_version,
+        )
+
         if options['rollback_snapshot']:
             await self.middleware.call(
                 'zfs.snapshot.rollback', snap_name, {
@@ -115,3 +124,10 @@ class ChartReleaseService(Service):
         )
 
         return await self.middleware.call('chart.release.get_instance', release_name)
+
+    @private
+    def remove_old_upgraded_chart_version_copies(self, charts_path, current_version):
+        c_v = parse_version(current_version)
+        for v_path in filter(lambda p: p != current_version, os.listdir(charts_path)):
+            if parse_version(v_path) > c_v:
+                shutil.rmtree(path=os.path.join(charts_path, v_path), ignore_errors=True)

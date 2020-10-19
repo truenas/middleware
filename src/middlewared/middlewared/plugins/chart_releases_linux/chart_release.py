@@ -19,6 +19,14 @@ class ChartReleaseService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
+        """
+        Query available chart releases.
+
+        `options.extra.retrieve_resources` is a boolean when set will retrieve existing kubernetes resources
+        in the chart namespace.
+
+        `options.extra.history` is a boolean when set will retrieve all chart version upgrades for a chart release.
+        """
         return await self.middleware.call('chart.release.query_releases', filters, options)
 
     @private
