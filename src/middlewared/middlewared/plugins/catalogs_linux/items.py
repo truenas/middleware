@@ -30,7 +30,7 @@ class CatalogService(Service):
 
         if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
             return self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
-        else:
+        elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
         trains = {'charts': {}, 'test': {}}
