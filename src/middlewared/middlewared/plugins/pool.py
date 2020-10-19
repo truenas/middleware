@@ -250,6 +250,7 @@ class PoolService(CRUDService):
         datastore = 'storage.volume'
         datastore_extend = 'pool.pool_extend'
         datastore_prefix = 'vol_'
+        event_send = False
 
     @item_method
     @accepts(
@@ -756,6 +757,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
+        self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
         return pool
 
     @private
@@ -772,6 +774,7 @@ class PoolService(CRUDService):
         'pool_create', 'pool_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'encryption'}),
+        ('rm', {'name': 'encryption_options'}),
         ('rm', {'name': 'deduplication'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
@@ -1413,6 +1416,7 @@ class PoolService(CRUDService):
             }
         )
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
+        self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
 
         return True
 
@@ -1578,6 +1582,7 @@ class PoolService(CRUDService):
         asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
+        self.middleware.send_event('pool.query', 'CHANGED', id=oid, cleared=True)
 
     @item_method
     @accepts(Int('id'))
