@@ -140,7 +140,7 @@ def generate_dual_nvdimm_config(middleware):
     # Before the version 3 hardware, we were not changing
     # this value so this is a way to identify version 1/2
     # m-series hardware.
-    if data['system_product_version'] == '0123456789':
+    if data['system-version'] == '0123456789':
         return
 
     try:
