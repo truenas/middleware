@@ -12,6 +12,9 @@ class CatalogService(Service):
     @periodic(interval=864000)
     @job(lock='sync_catalogs')
     async def sync_catalogs(self, job):
+        """
+        Sync all available catalogs.
+        """
         catalogs = await self.middleware.call('catalog.query')
         for catalog in catalogs:
             job.set_progress(100 / len(catalogs), f'Syncing {catalog["id"]} catalog')
@@ -22,6 +25,9 @@ class CatalogService(Service):
 
     @accepts(Str('label', required=True))
     async def sync(self, catalog_label):
+        """
+        Sync `label` catalog to retrieve latest changes from upstream.
+        """
         await self.middleware.call('catalog.items', catalog_label, {'cache': False})
 
     @private

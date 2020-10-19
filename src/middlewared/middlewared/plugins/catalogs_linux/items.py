@@ -20,6 +20,12 @@ class CatalogService(Service):
         )
     )
     def items(self, label, options):
+        """
+        Retrieve item details for `label` catalog.
+
+        `options.cache` is a boolean which when set will try to get items details for `label` catalog from cache
+        if available.
+        """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
 
         if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
@@ -39,6 +45,9 @@ class CatalogService(Service):
                 }
 
         self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
+        if label == self.middleware.call_sync('catalog.official_catalog_label'):
+            # Update feature map cache whenever official catalog is updated
+            self.middleware.call_sync('catalog.get_feature_map', False)
 
         return trains
 

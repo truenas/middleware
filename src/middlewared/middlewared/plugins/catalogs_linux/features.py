@@ -21,8 +21,8 @@ class CatalogService(Service):
         return not bool(set(version_details['required_features']) - SUPPORTED_FEATURES)
 
     @private
-    def get_feature_map(self):
-        if self.middleware.call_sync('cache.has_key', 'catalog_feature_map'):
+    def get_feature_map(self, cache=True):
+        if cache and self.middleware.call_sync('cache.has_key', 'catalog_feature_map'):
             return self.middleware.call_sync('cache.get', 'catalog_feature_map')
 
         catalog = self.middleware.call_sync(
