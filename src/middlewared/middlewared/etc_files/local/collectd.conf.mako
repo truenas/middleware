@@ -35,6 +35,8 @@
 	ups_config = middleware.call_sync('ups.config')
 	ups_service = middleware.call_sync('service.query', [['service', '=', 'ups']], {'get': True})
 
+	has_internal_graphite_server = middleware.call_sync('reporting.has_internal_graphite_server')
+
 	# FIXME: python plugin support is broken in upstream - https://bugs.launchpad.net/ubuntu/+source/collectd/+bug/1872281
 	# It works in 5.11 collectd version, however for now leaving it broken for SCALE after discussing with William
 	# TODO: NUT plugin has been disabled in upstream - https://salsa.debian.org/debian/pkg-collectd/-/blob/master/debian/changelog#L86
@@ -197,6 +199,17 @@ LoadPlugin zfs_arc_v2
 % endif
 
 <Plugin "write_graphite">
+% if has_internal_graphite_server:
+    <Node "middleware">
+        Host "localhost"
+        Port "2003"
+        Protocol "tcp"
+        LogSendErrors true
+        StoreRates true
+        AlwaysAppendDS true
+        EscapeCharacter "_"
+    </Node>
+% endif
 % if graphite:
 	<Node "graphite">
 		Host "${graphite}"
