@@ -69,7 +69,7 @@ class ChartReleaseService(Service):
         return replica_counts
 
     @private
-    async def scale_release_internal(self, resources, replicas=None, replica_counts=None):
+    async def scale_release_internal(self, resources, replicas=None, replica_counts=None, resource_check=False):
         if replicas is not None and replica_counts:
             raise CallError('Only one of "replicas" or "replica_counts" should be specified')
         elif replicas is None and not replica_counts:
@@ -78,12 +78,23 @@ class ChartReleaseService(Service):
         assert bool(resources or replica_counts) is True
 
         replica_counts = replica_counts or {r.value: {} for r in SCALEABLE_RESOURCES}
+        if resource_check:
+            resources_data = {
+                r.name.lower(): {
+                    w['metadata']['name'] for w in await self.middleware.call(f'k8s.{r.name.lower()}.query')
+                }
+                for r in SCALEABLE_RESOURCES
+            }
 
         for resource in SCALEABLE_RESOURCES:
             for workload in resources[resource.value]:
                 replica_count = replica_counts[resource.value].get(
                     workload['metadata']['name'], {}
                 ).get('replicas') or replicas
+
+                if resource_check:
+                    if workload['metadata']['name'] not in resources_data[resource.name.lower()]:
+                        continue
 
                 await self.middleware.call(
                     f'k8s.{resource.name.lower()}.update', workload['metadata']['name'], {

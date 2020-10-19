@@ -120,7 +120,7 @@ class ChartReleaseService(Service):
             )
 
         await self.middleware.call(
-            'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale']
+            'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale'], True,
         )
 
         return await self.middleware.call('chart.release.get_instance', release_name)
