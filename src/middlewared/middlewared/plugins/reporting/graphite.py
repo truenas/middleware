@@ -1,5 +1,5 @@
 import asyncio
-from queue import Queue
+from queue import Full, Queue
 import re
 import select
 import socketserver
@@ -71,7 +71,7 @@ class GraphiteEventSource(EventSource):
 
             names = [re.compile(r) for r in names.split(",")]
 
-        queue = Queue()
+        queue = Queue(1024)
         self.middleware.call_sync("reporting.register_graphite_queue", queue)
         try:
             self._run(mode, names, queue)
@@ -157,7 +157,10 @@ class ReportingService(Service):
     @private
     async def push_graphite_queues(self, batch):
         for queue in list(self.queues):
-            queue.put(batch)
+            try:
+                queue.put(batch)
+            except Full:
+                pass
 
 
 async def setup(middleware):
