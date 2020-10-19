@@ -111,13 +111,18 @@ class ChartReleaseService(CRUDService):
         # 4) Create storage class
         storage_class_name = await get_storage_class_name(data['release_name'])
         try:
+            job.set_progress(30, 'Creating chart release datasets')
+
             for dataset in await self.release_datasets(release_ds):
-                if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
+                if not await self.middleware.call('zfs.dataset.query', [['id', '=', dataset]]):
                     await self.middleware.call('pool.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
+
+            job.set_progress(45, 'Created chart release datasets')
 
             chart_path = os.path.join('/mnt', release_ds, 'charts', data['version'])
             await self.middleware.run_in_thread(lambda: shutil.copytree(item_details['location'], chart_path))
 
+            job.set_progress(55, 'Completed setting up chart release')
             # Before finally installing the release, we will perform any actions which might be required
             # for the release to function like creating/deleting ix-volumes
             await self.perform_actions(context)
@@ -259,7 +264,7 @@ class ChartReleaseService(CRUDService):
 
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', release_name)
-        if await self.middleware.call('pool.dataset.query', [['id', '=', release_ds]]):
+        if await self.middleware.call('zfs.dataset.query', [['id', '=', release_ds]]):
             if job:
                 job.set_progress(95, f'Removing {release_ds!r} dataset')
             await self.middleware.call('zfs.dataset.delete', release_ds, {'recursive': True, 'force': True})
