@@ -138,9 +138,9 @@ def generate_dual_nvdimm_config(middleware):
 
     # 0123456789 is the default value from supermicro.
     # Before the version 3 hardware, we were not changing
-    # this value so ignore it to prevent an error on every
-    # boot
-    if product == '0123456789':
+    # this value so this is a way to identify version 1/2
+    # m-series hardware.
+    if data['system_product_version'] == '0123456789':
         return
 
     try:
