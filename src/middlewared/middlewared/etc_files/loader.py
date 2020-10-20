@@ -136,11 +136,12 @@ def generate_dual_nvdimm_config(middleware):
 
     product = data['system_product']
 
-    # 0123456789 is the default value from supermicro.
+    # 0123456789/12345679 are some of the default values
+    # that we've seen from supermicro.
     # Before the version 3 hardware, we were not changing
     # this value so this is a way to identify version 1/2
     # m-series hardware.
-    if data['system_product_version'] == '0123456789':
+    if data['system_product_version'] in ('0123456789', '123456789'):
         return
 
     try:
@@ -150,7 +151,13 @@ def generate_dual_nvdimm_config(middleware):
         middleware.logger.error('Failed determining hardware version with error: %s', e)
         return
 
-    if product.startswith('TRUENAS-M') and current_vers.major >= minimum_vers.major:
+    # for now we only check to make sure that the current version is 3 because
+    # we quickly found out that the SMBIOS defaults for the system-version value
+    # from supermicro aren't very predictable. Since setting these values on a
+    # system that doesn't support the dual-nvdimm configs leads to "no carrier"
+    # on the ntb0 interface, we play it safe. The `minimum_vers` will need to be
+    # changed as time goes on if we start tagging hardware with 4.0,5.0 etc etc
+    if product.startswith('TRUENAS-M') and current_vers.major == minimum_vers.major:
         return [
             'hint.ntb_hw.0.split=1',
             'hint.ntb_hw.0.config="ntb_pmem:1:4:0,ntb_pmem:1:4:0,ntb_transport"'
