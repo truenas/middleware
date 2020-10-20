@@ -349,6 +349,7 @@ class NetworkInterfaceModel(sa.Model):
     int_options = sa.Column(sa.String(120))
     int_mtu = sa.Column(sa.Integer(), nullable=True)
     int_disable_offload_capabilities = sa.Column(sa.Boolean(), default=False)
+    int_link_address = sa.Column(sa.String(17), nullable=True)
 
 
 class NetworkLaggInterfaceModel(sa.Model):
@@ -1385,6 +1386,13 @@ class InterfaceService(CRUDService):
                         config['id'],
                         {'int_interface': new['name']},
                     )
+
+            await self.middleware.call(
+                'datastore.update',
+                'network.interfaces',
+                config['id'],
+                {'int_link_address': iface['state']['link_address']},
+            )
 
             if iface['type'] == 'BRIDGE':
                 if 'bridge_members' in data:

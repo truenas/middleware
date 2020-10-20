@@ -881,6 +881,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 'alert',
                 # Migrate users and groups ASAP
                 'account',
+                # Migrate network interfaces ASAP
+                'network',
             ]
             try:
                 return beginning.index(plugin)
