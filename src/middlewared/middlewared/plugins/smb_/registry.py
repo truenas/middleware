@@ -227,6 +227,40 @@ class SharingSMBService(Service):
         return await self.apply_conf_registry(share, confdiff)
 
     @private
+    async def add_multiprotocol_conf(self, conf, gl, data):
+        nfs_path_list = []
+        for export in gl['nfs_exports']:
+            nfs_path_list.extend(export['paths'])
+
+        if any(filter(lambda x: f"{conf['path']}/" in f"{x}/", nfs_path_list)):
+            self.logger.debug("SMB share [%s] is also an NFS export. "
+                              "Applying parameters for mixed-protocol share.", data['name'])
+            conf.update({
+                "strict locking": "yes",
+                "posix locking": "yes",
+                "level2 oplocks": "no",
+                "oplocks": "no"
+            })
+            if data['durablehandle']:
+                self.logger.warn("Disabling durable handle support on SMB share [%s] "
+                                 "due to NFS export of same path.", data['name'])
+                await self.middleware.call('datastore.update', 'sharing.cifs_share',
+                                           data['id'], {'cifs_durablehandle': False})
+                data['durablehandle'] = False
+
+        if any(filter(lambda x: f"{x['path']}/" in f"{conf['path']}/" or f"{conf['path']}/" in f"{x['path']}/", gl['afp_shares'])):
+            self.logger.debug("SMB share [%s] is also an AFP share. "
+                              "Applying parameters for mixed-protocol share.", data['name'])
+            conf.update({
+                "fruit:locking": "netatalk",
+                "fruit:metadata": "netatalk",
+                "fruit:resource": "file",
+                "strict locking": "auto",
+                "streams_xattr:prefix": "user.",
+                "streams_xattr:store_stream_type": "no"
+            })
+
+    @private
     async def share_to_smbconf(self, conf_in, globalconf=None):
         data = conf_in.copy()
         gl = await self.get_global_params(globalconf)
@@ -235,10 +269,14 @@ class SharingSMBService(Service):
 
         if data['home'] and gl['ad_enabled']:
             data['path_suffix'] = '%D/%U'
-        elif data['home']:
+        elif data['home'] and data['path']:
             data['path_suffix'] = '%U'
 
-        conf['path'] = '/'.join([data['path'], data['path_suffix']]) if data['path_suffix'] else data['path']
+        if data['path']:
+            conf['path'] = '/'.join([data['path'], data['path_suffix']]) if data['path_suffix'] else data['path']
+        else:
+            conf['path'] = ''
+
         if osc.IS_FREEBSD:
             data['vfsobjects'] = ['aio_fbsd']
         else:
@@ -256,25 +294,6 @@ class SharingSMBService(Service):
             conf["hosts deny"] = data['hostsdeny']
         conf["read only"] = "yes" if data['ro'] else "no"
         conf["guest ok"] = "yes" if data['guestok'] else "no"
-
-        nfs_path_list = []
-        for export in gl['nfs_exports']:
-            nfs_path_list.extend(export['paths'])
-
-        if any(filter(lambda x: f"{conf['path']}/" in f"{x}/", nfs_path_list)):
-            self.logger.debug("SMB share [%s] is also an NFS export. "
-                              "Applying parameters for mixed-protocol share.", data['name'])
-            conf.update({
-                "strict locking": "yes",
-                "level2 oplocks": "no",
-                "oplocks": "no"
-            })
-            if data['durablehandle']:
-                self.logger.warn("Disabling durable handle support on SMB share [%s] "
-                                 "due to NFS export of same path.", data['name'])
-                await self.middleware.call('datastore.update', 'sharing.cifs_share',
-                                           data['id'], {'cifs_durablehandle': False})
-                data['durablehandle'] = False
 
         if gl['fruit_enabled']:
             data['vfsobjects'].append('fruit')
@@ -342,23 +361,12 @@ class SharingSMBService(Service):
             conf["fruit:metadata"] = "stream"
             conf["fruit:resource"] = "stream"
 
-        if any(filter(lambda x: f"{x['path']}/" in f"{conf['path']}/" or f"{conf['path']}/" in f"{x['path']}/", gl['afp_shares'])):
-            self.logger.debug("SMB share [%s] is also an AFP share. "
-                              "Applying parameters for mixed-protocol share.", data['name'])
-            conf.update({
-                "fruit:locking": "netatalk",
-                "fruit:metadata": "netatalk",
-                "fruit:resource": "file",
-                "strict locking": "auto",
-                "streams_xattr:prefix": "user.",
-                "streams_xattr:store_stream_type": "no"
-            })
+        if conf["path"]:
+            await self.add_multiprotocol_conf(conf, gl, data['name'])
 
         if data['timemachine']:
             conf["fruit:time machine"] = "yes"
             conf["fruit:locking"] = "none"
-
-        nfs_path_list = []
 
         if data['recyclebin']:
             conf.update({
