@@ -74,8 +74,6 @@ def get_schema(variable_details):
 
     if schema_class == List:
         obj.items = list(chain.from_iterable(get_schema(i) for i in schema_details['items']))
-        # To make sure that subquestions are added correctly for list, we would have to iterate over the schema
-        # again as we can't judge in the first go which value of the list maps to which item
     elif 'subquestions' in schema_details:
         result.extend(list(chain.from_iterable(get_schema(i) for i in schema_details['subquestions'])))
 

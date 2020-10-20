@@ -18,31 +18,34 @@ class ChartReleaseService(Service):
 
     @private
     def releases_secrets(self, options=None):
+        # Helm stores each release state as k8s secrets
+        # For any change done via helm, helm adds another secret for the chart release
+        # Here we retrieve the data stored in k8s secrets and make up the complete history for each chart release
+
         options = options or {}
         namespace_filter = options.get('namespace_filter') or ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]
         namespace_labels = {
             n['metadata']['name']: n['metadata']['labels'] for n in self.middleware.call_sync('k8s.namespace.query')
         }
 
-        release_secrets = defaultdict(lambda: dict({'untagged': [], 'releases': [], 'history': {}}))
+        release_secrets = defaultdict(lambda: dict({'releases': [], 'history': {}}))
         secrets = self.middleware.call_sync(
             'k8s.secret.query', [['type', '=', 'helm.sh/release.v1'], namespace_filter]
         )
+        official_catalog_label = self.middleware.call_sync('catalog.official_catalog_label')
         for release_secret in secrets:
             data = release_secret.pop('data')
             release = json.loads(gzip.decompress(b64decode(b64decode(data['release']))).decode())
             name = release['name']
             release_namespace_name = get_namespace(name)
-            if any(k not in release_secret['metadata']['labels'] for k in ('catalog', 'catalog_train')):
-                release_secrets[name]['untagged'].append(release_secret)
 
+            # We don't want manifest files data
             release.pop('manifest')
+
             release.update({
                 'chart_metadata': release.pop('chart')['metadata'],
                 'id': name,
-                'catalog': namespace_labels[release_namespace_name].get(
-                    'catalog', self.middleware.call_sync('catalog.official_catalog_label')
-                ),
+                'catalog': namespace_labels[release_namespace_name].get('catalog', official_catalog_label),
                 'catalog_train': namespace_labels[release_namespace_name].get('catalog_train', 'test'),
             })
             if options.get('retrieve_secret_metadata'):
