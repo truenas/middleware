@@ -54,13 +54,13 @@ class SystemDatasetService(ConfigService):
 
         # Make `uuid` point to the uuid of current node
         config['uuid_a'] = config['uuid']
-        if not await self.middleware.call('system.is_freenas'):
+        if await self.middleware.call('system.is_enterprise'):
             if await self.middleware.call('failover.node') == 'B':
                 config['uuid'] = config['uuid_b']
 
         if not config['uuid']:
             config['uuid'] = uuid.uuid4().hex
-            if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
+            if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.node') == 'B':
                 attr = 'uuid_b'
                 config[attr] = config['uuid']
             else:
@@ -169,7 +169,7 @@ class SystemDatasetService(ConfigService):
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
 
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+        if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'MASTER':
                 try:
                     await self.middleware.call('failover.call_remote', 'system.reboot')
@@ -194,7 +194,7 @@ class SystemDatasetService(ConfigService):
 
         boot_pool = await self.middleware.call('boot.pool_name')
         if (
-            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.licensed') and
             await self.middleware.call('failover.status') == 'BACKUP' and
             config.get('basename') and config['basename'] != f'{boot_pool}/.system'
         ):
@@ -282,6 +282,10 @@ class SystemDatasetService(ConfigService):
                 os.chmod(corepath, 0o775)
 
             await self.__nfsv4link(config)
+
+            if osc.IS_LINUX:
+                await self.middleware.call('etc.generate', 'glusterd')
+
             await self.middleware.call('smb.configure')
             await self.middleware.call('dscache.initialize')
 
@@ -351,7 +355,7 @@ class SystemDatasetService(ConfigService):
         return [(f'{pool}/.system', '')] + [
             (f'{pool}/.system/{i}', i) for i in [
                 'cores', 'samba4', f'syslog-{uuid}',
-                f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services'
+                f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services', 'glusterd',
             ]
         ]
 
@@ -361,7 +365,7 @@ class SystemDatasetService(ConfigService):
             return None
 
         restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.status') == 'BACKUP':
+        if await self.middleware.call('failover.licensed') and await self.middleware.call('failover.status') == 'BACKUP':
             return None
 
         for item in restartfiles:
@@ -432,6 +436,8 @@ class SystemDatasetService(ConfigService):
             if osc.IS_LINUX:
                 await self.middleware.call('cache.put', 'use_syslog_dataset', False)
                 await self.middleware.call('service.restart', 'syslogd')
+                if await self.middleware.call('service.started', 'glusterd'):
+                    restart.insert(0, 'glusterd')
 
             # Middleware itself will log to syslog dataset.
             # This may be prone to a race condition since we dont wait the workers to stop

@@ -194,6 +194,16 @@ class EtcService(Service):
         'pf': [
             {'type': 'py', 'path': 'pf', 'platform': 'FreeBSD'},
         ],
+        'glusterd': [
+            {
+                'type': 'mako',
+                'path': 'glusterfs/glusterd.vol',
+                'local_path': 'glusterd.conf',
+                'user': 'root', 'group': 'root', 'mode': 0o644,
+                'checkpoint': 'pool_import',
+                'platform': 'Linux',
+            },
+        ],
         'keepalived': [
             {
                 'type': 'mako',
