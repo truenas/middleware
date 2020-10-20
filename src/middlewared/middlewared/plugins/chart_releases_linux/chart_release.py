@@ -127,6 +127,20 @@ class ChartReleaseService(CRUDService):
             # for the release to function like creating/deleting ix-volumes
             await self.perform_actions(context)
 
+            namespace_name = get_namespace(data['release_name'])
+
+            job.set_progress(65, f'Creating {namespace_name} for chart release')
+            await self.middleware.call(
+                'k8s.namespace.create', {
+                    'body': {
+                        'metadata': {
+                            'labels': {'catalog': data['catalog'], 'catalog_train': data['train']},
+                            'name': namespace_name
+                        }
+                    }
+                }
+            )
+
             job.set_progress(75, 'Installing Catalog Item')
 
             with tempfile.NamedTemporaryFile(mode='w+') as f:
@@ -135,10 +149,7 @@ class ChartReleaseService(CRUDService):
                 # We will install the chart now and force the installation in an ix based namespace
                 # https://github.com/helm/helm/issues/5465#issuecomment-473942223
                 cp = await run(
-                    [
-                        'helm', 'install', data['release_name'], chart_path, '-n',
-                        get_namespace(data['release_name']), '--create-namespace', '-f', f.name,
-                    ],
+                    ['helm', 'install', data['release_name'], chart_path, '-n', namespace_name, '-f', f.name],
                     check=False,
                 )
             if cp.returncode:
@@ -152,12 +163,6 @@ class ChartReleaseService(CRUDService):
                 await self.middleware.call('k8s.storage_class.update', storage_class_name, storage_class)
             else:
                 await self.middleware.call('k8s.storage_class.create', storage_class)
-
-            job.set_progress(95, 'Syncing chart release secrets')
-            await self.middleware.call(
-                'chart.release.sync_secrets_for_release',
-                data['release_name'], data['catalog'], data['train'],
-            )
         except Exception:
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed ( it is possible this might have happened )
@@ -214,9 +219,7 @@ class ChartReleaseService(CRUDService):
             if cp.returncode:
                 raise CallError(f'Failed to update chart release: {cp.stderr.decode()}')
 
-        await self.middleware.call(
-            'chart.release.sync_secrets_for_release', chart_release, release['catalog'], release['catalog_train'],
-        )
+        await self.middleware.call('chart.release.sync_secrets_for_release', chart_release)
 
         return await self.get_instance(chart_release)
 

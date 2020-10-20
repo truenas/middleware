@@ -60,14 +60,13 @@ class ChartReleaseService(Service):
         return release_secrets
 
     @private
-    async def sync_secrets_for_release(self, release, catalog, catalog_train):
+    async def sync_secrets_for_release(self, release):
         secrets_data = await self.middleware.call(
             'chart.release.releases_secrets', {
                 'namespace_filter': ['metadata.namespace', '=', get_namespace(release)],
                 'retrieve_secret_metadata': True,
             }
         )
-        await self.label_unlabelled_secrets(secrets_data[release]['untagged'], catalog, catalog_train)
         # We want to delete any secret which only contains configuration changes for the same chart version.
         # Helm right now by default tracks only past 10 changes for a chart release. This means if user changes
         # any value 10 ten times, that's the only history we have. Ideally we would like to only keep history for
@@ -85,17 +84,3 @@ class ChartReleaseService(Service):
 
         for remove_secret in to_remove:
             await self.middleware.call('k8s.secret.delete', remove_secret, {'namespace': get_namespace(release)})
-
-    @private
-    async def label_unlabelled_secrets(self, secrets, catalog, catalog_train):
-        for secret in secrets:
-            name = secret['metadata']['name']
-            namespace = secret['metadata']['namespace']
-            labels = secret['metadata']['labels']
-            labels.update({
-                'catalog': catalog,
-                'catalog_train': catalog_train,
-            })
-            await self.middleware.call(
-                'k8s.secret.update', name, {'namespace': namespace, 'body': {'metadata': {'labels': labels}}}
-            )

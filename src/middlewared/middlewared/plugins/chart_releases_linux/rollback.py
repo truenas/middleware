@@ -100,9 +100,7 @@ class ChartReleaseService(Service):
                     f'Failed to rollback {release_name!r} chart release to {rollback_version!r}: {cp.stderr.decode()}'
                 )
         finally:
-            await self.middleware.call(
-                'chart.release.sync_secrets_for_release', release_name, release['catalog'], release['catalog_train']
-            )
+            await self.middleware.call('chart.release.sync_secrets_for_release', release_name)
 
         # We are going to remove old chart version copies
         await self.middleware.call(
