@@ -104,6 +104,9 @@ class ZettareplService(Service):
             if f"replication_task_{task_id}" not in task_ids:
                 self.serializable_state.pop(task_id, None)
 
+    def get_internal_task_state(self, task_id):
+        return self.state[task_id]
+
     def set_state(self, task_id, state):
         self.state[task_id] = state
 
