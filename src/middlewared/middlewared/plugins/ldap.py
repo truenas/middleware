@@ -925,6 +925,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('etc.generate', 'smb')
             await self.middleware.call('smb.store_ldap_admin_password')
             await self.middleware.call('service.restart', 'cifs')
+            await self.middleware.call('smb.set_passdb_backend', 'ldapsam')
 
         await self.set_state(DSStatus['HEALTHY'])
         await self.middleware.call('ldap.fill_cache')
@@ -943,6 +944,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('service.restart', 'cifs')
             await self.middleware.call('smb.synchronize_passdb')
             await self.middleware.call('smb.synchronize_group_mappings')
+            await self.middleware.call('smb.set_passdb_backend', 'tdbsam')
         await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.nslcd_cmd('onestop')
         await self.set_state(DSStatus['DISABLED'])

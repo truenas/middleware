@@ -353,6 +353,17 @@ class SMBService(SystemServiceService):
             raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
 
     @private
+    def set_passdb_backend(self, backend_type):
+        if backend_type not in ['tdbsam', 'ldapsam']:
+            raise CallError(f'Unsupported passdb backend type: [{backend_type}]', errno.EINVAL)
+        try:
+            LP_CTX.load(SMBPath.GLOBALCONF.platform())
+        except Exception as e:
+            self.logger.warning("Failed to reload smb.conf: %s", e)
+
+        return LP_CTX.set('passdb backend', backend_type)
+
+    @private
     async def get_next_rid(self):
         next_rid = (await self.config())['next_rid']
         if next_rid == 0:
