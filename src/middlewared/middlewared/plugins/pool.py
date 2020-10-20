@@ -1,6 +1,7 @@
 import asyncio
 from collections import deque
 import contextlib
+import copy
 import enum
 import errno
 import json
@@ -2663,16 +2664,16 @@ class PoolDatasetService(CRUDService):
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
+        filters = filters or []
+        if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0][:2]) == ['id', '=']:
+            zfsfilters.append(copy.deepcopy(filters[0]))
+
         sys_config = self.middleware.call_sync('systemdataset.config')
         if sys_config['basename']:
-            zfsfilters.extend([
+            filters.extend([
                 ['id', '!=', sys_config['basename']],
                 ['id', '!^', f'{sys_config["basename"]}/'],
             ])
-        for f in filters or []:
-            if len(f) == 3:
-                if f[0] in ('id', 'name', 'pool', 'type'):
-                    zfsfilters.append(f)
 
         return filter_list(
             self.__transform(self.middleware.call_sync(
