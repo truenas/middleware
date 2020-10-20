@@ -39,7 +39,7 @@ class Middleware(dict):
     async def run_in_thread(self, method, *args, **kwargs):
         return method(*args, **kwargs)
 
-    def _query_filter(self, l):
+    def _query_filter(self, lst):
         def query(filters=None, options=None):
-            return filter_list(l, filters, options)
+            return filter_list(lst, filters, options)
         return query

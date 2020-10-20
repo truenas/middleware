@@ -82,7 +82,8 @@ async def test__interface_link_address_setup(test):
 
         await link_address_setup(ds.middleware)
 
-        key = lambda v: v["interface"]
+        def key(v):
+            return v["interface"]
         assert sorted(await ds.query("network.interfaces", [], {"prefix": "int_"}), key=key) == sorted([
             {
                 "id": ANY,
