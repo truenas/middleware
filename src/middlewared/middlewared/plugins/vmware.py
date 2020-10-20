@@ -408,7 +408,7 @@ class VMWareService(CRUDService):
         # Generate a helpful description that is visible on the VMWare side.  Since we
         # are going to be creating VMWare snaps, if one gets left dangling this will
         # help determine where it came from.
-        vmsnapdescription = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} FreeNAS Created Snapshot"
+        vmsnapdescription = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} TrueNAS Created Snapshot"
 
         # We keep track of snapshots per VMWare "task" because we are going to iterate
         # over all the VMWare tasks for a given ZFS filesystem, do all the VMWare snapshotting
@@ -446,7 +446,7 @@ class VMWareService(CRUDService):
                             if not self._findVMSnapshotByName(vm, vmsnapname):
                                 # have we already created a snapshot of the VM for this volume
                                 # iteration? can happen if the VM uses two datasets (a and b)
-                                # where both datasets are mapped to the same ZFS volume in FreeNAS.
+                                # where both datasets are mapped to the same ZFS volume in TrueNAS.
                                 VimTask.WaitForTask(vm.CreateSnapshot_Task(
                                     name=vmsnapname,
                                     description=vmsnapdescription,
