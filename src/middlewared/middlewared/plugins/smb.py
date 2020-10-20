@@ -1022,6 +1022,21 @@ class SharingSMBService(SharingService):
                     'are not permitted.'
                 )
 
+            if schema_name == 'smb_update.smb_options' and ':' not in kv[0]:
+                """
+                lib/param doesn't validate params containing a colon.
+                this dump_a_parameter() wraps around the respective lp_ctx
+                function in samba that checks the known parameter table.
+                This should be a lightweight validation of GLOBAL params.
+                """
+                try:
+                    LP_CTX.dump_a_parameter(kv[0].strip())
+                except RuntimeError as e:
+                    verrors.add(
+                        f'{schema_name}.auxsmbconf',
+                        str(e)
+                    )
+
         verrors.check()
 
     @private

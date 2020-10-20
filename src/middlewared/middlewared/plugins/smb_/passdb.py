@@ -118,6 +118,15 @@ class SMBService(Service):
         if entry == bsduser[0]['smbhash']:
             return
 
+        """
+        If an invalid global auxiliary parameter is present
+        in the smb.conf, then pdbedit will write error messages
+        to stdout (two for each invalid parameter, separated by \n).
+        The last line of output in this case will be the passdb entry
+        in smbpasswd format (-Lw). This is the reason why we pre-emptively
+        splitlines() and use last element of resulting list for our checks.
+        """
+        entry = entry.splitlines()[-1]
         entry = entry.split(':')
 
         if smbpasswd_string[3] != entry[3]:
