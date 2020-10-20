@@ -1,6 +1,6 @@
 from kubernetes_asyncio import client
 
-from middlewared.schema import Dict
+from middlewared.schema import Dict, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -33,3 +33,25 @@ class KubernetesNamespaceService(CRUDService):
                 await context['core_api'].create_namespace(body=data['body'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create namespace: {e}')
+
+    @accepts(
+        Dict(
+            'namespace_update',
+            Str('namespace'),
+            Dict('body', additional_attrs=True, required=True),
+        )
+    )
+    async def do_update(self, namespace, data):
+        async with api_client() as (api, context):
+            try:
+                await context['core_api'].patch_namespace(namespace, body=data['body'])
+            except client.exceptions.ApiException as e:
+                raise CallError(f'Unable to create namespace: {e}')
+
+    @accepts(Str('namespace'))
+    async def do_delete(self, namespace):
+        async with api_client() as (api, context):
+            try:
+                await context['core_api'].delete_namespace(namespace)
+            except client.exceptions.ApiException as e:
+                raise CallError(f'Unable to delete namespace: {e}')
