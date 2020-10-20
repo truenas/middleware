@@ -433,10 +433,7 @@ def get_lagg_proto():
 
     while True:
         protos = { }
-        types = LAGGType
-        if  not is_freenas and failover_licensed:
-            types = list(filter(lambda x: x[0] != 'failover', types))
-        for i, t in enumerate(types):
+        for i, t in enumerate(LAGGType):
             protos[i] = t[0]
             print("%d) %s" % (i + 1, protos[i]))
 
@@ -802,6 +799,12 @@ Acceptable formats are 255.255.255.0,
             while True:
                 intcrit = input(_("Mark interface as Critical for Failover? (y/n) "))
                 if intcrit.lower().startswith("y"):
+                    if iface.int_interface.startswith('lagg'):
+                        with Client() as c:
+                            data = c.call('datastore.query', 'network.lagginterface', [('lagg_interface', '=', iface.id)])
+                            if data and data[0]['lagg_protocol'] == 'failover':
+                                print('A lagg interface using the "Failover" protocol is not allowed to be marked critical for failover.')
+                                continue
                     iface.int_critical = True
                 elif intcrit.lower().startswith("n"):
                     iface.int_critical = False
