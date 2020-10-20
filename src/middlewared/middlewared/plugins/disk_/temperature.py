@@ -1,4 +1,7 @@
+import asyncio
 import re
+
+import async_timeout
 
 try:
     import cam
@@ -105,9 +108,13 @@ class DiskService(Service):
         if len(names) == 0:
             names = await self.disks_for_temperature_monitoring()
 
-        result = dict(zip(
-            names,
-            await asyncio_map(lambda name: self.middleware.call('disk.temperature', name, powermode), names, 8),
-        ))
+        async def temperature(name):
+            try:
+                async with async_timeout.timeout(15):
+                    return await self.middleware.call('disk.temperature', name, powermode)
+            except asyncio.TimeoutError:
+                return None
+
+        result = dict(zip(names, await asyncio_map(temperature, names, 8)))
 
         return result
