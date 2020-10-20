@@ -2096,6 +2096,34 @@ class PoolDatasetService(CRUDService):
 
     @accepts(
         Str('id'),
+        Bool('download', default=False),
+    )
+    @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
+    def export_key(self, job, id, download):
+        """
+        Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded as a text file,
+        otherwise it will be returned as string.
+
+        Please refer to websocket documentation for downloading the file.
+        """
+        if download:
+            job.check_pipe('output')
+
+        self.middleware.call_sync('pool.dataset.get_instance', id)
+
+        keys = self.query_encrypted_roots_keys([['name', '=', id]])
+        if id not in keys:
+            raise CallError('Specified dataset does not have it\'s own encryption key.', errno.EINVAL)
+
+        key = keys[id]
+
+        if download:
+            job.pipes.output.w.write(key.encode())
+        else:
+            return key
+
+    @accepts(
+        Str('id'),
         Dict(
             'lock_options',
             Bool('force_umount', default=False),
