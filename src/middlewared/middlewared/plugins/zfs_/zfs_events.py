@@ -187,7 +187,14 @@ async def zfs_events(middleware, data):
         event_type = data['history_internal_name']
         ds_id = data['history_dsname']
         if event_type in ('create', 'set'):
-            ds_data = await middleware.call('pool.dataset.get_instance', ds_id)
+            ds_data = await middleware.call('pool.dataset.query', [['id', '=', ds_id]])
+            if not ds_data:
+                # We should not send an event because of 2 reasons:
+                # 1) Dataset in question was system dataset which was filtered out by pool.dataset service
+                # 2) Dataset got deleted in a race condition which is still fine as destroy event will catch that
+                return
+
+            ds_data = ds_data[0]
             middleware.send_event(
                 'pool.dataset.query', 'ADDED' if event_type == 'create' else 'CHANGED', id=ds_id, fields=ds_data
             )
