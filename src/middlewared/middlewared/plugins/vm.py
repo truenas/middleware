@@ -1684,10 +1684,7 @@ class VMService(CRUDService):
                 continue
             break
 
-        if not await self.middleware.call('zfs.snapshot.clone', {
-            'snapshot': zvol_snapshot, 'dataset_dst': clone_dst,
-        }):
-            raise CallError(f'Failed to clone {zvol_snapshot}.')
+        await self.middleware.call('zfs.snapshot.clone', {'snapshot': zvol_snapshot, 'dataset_dst': clone_dst})
 
         created_clones.append(clone_dst)
 
