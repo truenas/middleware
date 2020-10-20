@@ -24,7 +24,7 @@ class CatalogService(CRUDService):
         """
         Query available catalogs.
 
-        `options.extra.item_details is a boolean value which if set will retrieve items details for each chart.
+        `options.extra.item_details` is a boolean value which if set will retrieve items details for each chart.
         """
         options = options or {}
         extra = options.get('extra', {})

@@ -130,16 +130,16 @@ class ChartReleaseService(CRUDService):
             namespace_name = get_namespace(data['release_name'])
 
             job.set_progress(65, f'Creating {namespace_name} for chart release')
-            await self.middleware.call(
-                'k8s.namespace.create', {
-                    'body': {
-                        'metadata': {
-                            'labels': {'catalog': data['catalog'], 'catalog_train': data['train']},
-                            'name': namespace_name
-                        }
-                    }
+            namespace_body = {
+                'metadata': {
+                    'labels': {'catalog': data['catalog'], 'catalog_train': data['train']},
+                    'name': namespace_name
                 }
-            )
+            }
+            if not await self.middleware.call('k8s.namespace.query', [['metadata.name', '=', namespace_name]]):
+                await self.middleware.call('k8s.namespace.create', {'body': namespace_body})
+            else:
+                await self.middleware.call('k8s.namespace.update', namespace_name, {'body': namespace_body})
 
             job.set_progress(75, 'Installing Catalog Item')
 
@@ -172,7 +172,7 @@ class ChartReleaseService(CRUDService):
                 if delete_job.error:
                     self.logger.error('Failed to uninstall helm chart release: %s', delete_job.error)
             else:
-                await self.remove_storage_class_and_dataset(data['release_name'])
+                await self.post_remove_tasks(data['release_name'])
 
             raise
         else:
@@ -249,10 +249,15 @@ class ChartReleaseService(CRUDService):
             job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
             await asyncio.sleep(5)
 
-        await self.remove_storage_class_and_dataset(release_name, job)
+        await self.post_remove_tasks(release_name, job)
 
         job.set_progress(100, f'{release_name!r} chart release deleted')
         return True
+
+    @private
+    async def post_remove_tasks(self, release_name, job=None):
+        await self.remove_storage_class_and_dataset(release_name, job)
+        await self.middleware.call('k8s.namespace.delete', get_namespace(release_name))
 
     @private
     async def remove_storage_class_and_dataset(self, release_name, job=None):

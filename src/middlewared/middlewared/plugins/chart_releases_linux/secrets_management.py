@@ -20,6 +20,9 @@ class ChartReleaseService(Service):
     def releases_secrets(self, options=None):
         options = options or {}
         namespace_filter = options.get('namespace_filter') or ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]
+        namespace_labels = {
+            n['metadata']['name']: n['metadata']['labels'] for n in self.middleware.call_sync('k8s.namespace.query')
+        }
 
         release_secrets = defaultdict(lambda: dict({'untagged': [], 'releases': [], 'history': {}}))
         secrets = self.middleware.call_sync(
@@ -29,6 +32,7 @@ class ChartReleaseService(Service):
             data = release_secret.pop('data')
             release = json.loads(gzip.decompress(b64decode(b64decode(data['release']))).decode())
             name = release['name']
+            release_namespace_name = get_namespace(name)
             if any(k not in release_secret['metadata']['labels'] for k in ('catalog', 'catalog_train')):
                 release_secrets[name]['untagged'].append(release_secret)
 
@@ -36,10 +40,10 @@ class ChartReleaseService(Service):
             release.update({
                 'chart_metadata': release.pop('chart')['metadata'],
                 'id': name,
-                'catalog': release_secret['metadata']['labels'].get(
+                'catalog': namespace_labels[release_namespace_name].get(
                     'catalog', self.middleware.call_sync('catalog.official_catalog_label')
                 ),
-                'catalog_train': release_secret['metadata']['labels'].get('catalog_train', 'test'),
+                'catalog_train': namespace_labels[release_namespace_name].get('catalog_train', 'test'),
             })
             if options.get('retrieve_secret_metadata'):
                 release['secret_metadata'] = deepcopy(release_secret['metadata'])

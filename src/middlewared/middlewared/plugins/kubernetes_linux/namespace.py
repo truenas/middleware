@@ -35,9 +35,9 @@ class KubernetesNamespaceService(CRUDService):
                 raise CallError(f'Unable to create namespace: {e}')
 
     @accepts(
+        Str('namespace'),
         Dict(
             'namespace_update',
-            Str('namespace'),
             Dict('body', additional_attrs=True, required=True),
         )
     )
@@ -46,7 +46,7 @@ class KubernetesNamespaceService(CRUDService):
             try:
                 await context['core_api'].patch_namespace(namespace, body=data['body'])
             except client.exceptions.ApiException as e:
-                raise CallError(f'Unable to create namespace: {e}')
+                raise CallError(f'Unable to update namespace: {e}')
 
     @accepts(Str('namespace'))
     async def do_delete(self, namespace):
