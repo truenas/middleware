@@ -2836,7 +2836,11 @@ class PoolDatasetService(CRUDService):
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         else:
-            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
+            parent_ds = await self.middleware.call('pool.dataset.query', [('id', '=', data['name'].rsplit('/')[0])])
+            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
+            parent_ds = parent_ds[0]
+
+        verrors.check()
 
         mountpoint = os.path.join('/mnt', data['name'])
         if os.path.exists(mountpoint):
@@ -2853,7 +2857,7 @@ class PoolDatasetService(CRUDService):
             if osc.IS_FREEBSD:
                 data['aclmode'] = 'RESTRICTED'
 
-        if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
+        if parent_ds['locked']:
             verrors.add(
                 'pool_dataset_create.name',
                 f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
@@ -2878,7 +2882,7 @@ class PoolDatasetService(CRUDService):
             if not data['encryption_options']['passphrase']:
                 # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
                 # because we don't allow children to be unlocked while parent is locked
-                parent_encryption_root = (await self.get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
+                parent_encryption_root = parent_ds['encryption_root']
                 if (
                     parent_encryption_root and ZFSKeyFormat(
                         (await self.get_instance(parent_encryption_root))['key_format']['value']
@@ -3083,13 +3087,14 @@ class PoolDatasetService(CRUDService):
 
         return await self.get_instance(id)
 
-    async def __common_validation(self, verrors, schema, data, mode):
+    async def __common_validation(self, verrors, schema, data, mode, parent=None):
         assert mode in ('CREATE', 'UPDATE')
 
-        parent = await self.middleware.call(
-            'zfs.dataset.query',
-            [('id', '=', data['name'].rsplit('/')[0])]
-        )
+        if parent is None:
+            parent = await self.middleware.call(
+                'zfs.dataset.query',
+                [('id', '=', data['name'].rsplit('/')[0])]
+            )
 
         if not parent:
             verrors.add(
