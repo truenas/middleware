@@ -389,11 +389,16 @@ class IdmapDomainService(CRUDService):
 
     @private
     async def validate(self, schema_name, data, verrors):
-        if data['name'] in [DSType.DS_TYPE_LDAP.name, DSType.DS_TYPE_DEFAULT_DOMAIN.name]:
+        if data['name'] == DSType.DS_TYPE_LDAP.name:
             if data['idmap_backend'] not in (await self.backend_choices())['LDAP']:
                 verrors.add(f'{schema_name}.idmap_backend',
-                            f'idmap backend [{data["idmap_backend"]}] is not appropriate. '
+                            f'idmap backend [{data["idmap_backend"]}] is not appropriate '
                             f'for the system domain type {data["name"]}')
+
+        elif data['name'] == DSType.DS_TYPE_DEFAULT_DOMAIN.name:
+            if data['idmap_backend'] != 'TDB':
+                verrors.add(f'{schema_name}.idmap_backend',
+                            'TDB is the only supported idmap backend for DS_TYPE_DEFAULT_DOMAIN.')
 
         if data['range_high'] < data['range_low']:
             """
