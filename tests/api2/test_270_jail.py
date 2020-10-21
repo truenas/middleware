@@ -20,28 +20,50 @@ RELEASE = None
 JAIL_NAME = 'jail1'
 
 
-def test_01_activate_iocage_pool(request):
+def test_01_get_nameserver1_and_nameserver2(request):
+    depends(request, ["pool_04"], scope="session")
+    global nameserver1, nameserver2
+    results = GET("/network/configuration/")
+    assert results.status_code == 200, results.text
+    nameserver1 = results.json()['nameserver1']
+    nameserver2 = results.json()['nameserver2']
+
+
+def test_02_set_nameserver_for_ad(request):
+    depends(request, ["pool_04"], scope="session")
+    global payload
+    payload = {
+        "nameserver1": '8.8.8.8',
+        "nameserver2": '8.8.4.4'
+    }
+    global results
+    results = PUT("/network/configuration/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+def test_03_activate_iocage_pool(request):
     depends(request, ["pool_04"], scope="session")
     results = POST('/jail/activate/', pool_name)
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-def test_02_verify_iocage_pool(request):
+def test_04_verify_iocage_pool(request):
     depends(request, ["pool_04"], scope="session")
     results = GET('/jail/get_activated_pool/')
     assert results.status_code == 200, results.text
     assert results.json() == pool_name, results.text
 
 
-def test_03_get_installed_FreeBSD_release_(request):
+def test_05_get_installed_FreeBSD_release_(request):
     depends(request, ["pool_04"], scope="session")
     results = POST('/jail/releases_choices/', False)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
-def test_04_get_available_FreeBSD_release(request):
+def test_06_get_available_FreeBSD_release(request):
     depends(request, ["pool_04"], scope="session")
     global RELEASE
     results = POST('/jail/releases_choices/', True)
@@ -51,7 +73,7 @@ def test_04_get_available_FreeBSD_release(request):
     RELEASE = '12.1-RELEASE'
 
 
-def test_05_fetch_FreeBSD(request):
+def test_07_fetch_FreeBSD(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     results = POST(
@@ -63,7 +85,7 @@ def test_05_fetch_FreeBSD(request):
     JOB_ID = results.json()
 
 
-def test_06_verify_fetch_job_state(request):
+def test_08_verify_fetch_job_state(request):
     depends(request, ["pool_04"], scope="session")
     global freeze, freeze_msg
     freeze = False
@@ -74,7 +96,7 @@ def test_06_verify_fetch_job_state(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_07_verify_FreeBSD_release_is_installed(request):
+def test_09_verify_FreeBSD_release_is_installed(request):
     depends(request, ["pool_04"], scope="session")
     results = POST('/jail/releases_choices', False)
     assert results.status_code == 200, results.text
@@ -82,7 +104,7 @@ def test_07_verify_FreeBSD_release_is_installed(request):
     assert RELEASE in results.json(), results.text
 
 
-def test_08_create_jail(request):
+def test_10_create_jail(request):
     depends(request, ["pool_04"], scope="session")
     if freeze is True:
         pytest.skip(freeze_msg)
@@ -101,7 +123,7 @@ def test_08_create_jail(request):
     JOB_ID = results.json()
 
 
-def test_09_verify_creation_of_jail(request):
+def test_11_verify_creation_of_jail(request):
     depends(request, ["pool_04"], scope="session")
     global freeze, freeze_msg
     if freeze is True:
@@ -114,7 +136,7 @@ def test_09_verify_creation_of_jail(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_10_verify_iocage_list_with_ssh(request):
+def test_12_verify_iocage_list_with_ssh(request):
     depends(request, ["pool_04"], scope="session")
     if freeze is True:
         pytest.skip(freeze_msg)
@@ -125,7 +147,7 @@ def test_10_verify_iocage_list_with_ssh(request):
     assert results['result'] is True, results2['output']
 
 
-def test_11_update_jail_description(request):
+def test_13_update_jail_description(request):
     depends(request, ["pool_04"], scope="session")
     if freeze is True:
         pytest.skip(freeze_msg)
@@ -140,7 +162,7 @@ def test_11_update_jail_description(request):
     JAIL_NAME += '_renamed'
 
 
-def test_12_start_jail(request):
+def test_14_start_jail(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     if freeze is True:
@@ -152,7 +174,7 @@ def test_12_start_jail(request):
     time.sleep(1)
 
 
-def test_13_verify_jail_started(request):
+def test_15_verify_jail_started(request):
     depends(request, ["pool_04"], scope="session")
     global freeze, freeze_msg
     if freeze is True:
@@ -173,7 +195,7 @@ def test_13_verify_jail_started(request):
         assert results.json()['state'] == 'up', results.text
 
 
-def test_14_exec_call(request):
+def test_16_exec_call(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
 
@@ -191,7 +213,7 @@ def test_14_exec_call(request):
     time.sleep(1)
 
 
-def test_15_verify_exec_job(request):
+def test_17_verify_exec_job(request):
     depends(request, ["pool_04"], scope="session")
     global freeze, freeze_msg
     if freeze is True:
@@ -206,7 +228,7 @@ def test_15_verify_exec_job(request):
     assert 'exec successful' in result, str(result)
 
 
-def test_16_stop_jail(request):
+def test_18_stop_jail(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
 
@@ -222,7 +244,7 @@ def test_16_stop_jail(request):
     time.sleep(1)
 
 
-def test_17_verify_jail_stopped(request):
+def test_19_verify_jail_stopped(request):
     depends(request, ["pool_04"], scope="session")
     if freeze is True:
         pytest.skip(freeze_msg)
@@ -238,7 +260,7 @@ def test_17_verify_jail_stopped(request):
         assert results.json()['state'] == 'down', results.text
 
 
-def test_18_export_jail(request):
+def test_20_export_jail(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     if freeze is True:
@@ -253,7 +275,7 @@ def test_18_export_jail(request):
         JOB_ID = results.json()
 
 
-def test_19_verify_export_job_succed(request):
+def test_21_verify_export_job_succeed(request):
     depends(request, ["pool_04"], scope="session")
     global job_results
     job_status = wait_on_job(JOB_ID, 300)
@@ -261,13 +283,13 @@ def test_19_verify_export_job_succed(request):
     job_results = job_status['results']
 
 
-def test_20_start_jail(request):
+def test_22_start_jail(request):
     depends(request, ["pool_04"], scope="session")
     results = POST('/jail/start/', JAIL_NAME)
     assert results.status_code == 200, results.text
 
 
-def test_21_wait_for_jail_to_be_up(request):
+def test_23_wait_for_jail_to_be_up(request):
     depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 20)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -281,13 +303,13 @@ def test_21_wait_for_jail_to_be_up(request):
         assert results.json()['state'] == 'up', results.text
 
 
-def test_22_rc_action(request):
+def test_24_rc_action(request):
     depends(request, ["pool_04"], scope="session")
     results = POST('/jail/rc_action/', 'STOP')
     assert results.status_code == 200, results.text
 
 
-def test_23_delete_jail(request):
+def test_25_delete_jail(request):
     depends(request, ["pool_04"], scope="session")
     payload = {
         'force': True
@@ -296,14 +318,26 @@ def test_23_delete_jail(request):
     assert results.status_code == 200, results.text
 
 
-def test_24_verify_the_jail_id_is_delete(request):
+def test_26_verify_the_jail_id_is_delete(request):
     depends(request, ["pool_04"], scope="session")
     results = GET(f'/jail/id/{JAIL_NAME}/')
     assert results.status_code == 404, results.text
 
 
-def test_25_verify_clean_call(request):
+def test_27_verify_clean_call(request):
     depends(request, ["pool_04"], scope="session")
     results = POST('/jail/clean/', 'ALL')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
+
+
+def test_28_configure_setting_domain_hostname_and_dns(request):
+    depends(request, ["pool_04"], scope="session")
+    global payload
+    payload = {
+        "nameserver1": nameserver1,
+        "nameserver2": nameserver2
+    }
+    global results
+    results = PUT("/network/configuration/", payload)
+    assert results.status_code == 200, results.text
