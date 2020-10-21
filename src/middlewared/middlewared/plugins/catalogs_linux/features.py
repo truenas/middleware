@@ -10,7 +10,6 @@ SUPPORTED_FEATURES = {
     'normalize/ixVolume',
     'definitions/interface',
     'definitions/gpuConfiguration',
-    'validations/persistentVolumeClaims',
 }
 
 
@@ -30,7 +29,7 @@ class CatalogService(Service):
         )
 
         path = os.path.join(catalog['location'], 'features_capability.json')
-        if not os.path.exists(catalog['location']):
+        if not os.path.exists(path):
             raise CallError('Unable to retrieve feature capability mapping for SCALE versions', errno=errno.ENOENT)
 
         with open(path, 'r') as f:

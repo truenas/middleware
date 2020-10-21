@@ -8,9 +8,7 @@ from .schema import get_schema, get_list_item_from_value, update_conditional_val
 from .utils import RESERVED_NAMES
 
 
-validation_mapping = {
-    'validations/persistentVolumeClaims': 'persistent_volume_claims',
-}
+validation_mapping = {}
 
 
 class ChartReleaseService(Service):
@@ -74,11 +72,3 @@ class ChartReleaseService(Service):
             )
 
         return verrors
-
-    @private
-    async def validate_persistent_volume_claims(self, verrors, value, question, schema_name):
-        used_names = set()
-        for index, pvc in enumerate(value):
-            if pvc['name'] in used_names:
-                verrors.add(f'{schema_name}.{index}.name', 'Names for PVC\'s must be unique')
-            used_names.add(pvc['name'])

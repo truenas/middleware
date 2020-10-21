@@ -7,7 +7,7 @@ import yaml
 from pkg_resources import parse_version
 
 from middlewared.schema import Dict, Str
-from middlewared.service import accepts, CallError, Service, ValidationErrors
+from middlewared.service import accepts, CallError, job, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
 from .utils import get_namespace, run
@@ -26,7 +26,8 @@ class ChartReleaseService(Service):
             Str('item_version', required=True),
         )
     )
-    async def upgrade(self, release_name, options):
+    @job(lock=lambda args: f'chart_release_upgrade_{args[0]}')
+    async def upgrade(self, job, release_name, options):
         """
         Upgrade `release_name` chart release.
 
@@ -85,12 +86,13 @@ class ChartReleaseService(Service):
         config, context = await self.middleware.call(
             'chart.release.normalise_and_validate_values', catalog_item, config, False, release['dataset'],
         )
+        job.set_progress(25, 'Initial validation complete')
 
         # We have validated configuration now
 
         chart_path = os.path.join(release['path'], 'charts', new_version)
-        await self.middleware.run_in_thread(lambda: shutil.rmtree(chart_path, ignore_errors=True))
-        await self.middleware.run_in_thread(lambda: shutil.copytree(catalog_item['location'], chart_path))
+        await self.middleware.run_in_thread(shutil.rmtree, chart_path, ignore_errors=True)
+        await self.middleware.run_in_thread(shutil.copytree, catalog_item['location'], chart_path)
 
         # If a snapshot of the volumes already exist with the same name in case of a failed upgrade, we will remove
         # it as we want the current point in time being reflected in the snapshot
@@ -102,6 +104,7 @@ class ChartReleaseService(Service):
         await self.middleware.call(
             'zfs.snapshot.create', {'dataset': volumes_ds, 'name': release['version'], 'recursive': True}
         )
+        job.set_progress(40, 'Created snapshot for upgrade')
 
         await self.middleware.call('chart.release.perform_actions', context)
 

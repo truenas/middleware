@@ -76,7 +76,7 @@ class ChartReleaseService(CRUDService):
         create the chart release.
         """
         await self.middleware.call('kubernetes.validate_k8s_setup')
-        if await self.middleware.call('chart.release.query', [['id', '=', data['release_name']]]):
+        if await self.get_instance(data['release_name']):
             raise CallError(f'Chart release with {data["release_name"]} already exists.', errno=errno.EEXIST)
 
         catalog = await self.middleware.call(
@@ -186,7 +186,8 @@ class ChartReleaseService(CRUDService):
             Dict('values', additional_attrs=True),
         )
     )
-    async def do_update(self, chart_release, data):
+    @job(lock=lambda args: f'chart_release_update_{args[0]}')
+    async def do_update(self, job, chart_release, data):
         """
         Update an existing chart release.
 
@@ -206,6 +207,8 @@ class ChartReleaseService(CRUDService):
         config.update(data['values'])
         config, context = await self.normalise_and_validate_values(version_details, config, True, release['dataset'])
 
+        job.set_progress(25, 'Initial Validation complete')
+
         await self.perform_actions(context)
 
         with tempfile.NamedTemporaryFile(mode='w+') as f:
@@ -219,8 +222,10 @@ class ChartReleaseService(CRUDService):
             if cp.returncode:
                 raise CallError(f'Failed to update chart release: {cp.stderr.decode()}')
 
+        job.set_progress(90, 'Syncing secrets for chart release')
         await self.middleware.call('chart.release.sync_secrets_for_release', chart_release)
 
+        job.set_progress(100, 'Update completed for chart release')
         return await self.get_instance(chart_release)
 
     @accepts(Str('release_name'))

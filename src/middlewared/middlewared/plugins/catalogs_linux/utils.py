@@ -21,8 +21,7 @@ def convert_repository_to_path(git_repository_uri):
 
 def clone_repository(repository_uri, destination, depth):
     shutil.rmtree(destination, ignore_errors=True)
-    kwargs = {'env': os.environ.copy(), 'depth': depth}
-    return git.Repo.clone_from(repository_uri, destination, **{k: v for k, v in kwargs.items() if v})
+    return git.Repo.clone_from(repository_uri, destination, env=os.environ.copy(), depth=depth)
 
 
 def get_repo(destination):
