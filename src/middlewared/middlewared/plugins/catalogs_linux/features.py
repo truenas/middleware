@@ -61,6 +61,6 @@ class CatalogService(Service):
                 else:
                     train_message += f'Maximum SCALE version: Latest available {k.capitalize()!r} release'
 
-            error_str += f'{index}) {feature}{f"{train_message}" if train_message else ""}\n\n'
+            error_str += f'{index + 1}) {feature}{f"{train_message}" if train_message else ""}\n\n'
 
         raise CallError(error_str)
