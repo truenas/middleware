@@ -11,13 +11,14 @@ class CatalogService(Service):
     @accepts()
     @periodic(interval=864000)
     @job(lock='sync_catalogs')
-    async def sync_catalogs(self, job):
+    async def sync_all(self, job):
         """
-        Sync all available catalogs.
+        Refresh all available catalogs from upstream.
         """
         catalogs = await self.middleware.call('catalog.query')
-        for catalog in catalogs:
-            job.set_progress(100 / len(catalogs), f'Syncing {catalog["id"]} catalog')
+        catalog_len = len(catalogs)
+        for index, catalog in enumerate(catalogs):
+            job.set_progress(((index + 1) / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
             try:
                 await self.middleware.call('catalog.sync', catalog['id'])
             except Exception as e:
