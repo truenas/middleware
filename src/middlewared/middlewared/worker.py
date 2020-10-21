@@ -60,6 +60,9 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
 
         return self.client.call(method, *params, timeout=timeout, **kwargs)
 
+    def event_register(self, *args, **kwargs):
+        pass
+
     def send_event(self, name, event_type, **kwargs):
         with Client(py_exceptions=True) as c:
             return c.call('core.event_send', name, event_type, kwargs)
@@ -98,10 +101,18 @@ def main_worker(*call_args):
     return res
 
 
+def reconfigure_logging(mtype, **message):
+    fields = message.get('fields') or {}
+    if fields.get('stop'):
+        logger.stop_logging()
+    else:
+        logger.reconfigure_logging()
+
+
 def receive_events():
     c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
     c.subscribe('core.environ', lambda *args, **kwargs: environ_update(kwargs['fields']))
-    c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: logger.reconfigure_logging())
+    c.subscribe('core.reconfigure_logging', reconfigure_logging)
 
     environ_update(c.call('core.environ'))
 

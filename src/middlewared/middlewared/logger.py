@@ -21,8 +21,8 @@ logging.getLogger('botocore').setLevel(logging.WARN)
 logging.getLogger('ws4py').setLevel(logging.WARN)
 # we dont need GitPython debug messages (used in iocage)
 logging.getLogger('git.cmd').setLevel(logging.WARN)
-# it prints credentials to logs
-logging.getLogger('requests_oauthlib.oauth2_session').setLevel(logging.INFO)
+# issues garbage warnings
+logging.getLogger('googleapiclient').setLevel(logging.ERROR)
 # registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
 logging.getLogger('passlib.registry').setLevel(logging.INFO)
 if osc.IS_LINUX:
@@ -357,5 +357,16 @@ def reconfigure_logging():
             sys.stderr = handler.stream
         try:
             stream.close()
+        except Exception:
+            pass
+
+
+def stop_logging():
+    for name, handler in logging._handlers.items():
+        if not isinstance(handler, ErrorProneRotatingFileHandler):
+            continue
+
+        try:
+            handler.stream.close()
         except Exception:
             pass

@@ -254,7 +254,7 @@ def test_26_get_next_uid_for_shareuser(request):
     next_uid = results.json()
 
 
-@pytest.mark.dependency(name="user_27")
+@pytest.mark.dependency(name="shareuser")
 def test_27_creating_shareuser_to_test_sharing(request):
     depends(request, ["user_02", "user_01"])
     payload = {

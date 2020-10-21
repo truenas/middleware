@@ -58,21 +58,7 @@ class OpenVPN:
         return OpenVPN.DIGESTS
 
     @staticmethod
-    async def common_validation(middleware, data, schema, mode):
-        verrors = ValidationErrors()
-
-        if data['cipher'] and data['cipher'] not in OpenVPN.ciphers():
-            verrors.add(
-                f'{schema}.cipher',
-                'Please specify a valid cipher.'
-            )
-
-        if data['authentication_algorithm'] and data['authentication_algorithm'] not in OpenVPN.digests():
-            verrors.add(
-                f'{schema}.authentication_algorithm',
-                'Please specify a valid authentication_algorithm.'
-            )
-
+    async def cert_validation(middleware, data, schema, mode, verrors):
         root_ca = await middleware.call(
             'certificateauthority.query', [
                 ['id', '=', data['root_ca']],
@@ -110,9 +96,13 @@ class OpenVPN:
                         f'Root CA must have {k} set for KeyUsage extension.'
                     )
 
+        cert_id = data[f'{mode}_certificate']
+        if not cert_id:
+            return verrors
+
         cert = await middleware.call(
             'certificate.query', [
-                ['id', '=', data[f'{mode}_certificate']],
+                ['id', '=', cert_id],
                 ['revoked', '=', False]
             ]
         )
@@ -183,6 +173,27 @@ class OpenVPN:
                         'Server certificate must have "TLS Web Server Authentication" '
                         'set in ExtendedKeyUsage extension.'
                     )
+
+        return verrors
+
+    @staticmethod
+    async def common_validation(middleware, data, schema, mode):
+        verrors = ValidationErrors()
+
+        if data['cipher'] and data['cipher'] not in OpenVPN.ciphers():
+            verrors.add(
+                f'{schema}.cipher',
+                'Please specify a valid cipher.'
+            )
+
+        if data['authentication_algorithm'] and data['authentication_algorithm'] not in OpenVPN.digests():
+            verrors.add(
+                f'{schema}.authentication_algorithm',
+                'Please specify a valid authentication_algorithm.'
+            )
+
+        if data['root_ca']:
+            verrors = await OpenVPN.cert_validation(middleware, data, schema, mode, verrors)
 
         if data['tls_crypt_auth_enabled'] and not data['tls_crypt_auth']:
             verrors.add(
@@ -422,9 +433,9 @@ class OpenVPNServerService(SystemServiceService):
             'openvpn_server_update',
             Bool('tls_crypt_auth_enabled'),
             Int('netmask', validators=[Range(min=0, max=128)]),
-            Int('server_certificate'),
+            Int('server_certificate', null=True),
             Int('port', validators=[Port()]),
-            Int('root_ca'),
+            Int('root_ca', null=True),
             IPAddr('server'),
             Str('additional_parameters'),
             Str('authentication_algorithm', null=True),
@@ -583,8 +594,8 @@ class OpenVPNClientService(SystemServiceService):
             'openvpn_client_update',
             Bool('nobind'),
             Bool('tls_crypt_auth_enabled'),
-            Int('client_certificate'),
-            Int('root_ca'),
+            Int('client_certificate', null=True),
+            Int('root_ca', null=True),
             Int('port', validators=[Port()]),
             Str('additional_parameters'),
             Str('authentication_algorithm', null=True),

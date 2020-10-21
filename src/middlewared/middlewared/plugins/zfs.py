@@ -491,24 +491,15 @@ class ZFSDatasetService(CRUDService):
 
         with libzfs.ZFS() as zfs:
             # Handle `id` filter specially to avoiding getting all datasets
+            kwargs = dict(props=props, top_level_props=top_level_props, user_props=user_properties)
             if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
-                state_options = {
-                    'snapshots': extra.get('snapshots', False),
-                    'recursive': extra.get('recursive', True),
-                    'snapshots_recursive': extra.get('snapshots_recursive', False)
-                }
-                try:
-                    datasets = [zfs.get_dataset(filters[0][2]).__getstate__(**state_options)]
-                except libzfs.ZFSException:
-                    datasets = []
+                kwargs['datasets'] = [filters[0][2]]
+
+            datasets = zfs.datasets_serialized(**kwargs)
+            if flat:
+                datasets = self.flatten_datasets(datasets)
             else:
-                datasets = zfs.datasets_serialized(
-                    props=props, top_level_props=top_level_props, user_props=user_properties
-                )
-                if flat:
-                    datasets = self.flatten_datasets(datasets)
-                else:
-                    datasets = list(datasets)
+                datasets = list(datasets)
 
         return filter_list(datasets, filters, options)
 
@@ -1125,7 +1116,7 @@ class ZFSSnapshot(CRUDService):
             return True
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
-            return False
+            raise CallError(f'Failed to clone snapshot: {err}')
 
     @accepts(
         Str('id'),

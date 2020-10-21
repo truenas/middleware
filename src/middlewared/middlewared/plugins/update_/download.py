@@ -6,7 +6,7 @@ import time
 import humanfriendly
 import requests
 
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 from middlewared.utils import osc
 
 from .utils import scale_update_server
@@ -44,9 +44,9 @@ class UpdateService(Service):
                     timeout=30,
                 ) as r:
                     r.raise_for_status()
+                    total = int(r.headers["Content-Length"])
                     for i in r.iter_content(chunk_size=8 * 1024 * 1024):
                         progress = f.tell()
-                        total = int(r.headers["Content-Length"])
 
                         job.set_progress(
                             progress / total * progress_proportion,
@@ -55,6 +55,11 @@ class UpdateService(Service):
                         )
 
                         f.write(i)
+
+            size = os.path.getsize(dst)
+            if size != total:
+                os.unlink(dst)
+                raise CallError(f'Downloaded update file mismatch ({size} != {total})')
 
             return True
 

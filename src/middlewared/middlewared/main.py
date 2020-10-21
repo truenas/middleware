@@ -879,6 +879,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 # We need to run system plugin setup's function first because when system boots, the right
                 # timezone is not configured. See #72131
                 'system',
+                # Initialize mail before other plugins try to send e-mail messages
+                'mail',
                 # We also need to load alerts first because other plugins can issue one-shot alerts during their
                 # initialization
                 'alert',
@@ -886,6 +888,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 'account',
                 # Replication plugin needs to be initialized before zettarepl in order to register network activity
                 'replication',
+                # Migrate network interfaces ASAP
+                'network',
             ]
             try:
                 return beginning.index(plugin)

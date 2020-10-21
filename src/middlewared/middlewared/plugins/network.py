@@ -82,6 +82,26 @@ class NetworkConfigurationService(ConfigService):
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
 
+        data['state'] = {
+            'ipv4gateway': '',
+            'ipv6gateway': '',
+            'nameserver1': '',
+            'nameserver2': '',
+            'nameserver3': '',
+        }
+        summary = self.middleware.call_sync('network.general.summary')
+        for default_route in summary['default_routes']:
+            try:
+                ipaddress.IPv4Address(default_route)
+            except ValueError:
+                if not data['state']['ipv6gateway']:
+                    data['state']['ipv6gateway'] = default_route
+            else:
+                if not data['state']['ipv4gateway']:
+                    data['state']['ipv4gateway'] = default_route
+        for i, nameserver in enumerate(summary['nameservers'][:3]):
+            data['state'][f'nameserver{i + 1}'] = nameserver
+
         return data
 
     @private
@@ -214,6 +234,8 @@ class NetworkConfigurationService(ConfigService):
         Discovery support.
         """
         config = await self.config()
+        config.pop('state')
+
         new_config = config.copy()
         new_config.update(data)
 
@@ -351,6 +373,7 @@ class NetworkInterfaceModel(sa.Model):
     int_options = sa.Column(sa.String(120))
     int_mtu = sa.Column(sa.Integer(), nullable=True)
     int_disable_offload_capabilities = sa.Column(sa.Boolean(), default=False)
+    int_link_address = sa.Column(sa.String(17), nullable=True)
 
 
 class NetworkLaggInterfaceModel(sa.Model):
@@ -572,6 +595,7 @@ class InterfaceService(CRUDService):
                     'address': config['int_ipv4address'],
                     'netmask': int(config['int_v4netmaskbit']),
                 })
+        if not config['int_ipv6auto']:
             if config['int_ipv6address']:
                 iface['aliases'].append({
                     'type': 'INET6',
@@ -1180,6 +1204,23 @@ class InterfaceService(CRUDService):
                                 f'The following VHIDs are already in use: {used_vhids}.'
                             )
 
+                # creating a "failover" lagg interface on HA systems and trying
+                # to mark it "critical for failover" isn't allowed as it can cause
+                # delays in the failover process. (Sometimes failure entirely.)
+                # However, using this type of lagg interface for "non-critical"
+                # workloads (i.e. webUI management) is acceptable.
+                if itype == 'LINK_AGGREGATION':
+                    # there is a chance that we have failover lagg ints marked critical
+                    # for failover in the db so to prevent the webUI from disallowing
+                    # the user to update those interfaces, we'll only enforce this on
+                    # newly created laggs.
+                    if not update:
+                        if data.get('failover_critical') and data.get('lag_protocol') == 'FAILOVER':
+                            verrors.add(
+                                f'{schema_name}.failover_critical',
+                                'A lagg interface using the "Failover" protocol is not allowed to be marked critical for failover.'
+                            )
+
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data.get('aliases') or []):
             used_networks = []
@@ -1421,6 +1462,13 @@ class InterfaceService(CRUDService):
                         config['id'],
                         {'int_interface': new['name']},
                     )
+
+            await self.middleware.call(
+                'datastore.update',
+                'network.interfaces',
+                config['id'],
+                {'int_link_address': iface['state']['link_address']},
+            )
 
             if iface['type'] == 'BRIDGE':
                 if 'bridge_members' in data:

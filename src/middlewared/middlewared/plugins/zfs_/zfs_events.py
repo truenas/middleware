@@ -120,6 +120,14 @@ async def devd_zfs_hook(middleware, data):
 deadman_throttle = defaultdict(list)
 
 
+async def retrieve_pool_from_db(middleware, pool_name):
+    pool = await middleware.call('pool.query', [['name', '=', pool_name]])
+    if not pool:
+        # If we have no record of the pool, let's skip sending any event please
+        return
+    return pool[0]
+
+
 async def zfs_events(middleware, data):
     event_id = data['class']
     if event_id in ('sysevent.fs.zfs.resilver_start', 'sysevent.fs.zfs.scrub_start'):
@@ -147,6 +155,12 @@ async def zfs_events(middleware, data):
         deadman_throttle[pool] = deadman_throttle[pool][-max_items:]
     elif event_id == 'resource.fs.zfs.statechange':
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
+        pool = await retrieve_pool_from_db(middleware, data.get('pool'))
+        if not pool:
+            return
+
+        middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
+
     elif event_id in (
         'sysevent.fs.zfs.config_sync',
         'sysevent.fs.zfs.pool_destroy',
@@ -156,17 +170,36 @@ async def zfs_events(middleware, data):
         # for this reason we must react to certain types of ZFS events to keep
         # it in sync every time there is a change.
         asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+        if event_id == 'sysevent.fs.zfs.config_sync' and data.get('pool') and data.get('pool_guid'):
+            # This event is issued whenever a vdev change is done to a pool
+            # Checking pool_guid ensures that we do not do this on creation/deletion of pool as we expect the
+            # relevant event to be handled from the service endpoints because there are other operations related
+            # to create/delete which when done, we consider the create/delete operation as complete
+            pool = await retrieve_pool_from_db(middleware, data['pool'])
+            if not pool:
+                return
+
+            middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
     elif (
-        event_id == 'sysevent.fs.zfs.history_event' and data.get(
-            'history_internal_name'
-        ) == 'destroy' and data.get('history_dsname')
+        event_id == 'sysevent.fs.zfs.history_event' and data.get('history_dsname') and data.get('history_internal_name')
     ):
-        await middleware.call(
-            'pool.dataset.delete_encrypted_datasets_from_db', [
-                ['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]
-            ]
-        )
-        await middleware.call_hook('dataset.post_delete', data['history_dsname'])
+        # we need to send events for dataset creation/updating/deletion in case it's done via cli
+        event_type = data['history_internal_name']
+        ds_id = data['history_dsname']
+        if event_type in ('create', 'set'):
+            ds_data = await middleware.call('pool.dataset.get_instance', ds_id)
+            middleware.send_event(
+                'pool.dataset.query', 'ADDED' if event_type == 'create' else 'CHANGED', id=ds_id, fields=ds_data
+            )
+        elif event_type == 'destroy':
+            middleware.send_event('pool.dataset.query', 'CHANGED', id=ds_id, cleared=True)
+
+            await middleware.call(
+                'pool.dataset.delete_encrypted_datasets_from_db', [
+                    ['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]
+                ]
+            )
+            await middleware.call_hook('dataset.post_delete', data['history_dsname'])
 
 
 def setup(middleware):

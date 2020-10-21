@@ -65,6 +65,8 @@ class DiskService(CRUDService):
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
         datastore_extend_context = 'disk.disk_extend_context'
+        event_register = False
+        event_send = False
 
     @filterable
     async def query(self, filters=None, options=None):

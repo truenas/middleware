@@ -299,7 +299,5 @@ class ServiceService(CRUDService):
 
 
 async def setup(middleware):
-    middleware.event_register('service.query', 'Sent on service changes.')
-
     for klass in all_services:
         await middleware.call('service.register_object', klass(middleware))

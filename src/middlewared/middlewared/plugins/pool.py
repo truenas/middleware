@@ -1,6 +1,7 @@
 import asyncio
 from collections import deque
 import contextlib
+import copy
 import enum
 import errno
 import json
@@ -250,6 +251,7 @@ class PoolService(CRUDService):
         datastore = 'storage.volume'
         datastore_extend = 'pool.pool_extend'
         datastore_prefix = 'vol_'
+        event_send = False
 
     @item_method
     @accepts(
@@ -756,6 +758,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
+        self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
         return pool
 
     @private
@@ -772,6 +775,7 @@ class PoolService(CRUDService):
         'pool_create', 'pool_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'encryption'}),
+        ('rm', {'name': 'encryption_options'}),
         ('rm', {'name': 'deduplication'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
@@ -1413,6 +1417,7 @@ class PoolService(CRUDService):
             }
         )
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
+        self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
 
         return True
 
@@ -1578,6 +1583,7 @@ class PoolService(CRUDService):
         asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
+        self.middleware.send_event('pool.query', 'CHANGED', id=oid, cleared=True)
 
     @item_method
     @accepts(Int('id'))
@@ -1889,6 +1895,7 @@ class PoolDatasetService(CRUDService):
 
     class Config:
         namespace = 'pool.dataset'
+        event_send = False
 
     @accepts()
     async def encryption_algorithm_choices(self):
@@ -2657,16 +2664,16 @@ class PoolDatasetService(CRUDService):
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
+        filters = filters or []
+        if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0][:2]) == ['id', '=']:
+            zfsfilters.append(copy.deepcopy(filters[0]))
+
         sys_config = self.middleware.call_sync('systemdataset.config')
         if sys_config['basename']:
-            zfsfilters.extend([
+            filters.extend([
                 ['id', '!=', sys_config['basename']],
                 ['id', '!^', f'{sys_config["basename"]}/'],
             ])
-        for f in filters or []:
-            if len(f) == 3:
-                if f[0] in ('id', 'name', 'pool', 'type'):
-                    zfsfilters.append(f)
 
         return filter_list(
             self.__transform(self.middleware.call_sync(
@@ -2829,23 +2836,28 @@ class PoolDatasetService(CRUDService):
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         else:
-            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
+            parent_ds = await self.middleware.call('pool.dataset.query', [('id', '=', data['name'].rsplit('/', 1)[0])])
+            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
 
+        verrors.check()
+
+        parent_ds = parent_ds[0]
         mountpoint = os.path.join('/mnt', data['name'])
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
-        if osc.IS_LINUX and not data.get('acltype') and data['type'] == 'FILESYSTEM':
-            data['acltype'] = 'POSIXACL'
+        if osc.IS_LINUX and data['type'] == 'FILESYSTEM':
+            if not data.get('acltype'):
+                data['acltype'] = 'POSIXACL'
+            if not data.get('xattr'):
+                data['xattr'] = 'SA'
 
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
             if osc.IS_FREEBSD:
                 data['aclmode'] = 'RESTRICTED'
 
-            data['xattr'] = 'SA'
-
-        if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
+        if parent_ds['locked']:
             verrors.add(
                 'pool_dataset_create.name',
                 f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
@@ -2870,7 +2882,7 @@ class PoolDatasetService(CRUDService):
             if not data['encryption_options']['passphrase']:
                 # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
                 # because we don't allow children to be unlocked while parent is locked
-                parent_encryption_root = (await self.get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
+                parent_encryption_root = parent_ds['encryption_root']
                 if (
                     parent_encryption_root and ZFSKeyFormat(
                         (await self.get_instance(parent_encryption_root))['key_format']['value']
@@ -2955,7 +2967,7 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
-        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB':
+        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and data['acltype'] == "NFS4ACL":
             await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
 
         return await self.get_instance(data['id'])
@@ -3075,13 +3087,14 @@ class PoolDatasetService(CRUDService):
 
         return await self.get_instance(id)
 
-    async def __common_validation(self, verrors, schema, data, mode):
+    async def __common_validation(self, verrors, schema, data, mode, parent=None):
         assert mode in ('CREATE', 'UPDATE')
 
-        parent = await self.middleware.call(
-            'zfs.dataset.query',
-            [('id', '=', data['name'].rsplit('/')[0])]
-        )
+        if parent is None:
+            parent = await self.middleware.call(
+                'zfs.dataset.query',
+                [('id', '=', data['name'].rsplit('/', 1)[0])]
+            )
 
         if not parent:
             verrors.add(
