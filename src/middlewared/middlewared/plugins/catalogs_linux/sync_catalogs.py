@@ -29,6 +29,8 @@ class CatalogService(Service):
         """
         Sync `label` catalog to retrieve latest changes from upstream.
         """
+        catalog = await self.middleware.call('catalog.get_instance', catalog_label)
+        await self.middleware.call('catalog.update_git_repository', catalog, True)
         await self.middleware.call('catalog.items', catalog_label, {'cache': False})
 
     @private
