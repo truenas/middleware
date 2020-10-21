@@ -45,7 +45,7 @@ def get_schema(variable_details):
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
     obj_kwargs = {k: schema_details[k] for k in filter(
         lambda k: k in schema_details,
-        ('required', 'default', 'private', 'enum', 'ipv4', 'ipv6', 'cidr', 'null')
+        ('required', 'default', 'private', 'ipv4', 'ipv6', 'cidr', 'null')
     )}
 
     if schema_class not in (Cron, Dict):
@@ -67,6 +67,9 @@ def get_schema(variable_details):
         range_args = {k: schema_details[v] for k, v in zip(['min', 'max'], range_vars) if schema_details.get(v)}
         if range_args:
             obj.validators.append(Range(**range_args))
+
+        if 'enum' in schema_details:
+            obj.enum = [v['value'] for v in schema_details['enum']]
 
         if schema_class == Str:
             if 'valid_chars' in schema_details:
