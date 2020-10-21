@@ -79,13 +79,21 @@ class InterfaceService(Service):
                 has_ipv6 = True
 
         # configure CARP/VRRP
-        has_vip = data.get('int_vip', False)
+        has_vip = data.get('int_vip', '')
         if has_vip:
             vip_data = {
                 'address': data['int_vip'],
-                'netmask': '32' if not has_ipv6 else '128',
+                'netmask': '32',
             }
 
+        has_vipv6 = data.get('int_vipv6address', '')
+        if has_vipv6:
+            vip_data = {
+                'address': data['int_vipv6address'],
+                'netmask': '128',
+            }
+
+        if has_vip or has_vipv6:
             # linux doesn't use `carp_vhid` or `carp_pass` attributes
             if osc.IS_FREEBSD:
                 carp_vhid = data.get('int_vhid', None)
@@ -117,9 +125,16 @@ class InterfaceService(Service):
             if alias['alias_vip']:
                 alias_vip_data = {
                     'address': alias['alias_vip'],
-                    'netmask': '32' if not has_ipv6 else '128',
+                    'netmask': '32',
                 }
 
+            if alias['alias_vipv6address']:
+                alias_vip_data = {
+                    'address': alias['alias_vipv6address'],
+                    'netmask': '128',
+                }
+
+            if alias['alias_vip'] or alias['alias_vipv6address']:
                 if osc.IS_FREEBSD:
                     alias_vip_data['vhid'] = data['int_vhid']
 
@@ -139,7 +154,7 @@ class InterfaceService(Service):
         # Remove addresses configured and not in database
         for addr in addrs_configured:
             # keepalived service is responsible for deleting the VIP
-            if has_vip and str(addr.address) == data['int_vip']:
+            if str(addr.address) in (has_vip, has_vipv6):
                 continue
             if has_ipv6 and str(addr.address).startswith('fe80::'):
                 continue
@@ -169,7 +184,7 @@ class InterfaceService(Service):
                 # FIXME: change py-netif to accept str() key
                 iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
         else:
-            if has_vip:
+            if has_vip or has_vipv6:
                 if not self.middleware.call_sync('service.started', 'keepalived'):
                     self.middleware.call_sync('service.start', 'keepalived')
                 else:
@@ -179,7 +194,7 @@ class InterfaceService(Service):
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
             # keepalived service is responsible for adding the VIP
-            if has_vip and str(addr.address) == data['int_vip']:
+            if str(addr.address) in (has_vip, has_vipv6):
                 continue
             self.logger.debug('{}: adding {}'.format(name, addr))
             iface.add_address(addr)

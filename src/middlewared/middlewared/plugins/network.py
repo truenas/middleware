@@ -338,7 +338,8 @@ class NetworkAliasModel(sa.Model):
     alias_v4netmaskbit = sa.Column(sa.String(3), default='')
     alias_v6address = sa.Column(sa.String(45), default='')
     alias_v6netmaskbit = sa.Column(sa.String(3), default='')
-    alias_vip = sa.Column(sa.String(45), default='')
+    alias_vip = sa.Column(sa.String(42), default='')
+    alias_vipv6address = sa.Column(sa.String(45), default='')
     alias_v4address_b = sa.Column(sa.String(42), default='')
     alias_v6address_b = sa.Column(sa.String(45), default='')
 
@@ -365,7 +366,8 @@ class NetworkInterfaceModel(sa.Model):
     int_ipv6address = sa.Column(sa.String(45), default='')
     int_ipv6address_b = sa.Column(sa.String(45), default='')
     int_v6netmaskbit = sa.Column(sa.String(3), default='')
-    int_vip = sa.Column(sa.String(45), nullable=True)
+    int_vip = sa.Column(sa.String(42), nullable=True)
+    int_vipv6address = sa.Column(sa.String(45), nullable=True)
     int_vhid = sa.Column(sa.Integer(), nullable=True)
     int_pass = sa.Column(sa.String(100))
     int_critical = sa.Column(sa.Boolean(), default=False)
@@ -521,20 +523,19 @@ class InterfaceService(CRUDService):
                 iface['failover_aliases'].append({
                     'type': 'INET6',
                     'address': config['int_ipv6address_b'],
-                    'netmask': int(config['int_ipv6netmaskbit']),
+                    'netmask': int(config['int_v6netmaskbit']),
                 })
             if config['int_vip']:
-
-                netmask = 32
-                ip_type = 'INET'
-                if config['int_ipv6address'] or config['int_ipv6address_b']:
-                    netmask = 128
-                    ip_type = 'INET6'
-
                 iface['failover_virtual_aliases'].append({
-                    'type': ip_type,
+                    'type': 'INET',
                     'address': config['int_vip'],
-                    'netmask': netmask,
+                    'netmask': 32,
+                })
+            if config['int_vipv6address']:
+                iface['failover_virtual_aliases'].append({
+                    'type': 'INET6',
+                    'address': config['int_vipv6address'],
+                    'netmask': 128,
                 })
 
         if itype == InterfaceType.BRIDGE:
@@ -631,17 +632,16 @@ class InterfaceService(CRUDService):
                         'netmask': int(alias['alias_v6netmaskbit']),
                     })
                 if alias['alias_vip']:
-
-                    netmask = 32
-                    ip_type = 'INET'
-                    if alias['alias_v6address'] or alias['alias_v6address_b']:
-                        netmask = 128
-                        ip_type = 'INET6'
-
                     iface['failover_virtual_aliases'].append({
-                        'type': ip_type,
+                        'type': 'INET',
                         'address': alias['alias_vip'],
-                        'netmask': netmask,
+                        'netmask': 32,
+                    })
+                if alias['alias_vipv6address']:
+                    iface['failover_virtual_aliases'].append({
+                        'type': 'INET6',
+                        'address': alias['alias_vipv6address'],
+                        'netmask': 128,
                     })
 
         return iface
@@ -1306,8 +1306,10 @@ class InterfaceService(CRUDService):
             'ipv4address_b': '',
             'v4netmaskbit': '',
             'ipv6address': '',
+            'ipv6address_b': '',
             'v6netmaskbit': '',
             'vip': '',
+            'vipv6address': '',
         }
         aliases = {}
         for field, i in itertools.chain(
@@ -1331,9 +1333,16 @@ class InterfaceService(CRUDService):
                 if iface.get(iface_addrfield) or data.get('ipv4_dhcp'):
                     iface_ip = False
             else:
-                iface_addrfield = 'ipv6address'
-                alias_addrfield = 'v6address'
                 netfield = 'v6netmaskbit'
+                if field == 'A':
+                    iface_addrfield = 'ipv6address'
+                    alias_addrfield = 'v6address'
+                elif field == 'B':
+                    iface_addrfield = 'ipv6address_b'
+                    alias_addrfield = 'v6address_b'
+                else:
+                    alias_addrfield = iface_addrfield = 'vipv6address'
+                    netfield = None  # vip hardcodes to /128
                 if iface.get(iface_addrfield) or data.get('ipv6_auto'):
                     iface_ip = False
 
