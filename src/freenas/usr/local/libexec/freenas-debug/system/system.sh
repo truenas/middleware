@@ -136,6 +136,14 @@ system_func()
 	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' | jq .
 	section_footer
 
+	section_header "Middleware Asyncio Loop Tasks - 'midclt call core.get_tasks'"
+	midclt call core.get_tasks | jq .
+	section_footer
+
+	section_header "Middleware Threads - 'midclt call core.threads_stacks'"
+	midclt call core.threads_stacks | jq .
+	section_footer
+
 	if [ -f /data/license ]; then
 		section_header "License"
 		cat /data/license
