@@ -38,6 +38,16 @@ plugin_objects = [
     "plugin_repository"
 ]
 
+default_plugins = [
+    'asigra',
+    'nextcloud',
+    'plexmediaserver',
+    'plexmediaserver-plexpass',
+    'syncthing',
+    'tarsnap',
+    'iconik'
+]
+
 
 def test_01_get_nameserver1_and_nameserver2(request):
     depends(request, ["pool_04"], scope="session")
@@ -49,6 +59,7 @@ def test_01_get_nameserver1_and_nameserver2(request):
 
 
 def test_02_set_nameserver_for_ad(request):
+    depends(request, ["pool_04"], scope="session")
     global payload
     payload = {
         "nameserver1": '8.8.8.8',
@@ -91,13 +102,10 @@ def test_06_verify_plugin_repos_is_in_official_repositories(request):
     assert results.json()['IXSYSTEMS']['git_repository'] == default_repos_url, results.text
 
 
-def test_07_get_list_of_available_plugins_job_id(request):
+def test_07_get_list_of_default_plugins_available_job_id(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
-    payload = {
-        "plugin_repository": repos_url
-    }
-    results = POST('/plugin/available/', payload)
+    results = POST('/plugin/available/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
     JOB_ID = results.json()
@@ -111,88 +119,86 @@ def test_08_verify_list_of_available_plugins_job_id_is_successfull(request):
     job_results = job_status['results']
 
 
-@pytest.mark.parametrize('plugin', plugin_list)
-def test_09_verify_available_plugin(request, plugin):
+@pytest.mark.parametrize('plugin', default_plugins)
+def test_09_verify_available_plugin_(request, plugin):
     depends(request, ["pool_04"], scope="session")
     assert isinstance(job_results['result'], list), str(job_results)
     assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
-@pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_10_verify_available_plugins_transmission_is_not_na_with(request, prop):
+def test_10_verify_available_plugins_plexmediaserver_is_not_na_with(request, prop):
     depends(request, ["pool_04"], scope="session")
     for plugin_info in job_results['result']:
-        if 'transmission' in plugin_info['plugin']:
+        if 'plexmediaserver' in plugin_info['plugin']:
             break
     assert plugin_info[prop] != 'N/A', str(job_results)
 
 
-def test_11_add_transmission_plugins(request):
+def test_11_add_plexmediaserver_plugin(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
-        "plugin_name": "transmission",
-        "jail_name": "transmission",
+        "plugin_name": "plexmediaserver",
+        "jail_name": "plexmediaserver",
         'props': [
             'nat=1'
         ],
-        "plugin_repository": repos_url,
+        "plugin_repository": default_repos_url
     }
     results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
     JOB_ID = results.json()
 
 
-def test_12_verify_transmission_plugin_job_is_successfull(request):
+def test_12_verify_plexmediaserver_plugin_job_is_successfull(request):
     depends(request, ["pool_04"], scope="session")
-    job_status = wait_on_job(JOB_ID, 600)
+    job_status = wait_on_job(JOB_ID, 700)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_13_search_plugin_transmission_id(request):
+def test_13_search_plugin_plexmediaserver_id(request):
     depends(request, ["pool_04"], scope="session")
-    results = GET('/plugin/?id=transmission')
+    results = GET('/plugin/?id=plexmediaserver')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
-def test_14_get_transmission_plugin_info(request):
+def test_14_get_plexmediaserver_plugin_info(request):
     depends(request, ["pool_04"], scope="session")
-    global transmission_plugin
-    results = GET('/plugin/id/transmission/')
+    global plexmediaserver_plugin
+    results = GET('/plugin/id/plexmediaserver/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    transmission_plugin = results.json()
+    plexmediaserver_plugin = results.json()
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_15_verify_transmission_plugin_value_is_not_na_for_(request, prop):
+def test_15_verify_plexmediaserver_plugin_value_is_not_na_for_(request, prop):
     depends(request, ["pool_04"], scope="session")
-    assert transmission_plugin[prop] != 'N/A', str(transmission_plugin)
+    assert plexmediaserver_plugin[prop] != 'N/A', str(plexmediaserver_plugin)
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_16_verify_transmission_plugins_installed_and_available_value_(request, prop):
-    depends(request, ["pool_04"], scope="session")
+def test_16_verify_plexmediaserver_plugins_installed_and_available_value_(request, prop):
     for plugin_info in job_results['result']:
-        if 'transmission' in plugin_info['plugin']:
+        if 'plexmediaserver' in plugin_info['plugin']:
             break
-    assert plugin_info[prop] == transmission_plugin[prop], str(plugin_info)
+    assert plugin_info[prop] == plexmediaserver_plugin[prop], str(plugin_info)
 
 
-def test_17_get_transmission_jail_info(request):
+def test_17_get_plexmediaserver_jail_info(request):
     depends(request, ["pool_04"], scope="session")
-    global transmission_jail, results
-    results = GET("/jail/id/transmission")
+    global plexmediaserver_jail, results
+    results = GET("/jail/id/plexmediaserver")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    transmission_jail = results.json()
+    plexmediaserver_jail = results.json()
 
 
 @pytest.mark.parametrize('prop', plugin_objects)
-def test_18_verify_transmission_plugin_value_with_jail_value_of_(request, prop):
+def test_18_verify_plexmediaserver_plugin_value_with_jail_value_of_(request, prop):
     depends(request, ["pool_04"], scope="session")
-    assert transmission_jail[prop] == transmission_plugin[prop], results.text
+    assert plexmediaserver_jail[prop] == plexmediaserver_plugin[prop], results.text
 
 
 def test_19_get_list_of_available_plugins_without_cache(request):
@@ -223,11 +229,11 @@ def test_21_verify_available_plugin_without_cache(request, plugin):
     assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
-def test_22_stop_transmission_jail(request):
+def test_22_stop_plexmediaserver_jail(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
-        "jail": "transmission",
+        "jail": "plexmediaserver",
         "force": True
     }
     results = POST('/jail/stop/', payload)
@@ -235,36 +241,36 @@ def test_22_stop_transmission_jail(request):
     JOB_ID = results.json()
 
 
-def test_23_wait_for_transmission_plugin_to_be_down(request):
+def test_23_wait_for_plexmediaserver_plugin_to_be_down(request):
     depends(request, ["pool_04"], scope="session")
-    job_status = wait_on_job(JOB_ID, 15)
+    job_status = wait_on_job(JOB_ID, 60)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = GET('/plugin/id/transmission/')
+    results = GET('/plugin/id/plexmediaserver/')
     assert results.json()['state'] == 'down', results.text
 
 
-def test_24_start_transmission_jail(request):
+def test_24_start_plexmediaserver_jail(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
-    payload = "transmission"
+    payload = "plexmediaserver"
     results = POST('/jail/start/', payload)
     assert results.status_code == 200, results.text
     JOB_ID = results.json()
 
 
-def test_25_wait_for_transmission_plugin_to_be_up(request):
+def test_25_wait_for_plexmediaserver_plugin_to_be_up(request):
     depends(request, ["pool_04"], scope="session")
-    job_status = wait_on_job(JOB_ID, 15)
+    job_status = wait_on_job(JOB_ID, 60)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = GET('/plugin/id/transmission/')
+    results = GET('/plugin/id/plexmediaserver/')
     assert results.json()['state'] == 'up', results.text
 
 
-def test_26_stop_transmission_jail_before_deleteing(request):
+def test_26_stop_plexmediaserver_jail_before_deleteing(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
-        "jail": "transmission",
+        "jail": "plexmediaserver",
         "force": True
     }
     results = POST('/jail/stop/', payload)
@@ -272,29 +278,29 @@ def test_26_stop_transmission_jail_before_deleteing(request):
     JOB_ID = results.json()
 
 
-def test_27_wait_for_transmission_plugin_to_be_down(request):
+def test_27_wait_for_plexmediaserver_plugin_to_be_down(request):
     depends(request, ["pool_04"], scope="session")
-    job_status = wait_on_job(JOB_ID, 15)
+    job_status = wait_on_job(JOB_ID, 60)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = GET('/plugin/id/transmission/')
+    results = GET('/plugin/id/plexmediaserver/')
     assert results.json()['state'] == 'down', results.text
 
 
-def test_28_delete_transmission_plugin(request):
+def test_28_delete_plexmediaserver_plugin(request):
     depends(request, ["pool_04"], scope="session")
-    results = DELETE('/plugin/id/transmission/')
+    results = DELETE('/plugin/id/plexmediaserver/')
     assert results.status_code == 200, results.text
 
 
-def test_29_looking_transmission_jail_id_is_delete(request):
+def test_29_looking_plexmediaserver_jail_id_is_delete(request):
     depends(request, ["pool_04"], scope="session")
-    results = GET('/jail/id/transmission/')
+    results = GET('/jail/id/plexmediaserver/')
     assert results.status_code == 404, results.text
 
 
-def test_30_looking_transmission_plugin_id_is_delete(request):
+def test_30_looking_plexmediaserver_plugin_id_is_delete(request):
     depends(request, ["pool_04"], scope="session")
-    results = GET('/plugin/id/transmission/')
+    results = GET('/plugin/id/plexmediaserver/')
     assert results.status_code == 404, results.text
 
 
