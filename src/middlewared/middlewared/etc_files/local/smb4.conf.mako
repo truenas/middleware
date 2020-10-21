@@ -383,8 +383,6 @@
                     pc.update({f'idmap config {domain}: ldap_user_dn': idmap['options']['ldap_user_dn']})
                 if idmap['options'].get('ssl'):
                     pc.update({'ldap ssl': 'start tls'})
-                    if idmap['options']['ldap_server'].lower() == "ads":
-                        pc.update({'ldap ssl ads': 'Yes'})
 
             return pc
 

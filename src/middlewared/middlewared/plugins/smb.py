@@ -325,7 +325,7 @@ class SMBService(SystemServiceService):
         if not ldap['ldap_enable']:
             return True
 
-        set_pass = await run(['usr/local/bin/smbpasswd', '-w', ldap['ldap_bindpw']], check=False)
+        set_pass = await run([SMBCmd.SMBPASSWD.value, '-w', ldap['ldap_bindpw']], check=False)
         if set_pass.returncode != 0:
             self.logger.debug(f"Failed to set set ldap bindpw in secrets.tdb: {set_pass.stdout.decode()}")
             return False

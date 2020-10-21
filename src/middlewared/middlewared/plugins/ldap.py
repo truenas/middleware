@@ -917,9 +917,9 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
 
         if not await self.nslcd_status():
-            await self.nslcd_cmd('onestart')
+            await self.nslcd_cmd('start')
         else:
-            await self.nslcd_cmd('onerestart')
+            await self.nslcd_cmd('restart')
 
         if ldap['has_samba_schema']:
             await self.middleware.call('etc.generate', 'smb')
@@ -944,7 +944,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.synchronize_passdb')
             await self.middleware.call('smb.synchronize_group_mappings')
         await self.middleware.call('cache.pop', 'LDAP_cache')
-        await self.nslcd_cmd('onestop')
+        await self.nslcd_cmd('stop')
         await self.set_state(DSStatus['DISABLED'])
 
     @private
