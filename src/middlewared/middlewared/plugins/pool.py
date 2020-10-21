@@ -2836,12 +2836,12 @@ class PoolDatasetService(CRUDService):
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         else:
-            parent_ds = await self.middleware.call('pool.dataset.query', [('id', '=', data['name'].rsplit('/')[0])])
+            parent_ds = await self.middleware.call('pool.dataset.query', [('id', '=', data['name'].rsplit('/', 1)[0])])
             await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
-            parent_ds = parent_ds[0]
 
         verrors.check()
 
+        parent_ds = parent_ds[0]
         mountpoint = os.path.join('/mnt', data['name'])
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
@@ -3093,7 +3093,7 @@ class PoolDatasetService(CRUDService):
         if parent is None:
             parent = await self.middleware.call(
                 'zfs.dataset.query',
-                [('id', '=', data['name'].rsplit('/')[0])]
+                [('id', '=', data['name'].rsplit('/', 1)[0])]
             )
 
         if not parent:
