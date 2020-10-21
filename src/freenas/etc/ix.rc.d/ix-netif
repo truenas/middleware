@@ -103,8 +103,8 @@ _interface_config()
 	local ipv6_autoconfig="NO"
 
 	# Traverse the network_interface table and network_aliases table to generate rc.conf style configuration
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_ipv6address_b, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
-	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6addr_b ipv6netmask int_vip int_vhid int_pass critical group options; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_ipv6address_b, int_v6netmaskbit, int_vip, int_vipv6address, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6addr_b ipv6netmask int_vip int_vipv6 int_vhid int_pass critical group options; do
 
 		# means we are licensed but HA hardware detection failed
 		if [ ${configure_ifaces} -ne 1 ]; then
@@ -156,41 +156,42 @@ _interface_config()
 		fi
 		echo \"
 
-		# configure the VIP on HA systems
-		if [ -n "${int_vip}" ]; then
-
-			# configure the CARP password
-			if [ -n "${int_pass}" ]; then
-				int_passopt=" pass ${int_pass}"
-			else
-				int_passopt=""
-			fi
-
-			# set CARP advskew to 1 if we're master node
-			if [ "${failover_status}" = "MASTER" ]; then
-				carp1_skew="1"
-			fi
-
-			# setup the CARP address
-			if [ -n "${ipv4addr}" ]; then
-				echo -n "ifconfig_${interface}_alias0=\"inet ${int_vip}/32 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}"
-			elif [ -n "${ipv6addr}" ]; then
-				echo -n "ifconfig_${interface}_alias0=\"inet6 ${int_vip} prefixlen 128 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}"
-			fi
-
-			# setup the failover critical group info
-			if [ -n "${critical}" ]; then
-				echo -n " descr CriticalGroup${group}"
-			fi
-			echo \"
-
-			eval counter_${interface}=1
-
+		# set CARP advskew to 1 if we're master node
+		if [ "${failover_status}" = "MASTER" ]; then
+			carp1_skew="1"
+		else
+			carp1_skew="100"
 		fi
 
+		# configure the CARP password
+		if [ -n "${int_pass}" ]; then
+			int_passopt=" pass ${int_pass}"
+		else
+			int_passopt=""
+		fi
+
+		# setup the failover critical group info
+		if [ -n "${critical}" ]; then
+			descr=" descr CriticalGroup${group}"
+		else
+			descr=""
+		fi
+
+		# configure VIP on HA systems
+		if [ -n "${int_vip}" ]; then
+			# setup the CARP v4 address
+			echo -n "ifconfig_${interface}_alias0=\"inet ${int_vip}/32 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}${descr}\""
+
+		elif [ -n "${int_vipv6}" ]; then
+			# setup the CARP v6 address
+			echo -n "ifconfig_${interface}_alias0=\"inet6 ${int_vipv6} prefixlen 128 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}${descr}\""
+		fi
+
+		eval counter_${interface}=1
+
 		# handle the extra aliases on the interface (if any)
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_vip, alias_v4address, alias_v4address_b, alias_v4netmaskbit, alias_v6address, alias_v6address_b, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
-		while read alias_id a_vip v4addr v4addr_b v4netmask v6addr v6addr_b v6netmask; do
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_vip, alias_vipv6address, alias_v4address, alias_v4address_b, alias_v4netmaskbit, alias_v6address, alias_v6address_b, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
+		while read alias_id a_vip a_vipv6 v4addr v4addr_b v4netmask v6addr v6addr_b v6netmask; do
 			eval counter=\${counter_${interface}:-0}
 			if [ "$(ha_node)" = "B" ]; then
 				v4addr=${v4addr_b}
@@ -198,14 +199,13 @@ _interface_config()
 			fi
 
 			# configure the extra CARP aliases
-			if [ -n "${int_vhid}" -a -n "${a_vip}" ]; then
-				if [ -n "${v4addr}" ]; then
-					echo "ifconfig_${interface}_alias${counter}=\"inet ${a_vip}/32 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}\""
-					counter=$((counter+1))
-				elif [ -n "${v6addr}" ]; then
-					echo "ifconfig_${interface}_alias${counter}=\"inet6 ${a_vip} prefixlen 128 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}\""
-					counter=$((counter+1))
-				fi
+			if [ -n "${a_vip}" ]; then
+				echo "ifconfig_${interface}_alias${counter}=\"inet ${a_vip}/32 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}\""
+				counter=$((counter+1))
+			fi
+			if [ -n "${a_vipv6}" ]; then
+				echo "ifconfig_${interface}_alias${counter}=\"inet6 ${a_vipv6} prefixlen 128 vhid ${int_vhid} advskew ${carp1_skew}${int_passopt}\""
+				counter=$((counter+1))
 			fi
 
 			# configure the extra aliases
