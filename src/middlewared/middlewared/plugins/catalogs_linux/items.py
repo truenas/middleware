@@ -104,7 +104,10 @@ class CatalogService(Service):
         for ref in question['schema']['$ref']:
             version_data['required_features'].append(ref)
             if ref == 'definitions/interface':
-                data['enum'] = [d['id'] for d in self.middleware.call_sync('interface.query')]
+                data['enum'] = [
+                    {'value': d['id'], 'description': f'{d["id"]!r} Interface'}
+                    for d in self.middleware.call_sync('interface.query')
+                ]
             elif ref == 'definitions/gpuConfiguration':
                 data['attrs'] = []
                 for gpu, quantity in self.middleware.call_sync('k8s.gpu.available_gpus').items():

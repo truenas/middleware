@@ -5,7 +5,7 @@ import shutil
 from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, Str
-from middlewared.service import accepts, CallError, private, Service
+from middlewared.service import accepts, CallError, job, private, Service
 
 from .utils import get_namespace, run
 
@@ -24,7 +24,8 @@ class ChartReleaseService(Service):
             Str('item_version', required=True),
         )
     )
-    async def rollback(self, release_name, options):
+    @job(lock=lambda args: f'chart_release_rollback_{args[0]}')
+    async def rollback(self, job, release_name, options):
         """
         Rollback a chart release to a previous chart version.
 
@@ -80,9 +81,12 @@ class ChartReleaseService(Service):
                 f'exist anymore: {", ".join(d.split("/")[-1] for d in history_datasets - current_dataset_paths)}'
             )
 
+        job.set_progress(25, 'Initial validation complete')
+
         # TODO: Upstream helm does not have ability to force stop a release, until we have that ability
         #  let's just try to do a best effort to scale down scaleable workloads and then scale them back up
         scale_stats = await self.middleware.call('chart.release.scale', release_name, {'replica_count': 0})
+        job.set_progress(45, 'Scaled down workloads')
 
         command = []
         if options['force']:
@@ -121,6 +125,7 @@ class ChartReleaseService(Service):
             'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale'], True,
         )
 
+        job.set_progress(100, 'Rollback complete for chart release')
         return await self.middleware.call('chart.release.get_instance', release_name)
 
     @private

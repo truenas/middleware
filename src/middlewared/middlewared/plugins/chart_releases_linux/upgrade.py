@@ -119,4 +119,5 @@ class ChartReleaseService(Service):
             if cp.returncode:
                 raise CallError(f'Failed to upgrade chart release to {new_version!r}: {cp.stderr.decode()}')
 
+        job.set_progress(100, 'Upgrade complete for chart release')
         return await self.middleware.call('chart.release.get_instance', release_name)
