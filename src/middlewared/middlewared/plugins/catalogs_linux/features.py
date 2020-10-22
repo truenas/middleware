@@ -54,7 +54,7 @@ class CatalogService(Service):
         error_str = 'Catalog item version is not supported due to following missing features:\n'
         for index, feature in enumerate(missing_features):
             train_message = ''
-            for k, v in mapping[feature].items():
+            for k, v in mapping.get(feature, {}).items():
                 train_message += f'\nFor {k.capitalize()!r} train:\nMinimum SCALE version: {v["min"]}\n'
                 if v.get('max'):
                     train_message += f'Maximum SCALE version: {v["max"]}'

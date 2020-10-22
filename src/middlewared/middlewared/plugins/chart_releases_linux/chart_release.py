@@ -173,7 +173,7 @@ class ChartReleaseService(CRUDService):
         # 2) Copy chart version into release/charts dataset
         # 3) Install the helm chart
         # 4) Create storage class
-        storage_class_name = await get_storage_class_name(data['release_name'])
+        storage_class_name = get_storage_class_name(data['release_name'])
         try:
             job.set_progress(30, 'Creating chart release datasets')
 
@@ -334,7 +334,7 @@ class ChartReleaseService(CRUDService):
 
     @private
     async def remove_storage_class_and_dataset(self, release_name, job=None):
-        storage_class_name = await get_storage_class_name(release_name)
+        storage_class_name = get_storage_class_name(release_name)
         if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
             if job:
                 job.set_progress(85, f'Removing {release_name!r} storage class')

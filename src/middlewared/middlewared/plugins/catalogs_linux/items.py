@@ -67,7 +67,7 @@ class CatalogService(Service):
 
     @private
     def item_version_details(self, version_path):
-        version_data = {'location': version_path, 'required_features': []}
+        version_data = {'location': version_path, 'required_features': set()}
         for key, filename, parser in (
             ('values', 'values.yaml', yaml.load),
             ('schema', 'questions.yaml', yaml.load),
@@ -82,6 +82,7 @@ class CatalogService(Service):
         self.normalise_questions(version_data)
 
         version_data['supported'] = self.middleware.call_sync('catalog.version_supported', version_data)
+        version_data['required_features'] = list(version_data['required_features'])
 
         return version_data
 
@@ -92,17 +93,15 @@ class CatalogService(Service):
 
     def _normalise_question(self, question, version_data):
         schema = question['schema']
-        for attr in itertools.chain(
-            *[d.get(k, []) for d, k in zip((schema, schema, question), ('attrs', 'items', 'subquestions'))]
-        ):
+        for attr in itertools.chain(*[schema.get(k, []) for k in ('attrs', 'items', 'subquestions')]):
             self._normalise_question(attr, version_data)
 
-        if '$ref' not in question['schema']:
+        if '$ref' not in schema:
             return
 
         data = {}
-        for ref in question['schema']['$ref']:
-            version_data['required_features'].append(ref)
+        for ref in schema['$ref']:
+            version_data['required_features'].add(ref)
             if ref == 'definitions/interface':
                 data['enum'] = [
                     {'value': d['id'], 'description': f'{d["id"]!r} Interface'}
@@ -120,4 +119,4 @@ class CatalogService(Service):
                         }
                     })
 
-        question['schema'].update(data)
+        schema.update(data)

@@ -30,7 +30,7 @@ async def run(*args, **kwargs):
     return await _run(*args, **kwargs)
 
 
-async def get_storage_class_name(release):
+def get_storage_class_name(release):
     return f'ix-storage-class-{release}'
 
 

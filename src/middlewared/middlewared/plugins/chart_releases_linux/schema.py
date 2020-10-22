@@ -38,7 +38,7 @@ def update_conditional_validation(dict_obj, variable_details):
     return dict_obj
 
 
-def get_schema(variable_details):
+def get_schema(variable_details, update):
     schema_details = variable_details['schema']
     schema_class = mapping[schema_details['type']]
 
@@ -53,7 +53,8 @@ def get_schema(variable_details):
     else:
         obj = schema_class(
             variable_details['variable'],
-            *list(chain.from_iterable(get_schema(var) for var in schema_details.get('attrs', []))), **obj_kwargs
+            *list(chain.from_iterable(get_schema(var, update) for var in schema_details.get('attrs', []))),
+            update=update, **obj_kwargs
         )
         if schema_class == Dict:
             obj = update_conditional_validation(obj, variable_details)
@@ -76,9 +77,9 @@ def get_schema(variable_details):
                 obj.validators.append(Match(schema_details['valid_chars']))
 
     if schema_class == List:
-        obj.items = list(chain.from_iterable(get_schema(i) for i in schema_details['items']))
+        obj.items = list(chain.from_iterable(get_schema(i, update) for i in schema_details['items']))
     elif 'subquestions' in schema_details:
-        result.extend(list(chain.from_iterable(get_schema(i) for i in schema_details['subquestions'])))
+        result.extend(list(chain.from_iterable(get_schema(i, update) for i in schema_details['subquestions'])))
 
     result.insert(0, obj)
     return result

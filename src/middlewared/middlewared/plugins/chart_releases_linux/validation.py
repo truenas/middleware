@@ -22,7 +22,9 @@ class ChartReleaseService(Service):
             new_values.pop(k[0], None)
 
         schema_name = f'chart_release_{"update" if update else "create"}'
-        attrs = list(itertools.chain.from_iterable(get_schema(q) for q in item_version_details['schema']['questions']))
+        attrs = list(itertools.chain.from_iterable(
+            get_schema(q, update) for q in item_version_details['schema']['questions']
+        ))
         dict_obj = update_conditional_validation(
             Dict(schema_name, *attrs, update=update), {
                 'schema': {'attrs': item_version_details['schema']['questions']}
