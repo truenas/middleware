@@ -20,7 +20,7 @@ class MiddlewareGDB(object):
             try:
                 subprocess.run(['dpkg', '-L', p], capture_output=True, check=True)
             except subprocess.CalledProcessError:
-                subprocess.run('apt install -y python3-dbg python3-dev', shell=True, check=True)
+                subprocess.run(['apt', 'install', '-y', p], check=True)
 
     def run_gdb(self):
 
