@@ -188,7 +188,11 @@ http {
         }
 
         location /api/docs/restful/static {
+% if IS_FREEBSD:
             alias /usr/local/www/swagger-ui/node_modules/swagger-ui-dist;
+% else:
+            alias /usr/local/share/swagger-ui-dist;
+% endif
         }
 
         location /ui {
