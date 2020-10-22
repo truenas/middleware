@@ -126,6 +126,7 @@ def test_09_verify_available_plugin_(request, plugin):
     assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
+@pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_10_verify_available_plugins_plexmediaserver_is_not_na_with(request, prop):
     depends(request, ["pool_04"], scope="session")
     for plugin_info in job_results['result']:
