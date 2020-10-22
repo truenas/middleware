@@ -663,7 +663,7 @@ async def vrrp_fifo_hook(middleware, data):
     # since both of them are static in our use case
     data = data.split()
 
-    ifname = data[1].strip('"')  # interface
+    ifname = data[1].split('_')[0].strip('"')  # interface
     event = data[2]  # the state that is being transititoned to
 
     # we only care about MASTER or BACKUP events currently

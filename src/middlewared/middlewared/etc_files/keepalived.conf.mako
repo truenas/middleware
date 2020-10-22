@@ -23,21 +23,41 @@
 
     info = middleware.call_sync('interface.query')
     info = [i for i in info if len(i['failover_virtual_aliases'])]
-
     if not info:
         middleware.logger.error(
-	    'No interfaces configured for failover.'
-	    ' Keepalived config not generated.'
-	)
-	raise FileShouldNotExist()
+            'No interfaces configured for failover.'
+            ' Keepalived config not generated.'
+        )
+        raise FileShouldNotExist()
+
+    # keepalived requires that ipv4 and ipv6 addresses for a given
+    # interface be separated into their own vrrp_instance entry
+    ips = []
+    for i in info:
+    ips.append({
+        'name': i['id'] + '_v4',
+        'aliases': [j for j in i['aliases'] if j['type'] == 'INET'],
+        'failover_aliases': [j for j in i['failover_aliases'] if j['type'] == 'INET'],
+        'failover_virtual_aliases': [j for j in i['failover_virtual_aliases'] if j['type'] == 'INET'],
+    })
+    ips.append({
+        'name': i['id'] + '_v6',
+        'aliases': [j for j in i['aliases'] if j['type'] == 'INET6'],
+        'failover_aliases': [j for j in i['failover_aliases'] if j['type'] == 'INET6'],
+        'failover_virtual_aliases': [j for j in i['failover_virtual_aliases'] if j['type'] == 'INET6'],
+    })
+
+    # ipv4 or ipv6 addresses might not exist so remove them from
+    # here so we don't generate an empty entry in the config
+    ips = [i for i in ips if i['aliases']]
 
 %>\
 global_defs {
     vrrp_notify_fifo /var/run/vrrpd.fifo
 }
-% for i in info:
-vrrp_instance ${i['id']} {
-    interface ${i['id']}
+% for i in ips:
+vrrp_instance ${i['name']} {
+    interface ${i['name'].split('_')[0]}
     state BACKUP
     advert_int ${advert_int}
     nopreempt
