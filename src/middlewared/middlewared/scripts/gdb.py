@@ -1,12 +1,9 @@
 import argparse
 import logging
-import libzfs
-import re
 import requests
 import subprocess
 import sys
 import tempfile
-import textwrap
 
 
 class MiddlewareGDB(object):
@@ -58,7 +55,7 @@ class MiddlewareGDB(object):
 
     def main(self):
         parser = argparse.ArgumentParser()
-        args = parser.parse_args()
+        parser.parse_args()
 
         print('Making sure debug packages are installed')
         self.install_dbg()
