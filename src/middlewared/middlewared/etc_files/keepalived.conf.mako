@@ -34,18 +34,18 @@
     # interface be separated into their own vrrp_instance entry
     ips = []
     for i in info:
-    ips.append({
-        'name': i['id'] + '_v4',
-        'aliases': [j for j in i['aliases'] if j['type'] == 'INET'],
-        'failover_aliases': [j for j in i['failover_aliases'] if j['type'] == 'INET'],
-        'failover_virtual_aliases': [j for j in i['failover_virtual_aliases'] if j['type'] == 'INET'],
-    })
-    ips.append({
-        'name': i['id'] + '_v6',
-        'aliases': [j for j in i['aliases'] if j['type'] == 'INET6'],
-        'failover_aliases': [j for j in i['failover_aliases'] if j['type'] == 'INET6'],
-        'failover_virtual_aliases': [j for j in i['failover_virtual_aliases'] if j['type'] == 'INET6'],
-    })
+        ips.append({
+            'name': i['id'] + '_v4',
+            'aliases': [j for j in i['aliases'] if j['type'] == 'INET'],
+            'failover_aliases': [j for j in i['failover_aliases'] if j['type'] == 'INET'],
+            'failover_virtual_aliases': [j for j in i['failover_virtual_aliases'] if j['type'] == 'INET'],
+        })
+        ips.append({
+            'name': i['id'] + '_v6',
+            'aliases': [j for j in i['aliases'] if j['type'] == 'INET6'],
+            'failover_aliases': [j for j in i['failover_aliases'] if j['type'] == 'INET6'],
+            'failover_virtual_aliases': [j for j in i['failover_virtual_aliases'] if j['type'] == 'INET6'],
+        })
 
     # ipv4 or ipv6 addresses might not exist so remove them from
     # here so we don't generate an empty entry in the config
