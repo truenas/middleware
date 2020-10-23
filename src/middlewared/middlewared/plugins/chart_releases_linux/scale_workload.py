@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.schema import Dict, Int, Str
 from middlewared.service import accepts, CallError, private, Service
 
@@ -106,3 +108,10 @@ class ChartReleaseService(Service):
                         }
                     }
                 )
+
+    @private
+    async def wait_for_pods_to_terminate(self, namespace):
+        # wait for release to uninstall properly, helm right now does not support a flag for this but
+        # a feature request is open in the community https://github.com/helm/helm/issues/2378
+        while await self.middleware.call('k8s.pod.query', [['metadata.namespace', '=', namespace]]):
+            await asyncio.sleep(5)

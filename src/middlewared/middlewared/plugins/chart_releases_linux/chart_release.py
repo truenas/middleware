@@ -1,4 +1,3 @@
-import asyncio
 import collections
 import copy
 import errno
@@ -314,13 +313,8 @@ class ChartReleaseService(CRUDService):
             raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
 
         job.set_progress(50, f'Uninstalled {release_name}')
-        # wait for release to uninstall properly, helm right now does not support a flag for this but
-        # a feature request is open in the community https://github.com/helm/helm/issues/2378
-        while await self.middleware.call(
-            'k8s.pod.query', [['metadata.namespace', '=', get_namespace(release_name)]],
-        ):
-            job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
-            await asyncio.sleep(5)
+        job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
+        await self.middleware.call('chart.release.wait_for_pods_to_terminate', get_namespace(release_name))
 
         await self.post_remove_tasks(release_name, job)
 
