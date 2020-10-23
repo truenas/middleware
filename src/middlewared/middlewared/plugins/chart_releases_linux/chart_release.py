@@ -196,8 +196,12 @@ class ChartReleaseService(CRUDService):
             job.set_progress(65, f'Creating {namespace_name} for chart release')
             namespace_body = {
                 'metadata': {
-                    'labels': {'catalog': data['catalog'], 'catalog_train': data['train']},
-                    'name': namespace_name
+                    'labels': {
+                        'catalog': data['catalog'],
+                        'catalog_train': data['train'],
+                        'catalog_branch': catalog['branch'],
+                    },
+                    'name': namespace_name,
                 }
             }
             if not await self.middleware.call('k8s.namespace.query', [['metadata.name', '=', namespace_name]]):
