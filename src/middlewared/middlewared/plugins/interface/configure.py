@@ -4,6 +4,7 @@ import shlex
 import signal
 import subprocess
 import re
+import textwrap
 
 from .netif import netif
 from .type_base import InterfaceType
@@ -140,12 +141,25 @@ class InterfaceService(Service):
 
                 addrs_database.add(self.alias_to_addr(alias_vip_data))
 
-        if has_ipv6:
-            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
-            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
+        if osc.IS_FREEBSD:
+            if has_ipv6:
+                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
+                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
+            else:
+                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
+                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
         else:
-            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
-            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
+            if has_ipv6:
+                # https://tools.ietf.org/html/rfc4291#section-2.5.1
+                # add an EUI64 link-local ipv6 address
+                mac = iface.link_address.address.address.replace(':', '')
+                mac[0:6] + 'fffe' + mac[6:]
+                mac = hex(int(mac[0:2], 16) ^ 2)[2:].zfill(2) + mac[2:]
+                link_local = {
+                    'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)),
+                    'netmask': '64',
+                }
+                addrs_database.add(self.alias_to_addr(link_local))
 
         if dhclient_running and not data['int_dhcp']:
             self.logger.debug('Killing dhclient for {}'.format(name))
