@@ -1424,7 +1424,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             self.loop.set_debug(True)
             self.loop.slow_callback_duration = 0.2
 
-        self.loop.create_task(self.__initialize())
+        self.loop.run_until_complete(self.__initialize())
 
         try:
             self.loop.run_forever()
