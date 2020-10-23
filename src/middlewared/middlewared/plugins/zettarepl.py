@@ -562,6 +562,8 @@ class ZettareplService(Service):
                 "recursive": replication_task["recursive"],
                 "exclude": replication_task_exclude(replication_task),
                 "properties": replication_task["properties"],
+                "properties-exclude": replication_task["properties_exclude"],
+                "properties-override": replication_task["properties_override"],
                 "replicate": replication_task["replicate"],
                 "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
                 "auto": replication_task["auto"],
