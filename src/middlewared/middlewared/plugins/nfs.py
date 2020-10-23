@@ -87,9 +87,12 @@ class NFSService(SystemServiceService):
 
         if found:
             await self.middleware.call('alert.oneshot_delete', 'NFSBindAddress', None)
+
             return bindip
         else:
-            await self.middleware.call('alert.oneshot_create', 'NFSBindAddress', None)
+            if await self.middleware.call('cache.has_key', 'interfaces_are_set_up'):
+                await self.middleware.call('alert.oneshot_create', 'NFSBindAddress', None)
+
             return []
 
     @accepts(Dict(
@@ -542,6 +545,14 @@ class SharingNFSService(SharingService):
         return data
 
 
+async def interface_post_sync(middleware):
+    if osc.IS_FREEBSD:
+        if not await middleware.call('cache.has_key', 'interfaces_are_set_up'):
+            await middleware.call('cache.put', 'interfaces_are_set_up', True)
+            if (await middleware.call('nfs.config'))['bindip']:
+                await middleware.call('service.restart', 'nfs')
+
+
 async def pool_post_import(middleware, pool):
     """
     Makes sure to reload NFS if a pool is imported and there are shares configured for it.
@@ -575,4 +586,6 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', NFSFSAttachmentDelegate(middleware))
+
+    middleware.register_hook('interface.post_sync', interface_post_sync)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
