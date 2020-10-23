@@ -337,6 +337,11 @@ class KerberosService(ConfigService):
         klistin = data.get("klistin")
         krb5 = KRB5(data.get("krb5type"))
 
+        if ldap.get('enable') and ldap['kerberos_realm']:
+            ldap_realm = await self.middleware.call('kerberos.realm.query',
+                                                    [('id', '=', ldap['kerberos_realm'])],
+                                                    {'get': True})
+
         if krb5 == KRB5.MIT:
             tickets = klistin.splitlines()
             default_principal = None
@@ -421,7 +426,7 @@ class KerberosService(ConfigService):
                     })
 
                 elif ldap['enable'] and ldap['kerberos_realm']:
-                    if ldap['kerberos_realm']['krb_realm'] in client:
+                    if ldap_realm['realm'] in client:
                         ldap_TGT.append({
                             'issued': issued,
                             'expires': expires,
