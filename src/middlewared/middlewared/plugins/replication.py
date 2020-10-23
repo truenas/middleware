@@ -59,6 +59,7 @@ class ReplicationModel(sa.Model):
     repl_name = sa.Column(sa.String(120))
     repl_state = sa.Column(sa.Text(), default="{}")
     repl_properties = sa.Column(sa.Boolean(), default=True)
+    repl_properties_exclude = sa.Column(sa.JSON(type=list))
     repl_replicate = sa.Column(sa.Boolean())
     repl_encryption = sa.Column(sa.Boolean())
     repl_encryption_key = sa.Column(sa.EncryptedText(), nullable=True)
@@ -151,6 +152,7 @@ class ReplicationService(CRUDService):
             Bool("recursive", required=True),
             List("exclude", items=[Path("dataset", empty=False)], default=[]),
             Bool("properties", default=True),
+            List("properties_exclude", items=[Str("property", empty=False)], default=[]),
             Bool("replicate", default=False),
             Bool("encryption", default=False),
             Str("encryption_key", null=True, default=None),
