@@ -952,28 +952,10 @@ class ZFSSnapshot(CRUDService):
                 filter_getattrs(filters).issubset({'name', 'pool'})
             )
         ):
-            # Using zfs list -o name is dozens of times faster than py-libzfs
-            cmd = ['zfs', 'list', '-H', '-o', 'name', '-t', 'snapshot']
-            order_by = options.get('order_by')
-            # -s name makes it even faster
-            if not order_by or order_by == ['name']:
-                cmd += ['-s', 'name']
-            cp = subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-            )
-            if cp.returncode != 0:
-                raise CallError(f'Failed to retrieve snapshots: {cp.stderr}')
-            stdout = cp.stdout.strip()
-            if not stdout:
-                return []
-            snaps = [
-                {'name': i, 'pool': i.split('/', 1)[0]}
-                for i in stdout.split('\n')
-            ]
-            if filters:
+            with libzfs.ZFS() as zfs:
+                snaps = zfs.snapshots_serialized(['name'])
+
+            if filters or len(options) > 1:
                 return filter_list(snaps, filters, options)
             return snaps
         with libzfs.ZFS() as zfs:
