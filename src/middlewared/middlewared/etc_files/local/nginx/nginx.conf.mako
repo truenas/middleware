@@ -287,7 +287,7 @@ http {
 % if general_settings['ui_httpsredirect'] and ssl_configuration:
     server {
     % for ip in ip_list:
-        listen    ${ip}:80;
+        listen    ${ip}:${general_settings['ui_port']};
     % endfor
         server_name localhost;
         return 307 https://$host:${general_settings['ui_httpsport']}$request_uri;
