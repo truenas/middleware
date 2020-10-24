@@ -885,9 +885,7 @@ class iSCSITargetExtentService(SharingService):
 
         used_zvols = [i['path'] for i in zvol_query]
 
-        zfs_snaps = await self.middleware.call(
-            'zfs.snapshot.query', [], {'select': ['name'], 'order_by': ['name']}
-        )
+        zfs_snaps = await self.middleware.call('zfs.snapshot.query', [], {'select': ['name']})
 
         zvols = await self.middleware.call(
             'pool.dataset.query',

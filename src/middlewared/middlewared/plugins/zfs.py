@@ -958,23 +958,15 @@ class ZFSSnapshot(CRUDService):
             if filters or len(options) > 1:
                 return filter_list(snaps, filters, options)
             return snaps
+
         with libzfs.ZFS() as zfs:
             # Handle `id` filter to avoid getting all snapshots first
-            snapshots = []
+            kwargs = dict(holds=False, mounted=False)
             if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
-                try:
-                    snapshots.append(zfs.get_snapshot(filters[0][2]).__getstate__())
-                except libzfs.ZFSException as e:
-                    if e.code != libzfs.Error.NOENT:
-                        raise
-            else:
-                for i in zfs.snapshots:
-                    try:
-                        snapshots.append(i.__getstate__())
-                    except libzfs.ZFSException as e:
-                        # snapshot may have been deleted while this is running
-                        if e.code != libzfs.Error.NOENT:
-                            raise
+                kwargs['datasets'] = [filters[0][2]]
+
+            snapshots = zfs.snapshots_serialized(**kwargs)
+
         # FIXME: awful performance with hundreds/thousands of snapshots
         return filter_list(snapshots, filters, options)
 
