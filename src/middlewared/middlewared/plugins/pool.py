@@ -3092,7 +3092,7 @@ class PoolDatasetService(CRUDService):
 
         if parent is None:
             parent = await self.middleware.call(
-                'zfs.dataset.query',
+                'pool.dataset.query',
                 [('id', '=', data['name'].rsplit('/', 1)[0])]
             )
 
@@ -3135,13 +3135,10 @@ class PoolDatasetService(CRUDService):
 
             if 'volsize' in data and parent:
 
-                avail_mem = int(parent['properties']['available']['rawvalue'])
+                avail_mem = int(parent['available']['rawvalue'])
 
                 if mode == 'UPDATE':
-                    avail_mem += int((await self.middleware.call(
-                        'zfs.dataset.query',
-                        [['id', '=', data['name']]]
-                    ))[0]['properties']['used']['rawvalue'])
+                    avail_mem += int((await self.get_instance(data['name']))['used']['rawvalue'])
 
                 if (
                     data['volsize'] > (avail_mem * 0.80) and
