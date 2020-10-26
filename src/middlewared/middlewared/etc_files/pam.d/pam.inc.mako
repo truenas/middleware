@@ -2,9 +2,9 @@
     class DirectoryServicePamBase(object):
         def __init__(self, **kwargs):
             self.middleware = kwargs.get('middleware')
-            self.pam_mkhomedir = "/usr/local/lib/pam_mkhomedir.so"
-            self.pam_ldap = "/usr/local/lib/pam_ldap.so"
-            self.pam_winbind = "/usr/local/lib/pam_winbind.so"
+            self.pam_mkhomedir = "pam_mkhomedir.so"
+            self.pam_ldap = "pam_ldap.so"
+            self.pam_winbind = "pam_winbind.so"
             self.pam_krb5 = "pam_krb5.so"
 
         def safe_call(self, *args):
