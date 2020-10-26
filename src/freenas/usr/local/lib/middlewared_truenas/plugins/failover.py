@@ -788,8 +788,8 @@ class FailoverService(ConfigService):
                 return False
 
     @private
-    async def is_backup_node(self):
-        return (await self.middleware.call('failover.status')) == 'BACKUP'
+    async def is_single_master_node(self):
+        return await self.middleware.call('failover.status') in ('MASTER', 'SINGLE')
 
     @accepts(
         Str('action', enum=['ENABLE', 'DISABLE']),
