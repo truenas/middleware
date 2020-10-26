@@ -1,8 +1,9 @@
-# Copyright (c) 2015 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
+
 from middlewared.client import Client, ClientException, CallTimeout
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, Service, job, private
@@ -33,6 +34,7 @@ class RemoteClient(object):
         self._subscriptions = defaultdict(list)
         self._on_connect_callbacks = []
         self._on_disconnect_callbacks = []
+        self._os_version = None
 
     def run(self):
         set_thread_name('ha_connection')
@@ -90,6 +92,13 @@ class RemoteClient(object):
         """
         Called everytime connection has been established.
         """
+
+        # journal thread checks this attribute to ensure
+        # we're not trying to alter the remote db if the
+        # OS versions do not match since schema changes
+        # can (and do) change between upgrades
+        self._os_version = self.get_os_version()
+
         for cb in self._on_connect_callbacks:
             try:
                 cb(self.middleware)
@@ -106,6 +115,9 @@ class RemoteClient(object):
         """
         Called everytime connection is closed for whatever reason.
         """
+
+        self._os_version = None
+
         for cb in self._on_disconnect_callbacks:
             try:
                 cb(self.middleware)
@@ -174,6 +186,16 @@ class RemoteClient(object):
                     break
             time.sleep(0.5)
 
+    def get_os_version(self):
+
+        if self._os_version is None:
+            try:
+                self._os_version = self.client.call('system.version')
+            except Exception:
+                logger.error('Failed to determine OS version', exc_info=True)
+
+        return self._os_version
+
 
 class FailoverService(Service):
 
@@ -213,6 +235,11 @@ class FailoverService(Service):
             return self.CLIENT.call(method, *args, **options)
         except CallTimeout:
             raise CallError('Call timeout', errno.ETIMEDOUT)
+
+    @private
+    def get_os_version(self):
+
+        return self.CLIENT.get_os_version()
 
     @private
     def sendfile(self, token, src, dst):
