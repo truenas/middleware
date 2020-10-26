@@ -1419,8 +1419,8 @@ class JournalSync:
     def _os_versions_match(self):
 
         try:
-            loc = self.middleware.call_sync('failover.get_os_version')
-            rem = self.middleware.call_sync('failover.call_remote', 'failover.get_os_version')
+            rem = self.middleware.call_sync('failover.get_remote_os_version')
+            loc = self.middleware.call_sync('system.version')
         except Exception:
             return False
 
@@ -1441,18 +1441,23 @@ async def journal_ha(middleware):
 
 
 def journal_sync(middleware):
+
+    alert = True
     while True:
         try:
             journal = Journal()
             journal_sync = JournalSync(middleware, sql_queue, journal)
             while True:
                 journal_sync.process()
-        except Exception as e:
-            if isinstance(e, OSVersionMismatch):
+                alert = True
+        except OSVersionMismatch:
+            if alert:
                 logger.warning('OS version does not match remote node. Not syncing journal')
-            else:
-                logger.warning('Failed to sync journal', exc_info=True)
-            time.sleep(5)
+                alert = False
+        except Exception:
+            logger.warning('Failed to sync journal', exc_info=True)
+
+        time.sleep(5)
 
 
 def sync_internal_ips(middleware, iface, carp1_skew, carp2_skew, internal_ip):

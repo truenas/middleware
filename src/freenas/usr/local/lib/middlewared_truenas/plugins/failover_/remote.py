@@ -34,7 +34,7 @@ class RemoteClient(object):
         self._subscriptions = defaultdict(list)
         self._on_connect_callbacks = []
         self._on_disconnect_callbacks = []
-        self._os_version = None
+        self._remote_os_version = None
 
     def run(self):
         set_thread_name('ha_connection')
@@ -97,7 +97,7 @@ class RemoteClient(object):
         # we're not trying to alter the remote db if the
         # OS versions do not match since schema changes
         # can (and do) change between upgrades
-        self._os_version = self.get_os_version()
+        self._remote_os_version = self.get_remote_os_version()
 
         for cb in self._on_connect_callbacks:
             try:
@@ -116,7 +116,7 @@ class RemoteClient(object):
         Called everytime connection is closed for whatever reason.
         """
 
-        self._os_version = None
+        self._remote_os_version = None
 
         for cb in self._on_disconnect_callbacks:
             try:
@@ -192,15 +192,15 @@ class RemoteClient(object):
                     break
             time.sleep(0.5)
 
-    def get_os_version(self):
+    def get_remote_os_version(self):
 
-        if self._os_version is None:
+        if self._remote_os_version is None:
             try:
-                self._os_version = self.client.call('system.version')
+                self._remote_os_version = self.client.call('system.version')
             except Exception:
                 logger.error('Failed to determine OS version', exc_info=True)
 
-        return self._os_version
+        return self._remote_os_version
 
 
 class FailoverService(Service):
@@ -243,9 +243,9 @@ class FailoverService(Service):
             raise CallError('Call timeout', errno.ETIMEDOUT)
 
     @private
-    def get_os_version(self):
+    def get_remote_os_version(self):
 
-        return self.CLIENT.get_os_version()
+        return self.CLIENT.get_remote_os_version()
 
     @private
     def sendfile(self, token, src, dst):
