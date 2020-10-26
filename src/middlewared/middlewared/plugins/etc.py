@@ -6,6 +6,7 @@ from middlewared.utils.io import write_if_changed
 
 import asyncio
 from collections import defaultdict
+from pathlib import Path
 import grp
 import imp
 import os
@@ -13,6 +14,10 @@ import pwd
 
 
 UPS_GROUP = 'nut' if osc.IS_LINUX else 'uucp'
+PAM_PATH = Path(f'{Path(__file__).parent.parent}/etc_files/pam.d')
+LINUX_PAM_FILES = set(PAM_PATH.glob('common*'))
+FREEBSD_PAM_FILES = set(PAM_PATH.iterdir()) - LINUX_PAM_FILES
+PAM_FILES = LINUX_PAM_FILES if osc.IS_LINUX else FREEBSD_PAM_FILES
 
 
 class FileShouldNotExist(Exception):
@@ -133,14 +138,8 @@ class EtcService(Service):
                 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
         'pam': [
-            {'type': 'mako', 'path': os.path.join('pam.d', f[:-5]), 'platform': 'FreeBSD'}
-            for f in os.listdir(
-                os.path.realpath(
-                    os.path.join(
-                        os.path.dirname(__file__), '..', 'etc_files', 'pam.d'
-                    )
-                )
-            )
+            {'type': 'mako', 'path': os.path.join('pam.d', f.name[:-5])}
+            for f in PAM_FILES
         ],
         'ftp': [
             {'type': 'mako', 'path': 'local/proftpd.conf' if osc.IS_FREEBSD else 'proftpd/proftpd.conf',
