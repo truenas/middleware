@@ -86,7 +86,7 @@ ${ssh_config['options']}
 UsePAM yes
 ChallengeResponseAuthentication yes
     % if IS_LINUX:
-## We want to set this to no because in linux we have pam_motd being used as well when we use pam_google_authenticator.so resulting in duplicate motd's
+## We want to set this to no because in linux we have pam_motd being used as well when we use pam_oath.so resulting in duplicate motd's
 PrintMotd no
     % endif
 % endif
