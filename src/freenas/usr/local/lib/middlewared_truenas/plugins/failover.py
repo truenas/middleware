@@ -75,6 +75,15 @@ class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
     pass
 
 
+class OSVersionMismatch(Exception):
+
+    """
+    Raised in JournalSync thread when the remote nodes OS version
+    does not match the local nodes OS version.
+    """
+    pass
+
+
 def throttle_condition(middleware, app, *args, **kwargs):
     # app is None means internal middleware call
     if app is None or (app and app.authenticated):
@@ -1321,6 +1330,10 @@ class JournalSync:
 
             self.journal.clear()
 
+        if not self._os_versions_match():
+            if self.journal:
+                raise OSVersionMismatch()
+
         had_journal_items = bool(self.journal)
         flush_succeeded = self._flush_journal()
 
@@ -1403,6 +1416,16 @@ class JournalSync:
     def _update_failover_status(self):
         self.failover_status = self.middleware.call_sync('failover.status')
 
+    def _os_versions_match(self):
+
+        try:
+            loc = self.middleware.call_sync('failover.get_os_version')
+            rem = self.middleware.call_sync('failover.call_remote', 'failover.get_os_version')
+        except Exception:
+            return False
+
+        return loc == rem
+
 
 def hook_datastore_execute_write(middleware, sql, params):
     sql_queue.put((sql, params))
@@ -1424,8 +1447,11 @@ def journal_sync(middleware):
             journal_sync = JournalSync(middleware, sql_queue, journal)
             while True:
                 journal_sync.process()
-        except Exception:
-            logger.warning('Failed to sync journal', exc_info=True)
+        except Exception as e:
+            if isinstance(e, OSVersionMismatch):
+                logger.warning('OS version does not match remote node. Not syncing journal')
+            else:
+                logger.warning('Failed to sync journal', exc_info=True)
             time.sleep(5)
 
 
