@@ -22,7 +22,11 @@ class UsageService(Service):
     async def start(self):
         retries = self.FAILED_RETRIES
         while retries:
-            if not await self.middleware.call('network.general.can_perform_activity', 'usage'):
+            if (
+                not await self.middleware.call('failover.is_single_master_node') or not await self.middleware.call(
+                    'network.general.can_perform_activity', 'usage'
+                )
+            ):
                 break
 
             if (await self.middleware.call('system.general.config'))['usage_collection']:
