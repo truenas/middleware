@@ -273,7 +273,8 @@ class EtcService(Service):
         ],
         'ssh': [
             {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
-            {'type': 'mako', 'path': 'pam.d/sshd'},
+            {'type': 'mako', 'path': 'pam.d/sshd', 'platform': 'FreeBSD'},
+            {'type': 'mako', 'path': 'pam.d/sshd', 'local_path': 'pam.d/sshd_linux', 'platform': 'Linux'},
             {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
             {'type': 'py', 'path': 'local/ssh/config'},
         ],
