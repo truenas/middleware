@@ -14,7 +14,8 @@ class UsageService(Service):
         private = True
 
     async def start(self):
-        if await self.middleware.call('system.is_freenas') or (
+        if (await self.middleware.call('system.general.config'))['usage_collection'] and (
+            await self.middleware.call('system.is_freenas') or
             await self.middleware.call('failover.status') in ('MASTER', 'SINGLE')
         ):
             try:
