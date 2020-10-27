@@ -14,9 +14,9 @@ class UsageService(Service):
         private = True
 
     async def start(self):
-        if (
-            await self.middleware.call('system.general.config')
-        )['usage_collection']:
+        if await self.middleware.call('system.is_freenas') or (
+            await self.middleware.call('failover.status') in ('MASTER', 'SINGLE')
+        ):
             try:
                 gather = await self.gather()
                 async with aiohttp.ClientSession(
