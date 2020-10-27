@@ -5,6 +5,7 @@ from middlewared.plugins.smb import SMBCmd
 
 import os
 import subprocess
+import time
 
 
 class SMBService(Service):
@@ -149,6 +150,29 @@ class SMBService(Service):
             raise CallError(f'Failed to delete user [{username}]: {deluser.stderr.decode()}')
 
     @private
+    async def passdb_reinit(self, conf_users):
+        """
+        This method gets called if we need to rebuild passdb.tdb from scratch.
+        Back up problematic version first to preserve collateral in case of regression.
+        `conf_users` contains results of `user.query`. Since users will receive new
+        SID values, we will need to flush samba's cache to ensure consistency.
+        """
+        private_dir = await self.middleware.call('smb.getparm',
+                                                 'private dir',
+                                                 'global')
+        ts = int(time.time())
+        old_path = f'{private_dir}/passdb.tdb'
+        new_path = f'{private_dir}/passdb.{ts}.corrupted'
+        os.rename(old_path, new_path)
+        self.logger.debug("Backing up original passdb to [%s]", new_path)
+        for u in conf_users:
+            await self.middleware.call('smb.update_passdb_user', u['username'], 'tdbsam')
+
+        net = await run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
+        if net.returncode != 0:
+            self.logger.warning("Samba gencache flush failed with error: %s", net.stderr.decode())
+
+    @private
     @job(lock="passdb_sync")
     async def synchronize_passdb(self, job):
         """
@@ -156,6 +180,7 @@ class SMBService(Service):
         Replace NT hashes of users if they do not match what is the the config file.
         Synchronize the "disabled" state of users
         Delete any entries in the passdb_tdb file that don't exist in the config file.
+        This method may cause temporary service disruption for SMB.
         """
         passdb_backend = await self.middleware.call('smb.getparm',
                                                     'passdb backend',
@@ -173,4 +198,9 @@ class SMBService(Service):
             for entry in pdb_users:
                 if not any(filter(lambda x: entry['username'] == x['username'], conf_users)):
                     self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry['username'])
-                    await self.remove_passdb_user(entry['username'])
+                    try:
+                        await self.remove_passdb_user(entry['username'])
+                    except Exception:
+                        self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
+                        await self.passdb_reinit(conf_users)
+                        return
