@@ -5,6 +5,7 @@ import socket
 
 from middlewared.utils import filter_list, osc
 
+GENERATE_SERVICE_FILTER = ['OR', [('state', '=', 'RUNNING'), ('enable', '=', True)]]
 AVAHI_SERVICE_PATH = '/etc/avahi/services'
 if osc.IS_FREEBSD:
     AVAHI_SERVICE_PATH = f'/usr/local{AVAHI_SERVICE_PATH}'
@@ -67,10 +68,10 @@ class mDNSService(object):
 
         if self.service == 'ADISK':
             afp_is_running = any(filter_list(
-                self.service_info, [('service', '=', 'afp'), ('state', '=', 'RUNNING')]
+                self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]
             ))
             smb_is_running = any(filter_list(
-                self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]
+                self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]
             ))
             if afp_is_running or smb_is_running:
                 return True
@@ -78,15 +79,15 @@ class mDNSService(object):
                 return False
 
         if self.service == 'AFPOVERTCP':
-            return any(filter_list(self.service_info, [('service', '=', 'afp'), ('state', '=', 'RUNNING')]))
+            return any(filter_list(self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]))
 
         if self.service == 'SMB':
-            return any(filter_list(self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]))
+            return any(filter_list(self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]))
 
         if self.service == 'SFTP_SSH':
-            return any(filter_list(self.service_info, [('service', '=', 'ssh'), ('state', '=', 'RUNNING')]))
+            return any(filter_list(self.service_info, [('service', '=', 'ssh'), GENERATE_SERVICE_FILTER]))
 
-        return any(filter_list(self.service_info, [('service', '=', self.service.lower()), ('state', '=', 'RUNNING')]))
+        return any(filter_list(self.service_info, [('service', '=', self.service.lower()), GENERATE_SERVICE_FILTER]))
 
     def _generate_txtRecord(self):
         """
@@ -127,10 +128,10 @@ class mDNSService(object):
         if self.service == 'ADISK':
             iindex = [AvahiConst.AVAHI_IF_UNSPEC]
             afp_is_running = any(filter_list(
-                self.service_info, [('service', '=', 'afp'), ('state', '=', 'RUNNING')]
+                self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]
             ))
             smb_is_running = any(filter_list(
-                self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]
+                self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]
             ))
 
             if afp_is_running:
