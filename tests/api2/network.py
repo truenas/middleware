@@ -9,8 +9,8 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import hostname, domain, interface, ip
-from functions import GET, PUT
+from auto_config import hostname, domain, interface, ip, user, password
+from functions import GET, PUT, SSH_TEST
 
 
 def test_01_get_default_network_general_summary():
@@ -41,8 +41,7 @@ def test_02_configure_setting_domain_hostname_and_dns():
     assert isinstance(results.json(), dict), results.text
 
 
-@pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway",
-                                   "nameserver1"])
+@pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway", "nameserver1"])
 def test_03_looking_put_network_configuration_output_(dkeys):
     assert results.json()[dkeys] == payload[dkeys], results.text
 
@@ -79,3 +78,73 @@ def test_09_verify_network_general_summary_ips():
     for value in results.json()['ips'][interface]['IPV4']:
         if ip in value:
             assert ip in value, results.text
+
+
+def test_10_enable_netwait():
+    global payload, results
+    payload = {
+        "netwait_enabled": True,
+        "netwait_ip": [gateway, '8.8.8.8'],
+    }
+    results = PUT("/network/configuration/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+@pytest.mark.parametrize('dkeys', ["netwait_enabled", "netwait_ip"])
+def test_11_verify_put_network_configuration_output_(dkeys):
+    assert results.json()[dkeys] == payload[dkeys], results.text
+
+
+def test_12_get_network_configuration_info_for_netwait():
+    global results
+    results = GET("/network/configuration/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+@pytest.mark.parametrize('dkeys', ["netwait_enabled", "netwait_ip"])
+def test_13_verify_get_network_configuration_output_(dkeys):
+    assert results.json()[dkeys] == payload[dkeys], results.text
+
+
+def test_14_verify_that_netwait_is_in_rc_conf_freenas():
+    cmd = 'cat /etc/rc.conf.freenas | grep netwait'
+    ssh_results = SSH_TEST(cmd, user, password, ip)
+    assert ssh_results['result'] is True, ssh_results['output']
+    assert 'netwait_enable="YES"' in ssh_results['output'], ssh_results['output']
+    assert f'netwait_ip="{gateway} 8.8.8.8"' in ssh_results['output'], ssh_results['output']
+
+
+def test_15_disable_netwait():
+    global payload, results
+    payload = {
+        "netwait_enabled": False,
+        "netwait_ip": [],
+    }
+    results = PUT("/network/configuration/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+@pytest.mark.parametrize('dkeys', ["netwait_enabled", "netwait_ip"])
+def test_16_verify_put_network_configuration_output_(dkeys):
+    assert results.json()[dkeys] == payload[dkeys], results.text
+
+
+def test_17_get_network_configuration_info_for_netwait():
+    global results
+    results = GET("/network/configuration/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+@pytest.mark.parametrize('dkeys', ["netwait_enabled", "netwait_ip"])
+def test_18_verify_get_network_configuration_output_(dkeys):
+    assert results.json()[dkeys] == payload[dkeys], results.text
+
+
+def test_19_verify_that_netwait_is_not_in_rc_conf_freenas():
+    cmd = 'cat /etc/rc.conf.freenas | grep netwait'
+    ssh_results = SSH_TEST(cmd, user, password, ip)
+    assert ssh_results['result'] is False, ssh_results['output']
