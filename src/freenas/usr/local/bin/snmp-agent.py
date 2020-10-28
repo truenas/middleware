@@ -32,8 +32,8 @@ def get_Kstat():
 
 def get_Kstat_FreeBSD():
     Kstats = [
-        "kstat.zfs",
-        "vfs.zfs"
+        "kstat.zfs.misc.arcstats",
+        "vfs.zfs.version.spa",
     ]
 
     Kstat = {}
