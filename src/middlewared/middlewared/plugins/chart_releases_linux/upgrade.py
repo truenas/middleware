@@ -43,6 +43,7 @@ class ChartReleaseService(Service):
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', release['catalog']]], {'get': True, 'extra': {'item_details': True}},
         )
+        # TODO: Add a catalog branch check as well when we add support for different catalogs / catalog branches
 
         new_version = options['item_version']
         current_chart = release['chart_metadata']

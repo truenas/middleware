@@ -610,8 +610,9 @@ class Dict(Attribute):
 
     def get_attrs_to_skip(self, data):
         skip_attrs = defaultdict(set)
+        check_data = self.get_defaults(data, {}) if not self.update else data
         for attr, attr_data in filter(
-            lambda k: not filter_list([data], k[1]['filters']), self.conditional_validation.items()
+            lambda k: not filter_list([check_data], k[1]['filters']), self.conditional_validation.items()
         ):
             for k in attr_data['attrs']:
                 skip_attrs[k].update({attr})
@@ -651,12 +652,17 @@ class Dict(Attribute):
 
         # Do not make any field and required and not populate default values
         if not self.update:
-            for attr in list(self.attrs.values()):
-                if attr.name not in data and attr.name not in skip_attrs and (
-                    attr.required or attr.has_default
-                ):
-                    data[attr.name] = attr.clean(NOT_PROVIDED)
+            data.update(self.get_defaults(data, skip_attrs))
 
+        return data
+
+    def get_defaults(self, orig_data, skip_attrs):
+        data = copy.deepcopy(orig_data)
+        for attr in list(self.attrs.values()):
+            if attr.name not in data and attr.name not in skip_attrs and (
+                attr.required or attr.has_default
+            ):
+                data[attr.name] = attr.clean(NOT_PROVIDED)
         return data
 
     def dump(self, value):
