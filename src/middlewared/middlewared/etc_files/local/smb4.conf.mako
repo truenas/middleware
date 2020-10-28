@@ -116,16 +116,14 @@
             """
             pc.update({
                 'dns proxy': 'No',
-                'aio max threads': '2',
                 'max log size': '51200',
                 'load printers': 'No',
                 'printing': 'bsd',
                 'printcap name': '/dev/null',
                 'disable spoolss': 'Yes',
                 'dos filemode': 'Yes',
-                'kernel change notify': 'No',
-                'directory name cache size': '0',
-                'nsupdate command': '/usr/local/bin/samba-nsupdate -g',
+                'kernel change notify': 'No' if IS_FREEBSD else 'Yes',
+                'directory name cache size': '0' if IS_FREEBSD else '100',
                 'unix charset': db['cifs']['unixcharset'],
                 'log level': f"{db['loglevel']} auth_json_audit:3@/var/log/samba4/auth_audit.log",
                 'obey pam restrictions': 'True' if pam_is_required(db) else 'False',
