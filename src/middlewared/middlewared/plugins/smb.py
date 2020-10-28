@@ -1306,9 +1306,12 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         """
         libsmbconf will handle any required notifications to clients if
         shares are added or deleted.
+        mDNS may need to be reloaded if a time machine share is located on
+        the share being attached.
         """
         reg_sync = await self.middleware.call('sharing.smb.sync_registry')
         await reg_sync.wait()
+        await self.middleware.call('service.reload', 'mdns')
 
 
 async def setup(middleware):
