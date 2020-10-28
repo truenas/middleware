@@ -1228,7 +1228,8 @@ class SharingSMBService(SharingService):
         return {x.name: x.value for x in SMBSharePreset}
 
     @private
-    async def sync_registry(self):
+    @job(lock='sync_smb_registry')
+    async def sync_registry(self, job):
         """
         Synchronize registry config with the share configuration in the truenas config
         file. This method simply reconciles lists of shares, removing from and adding to
@@ -1306,7 +1307,8 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         libsmbconf will handle any required notifications to clients if
         shares are added or deleted.
         """
-        await self.middleware.call('sharing.smb.sync_registry')
+        reg_sync = await self.middleware.call('sharing.smb.sync_registry')
+        await reg_sync.wait()
 
 
 async def setup(middleware):
