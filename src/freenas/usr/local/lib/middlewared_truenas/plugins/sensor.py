@@ -15,16 +15,19 @@ from middlewared.utils import filter_list, run
 class SensorService(Service):
     @filterable
     async def query(self, filters, options):
-        baseboard_manufacturer = (
-            await self.middleware.call('system.dmidecode_info')
-        )['baseboard-manufacturer']
+        dmidecode_info = await self.middleware.call('system.dmidecode_info')
+        baseboard_manufacturer = dmidecode_info['baseboard-manufacturer']
+        system_product_name = dmidecode_info['system-product-name']
 
         failover_hardware = await self.middleware.call("failover.hardware")
 
         is_gigabyte = baseboard_manufacturer == "GIGABYTE"
         is_m_series = baseboard_manufacturer == "Supermicro" and failover_hardware == "ECHOWARP"
+        is_freenas_certified = (
+            baseboard_manufacturer == "Supermicro" and system_product_name.startswith("FREENAS-CERTIFIED")
+        )
 
-        if not (is_gigabyte or is_m_series):
+        if not (is_gigabyte or is_m_series or is_freenas_certified):
             return []
 
         sensors = await self._sensor_list()

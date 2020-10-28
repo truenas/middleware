@@ -42,17 +42,18 @@ class PowerSupplyAlertClass(AlertClass):
 
 
 class SensorsAlertSource(AlertSource):
-    products = ("ENTERPRISE",)
-
     async def check(self):
-        baseboard_manufacturer = (
-            await self.middleware.call('system.dmidecode_info')
-        )['baseboard-manufacturer']
+        dmidecode_info = await self.middleware.call('system.dmidecode_info')
+        baseboard_manufacturer = dmidecode_info['baseboard-manufacturer']
+        system_product_name = dmidecode_info['system-product-name']
 
         failover_hardware = await self.middleware.call("failover.hardware")
 
         is_gigabyte = baseboard_manufacturer == "GIGABYTE"
         is_m_series = baseboard_manufacturer == "Supermicro" and failover_hardware == "ECHOWARP"
+        is_freenas_certified = (
+            baseboard_manufacturer == "Supermicro" and system_product_name.startswith("FREENAS-CERTIFIED")
+        )
 
         alerts = []
         for sensor in await self.middleware.call("sensor.query"):
@@ -90,7 +91,7 @@ class SensorsAlertSource(AlertSource):
                     key=[sensor["name"], relative, level],
                 ))
 
-            if is_m_series:
+            if is_m_series or is_freenas_certified:
                 ps_match = re.match("(PS[0-9]+) Status", sensor["name"])
                 if ps_match:
                     ps = ps_match.group(1)
