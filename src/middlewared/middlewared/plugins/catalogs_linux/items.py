@@ -35,7 +35,8 @@ class CatalogService(Service):
 
         trains = {'charts': {}, 'test': {}}
         trains.update({
-            t: {} for t in os.listdir(catalog['location']) if os.path.isdir(os.path.join(catalog['location'], t))
+            t: {} for t in os.listdir(catalog['location'])
+            if os.path.isdir(os.path.join(catalog['location'], t)) and not t.startswith('.')
         })
         for train in filter(lambda c: os.path.exists(os.path.join(catalog['location'], c)), trains):
             category_path = os.path.join(catalog['location'], train)

@@ -38,7 +38,7 @@ class ChartReleaseUpdateAlertClass(AlertClass, OneShotAlertClass):
     text = 'An update is available for "%(name)s" chart release.'
 
     async def create(self, args):
-        return Alert(ChartReleaseUpdateAlertClass, args, key=args['name'])
+        return Alert(ChartReleaseUpdateAlertClass, args, key=args['id'])
 
     async def delete(self, alerts, query):
         return list(filter(

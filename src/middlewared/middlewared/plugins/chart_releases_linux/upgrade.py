@@ -143,4 +143,9 @@ class ChartReleaseService(Service):
             if not catalog_item:
                 continue
             available_versions = [parse_version(v) for v in catalog_item['versions']]
-            available_versions.sort()
+            if not available_versions:
+                continue
+
+            available_versions.sort(reverse=True)
+            if available_versions[0] > parse_version(application['chart_metadata']['version']):
+                await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
