@@ -1,8 +1,7 @@
 [Unit]
 Description=Execute TrueNAS custom post-init tasks
 
-After=systemd-user-sessions.service plymouth-quit-wait.service getty-pre.target
-After=rc-local.service
+After=multi-user.target
 
 [Service]
 Type=oneshot
