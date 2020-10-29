@@ -3,7 +3,7 @@ import os
 
 from middlewared.service import Service
 import middlewared.sqlalchemy as sa
-from middlewared.utils import load_modules
+from middlewared.utils.plugins import load_modules
 from middlewared.utils.python import get_middlewared_dir
 
 

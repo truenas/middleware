@@ -6,7 +6,8 @@ from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import load_modules, load_classes, Popen, run
+from middlewared.utils import Popen, run
+from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_attributes

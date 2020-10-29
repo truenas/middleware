@@ -4,7 +4,7 @@ import os
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Dict, IPAddr, Str
-from middlewared.service import accepts, job, private, ConfigService, ValidationErrors
+from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
 
 class KubernetesModel(sa.Model):
@@ -128,6 +128,8 @@ class KubernetesService(ConfigService):
             config['cni_config'] = {}
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('kubernetes.status_change')
+            if config['pool'] != old_config['pool']:
+                await self.middleware.call('catalog.sync_all')
 
         return await self.config()
 
@@ -141,3 +143,11 @@ class KubernetesService(ConfigService):
                 'interface.ip_in_use', {'static': True, 'any': True}
             )
         }
+
+    @private
+    async def validate_k8s_setup(self):
+        k8s_config = await self.middleware.call('kubernetes.config')
+        if not k8s_config['dataset']:
+            raise CallError('Please configure kubernetes pool.')
+        if not await self.middleware.call('service.started', 'kubernetes'):
+            raise CallError('Kubernetes service is not running.')

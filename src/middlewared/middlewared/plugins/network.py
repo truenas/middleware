@@ -6,7 +6,7 @@ from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Ref, Str,
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
 from middlewared.utils.generate import random_string
-from middlewared.validators import Match, Range
+from middlewared.validators import Hostname, Match, Range
 
 import asyncio
 from collections import defaultdict
@@ -183,9 +183,9 @@ class NetworkConfigurationService(ConfigService):
     @accepts(
         Dict(
             'global_configuration_update',
-            Str('hostname', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
-            Str('hostname_b', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
-            Str('hostname_virtual', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
+            Str('hostname', validators=[Hostname()]),
+            Str('hostname_b', validators=[Hostname()]),
+            Str('hostname_virtual', validators=[Hostname()]),
             Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             List('domains', items=[Str('domains')]),
             Dict(

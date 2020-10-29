@@ -57,11 +57,18 @@ class KubernetesService(Service):
             raise CallError(f'"{config["pool"]}" pool not found.', errno=errno.ENOENT)
 
         k8s_datasets = set(await self.kubernetes_datasets(config['dataset']))
+        required_datasets = set(config['dataset']) | set(
+            os.path.join(config['dataset'], ds) for ds in ('k3s', 'docker', 'releases')
+        )
         diff = {
             d['id'] for d in await self.middleware.call('pool.dataset.query', [['id', 'in', list(k8s_datasets)]])
         } ^ k8s_datasets
+        fatal_diff = diff.intersection(required_datasets)
+        if fatal_diff:
+            raise CallError(f'Missing "{", ".join(fatal_diff)}" dataset(s) required for starting kubernetes.')
+
         if diff:
-            raise CallError(f'Missing "{", ".join(diff)}" dataset(s) required for starting kubernetes.')
+            await self.create_update_k8s_datasets(config['dataset'])
 
         locked_datasets = [
             d['id'] for d in await self.middleware.call('zfs.dataset.locked_datasets')
@@ -128,7 +135,9 @@ class KubernetesService(Service):
 
     @private
     async def kubernetes_datasets(self, k8s_ds):
-        return [k8s_ds] + [os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases', 'default_volumes')]
+        return [k8s_ds] + [
+            os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases', 'default_volumes', 'catalogs')
+        ]
 
 
 async def _event_system(middleware, event_type, args):

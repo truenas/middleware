@@ -8,7 +8,7 @@ import setproctitle
 
 from . import logger
 from .common.environ import environ_update
-from .utils import LoadPluginsMixin
+from .utils.plugins import LoadPluginsMixin
 import middlewared.utils.osc as osc
 from .utils.service.call import ServiceCallMixin
 

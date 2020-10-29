@@ -1,7 +1,8 @@
 import functools
 import sys
 
-from middlewared.utils import LoadPluginsMixin, osc
+from middlewared.utils import osc
+from middlewared.utils.plugins import LoadPluginsMixin
 
 
 # freenasOS

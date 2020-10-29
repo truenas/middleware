@@ -33,7 +33,8 @@ from middlewared.service import (
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.validators import validate_attributes
-from middlewared.utils import bisect, load_modules, load_classes
+from middlewared.utils import bisect
+from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]

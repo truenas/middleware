@@ -16,6 +16,8 @@ async def api_client(context=None, api_client_kwargs=None):
         'core_api': client.CoreV1Api(api_cl),
         'apps_api': client.AppsV1Api(api_cl),
         'storage_api': client.StorageV1Api(api_cl),
+        'batch_api': client.BatchV1Api(api_cl),
+        'cronjob_batch_api': client.BatchV1beta1Api(api_cl),
     }
     for k in filter(lambda k: context[k], context):
         if k == 'node':
