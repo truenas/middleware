@@ -83,6 +83,9 @@ class CatalogService(Service):
 
         version_data['supported'] = self.middleware.call_sync('catalog.version_supported', version_data)
         version_data['required_features'] = list(version_data['required_features'])
+        version_data['values'] = self.middleware.call_sync(
+            'chart.release.construct_schema_for_item_version', version_data, version_data['values'], False
+        )['new_values']
 
         return version_data
 
