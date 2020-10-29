@@ -27,3 +27,21 @@ class ApplicationsStartFailedAlertClass(AlertClass, OneShotAlertClass):
 
     async def delete(self, alerts, query):
         return []
+
+
+class ChartReleaseUpdateAlertClass(AlertClass, OneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.APPLICATIONS
+    level = AlertLevel.INFO
+    title = 'Chart Release Update Available'
+    text = 'An update is available for "%(name)s" chart release.'
+
+    async def create(self, args):
+        return Alert(ChartReleaseUpdateAlertClass, args, key=args['id'])
+
+    async def delete(self, alerts, query):
+        return list(filter(
+            lambda alert: alert.key != str(query),
+            alerts
+        ))

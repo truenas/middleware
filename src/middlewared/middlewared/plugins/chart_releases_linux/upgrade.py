@@ -7,7 +7,7 @@ import yaml
 from pkg_resources import parse_version
 
 from middlewared.schema import Dict, Str
-from middlewared.service import accepts, CallError, job, Service, ValidationErrors
+from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
 from .utils import get_namespace, run
@@ -121,4 +121,46 @@ class ChartReleaseService(Service):
                 raise CallError(f'Failed to upgrade chart release to {new_version!r}: {cp.stderr.decode()}')
 
         job.set_progress(100, 'Upgrade complete for chart release')
-        return await self.middleware.call('chart.release.get_instance', release_name)
+
+        chart_release = await self.middleware.call('chart.release.get_instance', release_name)
+        await self.chart_release_update_check(catalog['trains'][release['catalog_train']][chart], chart_release)
+        return chart_release
+
+    @periodic(interval=86400)
+    @private
+    async def periodic_chart_releases_update_checks(self):
+        await self.chart_releases_update_checks_internal()
+
+    @private
+    async def chart_releases_update_checks_internal(self, chart_releases_filters=None):
+        chart_releases_filters = chart_releases_filters or []
+        sync_job = await self.middleware.call('catalog.sync_all')
+        await sync_job.wait()
+        if not await self.middleware.call('service.started', 'kubernetes'):
+            return
+
+        # TODO: Let's please use branch as well to keep an accurate track of which app belongs to which catalog branch
+        catalog_items = {
+            f'{c["id"]}_{train}_{item}': c['trains'][train][item]
+            for c in await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
+            for train in c['trains'] for item in c['trains'][train]
+        }
+        for application in await self.middleware.call('chart.release.query', chart_releases_filters):
+            app_id = f'{application["catalog"]}_{application["catalog_train"]}_{application["chart_metadata"]["name"]}'
+            catalog_item = catalog_items.get(app_id)
+            if not catalog_item:
+                continue
+
+            await self.chart_release_update_check(catalog_item, application)
+
+    @private
+    async def chart_release_update_check(self, catalog_item, application):
+        available_versions = [parse_version(v) for v in catalog_item['versions']]
+        if not available_versions:
+            return
+
+        available_versions.sort(reverse=True)
+        if available_versions[0] > parse_version(application['chart_metadata']['version']):
+            await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', f'"{application["id"]}"')
