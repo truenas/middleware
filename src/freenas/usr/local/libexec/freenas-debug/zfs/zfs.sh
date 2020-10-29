@@ -113,4 +113,17 @@ zfs_func()
 	section_header  "pool joined to storage"
 	cat  /tmp/pool.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
 	section_footer
+
+	section_header  "kstat"
+	if is_freebsd; then
+		sysctl kstat.zfs.misc.fletcher_4_bench
+		sysctl kstat.zfs.misc.vdev_raidz_bench
+		sysctl kstat.zfs.misc.dbgmsg
+		for pool in $(zpool list -Ho name); do
+			sysctl kstat.zfs.${pool}.misc.state
+			sysctl kstat.zfs.${pool}.multihost
+			sysctl kstat.zfs.${pool}.txgs
+		done
+	fi
+	section_footer
 }
