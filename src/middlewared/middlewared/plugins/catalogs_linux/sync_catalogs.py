@@ -1,7 +1,7 @@
 import os
 
 from middlewared.schema import accepts, Str
-from middlewared.service import job, periodic, private, Service
+from middlewared.service import job, private, Service
 
 from .utils import pull_clone_repository
 
@@ -9,7 +9,6 @@ from .utils import pull_clone_repository
 class CatalogService(Service):
 
     @accepts()
-    @periodic(interval=864000)
     @job(lock='sync_catalogs')
     async def sync_all(self, job):
         """
