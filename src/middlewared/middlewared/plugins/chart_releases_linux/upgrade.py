@@ -7,7 +7,7 @@ import yaml
 from pkg_resources import parse_version
 
 from middlewared.schema import Dict, Str
-from middlewared.service import accepts, CallError, job, Service, ValidationErrors
+from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
 from .utils import get_namespace, run
@@ -122,3 +122,25 @@ class ChartReleaseService(Service):
 
         job.set_progress(100, 'Upgrade complete for chart release')
         return await self.middleware.call('chart.release.get_instance', release_name)
+
+    @periodic(interval=86400)
+    @private
+    async def periodic_plugin_update(self):
+        sync_job = await self.middleware.call('catalog.sync_all')
+        await sync_job.wait()
+        if not await self.middleware.call('service.started', 'kubernetes'):
+            return
+
+        # TODO: Let's please use branch as well to keep an accurate track of which app belongs to which catalog branch
+        catalog_items = {
+            f'{c["id"]}_{train}_{item}': c['trains'][train][item]
+            for c in await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
+            for train in c['trains'] for item in c['trains'][train]
+        }
+        for application in await self.middleware.call('chart.release.query'):
+            app_id = f'{application["catalog"]}_{application["catalog_train"]}_{application["chart_metadata"]["name"]}'
+            catalog_item = catalog_items.get(app_id)
+            if not catalog_item:
+                continue
+            available_versions = [parse_version(v) for v in catalog_item['versions']]
+            available_versions.sort()
