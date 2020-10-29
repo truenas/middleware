@@ -34,6 +34,9 @@ class CatalogService(Service):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
         trains = {'charts': {}, 'test': {}}
+        trains.update({
+            t: {} for t in os.listdir(catalog['location']) if os.path.isdir(os.path.join(catalog['location'], t))
+        })
         for train in filter(lambda c: os.path.exists(os.path.join(catalog['location'], c)), trains):
             category_path = os.path.join(catalog['location'], train)
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
