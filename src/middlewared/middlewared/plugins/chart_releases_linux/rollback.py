@@ -126,6 +126,9 @@ class ChartReleaseService(Service):
         )
 
         job.set_progress(100, 'Rollback complete for chart release')
+
+        await self.middleware.call('chart.release.chart_releases_update_checks_internal', [['id', '=', release_name]])
+
         return await self.middleware.call('chart.release.get_instance', release_name)
 
     @private

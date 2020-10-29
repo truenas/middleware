@@ -128,7 +128,12 @@ class ChartReleaseService(Service):
 
     @periodic(interval=86400)
     @private
-    async def periodic_plugin_update(self):
+    async def periodic_chart_releases_update_checks(self):
+        await self.chart_releases_update_checks_internal()
+
+    @private
+    async def chart_releases_update_checks_internal(self, chart_releases_filters=None):
+        chart_releases_filters = chart_releases_filters or []
         sync_job = await self.middleware.call('catalog.sync_all')
         await sync_job.wait()
         if not await self.middleware.call('service.started', 'kubernetes'):
@@ -140,7 +145,7 @@ class ChartReleaseService(Service):
             for c in await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
             for train in c['trains'] for item in c['trains'][train]
         }
-        for application in await self.middleware.call('chart.release.query'):
+        for application in await self.middleware.call('chart.release.query', chart_releases_filters):
             app_id = f'{application["catalog"]}_{application["catalog_train"]}_{application["chart_metadata"]["name"]}'
             catalog_item = catalog_items.get(app_id)
             if not catalog_item:
@@ -158,4 +163,4 @@ class ChartReleaseService(Service):
         if available_versions[0] > parse_version(application['chart_metadata']['version']):
             await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
         else:
-            await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', application)
+            await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', f'"{application["id"]}"')
