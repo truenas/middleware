@@ -752,8 +752,15 @@ class SMBService(SystemServiceService):
                                 'and then alter the parameter before re-joining the domain.')
 
         for entry in new['smb_options'].splitlines():
-            kv = entry.split('=')
-            if len(kv) == 0:
+            if entry == '' or entry.startswith(('#', ';')):
+                continue
+
+            kv = entry.split('=', 1)
+            if len(kv) != 2:
+                verrors.add(
+                    'smb_update.smb_options',
+                    f'Auxiliary parameters must be in the format of "key = value": {entry}'
+                )
                 continue
 
             auxparam = kv[0].strip()
