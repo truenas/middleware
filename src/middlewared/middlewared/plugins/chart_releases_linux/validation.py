@@ -17,10 +17,7 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def validate_values(self, item_version_details, new_values, update):
-        for k in RESERVED_NAMES:
-            new_values.pop(k[0], None)
-
+    async def construct_schema_for_item_version(self, item_version_details, new_values, update):
         schema_name = f'chart_release_{"update" if update else "create"}'
         attrs = list(itertools.chain.from_iterable(
             get_schema(q, update) for q in item_version_details['schema']['questions']
@@ -36,6 +33,22 @@ class ChartReleaseService(Service):
                 'conditional_validation': dict_obj.conditional_validation, 'update': update,
             }
         )
+        return {
+            'verrors': verrors,
+            'new_values': new_values,
+            'dict_obj': dict_obj,
+            'schema_name': schema_name,
+        }
+
+    @private
+    async def validate_values(self, item_version_details, new_values, update):
+        for k in RESERVED_NAMES:
+            new_values.pop(k[0], None)
+
+        verrors, new_values, dict_obj, schema_name = (
+            await self.construct_schema_for_item_version(item_version_details, new_values, update)
+        ).values()
+
         verrors.check()
 
         # If schema is okay, we see if we have question specific validation to be performed
