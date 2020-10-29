@@ -121,7 +121,10 @@ class ChartReleaseService(Service):
                 raise CallError(f'Failed to upgrade chart release to {new_version!r}: {cp.stderr.decode()}')
 
         job.set_progress(100, 'Upgrade complete for chart release')
-        return await self.middleware.call('chart.release.get_instance', release_name)
+
+        chart_release = await self.middleware.call('chart.release.get_instance', release_name)
+        await self.chart_release_update_check(catalog['trains'][release['catalog_train']][chart], chart_release)
+        return chart_release
 
     @periodic(interval=86400)
     @private
@@ -142,10 +145,17 @@ class ChartReleaseService(Service):
             catalog_item = catalog_items.get(app_id)
             if not catalog_item:
                 continue
-            available_versions = [parse_version(v) for v in catalog_item['versions']]
-            if not available_versions:
-                continue
 
-            available_versions.sort(reverse=True)
-            if available_versions[0] > parse_version(application['chart_metadata']['version']):
-                await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
+            await self.chart_release_update_check(catalog_item, application)
+
+    @private
+    async def chart_release_update_check(self, catalog_item, application):
+        available_versions = [parse_version(v) for v in catalog_item['versions']]
+        if not available_versions:
+            return
+
+        available_versions.sort(reverse=True)
+        if available_versions[0] > parse_version(application['chart_metadata']['version']):
+            await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', application)
