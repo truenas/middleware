@@ -16,7 +16,12 @@ class KubernetesPodService(CRUDService):
         label_selector = options.get('extra', {}).get('label_selector')
         kwargs = {k: v for k, v in [('label_selector', label_selector)] if v}
         async with api_client() as (api, context):
-            return filter_list(
-                [d.to_dict() for d in (await context['core_api'].list_pod_for_all_namespaces(**kwargs)).items],
-                filters, options
+            pods = [d.to_dict() for d in (await context['core_api'].list_pod_for_all_namespaces(**kwargs)).items]
+            events = await self.middleware.call(
+                'kubernetes.get_events_of_resource_type', 'Pod', [p['metadata']['uid'] for p in pods]
             )
+
+            for pod in pods:
+                pod['events'] = events[pod['metadata']['uid']]
+
+        return filter_list(pods, filters, options)

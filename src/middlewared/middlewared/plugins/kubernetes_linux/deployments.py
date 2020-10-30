@@ -16,10 +16,14 @@ class KubernetesDeploymentService(CRUDService):
     @filterable
     async def query(self, filters=None, options=None):
         async with api_client() as (api, context):
-            return filter_list(
-                [d.to_dict() for d in (await context['apps_api'].list_deployment_for_all_namespaces()).items],
-                filters, options
+            deployments = [d.to_dict() for d in (await context['apps_api'].list_deployment_for_all_namespaces()).items]
+            events = await self.middleware.call(
+                'kubernetes.get_events_of_resource_type', 'Deployment', [d['metadata']['uid'] for d in deployments]
             )
+            for deployment in deployments:
+                deployment['events'] = events[deployment['metadata']['uid']]
+
+        return filter_list(deployments, filters, options)
 
     @accepts(
         Dict(

@@ -11,7 +11,7 @@ class KubernetesService(Service):
 
     @private
     async def get_events_of_resource_type(self, resource, resource_uids=None):
-        assert resource in ('StatefulSet', 'Pod')
+        assert resource in ('StatefulSet', 'Pod', 'Deployment')
         events = defaultdict(list)
         resource_uids = resource_uids or []
         filters = []
