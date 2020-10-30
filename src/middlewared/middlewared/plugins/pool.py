@@ -3714,7 +3714,7 @@ class PoolDatasetService(CRUDService):
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
-            fstat = lsof = None
+            data = None
             if osc.IS_FREEBSD:
                 fstat = await run(
                     'fstat',
@@ -3723,6 +3723,7 @@ class PoolDatasetService(CRUDService):
                     check=False,
                     encoding='utf8',
                 )
+                data = parse_fstat(fstat.stdout, [path, zvol_path])
             else:
                 lsof = await run(
                     'lsof',
@@ -3733,8 +3734,9 @@ class PoolDatasetService(CRUDService):
                     check=False,
                     encoding='utf8'
                 )
+                data = parse_lsof(lsof.stdout, [path, zvol_path])
 
-            for pid, name in parse_lsof(lsof.stdout, [path, zvol_path]) if lsof else parse_fstat(fstat.stdout, [path, zvol_path]):
+            for pid, name in data:
                 service = await self.middleware.call('service.identify_process', name)
                 if service:
                     result.append({
