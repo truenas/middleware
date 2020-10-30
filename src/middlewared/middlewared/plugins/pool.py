@@ -3533,7 +3533,7 @@ class PoolDatasetService(CRUDService):
                 if q['id'] not in ['QUOTA', 'REFQUOTA']:
                     verrors.add(
                         f'quotas.{i}.id',
-                        f'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"'
+                        'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"'
                     )
                     continue
 
@@ -3701,11 +3701,27 @@ class PoolDatasetService(CRUDService):
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
-            lsof = await run('lsof',
-                             '-F', 'pcn',       # Output format parseable by `parse_lsof`
-                             '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
-                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False, encoding='utf8')
-            for pid, name in parse_lsof(lsof.stdout, [path, zvol_path]):
+            fstat = lsof = None
+            if osc.IS_FREEBSD:
+                fstat = await run(
+                    'fstat',
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                    encoding='utf8',
+                )
+            else:
+                lsof = await run(
+                    'lsof',
+                    '-F', 'pcn',  # Output format parseable by `parse_lsof`
+                    '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                    encoding='utf8'
+                )
+
+            for pid, name in parse_lsof(lsof.stdout, [path, zvol_path]) if lsof else parse_fstat(fstat.stdout, [path, zvol_path]):
                 service = await self.middleware.call('service.identify_process', name)
                 if service:
                     result.append({
@@ -4052,6 +4068,48 @@ def parse_lsof(lsof, dirs):
             if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
                 if pid is not None and command is not None:
                     pids[pid] = command
+
+    return list(pids.items())
+
+
+def parse_fstat(fstat, dirs):
+
+    # fstat output is separated by newlines
+    fstat = fstat.split('\n')
+
+    # first line is the column headers
+    fstat.pop(0)
+
+    def keep(fields):
+
+        # drop empty lines and/or lines without a 5th column
+        # because that's the path associated to the process
+        if len(fields) < 5:
+            return False
+
+        # drop the g_eli/g_mirror information since it's not needed
+        if fields[1].startswith(('g_eli', 'g_mirror')):
+            return False
+
+        # only return lines that have `/` in the path information since
+        # paths can be stream/socket/pipe types
+        return '/' in fields[4]
+
+    pids = {}
+    pid = command = None
+    for line in filter(keep, map(str.split, fstat)):
+        pid = command = None
+
+        try:
+            pid = int(line[2])
+        except ValueError:
+            pass
+
+        command = line[1]
+        path = line[4]
+        if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
+            if pid is not None and command is not None:
+                pids[pid] = command
 
     return list(pids.items())
 
