@@ -45,6 +45,14 @@
 
     # FIXME: SSD is not being reflected in the initiator, please look into it
     # FIXME: Authorized networks for initiators has not been implemented yet, please look for alternatives in SCST
+
+    target_hosts = defaultdict(list)
+    for row in middleware.call_sync('datastore.query', 'services.iscsihosttarget'):
+        target_hosts[row['target']['id']].append(row['host'])
+
+    hosts_iqns = defaultdict(list)
+    for row in middleware.call_sync('datastore.query', 'services.iscsihostiqn', [], {'relationships': False}):
+        hosts_iqns[row['host_id']].append(row['iqn'])
 %>\
 % for handler in filter(lambda k: extents_io[k], extents_io):
 HANDLER ${handler} {
@@ -122,6 +130,11 @@ TARGET_DRIVER iscsi {
         GROUP security_group {
 %   for access_control in initiator_portal_access:
             INITIATOR ${access_control}
+%   endfor
+%   for host in target_hosts[target['id']]:
+%   for iqn in hosts_iqns[host['id']]:
+            INITIATOR ${iqn}\#${host['ip']}
+%   endfor
 %   endfor
 ${retrieve_luns(target['id'], ' ' * 4)}\
         }
