@@ -1,3 +1,4 @@
+from aiohttp import client_exceptions
 from kubernetes_asyncio import watch
 
 from middlewared.service import CRUDService, filterable, private
@@ -30,9 +31,20 @@ class KubernetesEventService(CRUDService):
         if not await self.middleware.call('service.started', 'kubernetes'):
             return
 
+        try:
+            await self.k8s_events_internal()
+        except client_exceptions.ClientPayloadError:
+            if not await self.middleware.call('service.started', 'kubernetes'):
+                # This is okay and happens when k8s is stopped
+                return
+            raise
+
+    @private
+    async def k8s_events_internal(self):
         chart_namespace_prefix = await self.middleware.call('chart.release.get_chart_namespace_prefix')
         async with api_client() as (api, context):
-            async with watch.Watch().stream(context['core_api'].list_event_for_all_namespaces) as stream:
+            watch_obj = watch.Watch()
+            async with watch_obj.stream(context['core_api'].list_event_for_all_namespaces) as stream:
                 async for event in stream:
                     event_obj = event['object']
                     if event['type'] != 'ADDED' or (
