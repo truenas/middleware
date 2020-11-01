@@ -28,6 +28,7 @@ class KubernetesService(Service):
             await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {'error': str(e)})
             raise
         else:
+            await self.middleware.call('k8s.event.setup_k8s_events')
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
 
     @private
