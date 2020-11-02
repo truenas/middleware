@@ -70,8 +70,6 @@ _interface_config()
                                 if [ "${internal_iface}" = "" ]; then
                                         internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
                                 fi
-			elif [ "$(ha_hardware)" = "SBB" ]; then
-				internal_iface="ix0"
 			elif [ "$(ha_hardware)" = "ECHOWARP" -o "$(ha_hardware)" = "PUMA" ]; then
 				internal_iface="ntb0"
 				if [ "${node}" = "A" ]; then
@@ -79,8 +77,6 @@ _interface_config()
 				else
 					ether="02:8c:97:2e:a5:02"
 				fi
-			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
-				internal_iface="igb1"
 			elif [ "$(ha_hardware)" = "BHYVE" ]; then
 				internal_iface="em0"
 			fi

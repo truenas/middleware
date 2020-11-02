@@ -31,12 +31,6 @@ class InternalInterfaceService(Service):
         if hardware == 'BHYVE':
             return ['vtnet1']
 
-        if hardware == 'SBB':
-            return ['ix0']
-
-        if hardware == 'ULTIMATE':
-            return ['igb1']
-
         return []
 
     @private

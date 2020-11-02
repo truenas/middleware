@@ -218,8 +218,6 @@ class FailoverService(ConfigService):
           ECHOSTREAM
           ECHOWARP
           PUMA
-          SBB
-          ULTIMATE
           BHYVE
           MANUAL
         """
