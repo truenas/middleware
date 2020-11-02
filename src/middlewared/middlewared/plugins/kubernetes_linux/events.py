@@ -1,3 +1,5 @@
+import asyncio
+
 from aiohttp import client_exceptions
 from kubernetes_asyncio import watch
 
@@ -62,4 +64,4 @@ class KubernetesEventService(CRUDService):
 async def setup(middleware):
     middleware.event_register('kubernetes.events', 'Kubernetes cluster events')
     if await middleware.call('service.started', 'kubernetes'):
-        await middleware.call('k8s.event.k8s_events_internal')
+        asyncio.ensure_future(middleware.call('k8s.event.setup_k8s_events'))
