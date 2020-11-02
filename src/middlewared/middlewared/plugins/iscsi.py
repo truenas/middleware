@@ -1,8 +1,9 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.listen import ListenDelegate
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.service import CallError, CRUDService, private, SharingService, ValidationErrors
+from middlewared.service import CallError, CRUDService, private, ServiceChangeMixin, SharingService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
 from middlewared.utils.path import is_child
@@ -39,7 +40,7 @@ class ISCSIPortalModel(sa.Model):
     iscsi_target_portal_discoveryauthgroup = sa.Column(sa.Integer(), nullable=True)
 
 
-class ISCSIPortalIModel(sa.Model):
+class ISCSIPortalIPModel(sa.Model):
     __tablename__ = 'services_iscsitargetportalip'
     __table_args__ = (
         sa.Index('services_iscsitargetportalip_iscsi_target_portalip_ip__iscsi_target_portalip_port',
@@ -284,6 +285,35 @@ class ISCSIPortalService(CRUDService):
         await self._service_change('iscsitarget', 'reload')
 
         return result
+
+
+class ISCSIPortalListenDelegate(ListenDelegate, ServiceChangeMixin):
+    def __init__(self, middleware):
+        self.middleware = middleware
+
+    async def get_listen_state(self, ips):
+        return await self.middleware.call('datastore.query', 'services.iscsitargetportalip', [['ip', 'in', ips]],
+                                          {'prefix': 'iscsi_target_portalip_'})
+
+    async def set_listen_state(self, state):
+        for row in state:
+            await self.middleware.call('datastore.update', 'services.iscsitargetportalip', row['id'],
+                                       {'ip': row['ip']}, {'prefix': 'iscsi_target_portalip_'})
+
+        await self._service_change('iscsitarget', 'reload')
+
+    async def listens_on(self, state, ip):
+        return any(row['ip'] == ip for row in state)
+
+    async def reset_listens(self, state):
+        for row in state:
+            await self.middleware.call('datastore.update', 'services.iscsitargetportalip', row['id'],
+                                       {'ip': '0.0.0.0'}, {'prefix': 'iscsi_target_portalip_'})
+
+        await self._service_change('iscsitarget', 'reload')
+
+    async def repr(self, state):
+        return {'type': 'SERVICE', 'service': 'iscsi.portal'}
 
 
 class iSCSITargetAuthCredentialModel(sa.Model):
@@ -1636,4 +1666,8 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
 
 async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        ISCSIPortalListenDelegate(middleware),
+    )
     await middleware.call('pool.dataset.register_attachment_delegate', ISCSIFSAttachmentDelegate(middleware))

@@ -3,6 +3,7 @@ import os
 import subprocess
 import tempfile
 
+from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.service import CallError, SystemServiceService, private
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -640,7 +641,11 @@ async def _event_system(middleware, event_type, args):
             await middleware.call('service.start', srv['service'])
 
 
-def setup(middleware):
+async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        SystemServiceListenSingleDelegate(middleware, 'openvpn.server', 'server'),
+    )
     middleware.event_subscribe('system', _event_system)
     if not os.path.exists('/usr/local/etc/rc.d/openvpn'):
         return

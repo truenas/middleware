@@ -5,6 +5,7 @@ import os
 import socket
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Match, Range
@@ -603,6 +604,10 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
 
 async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        SystemServiceListenMultipleDelegate(middleware, 'nfs', 'bindip'),
+    )
     await middleware.call('pool.dataset.register_attachment_delegate', NFSFSAttachmentDelegate(middleware))
 
     middleware.register_hook('interface.post_sync', interface_post_sync)

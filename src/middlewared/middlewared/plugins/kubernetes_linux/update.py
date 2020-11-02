@@ -3,6 +3,7 @@ import os
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Dict, IPAddr, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
@@ -151,3 +152,10 @@ class KubernetesService(ConfigService):
             raise CallError('Please configure kubernetes pool.')
         if not await self.middleware.call('service.started', 'kubernetes'):
             raise CallError('Kubernetes service is not running.')
+
+
+async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        ConfigServiceListenSingleDelegate(middleware, 'kubernetes', 'node_ip'),
+    )
