@@ -7,6 +7,9 @@ class KubernetesService(Service):
 
     @accepts()
     async def events(self):
+        """
+        Returns events for kubernetes node.
+        """
         return (await self.middleware.call('k8s.node.config')).get('events', [])
 
     @private
