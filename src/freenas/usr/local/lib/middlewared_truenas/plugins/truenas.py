@@ -76,13 +76,6 @@ class TrueNASService(Service):
         TRUENAS-X
         TRUENAS-Z
 
-        Detected by the motherboard model:
-        TRUENAS-SBB
-
-        Pretty much anything else with a SM X8 board:
-        (X8DTH was popular but there are a few other boards out there)
-        TRUENAS-SM
-
         Really NFI about hardware at this point.  TrueNAS on a Dell?
         TRUENAS-UNKNOWN
         """
@@ -101,17 +94,6 @@ class TrueNASService(Service):
             return 'TRUENAS-X'
         if motherboard == 'GIGABYTE':
             return 'TRUENAS-Z'
-
-        # Are we an SBB?  We can tell this because all SBBs used
-        # the same motherboard: X8DTS
-        if motherboard_model == 'X8DTS':
-            return 'TRUENAS-SBB'
-
-        # Most likely we are an X8DTH at this point, but there are some
-        # unicorns that used various X8 boards, so we're going to make
-        # allowances
-        if motherboard_model.startswith('X8'):
-            return 'TRUENAS-SM'
 
         # Give up
         return 'TRUENAS-UNKNOWN'
