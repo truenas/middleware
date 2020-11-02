@@ -364,7 +364,7 @@ class SharingSMBService(Service):
             conf["fruit:resource"] = "stream"
 
         if conf["path"]:
-            await self.add_multiprotocol_conf(conf, gl, data['name'])
+            await self.add_multiprotocol_conf(conf, gl, data)
 
         if data['timemachine']:
             conf["fruit:time machine"] = "yes"
@@ -387,8 +387,20 @@ class SharingSMBService(Service):
             if not param.strip():
                 continue
             try:
-                kv = param.split('=', 1)
-                conf[kv[0].strip()] = kv[1].strip()
+                auxparam, val = param.split('=', 1)
+                """
+                vfs_fruit must be added to all shares if fruit is enabled.
+                Support for SMB2 AAPL extensions is determined on first tcon
+                to server, and so if they aren't appended to any vfs objects
+                overrides via auxiliary parameters, then users may experience
+                unexpected behavior.
+                """
+                if auxparam.strip() == "vfs objects" and gl['fruit_enabled']:
+                    vfsobjects = val.strip().split()
+                    vfsobjects.append('fruit')
+                    conf['vfs objects'] = await self.order_vfs_objects(vfsobjects)
+                else:
+                    conf[auxparam.strip()] = val.strip()
             except Exception:
                 self.logger.debug("[%s] contains invalid auxiliary parameter: [%s]",
                                   data['name'], param)
