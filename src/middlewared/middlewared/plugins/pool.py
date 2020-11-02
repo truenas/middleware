@@ -4070,7 +4070,9 @@ def parse_lsof(lsof, dirs):
             try:
                 pid = int(line[1:])
             except ValueError:
-                pass
+                # no reason to continue if we dont have
+                # a PID associated with the process
+                continue
 
         if line.startswith("c"):
             command = line[1:]
@@ -4118,8 +4120,9 @@ def parse_fstat(fstat, dirs):
         try:
             pid = int(line[2])
         except ValueError:
-            pass
-
+            # no reason to continue if we dont have
+            # a PID associated with the process
+            continue
         command = line[1]
         path = line[4]
         if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
