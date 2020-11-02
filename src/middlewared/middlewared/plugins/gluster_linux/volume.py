@@ -104,7 +104,6 @@ class GlusterVolumeService(CRUDService):
             ),
         ], required=True),
         Int('replica'),
-        Int('stripe'),
         Int('arbiter'),
         Int('disperse'),
         Int('disperse_data'),
@@ -122,7 +121,6 @@ class GlusterVolumeService(CRUDService):
             `peer_path` The full path of the brick
 
         `replica` Number of replica bricks
-        `stripe` Number of stripe bricks
         `arbiter` Number of arbiter bricks
         `disperse` Number of disperse bricks
         `disperse_data` Number of disperse data bricks
@@ -324,7 +322,6 @@ class GlusterVolumeService(CRUDService):
                     Str('peer_path', required=True),
                 ),
             ], required=True),
-            Int('stripe'),
             Int('replica'),
             Int('arbiter'),
             Bool('force'),
@@ -340,7 +337,6 @@ class GlusterVolumeService(CRUDService):
             `peer_name` IP or DNS name of the peer
             `peer_path` The full path of the brick to be added
 
-        `stripe` Stripe count
         `replica` Replica count
         `arbiter` Arbiter count
         `force` Forcefully add brick(s)
