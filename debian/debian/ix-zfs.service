@@ -1,6 +1,8 @@
 [Unit]
 Description=Import ZFS pools
 DefaultDependencies=no
+Before=network-pre.target
+Before=local-fs.target
 After=middlewared.service
 
 [Service]
