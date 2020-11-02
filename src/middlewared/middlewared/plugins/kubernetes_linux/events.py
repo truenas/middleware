@@ -61,3 +61,5 @@ class KubernetesEventService(CRUDService):
 
 async def setup(middleware):
     middleware.event_register('kubernetes.events', 'Kubernetes cluster events')
+    if await middleware.call('service.started', 'kubernetes'):
+        await middleware.call('k8s.event.k8s_events_internal')
