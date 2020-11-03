@@ -592,7 +592,7 @@ class FailoverService(Service):
                 self.run_call('service.restart', 'mdns', {'ha_propagate': False})
 
                 for i in (
-                    'smartd', 'ftp', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp', 'webdav',
+                    'smartd', 'ftp', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp', 'webdav', 'ups',
                 ):
                     c.execute(f'SELECT srv_enable FROM services_services WHERE srv_service = "{i}"')
                     ret = c.fetchone()
