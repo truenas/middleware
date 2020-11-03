@@ -290,17 +290,16 @@ class UPSService(SystemServiceService):
                     f'{config["identifier"]} is ONLINE (OL).'
                 )
             else:
-                # if we shutdown the active controller while the passive is still online
+                # if we shutdown the active node while the passive is still online
                 # then we're just going to cause a failover event. Shut the passive down
-                # first and then shut the active controller down
+                # first and then shut the active node down
                 if await self.middleware.call('failover.licensed'):
                     if await self.middleware.call('failover.status') == 'MASTER':
-                        syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown" for passive controller')
+                        syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown" for passive node')
                         try:
                             await self.middleware.call('failover.call_remote', 'ups.upssched_event', 'shutdown')
                         except Exception as e:
-                            syslog.syslog(syslog.LOG_ERROR, f'failed shutting down passive controller with error {e}')
-                            pass
+                            syslog.syslog(syslog.LOG_ERROR, f'failed shutting down passive node with error {e}')
 
                 syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown"')
                 await run('upsmon', '-c', 'fsd', check=False)
