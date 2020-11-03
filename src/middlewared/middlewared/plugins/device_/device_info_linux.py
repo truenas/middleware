@@ -166,7 +166,7 @@ class DeviceService(Service, DeviceInfoBase):
                 disk['rotationrate'] = self.get_rotational_rate(device_path)
 
             # get model and serial
-            disk['ident'] = disk['serial'] = disk_data.get('serial', '').strip()
+            disk['ident'] = disk['serial'] = (disk_data.get('serial') or '').strip()
             disk['descr'] = disk['model'] = disk_data.get('model').strip()
 
             # get all relevant size attributes of disk
