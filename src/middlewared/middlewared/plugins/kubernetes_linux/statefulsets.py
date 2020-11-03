@@ -16,10 +16,16 @@ class KubernetesStatefulsetService(CRUDService):
     @filterable
     async def query(self, filters=None, options=None):
         async with api_client() as (api, context):
-            return filter_list(
-                [d.to_dict() for d in (await context['apps_api'].list_stateful_set_for_all_namespaces()).items],
-                filters, options
+            stateful_sets = [
+                d.to_dict() for d in (await context['apps_api'].list_stateful_set_for_all_namespaces()).items
+            ]
+            events = await self.middleware.call(
+                'kubernetes.get_events_of_resource_type', 'StatefulSet', [s['metadata']['uid'] for s in stateful_sets]
             )
+            for stateful_set in stateful_sets:
+                stateful_set['events'] = events[stateful_set['metadata']['uid']]
+
+        return filter_list(stateful_sets, filters, options)
 
     @accepts(
         Dict(

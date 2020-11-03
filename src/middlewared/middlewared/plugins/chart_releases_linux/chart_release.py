@@ -349,3 +349,7 @@ class ChartReleaseService(CRUDService):
         return [release_dataset] + [
             os.path.join(release_dataset, k) for k in ('charts', 'volumes', 'volumes/ix_volumes')
         ]
+
+    @private
+    async def get_chart_namespace_prefix(self):
+        return CHART_NAMESPACE_PREFIX

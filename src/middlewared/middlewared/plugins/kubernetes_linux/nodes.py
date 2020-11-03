@@ -2,6 +2,7 @@ from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 
 from .k8s import api_client, nodes
+from .utils import NODE_NAME
 
 
 class KubernetesNodeService(ConfigService):
@@ -13,7 +14,13 @@ class KubernetesNodeService(ConfigService):
     async def config(self):
         try:
             async with api_client({'node': True}) as (api, context):
-                return {'node_configured': True, **(context['node'].to_dict())}
+                return {
+                    'node_configured': True,
+                    'events': await self.middleware.call('k8s.event.query', [], {
+                        'extra': {'field_selector': f'involvedObject.uid={NODE_NAME}'}
+                    }),
+                    **(context['node'].to_dict())
+                }
         except Exception as e:
             return {'node_configured': False, 'error': str(e)}
 
