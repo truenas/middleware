@@ -24,6 +24,8 @@ async def authenticate(middleware, req):
     if auth.startswith('Basic '):
         try:
             username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
+        except UnicodeDecodeError:
+            raise web.HTTPBadRequest()
         except binascii.Error:
             raise web.HTTPUnauthorized()
 
