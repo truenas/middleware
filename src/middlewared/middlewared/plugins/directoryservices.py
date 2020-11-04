@@ -165,7 +165,12 @@ class DirectoryServices(Service):
             'ldap': DSStatus.DISABLED.name,
             'nis': DSStatus.DISABLED.name
         }
-        ds_state.update(await self.get_state())
+        try:
+            old_state = await self.middleware.call('cache.get', 'DS_STATE')
+            ds_state.update(old_state)
+        except KeyError:
+            self.logger.trace("No previous DS_STATE exists. Lazy initializing for %s", new)
+
         ds_state.update(new)
         self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state)
         return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
