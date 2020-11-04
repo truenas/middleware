@@ -28,5 +28,5 @@ class BridgeMixin:
         return [
             link["ifname"]
             for link in json.loads(run(["bridge", "-json", "link"]).stdout)
-            if link["master"] == self.name
+            if link.get("master") == self.name
         ]
