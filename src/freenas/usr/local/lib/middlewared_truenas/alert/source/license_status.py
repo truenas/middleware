@@ -106,7 +106,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         ) % license['model']
                     ))
             else:
-                if hardware[0] in ('M40', 'M50', 'M60', 'X10', 'X20', 'Z20', 'Z30', 'Z35', 'Z50'):
+                if hardware[0] in ('M40', 'M50', 'M60', 'R10', 'R20', 'R40', 'R50', 'X10', 'X20', 'Z20', 'Z30', 'Z35',
+                                   'Z50'):
                     if hardware[0] != license['model']:
                         alerts.append(Alert(
                             LicenseAlertClass,
