@@ -166,7 +166,12 @@ class NISService(ConfigService):
         except asyncio.TimeoutError:
             raise CallError('nis.started check timed out after 5 seconds.')
 
-        if (await self.get_state()) != 'HEALTHY':
+        try:
+            cached_state = await self.middleware.call_sync('cache.get', 'DS_STATE')
+
+            if cached_state['nis'] != 'HEALTHY':
+                await self.set_state(DSStatus['HEALTHY'])
+        except KeyError:
             await self.set_state(DSStatus['HEALTHY'])
 
         return ret

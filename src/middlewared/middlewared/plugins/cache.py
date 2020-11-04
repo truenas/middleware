@@ -136,7 +136,7 @@ class DSCache(Service):
 
     def initialize(self):
         for ds in [('activedirectory', 'AD'), ('ldap', 'LDAP'), ('nis', 'NIS')]:
-            if self.middleware.call_sync(f'{ds[0]}.get_state') != 'DISABLED':
+            if (self.middleware.call_sync(f'{ds[0]}.config'))['enable']:
                 try:
                     with open(f'/var/db/system/.{ds[1]}_cache_backup', 'rb') as f:
                         pickled_cache = pickle.load(f)
@@ -146,7 +146,7 @@ class DSCache(Service):
 
     def backup(self):
         for ds in [('activedirectory', 'AD'), ('ldap', 'LDAP'), ('nis', 'NIS')]:
-            if self.middleware.call_sync(f'{ds[0]}.get_state') != 'DISABLED':
+            if (self.middleware.call_sync(f'{ds[0]}.config'))['enable']:
                 try:
                     ds_cache = self.middleware.call_sync('cache.get', f'{ds[1]}_cache')
                     with open(f'/var/db/system/.{ds[1]}_cache_backup', 'wb') as f:
