@@ -45,6 +45,8 @@ STATUS_DESC = [
 ]
 
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
+R_SERIES_REGEX = re.compile(r"ECStream (FS2|DSS212S[ps])")
+R50_REGEX = re.compile(r"iX eDrawer4048S([12])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
 ES24F_REGEX = re.compile(r"(ECStream|iX) 2024J([ps])")
@@ -349,7 +351,7 @@ class Enclosures(object):
 
         self.__enclosures = []
         for num, data in stat.items():
-            enclosure = Enclosure(num=num, data=data, labels=labels)
+            enclosure = Enclosure(num, data, stat, labels, system_info)
             if any(s in enclosure.encname for s in blacklist):
                 continue
 
@@ -384,8 +386,10 @@ class Enclosures(object):
 
 class Enclosure(object):
 
-    def __init__(self, num, data, labels):
+    def __init__(self, num, data, stat, labels, system_info):
         self.num = num
+        self.stat = stat
+        self.system_info = system_info
         if IS_FREEBSD:
             self.devname = f"ses{num}"
         else:
@@ -515,6 +519,15 @@ class Enclosure(object):
     def _set_model(self, data):
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
+            self.controller = True
+        elif R_SERIES_REGEX.match(self.encname):
+            self.model = self.system_info["system_product"].replace("TRUENAS-", "")
+            self.controller = True
+            if self.model == "R40":
+                index = [v for v in self.stat.values() if "ECStream FS2" in v].index(data)
+                self.model = f"{self.model}, Drawers #{index * 2 + 1}-{index * 2 + 2}"
+        elif m := R50_REGEX.match(self.encname):
+            self.model = f"R50, Drawer #{m.group(1)}"
             self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
