@@ -85,7 +85,7 @@ EXPORT {
     % elif not config["v4"] and share["aliases"]:
     Tag = ${alias.lstrip('/')};
     % elif config["v4"] and not share["aliases"]:
-    Pseduo = /${path.split('/')[-1]};
+    Pseudo = /${path.split('/')[-1]};
     % endif;
     % if config["udp"]:
     Transports = TCP, UDP;
