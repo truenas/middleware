@@ -820,6 +820,13 @@ class LDAPService(ConfigService):
             raise CallError('Automatically disabling LDAP service due to invalid configuration.',
                             errno.EINVAL)
 
+        """
+        Initialize state to "JOINING" until after booted.
+        """
+        if not await self.middleware.call('system.ready'):
+            await self.set_state(DSStatus['JOINING'])
+            return True
+
         try:
             await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),
                                    timeout=ldap['timeout'])
