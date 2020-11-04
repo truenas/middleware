@@ -153,6 +153,14 @@ class NISService(ConfigService):
         ret = False
         if not (await self.config())['enable']:
             return ret
+
+        """
+        Initialize state to "JOINING" until after booted.
+        """
+        if not await self.middleware.call('system.ready'):
+            await self.set_state(DSStatus['JOINING'])
+            return True
+
         try:
             ret = await asyncio.wait_for(self.__ypwhich(), timeout=5.0)
         except asyncio.TimeoutError:
