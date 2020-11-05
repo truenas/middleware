@@ -4,6 +4,7 @@ import uuid
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
                                 Patch, UnixPerm)
 from middlewared.validators import IpAddress, Range
@@ -390,5 +391,9 @@ class AFPFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
 
 async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        SystemServiceListenMultipleDelegate(middleware, 'afp', 'bindip'),
+    )
     await middleware.call('pool.dataset.register_attachment_delegate', AFPFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)

@@ -1,4 +1,5 @@
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
@@ -136,3 +137,10 @@ class S3Service(SystemServiceService):
             )
 
         return await self.config()
+
+
+async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        SystemServiceListenSingleDelegate(middleware, 's3', 'bindip'),
+    )

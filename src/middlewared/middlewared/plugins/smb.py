@@ -1,4 +1,5 @@
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors
 from middlewared.service_exception import CallError
@@ -1315,5 +1316,9 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
 
 async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        SystemServiceListenMultipleDelegate(middleware, 'smb', 'bindip'),
+    )
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)

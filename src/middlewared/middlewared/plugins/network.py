@@ -646,6 +646,38 @@ class InterfaceService(CRUDService):
 
         return iface
 
+    @private
+    async def get_datastores(self):
+        datastores = {}
+        datastores['interfaces'] = await self.middleware.call(
+            'datastore.query', 'network.interfaces'
+        )
+        datastores['alias'] = []
+        for i in await self.middleware.call('datastore.query', 'network.alias'):
+            i['alias_interface'] = i['alias_interface']['id']
+            datastores['alias'].append(i)
+
+        datastores['bridge'] = []
+        for i in await self.middleware.call('datastore.query', 'network.bridge'):
+            i['interface'] = i['interface']['id'] if i['interface'] else None
+            datastores['bridge'].append(i)
+
+        datastores['vlan'] = await self.middleware.call(
+            'datastore.query', 'network.vlan'
+        )
+
+        datastores['lagg'] = []
+        for i in await self.middleware.call('datastore.query', 'network.lagginterface'):
+            i['lagg_interface'] = i['lagg_interface']['id']
+            datastores['lagg'].append(i)
+
+        datastores['laggmembers'] = []
+        for i in await self.middleware.call('datastore.query', 'network.lagginterfacemembers'):
+            i['lagg_interfacegroup'] = i['lagg_interfacegroup']['id']
+            datastores['laggmembers'].append(i)
+
+        return datastores
+
     async def __save_datastores(self):
         """
         Save datastores states before performing any actions to interfaces.
@@ -654,32 +686,8 @@ class InterfaceService(CRUDService):
         """
         if self._original_datastores:
             return
-        self._original_datastores['interfaces'] = await self.middleware.call(
-            'datastore.query', 'network.interfaces'
-        )
-        self._original_datastores['alias'] = []
-        for i in await self.middleware.call('datastore.query', 'network.alias'):
-            i['alias_interface'] = i['alias_interface']['id']
-            self._original_datastores['alias'].append(i)
 
-        self._original_datastores['bridge'] = []
-        for i in await self.middleware.call('datastore.query', 'network.bridge'):
-            i['interface'] = i['interface']['id'] if i['interface'] else None
-            self._original_datastores['bridge'].append(i)
-
-        self._original_datastores['vlan'] = await self.middleware.call(
-            'datastore.query', 'network.vlan'
-        )
-
-        self._original_datastores['lagg'] = []
-        for i in await self.middleware.call('datastore.query', 'network.lagginterface'):
-            i['lagg_interface'] = i['lagg_interface']['id']
-            self._original_datastores['lagg'].append(i)
-
-        self._original_datastores['laggmembers'] = []
-        for i in await self.middleware.call('datastore.query', 'network.lagginterfacemembers'):
-            i['lagg_interfacegroup'] = i['lagg_interfacegroup']['id']
-            self._original_datastores['laggmembers'].append(i)
+        self._original_datastores = await self.get_datastores()
 
     async def __restore_datastores(self):
         if not self._original_datastores:
@@ -731,6 +739,10 @@ class InterfaceService(CRUDService):
                 'At least one interface configured with either IPv4 DHCP, IPv6 auto or a static IP'
                 ' is required.'
             )
+
+    @private
+    async def get_original_datastores(self):
+        return self._original_datastores
 
     @accepts()
     async def has_pending_changes(self):
