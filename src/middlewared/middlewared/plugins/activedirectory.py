@@ -841,6 +841,13 @@ class ActiveDirectoryService(ConfigService):
             raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
                             errno.EINVAL)
 
+        """
+        Initialize state to "JOINING" until after booted.
+        """
+        if not await self.middleware.call('system.ready'):
+            await self.set_state(DSStatus['JOINING'])
+            return True
+
         await self.middleware.call('activedirectory.conn_check', config)
 
         if (await self.get_state()) != 'HEALTHY':
