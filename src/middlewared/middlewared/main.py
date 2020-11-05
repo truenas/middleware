@@ -572,6 +572,12 @@ class ShellWorkerThread(threading.Thread):
                 return ['/usr/bin/cu', '-l', f'nmdm{options["vm_id"]}B']
             else:
                 return ['/usr/bin/virsh', 'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}']
+        elif options.get('chart_release'):
+            return [
+                '/usr/local/bin/k3s', 'kubectl', 'exec', '-n', options['chart_release']['namespace'],
+                f'pod/{options["pod_name"]}', '--container', options['container_name'], '-it', '--',
+                options.get('command', '/bin/bash'),
+            ]
         else:
             return ['/usr/bin/login', '-p', '-f', 'root']
 
@@ -731,6 +737,14 @@ class ShellApplication(object):
                 options['jail'] = data.get('jail') or options.get('jail')
                 if options.get('vm_id'):
                     options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
+                if options.get('chart_release_name'):
+                    if not options.get('pod_name') or not options.get('container_name'):
+                        raise CallError('Pod name and container name must be specified')
+
+                    options['chart_release'] = await self.middleware.call(
+                        'chart.release.get_instance', options['chart_release_name']
+                    )
+
                 conndata.t_worker = ShellWorkerThread(
                     ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), options=options
                 )
