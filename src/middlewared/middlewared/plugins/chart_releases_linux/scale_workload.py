@@ -1,6 +1,9 @@
 import asyncio
+import errno
 
-from middlewared.schema import Dict, Int, Str
+from collections import defaultdict
+
+from middlewared.schema import Dict, Int, List, Str
 from middlewared.service import accepts, CallError, private, Service
 
 from .utils import Resources
@@ -106,6 +109,64 @@ class ChartReleaseService(Service):
                                 'replicas': replica_count,
                             }
                         }
+                    }
+                )
+
+    @accepts(
+        Str('release_name'),
+        List(
+            'workloads',
+            items=[
+                Dict(
+                    'scale_workload',
+                    Int('replica_count', required=True),
+                    Str('type', enum=[r.name for r in SCALEABLE_RESOURCES], required=True),
+                    Str('name', required=True),
+                )
+            ],
+            empty=False,
+        ),
+    )
+    async def scale_workloads(self, release_name, workloads):
+        """
+        Scale workloads in a chart release to specified `replica_count`.
+        """
+        release = await self.middleware.call(
+            'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
+        )
+
+        not_found = {}
+        scale_resources = {r.name: [] for r in SCALEABLE_RESOURCES}
+        to_scale_resources = defaultdict(dict)
+
+        for workload in workloads:
+            to_scale_resources[workload['type']][workload['name']] = workload
+
+        for scaleable_resource in SCALEABLE_RESOURCES:
+            to_scale = to_scale_resources[scaleable_resource.name]
+            if not to_scale:
+                continue
+
+            for resource in map(
+                lambda r: r['metadata']['name'], release['resources'][f'{scaleable_resource.name.lower()}s']
+            ):
+                if resource in to_scale:
+                    scale_resources[scaleable_resource.name].append(to_scale[resource])
+                    to_scale.pop(resource)
+
+            not_found.update(to_scale)
+
+        if not_found:
+            raise CallError(
+                f'Unable to find {", ".join(not_found)} workload(s) for {release_name} release', errno=errno.ENOENT
+            )
+
+        for resource_type in scale_resources:
+            for workload in scale_resources[resource_type]:
+                await self.middleware.call(
+                    f'k8s.{resource_type.lower()}.update', workload['name'], {
+                        'namespace': release['namespace'],
+                        'body': {'spec': {'replicas': workload['replica_count']}},
                     }
                 )
 
