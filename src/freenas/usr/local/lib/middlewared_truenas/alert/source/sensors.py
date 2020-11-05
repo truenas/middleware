@@ -51,6 +51,7 @@ class SensorsAlertSource(AlertSource):
 
         is_gigabyte = baseboard_manufacturer == "GIGABYTE"
         is_m_series = baseboard_manufacturer == "Supermicro" and failover_hardware == "ECHOWARP"
+        is_r_series = system_product_name.startswith("TRUENAS-R")
         is_freenas_certified = (
             baseboard_manufacturer == "Supermicro" and system_product_name.startswith("FREENAS-CERTIFIED")
         )
@@ -91,7 +92,7 @@ class SensorsAlertSource(AlertSource):
                     key=[sensor["name"], relative, level],
                 ))
 
-            if is_m_series or is_freenas_certified:
+            if is_m_series or is_r_series or is_freenas_certified:
                 ps_match = re.match("(PS[0-9]+) Status", sensor["name"])
                 if ps_match:
                     ps = ps_match.group(1)
