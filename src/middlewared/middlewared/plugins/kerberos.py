@@ -1114,6 +1114,9 @@ class KerberosKeytabService(CRUDService):
         assume that samba has updated it behind the scenes and that the configuration
         database needs to be updated to reflect the change.
         """
+        if not await self.middleware.call('system.ready'):
+            return
+
         old_mtime = 0
         ad_state = await self.middleware.call('activedirectory.get_state')
         if ad_state == 'DISABLED' or not os.path.exists(keytab['SYSTEM'].value):
