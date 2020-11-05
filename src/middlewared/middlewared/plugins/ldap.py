@@ -729,29 +729,50 @@ class LDAPService(ConfigService):
         return ret
 
     @private
-    def validate_credentials(self, ldap=None):
-        ret = False
-        if ldap is None:
-            ldap = self.middleware.call_sync('ldap.config')
+    @job(lock="ldapquery")
+    def do_ldap_query(self, job, ldap_conf, action, args):
+        supported_actions = [
+            'get_samba_domains',
+            'get_root_DSE',
+            'get_dn',
+            'validate_credentials',
+        ]
+        if action not in supported_actions:
+            raise CallError(f"Unsuported LDAP query: {action}")
 
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
-            ret = LDAP.validate_credentials()
+        if ldap_conf is None:
+            ldap_conf = self.middleware.call_sync('ldap.config')
+
+        with LDAPQuery(conf=ldap_conf, logger=self.logger, hosts=ldap_conf['uri_list']) as LDAP:
+            if action == "get_samba_domains":
+                ret = LDAP.get_samba_domains()
+
+            elif action == "get_root_DSE":
+                ret = LDAP.get_root_DSE()
+
+            elif action == "get_dn":
+                dn = ldap_conf['basedn'] if args is None else args
+                ret = LDAP.get_dn(dn)
+
+            elif action == "validate_credentials":
+                ret = LDAP.validate_credentials()
 
         return ret
 
     @private
-    def get_samba_domains(self, ldap=None):
-        ret = []
-        if ldap is None:
-            ldap = self.middleware.call_sync('ldap.config')
-
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
-            ret = LDAP.get_samba_domains()
-
+    def validate_credentials(self, ldap_config=None):
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "validate_credentials", None)
+        ret = ldap_job.wait_sync()
         return ret
 
     @private
-    def get_root_DSE(self, ldap=None):
+    def get_samba_domains(self, ldap_config=None):
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_samba_domains", None)
+        ret = ldap_job.wait_sync()
+        return ret
+
+    @private
+    def get_root_DSE(self, ldap_config=None):
         """
         root DSE is defined in RFC4512, and must include the following:
 
@@ -772,29 +793,17 @@ class LDAPService(ConfigService):
 
         In practice, this full data is not returned from many LDAP servers
         """
-        ret = []
-        if ldap is None:
-            ldap = self.middleware.call_sync('ldap.config')
-
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
-            ret = LDAP.get_root_DSE()
-
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_root_DSE", None)
+        ret = ldap_job.wait_sync()
         return ret
 
     @private
-    def get_dn(self, dn=None, ldap=None):
+    def get_dn(self, dn=None, ldap_config=None):
         """
         Outputs contents of specified DN in JSON. By default will target the basedn.
         """
-        ret = []
-        if ldap is None:
-            ldap = self.middleware.call_sync('ldap.config')
-
-        if dn is None:
-            dn = ldap['basedn']
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
-            ret = LDAP.get_dn(dn)
-
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_dn", dn)
+        ret = ldap_job.wait_sync()
         return ret
 
     @private
@@ -836,7 +845,12 @@ class LDAPService(ConfigService):
         except Exception as e:
             raise CallError(e)
 
-        if (await self.get_state()) != 'HEALTHY':
+        try:
+            cached_state = await self.middleware.call_sync('cache.get', 'DS_STATE')
+
+            if cached_state['ldap'] != 'HEALTHY':
+                await self.set_state(DSStatus['HEALTHY'])
+        except KeyError:
             await self.set_state(DSStatus['HEALTHY'])
 
         return True

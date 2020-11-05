@@ -146,7 +146,7 @@ class SharingSMBService(Service):
                 await self.middleware.call('sharing.smb.strip_comments', share)
 
         if gl['ad_enabled'] is None:
-            gl['ad_enabled'] = False if (await self.middleware.call('activedirectory.get_state')) == "DISABLED" else True
+            gl['ad_enabled'] = (await self.middleware.call('activedirectory.config'))['enable']
 
         if gl['fruit_enabled'] is None:
             gl['fruit_enabled'] = (await self.middleware.call('smb.config'))['aapl_extensions']
