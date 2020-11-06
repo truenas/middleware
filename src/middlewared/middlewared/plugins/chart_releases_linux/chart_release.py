@@ -7,6 +7,8 @@ import shutil
 import tempfile
 import yaml
 
+from pkg_resources import parse_version
+
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list
@@ -31,6 +33,20 @@ class ChartReleaseService(CRUDService):
         """
         if not await self.middleware.call('service.started', 'kubernetes'):
             return []
+
+        update_catalog_config = {}
+        catalogs = await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
+        for catalog in catalogs:
+            update_catalog_config[catalog['label']] = {}
+            for train in catalog['trains']:
+                train_data = {}
+                for catalog_item in catalog['trains'][train]:
+                    train_data[catalog_item] = max(
+                        [parse_version(v) for v in catalog['trains'][train][catalog_item]['versions']],
+                        default=parse_version('0.0.0')
+                    )
+
+                update_catalog_config[catalog['label']][train] = train_data
 
         k8s_config = await self.middleware.call('kubernetes.config')
         options = options or {}
@@ -79,6 +95,14 @@ class ChartReleaseService(CRUDService):
                 }
             if get_history:
                 release_data['history'] = release['history']
+
+            current_version = parse_version(release_data['chart_metadata']['version'])
+            latest_version = update_catalog_config.get(release_data['catalog'], {}).get(
+                release_data['catalog_train'], {}
+            ).get(release_data['chart_metadata']['name'], release_data['chart_metadata']['version'])
+
+            release_data['update_available'] = latest_version > current_version
+            release_data['chart_metadata']['latest_chart_version'] = str(latest_version)
 
             releases.append(release_data)
 
