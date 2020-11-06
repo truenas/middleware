@@ -17,9 +17,30 @@ class EnclosureDetectionService(Service):
     @private
     def detect(self):
 
+        # first check to see if this is a BHYVE instance
+        manufacturer = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
+        if manufacturer == 'BHYVE':
+            self.HARDWARE = 'BHYVE'
+
+            # bhyve host configures a 3rd device to be mounted
+            # in the bhyve VM. This device is sg0 and has the
+            # string in it that will inform us if we're the A
+            # or B node respectively
+            proc = subprocess.run(
+                ['sg_inq', '/dev/sg0'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            if proc.stdout:
+                if 'TrueNAS_A' in proc.stdout.decode():
+                    self.NODE = 'A'
+                elif 'TrueNAS_B' in proc.stdout.decode():
+                    self.NODE = 'B'
+
+            return self.HARDWARE, self.NODE
+
         # Gather the PCI address for all enclosurers
         # detected by the kernel
-
         enclosures = self.middleware.call_sync("enclosure.list_ses_enclosures")
         if not enclosures:
             # No enclosures detected

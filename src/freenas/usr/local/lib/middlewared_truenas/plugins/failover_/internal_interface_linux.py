@@ -21,6 +21,10 @@ class InternalInterfaceService(Service):
             'failover.hardware'
         )
 
+        # Return BHYVE heartbeat interface
+        if hardware == 'BHYVE':
+            return ['enp0s6f1']
+
         # Detect Z-series heartbeat interface
         if hardware == 'ECHOSTREAM':
             for i in glob.iglob(INTERFACE_GLOB):
