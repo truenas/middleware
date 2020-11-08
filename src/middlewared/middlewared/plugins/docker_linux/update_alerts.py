@@ -1,5 +1,3 @@
-import asyncio
-
 from collections import defaultdict
 
 from middlewared.service import CallError, private, Service
@@ -31,6 +29,8 @@ class DockerImagesService(Service, DockerClientMixin):
 
     @private
     async def get_digest_of_image(self, tag, image_details=None):
+        # Following logic has been used from docker engine to make sure we follow the same rules/practices
+        # for normalising the image name / tag
         i = tag.find('/')
         if i == -1 or (not any(c in tag[:i] for c in ('.', ':')) and tag[:i] != 'localhost'):
             registry, image_tag = DEFAULT_DOCKER_REGISTRY, tag
@@ -52,7 +52,6 @@ class DockerImagesService(Service, DockerClientMixin):
         else:
             if image_details:
                 if digest != image_details['id']:
-                    # TODO: Raise an alert please
                     self.IMAGE_CACHE[tag] = True
                     await self.middleware.call(
                         'alert.oneshot_create', 'DockerImageUpdate', {**image_details, 'tag': tag}
@@ -69,8 +68,3 @@ class DockerImagesService(Service, DockerClientMixin):
             self.IMAGE_CACHE.pop(tag, None)
 
         await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', f'"{image["id"]}"')
-
-
-async def setup(middleware):
-    if await middleware.call('system.ready') and await middleware.call('service.started', 'docker'):
-        asyncio.ensure_future(middleware.call('docker.images.check_update'))

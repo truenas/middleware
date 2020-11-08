@@ -1,3 +1,4 @@
+import asyncio
 import errno
 import os
 import shutil
@@ -153,6 +154,8 @@ class ChartReleaseService(Service):
                 continue
 
             await self.chart_release_update_check(catalog_item, application)
+
+        asyncio.ensure_future(self.middleware.call('docker.images.check_update'))
 
     @private
     async def chart_release_update_check(self, catalog_item, application):
