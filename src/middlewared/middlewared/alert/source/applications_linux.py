@@ -45,3 +45,21 @@ class ChartReleaseUpdateAlertClass(AlertClass, OneShotAlertClass):
             lambda alert: alert.key != str(query),
             alerts
         ))
+
+
+class DockerImageUpdateAlertClass(AlertClass, OneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.APPLICATIONS
+    level = AlertLevel.INFO
+    title = 'Docker Image Update Available'
+    text = 'An update is available for docker image with "%(tag)s" tag.'
+
+    async def create(self, args):
+        return Alert(DockerImageUpdateAlertClass, args, key=args['id'])
+
+    async def delete(self, alerts, query):
+        return list(filter(
+            lambda alert: alert.key != str(query),
+            alerts
+        ))

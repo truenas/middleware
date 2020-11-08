@@ -54,14 +54,21 @@ class DockerImagesService(Service, DockerClientMixin):
                 if digest != image_details['id']:
                     # TODO: Raise an alert please
                     self.IMAGE_CACHE[tag] = True
+                    await self.middleware.call(
+                        'alert.oneshot_create', 'DockerImageUpdate', {**image_details, 'tag': tag}
+                    )
                 else:
                     self.IMAGE_CACHE[tag] = False
+                    await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', f'"{image_details["id"]}"')
 
             return digest
 
     @private
-    async def remove_tag_from_cache(self, tag):
-        self.IMAGE_CACHE.pop(tag, None)
+    async def remove_image_from_cache(self, image):
+        for tag in image['repo_tags']:
+            self.IMAGE_CACHE.pop(tag, None)
+
+        await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', f'"{image["id"]}"')
 
 
 async def setup(middleware):
