@@ -24,6 +24,8 @@ class DockerImagesService(CRUDService):
         if not await self.middleware.call('service.started', 'docker'):
             return results
 
+        update_cache = await self.middleware.call('docker.images.image_update_cache')
+
         async with aiodocker.Docker() as docker:
             for image in await docker.images.list():
                 repo_tags = image['RepoTags'] or []
@@ -34,6 +36,7 @@ class DockerImagesService(CRUDService):
                     'size': image['Size'],
                     'created': datetime.fromtimestamp(int(image['Created'])),
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
+                    'update_available': any(update_cache[r] for r in repo_tags),
                 })
         return filter_list(results, filters, options)
 
