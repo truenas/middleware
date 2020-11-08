@@ -1,4 +1,5 @@
 import aiohttp
+import aiohttp.client_exceptions
 import async_timeout
 import asyncio
 
@@ -26,7 +27,7 @@ class DockerClientMixin:
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with {url} in {timeout} seconds.'
         except aiohttp.ClientResponseError as e:
-            response['error'] = f'Error Code ({req.status}): {e}'
+            response['error'] = str(e)
         else:
             response['response_obj'] = req
             if req.status != 200:
@@ -34,7 +35,12 @@ class DockerClientMixin:
                     f' ({req.content})' if req.content else ''
                 )
             else:
-                response['response'] = await req.json()
+                try:
+                    response['response'] = await req.json()
+                except aiohttp.client_exceptions.ContentTypeError as e:
+                    # quay.io registry returns malformed content type header which aiohttp fails to parse
+                    # even though the content returned by registry is valid json
+                    response['error'] = f'Unable to parse response: {e}'
         return response
 
     async def _get_token(self, image):
@@ -57,4 +63,4 @@ class DockerClientMixin:
         if response['error']:
             raise CallError(f'Unable to retrieve latest image digest for {f"{image}:{tag}"!r}: {response["error"]}')
 
-        return response['config']['digest']
+        return response['response']['config']['digest']
