@@ -30,6 +30,8 @@ class KubernetesService(Service):
         else:
             asyncio.ensure_future(self.middleware.call('k8s.event.setup_k8s_events'))
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
+            # We only want to start checking for release updates once we have started k8s
+            asyncio.ensure_future(self.middleware.call('chart.release.chart_releases_update_checks_internal'))
 
     @private
     async def post_start_internal(self):
