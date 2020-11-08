@@ -1,3 +1,5 @@
+import asyncio
+
 from collections import defaultdict
 
 from middlewared.service import CallError, private, Service
@@ -23,7 +25,7 @@ class DockerImagesService(Service, DockerClientMixin):
         for image in images:
             for tag in image['repo_tags']:
                 try:
-                    await self.get_digest_of_image(tag)
+                    await self.get_digest_of_image(tag, image)
                 except CallError as e:
                     self.logger.error(str(e))
 
@@ -60,3 +62,8 @@ class DockerImagesService(Service, DockerClientMixin):
     @private
     async def remove_tag_from_cache(self, tag):
         self.IMAGE_CACHE.pop(tag, None)
+
+
+async def setup(middleware):
+    if await middleware.call('system.ready') and await middleware.call('service.started', 'docker'):
+        asyncio.ensure_future(middleware.call('docker.images.check_update'))
