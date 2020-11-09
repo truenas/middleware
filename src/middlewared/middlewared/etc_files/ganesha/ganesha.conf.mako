@@ -9,6 +9,11 @@
 
     gc = middleware.call_sync("network.configuration.config")
 
+    # call this here so that we don't have to call this
+    # n times (n being the number of shares in db)
+    peer_job = middleware.call_sync("gluster.peer.status")
+    peers = peer_job.wait_sync()
+
     bindip = middleware.call_sync("nfs.bindip", config)
     sec = middleware.call_sync("nfs.sec", config, kerberos_keytabs)
 
@@ -64,8 +69,23 @@ EXPORT_DEFAULTS {
         clients = share["networks"] + share["hosts"]
     %>
 
+    <%
+        share["uses_gluster"] = False
+        share["gluster_node"] = None
+    %>
     % for path, alias in zip(share["paths"], share["aliases"] or share["paths"]):
     <%
+        gvol = path.split("/")
+        if len(gvol) > 3 and gvol[3] == ".glusterfs":
+            share["uses_gluster"] = True
+            if peers:
+                share["gluster_node"] = peers[0]["hostname"]
+            else:
+                middleware.logger.debug(
+                    'Skipping generation of %r path.'
+                    'It is part of a gluster path, but gluster peers were not detected', path
+                )
+
         if share['locked'] and middleware.call_sync('pool.dataset.path_in_locked_datasets', path, locked_datasets):
             middleware.logger.debug(
                 'Skipping generation of %r path for NFS share as the underlying resource is locked', path
@@ -154,9 +174,17 @@ EXPORT {
     % if config["v4"] and share["security"]:
     SecType = ${", ".join([s.lower() for s in share["security"]])};
     % endif;
+    % if share["uses_gluster"] and share["gluster_node"] is not None:
+    FSAL {
+        Name = "GLUSTER";
+        Hostname = "${share["gluster_node"]}";
+        Volume = "${path.split("/")[4]}";
+    }
+    % else:
     FSAL {
         Name = VFS;
     }
+    % endif;
 }
     % endfor;
 % endfor;
