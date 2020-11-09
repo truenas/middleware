@@ -54,6 +54,13 @@ class ChartReleaseService(CRUDService):
         get_resources = extra.get('retrieve_resources')
         get_history = extra.get('history')
 
+        ports_used = collections.defaultdict(set)
+        for node_port_svc in await self.middleware.call(
+            'k8s.service.query', [['spec.type', '=', 'NodePort'], ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]]
+        ):
+            release_name = node_port_svc['metadata']['name'][len(CHART_NAMESPACE_PREFIX):]
+            ports_used[release_name].add({p['node_port'] for p in node_port_svc['spec']['ports']})
+
         storage_classes = collections.defaultdict(lambda: None)
         for storage_class in await self.middleware.call('k8s.storage_class.query'):
             storage_classes[storage_class['metadata']['name']] = storage_class
@@ -92,12 +99,15 @@ class ChartReleaseService(CRUDService):
             elif pod_diff < 0:
                 status = 'DEPLOYING'
 
+            # We will retrieve all host ports being used
+
             release_data.update({
                 'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name),
                 'dataset': os.path.join(k8s_config['dataset'], 'releases', name),
                 'config': config,
                 'status': status,
             })
+
             if get_resources:
                 release_data['resources'] = {
                     'storage_class': storage_classes[get_storage_class_name(name)],
