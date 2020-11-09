@@ -1,5 +1,4 @@
 import aiodocker
-import asyncio
 import errno
 import os
 
@@ -75,10 +74,7 @@ class DockerImagesService(CRUDService):
             except aiodocker.DockerError as e:
                 raise CallError(f'Failed to pull image: {e.message}')
 
-        image = await self.query([['repo_tags', 'rin', f'{data["from_image"]}:{data["tag"]}']], {'get': True})
-        asyncio.ensure_future(self.middleware.call(
-            'docker.images.get_digest_of_image', f'{data["from_image"]}:{data["tag"]}', image,
-        ))
+        await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', f'{data["from_image"]}:{data["tag"]}')
 
         return response
 
