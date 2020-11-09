@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 from middlewared.schema import Bool, Dict, Str
-from middlewared.service import accepts, CallError, filterable, private, CRUDService
+from middlewared.service import accepts, CallError, filterable, job, private, CRUDService
 from middlewared.utils import filter_list
 
 
@@ -23,6 +23,8 @@ class DockerImagesService(CRUDService):
         if not await self.middleware.call('service.started', 'docker'):
             return results
 
+        update_cache = await self.middleware.call('docker.images.image_update_cache')
+
         async with aiodocker.Docker() as docker:
             for image in await docker.images.list():
                 repo_tags = image['RepoTags'] or []
@@ -33,6 +35,7 @@ class DockerImagesService(CRUDService):
                     'size': image['Size'],
                     'created': datetime.fromtimestamp(int(image['Created'])),
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
+                    'update_available': any(update_cache[r] for r in repo_tags),
                 })
         return filter_list(results, filters, options)
 
@@ -50,7 +53,8 @@ class DockerImagesService(CRUDService):
             Str('tag', default=None, null=True),
         )
     )
-    async def pull(self, data):
+    @job()
+    async def pull(self, job, data):
         """
         `from_image` is the name of the image to pull. Format for the name is "registry/repo/image" where
         registry may be omitted and it will default to docker registry in this case.
@@ -61,6 +65,7 @@ class DockerImagesService(CRUDService):
         `docker_authentication` should be specified if image to be retrieved is under a private repository.
         """
         await self.docker_checks()
+        # TODO: Have job progress report downloading progress
         async with aiodocker.Docker() as docker:
             try:
                 response = await docker.images.pull(
@@ -68,6 +73,9 @@ class DockerImagesService(CRUDService):
                 )
             except aiodocker.DockerError as e:
                 raise CallError(f'Failed to pull image: {e.message}')
+
+        await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', f'{data["from_image"]}:{data["tag"]}')
+
         return response
 
     @accepts(
@@ -82,8 +90,11 @@ class DockerImagesService(CRUDService):
         `options.force` should be used to force delete an image even if it's in use by a stopped container.
         """
         await self.docker_checks()
+        image = await self.get_instance(id)
         async with aiodocker.Docker() as docker:
             await docker.images.delete(name=id, force=options['force'])
+
+        await self.middleware.call('docker.images.remove_image_from_cache', image)
 
     @private
     async def load_images_from_file(self, path):

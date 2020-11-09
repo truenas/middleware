@@ -1,3 +1,4 @@
+import asyncio
 import errno
 import os
 import shutil
@@ -129,15 +130,16 @@ class ChartReleaseService(Service):
     @periodic(interval=86400)
     @private
     async def periodic_chart_releases_update_checks(self):
+        sync_job = await self.middleware.call('catalog.sync_all')
+        await sync_job.wait()
+        if not await self.middleware.call('service.started', 'kubernetes'):
+            return
+
         await self.chart_releases_update_checks_internal()
 
     @private
     async def chart_releases_update_checks_internal(self, chart_releases_filters=None):
         chart_releases_filters = chart_releases_filters or []
-        sync_job = await self.middleware.call('catalog.sync_all')
-        await sync_job.wait()
-        if not await self.middleware.call('service.started', 'kubernetes'):
-            return
 
         # TODO: Let's please use branch as well to keep an accurate track of which app belongs to which catalog branch
         catalog_items = {
@@ -152,6 +154,8 @@ class ChartReleaseService(Service):
                 continue
 
             await self.chart_release_update_check(catalog_item, application)
+
+        asyncio.ensure_future(self.middleware.call('docker.images.check_update'))
 
     @private
     async def chart_release_update_check(self, catalog_item, application):
