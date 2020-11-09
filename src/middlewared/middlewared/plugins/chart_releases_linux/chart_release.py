@@ -54,12 +54,14 @@ class ChartReleaseService(CRUDService):
         get_resources = extra.get('retrieve_resources')
         get_history = extra.get('history')
 
-        ports_used = collections.defaultdict(set)
+        ports_used = collections.defaultdict(list)
         for node_port_svc in await self.middleware.call(
             'k8s.service.query', [['spec.type', '=', 'NodePort'], ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]]
         ):
             release_name = node_port_svc['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
-            ports_used[release_name].update({p['node_port'] for p in node_port_svc['spec']['ports']})
+            ports_used[release_name].extend([
+                {'port': p['node_port'], 'protocol': p['protocol']} for p in node_port_svc['spec']['ports']
+            ])
 
         storage_classes = collections.defaultdict(lambda: None)
         for storage_class in await self.middleware.call('k8s.storage_class.query'):
@@ -100,16 +102,19 @@ class ChartReleaseService(CRUDService):
                 status = 'DEPLOYING'
 
             # We will retrieve all host ports being used
-            for pod in resources[Resources.POD.value][name]:
+            for pod in filter(lambda p: p['status']['phase'] == 'Running', resources[Resources.POD.value][name]):
                 for container in pod['spec']['containers']:
-                    ports_used[name].update({p['host_port'] for p in container['ports'] if p['host_port']})
+                    ports_used[name].extend([
+                        {'port': p['host_port'], 'protocol': p['protocol']}
+                        for p in (container['ports'] or []) if p['host_port']
+                    ])
 
             release_data.update({
                 'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name),
                 'dataset': os.path.join(k8s_config['dataset'], 'releases', name),
                 'config': config,
                 'status': status,
-                'used_ports': list(ports_used[name]),
+                'used_ports': ports_used[name],
             })
 
             if get_resources:
