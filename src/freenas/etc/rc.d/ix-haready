@@ -9,7 +9,7 @@
 #
 
 # PROVIDE: ix-haready
-# REQUIRES: ix-postinit
+# REQUIRES: ix-postinit securelevel
 # KEYWORD: shutdown
 
 . /etc/rc.subr
