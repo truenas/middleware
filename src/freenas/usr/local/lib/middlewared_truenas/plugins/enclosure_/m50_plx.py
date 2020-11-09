@@ -92,7 +92,6 @@ class EnclosureService(Service):
                 "name": "Rear NVME U.2 Hotswap Bays",
                 "model": "M50/60 Series",
                 "controller": True,
-                "label": "Rear NVME U.2 Hotswap Bays",
                 "elements": [
                     {
                         "name": "Array Device Slot",

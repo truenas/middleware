@@ -126,7 +126,6 @@ class EnclosureService(Service):
                 "name": "Drive Bays",
                 "model": info["system_product"],
                 "controller": True,
-                "label": "Drive Bays",
                 "elements": [
                     {
                         "name": "Array Device Slot",

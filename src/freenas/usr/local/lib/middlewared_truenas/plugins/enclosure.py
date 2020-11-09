@@ -71,7 +71,6 @@ class EnclosureService(CRUDService):
                 "name": enc.name,
                 "model": enc.model,
                 "controller": enc.controller,
-                "label": enc.label,
                 "elements": [],
             }
 
@@ -117,6 +116,13 @@ class EnclosureService(CRUDService):
 
         for number, enclosure in enumerate(enclosures):
             enclosure["number"] = number
+
+        labels = {
+            label["encid"]: label["label"]
+            for label in self.middleware.call_sync("datastore.query", "truenas.enclosurelabel")
+        }
+        for enclosure in enclosures:
+            enclosure["label"] = labels.get(enclosure["id"]) or enclosure["name"]
 
         return filter_list(enclosures, filters=filters or [], options=options or {})
 
@@ -333,15 +339,13 @@ class EnclosureService(CRUDService):
                     element.device_slot_set("clear")
 
     def __get_enclosures(self):
-        return Enclosures(self.middleware.call_sync("enclosure.get_ses_enclosures"), {
-            label["encid"]: label["label"]
-            for label in self.middleware.call_sync("datastore.query", "truenas.enclosurelabel")
-        }, self.middleware.call_sync("system.info"))
+        return Enclosures(self.middleware.call_sync("enclosure.get_ses_enclosures"),
+                          self.middleware.call_sync("system.info"))
 
 
 class Enclosures(object):
 
-    def __init__(self, stat, labels, system_info):
+    def __init__(self, stat, system_info):
         blacklist = [
             "VirtualSES",
         ]
@@ -354,7 +358,7 @@ class Enclosures(object):
 
         self.__enclosures = []
         for num, data in stat.items():
-            enclosure = Enclosure(num, data, stat, labels, system_info)
+            enclosure = Enclosure(num, data, stat, system_info)
             if any(s in enclosure.encname for s in blacklist):
                 continue
 
@@ -389,7 +393,7 @@ class Enclosures(object):
 
 class Enclosure(object):
 
-    def __init__(self, num, data, stat, labels, system_info):
+    def __init__(self, num, data, stat, system_info):
         self.num = num
         self.stat = stat
         self.system_info = system_info
@@ -406,7 +410,6 @@ class Enclosure(object):
         self.__elementsbyname = {}
         self.descriptors = {}
         self._parse(data)
-        self.enclabel = labels.get(self.encid)
 
     def _parse(self, data):
         if IS_FREEBSD:
@@ -618,10 +621,6 @@ class Enclosure(object):
     @property
     def name(self):
         return self.encname
-
-    @property
-    def label(self):
-        return self.enclabel or self.name
 
     def find_device_slot(self, devname):
         """
