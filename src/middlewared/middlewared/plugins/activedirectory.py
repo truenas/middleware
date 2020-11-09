@@ -851,7 +851,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('activedirectory.conn_check', config)
 
         try:
-            cached_state = await self.middleware.call_sync('cache.get', 'DS_STATE')
+            cached_state = await self.middleware.call('cache.get', 'DS_STATE')
 
             if cached_state['activedirectory'] != 'HEALTHY':
                 await self.set_state(DSStatus['HEALTHY'])
