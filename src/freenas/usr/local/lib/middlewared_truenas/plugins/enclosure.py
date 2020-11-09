@@ -109,6 +109,8 @@ class EnclosureService(CRUDService):
 
             enclosures.append(enclosure)
 
+        enclosures = self.middleware.call_sync("enclosure.concatenate_enclosures", enclosures)
+
         enclosures = self.middleware.call_sync("enclosure.map_enclosures", enclosures)
 
         enclosures.extend(self.middleware.call_sync("enclosure.m50_plx_enclosures"))
@@ -152,11 +154,12 @@ class EnclosureService(CRUDService):
         return self._get_slot(lambda element: element["data"]["Device"] == disk)
 
     def _get_ses_slot(self, enclosure, element):
-        enclosure_id = enclosure["id"]
-        slot = element["slot"]
-        if enclosure_id.startswith("mapped_enclosure_"):
+        if "original" in element:
             enclosure_id = element["original"]["enclosure_id"]
             slot = element["original"]["slot"]
+        else:
+            enclosure_id = enclosure["id"]
+            slot = element["slot"]
 
         ses_enclosures = self.__get_enclosures()
         ses_enclosure = ses_enclosures.get_by_encid(enclosure_id)
@@ -525,7 +528,7 @@ class Enclosure(object):
             self.controller = True
             if self.model == "R40":
                 index = [v for v in self.stat.values() if "ECStream FS2" in v].index(data)
-                self.model = f"{self.model}, Drawers #{index * 2 + 1}-{index * 2 + 2}"
+                self.model = f"{self.model}, Drawer #{index + 1}"
         elif m := R50_REGEX.match(self.encname):
             self.model = f"R50, Drawer #{m.group(1)}"
             self.controller = True
