@@ -18,9 +18,8 @@ class VMDeviceService(Service, PCIInfoBase):
 
     async def iommu_enabled(self):
         cp = await run(['virt-host-validate'], check=False)
-        if cp.returncode:
-            raise CallError('Unable to determine if iommu is enabled: %s', cp.stderr.decode())
-        return bool(RE_IOMMU_ENABLED.findall(cp.stdout.decode()))
+        # We still check for stdout because if some check in it fails, the command will have a non zero exit code
+        return bool(RE_IOMMU_ENABLED.findall((cp.stdout or b'').decode()))
 
     @private
     def retrieve_node_information(self, xml):
