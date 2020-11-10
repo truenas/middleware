@@ -506,6 +506,23 @@ class SMBService(SystemServiceService):
         return await self.get_smb_ha_mode()
 
     @private
+    async def apply_aapl_changes(self):
+        shares = await self.middleware.call('sharing.smb.query')
+        for share in shares:
+            diff = await self.middleware.call(
+                'sharing.smb.diff_middleware_and_registry', share['name'], share
+            )
+
+            if diff is None:
+                self.logger.warning("Share [%s] does not exist in registry.",
+                                    share['name'])
+                continue
+
+            share_name = share['name'] if not share['home'] else 'homes'
+            await self.middleware.call('sharing.smb.apply_conf_diff',
+                                       'REGISTRY', share_name, diff)
+
+    @private
     async def validate_smb(self, new, verrors):
         try:
             await self.middleware.call('sharing.smb.validate_aux_params',
@@ -673,6 +690,13 @@ class SMBService(SystemServiceService):
 
         await self._update_service(old, new)
         await self.reset_smb_ha_mode()
+
+        """
+        Toggling aapl_extensions will require changes to all shares
+        on server (enabling vfs_fruit and possibly changing catia params).
+        """
+        if old['aapl_extensions'] != new['aapl_extensions']:
+            await self.apply_aapl_changes()
 
         return await self.config()
 
