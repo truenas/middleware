@@ -167,7 +167,7 @@ class DeviceService(Service, DeviceInfoBase):
 
             # get model and serial
             disk['ident'] = disk['serial'] = (disk_data.get('serial') or '').strip()
-            disk['descr'] = disk['model'] = disk_data.get('model').strip()
+            disk['descr'] = disk['model'] = (disk_data.get('model') or '').strip()
 
             # get all relevant size attributes of disk
             disk['sectorsize'] = disk_data['log-sec']
