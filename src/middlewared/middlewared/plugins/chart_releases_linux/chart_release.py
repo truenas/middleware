@@ -54,20 +54,22 @@ class ChartReleaseService(CRUDService):
         get_resources = extra.get('retrieve_resources')
         get_history = extra.get('history')
 
-        if get_resources:
-            storage_classes = collections.defaultdict(lambda: None)
-            for storage_class in await self.middleware.call('k8s.storage_class.query'):
-                storage_classes[storage_class['metadata']['name']] = storage_class
+        storage_classes = collections.defaultdict(lambda: None)
+        for storage_class in await self.middleware.call('k8s.storage_class.query'):
+            storage_classes[storage_class['metadata']['name']] = storage_class
 
-            resources = {r.value: collections.defaultdict(list) for r in Resources}
+        resources = {r.value: collections.defaultdict(list) for r in Resources}
+        workload_status = collections.defaultdict(lambda: {'desired': 0, 'available': 0})
 
-            for resource in Resources:
-                for r_data in await self.middleware.call(
-                    f'k8s.{resource.name.lower()}.query', [['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]]
-                ):
-                    resources[resource.value][
-                        r_data['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
-                    ].append(r_data)
+        for resource in Resources:
+            for r_data in await self.middleware.call(
+                f'k8s.{resource.name.lower()}.query', [['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]]
+            ):
+                release_name = r_data['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
+                resources[resource.value][release_name].append(r_data)
+                if resource in (Resources.DEPLOYMENT, Resources.STATEFULSET):
+                    workload_status[release_name]['desired'] += (r_data['status']['replicas'] or 0)
+                    workload_status[release_name]['available'] += (r_data['status']['ready_replicas'] or 0)
 
         release_secrets = await self.middleware.call('chart.release.releases_secrets', extra)
         releases = []
@@ -82,10 +84,19 @@ class ChartReleaseService(CRUDService):
             ):
                 config.update(rel_data['config'])
 
+            pods_status = workload_status[name]
+            pod_diff = pods_status['available'] - pods_status['desired']
+            status = 'ACTIVE'
+            if pod_diff == 0 and pods_status['desired'] == 0:
+                status = 'STOPPED'
+            elif pod_diff < 0:
+                status = 'DEPLOYING'
+
             release_data.update({
                 'path': os.path.join('/mnt', k8s_config['dataset'], 'releases', name),
                 'dataset': os.path.join(k8s_config['dataset'], 'releases', name),
                 'config': config,
+                'status': status,
             })
             if get_resources:
                 release_data['resources'] = {
