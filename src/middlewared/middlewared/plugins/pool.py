@@ -2675,6 +2675,12 @@ class PoolDatasetService(CRUDService):
                 ['id', '!^', f'{sys_config["basename"]}/'],
             ])
 
+        # top level dataset that stores all things related to gluster config
+        # needs to be hidden from local webUI. (This is managed by TrueCommander)
+        filters.extend([
+            ['id', 'rnin', '.glusterfs'],
+        ])
+
         return filter_list(
             self.__transform(self.middleware.call_sync(
                 'zfs.dataset.query', zfsfilters, {'extra': {'flat': options.get('extra', {}).get('flat', True)}})
