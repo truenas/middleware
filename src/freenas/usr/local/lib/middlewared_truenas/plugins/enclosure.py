@@ -352,17 +352,29 @@ class Enclosures(object):
         if (
             system_info["system_product"] and
             system_info["system_product"].startswith("TRUENAS-") and
-            "-MINI-" not in system_info["system_product"]
+            "-MINI-" not in system_info["system_product"] and
+            system_info["system_product"] != "TRUENAS-R20"
         ):
             blacklist.append("AHCI SGPIO Enclosure 2.00")
 
         self.__enclosures = []
+        enclosures_tail = []
         for num, data in stat.items():
             enclosure = Enclosure(num, data, stat, system_info)
             if any(s in enclosure.encname for s in blacklist):
                 continue
+            if (
+                system_info["system_product"] == "TRUENAS-R20" and
+                enclosure.encname == "AHCI SGPIO Enclosure 2.00"
+            ):
+                if enclosure.model == "R20, Drawer #2":
+                    enclosures_tail.append(enclosure)
+
+                continue
 
             self.__enclosures.append(enclosure)
+
+        self.__enclosures.extend(enclosures_tail)
 
     def __iter__(self):
         for e in list(self.__enclosures):
@@ -529,9 +541,18 @@ class Enclosure(object):
         elif R_SERIES_REGEX.match(self.encname):
             self.model = self.system_info["system_product"].replace("TRUENAS-", "")
             self.controller = True
+            if self.model == "R20":
+                self.model = f"{self.model}, Drawer #1"
             if self.model == "R40":
                 index = [v for v in self.stat.values() if "ECStream FS2" in v].index(data)
                 self.model = f"{self.model}, Drawer #{index + 1}"
+        elif (
+            self.system_info["system_product"] == "TRUENAS-R20" and
+            self.encname == "AHCI SGPIO Enclosure 2.00" and
+            len(data.splitlines()) == 6
+        ):
+            self.model = "R20, Drawer #2"
+            self.controller = True
         elif m := R50_REGEX.match(self.encname):
             self.model = f"R50, Drawer #{m.group(1)}"
             self.controller = True
