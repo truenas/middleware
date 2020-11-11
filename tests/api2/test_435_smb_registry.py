@@ -190,7 +190,21 @@ def test_008_test_presets(request, preset):
         assert to_test[k] == new_conf[k]
 
 
-def test_009_test_aux_param_on_update(request):
+def test_009_reset_smb():
+    """
+    Remove all parameters that might turn us into
+    a MacOS-style SMB server (fruit).
+    """
+    payload = {"aapl_extensions": False}
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+
+    results = PUT("/sharing/smb/id/1/",
+                  {"purpose": "NO_PRESET", "timemachine": False})
+    assert results.status_code == 200, results.text
+
+
+def test_010_test_aux_param_on_update(request):
     depends(request, ["SHARES_CREATED"])
     results = GET(
         '/sharing/smb', payload={
@@ -257,7 +271,7 @@ def test_009_test_aux_param_on_update(request):
     assert ncomments_sent == ncomments_recv, new_aux
 
 
-def test_010_test_aux_param_on_create(request):
+def test_011_test_aux_param_on_create(request):
     depends(request, ["SHARES_CREATED"])
     smb_share = "AUX_CREATE"
     payload = {
@@ -328,13 +342,13 @@ def test_010_test_aux_param_on_create(request):
 
 
 @pytest.mark.parametrize('smb_share', SHARES)
-def test_011_delete_shares(request, smb_share):
+def test_012_delete_shares(request, smb_share):
     depends(request, ["SHARES_CREATED"])
     results = DELETE(f"/sharing/smb/id/{SHARE_DICT[smb_share]}")
     assert results.status_code == 200, results.text
 
 
-def test_012_registry_is_empty(request):
+def test_013_registry_is_empty(request):
     depends(request, ["SHARES_CREATED"])
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
@@ -343,7 +357,7 @@ def test_012_registry_is_empty(request):
     assert len(reg_shares) == 0, results['output']
 
 
-def test_013_config_is_empty(request):
+def test_014_config_is_empty(request):
     depends(request, ["SHARES_CREATED"])
     results = GET(
         '/sharing/smb', payload={
@@ -362,7 +376,7 @@ with regard to homes shares
 
 
 @pytest.mark.dependency(name="HOME_SHARE_CREATED")
-def test_014_create_homes_share(request):
+def test_015_create_homes_share(request):
     depends(request, ["SMB_DATASET_CREATED"])
     smb_share = "HOME_CREATE"
     global home_id
@@ -378,7 +392,7 @@ def test_014_create_homes_share(request):
     home_id = results.json()['id']
 
 
-def test_015_verify_homeshare_in_registry(request):
+def test_016_verify_homeshare_in_registry(request):
     """
     When the "home" checkbox is checked, the share
     _must_ be added to the SMB running configuration with
@@ -403,14 +417,14 @@ def test_015_verify_homeshare_in_registry(request):
     assert has_homes_share is True, results['output']
 
 
-def test_016_convert_to_non_homes_share(request):
+def test_017_convert_to_non_homes_share(request):
     depends(request, ["HOME_SHARE_CREATED"])
     results = PUT(f"/sharing/smb/id/{home_id}/",
                   {"home": False})
     assert results.status_code == 200, results.text
 
 
-def test_017_verify_non_home_share_in_registry(request):
+def test_018_verify_non_home_share_in_registry(request):
     """
     Unchecking "homes" should result in the "homes" share
     definition being removed and replaced with a new share
@@ -432,14 +446,14 @@ def test_017_verify_non_home_share_in_registry(request):
     assert has_homes_share is True, results['output']
 
 
-def test_018_convert_back_to_homes_share(request):
+def test_019_convert_back_to_homes_share(request):
     depends(request, ["HOME_SHARE_CREATED"])
     results = PUT(f"/sharing/smb/id/{home_id}/",
                   {"home": True})
     assert results.status_code == 200, results.text
 
 
-def test_019_verify_homeshare_in_registry(request):
+def test_020_verify_homeshare_in_registry(request):
     """
     One final test to confirm that changing back to
     a "homes" share reverts us to having a proper
@@ -461,7 +475,7 @@ def test_019_verify_homeshare_in_registry(request):
     assert has_homes_share is True, results['output']
 
 
-def test_020_registry_has_single_entry(request):
+def test_021_registry_has_single_entry(request):
     """
     By the point we've reached this test, the share
     definition has switched several times. This test
@@ -475,7 +489,7 @@ def test_020_registry_has_single_entry(request):
     assert len(reg_shares) == 1, results['output']
 
 
-def test_021_registry_rebuild_homes(request):
+def test_022_registry_rebuild_homes(request):
     """
     Abusive test.
     In this test we run behind middleware's back and
@@ -508,14 +522,14 @@ def test_021_registry_rebuild_homes(request):
     assert has_homes_share is True, results['output']
 
 
-def test_022_delete_home_share(request):
+def test_023_delete_home_share(request):
     depends(request, ["HOME_SHARE_CREATED"])
     results = DELETE(f"/sharing/smb/id/{home_id}")
     assert results.status_code == 200, results.text
 
 
 # Check destroying a SMB dataset
-def test_023_destroying_smb_dataset(request):
+def test_024_destroying_smb_dataset(request):
     depends(request, ["SMB_DATASET_CREATED"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
