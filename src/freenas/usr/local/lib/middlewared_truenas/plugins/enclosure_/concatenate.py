@@ -41,20 +41,21 @@ class EnclosureService(Service):
                     }
 
             for item in items:
-                assert len(enclosure["elements"]) == len(item["elements"])
+                for i, item_elements in enumerate(item["elements"]):
+                    for elements in enclosure["elements"]:
+                        if elements["name"] == item_elements["name"]:
+                            break
+                    else:
+                        raise RuntimeError(
+                            f"Unable to find {item_elements['name']} among the elements of concatenated enclosure"
+                        )
 
-                for i, elements in enumerate(enclosure["elements"]):
-                    item_elements = item["elements"][i]
-
-                    assert elements["name"] == item_elements["name"]
-                    assert elements["descriptor"] == item_elements["descriptor"]
-
-                    for element in item_elements["elements"]:
+                    for item_element in item_elements["elements"]:
                         elements["elements"].append(dict(
-                            element,
+                            item_element,
                             original={
                                 "enclosure_id": item["id"],
-                                "slot": element["slot"],
+                                "slot": item_element["slot"],
                             },
                         ))
 
