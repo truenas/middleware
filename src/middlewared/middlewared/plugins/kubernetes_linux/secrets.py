@@ -1,6 +1,8 @@
+import yaml
+
 from kubernetes_asyncio import client
 
-from middlewared.schema import Dict, Ref, Str
+from middlewared.schema import Dict, List, Ref, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -67,3 +69,25 @@ class KubernetesSecretService(CRUDService):
                 await context['core_api'].delete_namespaced_secret(name, options['namespace'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete secret: {e}')
+
+    @accepts(
+        Str('secret_name'),
+        Dict(
+            'options',
+            List('filters'),
+        ),
+    )
+    async def export_to_yaml(self, secret_name, options):
+        filters = options.get('filters') or []
+        filters.append(['metadata.name', '=', secret_name])
+        secret = await self.query(filters, {'get': True})
+        return await self.export_to_yaml_internal(secret)
+
+    async def export_to_yaml_internal(self, secret):
+        return yaml.dump({
+            'apiVersion': 'v1',
+            'data': secret['data'],
+            'kind': 'Secret',
+            'metadata': secret['metadata'],
+            'type': secret['type'],
+        })
