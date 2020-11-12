@@ -97,13 +97,29 @@ class DiskService(CRUDService):
         else:
             disk.pop('passwd')
             disk.pop('kmip_uid')
+        disk['pool'] = context['zfs_guid_to_pool'].get(disk['zfs_guid'])
         return disk
 
     @private
     async def disk_extend_context(self, extra):
-        context = {'passwords': extra.get('passwords', False), 'disks_keys': {}}
-        if extra.get('passwords'):
+        context = {
+            'passwords': extra.get('passwords', False),
+            'disks_keys': {},
+
+            'pools': extra.get('pools', False),
+            'zfs_guid_to_pool': {},
+        }
+
+        if context['passwords']:
             context['disks_keys'] = await self.middleware.call('kmip.retrieve_sed_disks_keys')
+
+        if context['pools']:
+            for pool in await self.middleware.call('zfs.pool.query'):
+                topology = await self.middleware.call('pool.transform_topology_lightweight', pool['groups'])
+                for vdev in await self.middleware.call('pool.flatten_topology', topology):
+                    if vdev['type'] == 'DISK':
+                        context['zfs_guid_to_pool'][vdev['guid']] = pool['name']
+
         return context
 
     def _expand_enclosure(self, disk):
