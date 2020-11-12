@@ -238,17 +238,26 @@ class GlusterVolumeService(CRUDService):
         return result
 
     @item_method
-    @accepts(Str('name'))
+    @accepts(
+        Str('name', required=True),
+        Dict(
+            'data',
+            Bool('verbose', default=True),
+        )
+    )
     @job(lock=GLUSTER_JOB_LOCK)
-    def status(self, job, name):
+    def status(self, job, name, data):
         """
         Return detailed information about gluster volume(s).
 
         `name` Name of the gluster volume
+        `verbose` If False, only return brick information
+            for gluster volume with `name`.
         """
 
         rv = {}
         rv['volname'] = name
+        rv['group_subvols'] = data.pop('verbose')
 
         result = self.__volume_wrapper(volume.status_detail, **rv)
 
