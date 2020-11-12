@@ -1,3 +1,4 @@
+import errno
 import os
 
 from datetime import datetime
@@ -16,10 +17,12 @@ class KubernetesService(Service):
     @job(lock='chart_releases_backup')
     def backup_chart_releases(self, job, backup_name):
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
-        # TODO: Add validation for backup name to ensure it's not already taken
         name = BACKUP_NAME_PREFIX + (backup_name or datetime.utcnow().strftime('%F_%T'))
         if self.middleware.call_sync('zfs.snapshot.query', [['name', '=', name]]):
-            raise CallError(f'{name!r} snapshot already exists')
+            raise CallError(f'{name!r} snapshot already exists', errno=errno.EEXIST)
+
+        if name in self.list_backups():
+            raise CallError(f'Backup with {name!r} already exists', errno=errno.EEXIST)
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
         backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backup')
@@ -32,7 +35,7 @@ class KubernetesService(Service):
         len_chart_releases = len(chart_releases)
         for index, chart_release in enumerate(chart_releases):
             job.set_progress(
-                10 + ((index + 1) / len_chart_releases) * len_chart_releases, f'Backing up {chart_release["name"]}'
+                10 + ((index + 1) / len_chart_releases) * 80, f'Backing up {chart_release["name"]}'
             )
             chart_release_backup_path = os.path.join(backup_dir, chart_release['name'])
             os.makedirs(chart_release_backup_path)
@@ -58,3 +61,23 @@ class KubernetesService(Service):
         )
 
         job.set_progress(100, f'Backup {name!r} complete')
+
+    @accepts()
+    def list_backups(self):
+        self.middleware.call_sync('kubernetes.validate_k8s_setup')
+        k8s_config = self.middleware.call_sync('kubernetes.config')
+        backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backup')
+
+        backups = {}
+        snapshots = self.middleware.call_sync(
+            'zfs.snapshot.query', [['name', '^', f'{k8s_config["dataset"]}@{BACKUP_NAME_PREFIX}']], {'select': ['name']}
+        )
+        for snapshot in snapshots:
+            backup_name = snapshot['name'].split('@', 1)[-1]
+            backup_path = os.path.join(backup_base_dir, backup_name)
+            if not os.path.exists(backup_path):
+                continue
+
+            backups[backup_name] = backup_name
+
+        return backups
