@@ -393,38 +393,45 @@ class PoolService(CRUDService):
         )
         return True
 
-    def _topology(self, x, options=None):
+    @private
+    def transform_topology(self, x, options=None):
         """
         Transform topology output from libzfs to add `device` and make `type` uppercase.
         """
         options = options or {}
         if isinstance(x, dict):
-            path = x.get('path')
-            if path is not None:
-                device = disk = None
-                if path.startswith('/dev/'):
-                    args = [path[5:]] + ([] if osc.IS_LINUX else [options.get('geom_scan', True)])
-                    device = self.middleware.call_sync('disk.label_to_dev', *args)
-                    disk = self.middleware.call_sync('disk.label_to_disk', *args)
-                x['device'] = device
-                x['disk'] = disk
+            if options.get('device_disk', True):
+                path = x.get('path')
+                if path is not None:
+                    device = disk = None
+                    if path.startswith('/dev/'):
+                        args = [path[5:]] + ([] if osc.IS_LINUX else [options.get('geom_scan', True)])
+                        device = self.middleware.call_sync('disk.label_to_dev', *args)
+                        disk = self.middleware.call_sync('disk.label_to_disk', *args)
+                    x['device'] = device
+                    x['disk'] = disk
 
-            guid = x.get('guid')
-            if guid is not None:
-                unavail_disk = None
-                if x.get('status') == 'UNAVAIL':
-                    unavail_disk = self.middleware.call_sync('disk.disk_by_zfs_guid', guid)
-                x['unavail_disk'] = unavail_disk
+            if options.get('unavail_disk', True):
+                guid = x.get('guid')
+                if guid is not None:
+                    unavail_disk = None
+                    if x.get('status') == 'UNAVAIL':
+                        unavail_disk = self.middleware.call_sync('disk.disk_by_zfs_guid', guid)
+                    x['unavail_disk'] = unavail_disk
 
             for key in x:
                 if key == 'type' and isinstance(x[key], str):
                     x[key] = x[key].upper()
                 else:
-                    x[key] = self._topology(x[key], {'geom_scan': False})
+                    x[key] = self.transform_topology(x[key], dict(options, geom_scan=False))
         elif isinstance(x, list):
             for i, entry in enumerate(x):
-                x[i] = self._topology(x[i], {'geom_scan': False})
+                x[i] = self.transform_topology(x[i], dict(options, geom_scan=False))
         return x
+
+    @private
+    async def transform_topology_lightweight(self, x):
+        return await self.middleware.call('pool.transform_topology', x, {'device_disk': False, 'unavail_disk': False})
 
     @private
     def flatten_topology(self, topology):
@@ -453,7 +460,7 @@ class PoolService(CRUDService):
             pool.update({
                 'status': zpool['status'],
                 'scan': zpool['scan'],
-                'topology': self._topology(zpool['groups']),
+                'topology': self.transform_topology(zpool['groups']),
                 'healthy': zpool['healthy'],
                 'status_detail': zpool['status_detail'],
             })
