@@ -71,6 +71,15 @@ class DiskService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
+        """
+        Query disks.
+
+        The following extra options are supported:
+
+             include_expired: true - will also include expired disks (default: false)
+             passwords: true - will not hide KMIP password for the disks (default: false)
+             pools: true - will join pool name for each disk (default: false)
+        """
         filters = filters or []
         options = options or {}
         if not options.get('extra', {}).get('include_expired', False):
