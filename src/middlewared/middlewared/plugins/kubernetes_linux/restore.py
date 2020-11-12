@@ -1,4 +1,5 @@
 import errno
+import json
 import os
 import shutil
 import time
@@ -62,7 +63,7 @@ class KubernetesService(Service):
 
         releases = os.listdir(backup_dir)
         len_releases = len(releases)
-        restored_chart_releases = []
+        restored_chart_releases = {}
 
         for index, release_name in enumerate(releases):
             job.set_progress(
@@ -100,17 +101,30 @@ class KubernetesService(Service):
                         }
                     )
 
-            restored_chart_releases.append(release_name)
+            with open(os.path.join(r_backup_dir, 'workloads_replica_counts.json'), 'r') as f:
+                restored_chart_releases[release_name] = {'replica_counts': json.loads(f.read())}
 
         # Now helm will recognise the releases as valid, however we don't have any actual k8s deployed resource
         # That will be adjusted with updating chart releases with their existing values and helm will see that
         # k8s resources don't exist and will create them for us
-        job.set_progress(95, 'Creating kubernetes resources')
+        job.set_progress(92, 'Creating kubernetes resources')
         update_jobs = []
         for chart_release in restored_chart_releases:
             update_jobs.append(self.middleware.call_sync('chart.release.update', chart_release, {'values': {}}))
 
         for update_job in update_jobs:
             update_job.wait_sync()
+
+        job.set_progress(95, 'Scaling scalable workloads')
+        for chart_release in self.middleware.call_sync(
+            'chart.release.query', [], {'extra': {'retrieve_resources': True}}
+        ):
+            restored_chart_releases[chart_release['name']]['resources'] = chart_release['resources']
+
+        for chart_release in restored_chart_releases.values():
+            self.middleware.call(
+                'chart.release.scale_release_internal', chart_release['resources'], None,
+                chart_release['replica_counts'], True,
+            )
 
         job.set_progress(100, f'Restore of {backup_name!r} backup complete')

@@ -1,4 +1,5 @@
 import errno
+import json
 import os
 
 from datetime import datetime
@@ -31,7 +32,7 @@ class KubernetesService(Service):
         os.makedirs(backup_dir)
 
         job.set_progress(10, 'Basic validation complete')
-        chart_releases = self.middleware.call_sync('chart.release.query')
+        chart_releases = self.middleware.call_sync('chart.release.query', [], {'extra': {'retrieve_resources': True}})
         len_chart_releases = len(chart_releases)
         for index, chart_release in enumerate(chart_releases):
             job.set_progress(
@@ -53,6 +54,11 @@ class KubernetesService(Service):
             for secret in sorted(secrets, key=lambda d: d['metadata']['name']):
                 with open(os.path.join(secrets_dir, secret['metadata']['name']), 'w') as f:
                     f.write(self.middleware.call_sync('k8s.secret.export_to_yaml_internal', secret))
+
+            with open(os.path.join(chart_release_backup_path, 'workloads_replica_counts.json'), 'w') as f:
+                f.write(json.dumps(self.middleware.call_sync(
+                    'chart.release.get_replica_count_for_resources', chart_release['resources'],
+                )))
 
         job.set_progress(95, 'Taking snapshot of ix-applications')
 
