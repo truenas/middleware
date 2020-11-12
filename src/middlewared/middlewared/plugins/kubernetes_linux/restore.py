@@ -1,5 +1,7 @@
 import errno
 import os
+import shutil
+import time
 import yaml
 
 from middlewared.schema import Str
@@ -17,6 +19,12 @@ class KubernetesService(Service):
 
         job.set_progress(5, 'Basic validation complete')
 
+        self.middleware.call_sync('service.stop', 'kubernetes')
+        time.sleep(10)
+        shutil.rmtree('/etc/rancher', True)
+        db_config = self.middleware.call_sync('datastore.config', 'services.kubernetes')
+        self.middleware.call_sync('datastore.update', 'services.kubernetes', db_config['id'], {'cni_config': {}})
+
         k8s_config = self.middleware.call_sync('kubernetes.config')
         self.middleware.call_sync(
             'zfs.snapshot.rollback', f'{k8s_config["dataset"]}@{backup_name}', {
@@ -27,26 +35,30 @@ class KubernetesService(Service):
         )
 
         k3s_ds = os.path.join(k8s_config['dataset'], 'k3s')
-        self.middleware.call_sync('service.stop', 'kubernetes')
-
         if os.path.exists('/etc/rancher/node/password'):
             os.unlink('/etc/rancher/node/password')
 
-        self.middleware.call_sync('zfs.dataset.delete', k3s_ds, {'force': True, 'recursive': False})
+        self.middleware.call_sync('zfs.dataset.delete', k3s_ds, {'force': True, 'recursive': True})
         self.middleware.call_sync('pool.dataset.create', {'name': k3s_ds, 'type': 'FILESYSTEM'})
 
         self.middleware.call_sync('service.start', 'kubernetes')
+
+        while True:
+            config = self.middleware.call_sync('k8s.node.config')
+            if config['node_configured'] and not config['spec']['taints']:
+                break
+            time.sleep(5)
 
         job.set_progress(30, 'Kubernetes cluster re-initialized')
 
         backup_dir = os.path.join('/mnt', k8s_config['dataset'], 'backup', backup_name)
         releases_datasets = {}
         for ds in self.middleware.call_sync(
-            'pool.dataset.query', [['id', '^', f'{os.path.join(k8s_config["dataset"])}/releases/']]
+            'pool.dataset.query', [['id', '^', f'{k8s_config["dataset"]}/releases/']]
         ):
             name = ds['id'].split('/', 3)[-1].split('/', 1)[0]
             if name not in releases_datasets:
-                releases_datasets[name]: ds
+                releases_datasets[name] = ds
 
         releases = os.listdir(backup_dir)
         len_releases = len(releases)
@@ -80,7 +92,7 @@ class KubernetesService(Service):
 
             secrets_dir = os.path.join(r_backup_dir, 'secrets')
             for secret in sorted(os.listdir(secrets_dir)):
-                with open(os.path.join(secrets_dir, secret)):
+                with open(os.path.join(secrets_dir, secret)) as f:
                     self.middleware.call_sync(
                         'k8s.secret.create', {
                             'namespace': namespace_body['metadata']['name'],
