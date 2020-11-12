@@ -45,6 +45,8 @@ STATUS_DESC = [
 ]
 
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
+R_SERIES_REGEX = re.compile(r"ECStream (FS2|DSS212S[ps])")
+R50_REGEX = re.compile(r"iX eDrawer4048S([12])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
 ES24F_REGEX = re.compile(r"(ECStream|iX) 2024J([ps])")
@@ -69,7 +71,6 @@ class EnclosureService(CRUDService):
                 "name": enc.name,
                 "model": enc.model,
                 "controller": enc.controller,
-                "label": enc.label,
                 "elements": [],
             }
 
@@ -107,12 +108,21 @@ class EnclosureService(CRUDService):
 
             enclosures.append(enclosure)
 
+        enclosures = self.middleware.call_sync("enclosure.concatenate_enclosures", enclosures)
+
         enclosures = self.middleware.call_sync("enclosure.map_enclosures", enclosures)
 
         enclosures.extend(self.middleware.call_sync("enclosure.m50_plx_enclosures"))
 
         for number, enclosure in enumerate(enclosures):
             enclosure["number"] = number
+
+        labels = {
+            label["encid"]: label["label"]
+            for label in self.middleware.call_sync("datastore.query", "truenas.enclosurelabel")
+        }
+        for enclosure in enclosures:
+            enclosure["label"] = labels.get(enclosure["id"]) or enclosure["name"]
 
         return filter_list(enclosures, filters=filters or [], options=options or {})
 
@@ -150,11 +160,12 @@ class EnclosureService(CRUDService):
         return self._get_slot(lambda element: element["data"]["Device"] == disk)
 
     def _get_ses_slot(self, enclosure, element):
-        enclosure_id = enclosure["id"]
-        slot = element["slot"]
-        if enclosure_id.startswith("mapped_enclosure_"):
+        if "original" in element:
             enclosure_id = element["original"]["enclosure_id"]
             slot = element["original"]["slot"]
+        else:
+            enclosure_id = enclosure["id"]
+            slot = element["slot"]
 
         ses_enclosures = self.__get_enclosures()
         ses_enclosure = ses_enclosures.get_by_encid(enclosure_id)
@@ -328,15 +339,13 @@ class EnclosureService(CRUDService):
                     element.device_slot_set("clear")
 
     def __get_enclosures(self):
-        return Enclosures(self.middleware.call_sync("enclosure.get_ses_enclosures"), {
-            label["encid"]: label["label"]
-            for label in self.middleware.call_sync("datastore.query", "truenas.enclosurelabel")
-        }, self.middleware.call_sync("system.info"))
+        return Enclosures(self.middleware.call_sync("enclosure.get_ses_enclosures"),
+                          self.middleware.call_sync("system.info"))
 
 
 class Enclosures(object):
 
-    def __init__(self, stat, labels, system_info):
+    def __init__(self, stat, system_info):
         blacklist = [
             "VirtualSES",
         ]
@@ -349,7 +358,7 @@ class Enclosures(object):
 
         self.__enclosures = []
         for num, data in stat.items():
-            enclosure = Enclosure(num=num, data=data, labels=labels)
+            enclosure = Enclosure(num, data, stat, system_info)
             if any(s in enclosure.encname for s in blacklist):
                 continue
 
@@ -384,8 +393,10 @@ class Enclosures(object):
 
 class Enclosure(object):
 
-    def __init__(self, num, data, labels):
+    def __init__(self, num, data, stat, system_info):
         self.num = num
+        self.stat = stat
+        self.system_info = system_info
         if IS_FREEBSD:
             self.devname = f"ses{num}"
         else:
@@ -399,7 +410,6 @@ class Enclosure(object):
         self.__elementsbyname = {}
         self.descriptors = {}
         self._parse(data)
-        self.enclabel = labels.get(self.encid)
 
     def _parse(self, data):
         if IS_FREEBSD:
@@ -516,6 +526,15 @@ class Enclosure(object):
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
             self.controller = True
+        elif R_SERIES_REGEX.match(self.encname):
+            self.model = self.system_info["system_product"].replace("TRUENAS-", "")
+            self.controller = True
+            if self.model == "R40":
+                index = [v for v in self.stat.values() if "ECStream FS2" in v].index(data)
+                self.model = f"{self.model}, Drawer #{index + 1}"
+        elif m := R50_REGEX.match(self.encname):
+            self.model = f"R50, Drawer #{m.group(1)}"
+            self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
             self.controller = True
@@ -602,10 +621,6 @@ class Enclosure(object):
     @property
     def name(self):
         return self.encname
-
-    @property
-    def label(self):
-        return self.enclabel or self.name
 
     def find_device_slot(self, devname):
         """
