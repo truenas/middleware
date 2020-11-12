@@ -22,17 +22,19 @@ class DiskService(Service):
     @private
     async def sync_zfs_guid(self, pool_id_or_pool):
         if isinstance(pool_id_or_pool, dict):
-            pool = pool_id_or_pool
+            topology = pool_id_or_pool["topology"]
         elif isinstance(pool_id_or_pool, str):
-            pool = await self.middleware.call("pool.query", [["name", "=", pool_id_or_pool]], {"get": True})
+            pool = await self.middleware.call("zfs.pool.query", [["name", "=", pool_id_or_pool]], {"get": True})
+            topology = await self.middleware.call("pool.transform_topology", pool["groups"])
         else:
             pool = await self.middleware.call("pool.get_instance", pool_id_or_pool)
+            topology = pool["topology"]
 
-        if pool["topology"] is None:
+        if topology is None:
             return
 
         disk_to_guid = bidict.bidict()
-        for vdev in await self.middleware.call("pool.flatten_topology", pool["topology"]):
+        for vdev in await self.middleware.call("pool.flatten_topology", topology):
             if vdev["type"] == "DISK" and vdev["disk"] is not None:
                 disk_to_guid[vdev["disk"]] = vdev["guid"]
 
