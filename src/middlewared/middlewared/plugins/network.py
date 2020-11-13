@@ -1149,17 +1149,36 @@ class InterfaceService(CRUDService):
                             'A lagg interface using the "Failover" protocol is not allowed to be marked critical for failover.'
                         )
 
-            if update.get('failover_vhid') != data['failover_vhid']:
+            # We check to see if a VHID is being used on the external network
+            # if the interface is being newly created and/or the VHID is changing.
+            #
+            # There are 2 main reasons why we check the external network for used
+            # VHIDs.
+            #
+            #   1. the external network could have a device that is using the
+            #       the same VHID as this interface.
+            #   2. the external network could be a "flat" network which means
+            #       that everything is on 1 broadcast domain (which is disgusting)
+            #       but we have to account for this.
+            #
+            #   NOTE:
+            #       VHID/VRID is just a fancy term in CARP/VRRP protocol land to
+            #       represent a mac address. The VHID in CARP, literally, gets
+            #       converted to a mac address. So having a duplicate "VHID"
+            #       (mac address) on the same layer-2 segment...is bad.
+            new_int = data['failover_vhid'] and not update  # newly created interface
+            upd_int = update.get('failover_vhid') != data['failover_vhid']  # updated VHID
+            if new_int or upd_int:
                 used_vhids = set()
-                for v in (await self.middleware.call(
-                    'interface.scan_vrrp', data['name'], None, 5,
-                )).values():
+                for v in (await self.middleware.call('interface.scan_vrrp', data['name'], None, 5,)).values():
                     used_vhids.update(set(v))
+
+                # now properly alert the end user that the VHID is already
+                # in use on the external network
                 if data['failover_vhid'] in used_vhids:
-                    used_vhids = ', '.join([str(i) for i in used_vhids])
                     verrors.add(
                         f'{schema_name}.failover_vhid',
-                        f'The following VHIDs are already in use: {used_vhids}.'
+                        f'VHID: {data["failover_vhid"] if new_int else update.get("failover_vhid")} is already in use on the network.'
                     )
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
