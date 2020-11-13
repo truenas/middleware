@@ -1226,22 +1226,30 @@ class PoolService(CRUDService):
                 higher_prio = True
 
         if higher_prio:
-            # resilver_delay = 0
             resilver_min_time_ms = 9000
-            # scan_idle = 0
+            nia_credit = 10
+            nia_delay = 2
+            scrub_max_active = 8
         else:
-            # resilver_delay = 2
             resilver_min_time_ms = 3000
-            # scan_idle = 50
+            nia_credit = 5
+            nia_delay = 5
+            scrub_max_active = 3
 
         if osc.IS_LINUX:
             with open('/sys/module/zfs/parameters/zfs_resilver_min_time_ms', 'w') as f:
                 f.write(str(resilver_min_time_ms))
+            with open('/sys/module/zfs/parameters/zfs_vdev_nia_credit', 'w') as f:
+                f.write(str(nia_credit))
+            with open('/sys/module/zfs/parameters/zfs_vdev_nia_delay', 'w') as f:
+                f.write(str(nia_delay))
+            with open('/sys/module/zfs/parameters/zfs_vdev_scrub_max_active', 'w') as f:
+                f.write(str(scrub_max_active))
         else:
-            # Commented sysctls not available in OpenZFS (yet?)
-            # sysctl.filter('vfs.zfs.resilver_delay')[0].value = resilver_delay
             sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
-            # sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
+            sysctl.filter('vfs.zfs.vdev.nia_credit')[0].value = nia_credit
+            sysctl.filter('vfs.zfs.vdev.nia_delay')[0].value = nia_delay
+            sysctl.filter('vfs.zfs.vdev.scrub_max_active')[0].value = scrub_max_active
 
     @accepts()
     @job()
