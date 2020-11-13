@@ -1,4 +1,4 @@
-from glustercli.cli import volume
+from glustercli.cli import volume, quota
 from glustercli.cli.utils import GlusterCmdException
 
 from middlewared.service import (CRUDService, accepts,
@@ -158,9 +158,7 @@ class GlusterVolumeService(CRUDService):
         `force` Forcefully start the gluster volume
         """
 
-        result = self.__volume_wrapper(volume.start, name, **data)
-
-        return result
+        return self.__volume_wrapper(volume.start, name, **data)
 
     @item_method
     @accepts(
@@ -179,9 +177,7 @@ class GlusterVolumeService(CRUDService):
         `force` Forcefully restart the gluster volume
         """
 
-        result = self.__volume_wrapper(volume.restart, name, **data)
-
-        return result
+        return self.__volume_wrapper(volume.restart, name, **data)
 
     @item_method
     @accepts(
@@ -200,9 +196,7 @@ class GlusterVolumeService(CRUDService):
         `force` Forcefully stop the gluster volume
         """
 
-        result = self.__volume_wrapper(volume.stop, name, **data)
-
-        return result
+        return self.__volume_wrapper(volume.stop, name, **data)
 
     @accepts(Dict(
         'glustervolume_delete',
@@ -216,9 +210,7 @@ class GlusterVolumeService(CRUDService):
         `name` Name of the volume to be deleted
         """
 
-        result = self.__volume_wrapper(volume.delete, data['name'])
-
-        return result
+        return self.__volume_wrapper(volume.delete, data['name'])
 
     @item_method
     @accepts(Str('name'))
@@ -233,9 +225,7 @@ class GlusterVolumeService(CRUDService):
         rv = {}
         rv['volname'] = name
 
-        result = self.__volume_wrapper(volume.info, **rv)
-
-        return result
+        return self.__volume_wrapper(volume.info, **rv)
 
     @item_method
     @accepts(
@@ -259,9 +249,7 @@ class GlusterVolumeService(CRUDService):
         rv['volname'] = name
         rv['group_subvols'] = data.pop('verbose')
 
-        result = self.__volume_wrapper(volume.status_detail, **rv)
-
-        return result
+        return self.__volume_wrapper(volume.status_detail, **rv)
 
     @accepts()
     @job(lock=GLUSTER_JOB_LOCK)
@@ -270,9 +258,7 @@ class GlusterVolumeService(CRUDService):
         Return list of gluster volumes.
         """
 
-        result = self.__volume_wrapper(volume.vollist)
-
-        return result
+        return self.__volume_wrapper(volume.vollist)
 
     @item_method
     @accepts(
@@ -295,9 +281,7 @@ class GlusterVolumeService(CRUDService):
         `force` Forcefully reset option(s)
         """
 
-        result = self.__volume_wrapper(volume.optreset, name, **data)
-
-        return result
+        return self.__volume_wrapper(volume.optreset, name, **data)
 
     @item_method
     @accepts(
@@ -315,9 +299,9 @@ class GlusterVolumeService(CRUDService):
             --value-- is the value to be given to the option
         """
 
-        result = self.__volume_wrapper(volume.optset, name, **data)
+        data = data.pop("opts")
 
-        return result
+        return self.__volume_wrapper(volume.optset, name, data)
 
     @item_method
     @accepts(
@@ -399,9 +383,7 @@ class GlusterVolumeService(CRUDService):
         `force` Forcefully run the removal operation.
         """
 
-        result = self.removebrick_volume(name, data)
-
-        return result
+        return self.removebrick_volume(name, data)
 
     @item_method
     @accepts(
@@ -440,6 +422,24 @@ class GlusterVolumeService(CRUDService):
         `force` Forcefully replace bricks
         """
 
-        result = self.replacebrick_volume(name, data)
+        return self.replacebrick_volume(name, data)
 
-        return result
+    @item_method
+    @accepts(
+        Str('name', required=True),
+        Dict(
+            'data',
+            Bool('enable', required=True),
+        )
+    )
+    @job(lock=GLUSTER_JOB_LOCK)
+    def quota(self, job, name, data):
+        """
+        Enable/Disable the quota for a given gluster volume.
+
+        `name` Gluster volume name
+        `enable` enable quota (True) or disable it (False)
+        """
+
+        return self.__volume_wrapper(
+            quota.enable if data['enable'] else quota.disable, name)
