@@ -1102,7 +1102,7 @@ class InterfaceService(CRUDService):
             if not are_equal:
                 verrors.add(
                     f'{schema_name}.failover_aliases',
-                    'You must specify an active, standby and virtual IP address.'
+                    'The number of active, standby and virtual IP addresses must be the same.'
                 )
 
             if not update:
