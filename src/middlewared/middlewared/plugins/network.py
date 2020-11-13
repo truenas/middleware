@@ -1164,74 +1164,74 @@ class InterfaceService(CRUDService):
                     'Failover needs to be disabled to perform network configuration changes.'
                 )
 
-                # have to make sure that active, standby and virtual ip addresses are equal
-                active_node_ips = len(data.get('aliases', []))
-                standby_node_ips = len(data.get('failover_aliases', []))
-                virtual_node_ips = len(data.get('failover_virtual_aliases', []))
-                are_equal = active_node_ips == standby_node_ips == virtual_node_ips
-                if not are_equal:
+            # have to make sure that active, standby and virtual ip addresses are equal
+            active_node_ips = len(data.get('aliases', []))
+            standby_node_ips = len(data.get('failover_aliases', []))
+            virtual_node_ips = len(data.get('failover_virtual_aliases', []))
+            are_equal = active_node_ips == standby_node_ips == virtual_node_ips
+            if not are_equal:
+                verrors.add(
+                    f'{schema_name}.failover_aliases',
+                    'The number of active, standby and virtual IP addresses must be the same.'
+                )
+
+            if not update:
+                failover_attrs = set(
+                    [k for k, v in validation_attrs.items() if k not in ('mtu', 'ipv4_dhcp', 'ipv6_auto')]
+                )
+                configured_attrs = set([i for i in failover_attrs if data.get(i)])
+
+                if configured_attrs:
+                    for i in failover_attrs - configured_attrs:
+                        verrors.add(
+                            f'{schema_name}.{i}',
+                            f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
+                        )
+
+            if osc.IS_FREEBSD:
+                # can't remove VHID and not GROUP
+                if not data['failover_vhid'] and data['failover_group']:
                     verrors.add(
-                        f'{schema_name}.failover_aliases',
-                        'You must specify an active, standby and virtual IP address.'
+                        f'{schema_name}.failover_vhid',
+                        'Removing only the VHID is not allowed.'
                     )
 
-                if not update:
-                    failover_attrs = set(
-                        [k for k, v in validation_attrs.items() if k not in ('mtu', 'ipv4_dhcp', 'ipv6_auto')]
+                # can't remove GROUP and not VHID
+                if not data['failover_group'] and data['failover_vhid']:
+                    verrors.add(
+                        f'{schema_name}.failover_group',
+                        'Removing only the failover group is not allowed.'
                     )
-                    configured_attrs = set([i for i in failover_attrs if data.get(i)])
 
-                    if configured_attrs:
-                        for i in failover_attrs - configured_attrs:
-                            verrors.add(
-                                f'{schema_name}.{i}',
-                                f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
-                            )
-
-                if osc.IS_FREEBSD:
-                    # can't remove VHID and not GROUP
-                    if not data['failover_vhid'] and data['failover_group']:
+                if update.get('failover_vhid') != data['failover_vhid']:
+                    used_vhids = set()
+                    for v in (await self.middleware.call(
+                        'interface.scan_vrrp', data['name'], None, 5,
+                    )).values():
+                        used_vhids.update(set(v))
+                    if data['failover_vhid'] in used_vhids:
+                        used_vhids = ', '.join([str(i) for i in used_vhids])
                         verrors.add(
                             f'{schema_name}.failover_vhid',
-                            'Removing only the VHID is not allowed.'
+                            f'The following VHIDs are already in use: {used_vhids}.'
                         )
 
-                    # can't remove GROUP and not VHID
-                    if not data['failover_group'] and data['failover_vhid']:
+            # creating a "failover" lagg interface on HA systems and trying
+            # to mark it "critical for failover" isn't allowed as it can cause
+            # delays in the failover process. (Sometimes failure entirely.)
+            # However, using this type of lagg interface for "non-critical"
+            # workloads (i.e. webUI management) is acceptable.
+            if itype == 'LINK_AGGREGATION':
+                # there is a chance that we have failover lagg ints marked critical
+                # for failover in the db so to prevent the webUI from disallowing
+                # the user to update those interfaces, we'll only enforce this on
+                # newly created laggs.
+                if not update:
+                    if data.get('failover_critical') and data.get('lag_protocol') == 'FAILOVER':
                         verrors.add(
-                            f'{schema_name}.failover_group',
-                            'Removing only the failover group is not allowed.'
+                            f'{schema_name}.failover_critical',
+                            'A lagg interface using the "Failover" protocol is not allowed to be marked critical for failover.'
                         )
-
-                    if update.get('failover_vhid') != data['failover_vhid']:
-                        used_vhids = set()
-                        for v in (await self.middleware.call(
-                            'interface.scan_vrrp', data['name'], None, 5,
-                        )).values():
-                            used_vhids.update(set(v))
-                        if data['failover_vhid'] in used_vhids:
-                            used_vhids = ', '.join([str(i) for i in used_vhids])
-                            verrors.add(
-                                f'{schema_name}.failover_vhid',
-                                f'The following VHIDs are already in use: {used_vhids}.'
-                            )
-
-                # creating a "failover" lagg interface on HA systems and trying
-                # to mark it "critical for failover" isn't allowed as it can cause
-                # delays in the failover process. (Sometimes failure entirely.)
-                # However, using this type of lagg interface for "non-critical"
-                # workloads (i.e. webUI management) is acceptable.
-                if itype == 'LINK_AGGREGATION':
-                    # there is a chance that we have failover lagg ints marked critical
-                    # for failover in the db so to prevent the webUI from disallowing
-                    # the user to update those interfaces, we'll only enforce this on
-                    # newly created laggs.
-                    if not update:
-                        if data.get('failover_critical') and data.get('lag_protocol') == 'FAILOVER':
-                            verrors.add(
-                                f'{schema_name}.failover_critical',
-                                'A lagg interface using the "Failover" protocol is not allowed to be marked critical for failover.'
-                            )
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         for i, alias in enumerate(data.get('aliases') or []):
