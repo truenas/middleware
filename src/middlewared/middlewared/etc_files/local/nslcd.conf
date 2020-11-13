@@ -57,7 +57,7 @@
     scope 	sub
     timelimit	${ldap['timeout']}
     bind_timelimit ${ldap['dns_timeout']}
-    map passwd loginShell /bin/sh
+    map passwd loginShell "/bin/sh"
   % if aux:
     ${'\n'.join(aux)}
   % endif
