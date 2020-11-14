@@ -3,7 +3,8 @@ import errno
 import os
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import CallError, item_method, job, Service, ValidationErrors
+from middlewared.service import item_method, job, Service, ValidationErrors
+from middlewared.service_exception import MatchNotFound
 from middlewared.utils import osc
 
 
@@ -16,6 +17,7 @@ class PoolService(Service):
         Str('disk', required=True),
         Bool('force', default=False),
         Str('passphrase', private=True),
+        Bool('preserve_settings', default=True),
     ))
     @job(lock='pool_replace')
     async def replace(self, job, oid, options):
@@ -25,6 +27,8 @@ class PoolService(Service):
         `label` is the ZFS guid or a device name
         `disk` is the identifier of a disk
         `passphrase` is only valid for TrueNAS Core/Enterprise platform where pool is GELI encrypted
+        If `preserve_settings` is true, then settings (power management, S.M.A.R.T., etc.) of a disk being replaced
+        will be applied to a new disk.
 
         .. examples(websocket)::
 
@@ -75,6 +79,16 @@ class PoolService(Service):
 
         if verrors:
             raise verrors
+
+        old_disk = None
+        if options['preserve_settings']:
+            try:
+                old_disk = await self.middleware.call('disk.query', [['zfs_guid', '=', options['label']]], {
+                    'extra': {'include_expired': True},
+                    'get': True
+                })
+            except MatchNotFound:
+                pass
 
         create_swap = found[0] in ('data', 'spare')
 
@@ -127,5 +141,8 @@ class PoolService(Service):
 
         if osc.IS_FREEBSD:
             await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
+
+        if old_disk:
+            await self.middleware.call('disk.copy_settings', old_disk, disk)
 
         return True
