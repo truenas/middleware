@@ -8,6 +8,8 @@ import yaml
 from middlewared.schema import Str
 from middlewared.service import accepts, CallError, job, Service
 
+from .utils import BACKUP_NAME_PREFIX
+
 
 class KubernetesService(Service):
 
@@ -21,20 +23,21 @@ class KubernetesService(Service):
         job.set_progress(5, 'Basic validation complete')
 
         self.middleware.call_sync('service.stop', 'kubernetes')
-        time.sleep(10)
         shutil.rmtree('/etc/rancher', True)
         db_config = self.middleware.call_sync('datastore.config', 'services.kubernetes')
         self.middleware.call_sync('datastore.update', 'services.kubernetes', db_config['id'], {'cni_config': {}})
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
         self.middleware.call_sync(
-            'zfs.snapshot.rollback', f'{k8s_config["dataset"]}@{backup_name}', {
+            'zfs.snapshot.rollback', f'{k8s_config["dataset"]}@{BACKUP_NAME_PREFIX}{backup_name}', {
                 'force': True,
                 'recursive': True,
                 'recursive_clones': True,
             }
         )
 
+        # FIXME: Remove this sleep, sometimes the k3s dataset fails to umount
+        time.sleep(20)
         k3s_ds = os.path.join(k8s_config['dataset'], 'k3s')
         if os.path.exists('/etc/rancher/node/password'):
             os.unlink('/etc/rancher/node/password')
@@ -52,7 +55,7 @@ class KubernetesService(Service):
 
         job.set_progress(30, 'Kubernetes cluster re-initialized')
 
-        backup_dir = os.path.join('/mnt', k8s_config['dataset'], 'backup', backup_name)
+        backup_dir = os.path.join('/mnt', k8s_config['dataset'], 'backups', backup_name)
         releases_datasets = {}
         for ds in self.middleware.call_sync(
             'pool.dataset.query', [['id', '^', f'{k8s_config["dataset"]}/releases/']]

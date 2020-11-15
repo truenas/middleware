@@ -18,15 +18,16 @@ class KubernetesService(Service):
     @job(lock='chart_releases_backup')
     def backup_chart_releases(self, job, backup_name):
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
-        name = BACKUP_NAME_PREFIX + (backup_name or datetime.utcnow().strftime('%F_%T'))
-        if self.middleware.call_sync('zfs.snapshot.query', [['name', '=', name]]):
-            raise CallError(f'{name!r} snapshot already exists', errno=errno.EEXIST)
+        name = backup_name or datetime.utcnow().strftime('%F_%T')
+        snap_name = BACKUP_NAME_PREFIX + name
+        if self.middleware.call_sync('zfs.snapshot.query', [['name', '=', snap_name]]):
+            raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
 
         if name in self.list_backups():
             raise CallError(f'Backup with {name!r} already exists', errno=errno.EEXIST)
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
-        backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backup')
+        backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backups')
         os.makedirs(backup_base_dir, exist_ok=True)
         backup_dir = os.path.join(backup_base_dir, name)
         os.makedirs(backup_dir)
@@ -63,7 +64,7 @@ class KubernetesService(Service):
         job.set_progress(95, 'Taking snapshot of ix-applications')
 
         self.middleware.call_sync(
-            'zfs.snapshot.create', {'dataset': k8s_config['dataset'], 'name': name, 'recursive': True}
+            'zfs.snapshot.create', {'dataset': k8s_config['dataset'], 'name': snap_name, 'recursive': True}
         )
 
         job.set_progress(100, f'Backup {name!r} complete')
@@ -72,14 +73,14 @@ class KubernetesService(Service):
     def list_backups(self):
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
         k8s_config = self.middleware.call_sync('kubernetes.config')
-        backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backup')
+        backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backups')
 
         backups = {}
         snapshots = self.middleware.call_sync(
             'zfs.snapshot.query', [['name', '^', f'{k8s_config["dataset"]}@{BACKUP_NAME_PREFIX}']], {'select': ['name']}
         )
         for snapshot in snapshots:
-            backup_name = snapshot['name'].split('@', 1)[-1]
+            backup_name = snapshot['name'].split('@', 1)[-1].split(BACKUP_NAME_PREFIX, 1)[-1]
             backup_path = os.path.join(backup_base_dir, backup_name)
             if not os.path.exists(backup_path):
                 continue
