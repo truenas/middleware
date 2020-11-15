@@ -61,7 +61,7 @@ class CatalogService(Service):
         # for each version available under the item
         item_data = {'versions': {}}
         with open(os.path.join(item_path, 'item.yaml'), 'r') as f:
-            item_data.update(yaml.load(f.read()))
+            item_data.update(yaml.safe_load(f.read()))
 
         item_data.update({k: item_data.get(k) for k in ITEM_KEYS})
 
@@ -73,8 +73,8 @@ class CatalogService(Service):
     def item_version_details(self, version_path):
         version_data = {'location': version_path, 'required_features': set()}
         for key, filename, parser in (
-            ('values', 'values.yaml', yaml.load),
-            ('schema', 'questions.yaml', yaml.load),
+            ('values', 'values.yaml', yaml.safe_load),
+            ('schema', 'questions.yaml', yaml.safe_load),
             ('app_readme', 'app-readme.md', markdown.markdown),
             ('detailed_readme', 'README.md', markdown.markdown),
         ):
