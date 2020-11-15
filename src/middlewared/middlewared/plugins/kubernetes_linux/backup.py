@@ -18,6 +18,12 @@ class KubernetesService(Service):
     )
     @job(lock='chart_releases_backup')
     def backup_chart_releases(self, job, backup_name):
+        """
+        Create a backup of existing chart releases.
+
+        The backup will save helm configuration with history for each chart release and then take a
+        snapshot of `ix-applications` dataset.
+        """
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
         name = backup_name or datetime.utcnow().strftime('%F_%T')
         snap_name = BACKUP_NAME_PREFIX + name
@@ -72,6 +78,9 @@ class KubernetesService(Service):
 
     @accepts()
     def list_backups(self):
+        """
+        List existing chart releases backups.
+        """
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
         k8s_config = self.middleware.call_sync('kubernetes.config')
         backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backups')
@@ -111,6 +120,9 @@ class KubernetesService(Service):
 
     @accepts(Str('backup_name'))
     def delete_backup(self, backup_name):
+        """
+        Delete `backup_name` chart releases backup.
+        """
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
 
         backup = self.middleware.call_sync('kubernetes.list_backups').get(backup_name)

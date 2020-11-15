@@ -14,6 +14,12 @@ class KubernetesService(Service):
     @accepts(Str('backup_name'))
     @job(lock='kubernetes_restore_backup')
     def restore_backup(self, job, backup_name):
+        """
+        Restore `backup_name` chart releases backup.
+
+        It should be noted that a rollback will be initiated which will destroy any newer snapshots/clones
+        of `ix-applications` dataset then the snapshot in question of `backup_name`.
+        """
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
         backup = self.middleware.call_sync('kubernetes.list_backups').get(backup_name)
         if not backup:
