@@ -93,6 +93,7 @@ class KubernetesService(Service):
                 continue
 
             backup_data = {
+                'name': backup_name,
                 'releases': [],
                 'snapshot_name': snapshot['name'],
                 'created_on': self.middleware.call_sync(
@@ -121,6 +122,22 @@ class KubernetesService(Service):
 
 
 async def post_system_update_hook(middleware):
+    backups = [
+        v for k, v in (await middleware.call('kubernetes.list_backups')).items()
+        if k.startswith(UPDATE_BACKUP_PREFIX)
+    ]
+    if len(backups) >= 3:
+        backups.sort(key=lambda d: d['created_on'])
+        while len(backups) >= 3:
+            backup = backups.pop(0)
+            try:
+                await middleware.call('kubernetes.delete_backup', backup['name'])
+            except Exception as e:
+                middleware.logger.error(
+                    'Failed to delete %r chart releases backup: %s', backup['name'], e, exc_info=True
+                )
+                break
+
     await middleware.call('kubernetes.backup', f'{UPDATE_BACKUP_PREFIX}-{datetime.utcnow().strftime("%F_%T")}')
 
 
