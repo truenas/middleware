@@ -91,12 +91,16 @@ class KubernetesService(Service):
             if not os.path.exists(backup_path):
                 continue
 
-            backup_data = {'releases': []}
+            backup_data = {
+                'releases': [],
+                'snapshot_name': snapshot['name'],
+                'created_on': self.middleware.call_sync(
+                    'zfs.snapshot.get_instance', snapshot['name']
+                )['properties']['creation']['parsed'],
+            }
+
             for release in filter(lambda r: r in releases_datasets, os.listdir(backup_path)):
                 backup_data['releases'].append(release)
-
-            snap = self.middleware.call_sync('zfs.snapshot.get_instance', snapshot['name'])
-            backup_data['created_on'] = snap['properties']['creation']['parsed']
 
             backups[backup_name] = backup_data
 

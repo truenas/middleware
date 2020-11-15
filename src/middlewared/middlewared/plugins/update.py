@@ -298,6 +298,7 @@ class UpdateService(Service):
 
         await self.middleware.call('update.install_impl', job, location)
         await self.middleware.call('cache.put', 'update.applied', True)
+        await self.middleware.call_hook('update.post_update')
 
         if (
             await self.middleware.call('system.is_freenas') or
@@ -370,6 +371,8 @@ class UpdateService(Service):
         if path.startswith(UPLOAD_LOCATION):
             self.middleware.call_sync('update.destroy_upload_location')
 
+        self.middleware.call_hook_sync('update.post_update')
+
     @accepts(Dict(
         'updatefile',
         Str('destination', null=True),
@@ -419,6 +422,8 @@ class UpdateService(Service):
         if dest == UPLOAD_LOCATION:
             await self.middleware.call('update.destroy_upload_location')
 
+        await self.middleware.call_hook('update.post_update')
+
         job.set_progress(100, 'Update completed')
 
     @private
@@ -456,5 +461,10 @@ class UpdateService(Service):
         subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
 
 
+async def post_update_hook(middleware):
+    await middleware.call('update.take_systemdataset_samba4_snapshot')
+
+
 async def setup(middleware):
     await middleware.call('network.general.register_activity', 'update', 'Update')
+    middleware.register_hook('update.post_update', post_update_hook, sync=True)
