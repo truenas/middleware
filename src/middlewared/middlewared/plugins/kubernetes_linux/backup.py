@@ -8,7 +8,7 @@ from datetime import datetime
 from middlewared.schema import Str
 from middlewared.service import accepts, CallError, job, Service
 
-from .utils import BACKUP_NAME_PREFIX
+from .utils import BACKUP_NAME_PREFIX, UPDATE_BACKUP_PREFIX
 
 
 class KubernetesService(Service):
@@ -118,3 +118,11 @@ class KubernetesService(Service):
 
         self.middleware.call_sync('zfs.snapshot.delete', backup['snapshot_name'])
         shutil.rmtree(backup['backup_path'], True)
+
+
+async def post_system_update_hook(middleware):
+    await middleware.call('kubernetes.backup', f'{UPDATE_BACKUP_PREFIX}-{datetime.utcnow().strftime("%F_%T")}')
+
+
+async def setup(middleware):
+    middleware.register_hook('update.post_update', post_system_update_hook, sync=True)
