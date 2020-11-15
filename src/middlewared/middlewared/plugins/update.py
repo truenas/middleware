@@ -300,15 +300,6 @@ class UpdateService(Service):
         await self.middleware.call('cache.put', 'update.applied', True)
         await self.middleware.call_hook('update.post_update')
 
-        if (
-            await self.middleware.call('system.is_freenas') or
-            (
-                await self.middleware.call('failover.licensed') and
-                await self.middleware.call('failover.status') != 'BACKUP'
-            )
-        ):
-            await self.middleware.call('update.take_systemdataset_samba4_snapshot')
-
         if attrs.get('reboot'):
             await self.middleware.call('system.reboot', {'delay': 10})
         return True
@@ -462,7 +453,12 @@ class UpdateService(Service):
 
 
 async def post_update_hook(middleware):
-    await middleware.call('update.take_systemdataset_samba4_snapshot')
+    if (
+        await middleware.call('system.is_freenas') or (
+            await middleware.call('failover.licensed') and await middleware.call('failover.status') != 'BACKUP'
+        )
+    ):
+        await middleware.call('update.take_systemdataset_samba4_snapshot')
 
 
 async def setup(middleware):

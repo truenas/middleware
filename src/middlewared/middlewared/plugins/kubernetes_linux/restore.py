@@ -8,8 +8,6 @@ import yaml
 from middlewared.schema import Str
 from middlewared.service import accepts, CallError, job, Service
 
-from .utils import BACKUP_NAME_PREFIX
-
 
 class KubernetesService(Service):
 
