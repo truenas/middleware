@@ -79,12 +79,22 @@ class KubernetesService(Service):
         snapshots = self.middleware.call_sync(
             'zfs.snapshot.query', [['name', '^', f'{k8s_config["dataset"]}@{BACKUP_NAME_PREFIX}']], {'select': ['name']}
         )
+        releases_datasets = set(
+            ds['id'].split('/', 3)[-1].split('/', 1)[0] for ds in self.middleware.call_sync(
+                'pool.dataset.query', [['id', '=', f'{k8s_config["dataset"]}/releases']], {'get': True},
+            )['children']
+        )
+
         for snapshot in snapshots:
             backup_name = snapshot['name'].split('@', 1)[-1].split(BACKUP_NAME_PREFIX, 1)[-1]
             backup_path = os.path.join(backup_base_dir, backup_name)
             if not os.path.exists(backup_path):
                 continue
 
-            backups[backup_name] = backup_name
+            backup_data = {'releases': []}
+            for release in filter(lambda r: r in releases_datasets, os.listdir(backup_path)):
+                backup_data['releases'].append(release)
+
+            backups[backup_name] = backup_data
 
         return backups

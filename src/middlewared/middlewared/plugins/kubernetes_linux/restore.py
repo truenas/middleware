@@ -56,13 +56,11 @@ class KubernetesService(Service):
         job.set_progress(30, 'Kubernetes cluster re-initialized')
 
         backup_dir = os.path.join('/mnt', k8s_config['dataset'], 'backups', backup_name)
-        releases_datasets = {}
-        for ds in self.middleware.call_sync(
-            'pool.dataset.query', [['id', '^', f'{k8s_config["dataset"]}/releases/']]
-        ):
-            name = ds['id'].split('/', 3)[-1].split('/', 1)[0]
-            if name not in releases_datasets:
-                releases_datasets[name] = ds
+        releases_datasets = set(
+            ds['id'].split('/', 3)[-1].split('/', 1)[0] for ds in self.middleware.call_sync(
+                'pool.dataset.query', [['id', '=', f'{k8s_config["dataset"]}/releases']], {'get': True},
+            )['children']
+        )
 
         releases = os.listdir(backup_dir)
         len_releases = len(releases)
