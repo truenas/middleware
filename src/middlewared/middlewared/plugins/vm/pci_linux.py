@@ -25,7 +25,7 @@ class VMDeviceService(Service, PCIInfoBase):
     def retrieve_node_information(self, xml):
         info = {'capability': {}, 'iommu_group': {'number': None, 'addresses': []}}
         capability = next((e for e in xml.getchildren() if e.tag == 'capability' and e.get('type') == 'pci'), None)
-        if not capability:
+        if capability is None:
             return info
 
         for child in capability.getchildren():
@@ -60,11 +60,7 @@ class VMDeviceService(Service, PCIInfoBase):
             driver = next((e for e in xml.getchildren() if e.tag == 'driver'), None)
             drivers = [e.text for e in driver.getchildren()] if driver is not None else []
 
-            if not driver or (drivers and not all(d == 'vfio-pci' for d in drivers)):
-                self.middleware.logger.debug(
-                    'Only "vfio-pci" driver is expected to be configured for %r PCI device. Driver(s) found were: %s',
-                    pci, ', '.join(drivers)
-                )
+            if not drivers or not all(d == 'vfio-pci' for d in drivers):
                 continue
 
             node_info = await self.middleware.call('vm.device.retrieve_node_information', xml)
