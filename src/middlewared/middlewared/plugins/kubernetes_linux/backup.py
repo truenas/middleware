@@ -1,6 +1,7 @@
 import errno
 import json
 import os
+import shutil
 
 from datetime import datetime
 
@@ -97,6 +98,7 @@ class KubernetesService(Service):
                 'created_on': self.middleware.call_sync(
                     'zfs.snapshot.get_instance', snapshot['name']
                 )['properties']['creation']['parsed'],
+                'backup_path': backup_path,
             }
 
             for release in filter(lambda r: r in releases_datasets, os.listdir(backup_path)):
@@ -105,3 +107,14 @@ class KubernetesService(Service):
             backups[backup_name] = backup_data
 
         return backups
+
+    @accepts(Str('backup_name'))
+    def delete_backup(self, backup_name):
+        self.middleware.call_sync('kubernetes.validate_k8s_setup')
+
+        backup = self.middleware.call_sync('kubernetes.list_backups').get(backup_name)
+        if not backup:
+            raise CallError(f'Backup {backup_name!r} does not exist', errno=errno.ENOENT)
+
+        self.middleware.call_sync('zfs.snapshot.delete', backup['snapshot_name'])
+        shutil.rmtree(backup['backup_path'], True)

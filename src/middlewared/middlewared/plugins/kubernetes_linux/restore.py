@@ -17,7 +17,8 @@ class KubernetesService(Service):
     @job(lock='kubernetes_restore_backup')
     def restore_backup(self, job, backup_name):
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
-        if backup_name not in self.middleware.call_sync('kubernetes.list_backups'):
+        backup = self.middleware.call_sync('kubernetes.list_backups').get(backup_name)
+        if not backup:
             raise CallError(f'Backup {backup_name!r} does not exist', errno=errno.ENOENT)
 
         job.set_progress(5, 'Basic validation complete')
@@ -29,7 +30,7 @@ class KubernetesService(Service):
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
         self.middleware.call_sync(
-            'zfs.snapshot.rollback', f'{k8s_config["dataset"]}@{BACKUP_NAME_PREFIX}{backup_name}', {
+            'zfs.snapshot.rollback', backup['snapshot_name'], {
                 'force': True,
                 'recursive': True,
                 'recursive_clones': True,
@@ -55,7 +56,7 @@ class KubernetesService(Service):
 
         job.set_progress(30, 'Kubernetes cluster re-initialized')
 
-        backup_dir = os.path.join('/mnt', k8s_config['dataset'], 'backups', backup_name)
+        backup_dir = backup['backup_path']
         releases_datasets = set(
             ds['id'].split('/', 3)[-1].split('/', 1)[0] for ds in self.middleware.call_sync(
                 'pool.dataset.query', [['id', '=', f'{k8s_config["dataset"]}/releases']], {'get': True},
