@@ -24,7 +24,7 @@ class ChartReleaseService(Service):
         Dict(
             'upgrade_options',
             Dict('values', additional_attrs=True),
-            Str('item_version', required=True),
+            Str('item_version', default='latest'),
         )
     )
     @job(lock=lambda args: f'chart_release_upgrade_{args[0]}')
@@ -46,7 +46,6 @@ class ChartReleaseService(Service):
         )
         # TODO: Add a catalog branch check as well when we add support for different catalogs / catalog branches
 
-        new_version = options['item_version']
         current_chart = release['chart_metadata']
         chart = current_chart['name']
         if release['catalog_train'] not in catalog['trains']:
@@ -58,6 +57,13 @@ class ChartReleaseService(Service):
             raise CallError(
                 f'Unable to locate {chart!r} catalog item in {release["catalog"]!r} '
                 f'catalog\'s {release["catalog_train"]!r} train.', errno=errno.ENOENT
+            )
+
+        new_version = options['item_version']
+        if new_version == 'latest':
+            new_version = await self.middleware.call(
+                'chart.release.get_latest_version_from_item_versions',
+                catalog['trains'][release['catalog_train']][chart]['versions']
             )
 
         if new_version not in catalog['trains'][release['catalog_train']][chart]['versions']:

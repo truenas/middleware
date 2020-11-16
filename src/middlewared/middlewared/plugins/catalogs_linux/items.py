@@ -3,6 +3,8 @@ import markdown
 import os
 import yaml
 
+from pkg_resources import parse_version
+
 from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, private, Service
 
@@ -65,7 +67,10 @@ class CatalogService(Service):
 
         item_data.update({k: item_data.get(k) for k in ITEM_KEYS})
 
-        for version in filter(lambda p: os.path.isdir(os.path.join(item_path, p)), os.listdir(item_path)):
+        for version in sorted(
+            filter(lambda p: os.path.isdir(os.path.join(item_path, p)), os.listdir(item_path)),
+            reverse=True, key=parse_version,
+        ):
             item_data['versions'][version] = self.item_version_details(os.path.join(item_path, version))
         return item_data
 

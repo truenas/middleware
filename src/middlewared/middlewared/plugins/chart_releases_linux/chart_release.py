@@ -173,7 +173,7 @@ class ChartReleaseService(CRUDService):
             Str('item', required=True),
             Str('release_name', required=True),
             Str('train', default='charts'),
-            Str('version', required=True),
+            Str('version', default='latest'),
         )
     )
     @job(lock=lambda args: f'chart_release_create_{args[0]["release_name"]}')
@@ -203,10 +203,18 @@ class ChartReleaseService(CRUDService):
             raise CallError(f'Unable to locate "{data["train"]}" catalog train.', errno=errno.ENOENT)
         if data['item'] not in catalog['trains'][data['train']]:
             raise CallError(f'Unable to locate "{data["item"]}" catalog item.', errno=errno.ENOENT)
-        if data['version'] not in catalog['trains'][data['train']][data['item']]['versions']:
+
+        version = data['version']
+        if version == 'latest':
+            version = await self.middleware.call(
+                'chart.release.get_latest_version_from_item_versions',
+                catalog['trains'][data['train']][data['item']]['versions']
+            )
+
+        if version not in catalog['trains'][data['train']][data['item']]['versions']:
             raise CallError(f'Unable to locate "{data["version"]}" catalog item version.', errno=errno.ENOENT)
 
-        item_details = catalog['trains'][data['train']][data['item']]['versions'][data['version']]
+        item_details = catalog['trains'][data['train']][data['item']]['versions'][version]
         await self.middleware.call('catalog.version_supported_error_check', item_details)
 
         k8s_config = await self.middleware.call('kubernetes.config')
@@ -236,7 +244,7 @@ class ChartReleaseService(CRUDService):
 
             job.set_progress(45, 'Created chart release datasets')
 
-            chart_path = os.path.join('/mnt', release_ds, 'charts', data['version'])
+            chart_path = os.path.join('/mnt', release_ds, 'charts', version)
             await self.middleware.run_in_thread(lambda: shutil.copytree(item_details['location'], chart_path))
 
             job.set_progress(55, 'Completed setting up chart release')
