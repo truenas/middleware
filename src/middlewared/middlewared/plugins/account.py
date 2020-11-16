@@ -147,6 +147,7 @@ class UserService(CRUDService):
         datastore_options.pop('count', None)
         datastore_options.pop('get', None)
         datastore_options.pop('limit', None)
+        datastore_options.pop('offset', None)
 
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
@@ -997,6 +998,7 @@ class GroupService(CRUDService):
         datastore_options.pop('count', None)
         datastore_options.pop('get', None)
         datastore_options.pop('limit', None)
+        datastore_options.pop('offset', None)
 
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
