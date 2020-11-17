@@ -1373,11 +1373,40 @@ class JournalSync:
             try:
                 self.middleware.call_sync('failover.call_remote', 'datastore.sql', [query, params])
             except Exception as e:
-                if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.ECONNRESET]:
-                    logger.trace('Skipping journal sync, node down')
+                if isinstance(e, CallError):
+                    if e.errno in [errno.ECONNREFUSED, errno.ECONNRESET]:
+                        logger.trace('Skipping journal sync, node down')
+                    elif e.errno == errno.EFAULT and 'sqlite3.IntegrityError' in str(e):
+                        # single-stepping the `process()` method above produced the fact
+                        # that we can hit a sqlite3.IntegrityError when trying to insert an
+                        # entry in the `storage_scrub` table.
+
+                        # If we fail here, this is where it gets gross and `/data/ha-journal`
+                        # is appended and _ALL_ datastore.* operations fail to propagate to the
+                        # standby node. The shared-memory queue object between this thread
+                        # and the `datastore` thread is cleared out. However, because the HEAD
+                        # of the `/data/ha-journal` is tried first, it fails and no other
+                        # entries get an opportunity to run so we append more entries to
+                        # `/data/ha-journal`. This is extremely painful on HA systems because,
+                        # for example, if a user disables HA (to perform maintenance) the standby
+                        # node doesn't get this request and still thinks HA is enabled between the
+                        # nodes. Ultimately, this leads to production outages/unpredictable behavior
+                        # and databases that do not match between the nodes.
+
+                        # sync a fresh database to the other side which will cause the
+                        # /data/ha-journal file to be cleared
+                        try:
+                            self.middleware.call_sync('failover.send_database')
+                            return True
+                        except Exception:
+                            if not self.last_query_failed:
+                                logger.error('Failed to sync database to standby node with error: %r', e)
+                                self.last_query_failed = True
+
+                            self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
                 else:
                     if not self.last_query_failed:
-                        logger.exception('Failed to run query %s: %r', query, e)
+                        logger.error('Failed to run query %s: %r', query, e)
                         self.last_query_failed = True
 
                     self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
