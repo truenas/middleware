@@ -117,8 +117,9 @@ class FailoverService(ConfigService):
         """
         Update failover state.
 
-        `disabled` when true indicates that HA is disabled.
-        `master` sets the state of current node. Standby node will have the opposite value.
+        `disabled` When true indicates that HA will be disabled.
+        `master`  Marks the particular node in the chassis as the master node.
+                    The standby node will have the opposite value.
 
         `timeout` is the time to WAIT until a failover occurs when a network
             event occurs on an interface that is marked critical for failover AND
@@ -136,11 +137,10 @@ class FailoverService(ConfigService):
         new.update(data)
 
         if master is not NOT_PROVIDED:
-            if master is None:
-                # The node making the call is the one we want to make it MASTER by default
-                new['master_node'] = await self.middleware.call('failover.node')
-            else:
-                new['master_node'] = await self._master_node(master)
+            # The node making the call is the one we want to make MASTER by default
+            new['master_node'] = await self.middleware.call('failover.node')
+        else:
+            new['master_node'] = await self._master_node(master)
 
         verrors = ValidationErrors()
         if new['disabled'] is False:
@@ -799,8 +799,11 @@ class FailoverService(ConfigService):
         ),
     )
     async def control(self, action, options=None):
-        if options is None:
-            options = {}
+        if not options:
+            # The node making the call is the one we want to make MASTER by default
+            node = await self._master_node((await self.middleware.call('failover.node')))
+        else:
+            node = await self._master_node(options.get('active'))
 
         failover = await self.middleware.call('datastore.config', 'system.failover')
         if action == 'ENABLE':
@@ -809,19 +812,19 @@ class FailoverService(ConfigService):
                 return False
             update = {
                 'disabled': False,
-                'master_node': await self._master_node(False),
+                'master_node': node,
             }
-            await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
-            await self.middleware.call('service.restart', 'failover')
         elif action == 'DISABLE':
             if failover['disabled'] is True:
                 # Already disabled
                 return False
             update = {
-                'master_node': await self._master_node(True if options.get('active') else False),
+                'disabled': True,
+                'master_node': node,
             }
-            await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
-            await self.middleware.call('service.restart', 'failover')
+
+        await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
+        await self.middleware.call('service.restart', 'failover')
 
     @private
     def upgrade_version(self):
