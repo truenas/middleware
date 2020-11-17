@@ -129,7 +129,6 @@ def services_config(middleware, context):
             'openvpn_server': ['openvpn_server'],
             's3': ['minio'],
             'rsync': ['rsyncd'],
-            'snmp': ['snmpd', 'snmp_agent'],
             'tftp': ['inetd'],
             'webdav': ['apache24'],
             'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
@@ -144,6 +143,7 @@ def services_config(middleware, context):
         3. On BOTH controllers in TrueNAS HA systems
     """
     mapping.update({
+        'snmp': ['snmpd', 'snmp_agent'],
         'iscsitarget': ['ctld'],
         'lldp': ['ladvd'],
         'ssh': ['openssh'],

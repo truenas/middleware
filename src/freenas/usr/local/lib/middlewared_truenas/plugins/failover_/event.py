@@ -788,7 +788,7 @@ class FailoverService(Service):
                     run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
 
                 for i in (
-                    'ssh', 'iscsitarget',
+                    'ssh', 'iscsitarget', 'snmp',
                 ):
                     verb = 'restart'
                     if i == 'iscsitarget':
