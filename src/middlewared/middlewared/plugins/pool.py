@@ -463,6 +463,7 @@ class PoolService(CRUDService):
                 'topology': self.transform_topology(zpool['groups']),
                 'healthy': zpool['healthy'],
                 'status_detail': zpool['status_detail'],
+                'autotrim': zpool['properties']['autotrim'],
             })
         else:
             pool.update({
@@ -471,6 +472,7 @@ class PoolService(CRUDService):
                 'topology': None,
                 'healthy': False,
                 'status_detail': None,
+                'autotrim': {},
             })
 
         if osc.IS_FREEBSD and pool['encrypt'] > 0:
@@ -774,6 +776,7 @@ class PoolService(CRUDService):
 
     @accepts(Int('id'), Patch(
         'pool_create', 'pool_update',
+        ('add', {'name': 'autotrim', 'type': 'str', 'enum': ['ON', 'OFF']}),
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'encryption'}),
         ('rm', {'name': 'deduplication'}),
@@ -809,8 +812,10 @@ class PoolService(CRUDService):
         verrors = ValidationErrors()
 
         await self.__common_validation(verrors, data, 'pool_update', old=pool)
-        disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
+        disks = vdevs = None
+        if 'topology' in data:
+            disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
+            disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
 
         if verrors:
             raise verrors
@@ -820,31 +825,40 @@ class PoolService(CRUDService):
         else:
             enc_keypath = None
 
-        enc_disks = await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': enc_keypath})
+        if disks and vdevs:
+            enc_disks = await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': enc_keypath})
 
-        job.set_progress(90, 'Extending ZFS Pool')
+            job.set_progress(90, 'Extending ZFS Pool')
 
-        extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
-        await extend_job.wait()
+            extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
+            await extend_job.wait()
 
-        if extend_job.error:
-            raise CallError(extend_job.error)
+            if extend_job.error:
+                raise CallError(extend_job.error)
 
-        if osc.IS_FREEBSD:
-            await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
+            if osc.IS_FREEBSD:
+                await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
 
-            if pool['encrypt'] >= 2:
-                # FIXME: ask current passphrase and validate
-                await self.middleware.call('disk.geli_passphrase', pool, None)
-                await self.middleware.call(
-                    'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
-                )
+                if pool['encrypt'] >= 2:
+                    # FIXME: ask current passphrase and validate
+                    await self.middleware.call('disk.geli_passphrase', pool, None)
+                    await self.middleware.call(
+                        'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
+                    )
+
+        if 'autotrim' in data:
+            await self.middleware.call('zfs.pool.update', pool['name'], {'properties': {
+                'autotrim': {'value': data['autotrim'].lower()},
+            }})
 
         pool = await self.get_instance(id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
     async def __common_validation(self, verrors, data, schema_name, old=None):
+
+        if 'topology' not in data:
+            return
 
         def disk_to_stripe(topology_type):
             """
