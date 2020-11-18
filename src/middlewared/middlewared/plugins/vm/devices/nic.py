@@ -29,7 +29,7 @@ class NIC(Device):
         return ':'.join(['%02x' % x for x in mac_address])
 
     def setup_nic_attach(self):
-        nic_attach = self.data['attributes']['nic_attach']
+        nic_attach = self.data['attributes'].get('nic_attach')
         interfaces = netif.list_interfaces()
         if nic_attach and nic_attach not in interfaces:
             raise CallError(f'{nic_attach} not found.')

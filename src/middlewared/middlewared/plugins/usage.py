@@ -500,9 +500,9 @@ class UsageService(Service):
 
                     vnc_list.append(
                         {
-                            'wait': attrs['wait'],
-                            'vnc_resolution': attrs['vnc_resolution'],
-                            'web': attrs['vnc_web']
+                            'wait': attrs.get('wait'),
+                            'vnc_resolution': attrs.get('vnc_resolution'),
+                            'web': attrs.get('vnc_web')
                         }
                     )
 

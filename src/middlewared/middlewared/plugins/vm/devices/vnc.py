@@ -50,7 +50,7 @@ class VNC(Device):
 
     def hypervisor_args_freebsd(self, *args, **kwargs):
         attrs = self.data['attributes']
-        width, height = (attrs['vnc_resolution'] or '1024x768').split('x')
+        width, height = (attrs.get('vnc_resolution') or '1024x768').split('x')
         return '-s ' + ','.join(filter(
             bool, [
                 '29',
@@ -59,7 +59,7 @@ class VNC(Device):
                 f'tcp={attrs["vnc_bind"]}:{attrs["vnc_port"]}',
                 f'w={width}',
                 f'h={height}',
-                f'password={attrs["vnc_password"]}' if attrs['vnc_password'] else None,
+                f'password={attrs["vnc_password"]}' if attrs.get('vnc_password') else None,
                 'wait' if attrs.get('wait') else None,
             ]
         ))
