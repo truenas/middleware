@@ -108,11 +108,12 @@ class EnclosureService(CRUDService):
 
             enclosures.append(enclosure)
 
+        enclosures.extend(self.middleware.call_sync("enclosure.m50_plx_enclosures"))
+        enclosures.extend(self.middleware.call_sync("enclosure.r50_nvme_enclosures"))
+
         enclosures = self.middleware.call_sync("enclosure.concatenate_enclosures", enclosures)
 
         enclosures = self.middleware.call_sync("enclosure.map_enclosures", enclosures)
-
-        enclosures.extend(self.middleware.call_sync("enclosure.m50_plx_enclosures"))
 
         for number, enclosure in enumerate(enclosures):
             enclosure["number"] = number
@@ -620,6 +621,8 @@ class Enclosure(object):
             # Echostream have actually only 16 physical disk slots
             # See #24254
             if self.encname.startswith('ECStream 3U16+4R-4X6G.3') and slot > 16:
+                return
+            if self.model.startswith('R50, ') and slot >= 25:
                 return
             return ArrayDevSlot(slot=slot, value_raw=value, desc=desc, dev=dev)
         elif name == "SAS Connector":
