@@ -1854,7 +1854,9 @@ class VMService(CRUDService):
                     self.vms[vm_data['name']] = VMSupervisor(vm_data, self.libvirt_connection, self.middleware)
                 except Exception as e:
                     # Whatever happens, we don't want middlewared not booting
-                    self.middleware.logger.error('Unable to setup %r VM object: %s', vm_data['name'], str(e))
+                    self.middleware.logger.error(
+                        'Unable to setup %r VM object: %s', vm_data['name'], str(e), exc_info=True
+                    )
         else:
             self.middleware.logger.error('Failed to establish libvirt connection')
 
