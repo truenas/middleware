@@ -776,7 +776,7 @@ class NIC(Device):
         return ':'.join(['%02x' % x for x in mac_address])
 
     def pre_start_vm(self, *args, **kwargs):
-        nic_attach = self.data['attributes']['nic_attach']
+        nic_attach = self.data['attributes'].get('nic_attach')
         interfaces = netif.list_interfaces()
         bridge = None
         if nic_attach and nic_attach not in interfaces:
@@ -861,7 +861,7 @@ class VNC(Device):
 
     def bhyve_args(self, *args, **kwargs):
         attrs = self.data['attributes']
-        width, height = (attrs['vnc_resolution'] or '1024x768').split('x')
+        width, height = (attrs.get('vnc_resolution') or '1024x768').split('x')
         return '-s ' + ','.join(filter(
             bool, [
                 '29',
@@ -870,7 +870,7 @@ class VNC(Device):
                 f'tcp={attrs["vnc_bind"]}:{attrs["vnc_port"]}',
                 f'w={width}',
                 f'h={height}',
-                f'password={attrs["vnc_password"]}' if attrs['vnc_password'] else None,
+                f'password={attrs["vnc_password"]}' if attrs.get('vnc_password') else None,
                 'wait' if attrs.get('wait') else None,
             ]
         ))
