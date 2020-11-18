@@ -27,7 +27,7 @@ class KubernetesService(Service):
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
         name = backup_name or datetime.utcnow().strftime('%F_%T')
         snap_name = BACKUP_NAME_PREFIX + name
-        if self.middleware.call_sync('zfs.snapshot.query', [['name', '=', snap_name]]):
+        if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
             raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
 
         if name in self.list_backups():
@@ -150,7 +150,12 @@ async def post_system_update_hook(middleware):
                 )
                 break
 
-    await middleware.call('kubernetes.backup', f'{UPDATE_BACKUP_PREFIX}-{datetime.utcnow().strftime("%F_%T")}')
+    backup_job = await middleware.call(
+        'kubernetes.backup_chart_releases', f'{UPDATE_BACKUP_PREFIX}-{datetime.utcnow().strftime("%F_%T")}'
+    )
+    await backup_job.wait()
+    if backup_job.error:
+        middleware.logger.error('Failed to backup chart releases: %s', backup_job.error)
 
 
 async def setup(middleware):

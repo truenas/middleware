@@ -43,10 +43,8 @@ class KubernetesService(Service):
 
         # FIXME: Remove this sleep, sometimes the k3s dataset fails to umount
         time.sleep(20)
-        k3s_ds = os.path.join(k8s_config['dataset'], 'k3s')
-        if os.path.exists('/etc/rancher/node/password'):
-            os.unlink('/etc/rancher/node/password')
 
+        k3s_ds = os.path.join(k8s_config['dataset'], 'k3s')
         self.middleware.call_sync('zfs.dataset.delete', k3s_ds, {'force': True, 'recursive': True})
         self.middleware.call_sync('pool.dataset.create', {'name': k3s_ds, 'type': 'FILESYSTEM'})
 
@@ -128,7 +126,7 @@ class KubernetesService(Service):
             restored_chart_releases[chart_release['name']]['resources'] = chart_release['resources']
 
         for chart_release in restored_chart_releases.values():
-            self.middleware.call(
+            self.middleware.call_sync(
                 'chart.release.scale_release_internal', chart_release['resources'], None,
                 chart_release['replica_counts'], True,
             )
