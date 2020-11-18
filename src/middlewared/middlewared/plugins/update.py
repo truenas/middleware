@@ -454,9 +454,7 @@ class UpdateService(Service):
 
 async def post_update_hook(middleware):
     if (
-        await middleware.call('system.is_freenas') or (
-            await middleware.call('failover.licensed') and await middleware.call('failover.status') != 'BACKUP'
-        )
+        not await middleware.call('failover.licensed') or await middleware.call('failover.status') != 'BACKUP'
     ):
         await middleware.call('update.take_systemdataset_samba4_snapshot')
 
