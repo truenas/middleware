@@ -1185,7 +1185,10 @@ class CloudSyncService(TaskPathService):
                         }
                         for field in provider.credentials_schema
                     ],
-                    "credentials_oauth": f"{OAUTH_URL}/{provider.name.lower()}" if provider.credentials_oauth else None,
+                    "credentials_oauth": (
+                        f"{OAUTH_URL}/{(provider.credentials_oauth_name or provider.name.lower())}"
+                        if provider.credentials_oauth else None
+                    ),
                     "buckets": provider.buckets,
                     "bucket_title": provider.bucket_title,
                     "task_schema": [
