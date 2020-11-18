@@ -248,7 +248,13 @@ class VMSupervisor:
     def stop(self, shutdown_timeout=None):
         self._before_stopping_checks()
 
-        self.domain.shutdown()
+        try:
+            self.domain.shutdown()
+        except libvirt.libvirtError:
+            if not self.destroy_vm_context():
+                # We are going to do a poweroff instead of shutdown because shutdown will still fail due to unclean
+                # exit of VM - VM is already lost by this point and we have created a vm context manually
+                raise
 
         shutdown_timeout = shutdown_timeout or self.vm_data['shutdown_timeout']
         # We wait for timeout seconds before initiating post stop activities for the vm
@@ -270,7 +276,23 @@ class VMSupervisor:
 
     def poweroff(self):
         self._before_stopping_checks()
+        try:
+            self.domain.destroy()
+        except libvirt.libvirtError:
+            if not self.destroy_vm_context():
+                raise
+
+    def destroy_vm_context(self):
+        # There is a race condition where poweroff/shutdown fail sometimes in libvirt which results in it trying
+        # to destroy a VM whose context does not exist resulting in user having to reboot their machines in order
+        # to get the VM back.
+        # This is a workaround where we create a vm context if it doesn't exist so stop/poweroff work
+        if os.path.exists('/dev/vmm') and self.libvirt_domain_name in os.listdir('/dev/vmm'):
+            return False
+        cp = subprocess.Popen(['bhyve', self.libvirt_domain_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        cp.communicate()
         self.domain.destroy()
+        return True
 
     def guest_pptdev(self, ppt_maps, nid, host_bsf):
 
