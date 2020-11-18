@@ -1,11 +1,9 @@
-import os
 import re
 
 from middlewared.service import Service, private
 from middlewared.utils.osc import IS_FREEBSD
 
 if IS_FREEBSD:
-    from nvme import get_nsid
     import sysctl
 
 
@@ -20,18 +18,7 @@ class EnclosureService(Service):
         if system_product is None or not ("TRUENAS-M50" in system_product or "TRUENAS-M60" in system_product):
             return []
 
-        nvme_to_nvd = {}
-        for disk in self.middleware.call_sync("disk.query", [["devname", "^", "nvd"]]):
-            try:
-                n = int(disk["devname"][len("nvd"):])
-            except ValueError:
-                continue
-            nvd = f"/dev/{disk['devname']}"
-            if not os.path.exists(nvd):
-                continue
-            nvme = get_nsid(nvd)
-            if nvme is not None:
-                nvme_to_nvd[int(nvme[4:])] = n
+        nvme_to_nvd = self.middleware.call_sync('disk.nvme_to_nvd_map')
 
         slot_to_nvd = {}
         for nvme, nvd in nvme_to_nvd.items():
@@ -60,46 +47,11 @@ class EnclosureService(Service):
 
             slot_to_nvd[slot] = f"nvd{nvd}"
 
-        elements = []
-        for slot in range(1, 5):
-            device = slot_to_nvd.get(slot, None)
-
-            if device is not None:
-                status = "OK"
-                value_raw = "0x1000000"
-            else:
-                status = "Not Installed"
-                value_raw = "0x05000000"
-
-            elements.append({
-                "slot": slot,
-                "data": {
-                    "Descriptor": f"Disk #{slot}",
-                    "Status": status,
-                    "Value": "None",
-                    "Device": device,
-                },
-                "name": "Array Device Slot",
-                "descriptor": f"Disk #{slot}",
-                "status": status,
-                "value": "None",
-                "value_raw": value_raw,
-            })
-
-        return [
-            {
-                "id": "m50_plx_enclosure",
-                "name": "Rear NVME U.2 Hotswap Bays",
-                "model": "M50/60 Series",
-                "controller": True,
-                "elements": [
-                    {
-                        "name": "Array Device Slot",
-                        "descriptor": "Drive Slots",
-                        "header": ["Descriptor", "Status", "Value", "Device"],
-                        "elements": elements,
-                        "has_slot_status": False,
-                    },
-                ],
-            }
-        ]
+        return self.middleware.call_sync(
+            "enclosure.fake_nvme_enclosure",
+            "m50_plx_enclosure",
+            "Rear NVME U.2 Hotswap Bays",
+            "M50/60 Series",
+            4,
+            slot_to_nvd
+        )
