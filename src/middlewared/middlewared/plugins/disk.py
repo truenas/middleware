@@ -4,6 +4,8 @@ import errno
 import re
 import subprocess
 
+from sqlalchemy.exc import IntegrityError
+
 try:
     from bsd import geom
     from nvme import get_nsid
@@ -262,6 +264,32 @@ class DiskService(CRUDService):
             await self.middleware.call('kmip.sync_sed_keys', [id])
 
         return await self.query([['identifier', '=', id]], {'get': True})
+
+    @private
+    async def copy_settings(self, old, new):
+        await self.middleware.call('disk.update', new['identifier'], {
+            k: v for k, v in old.items() if k in [
+                'togglesmart', 'acousticlevel', 'advpowermgmt', 'description', 'hddstandby', 'hddstandby_force',
+                'smartoptions', 'critical', 'difference', 'informational',
+            ]
+        })
+
+        changed = False
+        for row in await self.middleware.call('datastore.query', 'tasks.smarttest_smarttest_disks', [
+            ['disk_id', '=', old['identifier']],
+        ], {'relationships': False}):
+            try:
+                await self.middleware.call('datastore.insert', 'tasks.smarttest_smarttest_disks', {
+                    'smarttest_id': row['smarttest_id'],
+                    'disk_id': new['identifier'],
+                })
+            except IntegrityError:
+                pass
+            else:
+                changed = True
+
+        if changed:
+            asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
     @private
     def get_name(self, disk):
