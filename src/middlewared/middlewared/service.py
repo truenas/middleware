@@ -602,9 +602,9 @@ class SharingTaskService(CRUDService):
         }
 
     @private
-    async def validate_path_field(self, data, schema, verrors):
+    async def validate_path_field(self, data, schema, verrors, bypass=False):
         await check_path_resides_within_volume(
-            verrors, self.middleware, f'{schema}.{self.path_field}', data.get(self.path_field)
+            verrors, self.middleware, f'{schema}.{self.path_field}', data.get(self.path_field), gluster_bypass=bypass,
         )
         return verrors
 
