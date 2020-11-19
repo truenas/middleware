@@ -10,13 +10,17 @@ class PoolService(Service):
         for root, children in pool['topology'].items():
             check.append((root, children))
 
-        while check:
+        while check and not found:
             root, children = check.pop()
             for c in children:
                 if c['type'] == 'DISK':
                     if label in (c['path'].replace('/dev/', ''), c['guid']):
                         found = (root, c)
                         break
+                elif c['guid'] == label:
+                    found = (root, c)
+                    break
+
                 if c['children']:
                     check.append((root, c['children']))
         return found
