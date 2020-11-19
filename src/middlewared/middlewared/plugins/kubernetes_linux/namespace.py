@@ -1,6 +1,8 @@
+import yaml
+
 from kubernetes_asyncio import client
 
-from middlewared.schema import Dict, Str
+from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -55,3 +57,25 @@ class KubernetesNamespaceService(CRUDService):
                 await context['core_api'].delete_namespace(namespace)
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete namespace: {e}')
+
+    @accepts(
+        Str('namespace_name'),
+        Dict(
+            'options',
+            List('filters'),
+        ),
+    )
+    async def export_to_yaml(self, namespace_name, options):
+        filters = options.get('filters') or []
+        filters.append(['metadata.name', '=', namespace_name])
+        namespace = await self.query(filters, {'get': True})
+        return await self.export_to_yaml_internal(namespace)
+
+    async def export_to_yaml_internal(self, namespace):
+        return yaml.dump({
+            'apiVersion': 'v1',
+            'kind': 'Namespace',
+            'metadata': namespace['metadata'],
+            'spec': namespace['spec'],
+            'status': namespace['status'],
+        })
