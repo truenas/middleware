@@ -1,7 +1,7 @@
 from middlewared.service import (CallError, ConfigService, CRUDService, Service,
                                  filterable, pass_app, private)
 from middlewared.utils import Popen, filter_list, run
-from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Ref, Str,
+from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
                                 ValidationErrors, accepts)
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
@@ -847,8 +847,20 @@ class InterfaceService(CRUDService):
         Bool('failover_critical', default=False),
         Int('failover_group', null=True),
         Int('failover_vhid', null=True, validators=[Range(min=1, max=255)]),
-        List('failover_aliases', items=[Ref('interface_alias')]),
-        List('failover_virtual_aliases', items=[Ref('interface_alias')]),
+        List('failover_aliases', items=[
+            Dict(
+                'interface_failover_alias',
+                Str('type', required=True, default='INET', enum=['INET', 'INET6']),
+                IPAddr('address', required=True),
+            )
+        ]),
+        List('failover_virtual_aliases', items=[
+            Dict(
+                'interface_virtual_alias',
+                Str('type', required=True, default='INET', enum=['INET', 'INET6']),
+                IPAddr('address', required=True),
+            )
+        ]),
         List('bridge_members'),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
         List('lag_ports', items=[Str('interface')]),
@@ -1329,32 +1341,39 @@ class InterfaceService(CRUDService):
             map(lambda x: ('B', x), data.get('failover_aliases') or []),
             map(lambda x: ('V', x), data.get('failover_virtual_aliases') or []),
         ):
-            ipaddr = ipaddress.ip_interface(f'{i["address"]}/{i["netmask"]}')
+            try:
+                ipaddr = ipaddress.ip_interface(f'{i["address"]}/{i["netmask"]}')
+            except KeyError:
+                # this is expected since the `netmask` key in `failover_aliases`
+                # or `failover_virtual_aliases` isn't required via the public API.
+                # The db doesn't have a netmask column for the standby IP or for
+                # the virtual IP so we hardcode those values behind the scene.
+                ipaddr = ipaddress.ip_interface(i["address"])
+
+            netfield = None
             iface_ip = True
             if ipaddr.version == 4:
-                netfield = 'v4netmaskbit'
                 if field == 'A':
                     iface_addrfield = 'ipv4address'
                     alias_addrfield = 'v4address'
+                    netfield = 'v4netmaskbit'
                 elif field == 'B':
                     iface_addrfield = 'ipv4address_b'
                     alias_addrfield = 'v4address_b'
                 else:
                     alias_addrfield = iface_addrfield = 'vip'
-                    netfield = None  # vip hardcodes to /32
                 if iface.get(iface_addrfield) or data.get('ipv4_dhcp'):
                     iface_ip = False
             else:
-                netfield = 'v6netmaskbit'
                 if field == 'A':
                     iface_addrfield = 'ipv6address'
                     alias_addrfield = 'v6address'
+                    netfield = 'v6netmaskbit'
                 elif field == 'B':
                     iface_addrfield = 'ipv6address_b'
                     alias_addrfield = 'v6address_b'
                 else:
                     alias_addrfield = iface_addrfield = 'vipv6address'
-                    netfield = None  # vip hardcodes to /128
                 if iface.get(iface_addrfield) or data.get('ipv6_auto'):
                     iface_ip = False
 
