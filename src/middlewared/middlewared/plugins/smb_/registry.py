@@ -1,6 +1,6 @@
-from middlewared.service import private, Service
+from middlewared.service import private, Service, filterable
 from middlewared.service_exception import CallError
-from middlewared.utils import run
+from middlewared.utils import run, filter_list
 from middlewared.plugins.smb import SMBCmd, SMBSharePreset
 from middlewared.utils import osc
 
@@ -259,6 +259,69 @@ class SharingSMBService(Service):
                 "streams_xattr:prefix": "user.",
                 "streams_xattr:store_stream_type": "no"
             })
+
+    @private
+    @filterable
+    async def registry_query(self, filters=None, options=None):
+        """
+        Filterable method for querying SMB shares from the registry
+        config. Can be reverted back to registry / smb.conf without
+        loss of information. This is necessary to provide consistent
+        API for viewing samba's current running configuration, which
+        is of particular importance with clustered registry shares.
+        """
+        reg_shares = await self.reg_listshares()
+        rv = []
+        for idx, name in enumerate(reg_shares):
+            reg_conf = await self.reg_showshare(name)
+            is_home = name == "HOMES"
+            reg_conf["name"] = "HOMES_SHARE" if is_home else name
+            reg_conf["home"] = is_home
+            parsed_conf = await self.smbconf_to_share(reg_conf)
+
+            entry = {"id": idx + 1}
+            entry.update(parsed_conf)
+            rv.append(entry)
+
+        return filter_list(rv, filters, options)
+
+    @private
+    async def smbconf_to_share(self, data):
+        """
+        Wrapper to convert registry share into approximation of
+        normal API return for sharing.smb.query.
+        Disabled and locked shares are not in samba's running
+        configuration in registry.tdb and so we assume that this
+        is not the case.
+        """
+        conf_in = data.copy()
+        vfs_objects = conf_in.pop("vfs objects")
+        ret = {
+            "purpose": "NO_PRESET",
+            "path": conf_in.pop("path"),
+            "path_suffix": "",
+            "home": conf_in.pop("home"),
+            "name": conf_in.pop("name"),
+            "guestok": conf_in.pop("guest ok", "yes") == "yes",
+            "browsable": conf_in.pop("browseable", "yes") == "yes",
+            "hostsallow": conf_in.pop("hosts allow", []),
+            "hostsdeny": conf_in.pop("hosts deny", []),
+            "abe": conf_in.pop("access based share enumeration", False),
+            "acl": True if "acl_xattr" in vfs_objects else False,
+            "ro": conf_in.pop("read only") == "yes",
+            "durable handle": conf_in.pop("posix locking", "yes") == "no",
+            "streams": True if "streams_xattr" in vfs_objects else False,
+            "timemachine": conf_in.pop("fruit:time machine", False),
+            "recyclebin": True if "recycle" in vfs_objects else False,
+            "fsrvp": False,
+            "enabled": True,
+            "locked": False,
+            "shadowcopy": False,
+            "aapl_name_mangling": True if "catia" in vfs_objects else False,
+        }
+        aux_list = [f"{k} = {v}" for k, v in conf_in.items()]
+        ret["auxsmbconf"] = '\n'.join(aux_list)
+        return ret
 
     @private
     async def share_to_smbconf(self, conf_in, globalconf=None):
