@@ -4,7 +4,7 @@ from middlewared.service import private, Service
 class PoolService(Service):
 
     @private
-    def find_disk_from_topology(self, label, pool):
+    def find_disk_from_topology(self, label, pool, include_top_level_vdev=False):
         check = []
         found = None
         for root, children in pool['topology'].items():
@@ -17,7 +17,7 @@ class PoolService(Service):
                     if label in (c['path'].replace('/dev/', ''), c['guid']):
                         found = (root, c)
                         break
-                elif c['guid'] == label:
+                elif include_top_level_vdev and c['guid'] == label:
                     found = (root, c)
                     break
 
