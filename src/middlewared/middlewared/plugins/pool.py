@@ -1185,7 +1185,7 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
 
-        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
+        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool, True)
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
 
@@ -1216,17 +1216,14 @@ class PoolService(CRUDService):
                 wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
                 wipe_jobs.append((disk, wipe_job))
 
-        failed_wipes = []
-        for disk, wipe_job in wipe_jobs:
+        error_str = ''
+        for index, item in wipe_jobs:
+            disk, wipe_job = item
             await wipe_job.wait()
             if wipe_job.error:
-                failed_wipes.append((disk, wipe_job.error or ''))
+                error_str += f'{index + 1}) {disk}: {wipe_job.error}\n'
 
-        if failed_wipes:
-            error_str = ''
-            for i, f in enumerate(failed_wipes):
-                error_str += f'{i + 1}) {f[0]}: {f[1]}\n'
-
+        if error_str:
             raise CallError(f'Failed to wipe disks:\n{error_str}')
 
     @private
