@@ -374,9 +374,6 @@ class DiskService(CRUDService):
 
         rv = {'name': disk_name, 'locked': None}
 
-        if osc.IS_LINUX:
-            return rv
-
         if not password:
             # If there is no password no point in continuing
             return rv
