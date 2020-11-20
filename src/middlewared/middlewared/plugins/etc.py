@@ -218,7 +218,7 @@ class EtcService(Service):
                 'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
                 'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
             },
-            {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux', 'checkpoint': 'pool_import'},
         ],
         'docker': [
             {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': None},
