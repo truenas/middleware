@@ -210,6 +210,8 @@ class UsageService(Service):
         # 3) No of backups
         # 4) No of automatic backups taken
         # 5) List of docker images
+        # 6) Configured cluster cidr info
+        k8s_config = await self.middleware.call('kubernetes.config')
         output = {
             'chart_releases': 0,
             # catalog -> train -> item -> versions
@@ -219,6 +221,10 @@ class UsageService(Service):
                 'automatic_backups': 0,
             },
             'docker_images': set(),
+            'kubernetes_config': {
+                'cluster_cidr': k8s_config['cluster_cidr'],
+                'service_cidr': k8s_config['service_cidr'],
+            },
         }
         chart_releases = await self.middleware.call('chart.release.query')
         output['chart_releases'] = len(chart_releases)
@@ -235,6 +241,8 @@ class UsageService(Service):
         })
         for image in await self.middleware.call('docker.images.query'):
             output['docker_images'].update(image['repo_tags'])
+
+        output['docker_images'] = list(output['docker_images'])
 
         return output
 
