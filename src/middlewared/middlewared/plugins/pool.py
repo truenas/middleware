@@ -1185,7 +1185,7 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
 
-        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
+        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool, True)
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
 
@@ -1194,21 +1194,37 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
 
+        if found[1]['type'] != 'DISK':
+            disk_paths = [d['path'] for d in found[1]['children']]
+        else:
+            disk_paths = [found[1]['path']]
+
         if osc.IS_FREEBSD:
             await self.middleware.call('pool.sync_encrypted', oid)
 
-            if found[1]['path'].endswith('.eli'):
-                devname = found[1]['path'].replace('/dev/', '')[:-4]
-                await self.middleware.call('disk.geli_detach_single', devname)
+            for disk_path in disk_paths:
+                if disk_path.endswith('.eli'):
+                    devname = disk_path.replace('/dev/', '')[:-4]
+                    await self.middleware.call('disk.geli_detach_single', devname)
 
-        disk = await self.middleware.call(
-            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
-        )
-        if disk:
-            wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
+        wipe_jobs = []
+        for disk_path in disk_paths:
+            disk = await self.middleware.call(
+                'disk.label_to_disk', disk_path.replace('/dev/', '')
+            )
+            if disk:
+                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
+                wipe_jobs.append((disk, wipe_job))
+
+        error_str = ''
+        for index, item in wipe_jobs:
+            disk, wipe_job = item
             await wipe_job.wait()
             if wipe_job.error:
-                raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
+                error_str += f'{index + 1}) {disk}: {wipe_job.error}\n'
+
+        if error_str:
+            raise CallError(f'Failed to wipe disks:\n{error_str}')
 
     @private
     def configure_resilver_priority(self):
