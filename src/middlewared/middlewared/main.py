@@ -1226,7 +1226,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         if not hasattr(method, 'accepts'):
             return args
 
-        return [method.accepts[i].dump(arg) for i, arg in enumerate(args) if i < len(method.accepts)]
+        return [method.accepts[i].dump(arg) if i < len(method.accepts) else arg
+                for i, arg in enumerate(args)]
 
     async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None, profile=False):
         serviceobj, methodobj = self._method_lookup(name)
