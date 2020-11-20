@@ -554,8 +554,14 @@ class UserService(CRUDService):
         If `user_id` is provided, shell choices are filtered to ensure the user can access the shell choices provided.
         """
         user = self.middleware.call_sync('user.get_instance', user_id) if user_id else None
+
+        # on linux /etc/shells has duplicate entries like (/bin/sh, /usr/bin/sh) (/bin/bash, /usr/bin/bash) etc.
+        # The entries that point to the same basename are the same binary.
+        # The /usr/bin/ path is the "newer" place to put binaries so we'll use those entries.
+        path = '/' if IS_FREEBSD else '/usr/bin/'
+
         with open('/etc/shells', 'r') as f:
-            shells = [x.rstrip() for x in f.readlines() if x.startswith('/')]
+            shells = [x.rstrip() for x in f.readlines() if x.startswith(path)]
         return {
             shell: os.path.basename(shell)
             for shell in (shells + ['/usr/sbin/nologin'])
