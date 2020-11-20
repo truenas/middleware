@@ -23,6 +23,7 @@ from middlewared.utils.asyncio_ import asyncio_map
 
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
 RE_DA = re.compile('^da[0-9]+$')
+RE_HDPARM_DRIVE_LOCKED = re.compile(r'Security.*\n\s*locked', re.DOTALL)
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
@@ -393,22 +394,10 @@ class DiskService(CRUDService):
 
         # Try ATA Security if SED was not unlocked and its not locked by OPAL
         if not unlocked and not locked:
-            cp = await run('camcontrol', 'security', devname, check=False)
-            if cp.returncode == 0:
-                output = cp.stdout.decode()
-                if RE_CAMCONTROL_DRIVE_LOCKED.search(output):
-                    locked = True
-                    cp = await run(
-                        'camcontrol', 'security', devname,
-                        '-U', _advconfig['sed_user'],
-                        '-k', password,
-                        check=False,
-                    )
-                    if cp.returncode == 0:
-                        locked = False
-                        unlocked = True
-                else:
-                    locked = False
+            if osc.IS_FREEBSD:
+                locked, unlocked = await self.unlock_with_camcontrol(devname, _advconfig, password)
+            else:
+                locked, unlocked = await self.unlock_with_hdparm(devname, _advconfig, password)
 
         if unlocked:
             try:
@@ -421,6 +410,48 @@ class DiskService(CRUDService):
             self.logger.error(f'Failed to unlock {disk_name}')
         rv['locked'] = locked
         return rv
+
+    @private
+    async def unlock_with_hdparm(self, devname, _advconfig, password):
+        locked = unlocked = False
+        cp = await run('hdparm', '-I', devname, check=False)
+        if cp.returncode:
+            return locked, unlocked
+
+        output = cp.stdout.decode()
+        if RE_HDPARM_DRIVE_LOCKED.search(output):
+            locked = True
+            cp = await run([
+                'hdparm', '--user-master', _advconfig['sed_user'][0].lower(),
+                '--security-unlock', password, devname,
+            ], check=False)
+            if cp.returncode == 0:
+                locked = False
+                unlocked = True
+
+        return locked, unlocked
+
+    @private
+    async def unlock_with_camcontrol(self, devname, _advconfig, password):
+        locked = unlocked = False
+        cp = await run('camcontrol', 'security', devname, check=False)
+        if cp.returncode == 0:
+            output = cp.stdout.decode()
+            if RE_CAMCONTROL_DRIVE_LOCKED.search(output):
+                locked = True
+                cp = await run(
+                    'camcontrol', 'security', devname,
+                    '-U', _advconfig['sed_user'],
+                    '-k', password,
+                    check=False,
+                )
+                if cp.returncode == 0:
+                    locked = False
+                    unlocked = True
+            else:
+                locked = False
+
+        return locked, unlocked
 
     @private
     async def sed_initial_setup(self, disk_name, password):
