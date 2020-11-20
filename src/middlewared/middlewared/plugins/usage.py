@@ -87,14 +87,23 @@ class UsageService(Service):
         context = self.get_gather_context()
         restrict_usage = restrict_usage or []
 
-        return json.dumps(
-            {
-                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f)) and (
+        usage_stats = {}
+        for func in filter(
+            lambda f: (
+                f.startswith('gather_') and callable(getattr(self, f)) and (
                     not f.endswith(('_freebsd', '_linux')) or f.rsplit('_', 1)[-1].upper() == osc.SYSTEM
                 ) and (not restrict_usage or f in restrict_usage)
-                for k, v in self.middleware.call_sync(f'usage.{f}', context).items()
-            }, sort_keys=True
-        )
+            ),
+            dir(self)
+        ):
+            try:
+                stats = self.middleware.call_sync(f'usage.{func}', context)
+            except Exception as e:
+                self.logger.error('Failed to gather stats from %r: %s', func, e, exc_info=True)
+            else:
+                usage_stats.update(stats)
+
+        return json.dumps(usage_stats, sort_keys=True)
 
     def gather_total_capacity(self, context):
         return {
