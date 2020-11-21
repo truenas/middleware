@@ -1,7 +1,7 @@
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
-from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors
+from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors, filterable
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
@@ -33,6 +33,9 @@ RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 
 LP_CTX = param.get_context()
 
+# placeholder for proper ctdb health check
+CLUSTER_IS_HEALTHY = True
+
 
 class SMBHAMODE(enum.IntEnum):
     """
@@ -43,6 +46,7 @@ class SMBHAMODE(enum.IntEnum):
     STANDALONE = 0
     LEGACY = 1
     UNIFIED = 2
+    CLUSTERED = 2
 
 
 class SMBCmd(enum.Enum):
@@ -819,6 +823,10 @@ class SharingSMBService(SharingService):
 
         `auxsmbconf` is a string of additional smb4.conf parameters not covered by the system's API.
         """
+        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        if ha_mode == SMBHAMODE.CLUSTERED and CLUSTER_IS_HEALTHY is False:
+            raise CallError("SMB share changes not permitted while cluster is unhealthy")
+
         verrors = ValidationErrors()
         path = data['path']
 
@@ -835,11 +843,12 @@ class SharingSMBService(SharingService):
 
         await self.apply_presets(data)
         await self.compress(data)
-        vuid = await self.generate_vuid(data['timemachine'])
-        data.update({'vuid': vuid})
-        data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+        if ha_mode != SMBHAMODE.CLUSTERED:
+            vuid = await self.generate_vuid(data['timemachine'])
+            data.update({'vuid': vuid})
+            data['id'] = await self.middleware.call(
+                'datastore.insert', self._config.datastore, data,
+                {'prefix': self._config.datastore_prefix})
 
         await self.strip_comments(data)
         await self.middleware.call('sharing.smb.reg_addshare', data)
@@ -850,7 +859,13 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
-        return await self.get_instance(data['id'])
+        if ha_mode == SMBHAMODE.CLUSTERED:
+            ret = await self.query([('name', '=', data['name'])],
+                                   {'get': True, 'extra': {'ha_mode': ha_mode.name}})
+        else:
+            ret = await self.get_instance(data['id'])
+
+        return ret
 
     @accepts(
         Int('id'),
@@ -864,14 +879,14 @@ class SharingSMBService(SharingService):
         """
         Update SMB Share of `id`.
         """
+        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        if ha_mode == SMBHAMODE.CLUSTERED and CLUSTER_IS_HEALTHY is False:
+            raise CallError("SMB share changes not permitted while cluster is unhealthy")
+
         verrors = ValidationErrors()
         path = data.get('path')
 
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
+        old = await self.query([('id', '=', id)], {'get': True, 'extra': {'ha_mode': ha_mode.name}})
 
         new = old.copy()
         new.update(data)
@@ -894,6 +909,23 @@ class SharingSMBService(SharingService):
 
         if old['purpose'] != new['purpose']:
             await self.apply_presets(new)
+
+        if ha_mode == SMBHAMODE.CLUSTERED:
+            diff = await self.middleware.call(
+                'sharing.smb.diff_middleware_and_registry', new['name'], new
+            )
+            share_name = new['name'] if not new['home'] else 'homes'
+            await self.middleware.call('sharing.smb.apply_conf_diff',
+                                       'REGISTRY', share_name, diff)
+
+            enable_aapl = await self.check_aapl(new)
+            if enable_aapl:
+                await self._service_change('cifs', 'restart')
+            else:
+                await self._service_change('cifs', 'reload')
+
+            return await self.query([('name', '=', share_name)],
+                                    {'get': True, 'extra': {'ha_mode': ha_mode.name}})
 
         old_is_locked = (await self.get_instance(id))['locked']
         if old['path'] != new['path']:
@@ -984,8 +1016,17 @@ class SharingSMBService(SharingService):
         Delete SMB Share of `id`. This will forcibly disconnect SMB clients
         that are accessing the share.
         """
-        share = await self._get_instance(id)
-        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        if ha_mode == SMBHAMODE.CLUSTERED and CLUSTER_IS_HEALTHY is False:
+            raise CallError("SMB share changes not permitted while cluster is unhealthy")
+
+        if ha_mode != SMBHAMODE.CLUSTERED:
+            share = await self._get_instance(id)
+            result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        else:
+            share = await self.query([('id', '=', id)], {'get': True})
+            result = id
+
         await self.close_share(share['name'])
         try:
             await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
@@ -1001,6 +1042,31 @@ class SharingSMBService(SharingService):
         if share['timemachine']:
             await self.middleware.call('service.restart', 'mdns')
 
+        return result
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        """
+        Query shares with filters. In clustered environments, local datastore query
+        is bypassed in favor of clustered registry.
+        """
+        extra = options.get('extra', {})
+        try:
+            ha_mode = SMBHAMODE[extra.get('ha_mode')]
+        except KeyError:
+            ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+
+        if ha_mode == SMBHAMODE.CLUSTERED:
+            result = await self.middleware.call(
+                'sharing.smb.registry_query', filters, options
+            )
+        else:
+            options['extend'] = self._config.datastore_extend
+            options['prefix'] = self._config.datastore_prefix
+
+            result = await self.middleware.call(
+                'datastore.query', self._config.datastore, filters, options
+            )
         return result
 
     @private
