@@ -6,6 +6,7 @@ import hashlib
 import os
 
 from copy import deepcopy
+from collections import defaultdict
 from datetime import datetime
 
 from middlewared.service import Service
@@ -86,14 +87,23 @@ class UsageService(Service):
         context = self.get_gather_context()
         restrict_usage = restrict_usage or []
 
-        return json.dumps(
-            {
-                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f)) and (
+        usage_stats = {}
+        for func in filter(
+            lambda f: (
+                f.startswith('gather_') and callable(getattr(self, f)) and (
                     not f.endswith(('_freebsd', '_linux')) or f.rsplit('_', 1)[-1].upper() == osc.SYSTEM
                 ) and (not restrict_usage or f in restrict_usage)
-                for k, v in self.middleware.call_sync(f'usage.{f}', context).items()
-            }, sort_keys=True
-        )
+            ),
+            dir(self)
+        ):
+            try:
+                stats = self.middleware.call_sync(f'usage.{func}', context)
+            except Exception as e:
+                self.logger.error('Failed to gather stats from %r: %s', func, e, exc_info=True)
+            else:
+                usage_stats.update(stats)
+
+        return json.dumps(usage_stats, sort_keys=True)
 
     def gather_total_capacity(self, context):
         return {
@@ -201,6 +211,49 @@ class UsageService(Service):
                 ]
             }
         }
+
+    async def gather_applications_linux(self, context):
+        # We want to retrieve following information
+        # 1) No of installed chart releases
+        # 2) catalog items with versions installed
+        # 3) No of backups
+        # 4) No of automatic backups taken
+        # 5) List of docker images
+        # 6) Configured cluster cidr info
+        k8s_config = await self.middleware.call('kubernetes.config')
+        output = {
+            'chart_releases': 0,
+            # catalog -> train -> item -> versions
+            'catalog_items': defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int)))),
+            'chart_releases_backups': {
+                'total_backups': 0,
+                'automatic_backups': 0,
+            },
+            'docker_images': set(),
+            'kubernetes_config': {
+                'cluster_cidr': k8s_config['cluster_cidr'],
+                'service_cidr': k8s_config['service_cidr'],
+            },
+        }
+        chart_releases = await self.middleware.call('chart.release.query')
+        output['chart_releases'] = len(chart_releases)
+        for chart_release in chart_releases:
+            chart = chart_release['chart_metadata']
+            output['catalog_items'][chart_release['catalog']][
+                chart_release['catalog_train']][chart['name']][chart['version']] += 1
+
+        backups = await self.middleware.call('kubernetes.list_backups')
+        backup_update_prefix = await self.middleware.call('kubernetes.get_system_update_backup_prefix')
+        output['chart_releases_backups'].update({
+            'total_backups': len(backups),
+            'automatic_backups': len([b for b in backups if b.startswith(backup_update_prefix)]),
+        })
+        for image in await self.middleware.call('docker.images.query'):
+            output['docker_images'].update(image['repo_tags'])
+
+        output['docker_images'] = list(output['docker_images'])
+
+        return output
 
     async def gather_jails_freebsd(self, context):
         try:

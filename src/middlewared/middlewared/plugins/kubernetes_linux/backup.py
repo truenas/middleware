@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime
 
 from middlewared.schema import Str
-from middlewared.service import accepts, CallError, job, Service
+from middlewared.service import accepts, CallError, job, private, Service
 
 from .utils import BACKUP_NAME_PREFIX, UPDATE_BACKUP_PREFIX
 
@@ -81,7 +81,9 @@ class KubernetesService(Service):
         """
         List existing chart releases backups.
         """
-        self.middleware.call_sync('kubernetes.validate_k8s_setup')
+        if not self.middleware.call_sync('service.started', 'kubernetes'):
+            return []
+
         k8s_config = self.middleware.call_sync('kubernetes.config')
         backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backups')
 
@@ -131,6 +133,10 @@ class KubernetesService(Service):
 
         self.middleware.call_sync('zfs.snapshot.delete', backup['snapshot_name'])
         shutil.rmtree(backup['backup_path'], True)
+
+    @private
+    async def get_system_update_backup_prefix(self):
+        return UPDATE_BACKUP_PREFIX
 
 
 async def post_system_update_hook(middleware):
