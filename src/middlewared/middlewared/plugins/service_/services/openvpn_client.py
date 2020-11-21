@@ -10,4 +10,4 @@ class OpenVPNClientService(SimpleService):
     freebsd_pidfile = "/var/run/openvpn_client.pid"
     freebsd_procname = "openvpn"
 
-    systemd_unit = "openvpn@client"
+    systemd_unit = "openvpn-client@client"
