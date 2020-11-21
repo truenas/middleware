@@ -8,7 +8,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import Nid, osc, Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
-from middlewared.validators import Range, Match
+from middlewared.validators import Range, MACAddr, Match
 
 import middlewared.logger
 import asyncio
@@ -761,7 +761,7 @@ class NIC(Device):
         'attributes',
         Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
         Str('nic_attach', default=None, null=True),
-        Str('mac', default=None, null=True),
+        Str('mac', default=None, null=True, validators=[MACAddr(separator=':')]),
     )
 
     def __init__(self, *args, **kwargs):
