@@ -24,7 +24,7 @@ dh ${middleware.call_sync('certificate.dhparam')}
 crl-verify ${root_ca['crl_path']}
 server ${config['server']} ${ip(f'{config["server"]}/{config["netmask"]}', strict=False).netmask}
 user nobody
-group nobody
+group ${"nobody" if IS_FREEBSD else "nogroup"}
 status /var/log/openvpn/openvpn-status.log
 log-append  /var/log/openvpn/openvpn.log
 verb 3
