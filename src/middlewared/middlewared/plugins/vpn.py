@@ -238,9 +238,12 @@ class OpenVPNServerService(SystemServiceService):
 
     @private
     async def server_extend(self, data):
-        data['server_certificate'] = None if not data['server_certificate'] else data['server_certificate']['id']
-        data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
-        data['tls_crypt_auth_enabled'] = bool(data['tls_crypt_auth'])
+        data.update({
+            'server_certificate': None if not data['server_certificate'] else data['server_certificate']['id'],
+            'root_ca': None if not data['root_ca'] else data['root_ca']['id'],
+            'tls_crypt_auth_enabled': bool(data['tls_crypt_auth']),
+            'interface': 'openvpn-server',
+        })
         return data
 
     @private
@@ -457,6 +460,7 @@ class OpenVPNServerService(SystemServiceService):
         generated to be used with OpenVPN server.
         """
         old_config = await self.config()
+        old_config.pop('interface')
         config = old_config.copy()
 
         config.update(data)
@@ -502,9 +506,12 @@ class OpenVPNClientService(SystemServiceService):
 
     @private
     async def client_extend(self, data):
-        data['client_certificate'] = None if not data['client_certificate'] else data['client_certificate']['id']
-        data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
-        data['tls_crypt_auth_enabled'] = bool(data['tls_crypt_auth'])
+        data.update({
+            'client_certificate': None if not data['client_certificate'] else data['client_certificate']['id'],
+            'root_ca': None if not data['root_ca'] else data['root_ca']['id'],
+            'tls_crypt_auth_enabled': bool(data['tls_crypt_auth']),
+            'interface': 'openvpn-client',
+        })
         return data
 
     @accepts()
@@ -618,6 +625,7 @@ class OpenVPNClientService(SystemServiceService):
         `nobind` must be enabled if OpenVPN client / server are to run concurrently.
         """
         old_config = await self.config()
+        old_config.pop('interface')
         config = old_config.copy()
 
         config.update(data)

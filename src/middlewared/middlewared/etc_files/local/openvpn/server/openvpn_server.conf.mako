@@ -15,8 +15,13 @@
 %>\
 proto ${config['protocol'].lower()}
 port ${config['port']}
+% if IS_LINUX:
+dev ${config['interface']}
+dev-type ${config['device_type'].lower()}
+% else:
 dev ${config['device_type'].lower()}
 #dev-type ${config['device_type'].lower()} -FIXME: This does not work, it is an openvpn issue in FreeBSD
+% endif
 ca ${root_ca['certificate_path']}
 cert ${server_cert['certificate_path']}
 key ${server_cert['privatekey_path']}
