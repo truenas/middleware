@@ -7,6 +7,7 @@ import uuid
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+RE_MAC_ADDRESS = re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$")
 
 
 class Email:
@@ -173,8 +174,20 @@ class IpInUse:
 
 
 class MACAddr:
+
+    SEPARATORS = [':', '-']
+
+    def __init__(self, separator=None):
+        if separator:
+            assert separator in self.SEPARATORS
+        self.separator = separator
+
     def __call__(self, value):
-        if not re.match('[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$', value.lower()):
+        if not RE_MAC_ADDRESS.match(value.lower()) or (
+            self.separator and (
+                self.separator not in value or ({self.separator} ^ set(self.SEPARATORS)).pop() in value.lower()
+            )
+        ):
             raise ValueError('Please provide a valid MAC address')
 
 
