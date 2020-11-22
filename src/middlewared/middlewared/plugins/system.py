@@ -89,6 +89,7 @@ class SystemAdvancedModel(sa.Model):
     adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
     adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
+    adv_isolated_gpu_pci_ids = sa.Column(sa.JSON(), default=[])
 
 
 class SystemAdvancedService(ConfigService):
