@@ -56,26 +56,30 @@ class KubernetesGPUService(Service):
             self.logger.error('Unable to configure GPU for node: %s', e)
 
     async def setup_internal(self):
-        gpu = await self.middleware.call('device.get_info', 'GPU')
-        to_remove = list(GPU_CONFIG.keys())
+        gpus = await self.middleware.call('device.get_info', 'GPU')
+        to_remove = set(GPU_CONFIG.keys())
         daemonsets = {
             f'{d["metadata"]["namespace"]}_{d["metadata"]["name"]}': d
             for d in await self.middleware.call('k8s.daemonset.query')
         }
-        if gpu['available']:
-            to_remove.remove(gpu['vendor'])
-            config = GPU_CONFIG[gpu['vendor']]
-            config_metadata = config['metadata']
-            if f'{config_metadata["namespace"]}_{config_metadata["name"]}' in daemonsets:
-                await self.middleware.call(
-                    'k8s.daemonset.update', config_metadata['name'], {
-                        'namespace': config_metadata['namespace'], 'body': config
-                    }
-                )
-            else:
-                await self.middleware.call(
-                    'k8s.daemonset.create', {'namespace': config_metadata['namespace'], 'body': config}
-                )
+        # we only support nvidia for now
+        supported_gpus = {'NVIDIA'}
+        found_gpus = supported_gpus.intersection(set([gpu['vendor'] for gpu in gpus]))
+        if found_gpus:
+            to_remove = to_remove - found_gpus
+            for gpu in found_gpus:
+                config = GPU_CONFIG[gpu]
+                config_metadata = config['metadata']
+                if f'{config_metadata["namespace"]}_{config_metadata["name"]}' in daemonsets:
+                    await self.middleware.call(
+                        'k8s.daemonset.update', config_metadata['name'], {
+                            'namespace': config_metadata['namespace'], 'body': config
+                        }
+                    )
+                else:
+                    await self.middleware.call(
+                        'k8s.daemonset.create', {'namespace': config_metadata['namespace'], 'body': config}
+                    )
 
         for vendor in to_remove:
             config_metadata = GPU_CONFIG[vendor]['metadata']

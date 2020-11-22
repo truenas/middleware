@@ -288,6 +288,10 @@ class DeviceService(Service, DeviceInfoBase):
             addr_re = RE_PCI_ADDR.match(addr)
 
             gpu_dev = pyudev.Devices.from_name(pyudev.Context(), 'pci', addr)
+            # Let's normalise vendor for consistency
+            vendor = None
+            if 'nvidia' in gpu_dev.get('ID_VENDOR_FROM_DATABASE', '').lower():
+                vendor = 'NVIDIA'
 
             gpus.append({
                 'addr': {
@@ -303,7 +307,7 @@ class DeviceService(Service, DeviceInfoBase):
                     }
                     for child in gpu_dev.parent.children if 'PCI_SLOT_NAME' in child and 'PCI_ID' in child
                 ],
-                'vendor': gpu_dev['ID_VENDOR_FROM_DATABASE'],
+                'vendor': vendor,
             })
 
         self.GPUs = gpus
