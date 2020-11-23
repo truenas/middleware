@@ -22,7 +22,7 @@ def upgrade():
         batch_op.add_column(sa.Column(
             'cifs_cluster_volname',
             sa.String(length=255),
-            default='',
+            server_default='',
             nullable=False,
         ))
 
