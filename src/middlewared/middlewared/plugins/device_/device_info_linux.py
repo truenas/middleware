@@ -313,3 +313,10 @@ class DeviceService(Service, DeviceInfoBase):
         self.GPUs = gpus
 
         return self.GPUs
+
+    @private
+    async def get_to_isolate_pci_ids(self):
+        gpus = await self.middleware.call('device.get_gpus')
+        adv_config = await self.middleware.call('system.advanced.config')
+        to_isolate = [gpu for gpu in gpus if gpu['addr']['pci_slot'] in adv_config['isolated_gpu_pci_ids']]
+        return [dev['pci_id'] for gpu in to_isolate for dev in gpu['devices']]
