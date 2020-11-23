@@ -3,6 +3,7 @@ import random
 from middlewared.plugins.interface.netif import netif
 from middlewared.schema import Dict, Str
 from middlewared.service import CallError
+from middlewared.validators import MACAddr
 
 from .device import Device
 from .utils import create_element
@@ -14,7 +15,7 @@ class NIC(Device):
         'attributes',
         Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
         Str('nic_attach', default=None, null=True),
-        Str('mac', default=None, null=True),
+        Str('mac', default=None, null=True, validators=[MACAddr(separator=':')]),
     )
 
     def __init__(self, *args, **kwargs):
