@@ -1,5 +1,4 @@
 import json
-import os
 import subprocess
 
 from middlewared.service import CallError
