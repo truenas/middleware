@@ -336,11 +336,16 @@ class EtcService(Service):
         'libvirt': [
             {'type': 'py', 'path': 'libvirt', 'platform': 'Linux', 'checkpoint': None},
         ],
+        'initramfs': [
+            {'type': 'py', 'path': 'initramfs_update', 'platform': 'Linux', 'checkpoint': None},
+        ],
+        'initramfs_check': [
+            {'type': 'py', 'path': 'initramfs_check', 'platform': 'Linux'},
+        ],
         'gpu_configuration': [
             {'type': 'mako', 'path': 'initramfs-tools/modules', 'platform': 'Linux'},
             {'type': 'mako', 'path': 'modules', 'platform': 'Linux'},
             {'type': 'mako', 'path': 'modprobe.d/kvm.conf', 'platform': 'Linux'},
-            {'type': 'py', 'path': 'gpu_conf', 'platform': 'Linux', 'checkpoint': None},
         ],
     }
     LOCKS = defaultdict(asyncio.Lock)
