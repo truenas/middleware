@@ -1,0 +1,13 @@
+[Unit]
+Description=Execute TrueNAS initramfs-check script to ensure we have valid initramfs image
+DefaultDependencies=no
+
+After=middlewared.service
+Before=ix-etc.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/initramfs_check.py
+
+[Install]
+WantedBy=multi-user.target
