@@ -206,7 +206,6 @@ class SystemAdvancedService(ConfigService):
                     'isolated_gpu_pci_ids',
                     f'{", ".join(not_available)} GPU pci slots are not available or a GPU is not configured.'
                 )
-            # TODO: Enable iommu in grub - amd_iommu=on iommu=pt kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on
 
         return verrors, data
 

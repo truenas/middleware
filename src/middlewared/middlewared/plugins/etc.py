@@ -84,6 +84,9 @@ class EtcService(Service):
     APACHE_DIR = 'local/apache24' if osc.IS_FREEBSD else 'local/apache2'
 
     GROUPS = {
+        'initramfs_check': [
+            {'type': 'py', 'path': 'initramfs_check', 'platform': 'Linux'},
+        ],
         'user': [
             {'type': 'mako', 'path': 'local/smbusername.map'},
             {'type': 'mako', 'path': 'group'},
@@ -338,9 +341,6 @@ class EtcService(Service):
         ],
         'initramfs': [
             {'type': 'py', 'path': 'initramfs_update', 'platform': 'Linux', 'checkpoint': None},
-        ],
-        'initramfs_check': [
-            {'type': 'py', 'path': 'initramfs_check', 'platform': 'Linux'},
         ],
         'gpu_configuration': [
             {'type': 'mako', 'path': 'initramfs-tools/modules', 'platform': 'Linux'},

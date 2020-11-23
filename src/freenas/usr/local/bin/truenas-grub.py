@@ -26,7 +26,8 @@ if __name__ == "__main__":
     #  with it ( https://github.com/NVIDIA/k8s-device-plugin/issues/235 )
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
-        'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 systemd.unified_cgroup_hierarchy=0"',
+        'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 systemd.unified_cgroup_hierarchy=0 ',
+        'amd_iommu=on iommu=pt kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on libata.allow_tpm=1"',
     ]
 
     terminal = ["console"]
