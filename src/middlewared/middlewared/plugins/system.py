@@ -355,7 +355,7 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('etc.generate', 'grub')
 
             if osc.IS_LINUX and original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']:
-                await self.middleware.call('etc.generate', 'gpu_configuration')
+                await self.middleware.call('etc.generate', 'initramfs')
 
         if consolemsg is not None:
             await self.middleware.call('system.general.update', {'ui_consolemsg': consolemsg})
