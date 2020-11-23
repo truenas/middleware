@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
@@ -265,14 +266,14 @@ class SystemAdvancedService(ConfigService):
         config_data = await self.config()
         config_data['sed_passwd'] = await self.sed_global_password()
         config_data.pop('consolemsg')
-        original_data = config_data.copy()
+        original_data = deepcopy(config_data)
         config_data.update(data)
 
         verrors, config_data = await self.__validate_fields('advanced_settings_update', config_data)
         if verrors:
             raise verrors
 
-        if len(set(config_data.items()) ^ set(original_data.items())) > 0:
+        if config_data != original_data:
             if original_data.get('sed_user'):
                 original_data['sed_user'] = original_data['sed_user'].lower()
             if config_data.get('sed_user'):
