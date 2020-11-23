@@ -112,9 +112,8 @@ class KubernetesGPUService(Service):
             f'{d["metadata"]["namespace"]}_{d["metadata"]["name"]}': d
             for d in await self.middleware.call('k8s.daemonset.query')
         }
-
         supported_gpus = {'NVIDIA', 'INTEL'}
-        found_gpus = supported_gpus.intersection(set([gpu['vendor'] for gpu in gpus]))
+        found_gpus = supported_gpus.intersection(set([gpu['vendor'] for gpu in gpus if gpu['available_to_host']]))
         if found_gpus:
             to_remove = to_remove - found_gpus
             for gpu in found_gpus:

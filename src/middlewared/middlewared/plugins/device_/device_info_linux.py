@@ -19,7 +19,6 @@ RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
 
 class DeviceService(Service, DeviceInfoBase):
 
-    GPUs = None
     HOST_TYPE = None
 
     def get_serials(self):
@@ -269,15 +268,12 @@ class DeviceService(Service, DeviceInfoBase):
         return topology
 
     def get_gpus(self):
-
-        if self.GPUs:
-            return self.GPUs
-
         cp = subprocess.Popen(['lspci', '-D'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = cp.communicate()
         if cp.returncode:
             raise CallError(f'Unable to list available gpus: {stderr.decode()}')
 
+        to_isolate_gpus = self.middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
         gpus = []
         gpu_slots = [line.strip() for line in stdout.decode().splitlines() if 'VGA compatible controller' in line]
         for gpu_line in gpu_slots:
@@ -308,11 +304,10 @@ class DeviceService(Service, DeviceInfoBase):
                     for child in gpu_dev.parent.children if 'PCI_SLOT_NAME' in child and 'PCI_ID' in child
                 ],
                 'vendor': vendor,
+                'available_to_host': addr not in to_isolate_gpus,
             })
 
-        self.GPUs = gpus
-
-        return self.GPUs
+        return gpus
 
     @private
     async def get_to_isolate_pci_ids(self):
