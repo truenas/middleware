@@ -196,6 +196,18 @@ class SystemAdvancedService(ConfigService):
             await self.middleware.call('certificate.cert_services_validation', data['syslog_tls_certificate'],
                                        f'{schema}.syslog_tls_certificate')
 
+        if data['isolated_gpu_pci_ids']:
+            gpus = await self.middleware.call('device.get_gpus')
+            provided = set(data['isolated_gpu_pci_ids'])
+            available = set([gpu['addr']['pci_slot'] for gpu in gpus])
+            not_available = provided - available
+            if not_available:
+                verrors.add(
+                    'isolated_gpu_pci_ids',
+                    f'{", ".join(not_available)} GPU pci slots are not available or a GPU is not configured.'
+                )
+            # TODO: Enable iommu in grub - amd_iommu=on iommu=pt kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on
+
         return verrors, data
 
     @accepts(
@@ -227,6 +239,7 @@ class SystemAdvancedService(ConfigService):
             Str('syslogserver'),
             Str('syslog_transport', enum=['UDP', 'TCP', 'TLS']),
             Int('syslog_tls_certificate', null=True),
+            List('isolated_gpu_pci_ids', items=[Str('pci_id')]),
             update=True
         )
     )
