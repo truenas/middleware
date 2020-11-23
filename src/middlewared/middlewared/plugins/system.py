@@ -199,14 +199,20 @@ class SystemAdvancedService(ConfigService):
 
         if data['isolated_gpu_pci_ids']:
             gpus = await self.middleware.call('device.get_gpus')
-            provided = set(data['isolated_gpu_pci_ids'])
-            available = set([gpu['addr']['pci_slot'] for gpu in gpus])
-            not_available = provided - available
-            if not_available:
+            if len(gpus) < 2:
                 verrors.add(
                     'isolated_gpu_pci_ids',
-                    f'{", ".join(not_available)} GPU pci slots are not available or a GPU is not configured.'
+                    'A minimum of 2 GPUs are required in the host to ensure that host has at least 1 GPU available.'
                 )
+            else:
+                provided = set(data['isolated_gpu_pci_ids'])
+                available = set([gpu['addr']['pci_slot'] for gpu in gpus])
+                not_available = provided - available
+                if not_available:
+                    verrors.add(
+                        'isolated_gpu_pci_ids',
+                        f'{", ".join(not_available)} GPU pci slots are not available or a GPU is not configured.'
+                    )
 
         return verrors, data
 
