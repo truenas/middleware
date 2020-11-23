@@ -742,6 +742,7 @@ class SharingSMBModel(sa.Model):
     cifs_fsrvp = sa.Column(sa.Boolean())
     cifs_enabled = sa.Column(sa.Boolean(), default=True)
     cifs_share_acl = sa.Column(sa.Text())
+    cifs_cluster_volname = sa.Column(sa.String(255), nullable=False)
 
 
 class SharingSMBService(SharingService):
@@ -788,6 +789,7 @@ class SharingSMBService(SharingService):
         Bool('fsrvp', default=False),
         Str('auxsmbconf', max_length=None, default=''),
         Bool('enabled', default=True),
+        Str('cluster_volname', default=''),
         register=True
     ))
     async def do_create(self, data):
@@ -827,11 +829,12 @@ class SharingSMBService(SharingService):
 
         verrors.check()
 
-        if path and not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except OSError as e:
-                raise CallError(f'Failed to create {path}: {e}')
+        if not data['cluster_volname']:
+            if path and not os.path.exists(path):
+                try:
+                    os.makedirs(path)
+                except OSError as e:
+                    raise CallError(f'Failed to create {path}: {e}')
 
         await self.apply_presets(data)
         await self.compress(data)
@@ -886,11 +889,12 @@ class SharingSMBService(SharingService):
         if verrors:
             raise verrors
 
-        if path and not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except OSError as e:
-                raise CallError(f'Failed to create {path}: {e}')
+        if not data['cluster_volname']:
+            if path and not os.path.exists(path):
+                try:
+                    os.makedirs(path)
+                except OSError as e:
+                    raise CallError(f'Failed to create {path}: {e}')
 
         if old['purpose'] != new['purpose']:
             await self.apply_presets(new)
@@ -1095,8 +1099,10 @@ class SharingSMBService(SharingService):
             verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
 
+        bypass = bool(data['cluster_volname'])
+
         if data['path']:
-            await self.validate_path_field(data, schema_name, verrors)
+            await self.validate_path_field(data, schema_name, verrors, bypass=bypass)
         elif not data['home']:
             verrors.add(f'{schema_name}.path', 'This field is required.')
         else:

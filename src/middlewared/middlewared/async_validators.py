@@ -17,7 +17,6 @@ async def check_path_resides_within_volume(verrors, middleware, name, path, glus
     ):
         verrors.add(name, "The path must reside within a pool mount point")
 
-    # currently only nfs sharing service (on SCALE) supports gluster config
     if not gluster_bypass:
         # we must also make sure that any sharing service does not point to
         # anywhere within the ".glusterfs" dataset since the clients need
