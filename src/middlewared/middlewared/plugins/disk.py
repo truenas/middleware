@@ -394,9 +394,9 @@ class DiskService(CRUDService):
         if not unlocked and not locked:
             locked, unlocked = await self.middleware.call('disk.unlock_ata_security', devname, _advconfig, password)
 
-        if unlocked:
+        if osc.IS_FREEBSD and unlocked:
             try:
-                # Disk needs to be retested after unlock
+                # Disk needs to be retasted after unlock
                 with open(f'/dev/{disk_name}', 'wb'):
                     pass
             except OSError:
