@@ -9,13 +9,18 @@
 	client_cert = middleware.call_sync('certificate.query', [['id', '=', config['client_certificate']]], {'get': True})
 %>\
 client
+% if IS_LINUX:
+dev ${config['interface']}
+dev-type ${config['device_type'].lower()}
+% else:
 dev ${config['device_type'].lower()}
 #dev-type ${config['device_type'].lower()} -FIXME: This does not work, it is an openvpn issue in FreeBSD
+% endif
 proto ${config['protocol'].lower()}
 port ${config['port']}
 remote ${config['remote']}
 user nobody
-group nobody
+group ${"nobody" if IS_FREEBSD else "nogroup"}
 persist-key
 persist-tun
 ca ${root_ca['certificate_path']}

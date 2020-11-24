@@ -294,10 +294,16 @@ class EtcService(Service):
             {'type': 'py', 'path': 'ttys_config', 'checkpoint_linux': None}
         ],
         'openvpn_server': [
-            {'type': 'mako', 'path': 'local/openvpn/server/openvpn_server.conf'}
+            {
+                'type': 'mako', 'local_path': 'local/openvpn/server/openvpn_server.conf',
+                'path': f'local/openvpn/server/{"openvpn_" if osc.IS_FREEBSD else ""}server.conf'
+            }
         ],
         'openvpn_client': [
-            {'type': 'mako', 'path': 'local/openvpn/client/openvpn_client.conf'}
+            {
+                'type': 'mako', 'local_path': 'local/openvpn/client/openvpn_client.conf',
+                'path': f'local/openvpn/client/{"openvpn_" if osc.IS_FREEBSD else ""}client.conf'
+            }
         ],
         'kmip': [
             {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
