@@ -1119,14 +1119,14 @@ class InterfaceService(CRUDService):
                         )
 
             # can't remove VHID and not GROUP
-            if not data['failover_vhid'] and data['failover_group']:
+            if not data.get('failover_vhid') and data.get('failover_group'):
                 verrors.add(
                     f'{schema_name}.failover_vhid',
                     'Removing only the VHID is not allowed.'
                 )
 
             # can't remove GROUP and not VHID
-            if not data['failover_group'] and data['failover_vhid']:
+            if not data.get('failover_group') and data.get('failover_vhid'):
                 verrors.add(
                     f'{schema_name}.failover_group',
                     'Removing only the failover group is not allowed.'
