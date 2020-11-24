@@ -273,8 +273,8 @@ EOD
 - You can't use ${_disks} for sharing data.
 
 NOTE:
-- Installing on flash media is preferred to installing on a
-  hard drive.
+- Installing on a SSD is preferred to installing on 
+  flash media.
 
 Proceed with the ${_type}?
 EOD
