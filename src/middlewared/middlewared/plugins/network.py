@@ -1215,7 +1215,7 @@ class InterfaceService(CRUDService):
                         'Removing only the failover group is not allowed.'
                     )
 
-                if update.get('failover_vhid') != data['failover_vhid']:
+                if update and update.get('failover_vhid') != data['failover_vhid']:
                     used_vhids = set()
                     for v in (await self.middleware.call(
                         'interface.scan_vrrp', data['name'], None, 5,
