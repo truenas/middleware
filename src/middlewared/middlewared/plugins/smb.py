@@ -1051,10 +1051,11 @@ class SharingSMBService(SharingService):
         is bypassed in favor of clustered registry.
         """
         extra = options.get('extra', {})
-        try:
-            ha_mode = SMBHAMODE[extra.get('ha_mode')]
-        except KeyError:
+        ha_mode_str = extra.get('ha_mode')
+        if ha_mode_str is None:
             ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        else:
+            ha_mode = SMBHAMODE[ha_mode_str]
 
         if ha_mode == SMBHAMODE.CLUSTERED:
             result = await self.middleware.call(
