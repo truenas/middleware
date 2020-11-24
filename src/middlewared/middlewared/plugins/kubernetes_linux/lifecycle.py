@@ -2,6 +2,7 @@ import asyncio
 import errno
 import json
 import os
+import shutil
 
 from middlewared.service import CallError, private, Service
 
@@ -134,6 +135,10 @@ class KubernetesService(Service):
     async def create_update_k8s_datasets(self, k8s_ds):
         for dataset in await self.kubernetes_datasets(k8s_ds):
             if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
+                if os.path.exists(os.path.join('/mnt', dataset)):
+                    await self.middleware.run_in_thread(
+                        lambda: shutil.rmtree(os.path.join('/mnt', dataset), ignore_errors=True)
+                    )
                 await self.middleware.call('pool.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
 
     @private
