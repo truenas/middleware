@@ -1224,7 +1224,7 @@ class PoolService(CRUDService):
                 wipe_jobs.append((disk, wipe_job))
 
         error_str = ''
-        for index, item in wipe_jobs:
+        for index, item in enumerate(wipe_jobs):
             disk, wipe_job = item
             await wipe_job.wait()
             if wipe_job.error:
