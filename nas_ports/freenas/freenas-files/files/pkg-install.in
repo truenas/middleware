@@ -36,6 +36,12 @@ post-install()
         fi
 
         cp /data/freenas-v1.db /data/factory-v1.db
+
+        if ! dmidecode -s system-product-name | egrep "^(FREE|TRUE)NAS" > /dev/null; then
+                for i in `seq 0 3`; do
+                        echo "hint.isp.$i.role=2" >> /boot/loader.conf.local
+                done
+        fi
 }
 
 backupwarning()

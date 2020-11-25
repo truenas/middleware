@@ -699,6 +699,12 @@ class SystemService(Service):
             'ecc_memory': dmidecode['ecc-memory'],
         }
 
+    @private
+    async def is_ix_hardware(self):
+        dmidecode = await self.middleware.call('system.dmidecode_info')
+        product = dmidecode['system-product-name']
+        return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
+
     # Sync the clock
     @private
     def sync_clock(self):
