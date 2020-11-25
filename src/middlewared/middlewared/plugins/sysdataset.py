@@ -349,7 +349,11 @@ class SystemDatasetService(ConfigService):
             try:
                 await run('umount', '-f', dataset)
             except subprocess.CalledProcessError as e:
-                raise CallError(f'Unable to umount {dataset}: {e.stderr.decode()}')
+                stderr = e.stderr.decode()
+                if 'no mount point specified' in stderr:
+                    # Already unmounted
+                    continue
+                raise CallError(f'Unable to umount {dataset}: {stderr}')
 
     def __get_datasets(self, pool, uuid):
         return [(f'{pool}/.system', '')] + [
@@ -431,6 +435,8 @@ class SystemDatasetService(ConfigService):
 
         if await self.middleware.call('service.started', 'cifs'):
             restart.insert(0, 'cifs')
+        if await self.middleware.call('service.started', 'webdav'):
+            restart.append('webdav')
 
         try:
             if osc.IS_LINUX:
