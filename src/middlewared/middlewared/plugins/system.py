@@ -588,6 +588,15 @@ class SystemService(Service):
             'ecc_memory': ecc_memory,
         }
 
+    @private
+    async def is_ix_hardware(self):
+        product = (await(await Popen(
+            ['dmidecode', '-s', 'system-product-name'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
+        return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
+
     # Sync the clock
     @private
     def sync_clock(self):
