@@ -218,7 +218,7 @@ class TrueNASService(Service):
 
         if not was_production and production:
             serial = (await self.middleware.call('system.info'))["system_serial"]
-            return await job.wrap(self.middleware.call('support.new_ticket', {
+            return await job.wrap(await self.middleware.call('support.new_ticket', {
                 "title": f"System has been just put into production ({serial})",
                 "body": "This system has been just put into production",
                 "attach_debug": attach_debug,
