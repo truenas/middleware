@@ -10,7 +10,7 @@ import json
 import os
 
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import Service, private
+from middlewared.service import job, private, Service
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 
@@ -229,7 +229,8 @@ class TrueNASService(Service):
         return await self.middleware.call('keyvalue.get', 'truenas:production', False)
 
     @accepts(Bool('production'), Bool('attach_debug', default=False))
-    async def set_production(self, production, attach_debug):
+    @job()
+    async def set_production(self, job, production, attach_debug):
         """
         Sets system production state and optionally sends initial debug.
         """
@@ -238,7 +239,7 @@ class TrueNASService(Service):
 
         if not was_production and production:
             serial = (await self.middleware.call('system.info'))["system_serial"]
-            await self.middleware.call('support.new_ticket', {
+            return await job.wrap(self.middleware.call('support.new_ticket', {
                 "title": f"System has been just put into production ({serial})",
                 "body": "This system has been just put into production",
                 "attach_debug": attach_debug,
@@ -248,4 +249,4 @@ class TrueNASService(Service):
                 "name": "Automatic Alert",
                 "email": "auto-support@ixsystems.com",
                 "phone": "-",
-            })
+            }))
