@@ -4,7 +4,7 @@ from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors, filterable
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, Popen, run
+from middlewared.utils import osc, Popen, run, filter_list
 
 import asyncio
 import codecs
@@ -1065,14 +1065,26 @@ class SharingSMBService(SharingService):
             result = await self.middleware.call(
                 'sharing.smb.registry_query', filters, options
             )
-        else:
-            options['extend'] = self._config.datastore_extend
-            options['prefix'] = self._config.datastore_prefix
+            return result
 
+        if not filters:
+            filters = []
+
+        options = await self.get_options(options)
+        if options['extend']:
+            datastore_options = options.copy()
+            datastore_options.pop('count', None)
+            datastore_options.pop('get', None)
             result = await self.middleware.call(
-                'datastore.query', self._config.datastore, filters, options
+                'datastore.query', self._config.datastore, [], datastore_options
             )
-        return result
+            return await self.middleware.run_in_thread(
+                filter_list, result, filters, options
+            )
+        else:
+            return await self.middleware.call(
+                'datastore.query', self._config.datastore, filters, options,
+            )
 
     @private
     async def check_aapl(self, data):
