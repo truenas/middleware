@@ -43,6 +43,7 @@ from .pseudo.misc import (
     NetworkService,
     NetworkGeneralService,
     NtpdService,
+    OpenVmToolsService,
     PowerdService,
     RcService,
     ResolvConfService,
@@ -119,4 +120,5 @@ if osc.IS_LINUX:
         DockerService,
         KubernetesService,
         KubeRouterService,
+        OpenVmToolsService,
     ])
