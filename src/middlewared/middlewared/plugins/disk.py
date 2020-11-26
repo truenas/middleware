@@ -387,6 +387,15 @@ class DiskService(CRUDService):
                 if cp.returncode == 0:
                     locked = False
                     unlocked = True
+                    # If we were able to unlock it, let's set mbrenable to off
+                    if osc.IS_LINUX:
+                        cp = await run('sedutil-cli', '--setMBREnable', 'off', password, devname, check=False)
+                        if cp.returncode:
+                            self.logger.error(
+                                'Failed to set MBREnable for %r to "off": %s', devname,
+                                cp.stderr.decode(), exc_info=True
+                            )
+
             elif 'Locked = N' in output:
                 locked = False
 
