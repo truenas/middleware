@@ -435,8 +435,8 @@ class SystemDatasetService(ConfigService):
 
         if await self.middleware.call('service.started', 'cifs'):
             restart.insert(0, 'cifs')
-        if await self.middleware.call('service.started', 'webdav'):
-            restart.append('webdav')
+        for service in ['open-vm-tools', 'webdav']:
+            restart.append(service)
 
         try:
             if osc.IS_LINUX:
