@@ -1066,12 +1066,7 @@ class SharingSMBService(SharingService):
                 'sharing.smb.registry_query', filters, options
             )
         else:
-            options['extend'] = self._config.datastore_extend
-            options['prefix'] = self._config.datastore_prefix
-
-            result = await self.middleware.call(
-                'datastore.query', self._config.datastore, filters, options
-            )
+            return await super().query(filters, options)
         return result
 
     @private
