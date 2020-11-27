@@ -901,10 +901,9 @@ class SharingSMBService(SharingService):
         await self.clean(new, 'sharingsmb_update', verrors, id=id)
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
-        if not data['cluster_volname']:
+        if not new['cluster_volname']:
             if path and not os.path.exists(path):
                 try:
                     os.makedirs(path)
