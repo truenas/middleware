@@ -15,7 +15,7 @@ sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, scale, ha, password, user, ip
 if scale is True:
-    shell = '/bin/bash'
+    shell = '/usr/bin/bash'
 else:
     shell = '/bin/csh'
 
