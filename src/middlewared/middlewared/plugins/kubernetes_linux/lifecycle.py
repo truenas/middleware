@@ -3,6 +3,9 @@ import errno
 import json
 import os
 import shutil
+import uuid
+
+from datetime import datetime
 
 from middlewared.service import CallError, private, Service
 
@@ -130,14 +133,17 @@ class KubernetesService(Service):
     async def setup_pool(self):
         config = await self.middleware.call('kubernetes.config')
         await self.create_update_k8s_datasets(config['dataset'])
+        # Now we would like to setup catalogs
+        await self.middleware.call('catalog.sync_all')
 
     @private
     async def create_update_k8s_datasets(self, k8s_ds):
         for dataset in await self.kubernetes_datasets(k8s_ds):
             if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
-                if os.path.exists(os.path.join('/mnt', dataset)):
+                test_path = os.path.join('/mnt', dataset)
+                if os.path.exists(test_path):
                     await self.middleware.run_in_thread(
-                        lambda: shutil.rmtree(os.path.join('/mnt', dataset), ignore_errors=True)
+                        shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}',
                     )
                 await self.middleware.call('pool.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
 
