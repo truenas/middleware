@@ -24,6 +24,7 @@ class TFTPService(SystemServiceService):
     class Config:
         service = "tftp"
         datastore_prefix = "tftp_"
+        cli_namespace = "service.tftp"
 
     @accepts(Dict(
         'tftp_update',

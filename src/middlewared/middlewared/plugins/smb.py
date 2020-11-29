@@ -215,6 +215,7 @@ class SMBService(SystemServiceService):
         datastore = 'services.cifs'
         datastore_extend = 'smb.smb_extend'
         datastore_prefix = 'cifs_srv_'
+        cli_namespace = 'service.smb'
 
     @private
     async def smb_extend(self, smb):
@@ -620,7 +621,7 @@ class SMBService(SystemServiceService):
         'smb_update',
         Str('netbiosname', max_length=15),
         Str('netbiosname_b', max_length=15),
-        List('netbiosalias', default=[], items=[Str('netbios_alias', max_length=15)]),
+        List('netbiosalias', items=[Str('netbios_alias', max_length=15)]),
         Str('workgroup'),
         Str('description'),
         Bool('enable_smb1'),
@@ -634,7 +635,7 @@ class SMBService(SystemServiceService):
         Str('filemask'),
         Str('dirmask'),
         Bool('ntlmv1_auth'),
-        List('bindip', items=[IPAddr('ip')], default=[]),
+        List('bindip', items=[IPAddr('ip')]),
         Str('smb_options', max_length=None),
         update=True,
     ))
@@ -748,6 +749,7 @@ class SharingSMBService(SharingService):
         datastore = 'sharing.cifs_share'
         datastore_prefix = 'cifs_'
         datastore_extend = 'sharing.smb.extend'
+        cli_namespace = 'sharing.smb'
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
@@ -779,8 +781,8 @@ class SharingSMBService(SharingService):
         Bool('recyclebin', default=False),
         Bool('guestok', default=False),
         Bool('abe', default=False),
-        List('hostsallow', default=[]),
-        List('hostsdeny', default=[]),
+        List('hostsallow'),
+        List('hostsdeny'),
         Bool('aapl_name_mangling', default=False),
         Bool('acl', default=True),
         Bool('durablehandle', default=True),
@@ -1044,7 +1046,7 @@ class SharingSMBService(SharingService):
         return result
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         """
         Query shares with filters. In clustered environments, local datastore query
         is bypassed in favor of clustered registry.

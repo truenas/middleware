@@ -26,6 +26,7 @@ class ReportingService(ConfigService):
 
     class Config:
         datastore = 'system.reporting'
+        cli_namespace = 'system.reporting'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

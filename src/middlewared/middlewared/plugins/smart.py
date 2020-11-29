@@ -137,6 +137,7 @@ class SMARTTestService(CRUDService):
         datastore_extend = 'smart.test.smart_test_extend'
         datastore_prefix = 'smarttest_'
         namespace = 'smart.test'
+        cli_namespace = 'task.smart_test'
 
     @private
     async def smart_test_extend(self, data):
@@ -204,7 +205,7 @@ class SMARTTestService(CRUDService):
             ),
             Str('desc'),
             Bool('all_disks', default=False),
-            List('disks', items=[Str('disk')], default=[]),
+            List('disks', items=[Str('disk')]),
             Str('type', enum=['LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE'], required=True),
             register=True
         )
@@ -609,6 +610,7 @@ class SmartService(SystemServiceService):
         service_verb_sync = False
         datastore_extend = "smart.smart_extend"
         datastore_prefix = "smart_"
+        cli_namespace = "service.smart"
 
     @private
     async def smart_extend(self, smart):

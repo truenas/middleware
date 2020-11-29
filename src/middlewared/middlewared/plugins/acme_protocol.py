@@ -216,6 +216,7 @@ class DNSAuthenticatorService(CRUDService):
     class Config:
         namespace = 'acme.dns.authenticator'
         datastore = 'system.acmednsauthenticator'
+        cli_namespace = 'system.acme.dns_auth'
 
     def __init__(self, *args, **kwargs):
         super(DNSAuthenticatorService, self).__init__(*args, **kwargs)

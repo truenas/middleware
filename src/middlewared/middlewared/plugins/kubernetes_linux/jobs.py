@@ -14,7 +14,7 @@ class KubernetesJobService(CRUDService):
         private = True
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         async with api_client() as (api, context):
             return filter_list(
                 [d.to_dict() for d in (await context['batch_api'].list_job_for_all_namespaces()).items],
@@ -71,7 +71,7 @@ class KubernetesCronJobService(CRUDService):
         private = True
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         async with api_client() as (api, context):
             return filter_list(
                 [d.to_dict() for d in (await context['cronjob_batch_api'].list_cron_job_for_all_namespaces()).items],

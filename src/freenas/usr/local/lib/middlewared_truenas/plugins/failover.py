@@ -113,6 +113,7 @@ class FailoverService(ConfigService):
     class Config:
         datastore = 'system.failover'
         datastore_extend = 'failover.failover_extend'
+        cli_namespace = 'system.failover'
 
     @private
     async def failover_extend(self, data):
@@ -587,7 +588,7 @@ class FailoverService(ConfigService):
                     Str('name', required=True),
                     Str('passphrase', required=True)
                 )
-            ], default=[]
+            ],
         ),
         List(
             'datasets', items=[
@@ -596,7 +597,7 @@ class FailoverService(ConfigService):
                     Str('name', required=True),
                     Str('passphrase', required=True),
                 )
-            ], default=[]
+            ],
         ),
     ))
     async def unlock(self, options):
@@ -661,7 +662,7 @@ class FailoverService(ConfigService):
                         Str('name', required=True),
                         Str('passphrase', required=True),
                     )
-                ], default=[]
+                ],
             ),
             List(
                 'datasets', items=[
@@ -670,7 +671,7 @@ class FailoverService(ConfigService):
                         Str('name', required=True),
                         Str('passphrase', required=True),
                     )
-                ], default=[]
+                ],
             ),
         )
     )
@@ -693,8 +694,8 @@ class FailoverService(ConfigService):
         Dict(
             'remove_encryption_keys',
             Bool('sync_keys', default=True),
-            List('pools', items=[Str('pool')], default=[]),
-            List('datasets', items=[Str('dataset')], default=[]),
+            List('pools', items=[Str('pool')]),
+            List('datasets', items=[Str('dataset')]),
         )
     )
     async def remove_encryption_keys(self, options):
@@ -832,7 +833,7 @@ class FailoverService(ConfigService):
             Bool('active'),
         ),
     )
-    async def control(self, action, options=None):
+    async def control(self, action, options):
         if not options:
             # The node making the call is the one we want to make MASTER by default
             node = await self._master_node((await self.middleware.call('failover.node')))

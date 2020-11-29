@@ -31,6 +31,9 @@ UPLOADED_DB_PATH = '/data/uploaded.db'
 
 class ConfigService(Service):
 
+    class Config:
+        cli_namespace = 'system.config'
+
     @accepts(Dict(
         'configsave',
         Bool('secretseed', default=False),

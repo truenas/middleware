@@ -185,7 +185,7 @@ class ZFSPoolService(CRUDService):
         ], null=True, default=None),
     )
     @job()
-    def extend(self, job, name, new=None, existing=None):
+    def extend(self, job, name, new, existing):
         """
         Extend a zfs pool `name` with `new` vdevs or attach to `existing` vdevs.
         """
@@ -261,7 +261,7 @@ class ZFSPoolService(CRUDService):
     @accepts(
         Str('pool'), Str('label'), Bool('expand', default=False)
     )
-    def online(self, name, label, expand=False):
+    def online(self, name, label, expand):
         """
         Online device `label` from the pool `pool`.
         """
@@ -300,7 +300,7 @@ class ZFSPoolService(CRUDService):
         Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
     )
     @job(lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}')
-    def scrub(self, job, name, action=None):
+    def scrub(self, job, name, action):
         """
         Start/Stop/Pause a scrub on pool `name`.
         """
@@ -447,7 +447,7 @@ class ZFSDatasetService(CRUDService):
         return sum([[deepcopy(ds)] + self.flatten_datasets(ds.get('children') or []) for ds in datasets], [])
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         """
         In `query-options` we can provide `extra` arguments which control which data should be retrieved
         for a dataset.
@@ -648,7 +648,7 @@ class ZFSDatasetService(CRUDService):
             if mount_ds:
                 self.mount(id, {'recursive': recursive})
 
-    @accepts(Str('name'), List('params', default=[], private=True))
+    @accepts(Str('name'), List('params', private=True))
     @job()
     def bulk_process(self, job, name, params):
         f = getattr(self, name, None)
@@ -945,9 +945,10 @@ class ZFSSnapshot(CRUDService):
     class Config:
         namespace = 'zfs.snapshot'
         process_pool = True
+        cli_namespace = 'storage.snapshot'
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         """
         Query all ZFS Snapshots with `query-filters` and `query-options`.
         """

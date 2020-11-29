@@ -22,6 +22,7 @@ class KMIPService(ConfigService):
     class Config:
         datastore = 'system_kmip'
         datastore_extend = 'kmip.kmip_extend'
+        cli_namespace = 'system.kmip'
 
     @private
     async def kmip_extend(self, data):

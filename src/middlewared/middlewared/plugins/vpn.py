@@ -235,6 +235,7 @@ class OpenVPNServerService(SystemServiceService):
         service_model = 'openvpnserver'
         service_verb = 'restart'
         datastore_extend = 'openvpn.server.server_extend'
+        cli_namespace = 'service.openvpn.server'
 
     @private
     async def server_extend(self, data):
@@ -350,9 +351,9 @@ class OpenVPNServerService(SystemServiceService):
 
     @accepts(
         Int('client_certificate_id'),
-        Str('server_address', null=True)
+        Str('server_address', null=True, default=None)
     )
-    async def client_configuration_generation(self, client_certificate_id, server_address=None):
+    async def client_configuration_generation(self, client_certificate_id, server_address):
         """
         Returns a configuration for OpenVPN client which can be used with any client to connect to FN/TN OpenVPN
         server.
@@ -503,6 +504,7 @@ class OpenVPNClientService(SystemServiceService):
         service_model = 'openvpnclient'
         service_verb = 'restart'
         datastore_extend = 'openvpn.client.client_extend'
+        cli_namespace = 'service.openvpn.client'
 
     @private
     async def client_extend(self, data):

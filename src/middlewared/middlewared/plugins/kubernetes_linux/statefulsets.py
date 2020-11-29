@@ -14,7 +14,7 @@ class KubernetesStatefulsetService(CRUDService):
         private = True
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         async with api_client() as (api, context):
             stateful_sets = [
                 d.to_dict() for d in (await context['apps_api'].list_stateful_set_for_all_namespaces()).items

@@ -263,7 +263,7 @@ class SharingSMBService(Service):
 
     @private
     @filterable
-    async def registry_query(self, filters=None, options=None):
+    async def registry_query(self, filters, options):
         """
         Filterable method for querying SMB shares from the registry
         config. Can be reverted back to registry / smb.conf without

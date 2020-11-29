@@ -414,6 +414,7 @@ class LDAPService(ConfigService):
         datastore = 'directoryservice.ldap'
         datastore_extend = "ldap.ldap_extend"
         datastore_prefix = "ldap_"
+        cli_namespace = "directory_service.ldap"
 
     @private
     async def ldap_extend(self, data):

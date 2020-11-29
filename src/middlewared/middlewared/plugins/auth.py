@@ -10,7 +10,7 @@ import time
 
 from middlewared.schema import Dict, Int, Str, accepts, Bool
 from middlewared.service import (
-    ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private, CallError
+    ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private, cli_private, CallError
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen
@@ -211,6 +211,10 @@ def is_internal_session(session):
 
 
 class AuthService(Service):
+
+    class Config:
+        cli_namespace = "auth"
+
     session_manager = SessionManager()
 
     token_manager = TokenManager()
@@ -220,7 +224,7 @@ class AuthService(Service):
         self.session_manager.middleware = self.middleware
 
     @filterable
-    def sessions(self, filters=None, options=None):
+    def sessions(self, filters, options):
         """
         Returns list of active auth sessions.
 
@@ -274,7 +278,7 @@ class AuthService(Service):
         return crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
 
     @accepts(Int('ttl', default=600, null=True), Dict('attrs', additional_attrs=True))
-    def generate_token(self, ttl=None, attrs=None):
+    def generate_token(self, ttl, attrs):
         """
         Generate a token to be used for authentication.
 
@@ -307,10 +311,11 @@ class AuthService(Service):
         """
         return (await self.middleware.call('auth.twofactor.config'))['enabled']
 
+    @cli_private
     @no_auth_required
     @accepts(Str('username'), Str('password'), Str('otp_token', null=True, default=None))
     @pass_app()
-    async def login(self, app, username, password, otp_token=None):
+    async def login(self, app, username, password, otp_token):
         """
         Authenticate session using username and password.
         Currently only root user is allowed.
@@ -331,6 +336,7 @@ class AuthService(Service):
             self.session_manager.login(app, LoginPasswordSessionManagerCredentials())
         return valid
 
+    @cli_private
     @no_auth_required
     @accepts(Str('api_key'))
     @pass_app()
@@ -344,6 +350,7 @@ class AuthService(Service):
 
         return False
 
+    @cli_private
     @accepts()
     @pass_app()
     async def logout(self, app):
@@ -354,6 +361,7 @@ class AuthService(Service):
         self.session_manager.logout(app)
         return True
 
+    @cli_private
     @no_auth_required
     @accepts(Str('token'))
     @pass_app()
@@ -385,6 +393,7 @@ class TwoFactorAuthService(ConfigService):
         datastore = 'system.twofactorauthentication'
         datastore_extend = 'auth.twofactor.two_factor_extend'
         namespace = 'auth.twofactor'
+        cli_namespace = 'auth.two_factor'
 
     @private
     async def two_factor_extend(self, data):

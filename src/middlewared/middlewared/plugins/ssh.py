@@ -48,6 +48,7 @@ class SSHService(SystemServiceService):
         service = "ssh"
         service_model = "ssh"
         datastore_prefix = "ssh_"
+        cli_namespace = 'service.ssh'
 
     @accepts()
     def bindiface_choices(self):

@@ -31,6 +31,7 @@ class InitShutdownScriptService(CRUDService):
         datastore = 'tasks.initshutdown'
         datastore_prefix = 'ini_'
         datastore_extend = 'initshutdownscript.init_shutdown_script_extend'
+        cli_namespace = 'system.init_shutdown_script'
 
     @accepts(Dict(
         'init_shutdown_script_create',

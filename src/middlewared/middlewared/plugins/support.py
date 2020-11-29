@@ -34,6 +34,7 @@ class SupportService(ConfigService):
 
     class Config:
         datastore = 'system.support'
+        cli_namespace = 'system.support'
 
     @accepts(Dict(
         'support_update',

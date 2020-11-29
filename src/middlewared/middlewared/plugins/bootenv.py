@@ -17,10 +17,13 @@ RE_BE_NAME = r'^[^/ *\'"?@!#$%^&()+=~<>;\\]+$'
 
 class BootEnvService(CRUDService):
 
+    class Config:
+        cli_namespace = 'system.bootenv'
+
     BE_TOOL = 'zectl' if osc.IS_LINUX else 'beadm'
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         """
         Query all Boot Environments with `query-filters` and `query-options`.
         """

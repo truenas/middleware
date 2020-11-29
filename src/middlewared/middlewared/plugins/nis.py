@@ -28,6 +28,7 @@ class NISService(ConfigService):
         datastore = 'directoryservice.nis'
         datastore_extend = "nis.nis_extend"
         datastore_prefix = "nis_"
+        cli_namespace = "directory_service.nis"
 
     @private
     async def nis_extend(self, nis):

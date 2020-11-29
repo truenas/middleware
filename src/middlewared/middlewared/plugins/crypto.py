@@ -591,7 +591,7 @@ class CryptoKeyService(Service):
                 ),
                 Dict(
                     'ExtendedKeyUsage',
-                    List('usages', items=[Str('usage', enum=EKU_OIDS)], default=[]),
+                    List('usages', items=[Str('usage', enum=EKU_OIDS)]),
                     Bool('enabled', default=False),
                     Bool('extension_critical', default=False)
                 ),
@@ -960,6 +960,7 @@ class CertificateService(CRUDService):
         datastore = 'system.certificate'
         datastore_extend = 'certificate.cert_extend'
         datastore_prefix = 'cert_'
+        cli_namespace = 'system.certificate'
 
     PROFILES = {
         'Openvpn Server Certificate': {
@@ -2027,7 +2028,7 @@ class CertificateService(CRUDService):
         Bool('force', default=False)
     )
     @job(lock='cert_delete')
-    def do_delete(self, job, id, force=False):
+    def do_delete(self, job, id, force):
         """
         Delete certificate of `id`.
 
@@ -2100,6 +2101,7 @@ class CertificateAuthorityService(CRUDService):
         datastore = 'system.certificateauthority'
         datastore_extend = 'certificate.cert_extend'
         datastore_prefix = 'cert_'
+        cli_namespace = 'system.certificate.authority'
 
     PROFILES = {
         'Openvpn Root CA': {

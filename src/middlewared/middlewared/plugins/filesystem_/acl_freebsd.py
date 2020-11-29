@@ -340,7 +340,7 @@ class FilesystemService(Service, ACLBase):
 
         return {'uid': stat.st_uid, 'gid': stat.st_gid, 'acl': simple_acl, 'acltype': ACLType.NFS4.name}
 
-    def getacl(self, path, simplified=True):
+    def getacl(self, path, simplified):
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
 

@@ -38,6 +38,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         datastore_extend = 'pool.snapshottask.extend'
         datastore_extend_context = 'pool.snapshottask.extend_context'
         namespace = 'pool.snapshottask'
+        cli_namespace = 'task.snapshot'
 
     @private
     async def extend_context(self, extra):
@@ -72,7 +73,7 @@ class PeriodicSnapshotTaskService(CRUDService):
             'periodic_snapshot_create',
             Dataset('dataset', required=True),
             Bool('recursive', required=True),
-            List('exclude', items=[Dataset('item')], default=[]),
+            List('exclude', items=[Dataset('item')]),
             Int('lifetime_value', required=True),
             Str('lifetime_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
             Str('naming_schema', required=True, validators=[ReplicationSnapshotNamingSchema()]),

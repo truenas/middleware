@@ -34,6 +34,7 @@ class ShareSec(CRUDService):
 
     class Config:
         namespace = 'smb.sharesec'
+        cli_namespace = 'sharing.smb.sharesec'
 
     @private
     async def parse_share_sd(self, sd, options=None):
@@ -291,7 +292,7 @@ class ShareSec(CRUDService):
                 )
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         """
         Use query-filters to search the SMB share ACLs present on server.
         """

@@ -242,7 +242,6 @@ class ACLBase(ServicePartBase):
                         ),
                     )
                 ],
-                default=[]
             ),
             Dict(
                 'nfs41_flags',
@@ -295,7 +294,7 @@ class ACLBase(ServicePartBase):
         Str('path'),
         Bool('simplified', default=True),
     )
-    def getacl(self, path, simplified=True):
+    def getacl(self, path, simplified):
         """
         Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The acl type is indicated
         by the `ACLType` key.

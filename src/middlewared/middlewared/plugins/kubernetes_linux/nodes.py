@@ -33,7 +33,6 @@ class KubernetesNodeService(ConfigService):
                 Str('value', null=True, default=None),
                 Str('effect', required=True, empty=False, enum=['NoSchedule', 'NoExecute'])
             )],
-            default=[],
         )
     )
     async def add_taints(self, taints):

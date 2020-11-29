@@ -29,6 +29,7 @@ class KubernetesService(ConfigService):
     class Config:
         datastore = 'services.kubernetes'
         datastore_extend = 'kubernetes.k8s_extend'
+        cli_namespace = 'app.kubernetes'
 
     @private
     async def k8s_extend(self, data):

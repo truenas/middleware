@@ -27,6 +27,7 @@ class TunableService(CRUDService):
         datastore = 'system.tunable'
         datastore_prefix = 'tun_'
         datastore_extend = 'tunable.upper'
+        cli_namespace = 'system.tunable'
 
     def __init__(self, *args, **kwargs):
         super(TunableService, self).__init__(*args, **kwargs)

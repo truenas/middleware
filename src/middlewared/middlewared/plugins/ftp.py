@@ -57,6 +57,7 @@ class FTPService(SystemServiceService):
         service = "ftp"
         datastore_prefix = "ftp_"
         datastore_extend = "ftp.ftp_extend"
+        cli_namespace = "service.ftp"
 
     @private
     async def ftp_extend(self, data):

@@ -34,6 +34,7 @@ class SystemDatasetService(ConfigService):
         datastore = 'system.systemdataset'
         datastore_extend = 'systemdataset.config_extend'
         datastore_prefix = 'sys_'
+        cli_namespace = 'system.system_dataset'
 
     @private
     async def config_extend(self, config):
@@ -194,7 +195,7 @@ class SystemDatasetService(ConfigService):
 
     @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
     @private
-    async def setup(self, mount, exclude_pool=None):
+    async def setup(self, mount, exclude_pool):
 
         # FIXME: corefile for LINUX
         if osc.IS_FREEBSD:

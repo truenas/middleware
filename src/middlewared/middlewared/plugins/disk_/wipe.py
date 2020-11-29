@@ -61,7 +61,7 @@ class DiskService(Service):
         lock=lambda args: args[0],
         description=lambda dev, mode, *args: f'{mode.replace("_", " ").title()} wipe of disk {dev}',
     )
-    async def wipe(self, job, dev, mode, sync, options=None):
+    async def wipe(self, job, dev, mode, sync, options):
         """
         Performs a wipe of a disk `dev`.
         It can be of the following modes:

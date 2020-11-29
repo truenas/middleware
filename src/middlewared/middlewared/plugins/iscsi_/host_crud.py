@@ -36,6 +36,7 @@ class iSCSIHostService(CRUDService):
         datastore = "services.iscsihost"
         datastore_extend = "iscsi.host.extend"
         datastore_extend_context = "iscsi.host.extend_context"
+        cli_namespace = "iscsi.host"
 
     @private
     async def extend_context(self, extra):

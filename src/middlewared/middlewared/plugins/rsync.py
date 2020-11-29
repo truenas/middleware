@@ -93,6 +93,7 @@ class RsyncdService(SystemServiceService):
         service = "rsync"
         service_model = 'rsyncd'
         datastore_prefix = "rsyncd_"
+        cli_namespace = 'service.rsync'
 
     @accepts(Dict(
         'rsyncd_update',
@@ -141,6 +142,7 @@ class RsyncModService(SharingService):
         datastore = 'services.rsyncmod'
         datastore_prefix = 'rsyncmod_'
         datastore_extend = 'rsyncmod.rsync_mod_extend'
+        cli_namespace = 'service.rsync_mod'
 
     @private
     async def rsync_mod_extend(self, data):
@@ -183,8 +185,8 @@ class RsyncModService(SharingService):
         Int('maxconn'),
         Str('user', default='nobody'),
         Str('group', default='nobody'),
-        List('hostsallow', items=[Str('hostsallow')], default=[]),
-        List('hostsdeny', items=[Str('hostdeny')], default=[]),
+        List('hostsallow', items=[Str('hostsallow')]),
+        List('hostsdeny', items=[Str('hostdeny')]),
         Str('auxiliary', max_length=None),
         register=True,
     ))
@@ -293,6 +295,7 @@ class RsyncTaskService(TaskPathService):
         datastore_prefix = 'rsync_'
         datastore_extend = 'rsynctask.rsync_task_extend'
         datastore_extend_context = 'rsynctask.rsync_task_extend_context'
+        cli_namespace = 'task.rsync'
 
     @private
     async def rsync_task_extend(self, data, context):

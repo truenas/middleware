@@ -171,6 +171,9 @@ class AlertSerializer:
 
 
 class AlertService(Service):
+    class Config:
+        cli_namespace = "system.alert"
+
     def __init__(self, middleware):
         super().__init__(middleware)
 
@@ -849,6 +852,7 @@ class AlertServiceService(CRUDService):
         datastore = "system.alertservice"
         datastore_extend = "alertservice._extend"
         datastore_order_by = ["name"]
+        cli_namespace = "system.alert.service"
 
     @accepts()
     async def list_types(self):
@@ -1044,6 +1048,7 @@ class AlertClassesModel(sa.Model):
 class AlertClassesService(ConfigService):
     class Config:
         datastore = "system.alertclasses"
+        cli_namespace = "system.alert.class"
 
     @accepts(Dict(
         "alert_classes_update",

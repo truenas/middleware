@@ -17,6 +17,9 @@ channels = []
 
 class IPMIService(CRUDService):
 
+    class Config:
+        cli_namespace = 'network.ipmi'
+
     @accepts()
     async def is_loaded(self):
         """
@@ -32,7 +35,7 @@ class IPMIService(CRUDService):
         return channels
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         """
         Query all IPMI Channels with `query-filters` and `query-options`.
         """
@@ -153,7 +156,7 @@ class IPMIService(CRUDService):
         Int('seconds'),
         Bool('force'),
     ))
-    async def identify(self, options=None):
+    async def identify(self, options):
         """
         Turn on IPMI chassis identify light.
 

@@ -136,6 +136,7 @@ class PoolResilverService(ConfigService):
         namespace = 'pool.resilver'
         datastore = 'storage.resilver'
         datastore_extend = 'pool.resilver.resilver_extend'
+        cli_namespace = 'storage.resilver'
 
     @private
     async def resilver_extend(self, data):
@@ -258,6 +259,7 @@ class PoolService(CRUDService):
         datastore_extend = 'pool.pool_extend'
         datastore_prefix = 'vol_'
         event_send = False
+        cli_namespace = 'storage.pool'
 
     @item_method
     @accepts(
@@ -560,7 +562,7 @@ class PoolService(CRUDService):
                     List('disks', items=[Str('disk')], required=True),
                 ),
             ]),
-            List('spares', items=[Str('disk')], default=[]),
+            List('spares', items=[Str('disk')]),
             required=True,
         ),
         register=True,
@@ -1833,9 +1835,10 @@ class PoolDatasetUserPropService(CRUDService):
 
     class Config:
         namespace = 'pool.dataset.userprop'
+        cli_namespace = 'storage.dataset.user_prop'
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         """
         Query all user properties for ZFS datasets.
         """
@@ -1951,6 +1954,7 @@ class PoolDatasetService(CRUDService):
     class Config:
         namespace = 'pool.dataset'
         event_send = False
+        cli_namespace = 'storage.dataset'
 
     @accepts()
     async def compression_choices(self):
@@ -2012,7 +2016,7 @@ class PoolDatasetService(CRUDService):
 
     @private
     @accepts(Ref('query-filters'))
-    def query_encrypted_roots_keys(self, filters=None):
+    def query_encrypted_roots_keys(self, filters):
         # We query database first - if we are able to find an encryption key, we assume it's the correct one.
         # If we are unable to find the key in database, we see if we have it in memory with the KMIP server, if not,
         # there are 2 ways this can go, we don't retrieve the key or the user can sync KMIP keys and we will have it
@@ -2256,7 +2260,7 @@ class PoolDatasetService(CRUDService):
                         Str('key', validators=[Range(min=64, max=64)], private=True),
                         Str('passphrase', empty=False, private=True),
                     )
-                ], default=[],
+                ],
             ),
         )
     )
@@ -2428,7 +2432,7 @@ class PoolDatasetService(CRUDService):
                         Str('key', validators=[Range(min=64, max=64)], private=True),
                         Str('passphrase', empty=False, private=True),
                     )
-                ], default=[],
+                ],
             ),
         )
     )
@@ -2739,7 +2743,7 @@ class PoolDatasetService(CRUDService):
         return any(is_child(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         """
         Query Pool Datasets with `query-filters` and `query-options`.
 
@@ -3948,6 +3952,7 @@ class PoolScrubService(CRUDService):
         datastore_extend = 'pool.scrub.pool_scrub_extend'
         datastore_prefix = 'scrub_'
         namespace = 'pool.scrub'
+        cli_namespace = 'storage.scrub'
 
     @private
     async def pool_scrub_extend(self, data):

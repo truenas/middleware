@@ -14,7 +14,7 @@ class KubernetesDeploymentService(CRUDService):
         private = True
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         async with api_client() as (api, context):
             deployments = [d.to_dict() for d in (await context['apps_api'].list_deployment_for_all_namespaces()).items]
             events = await self.middleware.call(

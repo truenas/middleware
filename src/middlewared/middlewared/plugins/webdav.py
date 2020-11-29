@@ -27,6 +27,7 @@ class WebDAVSharingService(SharingService):
         datastore = 'sharing.webdav_share'
         datastore_prefix = 'webdav_'
         namespace = 'sharing.webdav'
+        cli_namespace = 'sharing.webdav'
 
     @private
     async def validate_data(self, data, schema):
@@ -160,6 +161,7 @@ class WebDAVService(SystemServiceService):
         service = 'webdav'
         datastore_prefix = 'webdav_'
         datastore_extend = 'webdav.upper'
+        cli_namespace = 'service.webdav'
 
     @accepts(Dict(
         'webdav_update',

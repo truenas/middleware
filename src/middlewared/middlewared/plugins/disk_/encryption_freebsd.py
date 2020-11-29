@@ -17,7 +17,7 @@ GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 
 
 class DiskService(Service, DiskEncryptionBase):
-    def decrypt(self, job, devices, passphrase=None):
+    def decrypt(self, job, devices, passphrase):
         with tempfile.NamedTemporaryFile(dir='/tmp/') as f:
             os.chmod(f.name, 0o600)
             f.write(job.pipes.input.r.read())

@@ -27,7 +27,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     @accepts(
         Str('name'),
-        List('query-filters', default=[], register=True),
+        List('query-filters', register=True),
         Dict(
             'query-options',
             Bool('relationships', default=True),
@@ -35,8 +35,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             Str('extend_context', default=None, null=True),
             Str('prefix', default=None, null=True),
             Dict('extra', additional_attrs=True),
-            List('order_by', default=[]),
-            List('select', default=[]),
+            List('order_by'),
+            List('select'),
             Bool('count', default=False),
             Bool('get', default=False),
             Int('offset', default=0),

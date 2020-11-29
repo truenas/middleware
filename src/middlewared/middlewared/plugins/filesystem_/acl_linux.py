@@ -228,7 +228,7 @@ class FilesystemService(Service, ACLBase):
 
         return ret
 
-    def getacl(self, path, simplified=True):
+    def getacl(self, path, simplified):
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
 

@@ -1,12 +1,12 @@
-from middlewared.service import private, Service
+from middlewared.service import Service
 
 
 class DetectVirtualIpStates(Service):
 
     class Config:
+        private = True
         namespace = 'failover.vip'
 
-    @private
     async def get_states(self, interfaces=None):
 
         if interfaces is None:
@@ -42,7 +42,6 @@ class DetectVirtualIpStates(Service):
 
         return masters, backups, inits
 
-    @private
     async def check_states(self, local, remote):
 
         errors = []

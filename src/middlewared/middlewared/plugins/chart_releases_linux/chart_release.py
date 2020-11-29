@@ -21,9 +21,10 @@ class ChartReleaseService(CRUDService):
 
     class Config:
         namespace = 'chart.release'
+        cli_namespace = 'app.chart_release'
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         """
         Query available chart releases.
 

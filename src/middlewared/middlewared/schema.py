@@ -3,6 +3,7 @@ import copy
 from collections import defaultdict
 from datetime import datetime, time
 import errno
+import inspect
 import ipaddress
 import os
 
@@ -61,7 +62,7 @@ class Attribute(object):
     def __init__(self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
                  validators=None, register=False, hidden=False, editable=True, **kwargs):
         self.name = name
-        self.has_default = 'default' in kwargs
+        self.has_default = 'default' in kwargs and kwargs['default'] is not NOT_PROVIDED
         self.default = kwargs.pop('default', None)
         self.required = required
         self.null = null
@@ -116,6 +117,24 @@ class Attribute(object):
         """
         raise NotImplementedError("Attribute must implement to_json_schema method")
 
+    def _to_json_schema_common(self, parent):
+        schema = {}
+
+        schema['_name_'] = self.name
+
+        if self.title:
+            schema['title'] = self.title
+
+        if self.description:
+            schema['description'] = self.description
+
+        if self.has_default:
+            schema['default'] = self.default
+
+        schema['_required_'] = self.required
+
+        return schema
+
     def resolve(self, schemas):
         """
         After every plugin is initialized this method is called for every method param
@@ -144,7 +163,7 @@ class Attribute(object):
 class Any(Attribute):
 
     def to_json_schema(self, parent=None):
-        schema = {
+        return {
             'anyOf': [
                 {'type': 'string'},
                 {'type': 'integer'},
@@ -152,16 +171,9 @@ class Any(Attribute):
                 {'type': 'object'},
                 {'type': 'array'},
             ],
-            'title': self.title,
-            'nullable': True if self.null else False
+            'nullable': self.null,
+            **self._to_json_schema_common(parent),
         }
-        if self.description:
-            schema['description'] = self.description
-        if self.has_default:
-            schema['default'] = self.default
-        if not parent:
-            schema['_required_'] = self.required
-        return schema
 
 
 class Str(EnumMixin, Attribute):
@@ -184,20 +196,16 @@ class Str(EnumMixin, Attribute):
         return value
 
     def to_json_schema(self, parent=None):
-        schema = {}
-        if not parent:
-            schema['title'] = self.title
-            if self.description:
-                schema['description'] = self.description
-            if self.has_default:
-                schema['default'] = self.default
-            schema['_required_'] = self.required
+        schema = self._to_json_schema_common(parent)
+
         if self.null:
             schema['type'] = ['string', 'null']
         else:
             schema['type'] = 'string'
+
         if self.enum is not None:
             schema['enum'] = self.enum
+
         return schema
 
     def validate(self, value):
@@ -399,17 +407,10 @@ class Bool(Attribute):
         return value
 
     def to_json_schema(self, parent=None):
-        schema = {
+        return {
             'type': ['boolean', 'null'] if self.null else 'boolean',
+            **self._to_json_schema_common(parent),
         }
-        if not parent:
-            schema['title'] = self.title
-            if self.description:
-                schema['description'] = self.description
-            if self.has_default:
-                schema['default'] = self.default
-            schema['_required_'] = self.required
-        return schema
 
 
 class Int(EnumMixin, Attribute):
@@ -425,17 +426,10 @@ class Int(EnumMixin, Attribute):
         return value
 
     def to_json_schema(self, parent=None):
-        schema = {
+        return {
             'type': ['integer', 'null'] if self.null else 'integer',
+            **self._to_json_schema_common(parent),
         }
-        if not parent:
-            schema['title'] = self.title
-            if self.description:
-                schema['description'] = self.description
-            if self.has_default:
-                schema['default'] = self.default
-            schema['_required_'] = self.required
-        return schema
 
 
 class Float(EnumMixin, Attribute):
@@ -454,13 +448,10 @@ class Float(EnumMixin, Attribute):
             raise Error(self.name, 'Not a floating point number')
 
     def to_json_schema(self, parent=None):
-        schema = {
+        return {
             'type': ['float', 'null'] if self.null else 'float',
+            **self._to_json_schema_common(parent),
         }
-        if not parent:
-            schema['title'] = self.verbose
-            schema['_required_'] = self.required
-        return schema
 
 
 class List(EnumMixin, Attribute):
@@ -468,6 +459,8 @@ class List(EnumMixin, Attribute):
     def __init__(self, *args, **kwargs):
         self.items = kwargs.pop('items', [])
         self.unique = kwargs.pop('unique', False)
+        if 'default' not in kwargs:
+            kwargs['default'] = []
         super(List, self).__init__(*args, **kwargs)
 
     def clean(self, value):
@@ -530,32 +523,12 @@ class List(EnumMixin, Attribute):
         super().validate(value)
 
     def to_json_schema(self, parent=None):
-        schema = {'type': 'array'}
-        if not parent:
-            schema['title'] = self.title
-            if self.description:
-                schema['description'] = self.description
-            if self.has_default:
-                schema['default'] = self.default
-            schema['_required_'] = self.required
+        schema = self._to_json_schema_common(parent)
         if self.null:
             schema['type'] = ['array', 'null']
         else:
             schema['type'] = 'array'
-        if self.enum is not None:
-            schema['enum'] = self.enum
-        items = []
-        for i in self.items:
-            child_schema = i.to_json_schema(self)
-            if isinstance(child_schema['type'], list):
-                for t in child_schema['type']:
-                    items.append({'type': t})
-                    break
-            else:
-                items.append({'type': child_schema['type']})
-        if not items:
-            items.append({'type': 'null'})
-        schema['items'] = items
+        schema['items'] = [i.to_json_schema(self) for i in self.items]
         return schema
 
     def resolve(self, schemas):
@@ -616,7 +589,7 @@ class Dict(Attribute):
 
     def get_attrs_to_skip(self, data):
         skip_attrs = defaultdict(set)
-        check_data = self.get_defaults(data, {}, False) if not self.update else data
+        check_data = self.get_defaults(data, {}, ValidationErrors(), False) if not self.update else data
         for attr, attr_data in filter(
             lambda k: not filter_list([check_data], k[1]['filters']), self.conditional_defaults.items()
         ):
@@ -634,35 +607,46 @@ class Dict(Attribute):
 
             return copy.deepcopy(self.default)
 
-        self.errors = []
         if not isinstance(data, dict):
             raise Error(self.name, 'A dict was expected')
 
+        verrors = ValidationErrors()
         for key, value in list(data.items()):
             if not self.additional_attrs:
                 if key not in self.attrs:
-                    raise Error(key, 'Field was not expected')
+                    verrors.add(f'{self.name}.{key}', 'Field was not expected')
+                    continue
 
             attr = self.attrs.get(key)
             if not attr:
                 continue
 
-            data[key] = attr.clean(value)
+            data[key] = self._clean_attr(attr, value, verrors)
 
         # Do not make any field and required and not populate default values
         if not self.update:
-            data.update(self.get_defaults(data, self.get_attrs_to_skip(data)))
+            data.update(self.get_defaults(data, self.get_attrs_to_skip(data), verrors))
+
+        verrors.check()
 
         return data
 
-    def get_defaults(self, orig_data, skip_attrs, check_required=True):
+    def get_defaults(self, orig_data, skip_attrs, verrors, check_required=True):
         data = copy.deepcopy(orig_data)
         for attr in list(self.attrs.values()):
             if attr.name not in data and attr.name not in skip_attrs and (
                 (check_required and attr.required) or attr.has_default
             ):
-                data[attr.name] = attr.clean(NOT_PROVIDED)
+                data[attr.name] = self._clean_attr(attr, NOT_PROVIDED, verrors)
         return data
+
+    def _clean_attr(self, attr, value, verrors):
+        try:
+            return attr.clean(value)
+        except Error as e:
+            verrors.add(f'{self.name}.{e.attribute}', e.errmsg, e.errno)
+        except ValidationErrors as e:
+            verrors.extend(e)
 
     def dump(self, value):
         if self.private:
@@ -702,16 +686,11 @@ class Dict(Attribute):
             'type': 'object',
             'properties': {},
             'additionalProperties': self.additional_attrs,
+            **self._to_json_schema_common(parent),
         }
-        if not parent:
-            schema['title'] = self.title
-            if self.description:
-                schema['description'] = self.description
-            if self.has_default:
-                schema['default'] = self.default
-            schema['_required_'] = self.required
         for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema(parent=self)
+        schema['_attrs_order_'] = list(self.attrs.keys())
         return schema
 
     def resolve(self, schemas):
@@ -953,6 +932,9 @@ def accepts(*schema):
             raise ValueError("You can't have non-hidden arguments after hidden")
 
     def wrap(f):
+        if inspect.getfullargspec(f).defaults:
+            raise ValueError("All public method default arguments should be specified in @accepts()")
+
         # Make sure number of schemas is same as method argument
         args_index = 1
         if hasattr(f, '_pass_app'):
@@ -970,19 +952,20 @@ def accepts(*schema):
 
             verrors = ValidationErrors()
 
-            # Iterate over positional args first, excluding self
-            i = 0
-            for _ in args[args_index:]:
-                attr = nf.accepts[i]
-
-                value = attr.clean(args[args_index + i])
-                args[args_index + i] = value
-
+            def clean_and_validate_arg(attr, arg):
                 try:
+                    value = attr.clean(arg)
                     attr.validate(value)
+                    return value
+                except Error as e:
+                    verrors.add(e.attribute, e.errmsg, e.errno)
                 except ValidationErrors as e:
                     verrors.extend(e)
 
+            # Iterate over positional args first, excluding self
+            i = 0
+            for _ in args[args_index:]:
+                args[args_index + i] = clean_and_validate_arg(nf.accepts[i], args[args_index + i])
                 i += 1
 
             # Use i counter to map keyword argument to rpc positional
@@ -1002,13 +985,7 @@ def accepts(*schema):
                     i += 1
                     continue
 
-                value = attr.clean(value)
-                kwargs[kwarg] = value
-
-                try:
-                    attr.validate(value)
-                except ValidationErrors as e:
-                    verrors.extend(e)
+                kwargs[kwarg] = clean_and_validate_arg(attr, value)
 
             if verrors:
                 raise verrors

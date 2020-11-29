@@ -86,6 +86,7 @@ class ReplicationService(CRUDService):
         datastore_prefix = "repl_"
         datastore_extend = "replication.extend"
         datastore_extend_context = "replication.extend_context"
+        cli_namespace = "task.replication"
 
     @private
     async def extend_context(self, extra):
@@ -148,24 +149,24 @@ class ReplicationService(CRUDService):
             Int("netcat_active_side_port_min", null=True, default=None, validators=[Port()]),
             Int("netcat_active_side_port_max", null=True, default=None, validators=[Port()]),
             Str("netcat_passive_side_connect_address", null=True, default=None),
-            List("source_datasets", items=[Dataset("dataset")], required=True, empty=False),
+            List("source_datasets", items=[Dataset("dataset")], empty=False),
             Dataset("target_dataset", required=True),
             Bool("recursive", required=True),
-            List("exclude", items=[Dataset("dataset")], default=[]),
+            List("exclude", items=[Dataset("dataset")]),
             Bool("properties", default=True),
-            List("properties_exclude", items=[Str("property", empty=False)], default=[]),
+            List("properties_exclude", items=[Str("property", empty=False)]),
             Dict("properties_override", additional_attrs=True),
             Bool("replicate", default=False),
             Bool("encryption", default=False),
             Str("encryption_key", null=True, default=None),
             Str("encryption_key_format", enum=["HEX", "PASSPHRASE"], null=True, default=None),
             Str("encryption_key_location", null=True, default=None),
-            List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
+            List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")],
                  validators=[Unique()]),
             List("naming_schema", items=[
-                Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])], default=[]),
+                Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])]),
             List("also_include_naming_schema", items=[
-                Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])], default=[]),
+                Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])]),
             Bool("auto", required=True),
             Cron(
                 "schedule",
@@ -621,7 +622,7 @@ class ReplicationService(CRUDService):
 
     @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
              Int("ssh_credentials", null=True, default=None))
-    async def list_datasets(self, transport, ssh_credentials=None):
+    async def list_datasets(self, transport, ssh_credentials):
         """
         List datasets on remote side
 
@@ -646,7 +647,7 @@ class ReplicationService(CRUDService):
     @accepts(Str("dataset", required=True),
              Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
              Int("ssh_credentials", null=True, default=None))
-    async def create_dataset(self, dataset, transport, ssh_credentials=None):
+    async def create_dataset(self, dataset, transport, ssh_credentials):
         """
         Creates dataset on remote side
 

@@ -19,7 +19,7 @@ class KubernetesEventService(CRUDService):
         private = True
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         options = options or {}
         label_selector = options.get('extra', {}).get('label_selector')
         field_selector = options.get('extra', {}).get('field_selector')

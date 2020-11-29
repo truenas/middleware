@@ -12,14 +12,14 @@ class DiskService(Service):
     @private
     @lock('swaps_configure')
     @accepts(
-        List('disks', default=[], items=[Str('disk')]),
+        List('disks', items=[Str('disk')]),
         Dict(
             'swap_removal_options',
             Bool('configure_swap', default=True),
             register=True
         )
     )
-    async def swaps_remove_disks(self, disks, options=None):
+    async def swaps_remove_disks(self, disks, options):
         """
         Remove a given disk (e.g. ["da0", "da1"]) from swap.
         It will offline if from swap, removing encryption and destroying the mirror ( if part of one ).

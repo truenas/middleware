@@ -108,6 +108,7 @@ class MailService(ConfigService):
         datastore = 'system.email'
         datastore_prefix = 'em_'
         datastore_extend = 'mail.mail_extend'
+        cli_namespace = 'system.mail'
 
     @private
     async def mail_extend(self, cfg):

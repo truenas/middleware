@@ -109,6 +109,7 @@ class KerberosService(ConfigService):
         service = "kerberos"
         datastore = 'directoryservice.kerberossettings'
         datastore_prefix = "ks_"
+        cli_namespace = "directory_service.kerberos.settings"
 
     @accepts(Dict(
         'kerberos_settings_update',
@@ -605,6 +606,7 @@ class KerberosRealmService(CRUDService):
         datastore_prefix = 'krb_'
         datastore_extend = 'kerberos.realm.kerberos_extend'
         namespace = 'kerberos.realm'
+        cli_namespace = 'directory_service.kerberos.realm'
 
     @private
     async def kerberos_extend(self, data):
@@ -624,9 +626,9 @@ class KerberosRealmService(CRUDService):
         Dict(
             'kerberos_realm_create',
             Str('realm', required=True),
-            List('kdc', default=[]),
-            List('admin_server', default=[]),
-            List('kpasswd_server', default=[]),
+            List('kdc'),
+            List('admin_server'),
+            List('kpasswd_server'),
             register=True
         )
     )
@@ -722,6 +724,7 @@ class KerberosKeytabService(CRUDService):
         datastore = 'directoryservice.kerberoskeytab'
         datastore_prefix = 'keytab_'
         namespace = 'kerberos.keytab'
+        cli_namespace = 'directory_service.kerberos.keytab'
 
     @accepts(
         Dict(

@@ -27,8 +27,11 @@ from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 
 class FilesystemService(Service):
 
+    class Config:
+        cli_namespace = 'storage.filesystem'
+
     @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
-    def listdir(self, path, filters=None, options=None):
+    def listdir(self, path, filters, options):
         """
         Get the contents of a directory.
 
@@ -127,13 +130,12 @@ class FilesystemService(Service):
             Int('mode'),
         ),
     )
-    def file_receive(self, path, content, options=None):
+    def file_receive(self, path, content, options):
         """
         Simplified file receiving method for small files.
 
         `content` must be a base 64 encoded file content.
         """
-        options = options or {}
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -159,13 +161,12 @@ class FilesystemService(Service):
             Int('maxlen'),
         ),
     )
-    def file_get_contents(self, path, options=None):
+    def file_get_contents(self, path, options):
         """
         Get contents of a file `path` in base64 encode.
 
         DISCLAIMER: DO NOT USE THIS FOR BIG FILES (> 500KB).
         """
-        options = options or {}
         if not os.path.exists(path):
             return None
         with open(path, 'rb') as f:
@@ -196,11 +197,10 @@ class FilesystemService(Service):
         ),
     )
     @job(pipes=["input"])
-    async def put(self, job, path, options=None):
+    async def put(self, job, path, options):
         """
         Job to put contents to `path`.
         """
-        options = options or {}
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
             os.makedirs(dirname)

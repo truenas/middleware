@@ -216,6 +216,8 @@ def validate_attributes(schema, data, additional_attrs=False, attr_key="attribut
         data[attr_key] = schema.clean(data[attr_key])
     except Error as e:
         verrors.add(e.attribute, e.errmsg, e.errno)
+    except ValidationErrors as e:
+        verrors.extend(e)
 
     try:
         schema.validate(data[attr_key])

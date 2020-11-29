@@ -43,6 +43,7 @@ class AFPService(SystemServiceService):
         service = 'afp'
         datastore_extend = 'afp.extend'
         datastore_prefix = 'afp_srv_'
+        cli_namespace = 'service.afp'
 
     @private
     async def extend(self, afp):
@@ -153,6 +154,7 @@ class SharingAFPService(SharingService):
         datastore = 'sharing.afp_share'
         datastore_prefix = 'afp_'
         datastore_extend = 'sharing.afp.extend'
+        cli_namespace = 'sharing.afp'
 
     @accepts(Dict(
         'sharingafp_create',
@@ -160,10 +162,10 @@ class SharingAFPService(SharingService):
         Bool('home', default=False),
         Str('name'),
         Str('comment'),
-        List('allow', default=[]),
-        List('deny', default=[]),
-        List('ro', default=[]),
-        List('rw', default=[]),
+        List('allow'),
+        List('deny'),
+        List('ro'),
+        List('rw'),
         Bool('timemachine', default=False),
         Int('timemachine_quota', default=0),
         Bool('nodev', default=False),
@@ -172,8 +174,8 @@ class SharingAFPService(SharingService):
         UnixPerm('fperm', default='644'),
         UnixPerm('dperm', default='755'),
         UnixPerm('umask', default='000'),
-        List('hostsallow', items=[], default=[]),
-        List('hostsdeny', items=[], default=[]),
+        List('hostsallow', items=[]),
+        List('hostsdeny', items=[]),
         Str('vuid', null=True, default=''),
         Str('auxparams', max_length=None),
         Bool('enabled', default=True),

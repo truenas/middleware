@@ -11,7 +11,7 @@ class KubernetesPersistentVolumeClaimService(CRUDService):
         private = True
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         async with api_client() as (api, context):
             return filter_list(
                 [

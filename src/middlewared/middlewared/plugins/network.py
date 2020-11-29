@@ -64,6 +64,7 @@ class NetworkConfigurationService(ConfigService):
         datastore = 'network.globalconfiguration'
         datastore_prefix = 'gc_'
         datastore_extend = 'network.configuration.network_config_extend'
+        cli_namespace = 'network.configuration'
 
     @private
     def network_config_extend(self, data):
@@ -205,7 +206,7 @@ class NetworkConfigurationService(ConfigService):
             Str('hosts'),
             Dict('activity',
                  Str('type', enum=['ALLOW', 'DENY'], required=True),
-                 List('activities', items=[Str('activity')], required=True),
+                 List('activities', items=[Str('activity')]),
                  strict=True),
             update=True
         )
@@ -410,6 +411,7 @@ class InterfaceService(CRUDService):
 
     class Config:
         namespace_alias = 'interfaces'
+        cli_namespace = 'network.interface'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -843,7 +845,7 @@ class InterfaceService(CRUDService):
                 Int('netmask', required=True),
                 register=True,
             ),
-        ], default=[]),
+        ]),
         Bool('failover_critical', default=False),
         Int('failover_group', null=True),
         Int('failover_vhid', null=True, validators=[Range(min=1, max=255)]),
@@ -1727,8 +1729,8 @@ class InterfaceService(CRUDService):
         Bool('lag_ports', default=False),
         Bool('vlan_parent', default=True),
         List('exclude', default=['epair', 'tap', 'vnet']),
-        List('exclude_types', default=[], items=[Str('type', enum=[type.name for type in InterfaceType])]),
-        List('include', default=[]),
+        List('exclude_types', items=[Str('type', enum=[type.name for type in InterfaceType])]),
+        List('include'),
     ))
     async def choices(self, options):
         """
@@ -2003,7 +2005,7 @@ class InterfaceService(CRUDService):
             Bool('static', default=False),
         )
     )
-    def ip_in_use(self, choices=None):
+    def ip_in_use(self, choices):
         """
         Get all IPv4 / Ipv6 from all valid interfaces, excluding tap and epair.
 
@@ -2094,6 +2096,7 @@ class RouteService(Service):
 
     class Config:
         namespace_alias = 'routes'
+        cli_namespace = 'network.route'
 
     @filterable
     def system_routes(self, filters, options):
@@ -2271,6 +2274,7 @@ class StaticRouteService(CRUDService):
         datastore = 'network.staticroute'
         datastore_prefix = 'sr_'
         datastore_extend = 'staticroute.upper'
+        cli_namespace = 'network.static_route'
 
     @accepts(Dict(
         'staticroute_create',
@@ -2398,6 +2402,9 @@ class StaticRouteService(CRUDService):
 
 class DNSService(Service):
 
+    class Config:
+        cli_namespace = 'network.dns'
+
     @filterable
     async def query(self, filters, options):
         """
@@ -2446,6 +2453,7 @@ class NetworkGeneralService(Service):
 
     class Config:
         namespace = 'network.general'
+        cli_namespace = 'network.general'
 
     @accepts()
     async def summary(self):

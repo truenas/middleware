@@ -1,15 +1,15 @@
 import subprocess
 
 from middlewared.plugins.interface.netif import netif
-from middlewared.service import private, Service
+from middlewared.service import Service
 
 
 class InternalInterfaceService(Service):
 
     class Config:
+        private = True
         namespace = 'failover.internal_interface'
 
-    @private
     def detect(self):
 
         hardware = self.middleware.call_sync(
@@ -33,7 +33,6 @@ class InternalInterfaceService(Service):
 
         return []
 
-    @private
     async def pre_sync(self):
 
         hardware = await self.middleware.call('failover.hardware')
@@ -65,7 +64,6 @@ class InternalInterfaceService(Service):
             self.sync, iface, carp1_skew, carp2_skew, internal_ip
         )
 
-    @private
     def sync(self, iface, carp1_skew, carp2_skew, internal_ip):
 
         try:

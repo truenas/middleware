@@ -22,6 +22,7 @@ class NTPServerService(CRUDService):
         namespace = 'system.ntpserver'
         datastore = 'system.ntpserver'
         datastore_prefix = 'ntp_'
+        cli_namespace = 'system.ntp_server'
 
     @accepts(Dict(
         'ntp_create',

@@ -10,7 +10,7 @@ class DiskIdentifyBase(ServicePartBase):
 
     @private
     @accepts(Str('name'), Dict('disks', additional_attrs=True))
-    async def device_to_identifier(self, name, disks=None):
+    async def device_to_identifier(self, name, disks):
         """
         Given a device `name` (e.g. da0) returns an unique identifier string
         for this device.
@@ -30,5 +30,5 @@ class DiskIdentifyBase(ServicePartBase):
 
     @private
     @accepts(Str('identifier'), Dict('disks', additional_attrs=True))
-    def identifier_to_device(self, ident, disks=None):
+    def identifier_to_device(self, ident, disks):
         raise NotImplementedError()

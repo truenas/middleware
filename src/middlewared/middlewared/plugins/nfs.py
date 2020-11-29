@@ -43,6 +43,7 @@ class NFSService(SystemServiceService):
         service_verb = "restart"
         datastore_prefix = "nfs_srv_"
         datastore_extend = 'nfs.nfs_extend'
+        cli_namespace = "service.nfs"
 
     @private
     async def nfs_extend(self, nfs):
@@ -261,6 +262,7 @@ class SharingNFSService(SharingService):
         datastore = "sharing.nfs_share"
         datastore_prefix = "nfs_"
         datastore_extend = "sharing.nfs.extend"
+        cli_namespace = "sharing.nfs"
 
     async def human_identifier(self, share_task):
         return ', '.join(share_task[self.path_field])
@@ -275,11 +277,11 @@ class SharingNFSService(SharingService):
 
     @accepts(Dict(
         "sharingnfs_create",
-        List("paths", items=[Dir("path")], required=True, empty=False),
-        List("aliases", items=[Str("path", validators=[Match(r"^/.*")])], default=[]),
+        List("paths", items=[Dir("path")], empty=False),
+        List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
         Str("comment", default=""),
-        List("networks", items=[IPAddr("network", network=True)], default=[]),
-        List("hosts", items=[Str("host")], default=[]),
+        List("networks", items=[IPAddr("network", network=True)]),
+        List("hosts", items=[Str("host")]),
         Bool("alldirs", default=False),
         Bool("ro", default=False),
         Bool("quiet", default=False),
@@ -289,7 +291,6 @@ class SharingNFSService(SharingService):
         Str("mapall_group", required=False, default=None, null=True),
         List(
             "security",
-            default=[],
             items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
         ),
         Bool("enabled", default=True),

@@ -1,14 +1,14 @@
 import subprocess
 
-from middlewared.service import private, Service
+from middlewared.service import Service
 
 
 class FencedForceService(Service):
 
     class Config:
+        private = True
         namespace = 'failover.fenced'
 
-    @private
     def force(self):
 
         # fenced will reserve nvme drives so we need to make sure

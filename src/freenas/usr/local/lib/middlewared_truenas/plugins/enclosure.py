@@ -62,6 +62,9 @@ class EnclosureLabelModel(sa.Model):
 
 class EnclosureService(CRUDService):
 
+    class Config:
+        cli_namespace = 'storage.enclosure'
+
     @filterable
     def query(self, filters, options):
         enclosures = []
