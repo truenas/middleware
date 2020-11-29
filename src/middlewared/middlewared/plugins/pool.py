@@ -3,6 +3,7 @@ from collections import deque
 import contextlib
 import enum
 import errno
+import itertools
 import json
 import logging
 from datetime import datetime, time, timedelta
@@ -43,6 +44,11 @@ RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULT
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 ZFS_ENCRYPTION_ALGORITHM_CHOICES = [
     'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
+]
+ZFS_COMPRESSION_ALGORITHM_CHOICES = [
+    'OFF', 'LZ4', 'GZIP', 'GZIP-1', 'GZIP-9', 'ZSTD', 'ZSTD-FAST', 'ZLE', 'LZJB',
+] + [f'ZSTD-{i}' for i in range(1, 20)] + [
+    f'ZSTD-FAST-{i}' for i in itertools.chain(range(1, 11), range(20, 110, 10), range(500, 1500, 500))
 ]
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
@@ -1933,6 +1939,13 @@ class PoolDatasetService(CRUDService):
         namespace = 'pool.dataset'
 
     @accepts()
+    async def compression_choices(self):
+        """
+        Retrieve compression algorithm supported by ZFS.
+        """
+        return {v: v for v in ZFS_COMPRESSION_ALGORITHM_CHOICES}
+
+    @accepts()
     async def encryption_algorithm_choices(self):
         """
         Retrieve encryption algorithms supported for ZFS dataset encryption.
@@ -2794,9 +2807,7 @@ class PoolDatasetService(CRUDService):
         Str('sync', enum=[
             'STANDARD', 'ALWAYS', 'DISABLED',
         ]),
-        Str('compression', enum=[
-            'OFF', 'LZ4', 'GZIP', 'GZIP-1', 'GZIP-9', 'ZSTD', 'ZSTD-5', 'ZSTD-7', 'ZSTD-FAST', 'ZLE', 'LZJB',
-        ]),
+        Str('compression', enum=ZFS_COMPRESSION_ALGORITHM_CHOICES),
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
         Str('managedby', empty=False),
