@@ -68,11 +68,11 @@ class CtdbPrivateIpService(CRUDService):
 
         self.common_validation(data, schema_name, verrors)
 
-        self.middleware.call_sync('datastore.insert', 'ctdb.private.ips', data)
+        id = self.middleware.call_sync('datastore.insert', 'ctdb.private.ips', data)
 
         self.write_private_ips_to_ctdb()
 
-        return data
+        return self.middleware.call_sync('ctdb.private.ips.get_instance', id)
 
     @accepts(Int('id'))
     @job(lock=JOB_LOCK)

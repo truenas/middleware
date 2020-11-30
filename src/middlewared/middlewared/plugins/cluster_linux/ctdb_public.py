@@ -83,7 +83,7 @@ class CtdbPublicIpService(CRUDService):
 
         self.write_public_ips_to_ctdb()
 
-        return data
+        return self.middleware.call_sync('ctdb.public.ips.get_instance', id)
 
     @accepts(Int('id'))
     @job(lock=JOB_LOCK)
