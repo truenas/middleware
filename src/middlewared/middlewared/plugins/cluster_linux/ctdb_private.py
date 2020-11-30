@@ -1,4 +1,4 @@
-from middlewared.schema import List, Dict, IPAddr, Int
+from middlewared.schema import Dict, IPAddr, Int
 from middlewared.service import accepts, private, job, CRUDService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from .utils import CTDBConfig, JOB_LOCK
@@ -20,119 +20,70 @@ class CtdbPrivateIpService(CRUDService):
         namespace = datastore = 'ctdb.private.ips'
 
     @private
-    async def common_validation(self, data, schema_name, verrors):
+    def common_validation(self, data, schema_name, verrors):
 
-        # make sure something was given to us
-        if not data['private_ips']:
+        # get the current ips in the cluster
+        cur_data = {'private_ips': [], 'public_ips': []}
+        cur_data['private_ips'] = self.middleware.call_sync('ctdb.private.ips.query')
+        cur_data['public_ips'] = self.middleware.call_sync('ctdb.public.ips.query')
+
+        # need to make sure the new private ip(s) don't already exist in the cluster
+        if data['ip'] in set(i['ip'] for i in cur_data['private_ips'] + cur_data['public_ips']):
             verrors.add(
-                f'{schema_name}.no_ips',
-                'Private IP(s) must be specified.',
+                f'{schema_name}.ip',
+                f'Private IP address: {data["ip"]} already in the cluster.',
             )
 
         verrors.check()
 
-        # normalize the data and remove netmask info (if its given to us)
-        # from `ip` keys since it's not used
-        for i in data['private_ips']:
-            i['ip'] = i['ip'].split('/')[0]
-
-        if schema_name == 'node_create':
-            # get the current ips in the cluster
-            cur_data = {'private_ips': [], 'public_ips': []}
-            cur_data['private_ips'] = await self.query()
-            cur_data['public_ips'] = await self.middleware.call('datastore.query', 'ctdb.public.ips')
-
-            # need to make sure the new private ip(s) don't already exist in the cluster
-            if m := list(set(i['ip'] for i in data['private_ips']).intersection(set(i['ip'] for i in cur_data['private_ips']))):
-                verrors.add(
-                    f'{schema_name}.private_ip_exists',
-                    f'Private IP address(es): {m} already in the cluster.',
-                )
-
-            # need to make sure the new private ip(s) don't already exist in the cluster as public ip(s)
-            if m := list(set(i['ip'] for i in data['private_ips']).intersection(set(i['ip'] for i in cur_data['public_ips']))):
-                verrors.add(
-                    f'{schema_name}.public_ip_exists',
-                    f'Private IP address(es): {m} have already been added to the cluster as public IP(s).',
-                )
-
-        verrors.check()
-
-        return data
-
     @private
-    async def write_private_ips_to_ctdb(self):
-
-        data = {'private_ips': []}
-        data['private_ips'] = await self.query()
+    def write_private_ips_to_ctdb(self):
 
         with open(PRIVATE_IP_FILE, 'w') as f:
-            for i in map(lambda i: i['ip'], data['private_ips']):
+            for i in map(lambda i: i['ip'], self.middleware.call_sync('ctdb.private.ips.query')):
                 f.write(f'{i}\n')
-
-        return data
 
     @accepts(Dict(
         'node_create',
-        List('private_ips', unique=True, items=[
-            Dict('private_ip', IPAddr('ip'))
-        ], default=[]),
+        IPAddr('ip'),
     ))
     @job(lock=JOB_LOCK)
-    async def do_create(self, job, data):
+    def do_create(self, job, data):
 
         """
         Create private IPs to be used in the ctdb cluster.
 
-        `private_ips` is a list of `ip` addresses that will be used
+        `ip` is an IP v4/v6 address that will be used
             for the intra-cluster communication between nodes.
-            These ip addresses should be on a phyically separate
+            This ip address should be on a phyically separate
             network and should be non-routable.
         """
 
         schema_name = 'node_create'
         verrors = ValidationErrors()
 
-        data = await self.common_validation(data, schema_name, verrors)
+        # normalize the data and remove netmask info (if its given to us)
+        # from `ip` key since it's not used
+        data['ip'] = data['ip'].split('/')[0]
 
-        for i in data['private_ips']:
-            await self.middleware.call(
-                'datastore.insert', 'ctdb.private.ips', i,
-            )
+        self.common_validation(data, schema_name, verrors)
 
-        return await self.write_private_ips_to_ctdb()
+        self.middleware.call_sync('datastore.insert', 'ctdb.private.ips', data)
 
-    @accepts(Dict(
-        'node_update',
-        List('private_ips', items=[IPAddr('ip', network=False)], default=[]),
-    ))
-    @job(lock=JOB_LOCK)
-    async def do_update(self, job, data):
+        self.write_private_ips_to_ctdb()
 
-        """
-        Add nodes to the ctdb cluster.
-
-        `private_ips` is a list of `ip` addresses that will be used
-            for the intra-cluster communication between nodes.
-            These ip addresses should be on a phyically separate
-            network and should be non-routable.
-        """
-
-        schema_name = 'node_update'
-        data = await self.common_validation(data, schema_name)
-
-        return await self.write_private_ips_to_ctdb()
+        return data
 
     @accepts(Int('id'))
     @job(lock=JOB_LOCK)
-    async def do_delete(self, job, id):
+    def do_delete(self, job, id):
 
         """
         Delete private IP with `id` from ctdb cluster.
         """
 
-        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        result = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
 
-        await self.write_private_ips_to_ctdb()
+        self.write_private_ips_to_ctdb()
 
         return result

@@ -5,7 +5,7 @@
     if not clustered:
         return
 
-    data = middleware.call_sync('datastore.query', 'ctdb.private.ips')
+    data = middleware.call_sync('ctdb.private.ips.query')
     if not data:
         raise FileShouldNotExist()
 
