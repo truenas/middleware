@@ -5,7 +5,7 @@ import signal
 import subprocess
 
 from middlewared.schema import accepts, Bool, Ref, Str
-from middlewared.service import job, private, Service
+from middlewared.service import CallError, job, private, Service
 from middlewared.utils import osc, Popen, run
 
 
@@ -20,7 +20,15 @@ class DiskService(Service):
     @private
     async def destroy_partitions(self, disk):
         if osc.IS_LINUX:
-            await run(['sgdisk', '-Z', os.path.join('/dev', disk)])
+            cp = await run(['sgdisk', '-Z', os.path.join('/dev', disk)], check=False)
+            if not (
+                not cp.returncode or (
+                    cp.returncode == 2 and 'gpt data structures destroyed!' in cp.stdout.decode().lower()
+                )
+            ):
+                # We have return code 2 when sgdisk is unable to read partition table, which is fine in our case
+                # as we want to destroy the partition table anyways
+                raise CallError(f'Failed to wipe {disk}: {cp.stderr.decode()}')
         else:
             await run('gpart', 'destroy', '-F', f'/dev/{disk}', check=False)
             # Wipe out the partition table by doing an additional iterate of create/destroy
