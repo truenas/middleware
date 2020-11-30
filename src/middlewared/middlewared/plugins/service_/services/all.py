@@ -27,6 +27,7 @@ from .wsd import WSDService
 from .keepalived import KeepalivedService
 from .glusterd import GlusterdService
 from .glustereventsd import GlusterEventsdService
+from .ctdb import CtdbService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -113,6 +114,7 @@ all_services = [
 ]
 if osc.IS_LINUX:
     all_services.extend([
+        CtdbService,
         KeepalivedService,
         GlusterdService,
         GlusterEventsdService,
