@@ -129,7 +129,10 @@ class KubernetesService(ConfigService):
             config['cni_config'] = {}
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('kubernetes.status_change')
-            if config['pool'] != old_config['pool']:
+            if not config['pool'] and config['pool'] != old_config['pool']:
+                # We only want to do this when we don't have any pool configured and would like to use
+                # host catalog repos temporarily. Otherwise, we should call this after k8s datasets have
+                # been initialised
                 await self.middleware.call('catalog.sync_all')
 
         return await self.config()
