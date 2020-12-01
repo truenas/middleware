@@ -129,7 +129,7 @@ class ChartReleaseService(CRUDService):
             current_version = parse_version(release_data['chart_metadata']['version'])
             latest_version = update_catalog_config.get(release_data['catalog'], {}).get(
                 release_data['catalog_train'], {}
-            ).get(release_data['chart_metadata']['name'], release_data['chart_metadata']['version'])
+            ).get(release_data['chart_metadata']['name'], parse_version(release_data['chart_metadata']['version']))
 
             release_data['update_available'] = latest_version > current_version
             release_data['chart_metadata']['latest_chart_version'] = str(latest_version)
