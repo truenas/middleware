@@ -20,7 +20,7 @@ class DockerImagesService(Service, DockerClientMixin):
     @private
     async def check_update(self):
         images = await self.middleware.call('docker.images.query')
-        for image in images:
+        for image in filter(lambda i: not i['system_image'], images):
             for tag in image['repo_tags']:
                 try:
                     await self.get_digest_of_image(tag, image)
