@@ -195,17 +195,15 @@ class RealtimeEventSource(EventSource):
                 except Exception:
                     self.middleware.logger.error('Failed to read sensors output', exc_info=True)
                 else:
+                    core = 0
                     for chip, value in sensors.items():
                         for name, temps in value.items():
                             if not name.startswith('Core '):
                                 continue
-                            core = name[5:].strip()
-                            if not core.isdigit():
-                                continue
-                            core = int(core)
                             for temp, value in temps.items():
                                 if 'input' in temp:
                                     data['cpu']['temperature'][core] = 2732 + int(value * 10)
+                                    core += 1
                                     break
 
             # Interface related statistics
