@@ -1,4 +1,5 @@
 import base64
+from threading import Lock
 
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -10,14 +11,26 @@ class GmailService:
     def __init__(self, config):
         self.config = config
 
-        credentials = Credentials.from_authorized_user_info(config["oauth"])
-        self.service = build("gmail", "v1", credentials=credentials)
+        self._lock = Lock()
+        self._service = None
 
     def __eq__(self, other):
         return isinstance(other, GmailService) and self.config["oauth"] == other.config["oauth"]
 
+    @property
+    def service(self):
+        with self._lock:
+            if self._service is None:
+                credentials = Credentials.from_authorized_user_info(self.config["oauth"])
+                self._service = build("gmail", "v1", credentials=credentials)
+
+            return self._service
+
     def close(self):
-        self.service.close()
+        with self._lock:
+            if self._service is not None:
+                self._service.close()
+                self._service = None
 
 
 class MailService(Service):
