@@ -97,6 +97,9 @@ class DockerImagesService(CRUDService):
         """
         await self.docker_checks()
         image = await self.get_instance(id)
+        if image['system_image']:
+            raise CallError(f'{id} is being used by system and cannot be deleted.')
+
         async with aiodocker.Docker() as docker:
             await docker.images.delete(name=id, force=options['force'])
 
