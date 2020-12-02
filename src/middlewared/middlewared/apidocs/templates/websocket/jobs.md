@@ -7,7 +7,7 @@ from the endpoint. With this job id, the client can query the status of the job
 to see the progress and status. Errors are shown
 in the output, or the output contains the result returned by the endpoint on completion.
 
-e.g. `ws://freenas.domain/websocket`
+e.g. `ws://truenas.domain/websocket`
 
 ### Example of connecting to endpoint marked as a job
 
