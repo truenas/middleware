@@ -582,7 +582,7 @@ class ZettareplService(Service):
             if replication_task["encryption"]:
                 definition["encryption"] = {
                     "key": replication_task["encryption_key"],
-                    "key-format": replication_task["encryption_key_format"],
+                    "key-format": replication_task["encryption_key_format"].lower(),
                     "key-location": replication_task["encryption_key_location"],
                 }
             if replication_task["naming_schema"]:
