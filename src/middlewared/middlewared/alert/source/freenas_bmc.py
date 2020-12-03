@@ -13,7 +13,7 @@ class FreeNASBMCAlertClass(AlertClass):
     title = "Critical IPMI Firmware Update Available"
     text = (
         "A critical IPMI firmware update is available for this system. Please see "
-        "<a href=\"https://www.truenas.com/docs/hardware/legacy/mini-gen2/fn-bmc-watchdog/" target=\"_blank\">"
+        "<a href=\"https://www.truenas.com/docs/hardware/legacy/mini-gen2/fn-bmc-watchdog/\" target=\"_blank\">"
         "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details.",
     )
 
