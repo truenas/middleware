@@ -30,3 +30,8 @@ net.inet.carp.allow=0
 # we handle that in the application layer
 net.inet.carp.senderr_demotion_factor=0
 net.inet.carp.ifdown_demotion_factor=0
+
+# AIO tuning for SMB
+vfs.aio.max_aio_procs=128
+vfs.aio.target_aio_procs=16
+kern.kq_calloutmax=150000
