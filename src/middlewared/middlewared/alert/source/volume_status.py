@@ -28,12 +28,13 @@ class VolumeStatusAlertSource(AlertSource):
                         pass
 
                 bad_vdevs = []
-                for vdev in await self.middleware.call("pool.flatten_topology", pool["topology"]):
-                    if vdev["type"] == "DISK" and vdev["status"] != "ONLINE":
-                        name = vdev["guid"]
-                        if vdev.get("unavail_disk"):
-                            name = f'{vdev["unavail_disk"]["model"]} {vdev["unavail_disk"]["serial"]}'
-                        bad_vdevs.append(f"Disk {name} is {vdev['status']}")
+                if pool["topology"]:
+                    for vdev in await self.middleware.call("pool.flatten_topology", pool["topology"]):
+                        if vdev["type"] == "DISK" and vdev["status"] != "ONLINE":
+                            name = vdev["guid"]
+                            if vdev.get("unavail_disk"):
+                                name = f'{vdev["unavail_disk"]["model"]} {vdev["unavail_disk"]["serial"]}'
+                            bad_vdevs.append(f"Disk {name} is {vdev['status']}")
                 if bad_vdevs:
                     devices = (f"<br>The following devices are not healthy:"
                                f"<ul><li>{'</li><li>'.join(bad_vdevs)}</li></ul>")

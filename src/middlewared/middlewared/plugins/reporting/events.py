@@ -33,7 +33,7 @@ class RealtimeEventSource(EventSource):
 
     @staticmethod
     def get_cpu_usages(cp_diff):
-        cp_total = sum(cp_diff)
+        cp_total = sum(cp_diff) or 1
         data = {}
         data['user'] = cp_diff[0] / cp_total * 100
         data['nice'] = cp_diff[1] / cp_total * 100
@@ -52,7 +52,10 @@ class RealtimeEventSource(EventSource):
             data['guest'] = cp_diff[8] / cp_total * 100
             data['guest_nice'] = cp_diff[9] / cp_total * 100
         # Usage is the sum of all but idle
-        data['usage'] = ((cp_total - cp_diff[idle]) / cp_total) * 100
+        if sum(cp_diff):
+            data['usage'] = ((cp_total - cp_diff[idle]) / cp_total) * 100
+        else:
+            data['usage'] = 0
         return data
 
     def get_interface_speeds(self):
