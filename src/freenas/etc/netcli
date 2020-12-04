@@ -1633,11 +1633,13 @@ if __name__ == '__main__':
 
     while True:
         try:
-            try:
-                with Client() as c:
-                    console = c.call('system.advanced.config')['consolemenu']
-            except Exception:
-                console = True
+            console = True
+            if os.getppid() == 1:
+                try:
+                    with Client() as c:
+                        console = c.call('system.advanced.config')['consolemenu']
+                except Exception:
+                    pass
             if console:
                 main_menu()
             else:
