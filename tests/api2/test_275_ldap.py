@@ -165,7 +165,7 @@ def test_15_starting_cifs_service(request):
     payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
-    time.sleep(2)
+    time.sleep(5)
 
 
 def test_16_verify_if_cifs_service_is_running(request):
@@ -216,7 +216,7 @@ def test_22_restarting_cifs_service_after_changing_has_samba_schema(request):
     payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
-    time.sleep(2)
+    time.sleep(5)
 
 
 def test_23_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
@@ -247,7 +247,7 @@ def test_26_starting_cifs_service_after_changing_ssl_to_START_TLS(request):
     payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
-    time.sleep(2)
+    time.sleep(5)
 
 
 def test_27_verify_if_cifs_service_is_running(request):
