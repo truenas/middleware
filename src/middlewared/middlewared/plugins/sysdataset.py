@@ -3,6 +3,11 @@ from middlewared.service import CallError, ConfigService, ValidationErrors, job,
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
 
+try:
+    from middlewared.plugins.cluster_linux.utils import CTDBConfig
+except ImportError:
+    CTDBConfig = None
+
 import asyncio
 import errno
 import os
@@ -333,6 +338,9 @@ class SystemDatasetService(ConfigService):
         return createdds
 
     async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
+
+        IS_LINUX = osc.IS_LINUX
+
         for dataset, name in self.__get_datasets(pool, uuid):
             if name:
                 mountpoint = f'{path}/{name}'
@@ -343,10 +351,29 @@ class SystemDatasetService(ConfigService):
             if not os.path.isdir(mountpoint):
                 os.mkdir(mountpoint)
             await run('mount', '-t', 'zfs', dataset, mountpoint, check=True)
+            # if this is the ctdb dataset, then we have to
+            # mount the local glusterfuse mount after the
+            # zfs dataset is mounted
+            if IS_LINUX and name == CTDBConfig.CTDB_VOL_NAME.value:
+                c = await self.middleware.call('ctdb.shared.volume.mount')
+                await c.wait()
+                if c.error:
+                    raise CallError(f'{c.error}')
 
     async def __umount(self, pool, uuid):
+
+        IS_LINUX = osc.IS_LINUX
+
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
+                # if this is the ctdb dataset, then we have to
+                # unmount the local glusterfuse mount first before
+                # unmounting the underlying zfs dataset
+                if IS_LINUX and name == CTDBConfig.CTDB_VOL_NAME.value:
+                    c = await self.middleware.call('ctdb.shared.volume.umount')
+                    await c.wait()
+                    if c.error:
+                        raise CallError(f'{c.error}')
                 await run('umount', '-f', dataset)
             except subprocess.CalledProcessError as e:
                 stderr = e.stderr.decode()
@@ -359,8 +386,9 @@ class SystemDatasetService(ConfigService):
         return [(f'{pool}/.system', '')] + [
             (f'{pool}/.system/{i}', i) for i in [
                 'cores', 'samba4', f'syslog-{uuid}',
-                f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services', 'glusterd',
-            ]
+                f'rrd-{uuid}', f'configs-{uuid}',
+                'webui', 'services'
+            ] + ['glusterd', CTDBConfig.CTDB_VOL_NAME.value] if osc.IS_LINUX
         ]
 
     async def __nfsv4link(self, config):
