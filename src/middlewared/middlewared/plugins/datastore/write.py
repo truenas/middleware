@@ -28,10 +28,12 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 if isinstance(column.type, (types.String, types.Text)):
                     insert.setdefault(column.name, '')
 
-        await self.middleware.call('datastore.execute_write', table.insert().values(**insert))
         pk_column = self._get_pk(table)
-        if type(pk_column.type) == sqltypes.Integer:
-            pk = (await self.middleware.call('datastore.fetchall', 'SELECT last_insert_rowid()'))[0][0]
+        return_last_insert_rowid = type(pk_column.type) == sqltypes.Integer
+        result = await self.middleware.call('datastore.execute_write', table.insert().values(**insert),
+                                            return_last_insert_rowid)
+        if return_last_insert_rowid:
+            pk = result
         else:
             pk = insert[pk_column.name]
 
