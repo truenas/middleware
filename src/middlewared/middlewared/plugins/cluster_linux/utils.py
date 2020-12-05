@@ -1,5 +1,3 @@
-from middlewared.plugins.smb import SMBPath
-
 import os
 import enum
 
@@ -14,8 +12,8 @@ class CTDBConfig(enum.Enum):
     """
 
     # ctdb smb related config
-    SMB_BASE = SMBPath.STATEDIR.platform()
     VOL_DB_DIR = '/var/run/ctdb/volatile'
+    SMB_BASE = '/var/db/system/samba4'
     PER_DB_DIR = os.path.join(SMB_BASE, 'ctdb_persistent')
     STA_DB_DIR = os.path.join(SMB_BASE, 'ctdb_state')
 
