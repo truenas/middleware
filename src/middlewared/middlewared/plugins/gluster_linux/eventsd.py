@@ -4,9 +4,14 @@ import json
 
 from middlewared.validators import URL
 from middlewared.schema import Dict, Str
-from middlewared.service import job, accepts, CallError, CRUDService, ValidationErrors
+from middlewared.service import (job, accepts, CallError,
+                                 CRUDService, ValidationErrors)
+from .utils import GlusterConfig
 
-EVENTSD_LOCK = 'gluster_eventsd_lock'
+
+EVENTSD_LOCK = GlusterConfig.EVENTSD_LOCK.value
+LOCAL_WEBHOOK_URL = GlusterConfig.LOCAL_EVENTSD_WEBHOOK_URL.value
+WEBHOOKS_FILE = GlusterConfig.WEBHOOKS_FILE.value
 
 
 class GlusterEventsdService(CRUDService):
@@ -14,13 +19,11 @@ class GlusterEventsdService(CRUDService):
     class Config:
         namespace = 'gluster.eventsd'
 
-    WORKDIR = '/var/lib/glusterd'
-    WEBHOOKS_FILE = WORKDIR + '/events/webhooks.json'
-    EVENTSD_LOCK = 'gluster_eventsd_lock'
-
     def format_cmd(self, data, delete=False,):
 
-        cmd = ['gluster-eventsapi', 'webhook-add' if not delete else 'webhook-del']
+        cmd = [
+            'gluster-eventsapi', 'webhook-add' if not delete else 'webhook-del'
+        ]
 
         # need to add the url as the next param
         cmd.append(data['url'])
@@ -79,21 +82,30 @@ class GlusterEventsdService(CRUDService):
 
         verrors = ValidationErrors()
 
-        # there doesn't seem to be an upper limit on the amount
-        # of webhook endpoints that can be added to the daemon
-        # so place an arbitrary limit of 5 for now
-        if len(self.middleware.call_sync('gluster.eventsd.webhooks')['webhooks']) >= 5:
-            verrors.add(
-                f'webhook_create.{data["url"]}',
-                'Maximum number of webhooks has been met. '
-                'Delete one or more and try again.'
-            )
+        add_it = result = None
+
+        # get the current webhooks
+        cw = self.middleware.call_sync('gluster.eventsd.webhooks')
+        if data['url'] not in list(cw['webhooks']):
+            add_it = True
+            # there doesn't seem to be an upper limit on the amount
+            # of webhook endpoints that can be added to the daemon
+            # so place an arbitrary limit of 5
+            # (excluding the local middlewared webhook)
+            if len(cw['webhooks']) >= 5 and data['url'] != LOCAL_WEBHOOK_URL:
+                verrors.add(
+                    f'webhook_create.{data["url"]}',
+                    'Maximum number of webhooks has been met. '
+                    'Delete one or more and try again.'
+                )
 
         verrors.check()
 
-        cmd = self.format_cmd(data)
+        if add_it:
+            cmd = self.format_cmd(data)
+            result = self._run_cmd(cmd)
 
-        return self.run_cmd(cmd)
+        return result
 
     @accepts(Dict(
         'webhook_delete',
@@ -108,9 +120,15 @@ class GlusterEventsdService(CRUDService):
         `url` is a http address (i.e. http://192.168.1.50/endpoint)
         """
 
-        cmd = self.format_cmd(data, delete=True)
+        result = None
 
-        return self.run_cmd(cmd)
+        # get the current webhooks
+        cw = self.middleware.call_sync('gluster.eventsd.webhooks')
+        if data['url'] in list(cw['webhooks']):
+            cmd = self.format_cmd(data, delete=True)
+            result = self.run_cmd(cmd)
+
+        return result
 
     @accepts()
     def webhooks(self):
@@ -121,7 +139,7 @@ class GlusterEventsdService(CRUDService):
 
         result = {'webhooks': {}}
         with contextlib.suppress(FileNotFoundError):
-            with open(self.WEBHOOKS_FILE, 'r') as f:
+            with open(WEBHOOKS_FILE, 'r') as f:
                 result['webhooks'] = json.load(f)
 
         return result

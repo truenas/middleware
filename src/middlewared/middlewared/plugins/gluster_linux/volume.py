@@ -6,7 +6,10 @@ from middlewared.service import (CRUDService, accepts,
                                  item_method)
 from middlewared.schema import Dict, Str, Int, Bool, List
 
-from .utils import GLUSTER_JOB_LOCK
+from .utils import GlusterConfig
+
+
+GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
 
 
 class GlusterVolumeService(CRUDService):

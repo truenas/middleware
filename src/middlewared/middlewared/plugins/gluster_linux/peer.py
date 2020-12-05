@@ -7,10 +7,13 @@ from middlewared.service import (accepts, private, job,
                                  CallError, CRUDService,
                                  ValidationErrors)
 
-from .utils import GLUSTER_JOB_LOCK
+from .utils import GlusterConfig
 
 import subprocess
 import xml.etree.ElementTree as ET
+
+
+GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
 
 
 class GlusterPeerService(CRUDService):
@@ -49,7 +52,10 @@ class GlusterPeerService(CRUDService):
             'connected': p.find('connected').text,
         }
 
-        data['connected'] = 'Connected' if data['connected'] == '1' else 'Disconnected'
+        if data['connected'] == '1':
+            data['connected'] = 'Connected'
+        else:
+            data['connected'] = 'Disconnected'
 
         return data
 
@@ -157,15 +163,22 @@ class GlusterPeerService(CRUDService):
             return local_view
 
         # need to pull out a remote peer (that's connected)
-        remote_node = next(
-            (i['hostname'] for i in local_view if i['connected'] == 'Connected' and i['hostname'] != 'localhost'), None
-        )
+        remote_node = None
+        for i in local_view:
+            if i['connected'] == 'Connected' and i['hostname'] != 'localhost':
+                remote_node = i['hostname']
+                break
+
         if remote_node is None:
             raise CallError('All remote peers are disconnected.')
 
         # now we need to run the same command as `__peer_wrapper(peer.status)`
         # but specifying a remote peer to get the "remote_local_view"
-        command = ['gluster', f'--remote-host={remote_node}', 'peer', 'status', '--xml']
+        command = [
+            'gluster',
+            f'--remote-host={remote_node}',
+            'peer', 'status', '--xml'
+        ]
         cp = subprocess.run(
             command,
             stdout=subprocess.PIPE,
@@ -193,8 +206,9 @@ class GlusterPeerService(CRUDService):
         our_ip = [i for i in remote_local_view if i not in local_view]
         if len(our_ip) != 1:
             raise CallError(
-                f'Remote peer: {remote_node} sees these peers: {remote_local_view} '
-                'The local peer sees these peers: {local_view}.'
+                f'Remote peer: {remote_node} sees these peers: '
+                f'{remote_local_view}'
+                f'The local peer sees these peers: {local_view}.'
                 'The local and remote peers should be the same quantity.'
             )
 
