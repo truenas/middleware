@@ -7,7 +7,7 @@ import pathlib
 import subprocess
 
 
-class CtdbSharedStorageService(Service):
+class CtdbSharedVolumeService(Service):
 
     class Config:
         namespace = 'ctdb.shared.volume'
