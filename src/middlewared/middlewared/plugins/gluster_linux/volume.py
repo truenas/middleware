@@ -131,6 +131,10 @@ class GlusterVolumeService(CRUDService):
         name = data.pop('name')
         temp = data.pop('bricks')
 
+        # before we create the gluster volume, we need to ensure
+        # the ctdb shared volume is setup
+        self.middleware.call_sync('ctdb.shared.volume.create')
+
         bricks = []
         for i in temp:
             peer = i['peer_name']
@@ -359,7 +363,11 @@ class GlusterVolumeService(CRUDService):
                     Str('peer_path', required=True),
                 ),
             ], required=True),
-            Str('operation', enum=['START', 'STOP', 'COMMIT', 'STATUS'], required=True),
+            Str(
+                'operation',
+                enum=['START', 'STOP', 'COMMIT', 'STATUS'],
+                required=True,
+            ),
             Int('replica'),
         )
     )
