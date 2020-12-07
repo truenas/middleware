@@ -137,6 +137,8 @@ class ChartReleaseService(CRUDService):
             release_data['portals'] = await self.middleware.call(
                 'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_config
             )
+            if 'icon' not in release_data['chart_metadata']:
+                release_data['chart_metadata']['icon'] = None
 
             releases.append(release_data)
 
