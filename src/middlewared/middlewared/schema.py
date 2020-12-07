@@ -59,7 +59,7 @@ class EnumMixin(object):
 class Attribute(object):
 
     def __init__(self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
-                 validators=None, register=False, hidden=False, **kwargs):
+                 validators=None, register=False, hidden=False, editable=True, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs
         self.default = kwargs.pop('default', None)
@@ -72,15 +72,21 @@ class Attribute(object):
         self.validators = validators or []
         self.register = register
         self.hidden = hidden
+        self.editable = editable
+        # When a field is marked as non-editable, it must specify a default
+        if not self.editable and not self.has_default:
+            raise Error(self.name, 'Default value must be specified when attribute is marked as non-editable.')
 
     def clean(self, value):
         if value is None and self.null is False:
             raise Error(self.name, 'null not allowed')
         if value is NOT_PROVIDED:
             if self.has_default:
-                return copy.deepcopy(self.default)
+                value = copy.deepcopy(self.default)
             else:
                 raise Error(self.name, 'attribute required')
+        if not self.editable and value != self.default:
+            raise Error(self.name, 'Field is not editable.')
         return value
 
     def has_private(self):
