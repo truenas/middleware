@@ -221,9 +221,7 @@ class ChartReleaseService(CRUDService):
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
-        default_values = item_details['values']
-        new_values = copy.deepcopy(default_values)
-        new_values.update(data['values'])
+        new_values = data['values']
         new_values, context = await self.normalise_and_validate_values(item_details, new_values, False, release_ds)
 
         job.set_progress(25, 'Initial Validation completed')
