@@ -52,7 +52,12 @@ class ChartReleaseService(Service):
         verrors.check()
 
         # If schema is okay, we see if we have question specific validation to be performed
-        questions = {v['variable']: v for v in item_version_details['schema']['questions']}
+        questions = {}
+        for variable in item_version_details['schema']['questions']:
+            questions[variable['variable']] = variable
+            if 'subquestions' in variable.get('schema', {}):
+                for sub_variable in variable['schema']['subquestions']:
+                    questions[sub_variable['variable']] = sub_variable
         for key in new_values:
             await self.validate_question(verrors, new_values[key], questions[key], dict_obj.attrs[key], schema_name)
 
