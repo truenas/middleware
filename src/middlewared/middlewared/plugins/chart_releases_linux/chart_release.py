@@ -332,7 +332,10 @@ class ChartReleaseService(CRUDService):
         version_details = await self.middleware.call('catalog.item_version_details', chart_path)
         config = release['config']
         config.update(data['values'])
-        config, context = await self.normalise_and_validate_values(version_details, config, True, release['dataset'])
+        # We use update=False because we want defaults to be populated again if they are not present in the payload
+        # Why this is not dangerous is because the defaults will be added only if they are not present/configured for
+        # the chart release.
+        config, context = await self.normalise_and_validate_values(version_details, config, False, release['dataset'])
 
         job.set_progress(25, 'Initial Validation complete')
 
