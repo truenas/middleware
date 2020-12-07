@@ -665,9 +665,7 @@ class Dict(Attribute):
     def get_defaults(self, orig_data, skip_attrs):
         data = copy.deepcopy(orig_data)
         for attr in list(self.attrs.values()):
-            if attr.name not in data and attr.name not in skip_attrs and (
-                attr.required or attr.has_default
-            ):
+            if attr.name not in data and attr.name not in skip_attrs and attr.has_default:
                 data[attr.name] = attr.clean(NOT_PROVIDED)
         return data
 
