@@ -577,7 +577,7 @@ class Dict(Attribute):
 
     def __init__(self, name, *attrs, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
-        self.conditional_validation = kwargs.pop('conditional_validation', {})
+        self.conditional_defaults = kwargs.pop('conditional_defaults', {})
         self.strict = kwargs.pop('strict', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
@@ -590,12 +590,12 @@ class Dict(Attribute):
         for i in attrs:
             self.attrs[i.name] = i
 
-        for k, v in self.conditional_validation.items():
+        for k, v in self.conditional_defaults.items():
             if k not in self.attrs:
                 raise ValueError(f'Specified attribute {k!r} not found.')
             for k_v in ('filters', 'attrs'):
                 if k_v not in v:
-                    raise ValueError(f'Conditional validation must have {k_v} specified.')
+                    raise ValueError(f'Conditional defaults must have {k_v} specified.')
             for attr in v['attrs']:
                 if attr not in self.attrs:
                     raise ValueError(f'Specified attribute {attr} not found.')
@@ -618,7 +618,7 @@ class Dict(Attribute):
         skip_attrs = defaultdict(set)
         check_data = self.get_defaults(data, {}) if not self.update else data
         for attr, attr_data in filter(
-            lambda k: not filter_list([check_data], k[1]['filters']), self.conditional_validation.items()
+            lambda k: not filter_list([check_data], k[1]['filters']), self.conditional_defaults.items()
         ):
             for k in attr_data['attrs']:
                 skip_attrs[k].update({attr})
@@ -638,17 +638,10 @@ class Dict(Attribute):
         if not isinstance(data, dict):
             raise Error(self.name, 'A dict was expected')
 
-        skip_attrs = self.get_attrs_to_skip(data)
         for key, value in list(data.items()):
             if not self.additional_attrs:
                 if key not in self.attrs:
                     raise Error(key, 'Field was not expected')
-                if key in skip_attrs:
-                    raise Error(
-                        key,
-                        'Field was not expected because of conditional validation specified for '
-                        f'{", ".join(skip_attrs[key])!r}.'
-                    )
 
             attr = self.attrs.get(key)
             if not attr:
@@ -658,7 +651,7 @@ class Dict(Attribute):
 
         # Do not make any field and required and not populate default values
         if not self.update:
-            data.update(self.get_defaults(data, skip_attrs))
+            data.update(self.get_defaults(data, self.get_attrs_to_skip(data)))
 
         return data
 
