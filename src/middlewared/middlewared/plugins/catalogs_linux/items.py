@@ -130,5 +130,10 @@ class CatalogService(Service):
                             'max': int(quantity),
                         }
                     })
+            elif ref == 'definitions/timezone':
+                data['enum'] = [
+                    {'value': t, 'description': f'{t!r} timezone'}
+                    for t in self.middleware.call_sync('system.general.timezone_choices')
+                ]
 
         schema.update(data)

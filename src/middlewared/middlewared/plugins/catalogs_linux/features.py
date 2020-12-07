@@ -10,6 +10,7 @@ SUPPORTED_FEATURES = {
     'normalize/ixVolume',
     'definitions/interface',
     'definitions/gpuConfiguration',
+    'definitions/timezone',
 }
 
 
