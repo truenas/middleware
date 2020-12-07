@@ -811,8 +811,20 @@ class ActiveDirectoryService(ConfigService):
             res = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 1)
             if res:
                 dc = res[0]['host']
+        try:
+            ret = ActiveDirectory_Conn(conf=data, logger=self.logger).conn_check(dc)
+        except NTSTATUSError as e:
+            if e.args[0] == ntstatus.NT_STATUS_NO_TRUST_SAM_ACCOUNT:
+                raise CallError("No SAM Trust Account for this TrueNAS server exists "
+                                f"on Domain Controller [{dc}]. This may indicate problems "
+                                "with replication between Domain Controllers in the Active "
+                                "Directory domain and may impact file sharing services "
+                                "dependent on SAM account information being consistent among "
+                                "domain controllers", errno=errno.ENOENT)
 
-        return ActiveDirectory_Conn(conf=data, logger=self.logger).conn_check(dc)
+            raise CallError(f"Netlogon connection to [{dc}] failed with error: {e.args[1]}")
+
+        return ret
 
     @accepts()
     async def started(self):
