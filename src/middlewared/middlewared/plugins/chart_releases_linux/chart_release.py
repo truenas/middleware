@@ -11,7 +11,7 @@ from pkg_resources import parse_version
 
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, get
 
 from .utils import CHART_NAMESPACE_PREFIX, get_namespace, get_storage_class_name, Resources, run
 
@@ -49,6 +49,7 @@ class ChartReleaseService(CRUDService):
                 update_catalog_config[catalog['label']][train] = train_data
 
         k8s_config = await self.middleware.call('kubernetes.config')
+        k8s_node_config = await self.middleware.call('k8s.node.config')
         options = options or {}
         extra = copy.deepcopy(options.get('extra', {}))
         get_resources = extra.get('retrieve_resources')
@@ -133,10 +134,59 @@ class ChartReleaseService(CRUDService):
 
             release_data['update_available'] = latest_version > current_version
             release_data['chart_metadata']['latest_chart_version'] = str(latest_version)
+            release_data['portals'] = await self.middleware.call(
+                'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_config
+            )
 
             releases.append(release_data)
 
         return filter_list(releases, filters, options)
+
+    @private
+    def retrieve_portals_for_chart_release(self, release_data, k8s_node_config=None):
+        questions_yaml_path = os.path.join(
+            release_data['path'], 'charts', release_data['chart_metadata']['version'], 'questions.yaml'
+        )
+        if not os.path.exists(questions_yaml_path):
+            return {}
+
+        with open(questions_yaml_path, 'r') as f:
+            portals = yaml.safe_load(f.read()).get('portals') or {}
+
+        if not portals:
+            return portals
+
+        if not k8s_node_config:
+            k8s_node_config = self.middleware.call_sync('k8s.node.config')
+
+        node_ip = None
+        if k8s_node_config['node_configured']:
+            node_ip = next(
+                (addr['address'] for addr in k8s_node_config['status']['addresses'] if addr['type'] == 'InternalIP'),
+                None
+            )
+        # if not node_ip:
+        #    node_ip = self.middleware.call_sync('kubernetes.config')['node_ip']
+
+        cleaned_portals = {}
+        for portal_type, schema in portals.items():
+            t_portals = []
+            path = schema.get('path') or '/'
+            for protocol in schema['protocols']:
+                for host in schema['host']:
+                    if host == '$node_ip':
+                        host = node_ip
+
+                    for port in schema['ports']:
+                        if str(port).startswith('$variable-'):
+                            port = get(release_data['config'], port[len('$variable-'):])
+                        if not port:
+                            # We are not going to add it to list of urls if port comes up as empty
+                            continue
+                        t_portals.append(f'{protocol}://{host}:{port}{path}')
+            cleaned_portals[portal_type] = t_portals
+
+        return cleaned_portals
 
     @private
     async def host_path_volumes(self, pods):
