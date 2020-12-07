@@ -165,8 +165,8 @@ class ChartReleaseService(CRUDService):
                 (addr['address'] for addr in k8s_node_config['status']['addresses'] if addr['type'] == 'InternalIP'),
                 None
             )
-        # if not node_ip:
-        #    node_ip = self.middleware.call_sync('kubernetes.config')['node_ip']
+        if not node_ip:
+            node_ip = self.middleware.call_sync('kubernetes.config')['node_ip']
 
         cleaned_portals = {}
         for portal_type, schema in portals.items():
@@ -176,6 +176,11 @@ class ChartReleaseService(CRUDService):
                 for host in schema['host']:
                     if host == '$node_ip':
                         host = node_ip
+                    elif host.startswith('$variable-'):
+                        host = get(release_data['config'], host[len('$variable-'):])
+
+                    if not host:
+                        continue
 
                     for port in schema['ports']:
                         if str(port).startswith('$variable-'):
