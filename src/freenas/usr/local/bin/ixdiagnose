@@ -147,7 +147,7 @@ fi
 if [ -d "/tmp/middlewared/jobs" ]; then
 	tar -chf - -C /tmp/middlewared jobs | tar -C $dir -xf -
 fi
-tar -chf - -C /var log | tar -C $dir -xf -
+tar -chf - -C /var log --exclude=log/journal --exclude=log/lastlog --exclude=log/sysstat | tar -C $dir -xf -
 tar -chf - -C /var/tmp fndebug | tar -C $dir -xf -
 if [ "${limit}" != "-1" ] ; then
 	truncate_files "${limit}"
