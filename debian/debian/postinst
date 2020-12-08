@@ -1,4 +1,25 @@
 #!/bin/sh
+mkdir /var/trash
+for file in \
+    /etc/cron.d/certbot \
+    /etc/cron.d/e2scrub_all \
+    /etc/cron.d/mdadm \
+    /etc/cron.d/sysstat \
+    /etc/cron.daily/apt-compat \
+    /etc/cron.daily/apache2 \
+    /etc/cron.daily/calendar \
+    /etc/cron.daily/exim4-base \
+    /etc/cron.daily/dpkg \
+    /etc/cron.daily/mdadm \
+    /etc/cron.daily/man-db \
+    /etc/cron.daily/sysstat \
+    /etc/cron.weekly/man-db \
+    /etc/grub.d/10_linux \
+    /etc/grub.d/30_os-prober
+do
+    dpkg-divert --add --package truenas --rename --divert "/var/trash/$(echo "$file" | sed "s/\//_/g")" "$file"
+done
+
 dpkg-divert --add --package truenas --rename --divert /etc/grub.d__10_linux /etc/grub.d/10_linux
 dpkg-divert --add --package truenas --rename --divert /etc/grub.d__30_os-prober /etc/grub.d/30_os-prober
 
