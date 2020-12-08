@@ -49,7 +49,7 @@ class ChartReleaseService(CRUDService):
                 update_catalog_config[catalog['label']][train] = train_data
 
         k8s_config = await self.middleware.call('kubernetes.config')
-        k8s_node_config = await self.middleware.call('k8s.node.config')
+        k8s_node_ip = await self.middleware.call('kubernetes.node_ip')
         options = options or {}
         extra = copy.deepcopy(options.get('extra', {}))
         get_resources = extra.get('retrieve_resources')
@@ -135,7 +135,7 @@ class ChartReleaseService(CRUDService):
             release_data['update_available'] = latest_version > current_version
             release_data['chart_metadata']['latest_chart_version'] = str(latest_version)
             release_data['portals'] = await self.middleware.call(
-                'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_config
+                'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_ip
             )
             if 'icon' not in release_data['chart_metadata']:
                 release_data['chart_metadata']['icon'] = None
@@ -145,7 +145,7 @@ class ChartReleaseService(CRUDService):
         return filter_list(releases, filters, options)
 
     @private
-    def retrieve_portals_for_chart_release(self, release_data, k8s_node_config=None):
+    def retrieve_portals_for_chart_release(self, release_data, node_ip=None):
         questions_yaml_path = os.path.join(
             release_data['path'], 'charts', release_data['chart_metadata']['version'], 'questions.yaml'
         )
@@ -158,17 +158,8 @@ class ChartReleaseService(CRUDService):
         if not portals:
             return portals
 
-        if not k8s_node_config:
-            k8s_node_config = self.middleware.call_sync('k8s.node.config')
-
-        node_ip = None
-        if k8s_node_config['node_configured']:
-            node_ip = next(
-                (addr['address'] for addr in k8s_node_config['status']['addresses'] if addr['type'] == 'InternalIP'),
-                None
-            )
         if not node_ip:
-            node_ip = self.middleware.call_sync('kubernetes.config')['node_ip']
+            node_ip = self.middleware.call_sync('kubernetes.node_ip')
 
         cleaned_portals = {}
         for portal_type, schema in portals.items():
