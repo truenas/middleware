@@ -11,6 +11,7 @@ from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password, scale
 from pytest_dependency import depends
 
+shell = '/usr/bin/bash' if scale else '/bin/csh'
 group = 'nogroup' if scale else 'nobody'
 ACLTEST_DATASET = f'{pool_name}/acltest'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
@@ -567,7 +568,7 @@ def test_21_creating_shareuser_to_test_acls():
         "group_create": True,
         "password": ACL_PWD,
         "uid": next_uid,
-        "shell": "/bin/csh"}
+        "shell": shell}
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
     acluser_id = results.json()
