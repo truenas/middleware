@@ -135,5 +135,7 @@ class CatalogService(Service):
                     {'value': t, 'description': f'{t!r} timezone'}
                     for t in self.middleware.call_sync('system.general.timezone_choices')
                 ]
+            elif ref == 'definitions/nodeIP':
+                data['default'] = self.middleware.call_sync('kubernetes.node_ip')
 
         schema.update(data)

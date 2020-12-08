@@ -11,6 +11,7 @@ SUPPORTED_FEATURES = {
     'definitions/interface',
     'definitions/gpuConfiguration',
     'definitions/timezone',
+    'definitions/nodeIP',
 }
 
 
