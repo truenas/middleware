@@ -15,7 +15,8 @@ for file in \
     /etc/cron.daily/sysstat \
     /etc/cron.weekly/man-db \
     /etc/grub.d/10_linux \
-    /etc/grub.d/30_os-prober
+    /etc/grub.d/30_os-prober \
+    /etc/logrotate.d/syslog-ng
 do
     dpkg-divert --add --package truenas --rename --divert "/var/trash/$(echo "$file" | sed "s/\//_/g")" "$file"
 done
