@@ -15,11 +15,12 @@ class CPUPlugin(RRDBase):
 
     def get_defs(self, identifier):
         if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
-            cpu_idle = os.path.join(self.base_path, 'percent-idle.rrd')
-            cpu_nice = os.path.join(self.base_path, 'percent-nice.rrd')
-            cpu_user = os.path.join(self.base_path, 'percent-user.rrd')
-            cpu_system = os.path.join(self.base_path, 'percent-system.rrd')
-            cpu_interrupt = os.path.join(self.base_path, 'percent-interrupt.rrd')
+            type = 'gauge' if osc.IS_FREEBSD else 'percent'  # FIXME: backport our patches to SCALE
+            cpu_idle = os.path.join(self.base_path, f'{type}-idle.rrd')
+            cpu_nice = os.path.join(self.base_path, f'{type}-nice.rrd')
+            cpu_user = os.path.join(self.base_path, f'{type}-user.rrd')
+            cpu_system = os.path.join(self.base_path, f'{type}-system.rrd')
+            cpu_interrupt = os.path.join(self.base_path, f'{type}-interrupt.rrd')
 
             args = [
                 f'DEF:idle={cpu_idle}:value:AVERAGE',
