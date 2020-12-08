@@ -156,6 +156,23 @@ class KubernetesService(ConfigService):
         if not await self.middleware.call('service.started', 'kubernetes'):
             raise CallError('Kubernetes service is not running.')
 
+    @accepts()
+    async def node_ip(self):
+        """
+        Returns IP used by kubernetes which kubernetes uses to allow incoming connections.
+        """
+        k8s_node_config = await self.middleware.call('k8s.node.config')
+        node_ip = None
+        if k8s_node_config['node_configured']:
+            node_ip = next(
+                (addr['address'] for addr in k8s_node_config['status']['addresses'] if addr['type'] == 'InternalIP'),
+                None
+            )
+        if not node_ip:
+            node_ip = (await self.middleware.call('kubernetes.config'))['node_ip']
+
+        return node_ip
+
 
 async def setup(middleware):
     await middleware.call(
