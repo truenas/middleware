@@ -21,7 +21,7 @@ def test_01_verify_default_acltype_from_pool_dataset_with_api(request):
 
 
 def test_02_verify_default_acltype_from_pool_dataset_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get acltype {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -46,7 +46,7 @@ def test_04_verify_test1_dataset_inherited_parent_acltype_with_api(request):
 
 
 def test_05_verify_test1_dataset_inherited_parent_acltype_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get acltype {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

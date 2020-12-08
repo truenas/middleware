@@ -208,7 +208,7 @@ def test_17_Deleting_file(request):
 
 @bsd_host_cfg
 def test_18_verifiying_iscsi_session_on_freenas(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     try:
         results = SSH_TEST('ctladm islist', user, password, ip)
         assert results['result'] is True, results['output']

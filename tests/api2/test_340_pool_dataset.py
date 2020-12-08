@@ -302,7 +302,7 @@ def test_29_verify_the_id_zvol_does_not_exist(request):
 
 @pytest.mark.parametrize("create_dst", [True, False])
 def test_28_delete_dataset_with_receive_resume_token(request, create_dst):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     result = POST('/pool/dataset/', {'name': f'{pool_name}/src'})
     assert result.status_code == 200, result.text
 

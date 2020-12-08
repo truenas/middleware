@@ -94,7 +94,7 @@ def test_04_verify_the_job_id_is_successful(request):
 
 
 def test_05_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["AD_ENABLED"])
+    depends(request, ["AD_ENABLED", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -144,7 +144,7 @@ def test_08_system_keytab_verify(request):
     the system keytab. AD_MACHINE_ACCOUNT should add more than
     one principal.
     """
-    depends(request, ["AD_MACHINE_ACCOUNT_ADDED"])
+    depends(request, ["AD_MACHINE_ACCOUNT_ADDED", "ssh_password"], scope="session")
     global orig_kt_len
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
@@ -160,7 +160,7 @@ def test_09_ticket_verify(request):
     kerberos._klist_test performs a platform-independent verification
     of kerberos ticket.
     """
-    depends(request, ["AD_MACHINE_ACCOUNT_ADDED"])
+    depends(request, ["AD_MACHINE_ACCOUNT_ADDED", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos._klist_test'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['output'].strip() == 'True'
@@ -207,7 +207,7 @@ def test_12_second_keytab_system_keytab_verify(request):
     the system keytab. AD_MACHINE_ACCOUNT should add more than
     one principal.
     """
-    depends(request, ["SECOND_KEYTAB"])
+    depends(request, ["SECOND_KEYTAB", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -275,7 +275,7 @@ def test_18_second_realm_krb5_conf_verify(request):
     the system keytab. AD_MACHINE_ACCOUNT should add more than
     one principal.
     """
-    depends(request, ["SECOND_REALM"])
+    depends(request, ["SECOND_REALM", "ssh_password"], scope="session")
     has_kdc = False
     has_admin_server = False
     has_kpasswd_server = False
@@ -320,7 +320,7 @@ def test_20_base_krb5_pam_override(request):
 
 
 def test_21_base_krb5_pam_verify(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
+    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
     has_forwardable = False
     has_ticket_lifetime = False
 
@@ -356,7 +356,7 @@ def test_22_base_krb5_appdefaults_add(request):
 
 
 def test_23_base_krb5_appdefaults_verify(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
+    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
     has_aux = False
 
     cmd = 'cat /etc/krb5.conf'
@@ -390,7 +390,7 @@ def test_24_base_krb5_libdefaults_add(request):
 
 
 def test_25_base_krb5_libdefaults_verify(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
+    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
     has_aux = False
 
     cmd = 'cat /etc/krb5.conf'
@@ -431,7 +431,7 @@ def test_28_modify_base_krb5_libdefaults_aux_knownfail(request):
 
 
 def test_29_verify_no_nfs_principals(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
+    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.has_nfs_principal'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -445,7 +445,7 @@ def test_30_check_nfs_exports_sec(request):
     an NFS SPN entry. Expected security with v4 is:
     "V4: / -sec=sys"
     """
-    depends(request, ["KRB5_IS_HEALTHY"])
+    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
     payload = {"v4": True}
     results = PUT("/nfs/", payload)
     assert results.status_code == 200, results.text
@@ -476,14 +476,14 @@ def test_32_add_krb_spn(request):
     join involved obtaining a kerberos ticket with elevated
     privileges.
     """
-    depends(request, ["V4_KRB_ENABLED"])
+    depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
     cmd = 'midclt call activedirectory.add_nfs_spn'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 def test_33_verify_has_nfs_principals(request):
-    depends(request, ["V4_KRB_ENABLED"])
+    depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.has_nfs_principal'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -491,7 +491,7 @@ def test_33_verify_has_nfs_principals(request):
 
 
 def test_34_verify_ad_nfs_parameters(request):
-    depends(request, ["V4_KRB_ENABLED"])
+    depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.getparm "winbind use default domain" GLOBAL'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -506,6 +506,7 @@ def test_35_check_nfs_exports_sec(request):
     Expected security with is:
     "V4: / -sec=krb5:krb5i:krb5p"
     """
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'midclt call etc.generate nfsd'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -539,6 +540,7 @@ def test_37_check_nfs_exports_sec(request):
     "V4: / -sec=sys:krb5:krb5i:krb5p"
     """
     cmd = 'midclt call etc.generate nfsd'
+    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -567,7 +569,7 @@ def test_39_leave_activedirectory(request):
 
 
 def test_40_verify_activedirectory_live_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["AD_ENABLED"])
+    depends(request, ["AD_ENABLED", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])

@@ -42,7 +42,7 @@ G = 1024 * 1024 * 1024
     ),
 ])
 def test_dataset_quota_alert(request, datasets, expected_alerts):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     assert "" in datasets
 
     try:

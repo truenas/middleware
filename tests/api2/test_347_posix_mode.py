@@ -96,7 +96,7 @@ def test_04_verify_setting_mode_bits_nonrecursive(request, mode_bit):
 
 @pytest.mark.dependency(name="RECURSIVE_PREPARED")
 def test_05_prepare_recursive_tests(request):
-    depends(request, ["IS_TRIVIAL"])
+    depends(request, ["IS_TRIVIAL", "ssh_password"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': MODE_SUBDATASET
@@ -278,7 +278,7 @@ def dir_mode_check(mode_bit):
         assert results['result'] is False, results['output']
 
 
-def file_mode_check(mode_bit):
+def file_mode_check(request, mode_bit):
     if mode_bit.endswith("READ"):
         cmd = f'cat /mnt/{MODE_DATASET}/canary'
         results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
@@ -294,6 +294,7 @@ def file_mode_check(mode_bit):
         assert results['result'] is False, results['output']
 
     elif mode_bit.endswith("WRITE"):
+        depends(request, ["ssh_password"], scope="session")
         cmd = f'cat /mnt/{MODE_DATASET}/canary'
         results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
         assert results['result'] is False, results['output']
@@ -443,7 +444,7 @@ def test_13_test_directory_other_bits_function_allow(mode_bit, request):
 
 
 def test_14_setup_file_test(request):
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     result = POST(
         '/filesystem/setperm/', {
             'path': f'/mnt/{MODE_DATASET}',

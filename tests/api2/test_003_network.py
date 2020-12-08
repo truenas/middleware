@@ -6,6 +6,7 @@
 import pytest
 import sys
 import os
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import ha, scale, interface, user, password
@@ -148,7 +149,8 @@ def test_13_verify_get_network_configuration_output_(dkeys):
 
 
 @pytest.mark.skipif(ha or scale, reason='Skipping test for HA')
-def test_14_verify_that_netwait_is_in_rc_conf_freenas():
+def test_14_verify_that_netwait_is_in_rc_conf_freenas(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'cat /etc/rc.conf.freenas | grep netwait'
     ssh_results = SSH_TEST(cmd, user, password, ip)
     assert ssh_results['result'] is True, ssh_results['output']
@@ -189,7 +191,8 @@ def test_18_verify_get_network_configuration_output_(dkeys):
 
 
 @pytest.mark.skipif(ha or scale, reason='Skipping test for HA')
-def test_19_verify_that_netwait_is_not_in_rc_conf_freenas():
+def test_19_verify_that_netwait_is_not_in_rc_conf_freenas(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'cat /etc/rc.conf.freenas | grep netwait'
     ssh_results = SSH_TEST(cmd, user, password, ip)
     assert ssh_results['result'] is False, ssh_results['output']
