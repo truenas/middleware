@@ -4,11 +4,11 @@
 import sys
 import os
 import pytest
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, PUT, SSH_TEST, GET, DELETE
 from auto_config import user, password, ip
-
 TESTSCRIPT = '/tmp/.testFileCreatedViaInitScript'
 TESTCMD = 'foo'
 
@@ -34,7 +34,8 @@ def test_01_Create_initshutdownscript_command(initshutdowncmd_dict):
     assert isinstance(initshutdowncmd_dict['id'], int) is True
 
 
-def test_02_Touch_initshutdownscript_script_file():
+def test_02_Touch_initshutdownscript_script_file(request):
+    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'touch "{TESTSCRIPT}"', user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -78,7 +79,8 @@ def test_07_Check_that_API_reports_the_script_as_updated(initshutdownsc_dict):
     assert results.json()[0]['enabled'] is False
 
 
-def test_08_Delete_script_file():
+def test_08_Delete_script_file(request):
+    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'rm "{TESTSCRIPT}"', user, password, ip)
     assert results['result'] is True, results['output']
 

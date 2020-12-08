@@ -5,7 +5,7 @@
 import os
 import pytest
 import sys
-
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, PUT, SSH_TEST
@@ -38,7 +38,8 @@ def test_02_Check_ntpserver_configured_using_api(ntp_dict):
     assert data[0]['address'] == ntpServer, data
 
 
-def test_03_Checking_ntpserver_configured_using_ssh():
+def test_03_Checking_ntpserver_configured_using_ssh(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = f'fgrep "{ntpServer}" /etc/ntp.conf'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results
@@ -63,8 +64,9 @@ def test_05_Removing_non_AD_NTP_servers(ntp_dict):
         ntp_dict['servers'].pop(k)
 
 
-def test_06_Checking_ntpservers_num_configured_using_ssh(ntp_dict):
-    results = SSH_TEST(f'grep -R ^server /etc/ntp.conf', user, password, ip)
+def test_06_Checking_ntpservers_num_configured_using_ssh(ntp_dict, request):
+    depends(request, ["ssh_password"], scope="session")
+    results = SSH_TEST('grep -R ^server /etc/ntp.conf', user, password, ip)
     assert results['result'] is True, results
     assert len(results['output'].strip().split('\n')) == \
         len(ntp_dict['servers']), results['output']

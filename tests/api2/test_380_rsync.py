@@ -27,7 +27,8 @@ def test_02_Checking_that_API_reports_rsyncd_service():
     assert results.status_code == 200, results.text
 
 
-def test_03_create_root_ssh_key():
+def test_03_create_root_ssh_key(request):
+    depends(request, ["ssh_key"], scope="session")
     cmd = 'ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -N ""'
     results = SSH_TEST(cmd, user, None, ip)
     assert results['result'] is True, results['output']
@@ -111,7 +112,7 @@ def test_13_Check_that_the_API_reports_rsync_task_as_deleted(request, rsynctask_
 
 
 def test_14_remove_root_ssh_key(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_key"], scope="session")
     cmd = 'rm /root/.ssh/id_rsa*'
     results = SSH_TEST(cmd, user, None, ip)
     assert results['result'] is True, results['output']

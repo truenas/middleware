@@ -193,7 +193,7 @@ def test_013_creating_testfile_on_bsd(request):
 
 @bsd_host_cfg
 def test_014_verify_testfile_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -218,7 +218,7 @@ def test_016_moving_smb_file_on_bsd(request):
 
 @bsd_host_cfg
 def test_017_verify_testfile_does_not_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
@@ -235,7 +235,7 @@ def test_018_get_filesystem_stat_from_testfile_verify_it_is_not_there(request):
 
 @bsd_host_cfg
 def test_019_verify_testfile2_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile2.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -260,7 +260,7 @@ def test_021_copying_smb_file_on_bsd(request):
 
 @bsd_host_cfg
 def test_022_verify_testfile_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -277,7 +277,7 @@ def test_023_get_filesystem_stat_from_testfilet_and_verify(request, stat):
 
 @bsd_host_cfg
 def test_024_verify_testfile2_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile2.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -302,7 +302,7 @@ def test_026_deleting_smb_testfile_on_bsd(request):
 
 @bsd_host_cfg
 def test_027_verify_testfile_is_deleted_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
@@ -328,7 +328,7 @@ def test_029_unmounting_smb_on_bsd(request):
 
 @bsd_host_cfg
 def test_030_verify_testfile2_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile2.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -353,7 +353,7 @@ def test_032_remounting_smb_on_bsd(request):
 
 @bsd_host_cfg
 def test_033_verify_testfile2_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile2.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -386,7 +386,7 @@ def test_036_create_tmp_directory_on_bsd(request):
 
 @bsd_host_cfg
 def test_037_verify__the_tmp_directory_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -d {smb_path}/tmp'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -411,7 +411,7 @@ def test_039_moving_testfile2_into_the_tmp_directory_on_bsd(request):
 
 @bsd_host_cfg
 def test_040_verify_testfile2_is_in_tmp_directory_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f {smb_path}/tmp/testfile2.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -436,7 +436,7 @@ def test_042_deleting_testfile2_on_bsd_smb(request):
 
 @bsd_host_cfg
 def test_043_verify_testfile2_is_erased_from_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f {smb_path}/tmp/testfile2.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
@@ -461,7 +461,7 @@ def test_045_remove_tmp_directory_on_bsd_smb(request):
 
 @bsd_host_cfg
 def test_046_verify_the_tmp_directory_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -d {smb_path}/tmp'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
@@ -486,7 +486,7 @@ def test_048_verify_the_mount_directory_is_empty_on_bsd(request):
 
 @bsd_host_cfg
 def test_049_verify_the_mount_directory_is_empty_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'find -- "{smb_path}/" -prune -type d -empty | grep -q .'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -502,7 +502,7 @@ def test_050_creating_smb_file_on_bsd(request):
 
 @bsd_host_cfg
 def test_051_verify_testfile_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -535,7 +535,7 @@ def test_054_removing_smb_mountpoint_on_bsd(request):
 
 @bsd_host_cfg
 def test_055_verify_testfile_exist_on_freenas_after_unmout(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -569,7 +569,7 @@ def test_058_change_sharing_smd_home_to_true(request):
 
 
 def test_059_verify_smb_getparm_path_homes(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -653,7 +653,7 @@ def test_069_create_tmp_directory_on_osx(request):
 
 @osx_host_cfg
 def test_070_verify_tmp_directory_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -d "{smb_path}/tmp"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -677,7 +677,7 @@ def test_072_moving_smb_test_0file_into_a_tmp_directory_on_osx(request):
 
 @osx_host_cfg
 def test_073_verify_testfile_is_in_tmp_directory_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f {smb_path}/tmp/testfile.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -709,7 +709,7 @@ def test_076_verifying_test_0file_directory_were_successfully_removed_on_osx(req
 
 @osx_host_cfg
 def test_077_verify_the_mount_directory_is_empty_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'find -- "{smb_path}/" -prune -type d -empty | grep -q .'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -743,7 +743,7 @@ def test_080_verify_that_timemachine_is_true(request):
 
 @pytest.mark.parametrize('vfs_object', ["ixnas", "fruit", "streams_xattr"])
 def test_081_verify_smb_getparm_vfs_objects_share(request, vfs_object):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -751,7 +751,7 @@ def test_081_verify_smb_getparm_vfs_objects_share(request, vfs_object):
 
 
 def test_083_verify_smb_getparm_fruit_time_machine_is_yes(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -778,7 +778,7 @@ def test_085_verify_that_recyclebin_is_true(request):
 
 @pytest.mark.parametrize('vfs_object', ["ixnas", "crossrename", "recycle"])
 def test_086_verify_smb_getparm_vfs_objects_share(request, vfs_object):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -804,7 +804,7 @@ def test_088_create_testfile_on_smb_share_via_osx(request):
 
 @osx_host_cfg
 def test_089_verify_testfile_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -838,7 +838,7 @@ def test_092_get_filesystem_stat_from_testfile_verify_it_is_not_there(request):
 
 @osx_host_cfg
 def test_093_verify_recycle_directory_exist_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -d "{smb_path}/.recycle"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -854,7 +854,7 @@ def test_095_get_filesystem_stat_from_recycle_directory_and_verify(request, stat
 
 @osx_host_cfg
 def test_096_verify_guest_directory_exist_in_recycle_directory_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -d "{smb_path}/.recycle/guest"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -870,7 +870,7 @@ def test_097_get_filesystem_stat_from_guest_directory_recycle_and_verify(request
 
 @osx_host_cfg
 def test_098_verify_testfile_exist_in_recycle_guest_dirctory_on_freenas(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'test -f "{smb_path}/.recycle/guest/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -928,7 +928,7 @@ def test_104_verify_smb_sharesec_change_for(request, ae):
 
 
 def test_105_verify_smbclient_127_0_0_1_connection(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -937,7 +937,7 @@ def test_105_verify_smbclient_127_0_0_1_connection(request):
 
 
 def test_106_verify_midclt_call_smb_getparm_access_based_share_enum_is_null(request):
-    depends(request, ["pool_04", "smb_001", "smb_003"], scope="session")
+    depends(request, ["pool_04", "smb_001", "smb_003", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

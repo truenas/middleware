@@ -120,7 +120,7 @@ def test_05_update_cloud_sync(request, env, credentials, task):
 
 
 def test_06_run_cloud_sync(request, env, task):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     result = POST(f"/cloudsync/id/{task['id']}/sync/")
     assert result.status_code == 200, result.text
     for i in range(120):

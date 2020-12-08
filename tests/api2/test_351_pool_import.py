@@ -45,7 +45,7 @@ def test_01_create_dataset(request):
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
 def test_02_setup_function(request, image):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_key"], scope="session")
     zf = os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz")
     destination = f"/tmp/{image}.gz"
     send_results = send_file(zf, destination, user, None, ip)
@@ -81,7 +81,7 @@ def test_03_import_msdosfs(request):
 
 
 def test_04_look_if_Directory_slash_File(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'test -f {dataset_path}/Directory/File'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -106,7 +106,7 @@ def test_05_import_nonascii_msdosfs_fails(request):
 
 
 def test_06_look_if_Directory_slash_File(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'test -f {dataset_path}/Directory/File'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -131,7 +131,7 @@ def test_07_import_nonascii_msdosfs(request):
 
 
 def test_08_look_if_Каталог_slash_Файл(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'test -f {dataset_path}/Каталог/Файл'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -154,7 +154,7 @@ def test_09_import_ntfs(request):
 
 
 def test_10_look_if_Каталог_slash_Файл(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'test -f {dataset_path}/Каталог/Файл'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -162,7 +162,7 @@ def test_10_look_if_Каталог_slash_Файл(request):
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
 def test_11_stop_image_with_mdconfig(request, image):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     if scale is True:
         cmd = f"losetup -d {loops[image]}"
     else:

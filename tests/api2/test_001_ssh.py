@@ -3,13 +3,15 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import pytest
 import sys
 import os
 from time import sleep
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, is_agent_setup, if_key_listed, SSH_TEST
-from auto_config import sshKey, user, ha
+from auto_config import sshKey, user, password, ha
 
 if "controller1_ip" in os.environ:
     ip = os.environ["controller1_ip"]
@@ -46,21 +48,30 @@ def test_05_Checking_if_ssh_is_running():
     assert results.json()[0]['state'] == "RUNNING"
 
 
-def test_06_Ensure_ssh_agent_is_setup():
+@pytest.mark.dependency(name="ssh_password")
+def test_06_test_ssh():
+    cmd = 'ls -la'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_07_Ensure_ssh_agent_is_setup():
     assert is_agent_setup() is True
 
 
-def test_07_Ensure_ssh_key_is_up():
+def test_08_Ensure_ssh_key_is_up():
     assert if_key_listed() is True
 
 
-def test_08_Add_ssh_ky_to_root():
+def test_09_Add_ssh_ky_to_root():
     payload = {"sshpubkey": sshKey}
     results = PUT("/user/id/1/", payload, controller_a=ha)
     assert results.status_code == 200, results.text
 
 
-def test_09_test_ssh_key():
+@pytest.mark.dependency(name="ssh_key")
+def test_10_test_ssh_key(request):
+    depends(request, ["ssh_password"])
     cmd = 'ls -la'
     results = SSH_TEST(cmd, user, None, ip)
     assert results['result'] is True, results['output']

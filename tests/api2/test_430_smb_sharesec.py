@@ -241,14 +241,14 @@ def test_23_get_smb_sharesec_by_id(request):
 
 
 def test_24_delete_share_info_tdb(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'rm /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 def test_25_verify_share_info_tdb_is_deleted(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
@@ -264,7 +264,7 @@ def test_26_verify_smb_sharesec_is_reseted(request):
 
 
 def test_27_restort_sharesec_with_flush_share_info(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'midclt call smb.sharesec._flush_share_info'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -280,7 +280,7 @@ def test_28_verify_smb_sharesec_is_restored(request):
 
 
 def test_29_verify_share_info_tdb_is_created(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

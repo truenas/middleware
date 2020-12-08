@@ -167,7 +167,7 @@ def test_11_verify_job_id_is_successfull(request):
 
 
 def test_12_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
+    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -206,7 +206,7 @@ def test_16_verify_activedirectory_data_of_(request, data):
 
 @pytest.mark.dependency(name="kerberos_verified")
 def test_17_kerberos_keytab_verify(request):
-    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
+    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -219,7 +219,7 @@ def test_18_kerberos_restart_verify(request):
     """
     This tests our ability to re-kinit using our machine account.
     """
-    depends(request, ["kerberos_verified"])
+    depends(request, ["kerberos_verified", "ssh_password"], scope="session")
     cmd = 'rm /etc/krb5.keytab'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -431,7 +431,7 @@ def test_41_leave_activedirectory(request):
 
 
 def test_42_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
+    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -473,7 +473,7 @@ def test_46_verify_job_id_is_successfull(request):
 
 
 def test_47_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
+    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -653,7 +653,7 @@ def test_67_leave_activedirectory(request):
 
 
 def test_68_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
+    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])

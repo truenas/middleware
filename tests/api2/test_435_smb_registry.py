@@ -115,7 +115,7 @@ def test_004_creating_a_smb_share_path(request, smb_share):
 
 
 def test_005_shares_in_registry(request):
-    depends(request, ["SHARES_CREATED"])
+    depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -162,7 +162,7 @@ def test_008_test_presets(request, preset):
     be reflected in returned auxsmbconf and so we'll need
     to directly reach out and run smb.getparm.
     """
-    depends(request, ["SHARES_CREATED"])
+    depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     global DETECTED_PRESETS
     if not DETECTED_PRESETS:
         results = GET("/sharing/smb/presets")
@@ -205,7 +205,7 @@ def test_009_reset_smb():
 
 
 def test_010_test_aux_param_on_update(request):
-    depends(request, ["SHARES_CREATED"])
+    depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     results = GET(
         '/sharing/smb', payload={
             'query-filters': [['id', '=', 1]],
@@ -272,7 +272,7 @@ def test_010_test_aux_param_on_update(request):
 
 
 def test_011_test_aux_param_on_create(request):
-    depends(request, ["SHARES_CREATED"])
+    depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     smb_share = "AUX_CREATE"
     payload = {
         "comment": "My Test SMB Share",
@@ -349,7 +349,7 @@ def test_012_delete_shares(request, smb_share):
 
 
 def test_013_registry_is_empty(request):
-    depends(request, ["SHARES_CREATED"])
+    depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -401,7 +401,7 @@ def test_016_verify_homeshare_in_registry(request):
     share was added to the configuration with the
     correct name.
     """
-    depends(request, ["HOME_SHARE_CREATED"])
+    depends(request, ["HOME_SHARE_CREATED", "ssh_password"], scope="session")
     has_homes_share = False
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
@@ -430,7 +430,7 @@ def test_018_verify_non_home_share_in_registry(request):
     definition being removed and replaced with a new share
     name.
     """
-    depends(request, ["HOME_SHARE_CREATED"])
+    depends(request, ["HOME_SHARE_CREATED", "ssh_password"], scope="session")
     has_homes_share = False
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
@@ -459,7 +459,7 @@ def test_020_verify_homeshare_in_registry(request):
     a "homes" share reverts us to having a proper
     share definition for this special behavior.
     """
-    depends(request, ["HOME_SHARE_CREATED"])
+    depends(request, ["HOME_SHARE_CREATED", "ssh_password"], scope="session")
     has_homes_share = False
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
@@ -481,7 +481,7 @@ def test_021_registry_has_single_entry(request):
     definition has switched several times. This test
     verifies that we're properly removing the old share.
     """
-    depends(request, ["HOME_SHARE_CREATED"])
+    depends(request, ["HOME_SHARE_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -498,7 +498,7 @@ def test_022_registry_rebuild_homes(request):
     method is called (among other places) when the CIFS
     service reloads.
     """
-    depends(request, ["HOME_SHARE_CREATED"])
+    depends(request, ["HOME_SHARE_CREATED", "ssh_password"], scope="session")
     cmd = 'net conf delshare HOMES'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

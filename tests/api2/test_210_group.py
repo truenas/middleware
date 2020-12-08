@@ -8,7 +8,6 @@ import sys
 import os
 import json
 import pytest
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE, SSH_TEST
@@ -70,7 +69,8 @@ def test_07_look_group_full_name():
     assert groupinfo["gid"] == next_gid
 
 
-def test_08_look_for_testgroup_is_in_freenas_group():
+def test_08_look_for_testgroup_is_in_freenas_group(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'getent group | grep -q testgroup'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -110,13 +110,15 @@ def test_14_look_user_new_uid():
     assert groupinfo["gid"] == new_next_gid
 
 
-def test_15_look_for_testgroup_is_not_in_freenas_group():
+def test_15_look_for_testgroup_is_not_in_freenas_group(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'getent group | grep -q testgroup'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
 
 
-def test_16_look_for_newgroup_is_in_freenas_group():
+def test_16_look_for_newgroup_is_in_freenas_group(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'getent group | grep -q newgroup'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -130,11 +132,12 @@ def test_17_convert_to_smb_group():
     assert results.status_code == 200, results.text
 
 
-def test_18_check_groupmap_added():
+def test_18_check_groupmap_added(request):
     """
     Changing "smb" from False to True should result in
     insertion into group_mapping.tdb.
     """
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -153,7 +156,8 @@ def test_20_look_group_is_delete():
     assert len(GET('/group?group=newuser').json()) == 0
 
 
-def test_21_look_for_newgroup_is_not_in_freenas_group():
+def test_21_look_for_newgroup_is_not_in_freenas_group(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'getent group | grep -q newgroup'
     results = SSH_TEST(cmd, 'root', 'testing', ip)
     assert results['result'] is False, results['output']
@@ -186,7 +190,7 @@ def test_24_check_groupmap_added(request):
     Creating new group with "smb" = True should result in insertion into
     group_mapping.tdb.
     """
-    depends(request, ["SMB_GROUP_CREATED"])
+    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -212,7 +216,7 @@ def test_26_old_groupmap_removed_after_name_change(request):
     SID entry has been properly removed. Stale groupmap entries may cause
     difficult-to-diagnose group mapping issues.
     """
-    depends(request, ["SMB_GROUP_CREATED"])
+    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     cmd = 'tdbdump /var/db/system/samba4/group_mapping.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -226,7 +230,7 @@ def test_27_new_groupmap_added_after_name_change(request):
     Verify that new groupmap entry was inserted with correct
     group name.
     """
-    depends(request, ["SMB_GROUP_CREATED"])
+    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -248,7 +252,7 @@ def test_29_groupmap_deleted_after_smb_change(request):
     """
     Verify that new groupmap entry was deleted after change to "smb" = False.
     """
-    depends(request, ["SMB_GROUP_CREATED"])
+    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
