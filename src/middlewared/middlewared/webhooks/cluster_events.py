@@ -11,16 +11,24 @@ class ClusterEventsApplication(object):
 
     async def process_event(self, data):
 
-        # for now, we only mount the ctdb shared volume if we
-        # receive a start event for that volume
         event = data.get('event', None)
-        vol = data.get('message', None)
-        if event and vol:
-            if event == 'VOLUME_START' and vol['name'] == self.ctdb_shared_vol:
-                mount = await self.middleware.call('ctdb.shared.volume.mount')
-                await mount.wait()
-                if mount.error:
-                    self.middleware.logger.error(f'{mount.error}')
+        msg = data.get('message', None)
+
+        mount_it = False
+        if event and msg:
+            if event == 'VOLUME_START':
+                if msg.get('name', '') == self.ctdb_shared_vol:
+                    mount_it = True
+
+            if event == 'AFR_SUBVOL_UP':
+                if msg.get('subvol', '') in self.ctdb_shared_vol:
+                    mount_it = True
+
+        if mount_it:
+            mount = await self.middleware.call('ctdb.shared.volume.mount')
+            await mount.wait()
+            if mount.error:
+                self.middleware.logger.error(f'{mount.error}')
 
     async def response(self):
 
