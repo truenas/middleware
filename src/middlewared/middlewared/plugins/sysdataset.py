@@ -339,8 +339,6 @@ class SystemDatasetService(ConfigService):
 
     async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
 
-        IS_LINUX = osc.IS_LINUX
-
         for dataset, name in self.__get_datasets(pool, uuid):
             if name:
                 mountpoint = f'{path}/{name}'
@@ -351,25 +349,32 @@ class SystemDatasetService(ConfigService):
             if not os.path.isdir(mountpoint):
                 os.mkdir(mountpoint)
             await run('mount', '-t', 'zfs', dataset, mountpoint, check=True)
-            # if this is the ctdb dataset, then we have to
+
+        if osc.IS_LINUX:
+
+            # make sure the glustereventsd webhook dir and
+            # config file exist and start the glustereventsd
+            # service (if appropriate)
+            eventsd = await self.middleware.call('gluster.eventsd.init')
+            await eventsd.wait()
+            if eventsd.error:
+                raise CallError(f'{eventsd.error}')
+
             # mount the local glusterfuse mount after the
             # zfs dataset is mounted
-            if IS_LINUX and name == CTDBConfig.CTDB_VOL_NAME.value:
-                c = await self.middleware.call('ctdb.shared.volume.mount')
-                await c.wait()
-                if c.error:
-                    raise CallError(f'{c.error}')
+            ctdb = await self.middleware.call('ctdb.shared.volume.mount')
+            await ctdb.wait()
+            if ctdb.error:
+                raise CallError(f'{ctdb.error}')
 
     async def __umount(self, pool, uuid):
-
-        IS_LINUX = osc.IS_LINUX
 
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
                 # if this is the ctdb dataset, then we have to
                 # unmount the local glusterfuse mount first before
                 # unmounting the underlying zfs dataset
-                if IS_LINUX and name == CTDBConfig.CTDB_VOL_NAME.value:
+                if osc.IS_LINUX and name == CTDBConfig.CTDB_VOL_NAME.value:
                     c = await self.middleware.call('ctdb.shared.volume.umount')
                     await c.wait()
                     if c.error:

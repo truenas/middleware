@@ -1,6 +1,7 @@
 import subprocess
 import contextlib
 import json
+import pathlib
 
 from middlewared.validators import URL
 from middlewared.schema import Dict, Str
@@ -12,6 +13,7 @@ from .utils import GlusterConfig
 EVENTSD_LOCK = GlusterConfig.EVENTSD_LOCK.value
 LOCAL_WEBHOOK_URL = GlusterConfig.LOCAL_EVENTSD_WEBHOOK_URL.value
 WEBHOOKS_FILE = GlusterConfig.WEBHOOKS_FILE.value
+WORKDIR = GlusterConfig.WORKDIR.value
 
 
 class GlusterEventsdService(CRUDService):
@@ -103,7 +105,7 @@ class GlusterEventsdService(CRUDService):
 
         if add_it:
             cmd = self.format_cmd(data)
-            result = self._run_cmd(cmd)
+            result = self.run_cmd(cmd)
 
         return result
 
@@ -165,3 +167,66 @@ class GlusterEventsdService(CRUDService):
             return json.loads(out.strip())['output']
         else:
             raise CallError(err.strip())
+
+    @job(lock=EVENTSD_LOCK)
+    def init(self, job):
+
+        """
+        Initializes the webhook directory and config file
+        if it doesn't exist and then starts the service.
+        """
+
+        webhook_file = pathlib.Path(WEBHOOKS_FILE)
+
+        # check if the glusterd dataset exists
+        glusterd_dir = webhook_file.parent.parent
+        new_file = False
+
+        if glusterd_dir.exists() and glusterd_dir.is_mount():
+            try:
+                # make sure glusterd_dir/events subdir exists
+                webhook_file.parent.mkdir(exist_ok=True)
+
+                # now create the webhook file
+                if not webhook_file.exists():
+                    webhook_file.touch()
+                    new_file = True
+            except Exception as e:
+                raise CallError('%r', e)
+        else:
+            raise CallError(
+                f'{glusterd_dir} does not exist or is not mounted'
+            )
+
+        init_data = {}
+        if not new_file:
+            # need to know if webhooks have already been added
+            # to the file so act accordingly
+            with webhook_file.open('r') as f:
+                init_data = json.load(f)
+
+        # dont add local URL if it's already there
+        if not init_data.get(f'{LOCAL_WEBHOOK_URL}'):
+            # make sure to add local api endpoint to file
+            local_url = {f'{LOCAL_WEBHOOK_URL}': {'token': '', 'secret': ''}}
+            init_data.update(local_url)
+
+        # finally write it out
+        try:
+            with webhook_file.open('w') as f:
+                f.write(json.dumps(init_data))
+        except Exception as e:
+            raise CallError('%r', e)
+
+        # glustereventsd service doesn't have an entry in
+        # the db so we start it based on whether or not the
+        # glusterd service is started and/or set to start
+        # on boot
+        gluster = self.middleware.call_sync(
+            'service.query', [['service', '=', 'glusterd']]
+        )
+
+        if gluster and gluster['enable'] or gluster['state'] == 'RUNNING':
+            self.middleware.call_sync('service.restart', 'glustereventsd')
+
+        return init_data
