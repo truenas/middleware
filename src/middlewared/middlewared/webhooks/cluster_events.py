@@ -14,7 +14,7 @@ class ClusterEventsApplication(object):
         event = data.get('event', None)
         msg = data.get('message', None)
 
-        mount_it = False
+        umount_it = mount_it = False
         if event and msg:
             if event == 'VOLUME_START':
                 if msg.get('name', '') == self.ctdb_shared_vol:
@@ -24,11 +24,27 @@ class ClusterEventsApplication(object):
                 if msg.get('subvol', '') in self.ctdb_shared_vol:
                     mount_it = True
 
+            if event == 'VOLUME_STOP':
+                if msg.get('name', '') == self.ctdb_shared_vol:
+                    umount_it = True
+
+            if event == 'AFR_SUBVOLS_DOWN':
+                if msg.get('subvol', '') in self.ctdb_shared_vol:
+                    umount_it = True
+
         if mount_it:
-            mount = await self.middleware.call('ctdb.shared.volume.mount')
-            await mount.wait()
+            mount = await(
+                await self.middleware.call('ctdb.shared.volume.mount')
+            ).wait()
             if mount.error:
                 self.middleware.logger.error(f'{mount.error}')
+
+        if umount_it:
+            umount = await(
+                await self.middleware.call('ctdb.shared.volume.umount')
+            ).wait()
+            if umount.error:
+                self.middleware.logger.error(f'{umount.error}')
 
     async def response(self):
 
