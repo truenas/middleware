@@ -496,6 +496,11 @@ class ZFSDatasetService(CRUDService):
         return filter_list(datasets, filters, options)
 
     def query_for_quota_alert(self):
+        filters = []
+        config = self.middleware.call_sync("systemdataset.config")
+        if config["basename"]:
+            filters = [["name", "!=", config["basename"]], ["name", "!^", f"{config['basename']}/"]]
+
         return [
             {
                 k: v for k, v in dataset['properties'].items()
@@ -505,7 +510,7 @@ class ZFSDatasetService(CRUDService):
                     "org.freenas:refquota_warning", "org.freenas:refquota_critical"
                 ]
             }
-            for dataset in self.query()
+            for dataset in self.query(filters)
         ]
 
     def common_load_dataset_checks(self, ds):
