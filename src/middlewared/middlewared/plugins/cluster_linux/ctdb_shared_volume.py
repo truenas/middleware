@@ -71,7 +71,6 @@ class CtdbSharedVolumeService(Service):
     @accepts()
     @job(lock=CRE_OR_DEL_LOCK)
     async def create(self, job):
-
         """
         Create and mount the shared volume to be used
         by ctdb daemon.
@@ -121,7 +120,6 @@ class CtdbSharedVolumeService(Service):
     @accepts()
     @job(lock=CRE_OR_DEL_LOCK)
     async def delete(self, job):
-
         """
         Delete and unmount the shared volume used by ctdb daemon.
         """
@@ -154,7 +152,6 @@ class CtdbSharedVolumeService(Service):
     @accepts()
     @job(lock=JOB_LOCK)
     async def mount(self, job):
-
         """
         Mount the ctdb shared volume locally.
         """
@@ -200,7 +197,6 @@ class CtdbSharedVolumeService(Service):
     @accepts()
     @job(lock=JOB_LOCK)
     async def umount(self, job):
-
         """
         Unmount the locally mounted ctdb shared volume.
         """

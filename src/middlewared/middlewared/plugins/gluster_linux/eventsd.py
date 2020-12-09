@@ -5,7 +5,7 @@ import pathlib
 
 from middlewared.validators import URL
 from middlewared.schema import Dict, Str
-from middlewared.service import (job, accepts, CallError,
+from middlewared.service import (job, accepts, private, CallError,
                                  CRUDService, ValidationErrors)
 from .utils import GlusterConfig
 
@@ -70,7 +70,6 @@ class GlusterEventsdService(CRUDService):
     ))
     @job(lock=EVENTSD_LOCK)
     def do_create(self, job, data):
-
         """
         Add `url` webhook that will be called
         with a POST request that will include
@@ -115,7 +114,6 @@ class GlusterEventsdService(CRUDService):
     ))
     @job(lock=EVENTSD_LOCK)
     def do_delete(self, job, data):
-
         """
         Delete `url` webhook
 
@@ -134,7 +132,6 @@ class GlusterEventsdService(CRUDService):
 
     @accepts()
     def webhooks(self):
-
         """
         List the current webhooks (if any)
         """
@@ -149,7 +146,6 @@ class GlusterEventsdService(CRUDService):
     @accepts()
     @job(lock=EVENTSD_LOCK)
     def sync(self, job):
-
         """
         Sync the webhooks config file to all peers in the
         trusted storage pool
@@ -168,9 +164,9 @@ class GlusterEventsdService(CRUDService):
         else:
             raise CallError(err.strip())
 
+    @private
     @job(lock=EVENTSD_LOCK)
     def init(self, job):
-
         """
         Initializes the webhook directory and config file
         if it doesn't exist and then starts the service.
@@ -193,7 +189,7 @@ class GlusterEventsdService(CRUDService):
                     new_file = True
             except Exception as e:
                 raise CallError(
-                    'Failed creating %s with error: %r', str(webhook_file), e
+                    f'Failed creating {webhook_file} with error: {e}'
                 )
         else:
             raise CallError(
@@ -208,9 +204,9 @@ class GlusterEventsdService(CRUDService):
                 init_data = json.load(f)
 
         # dont add local URL if it's already there
-        if not init_data.get(f'{LOCAL_WEBHOOK_URL}'):
+        if not init_data.get(LOCAL_WEBHOOK_URL):
             # make sure to add local api endpoint to file
-            local_url = {f'{LOCAL_WEBHOOK_URL}': {'token': '', 'secret': ''}}
+            local_url = {LOCAL_WEBHOOK_URL: {'token': '', 'secret': ''}}
             init_data.update(local_url)
 
         # finally write it out
@@ -219,19 +215,15 @@ class GlusterEventsdService(CRUDService):
                 f.write(json.dumps(init_data))
         except Exception as e:
             raise CallError(
-                'Failed writing to %s with error: %r', str(webhook_file), e
+                f'Failed writing to {webhook_file} with error: {e}'
             )
 
         # glustereventsd service doesn't have an entry in
         # the db so we start it based on whether or not the
         # glusterd service is started and/or set to start
         # on boot
-        gluster = self.middleware.call_sync(
-            'service.query', [['service', '=', 'glusterd']]
-        )
-
-        if gluster:
-            if gluster[0]['enable'] or gluster[0]['state'] == 'RUNNING':
+        if g := self.middleware.call_sync('service.query', [['service', '=', 'glusterd']]):
+            if g[0]['enable'] or g[0]['state'] == 'RUNNING':
                 self.middleware.call_sync('service.restart', 'glustereventsd')
 
         return init_data

@@ -355,17 +355,27 @@ class SystemDatasetService(ConfigService):
             # make sure the glustereventsd webhook dir and
             # config file exist and start the glustereventsd
             # service (if appropriate)
-            eventsd = await self.middleware.call('gluster.eventsd.init')
-            await eventsd.wait()
-            if eventsd.error:
-                raise CallError(f'{eventsd.error}')
+            init = await(
+                await self.middleware.call('gluster.eventsd.init')
+            ).wait()
+            if init.error:
+                self.logger.error(
+                    'Failed to initilize %s directory with error: %s',
+                    CTDBConfig.CTDB_VOL_name.value,
+                    init.error
+                )
 
             # mount the local glusterfuse mount after the
             # zfs dataset is mounted
-            ctdb = await self.middleware.call('ctdb.shared.volume.mount')
-            await ctdb.wait()
-            if ctdb.error:
-                raise CallError(f'{ctdb.error}')
+            mount = await(
+                await self.middleware.call('ctdb.shared.volume.mount')
+            ).wait()
+            if mount.error:
+                self.logger.error(
+                    'Failed to mount locally %s with error: %s ',
+                    CTDBConfig.CTDB_VOL_NAME.value,
+                    mount.error
+                )
 
     async def __umount(self, pool, uuid):
 
@@ -375,10 +385,15 @@ class SystemDatasetService(ConfigService):
                 # unmount the local glusterfuse mount first before
                 # unmounting the underlying zfs dataset
                 if osc.IS_LINUX and name == CTDBConfig.CTDB_VOL_NAME.value:
-                    c = await self.middleware.call('ctdb.shared.volume.umount')
-                    await c.wait()
-                    if c.error:
-                        raise CallError(f'{c.error}')
+                    umount = await(
+                        await self.middleware.call('ctdb.shared.volume.umount')
+                    ).wait()
+                    if umount.error:
+                        self.logger.error(
+                            'Failed to umount %s with error: %s',
+                            CTDBConfig.CTDB_VOL_NAME.value,
+                            umount.error
+                        )
                 await run('umount', '-f', dataset)
             except subprocess.CalledProcessError as e:
                 stderr = e.stderr.decode()

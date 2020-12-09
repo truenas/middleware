@@ -66,7 +66,9 @@ class GlusterPeerService(CRUDService):
             try:
                 peers.append(self._parse_peer(_))
             except Exception as e:
-                raise CallError(f'{e}')
+                raise CallError(
+                    f'Failed parsing peer information with error: {e}'
+                )
 
         return peers
 
@@ -157,60 +159,62 @@ class GlusterPeerService(CRUDService):
         including localhost.
         """
 
+        final = None
         # get the local viewpoint of the remote peers in the TSP
-        local_view = self.__peer_wrapper(peer.status)
-        if not local_view:
-            return local_view
+        if local_view := self.__peer_wrapper(peer.status):
 
-        # need to pull out a remote peer (that's connected)
-        remote_node = None
-        for i in local_view:
-            if i['connected'] == 'Connected' and i['hostname'] != 'localhost':
-                remote_node = i['hostname']
-                break
+            # need to pull out a remote peer (that's connected)
+            remote_node = None
+            for i in local_view:
+                if i['connected'] == 'Connected' and i['hostname'] != 'localhost':
+                    remote_node = i['hostname']
+                    break
 
-        if remote_node is None:
-            raise CallError('All remote peers are disconnected.')
+            if remote_node is None:
+                raise CallError('All remote peers are disconnected.')
 
-        # now we need to run the same command as `__peer_wrapper(peer.status)`
-        # but specifying a remote peer to get the "remote_local_view"
-        command = [
-            'gluster',
-            f'--remote-host={remote_node}',
-            'peer', 'status', '--xml'
-        ]
-        cp = subprocess.run(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        )
-        if cp.returncode:
-            # the gluster cli utility will return stderr
-            # to stdout and vice versa on certain failures.
-            # account for this and decode appropriately
-            err = cp.stderr if cp.stderr else cp.stdout
-            if isinstance(err, bytes):
-                err = err.decode()
-            raise CallError(f'{err.strip()}')
-
-        # build our data structure by parsing the xml
-        remote_local_view = ET.fromstring(cp.stdout)
-        remote_local_view = self._parse_peer_status_xml(remote_local_view)
-
-        # now we compare the 2 "viewpoints" and deduce which IP address
-        # is our own
-        final = local_view.copy()
-
-        # this should only ever produce 1 entry
-        our_ip = [i for i in remote_local_view if i not in local_view]
-        if len(our_ip) != 1:
-            raise CallError(
-                f'Remote peer: {remote_node} sees these peers: '
-                f'{remote_local_view}'
-                f'The local peer sees these peers: {local_view}.'
-                'The local and remote peers should be the same quantity.'
+            # now we need to run the same command as `__peer_wrapper(peer.status)`
+            # but specifying a remote peer to get the "remote_local_view"
+            command = [
+                'gluster',
+                f'--remote-host={remote_node}',
+                'peer', 'status', '--xml'
+            ]
+            cp = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
             )
+            if cp.returncode:
+                # the gluster cli utility will return stderr
+                # to stdout and vice versa on certain failures.
+                # account for this and decode appropriately
+                err = cp.stderr if cp.stderr else cp.stdout
+                if isinstance(err, bytes):
+                    err = err.decode()
+                raise CallError(
+                    f'Failed running remote peer status with error: {err.strip()}'
+                )
 
-        final.append(our_ip[0])
+            # build our data structure by parsing the xml
+            remote_local_view = ET.fromstring(cp.stdout)
+            remote_local_view = self._parse_peer_status_xml(remote_local_view)
+
+            # now we compare the 2 "viewpoints" and deduce which IP address
+            # is our own
+            final = local_view.copy()
+
+            # this should only ever produce 1 entry
+            our_ip = [i for i in remote_local_view if i not in local_view]
+            if len(our_ip) != 1:
+                raise CallError(
+                    f'Remote peer: {remote_node} sees these peers: '
+                    f'{remote_local_view}'
+                    f'The local peer sees these peers: {local_view}.'
+                    'The local and remote peers should be the same quantity.'
+                )
+
+            final.append(our_ip[0])
+
         return final

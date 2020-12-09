@@ -33,18 +33,10 @@ class ClusterEventsApplication(object):
                     umount_it = True
 
         if mount_it:
-            mount = await(
-                await self.middleware.call('ctdb.shared.volume.mount')
-            ).wait()
-            if mount.error:
-                self.middleware.logger.error(f'{mount.error}')
+            await self.middleware.call('ctdb.shared.volume.mount')
 
         if umount_it:
-            umount = await(
-                await self.middleware.call('ctdb.shared.volume.umount')
-            ).wait()
-            if umount.error:
-                self.middleware.logger.error(f'{umount.error}')
+            await self.middleware.call('ctdb.shared.volume.umount')
 
     async def response(self):
 
@@ -68,14 +60,15 @@ class ClusterEventsApplication(object):
         if not await request.read():
             await self.response()
 
+        data = None
         try:
             data = await request.json()
         except Exception as e:
             self.middleware.logger.error(
                 'Failed to decode cluster event request: %r', e
             )
-            return await self.response()
 
-        await self.process_event(data)
+        if data is not None:
+            await self.process_event(data)
 
         return await self.response()
