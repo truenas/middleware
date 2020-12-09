@@ -5,6 +5,7 @@ from middlewared.utils import osc
 from middlewared.utils.io import write_if_changed
 
 import asyncio
+from collections import defaultdict
 import grp
 import imp
 import os
@@ -275,6 +276,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'wireguard/wg0.conf'}
         ]
     }
+    LOCKS = defaultdict(asyncio.Lock)
 
     checkpoints = ['initial', 'interface_sync', 'post_init', 'pool_import']
 
@@ -296,83 +298,84 @@ class EtcService(Service):
         if group is None:
             raise ValueError('{0} group not found'.format(name))
 
-        for entry in group:
+        async with self.LOCKS[name]:
+            for entry in group:
 
-            renderer = self._renderers.get(entry['type'])
-            if renderer is None:
-                raise ValueError(f'Unknown type: {entry["type"]}')
+                renderer = self._renderers.get(entry['type'])
+                if renderer is None:
+                    raise ValueError(f'Unknown type: {entry["type"]}')
 
-            if 'platform' in entry and entry['platform'].upper() != osc.SYSTEM:
-                continue
-
-            if checkpoint:
-                checkpoint_system = f'checkpoint_{osc.SYSTEM.lower()}'
-                if checkpoint_system in entry:
-                    entry_checkpoint = entry[checkpoint_system]
-                else:
-                    entry_checkpoint = entry.get('checkpoint', 'initial')
-                if entry_checkpoint != checkpoint:
+                if 'platform' in entry and entry['platform'].upper() != osc.SYSTEM:
                     continue
 
-            path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])
-            entry_path = entry['path']
-            if osc.IS_LINUX:
-                if entry_path.startswith('local/'):
-                    entry_path = entry_path[len('local/'):]
-            outfile = f'/etc/{entry_path}'
-            try:
-                rendered = await renderer.render(path)
-            except FileShouldNotExist:
-                self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
+                if checkpoint:
+                    checkpoint_system = f'checkpoint_{osc.SYSTEM.lower()}'
+                    if checkpoint_system in entry:
+                        entry_checkpoint = entry[checkpoint_system]
+                    else:
+                        entry_checkpoint = entry.get('checkpoint', 'initial')
+                    if entry_checkpoint != checkpoint:
+                        continue
 
+                path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])
+                entry_path = entry['path']
+                if osc.IS_LINUX:
+                    if entry_path.startswith('local/'):
+                        entry_path = entry_path[len('local/'):]
+                outfile = f'/etc/{entry_path}'
                 try:
-                    os.unlink(outfile)
-                except FileNotFoundError:
-                    pass
+                    rendered = await renderer.render(path)
+                except FileShouldNotExist:
+                    self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
 
-                continue
-            except Exception:
-                self.logger.error(f'Failed to render {entry["type"]}:{entry["path"]}', exc_info=True)
-                continue
+                    try:
+                        os.unlink(outfile)
+                    except FileNotFoundError:
+                        pass
 
-            if rendered is None:
-                continue
-
-            outfile_dirname = os.path.dirname(outfile)
-            if not os.path.exists(outfile_dirname):
-                os.makedirs(outfile_dirname)
-
-            changes = write_if_changed(outfile, rendered)
-
-            # If ownership or permissions are specified, see if
-            # they need to be changed.
-            st = os.stat(outfile)
-            if 'owner' in entry and entry['owner']:
-                try:
-                    pw = await self.middleware.run_in_thread(pwd.getpwnam, entry['owner'])
-                    if st.st_uid != pw.pw_uid:
-                        os.chown(outfile, pw.pw_uid, -1)
-                        changes = True
+                    continue
                 except Exception:
-                    pass
-            if 'group' in entry and entry['group']:
-                try:
-                    gr = await self.middleware.run_in_thread(grp.getgrnam, entry['group'])
-                    if st.st_gid != gr.gr_gid:
-                        os.chown(outfile, -1, gr.gr_gid)
-                        changes = True
-                except Exception:
-                    pass
-            if 'mode' in entry and entry['mode']:
-                try:
-                    if (st.st_mode & 0x3FF) != entry['mode']:
-                        os.chmod(outfile, entry['mode'])
-                        changes = True
-                except Exception:
-                    pass
+                    self.logger.error(f'Failed to render {entry["type"]}:{entry["path"]}', exc_info=True)
+                    continue
 
-            if not changes:
-                self.logger.debug(f'No new changes for {outfile}')
+                if rendered is None:
+                    continue
+
+                outfile_dirname = os.path.dirname(outfile)
+                if not os.path.exists(outfile_dirname):
+                    os.makedirs(outfile_dirname)
+
+                changes = write_if_changed(outfile, rendered)
+
+                # If ownership or permissions are specified, see if
+                # they need to be changed.
+                st = os.stat(outfile)
+                if 'owner' in entry and entry['owner']:
+                    try:
+                        pw = await self.middleware.run_in_thread(pwd.getpwnam, entry['owner'])
+                        if st.st_uid != pw.pw_uid:
+                            os.chown(outfile, pw.pw_uid, -1)
+                            changes = True
+                    except Exception:
+                        pass
+                if 'group' in entry and entry['group']:
+                    try:
+                        gr = await self.middleware.run_in_thread(grp.getgrnam, entry['group'])
+                        if st.st_gid != gr.gr_gid:
+                            os.chown(outfile, -1, gr.gr_gid)
+                            changes = True
+                    except Exception:
+                        pass
+                if 'mode' in entry and entry['mode']:
+                    try:
+                        if (st.st_mode & 0x3FF) != entry['mode']:
+                            os.chmod(outfile, entry['mode'])
+                            changes = True
+                    except Exception:
+                        pass
+
+                if not changes:
+                    self.logger.debug(f'No new changes for {outfile}')
 
     async def generate_checkpoint(self, checkpoint):
         if checkpoint not in await self.get_checkpoints():
