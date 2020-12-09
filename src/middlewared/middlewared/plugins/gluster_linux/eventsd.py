@@ -226,7 +226,8 @@ class GlusterEventsdService(CRUDService):
             'service.query', [['service', '=', 'glusterd']]
         )
 
-        if gluster and gluster['enable'] or gluster['state'] == 'RUNNING':
-            self.middleware.call_sync('service.restart', 'glustereventsd')
+        if gluster:
+            if gluster[0]['enable'] or gluster[0]['state'] == 'RUNNING':
+                self.middleware.call_sync('service.restart', 'glustereventsd')
 
         return init_data
