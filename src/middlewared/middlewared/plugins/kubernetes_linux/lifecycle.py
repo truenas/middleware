@@ -126,7 +126,7 @@ class KubernetesService(Service):
     async def status_change_internal(self):
         await self.validate_k8s_fs_setup()
         await self.middleware.call('service.start', 'docker')
-        await self.middleware.call('docker.images.load_default_images')
+        await self.middleware.call('container.image.load_default_images')
         asyncio.ensure_future(self.middleware.call('service.start', 'kubernetes'))
 
     @private

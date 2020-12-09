@@ -18,7 +18,8 @@ DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
 class DockerImagesService(CRUDService):
 
     class Config:
-        namespace = 'docker.images'
+        namespace = 'container.image'
+        namespace_alias = 'docker.images'
 
     @filterable
     async def query(self, filters=None, options=None):
@@ -26,8 +27,8 @@ class DockerImagesService(CRUDService):
         if not await self.middleware.call('service.started', 'docker'):
             return results
 
-        update_cache = await self.middleware.call('docker.images.image_update_cache')
-        system_images = await self.middleware.call('docker.images.get_system_images_tags')
+        update_cache = await self.middleware.call('container.image.image_update_cache')
+        system_images = await self.middleware.call('container.image.get_system_images_tags')
 
         async with aiodocker.Docker() as docker:
             for image in await docker.images.list():
@@ -103,7 +104,7 @@ class DockerImagesService(CRUDService):
         async with aiodocker.Docker() as docker:
             await docker.images.delete(name=id, force=options['force'])
 
-        await self.middleware.call('docker.images.remove_image_from_cache', image)
+        await self.middleware.call('container.image.remove_image_from_cache', image)
 
     @private
     async def load_images_from_file(self, path):
