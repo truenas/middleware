@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import math
+import os
 import psutil
 import sqlite3
 
@@ -53,6 +54,7 @@ if __name__ == "__main__":
 
     if osc.IS_FREEBSD:
         path = "/usr/local/etc/default/grub"
+        os.makedirs(os.path.dirname(path), exist_ok=True)
     else:
         path = "/etc/default/grub.d/truenas.cfg"
 
