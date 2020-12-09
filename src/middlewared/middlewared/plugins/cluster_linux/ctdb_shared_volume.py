@@ -1,4 +1,4 @@
-from middlewared.service import job, Service, CallError, accepts
+from middlewared.service import job, Service, CallError, accepts, private
 from middlewared.utils import run
 from middlewared.plugins.cluster_linux.utils import (CTDBConfig, JOB_LOCK,
                                                      CRE_OR_DEL_LOCK)
@@ -14,6 +14,7 @@ class CtdbSharedVolumeService(Service):
 
     CTDB_VOL_NAME = CTDBConfig.CTDB_VOL_NAME.value
 
+    @private
     async def construct_gluster_ctdb_api_request(self, peers):
 
         payload = {}
@@ -38,6 +39,7 @@ class CtdbSharedVolumeService(Service):
 
         return payload
 
+    @private
     async def shared_volume_exists_and_started(self):
 
         exists = started = False
