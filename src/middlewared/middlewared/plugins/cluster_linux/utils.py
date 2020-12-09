@@ -3,6 +3,7 @@ import enum
 
 
 JOB_LOCK = 'ctdb_lock'
+CRE_OR_DEL_LOCK = 'ctdb_create_or_delete_lock'
 
 
 class CTDBConfig(enum.Enum):

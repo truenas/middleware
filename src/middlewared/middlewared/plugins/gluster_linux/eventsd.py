@@ -192,7 +192,9 @@ class GlusterEventsdService(CRUDService):
                     webhook_file.touch()
                     new_file = True
             except Exception as e:
-                raise CallError('%r', e)
+                raise CallError(
+                    'Failed creating %s with error: %r', str(webhook_file), e
+                )
         else:
             raise CallError(
                 f'{glusterd_dir} does not exist or is not mounted'
@@ -216,7 +218,9 @@ class GlusterEventsdService(CRUDService):
             with webhook_file.open('w') as f:
                 f.write(json.dumps(init_data))
         except Exception as e:
-            raise CallError('%r', e)
+            raise CallError(
+                'Failed writing to %s with error: %r', str(webhook_file), e
+            )
 
         # glustereventsd service doesn't have an entry in
         # the db so we start it based on whether or not the
