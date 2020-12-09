@@ -387,7 +387,7 @@ class ZettareplService(Service):
         else:
             message = snapshot_progress_message
             progress = 100 * (
-                (message.snapshots_sent + message.bytes_sent / message.bytes_total) /
+                (message.snapshots_sent + message.bytes_sent / (message.bytes_total or float("inf"))) /
                 message.snapshots_total
             )
             text = (
