@@ -6,9 +6,9 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class CoreFilesArePresentAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "Core Files Are Present"
-    text = ("Core files are present in /var/db/system/cores: %s. Please, file a ticket at https://jira.ixsystems.com/ "
-            "and then remove them.")
+    title = "Core Files Found in System Database"
+    text = ("System core files were found in /var/db/system/cores: %s. Please create a ticket at https://jira.ixsystems.com/ "
+            "and remove these files.")
 
 
 class CoreFilesArePresentAlertSource(ThreadedAlertSource):
