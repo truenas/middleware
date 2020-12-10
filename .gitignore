@@ -8,8 +8,8 @@ __pycache__
 *.pyc
 .cache
 .pytest_cache
-config.py
-auto_config.py
+/tests/auto_config.py
+/tests/config.py
 .DS_Store
 .idea/
 .vscode/
