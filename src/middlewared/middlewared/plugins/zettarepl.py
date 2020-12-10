@@ -30,9 +30,6 @@ from zettarepl.observer import (
     ReplicationTaskDataProgress, ReplicationTaskSuccess, ReplicationTaskError,
 )
 from zettarepl.replication.task.dataset import get_target_dataset
-from zettarepl.scheduler.clock import Clock
-from zettarepl.scheduler.scheduler import Scheduler
-from zettarepl.scheduler.tz_clock import TzClock
 from zettarepl.snapshot.list import multilist_snapshots, group_snapshots_by_datasets
 from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
@@ -42,7 +39,7 @@ from zettarepl.transport.zfscli import get_properties_recursive
 from zettarepl.utils.logging import (
     LongStringsFilter, ReplicationTaskLoggingLevelFilter, logging_record_replication_task
 )
-from zettarepl.zettarepl import Zettarepl
+from zettarepl.zettarepl import create_zettarepl
 
 from middlewared.client import Client, ClientException
 from middlewared.logger import reconfigure_logging, setup_logging
@@ -158,13 +155,7 @@ class ZettareplProcess:
         definition = Definition.from_data(self.definition, raise_on_error=False)
         self.observer_queue.put(DefinitionErrors(definition.errors))
 
-        clock = Clock()
-        tz_clock = TzClock(definition.timezone, clock.now)
-
-        scheduler = Scheduler(clock, tz_clock)
-        local_shell = LocalShell()
-
-        self.zettarepl = Zettarepl(scheduler, local_shell)
+        self.zettarepl = create_zettarepl(definition)
         self.zettarepl.set_observer(self._observer)
         self.zettarepl.set_tasks(definition.tasks)
 
@@ -217,8 +208,11 @@ class ZettareplProcess:
 
         while self.zettarepl is not None:
             command, args = self.command_queue.get()
-            if command == "timezone":
-                self.zettarepl.scheduler.tz_clock.timezone = pytz.timezone(args)
+            if command == "config":
+                if "max_parallel_replication_tasks" in args:
+                    self.zettarepl.max_parallel_replication_tasks = args["max_parallel_replication_tasks"]
+                if "timezone" in args:
+                    self.zettarepl.scheduler.tz_clock.timezone = pytz.timezone(args["timezone"])
             if command == "tasks":
                 definition = Definition.from_data(args, raise_on_error=False)
                 self.observer_queue.put(DefinitionErrors(definition.errors))
@@ -296,9 +290,9 @@ class ZettareplService(Service):
 
                 self.process = None
 
-    def update_timezone(self, timezone):
+    def update_config(self, config):
         if self.queue:
-            self.queue.put(("timezone", timezone))
+            self.queue.put(("config", config))
 
     def update_tasks(self):
         try:
@@ -497,6 +491,7 @@ class ZettareplService(Service):
         return result
 
     async def get_definition(self):
+        config = await self.middleware.call("replication.config.config")
         timezone = (await self.middleware.call("system.general.config"))["timezone"]
 
         pools = {pool["name"]: pool for pool in await self.middleware.call("pool.query")}
@@ -626,6 +621,7 @@ class ZettareplService(Service):
             replication_tasks[f"task_{replication_task['id']}"] = definition
 
         definition = {
+            "max-parallel-replication-tasks": config["max_parallel_replication_tasks"],
             "timezone": timezone,
             "periodic-snapshot-tasks": periodic_snapshot_tasks,
             "replication-tasks": replication_tasks,
