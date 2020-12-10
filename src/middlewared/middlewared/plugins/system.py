@@ -1243,7 +1243,7 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('service.restart', 'syscons')
 
         if config['timezone'] != new_config['timezone']:
-            await self.middleware.call('zettarepl.update_timezone', new_config['timezone'])
+            await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
             await self.middleware.call('service.reload', 'timeservices')
             await self.middleware.call('service.restart', 'cron')
 
