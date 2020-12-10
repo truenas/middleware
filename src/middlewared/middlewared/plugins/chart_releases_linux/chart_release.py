@@ -116,6 +116,7 @@ class ChartReleaseService(CRUDService):
                 'config': config,
                 'status': status,
                 'used_ports': ports_used[name],
+                'pod_status': pods_status,
             })
 
             if get_resources:
