@@ -1479,19 +1479,40 @@ async def hook_restart_devd(middleware, *args, **kwargs):
 
 async def hook_license_update(middleware, *args, **kwargs):
     FailoverService.HA_MODE = None
-    if await middleware.call('failover.licensed'):
+
+    if not await middleware.call('failover.licensed'):
+        return
+
+    etc_generate = ['rc']
+    if await middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
+        await middleware.call('etc.generate', 'loader')
+        etc_generate += ['loader']
+
+    # setup the local heartbeat interface
+    heartbeat = True
+    try:
         await middleware.call('failover.ensure_remote_client')
-        etc_generate = ['rc']
-        if await middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
-            await middleware.call('etc.generate', 'loader')
-            etc_generate += ['loader']
+    except Exception:
+        middleware.logger.warning('Failed to ensure remote client on active')
+        heartbeat = False
+
+    if heartbeat:
+        # setup the remote controller
         try:
             await middleware.call('failover.send_small_file', '/data/license')
+        except Exception:
+            middleware.logger.warning('Failed to sync db to standby')
+
+        try:
             await middleware.call('failover.call_remote', 'failover.ensure_remote_client')
+        except Exception:
+            middleware.logger.warning('Failed to ensure remote client on standby')
+
+        try:
             for etc in etc_generate:
                 await middleware.call('failover.call_remote', 'etc.generate', [etc])
         except Exception:
-            middleware.logger.warning('Failed to sync license file to standby.')
+            middleware.logger.warning('etc.generate failed on standby')
 
     await middleware.call('service.restart', 'failover')
     await middleware.call('failover.status_refresh')
@@ -1572,13 +1593,28 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 
         return
 
-    middleware.logger.info('[HA] Setting up')
+    # when HA is initially setup, we don't synchronize service states to the
+    # standby controller. Minimally, however, it's nice to synchronize ssh
+    # (if appropriate, of course)
+    filters = [('srv_service', '=', 'ssh')]
+    ssh_enabled = remote_ssh_started = False
+    if ssh := await middleware.call('datastore.query', 'services.services', filters):
+        if ssh[0]['srv_enable']:
+            ssh_enabled = True
+        if await middleware.call('failover.call_remote', 'service.started', ['ssh']):
+            remote_ssh_started = True
+
+    middleware.logger.debug('[HA] Setting up')
 
     middleware.logger.debug('[HA] Synchronizing database and files')
     await middleware.call('failover.sync_to_peer')
 
     middleware.logger.debug('[HA] Configuring network on standby node')
     await middleware.call('failover.call_remote', 'interface.sync')
+
+    if ssh_enabled and not remote_ssh_started:
+        middleware.logger.debug('[HA] Starting SSH on standby node')
+        await middleware.call('failover.call_remote', 'service.start', ['ssh'])
 
     middleware.logger.debug('[HA] Restarting failover service on this node')
     await middleware.call('service.restart', 'failover')
@@ -1755,6 +1791,7 @@ def remote_status_event(middleware, *args, **kwargs):
 
 
 async def setup(middleware):
+    middleware.event_register('failover.setup', 'Sent when failover is being setup.')
     middleware.event_register('failover.status', 'Sent when failover status changes.')
     middleware.event_register(
         'failover.disabled_reasons',
