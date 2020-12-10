@@ -116,7 +116,7 @@
             """
             pc.update({
                 'dns proxy': 'No',
-                'max log size': '51200',
+                'max log size': '5120',
                 'load printers': 'No',
                 'printing': 'bsd',
                 'printcap name': '/dev/null',
