@@ -4,7 +4,7 @@ from glustercli.cli.utils import GlusterCmdException
 from middlewared.async_validators import resolve_hostname
 from middlewared.schema import Dict, Str
 from middlewared.service import (accepts, private, job,
-                                 CallError, CRUDService,
+                                 CallError, Service,
                                  ValidationErrors)
 
 from .utils import GlusterConfig
@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
 
 
-class GlusterPeerService(CRUDService):
+class GlusterPeerService(Service):
 
     class Config:
         namespace = 'gluster.peer'
@@ -106,7 +106,7 @@ class GlusterPeerService(CRUDService):
         )
     )
     @job(lock=GLUSTER_JOB_LOCK)
-    def do_create(self, job, data):
+    def create(self, job, data):
         """
         Add peer to the Trusted Storage Pool.
 
@@ -128,7 +128,7 @@ class GlusterPeerService(CRUDService):
         )
     )
     @job(lock=GLUSTER_JOB_LOCK)
-    def do_delete(self, job, data):
+    def delete(self, job, data):
         """
         Remove peer of `hostname` from the Trusted Storage Pool.
         """

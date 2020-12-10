@@ -6,7 +6,7 @@ import pathlib
 from middlewared.validators import URL
 from middlewared.schema import Dict, Str
 from middlewared.service import (job, accepts, private, CallError,
-                                 CRUDService, ValidationErrors)
+                                 Service, ValidationErrors)
 from .utils import GlusterConfig
 
 
@@ -16,7 +16,7 @@ WEBHOOKS_FILE = GlusterConfig.WEBHOOKS_FILE.value
 WORKDIR = GlusterConfig.WORKDIR.value
 
 
-class GlusterEventsdService(CRUDService):
+class GlusterEventsdService(Service):
 
     class Config:
         namespace = 'gluster.eventsd'
@@ -69,7 +69,7 @@ class GlusterEventsdService(CRUDService):
         Str('secret', required=False),
     ))
     @job(lock=EVENTSD_LOCK)
-    def do_create(self, job, data):
+    def create(self, job, data):
         """
         Add `url` webhook that will be called
         with a POST request that will include
@@ -113,7 +113,7 @@ class GlusterEventsdService(CRUDService):
         Str('url', required=True, validators=[URL()]),
     ))
     @job(lock=EVENTSD_LOCK)
-    def do_delete(self, job, data):
+    def delete(self, job, data):
         """
         Delete `url` webhook
 
@@ -172,6 +172,15 @@ class GlusterEventsdService(CRUDService):
         if it doesn't exist and then starts the service.
         """
 
+        service = self.middleware.call_sync(
+            'datastore.query', 'services.services', [
+                'srv_service', '=', 'glusterd'
+            ]
+        )
+        if not service[0]['enable']:
+            # glusterd isn't enabled so return
+            return
+
         webhook_file = pathlib.Path(WEBHOOKS_FILE)
 
         # check if the glusterd dataset exists
@@ -220,10 +229,8 @@ class GlusterEventsdService(CRUDService):
 
         # glustereventsd service doesn't have an entry in
         # the db so we start it based on whether or not the
-        # glusterd service is started and/or set to start
-        # on boot
-        if g := self.middleware.call_sync('service.query', [['service', '=', 'glusterd']]):
-            if g[0]['enable'] or g[0]['state'] == 'RUNNING':
-                self.middleware.call_sync('service.restart', 'glustereventsd')
+        # glusterd service is set to start on boot so if we
+        # get here, then restart it
+        self.middleware.call_sync('service.restart', 'glustereventsd')
 
         return init_data
