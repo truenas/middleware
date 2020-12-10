@@ -182,7 +182,7 @@ class CtdbSharedVolumeService(Service):
             # make sure the dirs are there
             path.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            raise CallError(f'{e}')
+            raise CallError(f'Failed creating directory with error: {e}')
 
         # try to mount it
         if not path.is_mount():

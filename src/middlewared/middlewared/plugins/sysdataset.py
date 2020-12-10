@@ -355,27 +355,25 @@ class SystemDatasetService(ConfigService):
             # make sure the glustereventsd webhook dir and
             # config file exist and start the glustereventsd
             # service (if appropriate)
-            init = await(
-                await self.middleware.call('gluster.eventsd.init')
-            ).wait()
-            if init.error:
+            init_job = await self.middleware.call('gluster.eventsd.init')
+            init = await init_job.wait()
+            if init_job.error:
                 self.logger.error(
                     'Failed to initilize %s directory with error: %s',
                     CTDBConfig.CTDB_VOL_name.value,
-                    init.error
+                    init_job.error
                 )
-
-            # mount the local glusterfuse mount after the
-            # zfs dataset is mounted
-            mount = await(
-                await self.middleware.call('ctdb.shared.volume.mount')
-            ).wait()
-            if mount.error:
-                self.logger.error(
-                    'Failed to mount locally %s with error: %s ',
-                    CTDBConfig.CTDB_VOL_NAME.value,
-                    mount.error
-                )
+            elif init:
+                # mount the local glusterfuse mount after
+                # successfully initializing glustereventsd
+                mnt_job = await self.middleware.call('ctdb.shared.volume.mount')
+                await mnt_job.wait()
+                if mnt_job.error:
+                    self.logger.error(
+                        'Failed to mount locally %s with error: %s ',
+                        CTDBConfig.CTDB_VOL_NAME.value,
+                        mnt_job.error
+                    )
 
     async def __umount(self, pool, uuid):
 
@@ -385,14 +383,13 @@ class SystemDatasetService(ConfigService):
                 # unmount the local glusterfuse mount first before
                 # unmounting the underlying zfs dataset
                 if osc.IS_LINUX and name == CTDBConfig.CTDB_VOL_NAME.value:
-                    umount = await(
-                        await self.middleware.call('ctdb.shared.volume.umount')
-                    ).wait()
-                    if umount.error:
+                    umnt_job = await self.middleware.call('ctdb.shared.volume.umount')
+                    await umnt_job.wait()
+                    if umnt_job.error:
                         self.logger.error(
                             'Failed to umount %s with error: %s',
                             CTDBConfig.CTDB_VOL_NAME.value,
-                            umount.error
+                            umnt_job.error
                         )
                 await run('umount', '-f', dataset)
             except subprocess.CalledProcessError as e:
