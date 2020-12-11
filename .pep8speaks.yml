@@ -1,0 +1,15 @@
+scanner:
+    diff_only: True
+    linter: flake8
+
+flake8:
+    ignore:
+      - E402
+      - E501
+      - W504
+    count: False
+    show-source: False
+    statistics: False
+    hang-closing: False
+
+no_blank_comment: True
