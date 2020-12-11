@@ -101,6 +101,7 @@ def test_07_promoting_dataset(request):
 # and stat output confirms its absence.
 
 
+@pytest.mark.dependency(name="pool_dataset_08")
 def test_08_set_acl_for_dataset(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
@@ -116,14 +117,15 @@ def test_08_set_acl_for_dataset(request):
     JOB_ID = result.json()
 
 
+@pytest.mark.dependency(name="pool_dataset_09")
 def test_09_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "pool_dataset_08"], scope="session")
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_10_get_filesystem_getacl(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "pool_dataset_09"], scope="session")
     global results
     payload = {
         'path': f'/mnt/{dataset}',
@@ -135,13 +137,13 @@ def test_10_get_filesystem_getacl(request):
 
 @pytest.mark.parametrize('key', ['tag', 'type', 'perms', 'flags'])
 def test_11_verify_filesystem_getacl(request, key):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "pool_dataset_09"], scope="session")
     assert results.json()['acl'][0][key] == default_acl[0][key], results.text
     assert results.json()['acl'][1][key] == default_acl[1][key], results.text
 
 
 def test_12_filesystem_acl_is_present(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "pool_dataset_09"], scope="session")
     results = POST('/filesystem/stat/', f'/mnt/{dataset}')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is True, results.text
