@@ -604,7 +604,7 @@ class FailoverService(Service):
         export_thread = threading.Thread(
             target=self._export_zpools,
             name='failover_export_zpools',
-            args=(fobj['volumes'])
+            args=(fobj['volumes'], )
         )
         export_thread.start()
         export_thread.join(timeout=self.ZPOOL_EXPORT_TIMEOUT)
