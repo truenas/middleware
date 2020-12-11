@@ -1,9 +1,9 @@
-@version:3.23
+@version:3.29
 
 #
 # options
 #
-options { chain_hostnames(off); flush_lines(0); threaded(yes); use-fqdn(no); };
+options { suppress(60); chain_hostnames(off); flush_lines(0); threaded(yes); use-fqdn(no); stats-freq(0); };
 
 #
 # sources
@@ -34,9 +34,10 @@ destination slip { file("/var/log/slip.log"); };
 destination ppp { file("/var/log/ppp.log"); };
 destination console { file("/dev/console"); };
 destination allusers { usertty("*"); };
-destination mdnsresponder { file("/var/log/mdnsresponder.log"); };
+destination mdns { file("/var/log/mdns.log"); };
 destination nginx_access { file("/tmp/nginx-access.log"); };
 destination nginx_error { file("/var/log/nginx/error.log"); };
+destination afp { file("/var/log/afp.log"); };
 #destination loghost { udp("loghost" port(514)); };
 
 #
@@ -84,10 +85,12 @@ filter f_is_debug { level(debug); };
 #
 filter f_ppp { program("ppp"); };
 filter f_slip { program("startslip"); };
-filter f_mdnsresponder { program("mDNSResponder"); };
-filter f_not_mdnsresponder { not program("mDNSResponder"); };
+filter f_mdns { program("avahi-daemon"); };
+filter f_not_mdns { not program("avahi-daemon"); };
 filter f_nginx { program("nginx"); };
 filter f_not_nginx { not program("nginx"); };
+filter f_afp { program("afpd"); };
+filter f_not_afp { not program("afpd"); };
 
 #
 # message filters
@@ -98,7 +101,7 @@ filter f_not_arpchange { not filter(f_arpchange); };
 #
 # *.err;kern.warning;auth.notice;mail.crit		/dev/console
 #
-log { source(src); filter(f_err); filter(f_not_mdnsresponder); filter(f_not_nginx); destination(console); };
+log { source(src); filter(f_err); filter(f_not_mdns); filter(f_not_nginx); filter(f_not_afp); destination(console); };
 log { source(src); filter(f_kern); filter(f_warning); destination(console); };
 log { source(src); filter(f_auth); filter(f_notice); destination(console); };
 log { source(src); filter(f_mail); filter(f_crit); destination(console); };
@@ -106,7 +109,7 @@ log { source(src); filter(f_mail); filter(f_crit); destination(console); };
 #
 # *.notice;authpriv.none;kern.debug;lpr.info;mail.crit;news.err	/var/log/messages
 #
-log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); filter(f_not_nginx); destination(messages); };
+log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdns); filter(f_not_nginx); filter(f_not_afp); destination(messages); };
 log { source(src); filter(f_kern); filter(f_debug); filter(f_not_arpchange); destination(messages); };
 log { source(src); filter(f_lpr); filter(f_info); destination(messages); };
 log { source(src); filter(f_mail); filter(f_crit); destination(messages); };
@@ -196,7 +199,7 @@ log { source(src); filter(f_console); filter(f_info); destination(consolelog); }
 # *.*							/var/log/ppp.log
 #
 log { source(src); filter(f_ppp); destination(ppp); };
-log { source(src); filter(f_mdnsresponder); filter(f_info); destination(mdnsresponder); };
+log { source(src); filter(f_mdns); filter(f_info); destination(mdns); };
 
 
 #
@@ -205,3 +208,9 @@ log { source(src); filter(f_mdnsresponder); filter(f_info); destination(mdnsresp
 #
 log { source(src); filter(f_nginx); filter(f_is_info); destination(nginx_access); };
 log { source(src); filter(f_nginx); filter(f_err); destination(nginx_error); };
+
+
+#
+# afp.*                                             /var/log/afp.log
+#
+log { source(src); filter(f_afp); destination(afp); };

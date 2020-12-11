@@ -1,0 +1,12 @@
+[Unit]
+Description=TrueNAS Update
+DefaultDependencies=no
+
+Before=middlewared.service
+
+[Service]
+Type=oneshot
+ExecStart=ix-update
+
+[Install]
+WantedBy=multi-user.target

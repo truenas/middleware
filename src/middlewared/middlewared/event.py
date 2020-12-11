@@ -6,18 +6,25 @@ class Events(object):
 
     def __init__(self):
         self.__events = {}
+        self.__events_private = set()
 
-    def register(self, name, description):
+    def register(self, name, description, private=False):
         if name in self.__events:
             raise ValueError(f'Event {name!r} already registered.')
         self.__events[name] = description
+        if private:
+            self.__events_private.add(name)
 
     def __contains__(self, name):
         return name in self.__events
 
     def __iter__(self):
         for k, v in self.__events.items():
-            yield k, {'description': v, 'wildcard_subscription': True}
+            yield k, {
+                'description': v,
+                'private': k in self.__events_private,
+                'wildcard_subscription': True
+            }
 
 
 class EventSource(object):

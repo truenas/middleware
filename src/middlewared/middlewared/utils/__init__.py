@@ -1,23 +1,20 @@
 import asyncio
-import imp
-import inspect
-import itertools
-import os
-import platform
+import logging
 import re
-import sys
 import subprocess
 import threading
 from datetime import datetime, timedelta
 from functools import wraps
 from threading import Lock
 
-from middlewared.schema import Schemas
 from middlewared.service_exception import MatchNotFound
-import middlewared.utils.osc as osc
+from middlewared.utils import osc
 
 BUILDTIME = None
 VERSION = None
+MID_PID = None
+
+logger = logging.getLogger(__name__)
 
 
 def bisect(condition, iterable):
@@ -33,7 +30,6 @@ def bisect(condition, iterable):
 
 
 def Popen(args, **kwargs):
-    kwargs.setdefault('encoding', 'utf8')
     shell = kwargs.pop('shell', None)
     if shell:
         return asyncio.create_subprocess_shell(args, **kwargs)
@@ -47,13 +43,15 @@ async def run(*args, **kwargs):
     kwargs.setdefault('stdout', subprocess.PIPE)
     kwargs.setdefault('stderr', subprocess.PIPE)
     check = kwargs.pop('check', True)
+    encoding = kwargs.pop('encoding', None)
+    errors = kwargs.pop('errors', None) or 'strict'
     proc = await asyncio.create_subprocess_exec(*args, **kwargs)
     stdout, stderr = await proc.communicate()
-    if "encoding" in kwargs:
+    if encoding:
         if stdout is not None:
-            stdout = stdout.decode(kwargs["encoding"], kwargs.get("errors") or "strict")
+            stdout = stdout.decode(encoding, errors)
         if stderr is not None:
-            stderr = stderr.decode(kwargs["encoding"], kwargs.get("errors") or "strict")
+            stderr = stderr.decode(encoding, errors)
     cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
     if check:
         cp.check_returncode()
@@ -110,10 +108,10 @@ def filter_list(_list, filters=None, options=None):
         'nin': lambda x, y: x not in y,
         'rin': lambda x, y: x is not None and y in x,
         'rnin': lambda x, y: x is not None and y not in x,
-        '^': lambda x, y: x.startswith(y),
-        '!^': lambda x, y: not x.startswith(y),
-        '$': lambda x, y: x.endswith(y),
-        '!$': lambda x, y: not x.endswith(y),
+        '^': lambda x, y: x is not None and x.startswith(y),
+        '!^': lambda x, y: x is not None and not x.startswith(y),
+        '$': lambda x, y: x is not None and x.endswith(y),
+        '!$': lambda x, y: x is not None and not x.endswith(y),
     }
 
     if filters is None:
@@ -305,125 +303,3 @@ class cache_with_autorefresh(object):
             return self.cached_return
 
         return wrapper
-
-
-def load_modules(directory, base=None, depth=0):
-    if base is None:
-        base = '.'.join(
-            ['middlewared'] +
-            os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/')
-        )
-
-    _, dirs, files = next(os.walk(directory))
-
-    for f in files:
-        if not f.endswith('.py'):
-            continue
-        name = f[:-3]
-
-        if any(name.endswith(f'_{suffix}') for suffix in ('base', 'freebsd', 'linux')):
-            if name.rsplit('_', 1)[-1] != platform.system().lower():
-                continue
-
-        if name == '__init__':
-            mod_name = base
-        else:
-            mod_name = f'{base}.{name}'
-
-        if mod_name in sys.modules:
-            yield sys.modules[mod_name]
-        else:
-            fp, pathname, description = imp.find_module(name, [directory])
-            try:
-                yield imp.load_module(mod_name, fp, pathname, description)
-            finally:
-                if fp:
-                    fp.close()
-
-    for f in dirs:
-        if depth > 0:
-            path = os.path.join(directory, f)
-            yield from load_modules(path, f'{base}.{f}', depth - 1)
-
-
-def load_classes(module, base, blacklist):
-    classes = []
-    for attr in dir(module):
-        attr = getattr(module, attr)
-        if inspect.isclass(attr):
-            if issubclass(attr, base):
-                if attr is not base and attr not in blacklist:
-                    classes.append(attr)
-
-    return classes
-
-
-class LoadPluginsMixin(object):
-
-    def __init__(self, overlay_dirs=None):
-        self.overlay_dirs = overlay_dirs or []
-        self._schemas = Schemas()
-        self._services = {}
-        self._services_aliases = {}
-
-    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None):
-        from middlewared.service import Service, CompoundService, CRUDService, ConfigService, SystemServiceService
-
-        services = []
-        main_plugins_dir = os.path.realpath(os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            '..',
-            'plugins',
-        ))
-        plugins_dirs = [os.path.join(overlay_dir, 'plugins') for overlay_dir in self.overlay_dirs]
-        plugins_dirs.insert(0, main_plugins_dir)
-        for plugins_dir in plugins_dirs:
-
-            if not os.path.exists(plugins_dir):
-                raise ValueError(f'plugins dir not found: {plugins_dir}')
-
-            for mod in load_modules(plugins_dir, depth=1):
-                if on_module_begin:
-                    on_module_begin(mod)
-
-                services.extend(load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)))
-
-                if on_module_end:
-                    on_module_end(mod)
-
-        key = lambda service: service._config.namespace
-        for name, parts in itertools.groupby(sorted(set(services), key=key), key=key):
-            parts = list(parts)
-
-            if len(parts) == 1:
-                service = parts[0](self)
-            else:
-                service = CompoundService(self, [part(self) for part in parts])
-
-            self.add_service(service)
-
-        if on_modules_loaded:
-            on_modules_loaded()
-
-        # Now that all plugins have been loaded we can resolve all method params
-        # to make sure every schema is patched and references match
-        from middlewared.schema import resolve_methods  # Lazy import so namespace match
-        to_resolve = []
-        for service in list(self._services.values()):
-            for attr in dir(service):
-                to_resolve.append(getattr(service, attr))
-        resolve_methods(self._schemas, to_resolve)
-
-    def add_service(self, service):
-        self._services[service._config.namespace] = service
-        if service._config.namespace_alias:
-            self._services_aliases[service._config.namespace_alias] = service
-
-    def get_service(self, name):
-        service = self._services.get(name)
-        if service:
-            return service
-        return self._services_aliases[name]
-
-    def get_services(self):
-        return self._services

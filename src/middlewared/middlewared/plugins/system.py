@@ -1,5 +1,6 @@
 import asyncio
-from datetime import datetime, date
+from collections import defaultdict
+from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
@@ -9,10 +10,10 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
 from middlewared.validators import Range
 
+import ntplib
 import csv
 import io
 import os
-import platform
 import psutil
 import re
 import requests
@@ -31,8 +32,9 @@ import uuid
 import warnings
 
 from licenselib.license import ContractType, Features, License
+from pathlib import Path
 
-IS_LINUX = platform.system().lower() == 'linux'
+
 SYSTEM_BOOT_ID = None
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
@@ -43,7 +45,9 @@ CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
-RE_MEMWIDTH = re.compile(r'Total Width:\s*(\d*)')
+RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=re.M)
+RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
+RE_ECC_MEMORY = re.compile(r'Error Correction Type:\s*(.*ECC.*)')
 
 
 class SystemAdvancedModel(sa.Model):
@@ -56,6 +60,7 @@ class SystemAdvancedModel(sa.Model):
     adv_serialspeed = sa.Column(sa.String(120), default="9600")
     adv_powerdaemon = sa.Column(sa.Boolean(), default=False)
     adv_swapondrive = sa.Column(sa.Integer(), default=2)
+    adv_overprovision = sa.Column(sa.Integer(), nullable=True, default=None)
     adv_consolemsg = sa.Column(sa.Boolean(), default=True)
     adv_traceback = sa.Column(sa.Boolean(), default=True)
     adv_advancedmode = sa.Column(sa.Boolean(), default=False)
@@ -74,6 +79,7 @@ class SystemAdvancedModel(sa.Model):
     adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
     adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
+    adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
 
 
 class SystemAdvancedService(ConfigService):
@@ -89,13 +95,21 @@ class SystemAdvancedService(ConfigService):
         """
         Get available choices for `serialport`.
         """
-        if await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
+        if osc.IS_FREEBSD and await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
             ports = {'0x3f8': '0x3f8'}
         else:
-            pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
-                               "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'", stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-            ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
+            if osc.IS_LINUX:
+                proc = await Popen(
+                    'dmesg | grep ttyS',
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
+                )
+                output = (await proc.communicate())[0].decode()
+                ports = {i: i for i in RE_LINUX_DMESG_TTY.findall(output)}
+            else:
+                pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
+                                   "sed -En 's/ *([0-9a-fA-Fx]+).*\\(uart[0-9]+\\)/\\1/p'", stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, shell=True)
+                ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
 
         if not ports or (await self.config())['serialport'] == '0x2f8':
             # We should always add 0x2f8 if ports is false or current value is the default one in db
@@ -116,6 +130,11 @@ class SystemAdvancedService(ConfigService):
         if data['syslog_tls_certificate']:
             data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
 
+        if data['swapondrive'] and (await self.middleware.call('system.product_type')) == 'ENTERPRISE':
+            data['swapondrive'] = 0
+
+        if osc.IS_FREEBSD:
+            data.pop('kdump_enabled')
         data.pop('sed_passwd')
         data.pop('kmip_uid')
 
@@ -135,7 +154,10 @@ class SystemAdvancedService(ConfigService):
             else:
                 data['serialport'] = serial_choice = hex(
                     int(serial_choice)
-                ) if serial_choice.isdigit() else serial_choice
+                ) if serial_choice.isdigit() else hex(int(serial_choice, 16))
+                # The else can happen when we have incoming value like 0x03f8 which is a valid
+                # hex value but the following validation would fail as we are not comparing with
+                # normalised hex strings
                 if serial_choice not in await self.serial_port_choices():
                     verrors.add(
                         f'{schema}.serialport',
@@ -169,6 +191,7 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
+            Bool('kdump_enabled'),
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
@@ -180,6 +203,7 @@ class SystemAdvancedService(ConfigService):
             Str('serialport'),
             Str('serialspeed', enum=['9600', '19200', '38400', '57600', '115200']),
             Int('swapondrive', validators=[Range(min=0)]),
+            Int('overprovision', validators=[Range(min=0)], null=True),
             Bool('traceback'),
             Bool('uploadcrash'),
             Bool('anonstats'),
@@ -241,30 +265,32 @@ class SystemAdvancedService(ConfigService):
 
             loader_reloaded = False
             if original_data['motd'] != config_data['motd']:
-                await self.middleware.call('service.start', 'motd', {'onetime': False})
+                await self.middleware.call('service.start', 'motd')
 
             if original_data['consolemenu'] != config_data['consolemenu']:
-                await self.middleware.call('service.start', 'ttys', {'onetime': False})
+                await self.middleware.call('service.start', 'ttys')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
-                await self.middleware.call('service.restart', 'powerd', {'onetime': False})
+                await self.middleware.call('service.restart', 'powerd')
 
             if original_data['serialconsole'] != config_data['serialconsole']:
-                await self.middleware.call('service.start', 'ttys', {'onetime': False})
+                await self.middleware.call('service.start', 'ttys')
                 if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    await self.middleware.call('service.reload', 'loader')
                     loader_reloaded = True
+                if osc.IS_LINUX:
+                    await self.middleware.call('etc.generate', 'grub')
             elif (
                 original_data['serialspeed'] != config_data['serialspeed'] or
                 original_data['serialport'] != config_data['serialport']
             ):
                 if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    await self.middleware.call('service.reload', 'loader')
                     loader_reloaded = True
 
             if original_data['autotune'] != config_data['autotune']:
                 if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    await self.middleware.call('service.reload', 'loader')
                     loader_reloaded = True
                 await self.middleware.call('system.advanced.autotune', 'loader')
                 await self.middleware.call('system.advanced.autotune', 'sysctl')
@@ -273,10 +299,10 @@ class SystemAdvancedService(ConfigService):
                 original_data['debugkernel'] != config_data['debugkernel'] and
                 not loader_reloaded
             ):
-                await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                await self.middleware.call('service.reload', 'loader')
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
-                await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
+                await self.middleware.call('service.restart', 'syslogd')
 
             if (
                 original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or
@@ -288,6 +314,12 @@ class SystemAdvancedService(ConfigService):
 
             if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
                 await self.middleware.call('kmip.sync_sed_keys')
+
+            if osc.IS_LINUX and config_data['kdump_enabled'] != original_data['kdump_enabled']:
+                # kdump changes require a reboot to take effect. So just generating the kdump config
+                # should be enough
+                await self.middleware.call('etc.generate', 'kdump')
+                await self.middleware.call('etc.generate', 'grub')
 
         return await self.config()
 
@@ -325,9 +357,129 @@ class SystemAdvancedService(ConfigService):
 
 class SystemService(Service):
 
+    DMIDECODE_CACHE = {
+        'ecc-memory': None,
+        'baseboard-manufacturer': None,
+        'baseboard-product-name': None,
+        'system-manufacturer': None,
+        'system-product-name': None,
+        'system-serial-number': None,
+        'system-version': None,
+    }
+
+    CPU_INFO = {
+        'cpu_model': None,
+        'core_count': None,
+    }
+
+    MEM_INFO = {
+        'physmem_size': None,
+    }
+
+    BIRTHDAY_DATE = {
+        'date': None,
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__product_type = None
+
+    @private
+    async def birthday(self):
+
+        if self.BIRTHDAY_DATE['date'] is None:
+            birth = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
+            if birth != datetime(1970, 1, 1):
+                self.BIRTHDAY_DATE['date'] = birth
+
+        return self.BIRTHDAY_DATE
+
+    @private
+    async def mem_info(self):
+
+        if self.MEM_INFO['physmem_size'] is None:
+            # physmem doesn't change after boot so cache the results
+            self.MEM_INFO['physmem_size'] = psutil.virtual_memory().total
+
+        return self.MEM_INFO
+
+    @private
+    async def cpu_info(self):
+
+        """
+        CPU info doesn't change after boot so cache the results
+        """
+
+        if self.CPU_INFO['cpu_model'] is None:
+            self.CPU_INFO['cpu_model'] = osc.get_cpu_model()
+
+        if self.CPU_INFO['core_count'] is None:
+            self.CPU_INFO['core_count'] = psutil.cpu_count(logical=True)
+
+        return self.CPU_INFO
+
+    @private
+    async def time_info(self):
+
+        time_info = {}
+
+        if osc.IS_FREEBSD:
+            time_constant = time.CLOCK_UPTIME
+        else:
+            time_constant = time.CLOCK_MONOTONIC_RAW
+
+        uptime_seconds = time.clock_gettime(time_constant)
+        uptime = str(timedelta(seconds=uptime_seconds))
+        current_time = time.time()
+        boot_time = datetime.fromtimestamp((current_time - uptime_seconds))
+        date_time = datetime.fromtimestamp(current_time, timezone.utc)
+
+        time_info['uptime_seconds'] = uptime_seconds
+        time_info['uptime'] = uptime
+        time_info['boot_time'] = boot_time
+        time_info['datetime'] = date_time
+
+        return time_info
+
+    @private
+    async def dmidecode_info(self):
+
+        """
+        dmidecode data is mostly static so cache the results
+        """
+
+        if self.DMIDECODE_CACHE['ecc-memory'] is None:
+            # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
+            # After discussing with nap, we determined that checking -t 17 did not work well with some systems,
+            # so we check -t 16 now only to see if it reports ECC memory
+            ecc = bool(RE_ECC_MEMORY.findall((await run(['dmidecode', '-t', '16'])).stdout.decode(errors='ignore')))
+            self.DMIDECODE_CACHE['ecc-memory'] = ecc
+
+        if self.DMIDECODE_CACHE['baseboard-manufacturer'] is None:
+            bm = ((await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['baseboard-manufacturer'] = bm
+
+        if self.DMIDECODE_CACHE['baseboard-product-name'] is None:
+            bpn = ((await run(["dmidecode", "-s", "baseboard-product-name"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['baseboard-product-name'] = bpn
+
+        if self.DMIDECODE_CACHE['system-manufacturer'] is None:
+            sm = ((await run(["dmidecode", "-s", "system-manufacturer"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['system-manufacturer'] = sm
+
+        if self.DMIDECODE_CACHE['system-product-name'] is None:
+            spn = ((await run(["dmidecode", "-s", "system-product-name"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['system-product-name'] = spn
+
+        if self.DMIDECODE_CACHE['system-serial-number'] is None:
+            ssn = ((await run(["dmidecode", "-s", "system-serial-number"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['system-serial-number'] = ssn
+
+        if self.DMIDECODE_CACHE['system-version'] is None:
+            sv = ((await run(["dmidecode", "-s", "system-version"], check=False)).stdout.decode(errors='ignore')).strip()
+            self.DMIDECODE_CACHE['system-version'] = sv
+
+        return self.DMIDECODE_CACHE
 
     @no_auth_required
     @accepts()
@@ -346,15 +498,31 @@ class SystemService(Service):
         Returns the type of the product.
 
         CORE - TrueNAS Core, community version
+        SCALE - TrueNAS SCALE, community version
         ENTERPRISE - TrueNAS Enterprise, appliance version
+        SCALE_ENTERPRISE - TrueNAS SCALE Enterprise, appliance version
         """
+        linux = osc.IS_LINUX
+
         if self.__product_type is None:
-            license = await self.middleware.run_in_thread(self._get_license)
-            self.__product_type = 'CORE' if (
-                not license or
-                license['model'].lower().startswith('freenas')
-            ) else 'ENTERPRISE'
+
+            hardware = await self.middleware.call('failover.hardware')
+            if hardware != 'MANUAL':
+                if linux:
+                    self.__product_type = 'SCALE_ENTERPRISE'
+                else:
+                    self.__product_type = 'ENTERPRISE'
+            else:
+                if linux:
+                    self.__product_type = 'SCALE'
+                else:
+                    self.__product_type = 'CORE'
+
         return self.__product_type
+
+    @private
+    async def is_enterprise(self):
+        return await self.middleware.call('system.product_type') in ['ENTERPRISE', 'SCALE_ENTERPRISE']
 
     @no_auth_required
     @accepts()
@@ -459,9 +627,8 @@ class SystemService(Service):
         # for fibre channel, which means they were issued having
         # dedup+jails instead.
         if (
-            licenseobj.contract_start < date(2017, 4, 14) and
-            Features.dedup in licenseobj.features and
-            Features.jails in licenseobj.features
+            Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14) and
+            Features.dedup in licenseobj.features and Features.jails in licenseobj.features
         ):
             license["features"].append(Features.fibrechannel.name.upper())
         return license
@@ -480,14 +647,18 @@ class SystemService(Service):
         except Exception:
             raise CallError('This is not a valid license.')
 
+        prev_product_type = self.middleware.call_sync('system.product_type')
+
         with open(LICENSE_FILE, 'w+') as f:
             f.write(license)
 
         self.middleware.call_sync('etc.generate', 'rc')
 
         self.__product_type = None
+        if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
+            Path('/data/truenas-eula-pending').touch(exist_ok=True)
         self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update'), wait=False,
+            self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )
 
     @accepts()
@@ -499,45 +670,49 @@ class SystemService(Service):
         if buildtime:
             buildtime = datetime.fromtimestamp(int(buildtime)),
 
-        uptime = (await (await Popen(
-            ['env', '-u', 'TZ', 'uptime'], stdout=subprocess.PIPE
-        )).communicate())[0].decode().split(',')
-        uptime = ', '.join([uptime[i].strip() for i in range(2)])
-
-        serial = await self._system_serial()
-
-        product = (await(await Popen(
-            ['dmidecode', '-s', 'system-product-name'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
-
-        manufacturer = (await(await Popen(
-            ['dmidecode', '-s', 'system-manufacturer'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
-
-        # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
-        ecc_results = RE_MEMWIDTH.findall((await run(['dmidecode', '-t', '17'])).stdout.decode())
+        time_info = await self.middleware.call('system.time_info')
+        dmidecode = await self.middleware.call('system.dmidecode_info')
+        cpu_info = await self.middleware.call('system.cpu_info')
+        mem_info = await self.middleware.call('system.mem_info')
+        birthday = await self.middleware.call('system.birthday')
+        timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         return {
             'version': self.version(),
             'buildtime': buildtime,
             'hostname': socket.gethostname(),
-            'physmem': psutil.virtual_memory().total,
-            'model': osc.get_cpu_model(),
-            'cores': psutil.cpu_count(logical=True),
+            'physmem': mem_info['physmem_size'],
+            'model': cpu_info['cpu_model'],
+            'cores': cpu_info['core_count'],
             'loadavg': os.getloadavg(),
-            'uptime': uptime,
-            'uptime_seconds': time.time() - psutil.boot_time(),
-            'system_serial': serial,
-            'system_product': product,
+            'uptime': time_info['uptime'],
+            'uptime_seconds': time_info['uptime_seconds'],
+            'system_serial': dmidecode['system-serial-number'] if dmidecode['system-serial-number'] else None,
+            'system_product': dmidecode['system-product-name'] if dmidecode['system-product-name'] else None,
+            'system_product_version': dmidecode['system-version'] if dmidecode['system-version'] else None,
             'license': await self.middleware.run_in_thread(self._get_license),
-            'boottime': datetime.fromtimestamp(psutil.boot_time()),
-            'datetime': datetime.utcnow(),
-            'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
-            'system_manufacturer': manufacturer,
-            'ecc_memory': all(dimm_module.strip() == '72' for dimm_module in (ecc_results or ['']))
+            'boottime': time_info['boot_time'],
+            'datetime': time_info['datetime'],
+            'birthday': birthday['date'],
+            'timezone': timezone_setting,
+            'system_manufacturer': dmidecode['system-manufacturer'] if dmidecode['system-manufacturer'] else None,
+            'ecc_memory': dmidecode['ecc-memory'],
         }
+
+    # Sync the clock
+    @private
+    def sync_clock(self):
+        client = ntplib.NTPClient()
+        clock = None
+        # Tries to get default ntpd server
+        try:
+            response = client.request("localhost")
+            if response.version:
+                clock = datetime.fromtimestamp(response.tx_time, timezone.utc)
+        except Exception:
+            # Cannot connect to NTP server
+            self.middleware.logger.debug('Error while connecting to NTP server')
+        return clock
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
     async def feature_enabled(self, name):
@@ -553,13 +728,6 @@ class SystemService(Service):
         if license and name in license['features']:
             return True
         return False
-
-    @private
-    async def _system_serial(self):
-        return (await(await Popen(
-            ['dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE,
-        )).communicate())[0].decode().strip() or None
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @job()
@@ -620,19 +788,20 @@ class SystemService(Service):
 
         cp = subprocess.Popen(
             ['ixdiagnose', '-d', direc, '-s', '-F', '-p'],
-            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             bufsize=1
         )
 
-        for line in iter(cp.stdout.readline, ''):
-            line = line.rstrip()
+        for line in iter(cp.stdout.readline, b''):
+            line = line.decode(errors='ignore').rstrip()
 
-            if line.startswith('**'):
-                percent, help = line.split(':')
-                job.set_progress(
-                    int(percent.split()[-1].strip('%')),
-                    help.lstrip()
-                )
+            if line.startswith('**') and '%: ' in line:
+                percent, desc = line.split('%: ', 1)
+                try:
+                    percent = int(percent.split()[-1])
+                except ValueError:
+                    continue
+                job.set_progress(percent, desc)
         _, stderr = cp.communicate()
 
         if cp.returncode != 0:
@@ -677,7 +846,7 @@ class SystemService(Service):
                 with requests.get(url, stream=True) as r:
                     for i in r.iter_content(chunk_size=1048576):
                         if standby_debug.tell() > 20971520:
-                            raise CallError(f'Standby debug file is bigger than 20MiB.')
+                            raise CallError('Standby debug file is bigger than 20MiB.')
                         standby_debug.write(i)
 
         debug_job.wait_sync()
@@ -691,7 +860,7 @@ class SystemService(Service):
             # so they can be downloaded at once.
             try:
                 if os.stat(debug_job.result).st_size > 20971520:
-                    raise CallError(f'Debug file is bigger than 20MiB.')
+                    raise CallError('Debug file is bigger than 20MiB.')
             except FileNotFoundError:
                 raise CallError('Debug file was not found, try again.')
 
@@ -734,6 +903,7 @@ class SystemGeneralModel(sa.Model):
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
     stg_language = sa.Column(sa.String(120), default="en")
     stg_kbdmap = sa.Column(sa.String(120))
+    stg_birthday = sa.Column(sa.DateTime(), nullable=True)
     stg_timezone = sa.Column(sa.String(120), default="America/Los_Angeles")
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
@@ -772,14 +942,13 @@ class SystemGeneralService(ConfigService):
                 {'get': True}
             )
 
-        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
         data['crash_reporting_is_set'] = data['crash_reporting'] is not None
         if data['crash_reporting'] is None:
-            data['crash_reporting'] = is_core
+            data['crash_reporting'] = True
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
-            data['usage_collection'] = is_core
+            data['usage_collection'] = True
 
         data.pop('pwenc_check')
 
@@ -925,7 +1094,11 @@ class SystemGeneralService(ConfigService):
             shell=True
         )
         self._timezone_choices = (await pipe.communicate())[0].decode().strip().split('\n')
-        self._timezone_choices = {x[20:]: x[20:] for x in self._timezone_choices}
+        self._timezone_choices = {
+            x[20:]: x[20:] for x in self._timezone_choices if osc.IS_FREEBSD or (
+                not x[20:].startswith(('right/', 'posix/')) and '.' not in x[20:]
+            )
+        }
 
     @accepts()
     async def timezone_choices(self):
@@ -981,15 +1154,29 @@ class SystemGeneralService(ConfigService):
 
     @private
     async def _initialize_kbdmap_choices(self):
-        """Populate choices from /usr/share/vt/keymaps/INDEX.keymaps"""
-        index = "/usr/share/vt/keymaps/INDEX.keymaps"
+        if osc.IS_FREEBSD:
+            with open("/usr/share/vt/keymaps/INDEX.keymaps", 'rb') as f:
+                d = f.read().decode('utf8', 'ignore')
+            _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
+            self._kbdmap_choices = {name: desc for name, desc in _all}
 
-        if not os.path.exists(index):
-            return []
-        with open(index, 'rb') as f:
-            d = f.read().decode('utf8', 'ignore')
-        _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
-        self._kbdmap_choices = {name: desc for name, desc in _all}
+        if osc.IS_LINUX:
+            with open("/usr/share/X11/xkb/rules/xorg.lst", "r") as f:
+                key = None
+                items = defaultdict(list)
+                for line in f.readlines():
+                    line = line.rstrip()
+                    if line.startswith("! "):
+                        key = line[2:]
+                    if line.startswith("  "):
+                        items[key].append(re.split(r"\s+", line.lstrip(), 1))
+
+            choices = dict(items["layout"])
+            for variant, desc in items["variant"]:
+                lang, title = desc.split(": ", 1)
+                choices[f"{lang}.{variant}"] = title
+
+            self._kbdmap_choices = dict(sorted(choices.items(), key=lambda t: t[1]))
 
     @accepts()
     async def kbdmap_choices(self):
@@ -1091,7 +1278,7 @@ class SystemGeneralService(ConfigService):
             Int('ui_certificate', null=True),
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
-            List('ui_httpsprotocols', items=[Str('protocol', enum=HTTPS_PROTOCOLS)], empty=False),
+            List('ui_httpsprotocols', items=[Str('protocol', enum=HTTPS_PROTOCOLS)], empty=False, unique=True),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
@@ -1292,12 +1479,18 @@ class SystemGeneralService(ConfigService):
             aliases += list(filter(lambda x: x['type'].startswith('INET'), i['state']['aliases']))
 
         cp = subprocess.run(
-            'sockstat -46P tcp |awk \'{ if ($2 == "nginx" && $7 == "*:*") print $5","$6 }\' | '
-            'sort | uniq',
+            'sockstat -46{} tcp |awk \'{{ if ($2 == "nginx" && ${} == "*:*") print ${}","${} }}\' | '
+            'sort | uniq'.format(
+                # Linux sockstat uses -R for protocol selection
+                # FreeBSD uses -P instead.
+                *(('R', '6', '4', '5') if osc.IS_LINUX else ('P', '7', '5', '6'))
+            ),
             shell=True, capture_output=True, text=True,
         )
         for line in cp.stdout.strip('\n').split('\n'):
-            _type, addr = line.split(',')
+            if not line:
+                continue
+            _type, addr = line.split(',', 1)
 
             if _type == 'tcp4':
                 addrsv4.append(addr)
@@ -1321,11 +1514,69 @@ class SystemGeneralService(ConfigService):
         CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
+async def _update_birthday_data(middleware, birthday=None):
+
+    birthday = (await middleware.call('system.info'))['birthday']
+    if birthday is not None:
+        # already been set
+        return
+
+    # get current time and use as birthday
+    if birthday is None:
+        birthday = await middleware.call('system.sync_clock')
+
+        middleware.logger.debug('Updating birthday data')
+        # update db with new birthday
+        settings = await middleware.call('datastore.config', 'system.settings')
+        await middleware.call('datastore.update', 'system.settings', settings['id'], {
+            'stg_birthday': birthday,
+        })
+
+
+async def _update_birthday(middleware):
+
+    birthday = None
+    timeout = 3600 * 24
+
+    middleware.register_hook('interface.post_sync', _update_birthday_data)
+
+    middleware.logger.debug('Waiting for clock sync to update system birthday')
+    while birthday is None:
+        birthday = await middleware.call('system.sync_clock')
+
+        # sleep for 1 day and try again
+        if birthday is None:
+            await asyncio.sleep(timeout)
+
+    await _update_birthday_data(middleware, birthday)
+
+
 async def _event_system(middleware, event_type, args):
+
     global SYSTEM_READY
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
+
+        # Check if birthday is already set
+        birthday = (await middleware.call('system.info'))['birthday']
+
+        # try to set birthday in background
+        if birthday is None:
+            asyncio.ensure_future(_update_birthday(middleware))
+
+        if osc.IS_LINUX:
+            if (await middleware.call('system.advanced.config'))['kdump_enabled']:
+                cp = await run(['kdump-config', 'status'], check=False)
+                if cp.returncode:
+                    middleware.logger.error('Failed to retrieve kdump-config status: %s', cp.stderr.decode())
+                else:
+                    if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
+                        await middleware.call('alert.oneshot_create', 'KdumpNotReady', None)
+                    else:
+                        await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+            else:
+                await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
@@ -1347,11 +1598,12 @@ class SystemHealthEventSource(EventSource):
         while not self._cancel.is_set():
             try:
                 self._check_update = self.middleware.call_sync('update.check_available')['status']
-                self._cancel.wait(timeout=60 * 60 * 24)
             except Exception:
                 self.middleware.logger.warn(
                     'Failed to check avaiable update for system.health event', exc_info=True,
                 )
+            finally:
+                self._cancel.wait(timeout=60 * 60 * 24)
 
     def pools_statuses(self):
         return {
@@ -1373,17 +1625,17 @@ class SystemHealthEventSource(EventSource):
         if delay < 5:
             return
 
-        cp_time = sysctl.filter('kern.cp_time')[0].value
+        cp_time = psutil.cpu_times()
         cp_old = cp_time
 
         while not self._cancel.is_set():
             time.sleep(delay)
 
-            cp_time = sysctl.filter('kern.cp_time')[0].value
-            cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_time, cp_old)))
+            cp_time = psutil.cpu_times()
+            cp_diff = type(cp_time)(*map(lambda x: x[0] - x[1], zip(cp_time, cp_old)))
             cp_old = cp_time
 
-            cpu_percent = round((sum(cp_diff[:3]) / sum(cp_diff)) * 100, 2)
+            cpu_percent = round(((sum(cp_diff) - cp_diff.idle) / sum(cp_diff)) * 100, 2)
 
             pools = self.middleware.call_sync(
                 'cache.get_or_put',
@@ -1406,20 +1658,34 @@ async def firstboot(middleware):
         # we do not want the clone to have the file in it.
         os.unlink(FIRST_INSTALL_SENTINEL)
 
+        if await middleware.call('system.product_type') == 'ENTERPRISE':
+            config = await middleware.call('datastore.config', 'system.advanced')
+            await middleware.call('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
+
         # Creating pristine boot environment from the "default"
-        middleware.logger.info("Creating 'Initial-Install' boot environment...")
-        cp = await run('beadm', 'create', '-e', 'default', 'Initial-Install', check=False)
-        if cp.returncode != 0:
-            middleware.logger.error(
-                'Failed to create initial boot environment: %s', cp.stderr.decode()
-            )
+        initial_install_be = 'Initial-Install'
+        middleware.logger.info('Creating %r boot environment...', initial_install_be)
+        activated_be = await middleware.call('bootenv.query', [['activated', '=', True]], {'get': True})
+        try:
+            await middleware.call('bootenv.create', {'name': initial_install_be, 'source': activated_be['realname']})
+        except Exception:
+            middleware.logger.error('Failed to create initial boot environment', exc_info=True)
         else:
             boot_pool = await middleware.call('boot.pool_name')
-            cp = await run('zfs', 'set', 'beadm:keep=True', os.path.join(boot_pool, 'ROOT/Initial-Install'))
+            cp = await run(
+                'zfs', 'set', f'{"zectl" if osc.IS_LINUX else "beadm"}:keep=True',
+                os.path.join(boot_pool, 'ROOT/Initial-Install')
+            )
             if cp.returncode != 0:
                 middleware.logger.error(
-                    f'Failed to set "beadm:keep=True" for Initial-Install boot environment: {cp.stderr}'
+                    'Failed to set keep attribute for Initial-Install boot environment: %s', cp.stderr.decode()
                 )
+            if osc.IS_LINUX:
+                cp = await run(
+                    'zfs', 'set', 'org.zectl:bootloader=grub', os.path.join(boot_pool, 'ROOT'), check=False
+                )
+                if cp.returncode != 0:
+                    middleware.logger.error('Failed to set bootloader as grub for zectl: %s', cp.stderr.decode())
 
 
 async def update_timeout_value(middleware, *args):
@@ -1462,6 +1728,11 @@ async def update_timeout_value(middleware, *args):
         )
 
 
+async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
+    if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
+        await middleware.call('system.advanced.update', {'autotune': True})
+
+
 async def setup(middleware):
     global SYSTEM_BOOT_ID, SYSTEM_READY
 
@@ -1477,36 +1748,31 @@ async def setup(middleware):
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
     else:
+        await firstboot(middleware)
         autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
-
-        if os.path.exists('/usr/local/sbin/beadm'):
-            await firstboot(middleware)
-
         if autotune_rv == 2:
             await run('shutdown', '-r', 'now', check=False)
 
     settings = await middleware.call(
         'system.general.config',
     )
-    os.environ['TZ'] = settings['timezone']
-    time.tzset()
+    await middleware.call('core.environ_update', {'TZ': settings['timezone']})
 
     middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
 
     await middleware.call('system.general.set_language')
     await middleware.call('system.general.set_crash_reporting')
 
-    asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
-
-    if sysctl:
+    if osc.IS_FREEBSD:
+        asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
         await update_timeout_value(middleware)
 
-    for srv in ['initshutdownscript', 'tunable', 'vm']:
-        for event in ('create', 'update', 'delete'):
-            middleware.register_hook(
-                f'{srv}.post_{event}',
-                update_timeout_value
-            )
+        for srv in ['initshutdownscript', 'tunable', 'vm']:
+            for event in ('create', 'update', 'delete'):
+                middleware.register_hook(
+                    f'{srv}.post_{event}',
+                    update_timeout_value
+                )
 
     middleware.event_subscribe('system', _event_system)
     middleware.register_event_source('system.health', SystemHealthEventSource)
@@ -1520,7 +1786,7 @@ async def setup(middleware):
         'sysctl debug.ddb.textdump.pending=1',
         'sysctl debug.debugger_on_panic=1',
         'sysctl debug.ddb.capture.bufsize=4194304'
-    ] if not IS_LINUX else []:  # TODO: See reasonable linux alternative
+    ] if osc.IS_FREEBSD else []:  # TODO: See reasonable linux alternative
         ret = await Popen(
             command,
             shell=True,
@@ -1536,3 +1802,5 @@ async def setup(middleware):
     CRASH_DIR = '/data/crash'
     os.makedirs(CRASH_DIR, exist_ok=True)
     os.chmod(CRASH_DIR, 0o775)
+
+    middleware.register_hook('system.post_license_update', hook_license_update, sync=False)

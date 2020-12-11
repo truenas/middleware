@@ -2,7 +2,7 @@ from datetime import time
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
+from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, Str
 from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
@@ -70,9 +70,9 @@ class PeriodicSnapshotTaskService(CRUDService):
     @accepts(
         Dict(
             'periodic_snapshot_create',
-            Path('dataset', required=True),
+            Dataset('dataset', required=True),
             Bool('recursive', required=True),
-            List('exclude', items=[Path('item', empty=False)], default=[]),
+            List('exclude', items=[Dataset('item')], default=[]),
             Int('lifetime_value', required=True),
             Str('lifetime_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
             Str('naming_schema', required=True, validators=[ReplicationSnapshotNamingSchema()]),
@@ -97,9 +97,11 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         Create a Periodic Snapshot Task that will take snapshots of specified `dataset` at specified `schedule`.
         Recursive snapshots can be created if `recursive` flag is enabled. You can `exclude` specific child datasets
-        from snapshot.
+        or zvols from the snapshot.
         Snapshots will be automatically destroyed after a certain amount of time, specified by
         `lifetime_value` and `lifetime_unit`.
+        If multiple periodic tasks create snapshots at the same time (for example hourly and daily at 00:00) the snapshot
+        will be kept until the last of these tasks reaches its expiry time.
         Snapshots will be named according to `naming_schema` which is a `strftime`-like template for snapshot name
         and must contain `%Y`, `%m`, `%d`, `%H` and `%M`.
 
@@ -149,7 +151,6 @@ class PeriodicSnapshotTaskService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
         return await self._get_instance(data['id'])
@@ -215,8 +216,6 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         if verrors:
             raise verrors
-        if verrors:
-            raise verrors
 
         Cron.convert_schedule_to_db_format(new, begin_end=True)
 
@@ -231,7 +230,6 @@ class PeriodicSnapshotTaskService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
         return await self._get_instance(id)
@@ -275,7 +273,6 @@ class PeriodicSnapshotTaskService(CRUDService):
             id
         )
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
         return response
@@ -299,20 +296,20 @@ class PeriodicSnapshotTaskService(CRUDService):
         if data['dataset'] not in (await self.middleware.call('pool.filesystem_choices')):
             verrors.add(
                 'dataset',
-                'Invalid ZFS dataset'
+                'ZFS dataset or zvol not found'
             )
 
         if not data['recursive'] and data['exclude']:
             verrors.add(
                 'exclude',
-                'Excluding datasets has no sense for non-recursive periodic snapshot tasks'
+                'Excluding datasets or zvols is not necessary for non-recursive periodic snapshot tasks'
             )
 
         for i, v in enumerate(data['exclude']):
             if not v.startswith(f'{data["dataset"]}/'):
                 verrors.add(
                     f'exclude.{i}',
-                    'Excluded dataset should be a child of selected dataset'
+                    'Excluded dataset or zvol should be a child or other descendant of selected dataset'
                 )
 
         return verrors
@@ -321,8 +318,9 @@ class PeriodicSnapshotTaskService(CRUDService):
 class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'snapshottask'
     title = 'Snapshot Task'
+    resource_name = 'dataset'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         results = []
         for task in await self.middleware.call('pool.snapshottask.query', [['enabled', '=', enabled]]):
             if is_child(os.path.join('/mnt', task['dataset']), path):
@@ -330,24 +328,27 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
 
         return results
 
-    async def get_attachment_name(self, attachment):
-        return attachment['dataset']
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'storage.task', attachment['id'])
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
             await self.middleware.call('datastore.update', 'storage.task', attachment['id'], {'task_enabled': enabled})
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
+
+
+async def on_zettarepl_state_changed(middleware, id, fields):
+    if id.startswith('periodic_snapshot_task_'):
+        task_id = int(id.split('_')[-1])
+        middleware.send_event('pool.snapshottask.query', 'CHANGED', id=task_id, fields={'state': fields})
 
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate',
                           PeriodicSnapshotTaskFSAttachmentDelegate(middleware))
+
+    middleware.register_hook('zettarepl.state_change', on_zettarepl_state_changed)

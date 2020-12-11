@@ -22,7 +22,7 @@ def upgrade():
         batch_op.add_column(sa.Column('stg_guihttpsprotocols', sa.TEXT(), nullable=True))
 
     op.execute("""
-        UPDATE system_settings SET stg_guihttpsprotocols = '["TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"]'
+        UPDATE system_settings SET stg_guihttpsprotocols = '["TLSv1.2", "TLSv1.3"]'
     """)
 
     with op.batch_alter_table('system_settings', schema=None) as batch_op:

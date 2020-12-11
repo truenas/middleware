@@ -1,2 +1,10 @@
 #!/bin/sh
-exec /usr/local/bin/sqlite3 -cmd ".timeout 60000" "$@"
+
+. /usr/local/share/system_info
+
+if is_linux; then
+	prefix="/usr"
+else
+	prefix="/usr/local"
+fi
+exec "$prefix"/bin/sqlite3 -cmd ".timeout 60000" "$@"

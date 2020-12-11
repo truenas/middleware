@@ -44,6 +44,11 @@ async def datastore_test():
                 m["datastore.fetchall"] = ds.fetchall
 
                 m["datastore.query"] = ds.query
+                m["datastore.send_insert_events"] = ds.send_insert_events
+                m["datastore.send_update_events"] = ds.send_update_events
+                m["datastore.send_delete_events"] = ds.send_delete_events
+
+                m["datastore.update"] = ds.update
 
                 yield ds
 
@@ -297,7 +302,7 @@ class StringModel(Model):
     __tablename__ = 'test_string'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    string = sa.Column(sa.String(100))
+    string = sa.Column(sa.String(100), nullable=True)
 
 
 @pytest.mark.parametrize("filter,ids", [
@@ -307,6 +312,11 @@ class StringModel(Model):
     ([("string", "in", ["Ipsum", "dolor"])], [2]),
     ([("string", "nin", ["Ipsum", "dolor"])], [1]),
 
+    ([("string", "in", [None, "Ipsum"])], [2, 3]),
+    ([("string", "nin", [None, "Ipsum"])], [1]),
+    ([("string", "in", [None])], [3]),
+    ([("string", "nin", [None])], [1, 2]),
+
     ([("string", "^", "Lo")], [1]),
     ([("string", "$", "um")], [2]),
 ])
@@ -315,6 +325,7 @@ async def test__string_filters(filter, ids):
     async with datastore_test() as ds:
         await ds.execute("INSERT INTO test_string VALUES (1, 'Lorem')")
         await ds.execute("INSERT INTO test_string VALUES (2, 'Ipsum')")
+        await ds.execute("INSERT INTO test_string VALUES (3, NULL)")
 
         assert [row["id"] for row in await ds.query("test.string", filter)] == ids
 
@@ -394,7 +405,7 @@ class EncryptedTextModel(Model):
     __tablename__ = 'test_encryptedtext'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    object = sa.Column(EncryptedText())
+    object = sa.Column(EncryptedText(), nullable=True)
 
 
 def decrypt(s, _raise=False):
@@ -471,6 +482,30 @@ async def test__encrypted_text_save():
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
             ['!Text']
+        )
+
+
+@pytest.mark.asyncio
+async def test__encrypted_text_load_null():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_encryptedtext VALUES (1, NULL)")
+
+        with patch("middlewared.sqlalchemy.decrypt", decrypt_safe):
+            assert (await ds.query("test.encryptedtext", [], {"get": True}))["object"] is None
+
+
+@pytest.mark.asyncio
+async def test__encrypted_text_save_null():
+    async with datastore_test() as ds:
+        with patch("middlewared.sqlalchemy.encrypt", encrypt):
+            await ds.insert("test.encryptedtext", {"object": None})
+
+        assert (await ds.fetchall("SELECT * FROM test_encryptedtext"))[0]["object"] is None
+
+        ds.middleware.call_hook_inline.assert_called_once_with(
+            "datastore.post_execute_write",
+            "INSERT INTO test_encryptedtext (object) VALUES (?)",
+            [None]
         )
 
 
@@ -634,6 +669,48 @@ async def test__insert_default_has_value():
         await ds.insert("test.default", {"string": "VALUE"})
 
         assert (await ds.query("test.default", [], {"get": True}))["string"] == "VALUE"
+
+
+class StringPrimaryKeyModel(Model):
+    __tablename__ = 'test_stringprimarykey'
+
+    string_id = sa.Column(sa.String(100), primary_key=True)
+    value = sa.Column(sa.Integer(), nullable=True)
+
+
+class BigIntegerPrimaryKeyModel(Model):
+    __tablename__ = 'test_bigintegerprimarykey'
+
+    integer_id = sa.Column(sa.BigInteger(), primary_key=True)
+    value = sa.Column(sa.Integer(), nullable=True)
+
+
+@pytest.mark.asyncio
+async def test__insert_string_pk_record():
+    async with datastore_test() as ds:
+        payload = {"string_id": "unique_key", "value": 1}
+        pk = await ds.insert("test.stringprimarykey", payload)
+
+        assert pk == payload["string_id"]
+        assert len(await ds.query("test.stringprimarykey", [["string_id", "=", pk]])) == 1
+
+
+@pytest.mark.asyncio
+async def test__insert_default_integer_pk_value():
+    async with datastore_test() as ds:
+        pk = await ds.insert("test.default", {"string": "VALUE"})
+
+        assert len(await ds.query("test.default", [["id", "=", pk]])) == 1
+
+
+@pytest.mark.asyncio
+async def test__insert_integer_pk_record():
+    async with datastore_test() as ds:
+        payload = {"integer_id": 120093877, "value": 1}
+        pk = await ds.insert("test.bigintegerprimarykey", payload)
+
+        assert pk == payload["integer_id"]
+        assert len(await ds.query("test.bigintegerprimarykey", [["integer_id", "=", pk]])) == 1
 
 
 class SMBModel(Model):

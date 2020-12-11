@@ -26,39 +26,23 @@
 #
 #####################################################################
 
+SMBCONF=${SAMBA_CONF:-"/etc/smb4.conf"}
+PATH_KRB5_CONFIG=${PATH_KRB5_CONFIG:-"/etc/krb5.conf"}
+PATH_NS_CONF=${PATH_NS_CONF:-"/etc/nsswitch.conf"}
 
 active_directory_opt() { echo a; }
 active_directory_help() { echo "Dump Active Directory Configuration"; }
 active_directory_directory() { echo "ActiveDirectory"; }
 active_directory_func()
 {
-	local workgroup
-	local netbiosname
-	local adminname
-	local domainname
-	local dcname
-	local pamfiles
-	local onoff
+	AD_CONF=$(midclt call activedirectory.config | jq 'del(.bindpw)')
+	local domainname=$(echo ${AD_CONF} | jq ".domainname")
+	local onoff=$(echo ${AD_CONF} | jq ".enable")
 	local enabled="DISABLED"
 	local cifs_onoff
 
-
-	#
-	#	Second, check if the Active Directory is enabled.
-	#
-	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_enable
-	FROM
-		directoryservice_activedirectory
-	ORDER BY
-		-id
-
-	LIMIT 1
-	")
-
 	enabled="DISABLED"
-	if [ "${onoff}" = "1" ]
+	if [ "${onoff}" == "true" ]
 	then
 		enabled="ENABLED"
 	fi
@@ -68,7 +52,7 @@ active_directory_func()
 	section_footer
 
 	section_header "Active Directory Run Status"
-	service samba_server onestatus
+	service winbindd status
 	section_header
 
 	#
@@ -96,57 +80,8 @@ active_directory_func()
 	echo "SMB will $cifs_enabled"
 	section_footer
 
-	#
-	#	Next, dump Active Directory configuration
-	#
-	local IFS="|"
-	read domainname bindname ssl allow_trusted_doms use_default_domain \
-		validate_certs cert krb_realm krb_princ create_computer \
-		sasl_wrapping timeout dns_timeout <<-__AD__
-	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_domainname,
-		ad_bindname,
-		ad_ssl,
-		ad_allow_trusted_doms,
-		ad_use_default_domain,
-		ad_validate_certificates,
-		ad_certificate_id,
-		ad_kerberos_realm_id,
-		ad_kerberos_principal,
-		ad_createcomputer,
-		ad_ldap_sasl_wrapping,
-		ad_timeout,
-		ad_dns_timeout
-
-	FROM
-		directoryservice_activedirectory
-
-	ORDER BY
-		-id
-
-	LIMIT 1
-	")
-__AD__
-
-	IFS="
-"
-
 	section_header "Active Directory Settings"
-	cat<<-__EOF__
-	Domain:                 ${domainname}
-	Bind name:              ${bindname}
-	Trusted domains:        ${allow_trusted_doms}
-	SSL:                    ${ssl}
-	Cert:                   ${cert}
-	Validate_certs:         ${validate_certs}
-	Kerberos_realm:         ${krb_realm}
-	Kerberos_principal:     ${krb_princ}
-	Default_computer_OU:    ${create_computer}
-	LDAP_SASL_Wrapping:     ${sasl_wrapping}
-	Timeout:                ${timeout}
-	DNS Timeout:            ${dns_timeout}
-__EOF__
+	echo ${AD_CONF} | jq
 	section_footer
 
 	#
@@ -166,12 +101,8 @@ __EOF__
 	#
 	#	Dump samba configuration
 	#
-	section_header "${SAMBA_CONF}"
-	sc "${SAMBA_CONF}"
-	section_footer
-
-	section_header "${SAMBA_SHARE_CONF}"
-	sc "${SAMBA_SHARE_CONF}"
+	section_header "${SMBCONF}"
+	sc "${SMBCONF}"
 	section_footer
 
 	#
@@ -185,7 +116,7 @@ __EOF__
 	#	List kerberos keytab entries
 	#
 	section_header "Kerberos Principals - 'ktutil'"
-	ktutil list
+	midclt call kerberos.keytab.kerberos_principal_choices
 	section_footer
 
 	#
@@ -208,7 +139,7 @@ __EOF__
 	wbinfo -P
 	section_footer
 	section_header "Active Directory trusted domains - 'wbinfo -m'"
-	wbinfo -m
+	wbinfo -m --verbose
 	section_footer
 	section_header "Active Directory all domains - 'wbinfo --all-domains'"
 	wbinfo --all-domains
@@ -257,4 +188,21 @@ __EOF__
 	midclt call activedirectory.check_clockskew | jq
 	section_footer
 	fi
+
+	#
+	#	Dump Kerberos SPNs
+	#
+	if [ "${enabled}" = "ENABLED" ]
+	section_header "Active Directory SPN list"
+	then
+	midclt call activedirectory.get_spn_list | jq
+	section_footer
+	fi
+
+	#
+	#	Dump idmap settings
+	#
+	section_header "idmap settings"
+	midclt call idmap.query | jq
+	section_footer
 }

@@ -30,6 +30,15 @@
 network_opt() { echo n; }
 network_help() { echo "Dump Network Configuration"; }
 network_directory() { echo "Network"; }
+get_gw_in_linux_for_ip()
+{
+	gw=""
+	output=$(ip route get "$1" from "$2" 2> /dev/null)
+	if [ $(echo "$output" | grep -c "via") -eq 1 ]; then
+		gw=$(echo "$output" | cut -d ' ' -f 5 | head -n 1)
+        fi
+	echo "$gw"
+}
 network_func()
 {
 	section_header "Hostname"
@@ -51,21 +60,45 @@ network_func()
 	section_footer
 
 	section_header "Interfaces"
-	for i in $(ifconfig -l)
+	if is_linux; then
+		interfaces=$(ls /sys/class/net)
+	else
+		interfaces=$(ifconfig -l)
+	fi
+	for i in $interfaces
 	do
-		ifconfig -vvv ${i}
+		echo
+		if is_linux; then
+			ip address show dev "$i"
+			grep -iq 'up' /sys/class/net/"$i"/operstate
+			iface_up=$?
+		else
+			ifconfig -vvv ${i}
+			ifconfig ${i} | grep -q '\bUP\b'
+			iface_up=$?
+		fi
+
 		echo
 
-		if $(ifconfig ${i}|grep -q '\bUP\b')
+		if [ "$iface_up" -eq 0 ];
 		then
-			ips=$(ifconfig ${i}|grep '\binet\b'|awk '{ print $2 }'|xargs)
-			ips6=$(ifconfig ${i}|grep '\binet6\b'|awk '{ print $2 }'|xargs)
+			if is_linux; then
+				ips=$(ip address show dev ${i} | grep '\binet\b' | awk '{ print $2 }' | cut -d'/' -f1 | xargs)
+				ips6=$(ip address show dev ${i} | grep '\binet6\b' | awk '{ print $2 }' | cut -d'/' -f1 | xargs)
+			else
+				ips=$(ifconfig ${i}|grep '\binet\b'|awk '{ print $2 }'|xargs)
+				ips6=$(ifconfig ${i}|grep '\binet6\b'|awk '{ print $2 }'|xargs)
+			fi
 
 			if [ -n "${ips}" ]
 			then
 				for ip in ${ips}
 				do
-					gw=$(route -n show -inet ${ip}|grep gateway|xargs)
+					if is_linux; then
+						gw=$(get_gw_in_linux_for_ip "8.8.8.8" "$ip")
+					else
+						gw=$(route -n show -inet ${ip}|grep gateway|xargs)
+					fi
 					if [ -n "${gw}" ]
 					then
 						echo "${ip} gateway ${gw}"
@@ -77,7 +110,11 @@ network_func()
 			then
 				for ip6 in ${ips6}
 				do
-					gw=$(route -n show -inet6 ${ip6}|grep gateway|xargs)
+					if is_linux; then
+						gw=$(get_gw_in_linux_for_ip "2001:4860:4860::8888" "$ip6")
+					else
+						gw=$(route -n show -inet6 ${ip6}|grep gateway|xargs)
+					fi
 					if [ -n "${gw}" ]
 					then
 						echo "${ip6} gateway ${gw}"
@@ -89,23 +126,52 @@ network_func()
 	section_footer
 
 	section_header "Default Route"
-	route -n show default|grep gateway|awk '{ print $2 }'
+	if is_linux; then
+		ip route show default | awk '/default/ {print $3}'
+	else
+		route -n show default|grep gateway|awk '{ print $2 }'
+	fi
 	section_footer
 
 	section_header "Routing tables (netstat -nrW)"
 	netstat -nrW
 	section_footer
 
+	if is_linux; then
+		section_header "Complete Routing tables (ip route show table all)"
+		ip route show table all
+		section_footer
+
+		section_header "IP Rules (ip rule list)"
+		ip rule list
+		section_footer
+
+		section_header "Iptables Rules (iptables-save)"
+		iptables-save
+		section_footer
+
+		section_header "IPVS rules (ipvsadm -L)"
+		ipvsadm -L
+		section_footer
+	fi
+
 	section_header "ARP entries (arp -an)"
 	arp -an
 	section_footer
 
-	section_header "mbuf statistics (netstat -m)"
-	netstat -m
-	section_footer
+	if is_freebsd; then
+		section_header "mbuf statistics (netstat -m)"
+		netstat -m
+		section_footer
+	fi
 
-	section_header "Interface statistics (netstat -in)"
-	netstat -in
+	if is_linux; then
+		section_header "Interface statistics (ip -s addr)"
+		ip -s addr
+	else
+		section_header "Interface statistics (netstat -in)"
+		netstat -in
+	fi
 	section_footer
 
 	section_header "protocols - 'netstat -p protocol -s'"
@@ -116,5 +182,9 @@ network_func()
 
 	section_header "Open connections and listening sockets (sockstat)"
 	sockstat
+	section_footer
+
+	section_header "Network configuration"
+	midclt call network.configuration.config | jq
 	section_footer
 }

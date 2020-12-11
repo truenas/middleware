@@ -40,11 +40,6 @@ MAKE_JOBS_UNSAFE=yes
 .include <bsd.port.pre.mk>
 
 do-build:
-	(cd ${WRKSRC}/escrowd; \
-		${MAKE} cleandir && \
-		${MAKE} obj && \
-		${MAKE} depend all \
-	)
 	${MAKE} -C ${WRKSRC}/winacl   obj
 	${MAKE} -C ${WRKSRC}/winacl  all
 
@@ -57,11 +52,6 @@ do-install:
 .if defined(DEBUG_FLAGS)
 	mkdir -p ${STAGEDIR}${DEBUGDIR}${PREFIX}/boot/modules
 .endif
-	(cd ${WRKSRC}/escrowd; \
-		${MAKE} BINDIR=${STAGEDIR}${PREFIX}/usr/sbin \
-		MANDIR=${STAGEDIR}${PREFIX}/usr/share/man/man install \
-	)
-
 	${MAKE} -C ${WRKSRC}/winacl DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	#
 	# Adding autotune
@@ -71,8 +61,14 @@ do-install:
 	#
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
+	${MV} ${STAGEDIR}/usr/local/bin.freebsd/* ${STAGEDIR}/usr/local/bin/
+	${RM} -rf ${STAGEDIR}/usr/local/bin.freebsd
+	${MV} ${STAGEDIR}/usr/local/sbin.freebsd/* ${STAGEDIR}/usr/local/sbin/
+	${RM} -rf ${STAGEDIR}/usr/local/sbin.freebsd
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
+		| ${GREP} -v "/debian/" \
 		| ${GREP} -v "/netcli.sh" \
+		| ${GREP} -v "/systemd/" \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
 		| ${AWK} '{$$1=""; sub(/^[ \t]+/, ""); print $$0}' >> ${TMPPLIST})

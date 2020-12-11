@@ -63,6 +63,8 @@ class ACMERegistrationService(CRUDService):
 
     @private
     def get_directory(self, acme_directory_uri):
+        self.middleware.call_sync('network.general.will_perform_activity', 'acme')
+
         try:
             acme_directory_uri = acme_directory_uri.rstrip('/')
             response = requests.get(acme_directory_uri).json()
@@ -116,6 +118,8 @@ class ACMERegistrationService(CRUDService):
         # 2) REGISTER CLIENT
         # 3) SAVE REGISTRATION OBJECT
         # 4) SAVE REGISTRATION BODY
+
+        self.middleware.call_sync('network.general.will_perform_activity', 'acme')
 
         verrors = ValidationErrors()
 
@@ -390,6 +394,7 @@ class DNSAuthenticatorService(CRUDService):
     )
     @private
     def update_txt_record(self, data):
+        self.middleware.call_sync('network.general.will_perform_activity', 'acme')
 
         authenticator = self.middleware.call_sync('acme.dns.authenticator._get_instance', data['authenticator'])
 
@@ -486,3 +491,7 @@ class DNSAuthenticatorService(CRUDService):
         raise CallError(
             f'Timed out waiting for Route53 change. Current status: {resp["ChangeInfo"]["Status"]}'
         )
+
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'acme', 'ACME')

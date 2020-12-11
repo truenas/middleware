@@ -1,4 +1,63 @@
 #!/bin/sh
+mkdir /var/trash
+for file in \
+    /etc/cron.d/certbot \
+    /etc/cron.d/e2scrub_all \
+    /etc/cron.d/mdadm \
+    /etc/cron.d/sysstat \
+    /etc/cron.daily/apt-compat \
+    /etc/cron.daily/apache2 \
+    /etc/cron.daily/calendar \
+    /etc/cron.daily/exim4-base \
+    /etc/cron.daily/dpkg \
+    /etc/cron.daily/mdadm \
+    /etc/cron.daily/man-db \
+    /etc/cron.daily/sysstat \
+    /etc/cron.weekly/man-db \
+    /etc/grub.d/10_linux \
+    /etc/grub.d/30_os-prober \
+    /etc/logrotate.d/syslog-ng
+do
+    dpkg-divert --add --package truenas --rename --divert "/var/trash/$(echo "$file" | sed "s/\//_/g")" "$file"
+done
 
-# It unconfigures interfaces we've just configured even if it is instructed to do not touch anything
-systemctl disable systemd-networkd
+dpkg-divert --add --package truenas --rename --divert /etc/grub.d__10_linux /etc/grub.d/10_linux
+dpkg-divert --add --package truenas --rename --divert /etc/grub.d__30_os-prober /etc/grub.d/30_os-prober
+
+# openssh-server explicitly sets itself to enabled on post install, so preset is not respected
+# we need to manually disable it
+
+systemctl disable ssh.service
+
+# Services whose unit files are created with systemd-sysv-generator do not respect preset file so for now
+# we disable them explicitly
+
+systemctl disable scst
+systemctl disable inadyn
+systemctl disable tftpd-hpa
+systemctl disable proftpd
+systemctl disable netatalk
+systemctl disable nmbd
+systemctl disable smbd
+systemctl disable winbind
+systemctl disable wsdd
+
+# kubelet and nvidia-persistenced are not respecting vendor preset file so we disable them explicitly
+systemctl disable kubelet
+systemctl disable nvidia-persistenced
+
+# Update alternatives
+update-alternatives --install "/usr/sbin/sendmail" sendmail "/etc/find_alias_for_smtplib.sh" "10"
+# We will be using legacy iptables until k3s introduces fixes upstream to properly handle iptables
+update-alternatives --set iptables /usr/sbin/iptables-legacy
+update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+update-alternatives --set arptables /usr/sbin/arptables-legacy
+update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+
+# Copy to /conf/base
+for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf /var/log; do
+    mkdir -p "$(dirname "/conf/base/$bit")"
+    cp -aR "$bit" "/conf/base/$bit"
+done
+
+#DEBHELPER#

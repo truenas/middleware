@@ -60,8 +60,8 @@ zfs_func()
 	zpool status -v
 	section_footer
 
-	section_header "zpool history - excepting replication"
-	zpool history | egrep -v "zfs.*(snapshot|destroy|recv).*"
+	section_header "zpool history -i"
+	zpool history -i
 	section_footer
 
 	section_header "zpool get all"
@@ -83,21 +83,47 @@ zfs_func()
 	do
 		section_header "${s}"
 		zfs get all "${s}"
+		if is_freebsd; then
+			echo "Mountpoint ACL:"
+			mp=$(zfs get -H -o value mountpoint "${s}")
+			if [ "${mp}" != "legacy" ]; then
+				getfacl "${mp}"
+			fi
+		fi
 		section_footer
 	done
 	section_footer
 
-	glabel status > /tmp/glabel.out 
-	section_header  "zpool disk membership normal form"
-		zpool status | ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_pool.nawk | tee /tmp/pool.normal
-	section_footer
-	section_header  "enclosure use normal form"
+	if is_linux; then
+		lsblk -o name,partuuid -l > /tmp/glabel.out
+	else
+		glabel status > /tmp/glabel.out
+		section_header  "enclosure use normal form"
 		sesutil map | ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_ses.nawk | tee /tmp/ses.normal
-	section_footer
-	section_header  "pool joined to storage"
-		cat  /tmp/pool.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
-	section_footer
-	section_header  "enclosure data joined to pool"
+		section_footer
+
+		section_header  "enclosure data joined to pool"
 		cat  /tmp/ses.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_ses.nawk
+		section_footer
+	fi
+	section_header  "zpool disk membership normal form"
+	zpool status | ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_pool.nawk | tee /tmp/pool.normal
+	section_footer
+
+	section_header  "pool joined to storage"
+	cat  /tmp/pool.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
+	section_footer
+
+	section_header  "kstat"
+	if is_freebsd; then
+		sysctl kstat.zfs.misc.fletcher_4_bench
+		sysctl kstat.zfs.misc.vdev_raidz_bench
+		sysctl kstat.zfs.misc.dbgmsg
+		for pool in $(zpool list -Ho name); do
+			sysctl kstat.zfs.${pool}.misc.state
+			sysctl kstat.zfs.${pool}.multihost
+			sysctl kstat.zfs.${pool}.txgs
+		done
+	fi
 	section_footer
 }

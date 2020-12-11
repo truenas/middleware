@@ -18,11 +18,11 @@ class DiskService(Service):
         async def update():
             try:
                 disks = [
-                    disk['devname']
+                    disk['name']
                     for disk in await self.middleware.call(
                         'disk.query',
                         [
-                            ['devname', '!=', None],
+                            ['name', '!=', None],
                         ],
                     )
                 ]

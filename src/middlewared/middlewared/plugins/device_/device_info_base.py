@@ -34,6 +34,10 @@ class DeviceInfoBase(ServicePartBase):
     }
 
     @private
+    async def get_gpus(self):
+        raise NotImplementedError()
+
+    @private
     async def get_serials(self):
         raise NotImplementedError()
 

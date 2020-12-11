@@ -24,6 +24,7 @@ def setusercontext(user):
     lc = libutil.login_getpwclass(pwnam)
     os.setgid(passwd.pw_gid)
     if lc and lc[0]:
+        libc.initgroups(user.encode('ascii'), passwd.pw_gid)
         libutil.setusercontext(
             lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)  # 0x07ff LOGIN_SETALL
         )
@@ -31,13 +32,15 @@ def setusercontext(user):
     else:
         os.setgid(passwd.pw_gid)
         libc.setlogin(user)
-        libc.initgroups(user, passwd.pw_gid)
+        libc.initgroups(user.encode('ascii'), passwd.pw_gid)
         os.setuid(passwd.pw_uid)
 
     try:
         os.chdir(passwd.pw_dir)
     except Exception:
         os.chdir('/')
+
+    os.environ['HOME'] = passwd.pw_dir
 
 
 def _run_command(user, commandline, q, rv):
@@ -66,7 +69,7 @@ def _run_command(user, commandline, q, rv):
 
 
 def run_command_with_user_context(commandline, user, callback):
-    q = Queue()
+    q = Queue(maxsize=100)
     rv = Value('i')
     stdout = b''
     p = Process(
@@ -83,6 +86,11 @@ def run_command_with_user_context(commandline, user, callback):
             callback(get)
         except queue.Empty:
             pass
+        except Exception:
+            logger.error('Unhandled exception', exc_info=True)
+            p.kill()
+            raise
+
     p.join()
 
     return subprocess.CompletedProcess(

@@ -10,7 +10,7 @@
 #cache and log aren't ONLINE; the sadists that wrote zpool status didn't see this coming
 ($0 ~ /ONLINE|log|cache|REMOVED|OFFLINE|DEGRADED/  ) {
 	#bug: needs an entry for every vdev type
-	if ( match ( $1, "gptid") || match ($1, "[a]*da[0-9]") || match ($1, "diskid") || match ($2, "OFFLINE") )  {
+	if ( match ( $1, "gptid") || match ($1, "[a]*da[0-9]") || match ($1, "diskid") || match ($2, "OFFLINE") || match ($1, "[[:alnum:]]{8}(-[[:alnum:]]{4}){3}-[[:alnum:]]{12}") )  {
 	#            gptid/13377042-b351-11e7-8040-0007432ba650  ONLINE       0     0     0
 	# get device ^^^^^^^^                      and      status^^^^
 		print ( "disk: " $1  " state: "  $2  " vdev: " lvdv " pool: " lpool " aux: " $5 $6 $7); 
@@ -25,7 +25,28 @@
 	
 }
 
+
+# Following is zpool status from ZoL
+#  pool: scale2
+# state: DEGRADED
+#status: One or more devices has been taken offline by the administrator.
+#	Sufficient replicas exist for the pool to continue functioning in a
+#	degraded state.
+#action: Online the device using 'zpool online' or replace the device with
+#	'zpool replace'.
+#  scan: none requested
+#config:
+
+#	NAME                                      STATE     READ WRITE CKSUM
+#	scale2                                    DEGRADED     0     0     0
+#	  mirror-0                                DEGRADED     0     0     0
+#	    03887d86-90af-4e47-b414-2cee7ad6244f  ONLINE       0     0     0
+#	    15604eef-4bd5-449e-b285-b51302b96cb3  OFFLINE      0     0     0
 #
+#errors: No known data errors
+
+
+# Following is zpool status from ZoF
 #errors: No known data errors
 #
 #  pool: test0

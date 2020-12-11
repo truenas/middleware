@@ -5,8 +5,10 @@ from datetime import timedelta
 import logging
 import os
 
-from middlewared.alert.base import AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import (AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource,
+                                    UnavailableException)
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.service_exception import CallError
 from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
@@ -16,6 +18,26 @@ IPMISELRecord = namedtuple("IPMISELRecord", ["id", "datetime", "sensor", "event"
 
 def has_ipmi():
     return any(os.path.exists(p) for p in ["/dev/ipmi0", "/dev/ipmi/0", "/dev/ipmidev/0"])
+
+
+class IpmiTool:
+    def __init__(self):
+        self.errors = 0
+
+    async def __call__(self, args):
+        result = await run(["ipmitool"] + args, check=False, encoding="utf8", errors="ignore")
+        if result.returncode != 0:
+            self.errors += 1
+            if self.errors < 5:
+                raise UnavailableException()
+
+            raise CallError(f"ipmitool failed (code={result.returncode}): {result.stderr}")
+
+        self.errors = 0
+        return result.stdout
+
+
+ipmitool = IpmiTool()
 
 
 def parse_ipmitool_output(output):
@@ -126,8 +148,7 @@ class IPMISELAlertSource(AlertSource):
         if not has_ipmi():
             return
 
-        return await self._produce_alerts_for_ipmitool_output(
-            (await run(["ipmitool", "-c", "sel", "elist"], encoding="utf8")).stdout)
+        return await self._produce_alerts_for_ipmitool_output(await ipmitool(["-c", "sel", "elist"]))
 
     async def _produce_alerts_for_ipmitool_output(self, output):
         alerts = []
@@ -190,12 +211,16 @@ class IPMISELSpaceLeftAlertSource(AlertSource):
         if not has_ipmi():
             return
 
-        return self._produce_alert_for_ipmitool_output(
-            (await run(["ipmitool", "sel", "info"], encoding="utf8")).stdout)
+        return self._produce_alert_for_ipmitool_output(await ipmitool(["sel", "info"]))
 
     def _produce_alert_for_ipmitool_output(self, output):
         sel_information = parse_sel_information(output)
-        if int(sel_information["Percent Used"].rstrip("%")) > 90:
+        try:
+            percent_used = int(sel_information["Percent Used"].rstrip("%"))
+        except ValueError:
+            return
+
+        if percent_used > 90:
             return Alert(
                 IPMISELSpaceLeftAlertClass,
                 {

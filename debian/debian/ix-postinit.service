@@ -1,0 +1,14 @@
+[Unit]
+Description=Execute TrueNAS custom post-init tasks
+
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=midclt call core.notify_postinit
+ExecStart=midclt call -job initshutdownscript.execute_init_tasks POSTINIT
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=getty.target

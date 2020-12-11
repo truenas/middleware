@@ -15,5 +15,11 @@ class DiskService(Service):
             except OSError:
                 pass
             os.symlink(f'/dev/{name}', '/dev/dumpdev')
-            await run('dumpon', f'/dev/{name}')
+            cp = await run('dumpon', f'/dev/{name}', check=False)
+            if cp.returncode:
+                self.middleware.logger.error(
+                    'Failed to specify "%s" device for crash dumps: %s', f'/dev/{name}', cp.stderr.decode()
+                )
+            else:
+                self.middleware.logger.debug('Configured "%s" device for crash dumps.', f'/dev/{name}')
         return True

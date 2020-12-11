@@ -1,0 +1,16 @@
+[Unit]
+Description=Import ZFS pools
+DefaultDependencies=no
+Before=network-pre.target
+Before=local-fs.target
+After=middlewared.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=-midclt call disk.sed_unlock_all
+ExecStart=midclt call -job --job-print description pool.import_on_boot
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

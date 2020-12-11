@@ -26,6 +26,7 @@ network:*:69:
 audit:*:77:
 ladvd:*:78:
 www:*:80:
+ntpd:*:123:
 avahi:*:200:
 messagebus:*:201:
 nslcd:*:389:

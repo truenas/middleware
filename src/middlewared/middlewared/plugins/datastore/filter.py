@@ -3,6 +3,24 @@ import operator
 from .schema import SchemaMixin
 
 
+def in_(col, value):
+    has_nulls = None in value
+    value = [v for v in value if v is not None]
+    expr = col.in_(value)
+    if has_nulls:
+        expr = expr | (col == None)  # noqa
+    return expr
+
+
+def nin(col, value):
+    has_nulls = None in value
+    value = [v for v in value if v is not None]
+    expr = ~col.in_(value)
+    if has_nulls:
+        expr = expr & (col != None)  # noqa
+    return expr
+
+
 class FilterMixin(SchemaMixin):
     def _filters_to_queryset(self, filters, table, prefix, aliases):
         opmap = {
@@ -13,8 +31,8 @@ class FilterMixin(SchemaMixin):
             '<': operator.lt,
             '<=': operator.le,
             '~': lambda col, value: col.op('regexp')(value),
-            'in': lambda col, value: col.in_(value),
-            'nin': lambda col, value: ~col.in_(value),
+            'in': in_,
+            'nin': nin,
             '^': lambda col, value: col.startswith(value),
             '$': lambda col, value: col.endswith(value),
         }

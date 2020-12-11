@@ -4,18 +4,24 @@ import dateutil.tz
 import glob
 import io
 import os
-import platform
 import re
 import syslog
+import socket
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
+from middlewared.utils import osc, run
 from middlewared.validators import Email, Range, Port
 
 
-DRIVER_BIN_DIR = '/usr/local/libexec/nut'
+if osc.IS_FREEBSD:
+    DRIVER_BIN_DIR = '/usr/local/libexec/nut'
+elif osc.IS_LINUX:
+    DRIVER_BIN_DIR = '/lib/nut'
+
+RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
+RE_UPS_STATUS = re.compile(r'ups.status: (.*)')
 
 
 class UPSModel(sa.Model):
@@ -34,7 +40,7 @@ class UPSModel(sa.Model):
     ups_shutdown = sa.Column(sa.String(120), default='batt')
     ups_shutdowntimer = sa.Column(sa.Integer(), default=30)
     ups_monuser = sa.Column(sa.String(50), default='upsmon')
-    ups_monpwd = sa.Column(sa.String(30), default="fixmepass")
+    ups_monpwd = sa.Column(sa.EncryptedText(), default='fixmepass')
     ups_extrausers = sa.Column(sa.Text())
     ups_rmonitor = sa.Column(sa.Boolean(), default=False)
     ups_emailnotify = sa.Column(sa.Boolean(), default=False)
@@ -82,7 +88,7 @@ class UPSService(SystemServiceService):
         Returns choices of UPS drivers supported by the system.
         """
         ups_choices = {}
-        if platform.system().lower() == 'linux':
+        if osc.IS_LINUX:
             driver_list = '/usr/share/nut/driver.list'
         else:
             driver_list = '/conf/base/etc/local/nut/driver.list'
@@ -138,12 +144,11 @@ class UPSService(SystemServiceService):
                     'Use alphanumeric characters, ".", "-" and "_"'
                 )
 
-        for field in [field for field in ['monpwd', 'monuser'] if data.get(field)]:
-            if re.search(r'[ #]', data[field], re.I):
-                verrors.add(
-                    f'{schema}.{field}',
-                    'Spaces or number signs are not allowed'
-                )
+        for field in ['monpwd', 'monuser']:
+            if not data.get(field):
+                verrors.add(f'{schema}.{field}', 'This field is required.')
+            elif re.search(r'[ #]', data[field], re.I):
+                verrors.add(f'{schema}.{field}', 'Spaces or number signs are not allowed.')
 
         mode = data.get('mode')
         if mode == 'MASTER':
@@ -264,29 +269,42 @@ class UPSService(SystemServiceService):
     async def upssched_event(self, notify_type):
         config = await self.config()
         upsc_identifier = config['complete_identifier']
+        cp = await run('upsc', upsc_identifier, check=False)
+        if cp.returncode:
+            stats_output = ''
+            self.logger.error('Failed to retrieve ups information: %s', cp.stderr.decode())
+        else:
+            stats_output = cp.stdout.decode()
+
+        if RE_TEST_IN_PROGRESS.search(stats_output):
+            self.logger.debug('Self test is in progress and %r notify event should be ignored', notify_type)
+            return
+
         if notify_type.lower() == 'shutdown':
             # Before we start FSD with upsmon, lets ensure that ups is not ONLINE (OL).
             # There are cases where battery/charger issues can result in ups.status being "OL LB" at the
             # same time. This will ensure that we don't initiate a shutdown if ups is OL.
-            stats_output = (
-                await run(
-                    '/usr/local/bin/upsc', upsc_identifier,
-                    check=False
-                )
-            ).stdout
-
-            ups_status = re.findall(
-                fr'ups.status: (.*)',
-                '' if not stats_output else stats_output.decode()
-            )
+            ups_status = RE_UPS_STATUS.findall(stats_output)
             if ups_status and 'ol' in ups_status[0].lower():
                 self.middleware.logger.debug(
                     f'Shutdown not initiated as ups.status ({ups_status[0]}) indicates '
                     f'{config["identifier"]} is ONLINE (OL).'
                 )
             else:
+                # if we shutdown the active node while the passive is still online
+                # then we're just going to cause a failover event. Shut the passive down
+                # first and then shut the active node down
+                if await self.middleware.call('failover.licensed'):
+                    if await self.middleware.call('failover.status') == 'MASTER':
+                        syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown" for passive node')
+                        try:
+                            await self.middleware.call('failover.call_remote', 'ups.upssched_event', 'shutdown')
+                        except Exception as e:
+                            syslog.syslog(syslog.LOG_ERROR, f'failed shutting down passive node with error {e}')
+
                 syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown"')
-                await run('/usr/local/sbin/upsmon', '-c', 'fsd', check=False)
+                await run('upsmon', '-c', 'fsd', check=False)
+
         elif 'notify' in notify_type.lower():
             # notify_type is expected to be of the following format
             # NOTIFY-EVENT i.e NOTIFY-LOWBATT
@@ -324,10 +342,10 @@ class UPSService(SystemServiceService):
                 # battery.runtime.low: 900
 
                 ups_name = config['identifier']
-                hostname = (await self.middleware.call('system.info'))['hostname']
+                hostname = socket.gethostname()
                 current_time = datetime.datetime.now(tz=dateutil.tz.tzlocal()).strftime('%a %b %d %H:%M:%S %Z %Y')
                 ups_subject = config['subject'].replace('%d', current_time).replace('%h', hostname)
-                body = f'NOTIFICATION: {notify_type!r}<br>UPS: {ups_name!r}<br><br>'
+                body = f'NOTIFICATION: {notify_type!r}\n\nUPS: {ups_name!r}\n\n'
 
                 # Let's gather following stats
                 data_points = {
@@ -340,7 +358,7 @@ class UPSService(SystemServiceService):
                 }
 
                 stats_output = (
-                    await run('/usr/local/bin/upsc', upsc_identifier, check=False)
+                    await run('upsc', upsc_identifier, check=False)
                 ).stdout
                 recovered_stats = re.findall(
                     fr'({"|".join(data_points)}): (.*)',
@@ -348,14 +366,14 @@ class UPSService(SystemServiceService):
                 )
 
                 if recovered_stats:
-                    body += 'Statistics recovered:<br><br>'
+                    body += 'Statistics recovered:\n\n'
                     # recovered_stats is expected to be a list in this format
                     # [('battery.charge', '5'), ('battery.charge.low', '10'), ('battery.runtime', '1860')]
                     for index, stat in enumerate(recovered_stats):
-                        body += f'{index + 1}) {data_points[stat[0]]}<br>  {stat[0]}: {stat[1]}<br><br>'
+                        body += f'{index + 1}) {data_points[stat[0]]}\n  {stat[0]}: {stat[1]}\n\n'
 
                 else:
-                    body += 'Statistics could not be recovered<br>'
+                    body += 'Statistics could not be recovered\n'
 
                 # Subject and body defined, send email
                 job = await self.middleware.call(

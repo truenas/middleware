@@ -1,10 +1,10 @@
 import textwrap
-from unittest.mock import patch
 
 from asynctest import CoroutineMock, Mock
 import pytest
 
-from middlewared.plugins.disk import get_temperature, DiskService
+from middlewared.plugins.disk_.smart_attributes import DiskService as SmartAttributesDiskService
+from middlewared.plugins.disk_.temperature import get_temperature
 from middlewared.pytest.unit.middleware import Middleware
 
 
@@ -32,8 +32,7 @@ def test__get_temperature(stdout, temperature):
 async def test__disk_service__sata_dom_lifetime_left():
 
     m = Middleware()
-
-    with patch("middlewared.plugins.disk.run", CoroutineMock(return_value=Mock(stdout=textwrap.dedent("""\
+    m["disk.smartctl"] = Mock(return_value=textwrap.dedent("""\
         smartctl 6.6 2017-11-05 r4594 [FreeBSD 11.2-STABLE amd64] (local build)
         Copyright (C) 2002-17, Bruce Allen, Christian Franke, www.smartmontools.org
 
@@ -53,5 +52,6 @@ async def test__disk_service__sata_dom_lifetime_left():
         194 Temperature_Celsius     0x0022   060   060   030    Old_age   Always       -       40 (Min/Max 30/60)
         241 Total_LBAs_Written      0x0032   100   100   000    Old_age   Always       -       14088053817
 
-    """)))):
-        assert abs(await DiskService(m).sata_dom_lifetime_left("ada1") - 0.8926) < 1e-4
+    """))
+
+    assert abs(await SmartAttributesDiskService(m).sata_dom_lifetime_left("ada1") - 0.8926) < 1e-4

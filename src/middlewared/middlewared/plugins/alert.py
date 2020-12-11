@@ -33,7 +33,9 @@ from middlewared.service import (
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.validators import validate_attributes
-from middlewared.utils import bisect, load_modules, load_classes
+from middlewared.utils import bisect
+from middlewared.utils.plugins import load_modules, load_classes
+from middlewared.utils.python import get_middlewared_dir
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY = "IMMEDIATELY"
@@ -46,9 +48,6 @@ AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
 class AlertModel(sa.Model):
     __tablename__ = 'system_alert'
-    __table_args__ = (
-        sa.Index('system_alert_node_f77e0d77_uniq', 'node', 'klass', 'key', unique=True),
-    )
 
     id = sa.Column(sa.Integer(), primary_key=True)
     node = sa.Column(sa.String(100))
@@ -57,7 +56,7 @@ class AlertModel(sa.Model):
     datetime = sa.Column(sa.DateTime())
     last_occurrence = sa.Column(sa.DateTime())
     text = sa.Column(sa.Text())
-    args = sa.Column(sa.JSON())
+    args = sa.Column(sa.JSON(type=None))
     dismissed = sa.Column(sa.Boolean())
     uuid = sa.Column(sa.Text())
     klass = sa.Column(sa.Text())
@@ -129,6 +128,14 @@ class AlertPolicy:
         return gone_alerts, new_alerts
 
 
+def get_alert_level(alert, classes):
+    return AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)]
+
+
+def get_alert_policy(alert, classes):
+    return classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY)
+
+
 class AlertSerializer:
     def __init__(self, middleware):
         self.middleware = middleware
@@ -168,7 +175,7 @@ class AlertService(Service):
     async def load(self):
         is_freenas = await self.middleware.call("system.is_freenas")
 
-        main_sources_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "alert", "source")
+        main_sources_dir = os.path.join(get_middlewared_dir(), "alert", "source")
         sources_dirs = [os.path.join(overlay_dir, "alert", "source") for overlay_dir in self.middleware.overlay_dirs]
         sources_dirs.insert(0, main_sources_dir)
         for sources_dir in sources_dirs:
@@ -213,7 +220,8 @@ class AlertService(Service):
 
                 alert = Alert(**alert)
 
-                self.alerts.append(alert)
+                if not any(a.uuid == alert.uuid for a in self.alerts):
+                    self.alerts.append(alert)
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
@@ -243,7 +251,7 @@ class AlertService(Service):
         List all types of alerts which the system can issue.
         """
 
-        product_type = await self.middleware.call("system.product_type")
+        product_type = await self.middleware.call("alert.product_type")
 
         classes = [alert_class for alert_class in AlertClass.classes
                    if product_type in alert_class.products and not alert_class.exclude_from_list]
@@ -406,22 +414,27 @@ class AlertService(Service):
 
             for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice",
                                                                  [["enabled", "=", True]]):
+                service_level = AlertLevel[alert_service_desc["level"]]
+
+                service_alerts = [
+                    alert for alert in self.alerts
+                    if (
+                        get_alert_level(alert, classes).value >= service_level.value and
+                        get_alert_policy(alert, classes) != "NEVER"
+                    )
+                ]
                 service_gone_alerts = [
                     alert for alert in gone_alerts
                     if (
-                        AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
-                        AlertLevel[alert_service_desc["level"]].value and
-
-                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
+                        get_alert_level(alert, classes).value >= service_level.value and
+                        get_alert_policy(alert, classes) == policy_name
                     )
                 ]
                 service_new_alerts = [
                     alert for alert in new_alerts
                     if (
-                        AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
-                        AlertLevel[alert_service_desc["level"]].value and
-
-                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
+                        get_alert_level(alert, classes).value >= service_level.value and
+                        get_alert_policy(alert, classes) == policy_name
                     )
                 ]
                 for gone_alert in list(service_gone_alerts):
@@ -446,7 +459,7 @@ class AlertService(Service):
                                       alert_service_desc["type"], alert_service_desc["attributes"], exc_info=True)
                     continue
 
-                alerts = [alert for alert in self.alerts if not alert.dismissed]
+                alerts = [alert for alert in service_alerts if not alert.dismissed]
                 service_gone_alerts = [alert for alert in service_gone_alerts if not alert.dismissed]
                 service_new_alerts = [alert for alert in service_new_alerts if not alert.dismissed]
 
@@ -521,7 +534,7 @@ class AlertService(Service):
     async def __run_alerts(self):
         master_node = "A"
         backup_node = "B"
-        product_type = await self.middleware.call("system.product_type")
+        product_type = await self.middleware.call("alert.product_type")
         run_on_backup_node = False
         run_failover_related = False
         if product_type == "ENTERPRISE":
@@ -722,7 +735,7 @@ class AlertService(Service):
 
         return alerts
 
-    @periodic(3600)
+    @periodic(3600, run_on_start=False)
     @private
     async def flush_alerts(self):
         if (
@@ -798,6 +811,14 @@ class AlertService(Service):
             raise CallError("Alert source {name!r} not found.", errno.ENOENT)
 
         self.alert_source_last_run[alert_source.name] = datetime.min
+
+    @private
+    async def product_type(self):
+        product_type = await self.middleware.call("system.product_type")
+        # FIXME
+        if product_type == "SCALE":
+            product_type = "CORE"
+        return product_type
 
 
 class AlertServiceModel(sa.Model):

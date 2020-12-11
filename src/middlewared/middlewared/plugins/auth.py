@@ -1,6 +1,5 @@
 import crypt
 from datetime import datetime, timedelta
-import platform
 import pyotp
 import random
 import re
@@ -14,11 +13,8 @@ from middlewared.service import (
     ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private, CallError
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen
+from middlewared.utils import osc, Popen
 from middlewared.validators import Range
-
-
-IS_LINUX = platform.system().lower() == 'linux'
 
 
 class TokenManager:
@@ -178,6 +174,10 @@ class LoginPasswordSessionManagerCredentials(SessionManagerCredentials):
     pass
 
 
+class ApiKeySessionManagerCredentials(SessionManagerCredentials):
+    pass
+
+
 class TokenSessionManagerCredentials(SessionManagerCredentials):
     def __init__(self, token_manager, token):
         self.token_manager = token_manager
@@ -331,6 +331,19 @@ class AuthService(Service):
             self.session_manager.login(app, LoginPasswordSessionManagerCredentials())
         return valid
 
+    @no_auth_required
+    @accepts(Str('api_key'))
+    @pass_app()
+    async def login_with_api_key(self, app, api_key):
+        """
+        Authenticate session using API Key.
+        """
+        if await self.middleware.call('api_key.authenticate', api_key):
+            self.session_manager.login(app, ApiKeySessionManagerCredentials())
+            return True
+
+        return False
+
     @accepts()
     @pass_app()
     async def logout(self, app):
@@ -359,7 +372,7 @@ class TwoFactorAuthModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     otp_digits = sa.Column(sa.Integer(), default=6)
-    secret = sa.Column(sa.String(16), nullable=True, default=None)
+    secret = sa.Column(sa.EncryptedText(), nullable=True, default=None)
     window = sa.Column(sa.Integer(), default=0)
     interval = sa.Column(sa.Integer(), default=30)
     services = sa.Column(sa.JSON(), default={})
@@ -375,8 +388,6 @@ class TwoFactorAuthService(ConfigService):
 
     @private
     async def two_factor_extend(self, data):
-        data['secret'] = await self.middleware.call('pwenc.decrypt', data['secret'])
-
         for srv in ['ssh']:
             data['services'].setdefault(srv, False)
 
@@ -386,9 +397,9 @@ class TwoFactorAuthService(ConfigService):
         Dict(
             'auth_twofactor_update',
             Bool('enabled'),
-            Int('otp_digits', validators=Range(min=6, max=8)),
-            Int('window', validators=Range(min=0)),
-            Int('interval', validators=Range(min=5)),
+            Int('otp_digits', validators=[Range(min=6, max=8)]),
+            Int('window', validators=[Range(min=0)]),
+            Int('interval', validators=[Range(min=5)]),
             Dict(
                 'services',
                 Bool('ssh', default=False)
@@ -415,8 +426,6 @@ class TwoFactorAuthService(ConfigService):
             config['secret'] = await self.middleware.run_in_thread(
                 self.generate_base32_secret
             )
-
-        config['secret'] = await self.middleware.call('pwenc.encrypt', config['secret'])
 
         await self.middleware.call(
             'datastore.update',
@@ -458,7 +467,7 @@ class TwoFactorAuthService(ConfigService):
             'datastore.update',
             self._config.datastore,
             config['id'], {
-                'secret': self.middleware.call_sync('pwenc.encrypt', self.generate_base32_secret())
+                'secret': self.generate_base32_secret()
             }
         )
 
@@ -511,7 +520,7 @@ async def check_permission(middleware, app):
     data = await proc.communicate()
     for line in data[0].strip().splitlines()[1:]:
         cols = line.decode().split()
-        if cols[-3 if IS_LINUX else -2] == remote and cols[0] == 'root':
+        if cols[-3 if osc.IS_LINUX else -2] == remote and cols[0] == 'root':
             AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
             break
 

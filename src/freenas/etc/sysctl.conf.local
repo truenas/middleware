@@ -18,9 +18,6 @@ net.link.lagg.lacp.default_strict_mode=0
 vfs.nfsd.tcpcachetimeo=300
 vfs.nfsd.tcphighwater=150000
 
-# Force minimal 4KB ashift for new top level ZFS VDEVs.
-vfs.zfs.min_auto_ashift=12
-
 # Reduce default indirect block size from 128KB to 32KB.
 vfs.zfs.default_ibs=15
 

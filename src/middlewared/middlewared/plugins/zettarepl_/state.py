@@ -34,6 +34,9 @@ class ZettareplService(Service):
             }
         }
 
+    def get_state_internal(self, task_id):
+        return self.state.get(task_id)
+
     def _known_tasks_ids(self):
         return set(self.state.keys()) | set(self.definition_errors.keys()) | set(self.hold_tasks.keys())
 
@@ -80,11 +83,29 @@ class ZettareplService(Service):
         for task_id in set(old_definition_errors.keys()) | set(self.definition_errors.keys()):
             self._notify_state_change(task_id)
 
-    def set_hold_tasks(self, hold_tasks):
+    def notify_definition(self, definition, hold_tasks):
         old_hold_tasks = self.hold_tasks
         self.hold_tasks = hold_tasks
         for task_id in set(old_hold_tasks.keys()) | set(self.hold_tasks.keys()):
             self._notify_state_change(task_id)
+
+        task_ids = (
+            {f"periodic_snapshot_{k}" for k in definition["periodic-snapshot-tasks"]} |
+            {f"replication_{k}" for k in definition["replication-tasks"]} |
+            set(hold_tasks.keys())
+        )
+        for task_id in list(self.state.keys()):
+            if task_id not in task_ids:
+                self.state.pop(task_id, None)
+        for task_id in list(self.last_snapshot.keys()):
+            if task_id not in task_ids:
+                self.last_snapshot.pop(task_id, None)
+        for task_id in list(self.serializable_state.keys()):
+            if f"replication_task_{task_id}" not in task_ids:
+                self.serializable_state.pop(task_id, None)
+
+    def get_internal_task_state(self, task_id):
+        return self.state[task_id]
 
     def set_state(self, task_id, state):
         self.state[task_id] = state
@@ -96,6 +117,8 @@ class ZettareplService(Service):
         self._notify_state_change(task_id)
 
     def set_last_snapshot(self, task_id, last_snapshot):
+        self.last_snapshot[task_id] = last_snapshot
+
         if task_id.startswith("replication_task_"):
             self.serializable_state[int(task_id.split("_")[-1])]["last_snapshot"] = last_snapshot
 

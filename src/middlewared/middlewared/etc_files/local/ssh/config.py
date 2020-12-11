@@ -2,7 +2,12 @@ import base64
 import os
 import re
 
-SSH_CONFIG_PATH = '/usr/local/etc/ssh/'
+from middlewared.utils import osc
+
+if osc.IS_FREEBSD:
+    SSH_CONFIG_PATH = '/usr/local/etc/ssh'
+else:
+    SSH_CONFIG_PATH = '/etc/ssh'
 
 
 def generate_ssh_config(middleware):

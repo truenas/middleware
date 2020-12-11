@@ -41,7 +41,7 @@ class StatsService(Service):
         """
         rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, source, _type)
         proc = await Popen(
-            ['/usr/local/bin/rrdtool', 'info', rrdfile],
+            ['rrdtool', 'info', rrdfile],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -102,7 +102,7 @@ class StatsService(Service):
             ])
         proc = await Popen(
             [
-                '/usr/local/bin/rrdtool', 'xport',
+                'rrdtool', 'xport',
                 '--daemon', 'unix:/var/run/rrdcached.sock',
                 '--json',
                 '--start', stats['start'], '--end', stats['end'],

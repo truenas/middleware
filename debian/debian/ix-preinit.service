@@ -1,0 +1,17 @@
+[Unit]
+Description=Execute TrueNAS custom pre-init tasks
+DefaultDependencies=no
+
+Before=network-pre.target
+
+After=middlewared.service
+Before=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=midclt call -job initshutdownscript.execute_init_tasks PREINIT
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target

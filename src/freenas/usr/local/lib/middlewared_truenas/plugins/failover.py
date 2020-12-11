@@ -1,4 +1,4 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -27,10 +27,11 @@ except ImportError:
 import tempfile
 import textwrap
 import time
+import enum
 
 from functools import partial
 
-from middlewared.schema import accepts, Bool, Dict, Int, NOT_PROVIDED, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
@@ -38,116 +39,52 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
-from middlewared.plugins.system import SystemService
+from middlewared.utils.contextlib import asyncnullcontext
 
 BUFSIZE = 256
-INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
+ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
+TRUENAS_VERS = re.compile(r'\d*\.?\d+')
 
 logger = logging.getLogger('failover')
 
 
-class LocalEscrowCtl:
-    def __init__(self):
-        server = '/tmp/escrowd.sock'
-        connected = False
-        retries = 5
+class HA_HARDWARE(enum.Enum):
 
-        # Start escrowd on demand
-        #
-        # Attempt to connect the server;
-        # if connection can not be established, startescrowd and
-        # retry.
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            sock.connect(server)
-            connected = True
-        except Exception:
-            subprocess.Popen(['escrowd'])
-            while retries > 0 and connected is False:
-                try:
-                    retries = retries - 1
-                    sock.connect(server)
-                    connected = True
-                except Exception:
-                    time.sleep(1)
+    """
+    The echostream E16 JBOD and the echostream Z-series chassis
+    are the same piece of hardware. One of the only ways to differentiate
+    them is to look at the enclosure elements in detail. The Z-series
+    chassis identifies element 0x26 as `ZSERIES_ENCLOSURE` listed below.
+    The E16 JBOD does not. The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5.
 
-        if not connected:
-            raise RuntimeError('Can\'t connect to escrowd')
+    We use this fact to ensure we are looking at the internal enclosure, and
+    not a shelf. If we used a shelf to determine which node was A or B, you could
+    cause the nodes to switch identities by switching the cables for the shelf.
+    """
 
-        data = sock.recv(BUFSIZE).decode()
-        if data != '220 Ready, go ahead\n':
-            raise RuntimeError('server didn\'t send welcome message')
-        self.sock = sock
+    ZSERIES_ENCLOSURE = re.compile(r'SD_9GV12P1J_12R6K4', re.M)
+    ZSERIES_NODE = re.compile(r'3U20D-Encl-([AB])', re.M)
+    XSERIES_ENCLOSURE = re.compile(r'Enclosure Name: CELESTIC (P3215-O|P3217-B)', re.M)
+    XSERIES_NODEA = re.compile(r'ESCE A_(5[0-9A-F]{15})', re.M)
+    XSERIES_NODEB = re.compile(r'ESCE B_(5[0-9A-F]{15})', re.M)
+    MSERIES_ENCLOSURE = re.compile(r'Enclosure Name: (ECStream|iX) 4024S([ps])', re.M)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, typ, value, traceback):
-        self.close()
-
-    def setkey(self, passphrase):
-        # Set key on local escrow daemon.
-        command = f'SETKEY {passphrase}\n'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        return (data == '250 setkey accepted.\n')
-
-    def clear(self):
-        # Clear key on local escrow daemon.
-        command = 'CLEAR'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        succeeded = (data == '200 clear succeeded.\n')
-        open(FAILOVER_NEEDOP, 'w')
-        return succeeded
-
-    def shutdown(self):
-        # Shutdown local escrow daemon.
-        command = 'SHUTDOWN'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        return (data == '250 Shutting down.\n')
-
-    def getkey(self):
-        # Get key from local escrow daemon. Returns None if not available.
-        command = 'REVEAL'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        lines = data.split('\n')
-        if lines[0] == '404 No passphrase present':
-            return None
-        elif lines[0] == '200 Approved':
-            if len(lines) > 2:
-                data = lines[1]
-            else:
-                data = self.sock.recv(BUFSIZE).decode()
-                data = data.split('\n')[0]
-            return data
-        else:
-            # Should never happen.
-            return None
-
-    def status(self):
-        # Get status of local escrow daemon.
-        # True -- Have key; False -- No key.
-        command = 'STATUS'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        return data == '200 keyd\n'
-
-    def close(self):
-        try:
-            if self.sock:
-                self.sock.close()
-        except OSError:
-            pass
-
-    def __del__(self):
-        self.close()
+    # sg_ses on linux returns slightly different text than getencstat on freeBSD
+    XSERIES_ENCLOSURE_LINUX = re.compile(r'\s*CELESTIC\s*(P3215-O|P3217-B)', re.M)
+    MSERIES_ENCLOSURE_LINUX = re.compile(r'\s*(ECStream|iX)\s*4024S([ps])', re.M)
 
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
+    pass
+
+
+class OSVersionMismatch(Exception):
+
+    """
+    Raised in JournalSync thread when the remote nodes OS version
+    does not match the local nodes OS version.
+    """
     pass
 
 
@@ -193,8 +130,17 @@ class FailoverService(ConfigService):
         """
         Update failover state.
 
-        `disabled` when true indicates that HA is disabled.
-        `master` sets the state of current node. Standby node will have the opposite value.
+        `disabled` When true indicates that HA will be disabled.
+        `master`  Marks the particular node in the chassis as the master node.
+                    The standby node will have the opposite value.
+
+        `timeout` is the time to WAIT until a failover occurs when a network
+            event occurs on an interface that is marked critical for failover AND
+            HA is enabled and working appropriately.
+
+            The default time to wait is 2 seconds.
+            **NOTE**
+                This setting does NOT effect the `disabled` or `master` parameters.
         """
         master = data.pop('master', NOT_PROVIDED)
 
@@ -204,11 +150,10 @@ class FailoverService(ConfigService):
         new.update(data)
 
         if master is not NOT_PROVIDED:
-            if master is None:
-                # The node making the call is the one we want to make it MASTER by default
-                data['master_node'] = await self.middleware.call('failover.node')
-            else:
-                data['master_node'] = await self._master_node(master)
+            # The node making the call is the one we want to make MASTER by default
+            new['master_node'] = await self.middleware.call('failover.node')
+        else:
+            new['master_node'] = await self._master_node(master)
 
         verrors = ValidationErrors()
         if new['disabled'] is False:
@@ -257,246 +202,74 @@ class FailoverService(ConfigService):
         return True
 
     @private
-    def ha_mode(self):
+    async def ha_mode(self):
+
         if self.HA_MODE is None:
-            self.HA_MODE = self._ha_mode()
+            self.HA_MODE = await self.middleware.call(
+                'failover.enclosure.detect'
+            )
+
         return self.HA_MODE
 
-    @staticmethod
-    def _ha_mode():
-        hardware = None
-        node = None
-
-        proc = subprocess.Popen([
-            '/usr/local/sbin/dmidecode',
-            '-s', 'system-product-name',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        manufacturer = proc.communicate()[0].strip()
-
-        if manufacturer == b'BHYVE':
-            hardware = 'BHYVE'
-            proc = subprocess.Popen(
-                ['/sbin/camcontrol', 'devlist'],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            devlist = proc.communicate()[0].decode(errors='ignore')
-            if proc.returncode == 0:
-                if 'TrueNAS_A' in devlist:
-                    node = 'A'
-                else:
-                    node = 'B'
-
-        else:
-            enclosures = ['/dev/' + enc for enc in os.listdir('/dev') if enc.startswith('ses')]
-            for enclosure in enclosures:
-                proc = subprocess.Popen([
-                    '/usr/sbin/getencstat',
-                    '-V', enclosure,
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                encstat = proc.communicate()[0].decode('utf8', 'ignore').strip()
-                # The echostream E16 JBOD and the echostream Z-series chassis are the same piece
-                # of hardware. One of the only ways to differentiate them is to look at the
-                # enclosure elements in detail. The Z-series chassis identifies element 0x26
-                # as SD_9GV12P1J_12R6K4.  The E16 does not.
-                # The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5
-                # We use this fact to ensure we are looking at the internal enclosure, not a shelf.
-                # If we used a shelf to determine which node was A or B you could cause the nodes
-                # to switch identities by switching the cables for the shelf.
-                if re.search(r'SD_9GV12P1J_12R6K4', encstat, re.M):
-                    hardware = 'ECHOSTREAM'
-                    reg = re.search(r'3U20D-Encl-([AB])\'', encstat, re.M)
-                    # In theory this should only be reached if we are dealing with
-                    # an echostream, which renders the "if reg else None" irrelevent
-                    node = reg.group(1) if reg else None
-                    # We should never be able to find more than one of these
-                    # but just in case we ever have a situation where there are
-                    # multiple internal enclosures, we'll just stop at the first one
-                    # we find.
-                    if node:
-                        break
-                # Identify PUMA platform by one of enclosure names.
-                elif re.search(r'Enclosure Name: CELESTIC (P3215-O|P3217-B)', encstat, re.M):
-                    hardware = 'PUMA'
-                    # Identify node by comparing addresses from SES and SMP.
-                    # There is no exact match, but allocation seems sequential.
-                    proc = subprocess.Popen([
-                        '/sbin/camcontrol', 'smpphylist', enclosure, '-q'
-                    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-                    phylist = proc.communicate()[0].strip()
-                    reg = re.search(r'ESCE A_(5[0-9A-F]{15})', encstat, re.M)
-                    if reg:
-                        addr = f'0x{(int(reg.group(1), 16) - 1):016x}'
-                        if addr in phylist:
-                            node = 'A'
-                            break
-                    reg = re.search(r'ESCE B_(5[0-9A-F]{15})', encstat, re.M)
-                    if reg:
-                        addr = f'0x{(int(reg.group(1), 16) - 1):016x}'
-                        if addr in phylist:
-                            node = 'B'
-                            break
-                else:
-                    # Identify ECHOWARP platform by one of enclosure names.
-                    reg = re.search(r'Enclosure Name: (ECStream|iX) 4024S([ps])', encstat, re.M)
-                    if reg:
-                        hardware = 'ECHOWARP'
-                        # Identify node by the last symbol of the model name
-                        if reg.group(2) == 'p':
-                            node = 'A'
-                            break
-                        elif reg.group(2) == 's':
-                            node = 'B'
-                            break
-
-        if node:
-            return hardware, node
-
-        proc = subprocess.Popen([
-            '/usr/local/sbin/dmidecode',
-            '-s', 'system-serial-number',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        serial = proc.communicate()[0].split('\n', 1)[0].strip()
-
-        license = SystemService._get_license()
-
-        if license is not None:
-            if license['system_serial'] == serial:
-                node = 'A'
-            elif license['system_serial_ha'] == serial:
-                node = 'B'
-
-        if node is None:
-            return 'MANUAL', None
-
-        if license['system_serial'] and license['system_serial_ha']:
-            mode = None
-            proc = subprocess.Popen([
-                '/usr/local/sbin/dmidecode',
-                '-s', 'baseboard-product-name',
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-            board = proc.communicate()[0].split('\n', 1)[0].strip()
-            # If we've gotten this far it's because we were unable to
-            # identify ourselves via enclosure device.
-            if board == 'X8DTS':
-                hardware = 'SBB'
-            elif board.startswith('X8'):
-                hardware = 'ULTIMATE'
-            else:
-                mode = 'MANUAL', None
-
-            if mode is None:
-                mode = hardware, node
-            return mode
-        else:
-            return 'MANUAL', None
-
     @accepts()
-    def hardware(self):
+    async def hardware(self):
         """
-        Gets the hardware type of HA.
-
+        Returns the hardware type for an HA system.
           ECHOSTREAM
           ECHOWARP
           PUMA
-          SBB
-          ULTIMATE
+          BHYVE
           MANUAL
         """
-        return self.ha_mode()[0]
+
+        hardware = await self.middleware.call('failover.ha_mode')
+
+        return hardware[0]
 
     @accepts()
-    def node(self):
+    async def node(self):
         """
-        Gets the node identification.
+        Returns the slot position in the chassis that
+        the controller is located.
           A - First node
           B - Seconde Node
-          MANUAL - could not be identified, its in manual mode
+          MANUAL - slot position in chassis could not be determined
         """
-        node = self.ha_mode()[1]
-        if node is None:
-            return 'MANUAL'
-        return node
+
+        node = await self.middleware.call('failover.ha_mode')
+
+        return node[1]
 
     @private
     @accepts()
-    def internal_interfaces(self):
+    async def internal_interfaces(self):
         """
-        Interfaces used internally for HA.
-        It is a direct link between the nodes.
+        This is a p2p ethernet connection on HA systems.
         """
-        hardware = self.hardware()
-        if hardware == 'ECHOSTREAM':
-            stdout = subprocess.check_output('/usr/sbin/pciconf -lv | grep "card=0xa01f8086 chip=0x10d38086"',
-                                             shell=True, encoding='utf8')
-            if not stdout:
-                if not os.path.exists(INTERNAL_IFACE_NF):
-                    open(INTERNAL_IFACE_NF, 'w').close()
-                return []
-            return [stdout.split('@')[0]]
-        elif hardware == 'SBB':
-            return ['ix0']
-        elif hardware in ('ECHOWARP', 'PUMA'):
-            return ['ntb0']
-        elif hardware == 'ULTIMATE':
-            return ['igb1']
-        elif hardware == 'BHYVE':
-            return ['vtnet1']
-        return []
 
-    @private
-    def internal_interfaces_notfound(self):
-        return os.path.exists(INTERNAL_IFACE_NF)
+        return await self.middleware.call(
+            'failover.internal_interface.detect'
+        )
 
     @private
     async def get_carp_states(self, interfaces=None):
-        if interfaces is None:
-            interfaces = await self.middleware.call('interface.query')
-        masters, backups, inits = [], [], []
-        internal_interfaces = await self.middleware.call('failover.internal_interfaces')
-        critical_interfaces = [iface['int_interface']
-                               for iface in await self.middleware.call('datastore.query', 'network.interfaces',
-                                                                       [['int_critical', '=', True]])]
-        for iface in interfaces:
-            if iface['name'] in internal_interfaces:
-                continue
-            if iface['name'] not in critical_interfaces:
-                continue
-            if not iface['state']['carp_config']:
-                continue
-            if iface['state']['carp_config'][0]['state'] == 'MASTER':
-                masters.append(iface['name'])
-            elif iface['state']['carp_config'][0]['state'] == 'BACKUP':
-                backups.append(iface['name'])
-            elif iface['state']['carp_config'][0]['state'] == 'INIT':
-                inits.append(iface['name'])
-            else:
-                self.logger.warning('Unknown CARP state %r for interface %s', iface['state']['carp_config'][0]['state'],
-                                    iface['name'])
-        return masters, backups, inits
+        """
+        This method has to be left in for backwards compatibility
+        when upgrading from 11.3 to 12+
+        """
+        return await self.middleware.call(
+            'failover.vip.get_states', interfaces
+        )
 
     @private
     async def check_carp_states(self, local, remote):
-        errors = []
-        interfaces = set(local[0] + local[1] + remote[0] + remote[1])
-        if not interfaces:
-            errors.append(f"There are no failover interfaces")
-        for name in interfaces:
-            if name not in local[0] + local[1]:
-                errors.append(f"Interface {name} is not configured for failover on local system")
-            if name not in remote[0] + remote[1]:
-                errors.append(f"Interface {name} is not configured for failover on remote system")
-            if name in local[0] and name in remote[0]:
-                errors.append(f"Interface {name} is MASTER on both nodes")
-            if name in local[1] and name in remote[1]:
-                errors.append(f"Interface {name} is BACKUP on both nodes")
-        for name in set(local[2] + remote[2]):
-            if name not in local[2]:
-                errors.append(f"Interface {name} is in a non-functioning state on local system")
-            if name not in remote[2]:
-                errors.append(f"Interface {name} is in a non-functioning state on remote system")
-
-        return errors
+        """
+        This method has to be left in for backwards compatibility
+        when upgrading from 11.3 to 12+
+        """
+        return await self.middleware.call(
+            'failover.vip.check_states', local, remote
+        )
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
@@ -504,7 +277,7 @@ class FailoverService(ConfigService):
     @pass_app()
     async def status(self, app):
         """
-        Return the current status of this node in the failover
+        Get the current HA status.
 
         Returns:
             MASTER
@@ -514,17 +287,20 @@ class FailoverService(ConfigService):
             ERROR
             SINGLE
         """
+
         status = await self._status(app)
         if status != self.LAST_STATUS:
             self.LAST_STATUS = status
             self.middleware.send_event('failover.status', 'CHANGED', fields={'status': status})
+
         return status
 
     async def _status(self, app):
+
         try:
             status = await self.middleware.call('cache.get', 'failover_status')
         except KeyError:
-            status = await self._get_local_status(app)
+            status = await self.middleware.call('failover.status.get_local', app)
             if status:
                 await self.middleware.call('cache.put', 'failover_status', status, 300)
 
@@ -532,45 +308,22 @@ class FailoverService(ConfigService):
             return status
 
         try:
-            remote_imported = await self.middleware.call('failover.call_remote', 'pool.query', [
-                [['status', '!=', 'OFFLINE']]
-            ])
+            remote_imported = await self.middleware.call(
+                'failover.call_remote', 'pool.query',
+                [[['status', '!=', 'OFFLINE']]]
+            )
+
             # Other node has the pool
             if remote_imported:
-                # check for carp MASTER (any) in remote?
                 return 'BACKUP'
             # Other node has no pool
             else:
-                # check for carp MASTER (none) in remote?
                 return 'ERROR'
         except Exception as e:
             # Anything other than ClientException is unexpected and should be logged
             if not isinstance(e, CallError):
-                self.logger.warn('Failed checking failover status', exc_info=True)
+                self.logger.warning('Failed checking failover status', exc_info=True)
             return 'UNKNOWN'
-
-    async def _get_local_status(self, app):
-        interfaces = await self.middleware.call('interface.query')
-        if not any(filter(lambda x: x['state']['carp_config'], interfaces)):
-            return 'SINGLE'
-
-        pools = await self.middleware.call('pool.query')
-        if not pools:
-            return 'SINGLE'
-
-        if not await self.middleware.call('failover.licensed'):
-            return 'SINGLE'
-
-        masters = (await self.get_carp_states(interfaces))[0]
-        if masters:
-            if any(filter(lambda x: x.get('status') != 'OFFLINE', pools)):
-                return 'MASTER'
-            if os.path.exists('/tmp/.failover_electing'):
-                return 'ELECTING'
-            elif os.path.exists('/tmp/.failover_importing'):
-                return 'IMPORTING'
-            elif os.path.exists('/tmp/.failover_failed'):
-                return 'ERROR'
 
     @private
     async def status_refresh(self):
@@ -582,10 +335,10 @@ class FailoverService(ConfigService):
     @accepts()
     def in_progress(self):
         """
-        Returns true if current node is still initializing after failover event
+        Returns True if there is an ongoing failover event.
         """
-        FAILOVER_EVENT = '/tmp/.failover_event'
-        return LockFile(FAILOVER_EVENT).is_locked()
+
+        return LockFile('/tmp/.failover_event').is_locked()
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
@@ -606,25 +359,23 @@ class FailoverService(ConfigService):
         return addresses
 
     @accepts()
-    def force_master(self):
+    async def force_master(self):
         """
         Force this controller to become MASTER.
         """
+
         # Skip if we are already MASTER
-        if self.middleware.call_sync('failover.status') == 'MASTER':
+        if await self.middleware.call('failover.status') == 'MASTER':
             return False
-        cp = subprocess.run(['fenced', '--force'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-        if cp.returncode not in (0, 6):
+
+        if not await self.middleware.call('failover.fenced.start', True):
             return False
-        for i in self.middleware.call_sync('interface.query', [('failover_critical', '!=', None)]):
+
+        for i in await self.middleware.call('interface.query', [('failover_critical', '!=', None)]):
             if i['failover_vhid']:
-                subprocess.run([
-                    'python',
-                    '/usr/local/libexec/truenas/carp-state-change-hook.py',
-                    f'{i["failover_vhid"]}@{i["name"]}',
-                    'forcetakeover',
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                await self.middleware.call('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
                 break
+
         return False
 
     @accepts(Dict(
@@ -639,6 +390,8 @@ class FailoverService(ConfigService):
         """
         self.logger.debug('Sending database to standby controller')
         self.middleware.call_sync('failover.send_database')
+        self.logger.debug('Syncing cached keys')
+        self.middleware.call_sync('failover.sync_keys_to_remote_node')
         self.logger.debug('Sending license and pwenc files')
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
@@ -723,7 +476,7 @@ class FailoverService(ConfigService):
         reasons = set(self._disabled_reasons(app))
         if reasons != self.LAST_DISABLEDREASONS:
             self.LAST_DISABLEDREASONS = reasons
-            self.middleware.send_event('failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': reasons})
+            self.middleware.send_event('failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': list(reasons)})
         return list(reasons)
 
     def _disabled_reasons(self, app):
@@ -736,17 +489,34 @@ class FailoverService(ConfigService):
             reasons.append('NO_VIP')
         try:
             assert self.middleware.call_sync('failover.remote_connected') is True
-            # This only matters if it has responded to 'ping', otherwise
-            # there is no reason to even try
-            if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
+
+            # if the remote node panic's (this happens on failover event if we cant export the
+            # zpool in 4 seconds on freeBSD systems (linux reboots silently by design)
+            # then the p2p interface stays "UP" and the websocket remains open.
+            # At this point, we have to wait for the TCP timeout (60 seconds default).
+            # This means the assert line up above will return `True`.
+            # However, any `call_remote` method will hang because the websocket is still
+            # open but hasn't closed due to the default TCP timeout window. This can be painful
+            # on failover events because it delays the process of restarting services in a timely
+            # manner. To work around this, we place a `timeout` of 5 seconds on the system.ready
+            # call. This essentially bypasses the TCP timeout window.
+            if not self.middleware.call_sync('failover.call_remote', 'system.ready', [], {'timeout': 5}):
                 reasons.append('NO_SYSTEM_READY')
 
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.append('NO_LICENSE')
 
-            local = self.middleware.call_sync('failover.get_carp_states')
-            remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
-            if self.middleware.call_sync('failover.check_carp_states', local, remote):
+            local = self.middleware.call_sync('failover.vip.get_states')
+            try:
+                remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
+            except Exception as e:
+                if e.errno == CallError.ENOMETHOD:
+                    # We're talking to an 11.3 system, so use the old API
+                    remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
+                else:
+                    raise
+
+            if self.middleware.call_sync('failover.vip.check_states', local, remote):
                 reasons.append('DISAGREE_CARP')
 
             mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
@@ -783,14 +553,18 @@ class FailoverService(ConfigService):
          2. the quantity of disks are the same between
             controllers but serials do not match
         """
-        local_boot_disks = await self.middleware.call('zfs.pool.get_disks', 'freenas-boot')
-        remote_boot_disks = await self.middleware.call('failover.call_remote', 'zfs.pool.get_disks', ['freenas-boot'])
-        local_disks = set(v['ident'] for k, v in
-            (await self.middleware.call('device.get_info', 'DISK')).items()
-            if not k in local_boot_disks)
-        remote_disks = set(v['ident'] for k, v in
-            (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).items()
-            if not k in remote_boot_disks)
+        local_boot_disks = await self.middleware.call('boot.get_disks')
+        remote_boot_disks = await self.middleware.call('failover.call_remote', 'boot.get_disks')
+        local_disks = set(
+            v['ident']
+            for k, v in (await self.middleware.call('device.get_info', 'DISK')).items()
+            if k not in local_boot_disks
+        )
+        remote_disks = set(
+            v['ident']
+            for k, v in (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).items()
+            if k not in remote_boot_disks
+        )
         return {
             'missing_local': sorted(remote_disks - local_disks),
             'missing_remote': sorted(local_disks - remote_disks),
@@ -798,75 +572,145 @@ class FailoverService(ConfigService):
 
     @accepts(Dict(
         'options',
-        Str('passphrase', password=True, required=True),
+        List(
+            'pools', items=[
+                Dict(
+                    'pool_keys',
+                    Str('name', required=True),
+                    Str('passphrase', required=True)
+                )
+            ], default=[]
+        ),
+        List(
+            'datasets', items=[
+                Dict(
+                    'dataset_keys',
+                    Str('name', required=True),
+                    Str('passphrase', required=True),
+                )
+            ], default=[]
+        ),
     ))
-    def unlock(self, options):
+    async def unlock(self, options):
         """
         Unlock pools in HA, syncing passphrase between controllers and forcing this controller
         to be MASTER importing the pools.
         """
-        self.middleware.call('failover.encryption_setkey', options['passphrase'])
-        return self.middleware.call('failover.force_master')
+        if options['pools'] or options['datasets']:
+            await self.middleware.call(
+                'failover.update_encryption_keys', {
+                    'pools': options['pools'],
+                    'datasets': options['datasets'],
+                },
+            )
+
+        return await self.middleware.call('failover.force_master')
+
+    @private
+    @job(lock=lambda args: f'failover_dataset_unlock_{args[0]}')
+    async def unlock_zfs_datasets(self, job, pool_name):
+        # We are going to unlock all zfs datasets we have keys in cache/database for the pool in question
+        zfs_keys = (await self.encryption_keys())['zfs']
+        unlock_job = await self.middleware.call(
+            'pool.dataset.unlock', pool_name, {
+                'recursive': True,
+                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()]
+            }
+        )
+        return await job.wrap(unlock_job)
 
     @private
     @accepts()
-    def encryption_getkey(self):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.getkey()
+    async def encryption_keys(self):
+        return await self.middleware.call(
+            'cache.get_or_put', 'failover_encryption_keys', 0, lambda: {'geli': {}, 'zfs': {}}
+        )
 
     @private
-    def encryption_shutdown(self):
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.shutdown()
+    @accepts(
+        Dict(
+            'update_encryption_keys',
+            Bool('sync_keys', default=True),
+            List(
+                'pools', items=[
+                    Dict(
+                        'pool_geli_keys',
+                        Str('name', required=True),
+                        Str('passphrase', required=True),
+                    )
+                ], default=[]
+            ),
+            List(
+                'datasets', items=[
+                    Dict(
+                        'dataset_keys',
+                        Str('name', required=True),
+                        Str('passphrase', required=True),
+                    )
+                ], default=[]
+            ),
+        )
+    )
+    async def update_encryption_keys(self, options):
+        if not options['pools'] and not options['datasets']:
+            raise CallError('Please specify pools/datasets to update')
+
+        async with ENCRYPTION_CACHE_LOCK:
+            keys = await self.encryption_keys()
+            for pool in options['pools']:
+                keys['geli'][pool['name']] = pool['passphrase']
+            for dataset in options['datasets']:
+                keys['zfs'][dataset['name']] = dataset['passphrase']
+            await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
+            if options['sync_keys']:
+                await self.sync_keys_to_remote_node(lock=False)
 
     @private
-    def encryption_status(self):
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.status()
+    @accepts(
+        Dict(
+            'remove_encryption_keys',
+            Bool('sync_keys', default=True),
+            List('pools', items=[Str('pool')], default=[]),
+            List('datasets', items=[Str('dataset')], default=[]),
+        )
+    )
+    async def remove_encryption_keys(self, options):
+        if not options['pools'] and not options['datasets']:
+            raise CallError('Please specify pools/datasets to remove')
 
-    @private
-    @accepts(Str('passphrase'), Dict('options', Bool('sync', default=True)))
-    def encryption_setkey(self, passphrase, options=None):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            rv = escrowctl.setkey(passphrase)
-        if not rv:
-            return rv
-        if options['sync']:
-            try:
-                self.call_remote('failover.encryption_setkey', [passphrase, {'sync': False}])
-            except Exception as e:
-                self.logger.warn('Failed to set encryption key on standby node: %s', e)
-        return rv
-
-    @private
-    @accepts()
-    def encryption_clearkey(self):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.clear()
+        async with ENCRYPTION_CACHE_LOCK:
+            keys = await self.encryption_keys()
+            for pool in options['pools']:
+                keys['geli'].pop(pool, None)
+            for dataset in options['datasets']:
+                keys['zfs'] = {
+                    k: v for k, v in keys['zfs'].items() if k != dataset and not k.startswith(f'{dataset}/')
+                }
+            await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
+            if options['sync_keys']:
+                await self.sync_keys_to_remote_node(lock=False)
 
     @private
     @job()
-    def encryption_attachall(self, job):
+    def attach_all_geli_providers(self, job):
         pools = self.middleware.call_sync('pool.query', [('encrypt', '>', 0)])
         if not pools:
             return
-        with LocalEscrowCtl() as escrowctl, tempfile.NamedTemporaryFile(mode='w+') as tmp:
-            tmp.file.write(escrowctl.getkey() or "")
-            tmp.file.flush()
-            procs = []
-            failed_drive = 0
-            failed_volume = 0
-            for pool in pools:
+
+        failed_drive = 0
+        failed_volumes = []
+        geli_keys = self.middleware.call_sync('failover.encryption_keys')['geli']
+        for pool in pools:
+            with tempfile.NamedTemporaryFile(mode='w+') as tmp:
+                tmp.file.write(geli_keys.get(pool['name'], ''))
+                tmp.file.flush()
                 keyfile = pool['encryptkey_path']
+                procs = []
                 for encrypted_disk in self.middleware.call_sync(
                     'datastore.query',
                     'storage.encrypteddisk',
                     [('encrypted_volume', '=', pool['id'])]
                 ):
-
                     if encrypted_disk['encrypted_disk']:
                         # gptid might change on the active head, so we need to rescan
                         # See #16070
@@ -877,7 +721,7 @@ class FailoverService(ConfigService):
                         except Exception:
                             self.logger.warning(
                                 'Failed to open dev %s to rescan.',
-                                encrypted_disk['encrypted_disk']['name'],
+                                encrypted_disk['encrypted_disk']['disk_name'],
                             )
                     provider = encrypted_disk['encrypted_provider']
                     if not os.path.exists(f'/dev/{provider}.eli'):
@@ -899,36 +743,30 @@ class FailoverService(ConfigService):
                         self.logger.warn('Unable to attach GELI provider: %s', msg)
                         failed_drive += 1
 
-                job = self.middleware.call_sync('zfs.pool.import', pool['guid'], {
-                    'altroot': '/mnt',
-                })
-                job.wait_sync()
-                if job.error:
-                    failed_volume += 1
+                try:
+                    self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
+                        'altroot': '/mnt',
+                    })
+                except Exception as e:
+                    failed_volumes.append(pool['name'])
+                    self.logger.error('Failed to import %s pool: %s', pool['name'], str(e))
 
-            if failed_drive > 0:
-                job.set_progress(None, f'{failed_drive} can not be attached.')
-                self.logger.error('%d can not be attached.', failed_drive)
+        if failed_drive > 0:
+            job.set_progress(None, f'{failed_drive} drive(s) can not be attached.')
+            self.logger.error('%d drive(s) can not be attached.', failed_drive)
 
-            try:
-                if failed_volume == 0:
-                    try:
-                        os.unlink(FAILOVER_NEEDOP)
-                    except FileNotFoundError:
-                        pass
-                    passphrase = escrowctl.getkey()
-                    try:
-                        self.middleware.call_sync(
-                            'failover.call_remote', 'failover.encryption_setkey', [passphrase]
-                        )
-                    except Exception:
-                        self.logger.error(
-                            'Failed to set encryption key on standby node.', exc_info=True,
-                        )
-                else:
-                    open(FAILOVER_NEEDOP, 'w').close()
-            except Exception:
-                pass
+        try:
+            if not failed_volumes:
+                try:
+                    os.unlink(FAILOVER_NEEDOP)
+                except FileNotFoundError:
+                    pass
+                self.middleware.call_sync('failover.sync_keys_to_remote_node')
+            else:
+                with open(FAILOVER_NEEDOP, 'w') as f:
+                    f.write('\n'.join(failed_volumes))
+        except Exception:
+            pass
 
     @private
     @job()
@@ -960,6 +798,10 @@ class FailoverService(ConfigService):
                 )
                 return False
 
+    @private
+    async def is_single_master_node(self):
+        return await self.middleware.call('failover.status') in ('MASTER', 'SINGLE')
+
     @accepts(
         Str('action', enum=['ENABLE', 'DISABLE']),
         Dict(
@@ -968,8 +810,11 @@ class FailoverService(ConfigService):
         ),
     )
     async def control(self, action, options=None):
-        if options is None:
-            options = {}
+        if not options:
+            # The node making the call is the one we want to make MASTER by default
+            node = await self._master_node((await self.middleware.call('failover.node')))
+        else:
+            node = await self._master_node(options.get('active'))
 
         failover = await self.middleware.call('datastore.config', 'system.failover')
         if action == 'ENABLE':
@@ -978,19 +823,19 @@ class FailoverService(ConfigService):
                 return False
             update = {
                 'disabled': False,
-                'master_node': await self._master_node(False),
+                'master_node': node,
             }
-            await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
-            await self.middleware.call('service.restart', 'failover')
         elif action == 'DISABLE':
             if failover['disabled'] is True:
                 # Already disabled
                 return False
             update = {
-                'master_node': await self._master_node(True if options.get('active') else False),
+                'disabled': True,
+                'master_node': node,
             }
-            await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
-            await self.middleware.call('service.restart', 'failover')
+
+        await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
+        await self.middleware.call('service.restart', 'failover')
 
     @private
     def upgrade_version(self):
@@ -1005,13 +850,13 @@ class FailoverService(ConfigService):
         """
         Upgrades both controllers.
 
-        Files will be downloaded in the Active Controller and then transferred to the Standby
+        Files will be downloaded to the Active Controller and then transferred to the Standby
         Controller.
 
         Upgrade process will start concurrently on both nodes.
 
-        Once both upgrades are applied the Standby Controller will reboot and this job will wait for it
-        to complete the boot process, finalizing this job.
+        Once both upgrades are applied, the Standby Controller will reboot. This job will wait for
+        that job to complete before finalizing.
         """
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
@@ -1040,7 +885,7 @@ class FailoverService(ConfigService):
 
         try:
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
-                raise CallError('Standby Controller is not ready, wait boot process.')
+                raise CallError('Standby Controller is not ready.')
 
             legacy_upgrade = False
             try:
@@ -1160,7 +1005,7 @@ class FailoverService(ConfigService):
                 raise CallError('Could not find current boot environment.')
             self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
 
-        job.set_progress(None, 'Waiting Standby Controller to reboot.')
+        job.set_progress(None, 'Waiting on the Standby Controller to reboot.')
 
         # Wait enough that standby controller has stopped receiving new connections and is
         # rebooting.
@@ -1199,7 +1044,7 @@ class FailoverService(ConfigService):
                     continue
                 return True
             except CallError as e:
-                if e.errno in (errno.ECONNREFUSED, errno.EHOSTDOWN):
+                if e.errno in (errno.ECONNREFUSED, errno.ECONNRESET):
                     time.sleep(5)
                     continue
                 raise
@@ -1210,59 +1055,171 @@ class FailoverService(ConfigService):
         """
         Verify if HA upgrade is pending.
 
-        `upgrade_finish` needs to be called to finish HA upgrade if this method returns true.
+        `upgrade_finish` needs to be called to finish
+        the HA upgrade process if this method returns true.
         """
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
-            raise CallError('Upgrade can only run on Active Controller.')
+            raise CallError('Upgrade can only be run from the Active Controller.')
 
-        if not self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False):
+        if self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False) is not True:
             return False
+
         try:
-            assert self.call_remote('core.ping') == 'pong'
+            assert self.middleware.call_sync('failover.call_remote', 'core.ping') == 'pong'
         except Exception:
-            return True
+            return False
+
         local_version = self.middleware.call_sync('system.version')
-        remote_version = self.call_remote('system.version')
+        remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
+
         if local_version == remote_version:
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
             return False
 
-        local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
-        if local_bootenv:
-            remote_bootenv = self.call_remote('bootenv.query', [[
-                ('id', '=', local_bootenv[0]['id']),
-            ]])
-            if remote_bootenv:
-                return True
+        local_bootenv = self.middleware.call_sync(
+            'bootenv.query', [('active', 'rin', 'N')])
+
+        remote_bootenv = self.middleware.call_sync(
+            'failover.call_remote', 'bootenv.query', [[('active', '=', 'NR')]])
+
+        if not local_bootenv or not remote_bootenv:
+            raise CallError('Unable to determine installed version of software')
+
+        loc_findall = TRUENAS_VERS.findall(local_bootenv[0]['id'])
+        rem_findall = TRUENAS_VERS.findall(remote_bootenv[0]['id'])
+
+        loc_vers = tuple(float(i) for i in loc_findall)
+        rem_vers = tuple(float(i) for i in rem_findall)
+
+        if loc_vers > rem_vers:
+            return True
+
         return False
 
     @accepts()
     @job(lock='failover_upgrade_finish')
     def upgrade_finish(self, job):
         """
-        Perform last stage of HA upgrade.
+        Perform the last stage of an HA upgrade.
 
-        This will activate the new boot environment in Standby Controller and reboot it.
+        This will activate the new boot environment on the
+        Standby Controller and reboot it.
         """
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
             raise CallError('Upgrade can only run on Active Controller.')
 
-        job.set_progress(None, 'Waiting for Standby Controller to boot')
+        job.set_progress(None, 'Ensuring the Standby Controller is booted')
         if not self.upgrade_waitstandby():
-            raise CallError('Timed out waiting Standby Controller to boot.')
+            raise CallError('Timed out waiting for the Standby Controller to boot.')
 
         job.set_progress(None, 'Activating new boot environment')
         local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
         if not local_bootenv:
             raise CallError('Could not find current boot environment.')
-        self.call_remote('bootenv.activate', [local_bootenv[0]['id']])
+        self.middleware.call_sync('failover.call_remote', 'bootenv.activate', [local_bootenv[0]['id']])
 
         job.set_progress(None, 'Rebooting Standby Controller')
-        self.call_remote('system.reboot', [{'delay': 10}])
+        self.middleware.call_sync('failover.call_remote', 'system.reboot', [{'delay': 10}])
         self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
         return True
+
+    @private
+    async def sync_keys_from_remote_node(self):
+        """
+        Sync GELI and/or ZFS encryption keys from the active node.
+
+        TODO:
+            Once TruenAS >= 11.3 < 12 has been EOL'd, we should remove this method
+            (should call `failover.call_remote` `failover.sync_keys_to_remote_node`)
+        """
+
+        if not await self.middleware.call('failover.licensed'):
+            return
+
+        # only sync keys if we're the BACKUP node
+        if (await self.middleware.call('failover.status')) != 'BACKUP':
+            return
+
+        # make sure we can contact the MASTER node
+        try:
+            assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
+        except Exception:
+            self.middleware.logger.error(
+                'Failed to contact active controller when syncing encryption keys', exc_info=True
+            )
+            return
+
+        try:
+            await self.middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
+        except Exception as e:
+            if e.errno == CallError.ENOMETHOD:
+                # we're talking to an older system (this happens on upgrades from 11 to 12+)
+                enc_pools = await self.middleware.call('pool.query', [('encrypt', '>', 0)])
+                if enc_pools:
+                    passphrase = await self.middleware.call('failover.call_remote', 'failover.encryption_getkey')
+                    await self.middleware.call(
+                        'failover.update_encryption_keys', {
+                            'pools': [
+                                {'name': p['name'], 'passphrase': passphrase or ''}
+                                for p in enc_pools
+                            ],
+                            'sync_keys': False,
+                        }
+                    )
+            else:
+                self.middleware.logger.error(
+                    'Failed to sync keys from active controller when syncing encryption keys', exc_info=True
+                )
+
+    @private
+    async def sync_keys_to_remote_node(self, lock=True):
+        """
+        Sync GELI and/or ZFS encryption keys to the standby node.
+        """
+
+        if not await self.middleware.call('failover.licensed'):
+            return
+
+        # only sync keys if we're the MASTER node
+        if (await self.middleware.call('failover.status')) != 'MASTER':
+            return
+
+        # make sure we can contact the BACKUP node
+        try:
+            assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
+        except Exception:
+            self.middleware.logger.error(
+                'Failed to contact standby controller when syncing encryption keys', exc_info=True
+            )
+            return
+
+        async with ENCRYPTION_CACHE_LOCK if lock else asyncnullcontext():
+            try:
+                keys = await self.encryption_keys()
+                await self.middleware.call(
+                    'failover.call_remote', 'cache.put', ['failover_encryption_keys', keys]
+                )
+            except Exception as e:
+                await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
+                self.middleware.logger.error('Failed to sync keys with standby controller: %s', str(e), exc_info=True)
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
+            try:
+                kmip_keys = await self.middleware.call('kmip.kmip_memory_keys')
+                await self.middleware.call(
+                    'failover.call_remote', 'kmip.update_memory_keys', [kmip_keys]
+                )
+            except Exception as e:
+                await self.middleware.call(
+                    'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
+                )
+                self.middleware.logger.error(
+                    'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True
+                )
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'FailoverKMIPKeysSyncFailed', None)
 
 
 async def ha_permission(middleware, app):
@@ -1286,16 +1243,22 @@ async def ha_permission(middleware, app):
         AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
 
 
-async def hook_geli_passphrase(middleware, passphrase):
+async def hook_pool_change_passphrase(middleware, passphrase_data):
     """
     Hook to set pool passphrase when its changed.
     """
     if not await middleware.call('failover.licensed'):
         return
-    if passphrase:
-        await middleware.call('failover.encryption_setkey', passphrase, {'sync': True})
+    if passphrase_data['action'] == 'UPDATE':
+        await middleware.call(
+            'failover.update_encryption_keys', {
+                'pools': [{
+                    'name': passphrase_data['pool'], 'passphrase': passphrase_data['passphrase']
+                }]
+            }
+        )
     else:
-        await middleware.call('failover.encryption_clearkey')
+        await middleware.call('failover.remove_encryption_keys', {'pools': [passphrase_data['pool']]})
 
 
 sql_queue = queue.Queue()
@@ -1369,6 +1332,10 @@ class JournalSync:
 
             self.journal.clear()
 
+        if not self._os_versions_match():
+            if self.journal:
+                raise OSVersionMismatch()
+
         had_journal_items = bool(self.journal)
         flush_succeeded = self._flush_journal()
 
@@ -1409,7 +1376,7 @@ class JournalSync:
             try:
                 self.middleware.call_sync('failover.call_remote', 'datastore.sql', [query, params])
             except Exception as e:
-                if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.ECONNRESET]:
                     logger.trace('Skipping journal sync, node down')
                 else:
                     if not self.last_query_failed:
@@ -1451,6 +1418,16 @@ class JournalSync:
     def _update_failover_status(self):
         self.failover_status = self.middleware.call_sync('failover.status')
 
+    def _os_versions_match(self):
+
+        try:
+            rem = self.middleware.call_sync('failover.get_remote_os_version')
+            loc = self.middleware.call_sync('system.version')
+        except Exception:
+            return False
+
+        return loc == rem
+
 
 def hook_datastore_execute_write(middleware, sql, params):
     sql_queue.put((sql, params))
@@ -1466,103 +1443,28 @@ async def journal_ha(middleware):
 
 
 def journal_sync(middleware):
+
+    alert = True
     while True:
         try:
             journal = Journal()
             journal_sync = JournalSync(middleware, sql_queue, journal)
             while True:
                 journal_sync.process()
+                alert = True
+        except OSVersionMismatch:
+            if alert:
+                logger.warning('OS version does not match remote node. Not syncing journal')
+                alert = False
         except Exception:
             logger.warning('Failed to sync journal', exc_info=True)
-            time.sleep(5)
 
-
-def sync_internal_ips(middleware, iface, carp1_skew, carp2_skew, internal_ip):
-    try:
-        iface = netif.get_interface(iface)
-    except KeyError:
-        middleware.logger.error('Internal interface %s not found, skipping setup.', iface)
-        return
-
-    carp1_addr = '169.254.10.20'
-    carp2_addr = '169.254.10.80'
-
-    found_i = found_1 = found_2 = False
-    for address in iface.addresses:
-        if address.af != netif.AddressFamily.INET:
-            continue
-        if str(address.address) == internal_ip:
-            found_i = True
-        elif str(address.address) == carp1_addr:
-            found_1 = True
-        elif str(address.address) == carp2_addr:
-            found_2 = True
-        else:
-            iface.remove_address(address)
-
-    # VHID needs to be configured before aliases
-    found = 0
-    for carp_config in iface.carp_config:
-        if carp_config.vhid == 10 and carp_config.advskew == carp1_skew:
-            found += 1
-        elif carp_config.vhid == 20 and carp_config.advskew == carp2_skew:
-            found += 1
-        else:
-            found -= 1
-    if found != 2:
-        iface.carp_config = [
-            netif.CarpConfig(10, advskew=carp1_skew),
-            netif.CarpConfig(20, advskew=carp2_skew),
-        ]
-
-    if not found_i:
-        iface.add_address(middleware.call_sync('interface.alias_to_addr', {
-            'address': internal_ip,
-            'netmask': '24',
-        }))
-
-    if not found_1:
-        iface.add_address(middleware.call_sync('interface.alias_to_addr', {
-            'address': carp1_addr,
-            'netmask': '32',
-            'vhid': 10,
-        }))
-
-    if not found_2:
-        iface.add_address(middleware.call_sync('interface.alias_to_addr', {
-            'address': carp2_addr,
-            'netmask': '32',
-            'vhid': 20,
-        }))
+        time.sleep(5)
 
 
 async def interface_pre_sync_hook(middleware):
-    hardware = await middleware.call('failover.hardware')
-    if hardware == 'MANUAL':
-        middleware.logger.debug('No HA hardware detected, skipping interfaces setup.')
-        return
-    node = await middleware.call('failover.node')
-    if node == 'A':
-        carp1_skew = 20
-        carp2_skew = 80
-        internal_ip = '169.254.10.1'
-    elif node == 'B':
-        carp1_skew = 80
-        carp2_skew = 20
-        internal_ip = '169.254.10.2'
-    else:
-        middleware.logger.debug('Could not determine HA node, skipping interfaces setup.')
-        return
 
-    iface = await middleware.call('failover.internal_interfaces')
-    if not iface:
-        middleware.logger.debug(f'No internal interfaces found for {hardware}.')
-        return
-    iface = iface[0]
-
-    await middleware.run_in_thread(
-        sync_internal_ips, middleware, iface, carp1_skew, carp2_skew, internal_ip
-    )
+    await middleware.call('failover.internal_interface.pre_sync')
 
 
 async def hook_restart_devd(middleware, *args, **kwargs):
@@ -1577,20 +1479,62 @@ async def hook_restart_devd(middleware, *args, **kwargs):
 
 async def hook_license_update(middleware, *args, **kwargs):
     FailoverService.HA_MODE = None
-    if await middleware.call('failover.licensed'):
+
+    if not await middleware.call('failover.licensed'):
+        return
+
+    etc_generate = ['rc']
+    if await middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
+        await middleware.call('etc.generate', 'loader')
+        etc_generate += ['loader']
+
+    # setup the local heartbeat interface
+    heartbeat = True
+    try:
         await middleware.call('failover.ensure_remote_client')
-        etc_generate = ['rc']
-        if await middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
-            await middleware.call('etc.generate', 'loader')
-            etc_generate += ['loader']
+    except Exception:
+        middleware.logger.warning('Failed to ensure remote client on active')
+        heartbeat = False
+
+    if heartbeat:
+        # setup the remote controller
         try:
             await middleware.call('failover.send_small_file', '/data/license')
-            for etc in etc_generate:
-                await middleware.call('falover.call_remote', 'etc.generate', [etc])
         except Exception:
-            middleware.logger.warning('Failed to sync license file to standby.')
+            middleware.logger.warning('Failed to sync db to standby')
+
+        try:
+            await middleware.call('failover.call_remote', 'failover.ensure_remote_client')
+        except Exception:
+            middleware.logger.warning('Failed to ensure remote client on standby')
+
+        try:
+            for etc in etc_generate:
+                await middleware.call('failover.call_remote', 'etc.generate', [etc])
+        except Exception:
+            middleware.logger.warning('etc.generate failed on standby')
+
     await middleware.call('service.restart', 'failover')
     await middleware.call('failover.status_refresh')
+
+
+async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
+    """
+    This hook needs to be run after a NIC rollback operation and before
+    an `interfaces.sync` operation on a TrueNAS HA system
+    """
+    if not await middleware.call('failover.licensed'):
+        return
+
+    try:
+        await middleware.call('failover.call_remote', 'core.ping')
+    except Exception:
+        middleware.logger.debug('[HA] Failed to contact standby controller', exc_info=True)
+        return
+
+    await middleware.call('failover.send_database')
+
+    middleware.logger.debug('[HA] Successfully sent database to standby controller')
 
 
 async def hook_setup_ha(middleware, *args, **kwargs):
@@ -1598,11 +1542,14 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     if not await middleware.call('failover.licensed'):
         return
 
-    if not await middleware.call('interface.query', [('failover_vhid', '!=', None)]):
+    if not await middleware.call('interface.query', [('failover_virtual_aliases', '!=', None)]):
         return
 
     if not await middleware.call('pool.query'):
         return
+
+    # If we have reached this stage make sure status is up to date
+    await middleware.call('failover.status_refresh')
 
     try:
         ha_configured = await middleware.call(
@@ -1612,14 +1559,52 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         ha_configured = False
 
     if ha_configured:
-        # If HA is already configured just sync network
-        if await middleware.call('failover.status') == 'MASTER':
+        # If HA is already configured and failover has been disabled,
+        # and we have gotten to this point, then this means a few things could be happening.
+        #    1. a new interface is being added
+        #    2. an alias is being added to an already configured interface
+        #    3. an interface is being modified (changing vhid/ip etc)
+        #    4. an interface is being deleted
+
+        # In the event #2 happens listed above, there is a race condition that
+        # must be accounted for. When an alias is added to an already configured interface,
+        # a CARP event will be triggered and the interface will go from MASTER to INIT->BACKUP->MASTER which
+        # generates a devd event that is processed by the failover.event plugin.
+        # It takes a few seconds for the kernel to transition the CARP interface from BACKUP->MASTER.
+        # However, we refresh the failover.status while this interface is transitioning.
+        # This means that failover.status returns 'ERROR'.
+        # To work around this we check 2 things:
+        #    1. if failover.status == 'MASTER' then we continue
+        #    or
+        #    2. the node in the chassis is marked as the master_node in the webUI
+        #      (because failover has been disabled in the webUI)
+        cur_status = await middleware.call('failover.status')
+        config = await middleware.call('failover.config')
+        if cur_status == 'MASTER' or (config['master'] and config['disabled']):
+
+            # In the event HA is configured and the end-user deletes
+            # an interface, we need to sync the database over to the
+            # standby node before we call `interface.sync`
+            middleware.logger.debug('[HA] Sending database to standby node')
+            await middleware.call('failover.send_database')
+
             middleware.logger.debug('[HA] Configuring network on standby node')
             await middleware.call('failover.call_remote', 'interface.sync')
-        await middleware.call('failover.status_refresh')
+
         return
 
-    middleware.logger.info('[HA] Setting up')
+    # when HA is initially setup, we don't synchronize service states to the
+    # standby controller. Minimally, however, it's nice to synchronize ssh
+    # (if appropriate, of course)
+    filters = [('srv_service', '=', 'ssh')]
+    ssh_enabled = remote_ssh_started = False
+    if ssh := await middleware.call('datastore.query', 'services.services', filters):
+        if ssh[0]['srv_enable']:
+            ssh_enabled = True
+        if await middleware.call('failover.call_remote', 'service.started', ['ssh']):
+            remote_ssh_started = True
+
+    middleware.logger.debug('[HA] Setting up')
 
     middleware.logger.debug('[HA] Synchronizing database and files')
     await middleware.call('failover.sync_to_peer')
@@ -1627,10 +1612,17 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     middleware.logger.debug('[HA] Configuring network on standby node')
     await middleware.call('failover.call_remote', 'interface.sync')
 
-    middleware.logger.debug('[HA] Restarting devd to enable failover')
-    await middleware.call('failover.call_remote', 'service.restart', ['failover'])
+    if ssh_enabled and not remote_ssh_started:
+        middleware.logger.debug('[HA] Starting SSH on standby node')
+        await middleware.call('failover.call_remote', 'service.start', ['ssh'])
+
+    middleware.logger.debug('[HA] Restarting failover service on this node')
     await middleware.call('service.restart', 'failover')
 
+    middleware.logger.debug('[HA] Restarting failover service on remote node')
+    await middleware.call('failover.call_remote', 'service.restart', ['failover'])
+
+    middleware.logger.debug('[HA] Resfreshing failover status')
     await middleware.call('failover.status_refresh')
 
     middleware.logger.info('[HA] Setup complete')
@@ -1662,19 +1654,78 @@ async def hook_sync_geli(middleware, pool=None):
 
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
     await middleware.call('enclosure.sync_zpool', pool)
+    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
+
+
+async def hook_pool_post_import(middleware, pool):
+    if pool and pool['encrypt'] == 2 and pool['passphrase']:
+        await middleware.call(
+            'failover.update_encryption_keys', {
+                'pools': [{'name': pool['name'], 'passphrase': pool['passphrase']}]
+            }
+        )
 
 
 async def hook_pool_lock(middleware, pool=None):
-    await middleware.call('failover.encryption_clearkey')
-    try:
-        await middleware.call('failover.call_remote', 'failover.encryption_clearkey')
-    except Exception as e:
-        middleware.logger.warn('Failed to clear encryption key on standby node: %s', e)
+    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
 
 
 async def hook_pool_unlock(middleware, pool=None, passphrase=None):
     if passphrase:
-        await middleware.call('failover.encryption_setkey', passphrase)
+        await middleware.call(
+            'failover.update_encryption_keys', {'pools': [{'name': pool['name'], 'passphrase': passphrase}]}
+        )
+
+
+async def hook_pool_dataset_unlock(middleware, datasets):
+    datasets = [
+        {'name': ds['name'], 'passphrase': ds['encryption_key']}
+        for ds in datasets if ds['key_format'].upper() == 'PASSPHRASE'
+    ]
+    if datasets:
+        await middleware.call('failover.update_encryption_keys', {'datasets': datasets})
+
+
+async def hook_pool_dataset_post_create(middleware, dataset_data):
+    if dataset_data['encrypted']:
+        if str(dataset_data['key_format']).upper() == 'PASSPHRASE':
+            await middleware.call(
+                'failover.update_encryption_keys', {
+                    'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]
+                }
+            )
+        else:
+            kmip = await middleware.call('kmip.config')
+            if kmip['enabled'] and kmip['manage_zfs_keys']:
+                await middleware.call('failover.sync_keys_to_remote_node')
+
+
+async def hook_pool_dataset_post_delete_lock(middleware, dataset):
+    await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset]})
+
+
+async def hook_pool_dataset_change_key(middleware, dataset_data):
+    if dataset_data['key_format'] == 'PASSPHRASE' or dataset_data['old_key_format'] == 'PASSPHRASE':
+        if dataset_data['key_format'] == 'PASSPHRASE':
+            await middleware.call(
+                'failover.update_encryption_keys', {
+                    'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]
+                }
+            )
+        else:
+            await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset_data['name']]})
+    else:
+        kmip = await middleware.call('kmip.config')
+        if kmip['enabled'] and kmip['manage_zfs_keys']:
+            await middleware.call('failover.sync_keys_to_remote_node')
+
+
+async def hook_pool_dataset_inherit_parent_encryption_root(middleware, dataset):
+    await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset]})
+
+
+async def hook_kmip_sync(middleware, *args, **kwargs):
+    await middleware.call('failover.sync_keys_to_remote_node')
 
 
 async def hook_pool_rekey(middleware, pool=None):
@@ -1693,7 +1744,7 @@ async def service_remote(middleware, service, verb, options):
 
     This is the middleware side of what legacy UI did on service changes.
     """
-    if options.get('sync') is False:
+    if not options['ha_propagate']:
         return
     # Skip if service is blacklisted or we are not MASTER
     if service in (
@@ -1708,15 +1759,17 @@ async def service_remote(middleware, service, verb, options):
     if service == 'nginx' and verb == 'stop':
         return
     try:
-        if options.get('wait') is True:
-            await middleware.call('failover.call_remote', f'service.{verb}', [service, options])
-        else:
-            await middleware.call('failover.call_remote', 'core.bulk', [
-                f'service.{verb}', [[service, options]]
-            ])
+        await middleware.call('failover.call_remote', 'core.bulk', [
+            f'service.{verb}', [[service, options]]
+        ])
     except Exception as e:
-        if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.EHOSTDOWN)):
+        if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.ECONNRESET)):
             middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)
+
+
+async def ready_system_sync_keys(middleware):
+
+    await middleware.call('failover.sync_keys_from_remote_node')
 
 
 async def _event_system_ready(middleware, event_type, args):
@@ -1726,6 +1779,7 @@ async def _event_system_ready(middleware, event_type, args):
     """
     if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
         return
+
     if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
         middleware.send_event('failover.upgrade_pending', 'ADDED', {
             'id': 'BACKUP', 'fields': {'pending': True},
@@ -1737,6 +1791,7 @@ def remote_status_event(middleware, *args, **kwargs):
 
 
 async def setup(middleware):
+    middleware.event_register('failover.setup', 'Sent when failover is being setup.')
     middleware.event_register('failover.status', 'Sent when failover status changes.')
     middleware.event_register(
         'failover.disabled_reasons',
@@ -1750,15 +1805,27 @@ async def setup(middleware):
     middleware.event_subscribe('system', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
-    middleware.register_hook('disk.post_geli_passphrase', hook_geli_passphrase, sync=False)
+    middleware.register_hook('pool.post_change_passphrase', hook_pool_change_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
+    middleware.register_hook('interface.post_rollback', hook_post_rollback_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
+    middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
+    middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)
+    middleware.register_hook('dataset.post_delete', hook_pool_dataset_post_delete_lock, sync=True)
+    middleware.register_hook('dataset.post_lock', hook_pool_dataset_post_delete_lock, sync=True)
+    middleware.register_hook('dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
+    middleware.register_hook('dataset.change_key', hook_pool_dataset_change_key, sync=True)
+    middleware.register_hook(
+        'dataset.inherit_parent_encryption_root', hook_pool_dataset_inherit_parent_encryption_root, sync=True
+    )
+    middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
+    middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
@@ -1772,3 +1839,6 @@ async def setup(middleware):
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     asyncio.ensure_future(journal_ha(middleware))
+
+    if await middleware.call('system.ready'):
+        asyncio.ensure_future(ready_system_sync_keys(middleware))

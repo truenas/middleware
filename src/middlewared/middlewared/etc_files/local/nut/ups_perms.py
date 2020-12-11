@@ -1,7 +1,10 @@
 import os
 
-UPS_CONFPATH = '/usr/local/etc/nut'
-UPS_VARPATH = '/var/db/nut'
+from middlewared.utils import osc
+
+
+UPS_CONFPATH = '/etc/nut' if osc.IS_LINUX else '/usr/local/etc/nut'
+UPS_VARPATH = '/var/run/nut' if osc.IS_LINUX else '/var/db/nut'
 UPS_CONFIG = f'{UPS_CONFPATH}/ups.conf'
 UPS_MONFILE = f'{UPS_CONFPATH}/upsmon.conf'
 UPS_SCHEDFILE = f'{UPS_CONFPATH}/upssched.conf'

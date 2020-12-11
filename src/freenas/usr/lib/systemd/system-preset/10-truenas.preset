@@ -1,0 +1,53 @@
+# TrueNAS specific services
+enable middlewared.service
+enable ix-*
+
+# Enabled mounts
+enable tmp.mount
+
+# Enabled services
+enable zfs-zed.service
+enable collectd.service
+enable nginx.service
+enable ntp.service
+enable rrdcached.service
+enable smartmontools.service
+enable syslog-ng.service
+
+# Disabled services
+disable smbd.service
+disable proftpd.service
+disable ladvd.service
+disable avahi-daemon.service
+disable nmbd.service
+disable nfs*
+disable rsync.service
+disable minio.service
+disable snmpd.service
+disable snmp-agent.service
+disable ssh*
+disable wg-quick*
+disable nut-*
+disable apache2.service
+disable wsdd.service
+disable libvirtd.service
+disable winbind.service
+disable netatalk.service
+disable glusterd*
+disable docker*
+disable kubelet*
+disable openvpn*
+disable nvidia-*
+disable libvirt*
+disable k3s*
+disable cni*
+disable kube-router*
+
+# We want middlewared to import pools
+disable zfs-mount.service
+disable zfs-volume-wait.service
+disable zfs-import-cache.service
+disable zfs-import-scan.service
+
+# It unconfigures interfaces we've just configured even if it is instructed to do not touch anything
+disable systemd-networkd.service

@@ -2,7 +2,7 @@ from datetime import datetime, time
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
+from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, Str
 from middlewared.service import item_method, job, private, CallError, CRUDService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
@@ -36,12 +36,12 @@ class ReplicationModel(sa.Model):
     repl_schedule_month = sa.Column(sa.String(100), nullable=True, default='*')
     repl_schedule_dayweek = sa.Column(sa.String(100), nullable=True, default="*")
     repl_only_matching_schedule = sa.Column(sa.Boolean())
+    repl_readonly = sa.Column(sa.String(120))
     repl_allow_from_scratch = sa.Column(sa.Boolean())
     repl_hold_pending_snapshots = sa.Column(sa.Boolean())
     repl_retention_policy = sa.Column(sa.String(120), default="NONE")
     repl_lifetime_unit = sa.Column(sa.String(120), nullable=True, default='WEEK')
     repl_lifetime_value = sa.Column(sa.Integer(), nullable=True, default=2)
-    repl_dedup = sa.Column(sa.Boolean(), default=False)
     repl_large_block = sa.Column(sa.Boolean(), default=True)
     repl_embed = sa.Column(sa.Boolean(), default=False)
     repl_compressed = sa.Column(sa.Boolean(), default=True)
@@ -59,7 +59,13 @@ class ReplicationModel(sa.Model):
     repl_name = sa.Column(sa.String(120))
     repl_state = sa.Column(sa.Text(), default="{}")
     repl_properties = sa.Column(sa.Boolean(), default=True)
+    repl_properties_exclude = sa.Column(sa.JSON(type=list))
+    repl_properties_override = sa.Column(sa.JSON())
     repl_replicate = sa.Column(sa.Boolean())
+    repl_encryption = sa.Column(sa.Boolean())
+    repl_encryption_key = sa.Column(sa.EncryptedText(), nullable=True)
+    repl_encryption_key_format = sa.Column(sa.String(120), nullable=True)
+    repl_encryption_key_location = sa.Column(sa.Text(), nullable=True)
 
     repl_periodic_snapshot_tasks = sa.relationship('PeriodicSnapshotTaskModel',
                                                    secondary=lambda: ReplicationPeriodicSnapshotTaskModel.__table__)
@@ -69,8 +75,8 @@ class ReplicationPeriodicSnapshotTaskModel(sa.Model):
     __tablename__ = 'storage_replication_repl_periodic_snapshot_tasks'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    replication_id = sa.Column(sa.ForeignKey('storage_replication.id'))
-    task_id = sa.Column(sa.ForeignKey('storage_task.id'))
+    replication_id = sa.Column(sa.ForeignKey('storage_replication.id', ondelete='CASCADE'), index=True)
+    task_id = sa.Column(sa.ForeignKey('storage_task.id', ondelete='CASCADE'), index=True)
 
 
 class ReplicationService(CRUDService):
@@ -142,12 +148,18 @@ class ReplicationService(CRUDService):
             Int("netcat_active_side_port_min", null=True, default=None, validators=[Port()]),
             Int("netcat_active_side_port_max", null=True, default=None, validators=[Port()]),
             Str("netcat_passive_side_connect_address", null=True, default=None),
-            List("source_datasets", items=[Path("dataset", empty=False)], required=True, empty=False),
-            Path("target_dataset", required=True, empty=False),
+            List("source_datasets", items=[Dataset("dataset")], required=True, empty=False),
+            Dataset("target_dataset", required=True),
             Bool("recursive", required=True),
-            List("exclude", items=[Path("dataset", empty=False)], default=[]),
+            List("exclude", items=[Dataset("dataset")], default=[]),
             Bool("properties", default=True),
+            List("properties_exclude", items=[Str("property", empty=False)], default=[]),
+            Dict("properties_override", additional_attrs=True),
             Bool("replicate", default=False),
+            Bool("encryption", default=False),
+            Str("encryption_key", null=True, default=None),
+            Str("encryption_key_format", enum=["HEX", "PASSPHRASE"], null=True, default=None),
+            Str("encryption_key_location", null=True, default=None),
             List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
                  validators=[Unique()]),
             List("naming_schema", items=[
@@ -171,13 +183,13 @@ class ReplicationService(CRUDService):
             ),
             Bool("only_matching_schedule", default=False),
             Bool("allow_from_scratch", default=False),
+            Str("readonly", enum=["SET", "REQUIRE", "IGNORE"], default="SET"),
             Bool("hold_pending_snapshots", default=False),
             Str("retention_policy", enum=["SOURCE", "CUSTOM", "NONE"], required=True),
             Int("lifetime_value", null=True, default=None, validators=[Range(min=1)]),
             Str("lifetime_unit", null=True, default=None, enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]),
             Str("compression", enum=["LZ4", "PIGZ", "PLZIP"], null=True, default=None),
             Int("speed_limit", null=True, default=None, validators=[Range(min=1)]),
-            Bool("dedup", default=False),
             Bool("large_block", default=True),
             Bool("embed", default=False),
             Bool("compressed", default=True),
@@ -222,6 +234,10 @@ class ReplicationService(CRUDService):
           `restrict_schedule`
         * `allow_from_scratch` will destroy all snapshots on target side and replicate everything from scratch if none
           of the snapshots on target side matches source snapshots
+        * `readonly` controls destination datasets readonly property:
+          * `SET` will set all destination datasets to readonly=on after finishing the replication
+          * `REQUIRE` will require all existing destination datasets to have readonly=on property
+          * `IGNORE` will avoid this kind of behavior
         * `hold_pending_snapshots` will prevent source snapshots from being deleted by retention of replication fails
           for some reason
         * `retention_policy` specifies how to delete old snapshots on target side:
@@ -230,7 +246,7 @@ class ReplicationService(CRUDService):
           * `NONE` does not delete any snapshots
         * `compression` compresses SSH stream. Available only for SSH transport
         * `speed_limit` limits speed of SSH stream. Available only for SSH transport
-        * `dedup`, `large_block`, `embed` and `compressed` are various ZFS stream flag documented in `man zfs send`
+        * `large_block`, `embed` and `compressed` are various ZFS stream flag documented in `man zfs send`
         * `retries` specifies number of retries before considering replication failed
 
         .. examples(websocket)::
@@ -285,7 +301,6 @@ class ReplicationService(CRUDService):
 
         await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
 
-        await self.middleware.call("service.restart", "cron")
         await self.middleware.call("zettarepl.update_tasks")
 
         return await self._get_instance(id)
@@ -368,7 +383,6 @@ class ReplicationService(CRUDService):
 
         await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
 
-        await self.middleware.call("service.restart", "cron")
         await self.middleware.call("zettarepl.update_tasks")
 
         return await self._get_instance(id)
@@ -399,7 +413,6 @@ class ReplicationService(CRUDService):
             id
         )
 
-        await self.middleware.call("service.restart", "cron")
         await self.middleware.call("zettarepl.update_tasks")
 
         return response
@@ -527,7 +540,7 @@ class ReplicationService(CRUDService):
                 if is_child(source_dataset, snapshot_task["dataset"]):
                     if data["recursive"]:
                         for exclude in snapshot_task["exclude"]:
-                            if exclude not in data["exclude"]:
+                            if is_child(exclude, source_dataset) and exclude not in data["exclude"]:
                                 verrors.add("exclude", f"You should exclude {exclude!r} as bound periodic snapshot "
                                                        f"task dataset {snapshot_task['dataset']!r} does")
                     else:
@@ -552,6 +565,11 @@ class ReplicationService(CRUDService):
 
             if not data["properties"]:
                 verrors.add("properties", "This option is required for full filesystem replication")
+
+        if data["encryption"]:
+            for k in ["encryption_key", "encryption_key_format", "encryption_key_location"]:
+                if data[k] is None:
+                    verrors.add(k, "This property is required when remote dataset encryption is enabled")
 
         if data["schedule"]:
             if not data["auto"]:
@@ -674,7 +692,7 @@ class ReplicationService(CRUDService):
 
     @accepts(
         List("datasets", empty=False, items=[
-            Path("dataset", empty=False),
+            Dataset("dataset")
         ]),
         List("naming_schema", empty=False, items=[
             Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])
@@ -706,8 +724,8 @@ class ReplicationService(CRUDService):
 
     @accepts(
         Str("direction", enum=["PUSH", "PULL"], required=True),
-        List("source_datasets", items=[Path("dataset", empty=False)], required=True, empty=False),
-        Path("target_dataset", required=True, empty=False),
+        List("source_datasets", items=[Dataset("dataset")], required=True, empty=False),
+        Dataset("target_dataset", required=True),
         Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
         Int("ssh_credentials", null=True, default=None),
     )
@@ -769,7 +787,7 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'replication'
     title = 'Replication'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         results = []
         for replication in await self.middleware.call('replication.query', [['enabled', '=', enabled]]):
             if replication['direction'] == 'PUSH':
@@ -783,14 +801,10 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
 
         return results
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'storage.replication', attachment['id'])
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
     async def toggle(self, attachments, enabled):
@@ -798,7 +812,6 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
             await self.middleware.call('datastore.update', 'storage.replication', attachment['id'],
                                        {'repl_enabled': enabled})
 
-        await self.middleware.call('service.restart', 'cron')
         await self.middleware.call('zettarepl.update_tasks')
 
 
@@ -810,6 +823,6 @@ async def on_zettarepl_state_changed(middleware, id, fields):
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', ReplicationFSAttachmentDelegate(middleware))
+    await middleware.call('network.general.register_activity', 'replication', 'Replication')
 
-    middleware.event_register('replication.query', 'Replication task state')
     middleware.register_hook('zettarepl.state_change', on_zettarepl_state_changed)

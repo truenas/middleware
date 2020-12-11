@@ -37,7 +37,47 @@ get_physical_disks_list()
 hardware_opt() { echo h; }
 hardware_help() { echo "Dump Hardware Configuration"; }
 hardware_directory() { echo "Hardware"; }
-hardware_func()
+
+hardware_linux()
+{
+	section_header "CPU and Memory information"
+
+	echo "CPU architecture: $(uname -m)"
+
+	echo "CPU model: $(lscpu | grep 'Model name' | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')"
+
+	echo "Number of active CPUs: $(grep -c 'model name' /proc/cpuinfo)"
+
+	echo "Number of CPUs online: $(lscpu -p=online | grep -v "^#" | grep -c "Y")"
+
+	echo "Current average CPU frequency: $(lscpu | grep 'CPU MHz' | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//') MHz"
+
+	echo "Physical Memory: $(getconf -a | grep PAGES | awk 'BEGIN {total = 1} {if (NR == 1 || NR == 3) total *=$NF} END {print total / 1024 / 1024 / 1024" GiB"}')"
+
+	section_footer
+
+	section_header "lspci -vvvD"
+	lspci -vvvD
+	section_footer
+
+	section_header "usb-devices"
+	usb-devices
+	section_footer
+
+	section_header "dmidecode"
+	dmidecode
+	section_footer
+
+	section_header "lsblk -o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,ROTA,SCHED,RQ-SIZE,RA,WSAME,HCTL,PATH"
+	lsblk -o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,ROTA,SCHED,RQ-SIZE,RA,WSAME,HCTL,PATH
+	section_footer
+
+	section_header "Disk information (device.retrieve_disks_data)"
+	midclt call device.retrieve_disks_data | jq
+	section_footer
+}
+
+hardware_freebsd()
 {
 	section_header "Hardware"
 
@@ -97,6 +137,10 @@ hardware_func()
 	camcontrol devlist -v
 	section_footer
 
+	section_header "nvmecontrol devlist"
+	nvmecontrol devlist
+	section_footer
+
 	for disk in $(get_physical_disks_list)
 	do
 		if echo "${disk}" | egrep -q '^da[0-9]+'
@@ -148,5 +192,14 @@ hardware_func()
 		section_header "sas3flash -listall"
 		sas3flash -listall
 		section_footer
+	fi
+}
+
+hardware_func()
+{
+	if is_linux; then
+		hardware_linux
+	else
+		hardware_freebsd
 	fi
 }

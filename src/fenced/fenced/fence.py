@@ -1,4 +1,4 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -13,7 +13,7 @@ import sysctl
 import time
 
 from fenced.disks import Disk, Disks
-from fenced.exceptions import PanicExit
+from fenced.exceptions import PanicExit, ExcludeDisksError
 
 logger = logging.getLogger(__name__)
 LICENSE_FILE = '/data/license'
@@ -23,14 +23,16 @@ class ExitCode(enum.IntEnum):
     REGISTER_ERROR = 1
     REMOTE_RUNNING = 2
     RESERVE_ERROR = 3
+    EXCLUDE_DISKS_ERROR = 4
     UNKNOWN = 5
     ALREADY_RUNNING = 6
 
 
 class Fence(object):
 
-    def __init__(self, interval):
+    def __init__(self, interval, exclude_disks):
         self._interval = interval
+        self._exclude_disks = exclude_disks.split(',') if exclude_disks else exclude_disks
         self._disks = Disks(self)
         self._reload = False
         self.hostid = None
@@ -49,26 +51,41 @@ class Fence(object):
         return hostid
 
     def load_disks(self):
+
         logger.debug('Loading disks')
         self._disks.clear()
         unsupported = []
         remote_keys = set()
 
+        disks = sysctl.filter('kern.disks')[0].value.split()
+        disks = [i for i in disks if i.startswith(('da', 'nvd'))]
+
+        # Running fenced exluding all disks is not allowed
+        if not len(set(disks) - set(self._exclude_disks)):
+            raise ExcludeDisksError('Excluding all disks is not allowed')
+
         # TODO: blacklist disks used by dumpdev
-        for i in sysctl.filter('kern.disks')[0].value.split():
-            if not i.startswith('da'):
+        for i in disks:
+
+            # You can pass an "--exclude-disks" argument to fenced
+            # to exclude disks from getting SCSI reservations.
+            # fenced is called in 12+ with the exclusion flag
+            # because the newer generation M-series are going to
+            # have NVMe boot drives
+            if i in self._exclude_disks:
                 continue
+
             try:
                 disk = Disk(self, i)
                 remote_keys.update(disk.get_keys()[1])
             except (OSError, RuntimeError):
-                logger.debug('Disk %s does not support reservations.', disk)
                 unsupported.append(i)
                 continue
+
             self._disks.add(disk)
 
         if unsupported:
-            logger.info('Disks without support for SCSI-3 PR: %s.', ' '.join(unsupported))
+            logger.debug('Disks without support for SCSI-3 PR: %s.', ' '.join(unsupported))
 
         return remote_keys
 
@@ -110,7 +127,7 @@ class Fence(object):
         return newkey
 
     def loop(self, key):
-        firstkey = key
+
         while True:
 
             if self._reload:
@@ -118,7 +135,6 @@ class Fence(object):
                 key = self.init(True)
                 self._reload = False
 
-            oldkey = key
             if key > 0xffffffff:
                 key = 2
             else:

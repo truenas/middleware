@@ -49,7 +49,7 @@ class DiskService(Service, DiskInfoBase):
                     'partition_uuid': part_uuid.text if part_uuid is not None else None,
                 }
                 part_no = RE_DISKPART.match(part['name'])
-                if part_no:
+                if part_no and part_no.group(2):
                     part['partition_number'] = int(part_no.group(2)[1:])
                 if os.path.exists(f'{part["path"]}.eli'):
                     part['encrypted_provider'] = f'{part["path"]}.eli'

@@ -1,23 +1,21 @@
-from lxml import etree
-
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.listen import ListenDelegate
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.service import (
-    CallError, CRUDService, SystemServiceService, ValidationErrors, filterable, private
-)
+from middlewared.service import CallError, CRUDService, private, ServiceChangeMixin, SharingService, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, run
+from middlewared.utils import osc, run
 from middlewared.utils.path import is_child
-from middlewared.validators import IpAddress, Range
+from middlewared.validators import Range
 
+import asyncio
 import bidict
 import errno
 import hashlib
 import re
 import os
-import subprocess
+import secrets
 try:
     import sysctl
 except ImportError:
@@ -29,137 +27,7 @@ AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'CHAP': 'CHAP',
     'CHAP Mutual': 'CHAP_MUTUAL',
 })
-RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
-
-
-class ISCSIGlobalModel(sa.Model):
-    __tablename__ = 'services_iscsitargetglobalconfiguration'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_basename = sa.Column(sa.String(120))
-    iscsi_isns_servers = sa.Column(sa.Text())
-    iscsi_pool_avail_threshold = sa.Column(sa.Integer(), nullable=True)
-    iscsi_alua = sa.Column(sa.Boolean(), default=False)
-
-
-class ISCSIGlobalService(SystemServiceService):
-
-    class Config:
-        datastore_extend = 'iscsi.global.config_extend'
-        datastore_prefix = 'iscsi_'
-        service = 'iscsitarget'
-        service_model = 'iscsitargetglobalconfiguration'
-        namespace = 'iscsi.global'
-
-    @private
-    def config_extend(self, data):
-        data['isns_servers'] = data['isns_servers'].split()
-        return data
-
-    @accepts(Dict(
-        'iscsiglobal_update',
-        Str('basename'),
-        List('isns_servers', items=[Str('server')]),
-        Int('pool_avail_threshold', validators=[Range(min=1, max=99)], null=True),
-        Bool('alua'),
-        update=True
-    ))
-    async def do_update(self, data):
-        """
-        `alua` is a no-op for FreeNAS.
-        """
-        old = await self.config()
-
-        new = old.copy()
-        new.update(data)
-
-        verrors = ValidationErrors()
-
-        servers = data.get('isns_servers') or []
-        for server in servers:
-            reg = RE_IP_PORT.search(server)
-            if reg:
-                ip = reg.group(1)
-                if ip and ip[0] == '[' and ip[-1] == ']':
-                    ip = ip[1:-1]
-                try:
-                    ip_validator = IpAddress()
-                    ip_validator(ip)
-                    continue
-                except ValueError:
-                    pass
-            verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" is not a valid IP(:PORT)? tuple.')
-
-        if verrors:
-            raise verrors
-
-        new['isns_servers'] = '\n'.join(servers)
-
-        await self._update_service(old, new)
-
-        if old['alua'] != new['alua']:
-            await self.middleware.call('etc.generate', 'loader')
-
-        return await self.config()
-
-    @filterable
-    def sessions(self, filters, options):
-        """
-        Get a list of currently running iSCSI sessions. This includes initiator and target names
-        and the unique connection IDs.
-        """
-        def transform(tag, text):
-            if tag in (
-                'target_portal_group_tag', 'max_data_segment_length', 'max_burst_length',
-                'first_burst_length',
-            ) and text.isdigit():
-                return int(text)
-            if tag in ('immediate_data', 'iser'):
-                return bool(int(text))
-            if tag in ('header_digest', 'data_digest', 'offload') and text == 'None':
-                return None
-            return text
-
-        cp = subprocess.run(['ctladm', 'islist', '-x'], capture_output=True, text=True)
-        connections = etree.fromstring(cp.stdout)
-        sessions = []
-        for connection in connections.xpath("//connection"):
-            sessions.append({
-                i.tag: transform(i.tag, i.text) for i in connection.iterchildren()
-            })
-        return filter_list(sessions, filters, options)
-
-    @private
-    async def alua_enabled(self):
-        """
-        Returns whether iSCSI ALUA is enabled or not.
-        """
-        if await self.middleware.call('system.is_freenas'):
-            return False
-        if not await self.middleware.call('failover.licensed'):
-            return False
-
-        license = (await self.middleware.call('system.info'))['license']
-        if license and 'FIBRECHANNEL' in license['features']:
-            return True
-
-        return (await self.middleware.call('iscsi.global.config'))['alua']
-
-    @private
-    async def terminate_luns_for_pool(self, pool_name):
-        cp = await run(['ctladm', 'devlist', '-b', 'block', '-x'], check=False, encoding='utf8')
-        for lun in etree.fromstring(cp.stdout).xpath('//lun'):
-            lun_id = lun.attrib['id']
-
-            try:
-                path = lun.xpath('//file')[0].text
-            except IndexError:
-                continue
-
-            if path.startswith(f'/dev/zvol/{pool_name}/'):
-                self.logger.info('Terminating LUN %s (%s)', lun_id, path)
-                await run(['ctladm', 'remove', '-b', 'block', '-l', lun_id], check=False)
 
 
 class ISCSIPortalModel(sa.Model):
@@ -172,7 +40,7 @@ class ISCSIPortalModel(sa.Model):
     iscsi_target_portal_discoveryauthgroup = sa.Column(sa.Integer(), nullable=True)
 
 
-class ISCSIPortalIModel(sa.Model):
+class ISCSIPortalIPModel(sa.Model):
     __tablename__ = 'services_iscsitargetportalip'
     __table_args__ = (
         sa.Index('services_iscsitargetportalip_iscsi_target_portalip_ip__iscsi_target_portalip_port',
@@ -419,15 +287,44 @@ class ISCSIPortalService(CRUDService):
         return result
 
 
+class ISCSIPortalListenDelegate(ListenDelegate, ServiceChangeMixin):
+    def __init__(self, middleware):
+        self.middleware = middleware
+
+    async def get_listen_state(self, ips):
+        return await self.middleware.call('datastore.query', 'services.iscsitargetportalip', [['ip', 'in', ips]],
+                                          {'prefix': 'iscsi_target_portalip_'})
+
+    async def set_listen_state(self, state):
+        for row in state:
+            await self.middleware.call('datastore.update', 'services.iscsitargetportalip', row['id'],
+                                       {'ip': row['ip']}, {'prefix': 'iscsi_target_portalip_'})
+
+        await self._service_change('iscsitarget', 'reload')
+
+    async def listens_on(self, state, ip):
+        return any(row['ip'] == ip for row in state)
+
+    async def reset_listens(self, state):
+        for row in state:
+            await self.middleware.call('datastore.update', 'services.iscsitargetportalip', row['id'],
+                                       {'ip': '0.0.0.0'}, {'prefix': 'iscsi_target_portalip_'})
+
+        await self._service_change('iscsitarget', 'reload')
+
+    async def repr(self, state):
+        return {'type': 'SERVICE', 'service': 'iscsi.portal'}
+
+
 class iSCSITargetAuthCredentialModel(sa.Model):
     __tablename__ = 'services_iscsitargetauthcredential'
 
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_target_auth_tag = sa.Column(sa.Integer(), default=1)
     iscsi_target_auth_user = sa.Column(sa.String(120))
-    iscsi_target_auth_secret = sa.Column(sa.String(120))
+    iscsi_target_auth_secret = sa.Column(sa.EncryptedText())
     iscsi_target_auth_peeruser = sa.Column(sa.String(120))
-    iscsi_target_auth_peersecret = sa.Column(sa.String(120))
+    iscsi_target_auth_peersecret = sa.Column(sa.EncryptedText())
 
 
 class iSCSITargetAuthCredentialService(CRUDService):
@@ -491,6 +388,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         verrors = ValidationErrors()
         await self.validate(new, 'iscsi_auth_update', verrors)
+        if new['tag'] != old['tag'] and not await self.query([['tag', '=', old['tag'], ['id', '!=', id]]]):
+            usages = await self.is_in_use_by_portals_targets(id)
+            if usages['in_use']:
+                verrors.add('iscsi_auth_update.tag', usages['usages'])
 
         if verrors:
             raise verrors
@@ -509,10 +410,37 @@ class iSCSITargetAuthCredentialService(CRUDService):
         """
         Delete iSCSI Authorized Access of `id`.
         """
-        await self._get_instance(id)
+        config = await self._get_instance(id)
+        if not await self.query([['tag', '=', config['tag']], ['id', '!=', id]]):
+            usages = await self.is_in_use_by_portals_targets(id)
+            if usages['in_use']:
+                raise CallError(usages['usages'])
+
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
+
+    @private
+    async def is_in_use_by_portals_targets(self, id):
+        config = await self.get_instance(id)
+        usages = []
+        portals = await self.middleware.call(
+            'iscsi.portal.query', [['discovery_authgroup', '=', config['tag']]], {'select': ['id']}
+        )
+        if portals:
+            usages.append(
+                f'Authorized access of {id} is being used by portal(s): {", ".join(p["id"] for p in portals)}'
+            )
+        groups = await self.middleware.call(
+            'datastore.query', 'services.iscsitargetgroups', [['iscsi_target_authgroup', '=', config['tag']]]
+        )
+        if groups:
+            usages.append(
+                f'Authorized access of {id} is being used by following target(s): '
+                f'{", ".join(str(g["iscsi_target"]["id"]) for g in groups)}'
+            )
+
+        return {'in_use': bool(usages), 'usages': '\n'.join(usages)}
 
     @private
     async def validate(self, data, schema_name, verrors):
@@ -571,24 +499,38 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_xen = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_rpm = sa.Column(sa.String(20), default='SSD')
     iscsi_target_extent_ro = sa.Column(sa.Boolean(), default=False)
-    iscsi_target_extent_legacy = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_enabled = sa.Column(sa.Boolean(), default=True)
+    iscsi_target_extent_vendor = sa.Column(sa.Text(), nullable=True)
 
 
-class iSCSITargetExtentService(CRUDService):
+class iSCSITargetExtentService(SharingService):
+
+    share_task_type = 'iSCSI Extent'
 
     class Config:
         namespace = 'iscsi.extent'
         datastore = 'services.iscsitargetextent'
         datastore_prefix = 'iscsi_target_extent_'
         datastore_extend = 'iscsi.extent.extend'
+        datastore_extend_context = 'iscsi.extent.extent_extend_context'
+
+    @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        if data['type'] == 'DISK':
+            if data['disk'].startswith('zvol/'):
+                return any(data['disk'][5:] == d['id'] for d in locked_datasets)
+            else:
+                # It is a disk
+                return False
+        else:
+            return await super().sharing_task_determine_locked(data, locked_datasets)
 
     @accepts(Dict(
         'iscsi_extent_create',
         Str('name', required=True),
         Str('type', enum=['DISK', 'FILE'], default='DISK'),
         Str('disk', default=None, null=True),
-        Str('serial', default=None, null=True, max_length=16),
+        Str('serial', default=None, null=True),
         Str('path', default=None, null=True),
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
@@ -631,7 +573,7 @@ class iSCSITargetExtentService(CRUDService):
         await self.save(data, 'iscsi_extent_create', verrors)
 
         data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
+            'datastore.insert', self._config.datastore, {**data, 'vendor': 'TrueNAS'},
             {'prefix': self._config.datastore_prefix}
         )
 
@@ -652,7 +594,7 @@ class iSCSITargetExtentService(CRUDService):
         Update iSCSI Extent of `id`.
         """
         verrors = ValidationErrors()
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -667,6 +609,7 @@ class iSCSITargetExtentService(CRUDService):
             raise verrors
 
         await self.save(new, 'iscsi_extent_update', verrors)
+        new.pop(self.locked_field)
 
         await self.middleware.call(
             'datastore.update',
@@ -678,7 +621,7 @@ class iSCSITargetExtentService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(
         Int('id'),
@@ -749,9 +692,32 @@ class iSCSITargetExtentService(CRUDService):
         return data
 
     @private
-    async def extend(self, data):
+    async def extent_extend_context(self, extra):
+        context = {
+            'disks': {},
+            'pools': {
+                p['name']: {'disks': await self.middleware.call('zfs.pool.get_disks', p['name']), 'all_flash': False}
+                for p in await self.middleware.call('pool.query')
+            }
+        }
+        disks_names = {}
+        for disk in await self.middleware.call('disk.query'):
+            disks_names[disk['devname']] = disk
+            context['disks'][disk['identifier']] = disk
+
+        for pool in filter(lambda p: context['pools'][p]['disks'], context['pools']):
+            data = context['pools'][pool]
+            if all(disks_names.get(d, {}).get('type') == 'SSD' for d in data['disks']):
+                data['all_flash'] = True
+        return context
+
+    @private
+    async def extend(self, data, context):
         extent_type = data['type'].upper()
         extent_rpm = data['rpm'].upper()
+
+        if osc.IS_FREEBSD:
+            data['serseq'] = True
 
         data['disk'] = None
         if extent_type != 'FILE':
@@ -759,11 +725,14 @@ class iSCSITargetExtentService(CRUDService):
             extent_type = 'DISK'
             # If extent is set to a disk ( not ZVOL and HAST ) - let's reflect this in the output
 
-            disk = await self.middleware.call('disk.query', [['identifier', '=', data['path']]])
-            if disk:
-                data['disk'] = disk[0]['name']
+            if data['path'] in context['disks']:
+                data['disk'] = context['disks'][data['path']]['name']
             else:
                 data['disk'] = data['path']
+                if osc.IS_FREEBSD and data['path'].startswith('zvol/'):
+                    pool = data['path'][len('zvol/'):].split('/')[0]
+                    if context['pools'].get(pool, {}).get('all_flash'):
+                        data['serseq'] = False
         else:
             extent_size = data['filesize']
 
@@ -807,6 +776,8 @@ class iSCSITargetExtentService(CRUDService):
 
         if '"' in serial:
             verrors.add(f'{schema_name}.serial', 'Double quotes are not allowed')
+        if osc.IS_FREEBSD and len(serial) > 15:
+            verrors.add(f'{schema_name}.serial', 'Maximum length of 15 characters is allowed for extent serial')
 
         if name != old or old is None:
             name_result = await self.middleware.call(
@@ -840,8 +811,6 @@ class iSCSITargetExtentService(CRUDService):
                 zvol = await self.middleware.call('pool.dataset.query', [['id', '=', zvol_name]])
                 if not zvol:
                     verrors.add(f'{schema_name}.disk', f'Zvol {zvol_name} does not exist')
-                elif zvol[0]['locked']:
-                    verrors.add(f'{schema_name}.disk', f'Zvol {zvol_name} is locked')
         elif extent_type == 'File':
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')
@@ -905,17 +874,20 @@ class iSCSITargetExtentService(CRUDService):
                                                    ['name', 'rnin', 'vnet'],
                                                    ['name', 'rnin', 'bridge']])
                        )[0]
-                mac = nic['state']['link_address'].replace(':', '')
+                mac = nic['state']['link_address'].replace(':', '').strip()
 
-                ltg = await self.query()
+                ltg = await self.query([], {'order_by': ['id']})
                 if len(ltg) > 0:
-                    lid = ltg[0]['id']
+                    lid = ltg[-1]['id']
                 else:
                     lid = 0
-                return f'{mac.strip()}{lid:02}'
+                if osc.IS_LINUX:
+                    return f'{mac}{lid:03}'
+                else:
+                    return f'{mac[:15-max(3, len(str(lid)))]}{lid:03}'[:15]
             except Exception:
-                self.logger.error('Failed to generate serial, using a default', exc_info=True)
-                return '10000001'
+                self.logger.error('Failed to generate serial, generating a random default', exc_info=True)
+                return secrets.token_hex()[:15]
         else:
             return serial
 
@@ -943,9 +915,7 @@ class iSCSITargetExtentService(CRUDService):
 
         used_zvols = [i['path'] for i in zvol_query]
 
-        zfs_snaps = await self.middleware.call(
-            'zfs.snapshot.query', [], {'select': ['name'], 'order_by': ['name']}
-        )
+        zfs_snaps = await self.middleware.call('zfs.snapshot.query', [], {'select': ['name']})
 
         zvols = await self.middleware.call(
             'pool.dataset.query',
@@ -999,7 +969,8 @@ class iSCSITargetExtentService(CRUDService):
                 await wipe_job.wait()
                 if wipe_job.error:
                     raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
-                await self.middleware.call('disk.label', disk, f'extent_{disk}')
+                if osc.IS_FREEBSD:
+                    await self.middleware.call('disk.label', disk, f'extent_{disk}')
             elif not disk.startswith('hast') and not disk.startswith('zvol'):
                 disk_filters = [('name', '=', disk), ('expiretime', '=', None)]
                 try:
@@ -1008,7 +979,7 @@ class iSCSITargetExtentService(CRUDService):
                     disk_identifier = disk_object.get('identifier', None)
                     data['path'] = disk_identifier
 
-                    if disk_identifier.startswith('{devicename}') or disk_identifier.startswith(
+                    if osc.IS_FREEBSD and disk_identifier.startswith('{devicename}') or disk_identifier.startswith(
                         '{uuid}'
                     ):
                         try:
@@ -1440,6 +1411,18 @@ class iSCSITargetService(CRUDService):
             'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target', '=', id]]
         )
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+        if osc.IS_LINUX and await self.middleware.call('service.started', 'iscsitarget'):
+            # We explicitly need to do this unfortunately as scst does not accept these changes with a reload
+            # So this is the best way to do this without going through a restart of the service
+            g_config = await self.middleware.call('iscsi.global.config')
+            cp = await run([
+                'scstadmin', '-force', '-noprompt', '-rem_target',
+                f'{g_config["basename"]}:{target["name"]}', '-driver', 'iscsi'
+            ], check=False)
+            if cp.returncode:
+                self.middleware.logger.error('Failed to remove %r target: %s', target['name'], cp.stderr.decode())
+
         await self._service_change('iscsitarget', 'reload')
         return rv
 
@@ -1495,7 +1478,7 @@ class iSCSITargetToExtentService(CRUDService):
     @accepts(Dict(
         'iscsi_targetextent_create',
         Int('target', required=True),
-        Int('lunid'),
+        Int('lunid', null=True),
         Int('extent', required=True),
         register=True
     ))
@@ -1521,11 +1504,17 @@ class iSCSITargetToExtentService(CRUDService):
 
         return await self._get_instance(data['id'])
 
+    def _set_null_false(name):
+        def set_null_false(attr):
+            attr.null = False
+        return {'name': name, 'method': set_null_false}
+
     @accepts(
         Int('id'),
         Patch(
             'iscsi_targetextent_create',
             'iscsi_targetextent_update',
+            ('edit', _set_null_false('lunid')),
             ('attr', {'update': True})
         )
     )
@@ -1591,7 +1580,7 @@ class iSCSITargetToExtentService(CRUDService):
         target = data['target']
         old_target = old.get('target')
         extent = data['extent']
-        if 'lunid' not in data:
+        if data.get('lunid') is None:
             lunids = [
                 o['lunid'] for o in await self.query(
                     [('target', '=', target)], {'order_by': ['lunid']}
@@ -1607,7 +1596,12 @@ class iSCSITargetToExtentService(CRUDService):
         else:
             lunid = data['lunid']
 
-        lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
+        # For Linux we have
+        # http://github.com/bvanassche/scst/blob/d483590da4de7d32c8371e0712fc186f3d8c509c/scst/include/scst_const.h#L69
+        if osc.IS_LINUX:
+            lun_map_size = 16383
+        else:
+            lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
 
         if lunid < 0 or lunid > lun_map_size - 1:
             verrors.add(
@@ -1632,52 +1626,51 @@ class iSCSITargetToExtentService(CRUDService):
             )
 
 
-class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
+class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'iscsi'
     title = 'iSCSI Extent'
     service = 'iscsitarget'
+    service_class = iSCSITargetExtentService
 
-    async def query(self, path, enabled):
-        results = []
-        for extent in await self.middleware.call('iscsi.extent.query', [['type', '=', 'DISK'],
-                                                                        ['enabled', '=', enabled]]):
-            if is_child(extent['path'], os.path.join('zvol', os.path.relpath(path, '/mnt'))):
-                results.append(extent)
+    async def get_query_filters(self, enabled, options=None):
+        return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))
 
-        return results
-
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
+    async def is_child_of_path(self, resource, path):
+        return is_child(resource[self.path_field], os.path.join('zvol', os.path.relpath(path, '/mnt')))
 
     async def delete(self, attachments):
-        lun_ids = []
+        orphan_targets_ids = set()
         for attachment in attachments:
             for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
+                orphan_targets_ids.add(te['target'])
                 await self.middleware.call('datastore.delete', 'services.iscsitargettoextent', te['id'])
-                lun_ids.append(te['lunid'])
 
             await self.middleware.call('datastore.delete', 'services.iscsitargetextent', attachment['id'])
+            await self.remove_alert(attachment)
+
+        for te in await self.middleware.call('iscsi.targetextent.query', [['target', 'in', orphan_targets_ids]]):
+            orphan_targets_ids.discard(te['target'])
+        for target_id in orphan_targets_ids:
+            await self.middleware.call('iscsi.target.delete', target_id, True)
 
         await self._service_change('iscsitarget', 'reload')
 
-        for lun_id in lun_ids:
-            await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
+        # For SCALE, reload action will remove existing LUN(s)
+        if osc.IS_FREEBSD:
+            await asyncio.sleep(5)
 
-    async def toggle(self, attachments, enabled):
-        lun_ids = []
-        for attachment in attachments:
-            for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
-                lun_ids.append(te['lunid'])
-
-            await self.middleware.call('datastore.update', 'services.iscsitargetextent', attachment['id'],
-                                       {'iscsi_target_extent_enabled': enabled})
-
+    async def restart_reload_services(self, attachments):
         await self._service_change('iscsitarget', 'reload')
 
-        if not enabled:
-            for lun_id in lun_ids:
-                await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
+    async def stop(self, attachments):
+        await self.restart_reload_services(attachments)
+        if osc.IS_FREEBSD:
+            await asyncio.sleep(5)
 
 
 async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        ISCSIPortalListenDelegate(middleware),
+    )
     await middleware.call('pool.dataset.register_attachment_delegate', ISCSIFSAttachmentDelegate(middleware))

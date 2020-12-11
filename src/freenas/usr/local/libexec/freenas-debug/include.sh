@@ -26,8 +26,10 @@
 #
 #####################################################################
 
-test -e /etc/rc.freenas && . /etc/rc.freenas
-test -e /etc/rc.conf.local && . /etc/rc.conf.local
+if is_freebsd; then
+	test -e /etc/rc.freenas && . /etc/rc.freenas
+	test -e /etc/rc.conf.local && . /etc/rc.conf.local
+fi
 
 #
 # This is the directory where we save things
@@ -155,29 +157,31 @@ freenas_header()
 		section_header "no version file found"
 	fi
 
-	desc=$(sysctl -nd kern.ostype)
-	out=$(sysctl -n kern.ostype)
-	echo "${desc}: ${out}"
+	if is_linux; then
+		kernel_prefix="kernel"
+	else
+		kernel_prefix="kern"
+	fi
 
-	desc=$(sysctl -nd kern.osrelease)
-	out=$(sysctl -n kern.osrelease)
-	echo "${desc}: ${out}"
+	out=$(sysctl -n "$kernel_prefix".ostype)
+	echo "Operating system type: ${out}"
 
-	desc=$(sysctl -nd kern.osrevision)
-	out=$(sysctl -n kern.osrevision)
-	echo "${desc}: ${out}"
+	out=$(sysctl -n "$kernel_prefix".osrelease)
+	echo "Operating system release: ${out}"
 
-	desc=$(sysctl -nd kern.version)
-	out=$(sysctl -n kern.version)
-	echo "${desc}: ${out}"
+	if is_freebsd; then
+		out=$(sysctl -n kern.osrevision)
+		echo "Operating system revision: ${out}"
 
-	desc=$(sysctl -nd kern.hostname)
-	out=$(sysctl -n kern.hostname)
-	echo "${desc}: ${out}"
+		out=$(sysctl -n kern.bootfile)
+		echo "Name of kernel file booted: ${out}"
+	fi
 
-	desc=$(sysctl -nd kern.bootfile)
-	out=$(sysctl -n kern.bootfile)
-	echo "${desc}: ${out}"
+	out=$(sysctl -n "$kernel_prefix".version)
+	echo "Kernel version: ${out}"
+
+	out=$(sysctl -n "$kernel_prefix".hostname)
+	echo "Hostname: ${out}"
 
 	section_footer
 }
@@ -245,6 +249,16 @@ load_module()
 	local name="${1}"
 	local d="${FREENAS_DEBUG_MODULEDIR}"
 	local p="${d}/${name}"
+
+	# Some modules might be linux/freebsd specifc
+	# their directory names end with their respective suffixes
+	# however the scripts would be stripped of the suffixes
+	# and we should ensure we handle this as desired
+	for suffix in "_freebsd" "_linux";
+	do
+		name=${name%"$suffix"}
+	done
+
 	local m="${p}/${name}.sh"
 
 	if [ -z "${name}" ]

@@ -4,13 +4,14 @@ DefaultDependencies=no
 
 Before=network-pre.target
 
-Wants=systemd-modules-load.service local-fs.target
-After=systemd-modules-load.service local-fs.target middlewared.service
+After=middlewared.service
+Before=local-fs.target
 
 [Service]
 Type=oneshot
+TimeoutStartSec=300
 ExecStart=midclt call -job certificate.dhparam_setup
-ExecStart=midclt call etc.generate_all
+ExecStart=midclt call etc.generate_checkpoint initial
 StandardOutput=null
 
 [Install]

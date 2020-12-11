@@ -1,4 +1,5 @@
 from sqlalchemy import and_, types
+from sqlalchemy.sql import sqltypes
 
 from middlewared.schema import accepts, Any, Dict, Str
 from middlewared.service import Service
@@ -18,7 +19,6 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         Insert a new entry to `name`.
         """
         table = self._get_table(name)
-
         insert, relationships = self._extract_relationships(table, options['prefix'], data)
 
         for column in table.c:
@@ -28,10 +28,18 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 if isinstance(column.type, (types.String, types.Text)):
                     insert.setdefault(column.name, '')
 
-        await self.middleware.call('datastore.execute_write', table.insert().values(**insert))
-        pk = (await self.middleware.call('datastore.fetchall', 'SELECT last_insert_rowid()'))[0][0]
+        pk_column = self._get_pk(table)
+        return_last_insert_rowid = type(pk_column.type) == sqltypes.Integer
+        result = await self.middleware.call('datastore.execute_write', table.insert().values(**insert),
+                                            return_last_insert_rowid)
+        if return_last_insert_rowid:
+            pk = result
+        else:
+            pk = insert[pk_column.name]
 
         await self._handle_relationships(pk, relationships)
+
+        await self.middleware.call('datastore.send_insert_events', name, insert)
 
         return pk
 
@@ -67,6 +75,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             )
             if result.rowcount != 1:
                 raise RuntimeError('No rows were updated')
+
+            await self.middleware.call('datastore.send_update_events', name, id)
 
         await self._handle_relationships(id, relationships)
 
@@ -125,4 +135,9 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             'datastore.execute_write',
             table.delete().where(self._where_clause(table, id_or_filters, options)),
         )
+
+        # FIXME: Sending events for batch deletes not implemented yet
+        if not isinstance(id_or_filters, list):
+            await self.middleware.call('datastore.send_delete_events', name, id_or_filters)
+
         return True

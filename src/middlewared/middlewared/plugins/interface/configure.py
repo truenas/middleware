@@ -1,15 +1,16 @@
 import ipaddress
 import os
-import platform
 import shlex
 import signal
 import subprocess
 import re
+import textwrap
 
 from .netif import netif
 from .type_base import InterfaceType
 
 from middlewared.service import private, Service
+from middlewared.utils import osc
 
 
 class InterfaceService(Service):
@@ -18,7 +19,9 @@ class InterfaceService(Service):
         namespace_alias = 'interfaces'
 
     @private
-    def configure(self, data, aliases, wait_dhcp=False, **kwargs):
+    def configure(self, data, aliases, wait_dhcp=False, options=None):
+        options = options or {}
+
         name = data['int_interface']
 
         iface = netif.get_interface(name)
@@ -32,11 +35,10 @@ class InterfaceService(Service):
         has_ipv6 = data['int_ipv6auto'] or False
 
         if (
-            not self.middleware.call_sync('system.is_freenas') and
-            self.middleware.call_sync('failover.node') == 'B'
+            self.middleware.call_sync('system.is_enterprise') and self.middleware.call_sync('failover.node') == 'B'
         ):
             ipv4_field = 'int_ipv4address_b'
-            ipv6_field = 'int_ipv6address'
+            ipv6_field = 'int_ipv6address_b'
             alias_ipv4_field = 'alias_v4address_b'
             alias_ipv6_field = 'alias_v6address_b'
         else:
@@ -58,33 +60,56 @@ class InterfaceService(Service):
                     }))
                 else:
                     self.logger.info('Unable to get address from dhclient')
-            if data[ipv6_field] and has_ipv6 is False:
+            if data[ipv6_field] and not has_ipv6:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv6_field],
                     'netmask': data['int_v6netmaskbit'],
                 }))
+                has_ipv6 = True
         else:
             if data[ipv4_field] and not data['int_dhcp']:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv4_field],
                     'netmask': data['int_v4netmaskbit'],
                 }))
-            if data[ipv6_field] and has_ipv6 is False:
+            if data[ipv6_field] and not has_ipv6:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv6_field],
                     'netmask': data['int_v6netmaskbit'],
                 }))
                 has_ipv6 = True
 
-        carp_vhid = carp_pass = None
-        if data['int_vip']:
-            addrs_database.add(self.alias_to_addr({
+        # configure CARP/VRRP
+        has_vip = data.get('int_vip', '')
+        if has_vip:
+            vip_data = {
                 'address': data['int_vip'],
                 'netmask': '32',
-                'vhid': data['int_vhid'],
-            }))
-            carp_vhid = data['int_vhid']
-            carp_pass = data['int_pass'] or None
+            }
+
+        has_vipv6 = data.get('int_vipv6address', '')
+        if has_vipv6:
+            vip_data = {
+                'address': data['int_vipv6address'],
+                'netmask': '128',
+            }
+
+        if has_vip or has_vipv6:
+            # linux doesn't use `carp_vhid` or `carp_pass` attributes
+            if osc.IS_FREEBSD:
+                carp_vhid = data.get('int_vhid', None)
+                carp_pass = data.get('int_pass', None)
+
+                vip_data['vhid'] = carp_vhid
+
+                if carp_vhid:
+                    advskew = None
+                    for cc in iface.carp_config:
+                        if cc.vhid == carp_vhid:
+                            advskew = cc.advskew
+                        break
+
+            addrs_database.add(self.alias_to_addr(vip_data))
 
         for alias in aliases:
             if alias[alias_ipv4_field]:
@@ -99,46 +124,92 @@ class InterfaceService(Service):
                 }))
 
             if alias['alias_vip']:
-                addrs_database.add(self.alias_to_addr({
+                alias_vip_data = {
                     'address': alias['alias_vip'],
                     'netmask': '32',
-                    'vhid': data['int_vhid'],
-                }))
+                }
 
-        if carp_vhid:
-            advskew = None
-            for cc in iface.carp_config:
-                if cc.vhid == carp_vhid:
-                    advskew = cc.advskew
-                    break
+            if alias['alias_vipv6address']:
+                alias_vip_data = {
+                    'address': alias['alias_vipv6address'],
+                    'netmask': '128',
+                }
 
-        if has_ipv6:
-            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
-            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
+            if alias['alias_vip'] or alias['alias_vipv6address']:
+                if osc.IS_FREEBSD:
+                    alias_vip_data['vhid'] = data['int_vhid']
+
+                addrs_database.add(self.alias_to_addr(alias_vip_data))
+
+        if osc.IS_FREEBSD:
+            if has_ipv6:
+                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
+                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
+            else:
+                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
+                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
         else:
-            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
-            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
+            if has_ipv6 and not [i for i in map(str, iface.addresses) if i.startswith('fe80::')]:
+                # https://tools.ietf.org/html/rfc4291#section-2.5.1
+                # add an EUI64 link-local ipv6 address if one doesn't already exist
+                mac = iface.link_address.address.address.replace(':', '')
+                mac = mac[0:6] + 'fffe' + mac[6:]
+                mac = hex(int(mac[0:2], 16) ^ 2)[2:].zfill(2) + mac[2:]
+                link_local = {
+                    'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)),
+                    'netmask': '64',
+                }
+                addrs_database.add(self.alias_to_addr(link_local))
+
+        if dhclient_running and not data['int_dhcp']:
+            self.logger.debug('Killing dhclient for {}'.format(name))
+            os.kill(dhclient_pid, signal.SIGTERM)
 
         # Remove addresses configured and not in database
-        for addr in (addrs_configured - addrs_database):
+        for addr in addrs_configured:
+            # keepalived service is responsible for deleting the VIP
+            if str(addr.address) in (has_vip, has_vipv6):
+                continue
             if has_ipv6 and str(addr.address).startswith('fe80::'):
                 continue
-            self.logger.debug('{}: removing {}'.format(name, addr))
-            iface.remove_address(addr)
+            if addr not in addrs_database:
+                self.logger.debug('{}: removing {}'.format(name, addr))
+                iface.remove_address(addr)
+            else:
+                if osc.IS_LINUX and not data['int_dhcp']:
+                    self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
+                    iface.replace_address(addr)
 
-        # carp must be configured after removing addresses
-        # in case removing the address removes the carp
-        if carp_vhid:
-            if not self.middleware.call_sync('system.is_freenas') and not advskew:
-                if self.middleware.call_sync('failover.node') == 'A':
-                    advskew = 20
+        if osc.IS_FREEBSD:
+            # carp must be configured after removing addresses
+            # in case removing the address removes the carp
+            if carp_vhid:
+                if self.middleware.call_sync('failover.licensed') and not advskew:
+                    if 'NO_FAILOVER' in self.middleware.call_sync('failover.disabled_reasons'):
+                        if self.middleware.call_sync('failover.vip.get_states')[0]:
+                            advskew = 20
+                        else:
+                            advskew = 80
+                    elif self.middleware.call_sync('failover.node') == 'A':
+                        advskew = 20
+                    else:
+                        advskew = 80
+
+                # FIXME: change py-netif to accept str() key
+                iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
+        else:
+            if has_vip or has_vipv6:
+                if not self.middleware.call_sync('service.started', 'keepalived'):
+                    self.middleware.call_sync('service.start', 'keepalived')
                 else:
-                    advskew = 80
-            # FIXME: change py-netif to accept str() key
-            iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
+                    self.middleware.call_sync('service.reload', 'keepalived')
+                iface.vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
+            # keepalived service is responsible for adding the VIP
+            if str(addr.address) in (has_vip, has_vipv6):
+                continue
             self.logger.debug('{}: adding {}'.format(name, addr))
             iface.add_address(addr)
 
@@ -154,7 +225,7 @@ class InterfaceService(Service):
 
         # In case there is no MTU in interface and it is currently
         # different than the default of 1500, revert it
-        if not kwargs.get('skip_mtu'):
+        if not options.get('skip_mtu'):
             if data['int_mtu']:
                 if iface.mtu != data['int_mtu']:
                     iface.mtu = data['int_mtu']
@@ -173,16 +244,13 @@ class InterfaceService(Service):
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
-            self.middleware.call_sync('interface.dhclient_start', data['int_interface'], wait_dhcp, wait=wait_dhcp)
-        elif dhclient_running and not data['int_dhcp']:
-            self.logger.debug('Killing dhclient for {}'.format(name))
-            os.kill(dhclient_pid, signal.SIGTERM)
+            self.middleware.call_sync('interface.dhclient_start', data['int_interface'], wait_dhcp)
 
-        if platform.system() == 'FreeBSD':
+        if osc.IS_FREEBSD:
             if data['int_ipv6auto']:
                 iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
-                subprocess.call(['/etc/rc.d/rtsold', 'onestart'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                close_fds=True)
+                subprocess.call(['/etc/rc.d/rtsold', 'onerestart'], stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL, close_fds=True)
             else:
                 iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 

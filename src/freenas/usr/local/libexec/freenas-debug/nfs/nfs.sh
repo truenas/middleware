@@ -32,9 +32,8 @@ nfs_help() { echo "Dump NFS Configuration"; }
 nfs_directory() { echo "NFS"; }
 nfs_func()
 {
-	
-	local onoff
 
+	local onoff
 
         onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
         SELECT
@@ -59,9 +58,9 @@ nfs_func()
         section_footer
 
 	section_header "NFS Run Status"
-	service nfsd onestatus
+	service nfs-ganesha status
 	section_footer
-	
+
 	section_header "/etc/hosts"
 	sc "/etc/hosts"
 	section_footer
@@ -78,15 +77,26 @@ nfs_func()
 	nfsstat
 	section_footer
 
-	section_header "nfsstat -c"
-	nfsstat -c
-	section_footer
+	if is_linux; then
+		section_header "/etc/ganesha/gluster.conf"
+		sc "/etc/ganesha/gluster.conf"
+		section_footer
 
-	section_header "nfsstat -s"
-	nfsstat -s
-	section_footer
+		section_header "/etc/ganesha/vfs.conf"
+		sc "/etc/ganesha/vfs.conf"
+		section_footer
 
-	section_header "nfsv4 locks: nfsdumpstate"
-	nfsdumpstate
+		section_header "/etc/ganesha/ganesha.conf"
+		sc "/etc/ganesha/ganesha.conf"
+		section_footer
+	else
+		section_header "nfsv4 locks: nfsdumpstate"
+		nfsdumpstate
+		section_footer
+	fi
+
+	section_header "Middleware Configuration"
+	midclt call nfs.config | jq
+	midclt call sharing.nfs.query | jq
 	section_footer
 }

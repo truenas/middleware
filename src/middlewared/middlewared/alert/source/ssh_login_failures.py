@@ -42,14 +42,15 @@ def catmsgs():
 
 
 def get_login_failures(now, messages):
-    yesterday = (now - timedelta(days=1)).strftime("%b %e ").encode("ascii")
-    today = now.strftime("%b %e ").encode("ascii")
+    yesterday = (now - timedelta(days=1)).strftime("%b %e ")
+    today = now.strftime("%b %e ")
 
     login_failures = []
     for message in messages:
+        message = message.decode("utf-8", "ignore")
         if message.strip():
             if message.startswith(yesterday):
-                if re.search(rb"\b(fail(ures?|ed)?|invalid|bad|illegal|auth.*error)\b", message, re.I):
+                if re.search(r"\b(fail(ures?|ed)?|invalid|bad|illegal|auth.*error)\b", message, re.I):
                     login_failures.append(message)
 
             if not message.startswith(yesterday) and not message.startswith(today):
@@ -73,5 +74,8 @@ class SSHLoginFailuresAlertSource(ThreadedAlertSource):
         if login_failures:
             return Alert(SSHLoginFailuresAlertClass, {
                 "count": len(login_failures),
-                "failures": b"".join(login_failures).decode("utf-8", "ignore")
+                "failures": "".join(
+                    login_failures if len(login_failures) <= 5
+                    else login_failures[:2] + [f"... {len(login_failures) - 4} more ...\n"] + login_failures[-2:]
+                )
             })

@@ -32,4 +32,8 @@ class B2RcloneRemote(BaseRcloneRemote):
     ]
 
     async def get_task_extra(self, task):
-        return {"chunk_size": str(task["attributes"].get("chunk_size", 96)) + "M"}
+        chunk_size = task["attributes"].get("chunk_size", 96)
+        extra = {"chunk_size": f"{chunk_size}M"}
+        if chunk_size > 200:
+            extra["upload_cutoff"] = f"{chunk_size}M"
+        return extra

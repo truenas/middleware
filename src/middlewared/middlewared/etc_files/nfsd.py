@@ -5,18 +5,21 @@ from middlewared.utils import run
 logger = logging.getLogger(__name__)
 
 
-async def get_exports(config, shares, kerberos_keytabs):
+async def get_exports(middleware, config, shares, has_nfs_principal):
     result = []
 
-    if config["v4"]:
-        if config["v4_krb"]:
-            result.append("V4: / -sec=krb5:krb5i:krb5p")
-        elif kerberos_keytabs:
-            result.append("V4: / -sec=sys:krb5:krb5i:krb5p")
-        else:
-            result.append("V4: / -sec=sys")
+    sec = await middleware.call("nfs.sec", config, has_nfs_principal)
+    if sec:
+        result.append(f"V4: / -sec={':'.join(sec)}")
 
     for share in shares:
+        if share['locked']:
+            middleware.logger.debug(
+                'Skipping generation of %r NFS share as the underlying resource is locked', share['id']
+            )
+            await middleware.call('sharing.nfs.generate_locked_alert', share['id'])
+            continue
+
         if share["paths"]:
             result.extend(build_share(config, share))
 
@@ -77,9 +80,9 @@ async def render(service, middleware):
 
     shares = await middleware.call("sharing.nfs.query", [["enabled", "=", True]])
 
-    kerberos_keytabs = await middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+    has_nfs_principal = await middleware.call('kerberos.keytab.has_nfs_principal')
 
     with open("/etc/exports", "w") as f:
-        f.write(await get_exports(config, shares, kerberos_keytabs))
+        f.write(await get_exports(middleware, config, shares, has_nfs_principal))
 
     await run("service", "mountd", "quietreload", check=False)

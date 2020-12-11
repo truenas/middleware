@@ -15,6 +15,8 @@ from middlewared.schema import Bool, Dict, accepts
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.pool import GELI_KEYPATH
+from middlewared.utils import osc
+from middlewared.utils.python import get_middlewared_dir
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
@@ -24,6 +26,7 @@ CONFIG_FILES = {
 FREENAS_DATABASE = '/data/freenas-v1.db'
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
+UPLOADED_DB_PATH = '/data/uploaded.db'
 
 
 class ConfigService(Service):
@@ -126,44 +129,53 @@ class ConfigService(Service):
             # This is not bullet proof as we can eventually have more migrations in a stable
             # release compared to a older nightly and still be considered a downgrade, however
             # this is simple enough and works in most cases.
+            alembic_version = None
             conn = sqlite3.connect(config_file_name)
             try:
                 cur = conn.cursor()
-                cur.execute(
-                    "SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'"
-                )
-                new_numsouth = cur.fetchone()[0]
-                cur.execute(
-                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin' and app != 'vcp'"
-                )
-                new_num = cur.fetchone()[0]
-                cur.close()
+                try:
+                    cur.execute(
+                        "SELECT version_num FROM alembic_version"
+                    )
+                    alembic_version = cur.fetchone()[0]
+                except sqlite3.OperationalError as e:
+                    if e.args[0] == "no such table: alembic_version":
+                        # FN/TN < 12
+                        # Let's just ensure it's not a random SQLite file
+                        cur.execute("SELECT 1 FROM django_migrations")
+                    else:
+                        raise
+                finally:
+                    cur.close()
             finally:
                 conn.close()
-            conn = sqlite3.connect(FREENAS_DATABASE)
-            try:
-                cur = conn.cursor()
-                cur.execute(
-                    "SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'"
-                )
-                numsouth = cur.fetchone()[0]
-                cur.execute(
-                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin' and app != 'vcp'"
-                )
-                num = cur.fetchone()[0]
-                cur.close()
-            finally:
-                conn.close()
-                if new_numsouth > numsouth or new_num > num:
+            if alembic_version is not None:
+                for root, dirs, files in os.walk(os.path.join(get_middlewared_dir(), "alembic", "versions")):
+                    found = False
+                    for name in files:
+                        if name.endswith(".py"):
+                            with open(os.path.join(root, name)) as f:
+                                if any(
+                                    line.strip() == f"Revision ID: {alembic_version}"
+                                    for line in f.read().splitlines()
+                                ):
+                                    found = True
+                                    break
+                    if found:
+                        break
+                else:
                     raise CallError(
                         'Failed to upload config, version newer than the '
                         'current installed.'
                     )
         except Exception as e:
             os.unlink(config_file_name)
-            raise CallError(f'The uploaded file is not valid: {e}')
+            if isinstance(e, CallError):
+                raise
+            else:
+                raise CallError(f'The uploaded file is not valid: {e}')
 
-        shutil.move(config_file_name, '/data/uploaded.db')
+        shutil.move(config_file_name, UPLOADED_DB_PATH)
         if bundle:
             for filename, destination in CONFIG_FILES.items():
                 file_path = os.path.join(tmpdir, filename)
@@ -182,6 +194,40 @@ class ConfigService(Service):
 
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
+
+        if osc.IS_LINUX:
+            # For SCALE, we have to enable/disable services based on the uploaded database
+            enable_disable_units = {'enable': [], 'disable': []}
+            conn = sqlite3.connect(UPLOADED_DB_PATH)
+            try:
+                cursor = conn.cursor()
+                for service, enabled in cursor.execute(
+                    "SELECT srv_service, srv_enable FROM services_services"
+                ).fetchall():
+                    try:
+                        units = self.middleware.call_sync('service.systemd_units', service)
+                    except KeyError:
+                        # An old service which we don't have currently
+                        continue
+
+                    if enabled:
+                        enable_disable_units['enable'].extend(units)
+                    else:
+                        enable_disable_units['disable'].extend(units)
+            finally:
+                conn.close()
+
+            for action in filter(lambda k: enable_disable_units[k], enable_disable_units):
+                cp = subprocess.Popen(
+                    ['systemctl', action] + enable_disable_units[action],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                err = cp.communicate()[1]
+                if cp.returncode:
+                    self.middleware.logger.error(
+                        'Failed to %s %r systemctl units: %s', action,
+                        ', '.join(enable_disable_units[action]), err.decode()
+                    )
 
     @accepts(Dict('options', Bool('reboot', default=True)))
     @job(lock='config_reset', logs=True)

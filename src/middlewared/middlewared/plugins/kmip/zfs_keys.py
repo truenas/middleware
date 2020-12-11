@@ -45,7 +45,7 @@ class KMIPService(Service, KMIPServerMixin):
                         self.zfs_keys[ds['name']] = key
                     continue
 
-                self.zfs_keys[ds['name']] = self.middleware.call_sync('pwenc.decrypt', ds['encryption_key'])
+                self.zfs_keys[ds['name']] = ds['encryption_key']
                 destroy_successful = False
                 if ds['kmip_uid']:
                     # This needs to be revoked and destroyed
@@ -53,7 +53,7 @@ class KMIPService(Service, KMIPServerMixin):
                     if not destroy_successful:
                         self.middleware.logger.debug(f'Failed to destroy key from KMIP Server for {ds["name"]}')
                 try:
-                    uid = self._register_secret_data(self.zfs_keys[ds['name']], conn)
+                    uid = self._register_secret_data(ds['name'], self.zfs_keys[ds['name']], conn)
                 except Exception:
                     failed.append(ds['name'])
                     update_data = {'kmip_uid': None} if destroy_successful else {}
@@ -86,7 +86,7 @@ class KMIPService(Service, KMIPServerMixin):
             except Exception:
                 failed.append(ds['name'])
             else:
-                update_data = {'encryption_key': self.middleware.call_sync('pwenc.encrypt', key), 'kmip_uid': None}
+                update_data = {'encryption_key': key, 'kmip_uid': None}
                 self.middleware.call_sync('datastore.update', 'storage.encrypteddataset', ds['id'], update_data)
                 self.zfs_keys.pop(ds['name'], None)
                 if connection_successful:
@@ -112,6 +112,7 @@ class KMIPService(Service, KMIPServerMixin):
             self.middleware.call_sync(
                 'alert.oneshot_create', 'KMIPZFSDatasetsSyncFailure', {'datasets': ','.join(failed)}
             )
+        self.middleware.call_hook_sync('kmip.zfs_keys_sync')
         return failed
 
     @private
@@ -129,9 +130,10 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def initialize_zfs_keys(self, connection_success):
+        locked_datasets = [ds['id'] for ds in self.middleware.call_sync('zfs.dataset.locked_datasets')]
         for ds in self.middleware.call_sync('datastore.query', 'storage.encrypteddataset',):
             if ds['encryption_key']:
-                self.zfs_keys[ds['name']] = self.middleware.call_sync('pwenc.decrypt', ds['encryption_key'])
+                self.zfs_keys[ds['name']] = ds['encryption_key']
             elif ds['kmip_uid'] and connection_success:
                 try:
                     with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
@@ -140,6 +142,8 @@ class KMIPService(Service, KMIPServerMixin):
                     self.middleware.logger.debug(f'Failed to retrieve key for {ds["name"]}')
                 else:
                     self.zfs_keys[ds['name']] = key
+            if ds['name'] in self.zfs_keys and ds['name'] in locked_datasets:
+                self.middleware.call_sync('pool.dataset.unlock', ds['name'])
 
     @private
     async def retrieve_zfs_keys(self):
@@ -155,3 +159,8 @@ class KMIPService(Service, KMIPServerMixin):
                 self.middleware.logger.debug(
                     f'Failed to remove encryption key from KMIP server for "{dataset}" Dataset: {e}'
                 )
+        await self.middleware.call_hook('kmip.zfs_keys_sync')
+
+    @private
+    async def update_zfs_keys(self, zfs_keys):
+        self.zfs_keys = zfs_keys

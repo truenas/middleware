@@ -32,7 +32,7 @@ generate_etc()
 	copy_templates
 
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call --job true --job-print description certificate.dhparam_setup > /dev/null
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate_all > /dev/null
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate_checkpoint initial > /dev/null
 
 	# etc rc plugin will generate rc.conf.freenas which needs to be re-read by /etc/rc script
 	killall -ALRM sh

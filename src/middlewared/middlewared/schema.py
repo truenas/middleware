@@ -1,5 +1,6 @@
 import asyncio
 import copy
+from collections import defaultdict
 from datetime import datetime, time
 import errno
 import ipaddress
@@ -8,6 +9,7 @@ import os
 from croniter import croniter
 
 from middlewared.service_exception import ValidationErrors
+from middlewared.utils import filter_list
 
 NOT_PROVIDED = object()
 
@@ -198,7 +200,7 @@ class Str(EnumMixin, Attribute):
 
         verrors = ValidationErrors()
 
-        if value and len(value) > self.max_length:
+        if value and len(str(value)) > self.max_length:
             verrors.add(self.name, f'Value greater than {self.max_length} not allowed')
 
         verrors.check()
@@ -208,36 +210,37 @@ class Str(EnumMixin, Attribute):
 
 class Path(Str):
 
+    def __init__(self, *args, **kwargs):
+        self.forwarding_slash = kwargs.pop('forwarding_slash', True)
+        super().__init__(*args, **kwargs)
+
     def clean(self, value):
         value = super().clean(value)
 
         if value is None:
             return value
 
-        return os.path.normpath(value.strip().strip("/").strip())
+        value = value.strip()
+
+        if self.forwarding_slash:
+            value = value.rstrip("/")
+        else:
+            value = value.strip("/")
+
+        return os.path.normpath(value.strip())
 
 
-class Dir(Str):
-
-    def validate(self, value):
-        if value is None:
-            return
-
-        verrors = ValidationErrors()
-
-        if value:
-            if not os.path.exists(value):
-                verrors.add(self.name, "This path does not exist.", errno.ENOENT)
-            elif not os.path.isdir(value):
-                verrors.add(self.name, "This path is not a directory.", errno.ENOTDIR)
-
-        if verrors:
-            raise verrors
-
-        return super().validate(value)
+class Dataset(Path):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('empty', False)
+        kwargs.setdefault('forwarding_slash', False)
+        super().__init__(*args, **kwargs)
 
 
-class File(Str):
+class HostPath(Path):
+
+    def validate_internal(self, verrors, value):
+        pass
 
     def validate(self, value):
         if value is None:
@@ -248,13 +251,25 @@ class File(Str):
         if value:
             if not os.path.exists(value):
                 verrors.add(self.name, "This path does not exist.", errno.ENOENT)
-            elif not os.path.isfile(value):
-                verrors.add(self.name, "This path is not a file.", errno.EISDIR)
+            self.validate_internal(verrors, value)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         return super().validate(value)
+
+
+class Dir(HostPath):
+
+    def validate_internal(self, verrors, value):
+        if not os.path.isdir(value):
+            verrors.add(self.name, "This path is not a directory.", errno.ENOTDIR)
+
+
+class File(HostPath):
+
+    def validate_internal(self, verrors, value):
+        if not os.path.isfile(value):
+            verrors.add(self.name, "This path is not a file.", errno.EISDIR)
 
 
 class IPAddr(Str):
@@ -556,6 +571,7 @@ class Dict(Attribute):
 
     def __init__(self, name, *attrs, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
+        self.conditional_validation = kwargs.pop('conditional_validation', {})
         self.strict = kwargs.pop('strict', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
@@ -567,6 +583,16 @@ class Dict(Attribute):
         self.attrs = {}
         for i in attrs:
             self.attrs[i.name] = i
+
+        for k, v in self.conditional_validation.items():
+            if k not in self.attrs:
+                raise ValueError(f'Specified attribute {k!r} not found.')
+            for k_v in ('filters', 'attrs'):
+                if k_v not in v:
+                    raise ValueError(f'Conditional validation must have {k_v} specified.')
+            for attr in v['attrs']:
+                if attr not in self.attrs:
+                    raise ValueError(f'Specified attribute {attr} not found.')
 
         if self.strict:
             for attr in self.attrs.values():
@@ -582,6 +608,17 @@ class Dict(Attribute):
     def has_private(self):
         return self.private or any(i.has_private() for i in self.attrs.values())
 
+    def get_attrs_to_skip(self, data):
+        skip_attrs = defaultdict(set)
+        check_data = self.get_defaults(data, {}) if not self.update else data
+        for attr, attr_data in filter(
+            lambda k: not filter_list([check_data], k[1]['filters']), self.conditional_validation.items()
+        ):
+            for k in attr_data['attrs']:
+                skip_attrs[k].update({attr})
+
+        return skip_attrs
+
     def clean(self, data):
         data = super().clean(data)
 
@@ -595,10 +632,17 @@ class Dict(Attribute):
         if not isinstance(data, dict):
             raise Error(self.name, 'A dict was expected')
 
+        skip_attrs = self.get_attrs_to_skip(data)
         for key, value in list(data.items()):
             if not self.additional_attrs:
                 if key not in self.attrs:
                     raise Error(key, 'Field was not expected')
+                if key in skip_attrs:
+                    raise Error(
+                        key,
+                        'Field was not expected because of conditional validation specified for '
+                        f'{", ".join(skip_attrs[key])!r}.'
+                    )
 
             attr = self.attrs.get(key)
             if not attr:
@@ -608,12 +652,17 @@ class Dict(Attribute):
 
         # Do not make any field and required and not populate default values
         if not self.update:
-            for attr in list(self.attrs.values()):
-                if attr.name not in data and (
-                    attr.required or attr.has_default
-                ):
-                    data[attr.name] = attr.clean(NOT_PROVIDED)
+            data.update(self.get_defaults(data, skip_attrs))
 
+        return data
+
+    def get_defaults(self, orig_data, skip_attrs):
+        data = copy.deepcopy(orig_data)
+        for attr in list(self.attrs.values()):
+            if attr.name not in data and attr.name not in skip_attrs and (
+                attr.required or attr.has_default
+            ):
+                data[attr.name] = attr.clean(NOT_PROVIDED)
         return data
 
     def dump(self, value):
@@ -803,7 +852,7 @@ class Ref(object):
         schema = schemas.get(self.name)
         if not schema:
             raise ResolverError('Schema {0} does not exist'.format(self.name))
-        schema = copy.deepcopy(schema)
+        schema = schema.copy()
         schema.register = False
         return schema
 

@@ -1,4 +1,5 @@
-import blkid
+import os
+import pyudev
 
 from middlewared.service import Service
 
@@ -14,17 +15,17 @@ class ZFSPoolService(Service, PoolDiskServiceBase):
 
     def get_disks(self, name):
         disks = self.middleware.call_sync('zfs.pool.get_devices', name)
-        block_devices = blkid.list_block_devices()
         mapping = {}
-        for dev in filter(lambda d: not d.name.startswith('sr'), block_devices):
-            mapping[dev.name] = dev.name
-            if dev.partitions_exist:
-                part_uuids = {
-                    f'disk/by-partuuid/{p["part_uuid"]}': dev.name
-                    for p in dev.__getstate__()['partitions_data']['partitions']
-                }
-                mapping.update(part_uuids)
-                mapping.update({f'{dev.name}{i}': dev.name for i in range(1, len(part_uuids) + 1)})
+        for dev in filter(
+            lambda d: not d.sys_name.startswith('sr') and d.get('DEVTYPE') in ('disk', 'partition'),
+            pyudev.Context().list_devices(subsystem='block')
+        ):
+            if dev['DEVTYPE'] == 'disk':
+                mapping[dev.sys_name] = dev.sys_name
+            elif dev.get('ID_PART_ENTRY_UUID'):
+                parent = dev.find_parent('block')
+                mapping[dev.sys_name] = parent.sys_name
+                mapping[os.path.join('disk/by-partuuid', dev['ID_PART_ENTRY_UUID'])] = parent.sys_name
 
         pool_disks = []
         for dev in disks:

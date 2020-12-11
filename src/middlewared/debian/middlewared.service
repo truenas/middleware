@@ -2,17 +2,24 @@
 Description=TrueNAS Middleware
 DefaultDependencies=no
 
-Before=network-pre.target
-Wants=network-pre.target
-
-Wants=systemd-modules-load.service local-fs.target
-After=systemd-modules-load.service local-fs.target
+Wants=ix-conf.service dbus.socket
+After=ix-conf.service dbus.socket
+Before=reboot.target shutdown.target halt.target
+Conflicts=reboot.target shutdown.target halt.target
 
 [Service]
 Type=notify
 ExecStart=/usr/bin/middlewared --log-handler=file -o /usr/local/lib/middlewared_truenas
 TimeoutStartSec=240
-Restart=on-failure
+Restart=always
+# SIGTERM will only happen if systemd kills process that timed out booting (it is the only case in which we don't
+# want to restart middleware infinitely as it will cause boot process to hang).
+# If user accidentally (or intentionally) kills middleware with SIGTERM, we'll see successful exit because we catch
+# SIGTERM and terminate event loop, then exit with successful status.
+RestartPreventExitStatus=SIGTERM
+# We don't want systemd to kill the middlewared process automatically on service stop, instead we rely on middlewared
+# to properly ensure that it shuts down cleanly on stop when SIGTERM is sent.
+SendSIGKILL=no
 
 [Install]
 WantedBy=multi-user.target

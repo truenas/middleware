@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import logging
+import subprocess
 
 from .address import AddressFamily, AddressMixin
 from .bridge import BridgeMixin
@@ -7,17 +8,18 @@ from .bits import InterfaceFlags, InterfaceLinkState
 from .lagg import LaggMixin
 from .utils import bitmask_to_set, run
 from .vlan import VlanMixin
+from .vrrp import VrrpMixin
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Interface"]
 
 CLONED_PREFIXES = [
-    'lo', 'tun', 'tap', 'br', 'vlan', 'bond',
+    'lo', 'tun', 'tap', 'br', 'vlan', 'bond', 'docker', 'veth', 'kube-bridge', 'kube-dummy',
 ]
 
 
-class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
+class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
     def __init__(self, name):
         self.name = name
 
@@ -48,7 +50,11 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
 
     @mtu.setter
     def mtu(self, mtu):
+        up = InterfaceFlags.UP in self.flags
         run(["ip", "link", "set", "dev", self.name, "mtu", str(mtu)])
+        if up:
+            self.down()
+            self.up()
 
     @property
     def cloned(self):
@@ -85,9 +91,12 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
 
     @property
     def link_address(self):
-        return list(filter(lambda x: x.af == AddressFamily.LINK, self.addresses)).pop()
+        try:
+            return list(filter(lambda x: x.af == AddressFamily.LINK, self.addresses)).pop()
+        except IndexError:
+            return None
 
-    def __getstate__(self, address_stats=False):
+    def __getstate__(self, address_stats=False, media=False, vrrp_config=None):
         state = {
             'name': self.name,
             'orig_name': self.orig_name,
@@ -104,10 +113,31 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
             'active_media_subtype': '',
             'supported_media': [],
             'media_options': None,
-            'link_address': self.link_address.address.address,
+            'link_address': self.link_address.address.address if self.link_address is not None else '',
             'aliases': [i.__getstate__(stats=address_stats) for i in self.addresses],
-            'carp_config': None,
+            'vrrp_config': vrrp_config,
         }
+
+        if media:
+            p = subprocess.run(["ethtool", self.name], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                               encoding="utf-8", errors="ignore")
+            if p.returncode == 0:
+                ethtool = {
+                    k.strip(): v.strip()
+                    for k, v in map(lambda s: s.split(":", 1), [line for line in p.stdout.splitlines() if ":" in line])
+                }
+                if "Speed" in ethtool:
+                    bits = [ethtool["Speed"]]
+                    if "Port" in ethtool:
+                        bits.append(ethtool["Port"])
+                    media_subtype = " ".join(bits)
+
+                    state.update({
+                        "media_type": "Ethernet",
+                        "media_subtype": "autoselect" if ethtool.get("Auto-negotiation") == "on" else media_subtype,
+                        "active_media_type": "Ethernet",
+                        "active_media_subtype": media_subtype,
+                    })
 
         if self.name.startswith('bond'):
             state.update({

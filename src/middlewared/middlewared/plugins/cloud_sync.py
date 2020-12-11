@@ -1,11 +1,14 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
+    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import load_modules, load_classes, Popen, run
+from middlewared.utils import Popen, run
+from middlewared.utils.plugins import load_modules, load_classes
+from middlewared.utils.python import get_middlewared_dir
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_attributes
 
@@ -132,12 +135,14 @@ def check_local_path(path):
 
 
 async def rclone(middleware, job, cloud_sync, dry_run=False):
+    await middleware.call("network.general.will_perform_activity", "cloud_sync")
+
     await middleware.run_in_thread(check_local_path, cloud_sync["path"])
 
     # Use a temporary file to store rclone file
     async with RcloneConfig(cloud_sync) as config:
         args = [
-            "/usr/local/bin/rclone",
+            "rclone",
             "--config", config.config_path,
             "-v",
             "--stats", "1s",
@@ -179,7 +184,7 @@ async def rclone(middleware, job, cloud_sync, dry_run=False):
                 await middleware.call("zfs.snapshot.create", dict(snapshot, recursive=recursive))
 
                 relpath = os.path.relpath(path, dataset["mountpoint"])
-                path = os.path.join(dataset["mountpoint"], ".zfs", "snapshot", snapshot_name, relpath)
+                path = os.path.normpath(os.path.join(dataset["mountpoint"], ".zfs", "snapshot", snapshot_name, relpath))
 
             args.extend([path, config.remote_path])
         else:
@@ -272,7 +277,7 @@ async def run_script(job, env, hook, script_name):
             [name],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            env=env,
+            env=dict(os.environ, **env),
         )
         future = asyncio.ensure_future(run_script_check(job, proc, script_name))
         await proc.wait()
@@ -378,7 +383,7 @@ async def rclone_check_progress(job, proc):
     dropbox__restricted_content = False
     try:
         while True:
-            read = (await proc.stdout.readline()).decode()
+            read = (await proc.stdout.readline()).decode("utf-8", "ignore")
             if read == "":
                 break
 
@@ -542,6 +547,8 @@ class CredentialsService(CRUDService):
         """
         Verify if `attributes` provided for `provider` are authorized by the `provider`.
         """
+        await self.middleware.call("network.general.will_perform_activity", "cloud_sync")
+
         data = dict(data, name="")
         await self._validate("cloud_sync_credentials_create", data)
 
@@ -610,6 +617,10 @@ class CredentialsService(CRUDService):
         """
         Delete Cloud Sync Credentials of `id`.
         """
+        tasks = await self.middleware.call("cloudsync.query", [["credential", "=", id]])
+        if tasks:
+            raise CallError(f"This credential is used by cloud sync task {tasks[0]['description'] or tasks[0]['id']}")
+
         await self.middleware.call(
             "datastore.delete",
             "system.cloudcredentials",
@@ -651,8 +662,8 @@ class CloudSyncModel(sa.Model):
     transfer_mode = sa.Column(sa.String(20), default='sync')
     encryption = sa.Column(sa.Boolean())
     filename_encryption = sa.Column(sa.Boolean(), default=True)
-    encryption_password = sa.Column(sa.String(256))
-    encryption_salt = sa.Column(sa.String(256))
+    encryption_password = sa.Column(sa.EncryptedText())
+    encryption_salt = sa.Column(sa.EncryptedText())
     args = sa.Column(sa.Text())
     post_script = sa.Column(sa.Text())
     pre_script = sa.Column(sa.Text())
@@ -663,10 +674,11 @@ class CloudSyncModel(sa.Model):
     follow_symlinks = sa.Column(sa.Boolean())
 
 
-class CloudSyncService(CRUDService):
+class CloudSyncService(TaskPathService):
 
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
+    share_task_type = 'CloudSync'
 
     class Config:
         datastore = "tasks.cloudsync"
@@ -705,13 +717,6 @@ class CloudSyncService(CRUDService):
     async def extend(self, cloud_sync):
         cloud_sync["credentials"] = cloud_sync.pop("credential")
 
-        cloud_sync["encryption_password"] = await self.middleware.call(
-            "pwenc.decrypt", cloud_sync["encryption_password"]
-        )
-        cloud_sync["encryption_salt"] = await self.middleware.call(
-            "pwenc.decrypt", cloud_sync["encryption_salt"]
-        )
-
         Cron.convert_db_format_to_schedule(cloud_sync)
 
         return cloud_sync
@@ -720,16 +725,10 @@ class CloudSyncService(CRUDService):
     async def _compress(self, cloud_sync):
         cloud_sync["credential"] = cloud_sync.pop("credentials")
 
-        cloud_sync["encryption_password"] = await self.middleware.call(
-            "pwenc.encrypt", cloud_sync["encryption_password"]
-        )
-        cloud_sync["encryption_salt"] = await self.middleware.call(
-            "pwenc.encrypt", cloud_sync["encryption_salt"]
-        )
-
         Cron.convert_schedule_to_db_format(cloud_sync)
 
         cloud_sync.pop('job', None)
+        cloud_sync.pop(self.locked_field, None)
 
         return cloud_sync
 
@@ -787,11 +786,18 @@ class CloudSyncService(CRUDService):
             if limit1["time"] >= limit2["time"]:
                 verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
 
+        await self.validate_path_field(data, name, verrors)
+
         if data["snapshot"]:
             if data["direction"] != "PUSH":
                 verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
             if data["transfer_mode"] == "MOVE":
                 verrors.add(f"{name}.snapshot", "This option can not be used for MOVE transfer mode")
+            if await self.middleware.call("pool.dataset.query",
+                                          [["name", "^", os.path.relpath(data["path"], "/mnt") + "/"],
+                                           ["type", "=", "FILESYSTEM"]]):
+                verrors.add(f"{name}.snapshot", "This option is only available for datasets that have no further "
+                                                "nesting")
 
     @private
     async def _validate_folder(self, verrors, name, data):
@@ -912,7 +918,7 @@ class CloudSyncService(CRUDService):
         """
         Updates the cloud_sync entry `id` with `data`.
         """
-        cloud_sync = await self._get_instance(id)
+        cloud_sync = await self.get_instance(id)
 
         # credentials is a foreign key for now
         if cloud_sync["credentials"]:
@@ -937,14 +943,14 @@ class CloudSyncService(CRUDService):
         await self.middleware.call("datastore.update", "tasks.cloudsync", id, cloud_sync)
         await self.middleware.call("service.restart", "cron")
 
-        cloud_sync = await self.extend(cloud_sync)
-        return cloud_sync
+        return await self.get_instance(id)
 
     @accepts(Int("id"))
     async def do_delete(self, id):
         """
         Deletes cloud_sync entry `id`.
         """
+        await self.middleware.call("cloudsync.abort", id)
         await self.middleware.call("datastore.delete", "tasks.cloudsync", id)
         await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", id)
         await self.middleware.call("service.restart", "cron")
@@ -988,7 +994,6 @@ class CloudSyncService(CRUDService):
         Dropbox Service
         `directory/name`
 
-
         `credentials` is a valid id of a Cloud Sync Credential which will be used to connect to the provider.
         """
         verrors = ValidationErrors()
@@ -1006,11 +1011,35 @@ class CloudSyncService(CRUDService):
 
     @private
     async def ls(self, config, path):
+        await self.middleware.call("network.general.will_perform_activity", "cloud_sync")
+
+        decrypt_filenames = config.get("encryption") and config.get("filename_encryption")
         async with RcloneConfig(config) as config:
             proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:" + path],
-                             check=False, encoding="utf8")
+                             check=False, encoding="utf8", errors="ignore")
             if proc.returncode == 0:
-                return json.loads(proc.stdout)
+                result = json.loads(proc.stdout)
+
+                if decrypt_filenames:
+                    if result:
+                        decrypted_names = {}
+                        proc = await run((["rclone", "--config", config.config_path, "cryptdecode", "encrypted:"] +
+                                         [item["Name"] for item in result]),
+                                         check=False, encoding="utf8", errors="ignore")
+                        for line in proc.stdout.splitlines():
+                            try:
+                                encrypted, decrypted = line.rstrip("\r\n").split(" \t ", 1)
+                            except ValueError:
+                                continue
+
+                            if decrypted != "Failed to decrypt":
+                                decrypted_names[encrypted] = decrypted
+
+                        for item in result:
+                            if item["Name"] in decrypted_names:
+                                item["Decrypted"] = decrypted_names[item["Name"]]
+
+                return result
             else:
                 raise CallError(proc.stderr, extra={"excerpt": lsjson_error_excerpt(proc.stderr)})
 
@@ -1029,7 +1058,10 @@ class CloudSyncService(CRUDService):
         Run the cloud_sync job `id`, syncing the local data to remote.
         """
 
-        cloud_sync = await self._get_instance(id)
+        cloud_sync = await self.get_instance(id)
+        if cloud_sync['locked']:
+            await self.middleware.call('cloudsync.generate_locked_alert', id)
+            return
 
         await self._sync(cloud_sync, options, job)
 
@@ -1161,7 +1193,10 @@ class CloudSyncService(CRUDService):
                         }
                         for field in provider.credentials_schema
                     ],
-                    "credentials_oauth": f"{OAUTH_URL}/{provider.name.lower()}" if provider.credentials_oauth else None,
+                    "credentials_oauth": (
+                        f"{OAUTH_URL}/{(provider.credentials_oauth_name or provider.name.lower())}"
+                        if provider.credentials_oauth else None
+                    ),
                     "buckets": provider.buckets,
                     "bucket_title": provider.bucket_title,
                     "task_schema": [
@@ -1190,15 +1225,27 @@ class CloudSyncService(CRUDService):
 
 
 remote_classes = []
-for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
-                                        "rclone", "remote")):
+for module in load_modules(os.path.join(get_middlewared_dir(), "rclone", "remote")):
     for cls in load_classes(module, BaseRcloneRemote, []):
         remote_classes.append(cls)
         for method_name in cls.extra_methods:
             setattr(CloudSyncService, f"{cls.name.lower()}_{method_name}", getattr(cls, method_name))
 
 
+class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
+    name = 'cloudsync'
+    title = 'CloudSync Task'
+    service_class = CloudSyncService
+    resource_name = 'path'
+
+    async def restart_reload_services(self, attachments):
+        await self.middleware.call('service.restart', 'cron')
+
+
 async def setup(middleware):
     for cls in remote_classes:
         remote = cls(middleware)
         REMOTES[remote.name] = remote
+
+    await middleware.call('pool.dataset.register_attachment_delegate', CloudSyncFSAttachmentDelegate(middleware))
+    await middleware.call('network.general.register_activity', 'cloud_sync', 'Cloud sync')

@@ -1,6 +1,7 @@
 import datetime
 import json
 
+import isodate
 from sqlalchemy import (
     Table, Column as _Column, ForeignKey, Index,
     Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text,
@@ -33,12 +34,18 @@ class EncryptedText(UserDefinedType):
         return "TEXT"
 
     def _bind_processor(self, value):
+        if value is None:
+            return None
+
         return encrypt(value) if value else ''
 
     def bind_processor(self, dialect):
         return self._bind_processor
 
     def _result_processor(self, value):
+        if value is None:
+            return None
+
         return decrypt(value) if value else ''
 
     def result_processor(self, dialect, coltype):
@@ -54,7 +61,10 @@ class JSON(UserDefinedType):
         return "TEXT"
 
     def _bind_processor(self, value):
-        result = json.dumps(value or self.type())
+        if value is None:
+            if self.type is not None:
+                value = self.type()
+        result = json.dumps(value)
         if self.encrypted:
             result = encrypt(result)
         return result
@@ -68,7 +78,10 @@ class JSON(UserDefinedType):
                 value = decrypt(value, _raise=True)
             return json.loads(value)
         except Exception:
-            return self.type()
+            if self.type is not None:
+                return self.type()
+            else:
+                return None
 
     def result_processor(self, dialect, coltype):
         return self._result_processor
@@ -108,6 +121,9 @@ class Time(UserDefinedType):
         if value is None:
             return None
 
+        if isinstance(value, str):
+            value = isodate.parse_time(value)
+
         return value.isoformat()
 
     def bind_processor(self, dialect):
@@ -115,7 +131,7 @@ class Time(UserDefinedType):
 
     def _result_processor(self, value):
         try:
-            return datetime.time(*map(int, value.split(":")))
+            return isodate.parse_time(value)
         except Exception:
             return datetime.time()
 

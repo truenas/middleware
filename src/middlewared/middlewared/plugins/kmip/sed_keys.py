@@ -143,7 +143,7 @@ class KMIPService(Service, KMIPServerMixin):
                         disk['kmip_uid'], conn, self.middleware.logger, disk['identifier']
                     )
                 try:
-                    uid = self._register_secret_data(self.disks_keys[disk['identifier']], conn)
+                    uid = self._register_secret_data(disk['identifier'], self.disks_keys[disk['identifier']], conn)
                 except Exception:
                     failed.append(disk['identifier'])
                     update_data = {'kmip_uid': None} if destroy_successful else {}
@@ -170,7 +170,7 @@ class KMIPService(Service, KMIPServerMixin):
                     )
                 self.global_sed_key = adv_config['sed_passwd']
                 try:
-                    uid = self._register_secret_data(self.global_sed_key, conn)
+                    uid = self._register_secret_data('global_sed_key', self.global_sed_key, conn)
                 except Exception:
                     failed.append('Global SED Key')
                 else:
@@ -275,6 +275,7 @@ class KMIPService(Service, KMIPServerMixin):
                 self.middleware.call_sync(
                     'alert.oneshot_create', 'KMIPSEDDisksSyncFailure', {'disks': ','.join(failed)}
                 )
+        self.middleware.call_hook_sync('kmip.sed_keys_sync')
         return ret_failed
 
     @private
@@ -291,7 +292,7 @@ class KMIPService(Service, KMIPServerMixin):
                 'datastore.update', 'storage.disk', disk['identifier'], {'disk_kmip_uid': None}
             )
         adv_config = await self.middleware.call('datastore.config', 'system.advanced', {'prefix': 'adv_'})
-        if adv_config['adv_kmip_uid']:
+        if adv_config['kmip_uid']:
             await self.middleware.call(
                 'datastore.update', 'system.advanced', adv_config['id'], {'adv_kmip_uid': None}
             )
@@ -330,6 +331,20 @@ class KMIPService(Service, KMIPServerMixin):
                 self.global_sed_key = key
 
     @private
+    async def update_sed_keys(self, data):
+        if 'global_password' in data:
+            self.global_sed_key = data['global_password']
+        if 'sed_disks_keys' in data:
+            self.disks_keys = data['sed_disks_keys']
+
+    @private
+    async def sed_keys(self):
+        return {
+            'global_password': await self.sed_global_password(),
+            'sed_disks_keys': await self.retrieve_sed_disks_keys(),
+        }
+
+    @private
     async def sed_global_password(self):
         return self.global_sed_key
 
@@ -354,6 +369,7 @@ class KMIPService(Service, KMIPServerMixin):
                 self.middleware.logger.debug(
                     f'Failed to remove password from KMIP server for {disk_id}: {e}'
                 )
+        await self.middleware.call_hook('kmip.sed_keys_sync')
 
     @private
     async def retrieve_sed_disks_keys(self):

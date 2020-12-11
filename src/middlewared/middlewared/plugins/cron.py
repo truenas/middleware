@@ -1,7 +1,8 @@
 import contextlib
+import errno
 
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
-from middlewared.service import CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.validators import Range
 from middlewared.utils.osc import run_command_with_user_context
@@ -47,7 +48,7 @@ class CronJobService(CRUDService):
                     schedule['minute'], schedule['hour'], schedule['dom'], schedule['month'],
                     schedule['dow'], user,
                     'PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin"',
-                    command.replace('\n', '').replace('%', r'\%'),
+                    command.replace('\n', ''),
                     '> /dev/null' if stdout else '', '2> /dev/null' if stderr else ''
                 )
             )
@@ -204,10 +205,11 @@ class CronJobService(CRUDService):
         return response
 
     @accepts(
-        Int('id')
+        Int('id'),
+        Bool('skip_disabled', default=False),
     )
-    @job(lock=lambda args: args[-1], logs=True)
-    def run(self, job, id):
+    @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True)
+    def run(self, job, id, skip_disabled):
         """
         Job to run cronjob task of `id`.
         """
@@ -216,6 +218,9 @@ class CronJobService(CRUDService):
             syslog.syslog(syslog.LOG_INFO, line.decode())
 
         cron_task = self.middleware.call_sync('cronjob._get_instance', id)
+        if skip_disabled and not cron_task['enabled']:
+            raise CallError('Cron job is disabled', errno.EINVAL)
+
         cron_cmd = ' '.join(
             self.middleware.call_sync(
                 'cronjob.construct_cron_command', cron_task['schedule'], cron_task['user'],
@@ -272,6 +277,9 @@ class CronJobService(CRUDService):
                 )
 
             job.logs_fd.write(f'Executed CronTask - {cron_cmd}: {stdout}'.encode())
+
+        if cp.returncode:
+            raise CallError(f'CronTask "{cron_cmd}" exited with {cp.returncode} (non-zero) exit status.')
 
         job.set_progress(
             100,

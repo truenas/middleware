@@ -3,11 +3,15 @@ import os
 import subprocess
 import tempfile
 
+from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.service import CallError, SystemServiceService, private
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
+from middlewared.utils import osc, run
 from middlewared.validators import Port, Range
+
+
+PROTOCOLS = ['UDP', 'UDP4', 'UDP6', 'TCP', 'TCP4', 'TCP6']
 
 
 class OpenVPN:
@@ -55,21 +59,7 @@ class OpenVPN:
         return OpenVPN.DIGESTS
 
     @staticmethod
-    async def common_validation(middleware, data, schema, mode):
-        verrors = ValidationErrors()
-
-        if data['cipher'] and data['cipher'] not in OpenVPN.ciphers():
-            verrors.add(
-                f'{schema}.cipher',
-                'Please specify a valid cipher.'
-            )
-
-        if data['authentication_algorithm'] and data['authentication_algorithm'] not in OpenVPN.digests():
-            verrors.add(
-                f'{schema}.authentication_algorithm',
-                'Please specify a valid authentication_algorithm.'
-            )
-
+    async def cert_validation(middleware, data, schema, mode, verrors):
         root_ca = await middleware.call(
             'certificateauthority.query', [
                 ['id', '=', data['root_ca']],
@@ -107,9 +97,13 @@ class OpenVPN:
                         f'Root CA must have {k} set for KeyUsage extension.'
                     )
 
+        cert_id = data[f'{mode}_certificate']
+        if not cert_id:
+            return verrors
+
         cert = await middleware.call(
             'certificate.query', [
-                ['id', '=', data[f'{mode}_certificate']],
+                ['id', '=', cert_id],
                 ['revoked', '=', False]
             ]
         )
@@ -140,6 +134,13 @@ class OpenVPN:
                     )
 
             if mode == 'client':
+                if not cert['common']:
+                    # This is required for openvpn clients - https://community.openvpn.net/openvpn/ticket/81
+                    # Otherwise we get "VERIFY ERROR: could not extract CN from X509 subject string"
+                    verrors.add(
+                        f'{schema}.client_certificate',
+                        'Client certificate requires common name (CN) to be set to verify properly.'
+                    )
                 if not any(
                     k in (extensions.get('KeyUsage') or '')
                     for k in ('Digital Signature', 'Key Agreement')
@@ -173,6 +174,27 @@ class OpenVPN:
                         'Server certificate must have "TLS Web Server Authentication" '
                         'set in ExtendedKeyUsage extension.'
                     )
+
+        return verrors
+
+    @staticmethod
+    async def common_validation(middleware, data, schema, mode):
+        verrors = ValidationErrors()
+
+        if data['cipher'] and data['cipher'] not in OpenVPN.ciphers():
+            verrors.add(
+                f'{schema}.cipher',
+                'Please specify a valid cipher.'
+            )
+
+        if data['authentication_algorithm'] and data['authentication_algorithm'] not in OpenVPN.digests():
+            verrors.add(
+                f'{schema}.authentication_algorithm',
+                'Please specify a valid authentication_algorithm.'
+            )
+
+        if data['root_ca']:
+            verrors = await OpenVPN.cert_validation(middleware, data, schema, mode, verrors)
 
         if data['tls_crypt_auth_enabled'] and not data['tls_crypt_auth']:
             verrors.add(
@@ -216,9 +238,12 @@ class OpenVPNServerService(SystemServiceService):
 
     @private
     async def server_extend(self, data):
-        data['server_certificate'] = None if not data['server_certificate'] else data['server_certificate']['id']
-        data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
-        data['tls_crypt_auth_enabled'] = bool(data['tls_crypt_auth'])
+        data.update({
+            'server_certificate': None if not data['server_certificate'] else data['server_certificate']['id'],
+            'root_ca': None if not data['root_ca'] else data['root_ca']['id'],
+            'tls_crypt_auth_enabled': bool(data['tls_crypt_auth']),
+            'interface': 'openvpn-server',
+        })
         return data
 
     @private
@@ -405,30 +430,23 @@ class OpenVPNServerService(SystemServiceService):
                 '</tls-crypt>'
             ])
 
-        return (
-            '\n'.join(
-                filter(
-                    bool,
-                    client_config
-                )
-            ) + f'\n{config["additional_parameters"]}'
-        ).strip()
+        return '\n'.join(filter(bool, client_config)).strip()
 
     @accepts(
         Dict(
             'openvpn_server_update',
             Bool('tls_crypt_auth_enabled'),
             Int('netmask', validators=[Range(min=0, max=128)]),
-            Int('server_certificate'),
+            Int('server_certificate', null=True),
             Int('port', validators=[Port()]),
-            Int('root_ca'),
+            Int('root_ca', null=True),
             IPAddr('server'),
             Str('additional_parameters'),
             Str('authentication_algorithm', null=True),
             Str('cipher', null=True),
             Str('compression', null=True, enum=['LZO', 'LZ4']),
             Str('device_type', enum=['TUN', 'TAP']),
-            Str('protocol', enum=['UDP', 'TCP']),
+            Str('protocol', enum=PROTOCOLS),
             Str('tls_crypt_auth', null=True),
             Str('topology', null=True, enum=['NET30', 'P2P', 'SUBNET']),
             update=True
@@ -442,6 +460,7 @@ class OpenVPNServerService(SystemServiceService):
         generated to be used with OpenVPN server.
         """
         old_config = await self.config()
+        old_config.pop('interface')
         config = old_config.copy()
 
         config.update(data)
@@ -487,9 +506,12 @@ class OpenVPNClientService(SystemServiceService):
 
     @private
     async def client_extend(self, data):
-        data['client_certificate'] = None if not data['client_certificate'] else data['client_certificate']['id']
-        data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
-        data['tls_crypt_auth_enabled'] = bool(data['tls_crypt_auth'])
+        data.update({
+            'client_certificate': None if not data['client_certificate'] else data['client_certificate']['id'],
+            'root_ca': None if not data['root_ca'] else data['root_ca']['id'],
+            'tls_crypt_auth_enabled': bool(data['tls_crypt_auth']),
+            'interface': 'openvpn-client',
+        })
         return data
 
     @accepts()
@@ -580,15 +602,15 @@ class OpenVPNClientService(SystemServiceService):
             'openvpn_client_update',
             Bool('nobind'),
             Bool('tls_crypt_auth_enabled'),
-            Int('client_certificate'),
-            Int('root_ca'),
+            Int('client_certificate', null=True),
+            Int('root_ca', null=True),
             Int('port', validators=[Port()]),
             Str('additional_parameters'),
             Str('authentication_algorithm', null=True),
             Str('cipher', null=True),
             Str('compression', null=True, enum=['LZO', 'LZ4']),
             Str('device_type', enum=['TUN', 'TAP']),
-            Str('protocol', enum=['UDP', 'TCP']),
+            Str('protocol', enum=PROTOCOLS),
             Str('remote'),
             Str('tls_crypt_auth', null=True),
             update=True
@@ -603,6 +625,7 @@ class OpenVPNClientService(SystemServiceService):
         `nobind` must be enabled if OpenVPN client / server are to run concurrently.
         """
         old_config = await self.config()
+        old_config.pop('interface')
         config = old_config.copy()
 
         config.update(data)
@@ -614,7 +637,24 @@ class OpenVPNClientService(SystemServiceService):
         return await self.config()
 
 
-def setup(middleware):
+async def _event_system(middleware, event_type, args):
+
+    # TODO: Let's please make sure openvpn functions as desired in scale
+    if osc.IS_FREEBSD and args['id'] == 'ready':
+        for srv in await middleware.call(
+            'service.query', [
+                ['enable', '=', True], ['OR', [['service', '=', 'openvpn_server'], ['service', '=', 'openvpn_client']]]
+            ]
+        ):
+            await middleware.call('service.start', srv['service'])
+
+
+async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        SystemServiceListenSingleDelegate(middleware, 'openvpn.server', 'server'),
+    )
+    middleware.event_subscribe('system', _event_system)
     if not os.path.exists('/usr/local/etc/rc.d/openvpn'):
         return
     for srv in ('openvpn_client', 'openvpn_server'):

@@ -4,13 +4,15 @@ DefaultDependencies=no
 
 Before=network-pre.target
 
-Wants=systemd-modules-load.service local-fs.target
-After=systemd-modules-load.service local-fs.target middlewared.service
+After=middlewared.service
+Before=local-fs.target
 Conflicts=systemd-networkd.service
 
 [Service]
 Type=oneshot
-ExecStart=midclt -t 120 call interfaces.sync true
+ExecStart=-midclt -t 60 call failover.internal_interface.pre_sync
+ExecStart=-midclt -t 120 call interface.sync true
+ExecStartPost=midclt call etc.generate_checkpoint interface_sync
 StandardOutput=null
 
 [Install]

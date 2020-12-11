@@ -32,7 +32,9 @@ class ProgressBar(object):
         filled_width = int(self.percentage * progress_width)
         self.write_stream.write('\033[2K\033[A\033[2K\r')
         self.write_stream.write(
-            f'Status: {self.message}' + f' Extra: {self.extra}' if self.extra else ''
+            f'Status: {(self.message or "(none)").strip()}' + (
+                f' Extra: {self.extra}' if self.extra else ''
+            ) + '\n'
         )
         self.write_stream.write(
             'Total Progress: [{}{}] {:.2%}'.format(

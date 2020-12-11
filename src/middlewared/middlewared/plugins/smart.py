@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
 import functools
 import re
+import time
 from itertools import chain
 
 import asyncio
@@ -7,9 +9,11 @@ import asyncio
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Range
-from middlewared.service import CRUDService, filterable, filter_list, private, SystemServiceService, ValidationErrors
+from middlewared.service import (
+    CRUDService, filterable, filter_list, job, private, SystemServiceService, ValidationErrors
+)
+from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -346,13 +350,13 @@ class SMARTTestService(CRUDService):
         `type` indicates what type of SMART test will be ran and must be specified.
         """
         verrors = ValidationErrors()
+        test_disks_list = []
         if not disks:
             verrors.add(
                 'disks',
                 'Please specify at least one disk.'
             )
         else:
-            test_disks_list = []
             disks_data = await self.middleware.call('disk.query')
             devices = await self.middleware.call('device.get_storage_devices_topology')
 
@@ -393,33 +397,48 @@ class SMARTTestService(CRUDService):
 
         verrors.check()
 
-        return list(
-            await asyncio_map(functools.partial(self.__manual_test, devices), test_disks_list, 16)
-        )
+        return await asyncio_map(self.__manual_test, test_disks_list, 16)
 
-    async def __manual_test(self, devices, disk):
-        args = await get_smartctl_args(self.middleware, devices, disk['disk'])
-
-        proc = await run(
-            list(
-                filter(bool, ['smartctl', '-t', disk['type'].lower(), '-C' if disk['mode'] == 'FOREGROUND' else None])
-            ) + args,
-            check=False, encoding='utf8'
-        )
-
+    async def __manual_test(self, disk):
         output = {}
-        if proc.returncode:
-            output['error'] = proc.stderr
-            self.middleware.logger.debug(
-                f'Self test for {disk["disk"]} failed with {proc.returncode} return code.'
-            )
+
+        try:
+            new_test_num = max(
+                test['num']
+                for test in (await self.middleware.call(
+                    'smart.test.results',
+                    [['disk', '=', disk['disk']]],
+                    {'get': True}
+                ))['tests']
+            ) + 1
+        except (MatchNotFound, ValueError):
+            new_test_num = 1
+
+        args = ['-t', disk['type'].lower()]
+        if disk['mode'] == 'FOREGROUND':
+            args.extend(['-C'])
+        try:
+            result = await self.middleware.call('disk.smartctl', disk['disk'], args)
+        except CallError as e:
+            output['error'] = e.errmsg
         else:
-            time_details = re.findall(RE_TIME_DETAILS, proc.stdout)
-            if not time_details:
-                output['error'] = f'Failed to parse smartctl self test details for {disk["identifier"]}.'
+            expected_result_time = None
+            time_details = re.findall(RE_TIME_DETAILS, result)
+            if time_details:
+                try:
+                    expected_result_time = datetime.strptime(time_details[0].strip(), '%a %b %d %H:%M:%S %Y')
+                except Exception as e:
+                    self.logger.error('Unable to parse expected_result_time: %r', e)
+                else:
+                    expected_result_time = expected_result_time.astimezone(timezone.utc).replace(tzinfo=None)
+
+            if expected_result_time:
+                output['expected_result_time'] = expected_result_time
+                output['job'] = (
+                    await self.middleware.call('smart.test.wait', disk, expected_result_time, new_test_num)
+                ).id
             else:
-                output['expected_result_time'] = time_details[0].strip()
-                # TODO: Please setup alerts
+                output['error'] = result
 
         return {
             'disk': disk['disk'],
@@ -532,6 +551,41 @@ class SMARTTestService(CRUDService):
             {"get": get},
         )
 
+    @private
+    @job()
+    async def wait(self, job, disk, expected_result_time, new_test_num):
+        start = datetime.utcnow()
+        if expected_result_time < start:
+            raise CallError(f'Invalid expected_result_time {expected_result_time.isoformat()}')
+
+        start_monotime = time.monotonic()
+        end_monotime = start_monotime + (expected_result_time - start).total_seconds()
+
+        # Check every percent but not more often than every minute
+        interval = max((end_monotime - start_monotime) / 100.0, 60)
+        while True:
+            job.set_progress(
+                min(
+                    (time.monotonic() - start_monotime) / (end_monotime - start_monotime),
+                    0.99
+                ) * 100,
+            )
+
+            try:
+                tests = (await self.middleware.call(
+                    'smart.test.results',
+                    [['disk', '=', disk['disk']]],
+                    {'get': True}
+                ))['tests']
+            except MatchNotFound:
+                tests = []
+
+            for test in tests:
+                if test['num'] == new_test_num:
+                    return test
+
+            await asyncio.sleep(interval)
+
 
 class SmartModel(sa.Model):
     __tablename__ = 'services_smart'
@@ -592,7 +646,7 @@ class SmartService(SystemServiceService):
         await self._update_service(old, new, verb)
 
         if new["powermode"] != old["powermode"]:
-            await self.middleware.call("service.restart", "collectd", {"onetime": False})
+            await self.middleware.call("service.restart", "collectd")
             await self._service_change("snmp", "restart")
 
         await self.smart_extend(new)

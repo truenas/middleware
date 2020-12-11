@@ -32,7 +32,12 @@ afp_directory() { echo "AFP"; }
 afp_func()
 {
 	local afp_onoff
-	
+	local CONF
+	if is_linux; then
+		CONF="/etc/netatalk/afp.conf"
+	else
+		CONF="/usr/local/etc/afp.conf"
+	fi
 	afp_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		srv_enable
@@ -70,8 +75,8 @@ afp_func()
 	#
 	#	Dump AFP configuration
 	#
-	section_header "/usr/local/etc/afp.conf"
-	sc /usr/local/etc/afp.conf
+	section_header "${CONF}"
+	sc ${CONF}
 	section_footer
 
 	local IFS="|"
@@ -93,5 +98,10 @@ afp_func()
 		printf "\n"
 		getfacl "${afp_path}"
 	done
+	section_footer
+
+	section_header "AFP Configuration"
+	midclt call afp.config | jq
+	midclt call sharing.afp.query | jq
 	section_footer
 }

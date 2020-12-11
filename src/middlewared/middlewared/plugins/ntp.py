@@ -103,7 +103,6 @@ class NTPServerService(CRUDService):
 
         return response
 
-
     @private
     @staticmethod
     def test_ntp_server(addr):

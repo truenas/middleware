@@ -120,6 +120,7 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
+        await self.middleware.call('etc.generate', 'user')
         setnisdomain = await run(['/bin/domainname', nis['domain']], check=False)
         if setnisdomain.returncode != 0:
             await self.set_state(DSStatus['FAULTED'])
@@ -152,10 +153,26 @@ class NISService(ConfigService):
         ret = False
         if not (await self.config())['enable']:
             return ret
+
+        """
+        Initialize state to "JOINING" until after booted.
+        """
+        if not await self.middleware.call('system.ready'):
+            await self.set_state(DSStatus['JOINING'])
+            return True
+
         try:
             ret = await asyncio.wait_for(self.__ypwhich(), timeout=5.0)
         except asyncio.TimeoutError:
             raise CallError('nis.started check timed out after 5 seconds.')
+
+        try:
+            cached_state = await self.middleware.call('cache.get', 'DS_STATE')
+
+            if cached_state['nis'] != 'HEALTHY':
+                await self.set_state(DSStatus['HEALTHY'])
+        except KeyError:
+            await self.set_state(DSStatus['HEALTHY'])
 
         return ret
 
@@ -186,6 +203,7 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
+        await self.middleware.call('etc.generate', 'user')
         await self.set_state(DSStatus['DISABLED'])
         self.logger.debug(f'NIS service successfully stopped. Setting state to DISABLED.')
         return True

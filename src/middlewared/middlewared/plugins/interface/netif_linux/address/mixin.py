@@ -21,6 +21,9 @@ class AddressMixin:
     def remove_address(self, address):
         self._address_op("del", address)
 
+    def replace_address(self, address):
+        self._address_op("replace", address)
+
     def _address_op(self, op, address):
         if isinstance(address.address, LinkAddress):
             return
@@ -49,7 +52,10 @@ class AddressMixin:
                     address = ipaddress.IPv4Interface(f'{addr["addr"]}/{addr["netmask"]}')
                 elif af is AddressFamily.INET6:
                     try:
-                        prefixlen = ipv6_netmask_to_prefixlen(addr["netmask"])
+                        if "/" in addr["netmask"]:
+                            prefixlen = int(addr["netmask"].split("/")[1])
+                        else:
+                            prefixlen = ipv6_netmask_to_prefixlen(addr["netmask"])
                     except ValueError:
                         logger.warning("Invalid IPv6 netmask %r for interface %r", addr["netmask"], self.name)
                         continue

@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-bsdloader
-# BEFORE: ix-fstab
+# BEFORE: middlewared earlykld
 
 . /etc/rc.freenas
 
@@ -32,7 +32,7 @@ migrate_bsd_loader()
 		if [ -z "$gptid" ] ; then gptid="bogusdisknamenotused" ; fi
 
 		# Does this disk exist in freenas-boot?
-		zpool status freenas-boot | grep -q -e " ${disk}p2 " -e " gptid/$gptid "
+		/usr/local/sbin/zpool status freenas-boot | grep -q -e " ${disk}p2 " -e " gptid/$gptid "
 		if [ $? -ne 0 ] ; then continue ; fi
 
         	if gpart show ${disk} | grep -q bios-boot; then

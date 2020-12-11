@@ -1,0 +1,33 @@
+#!/bin/bash -e
+
+readonly UPDATE_FAILED_LOG="/data/update.failed"
+
+if [ ! -f /data/need-update ]
+then
+    exit 0
+fi
+
+TRUENAS_CONFIG="/data/freenas-v1.db"
+if [ -f /data/uploaded.db ]; then
+    echo "Saving current ${TRUENAS_CONFIG} to ${TRUENAS_CONFIG}.bak"
+    cp ${TRUENAS_CONFIG} ${TRUENAS_CONFIG}.bak
+
+    echo "Moving uploaded config to ${TRUENAS_CONFIG}"
+    mv /data/uploaded.db ${TRUENAS_CONFIG}
+    if [ -f /data/pwenc_secret_uploaded ]; then
+        if [ -f /data/pwenc_secret ]; then
+            echo "Saving current pwenc secret to /data/pwenc_secret.bak"
+            cp /data/pwenc_secret /data/pwenc_secret.bak
+        fi
+    echo "Moving uploaded pwenc secret to /data/pwenc_secret"
+    mv /data/pwenc_secret_uploaded /data/pwenc_secret
+    fi
+fi
+
+migrate > $UPDATE_FAILED_LOG 2>&1
+
+echo "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')" | sqlite3 /data/freenas-v1.db
+
+rm -f $UPDATE_FAILED_LOG
+
+rm /data/need-update

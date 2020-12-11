@@ -2,6 +2,7 @@ from middlewared.client.utils import Struct
 import contextlib
 import logging
 import os
+import subprocess
 import sysctl
 
 logger = logging.getLogger(__name__)
@@ -212,10 +213,21 @@ def main(middleware):
     zpoollist = {i['name']: i for i in middleware.call_sync('zfs.pool.query')}
 
     system_disks = middleware.call_sync('device.get_disks')
+    extents = {}
+    locked_extents = {}
+    for extent in middleware.call_sync('iscsi.extent.query'):
+        extents[extent['id']] = extent
+        if extent['locked']:
+            locked_extents[extent['id']] = extent
     # Generate the LUN section
     for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
                                        [['iscsi_target_extent_enabled', '=', True]]):
         extent = Struct(extent)
+        if extent.id in locked_extents:
+            logger.warning('Extent %r is locked, skipping', extent.iscsi_target_extent_name)
+            middleware.call_sync('iscsi.extent.generate_locked_alert', extent.id)
+            continue
+
         path = extent.iscsi_target_extent_path
         if not path:
             logger.warning('Path for extent id %d is null, skipping', extent.id)
@@ -282,17 +294,11 @@ def main(middleware):
         # We can't change the vendor name of existing
         # LUNs without angering VMWare, but we can
         # use the right names going forward.
-        if extent.iscsi_target_extent_legacy is True:
-            addline('\toption "vendor" "FreeBSD"\n')
-        else:
-            if middleware.call_sync('system.is_freenas'):
-                addline('\toption "vendor" "FreeNAS"\n')
-            else:
-                addline('\toption "vendor" "TrueNAS"\n')
-
+        addline(f'\toption "vendor" "{extent.iscsi_target_extent_vendor}"\n')
         addline('\toption "product" "iSCSI Disk"\n')
         addline('\toption "revision" "0123"\n')
         addline('\toption "naa" "%s"\n' % extent.iscsi_target_extent_naa)
+        addline(f'\toption "serseq" "{"on" if extents[extent.id]["serseq"] else "off"}"\n')
         if extent.iscsi_target_extent_insecure_tpc:
             addline('\toption "insecure_tpc" "on"\n')
             if lunthreshold:
@@ -373,8 +379,8 @@ def main(middleware):
                                         [('iscsi_target', '=', target.id)],
                                         {'order_by': ['nulls_last:iscsi_lunid']}):
             t2e = Struct(t2e)
-            if not t2e.iscsi_extent.iscsi_target_extent_enabled:
-                # Skip adding extents to targets which are not enabled
+            if not t2e.iscsi_extent.iscsi_target_extent_enabled or t2e.iscsi_extent.id in locked_extents:
+                # Skip adding extents to targets which are not enabled or are using locked zvols
                 continue
             if t2e.iscsi_lunid is None:
                 while cur_lunid in used_lunids:
@@ -399,17 +405,29 @@ def main(middleware):
 
 
 def set_ctl_ha_peer(middleware):
+
+    def set_sysctl(sysctl_key, value):
+        cp = subprocess.run(["sysctl", f"{sysctl_key}={value}"], stderr=subprocess.PIPE)
+        if cp.returncode:
+            middleware.logger.error(
+                "Failed to set sysctl '%s' to '%s': %s", sysctl, str(value), str(cp.stderr.decode())
+            )
+
     with contextlib.suppress(IndexError):
         if middleware.call_sync("iscsi.global.alua_enabled"):
             node = middleware.call_sync("failover.node")
-            if node == "A":
-                sysctl.filter("kern.cam.ctl.ha_peer")[0].value = "listen 169.254.10.1"
-            if node == "B":
-                sysctl.filter("kern.cam.ctl.ha_peer")[0].value = "connect 169.254.10.1"
+            # 999 is the port used by ALUA on the heartbeat interface
+            # on TrueNAS HA systems. Because of this, we set
+            # net.inet.ip.portrange.lowfirst=998 to ensure local
+            # websocket connections do not have the opportunity
+            # to interfere.
+            sysctl.filter("net.inet.ip.portrange.lowfirst")[0].value = 998
+            set_sysctl("kern.cam.ctl.ha_peer", "listen 169.254.10.1" if node == "A" else "connect 169.254.10.1")
         else:
-            sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""
+            set_sysctl("kern.cam.ctl.ha_peer", "")
 
 
 def render(service, middleware):
     main(middleware)
-    set_ctl_ha_peer(middleware)
+    if middleware.call_sync('failover.licensed'):
+        set_ctl_ha_peer(middleware)

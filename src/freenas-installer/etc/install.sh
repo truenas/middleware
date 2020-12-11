@@ -24,7 +24,7 @@ NEW_BOOT_POOL="boot-pool"
 
 is_truenas()
 {
-	dmidecode -s system-product-name | grep -qi "truenas"
+	dmidecode -s system-product-name | grep -i "truenas" | grep -qv MINI
 	return $?
 }
 
@@ -185,6 +185,7 @@ get_physical_disks_list()
     local _boot=$(glabel status | awk '/iso9660\/(FREE|TRUE)NAS/ { print $3 }')
     local _disk
 
+    VAL=""
     for _disk in $(sysctl -n kern.disks)
     do
 	if [ "${_disk}" = "${_boot}" ]; then
@@ -262,7 +263,7 @@ new_install_verify()
 WARNING:
 EOD
 
-    if [ "$_type" = "upgrade" -a "$_upgradetype" = "inplace" ] ; then
+    if [ "$_upgradetype" = "inplace" ] ; then
       echo "- This will install into existing zpool on ${_disks}." >> ${_tmpfile}
     else
       echo "- This will erase ALL partitions and data on ${_disks}." >> ${_tmpfile}
@@ -374,37 +375,74 @@ install_loader()
     return 0
 }
 
+nasdb()
+{
+    local mnt=$1
+    local query=$2
+
+    chroot "${mnt}" /usr/local/bin/sqlite3 /data/freenas-v1.db "${query}"
+}
+
+videoconsole()
+{
+    if [ "$BOOTMODE" = "UEFI" ]; then
+	echo efi
+    else
+	echo vidconsole
+    fi
+}
+
 save_serial_settings()
 {
-    _mnt="$1"
+    local mnt="$1"
 
-    # If the installer was booted with serial mode enabled, we should
-    # save these values to the installed system
-    USESERIAL=$((`sysctl -n debug.boothowto` & 0x1000))
-    if [ "$USESERIAL" -eq 0 ] ; then return 0; fi
+    local RB_SERIAL=0x1000
+    local RB_MULTIPLE=0x20000000
 
-    # BIOS has vidconsole, UEFI has efi.
-    if [ "$BOOTMODE" = "UEFI" ] ; then
-       videoconsole="efi"
-    else
-       videoconsole="vidconsole"
+    local VIDEO_ONLY=0
+    local SERIAL_ONLY=$((RB_SERIAL))
+    local VID_SER_BOTH=$((RB_MULTIPLE))
+    local SER_VID_BOTH=$((RB_SERIAL | RB_MULTIPLE))
+    local CON_MASK=$((RB_SERIAL | RB_MULTIPLE))
+
+    local boothowto=$(sysctl -n debug.boothowto)
+    case $((boothowto & CON_MASK)) in
+    $VIDEO_ONLY|$VID_SER_BOTH)
+	# Do nothing if we booted with video as the primary console.
+	return 0
+	;;
+    $SERIAL_ONLY)
+	local console="comconsole"
+	;;
+    $SER_VID_BOTH)
+	if [ "$(kenv console)" = "comconsole" ]; then
+	    # We used the serial boot menu entry and efi has a serial port.
+	    # Enable only comconsole so loader output is not duplicated.
+	    local console="comconsole"
+	else
+	    local console="comconsole,$(videoconsole)"
+	fi
+	;;
+    esac
+
+    local port=$(kenv hw.uart.console | sed -En 's/.*io:([0-9a-fx]+).*/\1/p')
+    if [ -n "${port}" ] ; then
+	echo "comconsole_port=\"${port}\"" >> ${mnt}/boot/loader.conf.local
+	nasdb ${mnt} "update system_advanced set adv_serialport = '${port}'"
     fi
 
-    # Enable serial/internal for BSD loader
-    echo 'boot_multicons="YES"' >> ${_mnt}/boot/loader.conf
-    echo 'boot_serial="YES"' >> ${_mnt}/boot/loader.conf
-    echo "console=\"comconsole,${videoconsole}\"" >> ${_mnt}/boot/loader.conf
+    local speed=$(kenv hw.uart.console | sed -En 's/.*br:([0-9]+).*/\1/p')
+    if [ -n "${speed}" ] ; then
+	echo "comconsole_speed=\"${speed}\"" >> ${mnt}/boot/loader.conf.local
+	nasdb ${mnt} "update system_advanced set adv_serialspeed = ${speed}"
+    fi
 
-    chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
-    SERIALSPEED=`kenv hw.uart.console | sed -En 's/.*br:([0-9]+).*/\1/p'`
-    if [ -n "$SERIALSPEED" ] ; then
-       echo "comconsole_speed=\"$SERIALSPEED\"" >> ${_mnt}/boot/loader.conf
-       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialspeed = $SERIALSPEED"
-    fi
-    SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9a-fx]+).*/\1/p'`
-    if [ -n "$SERIALPORT" ] ; then
-       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = '$SERIALPORT'"
-    fi
+    cat >> ${mnt}/boot/loader.conf.local <<EOF
+boot_multicons="YES"
+boot_serial="YES"
+console="${console}"
+EOF
+    nasdb ${mnt} "update system_advanced set adv_serialconsole = 1"
 }
 
 mount_disk()
@@ -762,6 +800,11 @@ fail()
     abort
 }
 
+doing_upgrade()
+{
+    test -d /tmp/data_preserved
+}
+
 menu_install()
 {
     local _action
@@ -821,7 +864,7 @@ menu_install()
     fi
 
     # Make sure we are working from a clean slate.
-    cleanup 2>&1 >/dev/null
+    cleanup >/dev/null 2>&1
 
     if ${INTERACTIVE}; then
 	pre_install_check || return 0
@@ -937,7 +980,7 @@ menu_install()
     trap "fail ${_action} ${_realdisks}" EXIT
     set -e
 
-    if [ ${_do_upgrade} -eq 1 ]
+    if [ "${_upgrade_type}" = "inplace" ]
     then
         /etc/rc.d/dmesg start
     else
@@ -955,7 +998,7 @@ menu_install()
     # Hack #2
     ls $(get_product_path) > /dev/null
 
-    if [ ${_do_upgrade} -eq 1 -a "${_upgrade_type}" = "inplace" ]
+    if [ "${_upgrade_type}" = "inplace" ]
     then
       # Set the boot-environment name
       BENAME="default-`date +%Y%m%d-%H%M%S`"
@@ -999,7 +1042,7 @@ menu_install()
       mount_disk /tmp/data
     fi
 
-    if [ -d /tmp/data_preserved ]; then
+    if doing_upgrade; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
 	# We still need the newer version we are upgrading to's
 	# factory-v1.db, else issuing a factory-restore on the
@@ -1018,7 +1061,7 @@ menu_install()
 
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
-    if [ "${_do_upgrade}" -ne 0 ]; then
+    if doing_upgrade; then
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
 	fi
@@ -1069,7 +1112,7 @@ menu_install()
     zpool set bootfs=${BOOT_POOL}/ROOT/${BENAME} ${BOOT_POOL}
     install_loader /tmp/data ${_realdisks}
 
-    if [ -d /tmp/data_preserved ]; then
+    if doing_upgrade; then
 	# Instead of sentinel files, let's just migrate!
 	# Unfortunately, this doesn't seem to work well.
 	# This should be investigated.
@@ -1081,7 +1124,7 @@ menu_install()
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
 	${INTERACTIVE} && dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
-    elif [ "${_do_upgrade}" -eq 0 ]; then
+    else
 	if [ -n "${_password}" ]; then
 		# Set the root password
 		chroot /tmp/data /etc/netcli reset_root_pw "${_password}"
@@ -1106,7 +1149,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
     if [ ${_dlv:=0} -ne 0 ]; then
         _msg="${_msg}Please reboot, and change BIOS boot order to *not* boot over network."
     else
-        _msg="${_msg}Please reboot and remove the installation media."
+        _msg="${_msg}Please reboot, then remove the installation media."
     fi
     if ${INTERACTIVE}; then
 	dialog --msgbox "$_msg" 6 74

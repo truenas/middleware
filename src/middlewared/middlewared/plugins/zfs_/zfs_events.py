@@ -1,16 +1,16 @@
 import asyncio
+from collections import defaultdict
 import libzfs
-import platform
 import threading
+import time
 
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
-from middlewared.utils import start_daemon_thread
+from middlewared.utils import osc, start_daemon_thread
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
-EVENT_LOCK = asyncio.Lock()
-IS_LINUX = platform.system().lower() == 'linux'
+
 SCAN_THREADS = {}
 
 
@@ -109,44 +109,23 @@ async def scrub_finished(middleware, pool_name):
 
 
 async def devd_zfs_hook(middleware, data):
-    if data.get('type') in ('misc.fs.zfs.resilver_start', 'misc.fs.zfs.scrub_start'):
-        await resilver_scrub_start(middleware, data.get('pool_name'))
-    elif data.get('type') in (
-        'misc.fs.zfs.resilver_finish', 'misc.fs.zfs.scrub_finish', 'misc.fs.zfs.scrub_abort',
-    ):
-        await resilver_scrub_stop_abort(middleware, data.get('pool_name'))
-
-    if data.get('type') == 'misc.fs.zfs.scrub_finish':
-        await scrub_finished(middleware, data.get('pool_name'))
-
     if data.get('type') in (
         'ATTACH',
         'DETACH',
         'resource.fs.zfs.removed',
-        'misc.fs.zfs.config_sync',
+        'sysevent.fs.zfs.config_sync',
     ):
         asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
-    elif data.get('type') == 'ereport.fs.zfs.deadman':
-        asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
-            'vdev': data.get('vdev_path', '<unknown>'),
-            'pool': data.get('pool', '<unknown>'),
-        }))
-    elif data.get('type') == 'misc.fs.zfs.vdev_statechange':
-        """
-        This is so we can invalidate the CACHE_POOLS_STATUSES cache
-        when pool status changes
-        """
-        await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
-    elif data.get('type') in (
-        'misc.fs.zfs.config_sync',
-        'misc.fs.zfs.pool_create',
-        'misc.fs.zfs.pool_destroy',
-        'misc.fs.zfs.pool_import',
-    ):
-        # Swap must be configured only on disks being used by some pool,
-        # for this reason we must react to certain types of ZFS events to keep
-        # it in sync every time there is a change.
-        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+
+deadman_throttle = defaultdict(list)
+
+
+async def retrieve_pool_from_db(middleware, pool_name):
+    pool = await middleware.call('pool.query', [['name', '=', pool_name]])
+    if not pool:
+        # If we have no record of the pool, let's skip sending any event please
+        return
+    return pool[0]
 
 
 async def zfs_events(middleware, data):
@@ -161,25 +140,77 @@ async def zfs_events(middleware, data):
     if event_id == 'sysevent.fs.zfs.scrub_finish':
         await scrub_finished(middleware, data.get('pool'))
     elif event_id == 'ereport.fs.zfs.deadman':
-        asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
-            'vdev': data.get('vdev_path', '<unknown>'),
-            'pool': data.get('pool', '<unknown>'),
-        }))
+        vdev = data.get('vdev_path', '<unknown>')
+        pool = data.get('pool', '<unknown>')
+        now = time.monotonic()
+        interval = 300
+        max_items = 5
+        deadman_throttle[pool] = list(filter(lambda t: t > now - interval, deadman_throttle[pool]))
+        if len(deadman_throttle[pool]) < max_items:
+            asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
+                'vdev': vdev,
+                'pool': pool,
+            }))
+        deadman_throttle[pool].append(now)
+        deadman_throttle[pool] = deadman_throttle[pool][-max_items:]
     elif event_id == 'resource.fs.zfs.statechange':
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
+        pool = await retrieve_pool_from_db(middleware, data.get('pool'))
+        if not pool:
+            return
+
+        middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
+
     elif event_id in (
         'sysevent.fs.zfs.config_sync',
-        'sysevent.fs.zfs.pool_create',
         'sysevent.fs.zfs.pool_destroy',
         'sysevent.fs.zfs.pool_import',
     ):
-        async with EVENT_LOCK:
-            await middleware.call('disk.swaps_configure')
+        # Swap must be configured only on disks being used by some pool,
+        # for this reason we must react to certain types of ZFS events to keep
+        # it in sync every time there is a change.
+        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+        if event_id == 'sysevent.fs.zfs.config_sync' and data.get('pool') and data.get('pool_guid'):
+            # This event is issued whenever a vdev change is done to a pool
+            # Checking pool_guid ensures that we do not do this on creation/deletion of pool as we expect the
+            # relevant event to be handled from the service endpoints because there are other operations related
+            # to create/delete which when done, we consider the create/delete operation as complete
+            pool = await retrieve_pool_from_db(middleware, data['pool'])
+            if not pool:
+                return
+
+            middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
+    elif (
+        event_id == 'sysevent.fs.zfs.history_event' and data.get('history_dsname') and data.get('history_internal_name')
+    ):
+        # we need to send events for dataset creation/updating/deletion in case it's done via cli
+        event_type = data['history_internal_name']
+        ds_id = data['history_dsname']
+        if event_type in ('create', 'set'):
+            ds_data = await middleware.call('pool.dataset.query', [['id', '=', ds_id]])
+            if not ds_data:
+                # We should not send an event because of 2 reasons:
+                # 1) Dataset in question was system dataset which was filtered out by pool.dataset service
+                # 2) Dataset got deleted in a race condition which is still fine as destroy event will catch that
+                return
+
+            ds_data = ds_data[0]
+            middleware.send_event(
+                'pool.dataset.query', 'ADDED' if event_type == 'create' else 'CHANGED', id=ds_id, fields=ds_data
+            )
+        elif event_type == 'destroy':
+            middleware.send_event('pool.dataset.query', 'CHANGED', id=ds_id, cleared=True)
+
+            await middleware.call(
+                'pool.dataset.delete_encrypted_datasets_from_db', [
+                    ['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]
+                ]
+            )
+            await middleware.call_hook('dataset.post_delete', data['history_dsname'])
 
 
 def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
-    if IS_LINUX:
-        middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
-    else:
+    middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
+    if osc.IS_FREEBSD:
         middleware.register_hook('devd.zfs', devd_zfs_hook)

@@ -1,4 +1,4 @@
-#!/bin/sh -T
+#!/bin/sh
 #+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
@@ -31,6 +31,7 @@
 # executed from webserver/restricted context.
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
+. /usr/local/share/system_info
 : ${FREENAS_DEBUG_MODULEDIR="$(realpath $(dirname "$0"))/../libexec/freenas-debug"}
 
 . "$FREENAS_DEBUG_MODULEDIR/include.sh"
@@ -135,6 +136,14 @@ load_modules()
 {
 	for f in $(ls "${FREENAS_DEBUG_MODULEDIR}")
 	do
+		if is_linux; then
+			echo "$f" | grep -q ".*freebsd"
+		else
+			echo "$f" | grep -q ".*linux"
+		fi
+		if [ $? -eq 0 ]; then
+			continue
+		fi
 		if ! is_loaded "${f}"
 		then
 			load_module "${f}"
@@ -261,7 +270,11 @@ main()
 	OPTIND=1
 	if [ -d "${FREENAS_DEBUG_DIRECTORY}" ]
 	then
-		rm -rfx "${FREENAS_DEBUG_DIRECTORY}"
+		if is_linux; then
+			rm --one-file-system -rf "${FREENAS_DEBUG_DIRECTORY}"
+		else
+			rm -rfx "${FREENAS_DEBUG_DIRECTORY}"
+		fi
 	fi
 
 	if $zap ; then

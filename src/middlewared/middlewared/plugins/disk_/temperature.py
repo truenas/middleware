@@ -1,4 +1,7 @@
+import asyncio
 import re
+
+import async_timeout
 
 try:
     import cam
@@ -50,11 +53,11 @@ class DiskService(Service):
     @private
     async def disks_for_temperature_monitoring(self):
         return [
-            disk['devname']
+            disk['name']
             for disk in await self.middleware.call(
                 'disk.query',
                 [
-                    ['devname', '!=', None],
+                    ['name', '!=', None],
                     ['togglesmart', '=', True],
                     # Polling for disk temperature does not allow them to go to sleep automatically unless
                     # hddstandby_force is used
@@ -76,11 +79,13 @@ class DiskService(Service):
         """
         Returns temperature for device `name` using specified S.M.A.R.T. `powermode`.
         """
-        if name.startswith('da') and False:
+        if name.startswith('da'):
             smartctl_args = await self.middleware.call('disk.smartctl_args', name) or []
             if not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
                 try:
-                    return await self.middleware.run_in_thread(lambda: cam.CamDevice(name).get_temperature())
+                    temperature = await self.middleware.run_in_thread(lambda: cam.CamDevice(name).get_temperature())
+                    if temperature is not None:
+                        return temperature
                 except Exception:
                     pass
 
@@ -100,9 +105,16 @@ class DiskService(Service):
         Returns temperatures for a list of devices (runs in parallel).
         See `disk.temperature` documentation for more details.
         """
-        result = dict(zip(
-            names,
-            await asyncio_map(lambda name: self.middleware.call('disk.temperature', name, powermode), names, 8),
-        ))
+        if len(names) == 0:
+            names = await self.disks_for_temperature_monitoring()
+
+        async def temperature(name):
+            try:
+                async with async_timeout.timeout(15):
+                    return await self.middleware.call('disk.temperature', name, powermode)
+            except asyncio.TimeoutError:
+                return None
+
+        result = dict(zip(names, await asyncio_map(temperature, names, 8)))
 
         return result

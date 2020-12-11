@@ -4,8 +4,7 @@ import errno
 import fcntl
 import grp
 import ipaddress
-import ldap
-import ldap.sasl
+import ldap as pyldap
 import os
 import pwd
 import socket
@@ -15,7 +14,7 @@ import sys
 from ldap.controls import SimplePagedResultsControl
 from urllib.parse import urlparse
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
+from middlewared.service import job, private, ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -140,6 +139,14 @@ class LDAPQuery(object):
             self._close()
         return ret
 
+    def _convert_exception(self, ex):
+        if issubclass(type(ex), pyldap.LDAPError) and ex.args:
+            raise CallError(f"{ex.args[0].get('desc')}: "
+                            f"{ex.args[0].get('info', '')}",
+                            errno.EFAULT, type(ex).__name__)
+        else:
+            raise CallError(str(ex))
+
     def _open(self):
         """
         We can only intialize a single host. In this case,
@@ -159,44 +166,44 @@ class LDAPQuery(object):
             saved_gssapi_error = None
             for server in self.hosts:
                 try:
-                    self._handle = ldap.initialize(server)
+                    self._handle = pyldap.initialize(server)
                 except Exception as e:
                     self.logger.debug(f'Failed to initialize ldap connection to [{server}]: ({e}). Moving to next server.')
                     continue
 
                 res = None
-                ldap.protocol_version = ldap.VERSION3
-                ldap.set_option(ldap.OPT_REFERRALS, 0)
-                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, self.ldap['dns_timeout'])
+                pyldap.protocol_version = pyldap.VERSION3
+                pyldap.set_option(pyldap.OPT_REFERRALS, 0)
+                pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, self.ldap['dns_timeout'])
 
                 if SSL(self.ldap['ssl']) != SSL.NOSSL:
                     if self.ldap['certificate']:
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_CERTFILE,
-                            f"/etc/certificates/{self.ldap['certificate']}.crt"
+                        pyldap.set_option(
+                            pyldap.OPT_X_TLS_CERTFILE,
+                            f"/etc/certificates/{self.ldap['cert_name']}.crt"
                         )
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_KEYFILE,
-                            f"/etc/certificates/{self.ldap['certificate']}.key"
+                        pyldap.set_option(
+                            pyldap.OPT_X_TLS_KEYFILE,
+                            f"/etc/certificates/{self.ldap['cert_name']}.key"
                         )
 
-                    ldap.set_option(
-                        ldap.OPT_X_TLS_CACERTFILE,
+                    pyldap.set_option(
+                        pyldap.OPT_X_TLS_CACERTFILE,
                         '/etc/ssl/truenas_cacerts.pem'
                     )
                     if self.ldap['validate_certificates']:
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_REQUIRE_CERT,
-                            ldap.OPT_X_TLS_DEMAND
+                        pyldap.set_option(
+                            pyldap.OPT_X_TLS_REQUIRE_CERT,
+                            pyldap.OPT_X_TLS_DEMAND
                         )
                     else:
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_REQUIRE_CERT,
-                            ldap.OPT_X_TLS_ALLOW
+                        pyldap.set_option(
+                            pyldap.OPT_X_TLS_REQUIRE_CERT,
+                            pyldap.OPT_X_TLS_ALLOW
                         )
 
                     try:
-                        ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
+                        pyldap.set_option(pyldap.OPT_X_TLS_NEWCTX, 0)
                     except Exception:
                         self.logger.warning('Failed to initialize new TLS context.', exc_info=True)
 
@@ -204,7 +211,7 @@ class LDAPQuery(object):
                     try:
                         self._handle.start_tls_s()
 
-                    except ldap.LDAPError as e:
+                    except pyldap.LDAPError as e:
                         self.logger.debug('Encountered error initializing start_tls: %s', e)
                         saved_simple_error = e
                         continue
@@ -221,7 +228,7 @@ class LDAPQuery(object):
                 if self.ldap['certificate']:
                     try:
                         res = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
-                        if self.ad['verbose_logging']:
+                        if self.ldap['verbose_logging']:
                             self.logger.debug('Successfully bound to [%s] using client certificate.', server)
                         break
                     except Exception as e:
@@ -231,7 +238,7 @@ class LDAPQuery(object):
 
                 if self.ldap['kerberos_principal']:
                     try:
-                        self._handle.set_option(ldap.OPT_X_SASL_NOCANON, 1)
+                        self._handle.set_option(pyldap.OPT_X_SASL_NOCANON, 1)
                         self._handle.sasl_gssapi_bind_s()
                         res = True
                         break
@@ -249,10 +256,12 @@ class LDAPQuery(object):
 
             if res:
                 self._isopen = True
+
             elif saved_gssapi_error:
-                raise CallError(str(saved_gssapi_error))
+                self._convert_exception(saved_gssapi_error)
+
             elif saved_simple_error:
-                raise CallError(str(saved_simple_error))
+                self._convert_exception(saved_simple_error)
 
         return (self._isopen is True)
 
@@ -262,7 +271,7 @@ class LDAPQuery(object):
             self._handle.unbind()
             self._handle = None
 
-    def _search(self, basedn='', scope=ldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
+    def _search(self, basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
         if not self._handle:
             self._open()
 
@@ -320,17 +329,20 @@ class LDAPQuery(object):
         res = []
         for r in results:
             parsed_data = {}
-            for k, v in r[1].items():
-                try:
-                    v = list(i.decode() for i in v)
-                except Exception:
-                    v = list(str(i) for i in v)
-                parsed_data.update({k: v})
+            if len(r) > 1 and isinstance(r[1], dict):
+                for k, v in r[1].items():
+                    try:
+                        v = list(i.decode() for i in v)
+                    except Exception:
+                        v = list(str(i) for i in v)
+                    parsed_data.update({k: v})
 
-            res.append({
-                'dn': r[0],
-                'data': parsed_data
-            })
+                res.append({
+                    'dn': r[0],
+                    'data': parsed_data
+                })
+            else:
+                self.logger.debug("Unable to parse results: %s", r)
 
         return res
 
@@ -344,7 +356,11 @@ class LDAPQuery(object):
         if not self._handle:
             self._open()
         filter = '(objectclass=sambaDomain)'
-        results = self._search(self.ldap['basedn'], ldap.SCOPE_SUBTREE, filter)
+        try:
+            results = self._search(self.ldap['basedn'], pyldap.SCOPE_SUBTREE, filter)
+        except Exception as e:
+            self._convert_exception(e)
+
         return self.parse_results(results)
 
     def get_root_DSE(self):
@@ -358,14 +374,14 @@ class LDAPQuery(object):
         if not self._handle:
             self._open()
         filter = '(objectclass=*)'
-        results = self._search('', ldap.SCOPE_BASE, filter)
+        results = self._search('', pyldap.SCOPE_BASE, filter)
         return self.parse_results(results)
 
     def get_dn(self, dn):
         if not self._handle:
             self._open()
         filter = '(objectclass=*)'
-        results = self._search(dn, ldap.SCOPE_SUBTREE, filter)
+        results = self._search(dn, pyldap.SCOPE_SUBTREE, filter)
         return self.parse_results(results)
 
 
@@ -375,7 +391,7 @@ class LDAPModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     ldap_hostname = sa.Column(sa.String(120))
     ldap_basedn = sa.Column(sa.String(120))
-    ldap_binddn = sa.Column(sa.String(256))
+    ldap_binddn = sa.Column(sa.EncryptedText())
     ldap_bindpw = sa.Column(sa.String(120))
     ldap_anonbind = sa.Column(sa.Boolean())
     ldap_ssl = sa.Column(sa.String(120))
@@ -405,9 +421,14 @@ class LDAPService(ConfigService):
         for key in ["ssl", "schema"]:
             data[key] = data[key].upper()
 
-        for key in ["certificate", "kerberos_realm"]:
-            if data[key] is not None:
-                data[key] = data[key]["id"]
+        if data["certificate"] is not None:
+            data["cert_name"] = data['certificate']['cert_name']
+            data["certificate"] = data['certificate']['id']
+        else:
+            data["cert_name"] = None
+
+        if data["kerberos_realm"] is not None:
+            data["kerberos_realm"] = data["kerberos_realm"]["id"]
 
         data['uri_list'] = await self.hostnames_to_uris(data)
 
@@ -423,6 +444,7 @@ class LDAPService(ConfigService):
             data.pop('bindpw')
 
         data.pop('uri_list')
+        data.pop('cert_name')
 
         return data
 
@@ -469,16 +491,28 @@ class LDAPService(ConfigService):
         if not new["enable"]:
             return
 
+        if new["certificate"]:
+            verrors.extend(await self.middleware.call(
+                "certificate.cert_services_validation",
+                new["certificate"], "ldap_update.certificate", False
+            ))
+
+        if not new["bindpw"] and new["has_samba_schema"]:
+            verrors.add(
+                "ldap_update.bindpw",
+                "Bind credentials are required in order to use samba schema."
+            )
+
         if not new["bindpw"] and not new["kerberos_principal"] and not new["anonbind"]:
             verrors.add(
                 "ldap_update.binddn",
                 "Bind credentials or kerberos keytab are required for an authenticated bind."
             )
         if new["bindpw"] and new["kerberos_principal"]:
-            verrors.add(
-                "ldap_update.kerberos_principal",
-                "Simultaneous keytab and password authentication are not permitted."
-            )
+            self.logger.warning("Simultaneous keytab and password authentication "
+                                "are selected. Clearing LDAP bind password.")
+            new["bindpw"] = ""
+
         if not new["basedn"]:
             verrors.add(
                 "ldap_update.basedn",
@@ -499,12 +533,63 @@ class LDAPService(ConfigService):
                             f"Invalid port number: [{port}].")
 
     @private
-    async def ldap_validate(self, data):
-        for h in data['uri_list']:
-            host, port = urlparse(h).netloc.rsplit(':', 1)
-            await self.middleware.call('ldap.port_is_listening', host, int(port), data['dns_timeout'])
+    async def convert_ldap_err_to_verr(self, data, e, verrors):
+        if e.extra == "INVALID_CREDENTIALS":
+            verrors.add('ldap_update.binddn',
+                        'Remote LDAP server returned response that '
+                        'credentials are invalid.')
 
-        await self.middleware.call('ldap.validate_credentials', data)
+        elif e.extra == "STRONG_AUTH_NOT_SUPPORTED" and data['certificate']:
+            verrors.add('ldap_update.certificate',
+                        'Certificate-based authentication is not '
+                        f'supported by remote LDAP server: {e.errmsg}.')
+
+        elif e.extra == "NO_SUCH_OBJECT":
+            verrors.add('ldap_update.basedn',
+                        'Remote LDAP server returned "NO_SUCH_OBJECT". This may '
+                        'indicate that the base DN is syntactically correct, but does '
+                        'not exist on the server.')
+
+        elif e.extra == "INVALID_DN_SYNTAX":
+            verrors.add('ldap_update.basedn',
+                        'Remote LDAP server returned that the base DN is '
+                        'syntactically invalid.')
+
+        elif e.extra:
+            verrors.add('ldap_update', f'[{e.extra.__name__}]: {e.errmsg}')
+
+        else:
+            verrors.add('ldap_update', e.errmsg)
+
+    @private
+    async def ldap_validate(self, data, verrors):
+        ldap_has_samba_schema = False
+
+        for idx, h in enumerate(data['uri_list']):
+            host, port = urlparse(h).netloc.rsplit(':', 1)
+            try:
+                await self.middleware.call('ldap.port_is_listening', host, int(port), data['dns_timeout'])
+            except Exception as e:
+                verrors.add(
+                    f'ldap_update.hostname.{idx}',
+                    f'Failed to open socket to remote LDAP server: {e}'
+                )
+                return
+
+        try:
+            await self.middleware.call('ldap.validate_credentials', data)
+        except Exception as e:
+            await self.convert_ldap_err_to_verr(data, e, verrors)
+            return
+
+        try:
+            ldap_has_samba_schema = True if (await self.middleware.call('ldap.get_workgroup', data)) else False
+        except Exception as e:
+            await self.convert_ldap_err_to_verr(data, e, verrors)
+
+        if data['has_samba_schema'] and not ldap_has_samba_schema:
+            verrors.add('ldap_update.has_samba_schema',
+                        'Remote LDAP server does not have Samba schema extensions.')
 
     @accepts(Dict(
         'ldap_update',
@@ -589,13 +674,17 @@ class LDAPService(ConfigService):
         await self.common_validate(new, old, verrors)
         verrors.check()
 
+        if data.get('certificate') and data['certificate'] != old['certificate']:
+            new_cert = await self.middleware.call('certificate.query',
+                                                  [('id', '=', data['certificate'])],
+                                                  {'get': True})
+            new['cert_name'] = new_cert['name']
+
         if old != new:
             must_reload = True
             if new['enable']:
-                try:
-                    await self.middleware.call('ldap.ldap_validate', new)
-                except Exception as e:
-                    raise ValidationError('ldap_update', str(e))
+                await self.middleware.call('ldap.ldap_validate', new, verrors)
+                verrors.check()
 
         await self.ldap_compress(new)
         await self.middleware.call(
@@ -640,29 +729,50 @@ class LDAPService(ConfigService):
         return ret
 
     @private
-    def validate_credentials(self, ldap=None):
-        ret = False
-        if ldap is None:
-            ldap = self.middleware.call_sync('ldap.config')
+    @job(lock="ldapquery")
+    def do_ldap_query(self, job, ldap_conf, action, args):
+        supported_actions = [
+            'get_samba_domains',
+            'get_root_DSE',
+            'get_dn',
+            'validate_credentials',
+        ]
+        if action not in supported_actions:
+            raise CallError(f"Unsuported LDAP query: {action}")
 
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
-            ret = LDAP.validate_credentials()
+        if ldap_conf is None:
+            ldap_conf = self.middleware.call_sync('ldap.config')
+
+        with LDAPQuery(conf=ldap_conf, logger=self.logger, hosts=ldap_conf['uri_list']) as LDAP:
+            if action == "get_samba_domains":
+                ret = LDAP.get_samba_domains()
+
+            elif action == "get_root_DSE":
+                ret = LDAP.get_root_DSE()
+
+            elif action == "get_dn":
+                dn = ldap_conf['basedn'] if args is None else args
+                ret = LDAP.get_dn(dn)
+
+            elif action == "validate_credentials":
+                ret = LDAP.validate_credentials()
 
         return ret
 
     @private
-    def get_samba_domains(self, ldap=None):
-        ret = []
-        if ldap is None:
-            ldap = self.middleware.call_sync('ldap.config')
-
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
-            ret = LDAP.get_samba_domains()
-
+    def validate_credentials(self, ldap_config=None):
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "validate_credentials", None)
+        ret = ldap_job.wait_sync()
         return ret
 
     @private
-    def get_root_DSE(self, ldap=None):
+    def get_samba_domains(self, ldap_config=None):
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_samba_domains", None)
+        ret = ldap_job.wait_sync()
+        return ret
+
+    @private
+    def get_root_DSE(self, ldap_config=None):
         """
         root DSE is defined in RFC4512, and must include the following:
 
@@ -683,29 +793,17 @@ class LDAPService(ConfigService):
 
         In practice, this full data is not returned from many LDAP servers
         """
-        ret = []
-        if ldap is None:
-            ldap = self.middleware.call_sync('ldap.config')
-
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
-            ret = LDAP.get_root_DSE()
-
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_root_DSE", None)
+        ret = ldap_job.wait_sync()
         return ret
 
     @private
-    def get_dn(self, dn=None, ldap=None):
+    def get_dn(self, dn=None, ldap_config=None):
         """
         Outputs contents of specified DN in JSON. By default will target the basedn.
         """
-        ret = []
-        if ldap is None:
-            ldap = self.middleware.call_sync('ldap.config')
-
-        if dn is None:
-            dn = ldap['basedn']
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
-            ret = LDAP.get_dn(dn)
-
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_dn", dn)
+        ret = ldap_job.wait_sync()
         return ret
 
     @private
@@ -731,6 +829,13 @@ class LDAPService(ConfigService):
             raise CallError('Automatically disabling LDAP service due to invalid configuration.',
                             errno.EINVAL)
 
+        """
+        Initialize state to "JOINING" until after booted.
+        """
+        if not await self.middleware.call('system.ready'):
+            await self.set_state(DSStatus['JOINING'])
+            return True
+
         try:
             await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),
                                    timeout=ldap['timeout'])
@@ -739,6 +844,14 @@ class LDAPService(ConfigService):
 
         except Exception as e:
             raise CallError(e)
+
+        try:
+            cached_state = await self.middleware.call('cache.get', 'DS_STATE')
+
+            if cached_state['ldap'] != 'HEALTHY':
+                await self.set_state(DSStatus['HEALTHY'])
+        except KeyError:
+            await self.set_state(DSStatus['HEALTHY'])
 
         return True
 
@@ -756,7 +869,8 @@ class LDAPService(ConfigService):
             raise CallError(f'ldap.get_workgroup timed out after {ldap["timeout"]} seconds.', errno.ETIMEDOUT)
 
         if len(ret) > 1:
-            raise CallError(f'Multiple Samba Domains detected in LDAP environment: {ret}', errno.EINVAL)
+            self.logger.warning('Multiple Samba Domains detected in LDAP environment '
+                                'auto-configuration of workgroup map have failed: %s', ret)
 
         ret = ret[0]['data']['sambaDomainName'][0] if ret else []
 
@@ -822,17 +936,17 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
-        has_samba_schema = True if (await self.middleware.call('ldap.get_workgroup')) else False
 
         if not await self.nslcd_status():
-            await self.nslcd_cmd('onestart')
+            await self.nslcd_cmd('start')
         else:
-            await self.nslcd_cmd('onerestart')
+            await self.nslcd_cmd('restart')
 
-        if has_samba_schema:
+        if ldap['has_samba_schema']:
             await self.middleware.call('etc.generate', 'smb')
             await self.middleware.call('smb.store_ldap_admin_password')
             await self.middleware.call('service.restart', 'cifs')
+            await self.middleware.call('smb.set_passdb_backend', 'ldapsam')
 
         await self.set_state(DSStatus['HEALTHY'])
         await self.middleware.call('ldap.fill_cache')
@@ -849,8 +963,11 @@ class LDAPService(ConfigService):
         if ldap['has_samba_schema']:
             await self.middleware.call('etc.generate', 'smb')
             await self.middleware.call('service.restart', 'cifs')
+            await self.middleware.call('smb.synchronize_passdb')
+            await self.middleware.call('smb.synchronize_group_mappings')
+            await self.middleware.call('smb.set_passdb_backend', 'tdbsam')
         await self.middleware.call('cache.pop', 'LDAP_cache')
-        await self.nslcd_cmd('onestop')
+        await self.nslcd_cmd('stop')
         await self.set_state(DSStatus['DISABLED'])
 
     @private

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
+from middlewared.utils import osc
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -57,8 +58,7 @@ class DiskService(Service, ServiceChangeMixin):
 
         await self.restart_services_after_sync()
 
-        if not await self.middleware.call('system.is_freenas'):
-            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+        await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
     @private
     @accepts()
@@ -68,14 +68,30 @@ class DiskService(Service, ServiceChangeMixin):
         Synchronize all disks with the cache in database.
         """
         # Skip sync disks on standby node
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP'
-        ):
-            return
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return
+
+        if osc.IS_FREEBSD:
+            for i in range(10):
+                if i > 0:
+                    await asyncio.sleep(1)
+
+                if await self.middleware.call('device.devd_connected'):
+                    break
+            else:
+                self.logger.warning('Starting disk.sync_all when devd is not connected yet')
 
         sys_disks = await self.middleware.call('device.get_disks')
+
+        # output logging information to middlewared.log in case we sync disks
+        # when not all the disks have been resolved
+        log_info = {
+            ok: {
+                ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
+            } for ok, ov in sys_disks.items()
+        }
+        self.logger.info('Found disks: %r', log_info)
 
         seen_disks = {}
         serials = []
@@ -86,7 +102,11 @@ class DiskService(Service, ServiceChangeMixin):
             original_disk = disk.copy()
 
             name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'], sys_disks)
-            if not name or name in seen_disks:
+            if (
+                    not name or
+                    name in seen_disks or
+                    await self.middleware.call('disk.device_to_identifier', name) != disk['disk_identifier']
+            ):
                 # If we cant translate the identifier to a device, give up
                 # If name has already been seen once then we are probably
                 # dealing with with multipath here
@@ -124,12 +144,11 @@ class DiskService(Service, ServiceChangeMixin):
                 disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
             # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
             # when lots of drives are present
-            if disk != original_disk:
+            if self._disk_changed(disk, original_disk):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 changed = True
 
-            if not await self.middleware.call('system.is_freenas'):
-                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
             seen_disks[name] = disk
 
@@ -159,19 +178,22 @@ class DiskService(Service, ServiceChangeMixin):
                 if not new:
                     # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
                     # when lots of drives are present
-                    if disk != original_disk:
+                    if self._disk_changed(disk, original_disk):
                         await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                         changed = True
                 else:
-                    disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
+                    await self.middleware.call('datastore.insert', 'storage.disk', disk)
                     changed = True
 
-                if not await self.middleware.call('system.is_freenas'):
-                    await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
         if changed:
             await self.middleware.call('disk.restart_services_after_sync')
         return 'OK'
+
+    def _disk_changed(self, disk, original_disk):
+        # storage_disk.disk_size is a string
+        return dict(disk, disk_size=None if disk.get('disk_size') is None else str(disk['disk_size'])) != original_disk
 
     async def _map_device_disk_to_db(self, db_disk, disk):
         only_update_if_true = ('size',)
@@ -187,3 +209,46 @@ class DiskService(Service, ServiceChangeMixin):
             await self.middleware.call('service.restart', 'collectd')
         await self._service_change('smartd', 'restart')
         await self._service_change('snmp', 'restart')
+
+    expired_disks = set()
+
+    @private
+    async def init_datastore_events_processor(self):
+        self.expired_disks = {
+            disk["identifier"]
+            for disk in await self.middleware.call(
+                "datastore.query",
+                "storage.disk",
+                [("expiretime", "!=", None)],
+                {"prefix": "disk_"},
+            )
+        }
+
+    @private
+    async def process_datastore_event(self, type, kwargs):
+        if type == "CHANGED" and "fields" in kwargs:
+            if kwargs["fields"]["expiretime"] is not None:
+                if kwargs["fields"]["identifier"] not in self.expired_disks:
+                    self.expired_disks.add(kwargs["fields"]["identifier"])
+                    return "CHANGED", {"id": kwargs["id"], "cleared": True}
+
+                return None
+            else:
+                if kwargs["fields"]["identifier"] in self.expired_disks:
+                    self.expired_disks.remove(kwargs["fields"]["identifier"])
+                    return "ADDED", {"id": kwargs["id"], "fields": kwargs["fields"]}
+
+        return type, kwargs
+
+
+async def setup(middleware):
+    await middleware.call("disk.init_datastore_events_processor")
+
+    await middleware.call("datastore.register_event", {
+        "description": "Sent on disk changes.",
+        "datastore": "storage.disk",
+        "plugin": "disk",
+        "prefix": "disk_",
+        "id": "identifier",
+        "process_event": "disk.process_datastore_event",
+    })

@@ -91,6 +91,14 @@ class PoolService(Service):
             await self.middleware.call(
                 'datastore.update', 'storage.volume', oid, {'vol_encrypt': 1}
             )
+
+        await self.middleware.call_hook(
+            'pool.post_change_passphrase', {
+                'action': 'UPDATE' if options['passphrase'] else 'REMOVE',
+                'passphrase': options['passphrase'],
+                'pool': pool['name'],
+            }
+        )
         return True
 
     @item_method
@@ -411,7 +419,7 @@ class PoolService(Service):
         ):
             await self.middleware.call('disk.geli_detach_single', ed['encrypted_provider'])
 
-        await self.middleware.call_hook('pool.post_lock', pool=pool)
+        await self.middleware.call_hook('pool.post_lock', pool=pool['name'])
         await self.middleware.call('service.restart', 'system_datasets')
         return True
 

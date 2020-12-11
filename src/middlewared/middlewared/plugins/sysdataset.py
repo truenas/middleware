@@ -1,12 +1,13 @@
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run
+from middlewared.utils import osc, Popen, run
 
 import asyncio
 import errno
 import os
 import shutil
+import subprocess
 import uuid
 
 SYSDATASET_PATH = '/var/db/system'
@@ -53,13 +54,13 @@ class SystemDatasetService(ConfigService):
 
         # Make `uuid` point to the uuid of current node
         config['uuid_a'] = config['uuid']
-        if not await self.middleware.call('system.is_freenas'):
+        if await self.middleware.call('system.is_enterprise'):
             if await self.middleware.call('failover.node') == 'B':
                 config['uuid'] = config['uuid_b']
 
         if not config['uuid']:
             config['uuid'] = uuid.uuid4().hex
-            if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
+            if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.node') == 'B':
                 attr = 'uuid_b'
                 config[attr] = config['uuid']
             else:
@@ -98,6 +99,15 @@ class SystemDatasetService(ConfigService):
         new.update(data)
 
         verrors = ValidationErrors()
+        if new['pool'] != config['pool']:
+            ad_enabled = (self.middleware.call('activedirectory.get_state')) != 'DISABLED'
+            if ad_enabled:
+                verrors.add(
+                    'sysdataset_update.pool',
+                    'System dataset location may not be moved while the Active Directory service is enabled.',
+                    errno.EPERM
+                )
+
         if new['pool'] and new['pool'] != await self.middleware.call('boot.pool_name'):
             pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
             if not pool:
@@ -168,7 +178,7 @@ class SystemDatasetService(ConfigService):
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
 
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+        if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'MASTER':
                 try:
                     await self.middleware.call('failover.call_remote', 'system.reboot')
@@ -180,8 +190,11 @@ class SystemDatasetService(ConfigService):
     @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
     @private
     async def setup(self, mount, exclude_pool=None):
-        # We default kern.corefile value
-        await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
+
+        # FIXME: corefile for LINUX
+        if osc.IS_FREEBSD:
+            # We default kern.corefile value
+            await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
 
         config = await self.config()
         dbconfig = await self.middleware.call(
@@ -190,7 +203,7 @@ class SystemDatasetService(ConfigService):
 
         boot_pool = await self.middleware.call('boot.pool_name')
         if (
-            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.licensed') and
             await self.middleware.call('failover.status') == 'BACKUP' and
             config.get('basename') and config['basename'] != f'{boot_pool}/.system'
         ):
@@ -255,7 +268,7 @@ class SystemDatasetService(ConfigService):
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
                 os.unlink(SYSDATASET_PATH)
-            os.mkdir(SYSDATASET_PATH)
+            os.makedirs(SYSDATASET_PATH)
 
         acltype = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
         if acltype and acltype[0]['properties']['acltype']['value'] == 'off':
@@ -271,12 +284,18 @@ class SystemDatasetService(ConfigService):
 
             corepath = f'{SYSDATASET_PATH}/cores'
             if os.path.exists(corepath):
-                # FIXME: sysctl module not working
-                await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
+                # FIXME: corefile for LINUX
+                if osc.IS_FREEBSD:
+                    # FIXME: sysctl module not working
+                    await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
                 os.chmod(corepath, 0o775)
 
             await self.__nfsv4link(config)
-            await self.middleware.call('etc.generate', 'smb_configure')
+
+            if osc.IS_LINUX:
+                await self.middleware.call('etc.generate', 'glusterd')
+
+            await self.middleware.call('smb.configure')
             await self.middleware.call('dscache.initialize')
 
         return config
@@ -291,13 +310,23 @@ class SystemDatasetService(ConfigService):
             i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
         }
         for dataset in datasets:
-            dataset_quota = {'quota': '1G'} if dataset.endswith('/cores') else {}
+            is_cores_ds = dataset.endswith('/cores')
+            dataset_quota = {'quota': '1G'} if is_cores_ds else {}
             if dataset not in datasets_prop:
                 await self.middleware.call('zfs.dataset.create', {
                     'name': dataset,
                     'properties': {'mountpoint': 'legacy', **dataset_quota},
                 })
                 createdds = True
+            elif is_cores_ds and datasets_prop[dataset]['written']['parsed'] > 1024 ** 3:
+                try:
+                    await self.middleware.call('zfs.dataset.delete', dataset)
+                    await self.middleware.call('zfs.dataset.create', {
+                        'name': dataset,
+                        'properties': {'mountpoint': 'legacy', **dataset_quota},
+                    })
+                except Exception:
+                    self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
             else:
                 update_props_dict = {}
                 if datasets_prop[dataset]['mountpoint']['value'] != 'legacy':
@@ -326,13 +355,20 @@ class SystemDatasetService(ConfigService):
 
     async def __umount(self, pool, uuid):
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
-            await run('umount', '-f', dataset, check=False)
+            try:
+                await run('umount', '-f', dataset)
+            except subprocess.CalledProcessError as e:
+                stderr = e.stderr.decode()
+                if 'no mount point specified' in stderr:
+                    # Already unmounted
+                    continue
+                raise CallError(f'Unable to umount {dataset}: {stderr}')
 
     def __get_datasets(self, pool, uuid):
         return [(f'{pool}/.system', '')] + [
             (f'{pool}/.system/{i}', i) for i in [
                 'cores', 'samba4', f'syslog-{uuid}',
-                f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services'
+                f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services', 'glusterd',
             ]
         ]
 
@@ -342,7 +378,7 @@ class SystemDatasetService(ConfigService):
             return None
 
         restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.status') == 'BACKUP':
+        if await self.middleware.call('failover.licensed') and await self.middleware.call('failover.status') == 'BACKUP':
             return None
 
         for item in restartfiles:
@@ -397,6 +433,9 @@ class SystemDatasetService(ConfigService):
             path = '/tmp/system.new'
             if not os.path.exists('/tmp/system.new'):
                 os.mkdir('/tmp/system.new')
+            else:
+                # Make sure we clean up any previous attempts
+                await run('umount', '-R', path, check=False)
         else:
             path = SYSDATASET_PATH
         await self.__mount(_to, config['uuid'], path=path)
@@ -405,8 +444,21 @@ class SystemDatasetService(ConfigService):
 
         if await self.middleware.call('service.started', 'cifs'):
             restart.insert(0, 'cifs')
+        for service in ['open-vm-tools', 'webdav']:
+            restart.append(service)
 
         try:
+            if osc.IS_LINUX:
+                await self.middleware.call('cache.put', 'use_syslog_dataset', False)
+                await self.middleware.call('service.restart', 'syslogd')
+                if await self.middleware.call('service.started', 'glusterd'):
+                    restart.insert(0, 'glusterd')
+
+            # Middleware itself will log to syslog dataset.
+            # This may be prone to a race condition since we dont wait the workers to stop
+            # logging, however all the work before umount seems to make it seamless.
+            await self.middleware.call('core.stop_logging')
+
             for i in restart:
                 await self.middleware.call('service.stop', i)
 
@@ -419,8 +471,12 @@ class SystemDatasetService(ConfigService):
                     proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
                     await proc.communicate()
 
-                os.rmdir('/tmp/system.new')
+                    os.rmdir('/tmp/system.new')
+                else:
+                    raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
         finally:
+            if osc.IS_LINUX:
+                await self.middleware.call('cache.pop', 'use_syslog_dataset')
 
             restart.reverse()
             for i in restart:
@@ -433,6 +489,9 @@ async def pool_post_import(middleware, pool):
     """
     On pool import we may need to reconfigure system dataset.
     """
+    if pool is None:
+        return
+
     await middleware.call('systemdataset.setup')
 
 

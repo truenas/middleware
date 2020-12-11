@@ -4,9 +4,10 @@ import re
 from urllib.parse import urlparse
 import uuid
 
-from zettarepl.snapshot.task.naming_schema import validate_snapshot_naming_schema
+from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+RE_MAC_ADDRESS = re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$")
 
 
 class Email:
@@ -86,6 +87,11 @@ class Match:
 
     def __deepcopy__(self, memo):
         return Match(self.pattern, self.flags, self.explanation)
+
+
+class Hostname(Match):
+    def __init__(self, explanation=None):
+        super().__init__(r'^[a-zA-Z\.\-\0-9]+$', explanation=explanation)
 
 
 class Or:
@@ -168,8 +174,20 @@ class IpInUse:
 
 
 class MACAddr:
+
+    SEPARATORS = [':', '-']
+
+    def __init__(self, separator=None):
+        if separator:
+            assert separator in self.SEPARATORS
+        self.separator = separator
+
     def __call__(self, value):
-        if not re.match('[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$', value.lower()):
+        if not RE_MAC_ADDRESS.match(value.lower()) or (
+            self.separator and (
+                self.separator not in value or ({self.separator} ^ set(self.SEPARATORS)).pop() in value.lower()
+            )
+        ):
             raise ValueError('Please provide a valid MAC address')
 
 
@@ -186,12 +204,13 @@ class UUID:
             raise ValueError(f'Invalid UUID: {e}')
 
 
-def validate_attributes(schema, data, additional_attrs=False, attr_key="attributes"):
+def validate_attributes(schema, data, additional_attrs=False, attr_key="attributes", dict_kwargs=None):
     from middlewared.schema import Dict, Error
     from middlewared.service import ValidationErrors
     verrors = ValidationErrors()
+    dict_kwargs = dict_kwargs or {}
 
-    schema = Dict("attributes", *schema, additional_attrs=additional_attrs)
+    schema = Dict("attributes", *schema, additional_attrs=additional_attrs, **dict_kwargs)
 
     try:
         data[attr_key] = schema.clean(data[attr_key])

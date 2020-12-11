@@ -1,4 +1,4 @@
-# Copyright (c) 2015 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -8,7 +8,6 @@ import logging
 import re
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
-from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +42,19 @@ class PowerSupplyAlertClass(AlertClass):
 
 
 class SensorsAlertSource(AlertSource):
-    products = ("ENTERPRISE",)
-
     async def check(self):
-        baseboard_manufacturer = (
-            (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors="ignore")
-        ).strip()
+        dmidecode_info = await self.middleware.call('system.dmidecode_info')
+        baseboard_manufacturer = dmidecode_info['baseboard-manufacturer']
+        system_product_name = dmidecode_info['system-product-name']
 
         failover_hardware = await self.middleware.call("failover.hardware")
 
         is_gigabyte = baseboard_manufacturer == "GIGABYTE"
         is_m_series = baseboard_manufacturer == "Supermicro" and failover_hardware == "ECHOWARP"
+        is_r_series = system_product_name.startswith("TRUENAS-R")
+        is_freenas_certified = (
+            baseboard_manufacturer == "Supermicro" and system_product_name.startswith("FREENAS-CERTIFIED")
+        )
 
         alerts = []
         for sensor in await self.middleware.call("sensor.query"):
@@ -91,7 +92,7 @@ class SensorsAlertSource(AlertSource):
                     key=[sensor["name"], relative, level],
                 ))
 
-            if is_m_series:
+            if is_m_series or is_r_series or is_freenas_certified:
                 ps_match = re.match("(PS[0-9]+) Status", sensor["name"])
                 if ps_match:
                     ps = ps_match.group(1)

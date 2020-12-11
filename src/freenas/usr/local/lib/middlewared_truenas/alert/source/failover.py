@@ -1,4 +1,4 @@
-# Copyright (c) 2015 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -6,7 +6,6 @@
 
 import errno
 import os
-import json
 try:
     import sysctl
 except ImportError:
@@ -15,8 +14,6 @@ import subprocess
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
 from middlewared.service_exception import CallError
-
-FAILOVER_JSON = '/tmp/failover.json'
 
 
 class FailoverInterfaceNotFoundAlertClass(AlertClass):
@@ -100,11 +97,11 @@ class CTLHALinkAlertClass(AlertClass):
     products = ("ENTERPRISE",)
 
 
-class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
+class NoFailoverPassphraseKeysAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "No Escrowed Passphrase for Failover"
-    text = "No escrowed passphrase for failover. Automatic failover disabled."
+    title = "Passphrase Missing For Legacy-Encrypted Pool"
+    text = "Failover is unavailable until a legacy encryption passphrase is added to %(pool)r."
 
     products = ("ENTERPRISE",)
 
@@ -120,7 +117,7 @@ class FailoverAlertSource(ThreadedAlertSource):
         if not self.middleware.call_sync('failover.licensed'):
             return alerts
 
-        if self.middleware.call_sync('failover.internal_interfaces_notfound'):
+        if not self.middleware.call_sync('failover.internal_interfaces'):
             alerts.append(Alert(FailoverInterfaceNotFoundAlertClass))
             return alerts
 
@@ -135,10 +132,10 @@ class FailoverAlertSource(ThreadedAlertSource):
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                 raise UnavailableException()
 
-            local = self.middleware.call_sync('failover.get_carp_states')
-            remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
+            local = self.middleware.call_sync('failover.vip.get_states')
+            remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
 
-            errors = self.middleware.call_sync('failover.check_carp_states', local, remote)
+            errors = self.middleware.call_sync('failover.vip.check_states', local, remote)
             for error in errors:
                 alerts.append(Alert(
                     CARPStatesDoNotAgreeAlertClass,
@@ -185,22 +182,18 @@ class FailoverAlertSource(ThreadedAlertSource):
                 pass
 
         if status == 'BACKUP':
-            fobj = None
-            try:
-                with open(FAILOVER_JSON, 'r') as f:
-                    fobj = json.loads(f.read())
-            except Exception:
-                pass
+            fobj = self.middleware.call_sync('failover.generate_failover_data')
             try:
                 if len(fobj['phrasedvolumes']) > 0:
-                    if not self.middleware.call_sync('failover.encryption_status'):
-                        alerts.append(Alert(NoFailoverEscrowedPassphraseAlertClass))
+                    keys = self.middleware.call_sync('failover.encryption_keys')['geli']
+                    not_found = False
+                    for pool in fobj['phrasedvolumes']:
+                        if pool not in keys:
+                            not_found = True
+                            alerts.append(Alert(NoFailoverPassphraseKeysAlertClass, {'pool': pool}))
+                    if not_found:
                         # Kick a syncfrompeer if we don't.
-                        passphrase = self.middleware.call_sync(
-                            'failover.call_remote', 'failover.encryption_getkey'
-                        )
-                        if passphrase:
-                            self.middleware.call_sync('failover.encryption_setkey', passphrase)
+                        self.middleware.call_sync('failover.sync_keys_from_remote_node')
             except Exception:
                 pass
 

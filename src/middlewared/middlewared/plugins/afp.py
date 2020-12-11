@@ -1,16 +1,16 @@
 import asyncio
+import enum
 import uuid
 
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
                                 Patch, UnixPerm)
 from middlewared.validators import IpAddress, Range
-from middlewared.service import (SystemServiceService, ValidationErrors,
-                                 CRUDService, private)
+from middlewared.service import SystemServiceService, ValidationErrors, SharingService, private
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils.path import is_child
 import os
 
 
@@ -26,6 +26,15 @@ class AFPModel(sa.Model):
     afp_srv_global_aux = sa.Column(sa.Text())
     afp_srv_map_acls = sa.Column(sa.String(120))
     afp_srv_chmod_request = sa.Column(sa.String(120))
+    afp_srv_loglevel = sa.Column(sa.String(120), default="MINIMUM")
+
+
+class AFPLogLevel(enum.Enum):
+    NONE = "severe"
+    MINIMUM = "warn"
+    NORMAL = "note"
+    FULL = "info"
+    DEBUG = "maxdebug"
 
 
 class AFPService(SystemServiceService):
@@ -59,6 +68,7 @@ class AFPService(SystemServiceService):
         Str('global_aux', max_length=None),
         Str('map_acls', enum=['RIGHTS', 'MODE', 'NONE']),
         Str('chmod_request', enum=['PRESERVE', 'SIMPLE', 'IGNORE']),
+        Str('loglevel', enum=[x.name for x in AFPLogLevel]),
         update=True
     ))
     async def do_update(self, data):
@@ -97,6 +107,15 @@ class AFPService(SystemServiceService):
 
         return await self.config()
 
+    @accepts()
+    async def bindip_choices(self):
+        """
+        List of valid choices for IP addresses to which to bind the AFP service.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call('interface.ip_in_use')
+        }
+
 
 class SharingAFPModel(sa.Model):
     __tablename__ = 'sharing_afp_share'
@@ -125,7 +144,10 @@ class SharingAFPModel(sa.Model):
     afp_vuid = sa.Column(sa.String(36))
 
 
-class SharingAFPService(CRUDService):
+class SharingAFPService(SharingService):
+
+    share_task_type = 'AFP'
+
     class Config:
         namespace = 'sharing.afp'
         datastore = 'sharing.afp_share'
@@ -171,10 +193,6 @@ class SharingAFPService(CRUDService):
 
         await self.clean(data, 'sharingafp_create', verrors)
         await self.validate(data, 'sharingafp_create', verrors)
-
-        await check_path_resides_within_volume(
-            verrors, self.middleware, 'sharingafp_create.path', path)
-
         verrors.check()
 
         if path and not os.path.exists(path):
@@ -187,11 +205,10 @@ class SharingAFPService(CRUDService):
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(data)
 
         await self._service_change('afp', 'reload')
 
-        return data
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -219,12 +236,7 @@ class SharingAFPService(CRUDService):
         await self.clean(new, 'sharingafp_update', verrors, id=id)
         await self.validate(new, 'sharingafp_update', verrors, old=old)
 
-        if path:
-            await check_path_resides_within_volume(
-                verrors, self.middleware, 'sharingafp_create.path', path)
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if path and not os.path.exists(path):
             try:
@@ -236,11 +248,10 @@ class SharingAFPService(CRUDService):
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(new)
 
         await self._service_change('afp', 'reload')
 
-        return new
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -263,6 +274,7 @@ class SharingAFPService(CRUDService):
                 uuid.UUID(data['vuid'], version=4)
             except ValueError:
                 verrors.add(f'{schema_name}.vuid', 'vuid must be a valid UUID.')
+        await self.validate_path_field(data, schema_name, verrors)
 
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
@@ -342,6 +354,7 @@ class SharingAFPService(CRUDService):
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
         if not data['vuid'] and data['timemachine']:
             data['vuid'] = str(uuid.uuid4())
+        data.pop(self.locked_field, None)
         return data
 
 
@@ -349,6 +362,10 @@ async def pool_post_import(middleware, pool):
     """
     Makes sure to reload AFP if a pool is imported and there are shares configured for it.
     """
+    if pool is None:
+        asyncio.ensure_future(middleware.call('etc.generate', 'afpd'))
+        return
+
     path = f'/mnt/{pool["name"]}'
     if await middleware.call('sharing.afp.query', [
         ('OR', [
@@ -359,41 +376,24 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'afp'))
 
 
-class AFPFSAttachmentDelegate(FSAttachmentDelegate):
+class AFPFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'afp'
     title = 'AFP Share'
     service = 'afp'
+    service_class = SharingAFPService
 
-    async def query(self, path, enabled):
-        results = []
-        for afp in await self.middleware.call('sharing.afp.query', [['enabled', '=', enabled]]):
-            if is_child(afp['path'], path):
-                results.append(afp)
+    async def restart_reload_services(self, attachments):
+        await self._service_change('afp', 'reload')
 
-        return results
-
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'sharing.afp_share', attachment['id'])
-
+    async def stop(self, attachments):
         # AFP does not allow us to close specific share forcefully so we have to abort all connections
         await self._service_change('afp', 'restart')
 
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call('datastore.update', 'sharing.afp_share', attachment['id'],
-                                       {'afp_enabled': enabled})
-
-        if enabled:
-            await self._service_change('afp', 'reload')
-        else:
-            # AFP does not allow us to close specific share forcefully so we have to abort all connections
-            await self._service_change('afp', 'restart')
-
 
 async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        SystemServiceListenMultipleDelegate(middleware, 'afp', 'bindip'),
+    )
     await middleware.call('pool.dataset.register_attachment_delegate', AFPFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)

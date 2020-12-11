@@ -9,6 +9,9 @@ from middlewared.plugins.config import FREENAS_DATABASE
 
 
 def regexp(expr, item):
+    if item is None:
+        return False
+
     reg = re.compile(expr, re.I)
     return reg.search(item) is not None
 
@@ -45,7 +48,7 @@ class DatastoreService(Service):
         return await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, *args)
 
     @private
-    async def execute_write(self, stmt):
+    async def execute_write(self, stmt, return_last_insert_rowid=False):
         compiled = stmt.compile(self.engine)
 
         sql = compiled.string
@@ -59,11 +62,17 @@ class DatastoreService(Service):
             else:
                 binds.append(value)
 
-        return await self.middleware.run_in_executor(self.thread_pool, self._execute_write, sql, binds)
+        return await self.middleware.run_in_executor(self.thread_pool, self._execute_write, sql, binds,
+                                                     return_last_insert_rowid)
 
-    def _execute_write(self, sql, binds):
+    def _execute_write(self, sql, binds, return_last_insert_rowid):
         result = self.connection.execute(sql, binds)
-        self.middleware.call_hook_inline('datastore.post_execute_write', sql, binds)
+
+        self.middleware.call_hook_inline("datastore.post_execute_write", sql, binds)
+
+        if return_last_insert_rowid:
+            return self._fetchall("SELECT last_insert_rowid()")[0][0]
+
         return result
 
     @private

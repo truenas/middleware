@@ -7,16 +7,26 @@ import os
 import shutil
 import subprocess
 import time
+from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, Dict, Int, List, Patch, Str
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
+import middlewared.utils.osc as osc
 
 
 class keytab(enum.Enum):
     SYSTEM = '/etc/krb5.keytab'
     SAMBA = '/var/db/system/samba4/private/samba.keytab'
     TEST = '/var/db/system/test.keytab'
+
+
+class KRB5(enum.Enum):
+    MIT = 1
+    HEIMDAL = 2
+
+    def platform():
+        return KRB5.MIT if osc.IS_LINUX else KRB5.HEIMDAL
 
 
 class KRB_AppDefaults(enum.Enum):
@@ -29,6 +39,9 @@ class KRB_AppDefaults(enum.Enum):
     FORWARD = ('forward', 'boolean')
 
     def __str__(self):
+        return self.value[0]
+
+    def parm(self):
         return self.value[0]
 
 
@@ -67,6 +80,9 @@ class KRB_LibDefaults(enum.Enum):
     FCC_MIT_TICKETFLAGS = ('fcc-mit-ticketflags', 'boolean')
 
     def __str__(self):
+        return self.value[0]
+
+    def parm(self):
         return self.value[0]
 
 
@@ -138,7 +154,11 @@ class KerberosService(ConfigService):
         """
         Returns false if there is not a TGT or if the TGT has expired.
         """
-        klist = await run(['/usr/bin/klist', '-t'], check=False)
+        if KRB5.platform() == KRB5.MIT:
+            klist = await run(['klist', '-s'], check=False)
+        else:
+            klist = await run(['klist', '-t'], check=False)
+
         if klist.returncode != 0:
             return False
         return True
@@ -241,88 +261,143 @@ class KerberosService(ConfigService):
         return verrors
 
     @private
+    async def do_kinit(self, data):
+        dstype = DSType(data['dstype'])
+        krb5 = KRB5.platform()
+        if data['kerberos_principal']:
+            if krb5 == KRB5.MIT:
+                kinit = await run(['kinit', '-r', '7d', '-k', data['kerberos_principal']], check=False)
+            else:
+                kinit = await run(['kinit', '--renewable', '-k', data['kerberos_principal']], check=False)
+
+            if kinit.returncode != 0:
+                if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY:
+                    raise CallError(f"kinit for domain [{data['domainname']}] "
+                                    f"with principal [{data['kerberos_principal']}] "
+                                    f"failed: {kinit.stderr.decode()}")
+
+                elif dstype == DSType.LDAP:
+                    raise CallError(f"kinit with principal [{data['kerberos_principal']}] "
+                                    f"failed: {kinit.stderr.decode()}")
+            return True
+
+        if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY:
+                principal = f'{data["bindname"]}@{data["domainname"].upper()}'
+
+        elif dstype == DSType.LDAP:
+                krb_realm = await self.middleware.call(
+                    'kerberos.realm.query',
+                    [('id', '=', data['kerberos_realm'])],
+                    {'get': True}
+                )
+                bind_cn = (data['binddn'].split(','))[0].split("=")
+                principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
+
+        if krb5 == KRB5.MIT:
+            kinit = await Popen(
+                ['kinit', '-r', '7d', principal],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+            )
+        else:
+            kinit = await Popen(
+                ['kinit', '--renewable', '--password-file=STDIN', principal],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+            )
+
+        output = await kinit.communicate(input=data['bindpw'].encode())
+        if kinit.returncode != 0:
+            raise CallError(f"kinit with password failed: {output[1].decode()}")
+
+        return True
+
+    @private
     async def _kinit(self):
         """
-        There are two ways of performing the kinit:
-        1) username / password combination. In this case, password must be written
-           to file or recieved via STDIN
-        2) kerberos keytab.
-
         For now we only check for kerberos realms explicitly configured in AD and LDAP.
         """
+        data = {}
         ad = await self.middleware.call('activedirectory.config')
         ldap = await self.middleware.call('ldap.config')
         await self.middleware.call('etc.generate', 'kerberos')
         if ad['enable']:
-            if ad['kerberos_principal']:
-                ad_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ad['kerberos_principal']], check=False)
-                if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for domain [{ad['domainname']}] with principal [{ad['kerberos_principal']}] failed: {ad_kinit.stderr.decode()}")
-            else:
-                principal = f'{ad["bindname"]}@{ad["domainname"].upper()}'
-                ad_kinit = await Popen(
-                    ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
-                )
-                output = await ad_kinit.communicate(input=ad['bindpw'].encode())
-                if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {output[1].decode()}")
+            ad['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
+            await self.do_kinit(ad)
+
         if ldap['enable'] and ldap['kerberos_realm']:
-            if ldap['kerberos_principal']:
-                ldap_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
-                if ldap_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm {ldap['kerberos_realm']} with keytab failed: {ldap_kinit.stderr.decode()}")
-            else:
-                krb_realm = await self.middleware.call(
-                    'kerberos.realm.query',
-                    [('id', '=', ldap['kerberos_realm'])],
-                    {'get': True}
-                )
-                bind_cn = (ldap['binddn'].split(','))[0].split("=")
-                principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
-                ldap_kinit = await Popen(
-                    ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
-                )
-                output = await ldap_kinit.communicate(input=ldap['bindpw'].encode())
-                if ldap_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm {krb_realm['realm']} with password failed: {output[1].decode()}")
+            ldap['dstype'] = DSType.DS_TYPE_LDAP.value
+            await self.do_kinit(ldap)
 
     @private
-    async def _get_cached_klist(self):
-        """
-        Try to get retrieve cached kerberos tgt info. If it hasn't been cached,
-        perform klist, parse it, put it in cache, then return it.
-        """
-        if await self.middleware.call('cache.has_key', 'KRB_TGT_INFO'):
-            return (await self.middleware.call('cache.get', 'KRB_TGT_INFO'))
-        ad = await self.middleware.call('activedirectory.config')
-        ldap = await self.middleware.call('ldap.config')
+    async def parse_klist(self, data):
         ad_TGT = []
         ldap_TGT = []
-        if not ad['enable'] and not ldap['enable']:
-            return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
-        if not ad['enable'] and not ldap['kerberos_realm']:
-            return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
 
-        if not await self.status():
-            await self.start()
+        ad = data.get("ad")
+        ldap = data.get("ldap")
+        klistin = data.get("klistin")
+        krb5 = KRB5(data.get("krb5type"))
 
-        try:
-            klist = await asyncio.wait_for(
-                run(['/usr/bin/klist', '-v'], check=False, stdout=subprocess.PIPE),
-                timeout=10.0
-            )
-        except Exception as e:
-            await self.stop()
-            raise CallError("Attempt to list kerberos tickets failed with error: %s", e)
+        if ldap.get('enable') and ldap['kerberos_realm']:
+            ldap_realm = await self.middleware.call('kerberos.realm.query',
+                                                    [('id', '=', ldap['kerberos_realm'])],
+                                                    {'get': True})
 
-        if klist.returncode != 0:
-            await self.stop()
-            raise CallError(f'klist failed with error: {klist.stderr.decode()}')
+        if krb5 == KRB5.MIT:
+            tickets = klistin.splitlines()
+            default_principal = None
+            tlen = len(tickets)
 
-        klist_output = klist.stdout.decode()
-        tkts = klist_output.split('\n\n')
+            if ad['enable']:
+                dstype = DSType.DS_TYPE_ACTIVEDIRECTORY
+            elif ldap['enable']:
+                dstype = DSType.DS_TYPE_LDAP
+            else:
+                return {"ad_TGT": [], "ldap_TGT": []}
+
+            parsed_klist = []
+            for idx, e in enumerate(tickets):
+                if e.startswith('Default'):
+                    default_principal = (e.split(':')[1]).strip()
+                if e and e[0].isdigit():
+                    d = e.split("  ")
+                    issued = time.strptime(d[0], "%m/%d/%y %H:%M:%S")
+                    expires = time.strptime(d[1], "%m/%d/%y %H:%M:%S")
+                    client = default_principal
+                    server = d[2]
+                    flags = None
+                    etype = None
+                    next_two = [idx+1, idx+2]
+                    for i in next_two:
+                        if i >= tlen:
+                            break
+                        if tickets[i][0].isdigit():
+                            break
+                        if tickets[i].startswith("\tEtype"):
+                            etype = tickets[i].strip()
+                            break
+                        if tickets[i].startswith("\trenew"):
+                            flags = tickets[i].split("Flags: ")[1]
+                            continue
+
+                        extra = tickets[i].split(", ", 1)
+                        flags = extra[0].strip()
+                        etype = extra[1].strip()
+
+                    parsed_klist.append({
+                        'issued': issued,
+                        'expires': expires,
+                        'client': client,
+                        'server': server,
+                        'etype': etype,
+                        'flags': flags,
+                    })
+
+            return {
+                "ad_TGT": parsed_klist if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY else [],
+                "ldap_TGT": parsed_klist if dstype == DSType.DS_TYPE_LDAP else [],
+            }
+
+        tkts = klistin.split('\n\n')
         for tkt in tkts:
             s = tkt.splitlines()
             if len(s) > 4:
@@ -351,7 +426,7 @@ class KerberosService(ConfigService):
                     })
 
                 elif ldap['enable'] and ldap['kerberos_realm']:
-                    if ldap['kerberos_realm']['krb_realm'] in client:
+                    if ldap_realm['realm'] in client:
                         ldap_TGT.append({
                             'issued': issued,
                             'expires': expires,
@@ -361,9 +436,61 @@ class KerberosService(ConfigService):
                             'flags': flags,
                         })
 
-        if ad_TGT or ldap_TGT:
-            await self.middleware.call('cache.put', 'KRB_TGT_INFO', {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT})
-        return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
+        return {"ad_TGT": ad_TGT, "ldap_TGT": ldap_TGT}
+
+    @private
+    async def _get_cached_klist(self):
+        """
+        Try to get retrieve cached kerberos tgt info. If it hasn't been cached,
+        perform klist, parse it, put it in cache, then return it.
+        """
+        if await self.middleware.call('cache.has_key', 'KRB_TGT_INFO'):
+            return (await self.middleware.call('cache.get', 'KRB_TGT_INFO'))
+        ad = await self.middleware.call('activedirectory.config')
+        ldap = await self.middleware.call('ldap.config')
+        ad_TGT = []
+        ldap_TGT = []
+        parsed_klist = {}
+        if not ad['enable'] and not ldap['enable']:
+            return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
+        if not ad['enable'] and not ldap['kerberos_realm']:
+            return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
+
+        if not await self.status():
+            await self.start()
+        krb5 = KRB5.platform()
+        try:
+            if krb5 == KRB5.HEIMDAL:
+                klist = await asyncio.wait_for(
+                    run(['klist', '-v'], check=False, stdout=subprocess.PIPE),
+                    timeout=10.0
+                )
+            else:
+                klist = await asyncio.wait_for(
+                    run(['klist', '-ef'], check=False, stdout=subprocess.PIPE),
+                    timeout=10.0
+                )
+        except Exception as e:
+            await self.stop()
+            raise CallError("Attempt to list kerberos tickets failed with error: %s", e)
+
+        if klist.returncode != 0:
+            await self.stop()
+            raise CallError(f'klist failed with error: {klist.stderr.decode()}')
+
+        klist_output = klist.stdout.decode()
+
+        parsed_klist = await self.parse_klist({
+            "krb5type": krb5.value,
+            "klistin": klist_output,
+            "ad": ad,
+            "ldap": ldap,
+        })
+
+        if parsed_klist['ad_TGT'] or parsed_klist['ldap_TGT']:
+            await self.middleware.call('cache.put', 'KRB_TGT_INFO', parsed_klist)
+
+        return parsed_klist
 
     @private
     async def renew(self):
@@ -407,7 +534,7 @@ class KerberosService(ConfigService):
 
         if must_renew and not must_reinit:
             try:
-                kinit = await asyncio.wait_for(run(['/usr/bin/kinit', '-R'], check=False), timeout=15)
+                kinit = await asyncio.wait_for(run(['kinit', '-R'], check=False), timeout=15)
                 if kinit.returncode != 0:
                     raise CallError(f'kinit -R failed with error: {kinit.stderr.decode()}')
                 self.logger.debug(f'Successfully renewed kerberos TGT')
@@ -439,7 +566,7 @@ class KerberosService(ConfigService):
     @private
     async def stop(self):
         await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
-        kdestroy = await run(['/usr/bin/kdestroy'], check=False)
+        kdestroy = await run(['kdestroy'], check=False)
         if kdestroy.returncode != 0:
             raise CallError(f'kdestroy failed with error: {kdestroy.stderr.decode()}')
 
@@ -586,7 +713,7 @@ class KerberosKeytabModel(sa.Model):
     __tablename__ = 'directoryservice_kerberoskeytab'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    keytab_file = sa.Column(sa.Text())
+    keytab_file = sa.Column(sa.EncryptedText())
     keytab_name = sa.Column(sa.String(120))
 
 
@@ -594,18 +721,7 @@ class KerberosKeytabService(CRUDService):
     class Config:
         datastore = 'directoryservice.kerberoskeytab'
         datastore_prefix = 'keytab_'
-        datastore_extend = 'kerberos.keytab.kerberos_keytab_extend'
         namespace = 'kerberos.keytab'
-
-    @private
-    async def kerberos_keytab_extend(self, data):
-        data['file'] = await self.middleware.call('pwenc.decrypt', data['file'])
-        return data
-
-    @private
-    async def kerberos_keytab_compress(self, data):
-        data['file'] = await self.middleware.call('pwenc.encrypt', data['file'])
-        return data
 
     @accepts(
         Dict(
@@ -630,7 +746,6 @@ class KerberosKeytabService(CRUDService):
         if verrors:
             raise verrors
 
-        data = await self.kerberos_keytab_compress(data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -665,7 +780,6 @@ class KerberosKeytabService(CRUDService):
         if verrors:
             raise verrors
 
-        new = await self.kerberos_keytab_compress(data)
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
@@ -743,6 +857,26 @@ class KerberosKeytabService(CRUDService):
             )
 
     @private
+    async def do_ktutil_list(self, data):
+        kt = data.get("kt_name", keytab.SYSTEM.value)
+        if KRB5.platform() == KRB5.MIT:
+            ktutil = await Popen(['ktutil'],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 stdin=subprocess.PIPE)
+            output = await ktutil.communicate(f'rkt {kt}\nlist\nq\n'.encode())
+            if output[1]:
+                raise CallError(output[1].decode())
+            ret = '\n'.join(output[0].decode().splitlines()[4:-1])
+        else:
+            ktutil = await run(["ktutil", "-k", kt, "-v", "list"], check=False)
+            if ktutil.returncode != 0:
+                raise CallError(ktutil.stderr.decode())
+            ret = ktutil.stdout.decode()
+
+        return ret
+
+    @private
     async def _validate(self, data):
         """
         For now validation is limited to checking if we can resolve the hostnames
@@ -759,9 +893,10 @@ class KerberosKeytabService(CRUDService):
         with open(keytab['TEST'].value, "wb") as f:
             f.write(decoded)
 
-        ktutil = await run(["/usr/sbin/ktutil", "-k", keytab['TEST'].value, "list"], check=False)
-        if ktutil.returncode != 0:
-            verrors.add("kerberos.keytab_create", f"Failed to validate keytab: [{ktutil.stderr.decode().strip()}]")
+        try:
+            await self.do_ktutil_list({"kt_name": keytab['TEST'].value})
+        except CallError as e:
+            verrors.add("kerberos.keytab_create", f"Failed to validate keytab: [{e.errmsg}]")
 
         os.unlink(keytab['TEST'].value)
 
@@ -769,17 +904,18 @@ class KerberosKeytabService(CRUDService):
 
     @private
     async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
-        """
-        Parse ktutil output.
-        """
         keytab_entries = []
-        kt_list = await run(
-            ["/usr/sbin/ktutil", "-k", keytab_file, "-v", "list"], check=False
-        )
-        if kt_list.returncode != 0:
-            raise CallError(f'ktutil list for keytab [{keytab_file}] failed with error: {kt_list.stderr.decode()}')
-        kt_list_output = kt_list.stdout.decode()
-        if kt_list_output:
+        try:
+            kt_list_output = await self.do_ktutil_list({"kt_name": keytab_file})
+        except Exception as e:
+            self.logger.warning("Failed to list kerberos keytab [%s]: %s",
+                                keytab_file, e)
+            kt_list_output = None
+
+        if not kt_list_output:
+            return keytab_entries
+
+        if KRB5.platform() == KRB5.HEIMDAL:
             for line in kt_list_output.splitlines():
                 fields = line.split()
                 if len(fields) >= 4 and fields[0] != 'Vno':
@@ -794,6 +930,14 @@ class KerberosKeytabService(CRUDService):
                         'date': time.strptime(fields[3], '%Y-%m-%d'),
                         'aliases': fields[4].split() if len(fields) == 5 else []
                     })
+        else:
+            for line in kt_list_output.splitlines():
+                fields = line.split()
+                keytab_entries.append({
+                    'slot': fields[0],
+                    'kvno': fields[1],
+                    'principal': fields[2],
+                })
 
         return keytab_entries
 
@@ -815,10 +959,10 @@ class KerberosKeytabService(CRUDService):
         """
         Generate list of Kerberos principals that are not the AD machine account.
         """
-        smb = await self.middleware.call('smb.config')
+        ad = await self.middleware.call('activedirectory.config')
         pruned_list = []
         for i in keytab_list:
-            if smb['netbiosname'].upper() not in i['principal'].upper():
+            if ad['netbiosname'].upper() not in i['principal'].upper():
                 pruned_list.append(i)
 
         return pruned_list
@@ -831,14 +975,26 @@ class KerberosKeytabService(CRUDService):
         """
         if os.path.exists(keytab['SAMBA'].value):
             os.remove(keytab['SAMBA'].value)
-        kt_copy = await run([
-            '/usr/sbin/ktutil', 'copy',
-            keytab['SYSTEM'].value,
-            keytab['SAMBA'].value],
-            check=False
-        )
-        if kt_copy.stderr.decode():
-            raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
+
+        if KRB5.platform() == KRB5.HEIMDAL:
+            kt_copy = await run([
+                'ktutil', 'copy',
+                keytab['SYSTEM'].value,
+                keytab['SAMBA'].value],
+                check=False
+            )
+            if kt_copy.stderr.decode():
+                raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
+        else:
+            kt_copy = await Popen(['ktutil'],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 stdin=subprocess.PIPE)
+            output = await kt_copy.communicate(
+                f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}'.encode()
+            )
+            if output[1]:
+                raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {output[1].decode()}")
 
     @private
     async def _prune_keytab_principals(self, to_delete=[]):
@@ -846,29 +1002,46 @@ class KerberosKeytabService(CRUDService):
         Delete all keytab entries from the tmp keytab that are not samba entries.
         """
         seen_principals = []
-        for i in to_delete:
-            if i['principal'] in seen_principals:
-                continue
+        if KRB5.platform() == KRB5.HEIMDAL:
+            for i in to_delete:
+                if i['principal'] in seen_principals:
+                    continue
+                ktutil_remove = await run([
+                    'ktutil',
+                    '-k', keytab['SAMBA'].value,
+                    'remove',
+                    '-p', i['principal']],
+                    check=False
+                )
+                if ktutil_remove.stderr.decode():
+                    raise CallError(f"ktutil_remove failed for [{i}]: {ktutil_remove.stderr.decode()}")
+                seen_principals.append(i['principal'])
 
-            ktutil_remove = await run([
-                '/usr/sbin/ktutil',
-                '-k', keytab['SAMBA'].value,
-                'remove',
-                '-p', i['principal']],
-                check=False
-            )
-            seen_principals.append(i['principal'])
-            if ktutil_remove.stderr.decode():
-                raise CallError(f"ktutil_remove failed for [{i}]: {ktutil_remove.stderr.decode()}")
+        else:
+            rkt = f"rkt {keytab.SAMBA.value}"
+            wkt = f"wkt {keytab.SAMBA.value}"
+            for i in reversed(to_delete):
+                ktutil_remove = await Popen(['ktutil'],
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE,
+                                            stdin=subprocess.PIPE)
+                output = await ktutil_remove.communicate(
+                    f'{rkt}\ndelent {i["slot"]}\n{wkt}'
+                )
+                if output[1]:
+                    raise CallError(output[1].decode())
 
     @private
     async def kerberos_principal_choices(self):
         """
         Keytabs typically have multiple entries for same principal (differentiated by enc_type).
         Since the enctype isn't relevant in this situation, only show unique principal names.
-        _ktutil_list() will raise exception if system keytab doesn't exist. In this case, return
-        empty list.
+
+        Return empty list if system keytab doesn't exist.
         """
+        if not os.path.exists(keytab['SYSTEM'].value):
+            return []
+
         try:
             keytab_list = await self._ktutil_list()
         except Exception as e:
@@ -881,6 +1054,18 @@ class KerberosKeytabService(CRUDService):
                 kerberos_principals.append(entry['principal'])
 
         return sorted(kerberos_principals)
+
+    @private
+    async def has_nfs_principal(self):
+        """
+        This method checks whether the kerberos keytab contains an nfs service principal
+        """
+        principals = await self.kerberos_principal_choices()
+        for p in principals:
+            if p.startswith("nfs/"):
+                return True
+
+        return False
 
     @private
     async def store_samba_keytab(self):
@@ -909,17 +1094,17 @@ class KerberosKeytabService(CRUDService):
             self.logger.debug(f"Failed to generate b64encoded version of {keytab['SAMBA'].name}")
             return False
 
-        encrypted_keytab = await self.middleware.call('pwenc.encrypt', encoded_keytab.decode())
+        keytab_file = encoded_keytab.decode()
         entry = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
         if not entry:
             await self.middleware.call(
                 'datastore.insert',
                 'directoryservice.kerberoskeytab',
-                {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': encrypted_keytab}
+                {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': keytab_file}
             )
         else:
             id = entry[0]['id']
-            updated_entry = {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': encrypted_keytab}
+            updated_entry = {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': keytab_file}
             await self.middleware.call('datastore.update', 'directoryservice.kerberoskeytab', id, updated_entry)
 
         sambakt = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
@@ -934,10 +1119,17 @@ class KerberosKeytabService(CRUDService):
         assume that samba has updated it behind the scenes and that the configuration
         database needs to be updated to reflect the change.
         """
+        if not await self.middleware.call('system.ready'):
+            return
+
         old_mtime = 0
         ad_state = await self.middleware.call('activedirectory.get_state')
         if ad_state == 'DISABLED' or not os.path.exists(keytab['SYSTEM'].value):
             return
+
+        if (await self.middleware.call("smb.get_smb_ha_mode")) == "LEGACY":
+            return
+
         if await self.middleware.call('cache.has_key', 'KEYTAB_MTIME'):
             old_mtime = await self.middleware.call('cache.get', 'KEYTAB_MTIME')
 
@@ -945,6 +1137,15 @@ class KerberosKeytabService(CRUDService):
         if old_mtime == new_mtime:
             return
 
+        ts = await self.middleware.call('directoryservices.get_last_password_change')
+        if ts['dbconfig'] == ts['secrets']:
+            return
+
+        self.logger.debug("Machine account password has changed. Stored copies of "
+                          "kerberos keytab and directory services secrets will now "
+                          "be updated.")
+
+        await self.middleware.call('directoryservices.backup_secrets')
         await self.store_samba_keytab()
         self.logger.trace('Updating stored AD machine account kerberos keytab')
         await self.middleware.call(

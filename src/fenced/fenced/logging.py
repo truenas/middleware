@@ -1,4 +1,4 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -7,6 +7,9 @@
 import logging
 import logging.config
 import logging.handlers
+import os
+
+LOG_FILE = '/root/syslog/fenced.log'
 
 
 class FaultSysLogHandler(logging.handlers.SysLogHandler):
@@ -25,13 +28,26 @@ class FaultSysLogHandler(logging.handlers.SysLogHandler):
             self.sock = None
 
 
+def ensure_logdir_exists():
+    """
+    We need to ensure that the directory in `LOG_FILE` exists
+    so logging works
+    """
+    dirname = os.path.dirname(LOG_FILE)
+    os.makedirs(dirname, exist_ok=True)
+
+
 def setup_logging(foreground):
+
+    ensure_logdir_exists()
+
     logging.config.dictConfig({
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
             'simple': {
-                'format': '[%(name)s:%(lineno)s] %(message)s',
+                'format': '[%(asctime)s - %(name)s:%(lineno)s] %(message)s',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
             },
         },
         'handlers': {
@@ -42,6 +58,14 @@ def setup_logging(foreground):
                 'level': 'INFO',
                 'facility': 'daemon',
             },
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'formatter': 'simple',
+                'level': 'ERROR',
+                'filename': LOG_FILE,
+                'maxBytes': 1000000,  # 1MB size
+                'backupCount': '3',
+            },
             'console': {
                 'class': 'logging.StreamHandler',
                 'formatter': 'simple',
@@ -51,10 +75,9 @@ def setup_logging(foreground):
         },
         'loggers': {
             '': {
-                'handlers': ['console', 'syslog'],
+                'handlers': ['console', 'syslog', 'file'],
                 'level': 'DEBUG',
                 'propagate': True,
             },
         },
     })
-

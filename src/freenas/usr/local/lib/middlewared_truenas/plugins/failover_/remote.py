@@ -1,8 +1,9 @@
-# Copyright (c) 2015 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
+
 from middlewared.client import Client, ClientException, CallTimeout
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, Service, job, private
@@ -33,6 +34,7 @@ class RemoteClient(object):
         self._subscriptions = defaultdict(list)
         self._on_connect_callbacks = []
         self._on_disconnect_callbacks = []
+        self._remote_os_version = None
 
     def run(self):
         set_thread_name('ha_connection')
@@ -53,11 +55,7 @@ class RemoteClient(object):
 
     def connect_and_wait(self):
         try:
-            # 860 is the iSCSI port and blocked by the failover script
-            with Client(
-                f'ws://{self.remote_ip}:6000/websocket',
-                reserved_ports=True, reserved_ports_blacklist=[860],
-            ) as c:
+            with Client(f'ws://{self.remote_ip}:6000/websocket', reserved_ports=True) as c:
                 self.client = c
                 self.connected.set()
                 # Subscribe to all events on connection
@@ -94,6 +92,13 @@ class RemoteClient(object):
         """
         Called everytime connection has been established.
         """
+
+        # journal thread checks this attribute to ensure
+        # we're not trying to alter the remote db if the
+        # OS versions do not match since schema changes
+        # can (and do) change between upgrades
+        self._remote_os_version = self.get_remote_os_version()
+
         for cb in self._on_connect_callbacks:
             try:
                 cb(self.middleware)
@@ -110,6 +115,9 @@ class RemoteClient(object):
         """
         Called everytime connection is closed for whatever reason.
         """
+
+        self._remote_os_version = None
+
         for cb in self._on_disconnect_callbacks:
             try:
                 cb(self.middleware)
@@ -120,13 +128,13 @@ class RemoteClient(object):
         try:
             if not self.connected.wait(timeout=20):
                 if self.remote_ip is None:
-                    raise CallError('Unable to determine remote node IP')
+                    raise CallError('Unable to determine remote node IP', errno.EHOSTUNREACH)
                 raise CallError('Remote connection unavailable', errno.ECONNREFUSED)
             return self.client.call(*args, **kwargs)
         except AttributeError as e:
             # ws4py traceback which can happen when connection is lost
             if "'NoneType' object has no attribute 'text_message'" in str(e):
-                raise CallError('Remote connection closed.', errno.EREMOTE)
+                raise CallError('Remote connection closed.', errno.ECONNRESET)
             else:
                 raise
         except ClientException as e:
@@ -178,6 +186,16 @@ class RemoteClient(object):
                     break
             time.sleep(0.5)
 
+    def get_remote_os_version(self):
+
+        if self._remote_os_version is None:
+            try:
+                self._remote_os_version = self.client.call('system.version')
+            except Exception:
+                logger.error('Failed to determine OS version', exc_info=True)
+
+        return self._remote_os_version
+
 
 class FailoverService(Service):
 
@@ -191,7 +209,7 @@ class FailoverService(Service):
         elif node == 'B':
             remote = '169.254.10.1'
         else:
-            raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
+            raise CallError(f'Node {node} invalid for call_remote', errno.EHOSTUNREACH)
         return remote
 
     @accepts(
@@ -217,6 +235,11 @@ class FailoverService(Service):
             return self.CLIENT.call(method, *args, **options)
         except CallTimeout:
             raise CallError('Call timeout', errno.ETIMEDOUT)
+
+    @private
+    def get_remote_os_version(self):
+
+        return self.CLIENT.get_remote_os_version()
 
     @private
     def sendfile(self, token, src, dst):

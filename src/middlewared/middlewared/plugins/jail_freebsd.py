@@ -237,6 +237,7 @@ class PluginService(CRUDService):
         `branch` is the FreeNAS repository branch to use as the base for the `plugin_repository`. The default is to
         use the current system version. Example: 11.3-RELEASE.
         """
+        self.middleware.call_sync('network.general.will_perform_activity', 'jail')
         data['plugin_repository'] = data.get('plugin_repository') or self.default_repo()
         self.middleware.call_sync('jail.check_dataset_existence')
         verrors = ValidationErrors()
@@ -259,7 +260,7 @@ class PluginService(CRUDService):
         self.middleware.call_sync(
             'jail.failover_checks', {
                 'id': jail_name, 'host_hostuuid': jail_name,
-                **self.middleware.call_sync('jail.default_configuration'),
+                **self.middleware.call_sync('jail.complete_default_configuration'),
                 **self.defaults({
                     'plugin': plugin_name, 'plugin_repository': plugin_repository, 'branch': branch, 'refresh': True
                 })['properties'],
@@ -355,37 +356,23 @@ class PluginService(CRUDService):
             Str('branch'),
         )
     )
-    @job(
-        lock=lambda args: 'available_plugins_{}_{}'.format(
-            (args or [{}])[0].get('branch'), (args or [{}])[0].get('plugin_repository')
-        )
-    )
+    @job()
     def available(self, job, options):
         """
         List available plugins which can be fetched for `plugin_repository`.
         """
+        self.middleware.call_sync('network.general.will_perform_activity', 'jail')
         default_branch = self.get_version()
         default_repo = self.default_repo()
-        branch = options.get('branch') or default_branch
-        plugin_repository = options['plugin_repository'] = options.get('plugin_repository') or default_repo
-        # If user passes no parameters we assume defaults for branch and repo which are evaluated dynamically,
-        # however if the same defaults are passed to the function, job locking can't have the latter call wait
-        # because it is unable to retrieve defaults from schema layer or access our dynamic defaults
-        # In this case we decide to wait for a job which might already be running with the specified branch/repo
-        if options['cache'] and branch == default_branch and options['plugin_repository'] == default_repo:
-            plugin_avail_job = self.middleware.call_sync(
-                'core.get_jobs', [
-                    ['method', '=', 'plugin.available'],
-                    ['state', 'in', ['RUNNING', 'WAITING']],
-                    ['arguments', '=', []],
-                    ['id', '!=', job.id]
-                ]
-            )
-            if plugin_avail_job:
-                wait_job = self.middleware.call_sync(
-                    'core.job_wait', plugin_avail_job[0]['id']
-                )
-                wait_job.wait_sync()
+        options['branch'] = options.get('branch') or default_branch
+        options['plugin_repository'] = options.get('plugin_repository') or default_repo
+        return self.middleware.call_sync('plugin.available_impl', options).wait_sync(raise_error=True)
+
+    @job(lock=lambda args: f'available_plugins_{args[0]["plugin_repository"]}_{args[0]["branch"]}')
+    @private
+    def available_impl(self, job, options):
+        branch = options['branch']
+        plugin_repository = options['plugin_repository']
 
         if options['cache']:
             with contextlib.suppress(KeyError):
@@ -484,6 +471,17 @@ class PluginService(CRUDService):
             for branch in re.findall(r'refs/heads/(.*)', cp.stdout)
         }
 
+    @accepts(
+        Str('jail'),
+        Bool('update_jail', default=True)
+    )
+    @job(lock=lambda args: f'jail_update:{args[0]}')
+    async def update(self, job, jail, update_jail=True):
+        """
+        Updates specified plugin to latest available plugin version and optionally update plugin to latest patch level.
+        """
+        return await self.middleware.call('jail.update_to_latest_patch_internal', job, jail, False, update_jail)
+
     @periodic(interval=86400)
     @private
     def periodic_plugin_update(self):
@@ -492,20 +490,90 @@ class PluginService(CRUDService):
         self.middleware.call_sync('plugin.plugin_updates')
 
     @private
+    @job(lock='plugin_versions')
+    def retrieve_plugin_versions(self, job, plugins):
+        self.middleware.call_sync('network.general.will_perform_activity', 'jail')
+        return IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins)
+
+    @private
     @job(lock='plugin_updates')
     def plugin_updates(self, job):
-        installed_plugins = self.query()
+        plugins = self.query()
+        if not plugins:
+            return
+
+        index_data = {}
+        for repo in map(lambda p: p['plugin_repository'], plugins):
+            if repo not in index_data:
+                index_obj = IOCPlugin(git_repository=repo, branch=self.get_version())
+                index = index_obj.retrieve_plugin_index_data(index_obj.git_destination, expand_abi=False)
+                if index:
+                    index_data[repo] = index
+
+        installed_plugins = []
+        for plugin in filter(
+            lambda p: index_data.get(p['plugin_repository'], {}).get(p['plugin']),
+            plugins
+        ):
+            ioc_plugin = IOCPlugin(
+                plugin=plugin['plugin'], git_repository=plugin['plugin_repository'],
+                branch=self.get_version(), jail=plugin['name'],
+            )
+
+            try:
+                plugin_manifest = ioc_plugin._plugin_json_file()
+            except Exception:
+                plugin_manifest = {}
+            installed_plugins.append({
+                **plugin,
+                'plugin_manifest': plugin_manifest,
+                'plugin_git_manifest': index_data[plugin['plugin_repository']][plugin['plugin']],
+            })
+
         if not installed_plugins:
             return
 
         # There are 2 cases, one is where we check the version of the installed plugin with available, next is
         # we check the plugin manifest version with the installed plugin's manifest. If any of the case is true,
         # we raise an alert for the plugin update
+
+        # There are 2 cases which we have to handle wrt packagesite
+        # 1) Plugin is using a packagesite which does not have ${ABI}
+        # 2) Plugin is using a packagesite which has ${ABI}
+        # Case (1) is not special and just retrieving available plugin version from it's git repository
+        # is sufficient. However with Case (2), If a user has 11.3 jail and host is 12, available version
+        # will default to using the release specified in the manifest which is usually the same as host version.
+        # So assume Host is at 12, available version release is at 12, but the jail is at 11 release. So ABI
+        # will infact expand to "FreeBSD:11:amd64" instead of "FreeBSD:12:amd64". We need to account for this
+        # in how we determine if a plugin update is available for a specified plugin
+        def major_version(version):
+            return version.split('-')[0].split('.')[0]
+
         git_repos = {}
+        custom_plugin_versions = {}
+        custom_plugin_versions_job = None
         for plugin in installed_plugins:
-            repo = plugin['plugin_repository']
-            if repo not in git_repos:
-                git_repos[repo] = self.middleware.call_sync('plugin.available', {'plugin_repository': repo})
+            if (
+                major_version(plugin['plugin_git_manifest']['release']) != major_version(plugin['release']) and
+                '${ABI}' in plugin['plugin_git_manifest']['packagesite']
+            ):
+                # If the version in new git manifest is same as major version of plugin release,
+                # we don't need to do this as plugin.available will give us similar results
+                custom_plugin_versions[plugin['name']] = {
+                    **plugin['plugin_git_manifest'],
+                    'packagesite': IOCPlugin.expand_abi_with_specified_release(
+                        plugin['plugin_git_manifest']['packagesite'], plugin['release']
+                    ),
+                }
+            else:
+                repo = plugin['plugin_repository']
+                if repo not in git_repos:
+                    git_repos[repo] = self.middleware.call_sync('plugin.available', {'plugin_repository': repo})
+
+        if custom_plugin_versions:
+            custom_plugin_versions_job = self.middleware.call_sync(
+                'plugin.retrieve_plugin_versions', custom_plugin_versions
+            )
 
         for repo, job_obj in git_repos.items():
             job_obj.wait_sync()
@@ -515,27 +583,35 @@ class PluginService(CRUDService):
             else:
                 git_repos[repo] = job_obj.result
 
+        if custom_plugin_versions_job:
+            custom_plugin_versions_job.wait_sync()
+            if custom_plugin_versions_job.error:
+                self.middleware.logger.error(
+                    'Failed to retrieve available versions for "%s" plugins: %s',
+                    ', '.join(custom_plugin_versions), custom_plugin_versions_job.error
+                )
+                custom_plugin_versions = {k: {} for k in custom_plugin_versions}
+            else:
+                custom_plugin_versions = custom_plugin_versions_job.result
+
         for plugin in installed_plugins:
-            repo = plugin['plugin_repository']
-            plugin_dict = (list(filter(lambda d: d['name'] == plugin['plugin'], git_repos[repo])) or [{}])[0]
+            if plugin['name'] in custom_plugin_versions:
+                plugin_dict = custom_plugin_versions[plugin['name']]
+                if not plugin_dict:
+                    # We were unable to retrieve available plugin versions for this plugin
+                    continue
+            else:
+                repo = plugin['plugin_repository']
+                plugin_dict = (list(filter(lambda d: d['plugin'] == plugin['plugin'], git_repos[repo])) or [{}])[0]
+
             if not plugin_dict or any(
                 plugin_dict[k] == 'N/A' or plugin[k] == 'N/A' for k in ('version', 'revision', 'epoch')
             ):
                 # We don't support update alerts for plugins without a valid port
                 continue
 
-            ioc_plugin = IOCPlugin(
-                plugin=plugin['plugin'], git_repository=repo, branch=self.get_version()
-            )
-            try:
-                plugin_git_manifest = ioc_plugin._load_plugin_json()
-            except Exception:
-                continue
-
-            try:
-                plugin_manifest = ioc_plugin._plugin_json_file()
-            except Exception:
-                plugin_manifest = {}
+            plugin_git_manifest = plugin['plugin_git_manifest']
+            plugin_manifest = plugin['plugin_manifest']
 
             # We construct our version in the following manner
             # epoch!manifest_version.version.revision
@@ -596,7 +672,8 @@ class PluginService(CRUDService):
         try:
             conn = sqlite3.connect(db)
         except sqlite3.Error as e:
-            raise CallError(e)
+            self.middleware.logger.error('Failed to connect to %r database : %s', db, str(e))
+            return []
 
         with conn:
             cur = conn.cursor()
@@ -672,21 +749,6 @@ class JailService(CRUDService):
                                 jail['ip4_addr'] = f'{interface}|ERROR'
                         else:
                             jail['ip4_addr'] = 'DHCP (not running)'
-
-                    if jail['state'] == 'up':
-                        try:
-                            jail['jid'] = su.check_output(
-                                [
-                                    'jls', '-j',
-                                    f'ioc-{jail["host_hostuuid"].replace(".", "_")}',
-                                    'jid'
-                                ]
-                            ).decode().strip()
-                        except su.CalledProcessError:
-                            jail['jid'] = 'ERROR'
-                    else:
-                        jail['jid'] = None
-
                     jails.append(jail)
         except ioc_exceptions.JailMisconfigured as e:
             self.logger.error(e, exc_info=True)
@@ -702,7 +764,7 @@ class JailService(CRUDService):
         datasets = self.middleware.call_sync(
             'zfs.dataset.query',
             [['properties.org\\.freebsd\\.ioc:active.value', '=', 'yes']],
-            {'extra': {'properties': [], 'flat': False}}
+            {'extra': {'properties': ['encryption', 'keystatus', 'mountpoint'], 'flat': False}}
         )
         return not (not datasets or not any(
             d['name'].endswith('/iocage') and (not d['encrypted'] or (d['encrypted'] and d['key_loaded']))
@@ -714,6 +776,13 @@ class JailService(CRUDService):
         """
         Retrieve default configuration for iocage jails.
         """
+        return {
+            k: v for k, v in self.complete_default_configuration().items()
+            if k not in IOCJson.default_only_props
+        }
+
+    @private
+    def complete_default_configuration(self):
         if not self.iocage_set_up():
             return IOCJson.retrieve_default_props()
         else:
@@ -782,7 +851,9 @@ class JailService(CRUDService):
             verrors = common_validation(self.middleware, options)
 
             self.failover_checks({
-                'id': uuid, 'host_hostuuid': uuid, **self.middleware.call_sync('jail.default_configuration'), **{
+                'id': uuid,
+                'host_hostuuid': uuid,
+                **self.middleware.call_sync('jail.complete_default_configuration'), **{
                     v.split('=')[0]: v.split('=')[-1] for v in options['props']
                 }
             }, verrors, 'options')
@@ -1015,6 +1086,7 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
+        self.middleware.call_sync('network.general.will_perform_activity', 'jail')
         release = options.get('release', None)
         https = options.pop('https', False)
         name = options.pop('name')
@@ -1252,6 +1324,10 @@ class JailService(CRUDService):
         ))
     def fstab(self, jail, options):
         """Manipulate a jails fstab"""
+        jail_data = self.middleware.call_sync('jail.get_instance', jail)
+        if jail_data['template'] and options['action'] != 'LIST':
+            raise CallError(f'Unable to perform {options["action"]} action as {jail} is a template.')
+
         uuid, _, iocage = self.check_jail_existence(jail, skip=False)
         status, jid = IOCList.list_get_jid(uuid)
         action = options['action'].lower()
@@ -1428,11 +1504,18 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_update:{args[0]}")
     def update_to_latest_patch(self, job, jail, update_pkgs=False):
         """Updates specified jail to latest patch level."""
+        return self.update_to_latest_patch_internal(job, jail, update_pkgs, True)
+
+    @private
+    def update_to_latest_patch_internal(self, job, jail, update_pkgs, update_jail):
         job.set_progress(0, f'Updating {jail}')
         msg_queue = deque(maxlen=10)
 
         def progress_callback(content, exception):
             msg = content['message'].strip('\n')
+            if 'No updates needed to update system' in msg:
+                raise CallError(f'No updates available for {jail}')
+
             if content['level'] == 'EXCEPTION':
                 raise exception(msg)
 
@@ -1456,7 +1539,7 @@ class JailService(CRUDService):
             jail,
             callback=progress_callback
         )
-        iocage.update(update_pkgs)
+        iocage.update(update_pkgs, update_jail)
 
         return True
 
@@ -1590,7 +1673,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'jail'
     title = 'Jail'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         results = []
 
         if not await self.middleware.call('jail.iocage_set_up'):
@@ -1605,7 +1688,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
             if not activated_pool:
                 return results
             if activated_pool == query_dataset or query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
-                for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
+                for j in await self.middleware.call('jail.query', [['OR', [('state', '=', 'up'), ('boot', '=', 1)]]]):
                     results.append({'id': j['host_hostuuid']})
 
         return results
@@ -1628,9 +1711,16 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.warning('Unable to %s %r', action, attachment['id'], exc_info=True)
 
+    async def stop(self, attachments):
+        await self.toggle(attachments, False)
+
+    async def start(self, attachments):
+        await self.toggle(attachments, True)
+
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', JailFSAttachmentDelegate(middleware))
+    await middleware.call('network.general.register_activity', 'jail', 'Plugin registry')
     middleware.register_hook('pool.pre_lock', jail_pool_pre_lock)
     middleware.event_subscribe('system', __event_system)
     ioc_common.set_interactive(False)

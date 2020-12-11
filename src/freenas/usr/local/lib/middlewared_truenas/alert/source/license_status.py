@@ -1,4 +1,4 @@
-# Copyright (c) 2015 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -6,12 +6,9 @@
 
 from collections import defaultdict
 from datetime import date, timedelta
-import subprocess
 import textwrap
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
-
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 
 class LicenseAlertClass(AlertClass):
@@ -20,7 +17,7 @@ class LicenseAlertClass(AlertClass):
     title = "TrueNAS License Issue"
     text = "%s"
 
-    products = ("ENTERPRISE",)
+    products = ("ENTERPRISE", "SCALE_ENTERPRISE")
 
 
 class LicenseIsExpiringAlertClass(AlertClass):
@@ -29,7 +26,7 @@ class LicenseIsExpiringAlertClass(AlertClass):
     title = "TrueNAS License Is Expiring"
     text = "%s"
 
-    products = ("ENTERPRISE",)
+    products = ("ENTERPRISE", "SCALE_ENTERPRISE")
 
 
 class LicenseHasExpiredAlertClass(AlertClass):
@@ -38,11 +35,11 @@ class LicenseHasExpiredAlertClass(AlertClass):
     title = "TrueNAS License Has Expired"
     text = "%s"
 
-    products = ("ENTERPRISE",)
+    products = ("ENTERPRISE", "SCALE_ENTERPRISE")
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
-    products = ("ENTERPRISE",)
+    products = ("ENTERPRISE", "SCALE_ENTERPRISE")
     run_on_backup_node = False
 
     def check_sync(self):
@@ -51,11 +48,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         if license is None:
             return Alert(LicenseAlertClass, "Your TrueNAS has no license, contact support.")
 
-        proc = subprocess.Popen([
-            '/usr/local/sbin/dmidecode',
-            '-s', 'system-serial-number',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        serial = proc.communicate()[0].split('\n', 1)[0].strip()
+        serial = self.middleware.call_sync('system.dmidecode_info')['system-serial-number']
 
         if license['system_serial'] != serial and license['system_serial_ha'] != serial:
             alerts.append(Alert(LicenseAlertClass, 'System serial does not match license.'))
@@ -108,7 +101,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         ) % license['model']
                     ))
             else:
-                if hardware[0] in ('M40', 'M50', 'X10', 'X20', 'Z20', 'Z30', 'Z35', 'Z50'):
+                if hardware[0] in ('M40', 'M50', 'M60', 'R10', 'R20', 'R40', 'R50', 'X10', 'X20', 'Z20', 'Z30', 'Z35',
+                                   'Z50'):
                     if hardware[0] != license['model']:
                         alerts.append(Alert(
                             LicenseAlertClass,
@@ -192,6 +186,45 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                                 'License expects %(license)s units of ES24 Expansion shelf but found %(found)s.' % {
                                     'license': addhw[0],
                                     'found': enc_nums['ES24'],
+                                }
+                            )
+                        ))
+
+                # ES24F Expansion shelf
+                if addhw[1] == 7:
+                    if enc_nums['ES24F'] != addhw[0]:
+                        alerts.append(Alert(
+                            LicenseAlertClass,
+                            (
+                                'License expects %(license)s units of ES24F Expansion shelf but found %(found)s.' % {
+                                    'license': addhw[0],
+                                    'found': enc_nums['ES24F'],
+                                }
+                            )
+                        ))
+
+                # ES60S Expansion shelf
+                if addhw[1] == 8:
+                    if enc_nums['ES60S'] != addhw[0]:
+                        alerts.append(Alert(
+                            LicenseAlertClass,
+                            (
+                                'License expects %(license)s units of ES60S Expansion shelf but found %(found)s.' % {
+                                    'license': addhw[0],
+                                    'found': enc_nums['ES60S'],
+                                }
+                            )
+                        ))
+
+                # ES102 Expansion shelf
+                if addhw[1] == 9:
+                    if enc_nums['ES102'] != addhw[0]:
+                        alerts.append(Alert(
+                            LicenseAlertClass,
+                            (
+                                'License expects %(license)s units of ES102 Expansion shelf but found %(found)s.' % {
+                                    'license': addhw[0],
+                                    'found': enc_nums['ES102'],
                                 }
                             )
                         ))

@@ -119,6 +119,12 @@ class SSHKeyPair(KeychainCredentialType):
 
     async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
         if attributes["private_key"]:
+            # TODO: It would be best if we use crypto plugin for this but as of right now we don't have support
+            #  for openssh keys -
+            #  https://stackoverflow.com/questions/59029092/how-to-load-openssh-private-key-using-cryptography-python-module
+            #  so we keep on using ssh-keygen for now until that is properly supported in cryptography module.
+
+            attributes["private_key"] = (attributes["private_key"].strip()) + "\n"
             with tempfile.NamedTemporaryFile("w+") as f:
                 os.chmod(f.name, 0o600)
 
@@ -138,7 +144,7 @@ class SSHKeyPair(KeychainCredentialType):
                     return
 
             if attributes["public_key"]:
-                if " ".join(attributes["public_key"].split()[:2]).strip() != public_key.strip():
+                if self._normalize_public_key(attributes["public_key"]) != self._normalize_public_key(public_key):
                     verrors.add(f"{schema_name}.public_key", "Private key and public key do not match")
             else:
                 attributes["public_key"] = public_key
@@ -157,6 +163,9 @@ class SSHKeyPair(KeychainCredentialType):
             if proc.returncode != 0:
                 verrors.add(f"{schema_name}.public_key", "Invalid public key")
                 return
+
+    def _normalize_public_key(self, public_key):
+        return " ".join(public_key.split()[:2]).strip()
 
 
 class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
@@ -514,13 +523,13 @@ class KeychainCredentialService(CRUDService):
                 try:
                     return process_ssh_keyscan_output(proc.stdout)
                 except Exception:
-                    raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}") from None
+                    raise CallError(f"ssh-keyscan failed: {proc.stdout + proc.stderr}") from None
             elif proc.stderr:
-                raise CallError(f"ssh-keyscan failed: {proc.stderr!r}")
+                raise CallError(f"ssh-keyscan failed: {proc.stderr}")
             else:
                 raise CallError("SSH timeout")
         else:
-            raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}")
+            raise CallError(f"ssh-keyscan failed: {proc.stdout + proc.stderr}")
 
     @accepts(Dict(
         "keychain_remote_ssh_semiautomatic_setup",

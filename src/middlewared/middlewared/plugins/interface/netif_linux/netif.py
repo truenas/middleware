@@ -17,17 +17,17 @@ __all__ = ["AggregationProtocol", "create_vlan", "create_interface", "destroy_in
 def create_interface(name):
     if name.startswith("br"):
         create_bridge(name)
-        return
+        return name
 
     if name.startswith("bond"):
         create_lagg(name)
-        return
+        return name
 
     raise ValueError(f"Invalid interface name: {name!r}")
 
 
 def destroy_interface(name):
-    if name.startswith(("bond", "br", "vlan")):
+    if name.startswith(("bond", "br", "vlan", "kube-bridge")):
         run(["ip", "link", "delete", name])
     else:
         run(["ip", "link", "set", name, "down"])

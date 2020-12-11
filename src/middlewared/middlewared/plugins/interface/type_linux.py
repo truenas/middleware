@@ -9,7 +9,7 @@ class InterfaceService(Service, InterfaceTypeBase):
         namespace_alias = 'interfaces'
 
     async def type(self, iface_state):
-        if iface_state['name'].startswith('br'):
+        if iface_state['name'].startswith(('br', 'kube-bridge')):
             return InterfaceType.BRIDGE
         elif iface_state['name'].startswith('bond'):
             return InterfaceType.LINK_AGGREGATION

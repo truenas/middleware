@@ -1,0 +1,11 @@
+[Unit]
+Description=SNMP Agent
+After=snmpd.service
+
+[Service]
+ExecStart=/usr/local/bin/snmp-agent.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

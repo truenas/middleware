@@ -15,6 +15,7 @@ load_rc_config $name
 
 : ${snmp_agent_enable:="NO"}
 
+PATH="$PATH:/usr/local/bin"
 pidfile=/var/run/snmp-agent.pid
 command="/usr/sbin/daemon"
 command_args="-f -P ${pidfile} -r /usr/local/bin/snmp-agent.py"

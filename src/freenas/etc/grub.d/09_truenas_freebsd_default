@@ -1,0 +1,3 @@
+#!/bin/sh
+midclt call update.freebsd_grub false 2> /dev/null
+exit 0

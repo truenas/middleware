@@ -15,7 +15,7 @@ class DiskService(Service, DiskSwapMirrorBase):
         extra = options['extra']
         cp = await run(
             'mdadm', '--build', os.path.join('/dev/md', name), f'--level={extra.get("level", 1)}',
-            f'--raid-devices={len(options["paths"])}', *options['paths'], encoding='utf8'
+            f'--raid-devices={len(options["paths"])}', *options['paths'], encoding='utf8', check=False,
         )
         if cp.returncode:
             raise CallError(f'Failed to create mirror {name}: {cp.stderr}')

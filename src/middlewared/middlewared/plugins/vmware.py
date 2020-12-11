@@ -1,14 +1,13 @@
 from collections import defaultdict
 from datetime import datetime
 import errno
-import os
 import socket
 import ssl
 import uuid
 
 from middlewared.async_validators import resolve_hostname
 from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 
 from pyVim import connect, task as VimTask
@@ -21,7 +20,7 @@ class VMWareModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     hostname = sa.Column(sa.String(200))
     username = sa.Column(sa.String(200))
-    password = sa.Column(sa.String(200))
+    password = sa.Column(sa.EncryptedText())
     filesystem = sa.Column(sa.String(200))
     datastore = sa.Column(sa.String(200))
 
@@ -30,12 +29,6 @@ class VMWareService(CRUDService):
 
     class Config:
         datastore = 'storage.vmwareplugin'
-        datastore_extend = 'vmware.item_extend'
-
-    @private
-    async def item_extend(self, item):
-        item['password'] = await self.middleware.call('pwenc.decrypt', item['password'])
-        return item
 
     @private
     async def validate_data(self, data, schema_name):
@@ -98,8 +91,6 @@ class VMWareService(CRUDService):
         """
         await self.validate_data(data, 'vmware_create')
 
-        data['password'] = await self.middleware.call('pwenc.encrypt', data['password'])
-
         data['id'] = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -123,16 +114,12 @@ class VMWareService(CRUDService):
 
         await self.validate_data(new, 'vmware_update')
 
-        new['password'] = await self.middleware.call('pwenc.encrypt', new['password'])
-
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
             id,
             new,
         )
-
-        await self.middleware.run_in_thread(self._cleanup_legacy_alerts)
 
         return await self._get_instance(id)
 
@@ -149,8 +136,6 @@ class VMWareService(CRUDService):
             self._config.datastore,
             id
         )
-
-        await self.middleware.run_in_thread(self._cleanup_legacy_alerts)
 
         return response
 
@@ -291,6 +276,8 @@ class VMWareService(CRUDService):
         }
 
     def __get_datastores(self, data):
+        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
+
         try:
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             ssl_context.verify_mode = ssl.CERT_NONE
@@ -362,6 +349,7 @@ class VMWareService(CRUDService):
         """
         Returns Virtual Machines on the VMWare host identified by `pk`.
         """
+        await self.middleware.call('network.general.will_perform_activity', 'vmware')
 
         item = await self.query([('id', '=', pk)], {'get': True})
 
@@ -409,6 +397,8 @@ class VMWareService(CRUDService):
 
     @private
     def snapshot_begin(self, dataset, recursive):
+        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
+
         # If there's a VMWare Plugin object for this filesystem
         # snapshot the VMs before taking the ZFS snapshot.
         # Once we've taken the ZFS snapshot we're going to log back in
@@ -417,14 +407,13 @@ class VMWareService(CRUDService):
         # the performance of your VMs.
         qs = self._dataset_get_vms(dataset, recursive)
 
-        # Generate a unique snapshot name that (hopefully) won't collide with anything
-        # that exists on the VMWare side.
+        # Generate a unique snapshot name that won't collide with anything that exists on the VMWare side.
         vmsnapname = str(uuid.uuid4())
 
         # Generate a helpful description that is visible on the VMWare side.  Since we
         # are going to be creating VMWare snaps, if one gets left dangling this will
         # help determine where it came from.
-        vmsnapdescription = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} FreeNAS Created Snapshot"
+        vmsnapdescription = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} TrueNAS Created Snapshot"
 
         # We keep track of snapshots per VMWare "task" because we are going to iterate
         # over all the VMWare tasks for a given ZFS filesystem, do all the VMWare snapshotting
@@ -459,10 +448,10 @@ class VMWareService(CRUDService):
                 if self._doesVMDependOnDataStore(vm, vmsnapobj["datastore"]):
                     try:
                         if self._canSnapshotVM(vm):
-                            if not self._doesVMSnapshotByNameExists(vm, vmsnapname):
+                            if not self._findVMSnapshotByName(vm, vmsnapname):
                                 # have we already created a snapshot of the VM for this volume
                                 # iteration? can happen if the VM uses two datasets (a and b)
-                                # where both datasets are mapped to the same ZFS volume in FreeNAS.
+                                # where both datasets are mapped to the same ZFS volume in TrueNAS.
                                 VimTask.WaitForTask(vm.CreateSnapshot_Task(
                                     name=vmsnapname,
                                     description=vmsnapdescription,
@@ -518,6 +507,8 @@ class VMWareService(CRUDService):
 
     @private
     def snapshot_end(self, context):
+        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
+
         vmsnapname = context["vmsnapname"]
 
         for elem in context["vmsnapobjs"]:
@@ -543,9 +534,9 @@ class VMWareService(CRUDService):
                 if [vm_uuid, vm.name] not in elem["snapvmfails"] and vm_uuid not in elem["snapvmskips"]:
                     # The test above is paranoia.  It shouldn't be possible for a vm to
                     # be in more than one of the three dictionaries.
-                    snap = self._doesVMSnapshotByNameExists(vm, vmsnapname)
+                    snap = self._findVMSnapshotByName(vm, vmsnapname)
                     try:
-                        if snap is not False:
+                        if snap:
                             VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
                     except Exception as e:
                         self.logger.debug("Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True)
@@ -559,7 +550,8 @@ class VMWareService(CRUDService):
             connect.Disconnect(si)
 
     @private
-    def periodic_snapshot_task_begin(self, task_id):
+    @job()
+    def periodic_snapshot_task_begin(self, job, task_id):
         task = self.middleware.call_sync("pool.snapshottask.query",
                                          [["id", "=", task_id]],
                                          {"get": True})
@@ -567,7 +559,8 @@ class VMWareService(CRUDService):
         return self.snapshot_begin(task["dataset"], task["recursive"])
 
     @private
-    def periodic_snapshot_task_end(self, context):
+    @job()
+    def periodic_snapshot_task_end(self, job, context):
         return self.snapshot_end(context)
 
     # Check if a VM is using a certain datastore
@@ -605,21 +598,34 @@ class VMWareService(CRUDService):
 
         return True
 
-    # check if there is already a snapshot by a given name
-    def _doesVMSnapshotByNameExists(self, vm, snapshotName):
+    def _findVMSnapshotByName(self, vm, snapshotName):
         try:
-            tree = vm.snapshot.rootSnapshotList
-            while tree[0].childSnapshotList is not None:
-                snap = tree[0]
-                if snap.name == snapshotName:
-                    return snap.snapshot
-                if len(tree[0].childSnapshotList) < 1:
-                    break
-                tree = tree[0].childSnapshotList
-        except Exception:
-            self.logger.debug('Exception in doesVMSnapshotByNameExists', exc_info=True)
+            if vm.snapshot is None:
+                return None
 
-        return False
+            for tree in vm.snapshot.rootSnapshotList:
+                result = self._findVMSnapshotByNameInTree(tree, snapshotName)
+                if result:
+                    return result
+        except Exception:
+            self.logger.debug('Exception in _findVMSnapshotByName', exc_info=True)
+
+        return None
+
+    def _findVMSnapshotByNameInTree(self, tree, snapshotName):
+        if tree.name == snapshotName:
+            return tree.snapshot
+
+        for i in tree.childSnapshotList:
+            if i.name == snapshotName:
+                return i.snapshot
+
+            if hasattr(i, "childSnapshotList"):
+                result = self._findVMSnapshotByNameInTree(i, snapshotName)
+                if result:
+                    return result
+
+        return None
 
     def _vmware_exception_message(self, e):
         if hasattr(e, "msg"):
@@ -636,9 +642,6 @@ class VMWareService(CRUDService):
     def _delete_vmware_login_failed_alert(self, vmsnapobj):
         self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
 
-    def _cleanup_legacy_alerts(self):
-        for f in ("/var/tmp/.vmwaresnap_fails", "/var/tmp/.vmwarelogin_fails", "/var/tmp/.vmwaresnapdelete_fails"):
-            try:
-                os.unlink(f)
-            except Exception:
-                pass
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'vmware', 'VMware Snapshots')

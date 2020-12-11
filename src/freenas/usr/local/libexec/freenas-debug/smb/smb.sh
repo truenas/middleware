@@ -26,7 +26,8 @@
 #
 #####################################################################
 
-
+SMBCONF=${SAMBA_CONF:-"/etc/smb4.conf"}
+SMBSHARECONF=${SAMBA_SHARE_CONF:-"/etc/smb4_share.conf"}
 smb_opt() { echo C; }
 smb_help() { echo "Dump SMB Configuration"; }
 smb_directory() { echo "SMB"; }
@@ -74,12 +75,12 @@ smb_func()
 	#
 	#	Dump samba configuration
 	#
-	section_header "${SAMBA_CONF}"
-	sc "${SAMBA_CONF}"
+	section_header "${SMBCONF}"
+	sc "${SMBCONF}"
 	section_footer
 
-	section_header "${SAMBA_SHARE_CONF}"
-	sc "${SAMBA_SHARE_CONF}"
+	section_header "${SMBSHARECONF}"
+	net conf list
 	section_footer
 
 	local IFS="|"
@@ -134,11 +135,16 @@ smb_func()
 	smbstatus -L | head -50
 	section_footer
 	
-	section_header "ACLs - 'sharesec --view-all'"
-	sharesec --view-all
+	section_header "ACLs - 'midclt call smb.sharesec.query'"
+	midclt call smb.sharesec.query | jq
 	section_footer
 
 	section_header "Local users in passdb.tdb"
-	pdbedit -Lv
+	midclt call smb.passdb_list true | jq
+	section_footer
+
+	section_header "Database Dump"
+	midclt call smb.config | jq
+	midclt call sharing.smb.query | jq
 	section_footer
 }

@@ -1,9 +1,9 @@
 import asyncio
 import os
 
-from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
-from middlewared.service import CRUDService, SystemServiceService, private
+from middlewared.service import SharingService, SystemServiceService, private
 import middlewared.sqlalchemy as sa
 
 
@@ -16,9 +16,12 @@ class WebDAVSharingModel(sa.Model):
     webdav_path = sa.Column(sa.String(255))
     webdav_ro = sa.Column(sa.Boolean(), default=False)
     webdav_perm = sa.Column(sa.Boolean(), default=True)
+    webdav_enabled = sa.Column(sa.Boolean(), default=True)
 
 
-class WebDAVSharingService(CRUDService):
+class WebDAVSharingService(SharingService):
+
+    share_task_type = 'WebDAV'
 
     class Config:
         datastore = 'sharing.webdav_share'
@@ -28,34 +31,18 @@ class WebDAVSharingService(CRUDService):
     @private
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
+        await self.validate_path_field(data, schema, verrors)
 
-        path = data.get('path')
-        if not path:
-            verrors.add(
-                f'{schema}.path',
-                'This field is required'
-            )
-        else:
-            await check_path_resides_within_volume(verrors, self.middleware, f'{schema}.path', data['path'])
-
-        name = data.get('name')
-        if not name:
+        if not data['name'].isalnum():
             verrors.add(
                 f'{schema}.name',
-                'This field is required'
+                'Only alphanumeric characters are allowed'
             )
-        else:
-            if not name.isalnum():
-                verrors.add(
-                    f'{schema}.name',
-                    'Only AlphaNumeric characters are allowed'
-                )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
-        if not os.path.exists(path):
-            os.makedirs(path)
+        if not os.path.exists(data[self.path_field]):
+            os.makedirs(data[self.path_field])
 
     @accepts(
         Dict(
@@ -63,8 +50,9 @@ class WebDAVSharingService(CRUDService):
             Bool('perm', default=True),
             Bool('ro', default=False),
             Str('comment'),
-            Str('name', required=True),
-            Str('path', required=True),
+            Str('name', required=True, empty=False),
+            Str('path', required=True, empty=False),
+            Bool('enabled', default=True),
             register=True
         )
     )
@@ -96,7 +84,7 @@ class WebDAVSharingService(CRUDService):
 
         await self._service_change('webdav', 'reload')
 
-        return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id', required=True),
@@ -115,7 +103,7 @@ class WebDAVSharingService(CRUDService):
         await self.validate_data(new, 'webdav_share_update')
 
         if len(set(old.items()) ^ set(new.items())) > 0:
-
+            new.pop(self.locked_field)
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
@@ -134,7 +122,7 @@ class WebDAVSharingService(CRUDService):
                 'options': {'recursive': True}
             })
 
-        return await self.query(filters=[('id', '=', id)], options={'get': True})
+        return await self.get_instance(id)
 
     @accepts(
         Int('id')
@@ -162,7 +150,7 @@ class WebDAVModel(sa.Model):
     webdav_protocol = sa.Column(sa.String(120), default="http")
     webdav_tcpport = sa.Column(sa.Integer(), default=8080)
     webdav_tcpportssl = sa.Column(sa.Integer(), default=8081)
-    webdav_password = sa.Column(sa.String(120), default="davtest")
+    webdav_password = sa.Column(sa.EncryptedText(), default='davtest')
     webdav_htauth = sa.Column(sa.String(120), default='digest')
     webdav_certssl_id = sa.Column(sa.ForeignKey('system_certificate.id'), nullable=True)
 
@@ -261,6 +249,10 @@ async def pool_post_import(middleware, pool):
     """
     Makes sure to reload WebDAV if a pool is imported and there are shares configured for it.
     """
+    if pool is None:
+        asyncio.ensure_future(middleware.call('etc.generate', 'webdav'))
+        return
+
     path = f'/mnt/{pool["name"]}'
     if await middleware.call('sharing.webdav.query', [
         ('OR', [
@@ -271,5 +263,16 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'webdav'))
 
 
+class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):
+    name = 'webdav'
+    title = 'WebDAV Share'
+    service = 'webdav'
+    service_class = WebDAVSharingService
+
+    async def restart_reload_services(self, attachments):
+        await self._service_change('webdav', 'reload')
+
+
 async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', WebDAVFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)

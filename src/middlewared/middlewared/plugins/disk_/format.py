@@ -1,9 +1,7 @@
-import platform
 import subprocess
 
 from middlewared.service import CallError, private, Service
-
-IS_LINUX = platform.system().lower() == 'linux'
+from middlewared.utils import osc
 
 
 class DiskService(Service):
@@ -27,14 +25,14 @@ class DiskService(Service):
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
 
         # Calculate swap size.
-        swapsize = swapgb * 1024 * 1024 * 2
+        swapsize = swapgb * 1024 * 1024 * 1024 / (disk_details["sectorsize"] or 512)
         # Round up to nearest whole integral multiple of 128
         # so next partition starts at mutiple of 128.
         swapsize = (int((swapsize + 127) / 128)) * 128
 
-        commands = [] if IS_LINUX else [('gpart', 'create', '-s', 'gpt', f'/dev/{disk}')]
+        commands = [] if osc.IS_LINUX else [('gpart', 'create', '-s', 'gpt', f'/dev/{disk}')]
         if swapsize > 0:
-            if IS_LINUX:
+            if osc.IS_LINUX:
                 commands.extend([
                     (
                         'sgdisk', f'-a{int(4096/disk_details["sectorsize"])}',
@@ -48,7 +46,7 @@ class DiskService(Service):
                     ('gpart', 'add', '-a', '4k', '-t', 'freebsd-zfs', disk),
                 ])
         else:
-            if IS_LINUX:
+            if osc.IS_LINUX:
                 commands.append(
                     ('sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:0', '-t1:BF01', f'/dev/{disk}'),
                 )
@@ -57,7 +55,7 @@ class DiskService(Service):
 
         # Install a dummy boot block so system gives meaningful message if booting
         # from the wrong disk.
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             commands.append(('gpart', 'bootcode', '-b', '/boot/pmbr-datadisk', f'/dev/{disk}'))
         # TODO: Let's do the same for linux please ^^^
 
@@ -67,6 +65,9 @@ class DiskService(Service):
             )
             if cp.returncode != 0:
                 raise CallError(f'Unable to GPT format the disk "{disk}": {cp.stderr}')
+
+        if osc.IS_LINUX:
+            self.middleware.call_sync('device.settle_udev_events')
 
         if sync:
             # We might need to sync with reality (e.g. devname -> uuid)

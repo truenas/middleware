@@ -1,6 +1,7 @@
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc
 from middlewared.validators import Email
 
 from datetime import datetime, timedelta
@@ -92,11 +93,15 @@ class MailModel(sa.Model):
     em_security = sa.Column(sa.String(120), default="plain")
     em_smtp = sa.Column(sa.Boolean())
     em_user = sa.Column(sa.String(120), nullable=True)
-    em_pass = sa.Column(sa.String(120), nullable=True)
+    em_pass = sa.Column(sa.EncryptedText(), nullable=True)
     em_fromname = sa.Column(sa.String(120), default='')
+    em_oauth = sa.Column(sa.JSON(type=dict, encrypted=True), nullable=True)
 
 
 class MailService(ConfigService):
+
+    oauth_access_token = None
+    oauth_access_token_expires_at = None
 
     class Config:
         datastore = 'system.email'
@@ -119,6 +124,12 @@ class MailService(ConfigService):
         Bool('smtp'),
         Str('user'),
         Str('pass', private=True),
+        Dict('oauth',
+             Str('client_id', required=True),
+             Str('client_secret', required=True),
+             Str('refresh_token', required=True),
+             null=True,
+             private=True),
         register=True,
         update=True,
     ))
@@ -155,6 +166,9 @@ class MailService(ConfigService):
             raise verrors
 
         await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
+
+        await self.middleware.call('mail.gmail_initialize')
+
         return await self.config()
 
     def __password_verify(self, password, schema, verrors=None):
@@ -333,7 +347,7 @@ class MailService(ConfigService):
 
         if 'html' in message or attachments:
             msg = MIMEMultipart()
-            msg.preamble = message['text']
+            msg.preamble = 'This is a multi-part message in MIME format.'
             if 'html' in message:
                 msg2 = MIMEMultipart('alternative')
                 msg2.attach(MIMEText(message['text'], 'plain', _charset='utf-8'))
@@ -365,7 +379,7 @@ class MailService(ConfigService):
         for key, val in list(extra_headers.items()):
             # We already have "Content-Type: multipart/mixed" and setting "Content-Type: text/plain" like some scripts
             # do will break python e-mail module.
-            if key.lower() == "сontent-type":
+            if key.lower() == "content-type":
                 continue
 
             if key in msg:
@@ -375,19 +389,22 @@ class MailService(ConfigService):
 
         syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
         try:
-            server = self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname)
-            # NOTE: Don't do this.
-            #
-            # If smtplib.SMTP* tells you to run connect() first, it's because the
-            # mailserver it tried connecting to via the outgoing server argument
-            # was unreachable and it tried to connect to 'localhost' and barfed.
-            # This is because FreeNAS doesn't run a full MTA.
-            # else:
-            #    server.connect()
-            headers = '\n'.join([f'{k}: {v}' for k, v in msg._headers])
-            syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
-            server.sendmail(from_addr.encode(), to, msg.as_string())
-            server.quit()
+            if config['oauth']:
+                self.middleware.call_sync('mail.gmail_send', msg, config)
+            else:
+                server = self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname)
+                # NOTE: Don't do this.
+                #
+                # If smtplib.SMTP* tells you to run connect() first, it's because the
+                # mailserver it tried connecting to via the outgoing server argument
+                # was unreachable and it tried to connect to 'localhost' and barfed.
+                # This is because FreeNAS doesn't run a full MTA.
+                # else:
+                #    server.connect()
+                headers = '\n'.join([f'{k}: {v}' for k, v in msg._headers])
+                syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
+                server.sendmail(from_addr.encode(), to, msg.as_string())
+                server.quit()
         except Exception as e:
             # Don't spam syslog with these messages. They should only end up in the
             # test-email pane.
@@ -396,7 +413,10 @@ class MailService(ConfigService):
                 raise CallError(str(e))
             syslog.syslog(f'Failed to send email to {", ".join(to)}: {str(e)}')
             if isinstance(e, smtplib.SMTPAuthenticationError):
-                raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
+                raise CallError(
+                    f'Authentication error ({e.smtp_code}): {e.smtp_error}',
+                    errno.EAUTH if osc.IS_FREEBSD else errno.EPERM
+                )
             self.logger.warn('Failed to send email: %s', str(e), exc_info=True)
             if message['queue']:
                 with MailQueue() as mq:
@@ -405,6 +425,8 @@ class MailService(ConfigService):
         return True
 
     def _get_smtp_server(self, config, timeout=300, local_hostname=None):
+        self.middleware.call_sync('network.general.will_perform_activity', 'mail')
+
         if local_hostname is None:
             local_hostname = socket.gethostname()
 
@@ -428,6 +450,7 @@ class MailService(ConfigService):
                 server.starttls()
         if config['smtp']:
             server.login(config['user'], config['pass'])
+
         return server
 
     @periodic(600, run_on_start=False)
@@ -448,3 +471,7 @@ class MailService(ConfigService):
                         mq.queue.remove(queue)
                 else:
                     mq.queue.remove(queue)
+
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'mail', 'Mail')

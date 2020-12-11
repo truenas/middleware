@@ -1,6 +1,6 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 # -
-# Copyright (c) 2015 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -65,7 +65,7 @@ def main(command, quiet):
             else:
                 print("Failover status: Enabled")
         else:
-                print("Failover status: Not configured")
+            print("Failover status: Not configured")
 
     elif command == "enable":
         if not fo_exists:
@@ -96,21 +96,16 @@ def main(command, quiet):
                 status = "master"
                 try:
                     ret = client.call('failover.call_remote', 'failover.control', ['DISABLE', {'active': False}])
-                except:
+                except Exception:
                     ret = False
             else:
                 status = "passive"
                 try:
                     ret = client.call('failover.call_remote', 'failover.control', ['DISABLE', {'active': True}])
-                except:
+                except Exception:
                     ret = False
             if ret is not False:
-                client.call('failover.control', {
-                    'action': 'DISABLE',
-                    'options': {
-                        'active': status == 'master',
-                    }
-                })
+                client.call('failover.control', 'DISABLE', {'active': status == 'master'})
                 print("Failover disabled.")
                 sys.exit(0)
             else:
@@ -126,8 +121,9 @@ def main(command, quiet):
             sys.exit(5)
         print("This will likely cause the active node to reboot.")
         while True:
-            ret = input("Are you sure you wish to proceed with making "
-                            "this node active? (y/n): ")
+            ret = input(
+                "Are you sure you wish to proceed with making this node active? (y/n): "
+            )
             if ret.lower() == "y":
                 break
             elif ret.lower() == "n":
@@ -143,8 +139,9 @@ def main(command, quiet):
             sys.exit(6)
         print("Volume giveback will reboot this node.")
         while True:
-            ret = input("Are you sure you wish to proceed with making "
-                            "the other node active? (y/n): ")
+            ret = input(
+                "Are you sure you wish to proceed with making the other node active? (y/n): "
+            )
             if ret.lower() == "y":
                 break
             elif ret.lower() == "n":
@@ -153,6 +150,7 @@ def main(command, quiet):
             else:
                 continue
         os.system("shutdown -r now")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='HA CLI control utility.')

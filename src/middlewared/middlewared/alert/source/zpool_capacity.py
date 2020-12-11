@@ -52,9 +52,9 @@ class ZpoolCapacityAlertSource(ThreadedAlertSource):
 
             klass = None
             if cap >= 90:
-                klass = ZpoolCapacityWarningAlertClass
-            elif cap >= 80:
                 klass = ZpoolCapacityCriticalAlertClass
+            elif cap >= 80:
+                klass = ZpoolCapacityWarningAlertClass
             if klass:
                 alerts.append(
                     Alert(

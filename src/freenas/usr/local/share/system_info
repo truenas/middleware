@@ -1,0 +1,24 @@
+#!/bin/sh
+
+case $(uname -s) in
+FreeBSD)
+	is_freebsd=true
+	is_linux=false
+	;;
+Linux)
+	is_linux=true
+	is_freebsd=false
+	;;
+esac
+
+is_freebsd() {
+	$is_freebsd
+}
+
+is_linux() {
+	$is_linux
+}
+
+# Database specific variables
+FREENAS_SQLITE_CMD="/usr/local/bin/sqlite3fn"
+FREENAS_CONFIG="/data/freenas-v1.db"

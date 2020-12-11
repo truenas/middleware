@@ -5,8 +5,9 @@ import syslog
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, ValidationErrors
 from middlewared.validators import Range
-from middlewared.service import SystemServiceService
+from middlewared.service import private, SystemServiceService
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc
 
 
 class SSHModel(sa.Model):
@@ -20,23 +21,24 @@ class SSHModel(sa.Model):
     ssh_kerberosauth = sa.Column(sa.Boolean(), default=False)
     ssh_tcpfwd = sa.Column(sa.Boolean(), default=False)
     ssh_compression = sa.Column(sa.Boolean(), default=False)
-    ssh_privatekey = sa.Column(sa.Text())
+    ssh_privatekey = sa.Column(sa.EncryptedText())
     ssh_sftp_log_level = sa.Column(sa.String(20))
     ssh_sftp_log_facility = sa.Column(sa.String(20))
-    ssh_host_dsa_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_dsa_key = sa.Column(sa.EncryptedText(), nullable=True)
     ssh_host_dsa_key_pub = sa.Column(sa.Text(), nullable=True)
     ssh_host_dsa_key_cert_pub = sa.Column(sa.Text(), nullable=True)
-    ssh_host_ecdsa_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_ecdsa_key = sa.Column(sa.EncryptedText(), nullable=True)
     ssh_host_ecdsa_key_pub = sa.Column(sa.Text(), nullable=True)
     ssh_host_ecdsa_key_cert_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_ed25519_key = sa.Column(sa.EncryptedText(), nullable=True)
     ssh_host_ed25519_key_pub = sa.Column(sa.Text(), nullable=True)
-    ssh_host_ed25519_key = sa.Column(sa.Text(), nullable=True)
     ssh_host_ed25519_key_cert_pub = sa.Column(sa.Text(), nullable=True)
-    ssh_host_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_key = sa.Column(sa.EncryptedText(), nullable=True)
     ssh_host_key_pub = sa.Column(sa.Text(), nullable=True)
-    ssh_host_rsa_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_rsa_key = sa.Column(sa.EncryptedText(), nullable=True)
     ssh_host_rsa_key_pub = sa.Column(sa.Text(), nullable=True)
     ssh_host_rsa_key_cert_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_weak_ciphers = sa.Column(sa.JSON(type=list))
     ssh_options = sa.Column(sa.Text())
 
 
@@ -66,6 +68,7 @@ class SSHService(SystemServiceService):
         Str('sftp_log_level', enum=["", "QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG2", "DEBUG3"]),
         Str('sftp_log_facility', enum=["", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4",
                                        "LOCAL5", "LOCAL6", "LOCAL7"]),
+        List('weak_ciphers', items=[Str('cipher', enum=['AES128-CBC', 'NONE'])]),
         Str('options', max_length=None),
         update=True
     ))
@@ -121,3 +124,37 @@ class SSHService(SystemServiceService):
             syslog.closelog()
 
         return new
+
+    @private
+    def save_keys(self):
+        update = {}
+        for i in [
+            "ssh_host_key",
+            "ssh_host_key.pub",
+            "ssh_host_dsa_key",
+            "ssh_host_dsa_key.pub",
+            "ssh_host_dsa_key-cert.pub",
+            "ssh_host_ecdsa_key",
+            "ssh_host_ecdsa_key.pub",
+            "ssh_host_ecdsa_key-cert.pub",
+            "ssh_host_rsa_key",
+            "ssh_host_rsa_key.pub",
+            "ssh_host_rsa_key-cert.pub",
+            "ssh_host_ed25519_key",
+            "ssh_host_ed25519_key.pub",
+            "ssh_host_ed25519_key-cert.pub",
+        ]:
+            if osc.IS_FREEBSD:
+                path = os.path.join("/usr/local/etc/ssh", i)
+            else:
+                path = os.path.join("/etc/ssh", i)
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    data = base64.b64encode(f.read()).decode("ascii")
+
+                column = i.replace(".", "_",).replace("-", "_")
+
+                update[column] = data
+
+        old = self.middleware.call_sync('ssh.config')
+        self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update)

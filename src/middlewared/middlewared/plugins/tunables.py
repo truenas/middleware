@@ -4,6 +4,7 @@ from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc, run
 from middlewared.validators import Match
 
 
@@ -18,17 +19,44 @@ class TunableModel(sa.Model):
     tun_var = sa.Column(sa.String(128))
 
 
+TUNABLE_TYPES = ['SYSCTL'] + ([] if osc.IS_LINUX else ['LOADER', 'RC'])
+
+
 class TunableService(CRUDService):
     class Config:
         datastore = 'system.tunable'
         datastore_prefix = 'tun_'
         datastore_extend = 'tunable.upper'
 
+    def __init__(self, *args, **kwargs):
+        super(TunableService, self).__init__(*args, **kwargs)
+        self.__default_sysctl = {}
+
+    @private
+    async def default_sysctl_config(self):
+        return self.__default_sysctl
+
+    @private
+    async def get_default_value(self, oid):
+        return self.__default_sysctl[oid]
+
+    @private
+    async def set_default_value(self, oid, value):
+        if oid not in self.__default_sysctl:
+            self.__default_sysctl[oid] = value
+
+    @accepts()
+    async def tunable_type_choices(self):
+        """
+        Retrieve tunable type choices supported in the system
+        """
+        return {k: k for k in TUNABLE_TYPES}
+
     @accepts(Dict(
         'tunable_create',
-        Str('var', validators=[Match(r'^[\w\.]+$')], required=True),
+        Str('var', validators=[Match(r'^[\w\.\-]+$')], required=True),
         Str('value', required=True),
-        Str('type', enum=['LOADER', 'RC', 'SYSCTL'], required=True),
+        Str('type', enum=TUNABLE_TYPES, required=True),
         Str('comment'),
         Bool('enabled', default=True),
         register=True
@@ -39,7 +67,10 @@ class TunableService(CRUDService):
 
         `var` represents name of the sysctl/loader/rc variable.
 
-        `type` should be one of the following:
+        `type` for SCALE should be one of the following:
+        1) SYSCTL     -     Configure `var` for sysctl(8)
+
+        `type` for CORE/ENTERPRISE should be one of the following:
         1) LOADER     -     Configure `var` for loader(8)
         2) RC         -     Configure `var` for rc(8)
         3) SYSCTL     -     Configure `var` for sysctl(8)
@@ -71,7 +102,7 @@ class TunableService(CRUDService):
         """
         Update Tunable of `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -89,16 +120,36 @@ class TunableService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
+        if old['type'] == 'SYSCTL' and old['var'] in self.__default_sysctl and (
+            old['var'] != new['var'] or old['type'] != new['type']
+        ):
+            default_value = self.__default_sysctl.pop(old['var'])
+            cp = await run(['sysctl', f'{old["var"]}={default_value}'], check=False, encoding='utf8')
+            if cp.returncode:
+                self.middleware.logger.error(
+                    'Failed to set sysctl %r -> %r : %s', old['var'], default_value, cp.stderr
+                )
+
         await self.middleware.call('service.reload', new['type'])
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete Tunable of `id`.
         """
-        tunable = await self._get_instance(id)
+        tunable = await self.get_instance(id)
+        await self.lower(tunable)
+        if tunable['type'] == 'sysctl':
+            # Restore the default value, if it is possible.
+            value_default = self.__default_sysctl.pop(tunable['var'], None)
+            if value_default:
+                cp = await run(['sysctl', f'{tunable["var"]}={value_default}'], check=False, encoding='utf8')
+                if cp.returncode:
+                    self.middleware.logger.error(
+                        'Failed to set sysctl %r -> %r : %s', tunable['var'], value_default, cp.stderr
+                    )
 
         response = await self.middleware.call(
             'datastore.delete',

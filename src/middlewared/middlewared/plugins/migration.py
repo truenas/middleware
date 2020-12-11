@@ -3,11 +3,12 @@ import os
 
 from middlewared.service import Service
 import middlewared.sqlalchemy as sa
-from middlewared.utils import load_modules
+from middlewared.utils.plugins import load_modules
+from middlewared.utils.python import get_middlewared_dir
 
 
 def load_migrations(middleware):
-    main_sources_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "migration")
+    main_sources_dir = os.path.join(get_middlewared_dir(), "migration")
     sources_dirs = [os.path.join(overlay_dir, "migration") for overlay_dir in middleware.overlay_dirs]
     sources_dirs.insert(0, main_sources_dir)
 
@@ -31,12 +32,6 @@ class MigrationService(Service):
         private = True
 
     async def run(self):
-        if await self.middleware.call("keyvalue.get", "fake_migration", False):
-            for module in load_migrations(self.middleware):
-                await self.middleware.call("datastore.insert", "system.migration", {"name": module.__name__})
-
-            await self.middleware.call("keyvalue.set", "fake_migration", False)
-
         if await self.middleware.call("keyvalue.get", "run_migration", False):
             executed_migrations = {m["name"] for m in await self.middleware.call("datastore.query", "system.migration")}
 

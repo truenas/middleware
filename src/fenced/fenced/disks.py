@@ -1,14 +1,13 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, wait as fut_wait
-from functools import partial
 
 import cam
+import nvme
 import logging
 
 CAM_RETRIES = 5
@@ -88,12 +87,12 @@ class Disks(dict):
 
         def callback(i, fs, failed):
             try:
-                host_key, remote_keys = i.result()
+                host_key, remote_key = i.result()
+                remote_keys.update(remote_key)
                 if host_key is None:
                     failed.add(fs[i])
                     return
                 keys.add(host_key)
-                remote_keys.union(remote_keys)
             except Exception:
                 failed.add(fs[i])
 
@@ -113,8 +112,14 @@ class Disk(object):
         self.fence = fence
         self.name = name
         self.pool = pool
-        self.cam = cam.CamDevice(f'/dev/{name}')
         self.curkey = None
+        self.nvme = None
+        self.cam = None
+
+        if self.name.startswith('nvd'):
+            self.nvme = nvme.NvmeDevice(f'/dev/{name}')
+        else:
+            self.cam = cam.CamDevice(f'/dev/{name}')
 
     def __repr__(self):
         return f'<Disk: {self.name}>'
@@ -125,51 +130,100 @@ class Disk(object):
     def get_keys(self):
         host_key = None
         remote_keys = set()
-        for key in self.cam.read_keys(retries=CAM_RETRIES)['keys']:
+
+        if self.nvme:
+            keys = self.nvme.read_keys()['keys']
+        else:
+            keys = self.cam.read_keys(retries=CAM_RETRIES)['keys']
+
+        for key in keys:
             # First 4 bytes are the host id
             if key >> 32 == self.fence.hostid:
                 host_key = key
             else:
                 remote_keys.add(key)
+
         return (host_key, remote_keys)
 
     def get_reservation(self):
-        return self.cam.read_reservation(retries=CAM_RETRIES)
+
+        if self.nvme:
+            reservation = self.nvme.read_reservation()
+        else:
+            reservation = self.cam.read_reservation(retries=CAM_RETRIES)
+
+        return reservation
 
     def register_key(self, newkey):
-        newkey = self.fence.hostid << 32 | (newkey & 0xffffffff)
-        self.cam.scsi_prout(
-            reskey=self.curkey, sa_reskey=newkey, action=cam.SCSIPersistOutAction.REGISTER,
-            retries=CAM_RETRIES,
-        )
-        self.curkey = newkey
 
-    def reset_keys(self, newkey):
-        reservation = self.get_reservation()
         newkey = self.fence.hostid << 32 | (newkey & 0xffffffff)
-        if reservation and reservation['reservation'] >> 32 != self.fence.hostid:
-            self.cam.scsi_prout(
-                sa_reskey=newkey,
-                action=cam.SCSIPersistOutAction.REG_IGNORE,
-                retries=CAM_RETRIES,
-            )
-            self.cam.scsi_prout(
-                reskey=newkey,
-                sa_reskey=reservation['reservation'],
-                action=cam.SCSIPersistOutAction.PREEMPT,
-                restype=cam.SCSIPersistType.WRITE_EXCLUSIVE,
-                retries=CAM_RETRIES,
+
+        if self.nvme:
+            self.nvme.resvregister(
+                crkey=self.curkey, nrkey=newkey, rrega=2,
             )
         else:
             self.cam.scsi_prout(
-                sa_reskey=newkey,
-                action=cam.SCSIPersistOutAction.REG_IGNORE,
+                reskey=self.curkey, sa_reskey=newkey, action=cam.SCSIPersistOutAction.REGISTER,
                 retries=CAM_RETRIES,
             )
-            self.cam.scsi_prout(
-                reskey=newkey,
-                action=cam.SCSIPersistOutAction.RESERVE,
-                restype=cam.SCSIPersistType.WRITE_EXCLUSIVE,
-                retries=CAM_RETRIES,
-            )
+
+        self.curkey = newkey
+
+    def reset_keys(self, newkey):
+
+        reservation = self.get_reservation()
+        newkey = self.fence.hostid << 32 | (newkey & 0xffffffff)
+
+        if reservation and reservation['reservation'] >> 32 != self.fence.hostid:
+            if self.nvme:
+                self.nvme.resvregister(
+                    nrkey=newkey,
+                    rrega=0,
+                )
+                self.nvme.resvacquire(
+                    crkey=newkey,
+                    prkey=reservation['reservation'],
+                    rtype=1,
+                    racqa=1,
+                )
+            else:
+                self.cam.scsi_prout(
+                    sa_reskey=newkey,
+                    action=cam.SCSIPersistOutAction.REG_IGNORE,
+                    retries=CAM_RETRIES,
+                )
+                self.cam.scsi_prout(
+                    reskey=newkey,
+                    sa_reskey=reservation['reservation'],
+                    action=cam.SCSIPersistOutAction.PREEMPT,
+                    restype=cam.SCSIPersistType.WRITE_EXCLUSIVE,
+                    retries=CAM_RETRIES,
+                )
+        else:
+            if self.nvme:
+                self.nvme.resvregister(
+                    nrkey=newkey,
+                    crkey=0 if not reservation else reservation['reservation'],
+                    rrega=0 if not reservation else 2,
+                    iekey=False if not reservation else True,
+                )
+                self.nvme.resvacquire(
+                    crkey=newkey,
+                    rtype=1,
+                    racqa=0,
+                )
+            else:
+                self.cam.scsi_prout(
+                    sa_reskey=newkey,
+                    action=cam.SCSIPersistOutAction.REG_IGNORE,
+                    retries=CAM_RETRIES,
+                )
+                self.cam.scsi_prout(
+                    reskey=newkey,
+                    action=cam.SCSIPersistOutAction.RESERVE,
+                    restype=cam.SCSIPersistType.WRITE_EXCLUSIVE,
+                    retries=CAM_RETRIES,
+                )
+
         self.curkey = newkey

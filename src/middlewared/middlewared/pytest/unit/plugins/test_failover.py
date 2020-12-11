@@ -1,8 +1,6 @@
 import errno
 from unittest.mock import MagicMock, Mock, patch
 
-import pytest
-
 import middlewared
 from middlewared.service import CallError
 from middlewared.pytest.unit.middleware import Middleware

@@ -1,7 +1,7 @@
 from middlewared.service import Service, ValidationErrors, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
-from middlewared.plugins.smb import SMBCmd
+from middlewared.plugins.smb import SMBCmd, WBCErr
 
 
 class SMBService(Service):
@@ -49,13 +49,13 @@ class SMBService(Service):
     @private
     async def wbinfo_gidtosid(self, gid):
         verrors = ValidationErrors()
-        proc = await run(['/usr/local/bin/wbinfo', '--gid-to-sid', gid], check=False)
+        proc = await run([SMBCmd.WBINFO.value, '--gid-to-sid', str(gid)], check=False)
         if proc.returncode != 0:
-            if "WBC_ERR_WINBIND_NOT_AVAILABLE" in proc.stderr.decode():
-                return "WBC_ERR_WINBIND_NOT_AVAILABLE"
+            if WBCErr.WINBIND_NOT_AVAILABLE.err() in proc.stderr.decode():
+                return WBCErr.WINBIND_NOT_AVAILABLE.err()
             else:
                 verrors.add('smb_update.admin_group',
-                            f'Failed to identify Windows SID for group: {proc.stderr.decode()}')
+                            f'Failed to identify Windows SID for gid [{gid}]: {proc.stderr.decode()}')
                 raise verrors
 
         return proc.stdout.decode().strip()
@@ -99,7 +99,7 @@ class SMBService(Service):
             raise verrors
 
         sid = await self.wbinfo_gidtosid(group['gr_gid'])
-        if sid == "WBC_ERR_WINBIND_NOT_AVAILABLE":
+        if sid == WBCErr.WINBIND_NOT_AVAILABLE.err():
             self.logger.debug("Delaying admin group add until winbind starts")
             await self.middleware.call('cache.put', 'SMB_SET_ADMIN', True)
             return True
@@ -108,7 +108,7 @@ class SMBService(Service):
         if not must_add_sid:
             return True
 
-        proc = await run(['/usr/local/bin/net', 'groupmap', 'addmem', 'S-1-5-32-544', sid],
+        proc = await run([SMBCmd.NET.value, 'groupmap', 'addmem', 'S-1-5-32-544', sid],
                          check=False)
         if proc.returncode != 0:
             raise CallError(f'net groupmap addmem failed: {proc.stderr.decode().strip()}')

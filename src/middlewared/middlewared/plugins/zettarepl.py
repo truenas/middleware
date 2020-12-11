@@ -1,6 +1,7 @@
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
+import errno
 import logging
 import multiprocessing
 import os
@@ -9,11 +10,13 @@ import queue
 import re
 import setproctitle
 import signal
+import socket
 import threading
 import time
 import types
 
 import humanfriendly
+import paramiko.ssh_exception
 
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
@@ -24,7 +27,7 @@ from zettarepl.observer import (
     PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
     ReplicationTaskScheduled, ReplicationTaskStart, ReplicationTaskSnapshotStart, ReplicationTaskSnapshotProgress,
     ReplicationTaskSnapshotSuccess,
-    ReplicationTaskSuccess, ReplicationTaskError
+    ReplicationTaskDataProgress, ReplicationTaskSuccess, ReplicationTaskError,
 )
 from zettarepl.replication.task.dataset import get_target_dataset
 from zettarepl.scheduler.clock import Clock
@@ -39,17 +42,20 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import Zettarepl
 
-from middlewared.client import Client
-from middlewared.logger import setup_logging
+from middlewared.client import Client, ClientException
+from middlewared.logger import reconfigure_logging, setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
 import middlewared.utils.osc as osc
 from middlewared.utils.string import make_sentence
 
 INVALID_DATASETS = (
+    re.compile(r"boot-pool($|/)"),
     re.compile(r"freenas-boot($|/)"),
     re.compile(r"[^/]+/\.system($|/)")
 )
+SSH_EXCEPTIONS = (socket.timeout, paramiko.ssh_exception.NoValidConnectionsError, paramiko.ssh_exception.SSHException,
+                  IOError, OSError)
 
 
 def lifetime_timedelta(value, unit):
@@ -79,10 +85,10 @@ def lifetime_iso8601(value, unit):
     return timedelta_iso8601(lifetime_timedelta(value, unit))
 
 
-def replication_task_exclude(source_datasets, recursive, exclude):
-    if recursive:
-        exclude = list(exclude)
-        for ds in source_datasets:
+def replication_task_exclude(replication_task):
+    exclude = list(replication_task["exclude"])
+    if replication_task["recursive"] and not replication_task["replicate"]:
+        for ds in replication_task["source_datasets"]:
             # Exclude all possible FreeNAS system datasets
             if "/" not in ds:
                 exclude.append(f"{ds}/.system")
@@ -146,6 +152,9 @@ class ZettareplProcess:
             handler.addFilter(LongStringsFilter())
             handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
 
+        c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+        c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: reconfigure_logging())
+
         definition = Definition.from_data(self.definition, raise_on_error=False)
         self.observer_queue.put(DefinitionErrors(definition.errors))
 
@@ -178,8 +187,8 @@ class ZettareplProcess:
                 task_id = int(message.task_id.split("_")[-1])
 
                 if isinstance(message, PeriodicSnapshotTaskStart):
-                    with Client(py_exceptions=True) as c:
-                        context = c.call("vmware.periodic_snapshot_task_begin", task_id)
+                    with Client() as c:
+                        context = c.call("vmware.periodic_snapshot_task_begin", task_id, job=True)
 
                     self.vmware_contexts[task_id] = context
 
@@ -192,9 +201,14 @@ class ZettareplProcess:
                 if isinstance(message, (PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError)):
                     context = self.vmware_contexts.pop(task_id, None)
                     if context:
-                        with Client(py_exceptions=True) as c:
-                            c.call("vmware.periodic_snapshot_task_end", context)
+                        with Client() as c:
+                            c.call("vmware.periodic_snapshot_task_end", context, job=True)
 
+        except ClientException as e:
+            if e.error:
+                logger.error("Unhandled exception in ZettareplProcess._observer: %r", e.error)
+            if e.trace:
+                logger.error("Unhandled exception in ZettareplProcess._observer:\n%s", e.trace["formatted"])
         except Exception:
             logger.error("Unhandled exception in ZettareplProcess._observer", exc_info=True)
 
@@ -268,7 +282,7 @@ class ZettareplService(Service):
                 if self.observer_queue_reader is None:
                     self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
 
-                self.middleware.call_sync("zettarepl.set_hold_tasks", hold_tasks)
+                self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
     def stop(self):
         with self.lock:
@@ -306,7 +320,7 @@ class ZettareplService(Service):
             self.middleware.call_sync("zettarepl.start")
             self.queue.put(("tasks", definition))
 
-        self.middleware.call_sync("zettarepl.set_hold_tasks", hold_tasks)
+        self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
     async def run_periodic_snapshot_task(self, id):
         try:
@@ -324,6 +338,9 @@ class ZettareplService(Service):
         channels = self.replication_jobs_channels[f"task_{id}"]
         channel = queue.Queue()
         channels.append(channel)
+        snapshot_start_message = None
+        snapshot_progress_message = None
+        data_progress_message = None
         try:
             while True:
                 message = channel.get()
@@ -332,22 +349,20 @@ class ZettareplService(Service):
                     job.logs_fd.write(message.log.encode("utf8", "ignore") + b"\n")
 
                 if isinstance(message, ReplicationTaskSnapshotStart):
-                    job.set_progress(
-                        100 * (message.snapshots_sent / message.snapshots_total),
-                        f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
-                        f"{message.dataset}@{message.snapshot}",
-                    )
+                    snapshot_start_message = message
+                    snapshot_progress_message = None
+                    self._set_replication_task_progress(job, snapshot_start_message, snapshot_progress_message,
+                                                        data_progress_message)
 
                 if isinstance(message, ReplicationTaskSnapshotProgress):
-                    job.set_progress(
-                        100 * (
-                            (message.snapshots_sent + message.bytes_sent / message.bytes_total) /
-                            message.snapshots_total
-                        ),
-                        f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
-                        f"{message.dataset}@{message.snapshot} ({humanfriendly.format_size(message.bytes_sent)} / "
-                        f"{humanfriendly.format_size(message.bytes_total)})",
-                    )
+                    snapshot_progress_message = message
+                    self._set_replication_task_progress(job, snapshot_start_message, snapshot_progress_message,
+                                                        data_progress_message)
+
+                if isinstance(message, ReplicationTaskDataProgress):
+                    data_progress_message = message
+                    self._set_replication_task_progress(job, snapshot_start_message, snapshot_progress_message,
+                                                        data_progress_message)
 
                 if isinstance(message, ReplicationTaskSuccess):
                     return
@@ -357,31 +372,57 @@ class ZettareplService(Service):
         finally:
             channels.remove(channel)
 
+    def _set_replication_task_progress(self, job, snapshot_start_message, snapshot_progress_message,
+                                       data_progress_message):
+        if snapshot_start_message is None:
+            return
+
+        if snapshot_progress_message is None:
+            message = snapshot_start_message
+            progress = 100 * (message.snapshots_sent / message.snapshots_total)
+            text = (
+                f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
+                f"{message.dataset}@{message.snapshot}"
+            )
+        else:
+            message = snapshot_progress_message
+            progress = 100 * (
+                (message.snapshots_sent + message.bytes_sent / message.bytes_total) /
+                message.snapshots_total
+            )
+            text = (
+                f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
+                f"{message.dataset}@{message.snapshot} ({humanfriendly.format_size(message.bytes_sent)} / "
+                f"{humanfriendly.format_size(message.bytes_total)})"
+            )
+
+        if data_progress_message is not None:
+            text += (
+                f" [total {humanfriendly.format_size(data_progress_message.dst_size)} of "
+                f"{humanfriendly.format_size(data_progress_message.src_size)}]"
+            )
+
+        job.set_progress(progress, text)
+
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
             async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
                 datasets = await self.middleware.run_in_thread(list_datasets, shell)
-        except Exception as e:
-            raise CallError(repr(e))
-
-        boot_pool = await self.middleware.call("boot.pool_name")
-
-        invalid_datasets = (
-            re.compile(rf"{boot_pool}/?"),
-        )
+        except SSH_EXCEPTIONS as e:
+            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
         return [
             ds
             for ds in datasets
-            if not any(r.match(ds) for r in invalid_datasets)
+            if not any(r.match(ds) for r in INVALID_DATASETS)
         ]
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
         try:
             async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
                 return await self.middleware.run_in_thread(create_dataset, shell, dataset)
-        except Exception as e:
-            raise CallError(repr(e))
+        except SSH_EXCEPTIONS as e:
+            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
     async def count_eligible_manual_snapshots(self, datasets, naming_schemas, transport, ssh_credentials=None):
         try:
@@ -389,8 +430,8 @@ class ZettareplService(Service):
                 snapshots = await self.middleware.run_in_thread(
                     multilist_snapshots, shell, [(dataset, False) for dataset in datasets]
                 )
-        except Exception as e:
-            raise CallError(repr(e))
+        except SSH_EXCEPTIONS as e:
+            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
         parsed = parse_snapshots_names_with_multiple_schemas([s.name for s in snapshots], naming_schemas)
 
@@ -488,6 +529,13 @@ class ZettareplService(Service):
                     hold_tasks[f"replication_task_{replication_task['id']}"] = hold_task_reason
                     continue
 
+            if replication_task["transport"] != "LOCAL":
+                if not await self.middleware.call("network.general.can_perform_activity", "replication"):
+                    hold_tasks[f"replication_task_{replication_task['id']}"] = (
+                        "Replication network activity is disabled"
+                    )
+                    continue
+
             try:
                 transport = await self._define_transport(
                     replication_task["transport"],
@@ -512,18 +560,18 @@ class ZettareplService(Service):
                 "source-dataset": replication_task["source_datasets"],
                 "target-dataset": replication_task["target_dataset"],
                 "recursive": replication_task["recursive"],
-                "exclude": replication_task_exclude(replication_task["source_datasets"],
-                                                    replication_task["recursive"],
-                                                    replication_task["exclude"]),
+                "exclude": replication_task_exclude(replication_task),
                 "properties": replication_task["properties"],
+                "properties-exclude": replication_task["properties_exclude"],
+                "properties-override": replication_task["properties_override"],
                 "replicate": replication_task["replicate"],
                 "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
                 "auto": replication_task["auto"],
                 "only-matching-schedule": replication_task["only_matching_schedule"],
                 "allow-from-scratch": replication_task["allow_from_scratch"],
+                "readonly": replication_task["readonly"].lower(),
                 "hold-pending-snapshots": replication_task["hold_pending_snapshots"],
                 "retention-policy": replication_task["retention_policy"].lower(),
-                "dedup": replication_task["dedup"],
                 "large-block": replication_task["large_block"],
                 "embed": replication_task["embed"],
                 "compressed": replication_task["compressed"],
@@ -531,6 +579,12 @@ class ZettareplService(Service):
                 "logging-level": (replication_task["logging_level"] or "NOTSET").lower(),
             }
 
+            if replication_task["encryption"]:
+                definition["encryption"] = {
+                    "key": replication_task["encryption_key"],
+                    "key-format": replication_task["encryption_key_format"].lower(),
+                    "key-location": replication_task["encryption_key_location"],
+                }
             if replication_task["naming_schema"]:
                 definition["naming-schema"] = replication_task["naming_schema"]
             if replication_task["also_include_naming_schema"]:
@@ -583,6 +637,9 @@ class ZettareplService(Service):
 
     @asynccontextmanager
     async def _get_zettarepl_shell(self, transport, ssh_credentials):
+        if transport != "LOCAL":
+            await self.middleware.call("network.general.will_perform_activity", "replication")
+
         transport_definition = await self._define_transport(transport, ssh_credentials)
         transport = create_transport(transport_definition)
         shell = transport.shell(transport)
@@ -644,7 +701,7 @@ class ZettareplService(Service):
             message = self.observer_queue.get()
 
             try:
-                self.logger.debug("Observer queue got %r", message)
+                self.logger.trace("Observer queue got %r", message)
 
                 # Global events
 
@@ -690,10 +747,15 @@ class ZettareplService(Service):
                 # Replication task events
 
                 if isinstance(message, ReplicationTaskScheduled):
-                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
-                        "state": "WAITING",
-                        "datetime": datetime.utcnow(),
-                    })
+                    if (
+                            (self.middleware.call_sync(
+                                "zettarepl.get_state_internal", f"replication_{message.task_id}"
+                            ) or {}).get("state") != "RUNNING"
+                    ):
+                        self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
+                            "state": "WAITING",
+                            "datetime": datetime.utcnow(),
+                        })
 
                 if isinstance(message, ReplicationTaskStart):
                     self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
@@ -710,7 +772,7 @@ class ZettareplService(Service):
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskSnapshotStart):
-                    self.state[f"replication_{message.task_id}"] = {
+                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "RUNNING",
                         "datetime": datetime.utcnow(),
                         "progress": {
@@ -722,9 +784,9 @@ class ZettareplService(Service):
                             "bytes_total": 0,
                             # legacy
                             "current": 0,
-                            "total": 9,
+                            "total": 0,
                         }
-                    }
+                    })
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
@@ -752,6 +814,24 @@ class ZettareplService(Service):
                 if isinstance(message, ReplicationTaskSnapshotSuccess):
                     self.middleware.call_sync("zettarepl.set_last_snapshot", f"replication_{message.task_id}",
                                               f"{message.dataset}@{message.snapshot}")
+
+                    for channel in self.replication_jobs_channels[message.task_id]:
+                        channel.put(message)
+
+                if isinstance(message, ReplicationTaskDataProgress):
+                    task_id = f"replication_{message.task_id}"
+                    try:
+                        state = self.middleware.call_sync("zettarepl.get_internal_task_state", task_id)
+                    except KeyError:
+                        pass
+                    else:
+                        if state["state"] == "RUNNING" and "progress" in state:
+                            state["progress"].update({
+                                "root_dataset": message.dataset,
+                                "src_size": message.src_size,
+                                "dst_size": message.dst_size,
+                            })
+                            self.middleware.call_sync("zettarepl.set_state", task_id, state)
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)

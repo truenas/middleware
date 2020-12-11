@@ -6,7 +6,7 @@ import sys
 
 import sentry_sdk
 
-from .utils import sw_version, sw_version_is_stable
+from .utils import osc, sw_version, sw_version_is_stable
 
 
 # markdown debug is also considered useless
@@ -15,13 +15,23 @@ logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 logging.getLogger('asyncio').setLevel(logging.WARN)
 # We dont need internal aiohttp debug logging
 logging.getLogger('aiohttp.internal').setLevel(logging.WARN)
+# We dont need internal botocore debug logging
+logging.getLogger('botocore').setLevel(logging.WARN)
 # we dont need ws4py close debug messages
 logging.getLogger('ws4py').setLevel(logging.WARN)
 # we dont need GitPython debug messages (used in iocage)
 logging.getLogger('git.cmd').setLevel(logging.WARN)
+# issues garbage warnings
+logging.getLogger('googleapiclient').setLevel(logging.ERROR)
+# registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
+logging.getLogger('passlib.registry').setLevel(logging.INFO)
+if osc.IS_LINUX:
+    # It logs each call made to the k8s api server when in debug mode, so we set the level to warn
+    logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
 
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
+FAILOVER_LOGFILE = '/root/syslog/failover.log'
 logging.TRACE = 6
 
 
@@ -179,6 +189,11 @@ class ErrorProneRotatingFileHandler(logging.handlers.RotatingFileHandler):
             # involves logging
             pass
 
+    def doRollover(self):
+        super().doRollover()
+        # We must reconfigure stderr/stdout streams after rollover
+        reconfigure_logging()
+
 
 class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
@@ -203,6 +218,11 @@ class Logger(object):
                     'handlers': ['zettarepl_file'],
                     'propagate': False,
                 },
+                'failover': {
+                    'level': 'NOTSET',
+                    'handlers': ['failover_file'],
+                    'propagate': False,
+                },
             },
             'handlers': {
                 'file': {
@@ -224,6 +244,16 @@ class Logger(object):
                     'backupCount': 5,
                     'encoding': 'utf-8',
                     'formatter': 'zettarepl_file',
+                },
+                'failover_file': {
+                    'level': 'DEBUG',
+                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'filename': FAILOVER_LOGFILE,
+                    'mode': 'a',
+                    'maxBytes': 10485760,
+                    'backupCount': 5,
+                    'encoding': 'utf-8',
+                    'formatter': 'file',
                 },
             },
             'formatters': {
@@ -249,6 +279,7 @@ class Logger(object):
     def _set_output_file(self):
         """Set the output format for file log."""
         try:
+            os.makedirs(os.path.dirname(FAILOVER_LOGFILE), mode=0o755, exist_ok=True)
             dictConfig(self.DEFAULT_LOGGING)
         except Exception:
             # If something happens during system dataset reconfiguration, we have the chance of not having
@@ -306,3 +337,36 @@ def setup_logging(name, debug_level, log_handler):
         _logger.configure_logging('console')
     else:
         _logger.configure_logging('file')
+
+
+def reconfigure_logging():
+    for name, handler in logging._handlers.items():
+        if not isinstance(handler, ErrorProneRotatingFileHandler):
+            continue
+
+        stream = handler.stream
+        handler.stream = handler._open()
+        # We want to reassign stdout/stderr if its not the default one or closed
+        # which will happen on log file rotation.
+        try:
+            if sys.stdout.fileno() != 1 or sys.stderr.fileno() != 2:
+                raise ValueError()
+        except ValueError:
+            # ValueError can be raise if file handler is closed
+            sys.stdout = handler.stream
+            sys.stderr = handler.stream
+        try:
+            stream.close()
+        except Exception:
+            pass
+
+
+def stop_logging():
+    for name, handler in logging._handlers.items():
+        if not isinstance(handler, ErrorProneRotatingFileHandler):
+            continue
+
+        try:
+            handler.stream.close()
+        except Exception:
+            pass

@@ -1,8 +1,10 @@
+import asyncio
 import re
-import platform
 
-IS_LINUX = platform.system().lower() == 'linux'
-if not IS_LINUX:
+from middlewared.utils import osc
+
+
+if osc.IS_FREEBSD:
     import sysctl
     RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 
@@ -10,7 +12,7 @@ if not IS_LINUX:
 async def added_disk(middleware, disk_name):
     await middleware.call('disk.sync', disk_name)
     await middleware.call('disk.sed_unlock', disk_name)
-    if not IS_LINUX:
+    if osc.IS_FREEBSD:
         # TODO: Add support for multipath
         await middleware.call('disk.multipath_sync')
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
@@ -18,12 +20,12 @@ async def added_disk(middleware, disk_name):
 
 async def remove_disk(middleware, disk_name):
     await (await middleware.call('disk.sync_all')).wait()
-    if not IS_LINUX:
+    if osc.IS_FREEBSD:
         await middleware.call('disk.multipath_sync')
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
     # If a disk dies we need to reconfigure swaps so we are not left
     # with a single disk mirror swap, which may be a point of failure.
-    await middleware.call('disk.swaps_configure')
+    asyncio.ensure_future(middleware.call('disk.swaps_configure'))
 
 
 async def devd_devfs_hook(middleware, data):
@@ -57,7 +59,7 @@ async def udev_block_devices_hook(middleware, data):
 
 
 def setup(middleware):
-    if IS_LINUX:
+    if osc.IS_LINUX:
         middleware.register_hook('udev.block', udev_block_devices_hook)
     else:
         # Listen to DEVFS events so we can sync on disk attach/detach

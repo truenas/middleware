@@ -1,6 +1,5 @@
-import platform
-
 from middlewared.service import Service
+from middlewared.utils import osc
 
 from .netif import netif
 
@@ -15,9 +14,9 @@ class InterfaceService(Service):
         try:
             iface = netif.get_interface(vlan['vlan_vint'])
         except KeyError:
-            if platform.system() == 'FreeBSD':
+            if osc.IS_FREEBSD:
                 netif.create_interface(vlan['vlan_vint'])
-            if platform.system() == 'Linux':
+            if osc.IS_LINUX:
                 netif.create_vlan(vlan['vlan_vint'], vlan['vlan_pint'], vlan['vlan_tag'])
             iface = netif.get_interface(vlan['vlan_vint'])
 
@@ -43,3 +42,11 @@ class InterfaceService(Service):
             return
         parent_interfaces.append(iface.parent)
         parent_iface.up()
+
+        # On HA systems, there seems to be an issue (race in kernel maybe?)
+        # that when adding a CARP alias to the interface BEFORE the physical
+        # IP address gets added that CARP will stay in INIT state. The only
+        # way to get it out of that state is to ifconfig down/up the interface
+        # and then it will transition into MASTER/BACKUP accordingly.
+        # To workaround this, we up ourselves here explicitly.
+        iface.up()

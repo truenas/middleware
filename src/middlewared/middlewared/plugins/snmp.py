@@ -15,12 +15,13 @@ class SNMPModel(sa.Model):
     snmp_community = sa.Column(sa.String(120), default='public')
     snmp_v3_username = sa.Column(sa.String(20))
     snmp_v3_authtype = sa.Column(sa.String(3), default='SHA')
-    snmp_v3_password = sa.Column(sa.String(50))
+    snmp_v3_password = sa.Column(sa.EncryptedText())
     snmp_v3_privproto = sa.Column(sa.String(3), nullable=True)
-    snmp_v3_privpassphrase = sa.Column(sa.String(100), nullable=True)
+    snmp_v3_privpassphrase = sa.Column(sa.EncryptedText(), nullable=True)
     snmp_options = sa.Column(sa.Text())
     snmp_loglevel = sa.Column(sa.Integer(), default=3)
     snmp_zilstat = sa.Column(sa.Boolean(), default=False)
+    snmp_iftop = sa.Column(sa.Boolean(), default=False)
 
 
 class SNMPService(SystemServiceService):
@@ -45,6 +46,7 @@ class SNMPService(SystemServiceService):
         Int('loglevel', validators=[Range(min=0, max=7)]),
         Str('options', max_length=None),
         Bool('zilstat'),
+        Bool('iftop'),
         update=True
     ))
     async def do_update(self, data):

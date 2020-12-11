@@ -1,0 +1,10 @@
+[Unit]
+Description=Save SSH keys
+After=ssh.service
+
+[Service]
+Type=oneshot
+ExecStart=midclt call ssh.save_keys
+
+[Install]
+WantedBy=multi-user.target

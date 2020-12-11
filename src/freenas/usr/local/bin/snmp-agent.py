@@ -1,39 +1,39 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
+from middlewared.utils import osc
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+import contextlib
 import copy
 from datetime import datetime, timedelta
 from decimal import Decimal
 import os
+import pty
 import subprocess
 import threading
 import time
 
 import libzfs
+import humanfriendly
 import netsnmpagent
 import pysnmp.hlapi  # noqa
 import pysnmp.smi
-import sysctl
+if osc.IS_FREEBSD:
+    import sysctl
 
 from middlewared.client import Client
 
 
 def get_Kstat():
+    if osc.IS_FREEBSD:
+        return get_Kstat_FreeBSD()
+    else:
+        return get_Kstat_Linux()
+
+
+def get_Kstat_FreeBSD():
     Kstats = [
-        "hw.pagesize",
-        "hw.physmem",
-        "kern.maxusers",
-        "vm.kmem_map_free",
-        "vm.kmem_map_size",
-        "vm.kmem_size",
-        "vm.kmem_size_max",
-        "vm.kmem_size_min",
-        "vm.kmem_size_scale",
-        "vm.stats",
-        "vm.swap_total",
-        "vm.swap_reserved",
-        "kstat.zfs",
-        "vfs.zfs"
+        "kstat.zfs.misc.arcstats",
+        "vfs.zfs.version.spa",
     ]
 
     Kstat = {}
@@ -43,6 +43,22 @@ def get_Kstat():
                 Kstat[s.name] = Decimal(s.value)
             elif isinstance(s.value, bytearray):
                 Kstat[s.name] = Decimal(int.from_bytes(s.value, "little"))
+
+    return Kstat
+
+
+def get_Kstat_Linux():
+    Kstat = {}
+
+    with open("/proc/spl/kstat/zfs/arcstats") as f:
+        arcstats = f.readlines()
+
+    for line in arcstats[2:]:
+        if line.strip():
+            name, type, data = line.strip().split()
+            Kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
+
+    Kstat["vfs.zfs.version.spa"] = Decimal(5000)
 
     return Kstat
 
@@ -255,6 +271,7 @@ zpool_table = agent.Table(
         agent.Integer32()
     ],
     columns=[
+        (1, agent.Integer32()),
         (2, agent.DisplayString()),
         (3, agent.Integer32()),
         (4, agent.Integer32()),
@@ -278,6 +295,7 @@ dataset_table = agent.Table(
         agent.Integer32()
     ],
     columns=[
+        (1, agent.Integer32()),
         (2, agent.DisplayString()),
         (3, agent.Integer32()),
         (4, agent.Integer32()),
@@ -292,22 +310,58 @@ zvol_table = agent.Table(
         agent.Integer32()
     ],
     columns=[
+        (1, agent.Integer32()),
         (2, agent.DisplayString()),
         (3, agent.Integer32()),
         (4, agent.Integer32()),
         (5, agent.Integer32()),
         (6, agent.Integer32()),
+        (7, agent.Integer32()),
     ],
 )
 
-temp_sensors_table = agent.Table(
-    oidstr="LM-SENSORS-MIB::lmTempSensorsTable",
+lm_sensors_table = None
+if osc.IS_FREEBSD:
+    lm_sensors_table = agent.Table(
+        oidstr="LM-SENSORS-MIB::lmTempSensorsTable",
+        indexes=[
+            agent.Integer32(),
+        ],
+        columns=[
+            (1, agent.Integer32()),
+            (2, agent.DisplayString()),
+            (3, agent.Unsigned32()),
+        ]
+    )
+
+hdd_temp_table = agent.Table(
+    oidstr="FREENAS-MIB::hddTempTable",
     indexes=[
         agent.Integer32(),
     ],
     columns=[
         (2, agent.DisplayString()),
         (3, agent.Unsigned32()),
+    ]
+)
+
+interface_top_host_table = agent.Table(
+    oidstr="FREENAS-MIB::interfaceTopHostTable",
+    indexes=[
+        agent.Integer32(),
+    ],
+    columns=[
+        (2, agent.DisplayString()),
+        (3, agent.DisplayString()),
+        (4, agent.Unsigned32()),
+        (5, agent.DisplayString()),
+        (6, agent.Unsigned32()),
+        (7, agent.Unsigned32()),
+        (8, agent.Unsigned32()),
+        (9, agent.Unsigned32()),
+        (10, agent.Unsigned32()),
+        (11, agent.Unsigned32()),
+        (12, agent.Unsigned32()),
     ]
 )
 
@@ -485,7 +539,7 @@ class DiskTempThread(threading.Thread):
             try:
                 with Client() as c:
                     self.temperatures = {
-                        disk: temperature
+                        disk: temperature * 1000
                         for disk, temperature in c.call("disk.temperatures", self.disks, self.powermode).items()
                         if temperature is not None
                     }
@@ -494,6 +548,126 @@ class DiskTempThread(threading.Thread):
                 self.temperatures = {}
 
             time.sleep(self.interval)
+
+
+class IftopThread(threading.Thread):
+    def __init__(self):
+        super().__init__()
+
+        self.daemon = True
+
+        self.stats = {}
+
+    def run(self):
+        while True:
+            try:
+                with Client() as c:
+                    interfaces = [i["name"] for i in c.call("interface.query")]
+            except Exception as e:
+                print(f"Failed to query interfaces for iftop monitoring: {e!r}")
+                time.sleep(10)
+            else:
+                break
+
+        for interface in interfaces:
+            IftopInterfaceThread(interface, self.stats).start()
+
+
+IftopInterfaceStat = namedtuple(
+    "IftopInterface",
+    ["local_address", "local_port", "remote_address", "remote_port", "in_last_2s", "out_last_2s", "in_last_10s",
+     "out_last_10s", "in_last_40s", "out_last_40s"]
+)
+
+
+class IftopInterfaceThread(threading.Thread):
+    def __init__(self, interface, stats):
+        super().__init__()
+
+        self.daemon = True
+
+        self.interface = interface
+        self.stats = stats
+
+    def run(self):
+        while True:
+            try:
+                master, slave = pty.openpty()
+                try:
+                    p = subprocess.Popen(
+                        [
+                            "iftop",
+                            "-n",           # Don't do hostname lookups
+                            "-N",           # Do not resolve port number to service names
+                            "-P",           # Turn on port display
+                            "-B",           # Display bandwidth rates in bytes/sec rather than bits/sec
+                            "-i", self.interface,
+                            "-t",           # use text interface without ncurses
+                            "-L", "10",     # number of lines to print
+                        ],
+                        stdin=subprocess.DEVNULL,
+                        stdout=slave,
+                        stderr=subprocess.DEVNULL,
+                        encoding="utf-8",
+                        errors="ignore",
+                        preexec_fn=os.setsid,
+                    )
+                    try:
+                        os.close(slave)
+                        with os.fdopen(master, "r", encoding="utf-8", errors="ignore") as f:
+                            data = []
+                            while True:
+                                line = f.readline()
+                                if not line:
+                                    break
+
+                                if line.startswith("-" * 80):
+                                    if (
+                                            len(data) % 2 == 0 and
+                                            all(len(v.split()) == (7 if i % 2 == 0 else 6) for i, v in enumerate(data))
+                                    ):
+                                        self.stats[self.interface] = self._handle_data(data)
+
+                                    data = []
+                                else:
+                                    data.append(line)
+                    finally:
+                        p.wait()
+                        print(f"iftop for {self.interface} returned {p.returncode}")
+                finally:
+                    with contextlib.suppress(OSError):
+                        os.close(master)
+                    with contextlib.suppress(OSError):
+                        os.close(slave)
+            except Exception as e:
+                print(f"Failed to run iftop for {self.interface}: {e!r}")
+
+            time.sleep(10)
+
+    def _handle_data(self, data):
+        stats = []
+        for line1, line2 in zip(data[::2], data[1::2]):
+            _, local, _, out_last_2s, out_last_10s, out_last_40s, _ = line1.split()
+            remote, _, in_last_2s, in_last_10s, in_last_40s, _ = line2.split()
+            local_address, local_port = local.split(":")
+            remote_address, remote_port = remote.split(":")
+            stats.append(IftopInterfaceStat(
+                local_address=local_address,
+                local_port=int(local_port),
+                remote_address=remote_address,
+                remote_port=int(remote_port),
+                in_last_2s=self._handle_bw(in_last_2s),
+                out_last_2s=self._handle_bw(out_last_2s),
+                in_last_10s=self._handle_bw(in_last_10s),
+                out_last_10s=self._handle_bw(out_last_10s),
+                in_last_40s=self._handle_bw(in_last_40s),
+                out_last_40s=self._handle_bw(out_last_40s),
+            ))
+
+        return stats
+
+    def _handle_bw(self, bw):
+        return humanfriendly.parse_size(bw, binary=True)
 
 
 if __name__ == "__main__":
@@ -505,20 +679,32 @@ if __name__ == "__main__":
     zpool_io_thread = ZpoolIoThread()
     zpool_io_thread.start()
 
-    zilstat_1_thread = ZilstatThread(1)
-    zilstat_5_thread = ZilstatThread(5)
-    zilstat_10_thread = ZilstatThread(10)
+    zilstat_1_thread = None
+    zilstat_5_thread = None
+    zilstat_10_thread = None
 
-    if config["zilstat"]:
-        zilstat_1_thread.start()
-        zilstat_5_thread.start()
-        zilstat_10_thread.start()
+    if osc.IS_FREEBSD:
+        if config["zilstat"]:
+            zilstat_1_thread = ZilstatThread(1)
+            zilstat_5_thread = ZilstatThread(5)
+            zilstat_10_thread = ZilstatThread(10)
 
-    cpu_temp_thread = CpuTempThread(10)
-    cpu_temp_thread.start()
+            zilstat_1_thread.start()
+            zilstat_5_thread.start()
+            zilstat_10_thread.start()
+
+    cpu_temp_thread = None
+    if osc.IS_FREEBSD:
+        cpu_temp_thread = CpuTempThread(10)
+        cpu_temp_thread.start()
 
     disk_temp_thread = DiskTempThread(300)
     disk_temp_thread.start()
+
+    iftop_thread = None
+    if config["iftop"]:
+        iftop_thread = IftopThread()
+        iftop_thread.start()
 
     agent.start()
 
@@ -534,6 +720,7 @@ if __name__ == "__main__":
             zpool_table.clear()
             for i, zpool in enumerate(zfs.pools):
                 row = zpool_table.addRow([agent.Integer32(i + 1)])
+                row.setRowCell(1, agent.Integer32(i + 1))
                 row.setRowCell(2, agent.DisplayString(zpool.properties["name"].value))
                 allocation_units, \
                     (
@@ -569,6 +756,7 @@ if __name__ == "__main__":
             dataset_table.clear()
             for i, dataset in enumerate(datasets):
                 row = dataset_table.addRow([agent.Integer32(i + 1)])
+                row.setRowCell(1, agent.Integer32(i + 1))
                 row.setRowCell(2, agent.DisplayString(dataset.properties["name"].value))
                 allocation_units, (
                     size,
@@ -587,32 +775,66 @@ if __name__ == "__main__":
             zvol_table.clear()
             for i, zvol in enumerate(zvols):
                 row = zvol_table.addRow([agent.Integer32(i + 1)])
+                row.setRowCell(1, agent.Integer32(i + 1))
                 row.setRowCell(2, agent.DisplayString(zvol.properties["name"].value))
                 allocation_units, (
                     volsize,
                     used,
-                    available
+                    available,
+                    referenced
                 ) = calculate_allocation_units(
                     int(zvol.properties["volsize"].rawvalue),
                     int(zvol.properties["used"].rawvalue),
                     int(zvol.properties["available"].rawvalue),
+                    int(zvol.properties["referenced"].rawvalue),
                 )
                 row.setRowCell(3, agent.Integer32(allocation_units))
                 row.setRowCell(4, agent.Integer32(volsize))
                 row.setRowCell(5, agent.Integer32(used))
                 row.setRowCell(6, agent.Integer32(available))
+                row.setRowCell(7, agent.Integer32(referenced))
 
-            temp_sensors_table.clear()
-            temperatures = []
-            for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
-                temperatures.append((f"CPU{i}", temp))
-            temperatures.extend(list(disk_temp_thread.temperatures.items()))
-            for i, (name, temp) in enumerate(temperatures):
-                row = temp_sensors_table.addRow([agent.Integer32(i + 1)])
-                row.setRowCell(2, agent.DisplayString(name))
-                row.setRowCell(3, agent.Unsigned32(temp))
+            if lm_sensors_table:
+                lm_sensors_table.clear()
+                temperatures = []
+                if cpu_temp_thread:
+                    for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
+                        temperatures.append((f"CPU{i}", temp))
+                if disk_temp_thread:
+                    temperatures.extend(list(disk_temp_thread.temperatures.items()))
+                for i, (name, temp) in enumerate(temperatures):
+                    row = lm_sensors_table.addRow([agent.Integer32(i + 1)])
+                    row.setRowCell(1, agent.Integer32(i + 1))
+                    row.setRowCell(2, agent.DisplayString(name))
+                    row.setRowCell(3, agent.Unsigned32(temp))
 
-            last_update_at = datetime.utcnow()
+            if hdd_temp_table:
+                hdd_temp_table.clear()
+                if disk_temp_thread:
+                    for i, (name, temp) in enumerate(list(disk_temp_thread.temperatures.items())):
+                        row = hdd_temp_table.addRow([agent.Integer32(i + 1)])
+                        row.setRowCell(2, agent.DisplayString(name))
+                        row.setRowCell(3, agent.Unsigned32(temp))
+
+            if interface_top_host_table:
+                interface_top_host_table.clear()
+                if iftop_thread:
+                    i = 1
+                    for interface, stats in list(iftop_thread.stats.items()):
+                        for stat in stats:
+                            row = interface_top_host_table.addRow([agent.Integer32(i)])
+                            row.setRowCell(2, agent.DisplayString(interface))
+                            row.setRowCell(3, agent.DisplayString(stat.local_address))
+                            row.setRowCell(4, agent.Unsigned32(stat.local_port))
+                            row.setRowCell(5, agent.DisplayString(stat.remote_address))
+                            row.setRowCell(6, agent.Unsigned32(stat.remote_port))
+                            row.setRowCell(7, agent.Unsigned32(stat.in_last_2s))
+                            row.setRowCell(8, agent.Unsigned32(stat.out_last_2s))
+                            row.setRowCell(9, agent.Unsigned32(stat.in_last_10s))
+                            row.setRowCell(10, agent.Unsigned32(stat.out_last_10s))
+                            row.setRowCell(11, agent.Unsigned32(stat.in_last_40s))
+                            row.setRowCell(12, agent.Unsigned32(stat.out_last_40s))
+                            i += 1
 
             kstat = get_Kstat()
             arc_efficiency = get_arc_efficiency(kstat)
@@ -634,6 +856,11 @@ if __name__ == "__main__":
             zfs_l2arc_write.update(int(kstat["kstat.zfs.misc.arcstats.l2_write_bytes"] / 1024 % 2 ** 32))
             zfs_l2arc_size.update(int(kstat["kstat.zfs.misc.arcstats.l2_asize"] / 1024))
 
-            zfs_zilstat_ops1.update(zilstat_1_thread.value["ops"])
-            zfs_zilstat_ops5.update(zilstat_5_thread.value["ops"])
-            zfs_zilstat_ops10.update(zilstat_10_thread.value["ops"])
+            if zilstat_1_thread:
+                zfs_zilstat_ops1.update(zilstat_1_thread.value["ops"])
+            if zilstat_5_thread:
+                zfs_zilstat_ops5.update(zilstat_5_thread.value["ops"])
+            if zilstat_10_thread:
+                zfs_zilstat_ops10.update(zilstat_10_thread.value["ops"])
+
+            last_update_at = datetime.utcnow()

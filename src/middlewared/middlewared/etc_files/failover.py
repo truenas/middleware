@@ -44,8 +44,7 @@ def render(service, middleware):
         ],
         'non_crit_interfaces': [
             i['id'] for i in filter_list(interfaces, [
-                ('failover_virtual_aliases', '!=', []),
-                ('failover_critical', '=', True),
+                ('failover_critical', '!=', True),
             ])
         ],
         'internal_interfaces': middleware.call_sync('failover.internal_interfaces'),

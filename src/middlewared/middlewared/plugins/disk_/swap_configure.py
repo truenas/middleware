@@ -1,25 +1,26 @@
 import os
-import platform
 import subprocess
 
 from collections import defaultdict
 
-from middlewared.service import CallError, private, Service
-from middlewared.utils import run
+from middlewared.service import CallError, lock, private, Service
+from middlewared.utils import osc, run
 
-IS_LINUX = platform.system().lower() == 'linux'
+
 MIRROR_MAX = 5
 
 
 class DiskService(Service):
 
     @private
+    @lock('swaps_configure')
     async def swaps_configure(self):
         """
         Configures swap partitions in the system.
         We try to mirror all available swap partitions to avoid a system
         crash in case one of them dies.
         """
+        swap_redundancy = await self.middleware.call('disk.swap_redundancy')
         used_partitions_in_mirror = set()
         create_swap_devices = {}
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
@@ -43,7 +44,10 @@ class DiskService(Service):
             if mirror_name in existing_swap_devices['mirrors'] and (len(mirror['providers']) == 1 or any(
                 p['disk'] not in disks for p in mirror['providers']
             )):
-                await self.middleware.call('disk.swaps_remove_disks', [p['disk'] for p in mirror['providers']])
+                await self.middleware.call(
+                    'disk.swaps_remove_disks_unlocked',
+                    [p['disk'] for p in mirror['providers']], {'configure_swap': False}
+                )
                 existing_swap_devices['mirrors'].remove(mirror_name)
             else:
                 if mirror_name not in existing_swap_devices['mirrors']:
@@ -55,7 +59,7 @@ class DiskService(Service):
 
                 # If mirror has been configured automatically (not by middlewared)
                 # and there is no geli attached yet we should look for core in it.
-                if not IS_LINUX and mirror['config_type'] == 'AUTOMATIC' and not mirror['encrypted_provider']:
+                if osc.IS_FREEBSD and mirror['config_type'] == 'AUTOMATIC' and not mirror['encrypted_provider']:
                     await run(
                         'savecore', '-z', '-m', '5', '/data/crash/', mirror_name,
                         check=False
@@ -68,11 +72,17 @@ class DiskService(Service):
             lambda d: d['partition_type'] in valid_swap_part_uuids and d['name'] not in used_partitions_in_mirror,
             all_partitions.values()
         ):
-            if not IS_LINUX and not any(swap_part[k] in existing_swap_devices for k in ('encrypted_provider', 'path')):
+            if osc.IS_FREEBSD and not any(
+                swap_part[k] in existing_swap_devices for k in ('encrypted_provider', 'path')
+            ):
                 # Try to save a core dump from that.
                 # Only try savecore if the partition is not already in use
                 # to avoid errors in the console (#27516)
-                await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{swap_part["name"]}', check=False)
+                cp = await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{swap_part["name"]}', check=False)
+                if cp.returncode:
+                    self.middleware.logger.error(
+                        'Failed to savecore for "%s": %s', f'/dev/{swap_part["name"]}', cp.stderr.decode(),
+                    )
 
             if swap_part['disk'] in disks:
                 swap_partitions_by_size[swap_part['size']].append(swap_part['name'])
@@ -80,23 +90,23 @@ class DiskService(Service):
         dumpdev = False
         unused_partitions = []
         for size, partitions in swap_partitions_by_size.items():
-            # If we have only one partition add it to unused_partitions list
-            if len(partitions) == 1:
+            # If we don't have enough partitions for requested redundancy, add them to unused_partitions list
+            if len(partitions) < swap_redundancy:
                 unused_partitions += partitions
                 continue
 
-            for i in range(int(len(partitions) / 2)):
+            for i in range(int(len(partitions) / swap_redundancy)):
                 if (
                     len(create_swap_devices) + len(existing_swap_devices['mirrors']) +
                         len(existing_swap_devices['partitions'])
                 ) > MIRROR_MAX:
                     break
-                part_ab = partitions[0:2]
-                partitions = partitions[2:]
+                part_list = partitions[0:swap_redundancy]
+                partitions = partitions[swap_redundancy:]
 
                 # We could have a single disk being used as swap, without mirror.
                 try:
-                    for p in part_ab:
+                    for p in part_list:
                         remove = False
                         part_data = all_partitions[p]
                         if part_data['encrypted_provider'] in existing_swap_devices['partitions']:
@@ -107,34 +117,33 @@ class DiskService(Service):
                             part = part_data['path']
 
                         if remove:
-                            await self.middleware.call('disk.swaps_remove_disks', [part_data['disk']])
+                            await self.middleware.call(
+                                'disk.swaps_remove_disks_unlocked', [part_data['disk']], {'configure_swap': False}
+                            )
                             existing_swap_devices['partitions'].remove(part)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
                     # If something failed here there is no point in trying to create the mirror
                     continue
 
-                part_a, part_b = part_ab
-
-                if not IS_LINUX and not dumpdev:
-                    dumpdev = await self.middleware.call('disk.dumpdev_configure', part_a)
+                if osc.IS_FREEBSD and not dumpdev:
+                    dumpdev = await self.middleware.call('disk.dumpdev_configure', part_list[0])
                 swap_path = await self.middleware.call('disk.new_swap_name')
                 if not swap_path:
                     # Which means maximum has been reached and we can stop
                     break
-                part_a_path, part_b_path = all_partitions[part_a]['path'], all_partitions[part_b]['path']
                 try:
                     await self.middleware.call(
                         'disk.create_swap_mirror', swap_path, {
-                            'paths': [part_a_path, part_b_path],
-                            'extra': {'level': 1} if IS_LINUX else {},
+                            'paths': [all_partitions[p]['path'] for p in part_list],
+                            'extra': {'level': 1} if osc.IS_LINUX else {},
                         }
                     )
-                except CallError:
-                    self.logger.warning('Failed to create swap mirror %s', swap_path)
+                except CallError as e:
+                    self.logger.warning('Failed to create swap mirror %s: %s', swap_path, e)
                     continue
 
-                swap_device = os.path.realpath(os.path.join(f'/dev/{"md" if IS_LINUX else "mirror"}', swap_path))
+                swap_device = os.path.realpath(os.path.join(f'/dev/{"md" if osc.IS_LINUX else "mirror"}', swap_path))
                 create_swap_devices[swap_device] = {
                     'path': swap_device,
                     'encrypted_provider': None,
@@ -146,7 +155,7 @@ class DiskService(Service):
         if unused_partitions and not create_swap_devices and all(
             not existing_swap_devices[k] for k in existing_swap_devices
         ):
-            if not IS_LINUX and not dumpdev:
+            if osc.IS_FREEBSD and not dumpdev:
                 await self.middleware.call('disk.dumpdev_configure', unused_partitions[0])
             swap_device = all_partitions[unused_partitions[0]]
             create_swap_devices[swap_device['path']] = {
@@ -156,7 +165,7 @@ class DiskService(Service):
 
         created_swap_devices = []
         for swap_path, data in create_swap_devices.items():
-            if IS_LINUX:
+            if osc.IS_LINUX:
                 if not data['encrypted_provider']:
                     cp = await run(
                         'cryptsetup', '-d', '/dev/urandom', 'open', '--type', 'plain',
@@ -171,9 +180,9 @@ class DiskService(Service):
                 try:
                     await run('mkswap', swap_path)
                 except subprocess.CalledProcessError as e:
-                    self.logger.warning(f'Failed to make swap for %s: %s', swap_path, e.stderr.decode())
+                    self.logger.warning('Failed to make swap for %s: %s', swap_path, e.stderr.decode())
                     continue
-            elif not IS_LINUX and not data['encrypted_provider']:
+            elif osc.IS_FREEBSD and not data['encrypted_provider']:
                 try:
                     await run('geli', 'onetime', swap_path)
                 except subprocess.CalledProcessError as e:
@@ -201,7 +210,7 @@ class DiskService(Service):
             }
             try:
                 await self.middleware.call(
-                    'disk.swaps_remove_disks', [
+                    'disk.swaps_remove_disks_unlocked', [
                         all_partitions_by_path[p] for p in existing_swap_devices['partitions']
                         if p in all_partitions_by_path
                     ]
@@ -225,5 +234,25 @@ class DiskService(Service):
         """
         for i in range(MIRROR_MAX):
             name = f'swap{i}'
-            if not os.path.exists(os.path.join('/dev', 'md' if IS_LINUX else 'mirror', name)):
+            if not os.path.exists(os.path.join('/dev', 'md' if osc.IS_LINUX else 'mirror', name)):
                 return name
+
+    @private
+    async def swap_redundancy(self):
+        group_size = 2
+        pools = await self.middleware.call('pool.query', [['status', 'nin', ('OFFLINE', 'FAULTED')]])
+        for pool in pools:
+            vdevs = pool['topology']['data']
+            for vdev in vdevs:
+                new_size = 2
+                if vdev['type'] == 'MIRROR':
+                    new_size = len(vdev['children'])
+                if vdev['type'] == 'RAIDZ2':
+                    new_size = 3
+                if vdev['type'] == 'RAIDZ3':
+                    new_size = 4
+                # use max group size
+                if group_size < new_size:
+                    group_size = new_size
+
+        return group_size

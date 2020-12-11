@@ -32,9 +32,9 @@ iscsi_help() { echo "Dump iSCSI Configuration"; }
 iscsi_directory() { echo "iSCSI"; }
 iscsi_func()
 {
-	local onoff
+    local onoff
 
-        onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+    onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
         SELECT
                 srv_enable
         FROM
@@ -46,56 +46,87 @@ iscsi_func()
         LIMIT 1
         ")
 
-        enabled="not start on boot."
-        if [ "${onoff}" = "1" ]
-        then
-                enabled="will start on boot."
-        fi
+    enabled="not start on boot."
+    if [ "${onoff}" = "1" ]; then
+        enabled="will start on boot."
+    fi
 
-        section_header "iSCSI Boot Status"
-        echo "iSCSI will ${enabled}"
-        section_footer
+    section_header "iSCSI Boot Status"
+    echo "iSCSI will ${enabled}"
+    section_footer
 
-	section_header "iSCSI Run Status"
-	service ctld onestatus
-	section_footer
+    section_header "iSCSI Run Status"
+    if is_linux; then
+        systemctl status scst
+    else
+    	service ctld onestatus
+    fi
+    section_footer
 	
-	alua_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+    alua_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		iscsi_alua
 	FROM
 		services_iscsitargetglobalconfiguration
-	")
+    ")
 
-	if [ "${alua_enabled}" = "0" ]
-	then
-		section_header "iSCSI ALUA Status"
-		echo "ALUA is DISABLED"
-	fi
+    if [ "${alua_enabled}" = "0" ]; then
+        section_header "iSCSI ALUA Status"
+        echo "ALUA is DISABLED"
+    fi
 
-	if [ "${alua_enabled}" = "1" ]
-	then
-		section_header "iSCSI ALUA Status"
-		echo "ALUA is ENABLED"
-	fi
+    if [ "${alua_enabled}" = "1" ]; then
+        section_header "iSCSI ALUA Status"
+        echo "ALUA is ENABLED"
+    fi
 
-	section_header "/etc/ctl.conf"
-	sc "/etc/ctl.conf.shadow"
-	section_footer
+    if is_linux; then
+        section_header "/etc/scst.conf"
+        sed -e 's/\(IncomingUser.*"\)\(.*\)\("\)/\1\*****\3/#' -e 's/\(OutgoingUser.*"\)\(.*\)\("\)/\1\*****\3/#' /etc/scst.conf
+        section_footer
 
-	section_header "ctladm devlist -v"
-	ctladm devlist -v
-	section_footer
+        section_header "SCST Device Handlers"
+        scstadmin -list_handler
+        section_footer
 
-	section_header "ctladm islist"
-	ctladm islist
-	section_footer
+        section_header "SCST Devices"
+        scstadmin -list_device
+        section_footer
 
-	section_header "ctladm portlist -v"
-	ctladm portlist -v
-	section_footer
+        section_header "SCST Drivers"
+        scstadmin -list_driver
+        section_footer
 
-	section_header "ctladm port -l"
-	ctladm port -l
-	section_footer
+        section_header "SCST iSCSI Targets"
+        scstadmin -list_target -driver iscsi
+        section_footer
+
+        section_header "SCST Active Sessions"
+        scstadmin -list_sessions
+        section_footer
+
+        section_header "SCST Core Attributes"
+        scstadmin -list_scst_attr
+        section_footer
+    else
+        section_header "/etc/ctl.conf"
+        sc "/etc/ctl.conf.shadow"
+        section_footer
+
+        section_header "ctladm devlist -v"
+        ctladm devlist -v
+        section_footer
+
+        section_header "ctladm islist"
+        ctladm islist
+        section_footer
+
+        section_header "ctladm portlist -v"
+        ctladm portlist -v
+        section_footer
+
+        section_header "ctladm port -l"
+        ctladm port -l
+        section_footer
+    fi
 }

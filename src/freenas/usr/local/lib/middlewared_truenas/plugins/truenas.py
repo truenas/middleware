@@ -1,4 +1,4 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -9,13 +9,9 @@ import errno
 import json
 import os
 
-
-from licenselib.license import ContractType
-
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import Service, private
+from middlewared.service import job, private, Service
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
 EULA_PENDING_PATH = "/data/truenas-eula-pending"
@@ -61,6 +57,8 @@ class TrueNASService(Service):
         TRUENAS-M40-S
         TRUENAS-M50-HA
         TRUENAS-M50-S
+        TRUENAS-M60-HA
+        TRUENAS-M60-S
         TRUENAS-Z20-S
         TRUENAS-Z20-HA-D
         TRUENAS-Z30-HA-D
@@ -78,44 +76,24 @@ class TrueNASService(Service):
         TRUENAS-X
         TRUENAS-Z
 
-        Detected by the motherboard model:
-        TRUENAS-SBB
-
-        Pretty much anything else with a SM X8 board:
-        (X8DTH was popular but there are a few other boards out there)
-        TRUENAS-SM
-
         Really NFI about hardware at this point.  TrueNAS on a Dell?
         TRUENAS-UNKNOWN
         """
 
-        chassis = await run('dmidecode', '-s', 'system-product-name', check=False)
-        chassis = chassis.stdout.decode(errors='ignore').split('\n', 1)[0].strip()
+        data = await self.middleware.call('system.dmidecode_info')
+        chassis = data['system-product-name']
         if chassis.startswith(('TRUENAS-M', 'TRUENAS-X', 'TRUENAS-Z')):
             return chassis
         # We don't match a burned in name for a M, X or Z series.  Let's catch
         # the case where we are a M, X or Z. (shame on you production!)
-        motherboard = await run('dmidecode', '-s', 'baseboard-manufacturer', check=False)
-        motherboard = motherboard.stdout.decode(errors='ignore').split('\n', 1)[0].strip()
-        motherboard_model = await run('dmidecode', '-s', 'baseboard-product-name', check=False)
-        motherboard_model = motherboard_model.stdout.decode(errors='ignore').split('\n', 1)[0].strip()
+        motherboard = data['baseboard-manufacturer']
+        motherboard_model = data['baseboard-product-name']
         if motherboard_model == 'X11DPi-NT' or motherboard_model == 'X11SPi-TF':
             return 'TRUENAS-M'
         if motherboard_model == 'iXsystems TrueNAS X10':
             return 'TRUENAS-X'
         if motherboard == 'GIGABYTE':
             return 'TRUENAS-Z'
-
-        # Are we an SBB?  We can tell this because all SBBs used
-        # the same motherboard: X8DTS
-        if motherboard_model == 'X8DTS':
-            return 'TRUENAS-SBB'
-
-        # Most likely we are an X8DTH at this point, but there are some
-        # unicorns that used various X8 boards, so we're going to make
-        # allowances
-        if motherboard_model.startswith('X8'):
-            return 'TRUENAS-SM'
 
         # Give up
         return 'TRUENAS-UNKNOWN'
@@ -230,7 +208,8 @@ class TrueNASService(Service):
         return await self.middleware.call('keyvalue.get', 'truenas:production', False)
 
     @accepts(Bool('production'), Bool('attach_debug', default=False))
-    async def set_production(self, production, attach_debug):
+    @job()
+    async def set_production(self, job, production, attach_debug):
         """
         Sets system production state and optionally sends initial debug.
         """
@@ -239,7 +218,7 @@ class TrueNASService(Service):
 
         if not was_production and production:
             serial = (await self.middleware.call('system.info'))["system_serial"]
-            await self.middleware.call('support.new_ticket', {
+            return await job.wrap(await self.middleware.call('support.new_ticket', {
                 "title": f"System has been just put into production ({serial})",
                 "body": "This system has been just put into production",
                 "attach_debug": attach_debug,
@@ -249,4 +228,4 @@ class TrueNASService(Service):
                 "name": "Automatic Alert",
                 "email": "auto-support@ixsystems.com",
                 "phone": "-",
-            })
+            }))

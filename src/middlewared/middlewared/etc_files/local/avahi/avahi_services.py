@@ -3,7 +3,12 @@ import enum
 import xml.etree.ElementTree as xml
 import socket
 
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, osc
+
+GENERATE_SERVICE_FILTER = ['OR', [('state', '=', 'RUNNING'), ('enable', '=', True)]]
+AVAHI_SERVICE_PATH = '/etc/avahi/services'
+if osc.IS_FREEBSD:
+    AVAHI_SERVICE_PATH = f'/usr/local{AVAHI_SERVICE_PATH}'
 
 
 class DevType(enum.Enum):
@@ -38,7 +43,6 @@ class ServiceType(enum.Enum):
 
 class AvahiConst(enum.Enum):
     AVAHI_IF_UNSPEC = -1
-    AVAHI_SERVICE_PATH = "/usr/local/etc/avahi/services"
 
 
 class mDNSService(object):
@@ -64,19 +68,26 @@ class mDNSService(object):
 
         if self.service == 'ADISK':
             afp_is_running = any(filter_list(
-                self.service_info, [('service', '=', 'afp'), ('state', '=', 'RUNNING')]
+                self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]
             ))
             smb_is_running = any(filter_list(
-                self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]
+                self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]
             ))
             if afp_is_running or smb_is_running:
                 return True
             else:
                 return False
 
-            return any(filter_list(self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]))
+        if self.service == 'AFPOVERTCP':
+            return any(filter_list(self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]))
 
-        return any(filter_list(self.service_info, [('service', '=', self.service.lower()), ('state', '=', 'RUNNING')]))
+        if self.service == 'SMB':
+            return any(filter_list(self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]))
+
+        if self.service == 'SFTP_SSH':
+            return any(filter_list(self.service_info, [('service', '=', 'ssh'), GENERATE_SERVICE_FILTER]))
+
+        return any(filter_list(self.service_info, [('service', '=', self.service.lower()), GENERATE_SERVICE_FILTER]))
 
     def _generate_txtRecord(self):
         """
@@ -116,8 +127,22 @@ class mDNSService(object):
 
         if self.service == 'ADISK':
             iindex = [AvahiConst.AVAHI_IF_UNSPEC]
-            afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
-            smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
+            afp_is_running = any(filter_list(
+                self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]
+            ))
+            smb_is_running = any(filter_list(
+                self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]
+            ))
+
+            if afp_is_running:
+                afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
+            else:
+                afp_shares = []
+            if smb_is_running:
+                smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
+            else:
+                smb_shares = []
+
             afp = set([(x['name'], x['path']) for x in afp_shares])
             smb = set([(x['name'], x['path']) for x in smb_shares])
             if len(afp | smb) == 0:
@@ -243,7 +268,7 @@ class mDNSService(object):
                 self.hostname, self.regtype, port, interfaceIndex, txtrecord
             )
             # write header of service file
-            config_file = f"{AvahiConst.AVAHI_SERVICE_PATH.value}/{srv.name}.service"
+            config_file = f"{AVAHI_SERVICE_PATH}/{srv.name}.service"
             with open(config_file, "w") as f:
                 f.write('<?xml version="1.0" standalone="no"?>')
                 f.write('<!DOCTYPE service-group SYSTEM "avahi-service.dtd">')
@@ -273,8 +298,8 @@ class mDNSService(object):
 
 
 def remove_service_configs(middleware):
-    for file in os.listdir(AvahiConst.AVAHI_SERVICE_PATH.value):
-        servicefile = f'{AvahiConst.AVAHI_SERVICE_PATH.value}/{file}'
+    for file in os.listdir(AVAHI_SERVICE_PATH):
+        servicefile = f'{AVAHI_SERVICE_PATH}/{file}'
         if os.path.isfile(servicefile):
             try:
                 os.unlink(servicefile)
@@ -296,6 +321,9 @@ def get_hostname(middleware):
             return ngc['hostname_virtual']
         elif failover_status == 'BACKUP':
             return None
+        else:
+            return ngc['hostname_local']
+
     else:
         return ngc['hostname_local']
 
@@ -311,9 +339,9 @@ def generate_avahi_config(middleware):
     if not announce['mdns']:
         return
     mdns_configs = mDNSService(
-       middleware=middleware,
-       hostname=hostname,
-       service_info=service_info
+        middleware=middleware,
+        hostname=hostname,
+        service_info=service_info
     )
     mdns_configs.generate_services()
 

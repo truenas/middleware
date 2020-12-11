@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 import os
+import sys
 
 from alembic import context
 from alembic.operations import ops
@@ -7,10 +8,16 @@ from alembic.operations.base import BatchOperations, Operations
 from alembic.operations.batch import ApplyBatchImpl, BatchOperationsImpl
 from sqlalchemy import engine_from_config, ForeignKeyConstraint, pool
 
-import middlewared
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.sqlalchemy import JSON, Model
-from middlewared.utils import load_modules
+from middlewared.utils import osc
+from middlewared.utils.plugins import load_modules
+from middlewared.utils.python import get_middlewared_dir
+
+# freenasOS
+if osc.IS_FREEBSD:
+    if '/usr/local/lib' not in sys.path:
+        sys.path.append('/usr/local/lib')
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,7 +32,7 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Model.metadata
-list(load_modules(os.path.join(os.path.dirname(middlewared.__file__), "plugins"), depth=1))
+list(load_modules(os.path.join(get_middlewared_dir(), "plugins"), depth=1))
 list(load_modules("/usr/local/lib/middlewared_truenas/plugins", depth=1))
 
 # other values from the config, defined by the needs of env.py,

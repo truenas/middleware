@@ -1,13 +1,34 @@
 import logging
 import os
 import base64
+import subprocess
 
-from middlewared.utils import run
+from middlewared.utils import run, osc, Popen
 
 logger = logging.getLogger(__name__)
 kdir = "/etc/kerberos"
 keytabfile = "/etc/krb5.keytab"
-ktutil_cmd = "/usr/sbin/ktutil"
+ktutil_cmd = "ktutil"
+
+
+async def mit_copy(temp_keytab):
+    kt_copy = await Popen(['ktutil'],
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,
+                          stdin=subprocess.PIPE)
+    output = await kt_copy.communicate(
+        f'rkt {temp_keytab}\nwkt {keytabfile}'.encode()
+    )
+    if output[1]:
+        logger.debug(f"failed to generate [{keytabfile}]: {output[1].decode()}")
+
+
+async def heimdal_copy(temp_keytab):
+    ktutil = await run([ktutil_cmd, "copy", temp_keytab, keytabfile], check=False)
+    ktutil_errs = ktutil.stderr.decode()
+
+    if ktutil_errs:
+        logger.debug(f'Keytab generation failed with error: {ktutil_errs}')
 
 
 async def write_keytab(db_keytabname, db_keytabfile):
@@ -19,11 +40,11 @@ async def write_keytab(db_keytabname, db_keytabfile):
     with open(temp_keytab, "wb") as f:
         f.write(db_keytabfile)
 
-    ktutil = await run([ktutil_cmd, "copy", temp_keytab, keytabfile], check=False)
-    ktutil_errs = ktutil.stderr.decode()
+    if osc.IS_FREEBSD:
+        await heimdal_copy(temp_keytab)
 
-    if ktutil_errs:
-        logger.debug(f'Keytab generation failed with error: {ktutil_errs}')
+    else:
+        await mit_copy(temp_keytab)
 
     os.remove(temp_keytab)
 
@@ -31,7 +52,7 @@ async def write_keytab(db_keytabname, db_keytabfile):
 async def render(service, middleware):
     keytabs = await middleware.call('kerberos.keytab.query')
     if not keytabs:
-        logger.trace(f'No keytabs in configuration database, skipping keytab generation')
+        logger.trace('No keytabs in configuration database, skipping keytab generation')
         return
 
     for keytab in keytabs:

@@ -3,14 +3,12 @@ import json
 import requests
 import simplejson
 import socket
-import subprocess
 import time
 
 from middlewared.pipe import Pipes
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen
 from middlewared.validators import Email
 
 ADDRESS = 'support-proxy.ixsystems.com'
@@ -82,7 +80,7 @@ class SupportService(ConfigService):
         Returns whether Proactive Support is available for this product type and current license.
         """
 
-        if await self.middleware.call('system.is_freenas'):
+        if not await self.middleware.call('system.is_enterprise'):
             return False
 
         license = (await self.middleware.call('system.info'))['license']
@@ -126,7 +124,9 @@ class SupportService(ConfigService):
         Returns a dict with the category name as a key and id as value.
         """
 
-        sw_name = 'freenas' if self.middleware.call_sync('system.is_freenas') else 'truenas'
+        self.middleware.call_sync('network.general.will_perform_activity', 'support')
+
+        sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
         try:
             r = requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
@@ -178,15 +178,17 @@ class SupportService(ConfigService):
         For TrueNAS `username`, `password` and `type` attributes are not required.
         """
 
+        await self.middleware.call('network.general.will_perform_activity', 'support')
+
         job.set_progress(1, 'Gathering data')
 
-        sw_name = 'freenas' if await self.middleware.call('system.is_freenas') else 'truenas'
+        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
 
         if sw_name == 'freenas':
             required_attrs = ('type', 'username', 'password')
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
-            data['serial'] = (await (await Popen(['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE)).communicate())[0].decode().split('\n')[0].upper()
+            data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
             license = (await self.middleware.call('system.info'))['license']
             if license:
                 data['company'] = license['customer_name']
@@ -244,10 +246,7 @@ class SupportService(ConfigService):
                 'system.debug', pipes=Pipes(output=self.middleware.pipe()),
             )
 
-            not_freenas = not (await self.middleware.call('system.is_freenas'))
-            if not_freenas:
-                not_freenas &= await self.middleware.call('failover.licensed')
-            if not_freenas:
+            if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.licensed'):
                 debug_name = 'debug-{}.tar'.format(time.strftime('%Y%m%d%H%M%S'))
             else:
                 debug_name = 'debug-{}-{}.txz'.format(
@@ -308,7 +307,9 @@ class SupportService(ConfigService):
         Method to attach a file to a existing ticket.
         """
 
-        sw_name = 'freenas' if await self.middleware.call('system.is_freenas') else 'truenas'
+        await self.middleware.call('network.general.will_perform_activity', 'support')
+
+        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
 
         if 'username' in data:
             data['user'] = data.pop('username')
@@ -333,3 +334,7 @@ class SupportService(ConfigService):
 
         if data['error']:
             raise CallError(data['message'], errno.EINVAL)
+
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'support', 'Support')

@@ -213,9 +213,8 @@ class Job(object):
     Represents a long running call, methods marked with @job decorator
     """
 
-    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes,
-                 on_progress_cb=None):
-        self._finished = asyncio.Event()
+    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb):
+        self._finished = asyncio.Event(loop=middleware.loop)
         self.middleware = middleware
         self.method_name = method_name
         self.serviceobj = serviceobj
@@ -223,6 +222,7 @@ class Job(object):
         self.args = args
         self.options = options
         self.pipes = pipes or Pipes(input=None, output=None)
+        self.on_progress_cb = on_progress_cb
 
         self.id = None
         self.lock = None
@@ -230,8 +230,9 @@ class Job(object):
         self.error = None
         self.exception = None
         self.exc_info = None
+        self.aborted = False
         self.state = State.WAITING
-        self.on_progress_cb = on_progress_cb
+        self.description = None
         self.progress = {
             'percent': None,
             'description': None,
@@ -240,7 +241,7 @@ class Job(object):
         self.internal_data = {}
         self.time_started = datetime.utcnow()
         self.time_finished = None
-        self.loop = asyncio.get_event_loop()
+        self.loop = self.middleware.loop
         self.future = None
 
         self.logs_path = None
@@ -250,6 +251,12 @@ class Job(object):
         if self.options["check_pipes"]:
             for pipe in self.options["pipes"]:
                 self.check_pipe(pipe)
+
+        if self.options["description"]:
+            try:
+                self.description = self.options["description"](*args)
+            except Exception:
+                logger.error("Error setting job description", exc_info=True)
 
     def check_pipe(self, pipe):
         if getattr(self.pipes, pipe) is None:
@@ -289,6 +296,10 @@ class Job(object):
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
             self.time_finished = datetime.utcnow()
 
+    def set_description(self, description):
+        self.description = description
+        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+
     def set_progress(self, percent, description=None, extra=None):
         if percent is not None:
             assert isinstance(percent, (int, float))
@@ -305,14 +316,17 @@ class Job(object):
                 logger.warn('Failed to run on progress callback', exc_info=True)
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=encoded)
 
-    async def wait(self, timeout=None):
+    async def wait(self, timeout=None, raise_error=False):
         if timeout is None:
             await self._finished.wait()
         else:
             await asyncio.wait_for(asyncio.shield(self._finished.wait()), timeout)
+        if raise_error:
+            if self.error:
+                raise CallError(self.error)
         return self.result
 
-    def wait_sync(self):
+    def wait_sync(self, raise_error=False):
         """
         Synchronous method to wait for a job in another thread.
         """
@@ -324,11 +338,16 @@ class Job(object):
 
         fut.add_done_callback(done)
         event.wait()
+        if raise_error:
+            if self.error:
+                raise CallError(self.error)
         return self.result
 
     def abort(self):
         if self.loop is not None and self.future is not None:
             self.loop.call_soon_threadsafe(self.future.cancel)
+        elif self.state == State.WAITING:
+            self.aborted = True
 
     async def run(self, queue):
         """
@@ -342,8 +361,12 @@ class Job(object):
             self.logs_path = os.path.join(logs_dir, f"{self.id}.log")
             self.logs_fd = open(self.logs_path, "wb", buffering=0)
 
-        self.set_state('RUNNING')
         try:
+            if self.aborted:
+                raise asyncio.CancelledError()
+            else:
+                self.set_state('RUNNING')
+
             self.future = asyncio.ensure_future(self.__run_body())
             try:
                 await self.future
@@ -358,8 +381,7 @@ class Job(object):
         except Exception:
             self.set_state('FAILED')
             self.set_exception(sys.exc_info())
-            if self.options['transient']:
-                logger.error("Transient job failed", exc_info=True)
+            logger.error("Job %r failed", self.method, exc_info=True)
         finally:
             await self.__close_logs()
             await self.__close_pipes()
@@ -452,6 +474,7 @@ class Job(object):
             'id': self.id,
             'method': self.method_name,
             'arguments': self.middleware.dump_args(self.args, method=self.method),
+            'description': self.description,
             'logs_path': self.logs_path,
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,

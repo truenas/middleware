@@ -1,12 +1,11 @@
+import asyncio
 import errno
 import os
-import platform
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import item_method, job, Service, ValidationErrors
-
-
-IS_LINUX = platform.system().lower() == 'linux'
+from middlewared.service_exception import MatchNotFound
+from middlewared.utils import osc
 
 
 class PoolService(Service):
@@ -18,6 +17,7 @@ class PoolService(Service):
         Str('disk', required=True),
         Bool('force', default=False),
         Str('passphrase', private=True),
+        Bool('preserve_settings', default=True),
     ))
     @job(lock='pool_replace')
     async def replace(self, job, oid, options):
@@ -27,6 +27,8 @@ class PoolService(Service):
         `label` is the ZFS guid or a device name
         `disk` is the identifier of a disk
         `passphrase` is only valid for TrueNAS Core/Enterprise platform where pool is GELI encrypted
+        If `preserve_settings` is true, then settings (power management, S.M.A.R.T., etc.) of a disk being replaced
+        will be applied to a new disk.
 
         .. examples(websocket)::
 
@@ -57,7 +59,7 @@ class PoolService(Service):
             if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
                 verrors.add('options.force', 'Disk is not clean, partitions were found.')
 
-        if not IS_LINUX and pool['encrypt'] == 2:
+        if osc.IS_FREEBSD and pool['encrypt'] == 2:
             if not options.get('passphrase'):
                 verrors.add('options.passphrase', 'Passphrase is required for encrypted pool.')
             elif not await self.middleware.call(
@@ -65,7 +67,7 @@ class PoolService(Service):
             ):
                 verrors.add('options.passphrase', 'Passphrase is not valid.')
 
-        if IS_LINUX and options.get('passphrase'):
+        if osc.IS_LINUX and options.get('passphrase'):
             verrors.add(
                 'options.passphrase', 'This field is not valid on this platform.'
             )
@@ -77,6 +79,16 @@ class PoolService(Service):
 
         if verrors:
             raise verrors
+
+        old_disk = None
+        if options['preserve_settings']:
+            try:
+                old_disk = await self.middleware.call('disk.query', [['zfs_guid', '=', options['label']]], {
+                    'extra': {'include_expired': True},
+                    'get': True
+                })
+            except MatchNotFound:
+                pass
 
         create_swap = found[0] in ('data', 'spare')
 
@@ -115,7 +127,7 @@ class PoolService(Service):
             except Exception:
                 self.logger.warn('Failed to detach device', exc_info=True)
         except Exception as e:
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 try:
                     # If replace has failed lets detach geli to not keep disk busy
                     await self.middleware.call('disk.geli_detach_single', new_devname)
@@ -125,9 +137,12 @@ class PoolService(Service):
         finally:
             # Needs to happen even if replace failed to put back disk that had been
             # removed from swap prior to replacement
-            await self.middleware.call('disk.swaps_configure')
+            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
+
+        if old_disk:
+            await self.middleware.call('disk.copy_settings', old_disk, disk)
 
         return True

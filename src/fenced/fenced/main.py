@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 
-from fenced.exceptions import PanicExit
+from fenced.exceptions import PanicExit, ExcludeDisksError
 from fenced.fence import Fence, ExitCode
 from fenced.logging import setup_logging
 
@@ -88,6 +88,12 @@ def main():
         type=int,
         help='Time in seconds between each SCSI reservation set/check',
     )
+    parser.add_argument(
+        '--exclude-disks', '-ed',
+        default=[],
+        help='List of disks to be excluded from SCSI reservations.'
+             ' (THIS CAN CAUSE PROBLEMS IF YOU DONT KNOW WHAT YOURE DOING)',
+    )
     args = parser.parse_args()
 
     setup_logging(args.foreground)
@@ -96,7 +102,7 @@ def main():
         logger.error('fenced already running.')
         sys.exit(ExitCode.ALREADY_RUNNING.value)
 
-    fence = Fence(args.interval)
+    fence = Fence(args.interval, args.exclude_disks)
     newkey = fence.init(args.force)
 
     if not args.foreground:
@@ -121,6 +127,9 @@ def main():
         else:
             logger.info('Panic %s', e)
             panic(e)
+    except ExcludeDisksError as e:
+        logger.info(f'{e}')
+        sys.exit(ExitCode.EXCLUDE_DISKS_ERROR.value)
     except Exception:
         logger.error('Unexpected exception', exc_info=True)
         sys.exit(ExitCode.UNKNOWN.value)
