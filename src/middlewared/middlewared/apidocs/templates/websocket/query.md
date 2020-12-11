@@ -1,6 +1,6 @@
 ## Query Methods
 
-FreeNAS API has multiple query methods including `pool.query`, `disk.query`, `vm.query`, and many more.
+TrueNAS API has multiple query methods including `pool.query`, `disk.query`, `vm.query`, and many more.
 
 The arguments for these methods support multiple options and filters that are similar to SQL queries.
 
