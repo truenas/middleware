@@ -91,6 +91,8 @@ def clean_value_of_attr_for_upgrade(orig_value, variable):
     for k, v in orig_value.items():
         if k not in valid_attrs:
             value.pop(k)
+            continue
+
         if isinstance(v, dict) and valid_attrs[k]['schema']['type'] == 'dict':
             value[k] = clean_value_of_attr_for_upgrade(v, valid_attrs[k])
 
