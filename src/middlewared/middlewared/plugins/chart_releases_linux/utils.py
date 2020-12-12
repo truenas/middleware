@@ -5,10 +5,12 @@ from middlewared.utils import run as _run
 
 
 CHART_NAMESPACE_PREFIX = 'ix-'
+CONTEXT_KEY_NAME = 'ixChartContext'
 RESERVED_NAMES = [
     ('ixExternalInterfacesConfiguration', list),
     ('ixExternalInterfacesConfigurationNames', list),
     ('ixVolumes', list),
+    (CONTEXT_KEY_NAME, dict),
 ]
 
 
