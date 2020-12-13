@@ -83,15 +83,47 @@ class DomainState(enum.Enum):
     PMSUSPENDED = libvirt.VIR_DOMAIN_PMSUSPENDED
 
 
-class VMSupervisor:
+class LibvirtConnectionMixin:
 
-    def __init__(self, vm_data, connection, middleware=None):
+    LIBVIRT_CONNECTION = None
+
+    def _open(self):
+        try:
+            # We want to do this before initializing libvirt connection
+            libvirt.virEventRegisterDefaultImpl()
+            LibvirtConnectionMixin.LIBVIRT_CONNECTION = libvirt.open(LIBVIRT_URI)
+        except libvirt.libvirtError as e:
+            raise CallError(f'Failed to open libvirt connection: {e}')
+
+    def _close(self):
+        try:
+            self.LIBVIRT_CONNECTION.close()
+        except libvirt.libvirtError as e:
+            raise CallError(f'Failed to close libvirt connection: {e}')
+        else:
+            self.LIBVIRT_CONNECTION = None
+
+    def _is_connection_alive(self):
+        return self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive()
+
+    def _check_connection_alive(self):
+        if not self._is_connection_alive():
+            raise CallError('Failed to connect to libvirt')
+
+    def _check_setup_connection(self):
+        if not self._is_connection_alive():
+            self.middleware.call_sync('vm.wait_for_libvirtd', 10)
+        self._check_connection_alive()
+
+
+class VMSupervisor(LibvirtConnectionMixin):
+
+    def __init__(self, vm_data, middleware=None):
         self.vm_data = vm_data
-        self.connection = connection
         self.middleware = middleware
         self.devices = []
 
-        if not self.connection or not self.connection.isAlive():
+        if not self.LIBVIRT_CONNECTION or not self.LIBVIRT_CONNECTION.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
 
         self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
@@ -103,7 +135,7 @@ class VMSupervisor:
         if update_devices:
             self.update_vm_data(vm_data)
         try:
-            self.domain = self.connection.lookupByName(self.libvirt_domain_name)
+            self.domain = self.LIBVIRT_CONNECTION.lookupByName(self.libvirt_domain_name)
         except libvirt.libvirtError:
             self.domain = None
         else:
@@ -130,10 +162,10 @@ class VMSupervisor:
             raise CallError(f'{self.libvirt_domain_name} domain has already been defined')
 
         vm_xml = etree.tostring(self.construct_xml()).decode()
-        if not self.connection.defineXML(vm_xml):
+        if not self.LIBVIRT_CONNECTION.defineXML(vm_xml):
             raise CallError(f'Unable to define persistent domain for {self.libvirt_domain_name}')
 
-        self.domain = self.connection.lookupByName(self.libvirt_domain_name)
+        self.domain = self.LIBVIRT_CONNECTION.lookupByName(self.libvirt_domain_name)
 
     def undefine_domain(self):
         if self.domain.isActive():
@@ -929,7 +961,7 @@ class VMDeviceModel(sa.Model):
     order = sa.Column(sa.Integer(), nullable=True)
 
 
-class VMService(CRUDService):
+class VMService(CRUDService, LibvirtConnectionMixin):
 
     class Config:
         namespace = 'vm'
@@ -939,7 +971,6 @@ class VMService(CRUDService):
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
         self.vms = {}
-        self.libvirt_connection = None
 
     @accepts()
     def flags(self):
@@ -1224,7 +1255,7 @@ class VMService(CRUDService):
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
         """
         async with LIBVIRT_LOCK:
-            if not self.libvirt_connection:
+            if not self.LIBVIRT_CONNECTION:
                 await self.wait_for_libvirtd(10)
         await self.middleware.call('vm.ensure_libvirt_connection')
 
@@ -1244,8 +1275,8 @@ class VMService(CRUDService):
                 await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
 
         await self.middleware.run_in_thread(
-            lambda vms, vd, con, mw: vms.update({vd['name']: VMSupervisor(vd, con, mw)}),
-            self.vms, (await self.get_instance(vm_id)), self.libvirt_connection, self.middleware
+            lambda vms, vd, con, mw: vms.update({vd['name']: VMSupervisor(vd, mw)}),
+            self.vms, (await self.get_instance(vm_id)), self.LIBVIRT_CONNECTION, self.middleware
         )
 
         return await self.get_instance(vm_id)
@@ -1508,11 +1539,11 @@ class VMService(CRUDService):
         if vm['name'] in self.vms:
             self.vms.pop(vm['name']).undefine_domain()
         else:
-            VMSupervisor(vm, self.libvirt_connection, self.middleware).undefine_domain()
+            VMSupervisor(vm, self.middleware).undefine_domain()
 
     @private
     def ensure_libvirt_connection(self):
-        if not self.libvirt_connection or not self.libvirt_connection.isAlive():
+        if not self.LIBVIRT_CONNECTION or not self.LIBVIRT_CONNECTION.isAlive():
             raise CallError('Failed to connect to libvirt')
 
     @item_method
@@ -1639,7 +1670,7 @@ class VMService(CRUDService):
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
-        if self.libvirt_connection and vm['name'] in self.vms:
+        if self.LIBVIRT_CONNECTION and vm['name'] in self.vms:
             try:
                 # Whatever happens, query shouldn't fail
                 return self.vms[vm['name']].status()
@@ -1807,10 +1838,10 @@ class VMService(CRUDService):
 
     @private
     def close_libvirt_connection(self):
-        if self.libvirt_connection:
+        if self.LIBVIRT_CONNECTION:
             with contextlib.suppress(libvirt.libvirtError):
-                self.libvirt_connection.close()
-            self.libvirt_connection = None
+                self.LIBVIRT_CONNECTION.close()
+            self.LIBVIRT_CONNECTION = None
 
     @private
     async def terminate(self):
@@ -1832,9 +1863,8 @@ class VMService(CRUDService):
             if not await self.middleware.call('service.started', 'libvirtd'):
                 await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
             # We want to do this before initializing libvirt connection
-            libvirt.virEventRegisterDefaultImpl()
-            self.libvirt_connection = libvirt.open(LIBVIRT_URI)
-            await self.middleware.call('vm.setup_libvirt_events', self.libvirt_connection)
+            self._open()
+            await self.middleware.call('vm.setup_libvirt_events', self.LIBVIRT_CONNECTION)
         except (asyncio.TimeoutError, libvirt.libvirtError):
             self.middleware.logger.error('Failed to connect to libvirtd')
 
@@ -1847,11 +1877,11 @@ class VMService(CRUDService):
 
         # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
-        if self.libvirt_connection:
+        if self.LIBVIRT_CONNECTION:
             for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm'):
                 vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
                 try:
-                    self.vms[vm_data['name']] = VMSupervisor(vm_data, self.libvirt_connection, self.middleware)
+                    self.vms[vm_data['name']] = VMSupervisor(vm_data, self.middleware)
                 except Exception as e:
                     # Whatever happens, we don't want middlewared not booting
                     self.middleware.logger.error(
