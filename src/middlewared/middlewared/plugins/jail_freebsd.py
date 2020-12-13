@@ -1028,9 +1028,15 @@ class JailService(CRUDService):
         """Wrapper for iocage's API, as a few commands aren't ported to it"""
         try:
             iocage = ioc.IOCage(callback=callback, skip_jails=skip, jail=jail, reset_cache=True)
+            # We use match_to_dir as __check_jail_existence__ searches greedily meaning if
+            # we for example have a jail abcdef and wanted to check if abcd exists, it will say it does
+            # and give us abcdef jail.
+            if not ioc_common.match_to_dir(iocage.iocroot, jail):
+                raise CallError(f'{jail!r} jail does not exist', errno=errno.ENOENT)
+
             jail, path = iocage.__check_jail_existence__()
         except RuntimeError:
-            raise CallError(f"jail '{jail}' not found!")
+            raise CallError(f'{jail!r} jail does not exist', errno=errno.ENOENT)
 
         return jail, path, iocage
 
