@@ -122,9 +122,11 @@ class ChartReleaseService(Service):
         # chart versions during helm upgrade in the helm template, hence the requirement for a context object.
         config[CONTEXT_KEY_NAME].update({
             'operation': 'UPGRADE',
+            'isUpgrade': True,
             'upgradeMetadata': {
                 'oldChartVersion': current_chart['version'],
                 'newChartVersion': new_version,
+                'preUpgradeRevision': release['version'],
             }
         })
 
