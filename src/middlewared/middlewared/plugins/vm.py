@@ -122,9 +122,7 @@ class VMSupervisor(LibvirtConnectionMixin):
         self.vm_data = vm_data
         self.middleware = middleware
         self.devices = []
-
-        if not self.LIBVIRT_CONNECTION or not self.LIBVIRT_CONNECTION.isAlive():
-            raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
+        self._check_setup_connection()
 
         self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
         self.domain = self.stop_devices_thread = None
@@ -1257,7 +1255,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
         async with LIBVIRT_LOCK:
             if not self.LIBVIRT_CONNECTION:
                 await self.wait_for_libvirtd(10)
-        await self.middleware.call('vm.ensure_libvirt_connection')
+        await self.middleware.run_in_thread(self._check_setup_connection)
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
@@ -1448,13 +1446,12 @@ class VMService(CRUDService, LibvirtConnectionMixin):
            an existing device.
         3) Devices that do not have an `id` attribute are created and attached to `id` VM.
         """
-
         old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
         if new['name'] != old['name']:
-            await self.middleware.call('vm.ensure_libvirt_connection')
+            await self.middleware.run_in_thread(self._check_setup_connection)
             if old['status']['state'] == 'RUNNING':
                 raise CallError('VM name can only be changed when VM is inactive')
 
@@ -1498,7 +1495,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
         """Delete a VM."""
         async with LIBVIRT_LOCK:
             vm = await self.get_instance(id)
-            await self.middleware.call('vm.ensure_libvirt_connection')
+            await self.middleware.run_in_thread(self._check_setup_connection)
             status = await self.middleware.call('vm.status', id)
             if status.get('state') == 'RUNNING':
                 await self.middleware.call('vm.poweroff', id)
@@ -1541,11 +1538,6 @@ class VMService(CRUDService, LibvirtConnectionMixin):
         else:
             VMSupervisor(vm, self.middleware).undefine_domain()
 
-    @private
-    def ensure_libvirt_connection(self):
-        if not self.LIBVIRT_CONNECTION or not self.LIBVIRT_CONNECTION.isAlive():
-            raise CallError('Failed to connect to libvirt')
-
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit', default=False)))
     def start(self, id, options):
@@ -1561,7 +1553,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
         vm = self.middleware.call_sync('vm.get_instance', id)
-        self.ensure_libvirt_connection()
+        self._check_setup_connection()
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
 
@@ -1607,7 +1599,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
         not already stopped within the specified `shutdown_timeout`.
         """
         vm_data = self.middleware.call_sync('vm.get_instance', id)
-        self.ensure_libvirt_connection()
+        self._check_setup_connection()
         vm = self.vms[vm_data['name']]
 
         if options['force']:
@@ -1624,7 +1616,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
     @accepts(Int('id'))
     def poweroff(self, id):
         vm_data = self.middleware.call_sync('vm.get_instance', id)
-        self.ensure_libvirt_connection()
+        self._check_setup_connection()
         self.vms[vm_data['name']].poweroff()
         self.middleware.call_sync('vm.teardown_guest_vmemory', id)
 
@@ -1634,7 +1626,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
     def restart(self, job, id):
         """Restart a VM."""
         vm = self.middleware.call_sync('vm.get_instance', id)
-        self.ensure_libvirt_connection()
+        self._check_setup_connection()
         self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
 
     @private
