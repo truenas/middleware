@@ -1353,7 +1353,7 @@ class SharingSMBService(SharingService):
             try:
                 await self.middleware.call('sharing.smb.reg_addshare', share_conf[0])
             except Exception:
-                self.logger.warning("Failed to add SMB share [%] while synchronizing registry config",
+                self.logger.warning("Failed to add SMB share [%s] while synchronizing registry config",
                                     share, exc_info=True)
 
         for share in to_del:
