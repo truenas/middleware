@@ -17,7 +17,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-RE_TIME_DETAILS = re.compile(r'test will complete after(.*)', re.IGNORECASE)
+RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)
 
 
 async def annotate_disk_smart_tests(middleware, devices, disk):
@@ -423,7 +423,7 @@ class SMARTTestService(CRUDService):
             output['error'] = e.errmsg
         else:
             expected_result_time = None
-            time_details = re.findall(RE_TIME_DETAILS, result)
+            time_details = re.findall(RE_TIME, result)
             if time_details:
                 try:
                     expected_result_time = datetime.strptime(time_details[0].strip(), '%a %b %d %H:%M:%S %Y')
