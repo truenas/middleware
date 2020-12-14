@@ -278,7 +278,7 @@ def dir_mode_check(mode_bit):
         assert results['result'] is False, results['output']
 
 
-def file_mode_check(request, mode_bit):
+def file_mode_check(mode_bit):
     if mode_bit.endswith("READ"):
         cmd = f'cat /mnt/{MODE_DATASET}/canary'
         results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
@@ -294,7 +294,6 @@ def file_mode_check(request, mode_bit):
         assert results['result'] is False, results['output']
 
     elif mode_bit.endswith("WRITE"):
-        depends(request, ["ssh_password"], scope="session")
         cmd = f'cat /mnt/{MODE_DATASET}/canary'
         results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
         assert results['result'] is False, results['output']
@@ -468,7 +467,7 @@ def test_15_test_file_owner_bits_function_allow(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
 
     result = POST(
@@ -495,7 +494,7 @@ def test_16_test_file_group_bits_function_allow(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
 
     result = POST(
@@ -522,7 +521,7 @@ def test_17_test_file_other_bits_function_allow(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
 
     result = POST(
