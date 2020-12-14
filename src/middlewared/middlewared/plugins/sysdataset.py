@@ -100,7 +100,7 @@ class SystemDatasetService(ConfigService):
 
         verrors = ValidationErrors()
         if new['pool'] != config['pool']:
-            ad_enabled = (self.middleware.call('activedirectory.get_state')) != 'DISABLED'
+            ad_enabled = (await self.middleware.call('activedirectory.get_state')) != 'DISABLED'
             if ad_enabled:
                 verrors.add(
                     'sysdataset_update.pool',
