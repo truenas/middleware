@@ -12,6 +12,7 @@ from pkg_resources import parse_version
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list, get
+from middlewared.validators import Match
 
 from .utils import CHART_NAMESPACE_PREFIX, get_namespace, get_storage_class_name, Resources, run
 
@@ -220,7 +221,7 @@ class ChartReleaseService(CRUDService):
             Dict('values', additional_attrs=True),
             Str('catalog', required=True),
             Str('item', required=True),
-            Str('release_name', required=True),
+            Str('release_name', required=True, validators=[Match(r'[a-z0-9]([-a-z0-9]*[a-z0-9])?')]),
             Str('train', default='charts'),
             Str('version', default='latest'),
         )
