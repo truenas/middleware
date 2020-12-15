@@ -61,6 +61,9 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
             self.__define_domain()
 
+    def is_available(self):
+        return all(d.is_available() for d in self.devices)
+
     def status(self):
         domain = self.domain
         domain_state = DomainState(domain.state()[0])
@@ -123,6 +126,9 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             raise CallError(f'{self.libvirt_domain_name} domain is already active')
 
         self.update_vm_data(vm_data)
+
+        if not self.is_available():
+            raise CallError(f'VM device(s) are not available, vm will not start.')
 
         self.before_start_checks()
 
