@@ -18,7 +18,7 @@ class PCI(Device):
             self.init_ppt_map()
 
     def is_available(self):
-        return True
+        return self.passthru_device() in self.middleware.call_sync('vm.device.passthrough_device_choices')
 
     def identity(self):
         return str(self.passthru_device())
