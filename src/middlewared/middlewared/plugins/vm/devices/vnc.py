@@ -30,6 +30,10 @@ class VNC(Device):
         super().__init__(*args, **kwargs)
         self.web_process = None
 
+    def identity(self):
+        data = self.data['attributes']
+        return f'{data["vnc_bind"]}:{data["vnc_port"]}'
+
     def is_available(self):
         return self.data['attributes']['vnc_bind'] in self.middleware.call_sync('vm.device.vnc_bind_choices')
 

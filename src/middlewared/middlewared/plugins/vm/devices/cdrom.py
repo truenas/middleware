@@ -13,8 +13,11 @@ class CDROM(Device):
         Str('path', required=True),
     )
 
+    def identity(self):
+        return self.data['attributes']['path']
+
     def is_available(self):
-        return os.path.exists(self.data['attributes']['path'])
+        return os.path.exists(self.identity())
 
     def xml_linux(self, *args, **kwargs):
         disk_number = kwargs.pop('disk_number')

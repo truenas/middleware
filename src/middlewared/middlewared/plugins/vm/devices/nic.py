@@ -22,14 +22,14 @@ class NIC(Device):
         super().__init__(*args, **kwargs)
         self.bridge = self.bridge_created = self.nic_attach = None
 
-    def get_nic_attach(self):
+    def identity(self):
         nic_attach = self.data['attributes'].get('nic_attach')
         if not nic_attach:
             nic_attach = netif.RoutingTable().default_route_ipv4.interface
         return nic_attach
 
     def is_available(self):
-        return self.get_nic_attach() in netif.list_interfaces()
+        return self.identity() in netif.list_interfaces()
 
     @staticmethod
     def random_mac():

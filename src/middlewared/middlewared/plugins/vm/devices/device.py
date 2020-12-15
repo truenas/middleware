@@ -67,3 +67,9 @@ class Device(ABC):
 
     def hypervisor_args_freebsd(self, *args, **kwargs):
         pass
+
+    def __str__(self):
+        return f'{self.__class__.__name__} Device: {self.identity()}'
+
+    def identity(self):
+        raise NotImplementedError
