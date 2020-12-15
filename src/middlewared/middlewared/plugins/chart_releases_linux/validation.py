@@ -4,7 +4,7 @@ from middlewared.schema import Dict
 from middlewared.service import private, Service
 from middlewared.validators import validate_attributes
 
-from .schema import get_schema, get_list_item_from_value, update_conditional_validation
+from .schema import get_schema, get_list_item_from_value, update_conditional_defaults
 from .utils import RESERVED_NAMES
 
 
@@ -22,7 +22,7 @@ class ChartReleaseService(Service):
         attrs = list(itertools.chain.from_iterable(
             get_schema(q, update) for q in item_version_details['schema']['questions']
         ))
-        dict_obj = update_conditional_validation(
+        dict_obj = update_conditional_defaults(
             Dict(schema_name, *attrs, update=update), {
                 'schema': {'attrs': item_version_details['schema']['questions']}
             }
@@ -30,7 +30,7 @@ class ChartReleaseService(Service):
 
         verrors = validate_attributes(
             attrs, {'values': new_values}, attr_key='values', dict_kwargs={
-                'conditional_validation': dict_obj.conditional_validation, 'update': update,
+                'conditional_defaults': dict_obj.conditional_defaults, 'update': update,
             }
         )
         return {
@@ -52,7 +52,12 @@ class ChartReleaseService(Service):
         verrors.check()
 
         # If schema is okay, we see if we have question specific validation to be performed
-        questions = {v['variable']: v for v in item_version_details['schema']['questions']}
+        questions = {}
+        for variable in item_version_details['schema']['questions']:
+            questions[variable['variable']] = variable
+            if 'subquestions' in variable.get('schema', {}):
+                for sub_variable in variable['schema']['subquestions']:
+                    questions[sub_variable['variable']] = sub_variable
         for key in new_values:
             await self.validate_question(verrors, new_values[key], questions[key], dict_obj.attrs[key], schema_name)
 

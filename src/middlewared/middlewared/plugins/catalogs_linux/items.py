@@ -116,8 +116,8 @@ class CatalogService(Service):
             version_data['required_features'].add(ref)
             if ref == 'definitions/interface':
                 data['enum'] = [
-                    {'value': d['id'], 'description': f'{d["id"]!r} Interface'}
-                    for d in self.middleware.call_sync('interface.query')
+                    {'value': i, 'description': f'{i!r} Interface'}
+                    for i in self.middleware.call_sync('chart.release.nic_choices')
                 ]
             elif ref == 'definitions/gpuConfiguration':
                 data['attrs'] = []
@@ -130,5 +130,12 @@ class CatalogService(Service):
                             'max': int(quantity),
                         }
                     })
+            elif ref == 'definitions/timezone':
+                data['enum'] = [
+                    {'value': t, 'description': f'{t!r} timezone'}
+                    for t in self.middleware.call_sync('system.general.timezone_choices')
+                ]
+            elif ref == 'definitions/nodeIP':
+                data['default'] = self.middleware.call_sync('kubernetes.node_ip')
 
         schema.update(data)

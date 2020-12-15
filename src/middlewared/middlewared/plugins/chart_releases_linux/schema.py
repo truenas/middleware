@@ -19,7 +19,7 @@ mapping = {
 }
 
 
-def update_conditional_validation(dict_obj, variable_details):
+def update_conditional_defaults(dict_obj, variable_details):
     schema = variable_details['schema']
     for var in filter(lambda k: any(c in k['schema'] for c in ('show_subquestions_if', 'show_if')), schema['attrs']):
         var_schema = var['schema']
@@ -33,7 +33,7 @@ def update_conditional_validation(dict_obj, variable_details):
             filters.extend(var_schema['show_if'])
             attrs.append(var['variable'])
 
-        dict_obj.conditional_validation[var['variable']] = {'filters': filters, 'attrs': attrs}
+        dict_obj.conditional_defaults[var['variable']] = {'filters': filters, 'attrs': attrs}
 
     return dict_obj
 
@@ -45,7 +45,7 @@ def get_schema(variable_details, update):
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
     obj_kwargs = {k: schema_details[k] for k in filter(
         lambda k: k in schema_details,
-        ('required', 'default', 'private', 'ipv4', 'ipv6', 'cidr', 'null')
+        ('required', 'default', 'private', 'ipv4', 'ipv6', 'cidr', 'null', 'additional_attrs', 'editable')
     )}
 
     if schema_class not in (Cron, Dict):
@@ -57,7 +57,7 @@ def get_schema(variable_details, update):
             update=update, **obj_kwargs
         )
         if schema_class == Dict:
-            obj = update_conditional_validation(obj, variable_details)
+            obj = update_conditional_defaults(obj, variable_details)
 
     result = []
 
@@ -91,6 +91,8 @@ def clean_value_of_attr_for_upgrade(orig_value, variable):
     for k, v in orig_value.items():
         if k not in valid_attrs:
             value.pop(k)
+            continue
+
         if isinstance(v, dict) and valid_attrs[k]['schema']['type'] == 'dict':
             value[k] = clean_value_of_attr_for_upgrade(v, valid_attrs[k])
 

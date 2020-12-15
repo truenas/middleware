@@ -25,3 +25,10 @@ class ChartReleaseService(Service):
                 choices[pod['metadata']['name']].append(container['name'])
 
         return choices
+
+    @accepts()
+    async def nic_choices(self):
+        """
+        Available choices for NIC which can be added to a pod in a chart release.
+        """
+        return await self.middleware.call('interface.choices')
