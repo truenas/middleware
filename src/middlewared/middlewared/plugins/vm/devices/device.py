@@ -14,6 +14,9 @@ class Device(ABC):
     def xml(self, *args, **kwargs):
         return getattr(self, f'xml_{osc.SYSTEM.lower()}')(*args, **kwargs)
 
+    def is_available(self):
+        raise NotImplementedError
+
     def xml_freebsd(self, *args, **kwargs):
         raise NotImplementedError
 
