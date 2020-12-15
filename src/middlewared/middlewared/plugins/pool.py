@@ -1099,7 +1099,8 @@ class PoolService(CRUDService):
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
-        await self.middleware.call('disk.swaps_remove_disks', [disk])
+        if disk:
+            await self.middleware.call('disk.swaps_remove_disks', [disk])
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
