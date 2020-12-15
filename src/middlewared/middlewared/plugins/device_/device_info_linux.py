@@ -290,8 +290,11 @@ class DeviceService(Service, DeviceInfoBase):
             gpu_dev = pyudev.Devices.from_name(pyudev.Context(), 'pci', addr)
             # Let's normalise vendor for consistency
             vendor = None
-            if 'nvidia' in gpu_dev.get('ID_VENDOR_FROM_DATABASE', '').lower():
+            vendor_id_from_db = gpu_dev.get('ID_VENDOR_FROM_DATABASE', '').lower()
+            if 'nvidia' in vendor_id_from_db:
                 vendor = 'NVIDIA'
+            elif 'intel' in vendor_id_from_db:
+                vendor = 'INTEL'
 
             gpus.append({
                 'addr': {
