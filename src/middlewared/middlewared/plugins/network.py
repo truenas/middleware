@@ -2025,9 +2025,10 @@ class InterfaceService(CRUDService):
 
         """
         list_of_ip = []
-        ignore_nics = ['tap', 'epair', 'pflog']
-        if not choices['loopback']:
-            ignore_nics.append('lo')
+        ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
+        if choices['loopback']:
+            ignore_nics.remove('lo')
+
         ignore_nics = tuple(ignore_nics)
         static_ips = {}
         if choices['static']:
