@@ -79,7 +79,9 @@ class KubernetesService(Service):
             await self.create_update_k8s_datasets(config['dataset'])
 
         locked_datasets = [
-            d['id'] for d in await self.middleware.call('zfs.dataset.locked_datasets')
+            d['id'] for d in filter(
+                lambda d: d['mountpoint'], await self.middleware.call('zfs.dataset.locked_datasets')
+            )
             if d['mountpoint'].startswith(f'{config["dataset"]}/') or d['mountpoint'] == config['dataset']
         ]
         if locked_datasets:
