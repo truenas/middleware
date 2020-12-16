@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/sh -ex
+
 mkdir /var/trash
 for file in \
     /etc/cron.d/certbot \
@@ -21,9 +22,6 @@ do
     dpkg-divert --add --package truenas --rename --divert "/var/trash/$(echo "$file" | sed "s/\//_/g")" "$file"
 done
 
-dpkg-divert --add --package truenas --rename --divert /etc/grub.d__10_linux /etc/grub.d/10_linux
-dpkg-divert --add --package truenas --rename --divert /etc/grub.d__30_os-prober /etc/grub.d/30_os-prober
-
 # openssh-server explicitly sets itself to enabled on post install, so preset is not respected
 # we need to manually disable it
 
@@ -42,8 +40,7 @@ systemctl disable smbd
 systemctl disable winbind
 systemctl disable wsdd
 
-# kubelet and nvidia-persistenced are not respecting vendor preset file so we disable them explicitly
-systemctl disable kubelet
+# nvidia-persistenced is not respecting vendor preset file so we disable it explicitly
 systemctl disable nvidia-persistenced
 
 # Update alternatives
@@ -61,3 +58,7 @@ for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf /va
 done
 
 #DEBHELPER#
+
+# zfs-zed is not respecting vendor preset file so we enable it explicitly
+systemctl daemon-reload
+systemctl enable zfs-zed
