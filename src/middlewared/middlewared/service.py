@@ -52,7 +52,8 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, check_pipes=True, transient=False):
+def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, check_pipes=True, transient=False,
+        result_private=False):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
@@ -63,6 +64,7 @@ def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, 
             'pipes': pipes or [],
             'check_pipes': check_pipes,
             'transient': transient,
+            'result_private': result_private,
         }
         return fn
     return check_job
@@ -772,7 +774,8 @@ class CoreService(Service):
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
         jobs = filter_list([
-            i.__encode__() for i in list(self.middleware.jobs.all().values())
+            i.__encode__(public=options['extra'].get('public', False))
+            for i in list(self.middleware.jobs.all().values())
         ], filters, options)
         return jobs
 
