@@ -543,7 +543,7 @@ class VMWareService(CRUDService):
             connect.Disconnect(si)
 
     @private
-    @job(result_private=True)
+    @job()
     def periodic_snapshot_task_begin(self, job, task_id):
         task = self.middleware.call_sync("pool.snapshottask.query",
                                          [["id", "=", task_id]],
