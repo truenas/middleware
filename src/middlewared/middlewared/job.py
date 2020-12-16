@@ -438,7 +438,7 @@ class Job(object):
 
         await self.middleware.run_in_thread(close_pipes)
 
-    def __encode__(self):
+    def __encode__(self, public=False):
         exc_info = None
         if self.exc_info:
             etype = self.exc_info[0]
@@ -466,7 +466,7 @@ class Job(object):
             'logs_path': self.logs_path,
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,
-            'result': self.result,
+            'result': '********' if public and self.options['result_private'] else self.result,
             'error': self.error,
             'exception': self.exception,
             'exc_info': exc_info,

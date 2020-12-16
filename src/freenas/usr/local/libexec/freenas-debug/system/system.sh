@@ -133,7 +133,7 @@ system_func()
 	section_footer
 
 	section_header "Middleware Jobs - 'midclt call core.get_jobs'"
-	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' | jq .
+	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' '{"extra": {"public": true}}' | jq .
 	section_footer
 
 	if [ -f /data/license ]; then

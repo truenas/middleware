@@ -6,7 +6,7 @@ import ssl
 import uuid
 
 from middlewared.async_validators import resolve_hostname
-from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
+from middlewared.schema import accepts, Any, Bool, Dict, Int, Str, Patch
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 
@@ -143,7 +143,7 @@ class VMWareService(CRUDService):
         'vmware-creds',
         Str('hostname', required=True),
         Str('username', required=True),
-        Str('password', required=True),
+        Str('password', private=True, required=True),
     ))
     def get_datastores(self, data):
         """
@@ -155,7 +155,7 @@ class VMWareService(CRUDService):
         'vmware-creds',
         Str('hostname', required=True),
         Str('username', required=True),
-        Str('password', required=True),
+        Str('password', private=True, required=True),
     ))
     def match_datastores_with_datasets(self, data):
         """
@@ -543,7 +543,7 @@ class VMWareService(CRUDService):
             connect.Disconnect(si)
 
     @private
-    @job()
+    @job(result_private=True)
     def periodic_snapshot_task_begin(self, job, task_id):
         task = self.middleware.call_sync("pool.snapshottask.query",
                                          [["id", "=", task_id]],
@@ -552,6 +552,7 @@ class VMWareService(CRUDService):
         return self.snapshot_begin(task["dataset"], task["recursive"])
 
     @private
+    @accepts(Any("context", private=True))
     @job()
     def periodic_snapshot_task_end(self, job, context):
         return self.snapshot_end(context)
