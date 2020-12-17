@@ -1220,9 +1220,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
         """
         async with LIBVIRT_LOCK:
-            if not self.LIBVIRT_CONNECTION:
-                await self.wait_for_libvirtd(10)
-        await self.middleware.run_in_thread(self._check_setup_connection)
+            await self.middleware.run_in_thread(self._check_setup_connection)
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
