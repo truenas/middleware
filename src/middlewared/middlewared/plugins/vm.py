@@ -1629,6 +1629,14 @@ class VMService(CRUDService, LibvirtConnectionMixin):
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
+
+        try:
+            if not self._is_connection_alive():
+                self.middleware.call_sync('vm.wait_for_libvirtd', 5)
+        except Exception:
+            # We don't want vm.query to fail at any cost, so let's catch the exception
+            self.middleware.logger.debug('Failed to setup libvirt connection', exc_info=True)
+
         if self.LIBVIRT_CONNECTION and vm['name'] in self.vms:
             try:
                 # Whatever happens, query shouldn't fail
