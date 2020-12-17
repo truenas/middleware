@@ -697,7 +697,8 @@ class iSCSITargetExtentService(SharingService):
             'disks': {},
             'pools': {
                 p['name']: {'disks': await self.middleware.call('zfs.pool.get_disks', p['name']), 'all_flash': False}
-                for p in await self.middleware.call('pool.query')
+                for p in await self.middleware.call('pool.query', [['is_decrypted', '=', True],
+                                                                   ['status', '!=', 'OFFLINE']])
             }
         }
         disks_names = {}
