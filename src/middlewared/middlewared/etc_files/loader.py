@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import sysctl
+import os
 from packaging import version
 
 from middlewared.utils.io import write_if_changed
@@ -10,7 +11,16 @@ logger = logging.getLogger(__name__)
 
 def loader_config(middleware):
     config = generate_loader_config(middleware)
-    write_if_changed("/boot/loader.conf.local", "\n".join(config) + "\n")
+    path = "/boot/loader.conf.local"
+    write_if_changed(path, "\n".join(config) + "\n")
+
+    # write_if_changed creates the file with
+    # the execute bit so remove it
+    try:
+        os.chmod(path, 0o644)
+    except Exception:
+        # dont crash here
+        pass
 
 
 def generate_loader_config(middleware):
