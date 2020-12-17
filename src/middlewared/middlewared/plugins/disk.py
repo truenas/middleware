@@ -13,6 +13,7 @@ except ImportError:
     geom = None
     get_nsid = None
 
+from middlewared.common.camcontrol import camcontrol_list
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
@@ -536,6 +537,7 @@ class DiskService(CRUDService):
 
         reserved = await self.get_reserved()
 
+        devlist = await camcontrol_list()
         is_freenas = await self.middleware.call('system.is_freenas')
 
         serials = defaultdict(list)
@@ -551,11 +553,13 @@ class DiskService(CRUDService):
                     descr.startswith('3PAR')
                 ):
                     active_active.append(g.name)
+            if devlist.get(g.name, {}).get('driver') == 'umass-sim':
+                continue
             serial = ''
             v = g.provider.config.get('ident')
             if v:
                 # Exclude fake serial numbers e.g. `000000000000` reported by FreeBSD 12.2 USB stack
-                if not v.replace("0", ""):
+                if not v.replace('0', ''):
                     continue
                 serial = v
             v = g.provider.config.get('lunid')
