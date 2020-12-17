@@ -554,6 +554,9 @@ class DiskService(CRUDService):
             serial = ''
             v = g.provider.config.get('ident')
             if v:
+                # Exclude fake serial numbers e.g. `000000000000` reported by FreeBSD 12.2 USB stack
+                if not v.replace("0", ""):
+                    continue
                 serial = v
             v = g.provider.config.get('lunid')
             if v:
