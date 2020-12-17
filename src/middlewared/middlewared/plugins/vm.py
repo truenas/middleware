@@ -1637,7 +1637,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
             # We don't want vm.query to fail at any cost, so let's catch the exception
             self.middleware.logger.debug('Failed to setup libvirt connection', exc_info=True)
 
-        if self.LIBVIRT_CONNECTION and vm['name'] in self.vms:
+        if LibvirtConnectionMixin.LIBVIRT_CONNECTION and vm['name'] in self.vms:
             try:
                 # Whatever happens, query shouldn't fail
                 return self.vms[vm['name']].status()
@@ -1807,8 +1807,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
     def close_libvirt_connection(self):
         if self.LIBVIRT_CONNECTION:
             with contextlib.suppress(libvirt.libvirtError):
-                self.LIBVIRT_CONNECTION.close()
-            self.LIBVIRT_CONNECTION = None
+                self._close()
 
     @private
     async def terminate(self):
@@ -1844,7 +1843,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
 
         # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
-        if self.LIBVIRT_CONNECTION:
+        if LibvirtConnectionMixin.LIBVIRT_CONNECTION:
             for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm'):
                 vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
                 try:
