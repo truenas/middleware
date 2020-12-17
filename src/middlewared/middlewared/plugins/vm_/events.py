@@ -1,14 +1,15 @@
 import libvirt
 import threading
 
-from middlewared.plugins.vm import LibvirtConnectionMixin
 from middlewared.service import private, Service
+
+from .connection import LibvirtConnectionMixin
 
 
 class VMService(Service, LibvirtConnectionMixin):
 
     @private
-    def setup_libvirt_events(self, libvirt_connection):
+    def setup_libvirt_events(self):
         def callback(conn, dom, event, detail, opaque):
             """
             0: 'DEFINED',

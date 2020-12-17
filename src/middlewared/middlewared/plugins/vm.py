@@ -1,5 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.plugins.vm_.connection import LibvirtConnectionMixin
 from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors, job
@@ -47,7 +48,6 @@ logger = middlewared.logger.Logger('vm').getLogger()
 
 BUFSIZE = 65536
 
-LIBVIRT_URI = 'bhyve+unix:///system'
 LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
 LIBVIRT_BHYVE_NAMESPACE = 'http://libvirt.org/schemas/domain/bhyve/1.0'
 LIBVIRT_BHYVE_NSMAP = {'bhyve': LIBVIRT_BHYVE_NAMESPACE}
@@ -81,39 +81,6 @@ class DomainState(enum.Enum):
     SHUTOFF = libvirt.VIR_DOMAIN_SHUTOFF
     CRASHED = libvirt.VIR_DOMAIN_CRASHED
     PMSUSPENDED = libvirt.VIR_DOMAIN_PMSUSPENDED
-
-
-class LibvirtConnectionMixin:
-
-    LIBVIRT_CONNECTION = None
-
-    def _open(self):
-        try:
-            # We want to do this before initializing libvirt connection
-            libvirt.virEventRegisterDefaultImpl()
-            LibvirtConnectionMixin.LIBVIRT_CONNECTION = libvirt.open(LIBVIRT_URI)
-        except libvirt.libvirtError as e:
-            raise CallError(f'Failed to open libvirt connection: {e}')
-
-    def _close(self):
-        try:
-            self.LIBVIRT_CONNECTION.close()
-        except libvirt.libvirtError as e:
-            raise CallError(f'Failed to close libvirt connection: {e}')
-        else:
-            self.LIBVIRT_CONNECTION = None
-
-    def _is_connection_alive(self):
-        return self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive()
-
-    def _check_connection_alive(self):
-        if not self._is_connection_alive():
-            raise CallError('Failed to connect to libvirt')
-
-    def _check_setup_connection(self):
-        if not self._is_connection_alive():
-            self.middleware.call_sync('vm.wait_for_libvirtd', 10)
-        self._check_connection_alive()
 
 
 class VMSupervisor(LibvirtConnectionMixin):
@@ -1856,7 +1823,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
                 await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
             # We want to do this before initializing libvirt connection
             self._open()
-            await self.middleware.call('vm.setup_libvirt_events', self.LIBVIRT_CONNECTION)
+            await self.middleware.call('vm.setup_libvirt_events')
         except (asyncio.TimeoutError, libvirt.libvirtError):
             self.middleware.logger.error('Failed to connect to libvirtd')
 
