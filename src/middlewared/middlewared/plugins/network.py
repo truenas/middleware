@@ -895,7 +895,7 @@ class InterfaceService(CRUDService):
             required_attrs = ('vlan_parent_interface', 'vlan_tag')
 
         for i in required_attrs:
-            if not data.get(i):
+            if i not in data:
                 verrors.add(f'interface_create.{i}', 'This field is required')
 
         verrors.check()
@@ -1110,9 +1110,12 @@ class InterfaceService(CRUDService):
             if data['lag_protocol'] not in await self.middleware.call('interface.lag_supported_protocols'):
                 verrors.add(
                     f'{schema_name}.lag_protocol',
-                    f'{platform.system()} does not support LAGG protocol {data["lag_protocol"]}',
+                    f'{platform.system()} does not support LAG protocol {data["lag_protocol"]}',
                 )
-            for i, member in enumerate(data.get('lag_ports') or []):
+            lag_ports = data.get('lag_ports')
+            if not lag_ports:
+                verrors.add(f'{schema_name}.lag_ports', 'This field cannot be empty.')
+            for i, member in enumerate(lag_ports):
                 if member not in ifaces:
                     verrors.add(f'{schema_name}.lag_ports.{i}', 'Not a valid interface.')
                     continue
@@ -1140,27 +1143,26 @@ class InterfaceService(CRUDService):
                 except ValueError as e:
                     verrors.add(f'{schema_name}.name', str(e))
             parent = data.get('vlan_parent_interface')
-            if parent:
-                if parent not in ifaces:
-                    verrors.add(f'{schema_name}.vlan_parent_interface', 'Not a valid interface.')
-                elif parent in lag_used:
+            if parent not in ifaces:
+                verrors.add(f'{schema_name}.vlan_parent_interface', 'Not a valid interface.')
+            elif parent in lag_used:
+                verrors.add(
+                    f'{schema_name}.vlan_parent_interface',
+                    f'Interface {parent} is currently in use by {lag_used[parent]}.',
+                )
+            elif parent.startswith('br'):
+                verrors.add(
+                    f'{schema_name}.vlan_parent_interface',
+                    'Bridge interfaces are not allowed.',
+                )
+            else:
+                parent_iface = ifaces[parent]
+                mtu = data.get('mtu')
+                if mtu and mtu > (parent_iface.get('mtu') or 1500):
                     verrors.add(
-                        f'{schema_name}.vlan_parent_interface',
-                        f'Interface {parent} is currently in use by {lag_used[parent]}.',
+                        f'{schema_name}.mtu',
+                        'VLAN MTU cannot be bigger than parent interface.',
                     )
-                elif parent.startswith('br'):
-                    verrors.add(
-                        f'{schema_name}.vlan_parent_interface',
-                        'Bridge interfaces are not allowed.',
-                    )
-                else:
-                    parent_iface = ifaces[parent]
-                    mtu = data.get('mtu')
-                    if mtu and mtu > (parent_iface.get('mtu') or 1500):
-                        verrors.add(
-                            f'{schema_name}.mtu',
-                            'VLAN MTU cannot be bigger than parent interface.',
-                        )
 
         if not await self.middleware.call('failover.licensed'):
             data.pop('failover_critical', None)
