@@ -1,10 +1,11 @@
 import libvirt
 import threading
 
+from middlewared.plugins.vm import LibvirtConnectionMixin
 from middlewared.service import private, Service
 
 
-class VMService(Service):
+class VMService(Service, LibvirtConnectionMixin):
 
     @private
     def setup_libvirt_events(self, libvirt_connection):
@@ -58,11 +59,11 @@ class VMService(Service):
                 self.middleware.logger.debug('Received libvirtd event with unknown domain name %s', dom.name())
 
         def event_loop_execution():
-            while libvirt_connection._o and libvirt_connection.isAlive():
+            while self.LIBVIRT_CONNECTION._o and self.LIBVIRT_CONNECTION.isAlive():
                 libvirt.virEventRunDefaultImpl()
 
         event_thread = threading.Thread(target=event_loop_execution, name='libvirt_event_loop')
         event_thread.setDaemon(True)
         event_thread.start()
-        libvirt_connection.domainEventRegister(callback, None)
-        libvirt_connection.setKeepAlive(5, 3)
+        self.LIBVIRT_CONNECTION.domainEventRegister(callback, None)
+        self.LIBVIRT_CONNECTION.setKeepAlive(5, 3)
