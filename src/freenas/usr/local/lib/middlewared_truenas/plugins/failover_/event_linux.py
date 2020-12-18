@@ -426,7 +426,11 @@ class FailoverService(Service):
                 continue
 
             # try to unlock the zfs datasets (if any)
-            unlock_job = self.run_call('failover.unlock_zfs_datasets', vol["name"])
+            unlock_job = self.run_call(
+                'failover.unlock_zfs_datasets', vol["name"], {
+                    'restart_services': False,
+                }
+            )
             unlock_job.wait_sync()
             if unlock_job.error:
                 logger.error(f'Error unlocking ZFS encrypted datasets: {unlock_job.error}')
