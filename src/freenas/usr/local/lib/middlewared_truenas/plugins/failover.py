@@ -607,14 +607,26 @@ class FailoverService(ConfigService):
         return await self.middleware.call('failover.force_master')
 
     @private
+    @accepts(
+        Str('pool_name'),
+        Dict(
+            'unlock_zfs_datasets',
+            Bool('restart_services', default=True),
+        )
+    )
     @job(lock=lambda args: f'failover_dataset_unlock_{args[0]}')
-    async def unlock_zfs_datasets(self, job, pool_name):
-        # We are going to unlock all zfs datasets we have keys in cache/database for the pool in question
+    async def unlock_zfs_datasets(self, job, pool_name, data):
+        # Unnlock all (if any) zfs datasets for `pool_name`
+        # that we have keys for in the cache or the database.
+        # `restart_services` will cause any services that are
+        # dependent on the datasets to be restarted after the
+        # datasets are unlocked.
         zfs_keys = (await self.encryption_keys())['zfs']
         unlock_job = await self.middleware.call(
             'pool.dataset.unlock', pool_name, {
                 'recursive': True,
-                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()]
+                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()],
+                'toggle_attachments': data['restart_services'],
             }
         )
         return await job.wrap(unlock_job)
