@@ -159,11 +159,20 @@ class VMSupervisor(LibvirtConnectionMixin):
             for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
         ]
 
+    def unavailable_devices(self):
+        return [d for d in self.devices if not d.is_available()]
+
     def start(self, vm_data=None):
         if self.domain.isActive():
             raise CallError(f'{self.libvirt_domain_name} domain is already active')
 
         self.update_vm_data(vm_data)
+
+        unavailable_devices = self.unavailable_devices()
+        if unavailable_devices:
+            raise CallError(
+                f'VM will not start as {", ".join([str(d) for d in unavailable_devices])} device(s) are not available.'
+            )
 
         # Let's ensure that we are able to boot a GRUB based VM
         if self.vm_data['bootloader'] == 'GRUB' and not any(
@@ -593,6 +602,9 @@ class Device(ABC):
         self.data = data
         self.middleware = middleware
 
+    def is_available(self):
+        raise NotImplementedError
+
     @abstractmethod
     def xml(self, *args, **kwargs):
         pass
@@ -612,8 +624,20 @@ class Device(ABC):
     def bhyve_args(self, *args, **kwargs):
         pass
 
+    def __str__(self):
+        return f'{self.__class__.__name__} Device: {self.identity()}'
+
+    def identity(self):
+        raise NotImplementedError
+
 
 class StorageDevice(Device):
+
+    def identity(self):
+        return self.data['attributes']['path']
+
+    def is_available(self):
+        return os.path.exists(self.identity())
 
     def xml(self, *args, **kwargs):
         child_element = kwargs.pop('child_element')
@@ -661,6 +685,12 @@ class CDROM(Device):
         Str('path', required=True),
     )
 
+    def identity(self):
+        return self.data['attributes']['path']
+
+    def is_available(self):
+        return os.path.exists(self.identity())
+
     def xml(self, *args, **kwargs):
         child_element = kwargs.pop('child_element')
         return create_element(
@@ -699,6 +729,12 @@ class PCI(Device):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.init_ppt_map()
+
+    def is_available(self):
+        return self.identity() in self.middleware.call_sync('vm.device.pptdev_choices')
+
+    def identity(self):
+        return str(self.data['attributes'].get('pptdev'))
 
     def init_ppt_map(self):
         iommu_type = self.middleware.call_sync('vm.device.get_iommu_type')
@@ -764,6 +800,15 @@ class NIC(Device):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.bridge = self.bridge_created = None
+
+    def identity(self):
+        nic_attach = self.data['attributes'].get('nic_attach')
+        if not nic_attach:
+            nic_attach = netif.RoutingTable().default_route_ipv4.interface
+        return nic_attach
+
+    def is_available(self):
+        return self.identity() in netif.list_interfaces()
 
     @staticmethod
     def random_mac():
@@ -848,6 +893,13 @@ class VNC(Device):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.web_process = None
+
+    def identity(self):
+        data = self.data['attributes']
+        return f'{data["vnc_bind"]}:{data["vnc_port"]}'
+
+    def is_available(self):
+        return self.data['attributes']['vnc_bind'] in self.middleware.call_sync('vm.device.vnc_bind_choices')
 
     def xml(self, *args, **kwargs):
         return create_element(
