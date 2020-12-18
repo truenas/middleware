@@ -474,7 +474,7 @@ class PluginService(CRUDService):
         Bool('update_jail', default=True)
     )
     @job(lock=lambda args: f'jail_update:{args[0]}')
-    async def update(self, job, jail, update_jail=True):
+    async def update_plugin(self, job, jail, update_jail=True):
         """
         Updates specified plugin to latest available plugin version and optionally update plugin to latest patch level.
         """
