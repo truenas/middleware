@@ -2057,8 +2057,15 @@ class InterfaceService(CRUDService):
                 })
 
         for iface in list(netif.list_interfaces().values()):
-            if not iface.orig_name.startswith(ignore_nics):
+            try:
+                if iface.orig_name.startswith(ignore_nics):
+                    continue
                 aliases_list = iface.__getstate__()['aliases']
+            except FileNotFoundError:
+                # This happens on freebsd where we have a race condition when the interface
+                # might no longer possibly exist when we try to retrieve data from it
+                pass
+            else:
                 for alias_dict in filter(lambda d: not choices['static'] or d['address'] in static_ips, aliases_list):
 
                     if choices['ipv4'] and alias_dict['type'] == 'INET':
