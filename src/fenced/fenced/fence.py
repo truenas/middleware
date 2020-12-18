@@ -75,12 +75,26 @@ class Fence(object):
             if i in self._exclude_disks:
                 continue
 
-            try:
-                disk = Disk(self, i)
-                remote_keys.update(disk.get_keys()[1])
-            except (OSError, RuntimeError):
-                unsupported.append(i)
-                continue
+            # try 2 times to read the keys since there are SSDs
+            # that have a firmware bug that will actually barf
+            # on this request. However, nothing is wrong with
+            # the disk. If you simply send the same request
+            # again after this error, it will return the data
+            # requested with no errors.
+            # (i'm looking at you STEC ZeusRAM)
+            tries = 2
+            for j in range(tries):
+                try:
+                    disk = Disk(self, i)
+                    remote_keys.update(disk.get_keys()[1])
+                except (OSError, RuntimeError):
+                    logger.debug(
+                        'Retrying to read keys for disk %s', i
+                    )
+                    if j < tries - 1:
+                        continue
+                    else:
+                        unsupported.append(i)
 
             self._disks.add(disk)
 
