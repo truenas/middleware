@@ -382,6 +382,9 @@ class SMBService(SystemServiceService):
 
     @private
     async def setup_directories(self):
+        await self.reset_smb_ha_mode()
+        await self.middleware.call('etc.generate', 'smb')
+
         for p in SMBPath:
             if p == SMBPath.STATEDIR:
                 path = await self.middleware.call("smb.getparm", "state directory", "global")
@@ -421,25 +424,17 @@ class SMBService(SystemServiceService):
 
     @private
     @job(lock="smb_configure")
-    async def configure(self, job):
-        await self.reset_smb_ha_mode()
-        job.set_progress(0, 'Preparing to configure SMB.')
-        data = await self.config()
-        job.set_progress(10, 'Generating SMB config.')
-        await self.middleware.call('etc.generate', 'smb')
-
-        # Following hack will be removed once we make our own samba package
-        if osc.IS_LINUX:
-            os.remove("/etc/samba/smb.conf")
-            os.symlink("/etc/smb4.conf", "etc/samba/smb.conf")
-
+    async def configure(self, job, create_paths=True):
         """
         Many samba-related tools will fail if they are unable to initialize
         a messaging context, which will happen if the samba-related directories
         do not exist or have incorrect permissions.
         """
-        job.set_progress(20, 'Setting up SMB directories.')
-        await self.setup_directories()
+        data = await self.config()
+        job.set_progress(0, 'Setting up SMB directories.')
+        if create_paths:
+            await self.setup_directories()
+
         job.set_progress(30, 'Setting up server SID.')
         await self.middleware.call('smb.set_sid', data['cifs_SID'])
 
