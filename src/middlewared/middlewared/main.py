@@ -17,6 +17,7 @@ from .utils.run_in_thread import RunInThreadMixin
 from .utils.service.call import ServiceCallMixin
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
+from .webhooks.cluster_events import ClusterEventsApplication
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
@@ -1490,6 +1491,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         shellapp = ShellApplication(self)
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
+
+        clustereventsapp = ClusterEventsApplication(self)
+        app.router.add_route('POST', '/_clusterevents{path_info:.*}', clustereventsapp.listener)
 
         restful_api = RESTfulAPI(self, app)
         await restful_api.register_resources()

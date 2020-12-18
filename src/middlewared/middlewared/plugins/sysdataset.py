@@ -3,6 +3,11 @@ from middlewared.service import CallError, ConfigService, ValidationErrors, job,
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
 
+try:
+    from middlewared.plugins.cluster_linux.utils import CTDBConfig
+except ImportError:
+    CTDBConfig = None
+
 import asyncio
 import errno
 import os
@@ -342,6 +347,7 @@ class SystemDatasetService(ConfigService):
         return createdds
 
     async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
+
         for dataset, name in self.__get_datasets(pool, uuid):
             if name:
                 mountpoint = f'{path}/{name}'
@@ -353,9 +359,47 @@ class SystemDatasetService(ConfigService):
                 os.mkdir(mountpoint)
             await run('mount', '-t', 'zfs', dataset, mountpoint, check=True)
 
+        if osc.IS_LINUX:
+
+            # make sure the glustereventsd webhook dir and
+            # config file exist and start the glustereventsd
+            # service (if appropriate)
+            init_job = await self.middleware.call('gluster.eventsd.init')
+            init = await init_job.wait()
+            if init_job.error:
+                self.logger.error(
+                    'Failed to initilize %s directory with error: %s',
+                    CTDBConfig.CTDB_VOL_name.value,
+                    init_job.error
+                )
+            elif init:
+                # mount the local glusterfuse mount after
+                # successfully initializing glustereventsd
+                mnt_job = await self.middleware.call('ctdb.shared.volume.mount')
+                await mnt_job.wait()
+                if mnt_job.error:
+                    self.logger.error(
+                        'Failed to mount locally %s with error: %s ',
+                        CTDBConfig.CTDB_VOL_NAME.value,
+                        mnt_job.error
+                    )
+
     async def __umount(self, pool, uuid):
+
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
+                # if this is the ctdb dataset, then we have to
+                # unmount the local glusterfuse mount first before
+                # unmounting the underlying zfs dataset
+                if osc.IS_LINUX and name == CTDBConfig.CTDB_VOL_NAME.value:
+                    umnt_job = await self.middleware.call('ctdb.shared.volume.umount')
+                    await umnt_job.wait()
+                    if umnt_job.error:
+                        self.logger.error(
+                            'Failed to umount %s with error: %s',
+                            CTDBConfig.CTDB_VOL_NAME.value,
+                            umnt_job.error
+                        )
                 await run('umount', '-f', dataset)
             except subprocess.CalledProcessError as e:
                 stderr = e.stderr.decode()
@@ -368,8 +412,9 @@ class SystemDatasetService(ConfigService):
         return [(f'{pool}/.system', '')] + [
             (f'{pool}/.system/{i}', i) for i in [
                 'cores', 'samba4', f'syslog-{uuid}',
-                f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services', 'glusterd',
-            ]
+                f'rrd-{uuid}', f'configs-{uuid}',
+                'webui', 'services'
+            ] + ['glusterd', CTDBConfig.CTDB_VOL_NAME.value] if osc.IS_LINUX
         ]
 
     async def __nfsv4link(self, config):

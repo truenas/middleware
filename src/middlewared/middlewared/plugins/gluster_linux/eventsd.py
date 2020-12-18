@@ -1,26 +1,31 @@
 import subprocess
 import contextlib
 import json
+import pathlib
 
 from middlewared.validators import URL
 from middlewared.schema import Dict, Str
-from middlewared.service import job, accepts, CallError, CRUDService, ValidationErrors
+from middlewared.service import (job, accepts, private, CallError,
+                                 Service, ValidationErrors)
+from .utils import GlusterConfig
 
-EVENTSD_LOCK = 'gluster_eventsd_lock'
+
+EVENTSD_LOCK = GlusterConfig.EVENTSD_LOCK.value
+LOCAL_WEBHOOK_URL = GlusterConfig.LOCAL_EVENTSD_WEBHOOK_URL.value
+WEBHOOKS_FILE = GlusterConfig.WEBHOOKS_FILE.value
+WORKDIR = GlusterConfig.WORKDIR.value
 
 
-class GlusterEventsdService(CRUDService):
+class GlusterEventsdService(Service):
 
     class Config:
         namespace = 'gluster.eventsd'
 
-    WORKDIR = '/var/lib/glusterd'
-    WEBHOOKS_FILE = WORKDIR + '/events/webhooks.json'
-    EVENTSD_LOCK = 'gluster_eventsd_lock'
-
     def format_cmd(self, data, delete=False,):
 
-        cmd = ['gluster-eventsapi', 'webhook-add' if not delete else 'webhook-del']
+        cmd = [
+            'gluster-eventsapi', 'webhook-add' if not delete else 'webhook-del'
+        ]
 
         # need to add the url as the next param
         cmd.append(data['url'])
@@ -64,8 +69,7 @@ class GlusterEventsdService(CRUDService):
         Str('secret', required=False),
     ))
     @job(lock=EVENTSD_LOCK)
-    def do_create(self, job, data):
-
+    def create(self, job, data):
         """
         Add `url` webhook that will be called
         with a POST request that will include
@@ -79,49 +83,62 @@ class GlusterEventsdService(CRUDService):
 
         verrors = ValidationErrors()
 
-        # there doesn't seem to be an upper limit on the amount
-        # of webhook endpoints that can be added to the daemon
-        # so place an arbitrary limit of 5 for now
-        if len(self.middleware.call_sync('gluster.eventsd.webhooks')['webhooks']) >= 5:
-            verrors.add(
-                f'webhook_create.{data["url"]}',
-                'Maximum number of webhooks has been met. '
-                'Delete one or more and try again.'
-            )
+        add_it = result = None
+
+        # get the current webhooks
+        cw = self.middleware.call_sync('gluster.eventsd.webhooks')
+        if data['url'] not in list(cw['webhooks']):
+            add_it = True
+            # there doesn't seem to be an upper limit on the amount
+            # of webhook endpoints that can be added to the daemon
+            # so place an arbitrary limit of 5
+            # (excluding the local middlewared webhook)
+            if len(cw['webhooks']) >= 5 and data['url'] != LOCAL_WEBHOOK_URL:
+                verrors.add(
+                    f'webhook_create.{data["url"]}',
+                    'Maximum number of webhooks has been met. '
+                    'Delete one or more and try again.'
+                )
 
         verrors.check()
 
-        cmd = self.format_cmd(data)
+        if add_it:
+            cmd = self.format_cmd(data)
+            result = self.run_cmd(cmd)
 
-        return self.run_cmd(cmd)
+        return result
 
     @accepts(Dict(
         'webhook_delete',
         Str('url', required=True, validators=[URL()]),
     ))
     @job(lock=EVENTSD_LOCK)
-    def do_delete(self, job, data):
-
+    def delete(self, job, data):
         """
         Delete `url` webhook
 
         `url` is a http address (i.e. http://192.168.1.50/endpoint)
         """
 
-        cmd = self.format_cmd(data, delete=True)
+        result = None
 
-        return self.run_cmd(cmd)
+        # get the current webhooks
+        cw = self.middleware.call_sync('gluster.eventsd.webhooks')
+        if data['url'] in list(cw['webhooks']):
+            cmd = self.format_cmd(data, delete=True)
+            result = self.run_cmd(cmd)
+
+        return result
 
     @accepts()
     def webhooks(self):
-
         """
         List the current webhooks (if any)
         """
 
         result = {'webhooks': {}}
         with contextlib.suppress(FileNotFoundError):
-            with open(self.WEBHOOKS_FILE, 'r') as f:
+            with open(WEBHOOKS_FILE, 'r') as f:
                 result['webhooks'] = json.load(f)
 
         return result
@@ -129,7 +146,6 @@ class GlusterEventsdService(CRUDService):
     @accepts()
     @job(lock=EVENTSD_LOCK)
     def sync(self, job):
-
         """
         Sync the webhooks config file to all peers in the
         trusted storage pool
@@ -147,3 +163,74 @@ class GlusterEventsdService(CRUDService):
             return json.loads(out.strip())['output']
         else:
             raise CallError(err.strip())
+
+    @private
+    @job(lock=EVENTSD_LOCK)
+    def init(self, job):
+        """
+        Initializes the webhook directory and config file
+        if it doesn't exist and then starts the service.
+        """
+
+        service = self.middleware.call_sync(
+            'datastore.query', 'services.services', [
+                'srv_service', '=', 'glusterd'
+            ]
+        )
+        if not service[0]['enable']:
+            # glusterd isn't enabled so return
+            return
+
+        webhook_file = pathlib.Path(WEBHOOKS_FILE)
+
+        # check if the glusterd dataset exists
+        glusterd_dir = webhook_file.parent.parent
+        new_file = False
+
+        if glusterd_dir.exists() and glusterd_dir.is_mount():
+            try:
+                # make sure glusterd_dir/events subdir exists
+                webhook_file.parent.mkdir(exist_ok=True)
+
+                # now create the webhook file
+                if not webhook_file.exists():
+                    webhook_file.touch()
+                    new_file = True
+            except Exception as e:
+                raise CallError(
+                    f'Failed creating {webhook_file} with error: {e}'
+                )
+        else:
+            raise CallError(
+                f'{glusterd_dir} does not exist or is not mounted'
+            )
+
+        init_data = {}
+        if not new_file:
+            # need to know if webhooks have already been added
+            # to the file so act accordingly
+            with webhook_file.open('r') as f:
+                init_data = json.load(f)
+
+        # dont add local URL if it's already there
+        if not init_data.get(LOCAL_WEBHOOK_URL):
+            # make sure to add local api endpoint to file
+            local_url = {LOCAL_WEBHOOK_URL: {'token': '', 'secret': ''}}
+            init_data.update(local_url)
+
+        # finally write it out
+        try:
+            with webhook_file.open('w') as f:
+                f.write(json.dumps(init_data))
+        except Exception as e:
+            raise CallError(
+                f'Failed writing to {webhook_file} with error: {e}'
+            )
+
+        # glustereventsd service doesn't have an entry in
+        # the db so we start it based on whether or not the
+        # glusterd service is set to start on boot so if we
+        # get here, then restart it
+        self.middleware.call_sync('service.restart', 'glustereventsd')
+
+        return init_data

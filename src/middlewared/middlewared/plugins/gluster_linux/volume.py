@@ -1,15 +1,18 @@
 from glustercli.cli import volume, quota
 from glustercli.cli.utils import GlusterCmdException
 
-from middlewared.service import (CRUDService, accepts,
+from middlewared.service import (Service, accepts,
                                  job, private, CallError,
                                  item_method)
 from middlewared.schema import Dict, Str, Int, Bool, List
 
-from .utils import GLUSTER_JOB_LOCK
+from .utils import GlusterConfig
 
 
-class GlusterVolumeService(CRUDService):
+GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
+
+
+class GlusterVolumeService(Service):
 
     class Config:
         namespace = 'gluster.volume'
@@ -111,7 +114,7 @@ class GlusterVolumeService(CRUDService):
         Bool('force'),
     ))
     @job(lock=GLUSTER_JOB_LOCK)
-    def do_create(self, job, data):
+    def create(self, job, data):
         """
         Create a gluster volume.
 
@@ -130,6 +133,10 @@ class GlusterVolumeService(CRUDService):
 
         name = data.pop('name')
         temp = data.pop('bricks')
+
+        # before we create the gluster volume, we need to ensure
+        # the ctdb shared volume is setup
+        self.middleware.call_sync('ctdb.shared.volume.create')
 
         bricks = []
         for i in temp:
@@ -203,7 +210,7 @@ class GlusterVolumeService(CRUDService):
         Str('name', required=True),
     ))
     @job(lock=GLUSTER_JOB_LOCK)
-    def do_delete(self, job, data):
+    def delete(self, job, data):
         """
         Delete a gluster volume.
 
@@ -359,7 +366,11 @@ class GlusterVolumeService(CRUDService):
                     Str('peer_path', required=True),
                 ),
             ], required=True),
-            Str('operation', enum=['START', 'STOP', 'COMMIT', 'STATUS'], required=True),
+            Str(
+                'operation',
+                enum=['START', 'STOP', 'COMMIT', 'STATUS'],
+                required=True,
+            ),
             Int('replica'),
         )
     )
