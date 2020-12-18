@@ -271,7 +271,7 @@ EOD
 
     cat << EOD >> "${_tmpfile}"
 - You can't use ${_disks} for sharing data.
- 
+
 NOTE:
 - Installing on SATA, SAS, or NVMe flash media is recommended.
   USB flash sticks are discouraged.
