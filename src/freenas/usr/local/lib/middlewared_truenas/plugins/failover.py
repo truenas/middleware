@@ -619,7 +619,7 @@ class FailoverService(ConfigService):
         # Unnlock all (if any) zfs datasets for `pool_name`
         # that we have keys for in the cache or the database.
         # `restart_services` will cause any services that are
-        # depedant on the datasets to be restarted after the
+        # dependent on the datasets to be restarted after the
         # datasets are unlocked.
         zfs_keys = (await self.encryption_keys())['zfs']
         unlock_job = await self.middleware.call(
