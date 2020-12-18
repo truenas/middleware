@@ -1064,6 +1064,13 @@ class JailService(CRUDService):
             }
         )
 
+    @accepts()
+    async def vnet_default_interface_choices(self):
+        """
+        Returns a dictionary of interface choices which can be used with `vnet_default_interface` property.
+        """
+        return {'none': 'none', 'auto': 'auto', **(await self.interface_choices())}
+
     @accepts(
         Dict(
             'options',
