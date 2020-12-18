@@ -483,7 +483,12 @@ class PoolService(CRUDService):
                 'topology': None,
                 'healthy': False,
                 'status_detail': None,
-                'autotrim': {},
+                'autotrim': {
+                    'parsed': 'off',
+                    'rawvalue': 'off',
+                    'source': 'DEFAULT',
+                    'value': 'off',
+                },
             })
 
         if osc.IS_FREEBSD and pool['encrypt'] > 0:
