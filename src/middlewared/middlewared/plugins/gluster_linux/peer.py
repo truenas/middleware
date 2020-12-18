@@ -126,3 +126,22 @@ class GlusterPeerService(CRUDService):
         """
 
         return self.__peer_wrapper(peer.pool)
+
+    @accepts()
+    async def ips_available(self):
+        """
+        List of IPv4/v6 addresses available that can be used
+        as the `peer_name` when creating a gluster volume.
+
+        NOTE:
+            This will only return statically assigned IPs.
+            If this is an HA system, this will only return
+            the VIP addresses that have been configured on
+            the system.
+        """
+
+        return [
+            d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'static': True}
+            )
+        ]
