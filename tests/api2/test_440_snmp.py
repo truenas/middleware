@@ -3,7 +3,7 @@
 
 import sys
 import os
-
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST, SSH_TEST
@@ -31,7 +31,8 @@ def test_02_Enable_SNMP_service_at_boot():
     assert results.status_code == 200, results.text
 
 
-def test_03_verify_snmp_do_not_leak_password_in_middleware_log():
+def test_03_verify_snmp_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{PASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])

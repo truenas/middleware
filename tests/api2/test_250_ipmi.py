@@ -4,7 +4,7 @@
 
 import sys
 import os
-
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, SSH_TEST
@@ -56,7 +56,8 @@ def test_06_update_ipmi_interface():
         assert result.status_code == 200, result.text
 
 
-def test_07_verify_ipmi_channels_do_not_leak_password_in_middleware_log():
+def test_07_verify_ipmi_channels_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "abcd1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])

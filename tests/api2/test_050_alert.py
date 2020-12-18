@@ -32,7 +32,7 @@ def test_03_get_alert_list_policies():
 
 
 def test_04_degrading_a_pool_to_create_an_alert(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     global gptid
     get_pool = GET(f"/pool/?name={pool_name}").json()[0]
     id_path = '/dev/disk/by-partuuid/' if scale else '/dev/'
@@ -43,7 +43,7 @@ def test_04_degrading_a_pool_to_create_an_alert(request):
 
 
 def test_05_verify_the_pool_is_degraded(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -115,14 +115,14 @@ def test_11_verify_the_alert_is_restored(request):
 
 
 def test_12_clear_the_pool_degradation(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'zpool clear {pool_name}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 def test_13_verify_the_pool_is_not_degraded(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

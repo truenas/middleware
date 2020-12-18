@@ -4,7 +4,7 @@
 import os
 import pytest
 import sys
-
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, SSH_TEST
@@ -51,7 +51,8 @@ def test_04_system_advanced_check_serial_port_using_api(sysadv_dict):
     assert data['serialport'] == sysadv_dict['serial_choices'][0]
 
 
-def test_05_system_advanced_check_serial_port_using_ssh(sysadv_dict):
+def test_05_system_advanced_check_serial_port_using_ssh(sysadv_dict, request):
+    depends(request, ["ssh_password"], scope="session")
     if scale is True:
         cmd = f'dmesg | grep "{sysadv_dict["serial_choices"][0]}"'
     else:
@@ -69,7 +70,8 @@ def test_06_system_advanced_disable_serial_port():
     assert isinstance(data, dict), data
 
 
-def test_07_system_advanced_check_disabled_serial_port_using_ssh(sysadv_dict):
+def test_07_system_advanced_check_disabled_serial_port_using_ssh(sysadv_dict, request):
+    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'cat /boot/loader.conf.local | grep "{sysadv_dict["serial_choices"][0]}"', user, password, ip)
     assert results['result'] is False, results
 
@@ -91,6 +93,7 @@ def test_09_system_advanced_check_motd_using_api():
     assert data['motd'] == MOTD
 
 
-def test_10_system_advanced_check_motd_using_ssh():
+def test_10_system_advanced_check_motd_using_ssh(request):
+    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'cat /etc/motd | grep "{MOTD}"', user, password, ip)
     assert results['result'] is True, results

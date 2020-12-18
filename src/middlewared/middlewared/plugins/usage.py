@@ -248,7 +248,7 @@ class UsageService(Service):
             'total_backups': len(backups),
             'automatic_backups': len([b for b in backups if b.startswith(backup_update_prefix)]),
         })
-        for image in await self.middleware.call('docker.images.query'):
+        for image in await self.middleware.call('container.image.query'):
             output['docker_images'].update(image['repo_tags'])
 
         output['docker_images'] = list(output['docker_images'])

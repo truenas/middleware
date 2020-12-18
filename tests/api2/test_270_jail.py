@@ -137,7 +137,7 @@ def test_11_verify_creation_of_jail(request):
 
 
 def test_12_verify_iocage_list_with_ssh(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     if freeze is True:
         pytest.skip(freeze_msg)
     cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 12.1-RELEASE'

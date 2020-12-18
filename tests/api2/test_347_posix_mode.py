@@ -96,7 +96,7 @@ def test_04_verify_setting_mode_bits_nonrecursive(request, mode_bit):
 
 @pytest.mark.dependency(name="RECURSIVE_PREPARED")
 def test_05_prepare_recursive_tests(request):
-    depends(request, ["IS_TRIVIAL"])
+    depends(request, ["IS_TRIVIAL", "ssh_password"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': MODE_SUBDATASET
@@ -443,7 +443,7 @@ def test_13_test_directory_other_bits_function_allow(mode_bit, request):
 
 
 def test_14_setup_file_test(request):
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     result = POST(
         '/filesystem/setperm/', {
             'path': f'/mnt/{MODE_DATASET}',
@@ -467,7 +467,7 @@ def test_15_test_file_owner_bits_function_allow(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
 
     result = POST(
@@ -494,7 +494,7 @@ def test_16_test_file_group_bits_function_allow(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
 
     result = POST(
@@ -521,7 +521,7 @@ def test_17_test_file_other_bits_function_allow(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
 
     result = POST(

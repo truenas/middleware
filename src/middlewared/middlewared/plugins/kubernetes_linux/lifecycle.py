@@ -36,6 +36,7 @@ class KubernetesService(Service):
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
             # We only want to start checking for release updates once we have started k8s
             asyncio.ensure_future(self.middleware.call('chart.release.chart_releases_update_checks_internal'))
+            await self.middleware.call('catalog.sync_all')
 
     @private
     async def post_start_internal(self):
@@ -78,7 +79,9 @@ class KubernetesService(Service):
             await self.create_update_k8s_datasets(config['dataset'])
 
         locked_datasets = [
-            d['id'] for d in await self.middleware.call('zfs.dataset.locked_datasets')
+            d['id'] for d in filter(
+                lambda d: d['mountpoint'], await self.middleware.call('zfs.dataset.locked_datasets')
+            )
             if d['mountpoint'].startswith(f'{config["dataset"]}/') or d['mountpoint'] == config['dataset']
         ]
         if locked_datasets:
@@ -126,7 +129,7 @@ class KubernetesService(Service):
     async def status_change_internal(self):
         await self.validate_k8s_fs_setup()
         await self.middleware.call('service.start', 'docker')
-        await self.middleware.call('docker.images.load_default_images')
+        await self.middleware.call('container.image.load_default_images')
         asyncio.ensure_future(self.middleware.call('service.start', 'kubernetes'))
 
     @private

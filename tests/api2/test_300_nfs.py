@@ -116,7 +116,7 @@ def test_09_checking_to_see_if_nfs_service_is_running(request):
 
 @pytest.mark.skipif(scale, reason='Skipping for Scale')
 def test_10_checking_if_sysctl_vfs_nfsd_server_max_nfsvers_is_4(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'sysctl -n vfs.nfsd.server_max_nfsvers'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

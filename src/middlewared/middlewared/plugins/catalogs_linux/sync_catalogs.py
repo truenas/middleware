@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from middlewared.schema import accepts, Str
@@ -22,6 +23,9 @@ class CatalogService(Service):
                 await self.middleware.call('catalog.sync', catalog['id'])
             except Exception as e:
                 self.logger.error('Failed to sync %r catalog: %s', catalog['id'], e)
+
+        if await self.middleware.call('service.started', 'kubernetes'):
+            asyncio.ensure_future(self.middleware.call('chart.release.chart_releases_update_checks_internal'))
 
     @accepts(Str('label', required=True))
     async def sync(self, catalog_label):

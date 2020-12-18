@@ -121,9 +121,8 @@ class SMBSharePreset(enum.Enum):
         'path_suffix': '%U',
         'timemachine': True,
         'auxsmbconf': '\n'.join([
-            'tmprotect:auto_rollback=powerloss',
-            'ixnas:zfs_auto_homedir=true',
-            'ixnas:default_user_quota=1T',
+            'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true',
+            'ixnas:default_user_quota=1T' if osc.IS_FREEBSD else 'zfs_core:base_user_quota=1T',
         ])
     }}
     MULTI_PROTOCOL_AFP = {"verbose_name": "Multi-protocol (AFP/SMB) shares", "params": {
@@ -155,7 +154,7 @@ class SMBSharePreset(enum.Enum):
     PRIVATE_DATASETS = {"verbose_name": "Private SMB Datasets and Shares", "params": {
         'path_suffix': '%U',
         'auxsmbconf': '\n'.join([
-            'ixnas:zfs_auto_homedir=true'
+            'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true'
         ])
     }}
     WORM_DROPBOX = {"verbose_name": "SMB WORM. Files become readonly via SMB after 5 minutes", "params": {
@@ -1354,7 +1353,7 @@ class SharingSMBService(SharingService):
             try:
                 await self.middleware.call('sharing.smb.reg_addshare', share_conf[0])
             except Exception:
-                self.logger.warning("Failed to add SMB share [%] while synchronizing registry config",
+                self.logger.warning("Failed to add SMB share [%s] while synchronizing registry config",
                                     share, exc_info=True)
 
         for share in to_del:

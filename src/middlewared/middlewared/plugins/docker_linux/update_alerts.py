@@ -9,7 +9,8 @@ from .utils import DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO, DEFAULT_DOCKER_
 class DockerImagesService(Service, DockerClientMixin):
 
     class Config:
-        namespace = 'docker.images'
+        namespace = 'container.image'
+        namespace_alias = 'docker.images'
 
     IMAGE_CACHE = defaultdict(lambda: False)
 
@@ -19,8 +20,8 @@ class DockerImagesService(Service, DockerClientMixin):
 
     @private
     async def check_update(self):
-        images = await self.middleware.call('docker.images.query')
-        for image in images:
+        images = await self.middleware.call('container.image.query')
+        for image in filter(lambda i: not i['system_image'], images):
             for tag in image['repo_tags']:
                 try:
                     await self.get_digest_of_image(tag, image)

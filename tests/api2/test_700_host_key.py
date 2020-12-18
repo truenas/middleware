@@ -4,6 +4,7 @@ import pytest
 import sys
 import os
 import requests
+from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -29,7 +30,8 @@ def test_03_verify_if_ssh_is_running_before_reboot():
     assert results.json()[0]['state'] == "RUNNING"
 
 
-def test_04_get_ssh_keyscan_before_reboot():
+def test_04_get_ssh_keyscan_before_reboot(request):
+    depends(request, ["ssh_key"], scope="session")
     global output_before
     cmd = 'ssh-keyscan 127.0.0.1'
     results = SSH_TEST(cmd, user, None, ip)
@@ -77,7 +79,8 @@ def test_09_verify_if_ssh_is_running_after_reboot():
     assert results.json()[0]['state'] == "RUNNING"
 
 
-def test_10_get_ssh_keyscan_after_reboot():
+def test_10_get_ssh_keyscan_after_reboot(request):
+    depends(request, ["ssh_key"], scope="session")
     global output_after
     cmd = 'ssh-keyscan 127.0.0.1'
     results = SSH_TEST(cmd, user, None, ip)

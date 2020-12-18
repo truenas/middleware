@@ -1,5 +1,6 @@
 import aiodocker
 import errno
+import itertools
 import os
 
 from datetime import datetime
@@ -8,6 +9,8 @@ from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, filterable, job, private, CRUDService
 from middlewared.utils import filter_list
 
+from .utils import DEFAULT_DOCKER_IMAGES_LIST_PATH, DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO
+
 
 DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
 
@@ -15,7 +18,8 @@ DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
 class DockerImagesService(CRUDService):
 
     class Config:
-        namespace = 'docker.images'
+        namespace = 'container.image'
+        namespace_alias = 'docker.images'
 
     @filterable
     async def query(self, filters=None, options=None):
@@ -23,11 +27,13 @@ class DockerImagesService(CRUDService):
         if not await self.middleware.call('service.started', 'docker'):
             return results
 
-        update_cache = await self.middleware.call('docker.images.image_update_cache')
+        update_cache = await self.middleware.call('container.image.image_update_cache')
+        system_images = await self.middleware.call('container.image.get_system_images_tags')
 
         async with aiodocker.Docker() as docker:
             for image in await docker.images.list():
                 repo_tags = image['RepoTags'] or []
+                system_image = any(tag in system_images for tag in repo_tags)
                 results.append({
                     'id': image['Id'],
                     'labels': image['Labels'],
@@ -35,7 +41,8 @@ class DockerImagesService(CRUDService):
                     'size': image['Size'],
                     'created': datetime.fromtimestamp(int(image['Created'])),
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
-                    'update_available': any(update_cache[r] for r in repo_tags),
+                    'update_available': not system_image and any(update_cache[r] for r in repo_tags),
+                    'system_image': system_image,
                 })
         return filter_list(results, filters, options)
 
@@ -91,10 +98,13 @@ class DockerImagesService(CRUDService):
         """
         await self.docker_checks()
         image = await self.get_instance(id)
+        if image['system_image']:
+            raise CallError(f'{id} is being used by system and cannot be deleted.')
+
         async with aiodocker.Docker() as docker:
             await docker.images.delete(name=id, force=options['force'])
 
-        await self.middleware.call('docker.images.remove_image_from_cache', image)
+        await self.middleware.call('container.image.remove_image_from_cache', image)
 
     @private
     async def load_images_from_file(self, path):
@@ -120,3 +130,29 @@ class DockerImagesService(CRUDService):
     async def docker_checks(self):
         if not await self.middleware.call('service.started', 'docker'):
             raise CallError('Docker service is not running')
+
+    @private
+    def normalise_tag(self, tag):
+        tags = [tag]
+        i = tag.find('/')
+        if i == -1 or (not any(c in tag[:i] for c in ('.', ':')) and tag[:i] != 'localhost'):
+            for registry in (DEFAULT_DOCKER_REGISTRY, 'docker.io'):
+                tags.append(f'{registry}/{tag}')
+                if '/' not in tag:
+                    tags.append(f'{registry}/{DEFAULT_DOCKER_REPO}/{tag}')
+        else:
+            if tag.startswith('docker.io/'):
+                tags.append(f'{DEFAULT_DOCKER_REGISTRY}/{tag[len("docker.io/"):]}')
+            elif tag.startswith(DEFAULT_DOCKER_REGISTRY):
+                tags.append(f'docker.io/{tag[len(DEFAULT_DOCKER_REGISTRY):]}')
+        return tags
+
+    @private
+    def get_system_images_tags(self):
+        with open(DEFAULT_DOCKER_IMAGES_LIST_PATH, 'r') as f:
+            images = [i for i in map(str.strip, f.readlines()) if i]
+
+        images.append('quay.io/openebs/zfs-driver:ci')
+        return list(itertools.chain(
+            *[self.normalise_tag(tag) for tag in images]
+        ))
