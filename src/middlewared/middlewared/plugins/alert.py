@@ -145,11 +145,7 @@ class AlertSerializer:
         self.nodes = None
 
     async def serialize(self, alert):
-        if not self.initialized:
-            self.classes = (await self.middleware.call("alertclasses.config"))["classes"]
-            self.nodes = await self.middleware.call("alert.node_map")
-
-            self.initialized = True
+        await self._ensure_initialized()
 
         return dict(
             alert.__dict__,
@@ -160,6 +156,18 @@ class AlertSerializer:
             formatted=alert.formatted,
             one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically
         )
+
+    async def should_show_alert(self, alert):
+        await self._ensure_initialized()
+
+        return self.classes.get(alert.klass.name, {}).get("policy") != "NEVER"
+
+    async def _ensure_initialized(self):
+        if not self.initialized:
+            self.classes = (await self.middleware.call("alertclasses.config"))["classes"]
+            self.nodes = await self.middleware.call("alert.node_map")
+
+            self.initialized = True
 
 
 class AlertService(Service):
@@ -173,8 +181,6 @@ class AlertService(Service):
 
     @private
     async def load(self):
-        is_freenas = await self.middleware.call("system.is_freenas")
-
         main_sources_dir = os.path.join(get_middlewared_dir(), "alert", "source")
         sources_dirs = [os.path.join(overlay_dir, "alert", "source") for overlay_dir in self.middleware.overlay_dirs]
         sources_dirs.insert(0, main_sources_dir)
@@ -300,6 +306,7 @@ class AlertService(Service):
         return [
             await as_.serialize(alert)
             for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
+            if await as_.should_show_alert(alert)
         ]
 
     @private
@@ -380,10 +387,11 @@ class AlertService(Service):
 
     async def _send_alert_changed_event(self, alert):
         as_ = AlertSerializer(self.middleware)
-        self.middleware.send_event('alert.list', 'CHANGED', id=alert.uuid, fields=await as_.serialize(alert))
+        if as_.should_show_alert(alert):
+            self.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, fields=await as_.serialize(alert))
 
     def _send_alert_deleted_event(self, alert):
-        self.middleware.send_event('alert.list', 'CHANGED', id=alert.uuid, cleared=True)
+        self.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, cleared=True)
 
     @periodic(60)
     @private
@@ -472,9 +480,13 @@ class AlertService(Service):
             if policy_name == "IMMEDIATELY":
                 as_ = AlertSerializer(self.middleware)
                 for alert in gone_alerts:
-                    self._send_alert_deleted_event(alert)
+                    if await as_.should_show_alert(alert):
+                        self._send_alert_deleted_event(alert)
                 for alert in new_alerts:
-                    self.middleware.send_event('alert.list', 'ADDED', id=alert.uuid, fields=await as_.serialize(alert))
+                    if await as_.should_show_alert(alert):
+                        self.middleware.send_event(
+                            "alert.list", "ADDED", id=alert.uuid, fields=await as_.serialize(alert),
+                        )
 
                 for alert in new_alerts:
                     if alert.mail:
@@ -1069,34 +1081,6 @@ class AlertClassesService(ConfigService):
         await self.middleware.call("datastore.update", self._config.datastore, old["id"], new)
 
         return new
-
-
-class AlertDefaultSettingsService(Service):
-    class Config:
-        private = True
-
-    async def config(self):
-        return {
-            "settings": {
-                k: v["policy"]
-                for k, v in (await self.middleware.call("alertclasses.config"))["classes"].items()
-                if "policy" in v
-            },
-        }
-
-    @accepts(Dict(
-        "alert_default_settings_update",
-        Dict("settings", additional_attrs=True),
-    ))
-    async def update(self, data):
-        await self.middleware.call("alertclasses.update", {
-            "classes": {
-                k: {"policy": v}
-                for k, v in data["settings"].items()
-            },
-        })
-
-        return await self.config()
 
 
 async def setup(middleware):
