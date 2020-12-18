@@ -295,7 +295,10 @@ class SystemDatasetService(ConfigService):
             if osc.IS_LINUX:
                 await self.middleware.call('etc.generate', 'glusterd')
 
-            await self.middleware.call('smb.configure')
+            await self.middleware.call('smb.setup_directories')
+            # The following should be backgrounded since they may be quite
+            # long-running.
+            await self.middleware.call('smb.configure', False)
             await self.middleware.call('dscache.initialize')
 
         return config
