@@ -155,8 +155,14 @@ class RemoteClient(object):
                 logger.warning('Failed to run callback for %s', name, exc_info=True)
 
     def sendfile(self, token, local_path, remote_path):
+        # No reason to honor proxy settings in this
+        # method since we're sending across the
+        # heartbeat interface which is point-to-point
+        proxies = {'http': '', 'https': ''}
+
         r = requests.post(
             f'http://{self.remote_ip}:6000/_upload/',
+            proxies=proxies,
             files=[
                 ('data', json.dumps({
                     'method': 'filesystem.put',
