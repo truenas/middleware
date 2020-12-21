@@ -173,9 +173,9 @@ class GlusterEventsdService(Service):
         """
 
         service = self.middleware.call_sync(
-            'datastore.query', 'services.services', [
-                'srv_service', '=', 'glusterd'
-            ]
+            'datastore.query', 'services.services',
+            [('srv_service', '=', 'glusterd')],
+            {'prefix': 'srv_'},
         )
         if not service[0]['enable']:
             # glusterd isn't enabled so return
