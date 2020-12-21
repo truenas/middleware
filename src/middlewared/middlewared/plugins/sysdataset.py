@@ -372,7 +372,7 @@ class SystemDatasetService(ConfigService):
             if init_job.error:
                 self.logger.error(
                     'Failed to initilize %s directory with error: %s',
-                    CTDBConfig.CTDB_VOL_name.value,
+                    CTDBConfig.CTDB_VOL_NAME.value,
                     init_job.error
                 )
             elif init:
