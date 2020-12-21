@@ -145,11 +145,15 @@ else
 fi
 
 if [ -d "/tmp/middlewared/jobs" ]; then
+	echo "** 95%: Compressing Job Logs"
 	tar -chf - -C /tmp/middlewared jobs | tar -C $dir -xf -
 fi
+echo "** 96%: Compressing System Logs"
 tar -chf - -C /var log | tar -C $dir -xf -
+echo "** 97%: Compressing Debug Files"
 tar -chf - -C /var/tmp fndebug | tar -C $dir -xf -
 if [ "${limit}" != "-1" ] ; then
+	echo "** 97%: Truncating Debug Files"
 	truncate_files "${limit}"
 fi
 
@@ -159,11 +163,13 @@ if is_freebsd; then
 			exit 2
 		fi
 	else
+		echo "** 97%: Compressing Textdump"
 		mkdir "$dir/textdump"
 		tar -xvf $textdump -C "$dir/textdump"
 		cp $dumpdir/info.last "$dir/textdump"
 	fi
 fi
+echo "** 98%: Collecting Additional Information"
 if is_linux; then
 	path_prefix="/usr"
 else
@@ -194,6 +200,7 @@ fi
 if is_freebsd; then
 	set +e
 	ls /dev/ses* 2> /dev/null | while read -r ses; do
+		echo "** 98%: Collecting smp_rep_phy_err_log"
 		name=$(echo ${ses}|cut -d "/" -f 3)
 		/sbin/camcontrol smpphylist ${ses} > "$dir/smpphylist.${name}"
 		/usr/local/bin/smp_rep_phy_err_log ${ses} > "$dir/smp_rep_phy_err_log.${name}"
@@ -206,6 +213,7 @@ if is_freebsd; then
 	set -e
 fi
 
+echo "** 99%: Compressing Archive"
 tar -C $dir/.. -chzf $dir/../ixdiagnose.tgz ixdiagnose
 
 if [ "$actualdump" != "" ] ; then
