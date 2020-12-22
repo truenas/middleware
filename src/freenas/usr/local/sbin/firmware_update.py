@@ -6,6 +6,7 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
+from collections import namedtuple
 import logging
 import logging.config
 import logging.handlers
@@ -22,12 +23,21 @@ FWPATH = '/usr/local/share/firmware/'
 FAILED_UPDATE_SENTINEL = '/data/.hba_firmware_update_fail'
 UPDATE_SENTINEL = '/data/.hba_firmware_update'
 
-SAS92_VERSION = version.parse("20.0.0.0")
-SAS93_VERSION = version.parse("16.0.0.0")
-HBA94_VERSION = version.parse("15.0.0.0")
-
 UPDATE_SUCCESS = []
 UPDATE_FAIL = []
+
+Firmware = namedtuple("Firmware", ["path", "version"])
+
+
+def get_firmware(prefix):
+    for item in os.listdir(FWPATH):
+        if item.startswith(prefix):
+            if m := re.match(r".+\.([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\.bin$", item):
+                return Firmware(os.path.join(FWPATH, item), version.parse(m.group(1)))
+
+    logger.error("Unable to find firmware file with prefix %r", prefix)
+    return None
+
 
 logging.config.dictConfig({
     'version': 1,
@@ -81,10 +91,6 @@ for hba in re.finditer(r"^(([0-9]+) +[^ ]+ +([0-9]{2}\.[0-9]{2}\.[0-9]{2}\.[0-9]
     if firmware_version < version.parse("1"):
         logger.error("Can't get firmware version")
         continue
-    if firmware_version >= SAS92_VERSION:
-        logger.debug("Up to date firmware version %d" % firmware_version)
-        continue
-    logger.info("Found old firmware %r, updating to %r" % (firmware_version, SAS92_VERSION))
 
     proc = subprocess.Popen([
         SAS2FLASH, "-list", "-c", n
@@ -104,22 +110,26 @@ for hba in re.finditer(r"^(([0-9]+) +[^ ]+ +([0-9]{2}\.[0-9]{2}\.[0-9]{2}\.[0-9]
         boardname = boardname[:-1] + 'i'
     logger.debug("Board Name is %s" % boardname)
 
-    firmware_file = "%smps_%s_p%s.firmware.bin" % (FWPATH, boardname, SAS92_VERSION.major)
-    if not os.path.exists(firmware_file):
-        logger.error("Firmware image %s not found" % firmware_file)
+    new_firmware = get_firmware(f"mps_{boardname}")
+    if not new_firmware:
         continue
-    bios_file = "%smps_p%s_bios.rom" % (FWPATH, SAS92_VERSION.major)
+    bios_file = os.path.join(FWPATH, "mps_bios.rom")
     if not os.path.exists(bios_file):
         logger.error("BIOS image %s not found" % bios_file)
         continue
 
-    ret = subprocess.run([SAS2FLASH, "-c", n, "-b", bios_file, "-f", firmware_file])
+    if firmware_version >= new_firmware.version:
+        logger.debug("Up to date firmware version %r" % firmware_version)
+        continue
+    logger.info("Found old firmware %r, updating to %r" % (firmware_version, new_firmware.version))
+
+    ret = subprocess.run([SAS2FLASH, "-c", n, "-b", bios_file, "-f", new_firmware.path])
     if not ret.returncode:
         logger.info("Update successful")
         UPDATE_SUCCESS.append(controller)
     else:
         logger.error("Update failed: %s -c %s -b %s -f %s returned %d" %
-                     (SAS2FLASH, n, bios_file, firmware_file, ret.returncode))
+                     (SAS2FLASH, n, bios_file, new_firmware.path, ret.returncode))
         UPDATE_FAIL.append(controller)
 
 logger.debug("")
@@ -140,10 +150,6 @@ for hba in re.finditer(r"^(([0-9]+) +[^ ]+ +([0-9]{2}\.[0-9]{2}\.[0-9]{2}\.[0-9]
     if firmware_version < version.parse("1"):
         logger.error("Can't get firmware version")
         continue
-    if firmware_version >= SAS93_VERSION:
-        logger.debug("Up to date firmware version %d" % firmware_version)
-        continue
-    logger.info("Found old firmware %r, updating to %r" % (firmware_version, SAS93_VERSION))
 
     proc = subprocess.Popen([
         SAS3FLASH, "-list", "-c", n
@@ -160,22 +166,26 @@ for hba in re.finditer(r"^(([0-9]+) +[^ ]+ +([0-9]{2}\.[0-9]{2}\.[0-9]{2}\.[0-9]
         boardname = "SAS9300-8i"
     logger.debug("Board Name is %s" % boardname)
 
-    firmware_file = "%smpr_%s_p%s.firmware.bin" % (FWPATH, boardname, SAS93_VERSION.major)
-    if not os.path.exists(firmware_file):
-        logger.error("Firmware image %s not found" % firmware_file)
+    new_firmware = get_firmware(f"mpr_{boardname}")
+    if not new_firmware:
         continue
-    bios_file = "%smpr_p%s_bios.rom" % (FWPATH, SAS93_VERSION.major)
+    bios_file = os.path.join(FWPATH, "mpr_bios.rom")
     if not os.path.exists(bios_file):
         logger.error("BIOS image %s not found" % bios_file)
         continue
 
-    ret = subprocess.run([SAS3FLASH, "-c", n, "-b", bios_file, "-f", firmware_file])
+    if firmware_version >= new_firmware.version:
+        logger.debug("Up to date firmware version %d" % firmware_version)
+        continue
+    logger.info("Found old firmware %r, updating to %r" % (firmware_version, new_firmware.version))
+
+    ret = subprocess.run([SAS3FLASH, "-c", n, "-b", bios_file, "-f", new_firmware.path])
     if not ret.returncode:
         logger.info("Update successful")
         UPDATE_SUCCESS.append(controller)
     else:
         logger.error("Update failed: %s -c %s -b %s -f %s returned %d" %
-                     (SAS3FLASH, n, bios_file, firmware_file, ret.returncode))
+                     (SAS3FLASH, n, bios_file, new_firmware.path, ret.returncode))
         UPDATE_FAIL.append(controller)
 
 logger.debug("")
@@ -209,27 +219,27 @@ for hba in re.finditer(r"^( *([0-9]+) +(HBA 94[^ ]+) +SAS.*)$", listall, re.MULT
         logger.error("Can't get firmware version")
         logger.debug(info)
         continue
-    if firmware_version >= HBA94_VERSION:
-        logger.debug("Up to date firmware version %d" % firmware_version)
-        continue
-    logger.info("Found old firmware %r, updating to %r" % (firmware_version, HBA94_VERSION))
 
-    firmware_file = "%smpr_%s_p%s.firmware.bin" % (FWPATH, boardname, HBA94_VERSION.major)
-    if not os.path.exists(firmware_file):
-        logger.error("Firmware image %s not found" % firmware_file)
+    new_firmware = get_firmware(f"mpr_{boardname}")
+    if not new_firmware:
         continue
-    efibios_file = "%smpr_HBA_p%s_efibios.rom" % (FWPATH, HBA94_VERSION.major)
+    efibios_file = os.path.join(FWPATH, "mpr_HBA_efibios.rom")
     if not os.path.exists(efibios_file):
         logger.error("EFI BIOS image %s not found" % efibios_file)
         continue
 
-    ret = subprocess.run([STORCLI, "/c%s" % n, "download", "file=" + firmware_file])
+    if firmware_version >= new_firmware.version:
+        logger.debug("Up to date firmware version %d" % firmware_version)
+        continue
+    logger.info("Found old firmware %r, updating to %r" % (firmware_version, new_firmware.version))
+
+    ret = subprocess.run([STORCLI, "/c%s" % n, "download", "file=" + new_firmware.path])
     if not ret.returncode:
         logger.info("Update successful")
         UPDATE_SUCCESS.append(controller)
     else:
         logger.error("Update failed: %s /c%s download file=%s returned %d" %
-                     (STORCLI, n, firmware_file, ret.returncode))
+                     (STORCLI, n, new_firmware.path, ret.returncode))
         UPDATE_FAIL.append(controller)
         continue
 
