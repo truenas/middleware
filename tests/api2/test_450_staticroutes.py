@@ -5,10 +5,10 @@
 import os
 import pytest
 import sys
-
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import DELETE, GET, POST, PUT, SSH_TEST
+from functions import DELETE, GET, POST, SSH_TEST
 from auto_config import user, password, ip
 
 DESTINATION = '127.1.1.1'
@@ -40,7 +40,8 @@ def test_02_check_staticroute_configured_using_api(sr_dict):
     assert data[0]['gateway'] == GATEWAY, data
 
 
-def test_03_checking_staticroute_configured_using_ssh():
+def test_03_checking_staticroute_configured_using_ssh(request):
+    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'netstat -4rn|grep -E ^{DESTINATION}', user, password, ip)
     assert results['result'] is True, results
     assert results['output'].strip().split()[1] == GATEWAY, results
@@ -59,6 +60,7 @@ def test_05_check_staticroute_unconfigured_using_api(sr_dict):
     assert len(data) == 0, data
 
 
-def test_06_checking_staticroute_unconfigured_using_ssh():
+def test_06_checking_staticroute_unconfigured_using_ssh(request):
+    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'netstat -4rn|grep -E ^{DESTINATION}', user, password, ip)
     assert results['result'] is False, results

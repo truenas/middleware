@@ -6,6 +6,7 @@
 import pytest
 import sys
 import os
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
@@ -41,7 +42,8 @@ def test_02_create_vmware(data):
 
 
 @vmw_credentials
-def test_03_verify_vmware_get_datastore_do_not_leak_password_in_middleware_log():
+def test_03_verify_vmware_get_datastore_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{os.environ['VMWARE_PASSWORD']}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])

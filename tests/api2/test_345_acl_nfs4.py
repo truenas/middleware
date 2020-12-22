@@ -11,6 +11,7 @@ from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password, scale
 from pytest_dependency import depends
 
+shell = '/usr/bin/bash' if scale else '/bin/csh'
 group = 'nogroup' if scale else 'nobody'
 ACLTEST_DATASET = f'{pool_name}/acltest'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
@@ -361,7 +362,7 @@ We first create a child dataset to verify that ACLs do not change unless
 
 
 def test_12_prepare_recursive_tests(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ["HAS_NFS4_ACLS", "ssh_password"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_SUBDATASET
@@ -567,7 +568,7 @@ def test_21_creating_shareuser_to_test_acls():
         "group_create": True,
         "password": ACL_PWD,
         "uid": next_uid,
-        "shell": "/bin/csh"}
+        "shell": shell}
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
     acluser_id = results.json()
@@ -575,7 +576,7 @@ def test_21_creating_shareuser_to_test_acls():
 
 @pytest.mark.dependency(name="HAS_TESTFILE")
 def test_22_prep_testfile(request):
-    depends(request, ["ACL_USER_CREATED"])
+    depends(request, ["ACL_USER_CREATED", "ssh_password"], scope="session")
     cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -612,7 +613,7 @@ def test_23_test_acl_function_deny(perm, request):
     acltest user, then attempt to perform an action that
     should result in failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
 
     if perm == "FULL_DELETE":
         to_deny = {"DELETE_CHILD": True, "DELETE": True}
@@ -705,7 +706,7 @@ def test_24_test_acl_function_allow(perm, request):
     acltest user, then attempt to perform an action that
     should result in success.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -800,7 +801,7 @@ def test_25_test_acl_function_omit(perm, request):
     on presence of the particular permissions bit. Then we omit
     it. This should result in a failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -885,7 +886,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
     they grant no more permissions than intended. Some bits cannot
     be tested in isolation effectively using built in utilities.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -995,7 +996,7 @@ def test_26_file_execute_deny(request):
     Base permset with everyone@ FULL_CONTROL, but ace added on
     top explictly denying EXECUTE. Attempt to execute file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -1044,7 +1045,7 @@ def test_27_file_execute_allow(request):
     READ_ATTRIBUTES are also granted beecause we need to be able to
     stat and read our test script.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -1096,7 +1097,7 @@ def test_28_file_execute_omit(request):
     Grant user all permissions except EXECUTE. Attempt to execute
     file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",

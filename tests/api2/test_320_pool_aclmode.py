@@ -22,7 +22,7 @@ def test_01_verify_default_aclmode_from_pool_dataset_with_api(request):
 
 
 def test_02_verify_default_aclmode_from_pool_dataset_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -47,7 +47,7 @@ def test_04_verify_test1_dataset_inherited_parent_aclmode_with_api(request):
 
 
 def test_05_verify_test1_dataset_inherited_parent_aclmode_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -71,7 +71,7 @@ def test_07_verify_the_pool_dataset_aclmode_changed_to_restricted_with_api(reque
 
 
 def test_08_verify_the_pool_dataset_aclmode_changed_to_restricted_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -86,7 +86,7 @@ def test_09_verify_test1_dataset_inherited_parent_aclmode_changes_with_api(reque
 
 
 def test_10_verify_test1_dataset_inherited_parent_aclmode_changes_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -111,7 +111,7 @@ def test_12_verify_test2_dataset_inherited_parent_restricted_aclmode_with_api(re
 
 
 def test_13_verify_test2_dataset_inherited_parent_restricted_aclmode_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test2_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -135,7 +135,7 @@ def test_15_verify_test1_dataset_inherited_parent_aclmode_changes_with_api(reque
 
 
 def test_16_verify_test1_dataset_inherited_parent_aclmode_changes_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -150,7 +150,7 @@ def test_17_verify_test2_dataset_inherited_parent_aclmode_changes_with_api(reque
 
 
 def test_18_verify_test2_dataset_inherited_parent_aclmode_changes_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test2_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -165,7 +165,7 @@ def test_19_verify_the_pool_dataset_aclmode_changed_to_passthrough_with_api(requ
 
 
 def test_20_verify_the_pool_dataset_aclmode_changed_to_passthrough_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -189,7 +189,7 @@ def test_22_verify_test1_dataset_aclmode_changed_to_restricted_with_api(request)
 
 
 def test_23_verify_test1_dataset_aclmode_changed_to_restricted_with_zfs_get(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

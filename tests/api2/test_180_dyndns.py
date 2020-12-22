@@ -5,9 +5,9 @@ import os
 import sys
 import pytest
 from time import sleep
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-
 from config import *
 from auto_config import ip, user, password
 from functions import GET, POST, PUT, SSH_TEST
@@ -68,7 +68,8 @@ def test_05_Check_that_API_reports_dyndns_service():
     assert results.status_code == 200, results.text
 
 
-def test_06_verify_dyndhs_do_not_leak_password_in_middleware_log():
+def test_06_verify_dyndhs_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["ssh_password"], scope="session")
     if noip_test_cfg is True:
         cmd = f"""grep -R "{NOIPPASSWORD}" /var/log/middlewared.log"""
     else:

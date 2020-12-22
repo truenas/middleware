@@ -4,13 +4,19 @@ from glustercli.cli.utils import GlusterCmdException
 from middlewared.async_validators import resolve_hostname
 from middlewared.schema import Dict, Str
 from middlewared.service import (accepts, private, job,
-                                 CallError, CRUDService,
+                                 CallError, Service,
                                  ValidationErrors)
 
-from .utils import GLUSTER_JOB_LOCK
+from .utils import GlusterConfig
+
+import subprocess
+import xml.etree.ElementTree as ET
 
 
-class GlusterPeerService(CRUDService):
+GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
+
+
+class GlusterPeerService(Service):
 
     class Config:
         namespace = 'gluster.peer'
@@ -37,6 +43,34 @@ class GlusterPeerService(CRUDService):
             return result.decode().strip()
 
         return result
+
+    def _parse_peer(self, p):
+
+        data = {
+            'uuid': p.find('uuid').text,
+            'hostname': p.find('hostname').text,
+            'connected': p.find('connected').text,
+        }
+
+        if data['connected'] == '1':
+            data['connected'] = 'Connected'
+        else:
+            data['connected'] = 'Disconnected'
+
+        return data
+
+    def _parse_peer_status_xml(self, data):
+
+        peers = []
+        for _ in data.findall('peerStatus/peer'):
+            try:
+                peers.append(self._parse_peer(_))
+            except Exception as e:
+                raise CallError(
+                    f'Failed parsing peer information with error: {e}'
+                )
+
+        return peers
 
     @private
     def remove_peer_from_cluster(self, hostname):
@@ -72,7 +106,7 @@ class GlusterPeerService(CRUDService):
         )
     )
     @job(lock=GLUSTER_JOB_LOCK)
-    def do_create(self, job, data):
+    def create(self, job, data):
         """
         Add peer to the Trusted Storage Pool.
 
@@ -94,7 +128,7 @@ class GlusterPeerService(CRUDService):
         )
     )
     @job(lock=GLUSTER_JOB_LOCK)
-    def do_delete(self, job, data):
+    def delete(self, job, data):
         """
         Remove peer of `hostname` from the Trusted Storage Pool.
         """
@@ -125,4 +159,81 @@ class GlusterPeerService(CRUDService):
         including localhost.
         """
 
-        return self.__peer_wrapper(peer.pool)
+        final = None
+        # get the local viewpoint of the remote peers in the TSP
+        if local_view := self.__peer_wrapper(peer.status):
+
+            # need to pull out a remote peer (that's connected)
+            remote_node = None
+            for i in local_view:
+                if i['connected'] == 'Connected' and i['hostname'] != 'localhost':
+                    remote_node = i['hostname']
+                    break
+
+            if remote_node is None:
+                raise CallError('All remote peers are disconnected.')
+
+            # now we need to run the same command as `__peer_wrapper(peer.status)`
+            # but specifying a remote peer to get the "remote_local_view"
+            command = [
+                'gluster',
+                f'--remote-host={remote_node}',
+                'peer', 'status', '--xml'
+            ]
+            cp = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            if cp.returncode:
+                # the gluster cli utility will return stderr
+                # to stdout and vice versa on certain failures.
+                # account for this and decode appropriately
+                err = cp.stderr if cp.stderr else cp.stdout
+                if isinstance(err, bytes):
+                    err = err.decode()
+                raise CallError(
+                    f'Failed running remote peer status with error: {err.strip()}'
+                )
+
+            # build our data structure by parsing the xml
+            remote_local_view = ET.fromstring(cp.stdout)
+            remote_local_view = self._parse_peer_status_xml(remote_local_view)
+
+            # now we compare the 2 "viewpoints" and deduce which IP address
+            # is our own
+            final = local_view.copy()
+
+            # this should only ever produce 1 entry
+            our_ip = [i for i in remote_local_view if i not in local_view]
+            if len(our_ip) != 1:
+                raise CallError(
+                    f'Remote peer: {remote_node} sees these peers: '
+                    f'{remote_local_view}'
+                    f'The local peer sees these peers: {local_view}.'
+                    'The local and remote peers should be the same quantity.'
+                )
+
+            final.append(our_ip[0])
+
+        return final
+
+    @accepts()
+    async def ips_available(self):
+        """
+        List of IPv4/v6 addresses available that can be used
+        as the `peer_name` when creating a gluster volume.
+
+        NOTE:
+            This will only return statically assigned IPs.
+            If this is an HA system, this will only return
+            the VIP addresses that have been configured on
+            the system.
+        """
+
+        return [
+            d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'static': True}
+            )
+        ]

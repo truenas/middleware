@@ -1,7 +1,7 @@
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
-from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors
+from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors, filterable
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
@@ -33,6 +33,9 @@ RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 
 LP_CTX = param.get_context()
 
+# placeholder for proper ctdb health check
+CLUSTER_IS_HEALTHY = True
+
 
 class SMBHAMODE(enum.IntEnum):
     """
@@ -43,6 +46,7 @@ class SMBHAMODE(enum.IntEnum):
     STANDALONE = 0
     LEGACY = 1
     UNIFIED = 2
+    CLUSTERED = 2
 
 
 class SMBCmd(enum.Enum):
@@ -117,9 +121,8 @@ class SMBSharePreset(enum.Enum):
         'path_suffix': '%U',
         'timemachine': True,
         'auxsmbconf': '\n'.join([
-            'tmprotect:auto_rollback=powerloss',
-            'ixnas:zfs_auto_homedir=true',
-            'ixnas:default_user_quota=1T',
+            'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true',
+            'ixnas:default_user_quota=1T' if osc.IS_FREEBSD else 'zfs_core:base_user_quota=1T',
         ])
     }}
     MULTI_PROTOCOL_AFP = {"verbose_name": "Multi-protocol (AFP/SMB) shares", "params": {
@@ -151,7 +154,7 @@ class SMBSharePreset(enum.Enum):
     PRIVATE_DATASETS = {"verbose_name": "Private SMB Datasets and Shares", "params": {
         'path_suffix': '%U',
         'auxsmbconf': '\n'.join([
-            'ixnas:zfs_auto_homedir=true'
+            'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true'
         ])
     }}
     WORM_DROPBOX = {"verbose_name": "SMB WORM. Files become readonly via SMB after 5 minutes", "params": {
@@ -384,6 +387,9 @@ class SMBService(SystemServiceService):
 
     @private
     async def setup_directories(self):
+        await self.reset_smb_ha_mode()
+        await self.middleware.call('etc.generate', 'smb')
+
         for p in SMBPath:
             if p == SMBPath.STATEDIR:
                 path = await self.middleware.call("smb.getparm", "state directory", "global")
@@ -423,29 +429,17 @@ class SMBService(SystemServiceService):
 
     @private
     @job(lock="smb_configure")
-    async def configure(self, job):
-        await self.reset_smb_ha_mode()
-        job.set_progress(0, 'Preparing to configure SMB.')
-        data = await self.config()
-        job.set_progress(10, 'Generating SMB config.')
-        await self.middleware.call('etc.generate', 'smb')
-
-        # Following hack will be removed once we make our own samba package
-        if osc.IS_LINUX:
-            try:
-                os.remove("/etc/samba/smb.conf")
-            except FileNotFoundError:
-                pass
-
-            os.symlink("/etc/smb4.conf", "/etc/samba/smb.conf")
-
+    async def configure(self, job, create_paths=True):
         """
         Many samba-related tools will fail if they are unable to initialize
         a messaging context, which will happen if the samba-related directories
         do not exist or have incorrect permissions.
         """
-        job.set_progress(20, 'Setting up SMB directories.')
-        await self.setup_directories()
+        data = await self.config()
+        job.set_progress(0, 'Setting up SMB directories.')
+        if create_paths:
+            await self.setup_directories()
+
         job.set_progress(30, 'Setting up server SID.')
         await self.middleware.call('smb.set_sid', data['cifs_SID'])
 
@@ -821,6 +815,10 @@ class SharingSMBService(SharingService):
 
         `auxsmbconf` is a string of additional smb4.conf parameters not covered by the system's API.
         """
+        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        if ha_mode == SMBHAMODE.CLUSTERED and CLUSTER_IS_HEALTHY is False:
+            raise CallError("SMB share changes not permitted while cluster is unhealthy")
+
         verrors = ValidationErrors()
         path = data['path']
 
@@ -838,11 +836,12 @@ class SharingSMBService(SharingService):
 
         await self.apply_presets(data)
         await self.compress(data)
-        vuid = await self.generate_vuid(data['timemachine'])
-        data.update({'vuid': vuid})
-        data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+        if ha_mode != SMBHAMODE.CLUSTERED:
+            vuid = await self.generate_vuid(data['timemachine'])
+            data.update({'vuid': vuid})
+            data['id'] = await self.middleware.call(
+                'datastore.insert', self._config.datastore, data,
+                {'prefix': self._config.datastore_prefix})
 
         await self.strip_comments(data)
         await self.middleware.call('sharing.smb.reg_addshare', data)
@@ -853,7 +852,13 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
-        return await self.get_instance(data['id'])
+        if ha_mode == SMBHAMODE.CLUSTERED:
+            ret = await self.query([('name', '=', data['name'])],
+                                   {'get': True, 'extra': {'ha_mode': ha_mode.name}})
+        else:
+            ret = await self.get_instance(data['id'])
+
+        return ret
 
     @accepts(
         Int('id'),
@@ -867,14 +872,14 @@ class SharingSMBService(SharingService):
         """
         Update SMB Share of `id`.
         """
+        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        if ha_mode == SMBHAMODE.CLUSTERED and CLUSTER_IS_HEALTHY is False:
+            raise CallError("SMB share changes not permitted while cluster is unhealthy")
+
         verrors = ValidationErrors()
         path = data.get('path')
 
-        old = await self.middleware.call(
-            'datastore.query', self._config.datastore, [('id', '=', id)],
-            {'extend': self._config.datastore_extend,
-             'prefix': self._config.datastore_prefix,
-             'get': True})
+        old = await self.query([('id', '=', id)], {'get': True, 'extra': {'ha_mode': ha_mode.name}})
 
         new = old.copy()
         new.update(data)
@@ -886,10 +891,9 @@ class SharingSMBService(SharingService):
         await self.clean(new, 'sharingsmb_update', verrors, id=id)
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
-        if not data['cluster_volname']:
+        if not new['cluster_volname']:
             if path and not os.path.exists(path):
                 try:
                     os.makedirs(path)
@@ -898,6 +902,23 @@ class SharingSMBService(SharingService):
 
         if old['purpose'] != new['purpose']:
             await self.apply_presets(new)
+
+        if ha_mode == SMBHAMODE.CLUSTERED:
+            diff = await self.middleware.call(
+                'sharing.smb.diff_middleware_and_registry', new['name'], new
+            )
+            share_name = new['name'] if not new['home'] else 'homes'
+            await self.middleware.call('sharing.smb.apply_conf_diff',
+                                       'REGISTRY', share_name, diff)
+
+            enable_aapl = await self.check_aapl(new)
+            if enable_aapl:
+                await self._service_change('cifs', 'restart')
+            else:
+                await self._service_change('cifs', 'reload')
+
+            return await self.query([('name', '=', share_name)],
+                                    {'get': True, 'extra': {'ha_mode': ha_mode.name}})
 
         old_is_locked = (await self.get_instance(id))['locked']
         if old['path'] != new['path']:
@@ -988,8 +1009,17 @@ class SharingSMBService(SharingService):
         Delete SMB Share of `id`. This will forcibly disconnect SMB clients
         that are accessing the share.
         """
-        share = await self._get_instance(id)
-        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        if ha_mode == SMBHAMODE.CLUSTERED and CLUSTER_IS_HEALTHY is False:
+            raise CallError("SMB share changes not permitted while cluster is unhealthy")
+
+        if ha_mode != SMBHAMODE.CLUSTERED:
+            share = await self._get_instance(id)
+            result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        else:
+            share = await self.query([('id', '=', id)], {'get': True})
+            result = id
+
         await self.close_share(share['name'])
         try:
             await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
@@ -1005,6 +1035,27 @@ class SharingSMBService(SharingService):
         if share['timemachine']:
             await self.middleware.call('service.restart', 'mdns')
 
+        return result
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        """
+        Query shares with filters. In clustered environments, local datastore query
+        is bypassed in favor of clustered registry.
+        """
+        extra = options.get('extra', {})
+        ha_mode_str = extra.get('ha_mode')
+        if ha_mode_str is None:
+            ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        else:
+            ha_mode = SMBHAMODE[ha_mode_str]
+
+        if ha_mode == SMBHAMODE.CLUSTERED:
+            result = await self.middleware.call(
+                'sharing.smb.registry_query', filters, options
+            )
+        else:
+            return await super().query(filters, options)
         return result
 
     @private
@@ -1293,7 +1344,7 @@ class SharingSMBService(SharingService):
             try:
                 await self.middleware.call('sharing.smb.reg_addshare', share_conf[0])
             except Exception:
-                self.logger.warning("Failed to add SMB share [%] while synchronizing registry config",
+                self.logger.warning("Failed to add SMB share [%s] while synchronizing registry config",
                                     share, exc_info=True)
 
         for share in to_del:

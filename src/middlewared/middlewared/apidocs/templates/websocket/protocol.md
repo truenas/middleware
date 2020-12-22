@@ -1,12 +1,12 @@
 ## Websocket Protocol
 
-FreeNAS uses DDP: https://github.com/meteor/meteor/blob/devel/packages/ddp/DDP.md .
+TrueNAS uses DDP: https://github.com/meteor/meteor/blob/devel/packages/ddp/DDP.md .
 
 DDP (Distributed Data Protocol) is the stateful websocket protocol to communicate between the client and the server.
 
 Websocket endpoint: `/websocket`
 
-e.g. `ws://freenas.domain/websocket`
+e.g. `ws://truenas.domain/websocket`
 
 ### Example of connection
 

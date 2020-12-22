@@ -21,9 +21,10 @@ if __name__ == "__main__":
     c.execute("SELECT * FROM system_advanced")
     advanced = {k.replace("adv_", ""): v for k, v in c.fetchone().items()}
 
+    # We need to allow tpm in grub as sedutil-cli requires it
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
-        'GRUB_CMDLINE_LINUX_DEFAULT=""',
+        'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1"',
     ]
 
     terminal = ["console"]

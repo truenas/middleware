@@ -148,6 +148,12 @@ class NtpdService(SimpleService):
     systemd_unit = "ntp"
 
 
+class OpenVmToolsService(SimpleService):
+    name = "open-vm-tools"
+
+    systemd_unit = "open-vm-tools"
+
+
 class PowerdService(SimpleService):
     name = "powerd"
 

@@ -476,7 +476,7 @@ class PluginService(CRUDService):
         Bool('update_jail', default=True)
     )
     @job(lock=lambda args: f'jail_update:{args[0]}')
-    async def update(self, job, jail, update_jail=True):
+    async def update_plugin(self, job, jail, update_jail=True):
         """
         Updates specified plugin to latest available plugin version and optionally update plugin to latest patch level.
         """
@@ -1063,6 +1063,13 @@ class JailService(CRUDService):
                 'exclude': ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair', 'vnet', 'bridge']
             }
         )
+
+    @accepts()
+    async def vnet_default_interface_choices(self):
+        """
+        Returns a dictionary of interface choices which can be used with `vnet_default_interface` property.
+        """
+        return {'none': 'none', 'auto': 'auto', **(await self.interface_choices())}
 
     @accepts(
         Dict(

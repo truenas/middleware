@@ -273,8 +273,8 @@ EOD
 - You can't use ${_disks} for sharing data.
 
 NOTE:
-- Installing on a SSD is preferred to installing on 
-  flash media.
+- Installing on SATA, SAS, or NVMe flash media is recommended.
+  USB flash sticks are discouraged.
 
 Proceed with the ${_type}?
 EOD

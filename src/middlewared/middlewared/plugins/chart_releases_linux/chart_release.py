@@ -11,7 +11,8 @@ from pkg_resources import parse_version
 
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, get
+from middlewared.validators import Match
 
 from .utils import CHART_NAMESPACE_PREFIX, get_namespace, get_storage_class_name, Resources, run
 
@@ -49,6 +50,7 @@ class ChartReleaseService(CRUDService):
                 update_catalog_config[catalog['label']][train] = train_data
 
         k8s_config = await self.middleware.call('kubernetes.config')
+        k8s_node_ip = await self.middleware.call('kubernetes.node_ip')
         options = options or {}
         extra = copy.deepcopy(options.get('extra', {}))
         get_resources = extra.get('retrieve_resources')
@@ -115,6 +117,7 @@ class ChartReleaseService(CRUDService):
                 'config': config,
                 'status': status,
                 'used_ports': ports_used[name],
+                'pod_status': pods_status,
             })
 
             if get_resources:
@@ -129,14 +132,61 @@ class ChartReleaseService(CRUDService):
             current_version = parse_version(release_data['chart_metadata']['version'])
             latest_version = update_catalog_config.get(release_data['catalog'], {}).get(
                 release_data['catalog_train'], {}
-            ).get(release_data['chart_metadata']['name'], release_data['chart_metadata']['version'])
+            ).get(release_data['chart_metadata']['name'], parse_version(release_data['chart_metadata']['version']))
 
             release_data['update_available'] = latest_version > current_version
             release_data['chart_metadata']['latest_chart_version'] = str(latest_version)
+            release_data['portals'] = await self.middleware.call(
+                'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_ip
+            )
+            if 'icon' not in release_data['chart_metadata']:
+                release_data['chart_metadata']['icon'] = None
 
             releases.append(release_data)
 
         return filter_list(releases, filters, options)
+
+    @private
+    def retrieve_portals_for_chart_release(self, release_data, node_ip=None):
+        questions_yaml_path = os.path.join(
+            release_data['path'], 'charts', release_data['chart_metadata']['version'], 'questions.yaml'
+        )
+        if not os.path.exists(questions_yaml_path):
+            return {}
+
+        with open(questions_yaml_path, 'r') as f:
+            portals = yaml.safe_load(f.read()).get('portals') or {}
+
+        if not portals:
+            return portals
+
+        if not node_ip:
+            node_ip = self.middleware.call_sync('kubernetes.node_ip')
+
+        cleaned_portals = {}
+        for portal_type, schema in portals.items():
+            t_portals = []
+            path = schema.get('path') or '/'
+            for protocol in schema['protocols']:
+                for host in schema['host']:
+                    if host == '$node_ip':
+                        host = node_ip
+                    elif host.startswith('$variable-'):
+                        host = get(release_data['config'], host[len('$variable-'):])
+
+                    if not host:
+                        continue
+
+                    for port in schema['ports']:
+                        if str(port).startswith('$variable-'):
+                            port = get(release_data['config'], port[len('$variable-'):])
+                        if not port:
+                            # We are not going to add it to list of urls if port comes up as empty
+                            continue
+                        t_portals.append(f'{protocol}://{host}:{port}{path}')
+            cleaned_portals[portal_type] = t_portals
+
+        return cleaned_portals
 
     @private
     async def host_path_volumes(self, pods):
@@ -171,7 +221,7 @@ class ChartReleaseService(CRUDService):
             Dict('values', additional_attrs=True),
             Str('catalog', required=True),
             Str('item', required=True),
-            Str('release_name', required=True),
+            Str('release_name', required=True, validators=[Match(r'[a-z0-9]([-a-z0-9]*[a-z0-9])?')]),
             Str('train', default='charts'),
             Str('version', default='latest'),
         )
@@ -221,9 +271,7 @@ class ChartReleaseService(CRUDService):
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
-        default_values = item_details['values']
-        new_values = copy.deepcopy(default_values)
-        new_values.update(data['values'])
+        new_values = data['values']
         new_values, context = await self.normalise_and_validate_values(item_details, new_values, False, release_ds)
 
         job.set_progress(25, 'Initial Validation completed')
@@ -334,7 +382,10 @@ class ChartReleaseService(CRUDService):
         version_details = await self.middleware.call('catalog.item_version_details', chart_path)
         config = release['config']
         config.update(data['values'])
-        config, context = await self.normalise_and_validate_values(version_details, config, True, release['dataset'])
+        # We use update=False because we want defaults to be populated again if they are not present in the payload
+        # Why this is not dangerous is because the defaults will be added only if they are not present/configured for
+        # the chart release.
+        config, context = await self.normalise_and_validate_values(version_details, config, False, release['dataset'])
 
         job.set_progress(25, 'Initial Validation complete')
 

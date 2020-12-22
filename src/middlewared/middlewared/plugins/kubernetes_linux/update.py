@@ -129,7 +129,10 @@ class KubernetesService(ConfigService):
             config['cni_config'] = {}
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('kubernetes.status_change')
-            if config['pool'] != old_config['pool']:
+            if not config['pool'] and config['pool'] != old_config['pool']:
+                # We only want to do this when we don't have any pool configured and would like to use
+                # host catalog repos temporarily. Otherwise, we should call this after k8s datasets have
+                # been initialised
                 await self.middleware.call('catalog.sync_all')
 
         return await self.config()
@@ -152,6 +155,23 @@ class KubernetesService(ConfigService):
             raise CallError('Please configure kubernetes pool.')
         if not await self.middleware.call('service.started', 'kubernetes'):
             raise CallError('Kubernetes service is not running.')
+
+    @accepts()
+    async def node_ip(self):
+        """
+        Returns IP used by kubernetes which kubernetes uses to allow incoming connections.
+        """
+        k8s_node_config = await self.middleware.call('k8s.node.config')
+        node_ip = None
+        if k8s_node_config['node_configured']:
+            node_ip = next(
+                (addr['address'] for addr in k8s_node_config['status']['addresses'] if addr['type'] == 'InternalIP'),
+                None
+            )
+        if not node_ip:
+            node_ip = (await self.middleware.call('kubernetes.config'))['node_ip']
+
+        return node_ip
 
 
 async def setup(middleware):

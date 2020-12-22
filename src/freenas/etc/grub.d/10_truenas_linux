@@ -34,6 +34,10 @@ export TEXTDOMAINDIR="${datarootdir}/locale"
 CLASS="--class gnu-linux --class gnu --class os"
 SUPPORTED_INITS="sysvinit:/lib/sysvinit/init systemd:/lib/systemd/systemd upstart:/sbin/upstart"
 
+if echo ${GRUB_TERMINAL_OUTPUT} | grep -q serial; then
+  echo "sleep -i 1 # serial input enabled, let's consume buffered input"
+fi
+
 if [ "x${GRUB_DISTRIBUTOR}" = "x" ] ; then
   OS=GNU/Linux
 else

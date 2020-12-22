@@ -11,7 +11,7 @@ from middlewared.schema import Dict, Str
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
-from .utils import get_namespace, run
+from .utils import CONTEXT_KEY_NAME, get_namespace, run
 
 
 class ChartReleaseService(Service):
@@ -116,6 +116,20 @@ class ChartReleaseService(Service):
 
         await self.middleware.call('chart.release.perform_actions', context)
 
+        # Let's update context options to reflect that an upgrade is taking place and from which version to which
+        # version it's happening.
+        # Helm considers simple config change as an upgrade as well, and we have no way of determining the old/new
+        # chart versions during helm upgrade in the helm template, hence the requirement for a context object.
+        config[CONTEXT_KEY_NAME].update({
+            'operation': 'UPGRADE',
+            'isUpgrade': True,
+            'upgradeMetadata': {
+                'oldChartVersion': current_chart['version'],
+                'newChartVersion': new_version,
+                'preUpgradeRevision': release['version'],
+            }
+        })
+
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))
             f.flush()
@@ -161,7 +175,7 @@ class ChartReleaseService(Service):
 
             await self.chart_release_update_check(catalog_item, application)
 
-        asyncio.ensure_future(self.middleware.call('docker.images.check_update'))
+        asyncio.ensure_future(self.middleware.call('container.image.check_update'))
 
     @private
     async def chart_release_update_check(self, catalog_item, application):

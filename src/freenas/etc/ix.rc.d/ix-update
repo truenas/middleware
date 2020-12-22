@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-update
+# REQUIRE: ix-update-scripts
 # BEFORE: middlewared earlykld
 
 . /etc/rc.freenas
@@ -88,9 +89,21 @@ db_update()
 		if [ -f /usr/local/sbin/firmware_update.py ]; then
 			LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/firmware_update.py
 			if [ $? -eq 0 ]; then
-				# A reboot will be required, but we'll hold off
-				# on that and do database upgrades if they need
-				# to be done as well to avoid a double reboot.
+				# Users often wonder why a 3rd reboot occurs on their system
+				# when they upgrade their box. This is the reason why.
+				# To keep the long, drawn out story as short as possible
+				# and to maintain the fickle state that my mind is in
+				# after troubleshooting upgrade code for an entire day,
+				# /update-scripts gets created on upgrade by default
+				# in the Installer.py code (freenas-update).
+				# ix-update-scripts runs before this script and reboots
+				# the box before this rc script gets called.
+				# So a 2nd reboot occurs, and if the system that is being
+				# upgraded also has a SAS HBA card that received a
+				# firmware upgrade, then we set this variable to 1. As
+				# you may already guess, a 3rd reboot occurs. This will
+				# make you drink, if you don't already and/or step away
+				# from the computer and make you question your life choices.
 				REBOOT_REQUIRED=1
 			fi
 		else
@@ -143,8 +156,6 @@ db_update()
 
 	rm -f $NEED_UPDATE_SENTINEL
 	rm -f $CD_UPGRADE_SENTINEL
-
-	/usr/local/bin/midclt call etc.generate loader > /dev/null
 
 	echo "Database upgrade complete.  Rebooting."
 	cd /

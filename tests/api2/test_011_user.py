@@ -15,7 +15,7 @@ sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, scale, ha, password, user, ip
 if scale is True:
-    shell = '/bin/bash'
+    shell = '/usr/bin/bash'
 else:
     shell = '/bin/csh'
 
@@ -90,7 +90,7 @@ def test_02_creating_user_testuser(request):
 
 
 def test_03_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["user_01"])
+    depends(request, ["user_01", "ssh_password"], scope="session")
     cmd = """grep -R "test1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -188,7 +188,7 @@ def test_15_updating_user_testuser_info(request):
 
 
 def test_16_verify_put_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["user_02", "user_01"])
+    depends(request, ["user_02", "user_01", "ssh_password"], scope="session")
     cmd = """grep -R "testing123" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -271,6 +271,7 @@ def test_27_creating_shareuser_to_test_sharing(request):
 
 
 def test_28_verify_post_user_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "testing" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -330,14 +331,14 @@ def test_31_creating_user_with_homedir(request):
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = """grep -R "test1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
 def test_33_smb_user_passb_entry_exists(request):
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -380,7 +381,7 @@ def test_36_homedir_check_perm(to_test, request):
 
 
 def test_37_homedir_testfile_create(request):
-    depends(request, ["HOMEDIR_EXISTS"])
+    depends(request, ["HOMEDIR_EXISTS", "ssh_password"], scope="session")
     testfile = f'/mnt/{dataset}/testuser2/testfile.txt'
 
     cmd = f'touch {testfile}'
@@ -433,7 +434,7 @@ def test_42_verify_locked_smb_user_is_disabled(request):
     This test verifies that the passdb user is disabled
     when "locked" is set to True.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -463,7 +464,7 @@ def test_44_verify_absent_from_passdb(request):
     This test verifies that the user no longer appears
     in Samba's passdb after "smb" is set to False.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -501,6 +502,7 @@ def test_46_creating_non_smb_user(request):
 
 
 def test_47_verify_post_user_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "testabcd" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -511,7 +513,7 @@ def test_48_verify_non_smb_user_absent_from_passdb(request):
     Creating new user with "smb" = False must not
     result in a passdb entry being generated.
     """
-    depends(request, ["NON_SMB_USER_CREATED"])
+    depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -551,6 +553,7 @@ def test_50_convert_to_smb_user(request):
 
 
 def test_51_verify_put_user_do_not_leak_password_in_middleware_log(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "testabcd1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -561,7 +564,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
     At this point the non-SMB user has been converted to an SMB user. Verify
     that a passdb entry was appropriately generated.
     """
-    depends(request, ["NON_SMB_USER_CREATED"])
+    depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

@@ -387,7 +387,7 @@ class ZettareplService(Service):
         else:
             message = snapshot_progress_message
             progress = 100 * (
-                (message.snapshots_sent + message.bytes_sent / message.bytes_total) /
+                (message.snapshots_sent + message.bytes_sent / (message.bytes_total or float("inf"))) /
                 message.snapshots_total
             )
             text = (
@@ -582,7 +582,7 @@ class ZettareplService(Service):
             if replication_task["encryption"]:
                 definition["encryption"] = {
                     "key": replication_task["encryption_key"],
-                    "key-format": replication_task["encryption_key_format"],
+                    "key-format": replication_task["encryption_key_format"].lower(),
                     "key-location": replication_task["encryption_key_location"],
                 }
             if replication_task["naming_schema"]:

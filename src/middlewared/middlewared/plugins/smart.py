@@ -17,7 +17,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-RE_TIME_DETAILS = re.compile(r'test will complete after(.*)', re.IGNORECASE)
+RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)
 
 
 async def annotate_disk_smart_tests(middleware, devices, disk):
@@ -158,7 +158,7 @@ class SMARTTestService(CRUDService):
 
         smart_tests = await self.query(filters=[('type', '=', data['type'])])
         configured_disks = [d for test in smart_tests for d in test['disks']]
-        disks_dict = {disk['identifier']: disk['name'] for disk in (await self.middleware.call('disk.query'))}
+        disks_dict = await self.disk_choices()
 
         disks = data.get('disks')
         used_disks = []
@@ -182,6 +182,18 @@ class SMARTTestService(CRUDService):
             )
 
         return verrors
+
+    @accepts(Bool('full_disk', default=False))
+    async def disk_choices(self, full_disk):
+        """
+        Returns disk choices for S.M.A.R.T. test.
+
+        `full_disk` will return full disk objects instead of just names.
+        """
+        return {
+            disk['identifier']: disk if full_disk else disk['name']
+            for disk in await self.middleware.call('disk.query', [['devname', '!^', 'nv']])
+        }
 
     @accepts(
         Dict(
@@ -357,18 +369,15 @@ class SMARTTestService(CRUDService):
                 'Please specify at least one disk.'
             )
         else:
-            disks_data = await self.middleware.call('disk.query')
+            disks_choices = await self.disk_choices(True)
             devices = await self.middleware.call('device.get_storage_devices_topology')
 
             for index, disk in enumerate(disks):
-                for d in disks_data:
-                    if disk['identifier'] == d['identifier']:
-                        current_disk = d
-                        test_disks_list.append({
-                            'disk': current_disk['name'],
-                            **disk
-                        })
-                        break
+                if current_disk := disks_choices.get(disk['identifier']):
+                    test_disks_list.append({
+                        'disk': current_disk['name'],
+                        **disk
+                    })
                 else:
                     verrors.add(
                         f'disks.{index}.identifier',
@@ -380,12 +389,6 @@ class SMARTTestService(CRUDService):
                     verrors.add(
                         f'disks.{index}.identifier',
                         f'Test cannot be performed for {disk["identifier"]} disk. Failed to retrieve name.'
-                    )
-
-                if current_disk['name'].startswith('nvd'):
-                    verrors.add(
-                        f'disks.{index}.identifier',
-                        f'Test cannot be performed for {disk["identifier"]} disk. NVMe devices cannot be mapped yet.'
                     )
 
                 device = devices.get(current_disk['name'])
@@ -423,7 +426,7 @@ class SMARTTestService(CRUDService):
             output['error'] = e.errmsg
         else:
             expected_result_time = None
-            time_details = re.findall(RE_TIME_DETAILS, result)
+            time_details = re.findall(RE_TIME, result)
             if time_details:
                 try:
                     expected_result_time = datetime.strptime(time_details[0].strip(), '%a %b %d %H:%M:%S %Y')
@@ -536,7 +539,7 @@ class SMARTTestService(CRUDService):
         get = (options or {}).pop("get", False)
 
         disks = filter_list(
-            [{"disk": disk["name"]} for disk in await self.middleware.call("disk.query")],
+            [{"disk": disk} for disk in (await self.disk_choices()).values()],
             filters,
             options,
         )

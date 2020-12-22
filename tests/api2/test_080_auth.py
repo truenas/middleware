@@ -6,6 +6,7 @@
 import pytest
 import sys
 import os
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, SSH_TEST
@@ -25,7 +26,8 @@ def test_01_check_valid_root_user_authentication():
     assert results.json() is True, results.text
 
 
-def test_02_verify_auth_does_not_leak_password_into_middleware_log():
+def test_02_verify_auth_does_not_leak_password_into_middleware_log(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{password}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])

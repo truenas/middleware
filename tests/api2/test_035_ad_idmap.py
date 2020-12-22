@@ -87,7 +87,7 @@ def test_04_verify_the_job_id_is_successful(request):
 
 
 def test_05_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["AD_ENABLED"])
+    depends(request, ["AD_ENABLED", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -132,7 +132,7 @@ def test_08_test_backend_options(request, backend):
     DS_TYPE_DEFAULT_DOMAIN have hard-coded ids and
     so we don't need to look them up.
     """
-    depends(request, ["GATHERED_BACKEND_OPTIONS"])
+    depends(request, ["GATHERED_BACKEND_OPTIONS", "ssh_password"], scope="session")
     opts = BACKEND_OPTIONS[backend]['parameters'].copy()
     set_secret = False
 
@@ -340,7 +340,7 @@ def test_13_idmap_low_high_range_inversion_fail(request):
 
 @pytest.mark.dependency(name="CREATED_NEW_DOMAIN")
 def test_13_idmap_new_domain(request):
-    depends(request, ["JOINED_AD"])
+    depends(request, ["JOINED_AD", "ssh_password"], scope="session")
     global dom_id
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
@@ -364,7 +364,7 @@ def test_14_idmap_new_domain_duplicate_fail(request):
     It should not be possible to create a new domain that
     has a name conflict with an existing one.
     """
-    depends(request, ["JOINED_AD"])
+    depends(request, ["JOINED_AD", "ssh_password"], scope="session")
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -417,7 +417,7 @@ def test_17_leave_activedirectory(request):
 
 
 def test_18_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["AD_ENABLED"])
+    depends(request, ["AD_ENABLED", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])

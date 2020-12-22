@@ -14,6 +14,9 @@ class Device(ABC):
     def xml(self, *args, **kwargs):
         return getattr(self, f'xml_{osc.SYSTEM.lower()}')(*args, **kwargs)
 
+    def is_available(self):
+        raise NotImplementedError
+
     def xml_freebsd(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -64,3 +67,9 @@ class Device(ABC):
 
     def hypervisor_args_freebsd(self, *args, **kwargs):
         pass
+
+    def __str__(self):
+        return f'{self.__class__.__name__} Device: {self.identity()}'
+
+    def identity(self):
+        raise NotImplementedError

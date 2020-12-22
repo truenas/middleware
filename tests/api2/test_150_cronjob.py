@@ -5,10 +5,9 @@ import sys
 import os
 import pytest
 from time import sleep
-
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-
 from functions import POST, GET, PUT, SSH_TEST, GET, DELETE
 from auto_config import user, password, ip
 
@@ -38,7 +37,7 @@ def test_02_Checking_to_see_if_cronjob_was_created_and_enabled(cronjob_dict):
 
 
 def test_03_Wait_a_minute():
-    sleep(60)
+    sleep(65)
 
 
 def test_04_Updating_cronjob_status_to_disabled_updating_command(cronjob_dict):
@@ -55,7 +54,8 @@ def test_05_Checking_that_API_reports_the_cronjob_as_updated(cronjob_dict):
     assert results.json()[0]['enabled'] is False
 
 
-def test_06_Deleting_test_file_created_by_cronjob():
+def test_06_Deleting_test_file_created_by_cronjob(request):
+    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'rm "{TESTFILE}"', user, password, ip)
     assert results['result'] is True, results['output']
 

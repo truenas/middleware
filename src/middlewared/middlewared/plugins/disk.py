@@ -13,6 +13,7 @@ except ImportError:
     geom = None
     get_nsid = None
 
+from middlewared.common.camcontrol import camcontrol_list
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
@@ -21,7 +22,6 @@ from middlewared.utils import osc, run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
 RE_DA = re.compile('^da[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
@@ -374,9 +374,6 @@ class DiskService(CRUDService):
 
         rv = {'name': disk_name, 'locked': None}
 
-        if osc.IS_LINUX:
-            return rv
-
         if not password:
             # If there is no password no point in continuing
             return rv
@@ -391,29 +388,23 @@ class DiskService(CRUDService):
                 if cp.returncode == 0:
                     locked = False
                     unlocked = True
+                    # If we were able to unlock it, let's set mbrenable to off
+                    if osc.IS_LINUX:
+                        cp = await run('sedutil-cli', '--setMBREnable', 'off', password, devname, check=False)
+                        if cp.returncode:
+                            self.logger.error(
+                                'Failed to set MBREnable for %r to "off": %s', devname,
+                                cp.stderr.decode(), exc_info=True
+                            )
+
             elif 'Locked = N' in output:
                 locked = False
 
         # Try ATA Security if SED was not unlocked and its not locked by OPAL
         if not unlocked and not locked:
-            cp = await run('camcontrol', 'security', devname, check=False)
-            if cp.returncode == 0:
-                output = cp.stdout.decode()
-                if RE_CAMCONTROL_DRIVE_LOCKED.search(output):
-                    locked = True
-                    cp = await run(
-                        'camcontrol', 'security', devname,
-                        '-U', _advconfig['sed_user'],
-                        '-k', password,
-                        check=False,
-                    )
-                    if cp.returncode == 0:
-                        locked = False
-                        unlocked = True
-                else:
-                    locked = False
+            locked, unlocked = await self.middleware.call('disk.unlock_ata_security', devname, _advconfig, password)
 
-        if unlocked:
+        if osc.IS_FREEBSD and unlocked:
             try:
                 # Disk needs to be retasted after unlock
                 with open(f'/dev/{disk_name}', 'wb'):
@@ -546,6 +537,7 @@ class DiskService(CRUDService):
 
         reserved = await self.get_reserved()
 
+        devlist = await camcontrol_list()
         is_freenas = await self.middleware.call('system.is_freenas')
 
         serials = defaultdict(list)
@@ -561,9 +553,14 @@ class DiskService(CRUDService):
                     descr.startswith('3PAR')
                 ):
                     active_active.append(g.name)
+            if devlist.get(g.name, {}).get('driver') == 'umass-sim':
+                continue
             serial = ''
             v = g.provider.config.get('ident')
             if v:
+                # Exclude fake serial numbers e.g. `000000000000` reported by FreeBSD 12.2 USB stack
+                if not v.replace('0', ''):
+                    continue
                 serial = v
             v = g.provider.config.get('lunid')
             if v:
