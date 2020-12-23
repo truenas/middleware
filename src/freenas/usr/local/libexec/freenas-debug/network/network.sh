@@ -70,6 +70,7 @@ network_func()
 		echo
 		if is_linux; then
 			ip address show dev "$i"
+			echo -n "$(ethtool "$i" | grep -E 'Speed|Duplex|Port|Auto-')"
 			grep -iq 'up' /sys/class/net/"$i"/operstate
 			iface_up=$?
 		else
@@ -101,7 +102,7 @@ network_func()
 					fi
 					if [ -n "${gw}" ]
 					then
-						echo "${ip} gateway ${gw}"
+						echo "\tDefault IPv4 gateway: ${gw}"
 					fi
 				done
 			fi
@@ -117,7 +118,7 @@ network_func()
 					fi
 					if [ -n "${gw}" ]
 					then
-						echo "${ip6} gateway ${gw}"
+						echo "\tDefault IPv6 gateway: ${gw}"
 					fi
 				done
 			fi
