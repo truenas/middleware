@@ -158,24 +158,11 @@ class CtdbSharedVolumeService(Service):
         Mount the ctdb shared volume locally.
         """
 
-        # We call this method on startup so if we were
-        # to add a call to the `create` method then all
-        # nodes in the cluster would try to create the
-        # shared volume which is unnecessary and will
-        # cause lots of errors since only 1 node in the
-        # cluster needs to create the volume and it gets
-        # propagated to the peers that were specified
-        # during the creation of the shared volume.
-        #
-        # In summary....dont try to be fancy and call the
-        # create method in here or it's going to cause
-        # headaches.
+        # if the volume hasn't been created or started then we obviously
+        # can't mount it
         exists, started = await self.shared_volume_exists_and_started()
         if not exists or not started:
-            raise CallError(
-                'The ctdb shared volume does not exist or '
-                'is not started.'
-            )
+            return
 
         path = pathlib.Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
         try:
