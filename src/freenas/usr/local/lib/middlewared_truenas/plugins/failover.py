@@ -353,22 +353,17 @@ class FailoverService(ConfigService):
         all_ip4 = '0.0.0.0' in v4addrs
         all_ip6 = '::' in v6addrs
 
+        addrs = []
         if all_ip4 or all_ip6:
-            addrs = []
             for i in await self.middleware.call('interface.query', [('failover_vhid', '!=', None)]):
                 # user can bind to a single v4 address but all v6 addresses
                 # or vice versa
                 addrs.extend([
                     x['address'] for x in i.get('failover_virtual_aliases', [])
-                    if x['type'] == 'INET' and all_ip4
+                    if (x['type'] == 'INET' and all_ip4) or (x['type'] == 'INET6' and all_ip6)
                 ])
-                addrs.extend([
-                    x['address'] for x in i.get('failover_virtual_aliases', [])
-                    if x['type'] == 'INET6' and all_ip6
-                ])
-            return addrs
 
-        return v4addrs + v6addrs
+        return [i for i in set(addrs + v4addrs + v6addrs) if i not in ('0.0.0.0', '::')]
 
     @accepts()
     async def force_master(self):
