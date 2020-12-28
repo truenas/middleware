@@ -2028,6 +2028,9 @@ class InterfaceService(CRUDService):
         """
         list_of_ip = []
         ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
+        ignore_nics.extend(self.middleware.call_sync(
+            'failover.internal_interfaces'
+        ))
         if choices['loopback']:
             ignore_nics.remove('lo')
 
