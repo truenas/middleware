@@ -12,18 +12,18 @@ import threading
 import time
 
 from dns import resolver
-from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
+from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run, Popen
+from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
 import middlewared.utils.osc as osc
 
 from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
-from samba.credentials import Credentials, MUST_USE_KERBEROS
+from samba.credentials import Credentials
 from samba.net import Net
 from samba.samba3 import param
 from samba.dcerpc import (nbt, netlogon)
@@ -224,8 +224,9 @@ class ActiveDirectory_Conn(object):
         self._extend_creds()
         if dc is None:
             dc = self.get_pdc()
-        nl = netlogon.netlogon(f"ncacn_ip_tcp:{dc}[schannel,seal]",
-                               LP_CTX, self.cred)
+        netlogon.netlogon(
+            f"ncacn_ip_tcp:{dc}[schannel,seal]", LP_CTX, self.cred
+        )
         self.cred.new_client_authenticator()
         return True
 
@@ -865,15 +866,15 @@ class ActiveDirectoryService(ConfigService):
         """
         This co-routine performs virtual hostname aware
         dynamic DNS updates after joining AD to register
-        CARP addresses.
+        VIP addresses.
         """
         if not ad['allow_dns_updates'] or smb_ha_mode == 'STANDALONE':
             return
 
         vhost = (await self.middleware.call('network.configuration.config'))['hostname_virtual']
-        carp_ips = set(await self.middleware.call('failover.get_ips'))
-        smb_bind_ips = set(smb['bindip']) if smb['bindip'] else carp_ips
-        to_register = carp_ips & smb_bind_ips
+        vips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use', {'static': True}))]
+        smb_bind_ips = smb['bindip'] if smb['bindip'] else vips
+        to_register = set(vips) & set(smb_bind_ips)
         hostname = f'{vhost}.{ad["domainname"]}'
         cmd = [SMBCmd.NET.value, '-k', 'ads', 'dns', 'register', hostname]
         cmd.extend(to_register)
