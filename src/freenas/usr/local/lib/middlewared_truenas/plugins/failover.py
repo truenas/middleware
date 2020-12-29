@@ -348,8 +348,9 @@ class FailoverService(ConfigService):
         """
         Get a list of IPs for which the webUI can be accessed.
         """
-        v4addrs = (await self.middleware.call('system.general.config'))['ui_address']
-        v6addrs = (await self.middleware.call('system.general.config'))['ui_v6address']
+        data = await self.middleware.call('system.general.config')
+        v4addrs = data['ui_address']
+        v6addrs = data['ui_v6address']
         all_ip4 = '0.0.0.0' in v4addrs
         all_ip6 = '::' in v6addrs
 
