@@ -29,7 +29,8 @@ class SMBService(Service):
         Dict('status_options',
              Bool('verbose', default=True),
              Bool('fast', default=False),
-             Str('restrict_user', default='')
+             Str('restrict_user', default=''),
+             Str('restrict_session', default=''),
              )
     )
     async def status(self, info_level, filters, options, status_options):
@@ -47,8 +48,8 @@ class SMBService(Service):
         properly. `restrict_user` specifies the limits results to the specified
         user.
         """
-
-        if InfoLevel[info_level] == InfoLevel.AUTH_LOG:
+        lvl = InfoLevel[info_level]
+        if lvl == InfoLevel.AUTH_LOG:
             ret = []
             try:
                 with open("/var/log/samba4/auth_audit.log", "r") as f:
@@ -64,8 +65,22 @@ class SMBService(Service):
 
             return filter_list(ret, filters, options)
 
+        """
+        Apply some optimizations for case where filter is only asking
+        for a specific uid or session id.
+        """
+        if len(filters) == 1:
+            to_check = filters[0][:2]
+            if to_check == ["uid", "="]:
+                status_options['restrict_user'] = str(filters[0][2])
+                filters = []
+
+            elif to_check == ["session_id", "="]:
+                status_options['restrict_session'] = str(filters[0][2])
+                filters = []
+
         flags = '-j'
-        flags = flags + InfoLevel[info_level].value
+        flags = flags + lvl.value
         flags = flags + 'v' if status_options['verbose'] else flags
         flags = flags + 'f' if status_options['fast'] else flags
 
@@ -74,10 +89,27 @@ class SMBService(Service):
         if status_options['restrict_user']:
             statuscmd.extend(['-U', status_options['restrict_user']])
 
+        if status_options['restrict_session']:
+            statuscmd.extend(['-s', status_options['restrict_session']])
+
         smbstatus = await run(statuscmd, check=False)
 
         if smbstatus.returncode != 0:
             self.logger.debug('smbstatus [{%s}] failed with error: ({%s})',
                               flags, smbstatus.stderr.decode().strip())
 
-        return filter_list(json.loads(smbstatus.stdout.decode()), filters, options)
+        output = json.loads(smbstatus.stdout.decode())
+
+        if lvl == InfoLevel.SESSIONS:
+            output = output["sessions"]
+
+        elif lvl == InfoLevel.LOCKS:
+            output = output["locked_files"]
+
+        elif lvl == InfoLevel.BYTERANGE:
+            output = output["brl"]
+
+        elif lvl == InfoLevel.NOTIFICATIONS:
+            output = output["notify"]
+
+        return filter_list(output, filters, options)
