@@ -1127,7 +1127,8 @@ class ActiveDirectoryService(ConfigService):
         server for the NAS.
         """
         ntp_servers = self.middleware.call_sync('system.ntpserver.query')
-        default_ntp_servers = list(filter(lambda x: 'freebsd.pool.ntp.org' in x['address'], ntp_servers))
+        ntp_pool = 'freebsd.pool.ntp.og' if osc.IS_FREEBSD else 'debian.pool.ntp.org'
+        default_ntp_servers = list(filter(lambda x: ntp_pool in x['address'], ntp_servers))
         if len(ntp_servers) != 3 or len(default_ntp_servers) != 3:
             return
 
@@ -1138,7 +1139,12 @@ class ActiveDirectoryService(ConfigService):
                                 "Failed to automatically set time source.")
             return
 
-        self.middleware.call_sync('system.ntpserver.create', {'address': pdc, 'prefer': True})
+        try:
+            self.middleware.call_sync('system.ntpserver.create', {'address': pdc, 'prefer': True})
+        except Exception:
+            self.logger.warning('Failed to configure NTP for the Active Directory domain. Additional '
+                                'manual configuration may be required to ensure consistent time offset, '
+                                'which is required for a stable domain join.', exc_info=True)
 
     @private
     def get_site(self):
