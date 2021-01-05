@@ -729,10 +729,6 @@ class ShellApplication(object):
                     continue
 
                 authenticated = True
-                await ws.send_json({
-                    'msg': 'connected',
-                    'id': conndata.id,
-                })
 
                 options = data.get('options', {})
                 options['jail'] = data.get('jail') or options.get('jail')
@@ -752,6 +748,11 @@ class ShellApplication(object):
                 conndata.t_worker.start()
 
                 self.shells[conndata.id] = conndata.t_worker
+
+                await ws.send_json({
+                    'msg': 'connected',
+                    'id': conndata.id,
+                })
 
         # If connection was not authenticated, return earlier
         if not authenticated:
