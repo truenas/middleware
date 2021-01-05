@@ -1482,8 +1482,7 @@ def show_ip():
         print()
         print(_("The web user interface is at:"))
         print()
-
-        for url in sorted(urls):
+        for url in urls:
             print(url)
     else:
         print()
