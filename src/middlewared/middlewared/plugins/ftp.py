@@ -183,11 +183,11 @@ class FTPService(SystemServiceService):
                 (new["passiveportsmax"] > new["passiveportsmin"])):
             verrors.add("ftp_update.passiveportsmax", "When specified, should be greater than passiveportsmin")
 
-        if new["onlyanonymous"] and not new["anonpath"]:
-            verrors.add("ftp_update.anonpath", "This field is required for anonymous login")
-
-        if new["anonpath"]:
-            await check_path_resides_within_volume(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
+        if new["onlyanonymous"]:
+            if not new["anonpath"]:
+                verrors.add("ftp_update.anonpath", "This field is required for anonymous login")
+            else:
+                await check_path_resides_within_volume(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
 
         if new["tls"]:
             if not new["ssltls_certificate"]:
