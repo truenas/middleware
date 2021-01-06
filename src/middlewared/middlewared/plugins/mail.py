@@ -10,6 +10,7 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
+import html2text
 from lockfile import LockFile, LockTimeout
 from mako.lookup import TemplateLookup
 
@@ -191,7 +192,7 @@ class MailService(ConfigService):
     @accepts(Dict(
         'mail_message',
         Str('subject', required=True),
-        Str('text', required=True, max_length=None),
+        Str('text', max_length=None),
         Str('html', null=True, max_length=None),
         List('to', items=[Str('email')]),
         List('cc', items=[Str('email')]),
@@ -247,9 +248,20 @@ class MailService(ConfigService):
 
         message['subject'] = f'{product_name} {hostname}: {message["subject"]}'
 
+        add_html = True
         if 'html' in message and message['html'] is None:
             message.pop('html')
-        elif 'html' not in message:
+            add_html = False
+
+        if 'text' not in message:
+            if 'html' not in message:
+                verrors = ValidationErrors()
+                verrors.add('mail_message.text', 'Text is required when HTML is not set')
+                verrors.check()
+
+            message['text'] = html2text.html2text(message['html'])
+
+        if add_html and 'html' not in message:
             lookup = TemplateLookup(
                 directories=[os.path.join(os.path.dirname(os.path.realpath(__file__)), '../assets/templates')],
                 module_directory="/tmp/mako/templates")

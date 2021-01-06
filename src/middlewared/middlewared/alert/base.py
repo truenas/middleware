@@ -5,6 +5,8 @@ import json
 import logging
 import os
 
+import html2text
+
 from middlewared.alert.schedule import IntervalSchedule
 
 __all__ = ["UnavailableException",
@@ -221,6 +223,8 @@ class AlertService:
 
     schema = NotImplementedError
 
+    html = False
+
     def __init__(self, middleware, attributes):
         self.middleware = middleware
         self.attributes = attributes
@@ -251,7 +255,13 @@ class AlertService:
             node_map = await self.middleware.call("alert.node_map")
         else:
             node_map = None
-        return format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts)
+
+        html = format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts)
+
+        if self.html:
+            return html
+
+        return html2text.html2text(html).rstrip()
 
 
 class ThreadedAlertService(AlertService):
@@ -300,7 +310,7 @@ class ProThreadedAlertService(ThreadedAlertService):
 
 
 def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts):
-    text = f"{product_name} @ {hostname}\n\n"
+    text = f"{product_name} @ {hostname}<br><br>"
 
     if len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and new_alerts[0].klass.name == "Test":
         return text + "This is a test alert"
@@ -310,17 +320,26 @@ def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_ale
             text += "New alert"
         else:
             text += "New alerts"
-        text += ":\n" + "".join(["* %s\n" % format_alert(alert, node_map) for alert in new_alerts]) + "\n"
+        text += ":\n<ul>" + "".join([
+            "<li>%s</li>\n" % format_alert(alert, node_map)
+            for alert in new_alerts
+        ]) + "</ul>"
 
     if gone_alerts:
         if len(gone_alerts) == 1:
             text += "The following alert has been cleared"
         else:
             text += "These alerts have been cleared"
-        text += ":\n" + "".join(["* %s\n" % format_alert(alert, node_map) for alert in gone_alerts]) + "\n"
+        text += ":\n<ul>" + "".join([
+            "<li>%s</li>\n" % format_alert(alert, node_map)
+            for alert in gone_alerts
+        ]) + "</ul>\n"
 
     if alerts:
-        text += "Current alerts:\n" + "".join(["* %s\n" % format_alert(alert, node_map) for alert in alerts]) + "\n"
+        text += "Current alerts:\n<ul>" + "".join([
+            "<li>%s</li>\n" % format_alert(alert, node_map)
+            for alert in alerts
+        ]) + "</ul>\n"
 
     return text
 
