@@ -46,7 +46,9 @@ class VNC(Device):
                     create_element('listen', type='address', address=self.data['attributes']['vnc_bind']),
                 ]
             }, **({} if not attrs['vnc_password'] else {'passwd': attrs['vnc_password']})
-        )
+        ), create_element(
+            'controller', type='usb', model='nec-xhci'
+        ), create_element('input', type='tablet', bus='usb')
 
     def xml_freebsd(self, *args, **kwargs):
         return create_element(
