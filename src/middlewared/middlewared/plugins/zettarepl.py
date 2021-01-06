@@ -548,7 +548,7 @@ class ZettareplService(Service):
             my_schedule = replication_task["schedule"]
 
             properties_exclude = replication_task["properties_exclude"].copy()
-            for property in ["sharenfs", "sharesmb"]:
+            for property in ["mountpoint", "sharenfs", "sharesmb"]:
                 if property not in properties_exclude:
                     properties_exclude.append(property)
 
