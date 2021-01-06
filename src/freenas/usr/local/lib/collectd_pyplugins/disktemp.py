@@ -37,6 +37,9 @@ collectd.info('Loading "disktemp" python plugin')
 class DiskTemp(object):
     initialized = False
 
+    def config(self, config):
+        pass
+
     def init(self):
         collectd.info('Initializing "disktemp" plugin')
         try:
@@ -83,5 +86,6 @@ class DiskTemp(object):
 
 disktemp = DiskTemp()
 
+collectd.register_config(disktemp.config)
 collectd.register_init(disktemp.init)
 collectd.register_read(disktemp.read, READ_INTERVAL)

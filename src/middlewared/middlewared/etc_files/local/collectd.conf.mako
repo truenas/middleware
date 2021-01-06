@@ -37,8 +37,6 @@
 
 	has_internal_graphite_server = middleware.call_sync('reporting.has_internal_graphite_server')
 
-	# FIXME: python plugin support is broken in upstream - https://bugs.launchpad.net/ubuntu/+source/collectd/+bug/1872281
-	# It works in 5.11 collectd version, however for now leaving it broken for SCALE after discussing with William
 	# TODO: NUT plugin has been disabled in upstream - https://salsa.debian.org/debian/pkg-collectd/-/blob/master/debian/changelog#L86
 	# Let's bring it back once upstream brings it in
 
@@ -64,12 +62,12 @@ LoadPlugin threshold
 LoadPlugin zfs_arc
 LoadPlugin ${"nfsstat" if IS_FREEBSD else "nfs"}
 LoadPlugin write_graphite
+LoadPlugin python
 % if IS_FREEBSD:
 LoadPlugin cputemp
 LoadPlugin ctl
 LoadPlugin geom_stat
 LoadPlugin nut
-LoadPlugin python
 LoadPlugin zfs_arc_v2
 % endif
 
@@ -183,7 +181,6 @@ LoadPlugin zfs_arc_v2
 	IgnoreSelected true
 	LogOnce true
 </Plugin>
-% if IS_FREEBSD:
 
 <Plugin python>
 	ModulePath "/usr/local/lib/collectd_pyplugins"
@@ -194,7 +191,6 @@ LoadPlugin zfs_arc_v2
 	<Module "disktemp">
 	</Module>
 </Plugin>
-% endif
 
 <Plugin "write_graphite">
 % if has_internal_graphite_server:

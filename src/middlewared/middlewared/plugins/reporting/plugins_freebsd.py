@@ -53,26 +53,6 @@ class CPUTempPlugin(RRDBase):
         return args
 
 
-class DiskTempPlugin(RRDBase):
-
-    vertical_label = '\u00b0C'
-    rrd_types = (
-        ('temperature', 'value', None),
-    )
-
-    def get_title(self):
-        return 'Disk Temperature {identifier}'
-
-    def get_identifiers(self):
-        ids = []
-        for entry in glob.glob(f'{self._base_path}/disktemp-*'):
-            ident = entry.rsplit('-', 1)[-1]
-            if os.path.exists(os.path.join(entry, 'temperature.rrd')):
-                ids.append(ident)
-        ids.sort(key=RRDBase._sort_disks)
-        return ids
-
-
 class CTLPlugin(RRDBase):
 
     vertical_label = 'Bytes/s'
