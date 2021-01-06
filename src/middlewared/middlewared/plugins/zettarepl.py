@@ -556,7 +556,7 @@ class ZettareplService(Service):
 
             properties_exclude = replication_task["properties_exclude"].copy()
             properties_override = replication_task["properties_override"].copy()
-            for property in ["sharenfs", "sharesmb"]:
+            for property in ["mountpoint", "sharenfs", "sharesmb"]:
                 if property not in properties_override:
                     if property not in properties_exclude:
                         properties_exclude.append(property)
