@@ -217,12 +217,10 @@ def test_10_creating_shareuser_to_test_acls(request):
     depends(request, ["GROUP_CREATED"])
     global modeuser_id
     global next_uid
-
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
-    global next_uid
     next_uid = results.json()
-
+    shell = '/usr/bin/bash' if scale else '/bin/csh'
     payload = {
         "username": MODE_USER,
         "full_name": "Mode User",
@@ -230,7 +228,8 @@ def test_10_creating_shareuser_to_test_acls(request):
         "password": MODE_PWD,
         "uid": next_uid,
         "groups": [groupid],
-        "shell": "/bin/csh"}
+        "shell": shell
+    }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
     modeuser_id = results.json()
