@@ -1,7 +1,4 @@
 from .base import SimpleService
-from middlewared.plugins.gluster_linux.utils import GlusterConfig
-
-URL = GlusterConfig.LOCAL_EVENTSD_WEBHOOK_URL.value
 
 
 class GlusterdService(SimpleService):
@@ -16,11 +13,20 @@ class GlusterdService(SimpleService):
         # since it's responsible for sending
         # events to middlewared to be acted upon
         await self.middleware.call('service.start', 'glustereventsd')
-        await self.middleware.call('gluster.eventsd.create', {'url': URL})
+        await (
+            await self.middleware.call('ctdb.shared.volume.mount')
+        ).wait(raise_error=True)
 
     async def after_restart(self):
         # bounce the glustereventsd service
         await self.middleware.call('service.restart', 'glustereventsd')
+
+    async def before_stop(self):
+        # ctdb_shared_vol is FUSE mounted locally so umount
+        # it before we stop the glusterd service
+        await (
+            await self.middleware.call('ctdb.shared.volume.umount')
+        ).wait(raise_error=True)
 
     async def after_stop(self):
         # no reason to keep this running if glusterd service

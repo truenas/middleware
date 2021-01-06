@@ -5,12 +5,13 @@ import re
 import subprocess
 import json
 
+import libsgio
+
 from .device_info_base import DeviceInfoBase
 from middlewared.service import private, Service
 from middlewared.utils import run
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
-RE_DISK_ROTATION_RATE = re.compile(r'\s*Nominal\s*rotation\s*rate:\s*(.*)')
 RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')
 RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
@@ -121,19 +122,22 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     def get_rotational_rate(self, device_path):
 
-        rotation_rate = None
+        try:
+            disk = libsgio.SCSIDevice(device_path)
+            rotation_rate = disk.rotation_rate()
+        except Exception as e:
+            self.logger.error(
+                'Failed to retrieve rotational rate '
+                'for disk %s with error: %r', device_path, e
+            )
+            return
 
-        vpd = subprocess.run(
-            ['sg_vpd', '-p', 'bdc', device_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if not vpd.returncode and vpd.stdout:
-            reg = RE_DISK_ROTATION_RATE.search(vpd.stdout.decode())
-            if reg:
-                rotation_rate = reg.groups()[0].split()[0]
+        if rotation_rate in (0, 1):
+            # 0 = not reported
+            # 1 = SSD
+            return
 
-        return rotation_rate
+        return str(rotation_rate)
 
     @private
     def get_disk_details(self, block_device, disk, disks_data):

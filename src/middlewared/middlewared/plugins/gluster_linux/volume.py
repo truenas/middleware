@@ -136,7 +136,9 @@ class GlusterVolumeService(Service):
 
         # before we create the gluster volume, we need to ensure
         # the ctdb shared volume is setup
-        self.middleware.call_sync('ctdb.shared.volume.create')
+        self.middleware.call_sync(
+            'ctdb.shared.volume.create'
+        ).wait_sync(raise_error=True)
 
         bricks = []
         for i in temp:

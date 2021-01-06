@@ -149,7 +149,7 @@ if [ -d "/tmp/middlewared/jobs" ]; then
 	tar -chf - -C /tmp/middlewared jobs | tar -C $dir -xf -
 fi
 echo "** 96%: Compressing System Logs"
-tar -chf - -C /var log --exclude=log/journal --exclude=log/faillog --exclude=log/lastlog --exclude=log/sysstat | tar -C $dir -xf -
+tar -chf - -C /var --exclude=log/journal --exclude=log/faillog --exclude=log/lastlog --exclude=log/sysstat log | tar -C $dir -xf -
 echo "** 97%: Compressing Debug Files"
 tar -chf - -C /var/tmp fndebug | tar -C $dir -xf -
 if [ "${limit}" != "-1" ] ; then

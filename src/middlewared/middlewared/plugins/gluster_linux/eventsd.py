@@ -169,17 +169,8 @@ class GlusterEventsdService(Service):
     def init(self, job):
         """
         Initializes the webhook directory and config file
-        if it doesn't exist and then starts the service.
+        if it doesn't exist.
         """
-
-        service = self.middleware.call_sync(
-            'datastore.query', 'services.services',
-            [('srv_service', '=', 'glusterd')],
-            {'prefix': 'srv_'},
-        )
-        if not service[0]['enable']:
-            # glusterd isn't enabled so return
-            return
 
         webhook_file = pathlib.Path(WEBHOOKS_FILE)
 
@@ -226,11 +217,5 @@ class GlusterEventsdService(Service):
             raise CallError(
                 f'Failed writing to {webhook_file} with error: {e}'
             )
-
-        # glustereventsd service doesn't have an entry in
-        # the db so we start it based on whether or not the
-        # glusterd service is set to start on boot so if we
-        # get here, then restart it
-        self.middleware.call_sync('service.restart', 'glustereventsd')
 
         return init_data

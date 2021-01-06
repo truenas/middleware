@@ -9,9 +9,8 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip, user, password, pool_name, hostname
+from auto_config import ip, user, password, pool_name, hostname, scale
 from functions import PUT, POST, GET, SSH_TEST, DELETE
-
 
 try:
     Reason = 'BSD host configuration is missing in ixautomation.conf'
@@ -23,7 +22,8 @@ except ImportError:
 MOUNTPOINT = f'/tmp/iscsi-{hostname}'
 global DEVICE_NAME
 DEVICE_NAME = ""
-TARGET_NAME = "iqn.1994-09.freenasqa:target0"
+target_name = "target0"
+basename = "iqn.2005-10.org.freenas.ctl"
 
 
 def test_01_Add_iSCSI_initiator():
@@ -41,7 +41,7 @@ def test_02_Add_ISCSI_portal():
         'listen': [
             {
                 'ip': '0.0.0.0',
-                'port': 3620
+                'port': 3260
             }
         ]
     }
@@ -55,7 +55,7 @@ def test_02_Add_ISCSI_portal():
 def test_03_Add_ISCSI_target():
     global target_id
     payload = {
-        'name': TARGET_NAME,
+        'name': target_name,
         'groups': [
             {'portal': portal_id}
         ]
@@ -128,16 +128,16 @@ def test_08_Verify_the_iSCSI_service_is_enabled(request):
 @bsd_host_cfg
 def test_09_Connecting_to_iSCSI_target(request):
     depends(request, ["pool_04"], scope="session")
-    cmd = 'iscsictl -A -p %s:3620 -t %s' % (ip, TARGET_NAME)
+    cmd = f'iscsictl -A -p {ip}:3260 -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(15)
 def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name():
     while True:
-        cmd = f'iscsictl -L | grep {ip}:3620'
+        cmd = f'iscsictl -L | grep {ip}:3260'
         results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
         assert results['result'] is True, results['output']
         iscsictl_list = results['output'].strip().split()
@@ -161,15 +161,15 @@ def test_11_Format_the_target_volume(request):
 @bsd_host_cfg
 def test_12_Creating_iSCSI_mountpoint(request):
     depends(request, ["pool_04"], scope="session")
-    results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
-                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    cmd = f'mkdir -p {MOUNTPOINT}'
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
 def test_13_Mount_the_target_volume(request):
     depends(request, ["pool_04"], scope="session")
-    cmd = 'mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT)
+    cmd = f'mount "/dev/{DEVICE_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
@@ -207,16 +207,17 @@ def test_17_Deleting_file(request):
 
 
 @bsd_host_cfg
-def test_18_verifiying_iscsi_session_on_freenas(request):
+@pytest.mark.skipif(scale, reason='ctladm is not supported on SCALE')
+def test_18_verifiying_iscsi_session_on_truenas(request):
     depends(request, ["pool_04", "ssh_password"], scope="session")
     try:
         results = SSH_TEST('ctladm islist', user, password, ip)
         assert results['result'] is True, results['output']
         hostname = SSH_TEST('hostname', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)['output'].strip()
     except AssertionError as e:
-        raise AssertionError(f'Could not verify iscsi session on freenas : {e}')
+        raise AssertionError(f'Could not verify iscsi session on TrueNAS : {e}')
     else:
-        assert hostname in results['output'], 'No active session on FreeNAS for iSCSI'
+        assert hostname in results['output'], 'No active session on TrueNAS for iSCSI'
 
 
 @bsd_host_cfg
@@ -235,7 +236,7 @@ def test_20_Removing_iSCSI_volume_mountpoint():
 
 @bsd_host_cfg
 def test_21_Disconnect_iSCSI_target(request):
-    cmd = f'iscsictl -R -t {TARGET_NAME}'
+    cmd = f'iscsictl -R -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
