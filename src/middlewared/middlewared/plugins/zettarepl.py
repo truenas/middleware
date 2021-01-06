@@ -554,6 +554,13 @@ class ZettareplService(Service):
                                           for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]]
             my_schedule = replication_task["schedule"]
 
+            properties_exclude = replication_task["properties_exclude"].copy()
+            properties_override = replication_task["properties_override"].copy()
+            for property in ["sharenfs", "sharesmb"]:
+                if property not in properties_override:
+                    if property not in properties_exclude:
+                        properties_exclude.append(property)
+
             definition = {
                 "direction": replication_task["direction"].lower(),
                 "transport": transport,
@@ -562,8 +569,8 @@ class ZettareplService(Service):
                 "recursive": replication_task["recursive"],
                 "exclude": replication_task_exclude(replication_task),
                 "properties": replication_task["properties"],
-                "properties-exclude": replication_task["properties_exclude"],
-                "properties-override": replication_task["properties_override"],
+                "properties-exclude": properties_exclude,
+                "properties-override": properties_override,
                 "replicate": replication_task["replicate"],
                 "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
                 "auto": replication_task["auto"],
