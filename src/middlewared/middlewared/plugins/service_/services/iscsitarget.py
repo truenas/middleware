@@ -14,6 +14,12 @@ class ISCSITargetService(SimpleService):
 
     systemd_unit = "scst"
 
+    async def after_start(self):
+        await self.middleware.call("iscsi.host.injection.start")
+
+    async def before_stop(self):
+        await self.middleware.call("iscsi.host.injection.stop")
+
     async def reload(self):
         if osc.IS_LINUX:
             return (await run(

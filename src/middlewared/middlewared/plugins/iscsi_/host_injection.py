@@ -13,26 +13,66 @@ class iSCSIHostsInjectionService(Service):
         namespace = "iscsi.host.injection"
         private = True
 
-    async def run(self):
-        while True:
-            try:
-                await self.middleware.call(
-                    "iscsi.host.batch_update",
-                    [
-                        dict(host._asdict(), added_automatically=True)
-                        for host in await self.middleware.call("iscsi.host.injection.collect")
-                    ],
-                )
-            except Exception:
-                self.middleware.logger.error("Unhandled exception in iscsi.host.injection.run", exc_info=True)
+    control_lock = asyncio.Lock()
+    run_event = None
+    stop_event = None
 
-            await asyncio.sleep(5)
+    async def start(self):
+        async with self.control_lock:
+            if self.run_event:
+                self.logger.debug("iscsi.host.injection is already running")
+                return
+
+            self.logger.debug("Starting iscsi.host.injection")
+            self.run_event = asyncio.Event()
+            self.stop_event = asyncio.Event()
+            asyncio.ensure_future(self._run(self.run_event, self.stop_event))
+
+    async def stop(self):
+        async with self.control_lock:
+            if not self.run_event:
+                self.logger.debug("iscsi.host.injection is already stopped")
+                return
+
+            self.logger.debug("Stopping iscsi.host.injection")
+            self.run_event.set()
+            await self.stop_event.wait()
+
+            self.run_event = None
+            self.stop_event = None
+
+    async def _run(self, run_event, stop_event):
+        try:
+            while True:
+                try:
+                    await self.middleware.call(
+                        "iscsi.host.batch_update",
+                        [
+                            dict(host._asdict(), added_automatically=True)
+                            for host in await self.middleware.call("iscsi.host.injection.collect")
+                        ],
+                    )
+                except Exception:
+                    self.middleware.logger.error("Unhandled exception in iscsi.host.injection", exc_info=True)
+
+                try:
+                    await asyncio.wait_for(run_event.wait(), 5)
+                    return
+                except asyncio.TimeoutError:
+                    continue
+        finally:
+            stop_event.set()
 
     def collect(self):
         hosts = set()
 
         targets_path = "/sys/kernel/scst_tgt/targets/iscsi"
-        for target in os.listdir(targets_path):
+        try:
+            targets = os.listdir(targets_path)
+        except FileNotFoundError:
+            return hosts
+
+        for target in targets:
             target_path = os.path.join(targets_path, target)
             if not os.path.isdir(target_path):
                 continue
@@ -64,4 +104,6 @@ class iSCSIHostsInjectionService(Service):
 
 
 async def setup(middleware):
-    asyncio.ensure_future(middleware.call("iscsi.host.injection.run"))
+    service = await middleware.call("service.query", [["service", "=", "iscsitarget"]], {"get": True})
+    if service["enable"] or service["state"] == "RUNNING":
+        await middleware.call("iscsi.host.injection.start")

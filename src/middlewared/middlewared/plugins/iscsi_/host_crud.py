@@ -206,5 +206,4 @@ class iSCSIHostService(CRUDService):
 
 
 async def setup(middleware):
-    async with LOCK:
-        await middleware.call("iscsi.host.read_cache")
+    await middleware.call("iscsi.host.read_cache")
