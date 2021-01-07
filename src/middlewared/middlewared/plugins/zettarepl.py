@@ -550,10 +550,6 @@ class ZettareplService(Service):
                 hold_tasks[f"replication_task_{replication_task['id']}"] = e.errmsg
                 continue
 
-            my_periodic_snapshot_tasks = [f"task_{periodic_snapshot_task['id']}"
-                                          for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]]
-            my_schedule = replication_task["schedule"]
-
             properties_exclude = replication_task["properties_exclude"].copy()
             properties_override = replication_task["properties_override"].copy()
             for property in ["mountpoint", "sharenfs", "sharesmb"]:
@@ -572,7 +568,10 @@ class ZettareplService(Service):
                 "properties-exclude": properties_exclude,
                 "properties-override": properties_override,
                 "replicate": replication_task["replicate"],
-                "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
+                "periodic-snapshot-tasks": [
+                    f"task_{periodic_snapshot_task['id']}"
+                    for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
+                ],
                 "auto": replication_task["auto"],
                 "only-matching-schedule": replication_task["only_matching_schedule"],
                 "allow-from-scratch": replication_task["allow_from_scratch"],
@@ -596,8 +595,8 @@ class ZettareplService(Service):
                 definition["naming-schema"] = replication_task["naming_schema"]
             if replication_task["also_include_naming_schema"]:
                 definition["also-include-naming-schema"] = replication_task["also_include_naming_schema"]
-            if my_schedule is not None:
-                definition["schedule"] = zettarepl_schedule(my_schedule)
+            if replication_task["schedule"] is not None:
+                definition["schedule"] = zettarepl_schedule(replication_task["schedule"])
             if replication_task["restrict_schedule"] is not None:
                 definition["restrict-schedule"] = zettarepl_schedule(replication_task["restrict_schedule"])
             if replication_task["lifetime_value"] is not None and replication_task["lifetime_unit"] is not None:
