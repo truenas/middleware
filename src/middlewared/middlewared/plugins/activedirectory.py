@@ -1138,7 +1138,12 @@ class ActiveDirectoryService(ConfigService):
                                 "Failed to automatically set time source.")
             return
 
-        self.middleware.call_sync('system.ntpserver.create', {'address': pdc, 'prefer': True})
+        try:
+            self.middleware.call_sync('system.ntpserver.create', {'address': pdc, 'prefer': True})
+        except Exception:
+            self.logger.warning('Failed to configure NTP for the Active Directory domain. Additional '
+                                'manual configuration may be required to ensure consistent time offset, '
+                                'which is required for a stable domain join.', exc_info=True)
 
     @private
     def get_site(self):
