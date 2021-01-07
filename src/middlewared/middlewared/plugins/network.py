@@ -1716,7 +1716,7 @@ class InterfaceService(CRUDService):
         """
         return await self.middleware.call('interface.choices', {
             'bridge_members': True,
-            'lag_ports': True,
+            'lag_ports': False,
             'vlan_parent': True,
             'exclude_types': [InterfaceType.BRIDGE.value, InterfaceType.VLAN.value],
         })
