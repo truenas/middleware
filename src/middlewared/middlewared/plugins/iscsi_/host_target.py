@@ -1,5 +1,7 @@
+from collections import defaultdict
+
 from middlewared.schema import accepts, Int, List
-from middlewared.service import Service, ServiceChangeMixin
+from middlewared.service import private, Service, ServiceChangeMixin
 import middlewared.sqlalchemy as sa
 
 
@@ -42,3 +44,17 @@ class iSCSIHostService(Service, ServiceChangeMixin):
             })
 
         await self._service_change("iscsitarget", "reload")
+
+    @private
+    async def get_target_hosts(self):
+        target_hosts = defaultdict(list)
+        for row in await self.middleware.call("datastore.query", "services.iscsihosttarget"):
+            target_hosts[row["target"]["id"]].append(row["host"])
+        return target_hosts
+
+    @private
+    async def get_hosts_iqns(self):
+        hosts_iqns = defaultdict(list)
+        for row in await self.middleware.call("datastore.query", "services.iscsihostiqn", [], {"relationships": False}):
+            hosts_iqns[row["host_id"]].append(row["iqn"])
+        return hosts_iqns
