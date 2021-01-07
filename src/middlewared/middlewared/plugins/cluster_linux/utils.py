@@ -2,15 +2,18 @@ import os
 import enum
 
 
-JOB_LOCK = 'ctdb_lock'
-CRE_OR_DEL_LOCK = 'ctdb_create_or_delete_lock'
-
-
 class CTDBConfig(enum.Enum):
 
     """
     Various configuration settings used to configure ctdb.
     """
+
+    # create/delete or mount/umount requests can
+    # take awhile and obviously don't need to be
+    # run at the same time
+    BASE_LOCK = 'ctdb_'
+    MOUNT_UMOUNT_LOCK = BASE_LOCK + 'mount_or_umount_lock'
+    CRE_OR_DEL_LOCK = BASE_LOCK + 'ctdb_create_or_delete_lock'
 
     # ctdb smb related config
     VOL_DB_DIR = '/var/run/ctdb/volatile'

@@ -1,12 +1,8 @@
 from glustercli.cli import volume, quota
-from glustercli.cli.utils import GlusterCmdException
-
-from middlewared.service import (Service, accepts,
-                                 job, private, CallError,
-                                 item_method)
+from middlewared.service import (Service, accepts, job,
+                                 private, item_method)
 from middlewared.schema import Dict, Str, Int, Bool, List
-
-from .utils import GlusterConfig
+from .utils import GlusterConfig, run_method
 
 
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
@@ -16,27 +12,6 @@ class GlusterVolumeService(Service):
 
     class Config:
         namespace = 'gluster.volume'
-
-    def __volume_wrapper(self, method, *args, **kwargs):
-
-        result = b''
-
-        try:
-            result = method(*args, **kwargs)
-        except GlusterCmdException as e:
-            # the gluster cli utility will return stderr
-            # to stdout and vice versa on certain failures.
-            # account for this and decode appropriately
-            rc, out, err = e.args[0]
-            err = err if err else out
-            if isinstance(err, bytes):
-                err = err.decode()
-            raise CallError(f'{err.strip()}')
-
-        if isinstance(result, bytes):
-            return result.decode().strip()
-
-        return result
 
     @private
     def removebrick_volume(self, name, data):
@@ -56,19 +31,19 @@ class GlusterVolumeService(Service):
         # This is wrong, you can choose "start" or "force" exclusively
         # (i.e. gluster volume name remove-brick peer:path start OR force)
         if op.lower() == 'start':
-            result = self.__volume_wrapper(
+            result = run_method(
                 volume.bricks.remove_start, name, bricks, **data)
 
         if op.lower() == 'stop':
-            result = self.__volume_wrapper(
+            result = run_method(
                 volume.bricks.remove_stop, name, bricks, **data)
 
         if op.lower() == 'commit':
-            result = self.__volume_wrapper(
+            result = run_method(
                 volume.bricks.remove_commit, name, bricks, **data)
 
         if op.lower() == 'status':
-            result = self.__volume_wrapper(
+            result = run_method(
                 volume.bricks.remove_status, name, bricks, **data)
 
         return result
@@ -87,14 +62,12 @@ class GlusterVolumeService(Service):
         new_path = new['peer_path']
         new_brick = new_peer + ':' + new_path
 
-        result = self.__volume_wrapper(
+        return run_method(
             volume.bricks.replace_commit,
             name,
             src_brick,
             new_brick,
             **data)
-
-        return result
 
     @accepts(Dict(
         'glustervolume_create',
@@ -131,14 +104,13 @@ class GlusterVolumeService(Service):
         `force` Create volume forcefully, ignoring potential warnings
         """
 
-        name = data.pop('name')
-        temp = data.pop('bricks')
-
         # before we create the gluster volume, we need to ensure
         # the ctdb shared volume is setup
-        self.middleware.call_sync(
-            'ctdb.shared.volume.create'
-        ).wait_sync(raise_error=True)
+        ctdb_job = self.middleware.call_sync('ctdb.shared.volume.create')
+        ctdb_job.wait_sync(raise_error=True)
+
+        name = data.pop('name')
+        temp = data.pop('bricks')
 
         bricks = []
         for i in temp:
@@ -147,8 +119,7 @@ class GlusterVolumeService(Service):
             brick = peer + ':' + path
             bricks.append(brick)
 
-        return self.__volume_wrapper(
-            volume.create, name, bricks, **data)
+        return run_method(volume.create, name, bricks, **data)
 
     @item_method
     @accepts(
@@ -158,8 +129,7 @@ class GlusterVolumeService(Service):
             Bool('force')
         ),
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def start(self, job, name, data):
+    def start(self, name, data):
         """
         Start a gluster volume.
 
@@ -167,7 +137,7 @@ class GlusterVolumeService(Service):
         `force` Forcefully start the gluster volume
         """
 
-        return self.__volume_wrapper(volume.start, name, **data)
+        return run_method(volume.start, name, **data)
 
     @item_method
     @accepts(
@@ -177,8 +147,7 @@ class GlusterVolumeService(Service):
             Bool('force')
         ),
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def restart(self, job, name, data):
+    def restart(self, name, data):
         """
         Restart a gluster volume.
 
@@ -186,7 +155,7 @@ class GlusterVolumeService(Service):
         `force` Forcefully restart the gluster volume
         """
 
-        return self.__volume_wrapper(volume.restart, name, **data)
+        return run_method(volume.restart, name, **data)
 
     @item_method
     @accepts(
@@ -196,8 +165,7 @@ class GlusterVolumeService(Service):
             Bool('force')
         ),
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def stop(self, job, name, data):
+    def stop(self, name, data):
         """
         Stop a gluster volume.
 
@@ -205,7 +173,7 @@ class GlusterVolumeService(Service):
         `force` Forcefully stop the gluster volume
         """
 
-        return self.__volume_wrapper(volume.stop, name, **data)
+        return run_method(volume.stop, name, **data)
 
     @accepts(Dict(
         'glustervolume_delete',
@@ -219,12 +187,11 @@ class GlusterVolumeService(Service):
         `name` Name of the volume to be deleted
         """
 
-        return self.__volume_wrapper(volume.delete, data['name'])
+        return run_method(volume.delete, data['name'])
 
     @item_method
     @accepts(Str('name'))
-    @job(lock=GLUSTER_JOB_LOCK)
-    def info(self, job, name):
+    def info(self, name):
         """
         Return information about gluster volume(s).
 
@@ -234,7 +201,7 @@ class GlusterVolumeService(Service):
         rv = {}
         rv['volname'] = name
 
-        return self.__volume_wrapper(volume.info, **rv)
+        return run_method(volume.info, **rv)
 
     @item_method
     @accepts(
@@ -244,8 +211,7 @@ class GlusterVolumeService(Service):
             Bool('verbose', default=True),
         )
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def status(self, job, name, data):
+    def status(self, name, data):
         """
         Return detailed information about gluster volume(s).
 
@@ -258,16 +224,15 @@ class GlusterVolumeService(Service):
         rv['volname'] = name
         rv['group_subvols'] = data.pop('verbose')
 
-        return self.__volume_wrapper(volume.status_detail, **rv)
+        return run_method(volume.status_detail, **rv)
 
     @accepts()
-    @job(lock=GLUSTER_JOB_LOCK)
-    def list(self, job):
+    def list(self):
         """
         Return list of gluster volumes.
         """
 
-        return self.__volume_wrapper(volume.vollist)
+        return run_method(volume.vollist)
 
     @item_method
     @accepts(
@@ -278,8 +243,7 @@ class GlusterVolumeService(Service):
             Bool('force'),
         )
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def optreset(self, job, name, data):
+    def optreset(self, name, data):
         """
         Reset volumes options.
             If `opt` is not provided, then all options
@@ -290,15 +254,14 @@ class GlusterVolumeService(Service):
         `force` Forcefully reset option(s)
         """
 
-        return self.__volume_wrapper(volume.optreset, name, **data)
+        return run_method(volume.optreset, name, **data)
 
     @item_method
     @accepts(
         Str('name', required=True),
         Dict('opts', required=True, additional_attrs=True),
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def optset(self, job, name, data):
+    def optset(self, name, data):
         """
         Set gluster volume options.
 
@@ -310,7 +273,7 @@ class GlusterVolumeService(Service):
 
         data = data.pop("opts")
 
-        return self.__volume_wrapper(volume.optset, name, data)
+        return run_method(volume.optset, name, data)
 
     @item_method
     @accepts(
@@ -329,8 +292,7 @@ class GlusterVolumeService(Service):
             Bool('force'),
         )
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def addbrick(self, job, name, data):
+    def addbrick(self, name, data):
         """
         Add bricks to a gluster volume.
 
@@ -353,7 +315,7 @@ class GlusterVolumeService(Service):
             brick = peer + ':' + path
             bricks.append(brick)
 
-        return self.__volume_wrapper(
+        return run_method(
             volume.bricks.add, name, bricks, **data)
 
     @item_method
@@ -376,8 +338,7 @@ class GlusterVolumeService(Service):
             Int('replica'),
         )
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def removebrick(self, job, name, data):
+    def removebrick(self, name, data):
         """
         Perform a remove operation on the brick(s) in the gluster volume.
 
@@ -418,8 +379,7 @@ class GlusterVolumeService(Service):
             Bool('force'),
         )
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def replacebrick(self, job, name, data):
+    def replacebrick(self, name, data):
         """
         Commit the replacement of a brick.
 
@@ -445,8 +405,7 @@ class GlusterVolumeService(Service):
             Bool('enable', required=True),
         )
     )
-    @job(lock=GLUSTER_JOB_LOCK)
-    def quota(self, job, name, data):
+    def quota(self, name, data):
         """
         Enable/Disable the quota for a given gluster volume.
 
@@ -454,5 +413,5 @@ class GlusterVolumeService(Service):
         `enable` enable quota (True) or disable it (False)
         """
 
-        return self.__volume_wrapper(
+        return run_method(
             quota.enable if data['enable'] else quota.disable, name)
