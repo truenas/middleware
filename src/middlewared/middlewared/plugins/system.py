@@ -1299,99 +1299,86 @@ class SystemGeneralService(ConfigService):
 
         raise CallError('Unable to connect to any of the specified UI addresses:\n' + '\n'.join(errors))
 
-    def __get_urls(self, aliases, addrs, ipv6=False):
-
-        skip_internal = False
-        if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
-            skip_internal = True
-
-        urls = []
-        for addr in addrs:
-            ip, port = addr.split(':')
-
-            if ip == '*':
-                ips = [
-                    i["address"]
-                    for i in aliases
-                    if i['type'] == ('INET6' if ipv6 else 'INET')
-                ]
-            else:
-                ips = [ip]
-
-            for o in ips:
-                if skip_internal and o in (
-                    '169.254.10.1',
-                    '169.254.10.2',
-                    '169.254.10.20',
-                    '169.254.10.80',
-                ):
-                    continue
-
-                if ipv6 and '%' in o:
-                    o = o.split('%')[0]
-
-                if ipv6:
-                    url = f'http://[{o}]'
-                else:
-                    url = f'http://{o}'
-                if port != '80':
-                    url = f'{url}:{port}'
-                try:
-                    r = requests.head(url, timeout=10)
-                    assert r.status_code in (200, 302, 301)
-                    urls.append(url)
-                    continue
-                except Exception:
-                    pass
-
-                if ipv6:
-                    url = f'https://[{o}]'
-                else:
-                    url = f'https://{o}'
-                if port != '443':
-                    url = f'{url}:{port}'
-                try:
-                    r = requests.head(url, timeout=15, verify=False)
-                    assert r.status_code in (200, 302)
-                    urls.append(url)
-                    continue
-                except Exception:
-                    pass
-        return urls
-
     @private
-    def get_ui_urls(self):
-        addrsv4 = []
-        addrsv6 = []
-        aliases = []
-        for i in self.middleware.call_sync('interface.query'):
-            if not i['state'] or not i['state']['aliases']:
-                continue
-            aliases += list(filter(lambda x: x['type'].startswith('INET'), i['state']['aliases']))
+    async def get_ui_urls(self):
 
-        cp = subprocess.run(
-            'sockstat -46{} tcp |awk \'{{ if ($2 == "nginx" && ${} == "*:*") print ${}","${} }}\' | '
-            'sort | uniq'.format(
-                # Linux sockstat uses -R for protocol selection
-                # FreeBSD uses -P instead.
-                *(('R', '6', '4', '5') if osc.IS_LINUX else ('P', '7', '5', '6'))
-            ),
-            shell=True, capture_output=True, text=True,
-        )
-        for line in cp.stdout.strip('\n').split('\n'):
-            _type, addr = line.split(',')
+        config = await self.middleware.call('system.general.config')
+        kwargs = {'static': True} if (await self.middleware.call('failover.licensed')) else {}
 
-            if _type == 'tcp4':
-                addrsv4.append(addr)
-            else:
-                addrsv6.append(addr)
+        # http is always used
+        http_proto = 'http://'
+        http_port = config['ui_port']
+        http_default_port = config['ui_port'] == 80
+
+        # populate https data if necessary
+        https_proto = https_port = https_default_port = None
+        if config['ui_certificate']:
+            https_proto = 'https://'
+            https_port = config['ui_httpsport']
+            https_default_port = config['ui_httpsport'] == 443
+
+        nginx_ips = {}
+        for i in psutil.net_connections():
+            if i.laddr.port in (http_port, https_port):
+                nginx_ips.update({i.laddr.ip: i.family.name})
+
+        all_ip4 = '0.0.0.0' in nginx_ips
+        all_ip6 = '::' in nginx_ips
 
         urls = []
-        if addrsv4:
-            urls += self.__get_urls(aliases, addrsv4)
-        if addrsv6:
-            urls += self.__get_urls(aliases, addrsv6, ipv6=True)
-        return sorted(urls)
+        if all_ip4 or all_ip6:
+            for i in await self.middleware.call('interface.ip_in_use', kwargs):
+
+                # nginx could be listening to all IPv4 IPs but not all IPv6 IPs
+                # or vice versa
+                if i['type'] == 'INET' and all_ip4:
+                    http_url = f'{http_proto}{i["address"]}'
+                    if not http_default_port:
+                        http_url += f':{http_port}'
+                    urls.append(http_url)
+                    if https_proto is not None:
+                        https_url = f'{https_proto}{i["address"]}'
+                        if not https_default_port:
+                            https_url += f':{https_port}'
+                        urls.append(https_url)
+
+                elif i['type'] == 'INET6' and all_ip6:
+                    http_url = f'{http_proto}[{i["address"]}]'
+                    if not https_default_port:
+                        http_url += f':{https_port}'
+                    urls.append(http_url)
+                    if https_proto is not None:
+                        https_url = f'{https_proto}[{i["address"]}]'
+                        if not https_default_port:
+                            https_url += f':{https_port}'
+                        urls.append(https_url)
+
+        for k, v in nginx_ips.items():
+            # 0.0.0.0 and/or :: is handled above
+            if k not in ('0.0.0.0', '::'):
+                if v == 'AF_INET':
+                    http_url = f'{http_proto}{k}'
+                    if not http_default_port:
+                        http_url += f':{http_port}'
+                    urls.append(http_url)
+                    if https_proto is not None:
+                        https_url = f'{https_proto}{k}'
+                        if not https_default_port:
+                            https_url += f':{https_port}'
+                        urls.append(https_url)
+
+                elif v == 'AF_INET6':
+                    http_url = f'{http_proto}[{k}]'
+                    if not http_default_port:
+                        http_url += f':{http_port}'
+                    urls.append(http_url)
+                    if https_proto is not None:
+                        https_url = f'{https_proto}[{k}]'
+                        if not https_default_port:
+                            https_url += f':{https_port}'
+                        urls.append(https_url)
+
+        return sorted(set(urls))
 
     @private
     def set_language(self):
