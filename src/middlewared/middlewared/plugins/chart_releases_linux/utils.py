@@ -27,6 +27,14 @@ def get_namespace(release_name):
     return f'{CHART_NAMESPACE_PREFIX}{release_name}'
 
 
+def get_chart_release_from_namespace(namespace):
+    return namespace.split(CHART_NAMESPACE_PREFIX, 1)[-1]
+
+
+def is_ix_namespace(namespace):
+    return namespace.startswith(CHART_NAMESPACE_PREFIX)
+
+
 async def run(*args, **kwargs):
     kwargs['env'] = dict(os.environ, KUBECONFIG='/etc/rancher/k3s/k3s.yaml')
     return await _run(*args, **kwargs)
