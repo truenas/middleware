@@ -11,10 +11,14 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def refresh_events_state(self):
-        ChartReleaseService.CHART_RELEASES = {
-            app['name']: app for app in await self.middleware.call('chart.release.query')
-        }
+    async def refresh_events_state(self, chart_release_name=None):
+        filters = [['id', '=', chart_release_name]] if chart_release_name else []
+        for chart_release in await self.middleware.call('chart.release.query', filters):
+            ChartReleaseService.CHART_RELEASES[chart_release['name']] = chart_release
+
+    @private
+    async def remove_chart_release_from_events_state(self, chart_release_name):
+        ChartReleaseService.CHART_RELEASES.pop(chart_release_name, None)
 
     @private
     async def handle_k8s_event(self, k8s_event):
@@ -28,7 +32,7 @@ class ChartReleaseService(Service):
 
         if chart_release['status'] != self.CHART_RELEASES.get(name, {}).get('status'):
             # raise event
-            self.middleware.send_event('chart.release.events', 'CHANGED', id=name, fields=chart_release)
+            self.middleware.send_event('chart.release.query', 'CHANGED', id=name, fields=chart_release)
 
         ChartReleaseService.CHART_RELEASES[name] = chart_release
 
@@ -43,4 +47,3 @@ async def chart_release_event(middleware, event_type, args):
 
 async def setup(middleware):
     middleware.event_subscribe('kubernetes.events', chart_release_event)
-    middleware.event_register('chart.release.events', 'Chart Releases events')
