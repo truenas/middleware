@@ -24,12 +24,12 @@ class DockerImagesService(Service, DockerClientMixin):
         for image in filter(lambda i: not i['system_image'], images):
             for tag in image['repo_tags']:
                 try:
-                    await self.get_digest_of_image(tag, image)
+                    await self.check_update_for_image(tag, image)
                 except CallError as e:
                     self.logger.error(str(e))
 
     @private
-    async def get_digest_of_image(self, tag, image_details=None):
+    async def check_update_for_image(self, tag, image_details):
         # Following logic has been used from docker engine to make sure we follow the same rules/practices
         # for normalising the image name / tag
         i = tag.find('/')
@@ -46,22 +46,30 @@ class DockerImagesService(Service, DockerClientMixin):
 
         image_str, tag_str = image_tag.rsplit(':', 1)
 
-        try:
-            digest = await self._get_latest_digest(registry, image_str, tag_str)
-        except CallError as e:
-            raise CallError(f'Failed to retrieve digest: {e}')
+        if await self.compare_id_digests(image_details, registry, image_str, tag_str):
+            self.IMAGE_CACHE[tag] = True
+            await self.middleware.call(
+                'alert.oneshot_create', 'DockerImageUpdate', {'tag': tag, 'id': tag}
+            )
         else:
-            if image_details:
-                if digest != image_details['id']:
-                    self.IMAGE_CACHE[tag] = True
-                    await self.middleware.call(
-                        'alert.oneshot_create', 'DockerImageUpdate', {'tag': tag, 'id': tag}
-                    )
-                else:
-                    self.IMAGE_CACHE[tag] = False
-                    await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', tag)
+            self.IMAGE_CACHE[tag] = False
+            await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', tag)
 
-            return digest
+    @private
+    async def compare_id_digests(self, image_details, registry, image_str, tag_str):
+        # Returns true if an update is available otherwise returns false
+        repo_digest = None
+        if registry == DEFAULT_DOCKER_REGISTRY:
+            repo_digest = await self._get_repo_digest(registry, image_str, tag_str)
+        if not repo_digest:
+            try:
+                digest = await self._get_latest_digest(registry, image_str, tag_str)
+            except CallError as e:
+                raise CallError(f'Failed to retrieve digest: {e}')
+
+            return digest != image_details['id']
+        else:
+            return not any(digest.split('@', 1)[-1] == repo_digest for digest in image_details['repo_digests'])
 
     @private
     async def remove_image_from_cache(self, image):

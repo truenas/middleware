@@ -62,14 +62,14 @@ class DockerClientMixin:
 
         return response
 
-    def get_manifest_call_headers(self, registry, image, headers):
+    async def get_manifest_call_headers(self, registry, image, headers):
         if registry == DEFAULT_DOCKER_REGISTRY:
             headers['Authorization'] = f'Bearer {await self._get_token(image)}'
         return headers
 
     async def _get_latest_digest(self, registry, image, tag):
         response = await self._get_manifest_response(
-            registry, image, tag, self.get_manifest_call_headers(registry, image, {
+            registry, image, tag, await self.get_manifest_call_headers(registry, image, {
                 'Accept': 'application/vnd.docker.distribution.manifest.v2+json',
             }), 'get', True
         )
@@ -78,7 +78,7 @@ class DockerClientMixin:
 
     async def _get_repo_digest(self, registry, image, tag):
         response = await self._get_manifest_response(
-            registry, image, tag, self.get_manifest_call_headers(registry, image, {
+            registry, image, tag, await self.get_manifest_call_headers(registry, image, {
                 'Accept': 'application/vnd.docker.distribution.manifest.v2+json, '
                           'application/vnd.docker.distribution.manifest.list.v2+json, '
                           'application/vnd.docker.distribution.manifest.v1+json',
