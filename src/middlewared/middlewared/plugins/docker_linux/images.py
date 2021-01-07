@@ -38,6 +38,7 @@ class DockerImagesService(CRUDService):
                     'id': image['Id'],
                     'labels': image['Labels'],
                     'repo_tags': repo_tags,
+                    'repo_digests': image.get('RepoDigests') or [],
                     'size': image['Size'],
                     'created': datetime.fromtimestamp(int(image['Created'])),
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',

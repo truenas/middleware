@@ -175,7 +175,9 @@ class ChartReleaseService(Service):
 
             await self.chart_release_update_check(catalog_item, application)
 
-        asyncio.ensure_future(self.middleware.call('container.image.check_update'))
+        container_config = await self.middleware.call('container.config')
+        if container_config['enable_image_updates']:
+            asyncio.ensure_future(self.middleware.call('container.image.check_update'))
 
     @private
     async def chart_release_update_check(self, catalog_item, application):
