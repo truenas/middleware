@@ -290,7 +290,10 @@ class SystemDatasetService(ConfigService):
                 os.chmod(corepath, 0o775)
 
             await self.__nfsv4link(config)
-            await self.middleware.call('smb.configure')
+            await self.middleware.call('smb.setup_directories')
+            # The following should be backgrounded since they may be quite
+            # long-running.
+            await self.middleware.call('smb.configure', False)
             await self.middleware.call('dscache.initialize')
 
         return config
