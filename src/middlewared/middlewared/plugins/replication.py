@@ -458,24 +458,16 @@ class ReplicationService(CRUDService):
                                                "\"Also Include Naming Schema\" for push replication task"
                 )
 
-            if data["schedule"]:
-                if data["periodic_snapshot_tasks"]:
-                    verrors.add("schedule", "Push replication can't be bound to periodic snapshot task and have "
-                                            "schedule at the same time")
-            else:
-                if data["auto"] and not data["periodic_snapshot_tasks"]:
-                    verrors.add("auto", "Push replication that runs automatically must be either "
-                                        "bound to periodic snapshot task or have schedule")
+            if data["schedule"] is None and data["auto"] and not data["periodic_snapshot_tasks"]:
+                verrors.add("auto", "Push replication that runs automatically must be either "
+                                    "bound to a periodic snapshot task or have a schedule")
 
         if data["direction"] == "PULL":
-            if data["schedule"]:
-                pass
-            else:
-                if data["auto"]:
-                    verrors.add("auto", "Pull replication that runs automatically must have schedule")
+            if data["schedule"] is None and data["auto"]:
+                verrors.add("auto", "Pull replication that runs automatically must have a schedule")
 
             if data["periodic_snapshot_tasks"]:
-                verrors.add("periodic_snapshot_tasks", "Pull replication can't be bound to periodic snapshot task")
+                verrors.add("periodic_snapshot_tasks", "Pull replication can't be bound to a periodic snapshot task")
 
             if not data["naming_schema"]:
                 verrors.add("naming_schema", "Naming schema is required for pull replication")
