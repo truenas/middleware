@@ -11,6 +11,8 @@ class MailAlertService(AlertService):
         strict=True,
     )
 
+    html = True
+
     async def send(self, alerts, gone_alerts, new_alerts):
         email = self.attributes["email"]
         if not email:
@@ -19,11 +21,8 @@ class MailAlertService(AlertService):
             self.logger.trace("Email address for root not configured, not sending email")
             return
 
-        text = await self._format_alerts(alerts, gone_alerts, new_alerts)
-
         await self.middleware.call("mail.send", {
             "subject": "Alerts",
-            "text": text,
-            "html": text.replace("\n", "<br>"),
+            "html": await self._format_alerts(alerts, gone_alerts, new_alerts),
             "to": [email],
         })

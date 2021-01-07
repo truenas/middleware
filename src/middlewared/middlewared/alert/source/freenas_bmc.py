@@ -24,7 +24,6 @@ class FreeNASBMCAlertSource(ThreadedAlertSource):
     products = ("CORE",)
 
     def check_sync(self):
-
         data = self.middleware.call_sync('system.dmidecode_info')
         systemname = data['system-product-name']
         boardname = data['baseboard-product-name']
