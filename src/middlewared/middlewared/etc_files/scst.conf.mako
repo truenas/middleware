@@ -45,6 +45,9 @@
 
     # FIXME: SSD is not being reflected in the initiator, please look into it
     # FIXME: Authorized networks for initiators has not been implemented yet, please look for alternatives in SCST
+
+    target_hosts = middleware.call_sync('iscsi.host.get_target_hosts')
+    hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
 %>\
 % for handler in filter(lambda k: extents_io[k], extents_io):
 HANDLER ${handler} {
@@ -88,6 +91,11 @@ TARGET_DRIVER iscsi {
     mutual_chap = None
     chap_users = set()
     initiator_portal_access = set()
+    has_per_host_access = False
+    for host in target_hosts[target['id']]:
+        for iqn in hosts_iqns[host['id']]:
+            initiator_portal_access.add(f'{iqn}\#{host["ip"]}')
+            has_per_host_access = True
     for group in target['groups']:
         if group['authmethod'] != 'NONE' and authenticators[group['auth']]:
             auth_list = authenticators[group['auth']]
@@ -105,7 +113,10 @@ TARGET_DRIVER iscsi {
                 address = (f'[{addr["ip"]}]' if ':' in addr['ip'] else addr['ip'])
                 # FIXME: SCST does not seem to respect port values for portals, please look for alternatives
 
-            for initiator in ((initiators[group['initiator']]['initiators'] if group['initiator'] else []) or ['*']):
+            group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
+            if not has_per_host_access:
+                group_initiators = group_initiators or ['*']
+            for initiator in group_initiators:
                 initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
 %   if associated_targets:
