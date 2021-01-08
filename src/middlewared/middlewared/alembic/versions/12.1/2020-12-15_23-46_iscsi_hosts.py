@@ -1,7 +1,7 @@
 """iSCSI hosts
 
 Revision ID: 568b8cead63f
-Revises: 3d611f8cc676
+Revises: 920a1a135ef7
 Create Date: 2020-11-05 23:46:04.309962+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '568b8cead63f'
-down_revision = '3d611f8cc676'
+down_revision = '920a1a135ef7'
 branch_labels = None
 depends_on = None
 
