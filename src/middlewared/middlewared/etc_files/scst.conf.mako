@@ -91,6 +91,11 @@ TARGET_DRIVER iscsi {
     mutual_chap = None
     chap_users = set()
     initiator_portal_access = set()
+    has_per_host_access = False
+    for host in target_hosts[target['id']]:
+        for iqn in hosts_iqns[host['id']]:
+            initiator_portal_access.add(f'{iqn}\#{host["ip"]}')
+            has_per_host_access = True
     for group in target['groups']:
         if group['authmethod'] != 'NONE' and authenticators[group['auth']]:
             auth_list = authenticators[group['auth']]
@@ -108,7 +113,10 @@ TARGET_DRIVER iscsi {
                 address = (f'[{addr["ip"]}]' if ':' in addr['ip'] else addr['ip'])
                 # FIXME: SCST does not seem to respect port values for portals, please look for alternatives
 
-            for initiator in ((initiators[group['initiator']]['initiators'] if group['initiator'] else []) or ['*']):
+            group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
+            if not has_per_host_access:
+                group_initiators = group_initiators or ['*']
+            for initiator in group_initiators:
                 initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
 %   if associated_targets:
@@ -125,11 +133,6 @@ TARGET_DRIVER iscsi {
         GROUP security_group {
 %   for access_control in initiator_portal_access:
             INITIATOR ${access_control}
-%   endfor
-%   for host in target_hosts[target['id']]:
-%   for iqn in hosts_iqns[host['id']]:
-            INITIATOR ${iqn}\#${host['ip']}
-%   endfor
 %   endfor
 ${retrieve_luns(target['id'], ' ' * 4)}\
         }
