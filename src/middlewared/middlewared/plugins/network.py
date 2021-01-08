@@ -1804,7 +1804,11 @@ class InterfaceService(CRUDService):
         choices = await self.middleware.call('interface.choices', {
             'bridge_members': False,
             'lag_ports': False,
-            'exclude_types': [InterfaceType.BRIDGE.value, InterfaceType.LINK_AGGREGATION.value],
+            'exclude_types': [
+                InterfaceType.VLAN.value,
+                InterfaceType.BRIDGE.value,
+                InterfaceType.LINK_AGGREGATION.value,
+            ],
             'include': include,
         })
         return choices
