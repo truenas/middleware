@@ -43,7 +43,7 @@ class ChartReleaseService(Service):
         }
 
     @private
-    async def validate_values(self, item_version_details, new_values, update):
+    async def validate_values(self, item_version_details, new_values, update, release_data=None):
         for k in RESERVED_NAMES:
             new_values.pop(k[0], None)
 
@@ -61,14 +61,16 @@ class ChartReleaseService(Service):
                 for sub_variable in variable['schema']['subquestions']:
                     questions[sub_variable['variable']] = sub_variable
         for key in new_values:
-            await self.validate_question(verrors, new_values[key], questions[key], dict_obj.attrs[key], schema_name)
+            await self.validate_question(
+                verrors, new_values[key], questions[key], dict_obj.attrs[key], schema_name, release_data,
+            )
 
         verrors.check()
 
         return dict_obj
 
     @private
-    async def validate_question(self, verrors, value, question, var_attr, schema_name):
+    async def validate_question(self, verrors, value, question, var_attr, schema_name, release_data=None):
         schema = question['schema']
         schema_name = f'{schema_name}.{question["variable"]}'
 
@@ -77,7 +79,7 @@ class ChartReleaseService(Service):
             dict_attrs = {v['variable']: v for v in schema['attrs']}
             for k in filter(lambda k: k in dict_attrs, value):
                 await self.validate_question(
-                    verrors, value[k], dict_attrs[k], var_attr.attrs[k], f'{schema_name}.{k}',
+                    verrors, value[k], dict_attrs[k], var_attr.attrs[k], f'{schema_name}.{k}', release_data,
                 )
 
         elif schema['type'] == 'list' and value:
@@ -85,17 +87,23 @@ class ChartReleaseService(Service):
                 item_index, attr = get_list_item_from_value(item, var_attr)
                 if attr:
                     await self.validate_question(
-                        verrors, item, schema['items'][item_index], attr, f'{schema_name}.{index}'
+                        verrors, item, schema['items'][item_index], attr, f'{schema_name}.{index}', release_data,
                     )
 
         for validator_def in filter(lambda k: k in validation_mapping, schema.get('$ref', [])):
             await self.middleware.call(
                 f'chart.release.validate_{validation_mapping[validator_def]}', verrors, value, question, schema_name,
+                release_data,
             )
 
         return verrors
 
     @private
-    async def validate_port_available_on_node(self, verrors, value, question, schema_name):
+    async def validate_port_available_on_node(self, verrors, value, question, schema_name, release_data):
+        if release_data and value in [p['port'] for p in release_data['used_ports']]:
+            # TODO: This still leaves a case where user has multiple ports in a single app and mixes
+            #  them to the same value however in this case we will still get an error raised by k8s.
+            return
+
         if value in await self.middleware.call('chart.release.used_ports'):
             verrors.add(schema_name, 'Port is already in use.')

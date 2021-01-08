@@ -197,8 +197,10 @@ class ChartReleaseService(CRUDService):
         return host_path_volumes
 
     @private
-    async def normalise_and_validate_values(self, item_details, values, update, release_ds):
-        dict_obj = await self.middleware.call('chart.release.validate_values', item_details, values, update)
+    async def normalise_and_validate_values(self, item_details, values, update, release_ds, release_data=None):
+        dict_obj = await self.middleware.call(
+            'chart.release.validate_values', item_details, values, update, release_data,
+        )
         return await self.middleware.call(
             'chart.release.get_normalised_values', dict_obj, values, update, {
                 'release': {
@@ -386,7 +388,9 @@ class ChartReleaseService(CRUDService):
         # We use update=False because we want defaults to be populated again if they are not present in the payload
         # Why this is not dangerous is because the defaults will be added only if they are not present/configured for
         # the chart release.
-        config, context = await self.normalise_and_validate_values(version_details, config, False, release['dataset'])
+        config, context = await self.normalise_and_validate_values(
+            version_details, config, False, release['dataset'], release,
+        )
 
         job.set_progress(25, 'Initial Validation complete')
 
