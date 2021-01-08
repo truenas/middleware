@@ -32,3 +32,14 @@ class ChartReleaseService(Service):
         Available choices for NIC which can be added to a pod in a chart release.
         """
         return await self.middleware.call('interface.choices')
+
+    @accepts()
+    async def used_ports(self):
+        """
+        Returns ports in use by applications.
+        """
+        return sorted(list(set({
+            port['port']
+            for chart_release in await self.middleware.call('chart.release.query')
+            for port in chart_release['used_ports']
+        })))
