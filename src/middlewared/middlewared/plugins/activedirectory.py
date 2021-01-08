@@ -12,7 +12,7 @@ import threading
 import time
 
 from dns import resolver
-from middlewared.plugins.smb import SMBCmd, SMBPath
+from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
@@ -227,7 +227,6 @@ class ActiveDirectory_Conn(object):
         netlogon.netlogon(
             f"ncacn_ip_tcp:{dc}[schannel,seal]", LP_CTX, self.cred
         )
-        self.cred.new_client_authenticator()
         return True
 
     def get_site(self):
@@ -800,18 +799,52 @@ class ActiveDirectoryService(ConfigService):
     def validate_domain(self, data=None):
         """
         Methods used to determine AD domain health.
+        First we check whether our clock offset has grown to potentially production-impacting
+        levels, then we change whether another DC in our AD site is able to take over if the
+        DC winbind is currently connected to becomes inaccessible.
         """
         self.middleware.call_sync('activedirectory.check_clockskew', data)
+        self.conn_check(data)
 
     @private
     def conn_check(self, data=None, dc=None):
+        """
+        Temporarily connect to netlogon share of a DC that isn't the one that
+        winbind is currently communicating with in order to validate our credentials
+        and ability to failover in case of outage on winbind's current DC.
+
+        We only check a single DC because domains can have a significantly large number
+        of domain controllers in a given site.
+        """
         if data is None:
             data = self.middleware.call_sync("activedirectory.config")
         if dc is None:
             AD_DNS = ActiveDirectory_DNS(conf=data, logger=self.logger)
-            res = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 1)
-            if res:
+            res = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 2)
+            if len(res) != 2:
+                self.logger.warning("Less than two Domain Controllers are in our "
+                                    "Active Directory Site. This may result in production "
+                                    "outage if the currently connected DC is unreachable.")
+                return False
+
+            """
+            In some pathologically bad cases attempts to get the DC that winbind is currently
+            communicating with can time out. For this particular health check, the winbind
+            error should not be considered fatal.
+            """
+            wb_dcinfo = subprocess.run([SMBCmd.WBINFO.value, "--dc-info", data["domainname"]],
+                                       capture_output=True, check=False)
+            if wb_dcinfo.returncode == 0:
+                # output "FQDN (ip address)"
+                our_dc = wb_dcinfo.stdout.decode().split()[0]
+                for dc_to_check in res:
+                    thehost = dc_to_check['host']
+                    if thehost.casefold() != our_dc.casefold():
+                        dc = thehost
+            else:
+                self.logger.warning("Failed to get DC info from winbindd: %s", wb_dcinfo.stderr.decode())
                 dc = res[0]['host']
+
         try:
             ret = ActiveDirectory_Conn(conf=data, logger=self.logger).conn_check(dc)
         except NTSTATUSError as e:
@@ -861,7 +894,20 @@ class ActiveDirectoryService(ConfigService):
             await self.set_state(DSStatus['JOINING'])
             return True
 
-        await self.middleware.call('activedirectory.conn_check', config)
+        """
+        Verify winbindd netlogon connection.
+        """
+        netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
+        if netlogon_ping.returncode != 0:
+            wberr = netlogon_ping.stderr.decode().strip('\n')
+            err = errno.EFAULT
+            for wb in WBCErr:
+                if wb.err() in wberr:
+                    wberr = wberr.replace(wb.err(), wb.value[0])
+                    err = wb.value[1] if wb.value[1] else errno.EFAULT
+                    break
+
+            raise CallError(wberr, err)
 
         try:
             cached_state = await self.middleware.call('cache.get', 'DS_STATE')
