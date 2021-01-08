@@ -54,3 +54,9 @@ async def chart_release_event(middleware, event_type, args):
 
 async def setup(middleware):
     middleware.event_subscribe('kubernetes.events', chart_release_event)
+    if await middleware.call('service.started', 'kubernetes'):
+        try:
+            await middleware.call('chart.release.refresh_events_state')
+        except Exception:
+            # Let's not make this fatal for middleware boot
+            middleware.logger.error('Failed to refresh chart release events state', exc_info=True)
