@@ -8,7 +8,9 @@ from .schema import get_schema, get_list_item_from_value, update_conditional_def
 from .utils import RESERVED_NAMES
 
 
-validation_mapping = {}
+validation_mapping = {
+    'validations/nodePort': 'port_available_on_node',
+}
 
 
 class ChartReleaseService(Service):
@@ -92,3 +94,8 @@ class ChartReleaseService(Service):
             )
 
         return verrors
+
+    @private
+    async def validate_port_available_on_node(self, verrors, value, question, schema_name):
+        if value in await self.middleware.call('chart.release.used_ports'):
+            verrors.add(schema_name, 'Port is already in use.')
