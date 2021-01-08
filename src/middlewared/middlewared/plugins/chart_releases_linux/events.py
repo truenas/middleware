@@ -1,6 +1,12 @@
+import asyncio
+import collections
+
 from middlewared.service import private, Service
 
 from .utils import get_chart_release_from_namespace, is_ix_namespace
+
+
+LOCKS = collections.defaultdict(asyncio.Lock)
 
 
 class ChartReleaseService(Service):
@@ -23,18 +29,19 @@ class ChartReleaseService(Service):
     @private
     async def handle_k8s_event(self, k8s_event):
         name = get_chart_release_from_namespace(k8s_event['involved_object']['namespace'])
-        chart_release = await self.middleware.call('chart.release.query', [['id', '=', name]])
-        if not chart_release:
-            # It's possible the chart release got deleted
-            return
-        else:
-            chart_release = chart_release[0]
+        async with LOCKS[name]:
+            chart_release = await self.middleware.call('chart.release.query', [['id', '=', name]])
+            if not chart_release:
+                # It's possible the chart release got deleted
+                return
+            else:
+                chart_release = chart_release[0]
 
-        if chart_release['status'] != self.CHART_RELEASES.get(name, {}).get('status'):
-            # raise event
-            self.middleware.send_event('chart.release.query', 'CHANGED', id=name, fields=chart_release)
+            if chart_release['status'] != self.CHART_RELEASES.get(name, {}).get('status'):
+                # raise event
+                self.middleware.send_event('chart.release.query', 'CHANGED', id=name, fields=chart_release)
 
-        ChartReleaseService.CHART_RELEASES[name] = chart_release
+            ChartReleaseService.CHART_RELEASES[name] = chart_release
 
 
 async def chart_release_event(middleware, event_type, args):
