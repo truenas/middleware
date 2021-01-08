@@ -353,6 +353,7 @@ class ChartReleaseService(CRUDService):
 
             raise
         else:
+            await self.middleware.call('chart.release.refresh_events_state', data['release_name'])
             job.set_progress(100, 'Chart release created')
             return await self.get_instance(data['release_name'])
 
@@ -430,6 +431,8 @@ class ChartReleaseService(CRUDService):
         await self.middleware.call('chart.release.wait_for_pods_to_terminate', get_namespace(release_name))
 
         await self.post_remove_tasks(release_name, job)
+
+        await self.middleware.call('chart.release.remove_chart_release_from_events_state', release_name)
 
         job.set_progress(100, f'{release_name!r} chart release deleted')
         return True
