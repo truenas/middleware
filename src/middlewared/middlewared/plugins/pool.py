@@ -2249,6 +2249,7 @@ class PoolDatasetService(CRUDService):
             Bool('key_file', default=False),
             Bool('recursive', default=False),
             Bool('toggle_attachments', default=True),
+            List('services_restart', default=[]),
             List(
                 'datasets', items=[
                     Dict(
@@ -2304,6 +2305,13 @@ class PoolDatasetService(CRUDService):
             else:
                 if not bool(self.query_encrypted_roots_keys([['name', '=', id]])) and id not in keys_supplied:
                     verrors.add('unlock_options.datasets', f'Please specify key for {id}')
+
+        services_to_restart = set(options['services_restart'])
+        diff = services_to_restart - set(
+            self.middleware.call_sync('pool.dataset.unlock_services_restart_choices', id).keys()
+        )
+        if diff:
+            verrors.add('unlock_options.services_restart', f'{",".join(diff)} cannot be restarted on dataset unlock.')
 
         verrors.check()
 
@@ -2373,6 +2381,18 @@ class PoolDatasetService(CRUDService):
                     failed[name]['error'] = f'Failed to mount dataset: {e}'
                 else:
                     unlocked.append(name)
+
+        if self.middleware.call_sync('system.ready'):
+            services_to_restart.add('disk')
+            if '/' not in id:
+                services_to_restart.add('system_datasets')
+
+        self.middleware.call_sync('core.bulk', 'service.restart', [[i] for i in services_to_restart - {'vms'}])
+        if 'vms' in options['services_restart']:
+            for vm in await self.middleware.call('pool.dataset.unlock_restarted_vms', id):
+                if self.middleware.call_sync('vm.status', vm['id'])['state'] == 'RUNNING':
+                    await self.middleware.call('vm.stop', vm['id'])
+                await self.middleware.call('vm.start', vm['id'])
 
         if options['toggle_attachments']:
             self.middleware.call_sync(
