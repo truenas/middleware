@@ -14,6 +14,7 @@ class PoolDatasetService(Service):
         """
         Get a mapping of services identifiers and labels that can be restart on dataset unlock.
         """
+        await self.middleware.call('pool.dataset.get_instance', dataset)
         services = {
             'afp': 'AFP',
             'cifs': 'SMB',
@@ -29,7 +30,11 @@ class PoolDatasetService(Service):
             if service['enable'] or service['state'] == 'RUNNING':
                 result[k] = v
 
-        if osc.IS_FREEBSD:
+        if osc.IS_LINUX:
+            k8s_config = await self.middleware.call('kubernetes.config')
+            if k8s_config['pool'] and f'{dataset}/'.startswith(f'{k8s_config["dataset"]}/'):
+                result['kubernetes'] = 'Applications'
+        else:
             try:
                 activated_pool = await self.middleware.call('jail.get_activated_pool')
             except Exception:
