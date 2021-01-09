@@ -1785,9 +1785,7 @@ class PoolService(CRUDService):
                         'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
                     )
 
-                unlock_job = self.middleware.call_sync(
-                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False, 'recursive': True}
-                )
+                unlock_job = self.middleware.call_sync('pool.dataset.unlock', pool['name'], {'recursive': True})
                 unlock_job.wait_sync()
                 if unlock_job.error or unlock_job.result['failed']:
                     failed = ', '.join(unlock_job.result['failed']) if not unlock_job.error else ''
@@ -2248,7 +2246,6 @@ class PoolDatasetService(CRUDService):
             'unlock_options',
             Bool('key_file', default=False),
             Bool('recursive', default=False),
-            Bool('toggle_attachments', default=True),
             List('services_restart', default=[]),
             List(
                 'datasets', items=[
@@ -2394,12 +2391,6 @@ class PoolDatasetService(CRUDService):
                     await self.middleware.call('vm.stop', vm['id'])
                 await self.middleware.call('vm.start', vm['id'])
 
-        if options['toggle_attachments']:
-            self.middleware.call_sync(
-                'pool.dataset.restart_attachment_services_on_unlock',
-                self.__attachments_path(dataset), True, {'locked': False}
-            )
-
         if unlocked:
             def dataset_data(unlocked_dataset):
                 return {
@@ -2416,13 +2407,6 @@ class PoolDatasetService(CRUDService):
             )
 
         return {'unlocked': unlocked, 'failed': failed}
-
-    @private
-    async def restart_attachment_services_on_unlock(self, path, enabled, options=None):
-        async def restart(delegate):
-            await delegate.start((await delegate.query(path, enabled, options)))
-        coroutines = [restart(dg) for dg in self.attachment_delegates]
-        await asyncio.gather(*coroutines)
 
     @accepts(
         Str('id'),
