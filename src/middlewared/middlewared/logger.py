@@ -28,6 +28,7 @@ logging.getLogger('passlib.registry').setLevel(logging.INFO)
 if osc.IS_LINUX:
     # It logs each call made to the k8s api server when in debug mode, so we set the level to warn
     logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
+    logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
 
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
