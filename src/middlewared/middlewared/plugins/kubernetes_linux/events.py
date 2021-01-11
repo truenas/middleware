@@ -1,6 +1,8 @@
 import asyncio
 
 from aiohttp import client_exceptions
+from datetime import datetime
+from dateutil.tz import tzutc
 from kubernetes_asyncio import watch
 
 from middlewared.service import CRUDService, filterable, private
@@ -46,10 +48,13 @@ class KubernetesEventService(CRUDService):
         chart_namespace_prefix = await self.middleware.call('chart.release.get_chart_namespace_prefix')
         async with api_client() as (api, context):
             watch_obj = watch.Watch()
+            start_time = datetime.now(tz=tzutc())
             async with watch_obj.stream(context['core_api'].list_event_for_all_namespaces) as stream:
                 async for event in stream:
                     event_obj = event['object']
-                    if event['type'] != 'ADDED' or (
+                    check_time = event_obj.event_time or event_obj.last_timestamp or event_obj.first_timestamp
+
+                    if not check_time or start_time > check_time or event['type'] != 'ADDED' or (
                         event_obj.involved_object.uid != NODE_NAME and not event_obj.metadata.namespace.startswith(
                             chart_namespace_prefix
                         )
