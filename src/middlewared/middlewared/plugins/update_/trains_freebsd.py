@@ -103,7 +103,7 @@ class UpdateService(Service):
             redir_trains = {}
 
         conf = Configuration.Configuration()
-        conf.LoadTrainsConfig()
+        conf.LoadTrainsConfig(**self.middleware.call_sync('update.enterprise_kwargs'))
 
         trains = {}
         for name, descr in (conf.AvailableTrains() or {}).items():
@@ -158,6 +158,7 @@ class UpdateService(Service):
             diff_handler=handler.diff_call,
             handler=handler.call,
             train=train,
+            **self.middleware.call_sync('update.enterprise_kwargs'),
         )
 
         if not manifest:
@@ -184,3 +185,13 @@ class UpdateService(Service):
 
         data['version'] = manifest.Version()
         return data
+
+    @private
+    async def enterprise_kwargs(self):
+        if await self.middleware.call('system.product_type') == 'ENTERPRISE':
+            return {
+                'enterprise': True,
+                'enterprise_uuid': (await self.middleware.call('systemdataset.config'))['uuid_a'],
+            }
+
+        return {}
