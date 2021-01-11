@@ -11,7 +11,7 @@ import subprocess
 MOUNT_UMOUNT_LOCK = CTDBConfig.MOUNT_UMOUNT_LOCK.value
 CRE_OR_DEL_LOCK = CTDBConfig.CRE_OR_DEL_LOCK.value
 CTDB_VOL_NAME = CTDBConfig.CTDB_VOL_NAME.value
-CTDB_LOCAL_MOUNT = CTBConfig.CTDB_LOCAL_MOUNT.value
+CTDB_LOCAL_MOUNT = CTDBConfig.CTDB_LOCAL_MOUNT.value
 
 
 class CtdbSharedVolumeService(Service):
