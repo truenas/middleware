@@ -80,7 +80,7 @@ class CatalogService(Service):
         for key, filename, parser in (
             ('values', 'values.yaml', yaml.safe_load),
             ('schema', 'questions.yaml', yaml.safe_load),
-            ('app_readme', 'app-readme.md', markdown.markdown),
+            ('app_readme', 'app-readme.md', str.strip),
             ('detailed_readme', 'README.md', markdown.markdown),
         ):
             with open(os.path.join(version_path, filename), 'r') as f:
