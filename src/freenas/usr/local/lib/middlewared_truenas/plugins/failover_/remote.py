@@ -245,7 +245,8 @@ class FailoverService(Service):
     @private
     def get_remote_os_version(self):
 
-        return self.CLIENT.get_remote_os_version()
+        if self.CLIENT.remote_ip is not None:
+            return self.CLIENT.get_remote_os_version()
 
     @private
     def sendfile(self, token, src, dst):
