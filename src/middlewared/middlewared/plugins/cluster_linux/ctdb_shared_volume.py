@@ -11,6 +11,7 @@ import subprocess
 MOUNT_UMOUNT_LOCK = CTDBConfig.MOUNT_UMOUNT_LOCK.value
 CRE_OR_DEL_LOCK = CTDBConfig.CRE_OR_DEL_LOCK.value
 CTDB_VOL_NAME = CTDBConfig.CTDB_VOL_NAME.value
+CTDB_LOCAL_MOUNT = CTDBConfig.CTDB_LOCAL_MOUNT.value
 
 
 class CtdbSharedVolumeService(Service):
@@ -144,34 +145,34 @@ class CtdbSharedVolumeService(Service):
         Mount the ctdb shared volume locally.
         """
 
-        # if the volume hasn't been created or started then we obviously
-        # can't mount it
-        exists, started = self.shared_volume_exists_and_started()
-        if not exists or not started:
-            return
+        mounted = False
 
-        path = pathlib.Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
+        # if you try to mount without the service being started,
+        # the mount utility simply returns a msg to stderr stating
+        # "Mounting glusterfs on /cluster/ctdb_shared_vol failed" which is
+        # expected since the service isn't running
+        if not self.middleware.call_sync('service.started', 'glusterd'):
+            self.logger.warning('The "glusterd" service is not running. Not mounting.')
+            return mounted
+
         try:
             # make sure the dirs are there
-            path.mkdir(parents=True, exist_ok=True)
+            pathlib.Path(CTDB_LOCAL_MOUNT).mkdir(parents=True, exist_ok=True)
         except Exception as e:
             raise CallError(f'Failed creating directory with error: {e}')
 
-        # try to mount it
-        if not path.is_mount():
-            cmd = [
-                'mount', '-t', 'glusterfs',
-                'localhost:/' + path.name, path.as_posix(),
-            ]
-            cp = subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            if cp.returncode:
-                raise CallError(f'{cp.stderr.decode().strip()}')
+        cmd = ['mount', '-t', 'glusterfs', 'localhost:/' + CTDB_VOL_NAME, CTDB_LOCAL_MOUNT]
+        cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.returncode:
+            if b'is already mounted' in cp.stderr:
+                mounted = True
+            else:
+                errmsg = cp.stderr.decode().strip()
+                self.logger.error(f'Failed to mount {CTDB_LOCAL_MOUNT} with error: {errmsg}')
+        else:
+            mounted = True
 
-        return 'SUCCESS'
+        return mounted
 
     @accepts()
     @job(lock=MOUNT_UMOUNT_LOCK)
@@ -180,15 +181,17 @@ class CtdbSharedVolumeService(Service):
         Unmount the locally mounted ctdb shared volume.
         """
 
-        path = pathlib.Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
-        if path.is_mount():
-            cmd = ['umount', '-R', path.as_posix()]
-            cp = subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            if cp.returncode:
-                raise CallError(f'{cp.stderr.decode().strip()}')
+        umounted = False
 
-        return 'SUCCESS'
+        cmd = ['umount', '-R', CTDB_LOCAL_MOUNT]
+        cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.returncode:
+            if b'not mounted' in cp.stderr:
+                umounted = True
+            else:
+                errmsg = cp.stderr.decode().strip()
+                self.logger.error(f'Failed to umount {CTDB_LOCAL_MOUNT} with error: {errmsg}')
+        else:
+            umounted = True
+
+        return umounted
