@@ -23,10 +23,21 @@ class KubernetesEventService(CRUDService):
         options = options or {}
         label_selector = options.get('extra', {}).get('label_selector')
         field_selector = options.get('extra', {}).get('field_selector')
-        kwargs = {k: v for k, v in [('label_selector', label_selector), ('field_selector', field_selector)] if v}
+        namespace = options.get('extra', {}).get('namespace')
+        kwargs = {
+            k: v for k, v in [
+                ('label_selector', label_selector),
+                ('field_selector', field_selector),
+                ('namespace', namespace),
+            ] if v
+        }
         async with api_client() as (api, context):
+            if namespace:
+                method = context['core_api'].list_namespaced_event
+            else:
+                method = context['core_api'].list_event_for_all_namespaces
             return filter_list(
-                [d.to_dict() for d in (await context['core_api'].list_event_for_all_namespaces(**kwargs)).items],
+                [d.to_dict() for d in (await method(**kwargs)).items],
                 filters, options
             )
 
