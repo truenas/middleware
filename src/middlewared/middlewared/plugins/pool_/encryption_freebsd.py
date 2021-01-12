@@ -297,9 +297,7 @@ class PoolService(Service):
         if 'jails' in options['services_restart']:
             await self.middleware.call('core.bulk', 'jail.rc_action', [['RESTART']])
         if 'vms' in options['services_restart']:
-            for vm in await self.middleware.call('pool.dataset.unlock_restarted_vms', pool['name']):
-                await self.middleware.call('vm.stop', vm['id'])
-                await self.middleware.call('vm.start', vm['id'])
+            await self.middleware.call('pool.dataset.restart_vms_after_unlock', pool['name'])
 
         await self.middleware.call_hook(
             'pool.post_unlock', pool=pool, passphrase=options.get('passphrase'),

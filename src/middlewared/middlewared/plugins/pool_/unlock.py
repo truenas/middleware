@@ -66,3 +66,16 @@ class PoolDatasetService(Service):
                     break
 
         return result
+
+    @private
+    async def restart_vms_after_unlock(self, dataset_name):
+        for vm in await self.unlock_restarted_vms(dataset_name):
+            if await self.middleware.call('vm.status', vm['id'])['state'] == 'RUNNING':
+                stop_job = await self.middleware.call('vm.stop', vm['id'])
+                await stop_job.wait()
+                if stop_job.error:
+                    self.logger.error('Failed to stop %r VM: %s', vm['name'], stop_job.error)
+            try:
+                self.middleware.call_sync('vm.start', vm['id'])
+            except Exception:
+                self.logger.error('Failed to start %r VM after %r unlock', vm['name'], dataset_name, exc_info=True)
