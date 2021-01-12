@@ -6,6 +6,7 @@ from middlewared.common.attachment import FSAttachmentDelegate
 class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'kubernetes'
     title = 'Kubernetes'
+    service = 'kubernetes'
 
     async def query(self, path, enabled, options=None):
         results = []
