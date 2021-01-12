@@ -1,9 +1,10 @@
 import asyncio
 import collections
 
-from middlewared.service import private, Service
+from middlewared.schema import Str
+from middlewared.service import accepts, private, Service
 
-from .utils import get_chart_release_from_namespace, is_ix_namespace
+from .utils import get_chart_release_from_namespace, get_namespace, is_ix_namespace
 
 
 LOCKS = collections.defaultdict(asyncio.Lock)
@@ -15,6 +16,13 @@ class ChartReleaseService(Service):
 
     class Config:
         namespace = 'chart.release'
+
+    @accepts(Str('release_name'))
+    async def events(self, release_name):
+        """
+        Returns kubernetes events for `release_name` Chart Release.
+        """
+        return await self.middleware.call('k8s.event.query', [], {'extra': {'namespace': get_namespace(release_name)}})
 
     @private
     async def refresh_events_state(self, chart_release_name=None):
