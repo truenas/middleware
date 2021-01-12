@@ -210,10 +210,10 @@ class CtdbSharedVolumeService(Service):
         cmd = ['umount', '-R', CTDB_LOCAL_MOUNT]
         cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode:
-            if b'not mounted' or b'ctdb_shared_vol: not found' in cp.stderr:
+            errmsg = cp.stderr.decode().strip()
+            if 'not mounted' in errmsg or 'ctdb_shared_vol: not found' in errmsg:
                 umounted = True
             else:
-                errmsg = cp.stderr.decode().strip()
                 self.logger.error(f'Failed to umount {CTDB_LOCAL_MOUNT} with error: {errmsg}')
         else:
             umounted = True
