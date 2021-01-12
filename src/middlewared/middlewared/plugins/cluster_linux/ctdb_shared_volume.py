@@ -46,9 +46,11 @@ class CtdbSharedVolumeService(Service):
     @private
     def shared_volume_exists_and_started(self):
 
-        exists = started = False
+        exists = started = vol = False
+
         rv = {'volname': CTDB_VOL_NAME, 'group_subvols': True}
-        if vol := run_method(volume.status_detail, **rv):
+        vol = run_method(volume.status_detail, **rv)
+        if vol:
             if vol[0]['type'] != 'REPLICATE':
                 raise CallError(
                     f'A volume with the name "{CTDB_VOL_NAME}" already exists '
@@ -68,7 +70,7 @@ class CtdbSharedVolumeService(Service):
             else:
                 exists = started = True
 
-        return exists, started
+        return exists, started, vol
 
     @accepts()
     @job(lock=CRE_OR_DEL_LOCK)
@@ -79,7 +81,7 @@ class CtdbSharedVolumeService(Service):
         """
 
         # check if ctdb shared volume already exists and started
-        exists, started = self.shared_volume_exists_and_started()
+        exists, started, vol = self.shared_volume_exists_and_started()
         if exists and started:
             return
 
@@ -120,7 +122,7 @@ class CtdbSharedVolumeService(Service):
         """
 
         # nothing to delete if it doesn't exist
-        exists, started = self.shared_volume_exists_and_started()
+        exists, started, vol = self.shared_volume_exists_and_started()
         if not exists:
             return
 
@@ -155,6 +157,28 @@ class CtdbSharedVolumeService(Service):
             self.logger.warning('The "glusterd" service is not running. Not mounting.')
             return mounted
 
+        # there is a scenario where the ctdb shared volume can
+        # exist and be started but some (or all) peers that make up
+        # the volume are disconnected. In this situation, log an
+        # error and dont try to mount.
+        offline = []
+        exists, started, vol = self.shared_volume_exists_and_started()
+        if exists and started and vol:
+            for i in vol[0]['subvols'][0]['bricks']:
+                if not i['online']:
+                    offline.append({
+                        'peer': i['name'].split(':')[0],
+                        'uuid': i['uuid'],
+                    })
+
+        if offline:
+            for i in offline:
+                self.logger.error(
+                    'Peer "%s" with uuid "%s" is not connected', i['peer'], i['uuid']
+                )
+            self.logger.error('Not mounting ctdb shared volume')
+            return mounted
+
         try:
             # make sure the dirs are there
             pathlib.Path(CTDB_LOCAL_MOUNT).mkdir(parents=True, exist_ok=True)
@@ -186,7 +210,7 @@ class CtdbSharedVolumeService(Service):
         cmd = ['umount', '-R', CTDB_LOCAL_MOUNT]
         cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode:
-            if b'not mounted' in cp.stderr:
+            if b'not mounted' or b'ctdb_shared_vol: not found' in cp.stderr:
                 umounted = True
             else:
                 errmsg = cp.stderr.decode().strip()
