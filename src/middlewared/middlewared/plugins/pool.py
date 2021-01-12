@@ -2397,7 +2397,11 @@ class PoolDatasetService(CRUDService):
                 )
 
             try:
-                self.middleware.call_sync('core.bulk', 'service.restart', [[i] for i in services_to_restart - {'vms'}])
+                self.middleware.call_sync(
+                    'core.bulk', 'service.restart', [[i] for i in services_to_restart - {'vms', 'jails'}]
+                )
+                if 'jails' in options['services_restart']:
+                    self.middleware.call_sync('core.bulk', 'jail.rc_action', [['RESTART']])
                 if 'vms' in options['services_restart']:
                     self.middleware.call_sync('pool.dataset.restart_vms_after_unlock', id)
             except Exception:
