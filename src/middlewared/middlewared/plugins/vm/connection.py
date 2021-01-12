@@ -1,13 +1,8 @@
 import libvirt
 
 from middlewared.service import CallError
-from middlewared.utils import osc
 
-
-if osc.IS_LINUX:
-    LIBVIRT_URI = 'qemu+unix:///system'
-else:
-    LIBVIRT_URI = 'bhyve+unix:///system'
+from .utils import LIBVIRT_URI
 
 
 class LibvirtConnectionMixin:
