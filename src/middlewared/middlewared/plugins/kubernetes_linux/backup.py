@@ -82,7 +82,7 @@ class KubernetesService(Service):
         List existing chart releases backups.
         """
         if not self.middleware.call_sync('service.started', 'kubernetes'):
-            return []
+            return {}
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
         backup_base_dir = os.path.join('/mnt', k8s_config['dataset'], 'backups')
