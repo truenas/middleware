@@ -2396,19 +2396,7 @@ class PoolDatasetService(CRUDService):
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
 
-            try:
-                self.middleware.call_sync(
-                    'core.bulk', 'service.restart', [[i] for i in services_to_restart - {'vms', 'jails'}]
-                )
-                if 'jails' in options['services_restart']:
-                    self.middleware.call_sync('core.bulk', 'jail.rc_action', [['RESTART']])
-                if 'vms' in options['services_restart']:
-                    self.middleware.call_sync('pool.dataset.restart_vms_after_unlock', id)
-            except Exception:
-                self.logger.error(
-                    'Failed to restart %r services after %r dataset unlock',
-                    ', '.join(options['services_restart']), id, exc_info=True,
-                )
+            self.middleware.call_sync('pool.dataset.restart_services_after_unlock', id, services_to_restart)
 
             self.middleware.call_hook_sync(
                 'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],

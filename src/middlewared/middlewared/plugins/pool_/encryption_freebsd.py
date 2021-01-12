@@ -291,13 +291,10 @@ class PoolService(Service):
 
         await self.middleware.call('pool.sync_encrypted', oid)
 
-        await self.middleware.call('core.bulk', 'service.restart', [
-            [i] for i in set(options['services_restart']) | {'system_datasets', 'disk'} - {'jails', 'vms'}
-        ])
-        if 'jails' in options['services_restart']:
-            await self.middleware.call('core.bulk', 'jail.rc_action', [['RESTART']])
-        if 'vms' in options['services_restart']:
-            await self.middleware.call('pool.dataset.restart_vms_after_unlock', pool['name'])
+        await self.middleware.call(
+            'pool.dataset.restart_services_after_unlock', pool['name'],
+            set(options['services_restart']) | {'system_datasets', 'disk'}
+        )
 
         await self.middleware.call_hook(
             'pool.post_unlock', pool=pool, passphrase=options.get('passphrase'),
