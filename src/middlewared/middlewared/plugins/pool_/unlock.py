@@ -30,11 +30,15 @@ class PoolDatasetService(Service):
             if service['enable'] or service['state'] == 'RUNNING':
                 result[k] = v
 
-        if osc.IS_LINUX:
-            k8s_config = await self.middleware.call('kubernetes.config')
-            if k8s_config['pool'] and f'{dataset}/'.startswith(f'{k8s_config["dataset"]}/'):
-                result['kubernetes'] = 'Applications'
-        else:
+        check_services = {'kubernetes': 'Applications', **services}
+
+        result.update({
+            k: check_services[k] for k in map(
+                lambda a: a['service'], await self.middleware.call('pool.dataset.attachments', dataset)
+            ) if k in check_services
+        })
+
+        if osc.IS_FREEBSD:
             try:
                 activated_pool = await self.middleware.call('jail.get_activated_pool')
             except Exception:
