@@ -9,10 +9,9 @@ class GlusterdService(SimpleService):
     restartable = True
 
     async def after_start(self):
-        # glustereventsd needs to be started always
-        # since it's responsible for sending
-        # events to middlewared to be acted upon
-        await self.middleware.call('service.start', 'glustereventsd')
+        # the glustereventsd daemon is started via the
+        # ctdb.shared.volume.mount method. See comment there
+        # to know why we do this.
         await (
             await self.middleware.call('ctdb.shared.volume.mount')
         ).wait(raise_error=True)
@@ -22,13 +21,9 @@ class GlusterdService(SimpleService):
         await self.middleware.call('service.restart', 'glustereventsd')
 
     async def before_stop(self):
-        # ctdb_shared_vol is FUSE mounted locally so umount
-        # it before we stop the glusterd service
         await (
             await self.middleware.call('ctdb.shared.volume.umount')
         ).wait(raise_error=True)
 
     async def after_stop(self):
-        # no reason to keep this running if glusterd service
-        # is stopped
         await self.middleware.call('service.stop', 'glustereventsd')
