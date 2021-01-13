@@ -23,7 +23,7 @@ Javascript:
     ]
 
 
-NOTE: Supported Operators include `'=' | '!=' | '>' | '>=' | '<' | '<=' `
+#### Supported Operators
 | Operator       | Executes As     |
 | :------------- | :----------: |
 | '=' |  x == y |
