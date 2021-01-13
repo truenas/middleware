@@ -182,18 +182,24 @@ class CtdbSharedVolumeService(Service):
         # So, as an easy work-around we stop the glusterevevntsd service which prevents
         # any more events from being triggered while we mount/umount the volume.
         self.middleware.call_sync('service.stop', 'glustereventsd')
-        cmd = ['mount', '-t', 'glusterfs', 'localhost:/' + CTDB_VOL_NAME, CTDB_LOCAL_MOUNT]
-        cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if cp.returncode:
-            if b'is already mounted' in cp.stderr:
-                mounted = True
+        try:
+            cmd = ['mount', '-t', 'glusterfs', 'localhost:/' + CTDB_VOL_NAME, CTDB_LOCAL_MOUNT]
+            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if cp.returncode:
+                if b'is already mounted' in cp.stderr:
+                    mounted = True
+                else:
+                    errmsg = cp.stderr.decode().strip()
+                    self.logger.error(f'Failed to mount {CTDB_LOCAL_MOUNT} with error: {errmsg}')
             else:
-                errmsg = cp.stderr.decode().strip()
-                self.logger.error(f'Failed to mount {CTDB_LOCAL_MOUNT} with error: {errmsg}')
-        else:
-            mounted = True
+                mounted = True
+        except Exception:
+            self.logger.error(
+                'Unhandled exception when trying to mount ctdb shared volume', exc_info=True
+            )
+        finally:
+            self.middleware.call_sync('service.start', 'glustereventsd')
 
-        self.middleware.call_sync('service.start', 'glustereventsd')
         return mounted
 
     @accepts()
@@ -208,16 +214,22 @@ class CtdbSharedVolumeService(Service):
         # read the above comment in the `def mount` method on why we stop and
         # start this service before we umount the volume
         self.middleware.call_sync('service.stop', 'glustereventsd')
-        cmd = ['umount', '-R', CTDB_LOCAL_MOUNT]
-        cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if cp.returncode:
-            errmsg = cp.stderr.decode().strip()
-            if 'not mounted' in errmsg or 'ctdb_shared_vol: not found' in errmsg:
-                umounted = True
+        try:
+            cmd = ['umount', '-R', CTDB_LOCAL_MOUNT]
+            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if cp.returncode:
+                errmsg = cp.stderr.decode().strip()
+                if 'not mounted' in errmsg or 'ctdb_shared_vol: not found' in errmsg:
+                    umounted = True
+                else:
+                    self.logger.error(f'Failed to umount {CTDB_LOCAL_MOUNT} with error: {errmsg}')
             else:
-                self.logger.error(f'Failed to umount {CTDB_LOCAL_MOUNT} with error: {errmsg}')
-        else:
-            umounted = True
+                umounted = True
+        except Exception:
+            self.logger.error(
+                'Unhandled exception when trying to umount ctdb shared volume', exc_info=True
+            )
+        finally:
+            self.middleware.call_sync('service.start', 'glustereventsd')
 
-        self.middleware.call_sync('service.start', 'glustereventsd')
         return umounted
