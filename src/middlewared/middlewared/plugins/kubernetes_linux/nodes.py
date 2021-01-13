@@ -48,3 +48,8 @@ class KubernetesNodeService(ConfigService):
         async with api_client({'node': True}) as (api, context):
             for taint_key in taint_keys:
                 await nodes.remove_taint(context['core_api'], taint_key, context['node'])
+
+    @accepts()
+    async def delete_node(self):
+        async with api_client({'node': True}) as (api, context):
+            await context['core_api'].delete_node(NODE_NAME)
