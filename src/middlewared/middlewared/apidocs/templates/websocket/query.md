@@ -24,6 +24,23 @@ Javascript:
 
 
 NOTE: Supported Operators include `'=' | '!=' | '>' | '>=' | '<' | '<=' `
+| Operator       | Executes As     |
+| :------------- | :----------: |
+| '=' |  x == y |
+| '!=' |  x != y |
+| '>' |  x > y |
+| '>=' |  x >= y |
+| '<' |  x < y |
+| '<=' |  x <= y |
+| '~' |  re.match(y, x) |
+| 'in' |  x in y |
+| 'nin' |  x not in y |
+| 'rin' |  x is not None and y in x |
+| 'rnin' |  x is not None and y not in x |
+| '^' |  x is not None and x.startswith(y) |
+| '!^' |  x is not None and not x.startswith(y) |
+| '$' |  x is not None and x.endswith(y) |
+| '!$' |  x is not None and not x.endswith(y) |
 
 #### Multiple Filters
 
