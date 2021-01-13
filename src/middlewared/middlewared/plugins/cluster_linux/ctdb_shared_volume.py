@@ -46,10 +46,9 @@ class CtdbSharedVolumeService(Service):
     @private
     def shared_volume_exists_and_started(self):
 
-        exists = started = vol = False
+        exists = started = False
 
-        rv = {'volname': CTDB_VOL_NAME, 'group_subvols': True}
-        vol = run_method(volume.status_detail, **rv)
+        vol = run_method(volume.status_detail, {'volname': CTDB_VOL_NAME})
         if vol:
             if vol[0]['type'] != 'REPLICATE':
                 raise CallError(
@@ -70,7 +69,7 @@ class CtdbSharedVolumeService(Service):
             else:
                 exists = started = True
 
-        return exists, started, vol
+        return exists, started
 
     @accepts()
     @job(lock=CRE_OR_DEL_LOCK)
@@ -81,9 +80,7 @@ class CtdbSharedVolumeService(Service):
         """
 
         # check if ctdb shared volume already exists and started
-        exists, started, vol = self.shared_volume_exists_and_started()
-        if exists and started:
-            return
+        exists, started = self.shared_volume_exists_and_started()
 
         if not exists:
             # get the peers in the TSP
@@ -122,7 +119,7 @@ class CtdbSharedVolumeService(Service):
         """
 
         # nothing to delete if it doesn't exist
-        exists, started, vol = self.shared_volume_exists_and_started()
+        exists, started = self.shared_volume_exists_and_started()
         if not exists:
             return
 
@@ -157,26 +154,8 @@ class CtdbSharedVolumeService(Service):
             self.logger.warning('The "glusterd" service is not running. Not mounting.')
             return mounted
 
-        # there is a scenario where the ctdb shared volume can
-        # exist and be started but some (or all) peers that make up
-        # the volume are disconnected. In this situation, log an
-        # error and dont try to mount.
-        offline = []
-        exists, started, vol = self.shared_volume_exists_and_started()
-        if exists and started and vol:
-            for i in vol[0]['subvols'][0]['bricks']:
-                if not i['online']:
-                    offline.append({
-                        'peer': i['name'].split(':')[0],
-                        'uuid': i['uuid'],
-                    })
-
-        if offline:
-            for i in offline:
-                self.logger.error(
-                    'Peer "%s" with uuid "%s" is not connected', i['peer'], i['uuid']
-                )
-            self.logger.error('Not mounting ctdb shared volume')
+        exists, started = self.shared_volume_exists_and_started()
+        if not exists or not started:
             return mounted
 
         try:
@@ -185,6 +164,24 @@ class CtdbSharedVolumeService(Service):
         except Exception as e:
             raise CallError(f'Failed creating directory with error: {e}')
 
+        # we have to stop the glustereventsd service because when the volume is mounted
+        # it triggers an event which then gets processed by middlewared and calls this
+        # method again....
+        # Furthermore, there is a scenario which can cause a mount/umount loop. If the
+        # shared volume is in a self-heal situation because, say, 1 of the peers is down.
+        # when we `mount -t glusterfs`, 2 events get generated with identical timestamps.
+        # There is nothing we can do about the events and since the timestamps are in
+        # seconds (which means they appear at the "same" time), then you can get into a
+        # really bad loop. In the above scenario, when mounting a AFR_SUBVOLS_DOWN event
+        # is generated and an AFR_SUBVOL_UP event is generated and they both have the same
+        # timestamp. Well, according to testing, the SUBVOLS_DOWN event comes "first"
+        # while the SUBVOL_UP event comes "second". This means on SUBVOLS_DOWN event, we
+        # call the `ctdb.shared.volume.umount` method which generates another `SUBVOLS_DOWN`
+        # method and because we processed a `SUBVOL_UP` event, we run this method which
+        # generates another SUBVOL_UP event........This causes a mount/umount loop.
+        # So, as an easy work-around we stop the glusterevevntsd service which prevents
+        # any more events from being triggered while we mount/umount the volume.
+        self.middleware.call_sync('service.stop', 'glustereventsd')
         cmd = ['mount', '-t', 'glusterfs', 'localhost:/' + CTDB_VOL_NAME, CTDB_LOCAL_MOUNT]
         cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode:
@@ -196,6 +193,7 @@ class CtdbSharedVolumeService(Service):
         else:
             mounted = True
 
+        self.middleware.call_sync('service.start', 'glustereventsd')
         return mounted
 
     @accepts()
@@ -207,6 +205,9 @@ class CtdbSharedVolumeService(Service):
 
         umounted = False
 
+        # read the above comment in the `def mount` method on why we stop and
+        # start this service before we umount the volume
+        self.middleware.call_sync('service.stop', 'glustereventsd')
         cmd = ['umount', '-R', CTDB_LOCAL_MOUNT]
         cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode:
@@ -218,4 +219,5 @@ class CtdbSharedVolumeService(Service):
         else:
             umounted = True
 
+        self.middleware.call_sync('service.start', 'glustereventsd')
         return umounted
