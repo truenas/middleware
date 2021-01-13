@@ -1338,9 +1338,15 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             except Exception:
                 self.logger.warn('Failed to send event {} to {}'.format(name, session_id), exc_info=True)
 
+        async def wrap(handler):
+            try:
+                await handler(self, event_type, kwargs)
+            except Exception:
+                self.logger.error('Unhandled exception in event handler', exc_info=True)
+
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
-            asyncio.run_coroutine_threadsafe(handler(self, event_type, kwargs), loop=self.loop)
+            asyncio.run_coroutine_threadsafe(wrap(handler), loop=self.loop)
 
     def pdb(self):
         import pdb
