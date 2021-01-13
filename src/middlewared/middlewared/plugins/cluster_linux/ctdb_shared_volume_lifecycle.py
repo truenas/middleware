@@ -14,7 +14,7 @@ async def _event(middleware, event_type, args):
         )
         if glusterd['srv_enable']:
             asyncio.ensure_future(middleware.call('service.start', 'glusterd'))
-    elif args['id'] == 'shutdown' and glusterd['state'] == 'RUNNING':
+    elif args['id'] == 'shutdown' and await middleware.call('service.started', 'glusterd'):
         asyncio.ensure_future(middleware.call('service.stop', 'glusterd'))
 
 
