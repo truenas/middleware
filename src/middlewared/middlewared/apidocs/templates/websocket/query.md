@@ -22,7 +22,6 @@ Javascript:
       ["name","=","ada1"] 
     ]
 
-Command Line: `# midclt call disk.query '[["name", "=", "ada1"]]'`
 
 NOTE: Supported Operators include `'=' | '!=' | '>' | '>=' | '<' | '<=' `
 
@@ -37,7 +36,6 @@ Javascript:
       ["rotationrate",">",5400] // Note that the value should be the correct type
     ]
 
-Command Line: `# midclt call disk.query '[["type", "=", "HDD"],["rotationrate",">",5400]]'`
 
 #### Conjunctions
 
@@ -52,16 +50,12 @@ Javascript:
       ]
     ]
 
-Command Line: `# midclt call jail.query '[["OR", [["release","=","11.2-RELEASE"],["release","=","11.3-RELEASE"]]]]'`
-
 
 ### Query Options
 
 Query Options are objects that can further customize the results returned by a Query Method.
 
 Properties of a Query Option include `extend | extend_context | prefix | extra | order_by | select | count | get | limit | offset`
-
-NOTE: Keep options and filters separate when using `midclt` (eg. `midclt <method> '<filters>' '<options>'`)
 
 #### Count
 
@@ -73,7 +67,6 @@ Javascript:
       "count": true
     }
 
-Command Line: `# midclt call jail.query '[["release","=","11.2-RELEASE"]]' '{"count": true}'`
 
 #### Limit
 
@@ -85,7 +78,6 @@ Javascript:
       "limit": 5
     }
 
-Command Line: `# midclt call jail.query '[["release","=","11.2-RELEASE"]]' '{"limit": 5}'`
 
 #### Offset
 
@@ -97,7 +89,6 @@ Javascript:
       "offset": 1 // Omits the first item from the query result
     }
 
-Command Line: `# midclt call disk.query '[]' '{"offset": 1}'`
 
 #### Select
 
@@ -109,7 +100,6 @@ Javascript:
       "select": ["devname","size","rotationrate"]
     }
 
-Command Line: `# midclt call jail.query '[["release","=","11.2-RELEASE"]]' '{"select": ["devname","size","rotationrate"]}'`
 
 #### Order By
 
@@ -121,7 +111,6 @@ Javascript:
       "order_by": "size" // field name
     }
 
-Command Line: `# midclt call disk.query '[]' '{"order_by": ["size"]}'`
 
 
     
