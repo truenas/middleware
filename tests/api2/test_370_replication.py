@@ -133,7 +133,7 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
     (dict(naming_schema=["snap-%Y%m%d-%H%M-1m"]), "naming_schema"),
 
     # Auto with both periodic snapshot task and schedule
-    (dict(periodic_snapshot_tasks=["data-recursive"], schedule={"minute": "*/2"}, auto=True), "schedule"),
+    (dict(periodic_snapshot_tasks=["data-recursive"], schedule={"minute": "*/2"}, auto=True), None),
     # Auto with periodic snapshot task
     (dict(periodic_snapshot_tasks=["data-recursive"], auto=True), None),
     # Auto with schedule
