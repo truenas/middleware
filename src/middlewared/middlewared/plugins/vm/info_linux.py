@@ -8,6 +8,7 @@ from middlewared.service import accepts, Service
 from middlewared.utils import run
 
 from .info_base import VMInfoBase
+from .utils import get_virsh_command_args
 
 
 RE_AMD_NASID = re.compile(r'NASID:.*\((.*)\)')
@@ -72,7 +73,7 @@ class VMService(Service, VMInfoBase):
 
         for arch in filter(lambda a: a.tag == 'arch' and a.get('name'), index_xml.getchildren()):
             cp = subprocess.Popen(
-                ['virsh', 'cpu-models', arch.get('name') if arch.get('name') != 'x86' else 'x86_64'],
+                get_virsh_command_args() + ['cpu-models', arch.get('name') if arch.get('name') != 'x86' else 'x86_64'],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
             stdout = cp.communicate()[0]

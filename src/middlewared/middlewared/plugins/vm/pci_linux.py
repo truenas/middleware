@@ -6,6 +6,7 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
 from .pci_base import PCIInfoBase
+from .utils import get_virsh_command_args
 
 
 RE_IOMMU_ENABLED = re.compile(r'QEMU.*if IOMMU is enabled.*:\s*PASS.*')
@@ -46,13 +47,13 @@ class VMDeviceService(Service, PCIInfoBase):
         return info
 
     async def passthrough_device_choices(self):
-        cp = await run(['virsh', 'nodedev-list', 'pci'], check=False)
+        cp = await run(get_virsh_command_args() + ['nodedev-list', 'pci'], check=False)
         if cp.returncode:
             raise CallError(f'Unable to retrieve PCI devices: {cp.stderr.decode()}')
         pci_devices = [k.strip() for k in cp.stdout.decode().split('\n') if k.strip()]
         mapping = {}
         for pci in pci_devices:
-            cp = await run(['virsh', 'nodedev-dumpxml', pci], check=False)
+            cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', pci], check=False)
             if cp.returncode:
                 self.middleware.logger.debug('Failed to retrieve details for %r: %s', pci, cp.stderr.decode())
                 continue

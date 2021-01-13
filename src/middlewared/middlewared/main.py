@@ -572,7 +572,10 @@ class ShellWorkerThread(threading.Thread):
             if osc.IS_FREEBSD:
                 return ['/usr/bin/cu', '-l', f'nmdm{options["vm_id"]}B']
             else:
-                return ['/usr/bin/virsh', 'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}']
+                return [
+                    '/usr/bin/virsh', '-c', 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock',
+                    'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}'
+                ]
         elif options.get('chart_release'):
             return [
                 '/usr/local/bin/k3s', 'kubectl', 'exec', '-n', options['chart_release']['namespace'],

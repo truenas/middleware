@@ -1,5 +1,13 @@
 from lxml import etree
 
+from middlewared.utils import osc
+
+
+if osc.IS_LINUX:
+    LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
+else:
+    LIBVIRT_URI = 'bhyve+unix:///system'
+
 
 def create_element(*args, **kwargs):
     attribute_dict = kwargs.pop('attribute_dict', {})
@@ -9,3 +17,7 @@ def create_element(*args, **kwargs):
     for child in attribute_dict.get('children', []):
         element.append(child)
     return element
+
+
+def get_virsh_command_args():
+    return ['virsh', '-c', LIBVIRT_URI]

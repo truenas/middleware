@@ -321,6 +321,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'cni/net.d/multus.d/multus.kubeconfig', 'platform': 'Linux', 'checkpoint': None},
             {'type': 'mako', 'path': 'cni/net.d/kube-router.d/kubeconfig', 'platform': 'Linux', 'checkpoint': None},
         ],
+        'libvirt': [
+            {'type': 'py', 'path': 'libvirt', 'platform': 'Linux', 'checkpoint': None},
+        ],
     }
     LOCKS = defaultdict(asyncio.Lock)
 
