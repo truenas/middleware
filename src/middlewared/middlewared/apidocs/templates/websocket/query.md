@@ -24,7 +24,7 @@ Javascript:
 
 
 #### Supported Operators
-| Operator       | Executes As     |
+| Operator       | Description     |
 | :------------- | :----------: |
 | '=' |  x == y |
 | '!=' |  x != y |
