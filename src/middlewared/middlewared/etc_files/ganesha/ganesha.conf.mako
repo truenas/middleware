@@ -15,8 +15,7 @@
     # n times (n being the number of shares in db)
     peers = []
     if middleware.call_sync("service.started", "glusterd"):
-        peer_job = middleware.call_sync("gluster.peer.status")
-        peers = peer_job.wait_sync()
+        peers = middleware.call_sync("gluster.peer.status")
 
     bindip = middleware.call_sync("nfs.bindip", config)
     sec = middleware.call_sync("nfs.sec", config, kerberos_keytabs)
