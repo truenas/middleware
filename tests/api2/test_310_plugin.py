@@ -1,34 +1,40 @@
 
+import os
 import pytest
 import sys
-import os
+import time
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, ha, scale
-from functions import GET, POST, PUT, DELETE, wait_on_job
+from auto_config import pool_name, ha, scale, ip, user, password
+from functions import GET, POST, PUT, DELETE, wait_on_job, SSH_TEST
 
 reason = 'Skipping test for HA' if ha else 'Skipping test for Scale'
 pytestmark = pytest.mark.skipif(ha or scale, reason=reason)
 
 JOB_ID = None
 job_results = None
-is_freenas = GET("/system/is_freenas/", controller_a=ha).json()
-
-# default URL
 default_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
+community_repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
+custom_community_repos_url = 'https://github.com/ericbsd/iocage-plugin-index.git'
 
+if not scale:
+    PUT("/ssh/", {"rootlogin": True}, controller_a=ha)
+    POST("/service/start/", {"service": "ssh"}, controller_a=ha)
+    ssh_cmd = "uname -r | cut -d '-' -f1,2"
+    freebsd_release = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
+    community_index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{freebsd_release}/INDEX'
+    community_plugin_index = GET(community_index_url).json()
+    community_plugin_list = list(community_plugin_index.keys())
+    custom_community_index_url = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{freebsd_release}/INDEX'
+    custom_community_plugin_index = GET(custom_community_index_url).json()
+    custom_community_plugin_list = list(custom_community_plugin_index.keys())
+    PUT("/ssh/", {"rootlogin": False}, controller_a=ha)
+    POST("/service/stop/", {"service": "ssh"}, controller_a=ha)
+else:
+    community_plugin_list = []
+    custom_community_plugin_list = []
 
-repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
-index_url = 'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/12.1-RELEASE/INDEX'
-plugin_index = GET(index_url).json()
-plugin_list = list(plugin_index.keys())
-
-# custom URL
-repos_url2 = 'https://github.com/ericbsd/iocage-plugin-index.git'
-index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/12.1-RELEASE/INDEX'
-plugin_index2 = GET(index_url2).json()
-plugin_list2 = list(plugin_index2.keys())
 
 plugin_objects = [
     "id",
@@ -58,7 +64,7 @@ def test_01_get_nameserver1_and_nameserver2(request):
     nameserver2 = results.json()['nameserver2']
 
 
-def test_02_set_nameserver_for_ad(request):
+def test_02_set_nameserver_to_google_dns(request):
     depends(request, ["pool_04"], scope="session")
     global payload
     payload = {
@@ -69,6 +75,7 @@ def test_02_set_nameserver_for_ad(request):
     results = PUT("/network/configuration/", payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
+    time.sleep(1)
 
 
 def test_03_activate_jail_pool(request):
@@ -206,7 +213,7 @@ def test_19_get_list_of_available_plugins_without_cache(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
-        "plugin_repository": repos_url,
+        "plugin_repository": community_repos_url,
         "cache": False
     }
     results = POST('/plugin/available/', payload)
@@ -223,7 +230,7 @@ def test_20_verify_list_of_available_plugins_job_id_is_successfull(request):
     job_results = job_status['results']
 
 
-@pytest.mark.parametrize('plugin', plugin_list)
+@pytest.mark.parametrize('plugin', community_plugin_list)
 def test_21_verify_available_plugin_without_cache(request, plugin):
     depends(request, ["pool_04"], scope="session")
     assert isinstance(job_results['result'], list), str(job_results)
@@ -309,8 +316,8 @@ def test_31_get_list_of_available_plugins_job_id_on_custom_repos(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
-        "plugin_repository": repos_url2,
-        "branch": "12.1-RELEASE"
+        "plugin_repository": custom_community_repos_url,
+        "branch": freebsd_release
     }
     results = POST('/plugin/available/', payload)
     assert results.status_code == 200, results.text
@@ -326,7 +333,7 @@ def test_32_verify_list_of_available_plugins_job_id_is_successfull(request):
     job_results = job_status['results']
 
 
-@pytest.mark.parametrize('plugin', plugin_list2)
+@pytest.mark.parametrize('plugin', custom_community_plugin_list)
 def test_33_verify_available_plugin(request, plugin):
     depends(request, ["pool_04"], scope="session")
     assert isinstance(job_results['result'], list), str(job_results)
@@ -351,8 +358,8 @@ def test_35_add_transmission_plugins(request):
         'props': [
             'nat=1'
         ],
-        "plugin_repository": repos_url2,
-        "branch": "12.1-RELEASE"
+        "plugin_repository": custom_community_repos_url,
+        "branch": freebsd_release
     }
     results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
