@@ -1,4 +1,5 @@
 import asyncio
+import async_timeout
 import os
 import logging
 import re
@@ -92,9 +93,20 @@ class PoolService(Service):
                         await rsync_proc.wait()
                         if rsync_proc.returncode != 0:
                             raise Exception('rsync failed with exit code %r' % rsync_proc.returncode)
-                    except asyncio.CancelledError:
-                        rsync_proc.kill()
-                        raise
+                    finally:
+                        if rsync_proc.returncode is None:
+                            try:
+                                logger.warning("Terminating rsync")
+                                rsync_proc.terminate()
+                                try:
+                                    async with async_timeout.timeout(10):
+                                        await rsync_proc.wait()
+                                except asyncio.TimeoutError:
+                                    logger.warning("Timeout waiting for rsync to terminate, killing it")
+                                    rsync_proc.kill()
+                                    await asyncio.sleep(5)  # For children to die before unmount
+                            except ProcessLookupError:
+                                logger.warning("rsync process lookup error")
 
                     job.set_progress(100, description='Done', extra='')
         finally:
