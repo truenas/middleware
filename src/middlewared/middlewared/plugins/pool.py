@@ -2246,6 +2246,7 @@ class PoolDatasetService(CRUDService):
             'unlock_options',
             Bool('key_file', default=False),
             Bool('recursive', default=False),
+            Bool('toggle_attachments'),
             List('services_restart', default=[]),
             List(
                 'datasets', items=[
@@ -2304,11 +2305,21 @@ class PoolDatasetService(CRUDService):
                     verrors.add('unlock_options.datasets', f'Please specify key for {id}')
 
         services_to_restart = set(options['services_restart'])
-        diff = services_to_restart - set(
-            self.middleware.call_sync('pool.dataset.unlock_services_restart_choices', id).keys()
-        )
-        if diff:
-            verrors.add('unlock_options.services_restart', f'{",".join(diff)} cannot be restarted on dataset unlock.')
+        if 'toggle_attachments' in options and options['services_restart']:
+            verrors.add(
+                'unlock_options.toggle_attachments',
+                'This field should not be specified when "unlock_options.services_restart" is specified explicitly.'
+            )
+        elif options['services_restart']:
+            diff = services_to_restart - set(
+                self.middleware.call_sync('pool.dataset.unlock_services_restart_choices', id).keys()
+            )
+            if diff:
+                verrors.add('unlock_options.services_restart', f'{",".join(diff)} cannot be restarted on dataset unlock.')
+        elif options.get('toggle_attachments'):
+            services_to_restart = set(
+                self.middleware.call_sync('pool.dataset.unlock_services_restart_choices', id).keys()
+            )
 
         verrors.check()
 
