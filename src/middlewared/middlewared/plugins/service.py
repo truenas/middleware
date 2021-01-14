@@ -149,7 +149,10 @@ class ServiceService(CRUDService):
 
         await self.middleware.call_hook('service.pre_action', service, 'stop', options)
 
-        await service_object.before_stop()
+        try:
+            await service_object.before_stop()
+        except Exception:
+            self.logger.error("Failed before stop action for %r service", service)
         await service_object.stop()
         state = await service_object.get_state()
         if not state.running:
@@ -192,7 +195,10 @@ class ServiceService(CRUDService):
                 self.logger.error("Service %r not running after restart", service)
                 return False
         else:
-            await service_object.before_stop()
+            try:
+                await service_object.before_stop()
+            except Exception:
+                self.logger.error("Failed before stop action for %r service", service)
             await service_object.stop()
             state = await service_object.get_state()
             if not state.running:
