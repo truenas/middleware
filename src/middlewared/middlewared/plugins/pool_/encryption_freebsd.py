@@ -291,15 +291,10 @@ class PoolService(Service):
 
         await self.middleware.call('pool.sync_encrypted', oid)
 
-        await self.middleware.call('core.bulk', 'service.restart', [
-            [i] for i in set(options['services_restart']) | {'system_datasets', 'disk'} - {'jails', 'vms'}
-        ])
-        if 'jails' in options['services_restart']:
-            await self.middleware.call('core.bulk', 'jail.rc_action', [['RESTART']])
-        if 'vms' in options['services_restart']:
-            for vm in await self._unlock_restarted_vms(pool['name']):
-                await self.middleware.call('vm.stop', vm['id'])
-                await self.middleware.call('vm.start', vm['id'])
+        await self.middleware.call(
+            'pool.dataset.restart_services_after_unlock', pool['name'],
+            set(options['services_restart']) | {'system_datasets', 'disk'}
+        )
 
         await self.middleware.call_hook(
             'pool.post_unlock', pool=pool, passphrase=options.get('passphrase'),
@@ -314,51 +309,7 @@ class PoolService(Service):
         on volume unlock.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-        services = {
-            'afp': 'AFP',
-            'cifs': 'SMB',
-            'ftp': 'FTP',
-            'iscsitarget': 'iSCSI',
-            'nfs': 'NFS',
-            'webdav': 'WebDAV',
-        }
-
-        result = {}
-        for k, v in services.items():
-            service = await self.middleware.call('service.query', [['service', '=', k]], {'get': True})
-            if service['enable'] or service['state'] == 'RUNNING':
-                result[k] = v
-
-        try:
-            activated_pool = await self.middleware.call('jail.get_activated_pool')
-        except Exception:
-            activated_pool = None
-
-        # If iocage is not activated yet, there is a chance that this pool might have it activated there
-        if activated_pool is None:
-            result['jails'] = 'Jails/Plugins'
-
-        if await self._unlock_restarted_vms(pool['name']):
-            result['vms'] = 'Virtual Machines'
-
-        return result
-
-    async def _unlock_restarted_vms(self, pool_name):
-        result = []
-        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
-            for device in vm['devices']:
-                if device['dtype'] not in ('DISK', 'RAW'):
-                    continue
-
-                path = device['attributes'].get('path')
-                if not path:
-                    continue
-
-                if path.startswith(f'/dev/zvol/{pool_name}/') or path.startswith(f'/mnt/{pool_name}/'):
-                    result.append(vm)
-                    break
-
-        return result
+        return await self.middleware.call('pool.dataset.unlock_services_restart_choices', pool['name'])
 
     @private
     async def pool_lock_pre_check(self, pool, passphrase):

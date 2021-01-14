@@ -630,11 +630,14 @@ class FailoverService(ConfigService):
         # dependent on the datasets to be restarted after the
         # datasets are unlocked.
         zfs_keys = (await self.encryption_keys())['zfs']
+        services_to_restart = []
+        if data['restart_services']:
+            services_to_restart = await self.middleware.call('pool.dataset.unlock_services_restart_choices', pool_name)
         unlock_job = await self.middleware.call(
             'pool.dataset.unlock', pool_name, {
                 'recursive': True,
                 'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()],
-                'toggle_attachments': data['restart_services'],
+                'services_restart': list(services_to_restart),
             }
         )
         return await job.wrap(unlock_job)

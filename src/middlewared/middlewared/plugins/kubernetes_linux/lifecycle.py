@@ -83,7 +83,9 @@ class KubernetesService(Service):
             d['id'] for d in filter(
                 lambda d: d['mountpoint'], await self.middleware.call('zfs.dataset.locked_datasets')
             )
-            if d['mountpoint'].startswith(f'{config["dataset"]}/') or d['mountpoint'] == config['dataset']
+            if d['mountpoint'].startswith(f'{config["dataset"]}/') or d['mountpoint'] in (
+                f'/mnt/{k}' for k in (config['dataset'], config['pool'])
+            )
         ]
         if locked_datasets:
             raise CallError(

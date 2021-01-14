@@ -1785,9 +1785,7 @@ class PoolService(CRUDService):
                         'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
                     )
 
-                unlock_job = self.middleware.call_sync(
-                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False, 'recursive': True}
-                )
+                unlock_job = self.middleware.call_sync('pool.dataset.unlock', pool['name'], {'recursive': True})
                 unlock_job.wait_sync()
                 if unlock_job.error or unlock_job.result['failed']:
                     failed = ', '.join(unlock_job.result['failed']) if not unlock_job.error else ''
@@ -2248,7 +2246,7 @@ class PoolDatasetService(CRUDService):
             'unlock_options',
             Bool('key_file', default=False),
             Bool('recursive', default=False),
-            Bool('toggle_attachments', default=True),
+            List('services_restart', default=[]),
             List(
                 'datasets', items=[
                     Dict(
@@ -2304,6 +2302,13 @@ class PoolDatasetService(CRUDService):
             else:
                 if not bool(self.query_encrypted_roots_keys([['name', '=', id]])) and id not in keys_supplied:
                     verrors.add('unlock_options.datasets', f'Please specify key for {id}')
+
+        services_to_restart = set(options['services_restart'])
+        diff = services_to_restart - set(
+            self.middleware.call_sync('pool.dataset.unlock_services_restart_choices', id).keys()
+        )
+        if diff:
+            verrors.add('unlock_options.services_restart', f'{",".join(diff)} cannot be restarted on dataset unlock.')
 
         verrors.check()
 
@@ -2374,11 +2379,10 @@ class PoolDatasetService(CRUDService):
                 else:
                     unlocked.append(name)
 
-        if options['toggle_attachments']:
-            self.middleware.call_sync(
-                'pool.dataset.restart_attachment_services_on_unlock',
-                self.__attachments_path(dataset), True, {'locked': False}
-            )
+        if self.middleware.call_sync('system.ready'):
+            services_to_restart.add('disk')
+            if '/' not in id:
+                services_to_restart.add('system_datasets')
 
         if unlocked:
             def dataset_data(unlocked_dataset):
@@ -2391,18 +2395,14 @@ class PoolDatasetService(CRUDService):
                 self.middleware.call_sync(
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
+
+            self.middleware.call_sync('pool.dataset.restart_services_after_unlock', id, services_to_restart)
+
             self.middleware.call_hook_sync(
                 'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
             )
 
         return {'unlocked': unlocked, 'failed': failed}
-
-    @private
-    async def restart_attachment_services_on_unlock(self, path, enabled, options=None):
-        async def restart(delegate):
-            await delegate.start((await delegate.query(path, enabled, options)))
-        coroutines = [restart(dg) for dg in self.attachment_delegates]
-        await asyncio.gather(*coroutines)
 
     @accepts(
         Str('id'),

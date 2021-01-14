@@ -6,6 +6,7 @@ from middlewared.common.attachment import FSAttachmentDelegate
 class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'kubernetes'
     title = 'Kubernetes'
+    service = 'kubernetes'
 
     async def query(self, path, enabled, options=None):
         results = []
@@ -15,7 +16,9 @@ class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
             return results
 
         query_dataset = os.path.relpath(path, '/mnt')
-        if query_dataset == k8s_config['dataset'] or query_dataset.startswith(f'{k8s_config["dataset"]}/'):
+        if query_dataset in (k8s_config['dataset'], k8s_config['pool']) or query_dataset.startswith(
+            f'{k8s_config["dataset"]}/'
+        ):
             results.append({'id': k8s_config['pool']})
 
         return results
