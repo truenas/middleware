@@ -279,7 +279,7 @@ def test_31_get_list_of_available_plugins_job_id_on_custom_repos():
     global JOB_ID
     payload = {
         "plugin_repository": repos_url2,
-        "branch": "12.0-RELEASE"
+        "branch": freebsd_release
     }
     results = POST('/plugin/available/', payload)
     assert results.status_code == 200, results.text
