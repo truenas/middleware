@@ -1,27 +1,29 @@
 
+import os
 import pytest
 import sys
-import os
+import time
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name
-from functions import GET, POST, PUT, DELETE, wait_on_job
+from auto_config import pool_name, ip, user, password
+from functions import GET, POST, PUT, DELETE, wait_on_job, SSH_TEST
 
 JOB_ID = None
 job_results = None
 is_freenas = GET("/system/is_freenas/").json()
-
+ssh_cmd = "uname -r | cut -d '-' -f1,2"
+freebsd_release = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
 # default URL
 test_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 
 repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
-index_url = 'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/12.0-RELEASE/INDEX'
+index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{freebsd_release}/INDEX'
 plugin_index = GET(index_url).json()
 plugin_list = list(plugin_index.keys())
 
 # custom URL
 repos_url2 = 'https://github.com/ericbsd/iocage-plugin-index.git'
-index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/12.0-RELEASE/INDEX'
+index_url2 = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{freebsd_release}/INDEX'
 plugin_index2 = GET(index_url2).json()
 plugin_list2 = list(plugin_index2.keys())
 
@@ -53,7 +55,7 @@ def test_01_get_nameserver1_and_nameserver2():
     nameserver2 = results.json()['nameserver2']
 
 
-def test_02_set_nameserver_for_ad(request):
+def test_02_set_nameserver_to_google_dns(request):
     global payload
     payload = {
         "nameserver1": '8.8.8.8',
@@ -63,6 +65,7 @@ def test_02_set_nameserver_for_ad(request):
     results = PUT("/network/configuration/", payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
+    time.sleep(1)
 
 
 def test_03_activate_jail_pool():
