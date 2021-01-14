@@ -133,7 +133,7 @@ class KubernetesService(Service):
         await self.validate_k8s_fs_setup()
         await self.middleware.call('service.start', 'docker')
         await self.middleware.call('container.image.load_default_images')
-        asyncio.ensure_future(self.middleware.call('service.start', 'kubernetes'))
+        await self.middleware.call('service.start', 'kubernetes')
 
     @private
     async def setup_pool(self):
