@@ -60,8 +60,12 @@ zfs_func()
 	zpool status -v
 	section_footer
 
-	section_header "zpool history -i"
-	zpool history -i
+	section_header "zpool history"
+	zpool history
+	section_footer
+
+	section_header "zpool history -i | tail -n 1000"
+	zpool history -i | tail -n 1000
 	section_footer
 
 	section_header "zpool get all"
