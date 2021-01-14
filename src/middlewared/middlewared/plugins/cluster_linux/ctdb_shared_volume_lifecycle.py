@@ -9,7 +9,7 @@ async def _event(middleware, event_type, args):
         # FUSE mounted at boot time (if necessary)
         glusterd = await middleware.call(
             'datastore.query', 'services.services',
-            [('service', '=', 'glusterd')],
+            [('srv_service', '=', 'glusterd')],
             {'get': True}
         )
         if glusterd['srv_enable']:

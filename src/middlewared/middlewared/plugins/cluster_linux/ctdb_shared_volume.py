@@ -48,7 +48,7 @@ class CtdbSharedVolumeService(Service):
 
         exists = started = False
 
-        vol = run_method(volume.status_detail, {'volname': CTDB_VOL_NAME})
+        vol = run_method(volume.status_detail, volname=CTDB_VOL_NAME)
         if vol:
             if vol[0]['type'] != 'REPLICATE':
                 raise CallError(
