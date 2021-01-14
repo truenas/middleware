@@ -47,6 +47,8 @@ LICENSE_FILE = '/data/license'
 RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
 RE_ECC_MEMORY = re.compile(r'Error Correction Type:\s*(.*ECC.*)')
 
+DEBUG_MAX_SIZE = 30
+
 
 class SystemAdvancedModel(sa.Model):
     __tablename__ = 'system_advanced'
@@ -750,8 +752,8 @@ class SystemService(Service):
                 standby_debug = io.BytesIO()
                 with requests.get(url, stream=True) as r:
                     for i in r.iter_content(chunk_size=1048576):
-                        if standby_debug.tell() > 20971520:
-                            raise CallError(f'Standby debug file is bigger than 20MiB.')
+                        if standby_debug.tell() > DEBUG_MAX_SIZE * 1048576:
+                            raise CallError(f'Standby debug file is bigger than {DEBUG_MAX_SIZE}MiB.')
                         standby_debug.write(i)
 
         debug_job.wait_sync()
@@ -764,8 +766,8 @@ class SystemService(Service):
             # Debug file cannot be big on HA because we put both debugs in memory
             # so they can be downloaded at once.
             try:
-                if os.stat(debug_job.result).st_size > 20971520:
-                    raise CallError(f'Debug file is bigger than 20MiB.')
+                if os.stat(debug_job.result).st_size > DEBUG_MAX_SIZE * 1048576:
+                    raise CallError(f'Debug file is bigger than {DEBUG_MAX_SIZE}MiB.')
             except FileNotFoundError:
                 raise CallError('Debug file was not found, try again.')
 

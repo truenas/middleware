@@ -7,6 +7,7 @@ import subprocess
 import time
 
 from middlewared.pipe import Pipes
+from middlewared.plugins.system import DEBUG_MAX_SIZE
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -274,7 +275,7 @@ class SupportService(ConfigService):
                         if r == b'':
                             break
                         rbytes += len(r)
-                        if rbytes > 20971520:
+                        if rbytes > DEBUG_MAX_SIZE * 1048576:
                             raise CallError('Debug too large to attach', errno.EFBIG)
                         tjob.pipes.input.w.write(r)
                 finally:
