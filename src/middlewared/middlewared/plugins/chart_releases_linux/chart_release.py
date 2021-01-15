@@ -33,7 +33,7 @@ class ChartReleaseService(CRUDService):
         `options.extra.history` is a boolean when set will retrieve all chart version upgrades for a chart release.
         """
         if not await self.middleware.call('service.started', 'kubernetes'):
-            return []
+            return filter_list([], filters, options)
 
         update_catalog_config = {}
         catalogs = await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
