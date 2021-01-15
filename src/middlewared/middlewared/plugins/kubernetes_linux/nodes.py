@@ -2,7 +2,7 @@ from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 
 from .k8s import api_client, nodes
-from .utils import NODE_NAME
+from .utils import NODE_NAME, KUBERNETES_WORKER_NODE_PASSWORD
 
 
 class KubernetesNodeService(ConfigService):
@@ -53,3 +53,7 @@ class KubernetesNodeService(ConfigService):
     async def delete_node(self):
         async with api_client({'node': True}) as (api, context):
             await context['core_api'].delete_node(NODE_NAME)
+
+    @accepts()
+    async def worker_node_password(self):
+        return KUBERNETES_WORKER_NODE_PASSWORD
