@@ -190,3 +190,16 @@ class ChartReleaseService(Service):
             await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
         else:
             await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', f'"{application["id"]}"')
+
+    @accepts(Str('release_name'))
+    @job(lock=lambda args: f'pull_container_images{args[0]}')
+    async def pull_container_images(self, job, release_name):
+        images = await self.middleware.call('chart.release.retrieve_container_images', release_name)
+        bulk_job = await self.middleware.call(
+            'core.bulk', 'container.image.pull', [
+                [{'from_image': f'{image["registry"]}/{image["image"]}', 'tag': image['tag']}]
+                for image in images.values() if image['update_available']
+            ]
+        )
+        await bulk_job.wait()
+        return bulk_job.result

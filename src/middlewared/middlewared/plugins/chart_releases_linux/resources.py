@@ -59,6 +59,6 @@ class ChartReleaseService(Service):
         for image in await self.middleware.call('container.image.query'):
             for tag in images_tags:
                 if tag in image['repo_tags']:
-                    images[tag] = {**images, **(await self.middleware.call('container.image.parse_image_tag', tag))}
+                    images[tag] = {**image, **(await self.middleware.call('container.image.parse_image_tag', tag))}
 
         return images

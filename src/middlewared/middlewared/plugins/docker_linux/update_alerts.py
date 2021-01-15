@@ -49,6 +49,7 @@ class DockerImagesService(Service, DockerClientMixin):
             'image': image_str,
             'tag': tag_str,
             'registry': registry,
+            'complete_tag': f'{registry}/{image_str}:{tag_str}',
         }
 
     @private
