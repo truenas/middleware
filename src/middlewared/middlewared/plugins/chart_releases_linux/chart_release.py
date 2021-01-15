@@ -37,6 +37,12 @@ class ChartReleaseService(CRUDService):
 
         update_catalog_config = {}
         catalogs = await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
+        container_images = {}
+        for image in await self.middleware.call('container.image.query'):
+            for tag in image['repo_tags']:
+                if not container_images.get(tag):
+                    container_images[tag] = image['update_available']
+
         for catalog in catalogs:
             update_catalog_config[catalog['label']] = {}
             for train in catalog['trains']:
@@ -120,21 +126,22 @@ class ChartReleaseService(CRUDService):
                 'pod_status': pods_status,
             })
 
+            release_resources = {
+                'storage_class': storage_classes[get_storage_class_name(name)],
+                'host_path_volumes': await self.host_path_volumes(resources[Resources.POD.value][name]),
+                **{r.value: resources[r.value][name] for r in Resources},
+            }
+            release_resources = {
+                **release_resources,
+                'container_images': list(set(
+                    c['image']
+                    for workload_type in ('deployments', 'statefulsets')
+                    for workload in release_resources[workload_type]
+                    for c in workload['spec']['template']['spec']['containers']
+                ))
+            }
             if get_resources:
-                release_resources = {
-                    'storage_class': storage_classes[get_storage_class_name(name)],
-                    'host_path_volumes': await self.host_path_volumes(resources[Resources.POD.value][name]),
-                    **{r.value: resources[r.value][name] for r in Resources},
-                }
-                release_data['resources'] = {
-                    **release_resources,
-                    'container_images': list(set(
-                        c['image']
-                        for workload_type in ('deployments', 'statefulsets')
-                        for workload in release_resources[workload_type]
-                        for c in workload['spec']['template']['spec']['containers']
-                    ))
-                }
+                release_data['resources'] = release_resources
 
             if get_history:
                 release_data['history'] = release['history']
@@ -145,6 +152,9 @@ class ChartReleaseService(CRUDService):
             ).get(release_data['chart_metadata']['name'], parse_version(release_data['chart_metadata']['version']))
 
             release_data['update_available'] = latest_version > current_version
+            release_data['container_images_update_available'] = any(
+                container_images.get(tag) for tag in release_data['resources']['container_images']
+            )
             release_data['chart_metadata']['latest_chart_version'] = str(latest_version)
             release_data['portals'] = await self.middleware.call(
                 'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_ip
