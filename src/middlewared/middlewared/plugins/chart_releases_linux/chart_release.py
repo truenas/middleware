@@ -121,11 +121,21 @@ class ChartReleaseService(CRUDService):
             })
 
             if get_resources:
-                release_data['resources'] = {
+                release_resources = {
                     'storage_class': storage_classes[get_storage_class_name(name)],
                     'host_path_volumes': await self.host_path_volumes(resources[Resources.POD.value][name]),
                     **{r.value: resources[r.value][name] for r in Resources},
                 }
+                release_data['resources'] = {
+                    **release_resources,
+                    'container_images': list(set(
+                        c['image']
+                        for workload_type in ('deployments', 'statefulsets')
+                        for workload in release_resources[workload_type]
+                        for c in workload['spec']['template']['spec']['containers']
+                    ))
+                }
+
             if get_history:
                 release_data['history'] = release['history']
 
@@ -141,6 +151,7 @@ class ChartReleaseService(CRUDService):
             )
             if 'icon' not in release_data['chart_metadata']:
                 release_data['chart_metadata']['icon'] = None
+
 
             releases.append(release_data)
 
