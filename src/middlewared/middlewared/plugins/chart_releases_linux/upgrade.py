@@ -7,7 +7,7 @@ import yaml
 
 from pkg_resources import parse_version
 
-from middlewared.schema import Dict, Str
+from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
@@ -23,6 +23,7 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'upgrade_options',
+            Bool('update_container_images', default=True),
             Dict('values', additional_attrs=True),
             Str('item_version', default='latest'),
         )
@@ -145,6 +146,11 @@ class ChartReleaseService(Service):
 
         chart_release = await self.middleware.call('chart.release.get_instance', release_name)
         await self.chart_release_update_check(catalog['trains'][release['catalog_train']][chart], chart_release)
+
+        if options['update_container_images']:
+            container_update_job = await self.middleware.call('chart.release.pull_container_images', release_name)
+            await job.wrap(container_update_job)
+
         return chart_release
 
     @periodic(interval=86400)
