@@ -35,6 +35,9 @@ class ChartReleaseService(Service):
 
         `upgrade_options.item_version` specifies to which item version chart release should be upgraded to.
 
+        System will update container images being used by `release_name` chart release if
+        `upgrade_options.update_container_images` is set.
+
         During upgrade, `upgrade_options.values` can be specified to apply configuration changes for configuration
         changes for the chart release in question.
 
@@ -200,31 +203,26 @@ class ChartReleaseService(Service):
     @accepts(Str('release_name'))
     @job(lock=lambda args: f'pull_container_images{args[0]}')
     async def pull_container_images(self, job, release_name):
+        """
+        Update container images being used by `release_name` chart release.
+        """
         images = await self.middleware.call('chart.release.retrieve_container_images', release_name)
         results = {}
-        to_update = []
-        to_update_tags = []
-        for tag, image in images.items():
-            if image['update_available']:
-                to_update_tags.append(tag)
-                to_update.append([{'from_image': f'{image["registry"]}/{image["image"]}', 'tag': image['tag']}])
-            else:
-                results[tag] = 'Update not available'
 
         bulk_job = await self.middleware.call(
             'core.bulk', 'container.image.pull', [
                 [{'from_image': f'{image["registry"]}/{image["image"]}', 'tag': image['tag']}]
-                for image in images.values() if image['update_available']
+                for image in images.values()
             ]
         )
         await bulk_job.wait()
         if bulk_job.error:
             raise CallError(f'Failed to update container images for {release_name!r} chart release: {bulk_job.error}')
 
-        for index, status in enumerate(bulk_job.result):
+        for tag, status in zip(images, bulk_job.result):
             if status['error']:
-                results[to_update_tags[index]] = f'Failed to pull image: {status["error"]}'
+                results[tag] = f'Failed to pull image: {status["error"]}'
             else:
-                results[to_update_tags[index]] = 'Updated image'
+                results[tag] = 'Updated image'
 
         return results
