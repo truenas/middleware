@@ -44,6 +44,7 @@ class ChartReleaseService(Service):
         For upgrade, system will automatically take a snapshot of `ix_volumes` in question which can be used to
         rollback later on.
         """
+        await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call('chart.release.get_instance', release_name)
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', release['catalog']]], {'get': True, 'extra': {'item_details': True}},
@@ -215,6 +216,7 @@ class ChartReleaseService(Service):
         `redeploy` when set will redeploy pods which will result in chart release using newer updated versions of
         the container images.
         """
+        await self.middleware.call('kubernetes.validate_k8s_setup')
         images = [
             {'orig_tag': tag, **(await self.middleware.call('container.image.parse_image_tag', tag))}
             for tag in (await self.middleware.call(

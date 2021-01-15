@@ -41,6 +41,7 @@ class ChartReleaseService(Service):
         Rollback is only functional for the actual configuration of the release at the `item_version` specified and
         any associated `ix_volumes`.
         """
+        await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {
                 'extra': {'history': True, 'retrieve_resources': True}, 'get': True,

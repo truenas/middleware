@@ -15,6 +15,7 @@ class ChartReleaseService(Service):
         Output is a dictionary with names of pods as keys and containing names of containers which the pod
         comprises of.
         """
+        await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
         )

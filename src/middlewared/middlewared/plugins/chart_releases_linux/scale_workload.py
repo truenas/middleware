@@ -40,6 +40,7 @@ class ChartReleaseService(Service):
 
         This will scale deployments/statefulset to replica count specified.
         """
+        await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
         )
