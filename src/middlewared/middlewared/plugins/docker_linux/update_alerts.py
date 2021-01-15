@@ -29,7 +29,7 @@ class DockerImagesService(Service, DockerClientMixin):
                     self.logger.error(str(e))
 
     @private
-    async def check_update_for_image(self, tag, image_details):
+    async def parse_image_tag(self, tag):
         # Following logic has been used from docker engine to make sure we follow the same rules/practices
         # for normalising the image name / tag
         i = tag.find('/')
@@ -45,8 +45,16 @@ class DockerImagesService(Service, DockerClientMixin):
             image_tag += f':{DEFAULT_DOCKER_TAG}'
 
         image_str, tag_str = image_tag.rsplit(':', 1)
+        return {
+            'image': image_str,
+            'tag': tag_str,
+            'registry': registry,
+        }
 
-        if await self.compare_id_digests(image_details, registry, image_str, tag_str):
+    @private
+    async def check_update_for_image(self, tag, image_details):
+        parsed_tag = await self.parse_image_tag(tag)
+        if await self.compare_id_digests(image_details, parsed_tag['registry'], parsed_tag['image'], parsed_tag['tag']):
             self.IMAGE_CACHE[tag] = True
             await self.middleware.call(
                 'alert.oneshot_create', 'DockerImageUpdate', {'tag': tag, 'id': tag}
