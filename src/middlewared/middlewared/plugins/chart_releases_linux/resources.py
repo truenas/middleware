@@ -55,10 +55,10 @@ class ChartReleaseService(Service):
         images_tags = list(set([
             c['image'] for pod in release['resources']['pods'] for c in pod['status']['container_statuses']
         ]))
-        images = []
+        images = {}
         for image in await self.middleware.call('container.image.query'):
             for tag in images_tags:
                 if tag in image['repo_tags']:
-                    images.append(image)
+                    images[tag] = {**images, **(await self.middleware.call('container.image.parse_image_tag', tag))}
 
         return images
