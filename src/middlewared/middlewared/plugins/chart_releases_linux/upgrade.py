@@ -195,6 +195,16 @@ class ChartReleaseService(Service):
     @job(lock=lambda args: f'pull_container_images{args[0]}')
     async def pull_container_images(self, job, release_name):
         images = await self.middleware.call('chart.release.retrieve_container_images', release_name)
+        results = {}
+        to_update = []
+        to_update_tags = []
+        for tag, image in images.items():
+            if image['update_available']:
+                to_update_tags.append(tag)
+                to_update.append([{'from_image': f'{image["registry"]}/{image["image"]}', 'tag': image['tag']}])
+            else:
+                results[tag] = 'Update not available'
+
         bulk_job = await self.middleware.call(
             'core.bulk', 'container.image.pull', [
                 [{'from_image': f'{image["registry"]}/{image["image"]}', 'tag': image['tag']}]
@@ -202,4 +212,13 @@ class ChartReleaseService(Service):
             ]
         )
         await bulk_job.wait()
-        return bulk_job.result
+        if bulk_job.error:
+            raise CallError(f'Failed to update container images for {release_name!r} chart release: {bulk_job.error}')
+
+        for index, status in enumerate(bulk_job.result):
+            if status['error']:
+                results[to_update_tags[index]] = f'Failed to pull image: {status["error"]}'
+            else:
+                results[to_update_tags[index]] = 'Updated image'
+
+        return results
