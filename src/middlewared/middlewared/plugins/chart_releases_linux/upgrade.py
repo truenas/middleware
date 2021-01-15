@@ -200,11 +200,20 @@ class ChartReleaseService(Service):
         else:
             await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', f'"{application["id"]}"')
 
-    @accepts(Str('release_name'))
+    @accepts(
+        Str('release_name'),
+        Dict(
+            'pull_container_images_options',
+            Bool('redeploy', default=True),
+        )
+    )
     @job(lock=lambda args: f'pull_container_images{args[0]}')
-    async def pull_container_images(self, job, release_name):
+    async def pull_container_images(self, job, release_name, options):
         """
         Update container images being used by `release_name` chart release.
+
+        `redeploy` when set will redeploy pods which will result in chart release using newer updated versions of
+        the container images.
         """
         images = [
             {'orig_tag': tag, **(await self.middleware.call('container.image.parse_image_tag', tag))}
@@ -230,5 +239,8 @@ class ChartReleaseService(Service):
                 results[tag['orig_tag']] = f'Failed to pull image: {status["error"]}'
             else:
                 results[tag['orig_tag']] = 'Updated image'
+
+        if options['redeploy']:
+            await job.wrap(await self.middleware.call('chart.release.redeploy', release_name))
 
         return results

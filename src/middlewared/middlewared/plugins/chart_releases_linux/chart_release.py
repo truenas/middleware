@@ -152,7 +152,6 @@ class ChartReleaseService(CRUDService):
             if 'icon' not in release_data['chart_metadata']:
                 release_data['chart_metadata']['icon'] = None
 
-
             releases.append(release_data)
 
         return filter_list(releases, filters, options)
