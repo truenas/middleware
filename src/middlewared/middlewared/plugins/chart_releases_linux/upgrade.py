@@ -206,13 +206,19 @@ class ChartReleaseService(Service):
         """
         Update container images being used by `release_name` chart release.
         """
-        images = await self.middleware.call('chart.release.retrieve_container_images', release_name)
+        images = [
+            {'orig_tag': tag, **(await self.middleware.call('container.image.parse_image_tag', tag))}
+            for tag in (await self.middleware.call(
+                'chart.release.query', [['id', '=', release_name]],
+                {'extra': {'retrieve_resources': True}, 'get': True}
+            ))['resources']['container_images']
+        ]
         results = {}
 
         bulk_job = await self.middleware.call(
             'core.bulk', 'container.image.pull', [
                 [{'from_image': f'{image["registry"]}/{image["image"]}', 'tag': image['tag']}]
-                for image in images.values()
+                for image in images
             ]
         )
         await bulk_job.wait()
@@ -221,8 +227,8 @@ class ChartReleaseService(Service):
 
         for tag, status in zip(images, bulk_job.result):
             if status['error']:
-                results[tag] = f'Failed to pull image: {status["error"]}'
+                results[tag['orig_tag']] = f'Failed to pull image: {status["error"]}'
             else:
-                results[tag] = 'Updated image'
+                results[tag['orig_tag']] = 'Updated image'
 
         return results
