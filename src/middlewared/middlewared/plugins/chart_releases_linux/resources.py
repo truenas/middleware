@@ -43,3 +43,22 @@ class ChartReleaseService(Service):
             for chart_release in await self.middleware.call('chart.release.query')
             for port in chart_release['used_ports']
         })))
+
+    @accepts(Str('release_name'))
+    async def retrieve_container_images(self, release_name):
+        """
+        Retrieve container images being used by a chart release.
+        """
+        release = await self.middleware.call(
+            'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
+        )
+        images_tags = list(set([
+            c['image'] for pod in release['resources']['pods'] for c in pod['status']['container_statuses']
+        ]))
+        images = []
+        for image in await self.middleware.call('container.image.query'):
+            for tag in images_tags:
+                if tag in image['repo_tags']:
+                    images.append(image)
+
+        return images
