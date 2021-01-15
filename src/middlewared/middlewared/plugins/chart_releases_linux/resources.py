@@ -52,13 +52,13 @@ class ChartReleaseService(Service):
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
         )
-        images_tags = list(set([
-            c['image'] for pod in release['resources']['pods'] for c in pod['status']['container_statuses']
-        ]))
-        images = {}
-        for image in await self.middleware.call('container.image.query'):
-            for tag in images_tags:
-                if tag in image['repo_tags']:
-                    images[tag] = {**image, **(await self.middleware.call('container.image.parse_image_tag', tag))}
 
-        return images
+        return {
+            tag: await self.middleware.call('container.image.parse_image_tag', tag)
+            for tag in set([
+                c['image']
+                for workload_type in ('deployments', 'statefulsets')
+                for workload in release['resources'][workload_type]
+                for c in workload['spec']['template']['spec']['containers']
+            ])
+        }
