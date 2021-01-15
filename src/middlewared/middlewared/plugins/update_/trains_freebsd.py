@@ -2,6 +2,7 @@
 import re
 
 import requests
+from packaging import version
 
 from freenasOS import Configuration, Train
 from freenasOS.Update import CheckForUpdates, GetServiceDescription
@@ -184,6 +185,18 @@ class UpdateService(Service):
         )
 
         data['version'] = manifest.Version()
+
+        current_version = self.middleware.call_sync('system.version')
+        new_version = data['version']
+        if self.middleware.call_sync('update.enterprise_is_too_new', current_version, new_version):
+            self.middleware.call_sync('alert.oneshot_delete', 'CurrentVersionIsNotEnterpriseReady', None)
+            self.middleware.call_sync('alert.oneshot_create', 'CurrentVersionIsNotEnterpriseReady', {
+                'current_version': current_version,
+                'new_version': new_version,
+            })
+        else:
+            self.middleware.call_sync('alert.oneshot_delete', 'CurrentVersionIsNotEnterpriseReady', None)
+
         return data
 
     @private
@@ -195,3 +208,24 @@ class UpdateService(Service):
             }
 
         return {}
+
+    @private
+    async def enterprise_is_too_new(self, current_version, new_version):
+        if await self.middleware.call('system.product_type') != 'ENTERPRISE':
+            return False
+
+        try:
+            current_version = version.parse(current_version)
+        except Exception:
+            self.middleware.logger.warning('Unable to parse current system version %r', current_version,
+                                           exc_info=True)
+            return False
+
+        try:
+            new_version = version.parse(new_version)
+        except Exception:
+            self.middleware.logger.warning('Unable to parse new system version %r', new_version,
+                                           exc_info=True)
+            return False
+
+        return new_version < current_version
