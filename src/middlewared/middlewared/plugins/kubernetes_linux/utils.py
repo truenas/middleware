@@ -1,4 +1,5 @@
 BACKUP_NAME_PREFIX = 'ix-applications-backup-'
 KUBECONFIG_FILE = '/etc/rancher/k3s/k3s.yaml'
+KUBERNETES_WORKER_NODE_PASSWORD = 'e3d26cefbdf2f81eff5181e68a02372f'
 NODE_NAME = 'ix-truenas'
 UPDATE_BACKUP_PREFIX = 'system-update-'

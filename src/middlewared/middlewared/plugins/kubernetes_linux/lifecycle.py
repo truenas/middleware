@@ -9,12 +9,19 @@ from datetime import datetime
 
 from middlewared.service import CallError, private, Service
 
+START_LOCK = asyncio.Lock()
+
 
 class KubernetesService(Service):
 
     @private
     async def post_start(self):
         # TODO: Add support for migrations
+        async with START_LOCK:
+            return await self.post_start_impl()
+
+    @private
+    async def post_start_impl(self):
         try:
             timeout = 60
             while timeout > 0:
@@ -33,11 +40,8 @@ class KubernetesService(Service):
             raise
         else:
             asyncio.ensure_future(self.middleware.call('k8s.event.setup_k8s_events'))
-            asyncio.ensure_future(self.middleware.call('chart.release.refresh_events_state'))
+            await self.middleware.call('chart.release.refresh_events_state')
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
-            # We only want to start checking for release updates once we have started k8s
-            asyncio.ensure_future(self.middleware.call('chart.release.chart_releases_update_checks_internal'))
-            await self.middleware.call('catalog.sync_all')
 
     @private
     async def post_start_internal(self):
@@ -126,6 +130,7 @@ class KubernetesService(Service):
             with open(config_path, 'w') as f:
                 f.write(json.dumps(config))
 
+            self.middleware.call_sync('catalog.sync_all')
             self.middleware.call_sync('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
 
     @private
@@ -133,7 +138,7 @@ class KubernetesService(Service):
         await self.validate_k8s_fs_setup()
         await self.middleware.call('service.start', 'docker')
         await self.middleware.call('container.image.load_default_images')
-        asyncio.ensure_future(self.middleware.call('service.start', 'kubernetes'))
+        await self.middleware.call('service.start', 'kubernetes')
 
     @private
     async def setup_pool(self):
@@ -159,11 +164,24 @@ class KubernetesService(Service):
             os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases', 'default_volumes', 'catalogs')
         ]
 
+    @private
+    async def start_kubernetes(self):
+        # TODO: Remove this wrapper after 21.02 where we will moving on assume that all agent nodes are now using
+        #  our constant worker node password
+        if not (await self.middleware.call('kubernetes.config'))['pool']:
+            return
+
+        await self.middleware.call('service.start', 'kubernetes')
+        async with START_LOCK:
+            await self.middleware.call('k8s.node.delete_node')
+            await self.middleware.call('service.restart', 'kubernetes')
+            await self.middleware.call('catalog.sync_all')
+
 
 async def _event_system(middleware, event_type, args):
 
-    if args['id'] == 'ready' and (await middleware.call('kubernetes.config'))['pool']:
-        asyncio.ensure_future(middleware.call('service.start', 'kubernetes'))
+    if args['id'] == 'ready':
+        asyncio.ensure_future(middleware.call('kubernetes.start_kubernetes'))
     elif args['id'] == 'shutdown' and await middleware.call('service.started', 'kubernetes'):
         asyncio.ensure_future(middleware.call('service.stop', 'kubernetes'))
 
