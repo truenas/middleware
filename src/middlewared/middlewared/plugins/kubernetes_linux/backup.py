@@ -93,7 +93,7 @@ class KubernetesService(Service):
         )
         releases_datasets = set(
             ds['id'].split('/', 3)[-1].split('/', 1)[0] for ds in self.middleware.call_sync(
-                'pool.dataset.query', [['id', '=', f'{k8s_config["dataset"]}/releases']], {'get': True},
+                'zfs.dataset.get_instance', f'{k8s_config["dataset"]}/releases'
             )['children']
         )
 

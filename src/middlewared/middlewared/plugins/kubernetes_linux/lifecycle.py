@@ -74,7 +74,7 @@ class KubernetesService(Service):
             os.path.join(config['dataset'], ds) for ds in ('k3s', 'docker', 'releases')
         )
         diff = {
-            d['id'] for d in await self.middleware.call('pool.dataset.query', [['id', 'in', list(k8s_datasets)]])
+            d['id'] for d in await self.middleware.call('zfs.dataset.query', [['id', 'in', list(k8s_datasets)]])
         } ^ k8s_datasets
         fatal_diff = diff.intersection(required_datasets)
         if fatal_diff:
@@ -117,7 +117,7 @@ class KubernetesService(Service):
                 config[k] == on_disk_config.get(k) for k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
             )
 
-        if clean_start and self.middleware.call_sync('pool.dataset.query', [['id', '=', config['dataset']]]):
+        if clean_start and self.middleware.call_sync('zfs.dataset.query', [['id', '=', config['dataset']]]):
             self.middleware.call_sync('zfs.dataset.delete', config['dataset'], {'force': True, 'recursive': True})
 
         self.middleware.call_sync('kubernetes.setup_pool')
@@ -150,13 +150,13 @@ class KubernetesService(Service):
     @private
     async def create_update_k8s_datasets(self, k8s_ds):
         for dataset in await self.kubernetes_datasets(k8s_ds):
-            if not await self.middleware.call('pool.dataset.query', [['id', '=', dataset]]):
+            if not await self.middleware.call('zfs.dataset.query', [['id', '=', dataset]]):
                 test_path = os.path.join('/mnt', dataset)
                 if os.path.exists(test_path):
                     await self.middleware.run_in_thread(
                         shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}',
                     )
-                await self.middleware.call('pool.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
+                await self.middleware.call('zfs.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
 
     @private
     async def kubernetes_datasets(self, k8s_ds):
