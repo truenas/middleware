@@ -2745,6 +2745,11 @@ class PoolDatasetService(CRUDService):
             ['id', 'rnin', '.glusterfs'],
         ])
 
+        if osc.IS_LINUX:
+            k8s_config = self.middleware.call_sync('kubernetes.config')
+            if k8s_config['dataset']:
+                filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
+
         return filter_list(
             self.__transform(self.middleware.call_sync(
                 'zfs.dataset.query', zfsfilters, {'extra': {'flat': options.get('extra', {}).get('flat', True)}})
