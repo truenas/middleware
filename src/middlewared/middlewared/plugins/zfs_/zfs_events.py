@@ -186,6 +186,10 @@ async def zfs_events(middleware, data):
         # we need to send events for dataset creation/updating/deletion in case it's done via cli
         event_type = data['history_internal_name']
         ds_id = data['history_dsname']
+        if await middleware.call('pool.dataset.is_internal_dataset', ds_id):
+            # We should not raise any event for system internal datasets
+            return
+
         if event_type in ('create', 'set'):
             ds_data = await middleware.call('pool.dataset.query', [['id', '=', ds_id]])
             if not ds_data:

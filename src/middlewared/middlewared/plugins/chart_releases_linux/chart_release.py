@@ -291,6 +291,7 @@ class ChartReleaseService(CRUDService):
             for dataset in await self.release_datasets(release_ds):
                 if not await self.middleware.call('zfs.dataset.query', [['id', '=', dataset]]):
                     await self.middleware.call('zfs.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
+                    await self.middleware.call('zfs.dataset.mount', dataset)
 
             job.set_progress(45, 'Created chart release datasets')
 

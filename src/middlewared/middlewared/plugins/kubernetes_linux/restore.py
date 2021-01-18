@@ -48,6 +48,7 @@ class KubernetesService(Service):
         k3s_ds = os.path.join(k8s_config['dataset'], 'k3s')
         self.middleware.call_sync('zfs.dataset.delete', k3s_ds, {'force': True, 'recursive': True})
         self.middleware.call_sync('zfs.dataset.create', {'name': k3s_ds, 'type': 'FILESYSTEM'})
+        self.middleware.call_sync('zfs.dataset.mount', k3s_ds)
 
         self.middleware.call_sync('service.start', 'kubernetes')
 

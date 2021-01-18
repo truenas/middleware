@@ -157,6 +157,7 @@ class KubernetesService(Service):
                         shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}',
                     )
                 await self.middleware.call('zfs.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
+                await self.middleware.call('zfs.dataset.mount', dataset)
 
     @private
     async def kubernetes_datasets(self, k8s_ds):
