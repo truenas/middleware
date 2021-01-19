@@ -21,12 +21,12 @@ custom_community_repos_url = 'https://github.com/ericbsd/iocage-plugin-index.git
 if not scale:
     PUT("/ssh/", {"rootlogin": True}, controller_a=ha)
     POST("/service/start/", {"service": "ssh"}, controller_a=ha)
-    ssh_cmd = "uname -r | cut -d '-' -f1,2"
-    freebsd_release = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
-    community_index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{freebsd_release}/INDEX'
+    ssh_cmd = "uname -r | cut -d '-' -f1"
+    release_version = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
+    community_index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{release_version}-RELEASE/INDEX'
     community_plugin_index = GET(community_index_url).json()
     community_plugin_list = list(community_plugin_index.keys())
-    custom_community_index_url = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{freebsd_release}/INDEX'
+    custom_community_index_url = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{release_version}-RELEASE/INDEX'
     custom_community_plugin_index = GET(custom_community_index_url).json()
     custom_community_plugin_list = list(custom_community_plugin_index.keys())
     PUT("/ssh/", {"rootlogin": False}, controller_a=ha)
@@ -317,7 +317,7 @@ def test_31_get_list_of_available_plugins_job_id_on_custom_repos(request):
     global JOB_ID
     payload = {
         "plugin_repository": custom_community_repos_url,
-        "branch": freebsd_release
+        "branch": f'{release_version}-RELEASE'
     }
     results = POST('/plugin/available/', payload)
     assert results.status_code == 200, results.text
@@ -359,7 +359,7 @@ def test_35_add_transmission_plugins(request):
             'nat=1'
         ],
         "plugin_repository": custom_community_repos_url,
-        "branch": freebsd_release
+        "branch": f'{release_version}-RELEASE'
     }
     results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
