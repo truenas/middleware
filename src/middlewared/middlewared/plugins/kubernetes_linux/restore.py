@@ -47,7 +47,8 @@ class KubernetesService(Service):
 
         k3s_ds = os.path.join(k8s_config['dataset'], 'k3s')
         self.middleware.call_sync('zfs.dataset.delete', k3s_ds, {'force': True, 'recursive': True})
-        self.middleware.call_sync('pool.dataset.create', {'name': k3s_ds, 'type': 'FILESYSTEM'})
+        self.middleware.call_sync('zfs.dataset.create', {'name': k3s_ds, 'type': 'FILESYSTEM'})
+        self.middleware.call_sync('zfs.dataset.mount', k3s_ds)
 
         self.middleware.call_sync('service.start', 'kubernetes')
 
@@ -62,7 +63,7 @@ class KubernetesService(Service):
         backup_dir = backup['backup_path']
         releases_datasets = set(
             ds['id'].split('/', 3)[-1].split('/', 1)[0] for ds in self.middleware.call_sync(
-                'pool.dataset.query', [['id', '=', f'{k8s_config["dataset"]}/releases']], {'get': True},
+                'zfs.dataset.get_instance', f'{k8s_config["dataset"]}/releases'
             )['children']
         )
 

@@ -19,7 +19,8 @@ class ChartReleaseService(Service):
         user_wants = {os.path.join(ix_volumes_ds, v) for v in volumes}
 
         for create_ds in user_wants - existing_datasets:
-            await self.middleware.call('pool.dataset.create', {'name': create_ds, 'type': 'FILESYSTEM'})
+            await self.middleware.call('zfs.dataset.create', {'name': create_ds, 'type': 'FILESYSTEM'})
+            await self.middleware.call('zfs.dataset.mount', create_ds)
 
     @accepts(
         Str('release_name'),
@@ -34,7 +35,7 @@ class ChartReleaseService(Service):
         )
 
         volume_ds = os.path.join(release['dataset'], 'volumes/ix_volumes', volume_name)
-        if not await self.middleware.call('pool.dataset.query', [['id', '=', volume_ds]]):
+        if not await self.middleware.call('zfs.dataset.query', [['id', '=', volume_ds]]):
             raise CallError(f'Unable to locate {volume_name!r} volume', errno=errno.ENOENT)
 
         used_host_path_volumes = {v['host_path'].get('path', '') for v in release['resources']['host_path_volumes']}

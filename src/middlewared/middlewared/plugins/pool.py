@@ -2709,6 +2709,19 @@ class PoolDatasetService(CRUDService):
         return data
 
     @private
+    async def is_internal_dataset(self, dataset):
+        sys_ds = (await self.middleware.call('systemdataset.config'))['basename']
+        if sys_ds and (dataset == sys_ds or dataset.startswith(f'{sys_ds}/')):
+            return True
+
+        if osc.IS_LINUX:
+            k8s_ds = (await self.middleware.call('kubernetes.config'))['dataset']
+            if k8s_ds and (dataset == k8s_ds or dataset.startswith(f'{k8s_ds}/')):
+                return True
+
+        return '.glusterfs' in dataset
+
+    @private
     def path_in_locked_datasets(self, path, locked_datasets=None):
         if locked_datasets is None:
             locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
@@ -2744,6 +2757,11 @@ class PoolDatasetService(CRUDService):
         filters.extend([
             ['id', 'rnin', '.glusterfs'],
         ])
+
+        if osc.IS_LINUX:
+            k8s_config = self.middleware.call_sync('kubernetes.config')
+            if k8s_config['dataset']:
+                filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
 
         return filter_list(
             self.__transform(self.middleware.call_sync(

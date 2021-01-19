@@ -71,7 +71,7 @@ class ChartReleaseService(Service):
 
         current_dataset_paths = {
             os.path.join('/mnt', d['id']) for d in await self.middleware.call(
-                'pool.dataset.query', [['id', '^', f'{ix_volumes_ds}/']]
+                'zfs.dataset.query', [['id', '^', f'{ix_volumes_ds}/']]
             )
         }
         history_datasets = {d['hostPath'] for d in history_item['config'].get('ixVolumes', [])}
