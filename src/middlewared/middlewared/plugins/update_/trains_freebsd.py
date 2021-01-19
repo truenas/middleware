@@ -1,4 +1,5 @@
 # -*- coding=utf-8 -*-
+import os
 import re
 
 import requests
@@ -104,7 +105,7 @@ class UpdateService(Service):
             redir_trains = {}
 
         conf = Configuration.Configuration()
-        conf.LoadTrainsConfig(**self.middleware.call_sync('update.enterprise_kwargs'))
+        conf.LoadTrainsConfig(**self.middleware.call_sync('update.trains_kwargs'))
 
         trains = {}
         for name, descr in (conf.AvailableTrains() or {}).items():
@@ -154,15 +155,27 @@ class UpdateService(Service):
             old_version = self.middleware.call_sync('system.version').split('-', 1)[1]
             return self.middleware.call_sync('update.get_scale_update', train, old_version)
 
+        current_version = self.middleware.call_sync('system.version')
+
         handler = CheckUpdateHandler()
         manifest = CheckForUpdates(
             diff_handler=handler.diff_call,
             handler=handler.call,
             train=train,
-            **self.middleware.call_sync('update.enterprise_kwargs'),
+            **self.middleware.call_sync('update.trains_kwargs'),
         )
 
         if not manifest:
+            if await self.middleware.call('system.product_type') == 'ENTERPRISE':
+                if not os.path.exists('/usr/local/share/truenas/enterprise-ready'):
+                    self.middleware.call_sync('alert.oneshot_delete', 'CurrentVersionIsNotEnterpriseReady', None)
+                    self.middleware.call_sync('alert.oneshot_create', 'CurrentVersionIsNotEnterpriseReady', {
+                        'current_version': current_version,
+                        'new_version': '&lt;unknown&gt;',
+                    })
+                else:
+                    self.middleware.call_sync('alert.oneshot_delete', 'CurrentVersionIsNotEnterpriseReady', None)
+
             return {'status': 'UNAVAILABLE'}
 
         data = {
@@ -186,34 +199,28 @@ class UpdateService(Service):
 
         data['version'] = manifest.Version()
 
-        current_version = self.middleware.call_sync('system.version')
-        new_version = data['version']
-        if self.middleware.call_sync('update.enterprise_is_too_new', current_version, new_version):
-            self.middleware.call_sync('alert.oneshot_delete', 'CurrentVersionIsNotEnterpriseReady', None)
-            self.middleware.call_sync('alert.oneshot_create', 'CurrentVersionIsNotEnterpriseReady', {
-                'current_version': current_version,
-                'new_version': new_version,
-            })
-        else:
-            self.middleware.call_sync('alert.oneshot_delete', 'CurrentVersionIsNotEnterpriseReady', None)
+        if await self.middleware.call('system.product_type') == 'ENTERPRISE':
+            new_version = data['version']
+            if self.middleware.call_sync('update.is_too_new', current_version, new_version):
+                self.middleware.call_sync('alert.oneshot_delete', 'CurrentVersionIsNotEnterpriseReady', None)
+                self.middleware.call_sync('alert.oneshot_create', 'CurrentVersionIsNotEnterpriseReady', {
+                    'current_version': current_version,
+                    'new_version': new_version,
+                })
+            else:
+                self.middleware.call_sync('alert.oneshot_delete', 'CurrentVersionIsNotEnterpriseReady', None)
 
         return data
 
     @private
-    async def enterprise_kwargs(self):
-        if await self.middleware.call('system.product_type') == 'ENTERPRISE':
-            return {
-                'enterprise': True,
-                'enterprise_uuid': (await self.middleware.call('systemdataset.config'))['uuid_a'],
-            }
-
-        return {}
+    async def trains_kwargs(self):
+        return {
+            'enterprise': await self.middleware.call('system.product_type') == 'ENTERPRISE',
+            'system_uuid': (await self.middleware.call('systemdataset.config'))['uuid_a'],
+        }
 
     @private
-    async def enterprise_is_too_new(self, current_version, new_version):
-        if await self.middleware.call('system.product_type') != 'ENTERPRISE':
-            return False
-
+    async def is_too_new(self, current_version, new_version):
         try:
             current_version = version.parse(current_version)
         except Exception:
