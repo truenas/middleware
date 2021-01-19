@@ -35,10 +35,12 @@ class CatalogService(Service):
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
+        # We make sure we do not dive into library folder and not consider it a train
+        # This allows us to use this folder for placing helm library charts
         trains = {'charts': {}, 'test': {}}
         trains.update({
             t: {} for t in os.listdir(catalog['location'])
-            if os.path.isdir(os.path.join(catalog['location'], t)) and not t.startswith('.')
+            if os.path.isdir(os.path.join(catalog['location'], t)) and not t.startswith('.') and t != 'library'
         })
         for train in filter(lambda c: os.path.exists(os.path.join(catalog['location'], c)), trains):
             category_path = os.path.join(catalog['location'], train)
