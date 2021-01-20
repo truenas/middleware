@@ -61,8 +61,12 @@ class DockerImagesService(Service, DockerClientMixin):
                 'alert.oneshot_create', 'DockerImageUpdate', {'tag': tag, 'id': tag}
             )
         else:
-            self.IMAGE_CACHE[tag] = False
-            await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', tag)
+            await self.clear_update_flag_for_tag(tag)
+
+    @private
+    async def clear_update_flag_for_tag(self, tag):
+        self.IMAGE_CACHE[tag] = False
+        await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', tag)
 
     @private
     async def compare_id_digests(self, image_details, registry, image_str, tag_str):

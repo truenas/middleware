@@ -82,7 +82,7 @@ class DockerImagesService(CRUDService):
             except aiodocker.DockerError as e:
                 raise CallError(f'Failed to pull image: {e.message}')
 
-        await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', f'{data["from_image"]}:{data["tag"]}')
+        await self.middleware.call('container.image.clear_update_flag_for_tag', f'{data["from_image"]}:{data["tag"]}')
 
         return response
 
