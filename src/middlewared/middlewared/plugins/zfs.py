@@ -455,6 +455,10 @@ class ZFSDatasetService(CRUDService):
         `query-options.extra.snapshots` is a boolean which when set will retrieve snapshots for the dataset in question
         by adding a snapshots key to the dataset data.
 
+        `query-options.extra.retrieve_children` is a boolean which when set which is the default will retrieve child
+        datasets of a dataset. Motivation for providing a knob to configure this is performance concerns where getting
+        children sometimes is not required and in that case this user can be explicitly unset.
+
         `query-options.extra.top_level_properties` is a list of properties which we will like to include in the
         top level dict of dataset. It defaults to adding only mountpoint key keeping legacy behavior. If none are
         desired in top level dataset, an empty list should be passed else if null is specified it will add mountpoint
@@ -486,6 +490,7 @@ class ZFSDatasetService(CRUDService):
         flat = extra.get('flat', True)
         user_properties = extra.get('user_properties', True)
         retrieve_properties = extra.get('retrieve_properties', True)
+        retrieve_children = extra.get('retrieve_children', True)
         snapshots = extra.get('snapshots')
         if not retrieve_properties:
             # This is a short hand version where consumer can specify that they don't want any property to
@@ -497,6 +502,7 @@ class ZFSDatasetService(CRUDService):
             # Handle `id` filter specially to avoiding getting all datasets
             kwargs = dict(
                 props=props, top_level_props=top_level_props, user_props=user_properties, snapshots=snapshots,
+                retrieve_children=retrieve_children,
             )
             if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
                 kwargs['datasets'] = [filters[0][2]]
