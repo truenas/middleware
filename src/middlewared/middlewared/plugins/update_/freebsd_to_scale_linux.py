@@ -23,6 +23,7 @@ class UpdateService(Service):
 
         await self.middleware.call("etc.generate", "rc")
 
+        await self.middleware.call("boot.handle_initrd_zfs", False)
         await run(["update-initramfs", "-k", "all", "-u"])
         await self.middleware.call("etc.generate", "grub")
 
