@@ -73,9 +73,7 @@ Compression delayed
 % else:
 Compression no
 % endif
-% if ssh_config['passwordauth']:
-PasswordAuthentication yes
-% endif
+PasswordAuthentication ${"yes" if ssh_config['passwordauth'] else "no"}
 % if ssh_config['kerberosauth']:
 GSSAPIAuthentication yes
 % endif
