@@ -13,7 +13,11 @@ from sqlalchemy.types import UserDefinedType
 from middlewared.plugins.pwenc import encrypt, decrypt
 
 
-Model = declarative_base()
+class Base(object):
+    __table_args__ = {"sqlite_autoincrement": True}
+
+
+Model = declarative_base(cls=Base)
 Model.metadata.naming_convention = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
