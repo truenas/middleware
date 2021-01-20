@@ -444,7 +444,7 @@ class ZFSDatasetService(CRUDService):
         })
 
     def flatten_datasets(self, datasets):
-        return sum([[deepcopy(ds)] + self.flatten_datasets(ds['children']) for ds in datasets], [])
+        return sum([[deepcopy(ds)] + self.flatten_datasets(ds.get('children') or []) for ds in datasets], [])
 
     @filterable
     def query(self, filters=None, options=None):
@@ -455,9 +455,9 @@ class ZFSDatasetService(CRUDService):
         `query-options.extra.snapshots` is a boolean which when set will retrieve snapshots for the dataset in question
         by adding a snapshots key to the dataset data.
 
-        `query-options.extra.retrieve_children` is a boolean which when set which is the default will retrieve child
-        datasets of a dataset. Motivation for providing a knob to configure this is performance concerns where getting
-        children sometimes is not required and in that case this user can be explicitly unset.
+        `query-options.extra.retrieve_children` is a boolean set to true by default. When set to true, will retrieve
+        all children datasets which can cause a performance penalty. When set to false, will not retrieve children
+        datasets which does not incur the performance penalty.
 
         `query-options.extra.top_level_properties` is a list of properties which we will like to include in the
         top level dict of dataset. It defaults to adding only mountpoint key keeping legacy behavior. If none are

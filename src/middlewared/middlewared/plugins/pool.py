@@ -2749,6 +2749,10 @@ class PoolDatasetService(CRUDService):
         The second type is hierarchical, where only top level datasets are returned in the list. They contain all the
         children in the `children` key. This retrieval type is slightly faster.
         These options are controlled by the `query-options.extra.flat` attribute (default true).
+
+        In some cases it might be desirable to only retrieve details of a dataset itself and not it's children, in this
+        case `query-options.extra.retrieve_children` should be explicitly specified and set to `false` which will
+        result in children not being retrieved.
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
@@ -2774,13 +2778,18 @@ class PoolDatasetService(CRUDService):
             if k8s_config['dataset']:
                 filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
 
+        extra = copy.deepcopy(options.get('extra', {}))
+        retrieve_children = extra.get('retrieve_children', True)
         return filter_list(
             self.__transform(self.middleware.call_sync(
-                'zfs.dataset.query', zfsfilters, {'extra': {'flat': options.get('extra', {}).get('flat', True)}})
+                'zfs.dataset.query', zfsfilters, {
+                    'extra': {'flat': extra.get('flat', True), 'retrieve_children': retrieve_children}
+                }
+            ), retrieve_children,
             ), filters, options
         )
 
-    def __transform(self, datasets):
+    def __transform(self, datasets, retrieve_children):
         """
         We need to transform the data zfs gives us to make it consistent/user-friendly,
         making it match whatever pool.dataset.{create,update} uses as input.
@@ -2832,10 +2841,11 @@ class PoolDatasetService(CRUDService):
 
             dataset['locked'] = dataset['encrypted'] and not dataset['key_loaded']
 
-            rv = []
-            for child in dataset['children']:
-                rv.append(transform(child))
-            dataset['children'] = rv
+            if retrieve_children:
+                rv = []
+                for child in dataset['children']:
+                    rv.append(transform(child))
+                dataset['children'] = rv
 
             return dataset
 
