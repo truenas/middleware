@@ -7,7 +7,7 @@ import yaml
 
 from pkg_resources import parse_version
 
-from middlewared.schema import Dict, Str
+from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
@@ -23,6 +23,7 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'upgrade_options',
+            Bool('update_container_images', default=True),
             Dict('values', additional_attrs=True),
             Str('item_version', default='latest'),
         )
@@ -34,12 +35,16 @@ class ChartReleaseService(Service):
 
         `upgrade_options.item_version` specifies to which item version chart release should be upgraded to.
 
+        System will update container images being used by `release_name` chart release if
+        `upgrade_options.update_container_images` is set.
+
         During upgrade, `upgrade_options.values` can be specified to apply configuration changes for configuration
         changes for the chart release in question.
 
         For upgrade, system will automatically take a snapshot of `ix_volumes` in question which can be used to
         rollback later on.
         """
+        await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call('chart.release.get_instance', release_name)
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', release['catalog']]], {'get': True, 'extra': {'item_details': True}},
@@ -145,6 +150,11 @@ class ChartReleaseService(Service):
 
         chart_release = await self.middleware.call('chart.release.get_instance', release_name)
         await self.chart_release_update_check(catalog['trains'][release['catalog_train']][chart], chart_release)
+
+        if options['update_container_images']:
+            container_update_job = await self.middleware.call('chart.release.pull_container_images', release_name)
+            await job.wrap(container_update_job)
+
         return chart_release
 
     @periodic(interval=86400)
@@ -190,3 +200,49 @@ class ChartReleaseService(Service):
             await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
         else:
             await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', f'"{application["id"]}"')
+
+    @accepts(
+        Str('release_name'),
+        Dict(
+            'pull_container_images_options',
+            Bool('redeploy', default=True),
+        )
+    )
+    @job(lock=lambda args: f'pull_container_images{args[0]}')
+    async def pull_container_images(self, job, release_name, options):
+        """
+        Update container images being used by `release_name` chart release.
+
+        `redeploy` when set will redeploy pods which will result in chart release using newer updated versions of
+        the container images.
+        """
+        await self.middleware.call('kubernetes.validate_k8s_setup')
+        images = [
+            {'orig_tag': tag, **(await self.middleware.call('container.image.parse_image_tag', tag))}
+            for tag in (await self.middleware.call(
+                'chart.release.query', [['id', '=', release_name]],
+                {'extra': {'retrieve_resources': True}, 'get': True}
+            ))['resources']['container_images']
+        ]
+        results = {}
+
+        bulk_job = await self.middleware.call(
+            'core.bulk', 'container.image.pull', [
+                [{'from_image': f'{image["registry"]}/{image["image"]}', 'tag': image['tag']}]
+                for image in images
+            ]
+        )
+        await bulk_job.wait()
+        if bulk_job.error:
+            raise CallError(f'Failed to update container images for {release_name!r} chart release: {bulk_job.error}')
+
+        for tag, status in zip(images, bulk_job.result):
+            if status['error']:
+                results[tag['orig_tag']] = f'Failed to pull image: {status["error"]}'
+            else:
+                results[tag['orig_tag']] = 'Updated image'
+
+        if options['redeploy']:
+            await job.wrap(await self.middleware.call('chart.release.redeploy', release_name))
+
+        return results
