@@ -167,11 +167,12 @@ class RealtimeEventSource(EventSource):
             else:
                 cp_time = cp_times = None
 
+            if cp_time and cp_times:
+                cp_nums = int(len(cp_times) / num_times)
             if cp_time and cp_times and cp_times_last:
                 # Get the difference of times between the last check and the current one
                 # cp_time has a list with user, nice, system, interrupt and idle
                 cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_times, cp_times_last)))
-                cp_nums = int(len(cp_times) / num_times)
                 for i in range(cp_nums):
                     data['cpu'][i] = self.get_cpu_usages(cp_diff[i * num_times:i * num_times + num_times])
 
@@ -208,6 +209,17 @@ class RealtimeEventSource(EventSource):
                                     data['cpu']['temperature'][core] = 2732 + int(value * 10)
                                     core += 1
                                     break
+                    if core == cp_nums / 2:
+                        data['cpu']['temperature'] = dict(zip(
+                            range(cp_nums),
+                            sum(
+                                [
+                                    [data['cpu']['temperature'][core], data['cpu']['temperature'][core]]
+                                    for core in sorted(data['cpu']['temperature'].keys())
+                                ],
+                                [],
+                            ),
+                        ))
 
             # Interface related statistics
             if last_interface_speeds['time'] < time.monotonic() - self.INTERFACE_SPEEDS_CACHE_INTERLVAL:
