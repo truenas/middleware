@@ -1,6 +1,7 @@
 from middlewared.service import Service, accepts, job, CallError
 
 import subprocess
+import copy
 
 
 V4_FILE = '/data/v4-fw.rules'
@@ -14,28 +15,18 @@ class IptablesService(Service):
         namespace = 'failover.firewall'
         private = True
 
-    async def generate_rules(self, data):
+    async def generate_default_rules(self, data):
         """
-        Generate a list of iptables and ip6tables rules.
-
-        NOTE:
-            SSH and webUI traffic is always allowed.
+        Generate a list of default firewall rules.
         """
 
-        # rules always start with this line
-        v4rules = ['*filter\n']
-        v6rules = ['*filter\n']
+        # this is always the first rule
+        rules = ['*filter']
 
         # the positions of these are important
-        # v4 default section
-        v4rules.insert(1, ':INPUT ACCEPT [0:0]\n')
-        v4rules.insert(2, ':FORWARD ACCEPT [0:0]\n')
-        v4rules.insert(3, ':OUTPUT ACCEPT [0:0]\n')
-
-        # v6 default section
-        v6rules.insert(1, ':INPUT ACCEPT [0:0]\n')
-        v6rules.insert(2, ':FORWARD ACCEPT [0:0]\n')
-        v6rules.insert(3, ':OUTPUT ACCEPT [0:0]\n')
+        rules.insert(1, ':INPUT ACCEPT [0:0]')
+        rules.insert(2, ':FORWARD ACCEPT [0:0]')
+        rules.insert(3, ':OUTPUT ACCEPT [0:0]')
 
         if data['drop']:
             # we always allow ssh and webUI access when limiting inbound
@@ -43,29 +34,34 @@ class IptablesService(Service):
             sshport = (await self.middleware.call('ssh.config'))['tcpport']
             web = await self.middleware.call('system.general.config')
 
-            # v4 ssh/webUI rules
-            v4rules.append(f'-A INPUT -p tcp -m tcp --dport {sshport} -j ACCEPT\n')
-            v4rules.append(f'-A INPUT -p tcp -m tcp --dport {web["ui_port"]} -j ACCEPT\n')
-            v4rules.append(f'-A INPUT -p tcp -m tcp --dport {web["ui_httpsport"]} -j ACCEPT\n')
+            rules.append(f'-A INPUT -p tcp -m tcp --dport {sshport} -j ACCEPT')
+            rules.append(f'-A INPUT -p tcp -m tcp --dport {web["ui_port"]} -j ACCEPT')
+            rules.append(f'-A INPUT -p tcp -m tcp --dport {web["ui_httpsport"]} -j ACCEPT')
 
-            # v6 ssh/webUI rules
-            v6rules.append(f'-A INPUT -p tcp -m tcp --dport {sshport} -j ACCEPT\n')
-            v6rules.append(f'-A INPUT -p tcp -m tcp --dport {web["ui_port"]} -j ACCEPT\n')
-            v6rules.append(f'-A INPUT -p tcp -m tcp --dport {web["ui_httpsport"]} -j ACCEPT\n')
+        return rules
 
-            # only block the VIPs because there is the possibility of
-            # running MPIO for iSCSI which uses the non-VIP addresses of
-            # each controller on an HA system. We, obviously, dont want
-            # to block traffic there.
-            for i in data['vips']:
-                if i['type'] == 'INET':
-                    v4rules.append(f'-A INPUT -s {i["address"]}/32 -j DROP\n')
-                elif i['type'] == 'INET6':
-                    v6rules.append(f'-A INPUT -d {i["address"]}/128 -j DROP\n')
+    async def generate_rules(self, data):
+        """
+        Generate a list of iptables and ip6tables rules.
+        """
 
-        # the final line to be written should be COMMIT so add it here
-        v4rules.append('COMMIT\n')
-        v6rules.append('COMMIT\n')
+        default_rules = await self.middleware.call('failover.firewall.generate_default_rules', data)
+
+        v4rules = copy.deepcopy(default_rules)
+        v6rules = copy.deepcopy(default_rules)
+
+        # only block the VIPs because there is the possibility of
+        # running MPIO for iSCSI which uses the non-VIP addresses of
+        # each controller on an HA system. We, obviously, dont want
+        # to block traffic there.
+        for i in data['vips']:
+            if i['type'] == 'INET':
+                v4rules.append(f'-A INPUT -s {i["address"]}/32 -j DROP')
+            elif i['type'] == 'INET6':
+                v6rules.append(f'-A INPUT -s {i["address"]}/128 -j DROP')
+
+        v4rules.append('COMMIT')
+        v6rules.append('COMMIT')
 
         return v4rules, v6rules
 
@@ -76,17 +72,19 @@ class IptablesService(Service):
 
         try:
             with open(V4_FILE, 'w+') as f:
-                f.writelines(v4rules)
+                # there must be a trailing newline in the file
+                f.write(''.join(f"{i}\n" for i in v4rules))
         except Exception as e:
             raise CallError(f'Failed writing {V4_FILE} with error {e}')
 
         try:
             with open(V6_FILE, 'w+') as f:
-                f.writelines(v6rules)
+                # there must be a trailing newline in the file
+                f.write(''.join(f"{i}\n" for i in v6rules))
         except Exception as e:
             raise CallError(f'Failed writing {V6_FILE} with error {e}')
 
-    def restore_files(self, v4rules, v6rules):
+    def restore_files(self):
 
         # load the v4 rules
         cmd = f'iptables-restore < {V4_FILE}'
@@ -131,7 +129,7 @@ class IptablesService(Service):
         await self.middleware.call('failover.firewall.write_files', v4rules, v6rules)
 
         # now restore the files from the appropriate file(s) and enable them in iptables
-        await self.middleware.call('failover.firewall.restore_files', v4rules, v6rules)
+        await self.middleware.call('failover.firewall.restore_files')
 
         return True
 
@@ -154,6 +152,6 @@ class IptablesService(Service):
         await self.middleware.call('failover.firewall.write_files', v4rules, v6rules)
 
         # now restore the files from the appropriate file(s) and enable them in iptables
-        await self.middleware.call('failover.firewall.restore_files', v4rules, v6rules)
+        await self.middleware.call('failover.firewall.restore_files')
 
         return True
