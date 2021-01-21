@@ -1,3 +1,4 @@
+import contextlib
 import libvirt
 
 from middlewared.service import CallError
@@ -26,7 +27,12 @@ class LibvirtConnectionMixin:
             self.LIBVIRT_CONNECTION = None
 
     def _is_connection_alive(self):
-        return self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive()
+        with contextlib.suppress(libvirt.libvirtError):
+            # We see isAlive call failed for a user in NAS-109072, it would be better
+            # if we handle this to ensure that system recognises libvirt  connection
+            # is no longer active and a new one should be initiated.
+            return self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive()
+        return False
 
     def _check_connection_alive(self):
         if not self._is_connection_alive():
