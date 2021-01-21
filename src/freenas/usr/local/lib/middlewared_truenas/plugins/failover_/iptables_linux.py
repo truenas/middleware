@@ -4,8 +4,8 @@ import subprocess
 import copy
 
 
-V4_FILE = '/data/v4-fw.rules'
-V6_FILE = '/data/v6-fw.rules'
+V4_FILE = '/tmp/v4-fw.rules'
+V6_FILE = '/tmp/v6-fw.rules'
 JOB_LOCK = 'firewall_rules_update'
 
 
@@ -73,14 +73,14 @@ class IptablesService(Service):
         try:
             with open(V4_FILE, 'w+') as f:
                 # there must be a trailing newline in the file
-                f.write(''.join(f"{i}\n" for i in v4rules))
+                f.write('\n'.join(v4rules) + '\n')
         except Exception as e:
             raise CallError(f'Failed writing {V4_FILE} with error {e}')
 
         try:
             with open(V6_FILE, 'w+') as f:
                 # there must be a trailing newline in the file
-                f.write(''.join(f"{i}\n" for i in v6rules))
+                f.write('\n'.join(v6rules) + '\n')
         except Exception as e:
             raise CallError(f'Failed writing {V6_FILE} with error {e}')
 
