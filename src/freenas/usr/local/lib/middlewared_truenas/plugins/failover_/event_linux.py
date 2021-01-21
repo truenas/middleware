@@ -490,9 +490,12 @@ class FailoverService(Service):
                     logger.info('Restarting critical service "%s"', i)
                     self.run_call('service.restart', i, self.HA_PROPAGATE)
 
-        # TODO: look at nftables
-        # logger.info('Allowing network traffic.')
-        # run('/sbin/pfctl -d')
+        logger.info('Allowing network traffic.')
+        try:
+            self.run_call('failover.firewall.accept_all')
+        except Exception:
+            # don't crash here
+            logger.error('Failed to allow network traffic', exc_info=True)
 
         logger.info('Critical portion of failover is now complete')
 
@@ -580,9 +583,12 @@ class FailoverService(Service):
         logger.info('Transitioning all VIPs off this node')
         self.run_call('service.restart', 'keepalived')
 
-        # TODO: look at nftables
-        # logger.info('Enabling firewall')
-        # run('/sbin/pfctl -ef /etc/pf.conf.block')
+        logger.info('Blocking network traffic')
+        try:
+            self.run_call('failover.firewall.drop_all')
+        except Exception:
+            # don't crash here
+            logger.error('Failed to block network traffic', exc_info=True)
 
         # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
         # TrueNAS HA, by design, has a triggered unclean shutdown.
