@@ -105,7 +105,8 @@ class IptablesService(Service):
     async def drop_all(self, job):
         """
         Drops (silently) all v4/v6 inbound traffic destined for the
-        VIP addresses on a TrueNAS SCALE HA system.
+        VIP addresses on a TrueNAS SCALE HA system. SSH and webUI
+        mgmt traffic is always allowed.
 
         NOTE:
             Do not call this unless you know what
@@ -137,8 +138,7 @@ class IptablesService(Service):
     @job(lock=JOB_LOCK)
     async def accept_all(self, job):
         """
-        Accepts all v4/v6 inbound traffic destined for the
-        VIP addresses on a TrueNAS SCALE HA system.
+        Accepts all v4/v6 inbound traffic.
         """
 
         if not await self.middleware.call('failover.licensed'):
