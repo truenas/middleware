@@ -491,11 +491,10 @@ class FailoverService(Service):
                     self.run_call('service.restart', i, self.HA_PROPAGATE)
 
         logger.info('Allowing network traffic.')
-        try:
-            self.run_call('failover.firewall.accept_all')
-        except Exception:
-            # don't crash here
-            logger.error('Failed to allow network traffic', exc_info=True)
+        fw_accept_job = self.run_call('failover.firewall.accept_all')
+        fw_accept_job.wait_sync()
+        if fw_accept_job.error:
+            logger.error(f'Error allowing network traffic: {fw_accept_job.error}')
 
         logger.info('Critical portion of failover is now complete')
 
@@ -577,18 +576,17 @@ class FailoverService(Service):
         logger.warning('Stopping fenced')
         self.run_call('failover.fenced.stop')
 
+        logger.info('Blocking network traffic.')
+        fw_drop_job = self.run_call('failover.firewall.drop_all')
+        fw_drop_job.wait_sync()
+        if fw_drop_job.error:
+            logger.error(f'Error allowing network traffic: {fw_drop_job.error}')
+
         # restarting keepalived sends a priority 0 advertisement
         # which means any VIP that is on this controller will be
         # migrated to the other controller
         logger.info('Transitioning all VIPs off this node')
         self.run_call('service.restart', 'keepalived')
-
-        logger.info('Blocking network traffic')
-        try:
-            self.run_call('failover.firewall.drop_all')
-        except Exception:
-            # don't crash here
-            logger.error('Failed to block network traffic', exc_info=True)
 
         # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
         # TrueNAS HA, by design, has a triggered unclean shutdown.

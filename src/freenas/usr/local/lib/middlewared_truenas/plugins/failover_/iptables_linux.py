@@ -1,7 +1,7 @@
-from middlewared.service import Service, accepts, job, CallError
-
 import subprocess
 import copy
+
+from middlewared.service import Service, accepts, job, CallError
 
 
 V4_FILE = '/tmp/v4-fw.rules'
@@ -20,13 +20,14 @@ class IptablesService(Service):
         Generate a list of default firewall rules.
         """
 
-        # this is always the first rule
-        rules = ['*filter']
-
-        # the positions of these are important
-        rules.insert(1, ':INPUT ACCEPT [0:0]')
-        rules.insert(2, ':FORWARD ACCEPT [0:0]')
-        rules.insert(3, ':OUTPUT ACCEPT [0:0]')
+        # this is always the beginning of the rules
+        # the order of these are important
+        rules = [
+            '*filter',
+            ':INPUT ACCEPT [0:0]',
+            ':FORWARD ACCEPT [0:0]',
+            ':OUTPUT ACCEPT [0:0]',
+        ]
 
         if data['drop']:
             # we always allow ssh and webUI access when limiting inbound
@@ -85,7 +86,6 @@ class IptablesService(Service):
             raise CallError(f'Failed writing {V6_FILE} with error {e}')
 
     def restore_files(self):
-
         # load the v4 rules
         cmd = f'iptables-restore < {V4_FILE}'
         p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True)
@@ -118,7 +118,10 @@ class IptablesService(Service):
             return False
 
         # get vips
-        vips = await self.middleware.call('interface.ip_in_use', {'static': True})
+        vips = []
+        for i in await self.middleware.call('interface.query'):
+            for j in i.get('failover_virtual_aliases', []):
+                vips.append(j)
         if not vips:
             raise CallError('No VIP addresses detected on system')
 
