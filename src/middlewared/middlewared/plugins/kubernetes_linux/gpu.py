@@ -42,7 +42,7 @@ GPU_CONFIG = {
                 'spec': {
                     'initContainers': [{
                         'name': 'intel-gpu-initcontainer',
-                        'image': 'intel/intel-gpu-initcontainer:devel',
+                        'image': 'intel/intel-gpu-initcontainer:0.19.0',
                         'imagePullPolicy': 'IfNotPresent', 'securityContext': {'readOnlyRootFilesystem': True},
                         'volumeMounts': [{
                             'mountPath': '/etc/kubernetes/node-feature-discovery/source.d/', 'name': 'nfd-source-hooks'
@@ -51,7 +51,8 @@ GPU_CONFIG = {
                     'containers': [{
                         'name': 'intel-gpu-plugin',
                         'env': [{'name': 'NODE_NAME', 'valueFrom': {'fieldRef': {'fieldPath': 'spec.nodeName'}}}],
-                        'image': 'intel/intel-gpu-plugin:devel', 'imagePullPolicy': 'IfNotPresent',
+                        'image': 'intel/intel-gpu-plugin:0.19.0',
+                        'imagePullPolicy': 'IfNotPresent',
                         'securityContext': {'readOnlyRootFilesystem': True},
                         'volumeMounts': [
                             {'name': 'devfs', 'mountPath': '/dev/dri', 'readOnly': True},
