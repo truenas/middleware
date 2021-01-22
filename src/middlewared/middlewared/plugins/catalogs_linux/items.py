@@ -126,7 +126,8 @@ class CatalogService(Service):
                 for gpu, quantity in self.middleware.call_sync('k8s.gpu.available_gpus').items():
                     data['attrs'].append({
                         'variable': gpu,
-                        'label': 'GPU Resource',
+                        'label': f'GPU Resource ({gpu})',
+                        'description': 'Please enter the number of GPUs to allocate',
                         'schema': {
                             'type': 'int',
                             'max': int(quantity),
