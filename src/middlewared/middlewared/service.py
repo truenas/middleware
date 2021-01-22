@@ -507,7 +507,7 @@ class CRUDService(ServiceChangeMixin, Service):
         """
         Helper method to get an instance from a collection given the `id`.
         """
-        instance = await self.middleware.call(f'{self._config.namespace}.query', [('id', '=', id)])
+        instance = await self.middleware.call(f'{self._config.namespace}.query', [['id', '=', id]])
         if not instance:
             raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
         return instance[0]
