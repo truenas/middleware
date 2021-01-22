@@ -31,6 +31,9 @@ class ChartReleaseService(CRUDService):
         in the chart namespace.
 
         `options.extra.history` is a boolean when set will retrieve all chart version upgrades for a chart release.
+
+        `options.extra.include_chart_schema` is a boolean when set will retrieve the schema being used by the chart release
+        in question.
         """
         if not await self.middleware.call('service.started', 'kubernetes'):
             # We use filter_list here to ensure that `options` are respected, options like get: true
@@ -60,6 +63,7 @@ class ChartReleaseService(CRUDService):
         k8s_node_ip = await self.middleware.call('kubernetes.node_ip')
         options = options or {}
         extra = copy.deepcopy(options.get('extra', {}))
+        retrieve_schema = extra.get('include_chart_schema')
         get_resources = extra.get('retrieve_resources')
         get_history = extra.get('history')
 
@@ -153,6 +157,16 @@ class ChartReleaseService(CRUDService):
             ).get(release_data['chart_metadata']['name'], parse_version(release_data['chart_metadata']['version']))
 
             release_data['update_available'] = latest_version > current_version
+
+            if retrieve_schema:
+                chart_path = os.path.join(release_data['path'], 'charts', release_data['chart_metadata']['version'])
+                if os.path.exists(chart_path):
+                    release_data['chart_schema'] = await self.middleware.call(
+                        'catalog.item_version_details', chart_path
+                    )
+                else:
+                    release_data['chart_schema'] = None
+
             release_data['container_images_update_available'] = any(
                 container_images.get(tag) for tag in release_resources['container_images']
             )
