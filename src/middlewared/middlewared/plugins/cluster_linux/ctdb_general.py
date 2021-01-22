@@ -17,19 +17,9 @@ class CtdbGeneralService(Service):
         command.insert(1, '-j')
 
         result = {}
-        parse_it = False
 
         cp = await run(command, check=False)
         if not cp.returncode:
-            parse_it = True
-        else:
-            # TODO: ctdb -j listnodes always has
-            # a returncode of 1. Once this is fixed
-            # remove the ugly `parse_it` hack
-            if 'listnodes' in command:
-                parse_it = True
-
-        if parse_it:
             try:
                 result = json.loads(cp.stdout)
             except Exception as e:
@@ -67,21 +57,20 @@ class CtdbGeneralService(Service):
         Return a list of nodes in the ctdb cluster.
         """
 
-        result = await self.middleware.call('ctdb.general.wrapper', ['listnodes'])
+        result = await self.middleware.call('ctdb.general.wrapper', ['listnodes', '-v'])
         return result['nodelist'] if result else result
 
-    @accepts(Bool('all', default=True))
+    @accepts(Dict(
+        'ctdb_ips',
+        Bool('all_nodes', default=True)
+    ))
     async def ips(self, data):
         """
         Return a list of public ip addresses in the ctdb cluster.
         """
-        return []
 
-        # TODO "ctdb ips" sub-command doesn't return json output
-        # so skip for now
-        # command = ['ips', 'all'] if data['all'] else ['ips']
-        # result = await self.middleware.call('ctdb.general.wrapper', command)
-        # return result['iplist'] if result else result
+        command = ['ip', 'all'] if data['all_nodes'] else ['ip']
+        return (await self.middleware.call('ctdb.general.wrapper', command))['public_ips']
 
     @accepts()
     async def healthy(self):
