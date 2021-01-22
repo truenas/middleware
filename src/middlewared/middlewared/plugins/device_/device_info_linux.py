@@ -96,7 +96,7 @@ class DeviceService(Service, DeviceInfoBase):
         # information is invalid. So cache the result here
         # so that we don't have to continually call this
         # method for every disk on the system
-        if self.HOST_TYPE is not None:
+        if self.HOST_TYPE is None:
             self.HOST_TYPE = self.middleware.call_sync('dmidecode.system_info')['system-manufacturer']
 
         lsblk_disks = {}
@@ -137,8 +137,7 @@ class DeviceService(Service, DeviceInfoBase):
             disk = libsgio.SCSIDevice(device_path)
             rotation_rate = disk.rotation_rate()
         except RuntimeError:
-            if self.HOST_TYPE != 'QEMU':
-                self.logger.error('Ioctl failed while retrieving rotational rate for disk %s', device_path)
+            self.logger.error('Ioctl failed while retrieving rotational rate for disk %s', device_path)
             return
 
         if rotation_rate in (0, 1):
@@ -176,7 +175,12 @@ class DeviceService(Service, DeviceInfoBase):
             # get type of disk and rotational rate (if HDD)
             disk['type'] = 'SSD' if not disk_data['rota'] else 'HDD'
             if disk['type'] == 'HDD':
-                disk['rotationrate'] = self.get_rotational_rate(device_path)
+                if self.HOST_TYPE == 'QEMU':
+                    # qemu/kvm guests do not support necessary ioctl for
+                    # retrieving rotational rate
+                    disk['rotationrate'] = None
+                else:
+                    disk['rotationrate'] = self.get_rotational_rate(device_path)
 
             # get model and serial
             disk['ident'] = disk['serial'] = (disk_data.get('serial') or '').strip()
