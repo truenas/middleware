@@ -74,4 +74,5 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
         self.vms[vm_name].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
 
     def _status(self, vm_name):
+        self._check_setup_connection()
         return self.vms[vm_name].status()
