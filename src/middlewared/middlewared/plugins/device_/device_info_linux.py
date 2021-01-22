@@ -22,6 +22,7 @@ VGA_CLASS_ID = '0300'
 class DeviceService(Service, DeviceInfoBase):
 
     GPU = None
+    HOST_TYPE = None
 
     def get_serials(self):
         devices = []
@@ -88,6 +89,16 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     def retrieve_disks_data(self):
 
+        # some disk information will fail to be retrived
+        # based on what type of guest this is. For example,
+        # if this a qemu/kvm guest, then rotation_rate is
+        # expected to fail since th ioctl to query that
+        # information is invalid. So cache the result here
+        # so that we don't have to continually call this
+        # method for every disk on the system
+        if self.HOST_TYPE is None:
+            self.HOST_TYPE = self.middleware.call_sync('dmidecode.system_info')['system-manufacturer']
+
         lsblk_disks = {}
         disks_cp = subprocess.run(
             ['lsblk', '-OJdb'],
@@ -125,11 +136,8 @@ class DeviceService(Service, DeviceInfoBase):
         try:
             disk = libsgio.SCSIDevice(device_path)
             rotation_rate = disk.rotation_rate()
-        except Exception as e:
-            self.logger.error(
-                'Failed to retrieve rotational rate '
-                'for disk %s with error: %r', device_path, e
-            )
+        except RuntimeError:
+            self.logger.error('Ioctl failed while retrieving rotational rate for disk %s', device_path)
             return
 
         if rotation_rate in (0, 1):
@@ -167,7 +175,12 @@ class DeviceService(Service, DeviceInfoBase):
             # get type of disk and rotational rate (if HDD)
             disk['type'] = 'SSD' if not disk_data['rota'] else 'HDD'
             if disk['type'] == 'HDD':
-                disk['rotationrate'] = self.get_rotational_rate(device_path)
+                if self.HOST_TYPE == 'QEMU':
+                    # qemu/kvm guests do not support necessary ioctl for
+                    # retrieving rotational rate
+                    disk['rotationrate'] = None
+                else:
+                    disk['rotationrate'] = self.get_rotational_rate(device_path)
 
             # get model and serial
             disk['ident'] = disk['serial'] = (disk_data.get('serial') or '').strip()
