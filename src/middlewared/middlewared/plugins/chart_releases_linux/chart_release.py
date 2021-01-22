@@ -32,8 +32,8 @@ class ChartReleaseService(CRUDService):
 
         `options.extra.history` is a boolean when set will retrieve all chart version upgrades for a chart release.
 
-        `options.extra.include_chart_schema` is a boolean when set will retrieve the schema being used by the chart release
-        in question.
+        `options.extra.include_chart_schema` is a boolean when set will retrieve the schema being used by
+        the chart release in question.
         """
         if not await self.middleware.call('service.started', 'kubernetes'):
             # We use filter_list here to ensure that `options` are respected, options like get: true
@@ -67,9 +67,15 @@ class ChartReleaseService(CRUDService):
         get_resources = extra.get('retrieve_resources')
         get_history = extra.get('history')
 
+        if filters and len(filters) == 1 and filters[0][:2] == ['id', '=']:
+            extra['namespace_filter'] = ['metadata.namespace', '=', f'{CHART_NAMESPACE_PREFIX}{filters[0][-1]}']
+            resources_filters = [extra['namespace_filter']]
+        else:
+            resources_filters = [['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]]
+
         ports_used = collections.defaultdict(list)
         for node_port_svc in await self.middleware.call(
-            'k8s.service.query', [['spec.type', '=', 'NodePort'], ['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]]
+            'k8s.service.query', [['spec.type', '=', 'NodePort']] + resources_filters
         ):
             release_name = node_port_svc['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
             ports_used[release_name].extend([
@@ -84,9 +90,7 @@ class ChartReleaseService(CRUDService):
         workload_status = collections.defaultdict(lambda: {'desired': 0, 'available': 0})
 
         for resource in Resources:
-            for r_data in await self.middleware.call(
-                f'k8s.{resource.name.lower()}.query', [['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]]
-            ):
+            for r_data in await self.middleware.call(f'k8s.{resource.name.lower()}.query', resources_filters):
                 release_name = r_data['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
                 resources[resource.value][release_name].append(r_data)
                 if resource in (Resources.DEPLOYMENT, Resources.STATEFULSET):
