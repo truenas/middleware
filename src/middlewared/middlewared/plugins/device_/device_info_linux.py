@@ -22,6 +22,7 @@ VGA_CLASS_ID = '0300'
 class DeviceService(Service, DeviceInfoBase):
 
     GPU = None
+    HOST_TYPE = None
 
     def get_serials(self):
         devices = []
@@ -88,6 +89,16 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     def retrieve_disks_data(self):
 
+        # some disk information will fail to be retrived
+        # based on what type of guest this is. For example,
+        # if this a qemu/kvm guest, then rotation_rate is
+        # expected to fail since th ioctl to query that
+        # information is invalid. So cache the result here
+        # so that we don't have to continually call this
+        # method for every disk on the system
+        if self.HOST_TYPE is not None:
+            self.HOST_TYPE = self.middleware.call_sync('dmidecode.system_info')['system-manufacturer']
+
         lsblk_disks = {}
         disks_cp = subprocess.run(
             ['lsblk', '-OJdb'],
@@ -122,21 +133,12 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     def get_rotational_rate(self, device_path):
 
-        host_type = self.middleware.call_sync('system.dmidecode_info')['system-manufacturer']
-
         try:
             disk = libsgio.SCSIDevice(device_path)
             rotation_rate = disk.rotation_rate()
         except RuntimeError:
-            # RuntimeError() means the ioctl failed
-            if host_type == 'QEMU':
-                # this is expected behavior on qemu/kvm guests
-                return
-            else:
-                self.logger.warning('Ioctl failed for %s', device_path)
-                return
-        except Exception:
-            self.logger.error('Failed to retrieve rotational rate for disk %s', device_path, exc_info=True)
+            if self.HOST_TYPE != 'QEMU':
+                self.logger.error('Ioctl failed while retrieving rotational rate for disk %s', device_path)
             return
 
         if rotation_rate in (0, 1):
