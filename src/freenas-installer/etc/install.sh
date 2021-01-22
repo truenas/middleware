@@ -394,7 +394,7 @@ videoconsole()
 
 mseries()
 {
-    dmidecode -s system-product-name | grep -i "TRUENAS-M" | grep -v "MINI"
+    dmidecode -s system-product-name | grep -iv "MINI" | grep -iq "TRUENAS-M"
 }
 
 save_serial_settings()
