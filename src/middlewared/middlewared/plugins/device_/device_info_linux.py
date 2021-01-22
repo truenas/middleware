@@ -122,18 +122,21 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     def get_rotational_rate(self, device_path):
 
+        host_type = self.middleware.call_sync('system.dmidecode_info')['system-manufacturer']
+
         try:
             disk = libsgio.SCSIDevice(device_path)
             rotation_rate = disk.rotation_rate()
         except RuntimeError:
-            # this means the ioctl failed which is
-            # expected on qemu/kvm guests
-            return
-        except Exception as e:
-            self.logger.error(
-                'Failed to retrieve rotational rate '
-                'for disk %s with error: %r', device_path, e
-            )
+            # RuntimeError() means the ioctl failed
+            if host_type == 'QEMU':
+                # this is expected behavior on qemu/kvm guests
+                return
+            else:
+                self.logger.warning('Ioctl failed for %s', device_path)
+                return
+        except Exception:
+            self.logger.error('Failed to retrieve rotational rate for disk %s', device_path, exc_info=True)
             return
 
         if rotation_rate in (0, 1):
