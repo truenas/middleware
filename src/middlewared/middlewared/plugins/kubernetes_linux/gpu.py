@@ -89,7 +89,10 @@ class KubernetesGPUService(Service):
         if not node_config['node_configured']:
             return {}
 
-        return {k: v for k, v in node_config['status']['capacity'].items() if k.endswith('/gpu')}
+        return {
+            k: v for k, v in node_config['status']['capacity'].items()
+            if k.endswith('/gpu') or k.startswith('gpu.intel')
+        }
 
     async def setup(self):
         try:

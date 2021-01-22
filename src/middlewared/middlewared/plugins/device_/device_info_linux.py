@@ -9,15 +9,12 @@ import libsgio
 
 from .device_info_base import DeviceInfoBase
 from middlewared.service import CallError, private, Service
-from middlewared.utils import run
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
 RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
 RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
-NVIDIA_PCI_ID = '10de::'
-VGA_CLASS_ID = '0300'
 
 
 class DeviceService(Service, DeviceInfoBase):
