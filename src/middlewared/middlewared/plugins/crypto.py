@@ -445,11 +445,12 @@ class CryptoKeyService(Service):
                 self.middleware.logger.error('Unable to parse extension: %s', e)
 
         dn = []
-        for k, v in obj.get_subject().get_components():
-            if k.decode() == 'subjectAltName':
-                continue
-
-            dn.append(f'{k.decode()}={v.decode()}')
+        subject = obj.get_subject()
+        for k in filter(
+            lambda k: k != 'subjectAltName' and hasattr(subject, k),
+            map(lambda v: v[0].decode(), subject.get_components())
+        ):
+            dn.append(f'{k}={getattr(subject, k)}')
 
         cert_info['DN'] = f'/{"/".join(dn)}'
 
