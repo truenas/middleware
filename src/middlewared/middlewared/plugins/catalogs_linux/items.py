@@ -127,7 +127,7 @@ class CatalogService(Service):
                     data['attrs'].append({
                         'variable': gpu,
                         'label': f'GPU Resource ({gpu})',
-                        'description': 'Please specify number of GPU\'s to allocate',
+                        'description': 'Please enter the number of GPUs to allocate',
                         'schema': {
                             'type': 'int',
                             'max': int(quantity),
