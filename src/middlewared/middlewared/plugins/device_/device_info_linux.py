@@ -125,6 +125,10 @@ class DeviceService(Service, DeviceInfoBase):
         try:
             disk = libsgio.SCSIDevice(device_path)
             rotation_rate = disk.rotation_rate()
+        except RuntimeError:
+            # this means the ioctl failed which is
+            # expected on qemu/kvm guests
+            return
         except Exception as e:
             self.logger.error(
                 'Failed to retrieve rotational rate '
