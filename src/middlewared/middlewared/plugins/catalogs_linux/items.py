@@ -131,6 +131,11 @@ class CatalogService(Service):
                         'schema': {
                             'type': 'int',
                             'max': int(quantity),
+                            'enum': [
+                                {'value': i, 'description': f'Allocate {i!r} {gpu} GPU'}
+                                for i in range(int(quantity) + 1)
+                            ],
+                            'default': 0,
                         }
                     })
             elif ref == 'definitions/timezone':
