@@ -97,7 +97,7 @@ class DeviceService(Service, DeviceInfoBase):
         # so that we don't have to continually call this
         # method for every disk on the system
         if self.HOST_TYPE is None:
-            self.HOST_TYPE = self.middleware.call_sync('dmidecode.system_info')['system-manufacturer']
+            self.HOST_TYPE = self.middleware.call_sync('system.dmidecode_info')['system-manufacturer']
 
         lsblk_disks = {}
         disks_cp = subprocess.run(
