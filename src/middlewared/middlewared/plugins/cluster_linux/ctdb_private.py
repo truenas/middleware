@@ -77,7 +77,7 @@ class CtdbPrivateIpService(CRUDService):
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
 
-        return await self.middlewware.call('ctdb.private.ips.query', [('address', '=', data['ip'])])
+        return await self.middleware.call('ctdb.private.ips.query', [('address', '=', data['ip'])])
 
     @accepts(
         Int('id'),
