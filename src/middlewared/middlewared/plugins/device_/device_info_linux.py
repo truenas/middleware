@@ -8,20 +8,18 @@ import json
 import libsgio
 
 from .device_info_base import DeviceInfoBase
-from middlewared.service import private, Service
-from middlewared.utils import run
+from middlewared.service import CallError, private, Service
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
 RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')
+RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
 RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
-NVIDIA_PCI_ID = '10de::'
-VGA_CLASS_ID = '0300'
 
 
 class DeviceService(Service, DeviceInfoBase):
 
-    GPU = None
+    GPUs = None
     HOST_TYPE = None
 
     def get_serials(self):
@@ -270,23 +268,48 @@ class DeviceService(Service, DeviceInfoBase):
                 }
         return topology
 
-    async def get_gpus(self):
+    def get_gpus(self):
 
-        if self.GPU:
-            return self.GPU
+        if self.GPUs:
+            return self.GPUs
 
-        not_available = {'available': False, 'vendor': None}
+        cp = subprocess.Popen(['lspci', '-D'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = cp.communicate()
+        if cp.returncode:
+            raise CallError(f'Unable to list available gpus: {stderr.decode()}')
 
-        # we only support nvidia GPUs at the moment
-        cmd = ['lspci', '-d', NVIDIA_PCI_ID + VGA_CLASS_ID]
-        vga = await run(cmd, check=False)
-        if vga.returncode:
-            self.logger.error('Unable to retrieve GPU details: %s', vga.stderr.decode())
-            return not_available
+        gpus = []
+        gpu_slots = [line.strip() for line in stdout.decode().splitlines() if 'VGA compatible controller' in line]
+        for gpu_line in gpu_slots:
+            addr = gpu_line.split()[0]
+            addr_re = RE_PCI_ADDR.match(addr)
 
-        if 'nvidia' in vga.stdout.decode().lower():
-            self.GPU = {'available': True, 'vendor': 'NVIDIA'}
-        else:
-            self.GPU = not_available
+            gpu_dev = pyudev.Devices.from_name(pyudev.Context(), 'pci', addr)
+            # Let's normalise vendor for consistency
+            vendor = None
+            vendor_id_from_db = gpu_dev.get('ID_VENDOR_FROM_DATABASE', '').lower()
+            if 'nvidia' in vendor_id_from_db:
+                vendor = 'NVIDIA'
+            elif 'intel' in vendor_id_from_db:
+                vendor = 'INTEL'
 
-        return self.GPU
+            gpus.append({
+                'addr': {
+                    'pci_slot': addr,
+                    **{k: addr_re.group(k) for k in ('domain', 'bus', 'slot')},
+                },
+                'description': gpu_line.split('VGA compatible controller:')[-1].split('(rev')[0].strip(),
+                'devices': [
+                    {
+                        'pci_id': child['PCI_ID'],
+                        'pci_slot': child['PCI_SLOT_NAME'],
+
+                    }
+                    for child in gpu_dev.parent.children if 'PCI_SLOT_NAME' in child and 'PCI_ID' in child
+                ],
+                'vendor': vendor,
+            })
+
+        self.GPUs = gpus
+
+        return self.GPUs
