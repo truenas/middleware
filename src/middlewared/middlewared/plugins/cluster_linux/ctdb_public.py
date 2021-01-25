@@ -95,7 +95,7 @@ class CtdbPublicIpService(CRUDService):
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
 
-        return data
+        return await self.middleware.call('ctdb.public.ips.query', [('public_ip', '=', data['ip'])])
 
     @accepts(
         Int('id'),
@@ -122,4 +122,4 @@ class CtdbPublicIpService(CRUDService):
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
 
-        return id
+        return await self.get_instance(id)
