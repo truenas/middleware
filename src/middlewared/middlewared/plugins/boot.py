@@ -118,12 +118,15 @@ class BootService(Service):
         # register the new disks capacity which increase the size of the pool
         await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
 
+        await self.middleware.call('boot.handle_initrd_zfs')
+
     @accepts(Str('dev'))
     async def detach(self, dev):
         """
         Detach given `dev` from boot pool.
         """
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
+        await self.middleware.call('boot.handle_initrd_zfs')
 
     @accepts(Str('label'), Str('dev'))
     async def replace(self, label, dev):
@@ -140,6 +143,7 @@ class BootService(Service):
         zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
         await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, zfs_dev_part['name'])
         await self.middleware.call('boot.install_loader', dev)
+        await self.middleware.call('boot.handle_initrd_zfs')
 
     @accepts()
     @job(lock='boot_scrub')
@@ -171,6 +175,11 @@ class BootService(Service):
         Get Automatic Scrub Interval value in days.
         """
         return (await self.middleware.call('system.advanced.config'))['boot_scrub']
+
+    @private
+    async def handle_initrd_zfs(self, update_initramfs_if_changes=True):
+        await run('/usr/local/bin/initrd-zfs.py', BOOT_POOL_NAME, '/', str(int(update_initramfs_if_changes)),
+                  encoding='utf8', errors='ignore')
 
 
 async def setup(middleware):
