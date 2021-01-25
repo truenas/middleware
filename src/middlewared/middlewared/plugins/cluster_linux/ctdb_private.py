@@ -33,7 +33,7 @@ class CtdbPrivateIpService(CRUDService):
         ips = []
         if self.middleware.call_sync('service.started', 'ctdb'):
             ips = self.middleware.call_sync('ctdb.general.listnodes')
-            ips = list(map(lambda i: dict(i, id=i['address']), ips))
+            ips = list(map(lambda i: dict(i, id=i['pnn']), ips))
         else:
             try:
                 shared_vol = Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
