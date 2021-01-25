@@ -29,6 +29,7 @@ if __name__ == "__main__":
     for dev in disks:
         if mapping.get(dev) == "usb":
             has_usb = True
+            break
 
     zfs_config_path = os.path.join(root, "etc/default/zfs")
     with open(zfs_config_path) as f:
@@ -40,9 +41,11 @@ if __name__ == "__main__":
     if has_usb:
         lines.append(f"{zfs_var_name}=15")
 
-    with open(zfs_config_path, "w") as f:
-        new_config = "\n".join(lines) + "\n"
-        f.write(new_config)
+    new_config = "\n".join(lines) + "\n"
 
-    if update_initramfs_if_changes == "1" and new_config != original_config:
-        subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
+    if new_config != original_config:
+        with open(zfs_config_path, "w") as f:
+            f.write(new_config)
+
+        if update_initramfs_if_changes == "1":
+            subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
