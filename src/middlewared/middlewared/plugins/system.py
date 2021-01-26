@@ -534,7 +534,7 @@ class SystemService(Service):
         """
         buildtime = sw_buildtime()
         if buildtime:
-            buildtime = datetime.fromtimestamp(int(buildtime)),
+            buildtime = datetime.fromtimestamp(int(buildtime))
 
         uptime = (await (await Popen(
             ['env', '-u', 'TZ', 'uptime'], stdout=subprocess.PIPE
