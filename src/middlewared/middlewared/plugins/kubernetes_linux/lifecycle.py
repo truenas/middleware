@@ -36,6 +36,7 @@ class KubernetesService(Service):
             if not node_config['node_configured']:
                 raise CallError(f'Unable to configure node: {node_config["error"]}')
             await self.post_start_internal()
+            await self.add_iptables_rules()
         except Exception as e:
             await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {'error': str(e)})
             raise
@@ -45,14 +46,14 @@ class KubernetesService(Service):
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
 
     @private
-    async def add_iptable_rules(self):
+    async def add_iptables_rules(self):
         for rule in await self.iptable_rules():
             cp = await run(['iptables', '-A'] + rule, check=False)
             if cp.returncode:
                 self.logger.error('Failed to append %s iptable rule to isolate kubernetes', ', '.join(rule))
 
     @private
-    async def remove_iptable_rules(self):
+    async def remove_iptables_rules(self):
         for rule in await self.iptable_rules():
             cp = await run(['iptables', '-D'] + rule, check=False)
             if cp.returncode:
