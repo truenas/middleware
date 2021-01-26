@@ -744,6 +744,12 @@ class SharingSMBService(SharingService):
         datastore_extend = 'sharing.smb.extend'
 
     @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        return await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets', data[self.path_field], locked_datasets
+        ) if data[self.path_field] else False
+
+    @private
     async def strip_comments(self, data):
         parsed_config = ""
         for entry in data['auxsmbconf'].splitlines():
