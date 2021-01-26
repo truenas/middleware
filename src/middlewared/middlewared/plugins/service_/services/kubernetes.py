@@ -39,3 +39,4 @@ class KubernetesService(SimpleService):
         # This is necessary to ensure that docker umounts datasets and shuts down cleanly
         await asyncio.sleep(5)
         await self.middleware.call('k8s.cni.cleanup_cni')
+        await self.middleware.call('kubernetes.remove_iptables_rules')

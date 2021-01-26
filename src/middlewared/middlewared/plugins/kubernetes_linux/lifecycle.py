@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 
 from middlewared.service import CallError, private, Service
+from middlewared.utils import run
 
 START_LOCK = asyncio.Lock()
 
@@ -35,6 +36,7 @@ class KubernetesService(Service):
             if not node_config['node_configured']:
                 raise CallError(f'Unable to configure node: {node_config["error"]}')
             await self.post_start_internal()
+            await self.add_iptables_rules()
         except Exception as e:
             await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {'error': str(e)})
             raise
@@ -42,6 +44,33 @@ class KubernetesService(Service):
             asyncio.ensure_future(self.middleware.call('k8s.event.setup_k8s_events'))
             await self.middleware.call('chart.release.refresh_events_state')
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
+
+    @private
+    async def add_iptables_rules(self):
+        for rule in await self.iptable_rules():
+            cp = await run(['iptables', '-A'] + rule, check=False)
+            if cp.returncode:
+                self.logger.error('Failed to append %s iptable rule to isolate kubernetes', ', '.join(rule))
+
+    @private
+    async def remove_iptables_rules(self):
+        for rule in await self.iptable_rules():
+            cp = await run(['iptables', '-D'] + rule, check=False)
+            if cp.returncode:
+                self.logger.error('Failed to delete %s iptable rule', ', '.join(rule))
+
+    @private
+    async def iptable_rules(self):
+        node_ip = await self.middleware.call('kubernetes.node_ip')
+        if node_ip in ('0.0.0.0', '::'):
+            # This shouldn't happen but if it does, we don't add iptables in this case
+            # Even if user selects 0.0.0.0, k8s is going to auto select a node ip in this case
+            return []
+
+        return [
+            ['INPUT', '-p', 'tcp', '-s', f'{node_ip},localhost', '--dport', '6443', '-j', 'ACCEPT'],
+            ['INPUT', '-p', 'tcp', '--dport', '6443', '-j', 'DROP'],
+        ]
 
     @private
     async def post_start_internal(self):
