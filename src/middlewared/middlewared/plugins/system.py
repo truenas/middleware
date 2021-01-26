@@ -670,7 +670,7 @@ class SystemService(Service):
         """
         buildtime = sw_buildtime()
         if buildtime:
-            buildtime = datetime.fromtimestamp(int(buildtime)),
+            buildtime = datetime.fromtimestamp(int(buildtime))
 
         time_info = await self.middleware.call('system.time_info')
         dmidecode = await self.middleware.call('system.dmidecode_info')
