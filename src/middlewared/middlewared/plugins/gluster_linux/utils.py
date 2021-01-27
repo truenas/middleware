@@ -1,10 +1,6 @@
 import enum
 import os
 
-from middlewared.service import CallError
-from glustercli.cli.utils import GlusterCmdException
-
-
 class GlusterConfig(enum.Enum):
 
     """
@@ -34,26 +30,3 @@ class GlusterConfig(enum.Enum):
     # they automatically get written to a json formatted
     # file here
     WEBHOOKS_FILE = os.path.join(WORKDIR, 'events/webhooks.json')
-
-
-def run_method(func, *args, **kwargs):
-
-    result = b''
-
-    try:
-        result = func(*args, **kwargs)
-    except GlusterCmdException as e:
-        # gluster cli binary will return stderr to stdout
-        # and vice versa depending on the failure.
-        rc, out, err = e.args[0]
-        err = err if err else out
-        if isinstance(err, bytes):
-            err = err.decode()
-        raise CallError(f'{err.strip()}')
-    except Exception:
-        raise
-
-    if isinstance(result, bytes):
-        return result.decode().strip()
-
-    return result
