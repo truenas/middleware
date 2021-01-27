@@ -16,7 +16,7 @@ class CtdbPrivateIpService(CRUDService):
         namespace = 'ctdb.private.ips'
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         # logic is as follows:
         #   1. if ctdb daemon is started
         #       ctdb just reads the /etc private ip file and loads

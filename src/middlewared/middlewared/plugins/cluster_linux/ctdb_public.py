@@ -16,7 +16,7 @@ class CtdbPublicIpService(CRUDService):
         namespace = 'ctdb.public.ips'
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         # logic is as follows:
         #   1. if ctdb daemon is started
         #       ctdb just reads the /etc public ip file and loads
