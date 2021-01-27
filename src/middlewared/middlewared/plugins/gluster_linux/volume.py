@@ -16,7 +16,7 @@ class GlusterVolumeService(CRUDService):
         namespace = 'gluster.volume'
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         vols = []
         if await self.middleware.call('service.started', 'glusterd'):
             method = volume.status_detail

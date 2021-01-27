@@ -29,7 +29,7 @@ class GlusterMethodService(Service):
             err = err if err else out
             if isinstance(err, bytes):
                 err = err.decode()
-            raise CallError(f'{err.strip()}')
+            raise CallError(err.strip())
         except Exception:
             raise
 

@@ -1,7 +1,8 @@
+import subprocess
 import xml.etree.ElementTree as ET
 from glustercli.cli import peer
 
-from middlewared.utils import filter_list, run
+from middlewared.utils import filter_list
 from middlewared.schema import Dict, Str, Bool
 from middlewared.service import (accepts, private, job, filterable,
                                  CallError, CRUDService)
@@ -17,7 +18,7 @@ class GlusterPeerService(CRUDService):
         namespace = 'gluster.peer'
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         peers = []
         if await self.middleware.call('service.started', 'glusterd'):
             peers = await self.middleware.call('gluster.peer.status')
@@ -26,7 +27,7 @@ class GlusterPeerService(CRUDService):
         return filter_list(peers, filters, options)
 
     @private
-    async def _parse_peer(self, p):
+    def parse_peer(self, p):
         data = {
             'uuid': p.find('uuid').text,
             'hostname': p.find('hostname').text,
@@ -41,11 +42,11 @@ class GlusterPeerService(CRUDService):
         return data
 
     @private
-    async def _parse_peer_status_xml(self, data):
+    def parse_peer_status_xml(self, data):
         peers = []
         for _ in data.findall('peerStatus/peer'):
             try:
-                peers.append(await self._parse_peer(_))
+                peers.append(self.parse_peer(_))
             except Exception as e:
                 raise CallError(
                     f'Failed parsing peer information with error: {e}'
@@ -84,14 +85,14 @@ class GlusterPeerService(CRUDService):
         'peer_status',
         Bool('localhost', default=True),
     ))
-    async def status(self, data):
+    def status(self, data):
         """
         List the status of peers in the Trusted Storage Pool.
 
         `localhost` Boolean if True, include localhost else exclude localhost
         """
 
-        peers = await self.middleware.call('gluster.method.run', peer.status)
+        peers = self.middleware.call_sync('gluster.method.run', peer.status)
         if not data['localhost']:
             return peers
 
@@ -104,21 +105,22 @@ class GlusterPeerService(CRUDService):
         # running it on the `remote_node` so that we can get 2 different
         # "views" of the peers in the TSP.
         command = ['gluster', f'--remote-host={remote_node}', 'peer', 'status', '--xml']
-        cp = await run(command, check=False)
+        cp = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True
+        )
         if cp.returncode:
             # the gluster cli utility will return stderr
             # to stdout and vice versa on certain failures.
-            # account for this and decode appropriately
+            # account for this
             err = cp.stderr if cp.stderr else cp.stdout
-            if isinstance(err, bytes):
-                err = err.decode()
-            raise CallError(
-                f'Failed running remote peer status with error: {err.strip()}'
-            )
+            raise CallError(f'Failed running remote peer status with error: {err.strip()}')
 
         # build our data structure by parsing the xml
-        remote_local_view = ET.fromstring(cp.stdout.decode())
-        remote_local_view = await self._parse_peer_status_xml(remote_local_view)
+        remote_local_view = ET.fromstring(cp.stdout)
+        remote_local_view = self.parse_peer_status_xml(remote_local_view)
 
         # this should only ever produce 1 entry
         our_ip = [i for i in remote_local_view if i not in peers]

@@ -91,7 +91,7 @@ class CtdbSharedVolumeService(Service):
         mount_job = await self.middleware.call('ctdb.shared.volume.mount')
         await mount_job.wait(raise_error=True)
 
-        return await self.middleware.call('gluster.volume.query', [('id', '=', CTDB_VOL_NAME)])
+        return await self.get_instance(CTDB_VOL_NAME)
 
     @job(lock=CRE_OR_DEL_LOCK)
     async def delete(self, job):
