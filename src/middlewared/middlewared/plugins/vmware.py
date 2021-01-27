@@ -321,7 +321,7 @@ class VMWareService(CRUDService):
                         'local': host_mount_info.volume.local,
                         'ssd': host_mount_info.volume.ssd
                     }
-                elif host_mount_info.volume.type == 'NFS':
+                elif host_mount_info.volume.type in ('NFS', 'NFS41'):
                     datastores[host_mount_info.volume.name] = {
                         'type': host_mount_info.volume.type,
                         'capacity': host_mount_info.volume.capacity,
@@ -330,7 +330,7 @@ class VMWareService(CRUDService):
                         'remote_hostnames': host_mount_info.volume.remoteHostNames,
                         'username': host_mount_info.volume.userName,
                     }
-                elif host_mount_info.volume.type in ('other', 'VFFS'):
+                elif host_mount_info.volume.type in ('other', 'OTHER', 'VFFS'):
                     # Ignore VFFS type, it does not store VM's
                     # Ignore other type, it does not seem to be meaningful
                     pass
