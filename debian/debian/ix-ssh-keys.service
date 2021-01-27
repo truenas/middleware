@@ -4,6 +4,7 @@ After=ssh.service
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=midclt call ssh.save_keys
 
 [Install]

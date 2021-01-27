@@ -9,6 +9,7 @@ Before=local-fs.target
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=midclt call -job initshutdownscript.execute_init_tasks PREINIT
 StandardOutput=null
 StandardError=null

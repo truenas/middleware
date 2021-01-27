@@ -7,6 +7,7 @@ Before=ix-etc.service
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=midclt call --job true --job-print description disk.sync_all
 StandardOutput=null
 
