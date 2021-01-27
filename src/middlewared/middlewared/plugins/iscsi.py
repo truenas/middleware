@@ -339,8 +339,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
         Int('tag', required=True),
         Str('user', required=True),
         Str('secret', required=True),
-        Str('peeruser'),
-        Str('peersecret'),
+        Str('peeruser', default=''),
+        Str('peersecret', default=''),
         register=True
     ))
     async def do_create(self, data):
