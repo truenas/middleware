@@ -18,7 +18,7 @@ default_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 community_repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
 custom_community_repos_url = 'https://github.com/ericbsd/iocage-plugin-index.git'
 
-if not scale or not ha:
+if not scale and not ha:
     PUT("/ssh/", {"rootlogin": True}, controller_a=ha)
     POST("/service/start/", {"service": "ssh"}, controller_a=ha)
     ssh_cmd = "uname -r | cut -d '-' -f1"
