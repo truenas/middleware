@@ -578,13 +578,13 @@ class LDAPService(ConfigService):
 
         try:
             await self.middleware.call('ldap.validate_credentials', data)
-        except Exception as e:
+        except CallError as e:
             await self.convert_ldap_err_to_verr(data, e, verrors)
             return
 
         try:
             ldap_has_samba_schema = True if (await self.middleware.call('ldap.get_workgroup', data)) else False
-        except Exception as e:
+        except CallError as e:
             await self.convert_ldap_err_to_verr(data, e, verrors)
 
         if data['has_samba_schema'] and not ldap_has_samba_schema:
@@ -762,13 +762,13 @@ class LDAPService(ConfigService):
     @private
     def validate_credentials(self, ldap_config=None):
         ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "validate_credentials", None)
-        ret = ldap_job.wait_sync()
+        ret = ldap_job.wait_sync(raise_error=True)
         return ret
 
     @private
     def get_samba_domains(self, ldap_config=None):
         ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_samba_domains", None)
-        ret = ldap_job.wait_sync()
+        ret = ldap_job.wait_sync(raise_error=True)
         return ret
 
     @private
@@ -794,7 +794,7 @@ class LDAPService(ConfigService):
         In practice, this full data is not returned from many LDAP servers
         """
         ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_root_DSE", None)
-        ret = ldap_job.wait_sync()
+        ret = ldap_job.wait_sync(raise_error=True)
         return ret
 
     @private
@@ -803,7 +803,7 @@ class LDAPService(ConfigService):
         Outputs contents of specified DN in JSON. By default will target the basedn.
         """
         ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_dn", dn)
-        ret = ldap_job.wait_sync()
+        ret = ldap_job.wait_sync(raise_error=True)
         return ret
 
     @private
