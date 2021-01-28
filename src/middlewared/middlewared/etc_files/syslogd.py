@@ -221,8 +221,8 @@ def configure_syslog(middleware):
 
         return
 
-    log_path = os.path.join(systemdataset["path"], f"syslog-{systemdataset['uuid']}")
-    if os.path.exists(os.path.join(log_path, "log")):
+    log_path = os.path.join(systemdataset["path"], f"syslog-{systemdataset['uuid']}", "log")
+    if os.path.exists(log_path):
         # log directory exists, pick up any new files or
         # directories and create them. Existing files will be
         # appended. This is done this way so that ownership and
@@ -230,7 +230,7 @@ def configure_syslog(middleware):
 
         if not os.path.islink("/var/log"):
             for item in os.listdir("/var/log"):
-                dst = os.path.join(log_path, "log", item)
+                dst = os.path.join(log_path, item)
                 item = os.path.join("/var/log", item)
 
                 if os.path.isdir(item):
@@ -249,15 +249,22 @@ def configure_syslog(middleware):
     else:
         # This is the first time syslog is going to log to this
         # directory, so create the log directory and sync files.
-        shutil.copytree("/conf/base/var/log", os.path.join(log_path, "log"))
-        os.chmod(os.path.join(log_path, "log"), 0o755)
-        os.chown(os.path.join(log_path, "log"), 0, 0)
-        subprocess.run(f"rsync -avz /var/log/* {shlex.quote(log_path + '/log/')}", shell=True,
+        shutil.copytree("/conf/base/var/log", log_path)
+        os.chmod(log_path, 0o755)
+        os.chown(log_path, 0, 0)
+        subprocess.run(f"rsync -avz /var/log/* {shlex.quote(log_path + '/')}", shell=True,
                        stdout=subprocess.DEVNULL)
 
-    if not os.path.islink("/var/log") or not os.path.realpath("/var/log"):
-        os.rename("/var/log", "/var/log." + datetime.now().strftime("%Y%m%d%H%M%S"))
-        os.symlink(os.path.join(log_path, "log"), "/var/log")
+    symlink = False
+    if os.path.islink("/var/log"):
+        if os.readlink("/var/log") != log_path:
+            os.unlink("/var/log")
+            symlink = True
+    else:
+        shutil.rmtree("/var/log")
+        symlink = True
+    if symlink:
+        os.symlink(log_path, "/var/log")
 
     # Let's make sure that the permissions for directories/files in /var/log
     # reflect that of /conf/base/var/log
