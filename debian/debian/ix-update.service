@@ -6,6 +6,7 @@ Before=middlewared.service
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=ix-update
 
 [Install]

@@ -9,6 +9,7 @@ Before=local-fs.target
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 TimeoutStartSec=300
 ExecStart=midclt call -job certificate.dhparam_setup
 ExecStart=midclt call etc.generate_checkpoint initial
