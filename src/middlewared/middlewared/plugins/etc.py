@@ -256,6 +256,15 @@ class EtcService(Service):
         'smb_share': [
             {'type': 'mako', 'path': 'local/smb4_share.conf', 'checkpoint': 'pool_import'},
         ],
+        'ctdb': [
+            {
+                'type': 'mako',
+                'path': 'ctdb/ctdb.conf',
+                'checkpoint': 'pool_import',
+                'local_path': 'ctdb.conf',
+                'platform': 'Linux',
+            },
+        ],
         'snmpd': [
             {'type': 'mako', 'path': 'local/snmpd.conf' if osc.IS_FREEBSD else 'snmp/snmpd.conf',
              'local_path': 'local/snmpd.conf'},
