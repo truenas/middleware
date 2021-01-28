@@ -8,7 +8,7 @@ class DiskEncryptionBase(ServicePartBase):
         Str('passphrase', null=True, default=None, private=True),
     )
     @job(pipes=['input'])
-    def decrypt(self, job, devices, passphrase=None):
+    def decrypt(self, job, devices, passphrase):
         """
         Decrypt `devices` using uploaded encryption key
         """

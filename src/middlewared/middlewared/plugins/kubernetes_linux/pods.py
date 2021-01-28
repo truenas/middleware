@@ -11,7 +11,7 @@ class KubernetesPodService(CRUDService):
         private = True
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         options = options or {}
         label_selector = options.get('extra', {}).get('label_selector')
         kwargs = {k: v for k, v in [('label_selector', label_selector)] if v}

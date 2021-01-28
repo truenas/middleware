@@ -47,6 +47,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         namespace = 'vm'
         datastore = 'vm.vm'
         datastore_extend = 'vm.extend_vm'
+        cli_namespace = 'service.vm'
 
     @accepts()
     async def bootloader_options(self):
@@ -76,7 +77,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('memory', required=True),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
         Str('grubconfig', null=True),
-        List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
+        List('devices', items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         Int('shutdown_timeout', default=90, valdiators=[Range(min=5, max=300)]),

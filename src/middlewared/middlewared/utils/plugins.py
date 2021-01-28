@@ -113,6 +113,9 @@ class LoadPluginsMixin(object):
             else:
                 service = CompoundService(self, [part(self) for part in parts])
 
+            if not service._config.private and not service._config.cli_private and not service._config.cli_namespace:
+                raise RuntimeError(f'Service {service!r} does not have CLI namespace set')
+
             self.add_service(service)
 
         if on_modules_loaded:

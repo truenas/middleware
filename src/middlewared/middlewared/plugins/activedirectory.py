@@ -272,6 +272,7 @@ class ActiveDirectoryService(ConfigService):
         datastore = 'directoryservice.activedirectory'
         datastore_extend = "activedirectory.ad_extend"
         datastore_prefix = "ad_"
+        cli_namespace = "directory_service.activedirectory"
 
     @private
     async def ad_extend(self, ad):

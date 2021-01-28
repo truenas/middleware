@@ -16,6 +16,7 @@ class GlusterPeerService(CRUDService):
 
     class Config:
         namespace = 'gluster.peer'
+        cli_namespace = 'service.gluster.peer'
 
     @filterable
     async def query(self, filters, options):

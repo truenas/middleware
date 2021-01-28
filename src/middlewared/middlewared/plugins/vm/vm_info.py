@@ -154,7 +154,7 @@ class VMService(Service):
 
     @accepts(Int('id'), Str('host', default=''))
     @pass_app()
-    async def get_vnc_web(self, app, id, host=None):
+    async def get_vnc_web(self, app, id, host):
         """
             Get the VNC URL from a given VM.
 

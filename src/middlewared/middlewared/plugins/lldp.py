@@ -16,6 +16,7 @@ class LLDPService(SystemServiceService):
     class Config:
         service = 'lldp'
         datastore_prefix = 'lldp_'
+        cli_namespace = 'service.lldp'
 
     @accepts()
     async def country_choices(self):

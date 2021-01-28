@@ -538,6 +538,8 @@ class CredentialsService(CRUDService):
 
         datastore = "system.cloudcredentials"
 
+        cli_namespace = "task.cloud_sync.credential"
+
     @accepts(Dict(
         "cloud_sync_credentials_verify",
         Str("provider", required=True),
@@ -683,9 +685,10 @@ class CloudSyncService(TaskPathService):
     class Config:
         datastore = "tasks.cloudsync"
         datastore_extend = "cloudsync.extend"
+        cli_namespace = "task.cloud_sync"
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         """
         Query all Cloud Sync Tasks with `query-filters` and `query-options`.
         """
@@ -851,10 +854,10 @@ class CloudSyncService(TaskPathService):
         ),
         Bool("follow_symlinks", default=False),
         Int("transfers", null=True, default=None, validators=[Range(min=1)]),
-        List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
-                                                Str("time", validators=[Time()]),
-                                                Int("bandwidth", validators=[Range(min=1)], null=True))]),
-        List("exclude", default=[], items=[Str("path", empty=False)]),
+        List("bwlimit", items=[Dict("cloud_sync_bwlimit",
+                                    Str("time", validators=[Time()]),
+                                    Int("bandwidth", validators=[Range(min=1)], null=True))]),
+        List("exclude", items=[Str("path", empty=False)]),
         Dict("attributes", additional_attrs=True, required=True),
         Bool("snapshot", default=False),
         Str("pre_script", default="", max_length=None),

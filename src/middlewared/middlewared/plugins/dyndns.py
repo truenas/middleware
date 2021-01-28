@@ -26,6 +26,7 @@ class DynDNSService(SystemServiceService):
         service = "dynamicdns"
         datastore_extend = "dyndns.dyndns_extend"
         datastore_prefix = "ddns_"
+        cli_namespace = "service.dyndns"
 
     @private
     async def dyndns_extend(self, dyndns):

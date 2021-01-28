@@ -14,6 +14,7 @@ class GlusterVolumeService(CRUDService):
 
     class Config:
         namespace = 'gluster.volume'
+        cli_namespace = 'service.gluster.volume'
 
     @filterable
     async def query(self, filters, options):

@@ -4,7 +4,7 @@ from middlewared.service import Service
 
 
 class EC2Service(Service):
-    class Meta:
+    class Config:
         private = True
 
     def instance_id(self):

@@ -176,7 +176,8 @@ class IdmapDomainService(CRUDService):
         datastore = 'directoryservice.idmap_domain'
         datastore_prefix = 'idmap_domain_'
         namespace = 'idmap'
-        datastore_extend = f'{namespace}.idmap_extend'
+        datastore_extend = 'idmap.idmap_extend'
+        cli_namespace = 'directory_service.idmap'
 
     @private
     async def idmap_extend(self, data):

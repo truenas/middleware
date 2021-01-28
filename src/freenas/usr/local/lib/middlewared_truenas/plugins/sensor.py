@@ -13,6 +13,10 @@ from middlewared.utils import filter_list, run
 
 
 class SensorService(Service):
+
+    class Config:
+        cli_namespace = "system.sensor"
+
     @filterable
     async def query(self, filters, options):
         dmidecode_info = await self.middleware.call('system.dmidecode_info')

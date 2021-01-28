@@ -40,6 +40,7 @@ class VMDeviceService(CRUDService):
         namespace = 'vm.device'
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
+        cli_namespace = 'service.vm.device'
 
     @private
     async def create_resource(self, device, old=None):

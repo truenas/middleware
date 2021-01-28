@@ -142,6 +142,9 @@ def common_validation(middleware, options, update=False, jail=None, schema='opti
 
 class PluginService(CRUDService):
 
+    class Config:
+        cli_private = True
+
     @accepts()
     async def official_repositories(self):
         """
@@ -168,7 +171,7 @@ class PluginService(CRUDService):
         return self.middleware.call_sync('plugin.official_repositories')['IXSYSTEMS']['git_repository']
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         """
         Query installed plugins with `query-filters` and `query-options`.
         """
@@ -214,7 +217,7 @@ class PluginService(CRUDService):
             'plugin_create',
             Str('plugin_name', required=True),
             Str('jail_name', required=True),
-            List('props', default=[]),
+            List('props'),
             Str('branch', default=None, null=True),
             Str('plugin_repository', empty=False),
         )
@@ -693,6 +696,9 @@ class PluginService(CRUDService):
 
 class JailService(CRUDService):
 
+    class Config:
+        cli_private = True
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -700,7 +706,7 @@ class JailService(CRUDService):
         os.environ['IOCAGE_DEBUG'] = 'TRUE'
 
     @filterable
-    def query(self, filters=None, options=None):
+    def query(self, filters, options):
         """
         Query all jails with `query-filters` and `query-options`.
         """
@@ -811,12 +817,12 @@ class JailService(CRUDService):
             "options",
             Str("release", required=True),
             Str("template"),
-            List("pkglist", default=[], items=[Str("pkg", empty=False)]),
+            List("pkglist", items=[Str("pkg", empty=False)]),
             Str("uuid", required=True),
             Bool("basejail", default=False),
             Bool("empty", default=False),
             Bool("short", default=False),
-            List("props", default=[]),
+            List("props"),
             Bool('https', default=True)
         )
     )
@@ -912,9 +918,9 @@ class JailService(CRUDService):
         Dict(
             'clone_jail',
             Str('uuid', required=True, empty=False),
-            List('pkglist', default=[], items=[Str('pkg', empty=False)]),
+            List('pkglist', items=[Str('pkg', empty=False)]),
             Bool('thickjail', default=False),
-            List('props', default=[]),
+            List('props'),
         )
     )
     @job(lock=lambda args: f'clone_jail:{args[0]}')
@@ -1088,7 +1094,7 @@ class JailService(CRUDService):
             Str('jail_name'),
             Bool('accept', default=True),
             Bool('https', default=True),
-            List('props', default=[]),
+            List('props'),
             List(
                 'files',
                 default=['MANIFEST', 'base.txz', 'lib32.txz', 'doc.txz']

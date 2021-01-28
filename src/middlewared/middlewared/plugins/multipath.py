@@ -11,6 +11,9 @@ from middlewared.utils import filter_list, osc
 
 class MultipathService(CRUDService):
 
+    class Config:
+        cli_namespace = "storage.multipath"
+
     @filterable
     def query(self, filters, options):
         """

@@ -10,7 +10,7 @@ import json
 import os
 
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import job, private, Service
+from middlewared.service import cli_private, job, private, Service
 import middlewared.sqlalchemy as sa
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
@@ -44,7 +44,11 @@ class TruenasCustomerInformationModel(sa.Model):
 
 class TrueNASService(Service):
 
+    class Config:
+        cli_namespace = "system.truenas"
+
     @accepts()
+    @cli_private
     async def get_chassis_hardware(self):
         """
         Returns what type of hardware this is, detected from dmidecode.
@@ -99,6 +103,7 @@ class TrueNASService(Service):
         return 'TRUENAS-UNKNOWN'
 
     @accepts()
+    @cli_private
     def get_eula(self):
         """
         Returns the TrueNAS End-User License Agreement (EULA).
@@ -109,6 +114,7 @@ class TrueNASService(Service):
             return f.read()
 
     @accepts()
+    @cli_private
     async def is_eula_accepted(self):
         """
         Returns whether the EULA is accepted or not.

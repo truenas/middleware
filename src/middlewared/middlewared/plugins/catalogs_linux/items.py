@@ -14,6 +14,9 @@ ITEM_KEYS = ['icon_url']
 
 class CatalogService(Service):
 
+    class Config:
+        cli_namespace = 'app.catalog'
+
     @accepts(
         Str('label'),
         Dict(

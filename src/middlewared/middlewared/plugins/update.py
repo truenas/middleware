@@ -98,6 +98,9 @@ class UpdateModel(sa.Model):
 
 class UpdateService(Service):
 
+    class Config:
+        cli_namespace = 'system.update'
+
     @accepts()
     async def get_auto_download(self):
         """
@@ -198,7 +201,7 @@ class UpdateService(Service):
         Str('train', required=False),
         required=False,
     ))
-    def check_available(self, attrs=None):
+    def check_available(self, attrs):
         """
         Checks if there is an update available from update server.
 
@@ -256,7 +259,7 @@ class UpdateService(Service):
         return self.middleware.call_sync('update.check_train', train)
 
     @accepts(Str('path', null=True, default=None))
-    async def get_pending(self, path=None):
+    async def get_pending(self, path):
         """
         Gets a list of packages already downloaded and ready to be applied.
         Each entry of the lists consists of type of operation and name of it, e.g.
@@ -278,12 +281,10 @@ class UpdateService(Service):
         required=False,
     ))
     @job(lock='update')
-    async def update(self, job, attrs=None):
+    async def update(self, job, attrs):
         """
         Downloads (if not already in cache) and apply an update.
         """
-        attrs = attrs or {}
-
         trains = await self.middleware.call('update.get_trains')
         train = attrs.get('train') or trains['selected']
 

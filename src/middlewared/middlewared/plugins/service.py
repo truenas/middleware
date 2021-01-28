@@ -23,8 +23,11 @@ class ServiceModel(sa.Model):
 
 class ServiceService(CRUDService):
 
+    class Config:
+        cli_namespace = "service"
+
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         """
         Query all system services with `query-filters` and `query-options`.
         """
@@ -168,7 +171,7 @@ class ServiceService(CRUDService):
         Str('service'),
         Ref('service-control'),
     )
-    async def restart(self, service, options=None):
+    async def restart(self, service, options):
         """
         Restart the service specified by `service`.
         """
@@ -222,7 +225,7 @@ class ServiceService(CRUDService):
         Str('service'),
         Ref('service-control'),
     )
-    async def reload(self, service, options=None):
+    async def reload(self, service, options):
         """
         Reload the service specified by `service`.
         """

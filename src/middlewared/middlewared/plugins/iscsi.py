@@ -61,6 +61,7 @@ class ISCSIPortalService(CRUDService):
         datastore_extend = 'iscsi.portal.config_extend'
         datastore_prefix = 'iscsi_target_portal_'
         namespace = 'iscsi.portal'
+        cli_namespace = 'sharing.iscsi.portal'
 
     @private
     async def config_extend(self, data):
@@ -159,7 +160,7 @@ class ISCSIPortalService(CRUDService):
                 IPAddr('ip', required=True),
                 Int('port', default=3260, validators=[Range(min=1, max=65535)]),
             ),
-        ], default=[]),
+        ]),
         register=True,
     ))
     async def do_create(self, data):
@@ -333,6 +334,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         namespace = 'iscsi.auth'
         datastore = 'services.iscsitargetauthcredential'
         datastore_prefix = 'iscsi_target_auth_'
+        cli_namespace = 'sharing.iscsi.target.auth_credential'
 
     @accepts(Dict(
         'iscsi_auth_create',
@@ -513,6 +515,7 @@ class iSCSITargetExtentService(SharingService):
         datastore_prefix = 'iscsi_target_extent_'
         datastore_extend = 'iscsi.extent.extend'
         datastore_extend_context = 'iscsi.extent.extent_extend_context'
+        cli_namespace = 'sharing.iscsi.extent'
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
@@ -899,7 +902,7 @@ class iSCSITargetExtentService(SharingService):
         else:
             return naa
 
-    @accepts(List('exclude', default=[]))
+    @accepts(List('exclude'))
     async def disk_choices(self, exclude):
         """
         Exclude will exclude the path from being in the used_zvols list,
@@ -1027,11 +1030,12 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         datastore = 'services.iscsitargetauthorizedinitiator'
         datastore_prefix = 'iscsi_target_initiator_'
         datastore_extend = 'iscsi.initiator.extend'
+        cli_namespace = 'sharing.iscsi.target.authorized_initiator'
 
     @accepts(Dict(
         'iscsi_initiator_create',
-        List('initiators', default=[]),
-        List('auth_network', items=[IPAddr('ip', network=True)], default=[]),
+        List('initiators'),
+        List('auth_network', items=[IPAddr('ip', network=True)]),
         Str('comment'),
         register=True
     ))
@@ -1158,6 +1162,7 @@ class iSCSITargetService(CRUDService):
         datastore = 'services.iscsitarget'
         datastore_prefix = 'iscsi_target_'
         datastore_extend = 'iscsi.target.extend'
+        cli_namespace = 'sharing.iscsi.target'
 
     @private
     async def extend(self, data):
@@ -1187,7 +1192,7 @@ class iSCSITargetService(CRUDService):
         Str('name', required=True),
         Str('alias', null=True),
         Str('mode', enum=['ISCSI', 'FC', 'BOTH'], default='ISCSI'),
-        List('groups', default=[], items=[
+        List('groups', items=[
             Dict(
                 'group',
                 Int('portal', required=True),
@@ -1475,6 +1480,7 @@ class iSCSITargetToExtentService(CRUDService):
         datastore = 'services.iscsitargettoextent'
         datastore_prefix = 'iscsi_'
         datastore_extend = 'iscsi.targetextent.extend'
+        cli_namespace = 'sharing.iscsi.target.extent'
 
     @accepts(Dict(
         'iscsi_targetextent_create',

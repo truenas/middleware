@@ -7,7 +7,7 @@ from .identify_base import DiskIdentifyBase
 
 class DiskService(Service, DiskIdentifyBase):
 
-    async def device_to_identifier(self, name, disks=None):
+    async def device_to_identifier(self, name, disks):
         disks = disks or await self.middleware.call('device.get_disks')
         if name not in disks:
             return ''
@@ -31,7 +31,7 @@ class DiskService(Service, DiskIdentifyBase):
 
         return f'{{devicename}}{name}'
 
-    async def identifier_to_device(self, ident, disks=None):
+    async def identifier_to_device(self, ident, disks):
         if not ident:
             return None
 

@@ -14,6 +14,7 @@ class CtdbPrivateIpService(CRUDService):
 
     class Config:
         namespace = 'ctdb.private.ips'
+        cli_private = True
 
     @filterable
     def query(self, filters, options):

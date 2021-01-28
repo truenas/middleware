@@ -33,6 +33,7 @@ class TruecommandService(ConfigService):
     class Config:
         datastore = 'system.truecommand'
         datastore_extend = 'truecommand.tc_extend'
+        cli_namespace = 'system.truecommand'
 
     @private
     async def tc_extend(self, config):

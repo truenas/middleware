@@ -2,7 +2,7 @@ import subprocess
 import re
 import os
 
-from middlewared.service import private, Service
+from middlewared.service import Service
 from ..failover import HA_HARDWARE
 
 
@@ -10,10 +10,10 @@ class EnclosureDetectionService(Service):
 
     class Config:
         namespace = 'failover.enclosure'
+        private = True
 
     HARDWARE = NODE = 'MANUAL'
 
-    @private
     def detect(self):
 
         # First check if this is a BHYVE HA instance

@@ -27,6 +27,7 @@ class ISCSIGlobalService(SystemServiceService):
         service = 'iscsitarget'
         service_model = 'iscsitargetglobalconfiguration'
         namespace = 'iscsi.global'
+        cli_namespace = 'sharing.iscsi.global'
 
     @private
     def config_extend(self, data):

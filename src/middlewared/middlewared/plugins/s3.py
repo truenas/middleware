@@ -29,6 +29,7 @@ class S3Service(SystemServiceService):
         service = "s3"
         datastore_prefix = "s3_"
         datastore_extend = "s3.config_extend"
+        cli_namespace = "service.s3"
 
     async def bindip_choices(self):
         """

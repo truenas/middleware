@@ -1,7 +1,7 @@
 import glob
 
 from middlewared.plugins.interface.netif import netif
-from middlewared.service import private, Service
+from middlewared.service import Service
 
 
 ZSERIES_PCI_ID = 'PCI_ID=8086:10D3'
@@ -12,9 +12,9 @@ INTERFACE_GLOB = '/sys/class/net/*/device/uevent'
 class InternalInterfaceService(Service):
 
     class Config:
+        private = True
         namespace = 'failover.internal_interface'
 
-    @private
     def detect(self):
 
         hardware = self.middleware.call_sync(
@@ -41,7 +41,6 @@ class InternalInterfaceService(Service):
 
         return []
 
-    @private
     async def pre_sync(self):
 
         if not await self.middleware.call('system.is_enterprise'):
@@ -65,7 +64,6 @@ class InternalInterfaceService(Service):
 
         await self.middleware.run_in_thread(self.sync, iface, internal_ip)
 
-    @private
     def sync(self, iface, internal_ip):
 
         try:

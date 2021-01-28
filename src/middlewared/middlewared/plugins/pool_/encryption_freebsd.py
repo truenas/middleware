@@ -205,7 +205,7 @@ class PoolService(Service):
         'pool_unlock_options',
         Str('passphrase', private=True, required=False),
         Bool('recoverykey', default=False),
-        List('services_restart', default=[]),
+        List('services_restart'),
         register=True,
     ))
     @job(lock='unlock_pool', pipes=['input'], check_pipes=False)

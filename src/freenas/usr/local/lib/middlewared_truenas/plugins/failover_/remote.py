@@ -220,7 +220,7 @@ class FailoverService(Service):
 
     @accepts(
         Str('method'),
-        List('args', default=[]),
+        List('args'),
         Dict(
             'options',
             Int('timeout'),
@@ -229,7 +229,7 @@ class FailoverService(Service):
             Any('callback'),
         ),
     )
-    def call_remote(self, method, args, options=None):
+    def call_remote(self, method, args, options):
         """
         Call a method in the other node.
         """

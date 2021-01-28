@@ -29,6 +29,9 @@ class FCPortModel(sa.Model):
 
 class FCPortService(CRUDService):
 
+    class Config:
+        cli_namespace = 'system.fc_port'
+
     @filterable
     def query(self, filters, options):
         node = None

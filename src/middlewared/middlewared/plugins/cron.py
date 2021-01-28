@@ -34,6 +34,7 @@ class CronJobService(CRUDService):
         datastore_prefix = 'cron_'
         datastore_extend = 'cronjob.cron_extend'
         namespace = 'cronjob'
+        cli_namespace = 'task.cron_job'
 
     @private
     def cron_extend(self, data):

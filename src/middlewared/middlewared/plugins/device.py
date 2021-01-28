@@ -4,6 +4,9 @@ from middlewared.service import Service
 
 class DeviceService(Service):
 
+    class Config:
+        cli_namespace = 'system.device'
+
     @accepts(Str('type', enum=['SERIAL', 'DISK', 'GPU']))
     async def get_info(self, _type):
         """

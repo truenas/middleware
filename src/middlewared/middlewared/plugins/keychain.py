@@ -241,6 +241,7 @@ class KeychainCredentialService(CRUDService):
 
     class Config:
         datastore = "system.keychaincredential"
+        cli_namespace = "system.keychain_credential"
 
     @accepts(Dict(
         "keychain_credential_create",

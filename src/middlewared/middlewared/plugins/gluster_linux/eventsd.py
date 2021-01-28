@@ -20,6 +20,7 @@ class GlusterEventsdService(Service):
 
     class Config:
         namespace = 'gluster.eventsd'
+        cli_namespace = 'service.gluster.eventsd'
 
     def format_cmd(self, data, delete=False,):
 

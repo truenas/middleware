@@ -69,9 +69,10 @@ class DiskService(CRUDService):
         datastore_extend_context = 'disk.disk_extend_context'
         event_register = False
         event_send = False
+        cli_namespace = 'storage.disk'
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         """
         Query disks.
 

@@ -9,6 +9,7 @@ class CtdbGeneralService(Service):
 
     class Config:
         namespace = 'ctdb.general'
+        cli_private = True
 
     @private
     async def wrapper(self, command):

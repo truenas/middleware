@@ -1,14 +1,14 @@
 import os
 
-from middlewared.service import private, Service
+from middlewared.service import Service
 
 
 class DetectFailoverStatusService(Service):
 
     class Config:
+        private = True
         namespace = 'failover.status'
 
-    @private
     async def get_local(self, app):
 
         # Check if we have at least 1 interface with CARP config

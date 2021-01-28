@@ -21,6 +21,7 @@ class ImageService(CRUDService):
         namespace = 'webui.image'
         datastore = 'system.filesystem'
         datastore_extend = 'webui.image.url_extend'
+        cli_private = True
 
     @private
     async def url_extend(self, image):

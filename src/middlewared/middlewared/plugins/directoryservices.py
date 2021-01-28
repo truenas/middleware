@@ -129,6 +129,7 @@ class DirectorySecrets(object):
 class DirectoryServices(Service):
     class Config:
         service = "directoryservices"
+        cli_namespace = "directory_service"
 
     @accepts()
     async def get_state(self):

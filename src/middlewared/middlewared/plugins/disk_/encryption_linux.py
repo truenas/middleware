@@ -5,7 +5,7 @@ from .encryption_base import DiskEncryptionBase
 
 
 class DiskService(Service, DiskEncryptionBase):
-    def decrypt(self, job, devices, passphrase=None):
+    def decrypt(self, job, devices, passphrase):
         raise NotImplementedError()
 
     async def remove_encryption(self, device):

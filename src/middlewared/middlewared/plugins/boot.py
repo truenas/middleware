@@ -17,6 +17,9 @@ BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
 
 class BootService(Service):
 
+    class Config:
+        cli_namespace = 'system.boot'
+
     @private
     async def pool_name(self):
         return BOOT_POOL_NAME
@@ -73,7 +76,7 @@ class BootService(Service):
         ),
     )
     @job(lock='boot_attach')
-    async def attach(self, job, dev, options=None):
+    async def attach(self, job, dev, options):
         """
         Attach a disk to the boot pool, turning a stripe into a mirror.
 

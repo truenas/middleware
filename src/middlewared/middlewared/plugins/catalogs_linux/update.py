@@ -20,7 +20,7 @@ CATALOGS = [
 class CatalogService(CRUDService):
 
     @filterable
-    async def query(self, filters=None, options=None):
+    async def query(self, filters, options):
         """
         Query available catalogs.
 

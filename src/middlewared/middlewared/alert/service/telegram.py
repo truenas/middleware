@@ -11,7 +11,7 @@ class TelegramAlertService(ThreadedAlertService):
     schema = Dict(
         "telegram_attributes",
         Str("bot_token", required=True, empty=False),
-        List("chat_ids", required=True, empty=False, items=[Int("chat_id")]),
+        List("chat_ids", empty=False, items=[Int("chat_id")]),
         strict=True,
     )
 

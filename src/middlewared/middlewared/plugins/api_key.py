@@ -25,6 +25,7 @@ class ApiKeyService(CRUDService):
         namespace = "api_key"
         datastore = "account.api_key"
         datastore_extend = "api_key.item_extend"
+        cli_namespace = "auth.api_key"
 
     @private
     async def item_extend(self, item):

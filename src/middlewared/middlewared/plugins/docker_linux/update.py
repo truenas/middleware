@@ -15,6 +15,7 @@ class ContainerService(ConfigService):
 
     class Config:
         datastore = 'services.container'
+        cli_namespace = 'app.container.config'
 
     @accepts(
         Dict(

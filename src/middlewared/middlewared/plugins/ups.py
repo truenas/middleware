@@ -64,6 +64,7 @@ class UPSService(SystemServiceService):
         datastore_extend = 'ups.ups_config_extend'
         service = 'ups'
         service_verb = 'restart'
+        cli_namespace = 'service.ups'
 
     @private
     async def ups_config_extend(self, data):
