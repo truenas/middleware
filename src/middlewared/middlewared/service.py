@@ -1019,7 +1019,12 @@ class CoreService(Service):
                             for j in i['properties'].values():
                                 names.add(j['_name_'])
 
-                    args_descriptions = self._cli_args_descriptions(doc, names)
+                    args_descriptions_doc = doc
+                    if attr == 'update':
+                        if do_create := getattr(svc, 'do_create', None):
+                            args_descriptions_doc += "\n" + inspect.getdoc(do_create)
+
+                    args_descriptions = self._cli_args_descriptions(args_descriptions_doc, names)
 
                     for i in accepts:
                         if not i.get('description') and i['_name_'] in args_descriptions:
