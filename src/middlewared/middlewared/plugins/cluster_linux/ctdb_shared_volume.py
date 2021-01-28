@@ -1,11 +1,10 @@
-from middlewared.service import Service, CallError, accepts, private, job
-from middlewared.plugins.cluster_linux.utils import CTDBConfig
-from middlewared.plugins.gluster_linux.utils import run_method
-from glustercli.cli import volume
-
 import os
 import pathlib
-import subprocess
+from glustercli.cli import volume
+
+from middlewared.utils import run
+from middlewared.service import Service, CallError, job
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
 
 
 MOUNT_UMOUNT_LOCK = CTDBConfig.MOUNT_UMOUNT_LOCK.value
@@ -18,37 +17,14 @@ class CtdbSharedVolumeService(Service):
 
     class Config:
         namespace = 'ctdb.shared.volume'
+        private = True
 
-    @private
-    def construct_gluster_volume_create_data(self, peers):
-
-        payload = {}
-
-        # get the system dataset location
-        ctdb_sysds_path = self.middleware.call_sync('systemdataset.config')['path']
-        ctdb_sysds_path = os.path.join(ctdb_sysds_path, CTDB_VOL_NAME)
-
-        bricks = []
-        for i in peers:
-            peer = i
-            path = ctdb_sysds_path
-            brick = peer + ':' + path
-            bricks.append(brick)
-
-        payload = {
-            'bricks': bricks,
-            'replica': len(peers),
-            'force': True,
-        }
-
-        return payload
-
-    @private
-    def shared_volume_exists_and_started(self):
+    async def exists_and_started(self):
 
         exists = started = False
 
-        vol = run_method(volume.status_detail, volname=CTDB_VOL_NAME)
+        filters = [('id', '=', CTDB_VOL_NAME)]
+        vol = await self.middleware.call('gluster.volume.query', filters)
         if vol:
             if vol[0]['type'] != 'REPLICATE':
                 raise CallError(
@@ -64,27 +40,24 @@ class CtdbSharedVolumeService(Service):
                 )
             elif vol[0]['status'] != 'Started':
                 exists = True
-                run_method(volume.start, CTDB_VOL_NAME)
-                started = True
             else:
                 exists = started = True
 
         return exists, started
 
-    @accepts()
     @job(lock=CRE_OR_DEL_LOCK)
-    def create(self, job):
+    async def create(self, job):
         """
         Create and mount the shared volume to be used
         by ctdb daemon.
         """
 
         # check if ctdb shared volume already exists and started
-        exists, started = self.shared_volume_exists_and_started()
+        exists, started = await self.middleware.call('ctdb.shared.volume.exists_and_started')
 
         if not exists:
             # get the peers in the TSP
-            peers = self.middleware.call_sync('gluster.peer.pool')
+            peers = await self.middleware.call('gluster.peer.query')
             if not peers:
                 raise CallError('No peers detected')
 
@@ -97,51 +70,56 @@ class CtdbSharedVolumeService(Service):
                     'shared volume can be created.'
                 )
 
-            # create the ctdb shared volume
-            req = self.construct_gluster_volume_create_data(con_peers)
-            run_method(volume.create, CTDB_VOL_NAME, req.pop('bricks'), **req)
+            # get the system dataset location
+            ctdb_sysds_path = (await self.middleware.call('systemdataset.config'))['path']
+            ctdb_sysds_path = os.path.join(ctdb_sysds_path, CTDB_VOL_NAME)
+
+            bricks = []
+            for i in con_peers:
+                bricks.append(i + ':' + ctdb_sysds_path)
+
+            options = {'args': (CTDB_VOL_NAME, bricks,)}
+            options['kwargs'] = {'replica': len(con_peers), 'force': True}
+            await self.middleware.call('gluster.method.run', volume.create, options)
 
         if not started:
             # start it if we get here
-            run_method(volume.start, CTDB_VOL_NAME)
+            options = {'args': (CTDB_VOL_NAME,)}
+            await self.middleware.call('gluster.method.run', volume.start, options)
 
         # try to mount it locally
-        mount_job = self.middleware.call_sync('ctdb.shared.volume.mount')
-        mount_job.wait_sync(raise_error=True)
+        mount_job = await self.middleware.call('ctdb.shared.volume.mount')
+        await mount_job.wait(raise_error=True)
 
-        return 'SUCCESS'
+        return await self.get_instance(CTDB_VOL_NAME)
 
-    @accepts()
     @job(lock=CRE_OR_DEL_LOCK)
-    def delete(self, job):
+    async def delete(self, job):
         """
         Delete and unmount the shared volume used by ctdb daemon.
         """
 
         # nothing to delete if it doesn't exist
-        exists, started = self.shared_volume_exists_and_started()
+        exists, started = await self.middleware.call('ctdb.shared.volume.exists_and_started')
         if not exists:
             return
 
         # umount it first
-        umount_job = self.middleware.call_sync('ctdb.shared.volume.umount')
-        umount_job.wait_sync(raise_error=True)
+        umount_job = await self.middleware.call('ctdb.shared.volume.umount')
+        await umount_job.wait(raise_error=True)
 
         if started:
             # stop the volume
-            force = {'force': True}
-            run_method(volume.stop, CTDB_VOL_NAME, **force)
+            options = {'args': (CTDB_VOL_NAME,), 'kwargs': {'force': True}}
+            await self.middleware.call('gluster.method.run', volume.stop, options)
 
         # now delete it
-        run_method(volume.delete, CTDB_VOL_NAME)
+        await self.middleware.call('gluster.method.run', volume.delete, {'args': (CTDB_VOL_NAME,)})
 
-        return 'SUCCESS'
-
-    @accepts()
     @job(lock=MOUNT_UMOUNT_LOCK)
-    def mount(self, job):
+    async def mount(self, job):
         """
-        Mount the ctdb shared volume locally.
+        FUSE mount the ctdb shared volume locally.
         """
 
         mounted = False
@@ -150,11 +128,11 @@ class CtdbSharedVolumeService(Service):
         # the mount utility simply returns a msg to stderr stating
         # "Mounting glusterfs on /cluster/ctdb_shared_vol failed" which is
         # expected since the service isn't running
-        if not self.middleware.call_sync('service.started', 'glusterd'):
+        if not await self.middleware.call('service.started', 'glusterd'):
             self.logger.warning('The "glusterd" service is not running. Not mounting.')
             return mounted
 
-        exists, started = self.shared_volume_exists_and_started()
+        exists, started = await self.middleware.call('ctdb.shared.volume.exists_and_started')
         if not exists or not started:
             return mounted
 
@@ -181,10 +159,10 @@ class CtdbSharedVolumeService(Service):
         # generates another SUBVOL_UP event........This causes a mount/umount loop.
         # So, as an easy work-around we stop the glusterevevntsd service which prevents
         # any more events from being triggered while we mount/umount the volume.
-        self.middleware.call_sync('service.stop', 'glustereventsd')
+        await self.middleware.call('service.stop', 'glustereventsd')
         try:
             cmd = ['mount', '-t', 'glusterfs', 'localhost:/' + CTDB_VOL_NAME, CTDB_LOCAL_MOUNT]
-            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cp = await run(cmd, check=False)
             if cp.returncode:
                 if b'is already mounted' in cp.stderr:
                     mounted = True
@@ -198,25 +176,24 @@ class CtdbSharedVolumeService(Service):
                 'Unhandled exception when trying to mount ctdb shared volume', exc_info=True
             )
         finally:
-            self.middleware.call_sync('service.start', 'glustereventsd')
+            await self.middleware.call('service.start', 'glustereventsd')
 
         return mounted
 
-    @accepts()
     @job(lock=MOUNT_UMOUNT_LOCK)
-    def umount(self, job):
+    async def umount(self, job):
         """
-        Unmount the locally mounted ctdb shared volume.
+        Unmount the locally FUSE mounted ctdb shared volume.
         """
 
         umounted = False
 
         # read the above comment in the `def mount` method on why we stop and
         # start this service before we umount the volume
-        self.middleware.call_sync('service.stop', 'glustereventsd')
+        await self.middleware.call('service.stop', 'glustereventsd')
         try:
             cmd = ['umount', '-R', CTDB_LOCAL_MOUNT]
-            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cp = await run(cmd, check=False)
             if cp.returncode:
                 errmsg = cp.stderr.decode().strip()
                 if 'not mounted' in errmsg or 'ctdb_shared_vol: not found' in errmsg:
@@ -230,6 +207,6 @@ class CtdbSharedVolumeService(Service):
                 'Unhandled exception when trying to umount ctdb shared volume', exc_info=True
             )
         finally:
-            self.middleware.call_sync('service.start', 'glustereventsd')
+            await self.middleware.call('service.start', 'glustereventsd')
 
         return umounted
