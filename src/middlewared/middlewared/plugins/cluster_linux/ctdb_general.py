@@ -79,6 +79,15 @@ class CtdbGeneralService(Service):
         Returns a boolean if the ctdb cluster is healthy.
         """
 
+        # without ctdbd running, nothing to do
+        if not await self.middleware.call('service.started', 'ctdb'):
+            return False
+
+        # make sure the ctdb shared volume exists and is started
+        exists, started = await self.middleware.call('ctdb.shared.volume.exists_and_started')
+        if not exists and not started:
+            return False
+
         # TODO: ctdb has event scripts that can be run when the
         # health of the cluster has changed. We should use this
         # approach and use a lock on a file as a means of knowing
