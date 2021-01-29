@@ -401,7 +401,7 @@ class DirectoryServices(Service):
         elif ldap_enabled and not has_secrets and ldap_conf["has_samba_schema"]:
             self.logger.warning("LDAP SMB secrets database does not exist. "
                                 "attempting to restore secrets from configuration file.")
-            self.middleware.call("smb.store_ldap_admin_password")
+            await self.middleware.call("smb.store_ldap_admin_password")
 
         if ldap_enabled and ldap_conf['kerberos_realm']:
             is_kerberized = True
