@@ -139,11 +139,24 @@ class LDAPQuery(object):
             self._close()
         return ret
 
+    def _name_to_errno(self, ldaperr):
+        err = errno.EFAULT
+        if ldaperr == "INVALID_CREDENTIALS":
+            err = errno.EAUTH
+        elif ldaperr == "NO_SUCH_OBJECT":
+            err = errno.ENOENT
+        elif ldaperr == "INVALID_DN_SYNTAX":
+            err = errno.EINVAL
+
+        return err
+
     def _convert_exception(self, ex):
         if issubclass(type(ex), pyldap.LDAPError) and ex.args:
-            raise CallError(f"{ex.args[0].get('desc')}: "
-                            f"{ex.args[0].get('info', '')}",
-                            errno.EFAULT, type(ex).__name__)
+            desc = ex.args[0].get('desc')
+            info = ex.args[0].get('info')
+            err_str = f"{desc}: {info}" if info else desc
+            err = self._name_to_errno(type(ex).__name__)
+            raise CallError(err_str, err, type(ex).__name__)
         else:
             raise CallError(str(ex))
 
@@ -843,6 +856,8 @@ class LDAPService(ConfigService):
         except asyncio.TimeoutError:
             raise CallError(f'LDAP status check timed out after {ldap["timeout"]} seconds.', errno.ETIMEDOUT)
 
+        except CallError:
+            raise
         except Exception as e:
             raise CallError(e)
 
