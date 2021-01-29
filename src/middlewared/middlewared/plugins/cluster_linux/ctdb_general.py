@@ -1,8 +1,9 @@
+import json
+
 from middlewared.schema import Dict, Bool
 from middlewared.service import CallError, Service, accepts, private
 from middlewared.utils import run
 
-import json
 
 
 class CtdbGeneralService(Service):
@@ -86,6 +87,11 @@ class CtdbGeneralService(Service):
         # make sure the ctdb shared volume exists and is started
         exists, started = await self.middleware.call('ctdb.shared.volume.exists_and_started')
         if not exists and not started:
+            return False
+
+        # if the ctdb shared volume isn't mounted locally then
+        # active-active shares will not work so assume the worst
+        if not await self.middleware.call('ctdb.shared.volume.is_mounted'):
             return False
 
         # TODO: ctdb has event scripts that can be run when the

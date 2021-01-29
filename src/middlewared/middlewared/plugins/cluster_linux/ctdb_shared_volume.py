@@ -116,6 +116,19 @@ class CtdbSharedVolumeService(Service):
         # now delete it
         await self.middleware.call('gluster.method.run', volume.delete, {'args': (CTDB_VOL_NAME,)})
 
+    async def is_mounted(self):
+        """
+        Return a boolean if ctdb shared volume is mounted locally.
+        """
+
+        try:
+            mounted = pathlib.Path(CTDB_LOCAL_MOUNT).is_mount()
+        except Exception:
+            # happens when mounted but glusterd service is stopped/crashed
+            mounted = False
+
+        return mounted
+
     @job(lock=MOUNT_UMOUNT_LOCK)
     async def mount(self, job):
         """
