@@ -744,6 +744,12 @@ class SharingSMBService(SharingService):
         datastore_extend = 'sharing.smb.extend'
 
     @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        return await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets', data[self.path_field], locked_datasets
+        ) if data[self.path_field] else False
+
+    @private
     async def strip_comments(self, data):
         parsed_config = ""
         for entry in data['auxsmbconf'].splitlines():
@@ -1325,6 +1331,9 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         reg_sync = await self.middleware.call('sharing.smb.sync_registry')
         await reg_sync.wait()
         await self.middleware.call('service.reload', 'mdns')
+
+    async def is_child_of_path(self, resource, path):
+        return await super().is_child_of_path(resource, path) if resource.get(self.path_field) else False
 
 
 async def setup(middleware):
