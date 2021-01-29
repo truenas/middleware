@@ -2,12 +2,15 @@ from glustercli.cli import volume, quota
 
 from middlewared.utils import filter_list
 from middlewared.service import (CRUDService, accepts, job,
-                                 item_method, filterable)
+                                 item_method, filterable,
+                                 private, ValidationErrors)
 from middlewared.schema import Dict, Str, Int, Bool, List
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from .utils import GlusterConfig
 
 
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
+CTDB_VOL_NAME = CTDBConfig.CTDB_VOL_NAME.value
 
 
 class GlusterVolumeService(CRUDService):
@@ -26,6 +29,19 @@ class GlusterVolumeService(CRUDService):
             vols = list(map(lambda i: dict(i, id=i['name']), vols))
 
         return filter_list(vols, filters, options)
+
+    @private
+    async def common_validation(self, data, schema_name):
+        verrors = ValidationErrors()
+        create_request = schema_name == 'glustervolume_create'
+
+        if data['name'] == CTDB_VOL_NAME and create_request:
+            verrors.add(
+                f'{schema_name}.{data["name"]}',
+                f'"{data["name"]}" is a reserved name. Choose a different volume name.'
+            )
+
+        verrors.check()
 
     @accepts(Dict(
         'glustervolume_create',
@@ -61,6 +77,9 @@ class GlusterVolumeService(CRUDService):
         `redundancy` Integer representing number of redundancy bricks
         `force` Boolean, if True ignore potential warnings
         """
+
+        schema_name = 'glustervolume_create'
+        await self.middleware.call('gluster.volume.common_validation', data, schema_name)
 
         # before we create the gluster volume, we need to ensure
         # the ctdb shared volume is setup
@@ -140,8 +159,15 @@ class GlusterVolumeService(CRUDService):
                 to be deleted
         """
 
-        await self.middleware.call(
-            'gluster.method.run', volume.delete, {'args': ((await self.get_instance(id))['name'],)})
+        args = {'args': ((await self.get_instance(id))['name'],)}
+
+        if id == CTDB_VOL_NAME:
+            # if the ctdb shared volume is being deleted then call
+            # the ctdb shared volume specific API since it handles
+            # other items
+            await (await self.middleware.call('ctdb.shared.volume.delete')).wait(raise_error=True)
+        else:
+            await self.middleware.call('gluster.method.run', volume.delete, args)
 
     @item_method
     @accepts(Dict(
