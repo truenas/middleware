@@ -5,7 +5,6 @@ from middlewared.service import CallError, Service, accepts, private
 from middlewared.utils import run
 
 
-
 class CtdbGeneralService(Service):
 
     class Config:
