@@ -88,3 +88,6 @@ ChallengeResponseAuthentication yes
 PrintMotd no
     % endif
 % endif
+% if IS_LINUX:
+SetEnv LC_ALL=C.UTF-8
+% endif
