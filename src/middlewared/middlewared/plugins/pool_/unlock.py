@@ -30,7 +30,11 @@ class PoolDatasetService(Service):
             if service['enable'] or service['state'] == 'RUNNING':
                 result[k] = v
 
-        check_services = {'kubernetes': 'Applications', **services}
+        check_services = {
+            'kubernetes': 'Applications',
+            's3': 'S3',
+            **services
+        }
 
         result.update({
             k: check_services[k] for k in map(
