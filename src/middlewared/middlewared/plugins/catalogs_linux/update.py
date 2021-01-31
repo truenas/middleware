@@ -1,12 +1,22 @@
 import errno
 import os
 
+import middlewared.sqlalchemy as sa
+
 from middlewared.schema import Dict, Str, ValidationErrors
 from middlewared.service import accepts, CRUDService, private
 
 from .utils import convert_repository_to_path
 
 OFFICIAL_LABEL = 'OFFICIAL'
+
+
+class KubernetesModel(sa.Model):
+    __tablename__ = 'services_catalog'
+
+    label = sa.Column(sa.String(255), nullable=False, unique=True, primary_key=True)
+    repository = sa.Column(sa.Text(), nullable=False)
+    branch = sa.Column(sa.String(255), nullable=False)
 
 
 class CatalogService(CRUDService):
