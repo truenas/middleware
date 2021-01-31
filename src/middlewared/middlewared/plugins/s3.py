@@ -92,9 +92,7 @@ class S3Service(SystemServiceService):
                     f's3_update.{attr}', f'Attribute should be {minlen} to {maxlen} in length'
                 )
 
-        if not new['storage_path']:
-            verrors.add('s3_update.storage_path', 'Storage path is required')
-        else:
+        if new['storage_path']:
             await check_path_resides_within_volume(
                 verrors, self.middleware, 's3_update.storage_path', new['storage_path']
             )
