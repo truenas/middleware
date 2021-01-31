@@ -15,4 +15,4 @@ class S3Service(SimpleService):
 
     async def before_start(self):
         if not (await self.middleware.call('s3.config'))['storage_path']:
-            raise CallError('Storage path must bet set to start S3 service')
+            raise CallError('Storage path must be set to start S3 service')

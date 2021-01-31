@@ -36,14 +36,14 @@ class MinioFSAttachmentDelegate(FSAttachmentDelegate):
     async def stop(self, attachments):
         try:
             await self.middleware.call('service.stop', 's3')
-        except Exception as e:
-            self.middleware.logger.error('Failed to stop s3: %s', e)
+        except Exception:
+            self.middleware.logger.error('Failed to stop s3', exc_info=True)
 
     async def start(self, attachments):
         try:
             await self.middleware.call('service.start', 's3')
         except Exception:
-            self.middleware.logger.error('Failed to start s3')
+            self.middleware.logger.error('Failed to start s3', exc_info=True)
 
 
 async def setup(middleware):
