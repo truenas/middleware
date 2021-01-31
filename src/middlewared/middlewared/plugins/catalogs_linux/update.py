@@ -1,47 +1,41 @@
 import os
 
-from copy import deepcopy
-
-from middlewared.service import CRUDService, filterable, private
-from middlewared.utils import filter_list
+from middlewared.service import CRUDService, private
 
 from .utils import convert_repository_to_path
 
 OFFICIAL_LABEL = 'OFFICIAL'
-CATALOGS = [
-    {
-        'label': OFFICIAL_LABEL,
-        'repository': 'https://github.com/truenas/charts.git',
-        'branch': 'master',
-    }
-]
 
 
 class CatalogService(CRUDService):
 
-    @filterable
-    async def query(self, filters, options):
-        """
-        Query available catalogs.
+    class Config:
+        datastore = 'services.catalog'
+        datastore_extend = 'catalog.catalog_extend'
+        datastore_extend_context = 'catalog.catalog_extend_context'
+        cli_namespace = 'app.catalog'
 
-        `options.extra.item_details` is a boolean value which if set will retrieve items details for each chart.
-        """
-        options = options or {}
-        extra = options.get('extra', {})
-        catalogs = deepcopy(CATALOGS)
+    @private
+    async def catalog_extend_context(self, extra):
         k8s_dataset = (await self.middleware.call('kubernetes.config'))['dataset']
         catalogs_dir = os.path.join('/mnt', k8s_dataset, 'catalogs') if k8s_dataset else '/tmp/ix-applications/catalogs'
-        for catalog in catalogs:
-            catalog.update({
-                'location': os.path.join(catalogs_dir, convert_repository_to_path(catalog['repository'])),
-                'id': catalog['label'],
-            })
-            if extra.get('item_details'):
-                catalog['trains'] = await self.middleware.call(
-                    'catalog.items', catalog['label'], {'cache': extra.get('cache', True)},
-                )
+        return {
+            'catalogs_dir': catalogs_dir,
+            'extra': extra or {},
+        }
 
-        return filter_list(catalogs, filters, options)
+    @private
+    async def catalog_extend(self, catalog, context):
+        catalog.update({
+            'location': os.path.join(context['catalogs_dir'], convert_repository_to_path(catalog['repository'])),
+            'id': catalog['label'].upper(),
+        })
+        extra = context['extra']
+        if extra.get('item_details'):
+            catalog['trains'] = await self.middleware.call(
+                'catalog.items', catalog['label'], {'cache': extra.get('cache', True)},
+            )
+        return catalog
 
     @private
     async def official_catalog_label(self):
