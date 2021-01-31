@@ -1,6 +1,8 @@
+import errno
 import os
 
-from middlewared.service import CRUDService, private
+from middlewared.schema import Dict, Str, ValidationErrors
+from middlewared.service import accepts, CRUDService, private
 
 from .utils import convert_repository_to_path
 
@@ -37,6 +39,31 @@ class CatalogService(CRUDService):
             )
         return catalog
 
+    @accepts(
+        Dict(
+            'catalog_create',
+            Str('label', required=True, empty=False),
+            Str('repository', required=True, empty=False),
+            Str('branch', default='master'),
+        )
+    )
+    async def do_create(self, data):
+        verrors = ValidationErrors()
+        if await self.query([['id', '=', data['label']]]):
+            verrors.add('catalog_create.label', 'A catalog with specified label already exists', errno=errno.EEXIST)
+
+        if await self.query([['repository', '=', data['repository']], ['branch', '=', data['branch']]]):
+            for k in ('repository', 'branch'):
+                verrors.add(
+                    f'catalog_create.{k}', 'A catalog with same repository/branch already exists', errno=errno.EEXIST
+                )
+
+        await self.middleware.call('datastore.insert', self._config.datastore, data)
+
+        return await self.get_instance(data['label'])
+
     @private
     async def official_catalog_label(self):
         return OFFICIAL_LABEL
+
+    # TODO: Please see if there are edge cases with deletion/updating catalogs for already installed apps of those catalogs
