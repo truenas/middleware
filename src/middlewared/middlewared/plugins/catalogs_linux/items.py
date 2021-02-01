@@ -22,7 +22,6 @@ class CatalogService(Service):
         Dict(
             'options',
             Bool('cache', default=True),
-            Bool('retrieve_unusable_apps', default=False),
         )
     )
     def items(self, label, options):
@@ -114,7 +113,7 @@ class CatalogService(Service):
                     'catalog.validation_catalog_item_version', version_details['location'], f'{schema}.{version}'
                 )
             except ValidationErrors as verrors:
-                version_details['healthy_error'] = f'Following error(s) were found with {version!r}:\n'
+                version_details['healthy_error'] = f'Following error(s) were found with {schema}.{version!r}:\n'
                 for verror in verrors:
                     version_details['healthy_error'] += f'{verror[0]}: {verror[1]}'
 
