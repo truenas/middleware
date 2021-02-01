@@ -209,8 +209,9 @@ class KubernetesService(Service):
 
 
 async def _event_system(middleware, event_type, args):
-
-    if args['id'] == 'ready':
+    # we ignore the 'ready' event on an HA system since the failover event plugin
+    # is responsible for starting this service
+    if args['id'] == 'ready' and not await middleware.call('failover.licensed'):
         asyncio.ensure_future(middleware.call('kubernetes.start_kubernetes'))
     elif args['id'] == 'shutdown' and await middleware.call('service.started', 'kubernetes'):
         asyncio.ensure_future(middleware.call('service.stop', 'kubernetes'))

@@ -512,8 +512,12 @@ class FailoverService(Service):
         # restart the non-critical services in the background
         self.run_call('failover.events.restart_background', fobj['services'])
 
-        # TODO: jails don't exist on SCALE (yet)
-        # self.run_call('jail.start_on_boot')
+        # restart any k3s applications
+        if self.run_call('kubernetes.config')['dataset']:
+            logger.info('Restarting applications')
+            self.run_call('service.start', 'k3s')
+
+        # start any VMs (this will log errors if the vm(s) fail to start)
         self.run_call('vm.start_on_boot')
 
         logger.info('Initializing alert system')
@@ -580,7 +584,7 @@ class FailoverService(Service):
         fw_drop_job = self.run_call('failover.firewall.drop_all')
         fw_drop_job.wait_sync()
         if fw_drop_job.error:
-            logger.error(f'Error allowing network traffic: {fw_drop_job.error}')
+            logger.error(f'Error blocking network traffic: {fw_drop_job.error}')
 
         # restarting keepalived sends a priority 0 advertisement
         # which means any VIP that is on this controller will be

@@ -95,7 +95,7 @@ class VMService(Service, VMSupervisorMixin):
             try:
                 await self.middleware.call('vm.start', vm['id'])
             except Exception as e:
-                self.middleware.logger.debug(f'Failed to start VM {vm["name"]}: {e}')
+                self.middleware.logger.error(f'Failed to start VM {vm["name"]}: {e}')
 
     @private
     @accepts(
@@ -142,13 +142,16 @@ async def __event_system_ready(middleware, event_type, args):
     Method called when system is ready, supposed to start VMs
     flagged that way.
     """
+
     async def stop_vm(mw, vm):
         stop_job = await mw.call('vm.stop', vm['id'], {'force_after_timeout': True})
         await stop_job.wait()
         if stop_job.error:
             mw.logger.error(f'Stopping VM {vm["name"]} failed: {stop_job.error}')
 
-    if args['id'] == 'ready':
+    # we ignore the 'ready' event on an HA system since the failover event plugin
+    # is responsible for starting this service
+    if args['id'] == 'ready' and not await middleware.call('failover.licensed'):
         await middleware.call('vm.update_zfs_arc_max_initial')
 
         await middleware.call('vm.initialize_vms')
