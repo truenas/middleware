@@ -71,7 +71,8 @@ class CtdbGeneralService(Service):
         """
 
         command = ['ip', 'all'] if data['all_nodes'] else ['ip']
-        return (await self.middleware.call('ctdb.general.wrapper', command))['public_ips']
+        result = (await self.middleware.call('ctdb.general.wrapper', command))['nodes']
+        return result['public_ips'] if result else result
 
     @accepts()
     async def healthy(self):
