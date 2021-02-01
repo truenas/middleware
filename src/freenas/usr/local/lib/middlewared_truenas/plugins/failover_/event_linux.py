@@ -512,10 +512,10 @@ class FailoverService(Service):
         # restart the non-critical services in the background
         self.run_call('failover.events.restart_background', fobj['services'])
 
-        # restart any k3s applications
+        # restart any kubernetes applications
         if self.run_call('kubernetes.config')['dataset']:
             logger.info('Restarting applications')
-            self.run_call('service.start', 'k3s')
+            self.run_call('service.start', 'kubernetes')
 
         # start any VMs (this will log errors if the vm(s) fail to start)
         self.run_call('vm.start_on_boot')

@@ -142,20 +142,20 @@ async def __event_system_ready(middleware, event_type, args):
     Method called when system is ready, supposed to start VMs
     flagged that way.
     """
-
     async def stop_vm(mw, vm):
         stop_job = await mw.call('vm.stop', vm['id'], {'force_after_timeout': True})
         await stop_job.wait()
         if stop_job.error:
             mw.logger.error(f'Stopping VM {vm["name"]} failed: {stop_job.error}')
 
-    # we ignore the 'ready' event on an HA system since the failover event plugin
-    # is responsible for starting this service
-    if args['id'] == 'ready' and not await middleware.call('failover.licensed'):
+    if args['id'] == 'ready':
         await middleware.call('vm.update_zfs_arc_max_initial')
 
         await middleware.call('vm.initialize_vms')
 
+        # we ignore the 'ready' event on an HA system since the failover event plugin
+        # is responsible for starting this service, however, the VMs still need to be
+        # initialized (which is what the above callers are doing)
         if await middleware.call('failover.licensed'):
             return
 
