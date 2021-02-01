@@ -1,6 +1,7 @@
 import errno
 import os
 
+from catalog_validation.exceptions import ValidationErrors as CatalogValidationErrors
 from catalog_validation.validation import validate_catalog, validate_catalog_item, validate_catalog_item_version
 
 from middlewared.schema import Str
@@ -32,7 +33,7 @@ class CatalogService(Service):
         verrors = ValidationErrors()
         try:
             func(*args, **kwargs)
-        except ValidationErrors as e:
+        except CatalogValidationErrors as e:
             verrors.extend(e)
         verrors.check()
 

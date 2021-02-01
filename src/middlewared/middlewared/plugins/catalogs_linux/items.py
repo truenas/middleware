@@ -110,7 +110,7 @@ class CatalogService(Service):
             }
             try:
                 self.middleware.call_sync(
-                    'catalog.validation_catalog_item_version', version_details['location'], f'{schema}.{version}'
+                    'catalog.validate_catalog_item_version', version_details['location'], f'{schema}.{version}'
                 )
             except ValidationErrors as verrors:
                 version_details['healthy_error'] = f'Following error(s) were found with {schema}.{version!r}:\n'
