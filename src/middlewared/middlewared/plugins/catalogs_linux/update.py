@@ -43,7 +43,7 @@ class CatalogService(CRUDService):
     async def catalog_extend(self, catalog, context):
         catalog.update({
             'location': os.path.join(context['catalogs_dir'], convert_repository_to_path(catalog['repository'])),
-            'id': catalog['label'].upper(),
+            'id': catalog['label'],
         })
         extra = context['extra']
         if extra.get('item_details'):
@@ -64,6 +64,9 @@ class CatalogService(CRUDService):
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
+        # We normalize the label
+        data['label'] = data['label'].upper()
+
         if await self.query([['id', '=', data['label']]]):
             verrors.add('catalog_create.label', 'A catalog with specified label already exists', errno=errno.EEXIST)
 
@@ -75,7 +78,7 @@ class CatalogService(CRUDService):
 
         verrors.check()
 
-        if not data['force']:
+        if not data.pop('force'):
             # We will validate the catalog now to ensure it's valid wrt contents / format
             path = os.path.join(TMP_IX_APPS_DIR, 'validate_catalogs', convert_repository_to_path(data['repository']))
             try:
