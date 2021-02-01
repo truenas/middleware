@@ -3,10 +3,22 @@ import os
 
 from catalog_validation.validation import validate_catalog, validate_catalog_item, validate_catalog_item_version
 
-from middlewared.service import CallError, private, Service, ValidationErrors
+from middlewared.schema import Str
+from middlewared.service import accepts, CallError, private, Service, ValidationErrors
 
 
 class CatalogService(Service):
+
+    @accepts(Str('label'))
+    async def validate(self, label):
+        """
+        Validates `label` catalog format which includes validating trains and applications with their versions.
+
+        This does not test if an app version is valid in terms of kubernetes resources but instead ensures it has
+        the correct format and files necessary for TrueNAS to use it.
+        """
+        catalog = await self.middleware.call('catalog.get_instance', label)
+        await self.middleware.call('catalog.validate_catalog_from_path', catalog['location'])
 
     @private
     def validate_catalog_from_path(self, path):
