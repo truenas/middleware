@@ -5,12 +5,13 @@ import shutil
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Dict, Str, ValidationErrors
+from middlewared.schema import Bool, Dict, Str, ValidationErrors
 from middlewared.service import accepts, CRUDService, private
 
 from .utils import convert_repository_to_path
 
 OFFICIAL_LABEL = 'OFFICIAL'
+TMP_IX_APPS_DIR = '/tmp/ix-applications'
 
 
 class KubernetesModel(sa.Model):
@@ -32,7 +33,7 @@ class CatalogService(CRUDService):
     @private
     async def catalog_extend_context(self, extra):
         k8s_dataset = (await self.middleware.call('kubernetes.config'))['dataset']
-        catalogs_dir = os.path.join('/mnt', k8s_dataset, 'catalogs') if k8s_dataset else '/tmp/ix-applications/catalogs'
+        catalogs_dir = os.path.join('/mnt', k8s_dataset, 'catalogs') if k8s_dataset else f'{TMP_IX_APPS_DIR}/catalogs'
         return {
             'catalogs_dir': catalogs_dir,
             'extra': extra or {},
@@ -54,6 +55,7 @@ class CatalogService(CRUDService):
     @accepts(
         Dict(
             'catalog_create',
+            Bool('force', default=False),
             Str('label', required=True, empty=False),
             Str('repository', required=True, empty=False),
             Str('branch', default='master'),
@@ -72,6 +74,15 @@ class CatalogService(CRUDService):
                 )
 
         verrors.check()
+
+        if not data['force']:
+            # We will validate the catalog now to ensure it's valid wrt contents / format
+            path = os.path.join(TMP_IX_APPS_DIR, 'validate_catalogs', convert_repository_to_path(data['repository']))
+            try:
+                await self.middleware.call('catalog.update_git_repository', {**data, 'location': path}, True)
+                await self.middleware.call('catalog.validate_catalog_from_path', path)
+            finally:
+                await self.middleware.run_in_thread(shutil.rmtree, path, ignore_errors=True)
 
         await self.middleware.call('datastore.insert', self._config.datastore, data)
 
