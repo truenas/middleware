@@ -47,6 +47,9 @@ class CatalogService(Service):
         if version_details['supported']:
             return
 
+        if not version_details['healthy']:
+            raise CallError(version_details['healthy_error'])
+
         missing_features = set(version_details['required_features']) - SUPPORTED_FEATURES
         try:
             mapping = await self.middleware.call('catalog.get_feature_map')
