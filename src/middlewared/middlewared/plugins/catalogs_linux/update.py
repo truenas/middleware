@@ -14,7 +14,7 @@ OFFICIAL_LABEL = 'OFFICIAL'
 TMP_IX_APPS_DIR = '/tmp/ix-applications'
 
 
-class KubernetesModel(sa.Model):
+class CatalogModel(sa.Model):
     __tablename__ = 'services_catalog'
 
     label = sa.Column(sa.String(255), nullable=False, unique=True, primary_key=True)
