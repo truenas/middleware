@@ -42,7 +42,9 @@ class CatalogService(CRUDService):
     @private
     async def catalog_extend(self, catalog, context):
         catalog.update({
-            'location': os.path.join(context['catalogs_dir'], convert_repository_to_path(catalog['repository'])),
+            'location': os.path.join(
+                context['catalogs_dir'], convert_repository_to_path(catalog['repository'], catalog['branch'])
+            ),
             'id': catalog['label'],
         })
         extra = context['extra']
@@ -80,7 +82,9 @@ class CatalogService(CRUDService):
 
         if not data.pop('force'):
             # We will validate the catalog now to ensure it's valid wrt contents / format
-            path = os.path.join(TMP_IX_APPS_DIR, 'validate_catalogs', convert_repository_to_path(data['repository']))
+            path = os.path.join(
+                TMP_IX_APPS_DIR, 'validate_catalogs', convert_repository_to_path(data['repository'], data['branch'])
+            )
             try:
                 await self.middleware.call('catalog.update_git_repository', {**data, 'location': path}, True)
                 await self.middleware.call('catalog.validate_catalog_from_path', path)
