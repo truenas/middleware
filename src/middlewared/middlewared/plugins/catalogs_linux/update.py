@@ -1,5 +1,7 @@
+import asyncio
 import errno
 import os
+import shutil
 
 import middlewared.sqlalchemy as sa
 
@@ -73,14 +75,22 @@ class CatalogService(CRUDService):
 
         await self.middleware.call('datastore.insert', self._config.datastore, data)
 
+        asyncio.ensure_future(self.middleware.call('catalog.sync', data['label']))
+
         return await self.get_instance(data['label'])
 
     @accepts(
         Str('id'),
     )
-    async def do_delete(self, id):
-        await self.get_instance(id)
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
+    def do_delete(self, id):
+        catalog = self.middleware.call_sync('catalog.get_instance', id)
+
+        ret = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
+
+        if os.path.exists(catalog['location']):
+            shutil.rmtree(catalog['location'], ignore_errors=True)
+
+        return ret
 
     @private
     async def official_catalog_label(self):
