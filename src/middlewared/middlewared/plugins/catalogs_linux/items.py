@@ -38,15 +38,11 @@ class CatalogService(Service):
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
-        # TODO: Let's please add alerts for malformed catalogs
-        #  1) No train
-        #  2) Empty trains
-        #  3) Empty catalog item with no version
-        #  4) Malformed catalog item in a train
-        #  5) Unable to clone / pull the catalog
+        self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', f'"{label}"')
         # We make sure we do not dive into library folder and not consider it a train
         # This allows us to use this folder for placing helm library charts
         trains = {'charts': {}, 'test': {}}
+        unhealthy_apps = set()
         trains.update({
             t: {} for t in os.listdir(catalog['location'])
             if os.path.isdir(os.path.join(catalog['location'], t)) and not t.startswith('.') and t != 'library'
@@ -71,12 +67,14 @@ class CatalogService(Service):
                     for verror in verrors:
                         item_data['healthy_error'] += f'{verror[0]}: {verror[1]}'
 
+                    unhealthy_apps.add(f'{item} ({train} train)')
                     # If the item format is not valid - there is no point descending any further into versions
                     continue
 
                 item_data.update(self.item_details(item_location, schema))
                 unhealthy_versions = [k for k, v in item_data['versions'].items() if not v['healthy']]
                 if unhealthy_versions:
+                    unhealthy_apps.add(f'{item} ({train} train)')
                     item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
                 else:
                     item_data['healthy'] = True
@@ -85,6 +83,11 @@ class CatalogService(Service):
         if label == self.middleware.call_sync('catalog.official_catalog_label'):
             # Update feature map cache whenever official catalog is updated
             self.middleware.call_sync('catalog.get_feature_map', False)
+
+        if unhealthy_apps:
+            self.middleware.call_sync(
+                'alert.oneshot_create' 'CatalogNotHealthy', {'catalog': label, 'apps': ', '.join(unhealthy_apps)}
+            )
 
         return trains
 
