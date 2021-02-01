@@ -6,7 +6,7 @@ import yaml
 from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, Str
-from middlewared.service import accepts, private, Service
+from middlewared.service import accepts, private, Service, ValidationErrors
 
 
 ITEM_KEYS = ['icon_url']
@@ -22,6 +22,7 @@ class CatalogService(Service):
         Dict(
             'options',
             Bool('cache', default=True),
+            Bool('retrieve_unusable_apps', default=False),
         )
     )
     def items(self, label, options):
@@ -38,6 +39,12 @@ class CatalogService(Service):
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
+        # TODO: Let's please add alerts for malformed catalogs
+        #  1) No train
+        #  2) Empty trains
+        #  3) Empty catalog item with no version
+        #  4) Malformed catalog item in a train
+        #  5) Unable to clone / pull the catalog
         # We make sure we do not dive into library folder and not consider it a train
         # This allows us to use this folder for placing helm library charts
         trains = {'charts': {}, 'test': {}}
@@ -49,11 +56,31 @@ class CatalogService(Service):
             category_path = os.path.join(catalog['location'], train)
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
                 item_location = os.path.join(category_path, item)
-                trains[train][item] = {
+                trains[train][item] = item_data = {
                     'name': item,
                     'location': item_location,
-                    **self.item_details(item_location)
+                    'healthy': False,  # healthy means that each version the item hosts is valid and healthy
+                    'healthy_error': None,  # An error string explaining why the item is not healthy
+                    'versions': {},
                 }
+
+                schema = f'{train}.{item}'
+                try:
+                    self.middleware.call_sync('catalog.validate_catalog_item', item_location, schema, False)
+                except ValidationErrors as verrors:
+                    item_data['healthy_error'] = f'Following error(s) were found with {item!r}:\n'
+                    for verror in verrors:
+                        item_data['healthy_error'] += f'{verror[0]}: {verror[1]}'
+
+                    # If the item format is not valid - there is no point descending any further into versions
+                    continue
+
+                item_data.update(self.item_details(item_location, schema))
+                unhealthy_versions = [k for k, v in item_data['versions'].items() if not v['healthy']]
+                if unhealthy_versions:
+                    item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
+                else:
+                    item_data['healthy'] = True
 
         self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
         if label == self.middleware.call_sync('catalog.official_catalog_label'):
@@ -63,7 +90,7 @@ class CatalogService(Service):
         return trains
 
     @private
-    def item_details(self, item_path):
+    def item_details(self, item_path, schema):
         # Each directory under item path represents a version of the item and we need to retrieve details
         # for each version available under the item
         item_data = {'versions': {}}
@@ -76,7 +103,26 @@ class CatalogService(Service):
             filter(lambda p: os.path.isdir(os.path.join(item_path, p)), os.listdir(item_path)),
             reverse=True, key=parse_version,
         ):
-            item_data['versions'][version] = self.item_version_details(os.path.join(item_path, version))
+            item_data['versions'][version] = version_details = {
+                'healthy': False,
+                'healthy_error': None,
+                'location': os.path.join(item_path, version),
+                'required_features': [],
+            }
+            try:
+                self.middleware.call_sync(
+                    'catalog.validation_catalog_item_version', version_details['location'], f'{schema}.{version}'
+                )
+            except ValidationErrors as verrors:
+                version_details['healthy_error'] = f'Following error(s) were found with {version!r}:\n'
+                for verror in verrors:
+                    version_details['healthy_error'] += f'{verror[0]}: {verror[1]}'
+
+                # There is no point in trying to see what questions etc the version has as it's invalid
+                continue
+
+            version_details.update({'healthy': True, **self.item_version_details(version_details['location'])})
+
         return item_data
 
     @private
