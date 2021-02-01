@@ -55,6 +55,7 @@ class CatalogService(CRUDService):
             Str('label', required=True, empty=False),
             Str('repository', required=True, empty=False),
             Str('branch', default='master'),
+            register=True,
         )
     )
     async def do_create(self, data):
@@ -68,12 +69,19 @@ class CatalogService(CRUDService):
                     f'catalog_create.{k}', 'A catalog with same repository/branch already exists', errno=errno.EEXIST
                 )
 
+        verrors.check()
+
         await self.middleware.call('datastore.insert', self._config.datastore, data)
 
         return await self.get_instance(data['label'])
 
+    @accepts(
+        Str('id'),
+    )
+    async def do_delete(self, id):
+        await self.get_instance(id)
+        return await self.middleware.call('datastore.delete', self._config.datastore, id)
+
     @private
     async def official_catalog_label(self):
         return OFFICIAL_LABEL
-
-    # TODO: Please see if there are edge cases with deletion/updating catalogs for already installed apps of those catalogs
