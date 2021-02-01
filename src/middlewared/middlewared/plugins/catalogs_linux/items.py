@@ -86,7 +86,7 @@ class CatalogService(Service):
 
         if unhealthy_apps:
             self.middleware.call_sync(
-                'alert.oneshot_create' 'CatalogNotHealthy', {'catalog': label, 'apps': ', '.join(unhealthy_apps)}
+                'alert.oneshot_create', 'CatalogNotHealthy', {'catalog': label, 'apps': ', '.join(unhealthy_apps)}
             )
 
         return trains

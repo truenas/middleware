@@ -52,6 +52,9 @@ class CatalogService(CRUDService):
             catalog['trains'] = await self.middleware.call(
                 'catalog.items', catalog['label'], {'cache': extra.get('cache', True)},
             )
+            catalog['healthy'] = all(
+                app['healthy'] for train in catalog['trains'] for app in catalog['trains'][train].values()
+            )
         return catalog
 
     @accepts(

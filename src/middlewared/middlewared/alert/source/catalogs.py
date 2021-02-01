@@ -3,10 +3,10 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 
 class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
-    level = AlertLevel.CRITICAL
+    level = AlertLevel.WARNING
     category = AlertCategory.APPLICATIONS
     title = 'Catalog Not Healthy'
-    text = '%(apps)s are not healthy'
+    text = '%(apps)s Applications in %(catalog)s Catalog are not healthy'
 
     async def create(self, args):
         return Alert(CatalogNotHealthyAlertClass, args, key=args['catalog'])
