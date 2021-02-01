@@ -1403,6 +1403,9 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         await reg_sync.wait()
         await self.middleware.call('service.reload', 'mdns')
 
+    async def is_child_of_path(self, resource, path):
+        return await super().is_child_of_path(resource, path) if resource.get(self.path_field) else False
+
 
 async def setup(middleware):
     await middleware.call(
