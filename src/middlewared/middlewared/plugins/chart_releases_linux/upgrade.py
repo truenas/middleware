@@ -1,10 +1,14 @@
 import asyncio
+import copy
 import errno
+import importlib.util
 import os
 import shutil
 import tempfile
 import yaml
 
+from collections import Callable
+from inspect import signature
 from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, Str
@@ -89,6 +93,8 @@ class ChartReleaseService(Service):
         catalog_item = catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
         await self.middleware.call('catalog.version_supported_error_check', catalog_item)
 
+        config = await self.middleware.call('chart.release.upgrade_values', release)
+
         # We will be performing validation for values specified. Why we want to allow user to specify values here
         # is because the upgraded catalog item version might have different schema which potentially means that
         # upgrade won't work or even if new k8s are resources are created/deployed, they won't necessarily function
@@ -96,7 +102,7 @@ class ChartReleaseService(Service):
         # One tricky bit which we need to account for first is removing any key from current configured values
         # which the upgraded release will potentially not support. So we can safely remove those as otherwise
         # validation will fail as new schema does not expect those keys.
-        config = clean_values_for_upgrade(release['config'], catalog_item['schema']['questions'])
+        config = clean_values_for_upgrade(config, catalog_item['schema']['questions'])
         config.update(options['values'])
 
         config, context = await self.middleware.call(
@@ -159,6 +165,33 @@ class ChartReleaseService(Service):
             await job.wrap(container_update_job)
 
         return chart_release
+
+    @private
+    def upgrade_values(self, release):
+        config = copy.deepcopy(release['config'])
+        chart_version = release['chart_metadata']['version']
+        migration_path = os.path.join(release['path'], 'charts', chart_version, 'migrations')
+        migration_files = [os.path.join(migration_path, k) for k in (f'migrate_from_{chart_version}.py', 'migrate.py')]
+        if not os.path.exists(migration_path) or all(not os.path.exists(p) for p in migration_files):
+            return config
+
+        # This is guaranteed to exist based on above check
+        file_path = next(f for f in migration_files if os.path.exists(f))
+        spec = importlib.util.spec_from_file_location(file_path.split('/')[-1][:-3], file_path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        migrate_func = getattr(mod, 'migrate', None)
+        if not isinstance(migrate_func, Callable) or len(signature(migrate_func).parameters) != 1:
+            return config
+
+        migrated_config = migrate_func(config)
+        if migrated_config:
+            # We add this as a safety net in case something went wrong with the migration and we get a null response
+            # or the chart dev mishandled something - although we don't suppress any exceptions which might be raised
+            config = migrated_config
+
+        return config
 
     @periodic(interval=86400)
     @private
