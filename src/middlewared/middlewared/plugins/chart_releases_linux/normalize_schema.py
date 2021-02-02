@@ -4,7 +4,7 @@ import os
 
 from collections import Callable
 
-from middlewared.schema import Cron, Dict, List
+from middlewared.schema import Cron, Dict, List, Str
 from middlewared.service import private, Service
 
 from .schema import get_list_item_from_value
@@ -106,20 +106,22 @@ class ChartReleaseService(Service):
 
     @private
     async def normalise_ix_volume(self, attr, value, complete_config, context):
-        assert isinstance(attr, Dict) is True
+        # Let's allow ix volume attr to be a string as well making it easier to define a volume in questions.yaml
+        assert isinstance(attr, (Dict, Str)) is True
+
+        ds_name = value['datasetName'] if isinstance(attr, Dict) else value
 
         action_dict = next((d for d in context['actions'] if d['method'] == 'update_volumes_for_release'), None)
         if not action_dict:
             context['actions'].append({
                 'method': 'update_volumes_for_release',
-                'args': [copy.deepcopy(context['release']), [value['datasetName']]],
+                'args': [copy.deepcopy(context['release']), [ds_name]],
             })
         else:
-            action_dict['args'][-1].append(value['datasetName'])
+            action_dict['args'][-1].append(ds_name)
 
         complete_config['ixVolumes'].append({
-            'hostPath': os.path.join(context['release']['path'], 'volumes/ix_volumes', value['datasetName']),
-            'mountPath': value['mountPath'],
+            'hostPath': os.path.join(context['release']['path'], 'volumes/ix_volumes', ds_name),
         })
 
         return value
