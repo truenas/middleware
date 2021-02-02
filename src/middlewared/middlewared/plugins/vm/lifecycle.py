@@ -95,7 +95,7 @@ class VMService(Service, VMSupervisorMixin):
             try:
                 await self.middleware.call('vm.start', vm['id'])
             except Exception as e:
-                self.middleware.logger.debug(f'Failed to start VM {vm["name"]}: {e}')
+                self.middleware.logger.error(f'Failed to start VM {vm["name"]}: {e}')
 
     @private
     @accepts(
@@ -153,6 +153,9 @@ async def __event_system_ready(middleware, event_type, args):
 
         await middleware.call('vm.initialize_vms')
 
+        # we ignore the 'ready' event on an HA system since the failover event plugin
+        # is responsible for starting this service, however, the VMs still need to be
+        # initialized (which is what the above callers are doing)
         if await middleware.call('failover.licensed'):
             return
 
