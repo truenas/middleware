@@ -49,7 +49,6 @@ class ChartReleaseService(Service):
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', release['catalog']]], {'get': True, 'extra': {'item_details': True}},
         )
-        # TODO: Add a catalog branch check as well when we add support for different catalogs / catalog branches
 
         current_chart = release['chart_metadata']
         chart = current_chart['name']
@@ -171,7 +170,6 @@ class ChartReleaseService(Service):
     async def chart_releases_update_checks_internal(self, chart_releases_filters=None):
         chart_releases_filters = chart_releases_filters or []
 
-        # TODO: Let's please use branch as well to keep an accurate track of which app belongs to which catalog branch
         catalog_items = {
             f'{c["id"]}_{train}_{item}': c['trains'][train][item]
             for c in await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
