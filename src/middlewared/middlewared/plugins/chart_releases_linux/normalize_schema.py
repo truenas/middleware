@@ -117,8 +117,11 @@ class ChartReleaseService(Service):
                 'method': 'update_volumes_for_release',
                 'args': [copy.deepcopy(context['release']), [ds_name]],
             })
-        else:
+        elif ds_name not in action_dict['args'][-1]:
             action_dict['args'][-1].append(ds_name)
+        else:
+            # We already have this in action dict, let's not add a duplicate
+            return value
 
         complete_config['ixVolumes'].append({
             'hostPath': os.path.join(context['release']['path'], 'volumes/ix_volumes', ds_name),
