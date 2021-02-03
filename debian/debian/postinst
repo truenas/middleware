@@ -66,4 +66,3 @@ systemctl enable zfs-zed
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
 
 systemctl set-default truenas.target
-systemctl isolate truenas.target
