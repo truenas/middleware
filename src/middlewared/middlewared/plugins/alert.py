@@ -45,6 +45,8 @@ ALERT_SERVICES_FACTORIES = {}
 
 AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
+SEND_ALERTS_ON_READY = False
+
 
 class AlertModel(sa.Model):
     __tablename__ = 'system_alert'
@@ -417,6 +419,12 @@ class AlertService(Service):
     @private
     @job(lock="process_alerts", transient=True)
     async def send_alerts(self, job):
+        global SEND_ALERTS_ON_READY
+
+        if await self.middleware.call("system.state") != "READY":
+            SEND_ALERTS_ON_READY = True
+            return
+
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         now = datetime.utcnow()
@@ -1088,8 +1096,16 @@ class AlertClassesService(ConfigService):
         return new
 
 
+async def _event_system(middleware, event_type, args):
+    if args["id"] == "ready":
+        if SEND_ALERTS_ON_READY:
+            await middleware.call("alert.send_alerts")
+
+
 async def setup(middleware):
     middleware.event_register("alert.list", "Sent on alert changes.")
 
     await middleware.call("alert.load")
     await middleware.call("alert.initialize")
+
+    middleware.event_subscribe("system", _event_system)
