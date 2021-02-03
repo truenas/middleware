@@ -51,18 +51,29 @@ class MailService(Service):
         return None
 
     @private
-    def gmail_send(self, message, config):
+    def gmail_send(self, message, config, _retry_broken_pipe=True):
         gmail_service = self.middleware.call_sync("mail.gmail_build_service", config)
         if gmail_service == self.gmail_service:
             # Use existing gmail service if credentials match to avoid extra access token refresh
             gmail_service = self.gmail_service
+        else:
+            _retry_broken_pipe = False
 
         if gmail_service is None:
             raise RuntimeError("GMail service is not initialized")
 
-        gmail_service.service.users().messages().send(userId="me", body={
-            "raw": base64.urlsafe_b64encode(message.as_string().encode("ascii")).decode("ascii"),
-        }).execute()
+        try:
+            gmail_service.service.users().messages().send(userId="me", body={
+                "raw": base64.urlsafe_b64encode(message.as_string().encode("ascii")).decode("ascii"),
+            }).execute()
+        except BrokenPipeError:
+            if not _retry_broken_pipe:
+                raise
+
+            self.middleware.logger.debug("BrokenPipeError in gmail_send, retrying")
+            if self.gmail_service is not None:
+                self.gmail_service.close()
+            return self.gmail_send(message, config, _retry_broken_pipe=False)
 
         if gmail_service != self.gmail_service:
             gmail_service.close()
