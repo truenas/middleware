@@ -327,9 +327,9 @@ class SystemDatasetService(ConfigService):
                     'properties': {'mountpoint': 'legacy', **dataset_quota},
                 })
                 createdds = True
-            elif is_cores_ds and datasets_prop[dataset]['written']['parsed'] > 1024 ** 3:
+            elif is_cores_ds and datasets_prop[dataset]['used']['parsed'] >= 1024 ** 3:
                 try:
-                    await self.middleware.call('zfs.dataset.delete', dataset)
+                    await self.middleware.call('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})
                     await self.middleware.call('zfs.dataset.create', {
                         'name': dataset,
                         'properties': {'mountpoint': 'legacy', **dataset_quota},
