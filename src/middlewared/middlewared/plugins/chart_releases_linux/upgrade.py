@@ -176,8 +176,13 @@ class ChartReleaseService(Service):
 
         # This is guaranteed to exist based on above check
         file_path = next(f for f in migration_files if os.access(f, os.X_OK))
-        cp = subprocess.Popen([file_path, json.dumps(config)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = cp.communicate()
+
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(json.dumps(config))
+            f.flush()
+            cp = subprocess.Popen([file_path, f.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = cp.communicate()
+
         if cp.returncode:
             raise CallError(f'Failed to apply migration: {stderr.decode()}')
 
