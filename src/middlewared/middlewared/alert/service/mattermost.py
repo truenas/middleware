@@ -3,6 +3,7 @@ import requests
 
 from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
+from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class MattermostAlertService(ThreadedAlertService):
@@ -27,6 +28,6 @@ class MattermostAlertService(ThreadedAlertService):
                 "icon_url": self.attributes["icon_url"],
                 "text": self._format_alerts(alerts, gone_alerts, new_alerts),
             }),
-            timeout=15,
+            timeout=INTERNET_TIMEOUT,
         )
         r.raise_for_status()
