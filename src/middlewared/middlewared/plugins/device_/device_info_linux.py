@@ -134,7 +134,7 @@ class DeviceService(Service, DeviceInfoBase):
         try:
             disk = libsgio.SCSIDevice(device_path)
             rotation_rate = disk.rotation_rate()
-        except RuntimeError:
+        except (OSError, RuntimeError):
             self.logger.error('Ioctl failed while retrieving rotational rate for disk %s', device_path)
             return
 
