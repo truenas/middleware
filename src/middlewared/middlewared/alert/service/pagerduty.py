@@ -3,6 +3,7 @@ import requests
 
 from middlewared.alert.base import ProThreadedAlertService, ellipsis
 from middlewared.schema import Dict, Str
+from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class PagerDutyAlertService(ProThreadedAlertService):
@@ -26,7 +27,7 @@ class PagerDutyAlertService(ProThreadedAlertService):
                 "incident_key": alert.uuid,
                 "client": self.attributes["client_name"],
             }),
-            timeout=15,
+            timeout=INTERNET_TIMEOUT,
         )
         r.raise_for_status()
 
@@ -41,6 +42,6 @@ class PagerDutyAlertService(ProThreadedAlertService):
                 "incident_key": alert.uuid,
                 "client": self.attributes["client_name"],
             }),
-            timeout=15,
+            timeout=INTERNET_TIMEOUT,
         )
         r.raise_for_status()

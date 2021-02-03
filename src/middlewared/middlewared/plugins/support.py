@@ -12,6 +12,7 @@ from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen
+from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.validators import Email
 
 ADDRESS = 'support-proxy.ixsystems.com'
@@ -136,7 +137,7 @@ class SupportService(ConfigService):
                     'password': password,
                 }),
                 headers={'Content-Type': 'application/json'},
-                timeout=10,
+                timeout=INTERNET_TIMEOUT,
             )
             data = r.json()
         except simplejson.JSONDecodeError:
@@ -214,7 +215,7 @@ class SupportService(ConfigService):
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket',
                 data=json.dumps(data),
                 headers={'Content-Type': 'application/json'},
-                timeout=10,
+                timeout=INTERNET_TIMEOUT,
             ))
             result = r.json()
         except simplejson.JSONDecodeError:

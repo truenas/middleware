@@ -3,6 +3,7 @@ import requests
 
 from middlewared.alert.base import ProThreadedAlertService, ellipsis
 from middlewared.schema import Dict, Str
+from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class OpsGenieAlertService(ProThreadedAlertService):
@@ -25,7 +26,7 @@ class OpsGenieAlertService(ProThreadedAlertService):
                 "alias": alert.uuid,
                 "description": ellipsis(alert.formatted, 15000),
             }),
-            timeout=15,
+            timeout=INTERNET_TIMEOUT,
         )
         r.raise_for_status()
 
@@ -34,6 +35,6 @@ class OpsGenieAlertService(ProThreadedAlertService):
             (self.attributes.get("api_url") or "https://api.opsgenie.com") + "/v2/alerts/" + alert.uuid,
             params={"identifierType": "alias"},
             headers={"Authorization": f"GenieKey {self.attributes['api_key']}"},
-            timeout=15,
+            timeout=INTERNET_TIMEOUT,
         )
         r.raise_for_status()

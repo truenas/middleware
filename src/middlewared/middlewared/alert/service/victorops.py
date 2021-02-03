@@ -3,6 +3,7 @@ import requests
 
 from middlewared.alert.base import ProThreadedAlertService
 from middlewared.schema import Dict, Str
+from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class VictorOpsAlertService(ProThreadedAlertService):
@@ -26,7 +27,7 @@ class VictorOpsAlertService(ProThreadedAlertService):
                 "entity_display_name": alert.formatted,
                 "state_message": alert.formatted,
             }),
-            timeout=15,
+            timeout=INTERNET_TIMEOUT,
         )
         r.raise_for_status()
 
@@ -41,6 +42,6 @@ class VictorOpsAlertService(ProThreadedAlertService):
                 "entity_display_name": alert.formatted,
                 "state_message": alert.formatted,
             }),
-            timeout=15,
+            timeout=INTERNET_TIMEOUT,
         )
         r.raise_for_status()
