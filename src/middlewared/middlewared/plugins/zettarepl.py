@@ -36,7 +36,9 @@ from zettarepl.scheduler.tz_clock import TzClock
 from zettarepl.snapshot.list import multilist_snapshots, group_snapshots_by_datasets
 from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
+from zettarepl.transport.interface import ExecException
 from zettarepl.transport.local import LocalShell
+from zettarepl.transport.zfscli import get_properties_recursive
 from zettarepl.utils.logging import (
     LongStringsFilter, ReplicationTaskLoggingLevelFilter, logging_record_replication_task
 )
@@ -54,8 +56,6 @@ INVALID_DATASETS = (
     re.compile(r"freenas-boot($|/)"),
     re.compile(r"[^/]+/\.system($|/)")
 )
-SSH_EXCEPTIONS = (socket.timeout, paramiko.ssh_exception.NoValidConnectionsError, paramiko.ssh_exception.SSHException,
-                  IOError, OSError)
 
 
 def lifetime_timedelta(value, unit):
@@ -405,11 +405,9 @@ class ZettareplService(Service):
         job.set_progress(progress, text)
 
     async def list_datasets(self, transport, ssh_credentials=None):
-        try:
+        async with self._handle_ssh_exceptions():
             async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
                 datasets = await self.middleware.run_in_thread(list_datasets, shell)
-        except SSH_EXCEPTIONS as e:
-            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
         return [
             ds
@@ -418,20 +416,16 @@ class ZettareplService(Service):
         ]
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
-        try:
+        async with self._handle_ssh_exceptions():
             async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
                 return await self.middleware.run_in_thread(create_dataset, shell, dataset)
-        except SSH_EXCEPTIONS as e:
-            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
     async def count_eligible_manual_snapshots(self, datasets, naming_schemas, transport, ssh_credentials=None):
-        try:
+        async with self._handle_ssh_exceptions():
             async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
                 snapshots = await self.middleware.run_in_thread(
                     multilist_snapshots, shell, [(dataset, False) for dataset in datasets]
                 )
-        except SSH_EXCEPTIONS as e:
-            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
         parsed = parse_snapshots_names_with_multiple_schemas([s.name for s in snapshots], naming_schemas)
 
@@ -479,6 +473,28 @@ class ZettareplService(Service):
                 errors[target_dataset] = unmatched_snapshots
 
         return errors
+
+    async def datasets_have_encryption(self, datasets, recursive, transport, ssh_credentials=None):
+        async with self._handle_ssh_exceptions():
+            async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
+                try:
+                    properties_result = await self.middleware.run_in_thread(
+                        get_properties_recursive, shell, datasets, {"encryption": str}, recursive=recursive,
+                    )
+                except ExecException as e:
+                    self.middleware.logger.debug("Encryption not supported on shell %r: %r (exit code = %d)",
+                                                 shell, e.stdout.split("\n")[0], e.returncode)
+                    return []
+
+        result = []
+        for dataset, properties in properties_result.items():
+            if properties["encryption"] != "off":
+                if any(dataset.startswith(f"{parent}/") for parent in result):
+                    continue
+
+                result.append(dataset)
+
+        return result
 
     async def get_definition(self):
         timezone = (await self.middleware.call("system.general.config"))["timezone"]
@@ -630,6 +646,14 @@ class ZettareplService(Service):
 
         if not pools[pool]["is_decrypted"]:
             return f"Pool {pool} is locked"
+
+    @asynccontextmanager
+    async def _handle_ssh_exceptions(self):
+        try:
+            yield
+        except (socket.timeout, paramiko.ssh_exception.NoValidConnectionsError, paramiko.ssh_exception.SSHException,
+                IOError, OSError) as e:
+            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
     @asynccontextmanager
     async def _get_zettarepl_shell(self, transport, ssh_credentials):
