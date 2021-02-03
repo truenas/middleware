@@ -12,4 +12,4 @@ StandardOutput=null
 StandardError=null
 
 [Install]
-WantedBy=getty.target
+WantedBy=truenas.target

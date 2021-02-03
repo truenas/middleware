@@ -1,0 +1,5 @@
+[Unit]
+Description=TrueNAS Target
+Requires=multi-user.target
+After=multi-user.target
+AllowIsolate=yes
