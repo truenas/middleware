@@ -475,10 +475,11 @@ class List(EnumMixin, Attribute):
             for index, v in enumerate(value):
                 for i in self.items:
                     try:
-                        value[index] = i.clean(v)
+                        tmpval = copy.deepcopy(v)
+                        value[index] = i.clean(tmpval)
                         found = True
                         break
-                    except Error as e:
+                    except (Error, ValidationErrors) as e:
                         found = e
                 if self.items and found is not True:
                     raise Error(self.name, 'Item#{0} is not valid per list types: {1}'.format(index, found))
