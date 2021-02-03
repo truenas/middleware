@@ -1201,6 +1201,9 @@ class CoreService(Service):
         exception
         """
         statuses = []
+        if not params:
+            return statuses
+
         progress_step = 100 / len(params)
         current_progress = 0
 
