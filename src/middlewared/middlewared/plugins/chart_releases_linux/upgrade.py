@@ -93,7 +93,7 @@ class ChartReleaseService(Service):
         catalog_item = catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
         await self.middleware.call('catalog.version_supported_error_check', catalog_item)
 
-        config = await self.middleware.call('chart.release.upgrade_values', release)
+        config = await self.middleware.call('chart.release.upgrade_values', release, catalog_item['location'])
 
         # We will be performing validation for values specified. Why we want to allow user to specify values here
         # is because the upgraded catalog item version might have different schema which potentially means that
@@ -167,10 +167,10 @@ class ChartReleaseService(Service):
         return chart_release
 
     @private
-    def upgrade_values(self, release):
+    def upgrade_values(self, release, new_version_path):
         config = copy.deepcopy(release['config'])
         chart_version = release['chart_metadata']['version']
-        migration_path = os.path.join(release['path'], 'charts', chart_version, 'migrations')
+        migration_path = os.path.join(new_version_path, 'migrations')
         migration_files = [os.path.join(migration_path, k) for k in (f'migrate_from_{chart_version}.py', 'migrate.py')]
         if not os.path.exists(migration_path) or all(not os.path.exists(p) for p in migration_files):
             return config
