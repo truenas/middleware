@@ -87,9 +87,11 @@ class PoolDatasetService(Service):
     @private
     async def restart_services_after_unlock(self, dataset_name, services_to_restart):
         try:
-            await self.middleware.call('core.bulk', 'service.restart', [
-                [i] for i in set(services_to_restart) - {'jails', 'vms'}
-            ])
+            to_restart = [[i] for i in set(services_to_restart) - {'jails', 'vms'}]
+            if not to_restart:
+                return
+
+            await self.middleware.call('core.bulk', 'service.restart', to_restart)
             if 'jails' in services_to_restart:
                 await self.middleware.call('jail.rc_action', ['RESTART'])
             if 'vms' in services_to_restart:
