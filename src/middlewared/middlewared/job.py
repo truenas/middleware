@@ -312,6 +312,9 @@ class Job(object):
             await asyncio.wait_for(asyncio.shield(self._finished.wait()), timeout)
         if raise_error:
             if self.error:
+                if isinstance(self.exc_info[1], CallError):
+                    raise self.exc_info[1]
+
                 raise CallError(self.error)
         return self.result
 
@@ -329,6 +332,9 @@ class Job(object):
         event.wait()
         if raise_error:
             if self.error:
+                if isinstance(self.exc_info[1], CallError):
+                    raise self.exc_info[1]
+
                 raise CallError(self.error)
         return self.result
 
