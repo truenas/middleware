@@ -3,6 +3,7 @@ import requests
 
 from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str, List, Int
+from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class TelegramAlertService(ThreadedAlertService):
@@ -27,6 +28,6 @@ class TelegramAlertService(ThreadedAlertService):
                     "text": self._format_alerts(alerts, gone_alerts, new_alerts),
                     "parse_mode": "Markdown",
                 }),
-                timeout=15,
+                timeout=INTERNET_TIMEOUT,
             )
             r.raise_for_status()
