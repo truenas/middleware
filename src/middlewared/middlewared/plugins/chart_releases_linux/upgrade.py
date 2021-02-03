@@ -1,14 +1,13 @@
 import asyncio
 import copy
 import errno
-import importlib.util
+import json
 import os
 import shutil
+import subprocess
 import tempfile
 import yaml
 
-from collections import Callable
-from inspect import signature
 from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, Str
@@ -171,25 +170,21 @@ class ChartReleaseService(Service):
         config = copy.deepcopy(release['config'])
         chart_version = release['chart_metadata']['version']
         migration_path = os.path.join(new_version_path, 'migrations')
-        migration_files = [os.path.join(migration_path, k) for k in (f'migrate_from_{chart_version}.py', 'migrate.py')]
-        if not os.path.exists(migration_path) or all(not os.path.exists(p) for p in migration_files):
+        migration_files = [os.path.join(migration_path, k) for k in (f'migrate_from_{chart_version}', 'migrate')]
+        if not os.path.exists(migration_path) or all(not os.access(p, os.X_OK) for p in migration_files):
             return config
 
         # This is guaranteed to exist based on above check
-        file_path = next(f for f in migration_files if os.path.exists(f))
-        spec = importlib.util.spec_from_file_location(file_path.split('/')[-1][:-3], file_path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        file_path = next(f for f in migration_files if os.access(f, os.X_OK))
+        cp = subprocess.Popen([file_path, json.dumps(config)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = cp.communicate()
+        if cp.returncode:
+            raise CallError(f'Failed to apply migration: {stderr.decode()}')
 
-        migrate_func = getattr(mod, 'migrate', None)
-        if not isinstance(migrate_func, Callable) or len(signature(migrate_func).parameters) != 1:
-            return config
-
-        migrated_config = migrate_func(config)
-        if migrated_config:
+        if stdout:
             # We add this as a safety net in case something went wrong with the migration and we get a null response
             # or the chart dev mishandled something - although we don't suppress any exceptions which might be raised
-            config = migrated_config
+            config = json.loads(stdout.decode())
 
         return config
 
