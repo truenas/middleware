@@ -36,7 +36,7 @@ class SensorService(Service):
             return []
 
         sensors = await self._sensor_list()
-        if is_m_series:
+        if is_m_series or is_r_series or is_freenas_certified:
             for sensor in sensors:
                 ps_match = re.match("(PS[0-9]+) Status", sensor["name"])
                 if ps_match:
