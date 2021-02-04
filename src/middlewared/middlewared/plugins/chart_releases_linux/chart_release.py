@@ -289,8 +289,12 @@ class ChartReleaseService(CRUDService):
             raise CallError(f'Chart release with {data["release_name"]} already exists.', errno=errno.EEXIST)
 
         catalog = await self.middleware.call(
-            'catalog.query', [['id', '=', data['catalog']]], {'get': True, 'extra': {'item_details': True}}
+            'catalog.query', [['id', '=', data['catalog']]], {'extra': {'item_details': True}}
         )
+        if not catalog:
+            raise CallError(f'Unable to locate {data["catalog"]!r} catalog', errno=errno.ENOENT)
+        else:
+            catalog = catalog[0]
         if data['train'] not in catalog['trains']:
             raise CallError(f'Unable to locate "{data["train"]}" catalog train.', errno=errno.ENOENT)
         if data['item'] not in catalog['trains'][data['train']]:
