@@ -7,6 +7,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
+from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 from middlewared.validators import Range
 
 import ntplib
@@ -486,6 +487,11 @@ class SystemService(Service):
             "expired": licenseobj.expired,
             "features": [],
             "addhw": licenseobj.addhw,
+            "addhw_detail": [
+                f"{quantity} × " + (f"{LICENSE_ADDHW_MAPPING[code]} Expansion shelf" if code in LICENSE_ADDHW_MAPPING
+                                    else f"<Unknown hardware {code}>")
+                for quantity, code in licenseobj.addhw
+            ],
         }
         for feature in licenseobj.features:
             license["features"].append(feature.name.upper())
