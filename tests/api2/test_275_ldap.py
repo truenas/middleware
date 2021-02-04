@@ -13,7 +13,8 @@ from functions import (
     POST,
     DELETE,
     SSH_TEST,
-    cmd_test
+    cmd_test,
+    wait_on_job
 )
 from auto_config import pool_name, ip, user, password
 
@@ -109,20 +110,36 @@ def test_09_creating_ldap_dataset_for_smb(request):
     assert results.status_code == 200, results.text
 
 
-def test_10_changing_ldap_dataset_permission(request):
+def test_10_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
+    depends(request, ["setup_ldap", "ssh_password"], scope="session")
+    results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
+    assert results['result'] is True, str(results['output'])
+    assert LDAPUSER in results['output'], str(results['output'])
+
+
+def test_11_verify_that_the_ldap_user_id_exist_on_the_nas(request):
+    depends(request, ["setup_ldap", "ssh_password"], scope="session")
+    results = SSH_TEST(f'id {LDAPUSER}', user, password, ip)
+    assert results['result'] is True, str(results['output'])
+    assert LDAPUSER in results['output'], str(results['output'])
+
+
+def test_12_changing_ldap_dataset_permission(request):
     depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
     global job_id_09
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', {
         'acl': [],
         'mode': '777',
-        'user': 'root',
-        'group': 'wheel'
+        'user': LDAPUSER,
+        'group': LDAPUSER
     })
     assert results.status_code == 200, results.text
-    job_id_09 = results.json()
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_11_setting_up_for_testing(request):
+def test_13_setting_up_for_testing(request):
     depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
     global payload, results
     payload = {
@@ -133,7 +150,7 @@ def test_11_setting_up_for_testing(request):
 
 
 @pytest.mark.dependency(name="smb_share_ldap")
-def test_12_creating_a_smb_share_to_test_ldap(request):
+def test_14_creating_a_smb_share_to_test_ldap(request):
     depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
     global smb_id
     payload = {
@@ -148,19 +165,19 @@ def test_12_creating_a_smb_share_to_test_ldap(request):
     smb_id = results.json()['id']
 
 
-def test_13_enable_cifs_service(request):
+def test_15_enable_cifs_service(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = PUT("/service/id/cifs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
-def test_14_verify_if_clif_service_is_enabled(request):
+def test_16_verify_if_clif_service_is_enabled(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is True, results.text
 
 
-def test_15_starting_cifs_service(request):
+def test_17_starting_cifs_service(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
@@ -168,26 +185,20 @@ def test_15_starting_cifs_service(request):
     time.sleep(5)
 
 
-def test_16_verify_if_cifs_service_is_running(request):
+def test_18_verify_if_cifs_service_is_running(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_17_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
-    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap", "ssh_password"], scope="session")
-    results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
-    assert results['result'] is True, results['output']
-
-
-def test_18_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_on(request):
+def test_19_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_on(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
     results = cmd_test(cmd)
     assert results['result'] is True, results['output']
 
 
-def test_19_create_a_testfile_and_send_it_to_the_smb_share_with_ldap(request):
+def test_20_create_a_testfile_and_send_it_to_the_smb_share_with_ldap(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     cmd_test('touch testfile.txt')
     cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD}' \
@@ -196,13 +207,13 @@ def test_19_create_a_testfile_and_send_it_to_the_smb_share_with_ldap(request):
     assert results['result'] is True, results['output']
 
 
-def test_20_verify_testfile_exit_with_in_the_smb_share_with_filesystem_stat(request):
+def test_21_verify_testfile_exit_with_in_the_smb_share_with_filesystem_stat(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
-def test_21_set_has_samba_schema_to_false(request):
+def test_22_set_has_samba_schema_to_false(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {
         "has_samba_schema": False
@@ -211,7 +222,7 @@ def test_21_set_has_samba_schema_to_false(request):
     assert results.status_code == 200, results.text
 
 
-def test_22_restarting_cifs_service_after_changing_has_samba_schema(request):
+def test_23_restarting_cifs_service_after_changing_has_samba_schema(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
@@ -219,20 +230,20 @@ def test_22_restarting_cifs_service_after_changing_has_samba_schema(request):
     time.sleep(5)
 
 
-def test_23_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
+def test_24_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap", "ssh_password"], scope="session")
     results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is False, results['output']
 
 
-def test_24_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_false(request):
+def test_25_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_false(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
     results = cmd_test(cmd)
     assert results['result'] is False, results['output']
 
 
-def test_25_set_has_samba_schema_true_and_ssl_START_TLS(request):
+def test_26_set_has_samba_schema_true_and_ssl_START_TLS(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {
         "has_samba_schema": True,
@@ -242,7 +253,7 @@ def test_25_set_has_samba_schema_true_and_ssl_START_TLS(request):
     assert results.status_code == 200, results.text
 
 
-def test_26_starting_cifs_service_after_changing_ssl_to_START_TLS(request):
+def test_27_starting_cifs_service_after_changing_ssl_to_START_TLS(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
@@ -250,26 +261,26 @@ def test_26_starting_cifs_service_after_changing_ssl_to_START_TLS(request):
     time.sleep(5)
 
 
-def test_27_verify_if_cifs_service_is_running(request):
+def test_28_verify_if_cifs_service_is_running(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_28_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
+def test_29_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap", "ssh_password"], scope="session")
     results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_29_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_START_TLS(request):
+def test_30_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_START_TLS(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
     results = cmd_test(cmd)
     assert results['result'] is True, results['output']
 
 
-def test_30_remove_the_testfile_from_smb_share_with_ldap_with_ssl_START_TLS(request):
+def test_31_remove_the_testfile_from_smb_share_with_ldap_with_ssl_START_TLS(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD}' \
         ' -c "rm testfile.txt"'
@@ -278,13 +289,13 @@ def test_30_remove_the_testfile_from_smb_share_with_ldap_with_ssl_START_TLS(requ
     cmd_test('rm testfile.txt')
 
 
-def test_31_verify_testfile_is_removed_from_the_smb_share_with_filesystem_stat(request):
+def test_32_verify_testfile_is_removed_from_the_smb_share_with_filesystem_stat(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 422, results.text
 
 
-def test_32_set_has_samba_schema_to_false(request):
+def test_33_set_has_samba_schema_to_false(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {
         "has_samba_schema": False
@@ -293,46 +304,46 @@ def test_32_set_has_samba_schema_to_false(request):
     assert results.status_code == 200, results.text
 
 
-def test_33_restarting_cifs_service_after_changing_has_samba_schema(request):
+def test_34_restarting_cifs_service_after_changing_has_samba_schema(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_34_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
+def test_35_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap", "ssh_password"], scope="session")
     results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is False, results['output']
 
 
-def test_35_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_false(request):
+def test_36_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_false(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
     results = cmd_test(cmd)
     assert results['result'] is False, results['output']
 
 
-def test_36_stopping_cifs_service(request):
+def test_37_stopping_cifs_service(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_37_verify_if_cifs_service_stopped(request):
+def test_38_verify_if_cifs_service_stopped(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
-def test_38_delete_the_smb_share_for_ldap_testing(request):
+def test_39_delete_the_smb_share_for_ldap_testing(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_39_disabling_ldap(request):
+def test_40_disabling_ldap(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     payload = {
         "enable": False
@@ -341,7 +352,7 @@ def test_39_disabling_ldap(request):
     assert results.status_code == 200, results.text
 
 
-def test_40_verify_ldap_state_after_is_enabled_after_disabling_ldap(request):
+def test_41_verify_ldap_state_after_is_enabled_after_disabling_ldap(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
@@ -349,13 +360,13 @@ def test_40_verify_ldap_state_after_is_enabled_after_disabling_ldap(request):
     assert results.json() == "DISABLED", results.text
 
 
-def test_41_verify_ldap_enable_is_false(request):
+def test_42_verify_ldap_enable_is_false(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = GET("/ldap/")
     assert results.json()["enable"] is False, results.text
 
 
-def test_42_destroying_ad_dataset_for_smb(request):
+def test_43_destroying_ad_dataset_for_smb(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
