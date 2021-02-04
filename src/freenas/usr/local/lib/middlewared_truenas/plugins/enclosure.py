@@ -263,6 +263,9 @@ class EnclosureService(CRUDService):
                 seen_devs.append(label)
 
                 disk = label2disk.get(label)
+                if disk is None:
+                    continue
+
                 try:
                     element = self._get_ses_slot_for_disk(disk)
                 except MatchNotFound:
@@ -318,7 +321,10 @@ class EnclosureService(CRUDService):
 
         disks = []
         for label in seen_devs:
-            disk = label2disk[label]
+            disk = label2disk.get(label)
+            if disk is None:
+                continue
+
             if disk.startswith("multipath/"):
                 try:
                     disks.append(self.middleware.call_sync(
