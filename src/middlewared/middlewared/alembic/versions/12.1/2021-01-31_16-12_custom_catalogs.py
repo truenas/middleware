@@ -22,11 +22,12 @@ def upgrade():
         sa.Column('label', sa.String(length=255), nullable=False, unique=True),
         sa.Column('repository', sa.String(length=128), nullable=False),
         sa.Column('branch', sa.String(length=128), nullable=False),
+        sa.Column('builtin', sa.Boolean(), default=False),
         sa.PrimaryKeyConstraint('label', name=op.f('pk_services_catalog')),
     )
     op.execute(
-        "INSERT INTO services_catalog (label, repository, branch) VALUES"
-        " ('OFFICIAL', 'https://github.com/truenas/charts.git', 'master')"
+        "INSERT INTO services_catalog (label, repository, branch, builtin) VALUES"
+        " ('OFFICIAL', 'https://github.com/truenas/charts.git', 'master', 1)"
     )
 
 
