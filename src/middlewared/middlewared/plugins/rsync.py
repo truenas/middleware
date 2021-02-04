@@ -631,7 +631,7 @@ class RsyncTaskService(TaskPathService):
         ]
         for name, flag in (
             ('archive', '-a'),
-            ('compress', '-z'),
+            ('compress', '-zz'),
             ('delayupdates', '--delay-updates'),
             ('delete', '--delete-delay'),
             ('preserveattr', '-X'),
