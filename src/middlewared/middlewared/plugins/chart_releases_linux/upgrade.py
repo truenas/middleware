@@ -47,8 +47,12 @@ class ChartReleaseService(Service):
         await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call('chart.release.get_instance', release_name)
         catalog = await self.middleware.call(
-            'catalog.query', [['id', '=', release['catalog']]], {'get': True, 'extra': {'item_details': True}},
+            'catalog.query', [['id', '=', release['catalog']]], {'extra': {'item_details': True}},
         )
+        if not catalog:
+            raise CallError(f'Unable to locate {release["catalog"]!r} catalog', errno=errno.ENOENT)
+        else:
+            catalog = catalog[0]
 
         current_chart = release['chart_metadata']
         chart = current_chart['name']
