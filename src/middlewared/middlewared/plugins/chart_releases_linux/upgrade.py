@@ -189,7 +189,9 @@ class ChartReleaseService(Service):
 
     @private
     async def chart_release_update_check(self, catalog_item, application):
-        available_versions = [parse_version(v) for v in catalog_item['versions']]
+        available_versions = [
+            parse_version(version) for version, data in catalog_item['versions'].items() if data['healthy']
+        ]
         if not available_versions:
             return
 
