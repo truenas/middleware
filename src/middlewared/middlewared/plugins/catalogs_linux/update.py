@@ -114,6 +114,9 @@ class CatalogService(CRUDService):
         if os.path.exists(catalog['location']):
             shutil.rmtree(catalog['location'], ignore_errors=True)
 
+        # Let's delete any unhealthy alert if we had one
+        self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', id)
+
         return ret
 
     @private
