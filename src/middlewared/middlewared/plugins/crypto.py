@@ -212,11 +212,12 @@ class CryptoKeyService(Service):
     def add_extensions(self, cert, extensions_data, key, issuer=None):
         # issuer must be a certificate object
         # By default we add the following
-        cert = cert.public_key(
-            key.public_key()
-        ).add_extension(
-            x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
-        )
+        if not isinstance(cert, x509.CertificateSigningRequestBuilder):
+            cert = cert.public_key(
+                key.public_key()
+            ).add_extension(
+                x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
+            )
 
         for extension in filter(lambda v: v[1]['enabled'], extensions_data.items()):
             klass = getattr(x509.extensions, extension[0])
@@ -543,6 +544,8 @@ class CryptoKeyService(Service):
             'lifetime': data.get('lifetime'),
             'csr': True
         })
+
+        csr = self.add_extensions(csr, data.get('cert_extensions', {}), key, None)
 
         csr = csr.sign(key, self.retrieve_signing_algorithm(data, key), default_backend())
 
@@ -1693,7 +1696,6 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_IMPORTED_CSR',
             'CERTIFICATE_CREATE_ACME',
             'CERTIFICATE_CREATE_IMPORTED',
-            'CERTIFICATE_CREATE_CSR'
         ):
             data.pop('cert_extensions')
 
@@ -1778,6 +1780,7 @@ class CertificateService(CRUDService):
     async def __create_csr(self, job, data):
         # no signedby, lifetime attributes required
         cert_info = get_cert_info_from_data(data)
+        cert_info['cert_extensions'] = data['cert_extensions']
 
         data['type'] = CERT_TYPE_CSR
 
