@@ -1697,7 +1697,9 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_ACME',
             'CERTIFICATE_CREATE_IMPORTED',
         ):
+            # We add dictionaries/lists by default, so we need to explicitly remove them
             data.pop('cert_extensions')
+            data.pop('san')
 
         if create_type == 'CERTIFICATE_CREATE_ACME':
             data = await self.middleware.run_in_thread(
