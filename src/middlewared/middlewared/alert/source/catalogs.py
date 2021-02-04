@@ -6,10 +6,10 @@ class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
     level = AlertLevel.WARNING
     category = AlertCategory.APPLICATIONS
     title = 'Catalog Not Healthy'
-    text = '%(apps)s Applications in %(catalog)s Catalog are not healthy'
+    text = '%(apps)s Applications in %(catalog)s Catalog are not healthy.'
 
     async def create(self, args):
-        return Alert(CatalogNotHealthyAlertClass, args, key=args['catalog'])
+        return Alert(CatalogNotHealthyAlertClass, args, _key=args['catalog'])
 
     async def delete(self, alerts, query):
         return list(filter(
