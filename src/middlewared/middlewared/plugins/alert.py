@@ -385,7 +385,7 @@ class AlertService(Service):
 
     async def _send_alert_changed_event(self, alert):
         as_ = AlertSerializer(self.middleware)
-        if as_.should_show_alert(alert):
+        if await as_.should_show_alert(alert):
             self.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, fields=await as_.serialize(alert))
 
     def _send_alert_deleted_event(self, alert):
