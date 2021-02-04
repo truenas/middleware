@@ -107,6 +107,7 @@ class CatalogService(Service):
         ):
             item_data['versions'][version] = version_details = {
                 'healthy': False,
+                'supported': False,
                 'healthy_error': None,
                 'location': os.path.join(item_path, version),
                 'required_features': [],
