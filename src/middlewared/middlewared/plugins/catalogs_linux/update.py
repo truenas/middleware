@@ -6,7 +6,7 @@ import shutil
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, Str, ValidationErrors
-from middlewared.service import accepts, CRUDService, private
+from middlewared.service import accepts, CallError, CRUDService, private
 
 from .utils import convert_repository_to_path
 
@@ -20,6 +20,7 @@ class CatalogModel(sa.Model):
     label = sa.Column(sa.String(255), nullable=False, unique=True, primary_key=True)
     repository = sa.Column(sa.Text(), nullable=False)
     branch = sa.Column(sa.String(255), nullable=False)
+    builtin = sa.Column(sa.Boolean(), nullable=False, default=False)
 
 
 class CatalogService(CRUDService):
@@ -105,6 +106,8 @@ class CatalogService(CRUDService):
     )
     def do_delete(self, id):
         catalog = self.middleware.call_sync('catalog.get_instance', id)
+        if catalog['builtin']:
+            raise CallError('Builtin catalogs cannot be deleted')
 
         ret = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
 
