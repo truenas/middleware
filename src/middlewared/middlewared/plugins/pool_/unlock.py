@@ -95,7 +95,14 @@ class PoolDatasetService(Service):
             if not to_restart:
                 return
 
-            await self.middleware.call('core.bulk', 'service.restart', to_restart)
+            restart_job = await self.middleware.call('core.bulk', 'service.restart', to_restart)
+            statuses = await restart_job.wait()
+            for idx, srv_status in enumerate(statuses):
+                if srv_status['error']:
+                    self.logger.error(
+                        'Failed to restart %r service after %r unlock: %s',
+                        to_restart[idx], dataset_name, srv_status['error']
+                    )
             if 'jails' in services_to_restart:
                 await self.middleware.call('jail.rc_action', ['RESTART'])
             if 'vms' in services_to_restart:
