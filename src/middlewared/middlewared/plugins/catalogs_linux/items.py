@@ -38,7 +38,7 @@ class CatalogService(Service):
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
-        self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', f'"{label}"')
+        self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
         # We make sure we do not dive into library folder and not consider it a train
         # This allows us to use this folder for placing helm library charts
         trains = {'charts': {}, 'test': {}}
