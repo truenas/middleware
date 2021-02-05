@@ -263,7 +263,7 @@ class ChartReleaseService(CRUDService):
             Dict('values', additional_attrs=True),
             Str('catalog', required=True),
             Str('item', required=True),
-            Str('release_name', required=True, validators=[Match(r'[a-z0-9]([-a-z0-9]*[a-z0-9])?')]),
+            Str('release_name', required=True, validators=[Match(r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')]),
             Str('train', default='charts'),
             Str('version', default='latest'),
         )
