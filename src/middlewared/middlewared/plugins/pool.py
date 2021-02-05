@@ -3218,6 +3218,12 @@ class PoolDatasetService(CRUDService):
                 [('id', '=', data['name'].rsplit('/', 1)[0])]
             )
 
+        if await self.is_internal_dataset(data['name']):
+            verrors.add(
+                f'{schema}.name',
+                f'{data["name"]!r} is using system internal managed dataset. Please specify a different parent.'
+            )
+
         if not parent:
             verrors.add(
                 f'{schema}.name',
