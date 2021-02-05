@@ -187,9 +187,16 @@ class KerberosService(ConfigService):
                     raise CallError(f'[{e}] is not a supported encryption type')
 
         if data['ptype'] == 'cctype':
-            for cctype in ['DIR', 'FILE', 'MEMORY']:
-                if cctype not in data['value']:
-                    raise CallError(f'{data["value"]} is an unsupported cctype')
+            available_types = ['FILE', 'MEMORY']
+            if osc.IS_FREEBSD:
+                available_types.append('SCC')
+            else:
+                available_types.append('DIR')
+
+            if data['value'] not in available_types:
+                raise CallError(f'[{data["value"]}] is an unsupported cctype. '
+                                f'Available types are {", ".join(available_types)}. '
+                                'This parameter is case-sensitive')
 
         if data['ptype'] == 'keytab':
             try:
