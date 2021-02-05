@@ -159,6 +159,8 @@ class ChartReleaseService(Service):
         job.set_progress(100, 'Upgrade complete for chart release')
 
         chart_release = await self.middleware.call('chart.release.get_instance', release_name)
+        self.middleware.send_event('chart.release.query', 'CHANGED', id=release_name, fields=chart_release)
+
         await self.chart_release_update_check(catalog['trains'][release['catalog_train']][chart], chart_release)
 
         if options['update_container_images']:
