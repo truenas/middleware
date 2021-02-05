@@ -2765,28 +2765,30 @@ class PoolDatasetService(CRUDService):
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
+        children_filters = []
         filters = filters or []
         if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0][:2]) == ['id', '=']:
             zfsfilters.append(copy.deepcopy(filters[0]))
 
         sys_config = self.middleware.call_sync('systemdataset.config')
         if sys_config['basename']:
-            filters.extend([
+            children_filters.extend([
                 ['id', '!=', sys_config['basename']],
                 ['id', '!^', f'{sys_config["basename"]}/'],
             ])
 
         # top level dataset that stores all things related to gluster config
         # needs to be hidden from local webUI. (This is managed by TrueCommander)
-        filters.extend([
+        children_filters.extend([
             ['id', 'rnin', '.glusterfs'],
         ])
 
         if osc.IS_LINUX:
             k8s_config = self.middleware.call_sync('kubernetes.config')
             if k8s_config['dataset']:
-                filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
+                children_filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
 
+        filters.extend(children_filters)
         extra = copy.deepcopy(options.get('extra', {}))
         retrieve_children = extra.get('retrieve_children', True)
         props = extra.get('properties')
@@ -2797,15 +2799,16 @@ class PoolDatasetService(CRUDService):
                         'flat': extra.get('flat', True), 'retrieve_children': retrieve_children, 'properties': props,
                     }
                 }
-            ), retrieve_children,
+            ), retrieve_children, children_filters
             ), filters, options
         )
 
-    def __transform(self, datasets, retrieve_children):
+    def __transform(self, datasets, retrieve_children, children_filters):
         """
         We need to transform the data zfs gives us to make it consistent/user-friendly,
         making it match whatever pool.dataset.{create,update} uses as input.
         """
+
         def transform(dataset):
             for orig_name, new_name, method in (
                 ('org.freenas:description', 'comments', None),
@@ -2855,7 +2858,7 @@ class PoolDatasetService(CRUDService):
 
             if retrieve_children:
                 rv = []
-                for child in dataset['children']:
+                for child in filter_list(dataset['children'], children_filters):
                     rv.append(transform(child))
                 dataset['children'] = rv
 
