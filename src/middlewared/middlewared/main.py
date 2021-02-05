@@ -595,12 +595,15 @@ class ShellWorkerThread(threading.Thread):
             osc.close_fds(3)
 
             os.chdir('/root')
-            os.execve(self.command[0], self.command, {
+            env = {
                 'TERM': 'xterm',
                 'HOME': '/root',
                 'LANG': 'en_US.UTF-8',
                 'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin',
-            })
+            }
+            if osc.IS_LINUX:
+                env['LC_ALL'] = 'C.UTF-8'
+            os.execve(self.command[0], self.command, env)
 
         # Terminal baudrate affects input queue size
         attr = termios.tcgetattr(master_fd)
