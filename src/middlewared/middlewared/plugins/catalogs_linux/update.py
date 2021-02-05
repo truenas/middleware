@@ -7,6 +7,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, private
+from middlewared.validators import Match
 
 from .utils import convert_repository_to_path
 
@@ -62,7 +63,7 @@ class CatalogService(CRUDService):
         Dict(
             'catalog_create',
             Bool('force', default=False),
-            Str('label', required=True, empty=False),
+            Str('label', required=True, empty=False, validators=[Match(r'^\w+[\w.-]*$')], max_length=60),
             Str('repository', required=True, empty=False),
             Str('branch', default='master'),
             register=True,
