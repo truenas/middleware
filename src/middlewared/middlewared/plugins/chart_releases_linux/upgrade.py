@@ -143,6 +143,8 @@ class ChartReleaseService(Service):
             }
         })
 
+        job.set_progress(50, 'Upgrading chart release')
+
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))
             f.flush()

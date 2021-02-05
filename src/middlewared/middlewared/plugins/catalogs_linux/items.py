@@ -132,7 +132,6 @@ class CatalogService(Service):
     def item_version_details(self, version_path):
         version_data = {'location': version_path, 'required_features': set()}
         for key, filename, parser in (
-            ('values', 'values.yaml', yaml.safe_load),
             ('schema', 'questions.yaml', yaml.safe_load),
             ('app_readme', 'app-readme.md', str.strip),
             ('detailed_readme', 'README.md', markdown.markdown),
@@ -147,7 +146,7 @@ class CatalogService(Service):
         version_data['supported'] = self.middleware.call_sync('catalog.version_supported', version_data)
         version_data['required_features'] = list(version_data['required_features'])
         version_data['values'] = self.middleware.call_sync(
-            'chart.release.construct_schema_for_item_version', version_data, version_data['values'], False
+            'chart.release.construct_schema_for_item_version', version_data, {}, False
         )['new_values']
 
         return version_data
