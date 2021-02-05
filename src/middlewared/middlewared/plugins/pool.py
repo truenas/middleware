@@ -2757,6 +2757,11 @@ class PoolDatasetService(CRUDService):
         In some cases it might be desirable to only retrieve details of a dataset itself and not it's children, in this
         case `query-options.extra.retrieve_children` should be explicitly specified and set to `false` which will
         result in children not being retrieved.
+
+        In case only some properties are desired to be retrieved for datasets, consumer should specify
+        `query-options.extra.properties` which when `null` ( which is the default ) will retrieve all properties
+        and otherwise a list can be specified like `["type", "used", "available"]` to retrieve selective properties.
+        If no properties are desired, in that case an empty list should be sent.
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
@@ -2784,10 +2789,13 @@ class PoolDatasetService(CRUDService):
 
         extra = copy.deepcopy(options.get('extra', {}))
         retrieve_children = extra.get('retrieve_children', True)
+        props = extra.get('properties')
         return filter_list(
             self.__transform(self.middleware.call_sync(
                 'zfs.dataset.query', zfsfilters, {
-                    'extra': {'flat': extra.get('flat', True), 'retrieve_children': retrieve_children}
+                    'extra': {
+                        'flat': extra.get('flat', True), 'retrieve_children': retrieve_children, 'properties': props,
+                    }
                 }
             ), retrieve_children,
             ), filters, options
