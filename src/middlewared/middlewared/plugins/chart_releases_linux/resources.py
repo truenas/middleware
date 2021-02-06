@@ -31,6 +31,13 @@ class ChartReleaseService(Service):
         """
         return await self.retrieve_pod_with_containers(release_name)
 
+    @accepts(Str('release_name'))
+    async def pod_logs_choices(self, release_name):
+        """
+        Returns choices for accessing logs of any container in any pod in a chart release.
+        """
+        return await self.retrieve_pod_with_containers(release_name)
+
     @accepts()
     async def nic_choices(self):
         """
