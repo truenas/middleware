@@ -148,7 +148,11 @@ class ChartReleaseService(CRUDService):
                     for workload_type in ('deployments', 'statefulsets')
                     for workload in release_resources[workload_type]
                     for c in workload['spec']['template']['spec']['containers']
-                ))
+                )),
+                'truenas_certificates': [v['id'] for v in release_data['config'].get('ixCertificates', {}).values()],
+                'truenas_certificate_authorities': [
+                    v['id'] for v in release_data['config'].get('ixCertificateAuthorities', {}).values()
+                ],
             }
             if get_resources:
                 release_data['resources'] = release_resources
