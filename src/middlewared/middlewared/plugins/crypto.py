@@ -53,6 +53,26 @@ def get_cert_info_from_data(data):
     return {key: data.get(key) for key in cert_info_keys if data.get(key)}
 
 
+def check_dependencies(middleware, cert_type, id):
+    if cert_type == 'CA':
+        key = 'truenas_certificate_authorities'
+        method = 'certificateauthority.check_dependencies'
+    else:
+        key = 'truenas_certificates'
+        method = 'certificate.check_dependencies'
+
+    middleware.call_sync(method, id)
+
+    chart_releases = middleware.call_sync(
+        'chart.release.query', [[f'config.{key}', 'rin', id]], {'extra': {'retrieve_resources': True}}
+    )
+    if chart_releases:
+        raise CallError(
+            f'Certificate{" Authority" if cert_type == "CA" else ""} cannot be deleted as it is being used by '
+            f'{", ".join([c["id"] for c in chart_releases])} chart release(s).'
+        )
+
+
 async def validate_cert_name(middleware, cert_name, datastore, verrors, name):
     certs = await middleware.call(
         'datastore.query',
@@ -2057,7 +2077,7 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        self.middleware.call_sync('certificate.check_dependencies', id)
+        check_dependencies(self.middleware, 'CERT', id)
 
         certificate = self.middleware.call_sync('certificate._get_instance', id)
 
@@ -2766,20 +2786,7 @@ class CertificateAuthorityService(CRUDService):
             }
         """
         await self._get_instance(id)
-        verrors = ValidationErrors()
-
-        # Let's make sure we don't delete a ca which is being used by any service in the system
-        for service_cert_id, text in [
-            ((await self.middleware.call('openvpn.server.config'))['root_ca'], 'OpenVPN Server'),
-            ((await self.middleware.call('openvpn.client.config'))['root_ca'], 'OpenVPN Client')
-        ]:
-            if service_cert_id == id:
-                verrors.add(
-                    'certificateauthority_delete.id',
-                    f'This certificate authority is in use by {text} service and cannot be deleted.'
-                )
-
-        verrors.check()
+        await self.middleware.run_in_thread(check_dependencies, self.middleware, 'CA', id)
 
         response = await self.middleware.call(
             'datastore.delete',
