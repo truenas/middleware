@@ -51,6 +51,9 @@ class ChartReleaseService(Service):
         )
     )
     async def pod_logs(self, release_name, options):
+        """
+        Retrieve logs of `options.container_name` container in `options.pod_name` pod in `release_name` chart release.
+        """
         choices = await self.pod_logs_choices(release_name)
         if options['pod_name'] not in choices:
             raise CallError(f'Unable to locate {options["pod_name"]!r} pod.', errno=errno.ENOENT)
