@@ -25,3 +25,9 @@ class KubernetesPodService(CRUDService):
                 pod['events'] = events[pod['metadata']['uid']]
 
         return filter_list(pods, filters, options)
+
+    async def get_logs(self, pod, container, namespace):
+        async with api_client() as (api, context):
+            return await context['core_api'].read_namespaced_pod_log(
+                name=pod, container=container, namespace=namespace
+            )
