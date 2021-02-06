@@ -44,3 +44,21 @@ class ChartReleaseService(Service):
             for chart_release in await self.middleware.call('chart.release.query')
             for port in chart_release['used_ports']
         })))
+
+    @accepts()
+    async def certificate_choices(self):
+        """
+        Returns certificates which can be used by applications.
+        """
+        return await self.middleware.call(
+            'certificate.query', [['revoked', '=', False], ['cert_type_CSR', '=', False], ['parsed', '=', True]]
+        )
+
+    @accepts()
+    async def certificate_authority_choices(self):
+        """
+        Returns certificate authorities which can be used by applications.
+        """
+        return await self.middleware.call(
+            'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]]
+        )
