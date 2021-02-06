@@ -1,5 +1,9 @@
-from middlewared.schema import Str
-from middlewared.service import accepts, private, Service
+import errno
+
+from middlewared.schema import Dict, Str
+from middlewared.service import accepts, CallError, private, Service
+
+from .utils import get_namespace
 
 
 class ChartReleaseService(Service):
@@ -37,6 +41,28 @@ class ChartReleaseService(Service):
         Returns choices for accessing logs of any container in any pod in a chart release.
         """
         return await self.retrieve_pod_with_containers(release_name)
+
+    @accepts(
+        Str('release_name'),
+        Dict(
+            'options',
+            Str('pod_name', required=True, empty=False),
+            Str('container_name', required=True, empty=False),
+        )
+    )
+    async def pod_logs(self, release_name, options):
+        choices = await self.pod_logs_choices(release_name)
+        if options['pod_name'] not in choices:
+            raise CallError(f'Unable to locate {options["pod_name"]!r} pod.', errno=errno.ENOENT)
+        elif options['container_name'] not in choices[options['pod_name']]:
+            raise CallError(
+                f'Unable to locate {options["container_name"]!r} container in {options["pod_name"]!r} pod.',
+                errno=errno.ENOENT
+            )
+
+        return await self.middleware.call(
+            'k8s.pod.get_logs', options['pod_name'], options['container_name'], get_namespace(release_name)
+        )
 
     @accepts()
     async def nic_choices(self):
