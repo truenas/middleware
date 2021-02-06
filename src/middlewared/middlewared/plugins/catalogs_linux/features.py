@@ -8,6 +8,8 @@ from middlewared.service import CallError, private, Service
 SUPPORTED_FEATURES = {
     'normalize/interfaceConfiguration',
     'normalize/ixVolume',
+    'definitions/certificate',
+    'definitions/certificate_authority',
     'definitions/interface',
     'definitions/gpuConfiguration',
     'definitions/timezone',
