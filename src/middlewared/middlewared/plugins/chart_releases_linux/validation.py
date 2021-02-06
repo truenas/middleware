@@ -2,6 +2,7 @@ import itertools
 
 from middlewared.schema import Dict
 from middlewared.service import private, Service
+from middlewared.utils import filter_list
 from middlewared.validators import validate_attributes
 
 from .schema import get_schema, get_list_item_from_value, update_conditional_defaults
@@ -9,6 +10,8 @@ from .utils import RESERVED_NAMES
 
 
 validation_mapping = {
+    'definitions/certificate': 'certificate',
+    'definitions/certificate_authority': 'certificate_authority',
     'validations/nodePort': 'port_available_on_node',
 }
 
@@ -107,3 +110,15 @@ class ChartReleaseService(Service):
 
         if value in await self.middleware.call('chart.release.used_ports'):
             verrors.add(schema_name, 'Port is already in use.')
+
+    @private
+    async def validate_certificate(self, verrors, value, question, schema_name, release_data):
+        if not filter_list(await self.middleware.call('chart.release.certificate_choices'), [['id', '=', value]]):
+            verrors.add(schema_name, 'Unable to locate certificate.')
+
+    @private
+    async def validate_certificate_authority(self, verrors, value, question, schema_name, release_data):
+        if not filter_list(
+            await self.middleware.call('chart.release.certificate_authority_choices'), [['id', '=', value]]
+        ):
+            verrors.add(schema_name, 'Unable to locate certificate authority.')
