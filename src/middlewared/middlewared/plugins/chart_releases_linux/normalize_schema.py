@@ -4,13 +4,15 @@ import os
 
 from collections import Callable
 
-from middlewared.schema import Cron, Dict, List, Str
+from middlewared.schema import Cron, Dict, Int, List, Str
 from middlewared.service import private, Service
 
 from .schema import get_list_item_from_value
 from .utils import get_network_attachment_definition_name, RESERVED_NAMES
 
 REF_MAPPING = {
+    'definitions/certificate': 'certificate',
+    'definitions/certificate_authority': 'certificate_authorities',
     'normalize/interfaceConfiguration': 'interface_configuration',
     'normalize/ixVolume': 'ix_volume',
 }
@@ -128,3 +130,23 @@ class ChartReleaseService(Service):
         })
 
         return value
+
+    @private
+    async def normalise_certificate(self, attr, value, complete_config, context):
+        assert isinstance(attr, Int) is True
+
+        if not value:
+            return value
+
+        complete_config['ixCertificates'][attr.name] = await self.middleware.call('certificate.get_instance', value)
+
+    @private
+    async def normalise_certificate_authorities(self, attr, value, complete_config, context):
+        assert isinstance(attr, Int) is True
+
+        if not value:
+            return value
+
+        complete_config['ixCertificateAuthorities'][attr.name] = await self.middleware.call(
+            'certificateauthority.get_instance', value
+        )

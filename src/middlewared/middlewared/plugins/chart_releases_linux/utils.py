@@ -7,6 +7,8 @@ from middlewared.utils import run as _run
 CHART_NAMESPACE_PREFIX = 'ix-'
 CONTEXT_KEY_NAME = 'ixChartContext'
 RESERVED_NAMES = [
+    ('ixCertificates', dict),
+    ('ixCertificateAuthorities', dict),
     ('ixExternalInterfacesConfiguration', list),
     ('ixExternalInterfacesConfigurationNames', list),
     ('ixVolumes', list),
