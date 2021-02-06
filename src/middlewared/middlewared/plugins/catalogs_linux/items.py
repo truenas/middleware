@@ -212,5 +212,23 @@ class CatalogService(Service):
                 ]
             elif ref == 'definitions/nodeIP':
                 data['default'] = self.middleware.call_sync('kubernetes.node_ip')
+            elif ref == 'definitions/certificate':
+                data.update({
+                    'enum': [
+                        {'value': i['id'], 'description': f'{i["name"]!r} Certificate'}
+                        for i in self.middleware.call_sync('chart.release.certificate_choices')
+                    ],
+                    'default': None,
+                    'null': True,
+                })
+            elif ref == 'definitions/certificate_authority':
+                data.update({
+                    'enum': [
+                        {'value': i['id'], 'description': f'{i["name"]!r} Certificate Authority'}
+                        for i in self.middleware.call_sync('chart.release.certificate_authority_choices')
+                    ],
+                    'default': None,
+                    'null': True,
+                })
 
         schema.update(data)
