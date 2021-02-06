@@ -2724,17 +2724,31 @@ class PoolDatasetService(CRUDService):
         return data
 
     @private
-    async def is_internal_dataset(self, dataset):
-        sys_ds = (await self.middleware.call('systemdataset.config'))['basename']
-        if sys_ds and (dataset == sys_ds or dataset.startswith(f'{sys_ds}/')):
-            return True
+    async def internal_datasets_filters(self):
+        # We get filters here which ensure that we don't match an internal dataset
+        filters = []
+        sys_config = await self.middleware.call('systemdataset.config')
+        if sys_config['basename']:
+            filters.extend([
+                ['id', '!=', sys_config['basename']],
+                ['id', '!^', f'{sys_config["basename"]}/'],
+            ])
+        # top level dataset that stores all things related to gluster config
+        # needs to be hidden from local webUI. (This is managed by TrueCommander)
+        filters.extend([
+            ['id', 'rnin', '.glusterfs'],
+        ])
 
         if osc.IS_LINUX:
-            k8s_ds = (await self.middleware.call('kubernetes.config'))['dataset']
-            if k8s_ds and (dataset == k8s_ds or dataset.startswith(f'{k8s_ds}/')):
-                return True
+            k8s_config = await self.middleware.call('kubernetes.config')
+            if k8s_config['dataset']:
+                filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
 
-        return '.glusterfs' in dataset
+        return filters
+
+    @private
+    async def is_internal_dataset(self, dataset):
+        return not bool(filter_list([{'id': dataset}], await self.internal_datasets_filters()))
 
     @private
     def path_in_locked_datasets(self, path, locked_datasets=None):
@@ -2765,30 +2779,12 @@ class PoolDatasetService(CRUDService):
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
-        children_filters = []
         filters = filters or []
         if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0][:2]) == ['id', '=']:
             zfsfilters.append(copy.deepcopy(filters[0]))
 
-        sys_config = self.middleware.call_sync('systemdataset.config')
-        if sys_config['basename']:
-            children_filters.extend([
-                ['id', '!=', sys_config['basename']],
-                ['id', '!^', f'{sys_config["basename"]}/'],
-            ])
-
-        # top level dataset that stores all things related to gluster config
-        # needs to be hidden from local webUI. (This is managed by TrueCommander)
-        children_filters.extend([
-            ['id', 'rnin', '.glusterfs'],
-        ])
-
-        if osc.IS_LINUX:
-            k8s_config = self.middleware.call_sync('kubernetes.config')
-            if k8s_config['dataset']:
-                children_filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
-
-        filters.extend(children_filters)
+        internal_datasets_filters = self.middleware.call_sync('pool.dataset.internal_datasets_filters')
+        filters.extend(internal_datasets_filters)
         extra = copy.deepcopy(options.get('extra', {}))
         retrieve_children = extra.get('retrieve_children', True)
         props = extra.get('properties')
@@ -2799,7 +2795,7 @@ class PoolDatasetService(CRUDService):
                         'flat': extra.get('flat', True), 'retrieve_children': retrieve_children, 'properties': props,
                     }
                 }
-            ), retrieve_children, children_filters
+            ), retrieve_children, internal_datasets_filters,
             ), filters, options
         )
 
