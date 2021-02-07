@@ -138,7 +138,9 @@ class ChartReleaseService(Service):
         if not value:
             return value
 
-        complete_config['ixCertificates'][attr.name] = await self.middleware.call('certificate.get_instance', value)
+        complete_config['ixCertificates'][value] = await self.middleware.call('certificate.get_instance', value)
+
+        return value
 
     @private
     async def normalise_certificate_authorities(self, attr, value, complete_config, context):
@@ -147,6 +149,8 @@ class ChartReleaseService(Service):
         if not value:
             return value
 
-        complete_config['ixCertificateAuthorities'][attr.name] = await self.middleware.call(
+        complete_config['ixCertificateAuthorities'][value] = await self.middleware.call(
             'certificateauthority.get_instance', value
         )
+
+        return value
