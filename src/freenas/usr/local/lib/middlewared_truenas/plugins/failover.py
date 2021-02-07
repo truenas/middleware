@@ -1862,9 +1862,7 @@ async def _event_system_ready(middleware, event_type, args):
         return
 
     if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
-        middleware.send_event('failover.upgrade_pending', 'ADDED', {
-            'id': 'BACKUP', 'fields': {'pending': True},
-        })
+        middleware.send_event('failover.upgrade_pending', 'ADDED', id='BACKUP', fields={'pending': True})
 
 
 def remote_status_event(middleware, *args, **kwargs):
