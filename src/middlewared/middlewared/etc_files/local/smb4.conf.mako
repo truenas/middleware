@@ -132,7 +132,7 @@
 
             if not db['ad']['enable'] and middleware.call_sync('user.query', [('microsoft_account', '=', True)], {"count": True}):
                 pc.update({
-                    'username map': '/usr/local/etc/smbusername.map',
+                    'username map': '/usr/local/etc/smbusername.map' if IS_FREEBSD else '/etc/smbusername.map',
                     'username map cache time': '60',
                 })
 
