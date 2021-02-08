@@ -208,34 +208,33 @@ class ChartReleaseService(CRUDService):
         if not node_ip:
             node_ip = self.middleware.call_sync('kubernetes.node_ip')
 
+        def tag_func(key):
+            return self.parse_tag(release_data, key, node_ip)
+
         cleaned_portals = {}
         for portal_type, schema in portals.items():
             t_portals = []
             path = schema.get('path') or '/'
-            for protocol in schema['protocols']:
-                protocol = self.parse_k8s_resource_tag(release_data, protocol)
-                if not protocol:
-                    continue
-
-                for host in schema['host']:
-                    if host == '$node_ip':
-                        host = node_ip
-                    elif host.startswith('$variable-'):
-                        host = get(release_data['config'], host[len('$variable-'):])
-
-                    if not host:
-                        continue
-
-                    for port in schema['ports']:
-                        if str(port).startswith('$variable-'):
-                            port = get(release_data['config'], port[len('$variable-'):])
-                        if not port:
-                            # We are not going to add it to list of urls if port comes up as empty
-                            continue
+            for protocol in filter(bool, map(tag_func, schema['protocols'])):
+                for host in filter(bool, map(tag_func, schema['host'])):
+                    for port in filter(bool, map(tag_func, schema['ports'])):
                         t_portals.append(f'{protocol}://{host}:{port}{path}')
+
             cleaned_portals[portal_type] = t_portals
 
         return cleaned_portals
+
+    @private
+    def parse_tag(self, release_data, tag, node_ip):
+        tag = self.parse_k8s_resource_tag(release_data, tag)
+        if not tag:
+            return
+        if tag == '$node_ip':
+            return node_ip
+        elif tag.startswith('$variable-'):
+            return get(release_data['config'], tag[len('$variable-'):])
+
+        return tag
 
     @private
     def parse_k8s_resource_tag(self, release_data, tag):
