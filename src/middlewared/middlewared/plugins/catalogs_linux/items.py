@@ -221,7 +221,7 @@ class CatalogService(Service):
                     'default': None,
                     'null': True,
                 })
-            elif ref == 'definitions/certificate_authority':
+            elif ref == 'definitions/certificateAuthority':
                 data.update({
                     'enum': [
                         {'value': i['id'], 'description': f'{i["name"]!r} Certificate Authority'}

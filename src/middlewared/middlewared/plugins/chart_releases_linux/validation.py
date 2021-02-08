@@ -11,7 +11,7 @@ from .utils import RESERVED_NAMES
 
 validation_mapping = {
     'definitions/certificate': 'certificate',
-    'definitions/certificate_authority': 'certificate_authority',
+    'definitions/certificateAuthority': 'certificate_authority',
     'validations/nodePort': 'port_available_on_node',
 }
 
