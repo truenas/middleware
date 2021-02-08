@@ -781,6 +781,13 @@ class ZFSDatasetService(CRUDService):
         for k, v in data['properties'].items():
             params[k] = v
 
+        # it's important that we set xattr=sa for various
+        # performance reasons related to ea handling
+        # pool.dataset.create already sets this by default
+        # so mirror the behavior here
+        if 'xattr' not in params.keys():
+            params['xattr'] = 'sa'
+
         try:
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(data['name'].split('/')[0])
