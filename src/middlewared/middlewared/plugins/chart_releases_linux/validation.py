@@ -113,11 +113,17 @@ class ChartReleaseService(Service):
 
     @private
     async def validate_certificate(self, verrors, value, question, schema_name, release_data):
+        if not value:
+            return
+
         if not filter_list(await self.middleware.call('chart.release.certificate_choices'), [['id', '=', value]]):
             verrors.add(schema_name, 'Unable to locate certificate.')
 
     @private
     async def validate_certificate_authority(self, verrors, value, question, schema_name, release_data):
+        if not value:
+            return
+
         if not filter_list(
             await self.middleware.call('chart.release.certificate_authority_choices'), [['id', '=', value]]
         ):
