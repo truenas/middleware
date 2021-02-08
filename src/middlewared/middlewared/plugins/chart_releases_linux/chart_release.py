@@ -1,3 +1,4 @@
+import base64
 import collections
 import copy
 import errno
@@ -212,6 +213,10 @@ class ChartReleaseService(CRUDService):
             t_portals = []
             path = schema.get('path') or '/'
             for protocol in schema['protocols']:
+                protocol = self.parse_k8s_resource_tag(release_data, protocol)
+                if not protocol:
+                    continue
+
                 for host in schema['host']:
                     if host == '$node_ip':
                         host = node_ip
@@ -231,6 +236,36 @@ class ChartReleaseService(CRUDService):
             cleaned_portals[portal_type] = t_portals
 
         return cleaned_portals
+
+    @private
+    def parse_k8s_resource_tag(self, release_data, tag):
+        # Format expected here is "$kubernetes-resource_RESOURCE-TYPE_RESOURCE-NAME_KEY-NAME"
+        if not tag.startswith('$kubernetes-resource'):
+            return tag
+
+        if tag.count('_') < 3:
+            return
+
+        _, resource_type, resource_name, key = tag.split('_', 3)
+        if resource_type not in ('configmap', 'secret'):
+            return
+
+        resource = self.middleware.call_sync(
+            f'k8s.{resource_type}.query', [
+                ['metadata.namespace', '=', release_data['namespace']], ['metadata.name', '=', resource_name]
+            ]
+        )
+        if not resource or 'data' not in resource[0] or not isinstance(resource[0]['data'].get(key), (int, str)):
+            # Chart creator did not create the resource or we have a malformed
+            # secret/configmap, nothing we can do on this end
+            return
+        else:
+            value = resource[0]['data'][key]
+
+        if resource_type == 'secret':
+            value = base64.b64decode(value)
+
+        return str(value)
 
     @private
     async def host_path_volumes(self, pods):
