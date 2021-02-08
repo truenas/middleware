@@ -64,7 +64,7 @@ def check_dependencies(middleware, cert_type, id):
     middleware.call_sync(method, id)
 
     chart_releases = middleware.call_sync(
-        'chart.release.query', [[f'config.{key}', 'rin', id]], {'extra': {'retrieve_resources': True}}
+        'chart.release.query', [[f'resources.{key}', 'rin', id]], {'extra': {'retrieve_resources': True}}
     )
     if chart_releases:
         raise CallError(
