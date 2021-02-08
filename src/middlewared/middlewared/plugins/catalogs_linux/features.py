@@ -9,7 +9,7 @@ SUPPORTED_FEATURES = {
     'normalize/interfaceConfiguration',
     'normalize/ixVolume',
     'definitions/certificate',
-    'definitions/certificate_authority',
+    'definitions/certificateAuthority',
     'definitions/interface',
     'definitions/gpuConfiguration',
     'definitions/timezone',

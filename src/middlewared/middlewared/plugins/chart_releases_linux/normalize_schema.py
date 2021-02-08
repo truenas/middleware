@@ -12,7 +12,7 @@ from .utils import get_network_attachment_definition_name, RESERVED_NAMES
 
 REF_MAPPING = {
     'definitions/certificate': 'certificate',
-    'definitions/certificate_authority': 'certificate_authorities',
+    'definitions/certificateAuthority': 'certificate_authorities',
     'normalize/interfaceConfiguration': 'interface_configuration',
     'normalize/ixVolume': 'ix_volume',
 }
