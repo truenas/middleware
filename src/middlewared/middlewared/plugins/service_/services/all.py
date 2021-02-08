@@ -35,6 +35,7 @@ from .pseudo.libvirtd import LibvirtdService
 from .pseudo.misc import (
     CronService,
     DiskService,
+    DSCacheService,
     FailoverService,
     KmipService,
     LoaderService,
@@ -63,6 +64,7 @@ from .pseudo.misc import (
 all_services = [
     AFPService,
     CIFSService,
+    DSCacheService,
     DynamicDNSService,
     FTPService,
     ISCSITargetService,
