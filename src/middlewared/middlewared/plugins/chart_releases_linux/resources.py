@@ -1,7 +1,8 @@
 import errno
 
-from middlewared.schema import Dict, Str
+from middlewared.schema import Dict, Int, Str
 from middlewared.service import accepts, CallError, job, private, Service
+from middlewared.validators import Range
 
 from .utils import get_namespace
 
@@ -56,6 +57,8 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'options',
+            Int('limit_bytes', default=None, null=True, validators=[Range(min=1)]),
+            Int('tail_lines', default=500, validators=[Range(min=1)]),
             Str('pod_name', required=True, empty=False),
             Str('container_name', required=True, empty=False),
         )
@@ -72,7 +75,8 @@ class ChartReleaseService(Service):
         )
 
         logs = self.middleware.call_sync(
-            'k8s.pod.get_logs', options['pod_name'], options['container_name'], get_namespace(release_name)
+            'k8s.pod.get_logs', options['pod_name'], options['container_name'], get_namespace(release_name),
+            options['tail_lines'], options['limit_bytes']
         )
         job.pipes.output.w.write(logs)
 
