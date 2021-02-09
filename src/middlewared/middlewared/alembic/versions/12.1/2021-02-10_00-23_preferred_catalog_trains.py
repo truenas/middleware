@@ -18,9 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('services_catalog', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('preferred_trains', sa.TEXT(), nullable=True))
-
-    op.execute("UPDATE services_catalog SET preferred_trains = '[\"charts\"]'")
+        batch_op.add_column(sa.Column('preferred_trains', sa.TEXT(), nullable=False, server_default='[\"charts\"]'))
 
 
 def downgrade():
