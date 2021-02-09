@@ -785,7 +785,7 @@ class ZFSDatasetService(CRUDService):
         # performance reasons related to ea handling
         # pool.dataset.create already sets this by default
         # so mirror the behavior here
-        if 'xattr' not in params:
+        if data['type'] == 'FILESYSTEM' and 'xattr' not in params:
             params['xattr'] = 'sa'
 
         try:
