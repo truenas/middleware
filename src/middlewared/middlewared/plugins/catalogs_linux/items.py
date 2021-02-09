@@ -3,6 +3,7 @@ import markdown
 import os
 import yaml
 
+from catalog_validation.utils import VALID_TRAIN_REGEX
 from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, Str
@@ -56,10 +57,15 @@ class CatalogService(Service):
         trains = {'charts': {}, 'test': {}}
         options = options or {}
         unhealthy_apps = set()
-        trains.update({
-            t: {} for t in os.listdir(location)
-            if os.path.isdir(os.path.join(location, t)) and not t.startswith('.') and t != 'library'
-        })
+        for train in os.listdir(location):
+            if (
+                not os.path.isdir(os.path.join(location, train)) or train.startswith('.') or train == 'library' or
+                not VALID_TRAIN_REGEX.match(train)
+            ):
+                continue
+
+            trains[train] = {}
+
         for train in filter(lambda c: os.path.exists(os.path.join(location, c)), trains):
             category_path = os.path.join(location, train)
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
