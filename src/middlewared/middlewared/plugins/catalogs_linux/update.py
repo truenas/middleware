@@ -5,7 +5,7 @@ import shutil
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Bool, Dict, Str, ValidationErrors
+from middlewared.schema import Bool, Dict, List, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, private
 from middlewared.validators import Match
 
@@ -22,6 +22,7 @@ class CatalogModel(sa.Model):
     repository = sa.Column(sa.Text(), nullable=False)
     branch = sa.Column(sa.String(255), nullable=False)
     builtin = sa.Column(sa.Boolean(), nullable=False, default=False)
+    preferred_trains = sa.Column(sa.JSON(type=list))
 
 
 class CatalogService(CRUDService):
