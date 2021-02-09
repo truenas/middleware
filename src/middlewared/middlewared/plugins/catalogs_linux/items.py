@@ -39,16 +39,29 @@ class CatalogService(Service):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
         self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
+
+        trains = self.get_trains(catalog['location'], {'alert': True, 'label': label})
+
+        self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
+        if label == self.middleware.call_sync('catalog.official_catalog_label'):
+            # Update feature map cache whenever official catalog is updated
+            self.middleware.call_sync('catalog.get_feature_map', False)
+
+        return trains
+
+    @private
+    def get_trains(self, location, options=None):
         # We make sure we do not dive into library folder and not consider it a train
         # This allows us to use this folder for placing helm library charts
         trains = {'charts': {}, 'test': {}}
+        options = options or {}
         unhealthy_apps = set()
         trains.update({
-            t: {} for t in os.listdir(catalog['location'])
-            if os.path.isdir(os.path.join(catalog['location'], t)) and not t.startswith('.') and t != 'library'
+            t: {} for t in os.listdir(location)
+            if os.path.isdir(os.path.join(location, t)) and not t.startswith('.') and t != 'library'
         })
-        for train in filter(lambda c: os.path.exists(os.path.join(catalog['location'], c)), trains):
-            category_path = os.path.join(catalog['location'], train)
+        for train in filter(lambda c: os.path.exists(os.path.join(location, c)), trains):
+            category_path = os.path.join(location, train)
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
                 item_location = os.path.join(category_path, item)
                 trains[train][item] = item_data = {
@@ -79,14 +92,11 @@ class CatalogService(Service):
                 else:
                     item_data['healthy'] = True
 
-        self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
-        if label == self.middleware.call_sync('catalog.official_catalog_label'):
-            # Update feature map cache whenever official catalog is updated
-            self.middleware.call_sync('catalog.get_feature_map', False)
-
-        if unhealthy_apps:
+        if options.get('alert') and options.get('label') and unhealthy_apps:
             self.middleware.call_sync(
-                'alert.oneshot_create', 'CatalogNotHealthy', {'catalog': label, 'apps': ', '.join(unhealthy_apps)}
+                'alert.oneshot_create', 'CatalogNotHealthy', {
+                    'catalog': options['label'], 'apps': ', '.join(unhealthy_apps)
+                }
             )
 
         return trains
