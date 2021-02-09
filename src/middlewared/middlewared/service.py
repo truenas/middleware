@@ -451,6 +451,7 @@ class CRUDService(ServiceChangeMixin, Service):
             self.middleware.event_register(
                 f'{self._config.namespace}.query',
                 f'Sent on {self._config.namespace} changes.',
+                self._config.private
             )
 
     @private
