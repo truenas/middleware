@@ -1063,7 +1063,11 @@ class ZFSSnapshot(CRUDService):
 
     @accepts(
         Str('id'),
-        Dict('options', Bool('defer', default=False)),
+        Dict(
+            'options',
+            Bool('defer', default=False),
+            Bool('recursive', default=False),
+        ),
     )
     def do_delete(self, id, options):
         """
@@ -1074,7 +1078,7 @@ class ZFSSnapshot(CRUDService):
         try:
             with libzfs.ZFS() as zfs:
                 snap = zfs.get_snapshot(id)
-                snap.delete(defer=options['defer'])
+                snap.delete(defer=options['defer'], recursive=options['recursive'])
         except libzfs.ZFSException as e:
             raise CallError(str(e))
         else:
