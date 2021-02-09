@@ -100,6 +100,9 @@ class CatalogService(CRUDService):
 
         verrors.check()
 
+        if not data['preferred_trains']:
+            data['preferred_trains'] = ['charts']
+
         if not data.pop('force'):
             # We will validate the catalog now to ensure it's valid wrt contents / format
             path = os.path.join(
