@@ -12,7 +12,7 @@ import yaml
 
 from pkg_resources import parse_version
 
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list, get
 from middlewared.validators import Match
@@ -483,14 +483,23 @@ class ChartReleaseService(CRUDService):
         job.set_progress(100, 'Update completed for chart release')
         return await self.get_instance(chart_release)
 
-    @accepts(Str('release_name'))
+    @accepts(
+        Str('release_name'),
+        Dict(
+            'options',
+            Int('timeout', default=300)
+        )
+    )
     @job(lock=lambda args: f'chart_release_delete_{args[0]}')
-    async def do_delete(self, job, release_name):
+    async def do_delete(self, job, release_name, options):
         """
         Delete existing chart release.
 
         This will delete the chart release from the kubernetes cluster and also remove any associated volumes / data.
         To clarify, host path volumes will not be deleted which live outside the chart release dataset.
+
+        `options.timeout` is a value to specify how much time we should wait for pods to terminate before doing a
+        forceful termination of chart release namespace.
         """
         # For delete we will uninstall the release first and then remove the associated datasets
         await self.middleware.call('kubernetes.validate_k8s_setup')
@@ -506,7 +515,7 @@ class ChartReleaseService(CRUDService):
         try:
             await asyncio.wait_for(
                 self.middleware.call('chart.release.wait_for_pods_to_terminate', get_namespace(release_name)),
-                timeout=300
+                timeout=options['timeout'],
             )
         except asyncio.TimeoutError:
             self.middleware.logger.debug(
