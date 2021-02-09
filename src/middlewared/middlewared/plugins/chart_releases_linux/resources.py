@@ -58,7 +58,7 @@ class ChartReleaseService(Service):
         Dict(
             'options',
             Int('limit_bytes', default=None, null=True, validators=[Range(min=1)]),
-            Int('tail_lines', default=500, validators=[Range(min=1)]),
+            Int('tail_lines', default=500, validators=[Range(min=1)], null=True),
             Str('pod_name', required=True, empty=False),
             Str('container_name', required=True, empty=False),
         )
@@ -67,6 +67,13 @@ class ChartReleaseService(Service):
     def pod_logs(self, job, release_name, options):
         """
         Export logs of `options.container_name` container in `options.pod_name` pod in `release_name` chart release.
+
+        `options.tail_lines` is an option to select how many lines of logs to retrieve for the said container. It
+        defaults to 500. If set to `null`, it will retrieve complete logs of the container.
+
+        `options.limit_bytes` is an option to select how many bytes to retrieve from the tail lines selected. If set
+        to null ( which is the default ), it will not limit the bytes returned. To clarify, `options.tail_lines`
+        is applied first and the required number of lines are retrieved and then `options.limit_bytes` is applied.
 
         Please refer to websocket documentation for downloading the file.
         """
@@ -78,7 +85,7 @@ class ChartReleaseService(Service):
             'k8s.pod.get_logs', options['pod_name'], options['container_name'], get_namespace(release_name),
             options['tail_lines'], options['limit_bytes']
         )
-        job.pipes.output.w.write(logs)
+        job.pipes.output.w.write((logs or '').encode())
 
     @accepts()
     async def nic_choices(self):
