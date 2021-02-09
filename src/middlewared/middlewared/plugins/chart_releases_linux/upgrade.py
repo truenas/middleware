@@ -145,16 +145,7 @@ class ChartReleaseService(Service):
 
         job.set_progress(50, 'Upgrading chart release')
 
-        with tempfile.NamedTemporaryFile(mode='w+') as f:
-            f.write(yaml.dump(config))
-            f.flush()
-
-            cp = await run(
-                ['helm', 'upgrade', release_name, chart_path, '-n', get_namespace(release_name), '-f', f.name],
-                check=False,
-            )
-            if cp.returncode:
-                raise CallError(f'Failed to upgrade chart release to {new_version!r}: {cp.stderr.decode()}')
+        await self.middleware.call('chart.release.helm_action', release_name, chart_path, config, 'upgrade')
 
         job.set_progress(100, 'Upgrade complete for chart release')
 
