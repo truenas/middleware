@@ -60,10 +60,24 @@ class CatalogService(CRUDService):
             )
         return catalog
 
+    @private
+    async def common_validation(self, catalog, schema, data):
+        found_trains = set(catalog['trains'])
+        diff = set(data['preferred_trains']) - found_trains
+        verrors = ValidationErrors()
+        if diff:
+            verrors.add(
+                f'{schema}.preferred_trains',
+                f'{", ".join(diff)} trains were not found in catalog.'
+            )
+
+        verrors.check()
+
     @accepts(
         Dict(
             'catalog_create',
             Bool('force', default=False),
+            List('preferred_trains'),
             Str('label', required=True, empty=False, validators=[Match(r'^\w+[\w.-]*$')], max_length=60),
             Str('repository', required=True, empty=False),
             Str('branch', default='master'),
@@ -94,6 +108,10 @@ class CatalogService(CRUDService):
             try:
                 await self.middleware.call('catalog.update_git_repository', {**data, 'location': path}, True)
                 await self.middleware.call('catalog.validate_catalog_from_path', path)
+                await self.common_validation(
+                    {'trains': await self.middleware.call('catalog.get_trains', path)}, 'catalog_create', data
+                )
+
             finally:
                 await self.middleware.run_in_thread(shutil.rmtree, path, ignore_errors=True)
 
@@ -102,6 +120,22 @@ class CatalogService(CRUDService):
         asyncio.ensure_future(self.middleware.call('catalog.sync', data['label']))
 
         return await self.get_instance(data['label'])
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'catalog_update',
+            List('preferred_trains'),
+            update=True
+        )
+    )
+    async def do_update(self, id, data):
+        catalog = await self.query([['id', '=', id]], {'extra': {'item_details': True}, 'get': True})
+        await self.common_validation(catalog, 'catalog_update', data)
+
+        await self.middleware.call('datastore.update', self._config.datastore, id, data)
+
+        return await self.get_instance(id)
 
     @accepts(
         Str('id'),
