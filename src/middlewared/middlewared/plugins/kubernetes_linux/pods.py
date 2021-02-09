@@ -45,6 +45,10 @@ class KubernetesPodLogsFileFollowTailEventSource(EventSource):
     Format is "release-name_pod-name_container-name", each parameter is separated by `_`.
     """
 
+    def __init__(self, *args, **kwargs):
+        super(KubernetesPodLogsFileFollowTailEventSource, self).__init__(*args, **kwargs)
+        self.watch = None
+
     async def run(self):
         if str(self.arg).count('_') < 2:
             raise CallError('Arguments in the format "release-name_pod-name_container-name" must be specified.')
@@ -54,14 +58,21 @@ class KubernetesPodLogsFileFollowTailEventSource(EventSource):
         release_data = await self.middleware.call('chart.release.get_instance', release)
 
         async with api_client() as (api, context):
-            async with Watch().stream(
+            self.watch = Watch()
+            async with self.watch.stream(
                 context['core_api'].read_namespaced_pod_log, name=pod, container=container,
                 namespace=release_data['namespace'],
             ) as stream:
                 async for event in stream:
-                    if self._cancel.is_set():
-                        return
                     self.send_event('ADDED', fields={'data': event})
+
+    async def cancel(self):
+        await super().cancel()
+        if self.watch:
+            self.watch.close()
+
+    async def on_finish(self):
+        self.watch = None
 
 
 def setup(middleware):
