@@ -1020,7 +1020,7 @@ class CoreService(Service):
                             for j in i['properties'].values():
                                 names.add(j['_name_'])
 
-                    args_descriptions_doc = doc
+                    args_descriptions_doc = doc or ''
                     if attr == 'update':
                         if do_create := getattr(svc, 'do_create', None):
                             args_descriptions_doc += "\n" + inspect.getdoc(do_create)
