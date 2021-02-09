@@ -54,7 +54,7 @@ class KubernetesNamespaceService(CRUDService):
         Str('namespace'),
         Dict(
             'options',
-            Int('grace_period_seconds', default=None),
+            Int('grace_period_seconds', default=None, null=True),
         )
     )
     async def do_delete(self, namespace, options):

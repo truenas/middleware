@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import collections
 import copy
@@ -501,7 +502,17 @@ class ChartReleaseService(CRUDService):
 
         job.set_progress(50, f'Uninstalled {release_name}')
         job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
-        await self.middleware.call('chart.release.wait_for_pods_to_terminate', get_namespace(release_name))
+
+        try:
+            await asyncio.wait_for(
+                self.middleware.call('chart.release.wait_for_pods_to_terminate', get_namespace(release_name)),
+                timeout=300
+            )
+        except asyncio.TimeoutError:
+            self.middleware.logger.debug(
+                'Timed out waiting for pods to terminate in %r namespace', get_namespace(release_name)
+            )
+            job.set_progress(95, 'Timed out waiting for pods to terminate, terminating namespace.')
 
         await self.post_remove_tasks(release_name, job)
 
@@ -544,7 +555,7 @@ class ChartReleaseService(CRUDService):
     @private
     async def post_remove_tasks(self, release_name, job=None):
         await self.remove_storage_class_and_dataset(release_name, job)
-        await self.middleware.call('k8s.namespace.delete', get_namespace(release_name))
+        await self.middleware.call('k8s.namespace.delete', get_namespace(release_name), {'grace_period_seconds': 0})
 
     @private
     async def remove_storage_class_and_dataset(self, release_name, job=None):
