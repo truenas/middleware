@@ -317,6 +317,9 @@ class EtcService(Service):
         'kmip': [
             {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
         ],
+        'tftp': [
+            {'type': 'mako', 'path': 'default/tftpd-hpa', 'platform': 'Linux'},
+        ],
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/wg0.conf'}
         ],
