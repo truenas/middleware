@@ -120,7 +120,7 @@ class ChartReleaseService(Service):
         volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
         snap_name = f'{volumes_ds}@{release["version"]}'
         if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
-            await self.middleware.call('zfs.snapshot.delete', snap_name)
+            await self.middleware.call('zfs.snapshot.delete', snap_name, {'recursive': True})
 
         await self.middleware.call(
             'zfs.snapshot.create', {'dataset': volumes_ds, 'name': release['version'], 'recursive': True}
