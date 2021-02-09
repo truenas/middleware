@@ -1,7 +1,4 @@
 import errno
-import os
-import shutil
-import tempfile
 
 from middlewared.schema import Dict, Str
 from middlewared.service import accepts, CallError, job, private, Service
@@ -63,8 +60,8 @@ class ChartReleaseService(Service):
             Str('container_name', required=True, empty=False),
         )
     )
-    @job(lock='dataset_export_keys', pipes=['output'])
-    def pod_logs(self, release_name, options):
+    @job(lock='chart_release_logs', pipes=['output'])
+    def pod_logs(self, job, release_name, options):
         """
         Export logs of `options.container_name` container in `options.pod_name` pod in `release_name` chart release.
 
@@ -77,18 +74,7 @@ class ChartReleaseService(Service):
         logs = self.middleware.call_sync(
             'k8s.pod.get_logs', options['pod_name'], options['container_name'], get_namespace(release_name)
         )
-        temp_path = None
-        try:
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-                temp_path = f.name
-                os.chmod(temp_path, 0o600)
-                f.write(logs)
-
-            with open(temp_path, 'rb') as f:
-                shutil.copyfileobj(f, job.pipes.output.w)
-        finally:
-            if os.path.exists(temp_path or ''):
-                os.unlink(temp_path)
+        job.pipes.output.w.write(logs)
 
     @accepts()
     async def nic_choices(self):
