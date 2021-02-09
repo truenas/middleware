@@ -1,7 +1,10 @@
 import errno
+import os
+import shutil
+import tempfile
 
 from middlewared.schema import Dict, Str
-from middlewared.service import accepts, CallError, private, Service
+from middlewared.service import accepts, CallError, job, private, Service
 
 from .utils import get_namespace
 
@@ -42,6 +45,16 @@ class ChartReleaseService(Service):
         """
         return await self.retrieve_pod_with_containers(release_name)
 
+    @private
+    async def validate_pod_log_args(self, release_name, pod_name, container_name):
+        choices = await self.pod_logs_choices(release_name)
+        if pod_name not in choices:
+            raise CallError(f'Unable to locate {pod_name!r} pod.', errno=errno.ENOENT)
+        elif container_name not in choices[pod_name]:
+            raise CallError(
+                f'Unable to locate {container_name!r} container in {pod_name!r} pod.', errno=errno.ENOENT
+            )
+
     @accepts(
         Str('release_name'),
         Dict(
@@ -50,22 +63,32 @@ class ChartReleaseService(Service):
             Str('container_name', required=True, empty=False),
         )
     )
-    async def pod_logs(self, release_name, options):
+    @job(lock='dataset_export_keys', pipes=['output'])
+    def pod_logs(self, release_name, options):
         """
-        Retrieve logs of `options.container_name` container in `options.pod_name` pod in `release_name` chart release.
-        """
-        choices = await self.pod_logs_choices(release_name)
-        if options['pod_name'] not in choices:
-            raise CallError(f'Unable to locate {options["pod_name"]!r} pod.', errno=errno.ENOENT)
-        elif options['container_name'] not in choices[options['pod_name']]:
-            raise CallError(
-                f'Unable to locate {options["container_name"]!r} container in {options["pod_name"]!r} pod.',
-                errno=errno.ENOENT
-            )
+        Export logs of `options.container_name` container in `options.pod_name` pod in `release_name` chart release.
 
-        return await self.middleware.call(
+        Please refer to websocket documentation for downloading the file.
+        """
+        self.middleware.call_sync(
+            'chart.release.validate_pod_log_args', release_name, options['pod_name'], options['container_name']
+        )
+
+        logs = self.middleware.call_sync(
             'k8s.pod.get_logs', options['pod_name'], options['container_name'], get_namespace(release_name)
         )
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+                temp_path = f.name
+                os.chmod(temp_path, 0o600)
+                f.write(logs)
+
+            with open(temp_path, 'rb') as f:
+                shutil.copyfileobj(f, job.pipes.output.w)
+        finally:
+            if os.path.exists(temp_path or ''):
+                os.unlink(temp_path)
 
     @accepts()
     async def nic_choices(self):
