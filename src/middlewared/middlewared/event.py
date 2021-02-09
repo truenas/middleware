@@ -54,7 +54,7 @@ class EventSource(object):
         await self.middleware.run_in_thread(self.run_sync)
 
     def run_sync(self):
-        raise NotImplementedError('run() method not implemented')
+        raise NotImplementedError('run_sync() method not implemented')
 
     async def cancel(self):
         self._cancel.set()

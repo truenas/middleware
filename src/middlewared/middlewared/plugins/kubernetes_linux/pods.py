@@ -1,4 +1,10 @@
-from middlewared.service import CRUDService, filterable
+import errno
+import os
+
+from kubernetes_asyncio.watch import Watch
+
+from middlewared.main import EventSource
+from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
 from .k8s import api_client
@@ -31,3 +37,41 @@ class KubernetesPodService(CRUDService):
             return await context['core_api'].read_namespaced_pod_log(
                 name=pod, container=container, namespace=namespace
             )
+
+
+class KubernetesPodLogsFileFollowTailEventSource(EventSource):
+
+    """
+    Retrieve logs of a container in a pod in a chart release.
+
+    Name of chart release, name of pod and name of container is required.
+    Format is "release-name_pod-name_container-name", each parameter is separated by `_`.
+    """
+
+    async def run(self):
+        if str(self.arg).count('_') < 2:
+            raise CallError('Arguments in the format "release-name_pod-name_container-name" must be specified.')
+
+        release, pod, container = self.arg.split('_', 2)
+        release_data = await self.middleware.call('chart.release.get_instance', release)
+        choices = await self.middleware.call('chart.release.pod_logs_choices', release)
+        if pod not in choices:
+            raise CallError(f'Unable to locate {pod!r} pod.', errno=errno.ENOENT)
+        elif container not in choices[pod]:
+            raise CallError(
+                f'Unable to locate {container!r} container in {pod!r} pod.', errno=errno.ENOENT
+            )
+
+        async with api_client() as (api, context):
+            async with Watch().stream(
+                context['core_api'].read_namespaced_pod_log, name=pod, container=container,
+                namespace=release_data['namespace'],
+            ) as stream:
+                async for event in stream:
+                    if self._cancel.is_set():
+                        return
+                    self.send_event('ADDED', fields={'data': event})
+
+
+def setup(middleware):
+    middleware.register_event_source('kubernetes.pod_log_follow', KubernetesPodLogsFileFollowTailEventSource)
