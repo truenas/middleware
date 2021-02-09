@@ -5,6 +5,7 @@ import errno
 import itertools
 import os
 import shutil
+import subprocess
 import tempfile
 import yaml
 
@@ -405,17 +406,11 @@ class ChartReleaseService(CRUDService):
 
             job.set_progress(75, 'Installing Catalog Item')
 
-            with tempfile.NamedTemporaryFile(mode='w+') as f:
-                f.write(yaml.dump(new_values))
-                f.flush()
-                # We will install the chart now and force the installation in an ix based namespace
-                # https://github.com/helm/helm/issues/5465#issuecomment-473942223
-                cp = await run(
-                    ['helm', 'install', data['release_name'], chart_path, '-n', namespace_name, '-f', f.name],
-                    check=False,
-                )
-            if cp.returncode:
-                raise CallError(f'Failed to install catalog item: {cp.stderr}')
+            # We will install the chart now and force the installation in an ix based namespace
+            # https://github.com/helm/helm/issues/5465#issuecomment-473942223
+            await self.middleware.call(
+                'chart.release.helm_action', data['release_name'], chart_path, new_values, 'install'
+            )
 
             storage_class = await self.middleware.call('k8s.storage_class.retrieve_storage_class_manifest')
             storage_class['metadata']['name'] = storage_class_name
@@ -479,16 +474,7 @@ class ChartReleaseService(CRUDService):
 
         await self.perform_actions(context)
 
-        with tempfile.NamedTemporaryFile(mode='w+') as f:
-            f.write(yaml.dump(config))
-            f.flush()
-
-            cp = await run(
-                ['helm', 'upgrade', chart_release, chart_path, '-n', get_namespace(chart_release), '-f', f.name],
-                check=False,
-            )
-            if cp.returncode:
-                raise CallError(f'Failed to update chart release: {cp.stderr.decode()}')
+        await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 
         job.set_progress(90, 'Syncing secrets for chart release')
         await self.middleware.call('chart.release.sync_secrets_for_release', chart_release)
@@ -523,6 +509,27 @@ class ChartReleaseService(CRUDService):
 
         job.set_progress(100, f'{release_name!r} chart release deleted')
         return True
+
+    @private
+    def helm_action(self, chart_release, chart_path, config, tn_action):
+        args = ['-f']
+        if os.path.exists(os.path.join(chart_path, 'ix_values.yaml')):
+            args.extend([os.path.join(chart_path, 'ix_values.yaml'), '-f'])
+
+        action = tn_action if tn_action == 'install' else 'upgrade'
+
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(yaml.dump(config))
+            f.flush()
+
+            cp = subprocess.Popen(
+                ['helm', action, chart_release, chart_path, '-n', get_namespace(chart_release)] + args + [f.name],
+                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                env=dict(os.environ, KUBECONFIG='/etc/rancher/k3s/k3s.yaml'),
+            )
+            stderr = cp.communicate()[1]
+            if cp.returncode:
+                raise CallError(f'Failed to {tn_action} chart release: {stderr.decode()}')
 
     @accepts(Str('release_name'))
     @job(lock=lambda args: f'chart_release_redeploy_{args[0]}')
