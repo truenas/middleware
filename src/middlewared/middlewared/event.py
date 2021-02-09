@@ -1,3 +1,4 @@
+import asyncio
 import threading
 
 
@@ -34,26 +35,33 @@ class EventSource(object):
         self.arg = arg
         self.send_event = send_event
         self.unsubscribe_all = unsubscribe_all
-        self._cancel = threading.Event()
+        self._cancel = asyncio.Event()
+        self._cancel_sync = threading.Event()
 
-    def process(self):
+    async def process(self):
         try:
-            self.run()
+            await self.run()
         except Exception:
-            self.middleware.logger.warning('EventSource %r run() failed', self.name, exc_info=True)
-
+            self.middleware.logger.error('EventSource %r run() failed', self.name, exc_info=True)
         try:
-            self.on_finish()
+            await self.on_finish()
         except Exception:
-            self.middleware.logger.warning('EventSource %r on_finish() failed', self.name, exc_info=True)
+            self.middleware.logger.error('EventSource %r on_finish() failed', self.name, exc_info=True)
 
-        self.middleware.run_coroutine(self.unsubscribe_all())
+        await self.unsubscribe_all()
 
-    def run(self):
+    async def run(self):
+        await self.middleware.run_in_thread(self.run_sync)
+
+    def run_sync(self):
         raise NotImplementedError('run() method not implemented')
 
-    def cancel(self):
+    async def cancel(self):
         self._cancel.set()
+        await self.middleware.run_in_thread(self._cancel_sync.set)
 
-    def on_finish(self):
+    async def on_finish(self):
+        await self.middleware.run_in_thread(self.on_finish_sync)
+
+    def on_finish_sync(self):
         pass

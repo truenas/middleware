@@ -60,7 +60,7 @@ class GraphiteEventSource(EventSource):
     * `reporting.graphite:include,cpu-.*,disk-.*` - only include CPU and disk data
     * `reporting.graphite:exclude,cpu-.*,disk-.*` - all data except disk and CPU
     """
-    def run(self):
+    def run_sync(self):
         mode = None
         names = []
         if self.arg:
@@ -79,7 +79,7 @@ class GraphiteEventSource(EventSource):
             self.middleware.call_sync("reporting.unregister_graphite_queue", queue)
 
     def _run(self, mode, names, queue):
-        while not self._cancel.is_set():
+        while not self._cancel_sync.is_set():
             items = []
             for name, value, timestamp in queue.get():
                 if self._accept(mode, names, name):

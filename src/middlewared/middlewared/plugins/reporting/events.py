@@ -93,7 +93,7 @@ class RealtimeEventSource(EventSource):
 
         return speeds
 
-    def run(self):
+    def run_sync(self):
 
         cp_time_last = None
         cp_times_last = None
@@ -105,7 +105,7 @@ class RealtimeEventSource(EventSource):
         if osc.IS_LINUX:
             disk_stats = DiskStats()
 
-        while not self._cancel.is_set():
+        while not self._cancel_sync.is_set():
             data = {}
 
             # Virtual memory use
