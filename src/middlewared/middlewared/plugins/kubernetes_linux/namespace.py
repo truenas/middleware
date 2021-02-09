@@ -2,7 +2,7 @@ import yaml
 
 from kubernetes_asyncio import client
 
-from middlewared.schema import Dict, List, Str
+from middlewared.schema import Dict, Int, List, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -50,11 +50,17 @@ class KubernetesNamespaceService(CRUDService):
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to update namespace: {e}')
 
-    @accepts(Str('namespace'))
-    async def do_delete(self, namespace):
+    @accepts(
+        Str('namespace'),
+        Dict(
+            'options',
+            Int('grace_period_seconds', default=None),
+        )
+    )
+    async def do_delete(self, namespace, options):
         async with api_client() as (api, context):
             try:
-                await context['core_api'].delete_namespace(namespace)
+                await context['core_api'].delete_namespace(namespace, **options)
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete namespace: {e}')
 
