@@ -1,6 +1,3 @@
-import errno
-import os
-
 from kubernetes_asyncio.watch import Watch
 
 from middlewared.main import EventSource
@@ -53,14 +50,8 @@ class KubernetesPodLogsFileFollowTailEventSource(EventSource):
             raise CallError('Arguments in the format "release-name_pod-name_container-name" must be specified.')
 
         release, pod, container = self.arg.split('_', 2)
+        await self.middleware.call('chart.release.validate_pod_log_args', release, pod, container)
         release_data = await self.middleware.call('chart.release.get_instance', release)
-        choices = await self.middleware.call('chart.release.pod_logs_choices', release)
-        if pod not in choices:
-            raise CallError(f'Unable to locate {pod!r} pod.', errno=errno.ENOENT)
-        elif container not in choices[pod]:
-            raise CallError(
-                f'Unable to locate {container!r} container in {pod!r} pod.', errno=errno.ENOENT
-            )
 
         async with api_client() as (api, context):
             async with Watch().stream(
