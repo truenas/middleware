@@ -1599,15 +1599,15 @@ class SystemHealthEventSource(EventSource):
         start_daemon_thread(target=self.check_update)
 
     def check_update(self):
-        while not self._cancel.is_set():
+        while not self._cancel_sync.is_set():
             try:
                 self._check_update = self.middleware.call_sync('update.check_available')['status']
             except Exception:
                 self.middleware.logger.warn(
-                    'Failed to check avaiable update for system.health event', exc_info=True,
+                    'Failed to check available update for system.health event', exc_info=True,
                 )
             finally:
-                self._cancel.wait(timeout=60 * 60 * 24)
+                self._cancel_sync.wait(timeout=60 * 60 * 24)
 
     def pools_statuses(self):
         return {
@@ -1615,7 +1615,7 @@ class SystemHealthEventSource(EventSource):
             for p in self.middleware.call_sync('pool.query')
         }
 
-    def run(self):
+    def run_sync(self):
 
         try:
             if self.arg:
@@ -1632,7 +1632,7 @@ class SystemHealthEventSource(EventSource):
         cp_time = psutil.cpu_times()
         cp_old = cp_time
 
-        while not self._cancel.is_set():
+        while not self._cancel_sync.is_set():
             time.sleep(delay)
 
             cp_time = psutil.cpu_times()

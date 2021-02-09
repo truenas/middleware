@@ -15,7 +15,7 @@ class ProcessesEventSource(EventSource):
     Usage: reporting.processes:{"interval": 10, "cpu_percent": 0.1, "memory_percent": 0.1}
     """
 
-    def run(self):
+    def run_sync(self):
         options = {}
         if self.arg:
             options = json.loads(self.arg)
@@ -28,7 +28,7 @@ class ProcessesEventSource(EventSource):
 
         processes = {}
         first_iteration = True
-        while not self._cancel.is_set():
+        while not self._cancel_sync.is_set():
             iteration_processes = {}
             for p in psutil.process_iter(["cmdline", "cpu_percent", "memory_percent", "num_threads"]):
                 existing_process = processes.get(p)
@@ -42,8 +42,8 @@ class ProcessesEventSource(EventSource):
             result = []
             for process in processes.values():
                 if (
-                        process.memory_percent() < options["memory_percent"] and
-                        process.cpu_percent() < options["cpu_percent"]
+                    process.memory_percent() < options["memory_percent"] and
+                    process.cpu_percent() < options["cpu_percent"]
                 ):
                     continue
 

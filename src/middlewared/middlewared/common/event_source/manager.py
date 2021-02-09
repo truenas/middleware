@@ -1,8 +1,9 @@
-from collections import defaultdict, namedtuple
+import asyncio
 import functools
 
+from collections import defaultdict, namedtuple
+
 from middlewared.event import EventSource
-from middlewared.utils import start_daemon_thread
 
 IdentData = namedtuple("IdentData", ["app", "name", "arg"])
 
@@ -50,7 +51,7 @@ class EventSourceManager:
                 functools.partial(self._send_event, name, arg),
                 functools.partial(self._unsubscribe_all, name, arg),
             )
-            start_daemon_thread(target=self.instances[name][arg].process)
+            asyncio.ensure_future(self.instances[name][arg].process())
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
@@ -63,7 +64,7 @@ class EventSourceManager:
             self.middleware.logger.trace("Canceling instance of event source %r:%r as the last subscriber "
                                          "unsubscribed", ident_data.name, ident_data.arg)
             instance = self.instances[ident_data.name].pop(ident_data.arg)
-            instance.cancel()
+            await instance.cancel()
 
     async def unsubscribe_app(self, app):
         for ident, ident_data in list(self.idents.items()):

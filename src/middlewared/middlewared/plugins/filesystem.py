@@ -285,7 +285,7 @@ class FileFollowTailEventSource(EventSource):
     However `path` is required for this.
     """
 
-    def run(self):
+    def run_sync(self):
         if ':' in self.arg:
             path, lines = self.arg.rsplit(':', 1)
             lines = int(lines)
@@ -334,7 +334,7 @@ class FileFollowTailEventSource(EventSource):
         )]
         kqueue.control(ev, 0, 0)
 
-        while not self._cancel.is_set():
+        while not self._cancel_sync.is_set():
             events = kqueue.control([], 1, 1)
             if not events:
                 continue
@@ -351,7 +351,7 @@ class FileFollowTailEventSource(EventSource):
         if data:
             yield data
 
-        while not self._cancel.is_set():
+        while not self._cancel_sync.is_set():
             notifier.process_events()
 
             data = "".join(queue)

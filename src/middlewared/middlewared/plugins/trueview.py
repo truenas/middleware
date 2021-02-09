@@ -12,7 +12,7 @@ class TrueViewStatusEventSource(EventSource):
     on when the periodic event should be generated.
     """
 
-    def run(self):
+    def run_sync(self):
 
         try:
             if self.arg:
@@ -26,7 +26,7 @@ class TrueViewStatusEventSource(EventSource):
         if delay < 5:
             return
 
-        while not self._cancel.is_set():
+        while not self._cancel_sync.is_set():
             cp = subprocess.run(
                 ['trueview_stats.sh'], stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
