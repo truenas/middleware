@@ -70,6 +70,11 @@ class CatalogService(CRUDService):
                 f'{schema}.preferred_trains',
                 f'{", ".join(diff)} trains were not found in catalog.'
             )
+        if not data['preferred_trains']:
+            verrors.add(
+                f'{schema}.preferred_trains',
+                'At least 1 preferred train must be specified for a catalog.'
+            )
 
         verrors.check()
 
@@ -85,6 +90,9 @@ class CatalogService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        `catalog_create.preferred_trains` specifies trains which will be displayed in the UI directly for a user.
+        """
         verrors = ValidationErrors()
         # We normalize the label
         data['label'] = data['label'].upper()
