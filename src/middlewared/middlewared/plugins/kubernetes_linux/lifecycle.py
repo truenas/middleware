@@ -194,25 +194,16 @@ class KubernetesService(Service):
             os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases', 'default_volumes', 'catalogs')
         ]
 
-    @private
-    async def start_kubernetes(self):
-        # TODO: Remove this wrapper after 21.02 where we will moving on assume that all agent nodes are now using
-        #  our constant worker node password
-        if not (await self.middleware.call('kubernetes.config'))['pool']:
-            return
-
-        await self.middleware.call('service.start', 'kubernetes')
-        async with START_LOCK:
-            await self.middleware.call('k8s.node.delete_node')
-            await self.middleware.call('service.restart', 'kubernetes')
-            await self.middleware.call('catalog.sync_all')
-
 
 async def _event_system(middleware, event_type, args):
     # we ignore the 'ready' event on an HA system since the failover event plugin
     # is responsible for starting this service
-    if args['id'] == 'ready' and not await middleware.call('failover.licensed'):
-        asyncio.ensure_future(middleware.call('kubernetes.start_kubernetes'))
+    if (
+        args['id'] == 'ready' and not await middleware.call('failover.licensed') and (
+            await middleware.call('kubernetes.config')
+        )['pool']
+    ):
+        asyncio.ensure_future(middleware.call('service.start', 'kubernetes'))
     elif args['id'] == 'shutdown' and await middleware.call('service.started', 'kubernetes'):
         asyncio.ensure_future(middleware.call('service.stop', 'kubernetes'))
 
