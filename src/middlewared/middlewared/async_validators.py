@@ -8,6 +8,10 @@ from middlewared.validators import IpAddress
 
 async def check_path_resides_within_volume(verrors, middleware, name, path, gluster_bypass=False):
 
+    # when a sharing service is using gluster, the path checks below do not apply
+    if gluster_bypass:
+        return
+
     # we need to make sure the sharing service is configured within the zpool
     rp = os.path.realpath(path)
     vol_names = [vol["vol_name"] for vol in await middleware.call("datastore.query", "storage.volume")]
@@ -17,27 +21,26 @@ async def check_path_resides_within_volume(verrors, middleware, name, path, glus
     ):
         verrors.add(name, "The path must reside within a pool mount point")
 
-    if not gluster_bypass:
-        # we must also make sure that any sharing service does not point to
-        # anywhere within the ".glusterfs" dataset since the clients need
-        # to go through the appropriate gluster client to write to the cluster.
-        # If data is modified directly on the gluster resources, then it will
-        # cause a split-brain scenario which means the data that was modified
-        # would not be sync'ed with other nodes in the cluster.
-        rp = Path(rp)
+    # we must also make sure that any sharing service does not point to
+    # anywhere within the ".glusterfs" dataset since the clients need
+    # to go through the appropriate gluster client to write to the cluster.
+    # If data is modified directly on the gluster resources, then it will
+    # cause a split-brain scenario which means the data that was modified
+    # would not be sync'ed with other nodes in the cluster.
+    rp = Path(rp)
 
-        using_gluster_path = False
-        if rp.is_mount() and rp.name == '.glusterfs':
-            using_gluster_path = True
-        else:
-            # subtract 2 here to remove the '/' and 'mnt' parents
-            for i in range(0, len(rp.parents) - 2):
-                if rp.parents[i].is_mount() and rp.parents[i].name == ".glusterfs":
-                    using_gluster_path = True
-                    break
+    using_gluster_path = False
+    if rp.is_mount() and rp.name == '.glusterfs':
+        using_gluster_path = True
+    else:
+        # subtract 2 here to remove the '/' and 'mnt' parents
+        for i in range(0, len(rp.parents) - 2):
+            if rp.parents[i].is_mount() and rp.parents[i].name == ".glusterfs":
+                using_gluster_path = True
+                break
 
-        if using_gluster_path:
-            verrors.add(name, "A path being used by Gluster is not allowed")
+    if using_gluster_path:
+        verrors.add(name, "A path being used by Gluster is not allowed")
 
 
 async def resolve_hostname(middleware, verrors, name, hostname):
