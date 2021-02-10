@@ -47,3 +47,21 @@ class CertificateService(Service):
                 dependents['services'].append(data)
 
         return dependents
+
+    @private
+    async def reload_cert_dependent_services(self, id):
+        dependents = await self.services_dependent_on_cert(id)
+        for action in dependents['services']:
+            try:
+                await self.middleware.call(f'service.{action["action"]}', action['service'])
+            except Exception:
+                self.logger.error('Failed to %r %s service', action['action'], action['service'], exc_info=True)
+
+        bulk_job = await self.middleware.call(
+            'core.bulk', 'chart.release.redeploy', [[chart_release] for chart_release in dependents['chart_releases']]
+        )
+        for index, status in enumerate(await bulk_job.wait()):
+            if status['error']:
+                self.logger.error(
+                    'Failed to redeploy %r chart release: %s', dependents['chart_releases'][index], status['error']
+                )
