@@ -201,10 +201,10 @@ class AlertService(Service):
 
     @private
     async def initialize(self, load=True):
-        is_freenas = await self.middleware.call("system.is_freenas")
+        is_enterprise = await self.middleware.call("system.is_enterprise")
 
         self.node = "A"
-        if not is_freenas:
+        if is_enterprise:
             if await self.middleware.call("failover.node") == "B":
                 self.node = "B"
 
@@ -315,7 +315,7 @@ class AlertService(Service):
             'A': 'Controller A',
             'B': 'Controller B',
         }
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+        if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.licensed'):
             node = await self.middleware.call('failover.node')
             status = await self.middleware.call('failover.status')
             if status == 'MASTER':
@@ -498,7 +498,7 @@ class AlertService(Service):
                     if alert.mail:
                         await self.middleware.call("mail.send", alert.mail)
 
-                if not await self.middleware.call("system.is_freenas"):
+                if await self.middleware.call("system.is_enterprise"):
                     new_hardware_alerts = [alert for alert in new_alerts if alert.klass.hardware]
                     if new_hardware_alerts:
                         if await self.middleware.call("support.is_available_and_enabled"):
@@ -538,7 +538,7 @@ class AlertService(Service):
             return False
 
         if (
-            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('system.is_enterprise') and
             await self.middleware.call('failover.licensed') and
             (
                 await self.middleware.call('failover.status') == 'BACKUP' or
@@ -757,7 +757,7 @@ class AlertService(Service):
     @private
     async def flush_alerts(self):
         if (
-            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('system.is_enterprise') and
             await self.middleware.call('failover.licensed') and
             await self.middleware.call('failover.status') == 'BACKUP'
         ):
@@ -1019,7 +1019,7 @@ class AlertServiceService(CRUDService):
             return False
 
         master_node = "A"
-        if not await self.middleware.call("system.is_freenas"):
+        if await self.middleware.call("system.is_enterprise"):
             if await self.middleware.call("failover.licensed"):
                 master_node = await self.middleware.call("failover.node")
 
