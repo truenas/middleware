@@ -33,11 +33,9 @@ class CertificateService(Service):
             elif svc_name == 'system.advanced':
                 data = {'action': 'reload', 'service': 'syslogd'}
             elif svc_name == 'kmip':
-                if (await self.middleware.call('kmip.config'))['enabled']:
-                    data = {'action': 'start', 'service': 'kmip'}
+                data = {'action': 'start', 'service': 'kmip'}
             elif svc_name == 'ldap':
-                if (await self.middleware.call('ldap.config'))['enable']:
-                    data = {'action': 'start', 'service': 'ldap'}
+                data = {'action': 'start', 'service': 'ldap'}
             elif svc['config']['service']:
                 data = {
                     'action': svc['config']['service_verb'] or 'reload', 'service': svc['config']['service']
