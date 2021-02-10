@@ -27,6 +27,7 @@ class MinioFSAttachmentDelegate(FSAttachmentDelegate):
         return attachment['id']
 
     async def delete(self, attachments):
+        await self.stop(attachments)
         await self.middleware.call('s3.update', {'storage_path': ''})
 
     async def toggle(self, attachments, enabled):
