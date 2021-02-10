@@ -555,6 +555,14 @@ class CRUDService(ServiceChangeMixin, Service):
         """
         Raises EBUSY CallError if some datastores/services (except for `ignored`) reference object specified by id.
         """
+        dependencies = await self.get_dependencies(id, ignored)
+        if dependencies:
+            raise CallError(
+                'This object is being used by other objects', errno.EBUSY, {'dependencies': list(dependencies.values())}
+            )
+
+    @private
+    async def get_dependencies(self, id, ignored=None):
         ignored = ignored or set()
 
         services = {
@@ -608,10 +616,7 @@ class CRUDService(ServiceChangeMixin, Service):
                     'service': service['name'] if service else None,
                 }, **data)
 
-        if dependencies:
-            raise CallError('This object is being used by other objects', errno.EBUSY,
-                            {'dependencies': list(dependencies.values())})
-
+        return dependencies
 
 class SharingTaskService(CRUDService):
 
