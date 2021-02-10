@@ -4,8 +4,11 @@ import itertools
 import json
 import psutil
 import re
+import struct
 import subprocess
 import time
+
+import humanfriendly
 
 from middlewared.event import EventSource
 from middlewared.utils import osc
@@ -58,6 +61,67 @@ class RealtimeEventSource(EventSource):
             data['usage'] = 0
         return data
 
+    def get_memory_info(self, arc_size):
+        if osc.IS_FREEBSD:
+            page_size = int(sysctl.filter("hw.pagesize")[0].value)
+            classes = {
+                k: v if isinstance(v, int) else struct.unpack("I", v)[0] * page_size
+                for k, v in [
+                    (k, sysctl.filter(f"vm.stats.vm.v_{k}_count")[0].value)
+                    for k in ["cache", "laundry", "inactive", "active", "wire", "free"]
+                ]
+            }
+            classes["os_reserved"] = int(sysctl.filter("hw.physmem")[0].value) - sum(classes.values())
+
+            classes["wire"] -= arc_size
+            classes["arc"] = arc_size
+
+            extra = {}
+
+            sswap = psutil.swap_memory()
+            swap = {
+                "used": sswap.used,
+                "total": sswap.total,
+            }
+        else:
+            with open("/proc/meminfo") as f:
+                meminfo = {
+                    s[0]: humanfriendly.parse_size(s[1], binary=True)
+                    for s in [
+                        line.split(":", 1)
+                        for line in f.readlines()
+                    ]
+                }
+
+            classes = {}
+            classes["page_tables"] = meminfo["PageTables"]
+            classes["swap_cache"] = meminfo["SwapCached"]
+            classes["slab_cache"] = meminfo["Slab"]
+            classes["cache"] = meminfo["Cached"]
+            classes["buffers"] = meminfo["Buffers"]
+            classes["unused"] = meminfo["MemFree"]
+            classes["arc"] = arc_size
+            classes["apps"] = meminfo["MemTotal"] - sum(classes.values())
+
+            extra = {
+                "inactive": meminfo["Inactive"],
+                "committed": meminfo["Committed_AS"],
+                "active": meminfo["Active"],
+                "vmalloc_used": meminfo["VmallocUsed"],
+                "mapped": meminfo["Mapped"],
+            }
+
+            swap = {
+                "used": meminfo["SwapTotal"] - meminfo["SwapFree"],
+                "total": meminfo["SwapTotal"],
+            }
+
+        return {
+            "classes": classes,
+            "extra": extra,
+            "swap": swap,
+        }
+
     def get_interface_speeds(self):
         speeds = {}
 
@@ -108,8 +172,6 @@ class RealtimeEventSource(EventSource):
         while not self._cancel_sync.is_set():
             data = {}
 
-            # Virtual memory use
-            data['virtual_memory'] = psutil.virtual_memory()._asdict()
 
             # ZFS ARC Size (raw value is in Bytes)
             hits = 0
@@ -138,6 +200,10 @@ class RealtimeEventSource(EventSource):
                 data['zfs']['cache_hit_ratio'] = hits / total
             else:
                 data['zfs']['cache_hit_ratio'] = 0
+
+            # Virtual memory use
+            data['memory'] = self.get_memory_info(data['zfs']['arc_size'])
+            data['virtual_memory'] = psutil.virtual_memory()._asdict()
 
             data['cpu'] = {}
             # Get CPU usage %
