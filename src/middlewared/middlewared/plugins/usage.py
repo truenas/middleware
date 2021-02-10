@@ -224,7 +224,9 @@ class UsageService(Service):
         output = {
             'chart_releases': 0,
             # catalog -> train -> item -> versions
-            'catalog_items': defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int)))),
+            'catalog_items': defaultdict(
+                lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+            ),
             'chart_releases_backups': {
                 'total_backups': 0,
                 'automatic_backups': 0,
@@ -235,11 +237,17 @@ class UsageService(Service):
                 'service_cidr': k8s_config['service_cidr'],
             },
         }
+        catalogs = {c['label']: c for c in await self.middleware.call('catalog.query')}
         chart_releases = await self.middleware.call('chart.release.query')
         output['chart_releases'] = len(chart_releases)
         for chart_release in chart_releases:
             chart = chart_release['chart_metadata']
-            output['catalog_items'][chart_release['catalog']][
+            catalog = catalogs.get(chart_release['catalog'])
+            if not catalog:
+                # If the catalog was deleted, it's no use trying to log information below as we can't
+                # trace back to which item is really installed
+                continue
+            output['catalog_items'][catalog['repository']][catalog['branch']][
                 chart_release['catalog_train']][chart['name']][chart['version']] += 1
 
         backups = await self.middleware.call('kubernetes.list_backups')
