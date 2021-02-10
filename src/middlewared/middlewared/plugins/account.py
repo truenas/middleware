@@ -234,7 +234,11 @@ class UserService(CRUDService):
             if group:
                 group = group[0]
             else:
-                group = await self.middleware.call('group.create', {'name': data['username'], 'smb': False})
+                group = await self.middleware.call('group.create_internal', {
+                    'name': data['username'],
+                    'smb': False,
+                    'allow_duplicate_gid': False
+                }, False)
                 group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
             data['group'] = group['id']
         else:
@@ -313,7 +317,7 @@ class UserService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
-            await self.__set_smbpasswd(data['username'])
+            await self.middleware.call('smb.synchronize_passdb')
 
         if os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -503,7 +507,7 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
         if user['smb'] and must_change_pdb_entry:
-            await self.__set_smbpasswd(user['username'])
+            await self.middleware.call('smb.synchronize_passdb')
 
         return pk
 
@@ -846,16 +850,6 @@ class UserService(CRUDService):
             data['smbhash'] = '*'
         return password
 
-    async def __set_smbpasswd(self, username):
-        """
-        This method will update or create an entry in samba's passdb.tdb file.
-        Update will only happen if the account's nt_password has changed or
-        if the account's 'locked' state has changed. Samba's passdb python
-        library will raise an exception if a corresponding Unix user does not
-        exist. That is the reason we have two methods/steps to set password.
-        """
-        await self.middleware.call('smb.update_passdb_user', username)
-
     async def __set_groups(self, pk, groups):
 
         groups = set(groups)
@@ -1035,6 +1029,11 @@ class GroupService(CRUDService):
 
         `smb` specifies whether the group should be mapped into an NT group.
         """
+        return await self.create_internal(data)
+
+    @private
+    async def create_internal(self, data, reload_users=True):
+
         allow_duplicate_gid = data['allow_duplicate_gid']
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_create')
@@ -1054,7 +1053,9 @@ class GroupService(CRUDService):
         for user in users:
             await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': user})
 
-        await self.middleware.call('service.reload', 'user')
+        if reload_users:
+            await self.middleware.call('service.reload', 'user')
+
         if data['smb']:
             try:
                 await self.middleware.call('smb.groupmap_add', data['name'])
