@@ -10,6 +10,7 @@ import subprocess
 import textwrap
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
 class LicenseAlertClass(AlertClass):
@@ -133,107 +134,27 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             enc_nums[enc['model']] += 1
 
         if license['addhw']:
-            for addhw in license['addhw']:
-                # E16 Expansion shelf
-                if addhw[1] == 1:
-                    if enc_nums['E16'] != addhw[0]:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'License expects %(license)s units of E16 Expansion shelf but found %(found)s.' % {
-                                    'license': addhw[0],
-                                    'found': enc_nums['E16'],
-                                }
-                            )
-                        ))
-                # E24 Expansion shelf
-                if addhw[1] == 2:
-                    if enc_nums['E24'] != addhw[0]:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'License expects %(license)s units of E24 Expansion shelf but found %(found)s.' % {
-                                    'license': addhw[0],
-                                    'found': enc_nums['E24'],
-                                }
-                            )
-                        ))
-                # E60 Expansion shelf
-                if addhw[1] == 3:
-                    if enc_nums['E60'] != addhw[0]:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'License expects %(license)s units of E60 Expansion shelf but found %(found)s.' % {
-                                    'license': addhw[0],
-                                    'found': enc_nums['E60'],
-                                }
-                            )
-                        ))
-                # ES12 Expansion shelf
-                if addhw[1] == 5:
-                    if enc_nums['ES12'] != addhw[0]:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'License expects %(license)s units of ES12 Expansion shelf but found %(found)s.' % {
-                                    'license': addhw[0],
-                                    'found': enc_nums['ES12'],
-                                }
-                            )
-                        ))
-                # ES24 Expansion shelf
-                if addhw[1] == 6:
-                    if enc_nums['ES24'] != addhw[0]:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'License expects %(license)s units of ES24 Expansion shelf but found %(found)s.' % {
-                                    'license': addhw[0],
-                                    'found': enc_nums['ES24'],
-                                }
-                            )
-                        ))
+            for quantity, code in license['addhw']:
+                if code not in LICENSE_ADDHW_MAPPING:
+                    self.middleware.logger.warning('Unknown additional hardware code %d', code)
+                    continue
 
-                # ES24F Expansion shelf
-                if addhw[1] == 7:
-                    if enc_nums['ES24F'] != addhw[0]:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'License expects %(license)s units of ES24F Expansion shelf but found %(found)s.' % {
-                                    'license': addhw[0],
-                                    'found': enc_nums['ES24F'],
-                                }
-                            )
-                        ))
+                name = LICENSE_ADDHW_MAPPING[code]
 
-                # ES60S Expansion shelf
-                if addhw[1] == 8:
-                    if enc_nums['ES60S'] != addhw[0]:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'License expects %(license)s units of ES60S Expansion shelf but found %(found)s.' % {
-                                    'license': addhw[0],
-                                    'found': enc_nums['ES60S'],
-                                }
-                            )
-                        ))
+                if name == 'ES60':
+                    continue
 
-                # ES102 Expansion shelf
-                if addhw[1] == 9:
-                    if enc_nums['ES102'] != addhw[0]:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'License expects %(license)s units of ES102 Expansion shelf but found %(found)s.' % {
-                                    'license': addhw[0],
-                                    'found': enc_nums['ES102'],
-                                }
-                            )
-                        ))
-
+                if enc_nums[name] != quantity:
+                    alerts.append(Alert(
+                        LicenseAlertClass,
+                        (
+                            'License expects %(license)s units of %(name)s Expansion shelf but found %(found)s.' % {
+                                'license': quantity,
+                                'name': name,
+                                'found': enc_nums[name]
+                            }
+                        )
+                    ))
         elif enc_nums:
             alerts.append(Alert(
                 LicenseAlertClass,
