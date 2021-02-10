@@ -121,8 +121,8 @@ class ChartReleaseService(Service):
                 'method': 'update_volumes_for_release',
                 'args': [copy.deepcopy(context['release']), [vol_data]],
             })
-        elif ds_name not in action_dict['args'][-1]:
-            action_dict['args'][-1].append(ds_name)
+        elif ds_name not in [v['name'] for v in action_dict['args'][-1]]:
+            action_dict['args'][-1].append(vol_data)
         else:
             # We already have this in action dict, let's not add a duplicate
             return value
