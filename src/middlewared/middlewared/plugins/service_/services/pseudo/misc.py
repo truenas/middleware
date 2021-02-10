@@ -60,6 +60,12 @@ class KmipService(PseudoServiceBase):
         await self.middleware.call("service.start", "ssl")
         await self.middleware.call("etc.generate", "kmip")
 
+    async def get_state(self):
+        return ServiceState(
+            (await self.middleware.call('kmip.config'))['enabled'],
+            [],
+        )
+
 
 class LoaderService(PseudoServiceBase):
     name = "loader"
