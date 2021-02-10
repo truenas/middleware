@@ -454,14 +454,18 @@ class MailService(ConfigService):
     @periodic(600, run_on_start=False)
     @private
     def send_mail_queue(self):
-
         with MailQueue() as mq:
             for queue in list(mq.queue):
                 try:
                     config = self.middleware.call_sync('mail.config')
-                    server = self._get_smtp_server(config)
-                    server.sendmail(queue.message['From'].encode(), queue.message['To'].split(', '), queue.message.as_string())
-                    server.quit()
+                    if config['oauth']:
+                        self.middleware.call_sync('mail.gmail_send', queue.message, config)
+                    else:
+                        server = self._get_smtp_server(config)
+                        server.sendmail(queue.message['From'].encode(),
+                                        queue.message['To'].split(', '),
+                                        queue.message.as_string())
+                        server.quit()
                 except Exception:
                     self.logger.debug('Sending message from queue failed', exc_info=True)
                     queue.attempts += 1
