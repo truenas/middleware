@@ -1504,6 +1504,12 @@ class CertificateService(CRUDService):
                     },
                     {'prefix': self._config.datastore_prefix}
                 )
+                try:
+                    self.middleware.call_sync('certificate.reload_cert_dependent_services', cert['id'])
+                except Exception:
+                    self.logger.error(
+                        'Failed to reload services dependent on %r certificate', cert['name'], exc_info=True
+                    )
 
             job.set_progress(progress)
 
