@@ -16,10 +16,16 @@ class ChartReleaseService(Service):
         existing_datasets = {
             d['id'] for d in await self.middleware.call('zfs.dataset.query', [['id', '^', f'{ix_volumes_ds}/']])
         }
-        user_wants = {os.path.join(ix_volumes_ds, v) for v in volumes}
+        user_wants = set()
+        vols = {}
+        for v in volumes:
+            vols[v['name']] = v
+            user_wants.add(os.path.join(ix_volumes_ds, v['name']))
 
         for create_ds in user_wants - existing_datasets:
-            await self.middleware.call('zfs.dataset.create', {'name': create_ds, 'type': 'FILESYSTEM'})
+            await self.middleware.call(
+                'zfs.dataset.create', {**vols[create_ds]['properties'], 'name': create_ds, 'type': 'FILESYSTEM'}
+            )
             await self.middleware.call('zfs.dataset.mount', create_ds)
 
     @accepts(

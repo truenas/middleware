@@ -109,13 +109,17 @@ class ChartReleaseService(Service):
         # Let's allow ix volume attr to be a string as well making it easier to define a volume in questions.yaml
         assert isinstance(attr, (Dict, Str)) is True
 
-        ds_name = value['datasetName'] if isinstance(attr, Dict) else value
+        if isinstance(attr, Dict):
+            vol_data = {'name': value['datasetName'], 'properties': value.get('properties') or {}}
+        else:
+            vol_data = {'name': value, 'properties': {}}
+        ds_name = vol_data['name']
 
         action_dict = next((d for d in context['actions'] if d['method'] == 'update_volumes_for_release'), None)
         if not action_dict:
             context['actions'].append({
                 'method': 'update_volumes_for_release',
-                'args': [copy.deepcopy(context['release']), [ds_name]],
+                'args': [copy.deepcopy(context['release']), [vol_data]],
             })
         elif ds_name not in action_dict['args'][-1]:
             action_dict['args'][-1].append(ds_name)
