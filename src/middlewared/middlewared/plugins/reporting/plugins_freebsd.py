@@ -213,7 +213,7 @@ class UPSBatteryChargePlugin(UPSBase, RRDBase):
 class UPSRemainingBatteryPlugin(UPSBase, RRDBase):
 
     title = 'UPS Battery Time Remaining Statistics'
-    vertical_label = 'Seconds'
+    vertical_label = 'Minutes'
     rrd_types = (
-        ('timeleft-battery', 'value', None),
+        ('timeleft-battery', 'value', '%name%,60,/'),
     )
