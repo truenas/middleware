@@ -3,6 +3,7 @@ import aiohttp
 import async_timeout
 
 from middlewared.service import private, Service
+from middlewared.utils.network import INTERNET_TIMEOUT
 
 from .utils import scale_update_server
 
@@ -10,7 +11,7 @@ from .utils import scale_update_server
 class UpdateService(Service):
     @private
     async def get_scale_trains_data(self):
-        async with async_timeout.timeout(10):
+        async with async_timeout.timeout(INTERNET_TIMEOUT):
             async with aiohttp.ClientSession(
                 raise_for_status=True, trust_env=True,
             ) as session:
@@ -20,7 +21,7 @@ class UpdateService(Service):
 
     @private
     async def get_scale_update(self, train, current_version):
-        async with async_timeout.timeout(10):
+        async with async_timeout.timeout(INTERNET_TIMEOUT):
             async with aiohttp.ClientSession(
                 raise_for_status=True, trust_env=True,
             ) as session:

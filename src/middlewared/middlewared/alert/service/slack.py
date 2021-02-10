@@ -3,6 +3,7 @@ import requests
 
 from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
+from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class SlackAlertService(ThreadedAlertService):
@@ -21,6 +22,6 @@ class SlackAlertService(ThreadedAlertService):
             data=json.dumps({
                 "text": self._format_alerts(alerts, gone_alerts, new_alerts),
             }),
-            timeout=15,
+            timeout=INTERNET_TIMEOUT,
         )
         r.raise_for_status()
