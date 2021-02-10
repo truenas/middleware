@@ -52,6 +52,10 @@ class CertificateService(Service):
     async def reload_cert_dependent_services(self, id):
         dependents = await self.services_dependent_on_cert(id)
         for action in dependents['services']:
+            if not await self.middleware.call('service.started', action['service']):
+                # If the service is not already started, we are not going to reload/restart it
+                continue
+
             try:
                 await self.middleware.call(f'service.{action["action"]}', action['service'])
             except Exception:
