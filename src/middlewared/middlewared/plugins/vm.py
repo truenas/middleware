@@ -2485,7 +2485,6 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
 
 async def setup(middleware):
-    middleware.event_register('vm.query', 'Sent on VM state changes.')
     global ZFS_ARC_MAX_INITIAL
     if sysctl:
         ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
