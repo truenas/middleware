@@ -233,6 +233,7 @@ class ErrnoMixin:
     ENOMETHOD = 201
     ESERVICESTARTFAILURE = 202
     EALERTCHECKERUNAVAILABLE = 203
+    EREMOTENODEERROR = 204
 
     @classmethod
     def _get_errname(cls, code):
