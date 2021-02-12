@@ -1,5 +1,6 @@
 from .apidocs import app as apidocs_app
 from .client import ejson as json
+from .common.event_source.manager import EventSourceManager
 from .event import EventSource, Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
@@ -85,7 +86,6 @@ class Application(object):
           on_close(app)
         """
         self.__callbacks = defaultdict(list)
-        self.__event_sources = {}
         self.__subscribed = {}
 
     def register_callback(self, name, method):
@@ -192,32 +192,14 @@ class Application(object):
                 )
 
     async def subscribe(self, ident, name):
-
         if ':' in name:
             shortname, arg = name.split(':', 1)
         else:
             shortname = name
             arg = None
-        event_source = self.middleware.get_event_source(shortname)
-        if event_source:
-            for v in self.__event_sources.values():
-                # Do not allow an event source to be subscribed again
-                if v['name'] == name:
-                    self._send({
-                        'msg': 'nosub',
-                        'id': ident,
-                        'error': {
-                            'error': 'Already subscribed',
-                        }
-                    })
-                    return
-            es = event_source(self.middleware, self, ident, name, arg)
-            self.__event_sources[ident] = {
-                'event_source': es,
-                'name': name,
-            }
-            # Start it after setting __event_sources or it can have a race condition
-            start_daemon_thread(target=es.process)
+
+        if shortname in self.middleware.event_source_manager.event_sources:
+            await self.middleware.event_source_manager.subscribe(self, self.__esm_ident(ident), shortname, arg)
         else:
             self.__subscribed[ident] = name
 
@@ -229,15 +211,16 @@ class Application(object):
     async def unsubscribe(self, ident):
         if ident in self.__subscribed:
             self.__subscribed.pop(ident)
-        elif ident in self.__event_sources:
-            event_source = self.__event_sources[ident]['event_source']
-            await self.middleware.run_in_thread(event_source.cancel)
-            self.__event_sources.pop(ident)
+        elif self.__esm_ident(ident) in self.middleware.event_source_manager.idents:
+            await self.middleware.event_source_manager.unsubscribe(self.__esm_ident(ident))
+
+    def __esm_ident(self, ident):
+        return self.session_id + ident
 
     def send_event(self, name, event_type, **kwargs):
         if (
             not any(i == name or i == '*' for i in self.__subscribed.values()) and
-            not any(i['name'] == name for i in self.__event_sources.values())
+            name not in self.middleware.event_source_manager.event_sources
         ):
             return
         event = {
@@ -268,9 +251,7 @@ class Application(object):
             except Exception:
                 self.logger.error('Failed to run on_close callback.', exc_info=True)
 
-        for ident, val in self.__event_sources.items():
-            event_source = val['event_source']
-            asyncio.ensure_future(self.middleware.run_in_thread(event_source.cancel))
+        await self.middleware.event_source_manager.unsubscribe_app(self)
 
         self.middleware.unregister_wsclient(self)
 
@@ -838,7 +819,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.__init_procpool()
         self.__wsclients = {}
         self.__events = Events()
-        self.__event_sources = {}
+        self.event_source_manager = EventSourceManager(self)
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
         self.__server_threads = []
@@ -1120,12 +1101,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 raise RuntimeError('Only inline hooks can be called with call_hook_inline')
 
     def register_event_source(self, name, event_source):
-        if not issubclass(event_source, EventSource):
-            raise RuntimeError(f'{event_source} is not EventSource subclass')
-        self.__event_sources[name] = event_source
-
-    def get_event_source(self, name):
-        return self.__event_sources.get(name)
+        self.event_source_manager.register(name, event_source)
 
     async def run_in_executor(self, pool, method, *args, **kwargs):
         """
@@ -1332,7 +1308,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                         'wildcard_subscription': False,
                     }
                 ),
-                self.__event_sources.items()
+                self.event_source_manager.event_sources.items()
             )
         )
 
