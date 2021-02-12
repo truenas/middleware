@@ -291,9 +291,16 @@ class PoolService(Service):
 
         await self.middleware.call('pool.sync_encrypted', oid)
 
-        await self.middleware.call('core.bulk', 'service.restart', [
-            [i] for i in set(options['services_restart']) | {'system_datasets', 'disk'} - {'jails', 'vms'}
-        ])
+        to_restart = list(set(options['services_restart']) | {'system_datasets', 'disk'} - {'jails', 'vms'})
+        restart_job = await self.middleware.call('core.bulk', 'service.restart', to_restart)
+        statuses = await restart_job.wait()
+        for idx, srv_status in enumerate(statuses):
+            if srv_status['error']:
+                self.logger.error(
+                    'Failed to restart %r service after %r unlock: %s',
+                    to_restart[idx], pool['name'], srv_status['error']
+                )
+
         if 'jails' in options['services_restart']:
             await self.middleware.call('core.bulk', 'jail.rc_action', [['RESTART']])
         if 'vms' in options['services_restart']:
