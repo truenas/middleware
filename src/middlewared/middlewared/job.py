@@ -481,6 +481,7 @@ class Job(object):
             'method': self.method_name,
             'arguments': self.middleware.dump_args(self.args, method=self.method),
             'description': self.description,
+            'abortable': self.options['abortable'],
             'logs_path': self.logs_path,
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,
