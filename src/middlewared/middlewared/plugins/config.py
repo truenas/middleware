@@ -79,13 +79,13 @@ class ConfigService(Service):
 
     @accepts()
     @job(pipes=["input"])
-    async def upload(self, job):
+    def upload(self, job):
         """
         Accepts a configuration file via job pipe.
         """
         filename = tempfile.mktemp(dir='/var/tmp/firmware')
 
-        def read_write():
+        try:
             nreads = 0
             with open(filename, 'wb') as f_tmp:
                 while True:
@@ -97,13 +97,13 @@ class ConfigService(Service):
                     if nreads > 10240:
                         # FIXME: transfer to a file on disk
                         raise ValueError('File is bigger than 10MiB')
-        try:
-            await self.middleware.run_in_thread(read_write)
-            await self.middleware.run_in_thread(self.__upload, filename)
+
+            self.__upload(filename)
         finally:
             with contextlib.suppress(OSError):
                 os.unlink(filename)
-        asyncio.ensure_future(self.middleware.call('system.reboot', {'delay': 10}))
+
+        self.middleware.run_coroutine(self.middleware.call('system.reboot', {'delay': 10}), wait=False)
 
     def __upload(self, config_file_name):
         try:
@@ -175,6 +175,12 @@ class ConfigService(Service):
             else:
                 raise CallError(f'The uploaded file is not valid: {e}')
 
+        upload = []
+
+        def move(src, dst):
+            shutil.move(src, dst)
+            upload.append(dst)
+
         shutil.move(config_file_name, '/data/uploaded.db')
         if bundle:
             for filename, destination in CONFIG_FILES.items():
@@ -184,16 +190,33 @@ class ConfigService(Service):
                         # Let's only copy the geli keys and not overwrite the entire directory
                         os.makedirs(CONFIG_FILES['geli'], exist_ok=True)
                         for key_path in os.listdir(file_path):
-                            shutil.move(
+                            move(
                                 os.path.join(file_path, key_path), os.path.join(destination, key_path)
                             )
                     elif filename == 'pwenc_secret':
-                        shutil.move(file_path, '/data/pwenc_secret_uploaded')
+                        move(file_path, '/data/pwenc_secret_uploaded')
                     else:
-                        shutil.move(file_path, destination)
+                        move(file_path, destination)
 
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
+        upload.append(NEED_UPDATE_SENTINEL)
+
+        if self.middleware.call_sync('failover.licensed'):
+            try:
+                for path in upload:
+                    self.middleware.call_sync('failover.send_small_file', path)
+
+                self.middleware.run_coroutine(
+                    self.middleware.call('failover.call_remote', 'system.reboot'),
+                    wait=False,
+                )
+            except Exception as e:
+                raise CallError(
+                    f'Config uploaded successfully, but remote node responded with error: {e}. '
+                    f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
+                    CallError.EREMOTENODEERROR,
+                )
 
     @accepts(Dict('options', Bool('reboot', default=True)))
     @job(lock='config_reset', logs=True)
@@ -234,6 +257,22 @@ class ConfigService(Service):
             raise CallError('Factory reset has failed.')
 
         shutil.move(factorydb, FREENAS_DATABASE)
+
+        if self.middleware.call_sync('failover.licensed'):
+            try:
+                self.middleware.call_sync('failover.send_small_file', FREENAS_DATABASE)
+
+                if options['reboot']:
+                    self.middleware.run_coroutine(
+                        self.middleware.call('failover.call_remote', 'system.reboot'),
+                        wait=False,
+                    )
+            except Exception as e:
+                raise CallError(
+                    f'Config reset successfully, but remote node responded with error: {e}. '
+                    f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
+                    CallError.EREMOTENODEERROR,
+                )
 
         if options['reboot']:
             self.middleware.run_coroutine(
