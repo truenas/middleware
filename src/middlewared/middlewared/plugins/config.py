@@ -183,7 +183,7 @@ class ConfigService(Service):
             shutil.move(src, dst)
             upload.append(dst)
 
-        shutil.move(config_file_name, UPLOADED_DB_PATH)
+        move(config_file_name, UPLOADED_DB_PATH)
         if bundle:
             for filename, destination in CONFIG_FILES.items():
                 file_path = os.path.join(tmpdir, filename)
@@ -236,7 +236,7 @@ class ConfigService(Service):
         seconds.
         """
         factorydb = f'{FREENAS_DATABASE}.factory'
-        if os.path.exists(factorydb):
+        with contextlib.suppress(OSError):
             os.unlink(factorydb)
 
         cp = subprocess.run(
