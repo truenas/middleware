@@ -418,7 +418,7 @@ class FailoverService(ConfigService):
         self.middleware.call_sync('failover.call_remote', 'service.restart', ['failover'])
 
         self.middleware.call_sync(
-            'failover.call_remote', 'core.call_hook', 'config.on_upload', [FREENAS_DATABASE],
+            'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
         )
 
         if options['reboot']:

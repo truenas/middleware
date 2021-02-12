@@ -212,7 +212,7 @@ class ConfigService(Service):
                     self.middleware.call_sync('failover.send_small_file', path)
 
                 self.middleware.call_sync(
-                    'failover.call_remote', 'core.call_hook', 'config.on_upload', [UPLOADED_DB_PATH],
+                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]],
                 )
 
                 self.middleware.run_coroutine(
@@ -273,7 +273,7 @@ class ConfigService(Service):
                 self.middleware.call_sync('failover.send_small_file', FREENAS_DATABASE)
 
                 self.middleware.call_sync(
-                    'failover.call_remote', 'core.call_hook', 'config.on_upload', [FREENAS_DATABASE],
+                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
                 )
 
                 if options['reboot']:
