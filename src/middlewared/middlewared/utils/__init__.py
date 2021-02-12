@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import re
+import signal
 import subprocess
 import threading
 from datetime import datetime, timedelta
@@ -45,8 +46,14 @@ async def run(*args, **kwargs):
     check = kwargs.pop('check', True)
     encoding = kwargs.pop('encoding', None)
     errors = kwargs.pop('errors', None) or 'strict'
+    abort_signal = kwargs.pop('abort_signal', signal.SIGKILL)
     proc = await asyncio.create_subprocess_exec(*args, **kwargs)
-    stdout, stderr = await proc.communicate()
+    try:
+        stdout, stderr = await proc.communicate()
+    except asyncio.CancelledError:
+        if abort_signal is not None:
+            proc.send_signal(abort_signal)
+        raise
     if encoding:
         if stdout is not None:
             stdout = stdout.decode(encoding, errors)

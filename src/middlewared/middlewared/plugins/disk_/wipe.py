@@ -60,6 +60,7 @@ class DiskService(Service):
     @job(
         lock=lambda args: args[0],
         description=lambda dev, mode, *args: f'{mode.replace("_", " ").title()} wipe of disk {dev}',
+        abortable=True,
     )
     async def wipe(self, job, dev, mode, sync, options):
         """
@@ -93,27 +94,31 @@ class DiskService(Service):
                 'bs=1M',
             ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
-            async def dd_wait():
+            try:
+                async def dd_wait():
+                    while True:
+                        if proc.returncode is not None:
+                            break
+                        os.kill(proc.pid, signal.SIGUSR1 if osc.IS_LINUX else signal.SIGINFO)
+                        await asyncio.sleep(1)
+
+                asyncio.ensure_future(dd_wait())
+
                 while True:
-                    if proc.returncode is not None:
+                    line = await proc.stderr.readline()
+                    if line == b'':
                         break
-                    os.kill(proc.pid, signal.SIGUSR1 if osc.IS_LINUX else signal.SIGINFO)
-                    await asyncio.sleep(1)
-
-            asyncio.ensure_future(dd_wait())
-
-            while True:
-                line = await proc.stderr.readline()
-                if line == b'':
-                    break
-                line = line.decode()
-                reg = RE_DD.search(line)
-                if reg:
-                    speed = float(reg.group(2)) if osc.IS_LINUX else int(reg.group(2))
-                    if osc.IS_LINUX:
-                        mapping = {'gb': 1024 * 1024 * 1024, 'mb': 1024 * 1024, 'kb': 1024, 'b': 1}
-                        speed = int(speed * mapping[reg.group(3).lower()])
-                    job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': speed})
+                    line = line.decode()
+                    reg = RE_DD.search(line)
+                    if reg:
+                        speed = float(reg.group(2)) if osc.IS_LINUX else int(reg.group(2))
+                        if osc.IS_LINUX:
+                            mapping = {'gb': 1024 * 1024 * 1024, 'mb': 1024 * 1024, 'kb': 1024, 'b': 1}
+                            speed = int(speed * mapping[reg.group(3).lower()])
+                        job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': speed})
+            except asyncio.CancelledError:
+                proc.kill()
+                raise
 
         if sync:
             await self.middleware.call('disk.sync', dev)
