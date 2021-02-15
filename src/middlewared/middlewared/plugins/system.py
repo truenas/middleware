@@ -1801,4 +1801,7 @@ async def setup(middleware):
     os.makedirs(CRASH_DIR, exist_ok=True)
     os.chmod(CRASH_DIR, 0o775)
 
+    if osc.IS_LINUX:
+        await middleware.call('sysctl.set_zvol_volmode', 2)
+
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
