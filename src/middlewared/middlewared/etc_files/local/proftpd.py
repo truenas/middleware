@@ -14,7 +14,7 @@ def setup(middleware):
     open("/etc/hosts.deny", "w+").close()
 
     if osc.IS_LINUX:
-        filters = [["builtin", "=", True]]
+        filters = [["builtin", "=", True], ["username", "!=", "ftp"]]
         if ftp["rootlogin"]:
             filters.append(["username", "!=", "root"])
 
