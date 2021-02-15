@@ -882,7 +882,7 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to delete dataset', exc_info=True)
             error = e.stderr.strip()
             errno_ = errno.EFAULT
-            if "Device busy" in error:
+            if "Device busy" in error or "dataset is busy" in error:
                 errno_ = errno.EBUSY
             raise CallError(f'Failed to delete dataset: {error}', errno_)
 
