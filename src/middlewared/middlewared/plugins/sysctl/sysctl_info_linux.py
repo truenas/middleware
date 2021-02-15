@@ -59,3 +59,6 @@ class SysctlService(Service, SysctlInfoBase):
 
     def set_arc_max(self, value):
         return self.write_to_file(os.path.join(ZFS_MODULE_PARAMS_PATH, 'zfs_arc_max'), value)
+
+    def set_zvol_volmode(self, value):
+        return self.write_to_file(os.path.join(ZFS_MODULE_PARAMS_PATH, 'zvol_volmode'), value)
