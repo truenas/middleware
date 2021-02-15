@@ -114,6 +114,12 @@ zfs_func()
 	zpool status | ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_pool.nawk | tee /tmp/pool.normal
 	section_footer
 
+	for pool in $(zpool list -Ho name | grep -v -e "$(midclt call boot.pool_name)"); do
+		section_header "${pool} Pool Encryption Summary"
+		midclt call -job -jp description pool.dataset.encryption_summary "${pool}" | jq .
+		section_footer
+	done
+
 	section_header  "pool joined to storage"
 	cat  /tmp/pool.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
 	section_footer
