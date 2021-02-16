@@ -4,9 +4,14 @@ import socket
 from pathlib import Path
 
 from middlewared.validators import IpAddress
+from middlewared.utils import osc
 
 
 async def check_path_resides_within_volume(verrors, middleware, name, path, gluster_bypass=False):
+
+    # when a sharing service is using gluster, the path checks below do not apply
+    if gluster_bypass:
+        return
 
     # we need to make sure the sharing service is configured within the zpool
     rp = os.path.realpath(path)
@@ -17,7 +22,7 @@ async def check_path_resides_within_volume(verrors, middleware, name, path, glus
     ):
         verrors.add(name, "The path must reside within a pool mount point")
 
-    if not gluster_bypass:
+    if osc.IS_LINUX:
         # we must also make sure that any sharing service does not point to
         # anywhere within the ".glusterfs" dataset since the clients need
         # to go through the appropriate gluster client to write to the cluster.
