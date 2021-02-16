@@ -12,7 +12,7 @@ class DNSAuthenticatorService(Service):
     @private
     def cloudflare_txt_record_update(self, domain, challenge, key, cloudflare_email, api_key):
         cf = CloudFlare(cloudflare_email, api_key)
-        zone_id = self.find_cloudflare_zone_id(domain)
+        zone_id = self.find_cloudflare_zone_id(cf, domain)
         record_name = challenge.validation_domain_name(domain)
         record_content = f'"{challenge.validation(key)}"'
         data = {'type': 'TXT', 'name': record_name, 'content': record_content, 'ttl': 3600}
