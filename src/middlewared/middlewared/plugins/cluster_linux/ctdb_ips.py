@@ -44,6 +44,12 @@ class CtdbIpService(Service):
                     f'{schema_name}.{data["ip"]}',
                     f'"{data["ip"]}" is already added as a private IP address.'
                 )
+            elif schema_name == 'public_create':
+                if data['interface'] not in [i['id'] for i in await self.middleware.call('interface.query')]:
+                    verrors.add(
+                        f'{schema_name}.{data["interface"]}',
+                        f'"{data["interface"]}" not found on this system.',
+                    )
         else:
             address = data.get('address') or data['public_ip']
 
