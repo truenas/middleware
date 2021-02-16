@@ -1,7 +1,7 @@
 # $FreeBSD$
 
 PORTNAME=	firmware
-PORTVERSION=	201909261555
+PORTVERSION=	202102162100
 CATEGORIES=	freenas
 VALID_CATEGORIES+=	freenas
 
@@ -16,11 +16,11 @@ NO_BUILD=	yes
 .include <bsd.port.pre.mk>
 
 do-install:
-	${MKDIR} ${STAGEDIR}${PREFIX}/lib/firmware
-	cd ${WRKSRC} && ${COPYTREE_SHARE} . ${STAGEDIR}${PREFIX}/lib/firmware/
-	(cd ${STAGEDIR}${PREFIX}/lib/firmware; ${FIND} . -type f \
+	${MKDIR} ${STAGEDIR}${PREFIX}/share/firmware
+	cd ${WRKSRC} && ${COPYTREE_SHARE} . ${STAGEDIR}${PREFIX}/share/firmware/
+	(cd ${STAGEDIR}${PREFIX}/share/firmware; ${FIND} . -type f \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
-		| ${AWK} '{print "lib/firmware/"$$2 }' >> ${TMPPLIST})
+		| ${AWK} '{print "share/firmware/"$$2 }' >> ${TMPPLIST})
 
 .include <bsd.port.post.mk>
