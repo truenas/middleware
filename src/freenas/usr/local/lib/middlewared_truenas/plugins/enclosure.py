@@ -576,6 +576,8 @@ class Enclosure(object):
                 self.controller = True
             else:
                 self.model = "E16"
+        elif self.encname.startswith("ECStream 3U16RJ-AC.r3"):
+            self.model = "E16"
         elif self.encname.startswith("HGST H4102-J"):
             self.model = "ES102"
         elif self.encname.startswith("CELESTIC R0904"):
