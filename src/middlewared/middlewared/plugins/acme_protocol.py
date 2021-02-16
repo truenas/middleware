@@ -397,7 +397,7 @@ class DNSAuthenticatorService(CRUDService):
     def update_txt_record(self, data):
         self.middleware.call_sync('network.general.will_perform_activity', 'acme')
 
-        authenticator = self.middleware.call_sync('acme.dns.authenticator._get_instance', data['authenticator'])
+        authenticator = self.middleware.call_sync('acme.dns.authenticator.get_instance', data['authenticator'])
 
         return self.__getattribute__(
             f'update_txt_record_{authenticator["authenticator"].lower()}'
