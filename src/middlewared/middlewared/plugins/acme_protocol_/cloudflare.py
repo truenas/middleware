@@ -18,7 +18,6 @@ class DNSAuthenticatorService(Service):
         data = {'type': 'TXT', 'name': record_name, 'content': record_content, 'ttl': 3600}
 
         try:
-            self.middleware.logger.debug('Attempting to add record to zone %s: %s', zone_id, data)
             cf.zones.dns_records.post(zone_id, data=data)
         except CloudFlareAPIError as e:
             code = int(e)
@@ -27,7 +26,7 @@ class DNSAuthenticatorService(Service):
             if code == 1009:
                 hint = 'Does your API token have "Zone:DNS:Edit" permissions?'
 
-            self.middleware.logger.error('Encountered CloudFlareAPIError adding TXT record: %d %s', e, e)
+            self.middleware.logger.error('Encountered CloudFlareAPIError adding TXT record: %d %s', code, e)
             raise CallError(
                 f'Error communicating with the Cloudflare API: {e}{f"({hint})" if hint else ""}'
             )
@@ -74,7 +73,6 @@ class DNSAuthenticatorService(Service):
 
             if zones:
                 zone_id = zones[0]['id']
-                self.middleware.logger.debug('Found zone_id of %s for %s using name %s', zone_id, domain, zone_name)
                 return zone_id
 
         common_msg = f'Unable to determine zone_id for {domain} using zone names: {zone_name_guesses}'
