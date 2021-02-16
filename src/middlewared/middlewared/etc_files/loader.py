@@ -64,13 +64,18 @@ def list_efi_consoles():
 
 def generate_serial_loader_config(middleware):
     advanced = middleware.call_sync("system.advanced.config")
+    mseries = middleware.call_sync("failover.hardware") == "ECHOWARP"
+
     if advanced["serialconsole"]:
         if sysctl.filter("machdep.bootmethod")[0].value == "UEFI":
             # The efi console driver can do both video and serial output.
             # Don't enable it if it has a serial output, otherwise we may
             # output twice to the same serial port in loader.
+            # However, enabling serial output on UEFI booted m-series devices
+            # causes the boot loader screen to not show on the iKVM/HTML5 IPMI
+            # website.
             consoles = list_efi_consoles()
-            if any(path.find('Serial') != -1 for path in consoles):
+            if any(path.find('Serial') != -1 for path in consoles) and not mseries:
                 # Firmware gave efi a serial port.
                 # Use only comconsole to avoid duplicating output.
                 console = "comconsole"

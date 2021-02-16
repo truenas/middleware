@@ -392,6 +392,11 @@ videoconsole()
     fi
 }
 
+mseries()
+{
+    dmidecode -s system-product-name | grep -iv "MINI" | grep -iq "TRUENAS-M"
+}
+
 save_serial_settings()
 {
     local mnt="$1"
@@ -415,7 +420,10 @@ save_serial_settings()
 	local console="comconsole"
 	;;
     $SER_VID_BOTH)
-	if [ "$(kenv console)" = "comconsole" ]; then
+	# we skip setting only comconsole on UEFI booted mseries devices
+	# since doing so prevents the bsd boot loader screen from showing
+	# on the iKVM/HTML5 IPMI website.
+	if [ "$(kenv console)" = "comconsole" ] && ! mseries; then
 	    # We used the serial boot menu entry and efi has a serial port.
 	    # Enable only comconsole so loader output is not duplicated.
 	    local console="comconsole"
