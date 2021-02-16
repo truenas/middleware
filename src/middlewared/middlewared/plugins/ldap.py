@@ -505,6 +505,13 @@ class LDAPService(ConfigService):
         if not new["enable"]:
             return
 
+        ad_enabled = (await self.middleware.call("activedirectory.config"))['enable']
+        if ad_enabled:
+            verrors.add(
+                "ldap_update.enable",
+                "LDAP service may not be enabled while Active Directory service is enabled."
+            )
+
         if new["certificate"]:
             verrors.extend(await self.middleware.call(
                 "certificate.cert_services_validation",

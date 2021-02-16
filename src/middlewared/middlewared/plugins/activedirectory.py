@@ -365,6 +365,12 @@ class ActiveDirectoryService(ConfigService):
         if not new["enable"]:
             return
 
+        ldap_enabled = (await self.middleware.call("ldap.config"))['enable']
+        if ldap_enabled:
+            verrors.add(
+                "activedirectory_update.enable",
+                "Active Directory service may not be enabled while LDAP service is enabled."
+            )
         if not new["bindpw"] and not new["kerberos_principal"]:
             verrors.add(
                 "activedirectory_update.bindname",
