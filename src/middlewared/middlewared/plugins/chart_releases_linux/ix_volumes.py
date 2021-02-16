@@ -22,7 +22,9 @@ class ChartReleaseService(Service):
 
         for create_ds in set(user_wants) - existing_datasets:
             await self.middleware.call(
-                'zfs.dataset.create', {**user_wants[create_ds]['properties'], 'name': create_ds, 'type': 'FILESYSTEM'}
+                'zfs.dataset.create', {
+                    'properties': user_wants[create_ds]['properties'], 'name': create_ds, 'type': 'FILESYSTEM'
+                }
             )
             await self.middleware.call('zfs.dataset.mount', create_ds)
 
