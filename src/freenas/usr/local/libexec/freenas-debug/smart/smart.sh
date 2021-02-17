@@ -92,10 +92,28 @@ smart_func()
 		disks=$(sysctl -n kern.disks)
 	fi
 
+	# SAS to SATA interposers could be involed. Unfortunately,
+	# there is no "easy" way of identifying that there is
+	# one involved without doing some extravagant reading of
+	# specific VPD pages from the device itself. Even doing
+	# that is fraught with errors because the interposer could
+	# not trnalsate those pages appropriately.
+	# So, instead, we'll try to tell smartctl to do the translation
+	# and if it fails (which it will on proper SAS devices) then
+	# we'll try to run it without translation
 	for i in $disks
 	do
     		echo /dev/$i >> /tmp/smart.out
-		smartctl -a /dev/$i >> /tmp/smart.out
+		# try with translation first
+		output=$(smartctl -a -d sat /dev/$i)
+		if [ $? -ne 0 ]; then
+			# oops try without translation
+			output=$(smartctl -a /dev/$i)
+		fi
+		# double-quotes are important here to
+		# maintain original formatting
+		echo "$output" >> /tmp/smart.out
+		echo "" >> /tmp/smart.out
 	done
 	cat /tmp/smart.out
 	${FREENAS_DEBUG_MODULEDIR}/smart/smart.nawk < /tmp/smart.out
