@@ -16,6 +16,20 @@ class EventSourceManager:
         self.idents = {}
         self.subscriptions = defaultdict(lambda: defaultdict(set))
 
+    def short_name_arg(self, name):
+        if ':' in name:
+            shortname, arg = name.split(':', 1)
+        else:
+            shortname = name
+            arg = None
+        return shortname, arg
+
+    def get_full_name(self, name, arg):
+        if arg is None:
+            return name
+        else:
+            return f'{name}:{arg}'
+
     def register(self, name, event_source):
         if not issubclass(event_source, EventSource):
             raise RuntimeError(f"{event_source} is not EventSource subclass")
@@ -64,7 +78,7 @@ class EventSourceManager:
                 self.middleware.logger.trace("Ident %r is gone", ident)
                 continue
 
-            ident_data.app.send_event(ident_data.name, event_type, **kwargs)
+            ident_data.app.send_event(self.get_full_name(name, arg), event_type, **kwargs)
 
     async def _unsubscribe_all(self, name, arg):
         for ident in self.subscriptions[name][arg]:

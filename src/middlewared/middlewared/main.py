@@ -192,12 +192,7 @@ class Application(object):
                 )
 
     async def subscribe(self, ident, name):
-        if ':' in name:
-            shortname, arg = name.split(':', 1)
-        else:
-            shortname = name
-            arg = None
-
+        shortname, arg = self.middleware.event_source_manager.short_name_arg(name)
         if shortname in self.middleware.event_source_manager.event_sources:
             await self.middleware.event_source_manager.subscribe(self, self.__esm_ident(ident), shortname, arg)
         else:
@@ -220,7 +215,9 @@ class Application(object):
     def send_event(self, name, event_type, **kwargs):
         if (
             not any(i == name or i == '*' for i in self.__subscribed.values()) and
-            name not in self.middleware.event_source_manager.event_sources
+            self.middleware.event_source_manager.short_name_arg(
+                name
+            )[0] not in self.middleware.event_source_manager.event_sources
         ):
             return
         event = {
