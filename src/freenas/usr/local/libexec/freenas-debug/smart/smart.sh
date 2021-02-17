@@ -103,15 +103,17 @@ smart_func()
 	# we'll try to run it without translation
 	for i in $disks
 	do
-    		echo /dev/$i >> /tmp/smart.out
 		# try with translation first
 		output=$(smartctl -a -d sat /dev/$i)
+		msg="(USING TRANSLATION)"
 		if [ $? -ne 0 ]; then
 			# oops try without translation
 			output=$(smartctl -a /dev/$i)
+			msg="(NOT USING TRANSLATION)"
 		fi
 		# double-quotes are important here to
 		# maintain original formatting
+		echo "/dev/$i msg" >> /tmp/smart.out
 		echo "$output" >> /tmp/smart.out
 		echo "" >> /tmp/smart.out
 	done
