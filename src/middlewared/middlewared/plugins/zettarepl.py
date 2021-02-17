@@ -386,14 +386,14 @@ class ZettareplService(Service):
             )
             text = (
                 f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
-                f"{message.dataset}@{message.snapshot} ({humanfriendly.format_size(message.bytes_sent)} / "
-                f"{humanfriendly.format_size(message.bytes_total)})"
+                f"{message.dataset}@{message.snapshot} ({humanfriendly.format_size(message.bytes_sent, binary=True)} / "
+                f"{humanfriendly.format_size(message.bytes_total, binary=True)})"
             )
 
         if data_progress_message is not None:
             text += (
-                f" [total {humanfriendly.format_size(data_progress_message.dst_size)} of "
-                f"{humanfriendly.format_size(data_progress_message.src_size)}]"
+                f" [total {humanfriendly.format_size(data_progress_message.dst_size, binary=True)} of "
+                f"{humanfriendly.format_size(data_progress_message.src_size, binary=True)}]"
             )
 
         job.set_progress(progress, text)
