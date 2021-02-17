@@ -19,9 +19,25 @@ class InterfaceService(Service, InterfaceCapabilitiesBase):
         return list(nics)
 
     def enable_capabilities(self, iface, capabilities):
-        enabled = []
         iface = netif.get_interface(iface)
-        for capability in map(lambda c: getattr(netif.InterfaceCapability, c), capabilities):
+        capabilities = {getattr(netif.InterfaceCapability, c) for c in capabilities}
+        try:
+            iface.capabilities = capabilities
+        except OSError:
+            self.logger.error(
+                'Failed to set %r capabilities for %r at once, going to set them individually.',
+                ', '.join(c.name for c in capabilities), iface.name, exc_info=True
+            )
+            enabled = self.enable_capabilities_individually(iface, capabilities)
+        else:
+            enabled = [c.name for c in capabilities]
+
+        if enabled:
+            self.middleware.logger.debug(f'Enabled {",".join(enabled)} capabilities for {iface}')
+
+    def enable_capabilities_individually(self, iface, capabilities):
+        enabled = []
+        for capability in capabilities:
             current = iface.capabilities
             if capability in current:
                 continue
@@ -31,8 +47,7 @@ class InterfaceService(Service, InterfaceCapabilitiesBase):
                 pass
             else:
                 enabled.append(capability.name)
-        if enabled:
-            self.middleware.logger.debug(f'Enabled {",".join(enabled)} capabilities for {iface}')
+        return enabled
 
     def disable_capabilities(self, iface, capabilities):
         self.middleware.call_sync('interface.get_instance', iface)
