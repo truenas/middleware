@@ -16,6 +16,9 @@ class CoreFilesArePresentAlertClass(AlertClass):
 class CoreFilesArePresentAlertSource(ThreadedAlertSource):
     def check_sync(self):
         cores = "/var/db/system/cores"
+        if self.middleware.call_sync("system.is_enterprise"):
+            return
+
         try:
             listdir = os.listdir(cores)
         except Exception:
