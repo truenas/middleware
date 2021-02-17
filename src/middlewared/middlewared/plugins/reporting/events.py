@@ -211,8 +211,6 @@ class RealtimeEventSource(EventSource):
                     'time': time.monotonic(),
                     'speeds': self.get_interface_speeds(),
                 })
-            data['interfaces'] = defaultdict(dict)
-            retrieve_stat = {'rx_bytes': 'received_bytes', 'tx_bytes': 'sent_bytes'}
             if osc.IS_FREEBSD:
                 # Interface related statistics
                 data['interfaces'] = {}
