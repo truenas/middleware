@@ -9,7 +9,7 @@ from middlewared.schema import accepts
 from middlewared.service import Service, private
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.service_exception import CallError
-from middlewared.utils import run
+from middlewared.utils import run, osc
 from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
 
 
@@ -150,6 +150,9 @@ class DirectoryServices(Service):
         except KeyError:
             ds_state = {}
             for srv in DSType:
+                if srv is DSType.NIS and osc.IS_LINUX:
+                    continue
+
                 try:
                     res = await self.middleware.call(f'{srv.value}.started')
                     ds_state[srv.value] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name
@@ -164,8 +167,10 @@ class DirectoryServices(Service):
         ds_state = {
             'activedirectory': DSStatus.DISABLED.name,
             'ldap': DSStatus.DISABLED.name,
-            'nis': DSStatus.DISABLED.name
         }
+        if osc.IS_FREEBSD:
+            ds_state.update({'nis': DSStatus.DISABLED.name})
+
         try:
             old_state = await self.middleware.call('cache.get', 'DS_STATE')
             ds_state.update(old_state)
@@ -179,10 +184,6 @@ class DirectoryServices(Service):
     @accepts()
     async def cache_refresh(self):
         return await self.middleware.call('dscache.refresh')
-
-    @private
-    async def dstype_choices(self):
-        return [x.value.upper() for x in list(DSType)]
 
     @private
     async def ssl_choices(self, dstype):

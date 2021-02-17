@@ -1,6 +1,6 @@
 from middlewared.schema import Any, Str, accepts, Int
 from middlewared.service import Service, private
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, osc
 
 from collections import namedtuple
 import time
@@ -135,7 +135,11 @@ class DSCache(Service):
         }
 
     def initialize(self):
-        for ds in [('activedirectory', 'AD'), ('ldap', 'LDAP'), ('nis', 'NIS')]:
+        dstypes = [('activedirectory', 'AD'), ('ldap', 'LDAP')]
+        if osc.IS_FREEBSD:
+            dstypes.append(('nis', 'NIS'))
+
+        for ds in dstypes:
             if (self.middleware.call_sync(f'{ds[0]}.config'))['enable']:
                 try:
                     with open(f'/var/db/system/.{ds[1]}_cache_backup', 'rb') as f:
@@ -145,7 +149,11 @@ class DSCache(Service):
                     self.logger.debug('User cache file for [%s] is not present.', ds[0])
 
     def backup(self):
-        for ds in [('activedirectory', 'AD'), ('ldap', 'LDAP'), ('nis', 'NIS')]:
+        dstypes = [('activedirectory', 'AD'), ('ldap', 'LDAP')]
+        if osc.IS_FREEBSD:
+            dstypes.append(('nis', 'NIS'))
+
+        for ds in dstypes:
             if (self.middleware.call_sync(f'{ds[0]}.config'))['enable']:
                 try:
                     ds_cache = self.middleware.call_sync('cache.get', f'{ds[1]}_cache')

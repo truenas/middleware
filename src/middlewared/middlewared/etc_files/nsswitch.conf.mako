@@ -12,7 +12,7 @@
 
         ad_enabled = safe_call('activedirectory.config')['enable']
         ldap_enabled = safe_call('ldap.config')['enable']
-        nis_enabled = safe_call('nis.config')['enable']
+        nis_enabled = IS_FREEBSD and safe_call('nis.config')['enable']
 
         group = ['files']
         hosts = ['files', 'dns']
