@@ -341,15 +341,16 @@ def reconfigure_logging(handler_name='file'):
     if handler:
         stream = handler.stream
         handler.stream = handler._open()
-        # We want to reassign stdout/stderr if its not the default one or closed
-        # which will happen on log file rotation.
-        try:
-            if sys.stdout.fileno() != 1 or sys.stderr.fileno() != 2:
-                raise ValueError()
-        except ValueError:
-            # ValueError can be raise if file handler is closed
-            sys.stdout = handler.stream
-            sys.stderr = handler.stream
+        if handler_name == 'file':
+            # We want to reassign stdout/stderr if its not the default one or closed
+            # which will happen on log file rotation.
+            try:
+                if sys.stdout.fileno() != 1 or sys.stderr.fileno() != 2:
+                    raise ValueError()
+            except ValueError:
+                # ValueError can be raise if file handler is closed
+                sys.stdout = handler.stream
+                sys.stderr = handler.stream
         try:
             stream.close()
         except Exception:
