@@ -12,6 +12,7 @@ class CPUPlugin(RRDBase):
     plugin = 'aggregation-cpu-sum'
     title = 'CPU Usage'
     vertical_label = '%CPU'
+    stacked = True
 
     def get_defs(self, identifier):
         if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
@@ -28,16 +29,11 @@ class CPUPlugin(RRDBase):
                 f'DEF:user={cpu_user}:value:AVERAGE',
                 f'DEF:system={cpu_system}:value:AVERAGE',
                 f'DEF:interrupt={cpu_interrupt}:value:AVERAGE',
-                'CDEF:cinterrupt=interrupt,UN,0,interrupt,IF',
-                'CDEF:csystem=system,UN,0,system,IF,cinterrupt,+',
-                'CDEF:cuser=user,UN,0,user,IF,csystem,+',
-                'CDEF:cnice=nice,UN,0,nice,IF,cuser,+',
-                'CDEF:cidle=idle,UN,0,idle,IF,cnice,+',
-                'XPORT:cinterrupt:interrupt',
-                'XPORT:csystem:system',
-                'XPORT:cuser:user',
-                'XPORT:cnice:nice',
-                'XPORT:cidle:idle',
+                'XPORT:interrupt:interrupt',
+                'XPORT:system:system',
+                'XPORT:user:user',
+                'XPORT:nice:nice',
+                'XPORT:idle:idle',
             ]
 
             return args
@@ -61,16 +57,11 @@ class CPUPlugin(RRDBase):
                 'CDEF:user_p=user,total,/,100,*',
                 'CDEF:system_p=system,total,/,100,*',
                 'CDEF:interrupt_p=interrupt,total,/,100,*',
-                'CDEF:cinterrupt=interrupt_p,UN,0,interrupt_p,IF',
-                'CDEF:csystem=system_p,UN,0,system_p,IF,cinterrupt,+',
-                'CDEF:cuser=user_p,UN,0,user_p,IF,csystem,+',
-                'CDEF:cnice=nice_p,UN,0,nice_p,IF,cuser,+',
-                'CDEF:cidle=idle_p,UN,0,idle_p,IF,cnice,+',
-                'XPORT:cinterrupt:interrupt',
-                'XPORT:csystem:system',
-                'XPORT:cuser:user',
-                'XPORT:cnice:nice',
-                'XPORT:cidle:idle',
+                'XPORT:interrupt_p:interrupt',
+                'XPORT:system_p:system',
+                'XPORT:user_p:user',
+                'XPORT:nice_p:nice',
+                'XPORT:idle_p:idle',
             ]
 
             return args
@@ -130,18 +121,19 @@ class MemoryPlugin(RRDBase):
     vertical_label = 'Bytes'
     if osc.IS_FREEBSD:
         rrd_types = (
-            ('memory-wired', 'value', '%name%,UN,0,%name%,IF'),
-            ('memory-inactive', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
-            ('memory-laundry', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
-            ('memory-active', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
-            ('memory-free', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
+            ('memory-wired', 'value', None),
+            ('memory-inactive', 'value', None),
+            ('memory-laundry', 'value', None),
+            ('memory-active', 'value', None),
+            ('memory-free', 'value', None),
         )
+        stacked = True
     else:
         rrd_types = (
-            ('memory-used', 'value', '%name%,UN,0,%name%,IF'),
-            ('memory-free', 'value', '%name%,UN,0,%name%,IF'),
-            ('memory-cached', 'value', '%name%,UN,0,%name%,IF'),
-            ('memory-buffered', 'value', '%name%,UN,0,%name%,IF'),
+            ('memory-used', 'value', None),
+            ('memory-free', 'value', None),
+            ('memory-cached', 'value', None),
+            ('memory-buffered', 'value', None),
         )
 
 
@@ -162,22 +154,23 @@ class ProcessesPlugin(RRDBase):
     vertical_label = 'Processes'
     if osc.IS_FREEBSD:
         rrd_types = (
-            ('ps_state-wait', 'value', '%name%,UN,0,%name%,IF'),
-            ('ps_state-idle', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
-            ('ps_state-sleeping', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
-            ('ps_state-running', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
-            ('ps_state-stopped', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
-            ('ps_state-zombies', 'value', '%name%,UN,0,%name%,IF,%name_4%,+'),
-            ('ps_state-blocked', 'value', '%name%,UN,0,%name%,IF,%name_5%,+'),
+            ('ps_state-wait', 'value', None),
+            ('ps_state-idle', 'value', None),
+            ('ps_state-sleeping', 'value', None),
+            ('ps_state-running', 'value', None),
+            ('ps_state-stopped', 'value', None),
+            ('ps_state-zombies', 'value', None),
+            ('ps_state-blocked', 'value', None),
         )
     else:
         rrd_types = (
-            ('ps_state-sleeping', 'value', '%name%,UN,0,%name%,IF'),
-            ('ps_state-running', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
-            ('ps_state-stopped', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
-            ('ps_state-zombies', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
-            ('ps_state-blocked', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
+            ('ps_state-sleeping', 'value', None),
+            ('ps_state-running', 'value', None),
+            ('ps_state-stopped', 'value', None),
+            ('ps_state-zombies', 'value', None),
+            ('ps_state-blocked', 'value', None),
         )
+    stacked = True
 
 
 class SwapPlugin(RRDBase):
@@ -185,9 +178,10 @@ class SwapPlugin(RRDBase):
     title = 'Swap Utilization'
     vertical_label = 'Bytes'
     rrd_types = (
-        ('swap-used', 'value', '%name%,UN,0,%name%,IF'),
-        ('swap-free', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
+        ('swap-used', 'value', None),
+        ('swap-free', 'value', None),
     )
+    stacked = True
 
 
 class DFPlugin(RRDBase):
@@ -197,10 +191,8 @@ class DFPlugin(RRDBase):
         ('df_complex-free', 'value', None),
         ('df_complex-used', 'value', None),
     )
-    rrd_data_extra = """
-        CDEF:both=%name_0%,%name_1%,+
-        XPORT:both:both
-    """
+    stacked = True
+    stacked_show_total = True
 
     def get_title(self):
         return 'Disk space ({identifier})'
@@ -289,10 +281,8 @@ class ARCResultPlugin(RRDBase):
     identifier_plugin = False
     plugin = 'zfs_arc'
     vertical_label = 'Requests'
-    rrd_data_extra = """
-        CDEF:total=%name_0%,%name_1%,+
-        XPORT:total:total
-    """
+    stacked = True
+    stacked_show_total = True
 
     def get_rrd_types(self, identifier):
         return (
