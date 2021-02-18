@@ -12,7 +12,7 @@ syncmultipaths()
 {
 	echo "Syncing multipaths..."
 	/usr/local/bin/midclt call disk.multipath_sync > /dev/null
-	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
+	if [ "$(/usr/local/bin/midclt call system.is_enterprise)" = "True" ]; then
 		checkyesno failover_enable || /usr/local/bin/midclt call enclosure.sync_zpool > /dev/null
 	fi
 }

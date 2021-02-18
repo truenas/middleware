@@ -476,8 +476,7 @@ class DNSAuthenticatorService(CRUDService):
                             }
                         }
                     ],
-                    'Comment': f'{"Free" if self.middleware.call_sync("system.is_freenas") else "True"}'
-                               'NAS-dns-route53 certificate validation'
+                    'Comment': 'TrueNAS-dns-route53 certificate validation'
                 }
             )
         except boto_BaseClientException as e:

@@ -150,14 +150,14 @@ class PluginService(CRUDService):
         """
         List officially supported plugin repositories.
         """
-        is_fn = await self.middleware.call('system.is_freenas')
+        is_ent = await self.middleware.call('system.is_enterprise')
         repos = {
             'IXSYSTEMS': {
                 'name': 'iXsystems',
-                'git_repository': f'https://github.com/{"freenas" if is_fn else "truenas"}/iocage-ix-plugins.git'
+                'git_repository': f'https://github.com/{"freenas" if not is_ent else "truenas"}/iocage-ix-plugins.git'
             }
         }
-        if is_fn:
+        if not is_ent:
             repos.update({
                 'COMMUNITY': {
                     'name': 'Community',
@@ -1250,7 +1250,7 @@ class JailService(CRUDService):
 
     @private
     def failover_checks(self, jail_config, verrors, schema):
-        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
+        if self.middleware.call_sync('system.is_enterprise') and self.middleware.call_sync('failover.licensed'):
             jail_config = {
                 k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
             }
@@ -1673,10 +1673,10 @@ async def __event_system(middleware, event_type, args):
     # We need to call a method in Jail service to make sure it runs in the
     # process pool because of py-libzfs thread safety issue with iocage and middlewared
     if args['id'] == 'ready' and await middleware.call('jail.iocage_set_up'):
-        if not await middleware.call('system.is_freenas'):
+        if await middleware.call('system.is_enterprise'):
             await middleware.call('jail.check_dataset_existence')
             await middleware.call('jail.update_defaults', {'nat_backend': 'ipfw'})
-            # We start Jail/VM(s) during carp state change hook
+            # We start Jail/VM(s) during failover event
             if await middleware.call('failover.licensed'):
                 return
         try:

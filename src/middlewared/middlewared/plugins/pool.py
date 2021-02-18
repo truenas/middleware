@@ -1517,13 +1517,10 @@ class PoolService(CRUDService):
         pool = await self.get_instance(oid)
 
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
-        is_freenas = await self.middleware.call('system.is_freenas')
-        if (
-            pool_count == 1 and not is_freenas and
-            await self.middleware.call('failover.licensed') and
-            not (await self.middleware.call('failover.config'))['disabled']
-        ):
-            raise CallError('Disable failover before exporting last pool on system.')
+        is_enterprise = await self.middleware.call('system.is_enterprise')
+        if pool_count == 1 and is_enterprise and await self.middleware.call('failover.licensed'):
+            if not (await self.middleware.call('failover.config'))['disabled']:
+                raise CallError('Disable failover before exporting last pool on system.')
 
         enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
         enable_on_import = {}
@@ -1690,11 +1687,9 @@ class PoolService(CRUDService):
         if not os.path.exists(cachedir):
             os.mkdir(cachedir)
 
-        if (
-            not self.middleware.call_sync('system.is_freenas') and
-            self.middleware.call_sync('failover.licensed')
-        ):
-            return
+        if self.middleware.call_sync('system.is_enterprise'):
+            if self.middleware.call_sync('failover.licensed'):
+                return
 
         zpool_cache_saved = f'{ZPOOL_CACHE_FILE}.saved'
         if os.path.exists(ZPOOL_KILLCACHE):
@@ -4147,7 +4142,7 @@ class PoolScrubService(CRUDService):
         if name == await self.middleware.call('boot.pool_name'):
             pool = await self.middleware.call('zfs.pool.query', [['name', '=', name]], {'get': True})
         else:
-            if not await self.middleware.call('system.is_freenas'):
+            if await self.middleware.call('system.is_enterprise'):
                 if await self.middleware.call('failover.status') == 'BACKUP':
                     return
 

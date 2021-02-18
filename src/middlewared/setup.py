@@ -36,7 +36,7 @@ class InstallWithBabel(install):
 
 setup(
     name='middlewared',
-    description='FreeNAS Middleware Daemon',
+    description='TrueNAS Middleware Daemon',
     packages=find_packages(),
     package_data={
         'middlewared.apidocs': [

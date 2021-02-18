@@ -170,7 +170,7 @@ class NFSService(SystemServiceService):
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
         new_v4_krb_enabled = new["v4_krb"] or keytab_has_nfs
 
-        if new["v4"] and new_v4_krb_enabled and not await self.middleware.call("system.is_freenas"):
+        if new["v4"] and new_v4_krb_enabled and await self.middleware.call("system.is_enterprise"):
             if await self.middleware.call("failover.licensed"):
                 gc = await self.middleware.call("datastore.config", "network.globalconfiguration")
                 if not gc["gc_hostname_virtual"] or not gc["gc_domain"]:

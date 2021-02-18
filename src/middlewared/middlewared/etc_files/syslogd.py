@@ -88,7 +88,7 @@ def generate_syslog_conf(middleware):
 
 
 def generate_ha_syslog(middleware):
-    if middleware.call_sync("system.is_freenas"):
+    if not middleware.call_sync("system.is_enterprise"):
         return
 
     if not middleware.call_sync("failover.licensed"):
@@ -197,7 +197,7 @@ def use_syslog_dataset(middleware):
         except KeyError:
             pass
 
-        if middleware.call_sync("system.is_freenas"):
+        if not middleware.call_sync("system.is_enterprise"):
             return True
         else:
             return middleware.call_sync("failover.status") != "BACKUP"
