@@ -354,7 +354,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                         continue
 
                     disk_name = zvol['attributes']['path'].rsplit('/dev/zvol/')[-1]
-                    await self.middleware.call('zfs.dataset.delete', disk_name)
+                    await self.middleware.call('zfs.dataset.delete', disk_name, {'recursive': True})
 
             await self.middleware.run_in_thread(self._undefine_domain, vm['name'])
 
