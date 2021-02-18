@@ -714,7 +714,7 @@ class ActiveDirectoryService(ConfigService):
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'])
             await self.middleware.call('admonitor.start')
-            await self.middleware.call('activedirectory.get_cache')
+            await self.middleware.call('service.start', 'dscache')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
 
@@ -744,6 +744,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'])
+        await self.middleware.call('service.stop', 'dscache')
         if (await self.middleware.call('smb.get_smb_ha_mode')) == "LEGACY" and (await self.middleware.call('failover.status')) == 'MASTER':
             try:
                 await self.middleware.call('failover.call_remote', 'activedirectory.stop')

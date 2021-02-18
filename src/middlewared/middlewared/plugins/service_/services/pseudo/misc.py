@@ -308,6 +308,24 @@ class TtysService(PseudoServiceBase):
         pass
 
 
+class DSCacheService(PseudoServiceBase):
+    name = "dscache"
+
+    async def start(self):
+        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
+        if not ad_enabled:
+            await systemd_unit("nscd", "restart")
+        else:
+            await systemd_unit("nscd", "stop")
+
+        await self.middleware.call('dscache.refresh')
+
+    async def stop(self):
+        await systemd_unit("nscd", "stop")
+        await self.middleware.call('idmap.clear_idmap_cache')
+        await self.middleware.call('dscache.refresh')
+
+
 class UserService(PseudoServiceBase):
     name = "user"
 

@@ -965,7 +965,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.set_passdb_backend', 'ldapsam')
 
         await self.set_state(DSStatus['HEALTHY'])
-        await self.middleware.call('ldap.fill_cache')
+        await self.middleware.call('service.start', 'dscache')
 
     @private
     async def stop(self):
@@ -983,6 +983,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.synchronize_group_mappings')
             await self.middleware.call('smb.set_passdb_backend', 'tdbsam')
         await self.middleware.call('cache.pop', 'LDAP_cache')
+        await self.middleware.call('service.stop', 'dscache')
         await self.nslcd_cmd('stop')
         await self.set_state(DSStatus['DISABLED'])
 
