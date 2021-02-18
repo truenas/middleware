@@ -1111,6 +1111,7 @@ class CoreService(Service):
         of the new location
         """
         reconfigure_logging()
+        reconfigure_logging('zettarepl_file')
         self.middleware.send_event('core.reconfigure_logging', 'CHANGED')
 
     @private
