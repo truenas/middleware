@@ -15,7 +15,7 @@ class SmartdAlertSource(ThreadedAlertSource):
             if self.middleware.call_sync("system.vm"):
                 return
 
-            if not self.middleware.call_sync("system.is_freenas"):
+            if self.middleware.call_sync("system.is_enterprise"):
                 if self.middleware.call_sync("failover.status") != "MASTER":
                     return
 

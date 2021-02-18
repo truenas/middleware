@@ -157,8 +157,8 @@ system_func()
 		section_footer
 	fi
 
-	ret1=$(midclt call system.is_freenas)
-	if [ "x${ret1}" = "xFalse" ]; then
+	ret1=$(midclt call system.is_enterprise)
+	if [ "x${ret1}" = "xTrue" ]; then
 		ret2=$(midclt call failover.status)
 		section_header "HA db journal status"
 		if [ "x${ret2}" != "xSINGLE" ]; then

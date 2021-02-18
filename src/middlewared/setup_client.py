@@ -7,7 +7,7 @@ install_requires = [
 
 setup(
     name='middlewared.client',
-    description='FreeNAS Middleware Daemon Client',
+    description='TrueNAS Middleware Daemon Client',
     packages=[
         'middlewared.client',
     ],

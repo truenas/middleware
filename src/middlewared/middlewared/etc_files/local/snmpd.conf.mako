@@ -27,7 +27,7 @@ agentAddress udp:161,udp6:161,unix:/var/run/snmpd.sock
 sysLocation ${config["location"] or "unknown"}
 sysContact ${config["contact"] or "unknown@localhost"}
 sysDescr ${freenas_version}. Hardware: ${hw_machine} ${hw_model}. Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})
-sysObjectID 1.3.6.1.4.1.50536.3.${"1" if middleware.call_sync("system.is_freenas") else "2"}
+sysObjectID 1.3.6.1.4.1.50536.3.${"1" if not middleware.call_sync("system.is_enterprise") else "2"}
 
 master agentx
 

@@ -10,13 +10,11 @@
 	):
 		middleware.logger.debug(f'UPSMON: {field} field empty, upsmon will fail to start.')
 	ident = ups_config['complete_identifier']
-	if not ups_config['shutdowncmd'] and not (
-		not (middleware.call_sync('system.is_freenas')) and (
-			middleware.call_sync('truenas.get_chassis_hardware')).startswith('TRUENAS-X')
-	):
-		shutdown_cmd = '/sbin/shutdown -p now'
+	xseries = (middleware.call_sync('truenas.get_chassis_hardware')).startswith('TRUENAS-X')
+	if not ups_config['shutdowncmd'] and not xseries
+            shutdown_cmd = '/sbin/shutdown -p now'
 	else:
-		shutdown_cmd = ups_config['shutdowncmd'] or ''
+            shutdown_cmd = ups_config['shutdowncmd'] or ''
 %>\
 MONITOR ${ident} 1 ${user} ${ups_config['monpwd']} ${ups_config['mode']}
 NOTIFYCMD ${"/usr/sbin/upssched" if IS_LINUX else "/usr/local/sbin/upssched"}

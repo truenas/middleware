@@ -539,14 +539,14 @@ class DiskService(CRUDService):
         reserved = await self.get_reserved()
 
         devlist = await camcontrol_list()
-        is_freenas = await self.middleware.call('system.is_freenas')
+        is_enterprise = await self.middleware.call('system.is_enterprise')
 
         serials = defaultdict(list)
         active_active = []
         for g in geom.class_by_name('DISK').geoms:
             if not RE_DA.match(g.name) or g.name in reserved or g.name in mp_disks:
                 continue
-            if not is_freenas:
+            if is_enterprise:
                 descr = g.provider.config.get('descr') or ''
                 if (
                     descr == 'STEC ZeusRAM' or
@@ -575,8 +575,8 @@ class DiskService(CRUDService):
         disks_pairs = [disks for disks in list(serials.values())]
         disks_pairs.sort(key=lambda x: int(x[0][2:]))
 
-        # Mode is Active/Passive for FreeNAS
-        mode = None if is_freenas else 'R'
+        # Mode is Active/Passive for TrueNAS HA
+        mode = None if not is_enterprise else 'R'
         for disks in disks_pairs:
             if not len(disks) > 1:
                 continue

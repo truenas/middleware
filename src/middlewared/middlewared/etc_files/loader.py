@@ -33,7 +33,7 @@ def generate_loader_config(middleware):
         generate_truenas_logo,
         generate_dual_nvdimm_config,
     ]
-    if middleware.call_sync("system.is_freenas"):
+    if not middleware.call_sync("system.is_enterprise"):
         generators.append(generate_xen_loader_config)
 
     config = []

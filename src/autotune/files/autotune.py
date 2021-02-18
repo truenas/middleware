@@ -21,10 +21,10 @@ import sys
 from middlewared.client import Client
 
 c = Client('ws+unix:///var/run/middlewared-internal.sock')
-if c.call('system.is_freenas'):
-    TRUENAS = False
+if not c.call('system.is_enterprise'):
+    ENTERPRISE = False
 else:
-    TRUENAS = True
+    ENTERPRISE = True
     hardware = c.call('truenas.get_chassis_hardware')
     hardware = hardware.replace('TRUENAS-', '')
     hardware = hardware.split('-')
@@ -111,7 +111,7 @@ DEF_KNOBS = {
 
 
 def guess_vfs_zfs_dirty_data_max_max():
-    if TRUENAS and hardware[0].startswith("M"):
+    if ENTERPRISE and hardware[0].startswith("M"):
         return 12 * GiB
     else:
         return None
@@ -161,7 +161,7 @@ def guess_vfs_zfs_arc_max():
 
     - See comments for USERLAND_RESERVED_MEM.
     """
-    if HW_PHYSMEM_GiB > 200 and TRUENAS:
+    if HW_PHYSMEM_GiB > 200 and ENTERPRISE:
         return int(max(min(int(HW_PHYSMEM * .92),
                        HW_PHYSMEM - (USERLAND_RESERVED_MEM + KERNEL_RESERVED_MEM)),
                        MIN_ZFS_RESERVED_MEM))
@@ -218,28 +218,28 @@ def guess_net_inet_tcp_recvbuf_inc():
 
 
 def guess_vfs_zfs_vdev_async_read_max_active():
-    if TRUENAS and hardware[0] == "Z50":
+    if ENTERPRISE and hardware[0] == "Z50":
         return 64
     else:
         return None
 
 
 def guess_vfs_zfs_vdev_sync_read_max_active():
-    if TRUENAS and hardware[0] == "Z50":
+    if ENTERPRISE and hardware[0] == "Z50":
         return 64
     else:
         return None
 
 
 def guess_vfs_zfs_vdev_async_write_max_active():
-    if TRUENAS and hardware[0] == "Z50":
+    if ENTERPRISE and hardware[0] == "Z50":
         return 64
     else:
         return None
 
 
 def guess_vfs_zfs_vdev_sync_write_max_active():
-    if TRUENAS and hardware[0] == "Z50":
+    if ENTERPRISE and hardware[0] == "Z50":
         return 64
     else:
         return None

@@ -409,7 +409,7 @@ class VMDeviceService(CRUDService):
 
     @private
     async def failover_nic_check(self, vm_device, verrors, schema):
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+        if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.licensed'):
             nics = await self.middleware.call('vm.device.nic_capability_checks', [vm_device])
             if nics:
                 verrors.add(

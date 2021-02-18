@@ -11,12 +11,12 @@ RE_FIRMWARE_VERSION = re.compile(r'Firmware Revision\s*:\s*(\S+)', re.M)
 
 def get_context(middleware):
     context = {
-        'is_freenas': middleware.call_sync('system.is_freenas'),
+        'is_enterprise': middleware.call_sync('system.is_enterprise'),
         'failover_licensed': False,
         'failover_status': 'SINGLE',
     }
 
-    if not context['is_freenas']:
+    if context['is_enterprise']:
         context['failover_licensed'] = middleware.call_sync('failover.licensed')
         context['failover_status'] = middleware.call_sync('failover.status')
 
@@ -353,7 +353,7 @@ def tftp_config(middleware, context):
 
 
 def truenas_config(middleware, context):
-    if context['is_freenas'] or not context['failover_licensed']:
+    if not context['is_enterprise'] or not context['failover_licensed']:
         yield 'failover_enable="NO"'
     else:
         yield 'failover_enable="YES"'
@@ -372,7 +372,7 @@ def tunable_config(middleware, context):
 
 
 def vmware_config(middleware, context):
-    if context['is_freenas']:
+    if not context['is_enterprise']:
         try:
             subprocess.run(
                 ['vmware-checkvm'],
@@ -406,7 +406,7 @@ def _bmc_watchdog_is_broken():
 
 
 def watchdog_config(middleware, context):
-    if context['is_freenas']:
+    if not context['is_enterprise']:
         # Bug #7337 -- blacklist AMD systems for now
         model = sysctl.filter('hw.model')
         if not model or 'AMD' not in model[0].value:

@@ -251,7 +251,7 @@ class AlertService:
     async def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = await self.middleware.call("system.product_name")
         hostname = socket.gethostname()
-        if not await self.middleware.call("system.is_freenas"):
+        if await self.middleware.call("system.is_enterprise"):
             node_map = await self.middleware.call("alert.node_map")
         else:
             node_map = None
@@ -274,7 +274,7 @@ class ThreadedAlertService(AlertService):
     def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = self.middleware.call_sync("system.product_name")
         hostname = socket.gethostname()
-        if not self.middleware.call_sync("system.is_freenas"):
+        if self.middleware.call_sync("system.is_enterprise"):
             node_map = self.middleware.call_sync("alert.node_map")
         else:
             node_map = None
