@@ -97,7 +97,7 @@ smart_func()
 	# one involved without doing some extravagant reading of
 	# specific VPD pages from the device itself. Even doing
 	# that is fraught with errors because the interposer could
-	# not trnalsate those pages appropriately.
+	# mistranslate those pages.
 	# So, instead, we'll try to tell smartctl to do the translation
 	# and if it fails (which it will on proper SAS devices) then
 	# we'll try to run it without translation
