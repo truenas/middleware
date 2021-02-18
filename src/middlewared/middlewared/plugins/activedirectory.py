@@ -508,6 +508,15 @@ class ActiveDirectoryService(ConfigService):
             raise verrors
 
         if new['enable'] and not old['enable']:
+            """
+            Currently run two health checks prior to validating domain.
+            1) Attempt to kinit with user-provided credentials. This is used to
+               verify that the credentials are correct.
+            2) Check for an overly large time offset. System kerberos libraries
+               may not report the time offset as an error during kinit, but the large
+               time offset will prevent libads from using the ticket for the domain
+               join.
+            """
             try:
                 await self.middleware.run_in_thread(self.validate_credentials, new)
             except Exception as e:
@@ -517,7 +526,7 @@ class ActiveDirectoryService(ConfigService):
                 )
 
             try:
-                await self.middleware.run_in_thread(self.validate_domain, new)
+                await self.middleware.run_in_thread(self.check_clockskew, new)
             except ntplib.NTPException:
                 self.logger.warning("NTP request to Domain Controller failed.",
                                     exc_info=True)
