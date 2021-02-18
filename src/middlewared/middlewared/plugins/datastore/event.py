@@ -17,6 +17,7 @@ class DatastoreService(Service):
         Str("datastore", required=True),
         Str("plugin", required=True),
         Str("prefix", default=""),
+        Dict("extra", additional_attrs=True),
         Str("id", default="id"),
         Str("process_event", null=True, default=None),
         strict=True,
@@ -60,10 +61,14 @@ class DatastoreService(Service):
             )
 
     async def _fields(self, options, row, get=True):
+        query_options = {"get": get}
+        if options.get("extra"):
+            query_options["extra"] = options["extra"]
+
         return await self.middleware.call(
             f"{options['plugin']}.query",
             [[options["id"], "=", row[options["prefix"] + options["id"]]]],
-            {"get": get},
+            query_options,
         )
 
     async def _send_event(self, options, type, **kwargs):
