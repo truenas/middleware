@@ -113,7 +113,7 @@ smart_func()
 		fi
 		# double-quotes are important here to
 		# maintain original formatting
-		echo "/dev/$i msg" >> /tmp/smart.out
+		echo "/dev/$i $msg" >> /tmp/smart.out
 		echo "$output" >> /tmp/smart.out
 		echo "" >> /tmp/smart.out
 	done
