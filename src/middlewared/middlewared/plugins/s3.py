@@ -90,9 +90,9 @@ class S3Service(SystemServiceService):
                     f's3_update.{attr}', f'Attribute should be {minlen} to {maxlen} in length'
                 )
 
-        if not new['storage_path']:
-            verrors.add('s3_update.storage_path', 'Storage path is required')
-        else:
+        if not new['storage_path'] and await self.middleware.call('service.started', 's3'):
+            verrors.add('s3_update.storage_path', 'S3 must be stopped before unsetting storage path.')
+        elif new['storage_path']:
             await check_path_resides_within_volume(
                 verrors, self.middleware, 's3_update.storage_path', new['storage_path']
             )
@@ -123,7 +123,7 @@ class S3Service(SystemServiceService):
 
         await self._update_service(old, new)
 
-        if (await self.middleware.call('filesystem.stat', new['disks']))['user'] != 'minio':
+        if new['disks'] and (await self.middleware.call('filesystem.stat', new['disks']))['user'] != 'minio':
             await self.middleware.call(
                 'filesystem.setperm',
                 {
