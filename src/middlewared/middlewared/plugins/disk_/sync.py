@@ -249,6 +249,7 @@ async def setup(middleware):
         "datastore": "storage.disk",
         "plugin": "disk",
         "prefix": "disk_",
+        "extra": {"include_expired": True},
         "id": "identifier",
         "process_event": "disk.process_datastore_event",
     })
