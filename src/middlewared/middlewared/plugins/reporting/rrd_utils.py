@@ -43,6 +43,8 @@ class RRDBase(object, metaclass=RRDMeta):
     identifier_plugin = True
     rrd_types = None
     rrd_data_extra = None
+    stacked = False
+    stacked_show_total = False
 
     AGG_MAP = {
         'min': min,
@@ -73,6 +75,8 @@ class RRDBase(object, metaclass=RRDMeta):
             'title': self.get_title(),
             'vertical_label': self.get_vertical_label(),
             'identifiers': self.get_identifiers(),
+            'stacked': self.stacked,
+            'stacked_show_total': self.stacked_show_total,
         }
 
     @staticmethod
