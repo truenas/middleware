@@ -185,6 +185,11 @@ class ChartReleaseService(CRUDService):
             release_data['portals'] = await self.middleware.call(
                 'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_ip
             )
+            if release_data['chart_metadata'].get('appVersion'):
+                release_data['ui_version'] = f'{release_data["chart_metadata"]["appVersion"]}_{current_version}'
+            else:
+                release_data['ui_version'] = str(current_version)
+
             if 'icon' not in release_data['chart_metadata']:
                 release_data['chart_metadata']['icon'] = None
 
