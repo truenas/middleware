@@ -28,13 +28,13 @@ class ChartReleaseService(Service):
             get_schema(q, update) for q in item_version_details['schema']['questions']
         ))
         dict_obj = update_conditional_defaults(
-            Dict(schema_name, *attrs, update=update), {
+            Dict(schema_name, *attrs, update=update, additional_attrs=True), {
                 'schema': {'attrs': item_version_details['schema']['questions']}
             }
         )
 
         verrors = validate_attributes(
-            attrs, {'values': new_values}, attr_key='values', dict_kwargs={
+            attrs, {'values': new_values}, True, attr_key='values', dict_kwargs={
                 'conditional_defaults': dict_obj.conditional_defaults, 'update': update,
             }
         )
@@ -63,7 +63,7 @@ class ChartReleaseService(Service):
             if 'subquestions' in variable.get('schema', {}):
                 for sub_variable in variable['schema']['subquestions']:
                     questions[sub_variable['variable']] = sub_variable
-        for key in new_values:
+        for key in filter(lambda k: k in questions, new_values):
             await self.validate_question(
                 verrors, new_values[key], questions[key], dict_obj.attrs[key], schema_name, release_data,
             )
