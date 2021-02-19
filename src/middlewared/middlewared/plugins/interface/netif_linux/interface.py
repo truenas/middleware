@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["Interface"]
 
 CLONED_PREFIXES = [
-    'lo', 'tun', 'tap', 'br', 'vlan', 'bond', 'docker', 'veth', 'kube-bridge', 'kube-dummy',
+    'lo', 'tun', 'tap', 'br', 'vlan', 'bond', 'docker', 'veth', 'kube-bridge', 'kube-dummy', 'vnet', 'openvpn',
 ]
 
 
