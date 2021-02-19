@@ -55,10 +55,19 @@ class ChartReleaseService(CRUDService):
             for train in catalog['trains']:
                 train_data = {}
                 for catalog_item in catalog['trains'][train]:
-                    train_data[catalog_item] = max(
-                        [parse_version(v) for v in catalog['trains'][train][catalog_item]['versions']],
+                    versions = catalog['trains'][train][catalog_item]['versions']
+                    max_version = max(
+                        [parse_version(v) for v in versions],
                         default=parse_version('0.0.0')
                     )
+                    app_version = None
+                    if str(max_version) in versions:
+                        app_version = versions[str(max_version)]['chart_metadata'].get('appVersion')
+
+                    train_data[catalog_item] = {
+                        'chart_version': max_version,
+                        'app_version': app_version,
+                    }
 
                 update_catalog_config[catalog['label']][train] = train_data
 
@@ -163,11 +172,35 @@ class ChartReleaseService(CRUDService):
                 release_data['history'] = release['history']
 
             current_version = parse_version(release_data['chart_metadata']['version'])
-            latest_version = update_catalog_config.get(release_data['catalog'], {}).get(
+            catalog_version_dict = update_catalog_config.get(release_data['catalog'], {}).get(
                 release_data['catalog_train'], {}
-            ).get(release_data['chart_metadata']['name'], parse_version(release_data['chart_metadata']['version']))
-
+            ).get(release_data['chart_metadata']['name'], {})
+            latest_version = catalog_version_dict.get('chart_version', current_version)
+            latest_app_version = catalog_version_dict.get('app_version')
             release_data['update_available'] = latest_version > current_version
+
+            app_version = None
+            if release_data['chart_metadata']['name'] == 'ix-chart':
+                image_config = release_data['config'].get('image') or {}
+                if all(k in image_config for k in ('tag', 'repository')):
+                    # TODO: Let's see if we can find sane versioning for `latest` from upstream
+                    if image_config['tag'] == 'latest':
+                        app_version = f'{image_config["repository"]}_{image_config["tag"]}'
+                    else:
+                        app_version = image_config['tag']
+                # Latest app version for ix-chart remains same
+                latest_app_version = app_version
+            else:
+                app_version = release_data['chart_metadata'].get('appVersion')
+
+            for key, app_v, c_v in (
+                ('human_version', app_version, current_version),
+                ('human_latest_version', latest_app_version, latest_version),
+            ):
+                if app_v:
+                    release_data[key] = f'{app_v}_{c_v}'
+                else:
+                    release_data[key] = str(c_v)
 
             if retrieve_schema:
                 chart_path = os.path.join(release_data['path'], 'charts', release_data['chart_metadata']['version'])
@@ -185,23 +218,6 @@ class ChartReleaseService(CRUDService):
             release_data['portals'] = await self.middleware.call(
                 'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_ip
             )
-
-            app_version = None
-            if release_data['chart_metadata']['name'] == 'ix-chart':
-                image_config = release_data['config'].get('image') or {}
-                if all(k in image_config for k in ('tag', 'repository')):
-                    # TODO: Let's see if we can find sane versioning for `latest` from upstream
-                    if image_config['tag'] == 'latest':
-                        app_version = f'{image_config["repository"]}_{image_config["tag"]}'
-                    else:
-                        app_version = image_config['tag']
-            else:
-                app_version = release_data['chart_metadata'].get('appVersion')
-
-            if app_version:
-                release_data['ui_version'] = f'{app_version}_{current_version}'
-            else:
-                release_data['ui_version'] = str(current_version)
 
             if 'icon' not in release_data['chart_metadata']:
                 release_data['chart_metadata']['icon'] = None
