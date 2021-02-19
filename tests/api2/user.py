@@ -298,6 +298,7 @@ def test_31_creating_user_with_homedir(request):
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
     user_id = results.json()
+    time.sleep(2)
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
@@ -397,6 +398,7 @@ def test_41_lock_smb_user(request):
     }
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 200, results.text
+    time.sleep(2)
 
 
 def test_42_verify_locked_smb_user_is_disabled(request):
@@ -519,6 +521,7 @@ def test_50_convert_to_smb_user(request):
     }
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 200, results.text
+    time.sleep(2)
 
 
 def test_51_verify_put_user_do_not_leak_password_in_middleware_log():
