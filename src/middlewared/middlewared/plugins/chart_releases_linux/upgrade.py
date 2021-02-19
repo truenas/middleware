@@ -6,7 +6,6 @@ import os
 import shutil
 import subprocess
 import tempfile
-import yaml
 
 from pkg_resources import parse_version
 
@@ -14,7 +13,7 @@ from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
-from .utils import CONTEXT_KEY_NAME, get_namespace, run
+from .utils import CONTEXT_KEY_NAME
 
 
 class ChartReleaseService(Service):
@@ -38,8 +37,10 @@ class ChartReleaseService(Service):
 
         `upgrade_options.item_version` specifies to which item version chart release should be upgraded to.
 
-        System will update container images being used by `release_name` chart release if
-        `upgrade_options.update_container_images` is set.
+        System will update container images being used by `release_name` chart release. This can be controlled
+        right now by `upgrade_options.update_container_images` option but this is deprecated and will be removed
+        in the future where system will always update container images in use by a chart release as a chart release
+        upgrade is not considered complete until the images in use have also been updated to latest versions.
 
         During upgrade, `upgrade_options.values` can be specified to apply configuration changes for configuration
         changes for the chart release in question.
