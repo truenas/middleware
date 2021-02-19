@@ -185,8 +185,21 @@ class ChartReleaseService(CRUDService):
             release_data['portals'] = await self.middleware.call(
                 'chart.release.retrieve_portals_for_chart_release', release_data, k8s_node_ip
             )
-            if release_data['chart_metadata'].get('appVersion'):
-                release_data['ui_version'] = f'{release_data["chart_metadata"]["appVersion"]}_{current_version}'
+
+            app_version = None
+            if release_data['chart_metadata']['name'] == 'ix-chart':
+                image_config = release_data['config'].get('image') or {}
+                if all(k in image_config for k in ('tag', 'repository')):
+                    # TODO: Let's see if we can find sane versioning for `latest` from upstream
+                    if image_config['tag'] == 'latest':
+                        app_version = f'{image_config["repository"]}_{image_config["tag"]}'
+                    else:
+                        app_version = image_config['tag']
+            else:
+                app_version = release_data['chart_metadata'].get('appVersion')
+
+            if app_version:
+                release_data['ui_version'] = f'{app_version}_{current_version}'
             else:
                 release_data['ui_version'] = str(current_version)
 
