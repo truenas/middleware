@@ -57,9 +57,11 @@ class ChartReleaseService(Service):
         # in question needs newer image hashes.
         if options['update_container_images']:
             # TODO: Always do this in the future
+            job.set_progress(10, 'Updating container images')
             await (
                 await self.middleware.call('chart.release.pull_container_images', release_name, {'redeploy': False})
             ).wait(raise_error=True)
+            job.set_progress(30, 'Updated container images')
 
         job.set_progress(40, 'Created snapshot for upgrade')
         # If a snapshot of the volumes already exist with the same name in case of a failed upgrade, we will remove
@@ -147,7 +149,7 @@ class ChartReleaseService(Service):
         config, context = await self.middleware.call(
             'chart.release.normalise_and_validate_values', catalog_item, config, False, release['dataset'],
         )
-        job.set_progress(25, 'Initial validation complete')
+        job.set_progress(50, 'Initial validation complete for upgrading chart version')
 
         # We have validated configuration now
 
@@ -171,7 +173,7 @@ class ChartReleaseService(Service):
             }
         })
 
-        job.set_progress(50, 'Upgrading chart release')
+        job.set_progress(60, 'Upgrading chart release version')
 
         await self.middleware.call('chart.release.helm_action', release_name, chart_path, config, 'upgrade')
 
