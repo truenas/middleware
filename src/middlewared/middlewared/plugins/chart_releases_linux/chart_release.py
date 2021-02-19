@@ -48,7 +48,7 @@ class ChartReleaseService(CRUDService):
         for image in await self.middleware.call('container.image.query'):
             for tag in image['repo_tags']:
                 if not container_images.get(tag):
-                    container_images[tag] = image['update_available']
+                    container_images[tag] = image
 
         for catalog in catalogs:
             update_catalog_config[catalog['label']] = {}
@@ -154,12 +154,20 @@ class ChartReleaseService(CRUDService):
             }
             release_resources = {
                 **release_resources,
-                'container_images': list(set(
-                    c['image']
-                    for workload_type in ('deployments', 'statefulsets')
-                    for workload in release_resources[workload_type]
-                    for c in workload['spec']['template']['spec']['containers']
-                )),
+                'container_images': {
+                    i_name: {
+                        'id': image_details.get('id'),
+                        'update_available': image_details.get('update_available', False)
+                    } for i_name, image_details in map(
+                        lambda i: (i, container_images.get(i, {})),
+                        list(set(
+                            c['image']
+                            for workload_type in ('deployments', 'statefulsets')
+                            for workload in release_resources[workload_type]
+                            for c in workload['spec']['template']['spec']['containers']
+                        ))
+                    )
+                },
                 'truenas_certificates': [v['id'] for v in release_data['config'].get('ixCertificates', {}).values()],
                 'truenas_certificate_authorities': [
                     v['id'] for v in release_data['config'].get('ixCertificateAuthorities', {}).values()
@@ -212,7 +220,7 @@ class ChartReleaseService(CRUDService):
                     release_data['chart_schema'] = None
 
             release_data['container_images_update_available'] = any(
-                container_images.get(tag) for tag in release_resources['container_images']
+                details['update_available'] for details in release_resources['container_images'].values()
             )
             release_data['chart_metadata']['latest_chart_version'] = str(latest_version)
             release_data['portals'] = await self.middleware.call(
