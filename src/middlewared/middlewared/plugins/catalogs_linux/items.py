@@ -148,6 +148,7 @@ class CatalogService(Service):
     def item_version_details(self, version_path):
         version_data = {'location': version_path, 'required_features': set()}
         for key, filename, parser in (
+            ('chart_metadata', 'Chart.yaml', yaml.safe_load),
             ('schema', 'questions.yaml', yaml.safe_load),
             ('app_readme', 'app-readme.md', str.strip),
             ('detailed_readme', 'README.md', markdown.markdown),
