@@ -61,8 +61,22 @@ class ChartReleaseService(Service):
                 await self.middleware.call('chart.release.pull_container_images', release_name, {'redeploy': False})
             ).wait(raise_error=True)
 
+        job.set_progress(40, 'Created snapshot for upgrade')
+        # If a snapshot of the volumes already exist with the same name in case of a failed upgrade, we will remove
+        # it as we want the current point in time being reflected in the snapshot
+        volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
+        snap_name = f'{volumes_ds}@{release["version"]}'
+        if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
+            await self.middleware.call('zfs.snapshot.delete', snap_name, {'recursive': True})
+
+        await self.middleware.call(
+            'zfs.snapshot.create', {'dataset': volumes_ds, 'name': release['version'], 'recursive': True}
+        )
+
         if release['update_available']:
             await self.upgrade_chart_release(job, release, options)
+        else:
+            await (await self.middleware.call('chart.release.redeploy', release_name)).wait(raise_error=True)
 
         chart_release = await self.middleware.call('chart.release.get_instance', release_name)
         self.middleware.send_event('chart.release.query', 'CHANGED', id=release_name, fields=chart_release)
@@ -140,18 +154,6 @@ class ChartReleaseService(Service):
         chart_path = os.path.join(release['path'], 'charts', new_version)
         await self.middleware.run_in_thread(shutil.rmtree, chart_path, ignore_errors=True)
         await self.middleware.run_in_thread(shutil.copytree, catalog_item['location'], chart_path)
-
-        # If a snapshot of the volumes already exist with the same name in case of a failed upgrade, we will remove
-        # it as we want the current point in time being reflected in the snapshot
-        volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
-        snap_name = f'{volumes_ds}@{release["version"]}'
-        if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
-            await self.middleware.call('zfs.snapshot.delete', snap_name, {'recursive': True})
-
-        await self.middleware.call(
-            'zfs.snapshot.create', {'dataset': volumes_ds, 'name': release['version'], 'recursive': True}
-        )
-        job.set_progress(40, 'Created snapshot for upgrade')
 
         await self.middleware.call('chart.release.perform_actions', context)
 
