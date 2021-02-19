@@ -57,16 +57,12 @@ class DockerImagesService(Service, DockerClientMixin):
         parsed_tag = await self.parse_image_tag(tag)
         if await self.compare_id_digests(image_details, parsed_tag['registry'], parsed_tag['image'], parsed_tag['tag']):
             self.IMAGE_CACHE[tag] = True
-            await self.middleware.call(
-                'alert.oneshot_create', 'DockerImageUpdate', {'tag': tag, 'id': tag}
-            )
         else:
             await self.clear_update_flag_for_tag(tag)
 
     @private
     async def clear_update_flag_for_tag(self, tag):
         self.IMAGE_CACHE[tag] = False
-        await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', tag)
 
     @private
     async def compare_id_digests(self, image_details, registry, image_str, tag_str):
@@ -88,4 +84,3 @@ class DockerImagesService(Service, DockerClientMixin):
     async def remove_image_from_cache(self, image):
         for tag in image['repo_tags']:
             self.IMAGE_CACHE.pop(tag, None)
-            await self.middleware.call('alert.oneshot_delete', 'DockerImageUpdate', tag)
