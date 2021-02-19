@@ -83,7 +83,7 @@ class ChartReleaseService(Service):
         chart_release = await self.middleware.call('chart.release.get_instance', release_name)
         self.middleware.send_event('chart.release.query', 'CHANGED', id=release_name, fields=chart_release)
 
-        # await self.chart_release_update_check(catalog['trains'][release['catalog_train']][chart], chart_release)
+        await self.chart_releases_update_checks_internal([['id', '=', release_name]])
 
         job.set_progress(100, 'Upgrade complete for chart release')
 
@@ -218,6 +218,8 @@ class ChartReleaseService(Service):
     @private
     async def chart_releases_update_checks_internal(self, chart_releases_filters=None):
         chart_releases_filters = chart_releases_filters or []
+        # Chart release wrt alerts will be considered valid for upgrade/update if either there's a newer
+        # catalog item version available or any of the images it's using is outdated
 
         catalog_items = {
             f'{c["id"]}_{train}_{item}': c['trains'][train][item]
@@ -225,6 +227,10 @@ class ChartReleaseService(Service):
             for train in c['trains'] for item in c['trains'][train]
         }
         for application in await self.middleware.call('chart.release.query', chart_releases_filters):
+            if application['container_images_update_available']:
+                await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
+                continue
+
             app_id = f'{application["catalog"]}_{application["catalog_train"]}_{application["chart_metadata"]["name"]}'
             catalog_item = catalog_items.get(app_id)
             if not catalog_item:
