@@ -45,11 +45,36 @@ class ChartReleaseService(Service):
         During upgrade, `upgrade_options.values` can be specified to apply configuration changes for configuration
         changes for the chart release in question.
 
-        For upgrade, system will automatically take a snapshot of `ix_volumes` in question which can be used to
-        rollback later on.
+        When chart version is upgraded, system will automatically take a snapshot of `ix_volumes` in question
+        which can be used to rollback later on.
         """
         await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call('chart.release.get_instance', release_name)
+        if not release['update_available'] and not release['container_images_update_available']:
+            raise CallError('No update is available for chart release')
+
+        # We need to update container images before upgrading chart version as it's possible that the chart version
+        # in question needs newer image hashes.
+        if options['update_container_images']:
+            # TODO: Always do this in the future
+            await (
+                await self.middleware.call('chart.release.pull_container_images', release_name, {'redeploy': False})
+            ).wait(raise_error=True)
+
+        if release['update_available']:
+            await self.upgrade_chart_release(job, release, options)
+
+        chart_release = await self.middleware.call('chart.release.get_instance', release_name)
+        self.middleware.send_event('chart.release.query', 'CHANGED', id=release_name, fields=chart_release)
+
+        # await self.chart_release_update_check(catalog['trains'][release['catalog_train']][chart], chart_release)
+
+        job.set_progress(100, 'Upgrade complete for chart release')
+
+        return chart_release
+
+    async def upgrade_chart_release(self, job, release, options):
+        release_name = release['name']
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', release['catalog']]], {'extra': {'item_details': True}},
         )
@@ -147,19 +172,6 @@ class ChartReleaseService(Service):
         job.set_progress(50, 'Upgrading chart release')
 
         await self.middleware.call('chart.release.helm_action', release_name, chart_path, config, 'upgrade')
-
-        job.set_progress(100, 'Upgrade complete for chart release')
-
-        chart_release = await self.middleware.call('chart.release.get_instance', release_name)
-        self.middleware.send_event('chart.release.query', 'CHANGED', id=release_name, fields=chart_release)
-
-        await self.chart_release_update_check(catalog['trains'][release['catalog_train']][chart], chart_release)
-
-        if options['update_container_images']:
-            container_update_job = await self.middleware.call('chart.release.pull_container_images', release_name)
-            await job.wrap(container_update_job)
-
-        return chart_release
 
     @private
     def upgrade_values(self, release, new_version_path):
