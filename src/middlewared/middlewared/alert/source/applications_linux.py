@@ -34,8 +34,8 @@ class ChartReleaseUpdateAlertClass(AlertClass, OneShotAlertClass):
 
     category = AlertCategory.APPLICATIONS
     level = AlertLevel.INFO
-    title = 'Chart Release Update Available'
-    text = 'An update is available for "%(name)s" chart release.'
+    title = 'Application Update Available'
+    text = 'An update is available for "%(name)s" application.'
 
     async def create(self, args):
         return Alert(ChartReleaseUpdateAlertClass, args, key=args['id'])
