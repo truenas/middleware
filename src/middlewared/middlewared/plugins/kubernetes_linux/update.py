@@ -56,6 +56,10 @@ class KubernetesService(ConfigService):
         ):
             verrors.add(f'{schema}.{k}', 'Requested CIDR is already in use.')
 
+        if data['cluster_cidr'] == data['service_cidr']:
+            verrors.add(f'{schema}.cluster_cidr', 'Value cannot be similar to service CIDR.')
+            verrors.add(f'{schema}.service_cidr', 'Value cannot be similar to cluster CIDR.')
+
         if ipaddress.ip_address(data['cluster_dns_ip']) not in ipaddress.ip_network(data['service_cidr']):
             verrors.add(f'{schema}.cluster_dns_ip', 'Must be in range of "service_cidr".')
 
