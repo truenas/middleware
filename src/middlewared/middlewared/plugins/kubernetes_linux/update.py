@@ -60,6 +60,11 @@ class KubernetesService(ConfigService):
             verrors.add(f'{schema}.cluster_cidr', 'Value cannot be similar to service CIDR.')
             verrors.add(f'{schema}.service_cidr', 'Value cannot be similar to cluster CIDR.')
 
+        if ipaddress.ip_network(data['cluster_cidr'], False).overlaps(
+            ipaddress.ip_network(data['service_cidr'], False)
+        ):
+            verrors.add(f'{schema}.cluster_cidr', 'Must not overlap with service CIDR.')
+
         if ipaddress.ip_address(data['cluster_dns_ip']) not in ipaddress.ip_network(data['service_cidr']):
             verrors.add(f'{schema}.cluster_dns_ip', 'Must be in range of "service_cidr".')
 
