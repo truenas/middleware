@@ -41,8 +41,20 @@ class KubernetesService(ConfigService):
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
 
+        network_cidrs = [
+            ipaddress.ip_network(f'{ip_config["address"]}/{ip_config["netmask"]}', False)
+            for interface in await self.middleware.call('interface.query')
+            for ip_config in interface['aliases']
+        ]
+
         if data['pool'] and not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
             verrors.add(f'{schema}.pool', 'Please provide a valid pool configured in the system.')
+
+        for k in filter(
+            lambda k: any(ipaddress.ip_network(data[k], False).overlaps(cidr) for cidr in network_cidrs),
+            ('cluster_cidr', 'service_cidr')
+        ):
+            verrors.add(f'{schema}.{k}', 'Requested CIDR is already in use.')
 
         if ipaddress.ip_address(data['cluster_dns_ip']) not in ipaddress.ip_network(data['service_cidr']):
             verrors.add(f'{schema}.cluster_dns_ip', 'Must be in range of "service_cidr".')
