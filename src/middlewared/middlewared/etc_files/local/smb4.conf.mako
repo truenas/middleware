@@ -28,7 +28,8 @@
             conf['cifs'] = middleware.call_sync('smb.config')
             conf['ad'] = middleware.call_sync('activedirectory.config')
             conf['ldap'] = middleware.call_sync('ldap.config')
-            conf['nis'] = middleware.call_sync('datastore.config', 'directoryservice.nis')
+            if IS_FREEBSD:
+                conf['nis'] = middleware.call_sync('datastore.config', 'directoryservice.nis')
             conf['gc'] = middleware.call_sync('network.configuration.config')
             conf['shares'] = middleware.call_sync('sharing.smb.query', [['enabled', '=', True], ['locked', '=', False]])
             conf['role'] = 'standalone'
