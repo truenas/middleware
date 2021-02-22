@@ -193,7 +193,7 @@ class ChartReleaseService(CRUDService):
                 if all(k in image_config for k in ('tag', 'repository')):
                     # TODO: Let's see if we can find sane versioning for `latest` from upstream
                     if image_config['tag'] == 'latest':
-                        app_version = f'{image_config["repository"]}_{image_config["tag"]}'
+                        app_version = f'{image_config["repository"]}:{image_config["tag"]}'
                     else:
                         app_version = image_config['tag']
                 # Latest app version for ix-chart remains same
