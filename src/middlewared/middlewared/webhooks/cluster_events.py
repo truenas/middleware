@@ -1,5 +1,3 @@
-from middlewared.plugins.cluster_linux.utils import CTDBConfig
-
 from aiohttp import web
 
 
@@ -7,39 +5,39 @@ class ClusterEventsApplication(object):
 
     def __init__(self, middleware):
         self.middleware = middleware
-        self.ctdb_shared_vol = CTDBConfig.CTDB_VOL_NAME.value
+        self.mount_events = ('VOLUME_START', 'AFR_SUBVOL_UP')
+        self.umount_events = ('VOLUME_STOP', 'AFR_SUBVOLS_DOWN')
 
     async def process_event(self, data):
+        event = data.get('event', {})
+        msg = data.get('message', {})
 
-        event = data.get('event', None)
-        msg = data.get('message', None)
-
-        umount_it = mount_it = False
+        # for AFR_SUBVOL* events, the name of the volume
+        # isn't included in the message so we have to
+        # deduce the name of the volume by startswith()
+        name = None
         if event and msg:
-            if event == 'VOLUME_START':
-                if msg.get('name', '') == self.ctdb_shared_vol:
-                    mount_it = True
+            subvol = msg.get('subvol', None)
+            if subvol is None:
+                name = msg.get('name', None)
+            else:
+                try:
+                    name = list(filter(subvol.startswith, self.vols))[0]
+                except IndexError:
+                    pass
 
-            if event == 'AFR_SUBVOL_UP':
-                if msg.get('subvol', '') in self.ctdb_shared_vol:
-                    mount_it = True
-
-            if event == 'VOLUME_STOP':
-                if msg.get('name', '') == self.ctdb_shared_vol:
-                    umount_it = True
-
-            if event == 'AFR_SUBVOLS_DOWN':
-                if msg.get('subvol', '') in self.ctdb_shared_vol:
-                    umount_it = True
-
-        if mount_it:
-            await self.middleware.call('ctdb.shared.volume.mount')
-
-        if umount_it:
-            await self.middleware.call('ctdb.shared.volume.umount')
+        if name is not None:
+            if name in await self.middleware.call('gluster.volume.list'):
+                if event in self.mount_events:
+                    await self.middleware.call(
+                        'gluster.fuse.mount', {'name': name}
+                    )
+                elif event in self.umount_events:
+                    await self.middleware.call(
+                        'gluster.fuse.umount', {'name': name}
+                    )
 
     async def response(self):
-
         # This is a little confusing but the glustereventsd daemon
         # that is responsible for sending requests to this endpoint
         # doesn't actually act on any of our responses. It just
@@ -54,7 +52,6 @@ class ClusterEventsApplication(object):
         return res
 
     async def listener(self, request):
-
         # request is empty when the gluster-eventsapi webhook-test
         # command is called from CLI
         if not await request.read():
