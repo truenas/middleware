@@ -37,6 +37,8 @@ class CoreFilesArePresentAlertSource(ThreadedAlertSource):
             unlink = False
             if IS_FREEBSD and file == "syslog-ng.core":
                 unlink = True
+            elif file == "su.core":
+                unlink = True
             elif os.stat(path).st_mtime < time.time() - 86400 * 5:
                 unlink = True
             else:
