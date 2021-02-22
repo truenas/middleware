@@ -52,8 +52,8 @@ class CatalogService(Service):
 
     @private
     def get_trains(self, location, options=None):
-        # We make sure we do not dive into library and docs folders and not consider it a train
-        # This allows us to use this folder for placing helm library charts and docs respectively
+        # We make sure we do not dive into library and docs folders and not consider those a train
+        # This allows us to use these folders for placing helm library charts and docs respectively
         trains = {'charts': {}, 'test': {}}
         options = options or {}
         unhealthy_apps = set()
