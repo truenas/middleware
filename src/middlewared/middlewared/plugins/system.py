@@ -1265,12 +1265,15 @@ class SystemGeneralService(ConfigService):
 
         return await self.config()
 
-    @accepts()
-    async def ui_restart(self):
+    @accepts(Int('delay', default=3, validators=[Range(min=0)]))
+    async def ui_restart(self, delay):
         """
         Restart HTTP server to use latest UI settings.
+
+        HTTP server will be restarted after `delay` seconds.
         """
-        await self.middleware.call('service.restart', 'http')
+        event_loop = asyncio.get_event_loop()
+        event_loop.call_later(delay, lambda: asyncio.ensure_future(self.middleware.call('service.restart', 'http')))
 
     @accepts()
     async def local_url(self):
