@@ -3,6 +3,10 @@ import json
 from middlewared.schema import Dict, Bool
 from middlewared.service import CallError, Service, accepts, private
 from middlewared.utils import run
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
+
+
+CTDB_VOL = CTDBConfig.CTDB_VOL_NAME.value
 
 
 class CtdbGeneralService(Service):
@@ -84,13 +88,15 @@ class CtdbGeneralService(Service):
             return False
 
         # make sure the ctdb shared volume exists and is started
-        exists, started = await self.middleware.call('ctdb.shared.volume.exists_and_started')
-        if not exists and not started:
+        info = await self.middleware.call(
+            'gluster.volume.exists_and_started', CTDB_VOL
+        )
+        if not info['exists'] and not info['started']:
             return False
 
-        # if the ctdb shared volume isn't mounted locally then
+        # if the ctdb shared volume isn't FUSE mounted locally then
         # active-active shares will not work so assume the worst
-        if not await self.middleware.call('ctdb.shared.volume.is_mounted'):
+        if not await self.middleware.call('gluster.fuse.is_mounted', {'name': CTDB_VOL}):
             return False
 
         # TODO: ctdb has event scripts that can be run when the
