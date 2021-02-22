@@ -59,8 +59,8 @@ class CatalogService(Service):
         unhealthy_apps = set()
         for train in os.listdir(location):
             if (
-                not os.path.isdir(os.path.join(location, train)) or train.startswith('.') or train == 'library' or
-                train == 'docs' or not VALID_TRAIN_REGEX.match(train)
+                not os.path.isdir(os.path.join(location, train)) or train.startswith('.') or 
+                train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
             ):
                 continue
 
