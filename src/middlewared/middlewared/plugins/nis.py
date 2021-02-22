@@ -243,6 +243,8 @@ class NISService(ConfigService):
                 'password_disabled': False,
                 'locked': False,
                 'sudo': False,
+                'sudo_nopasswd': False,
+                'sudo_commands': [],
                 'microsoft_account': False,
                 'attributes': {},
                 'groups': [],
@@ -262,6 +264,8 @@ class NISService(ConfigService):
                 'group': g.gr_name,
                 'builtin': False,
                 'sudo': False,
+                'sudo_nopasswd': False,
+                'sudo_commands': [],
                 'users': [],
                 'local': False
             }})

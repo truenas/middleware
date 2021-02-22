@@ -5,7 +5,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.utils.osc import IS_FREEBSD
-from middlewared.validators import Email
+from middlewared.validators import Email, Match
 from middlewared.plugins.smb import SMBBuiltin
 
 import binascii
@@ -84,6 +84,8 @@ class UserModel(sa.Model):
     bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_locked = sa.Column(sa.Boolean(), default=False)
     bsdusr_sudo = sa.Column(sa.Boolean(), default=False)
+    bsdusr_sudo_nopasswd = sa.Column(sa.Boolean())
+    bsdusr_sudo_commands = sa.Column(sa.JSON(type=list))
     bsdusr_microsoft_account = sa.Column(sa.Boolean())
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_attributes = sa.Column(sa.JSON())
@@ -180,6 +182,8 @@ class UserService(CRUDService):
         Bool('microsoft_account', default=False),
         Bool('smb', default=True),
         Bool('sudo', default=False),
+        Bool('sudo_nopasswd', default=False),
+        List('sudo_commands', items=[Str('command', empty=False, validators=[Match('^/[a-zA-Z0-9]')])]),
         Str('sshpubkey', null=True, max_length=None),
         List('groups', default=[]),
         Dict('attributes', additional_attrs=True),
@@ -937,6 +941,8 @@ class GroupModel(sa.Model):
     bsdgrp_group = sa.Column(sa.String(120))
     bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
     bsdgrp_sudo = sa.Column(sa.Boolean(), default=False)
+    bsdgrp_sudo_nopasswd = sa.Column(sa.Boolean())
+    bsdgrp_sudo_commands = sa.Column(sa.JSON(type=list))
     bsdgrp_smb = sa.Column(sa.Boolean(), default=True)
 
 
@@ -1013,6 +1019,8 @@ class GroupService(CRUDService):
         Str('name', required=True),
         Bool('smb', default=True),
         Bool('sudo', default=False),
+        Bool('sudo_nopasswd', default=False),
+        List('sudo_commands', items=[Str('command', empty=False, validators=[Match('^/[a-zA-Z0-9]')])]),
         Bool('allow_duplicate_gid', default=False),
         List('users', items=[Int('id')], required=False),
         register=True,
