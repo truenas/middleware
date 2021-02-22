@@ -55,7 +55,9 @@ class ChartReleaseService(CRUDService):
             for train in catalog['trains']:
                 train_data = {}
                 for catalog_item in catalog['trains'][train]:
-                    versions = catalog['trains'][train][catalog_item]['versions']
+                    versions = {
+                        k: v for k, v in catalog['trains'][train][catalog_item]['versions'].items() if v['healthy']
+                    }
                     max_version = max(
                         [parse_version(v) for v in versions],
                         default=parse_version('0.0.0')
