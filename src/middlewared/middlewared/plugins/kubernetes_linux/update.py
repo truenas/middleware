@@ -13,9 +13,9 @@ class KubernetesModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(255), default=None, nullable=True)
-    cluster_cidr = sa.Column(sa.String(128), default='172.16.0.0/16')
-    service_cidr = sa.Column(sa.String(128), default='172.17.0.0/16')
-    cluster_dns_ip = sa.Column(sa.String(128), default='172.17.0.10')
+    cluster_cidr = sa.Column(sa.String(128), default='')
+    service_cidr = sa.Column(sa.String(128), default='')
+    cluster_dns_ip = sa.Column(sa.String(128), default='')
     route_v4_interface = sa.Column(sa.String(128), nullable=True)
     route_v4_gateway = sa.Column(sa.String(128), nullable=True)
     route_v6_interface = sa.Column(sa.String(128), nullable=True)
@@ -107,9 +107,9 @@ class KubernetesService(ConfigService):
         Dict(
             'kubernetes_update',
             Str('pool', empty=False, null=True),
-            IPAddr('cluster_cidr', cidr=True),
-            IPAddr('service_cidr', cidr=True),
-            IPAddr('cluster_dns_ip'),
+            IPAddr('cluster_cidr', cidr=True, empty=True),
+            IPAddr('service_cidr', cidr=True, empty=True),
+            IPAddr('cluster_dns_ip', empty=True),
             IPAddr('node_ip'),
             Str('route_v4_interface', null=True),
             IPAddr('route_v4_gateway', null=True, v6=False),
