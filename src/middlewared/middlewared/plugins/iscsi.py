@@ -390,7 +390,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         verrors = ValidationErrors()
         await self.validate(new, 'iscsi_auth_update', verrors)
-        if new['tag'] != old['tag'] and not await self.query([['tag', '=', old['tag'], ['id', '!=', id]]]):
+        if new['tag'] != old['tag'] and not await self.query([['tag', '=', old['tag']], ['id', '!=', id]]):
             usages = await self.is_in_use_by_portals_targets(id)
             if usages['in_use']:
                 verrors.add('iscsi_auth_update.tag', usages['usages'])
