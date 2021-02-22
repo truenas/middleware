@@ -199,7 +199,7 @@ class ACMERegistrationService(CRUDService):
             }
         )
 
-        return self.middleware.call_sync(f'{self._config.namespace}._get_instance', registration_id)
+        return self.middleware.call_sync(f'{self._config.namespace}.get_instance', registration_id)
 
 
 class ACMEDNSAuthenticatorModel(sa.Model):

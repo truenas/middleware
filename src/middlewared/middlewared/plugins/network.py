@@ -2335,7 +2335,7 @@ class StaticRouteService(CRUDService):
         """
         Delete Static Route of `id`.
         """
-        staticroute = self.middleware.call_sync('staticroute._get_instance', id)
+        staticroute = self.middleware.call_sync('staticroute.get_instance', id)
         rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
         try:
             rt = netif.RoutingTable()

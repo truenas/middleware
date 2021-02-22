@@ -218,7 +218,7 @@ class CronJobService(CRUDService):
             job.logs_fd.write(line)
             syslog.syslog(syslog.LOG_INFO, line.decode())
 
-        cron_task = self.middleware.call_sync('cronjob._get_instance', id)
+        cron_task = self.middleware.call_sync('cronjob.get_instance', id)
         if skip_disabled and not cron_task['enabled']:
             raise CallError('Cron job is disabled', errno.EINVAL)
 
