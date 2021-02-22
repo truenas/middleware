@@ -52,15 +52,15 @@ class CatalogService(Service):
 
     @private
     def get_trains(self, location, options=None):
-        # We make sure we do not dive into library folder and not consider it a train
-        # This allows us to use this folder for placing helm library charts
+        # We make sure we do not dive into library and docs folders and not consider those a train
+        # This allows us to use these folders for placing helm library charts and docs respectively
         trains = {'charts': {}, 'test': {}}
         options = options or {}
         unhealthy_apps = set()
         for train in os.listdir(location):
             if (
-                not os.path.isdir(os.path.join(location, train)) or train.startswith('.') or train == 'library' or
-                not VALID_TRAIN_REGEX.match(train)
+                not os.path.isdir(os.path.join(location, train)) or train.startswith('.') or 
+                train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
             ):
                 continue
 
