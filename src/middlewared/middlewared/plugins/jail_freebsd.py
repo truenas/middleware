@@ -303,7 +303,7 @@ class PluginService(CRUDService):
             'branch': branch,
         })
 
-        new_plugin = self.middleware.call_sync('plugin._get_instance', jail_name)
+        new_plugin = self.middleware.call_sync('plugin.get_instance', jail_name)
         new_plugin['install_notes'] = install_notes.strip()
 
         return new_plugin
@@ -910,7 +910,7 @@ class JailService(CRUDService):
 
         job.set_progress(100, f'Created: {uuid}')
 
-        return self.middleware.call_sync('jail._get_instance', uuid)
+        return self.middleware.call_sync('jail.get_instance', uuid)
 
     @item_method
     @accepts(
@@ -956,7 +956,7 @@ class JailService(CRUDService):
 
         job.set_progress(100, 'Jail has been successfully cloned.')
 
-        return self.middleware.call_sync('jail._get_instance', options['uuid'])
+        return self.middleware.call_sync('jail.get_instance', options['uuid'])
 
     @accepts(
         Str('jail'),

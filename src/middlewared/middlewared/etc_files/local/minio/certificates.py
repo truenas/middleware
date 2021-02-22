@@ -12,7 +12,7 @@ def render(service, middleware):
     else:
         middleware.call_sync('certificate.cert_services_validation', cert, 's3.certificate')
 
-        cert = middleware.call_sync('certificate._get_instance', cert)
+        cert = middleware.call_sync('certificate.get_instance', cert)
 
         minio_path = "/usr/local/etc/minio"
 

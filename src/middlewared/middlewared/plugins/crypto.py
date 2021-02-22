@@ -1771,7 +1771,7 @@ class CertificateService(CRUDService):
     def __create_acme_certificate(self, job, data):
 
         csr_data = self.middleware.call_sync(
-            'certificate._get_instance', data['csr_id']
+            'certificate.get_instance', data['csr_id']
         )
 
         data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
@@ -2085,7 +2085,7 @@ class CertificateService(CRUDService):
         """
         check_dependencies(self.middleware, 'CERT', id)
 
-        certificate = self.middleware.call_sync('certificate._get_instance', id)
+        certificate = self.middleware.call_sync('certificate.get_instance', id)
 
         if certificate.get('acme'):
             client, key = self.get_acme_client_and_key(certificate['acme']['directory'], True)

@@ -91,7 +91,7 @@ class KMIPService(ConfigService):
             ca = ca[0]
             if not await self.middleware.call(
                 'cryptokey.validate_cert_with_chain',
-                (await self.middleware.call('certificate._get_instance', new['certificate']))['certificate'],
+                (await self.middleware.call('certificate.get_instance', new['certificate']))['certificate'],
                 [ca['certificate']]
             ):
                 verrors.add(
