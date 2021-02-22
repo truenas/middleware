@@ -26,7 +26,7 @@ class TelegramAlertService(ThreadedAlertService):
                 data=json.dumps({
                     "chat_id": chat_id,
                     "text": self._format_alerts(alerts, gone_alerts, new_alerts),
-                    "parse_mode": "Markdown",
+                    "parse_mode": "HTML",
                 }),
                 timeout=INTERNET_TIMEOUT,
             )
