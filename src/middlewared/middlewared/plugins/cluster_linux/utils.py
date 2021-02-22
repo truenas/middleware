@@ -2,8 +2,15 @@ import os
 import enum
 
 
-class CTDBConfig(enum.Enum):
+class FuseConfig(enum.Enum):
+    """
+    Various configuration settings used for FUSE mounting
+    the gluster volumes locally.
+    """
+    FUSE_PATH_BASE = '/cluster'
 
+
+class CTDBConfig(enum.Enum):
     """
     Various configuration settings used to configure ctdb.
     """
@@ -40,7 +47,7 @@ class CTDBConfig(enum.Enum):
     GENERAL_FILE = 'ctdb.conf'
 
     # local gluster fuse client mount related config
-    LOCAL_MOUNT_BASE = '/cluster'
+    LOCAL_MOUNT_BASE = FuseConfig.FUSE_PATH_BASE.value
     CTDB_VOL_NAME = 'ctdb_shared_vol'
     CTDB_LOCAL_MOUNT = os.path.join(LOCAL_MOUNT_BASE, CTDB_VOL_NAME)
     GM_RECOVERY_FILE = os.path.join(CTDB_LOCAL_MOUNT, REC_FILE)
