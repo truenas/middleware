@@ -200,9 +200,10 @@ class FailoverService(ConfigService):
         """
         if self.HA_LICENSED is None:
             info = self.middleware.call_sync('system.info')
-            if not info['license'] or not info['license']['system_serial_ha']:
+            if info['license'] and info['license']['system_serial_ha']:
+                self.HA_LICENSED = True
+            else:
                 self.HA_LICENSED = False
-            self.HA_LICENSED = True
 
         return self.HA_LICENSED
 
