@@ -107,6 +107,7 @@ class FailoverModel(sa.Model):
 class FailoverService(ConfigService):
 
     HA_MODE = None
+    HA_LICENSED = None
     LAST_STATUS = None
     LAST_DISABLEDREASONS = None
 
@@ -197,10 +198,14 @@ class FailoverService(ConfigService):
         """
         Checks whether this instance is licensed as a HA unit.
         """
-        info = self.middleware.call_sync('system.info')
-        if not info['license'] or not info['license']['system_serial_ha']:
-            return False
-        return True
+        if self.HA_LICENSED is None:
+            info = self.middleware.call_sync('system.info')
+            if info['license'] and info['license']['system_serial_ha']:
+                self.HA_LICENSED = True
+            else:
+                self.HA_LICENSED = False
+
+        return self.HA_LICENSED
 
     @private
     async def ha_mode(self):
@@ -1507,6 +1512,7 @@ async def hook_restart_devd(middleware, *args, **kwargs):
 
 async def hook_license_update(middleware, *args, **kwargs):
     FailoverService.HA_MODE = None
+    FailoverService.HA_LICENSED = None
 
     if not await middleware.call('failover.licensed'):
         return
