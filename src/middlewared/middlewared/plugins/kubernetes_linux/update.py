@@ -51,11 +51,12 @@ class KubernetesService(ConfigService):
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
 
-        network_cidrs = [
+        network_cidrs = set([
             ipaddress.ip_network(f'{ip_config["address"]}/{ip_config["netmask"]}', False)
             for interface in await self.middleware.call('interface.query')
-            for ip_config in interface['aliases']
-        ]
+            for ip_config in itertools.chain(interface['aliases'], interface['state']['aliases'])
+            if ip_config['type'] != 'LINK'
+        ])
 
         unused_cidrs = []
         if not data['cluster_cidr'] or not data['service_cidr']:
