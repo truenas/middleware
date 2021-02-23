@@ -27,15 +27,12 @@ class PCI(Device):
             raise CallError(f'Unable to detach {self.passthru_device()} PCI device: {stderr.decode()}')
 
     def is_available(self):
-        choices = self.middleware.call_sync('vm.device.passthrough_device_choices')
-        if self.passthru_device() not in choices:
-            return False
+        if osc.IS_LINUX:
+            device = self.middleware.call_sync('vm.device.passthrough_device', self.passthru_device())
+            if not device['error'] and not device['available']:
+                self.detach_device()
 
-        pci_dev = choices[self.passthru_device()]
-        if osc.IS_LINUX and not pci_dev['available']:
-            self.detach_device()
-
-        return self.middleware.call_sync('vm.device.passthrough_device_choices')[self.passthru_device()]['available']
+        return self.middleware.call_sync('vm.device.passthrough_device', self.passthru_device())['available']
 
     def identity(self):
         return str(self.passthru_device())
