@@ -66,15 +66,12 @@ class VMDeviceService(Service, PCIInfoBase):
             driver = next((e for e in xml.getchildren() if e.tag == 'driver'), None)
             drivers = [e.text for e in driver.getchildren()] if driver is not None else []
 
-            if not drivers or not all(d == 'vfio-pci' for d in drivers):
-                continue
-
             node_info = await self.middleware.call('vm.device.retrieve_node_information', xml)
             if not node_info['iommu_group']['number']:
                 self.middleware.logger.debug('Unable to determine iommu group for %r, skipping', pci)
                 continue
 
-            mapping[pci] = {**node_info, 'drivers': drivers}
+            mapping[pci] = {**node_info, 'drivers': drivers, 'available': all(d == 'vfio-pci' for d in drivers)}
 
         return mapping
 
