@@ -49,6 +49,11 @@ class VMService(Service, VMSupervisorMixin):
         self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
 
     @private
+    async def check_setup_libvirt(self):
+        if not await self.middleware.call('service.started', 'libvirtd'):
+            await self.middleware.call('vm.setup_libvirt_connection')
+
+    @private
     def initialize_vms(self, timeout=30):
         if self.middleware.call_sync('vm.query'):
             self.setup_libvirt_connection(timeout)

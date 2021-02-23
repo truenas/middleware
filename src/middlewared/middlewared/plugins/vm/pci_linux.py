@@ -47,6 +47,7 @@ class VMDeviceService(Service, PCIInfoBase):
         return info
 
     async def passthrough_device(self, device):
+        await self.middleware.call('vm.check_setup_libvirt')
         data = {
             'capability': {
                 'class': None,
@@ -81,8 +82,7 @@ class VMDeviceService(Service, PCIInfoBase):
     async def passthrough_device_choices(self):
         # We need to check if libvirtd is running because it's possible that no vm has been configured yet
         # which will result in libvirtd not running and trying to list pci devices for passthrough fail.
-        if not await self.middleware.call('service.started', 'libvirtd'):
-            await self.middleware.call('vm.setup_libvirt_connection')
+        await self.middleware.call('vm.check_setup_libvirt')
 
         cp = await run(get_virsh_command_args() + ['nodedev-list', 'pci'], check=False)
         if cp.returncode:
