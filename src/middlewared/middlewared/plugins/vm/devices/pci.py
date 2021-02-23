@@ -46,6 +46,17 @@ class PCI(Device):
     def passthru_device(self):
         return str(self.data['attributes']['pptdev'])
 
+    def post_stop_vm_linux(self, *args, **kwargs):
+        if len(
+            self.middleware.call_sync(
+                'vm.device.query', [['attributes.pptdev', '=', self.passthru_device()], ['dtype', '=', 'PCI']]
+            )
+        ) == 1:
+            try:
+                self.reattach_device()
+            except CallError:
+                self.middleware.logger.error('Failed to re-attach %s device', self.passthru_device(), exc_info=True)
+
     def xml_linux(self, *args, **kwargs):
         passthrough_choices = kwargs.pop('passthrough_choices')
         addresses = passthrough_choices[self.passthru_device()]['iommu_group']['addresses']
