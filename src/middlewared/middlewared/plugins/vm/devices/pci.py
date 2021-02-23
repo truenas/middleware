@@ -1,8 +1,11 @@
+import subprocess
+
+from middlewared.service import CallError
 from middlewared.schema import Dict, Str
 from middlewared.utils import osc
 
 from .device import Device
-from .utils import create_element
+from .utils import create_element, LIBVIRT_URI
 
 
 class PCI(Device):
@@ -17,14 +20,28 @@ class PCI(Device):
         if osc.IS_FREEBSD:
             self.init_ppt_map()
 
+    def detach_device(self):
+        cp = subprocess.Popen(['virsh', '-c', LIBVIRT_URI, 'nodedev-detach', self.passthru_device()])
+        stderr = cp.communicate()[1]
+        if cp.returncode:
+            raise CallError(f'Unable to detach {self.passthru_device()} PCI device: {stderr.decode()}')
+
     def is_available(self):
-        return self.passthru_device() in self.middleware.call_sync('vm.device.passthrough_device_choices')
+        choices = self.middleware.call_sync('vm.device.passthrough_device_choices')
+        if self.passthru_device() not in choices:
+            return False
+
+        pci_dev = choices[self.passthru_device()]
+        if osc.IS_LINUX and not pci_dev['available']:
+            self.detach_device()
+
+        return self.middleware.call_sync('vm.device.passthrough_device_choices')[self.passthru_device()]['available']
 
     def identity(self):
         return str(self.passthru_device())
 
     def passthru_device(self):
-        return self.data['attributes']['pptdev']
+        return str(self.data['attributes']['pptdev'])
 
     def xml_linux(self, *args, **kwargs):
         passthrough_choices = kwargs.pop('passthrough_choices')
