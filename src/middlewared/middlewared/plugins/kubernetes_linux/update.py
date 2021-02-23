@@ -1,4 +1,5 @@
 import ipaddress
+import itertools
 import os
 
 import middlewared.sqlalchemy as sa
@@ -36,6 +37,15 @@ class KubernetesService(ConfigService):
         data['dataset'] = os.path.join(data['pool'], 'ix-applications') if data['pool'] else None
         data.pop('cni_config')
         return data
+
+    @private
+    async def unused_cidrs(self, network_cidrs):
+        return [
+            str(network) for network in itertools.chain(
+                ipaddress.ip_network('172.16.0.0/12', False).subnets(4),
+                ipaddress.ip_network('10.0.0.0/8', False).subnets(8)
+            ) if not any(network.overlaps(used_network) for used_network in network_cidrs)
+        ]
 
     @private
     async def validate_data(self, data, schema):
