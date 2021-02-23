@@ -218,13 +218,10 @@ class VMDeviceService(CRUDService):
 
         if device['dtype'] == 'PCI':
             await self.middleware.call('alert.oneshot_delete', 'PCIDeviceUnavailable', device['attributes']['pptdev'])
-            if len(await self.middleware.call(
-                'vm.device.query', [
-                    ['attributes.pptdev', '=', device['attributes']['pptdev']], ['dtype', '=', 'PCI']
-                ]
-            )) == 1:
+            device_obj = PCI(device, middleware=self.middleware)
+            if await self.middleware.run_in_thread(device_obj.safe_to_reattach):
                 try:
-                    PCI(device, middleware=self.middleware).reattach_device()
+                    await self.middleware.run_in_thread(device_obj.reattach_device)
                 except CallError:
                     if not options['force']:
                         raise
