@@ -87,10 +87,9 @@ class CtdbSharedVolumeService(Service):
 
         # try to mount it locally
         mount_job = await self.middleware.call(
-            'gluster.fuse.mount', {'name': CTDB_VOL_NAME}
+            'gluster.fuse.mount', {'name': CTDB_VOL_NAME, 'raise': True}
         )
-        if not await mount_job.wait():
-            raise CallError(f'Failed to FUSE mount {CTDB_VOL_NAME}. Check logs')
+        await mount_job.wait(raise_error=True)
 
         return await self.get_instance(CTDB_VOL_NAME)
 
@@ -109,10 +108,9 @@ class CtdbSharedVolumeService(Service):
 
         # umount it first
         umount_job = await self.middleware.call(
-            'gluster.volume.umount', {'name': CTDB_VOL_NAME}
+            'gluster.volume.umount', {'name': CTDB_VOL_NAME, 'raise': True}
         )
-        if not await umount_job.wait():
-            raise CallError(f'Failed to unmount {CTDB_VOL_NAME}. Check logs')
+        await umount_job.wait(raise_error=True)
 
         if info['started']:
             # stop the volume

@@ -54,6 +54,7 @@ class GlusterFuseService(Service):
         'gluserfuse_mount',
         Str('name', default=None),
         Bool('all', default=False),
+        Bool('raise', default=False),
     ))
     @job(lock='glusterfuse')
     async def mount(self, job, data):
@@ -63,6 +64,8 @@ class GlusterFuseService(Service):
         `name` String representing the name of the gluster volume
         `all` Boolean if True locally FUSE mount all detected
                 gluster volumes
+        `raise` Boolean if True raise a CallError if the FUSE mount
+                fails
         """
         schema_name = 'glusterfuse.mount'
         await self.middleware.call(
@@ -111,15 +114,25 @@ class GlusterFuseService(Service):
                             if ignore1 in errmsg:
                                 mounted.append(True)
                             else:
-                                self.logger.error(
-                                    'Failed to mount %s with error: %s', path, errmsg
-                                )
-                                mounted.append(False)
+                                if data['raise']:
+                                    raise CallError(
+                                        f'Failed to mount {path} with error: {errmsg}'
+                                    )
+                                else:
+                                    self.logger.error(
+                                        'Failed to mount %s with error: %s', path, errmsg
+                                    )
+                                    mounted.append(False)
                         else:
                             mounted.append(True)
-                except Exception:
-                    self.logger.error('Unhandled exception trying to mount %s', path, exc_info=True)
-                    continue
+                except Exception as e:
+                    if data['raise']:
+                        raise CallError(f'Unhandled exception trying to mount {path}: {e}')
+                    else:
+                        self.logger.error(
+                            'Unhandled exception trying to mount %s', path, exc_info=True
+                        )
+                        continue
 
             # always start it back up
             await self.middleware.call('service.start', 'glustereventsd')
@@ -130,6 +143,7 @@ class GlusterFuseService(Service):
         'glusterfuse_umount',
         Str('name', default=None),
         Bool('all', default=False),
+        Bool('raise', default=False),
     ))
     @job(lock='glusterfuse')
     async def umount(self, job, data):
@@ -139,6 +153,8 @@ class GlusterFuseService(Service):
         `name` String representing the name of the gluster volume
         `all` Boolean if True umount all locally detected FUSE
                 mounted gluster volumes
+        `raise` Boolean if True raise a CallError if the FUSE mount
+                fails
         """
         schema_name = 'glusterfuse.umount'
         await self.middleware.call(
@@ -162,15 +178,25 @@ class GlusterFuseService(Service):
                         if ignore1 in errmsg or ignore2 in errmsg:
                             umounted.append(True)
                         else:
-                            self.logger.error(
-                                'Failed to umount %s with error: %s', path, errmsg
-                            )
-                            umounted.append(False)
+                            if data['raise']:
+                                raise CallError(
+                                    f'Failed to umount {path} with error: {errmsg}'
+                                )
+                            else:
+                                self.logger.error(
+                                    'Failed to umount %s with error: %s', path, errmsg
+                                )
+                                umounted.append(False)
                     else:
                         umounted.append(True)
-                except Exception:
-                    self.logger.error('Unhandled exception trying to umount %s', path, exc_info=True)
-                    continue
+                except Exception as e:
+                    if data['raise']:
+                        raise CallError(f'Unhandled exception trying to umount {path}: {e}')
+                    else:
+                        self.logger.error(
+                            'Unhandled exception trying to umount %s', path, exc_info=True
+                        )
+                        continue
 
             # always start it back up
             await self.middleware.call('service.start', 'glustereventsd')
