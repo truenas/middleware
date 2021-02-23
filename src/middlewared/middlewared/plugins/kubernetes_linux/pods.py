@@ -36,6 +36,7 @@ class KubernetesPodService(CRUDService):
         async with api_client() as (api, context):
             return await context['core_api'].read_namespaced_pod_log(
                 name=pod, container=container, namespace=namespace, tail_lines=tail_lines, limit_bytes=limit_bytes,
+                timestamps=True,
             )
 
 
@@ -84,6 +85,7 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
                 async with self.watch.stream(
                     context['core_api'].read_namespaced_pod_log, name=pod, container=container,
                     namespace=release_data['namespace'], tail_lines=tail_lines, limit_bytes=limit_bytes,
+                    timestamps=True,
                 ) as stream:
                     async for event in stream:
                         self.send_event('ADDED', fields={'data': event})
