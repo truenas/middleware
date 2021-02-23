@@ -39,6 +39,15 @@ class VMDeviceService(Service, PCIInfoBase):
     async def passthrough_device_choices(self):
         return await self.pptdev_choices()
 
+    async def passthrough_device(self, device):
+        choices = await self.pptdev_choices()
+        if device not in choices:
+            return {
+                'available': False,
+            }
+        else:
+            return choices[device]
+
     async def iommu_enabled(self):
         if self.iommu_enable is not None:
             return self.iommu_enable
