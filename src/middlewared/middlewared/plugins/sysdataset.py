@@ -82,6 +82,25 @@ class SystemDatasetService(ConfigService):
 
         return config
 
+    @accepts()
+    async def pool_choices(self):
+        """
+        Retrieve pool choices which can be used for configuring system dataset.
+        """
+        boot_pool = await self.middleware.call('boot.pool_name')
+        current_pool = (await self.config())['pool']
+        pools = [p['name'] for p in await self.middleware.call('pool.query', [['encrypt', '!=', 2]])]
+        valid_root_ds = [
+            ds['id'] for ds in await self.middleware.call(
+                'pool.dataset.query', [['key_format.value', '!=', 'PASSPHRASE'], ['locked', '!=', True]], {
+                    'extra': {'retrieve_children': False}
+                }
+            )
+        ]
+        return {
+            p: p for p in set([boot_pool, current_pool] + [ds for ds in valid_root_ds if ds in pools])
+        }
+
     @accepts(Dict(
         'sysdataset_update',
         Str('pool', null=True),
