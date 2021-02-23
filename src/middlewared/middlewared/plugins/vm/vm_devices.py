@@ -208,6 +208,13 @@ class VMDeviceService(CRUDService):
         await self.delete_resource(options, device)
         if device['dtype'] == 'PCI':
             await self.middleware.call('alert.oneshot_delete', 'PCIDeviceUnavailable', device['attributes']['pptdev'])
+            if len(await self.middleware.call(
+                'vm.device.query', [
+                    ['attributes.pptdev', '=', device['attributes']['pptdev']], ['dtype', '=', 'PCI']
+                ]
+            )) == 1:
+                PCI(device, middleware=self.middleware).reattach_device()
+
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
