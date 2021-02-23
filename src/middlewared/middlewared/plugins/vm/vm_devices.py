@@ -206,6 +206,10 @@ class VMDeviceService(CRUDService):
         Delete a VM device of `id`.
         """
         device = await self.get_instance(id)
+        status = await self.middleware.call('vm.status', device['vm'])
+        if status.get('state') == 'RUNNING':
+            raise CallError('Please stop associated VM before deleting VM device.')
+
         try:
             await self.delete_resource(options, device)
         except CallError:
