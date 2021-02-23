@@ -26,6 +26,12 @@ class PCI(Device):
         if cp.returncode:
             raise CallError(f'Unable to detach {self.passthru_device()} PCI device: {stderr.decode()}')
 
+    def reattach_device(self):
+        cp = subprocess.Popen(['virsh', '-c', LIBVIRT_URI, 'nodedev-reattach', self.passthru_device()])
+        stderr = cp.communicate()[1]
+        if cp.returncode:
+            raise CallError(f'Unable to re-attach {self.passthru_device()} PCI device: {stderr.decode()}')
+
     def is_available(self):
         if osc.IS_LINUX:
             device = self.middleware.call_sync('vm.device.passthrough_device', self.passthru_device())
