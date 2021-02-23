@@ -57,25 +57,49 @@ class KubernetesService(ConfigService):
             for ip_config in interface['aliases']
         ]
 
+        unused_cidrs = []
+        if not data['cluster_cidr'] or not data['service_cidr']:
+            unused_cidrs = await self.unused_cidrs(network_cidrs)
+            # If index 0,1 belong to different classes, let's make sure
+            # that is not the case anymore - we will have class b first and then class a, so if
+            # index 0 is class b and 1 is class a, we remove index 0
+            class_b = ipaddress.IPv4Network(('172.16.0.0', '255.240.0.0'))
+            if len(unused_cidrs) > 2 and class_b.overlaps(
+                ipaddress.ip_network(unused_cidrs[0], False)
+            ) and not class_b.overlaps(ipaddress.ip_network(unused_cidrs[1], False)):
+                unused_cidrs.pop(0)
+
+        if unused_cidrs and not data['cluster_cidr']:
+            data['cluster_cidr'] = unused_cidrs.pop(0)
+
+        if unused_cidrs and not data['service_cidr']:
+            data['service_cidr'] = unused_cidrs.pop(0)
+
+        if not data['cluster_dns_ip'] and data['service_cidr']:
+            # Picking 10th ip ( which is the usual default ) from service cidr
+            data['cluster_dns_ip'] = str(list(ipaddress.ip_network(data['service_cidr'], False).hosts())[9])
+
         if data['pool'] and not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
             verrors.add(f'{schema}.pool', 'Please provide a valid pool configured in the system.')
 
-        for k in filter(
-            lambda k: any(ipaddress.ip_network(data[k], False).overlaps(cidr) for cidr in network_cidrs),
-            ('cluster_cidr', 'service_cidr')
-        ):
-            verrors.add(f'{schema}.{k}', 'Requested CIDR is already in use.')
+        for k in ('cluster_cidr', 'service_cidr'):
+            if not data[k]:
+                verrors.add(f'{schema}.{k}', f'Please specify a {k.split("_")[0]} CIDR.')
+            elif any(ipaddress.ip_network(data[k], False).overlaps(cidr) for cidr in network_cidrs):
+                verrors.add(f'{schema}.{k}', 'Requested CIDR is already in use.')
 
-        if data['cluster_cidr'] == data['service_cidr']:
+        if data['cluster_cidr'] and data['cluster_cidr'] == data['service_cidr']:
             verrors.add(f'{schema}.cluster_cidr', 'Value cannot be similar to service CIDR.')
             verrors.add(f'{schema}.service_cidr', 'Value cannot be similar to cluster CIDR.')
 
-        if ipaddress.ip_network(data['cluster_cidr'], False).overlaps(
+        if data['cluster_cidr'] and ipaddress.ip_network(data['cluster_cidr'], False).overlaps(
             ipaddress.ip_network(data['service_cidr'], False)
         ):
             verrors.add(f'{schema}.cluster_cidr', 'Must not overlap with service CIDR.')
 
-        if ipaddress.ip_address(data['cluster_dns_ip']) not in ipaddress.ip_network(data['service_cidr']):
+        if data['service_cidr'] and ipaddress.ip_address(
+            data['cluster_dns_ip']
+        ) not in ipaddress.ip_network(data['service_cidr']):
             verrors.add(f'{schema}.cluster_dns_ip', 'Must be in range of "service_cidr".')
 
         if data['node_ip'] not in await self.bindip_choices():
