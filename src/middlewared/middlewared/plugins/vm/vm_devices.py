@@ -198,6 +198,7 @@ class VMDeviceService(CRUDService):
             'vm_device_delete',
             Bool('zvol', default=False),
             Bool('raw_file', default=False),
+            Bool('force', default=False),
         )
     )
     async def do_delete(self, id, options):
@@ -205,7 +206,12 @@ class VMDeviceService(CRUDService):
         Delete a VM device of `id`.
         """
         device = await self.get_instance(id)
-        await self.delete_resource(options, device)
+        try:
+            await self.delete_resource(options, device)
+        except CallError:
+            if not options['force']:
+                raise
+
         if device['dtype'] == 'PCI':
             await self.middleware.call('alert.oneshot_delete', 'PCIDeviceUnavailable', device['attributes']['pptdev'])
             if len(await self.middleware.call(
@@ -213,7 +219,11 @@ class VMDeviceService(CRUDService):
                     ['attributes.pptdev', '=', device['attributes']['pptdev']], ['dtype', '=', 'PCI']
                 ]
             )) == 1:
-                PCI(device, middleware=self.middleware).reattach_device()
+                try:
+                    PCI(device, middleware=self.middleware).reattach_device()
+                except CallError:
+                    if not options['force']:
+                        raise
 
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 

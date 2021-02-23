@@ -360,7 +360,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
             # We remove vm devices first
             for device in vm['devices']:
-                await self.middleware.call('vm.device.delete', device['id'])
+                await self.middleware.call('vm.device.delete', device['id'], {'force': data['force']})
             result = await self.middleware.call('datastore.delete', 'vm.vm', id)
             if not await self.middleware.call('vm.query'):
                 await self.middleware.call('vm.deinitialize_vms')
