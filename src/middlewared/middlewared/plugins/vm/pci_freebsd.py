@@ -44,6 +44,7 @@ class VMDeviceService(Service, PCIInfoBase):
         if device not in choices:
             return {
                 'available': False,
+                'error': 'Unable to locate device',
             }
         else:
             return choices[device]

@@ -390,8 +390,12 @@ class VMDeviceService(CRUDService):
             pptdev = device['attributes'].get('pptdev')
             if osc.IS_FREEBSD and not RE_PPTDEV_NAME.findall(pptdev):
                 verrors.add('attribute.pptdev', 'Please specify correct PCI device for passthru.')
-            if pptdev not in await self.middleware.call('vm.device.pptdev_choices'):
-                verrors.add('attribute.pptdev', 'Not a valid choice. The PCI device is not available for passthru.')
+            device_details = await self.middleware.call('vm.device.passthrough_device', pptdev)
+            if device_details.get('error'):
+                verrors.add(
+                    'attribute.pptdev',
+                    f'Not a valid choice. The PCI device is not available for passthru: {device_details["error"]}'
+                )
             if not await self.middleware.call('vm.device.iommu_enabled'):
                 verrors.add('attribute.pptdev', 'IOMMU support is required.')
         elif device.get('dtype') == 'VNC':
