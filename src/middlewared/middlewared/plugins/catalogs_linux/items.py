@@ -127,6 +127,7 @@ class CatalogService(Service):
                 'healthy_error': None,
                 'location': os.path.join(item_path, version),
                 'required_features': [],
+                'human_version': version,
             }
             try:
                 self.middleware.call_sync(
@@ -165,6 +166,9 @@ class CatalogService(Service):
         version_data['values'] = self.middleware.call_sync(
             'chart.release.construct_schema_for_item_version', version_data, {}, False
         )['new_values']
+        chart_metadata = version_data['chart_metadata']
+        if chart_metadata['name'] != 'ix-chart' and chart_metadata.get('appVersion'):
+            version_data['human_version'] = f'{chart_metadata["appVersion"]}_{chart_metadata["version"]}'
 
         return version_data
 
