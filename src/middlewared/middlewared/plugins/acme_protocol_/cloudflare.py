@@ -1,16 +1,21 @@
 from certbot.plugins import dns_common
 from CloudFlare.cloudflare import CloudFlare, CloudFlareAPIError
 
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, CRUDService, private
 
 
-class DNSAuthenticatorService(Service):
+class DNSAuthenticatorService(CRUDService):
 
     class Config:
-        namespace = 'acme.dns.authenticator'
+        namespace = 'acme.dns.authenticator.cloudflare'
+        private = True
 
-    @private
-    def cloudflare_txt_record_update(self, domain, challenge, key, cloudflare_email, api_key):
+    def do_create(self, data):
+        domain = data['domain']
+        challenge = data['challenge']
+        key = data['key']
+        cloudflare_email = data['cloudflare_email']
+        api_key = data['api_key']
         cf = CloudFlare(cloudflare_email, api_key)
         zone_id = self.find_cloudflare_zone_id(cf, domain)
         record_name = challenge.validation_domain_name(domain)

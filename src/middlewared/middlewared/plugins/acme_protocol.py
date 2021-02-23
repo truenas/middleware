@@ -421,7 +421,10 @@ class DNSAuthenticatorService(CRUDService):
     @private
     def update_txt_record_cloudflare(self, domain, challenge, key, cloudflare_email, api_key):
         self.middleware.call_sync(
-            'acme.dns.authenticator.cloudflare_txt_record_update', domain, challenge, key, cloudflare_email, api_key
+            'acme.dns.authenticator.cloudflare.create', {
+                'domain': domain, 'challenge': challenge, 'key': key,
+                'cloudflare_email': cloudflare_email, 'api_key': api_key
+            }
         )
 
     @private
