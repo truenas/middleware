@@ -8,6 +8,7 @@ import errno
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 SYSDATASET_PATH = '/var/db/system'
 
@@ -288,6 +289,14 @@ class SystemDatasetService(ConfigService):
                     # FIXME: sysctl module not working
                     await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
                 os.chmod(corepath, 0o775)
+
+                if await self.middleware.call('keyvalue.get', 'run_migration', False):
+                    try:
+                        cores = Path(corepath)
+                        for corefile in cores.iterdir():
+                            corefile.unlink()
+                    except Exception:
+                        self.logger.warning("Failed to clear old core files.", exc_info=True)
 
             await self.__nfsv4link(config)
             await self.middleware.call('smb.setup_directories')
