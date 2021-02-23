@@ -46,12 +46,17 @@ class PCI(Device):
     def passthru_device(self):
         return str(self.data['attributes']['pptdev'])
 
+    def get_vms_using_device(self):
+        devs = self.middleware.call_sync(
+            'vm.device.query', [['attributes.pptdev', '=', self.passthru_device()], ['dtype', '=', 'PCI']]
+        )
+        return self.middleware.call_sync('vm.query', [['id', 'in', [dev['vm'] for dev in devs]]])
+
+    def safe_to_reattach(self):
+        return all(vm['status']['state'] != 'RUNNING' for vm in self.get_vms_using_device())
+
     def post_stop_vm_linux(self, *args, **kwargs):
-        if len(
-            self.middleware.call_sync(
-                'vm.device.query', [['attributes.pptdev', '=', self.passthru_device()], ['dtype', '=', 'PCI']]
-            )
-        ) == 1:
+        if self.safe_to_reattach():
             try:
                 self.reattach_device()
             except CallError:
