@@ -1,6 +1,8 @@
 import json
 
 from aiohttp.client_exceptions import ClientConnectionError
+from datetime import datetime
+from dateutil.parser import parse, ParserError
 from kubernetes_asyncio.watch import Watch
 
 from middlewared.main import EventSource
@@ -88,7 +90,17 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
                     timestamps=True,
                 ) as stream:
                     async for event in stream:
-                        self.send_event('ADDED', fields={'data': event})
+                        # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
+                        # separately so UI can highlight the timestamp giving us a cleaner view of the logs
+                        timestamp = event.split(maxsplit=1)[0].strip()
+                        try:
+                            timestamp = str(parse(timestamp))
+                        except (TypeError, ParserError):
+                            timestamp = None
+                        else:
+                            event = event.split(maxsplit=1)[-1].lstrip()
+
+                        self.send_event('ADDED', fields={'data': event, 'timestamp': timestamp})
             except ClientConnectionError:
                 pass
 
