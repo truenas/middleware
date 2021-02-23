@@ -46,6 +46,38 @@ class VMDeviceService(Service, PCIInfoBase):
 
         return info
 
+    async def passthrough_device(self, device):
+        data = {
+            'capability': {
+                'class': None,
+                'domain': None,
+                'bus': None,
+                'slot': None,
+                'function': None,
+                'product': 'Not Available',
+                'vendor': 'Not Available',
+            },
+            'iommu_group': {},
+            'available': False,
+            'drivers': [],
+            'error': None,
+        }
+        cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', device], check=False)
+        if cp.returncode:
+            data['error'] = cp.stderr.decode()
+            return data
+
+        xml = etree.fromstring(cp.stdout.decode().strip())
+        driver = next((e for e in xml.getchildren() if e.tag == 'driver'), None)
+        drivers = [e.text for e in driver.getchildren()] if driver is not None else []
+
+        node_info = await self.middleware.call('vm.device.retrieve_node_information', xml)
+        return {
+            **node_info, 'drivers': drivers, 'available': node_info['iommu_group']['number'] and all(
+                d == 'vfio-pci' for d in drivers
+            ), 'error': 'Unable to determine iommu group' if not node_info['iommu_group']['number'] else None,
+        }
+
     async def passthrough_device_choices(self):
         # We need to check if libvirtd is running because it's possible that no vm has been configured yet
         # which will result in libvirtd not running and trying to list pci devices for passthrough fail.
@@ -58,20 +90,10 @@ class VMDeviceService(Service, PCIInfoBase):
         pci_devices = [k.strip() for k in cp.stdout.decode().split('\n') if k.strip()]
         mapping = {}
         for pci in pci_devices:
-            cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', pci], check=False)
-            if cp.returncode:
-                self.middleware.logger.debug('Failed to retrieve details for %r: %s', pci, cp.stderr.decode())
+            details = await self.passthrough_device(pci)
+            if details['error']:
                 continue
-            xml = etree.fromstring(cp.stdout.decode().strip())
-            driver = next((e for e in xml.getchildren() if e.tag == 'driver'), None)
-            drivers = [e.text for e in driver.getchildren()] if driver is not None else []
-
-            node_info = await self.middleware.call('vm.device.retrieve_node_information', xml)
-            if not node_info['iommu_group']['number']:
-                self.middleware.logger.debug('Unable to determine iommu group for %r, skipping', pci)
-                continue
-
-            mapping[pci] = {**node_info, 'drivers': drivers, 'available': all(d == 'vfio-pci' for d in drivers)}
+            mapping[pci] = details
 
         return mapping
 
