@@ -16,8 +16,8 @@ class Route53Authenticator(Authenticator):
     NAME = 'route53'
     SCHEMA = Dict(
         'route53',
-        Str('access_key_id', required=True, empty=False),
-        Str('secret_access_key', required=True, empty=False),
+        Str('access_key_id', required=True, empty=False, title='Access Key Id'),
+        Str('secret_access_key', required=True, empty=False, title='Secret Access Key'),
     )
 
     def initialize_credentials(self):
