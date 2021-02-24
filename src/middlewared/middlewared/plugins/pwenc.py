@@ -78,6 +78,7 @@ class PWEncService(Service):
 
 async def setup(middleware):
     if not await middleware.call('pwenc.check'):
+        middleware.logger.debug('Generating new pwenc secret')
         await middleware.call('pwenc.generate_secret')
 
 
