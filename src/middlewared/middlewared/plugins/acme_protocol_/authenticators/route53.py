@@ -23,7 +23,7 @@ class Route53Authenticator(Authenticator):
             if not getattr(self, k, None):
                 verrors.add(k, 'Please provide a valid value.')
 
-    def perform(self, domain, challenge, key):
+    def perform(self, domain, validation_name, validation_content):
         session = boto3.Session(
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
@@ -67,8 +67,8 @@ class Route53Authenticator(Authenticator):
                         {
                             'Action': 'UPSERT',
                             'ResourceRecordSet': {
-                                'Name': challenge.validation_domain_name(domain),
-                                'ResourceRecords': [{'Value': f'"{challenge.validation(key)}"'}],
+                                'Name': validation_name,
+                                'ResourceRecords': [{'Value': f'"{validation_content}"'}],
                                 'TTL': 3600,
                                 'Type': 'TXT'
                             }
