@@ -28,7 +28,7 @@ class Authenticator:
 
     def cleanup(self, domain, validation_name, validation_content):
         try:
-            self.cleanup(domain, validation_name, validation_content)
+            self._cleanup(domain, validation_name, validation_content)
         except Exception as e:
             raise CallError(f'Failed to cleanup {self.NAME} challenge for {domain!r} domain: {e}')
 

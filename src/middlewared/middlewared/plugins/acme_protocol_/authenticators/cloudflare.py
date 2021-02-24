@@ -15,9 +15,9 @@ class CloudFlareAuthenticator(Authenticator):
     NAME = 'cloudflare'
     SCHEMA = Dict(
         'cloudflare',
-        Str('cloudflare_email', null=True, default=None),
-        Str('api_key', empty=False),
-        Str('api_token', empty=False),
+        Str('cloudflare_email', empty=False, null=True),
+        Str('api_key', empty=False, null=True),
+        Str('api_token', empty=False, null=True),
     )
 
     def initialize_credentials(self):
@@ -26,12 +26,14 @@ class CloudFlareAuthenticator(Authenticator):
         self.api_token = self.attributes.get('api_token')
 
     @accepts(SCHEMA)
-    def validate_credentials(self, data):
+    def validate_credentials(data):
         verrors = ValidationErrors()
         if data.get('api_token'):
-            if data.get('cloudflare_email') or data.get('api_key'):
-                for k in ('cloudflare_email', 'api_key'):
-                    verrors.add(k, 'Should not be specified when using "api_token".')
+            if data.get('cloudflare_email'):
+                verrors.add('cloudflare_email', 'Should not be specified when using "api_token".')
+            if data.get('api_key'):
+                verrors.add('api_key', 'Should not be specified when using "api_token".')
+
         elif data.get('cloudflare_email') or data.get('api_key'):
             if not data.get('cloudflare_email'):
                 verrors.add(
@@ -42,6 +44,8 @@ class CloudFlareAuthenticator(Authenticator):
                 verrors.add('api_key', 'Attribute is required when using a Global API Key.')
         else:
             verrors.add('api_token', 'Attribute must be specified when Global API Key is not specified.')
+
+        verrors.check()
 
     def _perform(self, domain, validation_name, validation_content):
         self.get_cloudflare_object().add_txt_record(domain, validation_name, validation_content, 3600)
