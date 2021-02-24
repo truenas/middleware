@@ -52,10 +52,8 @@ class PWEncService(Service):
         except IndexError:
             self.middleware.call_sync('datastore.insert', 'system.settings', {})
             settings = self.middleware.call_sync('datastore.config', 'system.settings')
-        try:
-            return self.decrypt(settings['stg_pwenc_check']) == PWENC_CHECK
-        except (IOError, ValueError):
-            return False
+
+        return self.decrypt(settings['stg_pwenc_check']) == PWENC_CHECK
 
     @classmethod
     def get_secret(cls):
