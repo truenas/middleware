@@ -117,7 +117,7 @@ class CloudFlareAuthenticator(Authenticator):
             return records[0]['id']
         logger.debug('Unable to find TXT record.')
 
-    def cleanup(self, *args, **kwargs):
+    def cleanup(self, domain, validation_name, validation_content):
         raise NotImplementedError
 
 

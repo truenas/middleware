@@ -25,11 +25,24 @@ class DNSAuthenticatorService(Service):
     )
     @private
     def perform_challenge(self, data):
-        auth_details = self.middleware.call_sync('acme.dns.authenticator.get_instance', data['authenticator'])
-        authenticator = auth_factory.authenticator(auth_details['authenticator'].lower())(auth_details['attributes'])
-        challenge = messages.ChallengeBody.from_json(json.loads(data['challenge']))
-        authenticator.perform(
-            data['domain'],
-            challenge.validation_domain_name(data['domain']),
-            challenge.validation(jose.JWKRSA.fields_from_json(json.loads(data['key']))),
+        authenticator = self.get_authenticator(data['authenticator'])
+        authenticator.perform(*self.get_validation_parameters(data['challenge'], data['domain'], data['key']))
+
+    @private
+    def cleanup_challenge(self, data):
+        authenticator = self.get_authenticator(data['authenticator'])
+        authenticator.cleanup(*self.get_validation_parameters(data['challenge'], data['domain'], data['key']))
+
+    @private
+    def get_authenticator(self, authenticator):
+        auth_details = self.middleware.call_sync('acme.dns.authenticator.get_instance', authenticator)
+        return auth_factory.authenticator(auth_details['authenticator'].lower())(auth_details['attributes'])
+
+    @private
+    def get_validation_parameters(self, challenge, domain, key):
+        challenge = messages.ChallengeBody.from_json(json.loads(challenge))
+        return (
+            domain,
+            challenge.validation_domain_name(domain),
+            challenge.validation(jose.JWKRSA.fields_from_json(json.loads(key))),
         )

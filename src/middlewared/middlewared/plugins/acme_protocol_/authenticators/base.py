@@ -24,5 +24,5 @@ class Authenticator:
     def perform(self, domain, validation_name, validation_content):
         raise NotImplementedError
 
-    def cleanup(self, *args, **kwargs):
+    def cleanup(self, domain, validation_name, validation_content):
         raise NotImplementedError
