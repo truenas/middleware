@@ -11,6 +11,7 @@ from middlewared.plugins.smb import SMBBuiltin
 import binascii
 import crypt
 import errno
+import glob
 import hashlib
 import os
 import random
@@ -68,6 +69,34 @@ def nt_password(cleartext):
     return binascii.hexlify(nthash).decode().upper()
 
 
+def validate_sudo_commands(commands):
+    verrors = ValidationErrors()
+    for i, command in enumerate(commands):
+        try:
+            executable = shlex.split(command)[0]
+
+            if not executable.startswith('/'):
+                raise ValueError('Executable must be an absolute path')
+
+            if os.path.normpath(executable).rstrip('/') != executable.rstrip('/'):
+                raise ValueError('Executable path must be normalized')
+
+            paths = glob.glob(executable)
+            if not paths:
+                raise ValueError(f'No paths matching {executable!r} exist')
+
+            if not executable.endswith('/'):
+                for item in paths:
+                    if os.path.isfile(item) and os.access(item, os.X_OK):
+                        break
+                else:
+                    raise ValueError(f'None of the paths matching {executable!r} is executable')
+        except ValueError as e:
+            verrors.add(f'{i}', str(e))
+
+    return verrors
+
+
 class UserModel(sa.Model):
     __tablename__ = 'account_bsdusers'
 
@@ -84,6 +113,8 @@ class UserModel(sa.Model):
     bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_locked = sa.Column(sa.Boolean(), default=False)
     bsdusr_sudo = sa.Column(sa.Boolean(), default=False)
+    bsdusr_sudo_nopasswd = sa.Column(sa.Boolean())
+    bsdusr_sudo_commands = sa.Column(sa.JSON(type=list))
     bsdusr_microsoft_account = sa.Column(sa.Boolean())
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_attributes = sa.Column(sa.JSON())
@@ -180,6 +211,8 @@ class UserService(CRUDService):
         Bool('microsoft_account', default=False),
         Bool('smb', default=True),
         Bool('sudo', default=False),
+        Bool('sudo_nopasswd', default=False),
+        List('sudo_commands', items=[Str('command', empty=False)]),
         Str('sshpubkey', null=True, max_length=None),
         List('groups', default=[]),
         Dict('attributes', additional_attrs=True),
@@ -837,6 +870,12 @@ class UserService(CRUDService):
                 f'{schema}.shell', 'Please select a valid shell.'
             )
 
+        if 'sudo_commands' in data:
+            verrors.add_child(
+                f'{schema}.sudo_commands',
+                await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands']),
+            )
+
     async def __set_password(self, data):
         if 'password' not in data:
             return
@@ -937,6 +976,8 @@ class GroupModel(sa.Model):
     bsdgrp_group = sa.Column(sa.String(120))
     bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
     bsdgrp_sudo = sa.Column(sa.Boolean(), default=False)
+    bsdgrp_sudo_nopasswd = sa.Column(sa.Boolean())
+    bsdgrp_sudo_commands = sa.Column(sa.JSON(type=list))
     bsdgrp_smb = sa.Column(sa.Boolean(), default=True)
 
 
@@ -1013,6 +1054,8 @@ class GroupService(CRUDService):
         Str('name', required=True),
         Bool('smb', default=True),
         Bool('sudo', default=False),
+        Bool('sudo_nopasswd', default=False),
+        List('sudo_commands', items=[Str('command', empty=False)]),
         Bool('allow_duplicate_gid', default=False),
         List('users', items=[Int('id')], required=False),
         register=True,
@@ -1253,6 +1296,12 @@ class GroupService(CRUDService):
                     f'{schema}.users',
                     f'Following users do not exist: {", ".join(map(str, notfound))}',
                 )
+
+        if 'sudo_commands' in data:
+            verrors.add_child(
+                f'{schema}.sudo_commands',
+                await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands']),
+            )
 
 
 async def setup(middleware):
