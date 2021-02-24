@@ -937,7 +937,9 @@ def accepts(*schema):
             raise ValueError("All public method default arguments should be specified in @accepts()")
 
         # Make sure number of schemas is same as method argument
-        args_index = 1
+        args_index = 0
+        if f.__code__.co_argcount >= 1 and f.__code__.co_varnames[0] == 'self':
+            args_index += 1
         if hasattr(f, '_pass_app'):
             args_index += 1
         if hasattr(f, '_job'):
