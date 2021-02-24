@@ -1,3 +1,8 @@
+import josepy as jose
+import json
+
+from acme import messages
+
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import private, Service
 
@@ -22,4 +27,8 @@ class DNSAuthenticatorService(Service):
     def perform_challenge(self, data):
         auth_details = self.middleware.call_sync('acme.dns.authenticator.get_instance', data['authenticator'])
         authenticator = auth_factory.authenticator(auth_details['authenticator'].lower())(auth_details['attributes'])
-        authenticator.perform()
+        authenticator.perform(
+            data['domain'],
+            messages.ChallengeBody.from_json(json.loads(data['challenge'])),
+            jose.JWKRSA.fields_from_json(json.loads(data['key'])),
+        )

@@ -6,7 +6,7 @@ class Route53Authenticator(Authenticator):
 
     NAME = 'route53'
 
-    def perform(self, *args, **kwargs):
+    def perform(self, domain, challenge, key):
         raise NotImplementedError
 
     def cleanup(self, *args, **kwargs):
