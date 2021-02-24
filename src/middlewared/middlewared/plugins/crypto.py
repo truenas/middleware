@@ -1178,7 +1178,7 @@ class CertificateService(CRUDService):
             if c and await self.middleware.call('cryptokey.load_certificate', c):
                 cert['chain_list'].append(c)
             else:
-                self.logger.debug(f'Failed to load certificate chain of {cert["name"]}', exc_info=True)
+                self.cert_extend_report_error('certificate chain', cert)
                 break
 
         if certs:
@@ -1186,7 +1186,7 @@ class CertificateService(CRUDService):
             cert_data = await self.middleware.call('cryptokey.load_certificate', cert['certificate'])
             cert.update(cert_data)
             if not cert_data:
-                self.logger.error(f'Failed to load certificate {cert["name"]}')
+                self.cert_extend_report_error('certificate', cert)
                 failed_parsing = True
 
         if cert['privatekey']:
@@ -1205,7 +1205,7 @@ class CertificateService(CRUDService):
                 else:
                     cert['key_type'] = 'OTHER'
             else:
-                self.logger.debug(f'Failed to load privatekey of {cert["name"]}', exc_info=True)
+                self.cert_extend_report_error('private key', cert)
                 cert['key_length'] = cert['key_type'] = None
         else:
             cert['key_length'] = cert['key_type'] = None
@@ -1217,7 +1217,7 @@ class CertificateService(CRUDService):
 
                 cert.update({k: None for k in ('from', 'until')})  # CSR's don't have from, until - normalizing keys
             else:
-                self.logger.debug(f'Failed to load csr {cert["name"]}', exc_info=True)
+                self.cert_extend_report_error('csr', cert)
                 failed_parsing = True
 
         if failed_parsing:
@@ -1242,6 +1242,15 @@ class CertificateService(CRUDService):
         cert['cert_type_CSR'] = bool(cert['type'] & CERT_TYPE_CSR)
 
         return cert
+
+    cert_extend_reported_errors = set()
+
+    @private
+    def cert_extend_report_error(self, title, cert):
+        item = (title, cert['name'])
+        if item not in self.cert_extend_reported_errors:
+            self.logger.debug('Failed to load %s of %s', title, cert['name'])
+            self.cert_extend_reported_errors.add(item)
 
     # HELPER METHODS
 
