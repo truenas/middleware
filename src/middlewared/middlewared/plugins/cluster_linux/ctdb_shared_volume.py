@@ -23,13 +23,17 @@ class CtdbSharedVolumeService(Service):
         for i in await self.middleware.call('gluster.volume.query', filters):
             err_msg = f'A volume named "{CTDB_VOL_NAME}" already exists '
             if i['type'] != 'REPLICATE':
-                err_msg += '''but is not a "REPLICATE" type volume. \
-                    Please delete or rename this volume and try again.'''
+                err_msg += (
+                    'but is not a "REPLICATE" type volume. '
+                    'Please delete or rename this volume and try again.'
+                )
                 raise CallError(err_msg)
             elif i['replicate'] < 3 or i['num_bricks'] < 3:
-                err_msg += '''but is configured in a way that \
-                        could cause data corruption. Please delete \
-                        or rename this volume and try again.'''
+                err_msg += (
+                    'but is configured in a way that '
+                    'could cause data corruption. Please delete '
+                    'or rename this volume and try again.'
+                )
                 raise CallError(err_msg)
         else:
             # it's expected that ctdb shared volume exists when
