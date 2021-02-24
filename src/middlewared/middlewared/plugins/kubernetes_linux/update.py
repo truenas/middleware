@@ -43,7 +43,8 @@ class KubernetesService(ConfigService):
         return [
             str(network) for network in itertools.chain(
                 ipaddress.ip_network('172.16.0.0/12', False).subnets(4),
-                ipaddress.ip_network('10.0.0.0/8', False).subnets(8)
+                ipaddress.ip_network('10.0.0.0/8', False).subnets(8),
+                ipaddress.ip_network('192.168.0.0/16', False).subnets(1),
             ) if not any(network.overlaps(used_network) for used_network in network_cidrs)
         ]
 
@@ -61,13 +62,8 @@ class KubernetesService(ConfigService):
         unused_cidrs = []
         if not data['cluster_cidr'] or not data['service_cidr']:
             unused_cidrs = await self.unused_cidrs(network_cidrs)
-            # If index 0,1 belong to different classes, let's make sure
-            # that is not the case anymore - we will have class b first and then class a, so if
-            # index 0 is class b and 1 is class a, we remove index 0
-            class_b = ipaddress.IPv4Network(('172.16.0.0', '255.240.0.0'))
-            if len(unused_cidrs) > 2 and class_b.overlaps(
-                ipaddress.ip_network(unused_cidrs[0], False)
-            ) and not class_b.overlaps(ipaddress.ip_network(unused_cidrs[1], False)):
+            # If index 0,1 belong to different classes, let's make sure that is not the case anymore
+            if len(unused_cidrs) > 2 and unused_cidrs[0].split('.')[0] != unused_cidrs[1].split('.')[0]:
                 unused_cidrs.pop(0)
 
         if unused_cidrs and not data['cluster_cidr']:
@@ -76,9 +72,12 @@ class KubernetesService(ConfigService):
         if unused_cidrs and not data['service_cidr']:
             data['service_cidr'] = unused_cidrs.pop(0)
 
-        if not data['cluster_dns_ip'] and data['service_cidr']:
-            # Picking 10th ip ( which is the usual default ) from service cidr
-            data['cluster_dns_ip'] = str(list(ipaddress.ip_network(data['service_cidr'], False).hosts())[9])
+        if not data['cluster_dns_ip']:
+            if data['service_cidr']:
+                # Picking 10th ip ( which is the usual default ) from service cidr
+                data['cluster_dns_ip'] = str(list(ipaddress.ip_network(data['service_cidr'], False).hosts())[9])
+            else:
+                verrors.add(f'{schema}.cluster_dns_ip', 'Please specify cluster_dns_ip.')
 
         if data['pool'] and not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
             verrors.add(f'{schema}.pool', 'Please provide a valid pool configured in the system.')
@@ -89,16 +88,12 @@ class KubernetesService(ConfigService):
             elif any(ipaddress.ip_network(data[k], False).overlaps(cidr) for cidr in network_cidrs):
                 verrors.add(f'{schema}.{k}', 'Requested CIDR is already in use.')
 
-        if data['cluster_cidr'] and data['cluster_cidr'] == data['service_cidr']:
-            verrors.add(f'{schema}.cluster_cidr', 'Value cannot be similar to service CIDR.')
-            verrors.add(f'{schema}.service_cidr', 'Value cannot be similar to cluster CIDR.')
-
-        if data['cluster_cidr'] and ipaddress.ip_network(data['cluster_cidr'], False).overlaps(
+        if data['cluster_cidr'] and data['service_cidr'] and ipaddress.ip_network(data['cluster_cidr'], False).overlaps(
             ipaddress.ip_network(data['service_cidr'], False)
         ):
             verrors.add(f'{schema}.cluster_cidr', 'Must not overlap with service CIDR.')
 
-        if data['service_cidr'] and ipaddress.ip_address(
+        if data['service_cidr'] and data['cluster_dns_ip'] and ipaddress.ip_address(
             data['cluster_dns_ip']
         ) not in ipaddress.ip_network(data['service_cidr']):
             verrors.add(f'{schema}.cluster_dns_ip', 'Must be in range of "service_cidr".')
