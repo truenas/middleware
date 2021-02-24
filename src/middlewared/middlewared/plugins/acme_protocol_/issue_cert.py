@@ -22,6 +22,7 @@ class ACMEService(Service):
         4) Handle Authorizations
         5) Clean up challenge ( we should do this even if 3/4 fail to ensure there are no leftovers )
         """
+        self.middleware.call_sync('network.general.will_perform_activity', 'acme')
         verrors = ValidationErrors()
 
         # TODO: Add ability to complete DNS validation challenge manually
@@ -118,7 +119,7 @@ class ACMEService(Service):
                     )
 
                 self.middleware.call_sync(
-                    'acme.dns.authenticator.update_txt_record', {
+                    'acme.dns.authenticator.perform_challenge', {
                         'authenticator': dns_mapping[domain],
                         'challenge': challenge.json_dumps(),
                         'domain': domain,
