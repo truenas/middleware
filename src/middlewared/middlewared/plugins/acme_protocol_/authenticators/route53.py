@@ -4,7 +4,6 @@ import boto3
 import time
 
 from botocore import exceptions as boto_exceptions
-from botocore.errorfactory import BaseClientExceptions as boto_BaseClientException
 
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError
@@ -92,14 +91,14 @@ class Route53Authenticator(Authenticator):
                                 'Name': validation_domain_name,
                                 'Type': 'TXT',
                                 'TTL': 3600,
-                                'ResourceRecords': [] if action == 'DELETE' else [{'Value': f'"{validation}"'}],
+                                'ResourceRecords': [{'Value': f'"{validation}"'}],
                             }
                         }
                     ]
                 }
             )
             return response['ChangeInfo']
-        except boto_BaseClientException as e:
+        except Exception as e:
             raise CallError(f'Failed to {action} Route53 record sets: {e}')
 
     def _cleanup(self, domain, validation_name, validation_content):
