@@ -4,6 +4,7 @@ from middlewared.service import CallError, ValidationErrors
 class Authenticator:
 
     NAME = NotImplementedError
+    SCHEMA = NotImplementedError
 
     def __init__(self, attributes):
         self.attributes = attributes
