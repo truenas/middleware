@@ -1,3 +1,5 @@
+import logging
+
 from certbot.plugins import dns_common
 from CloudFlare.cloudflare import CloudFlare, CloudFlareAPIError
 
@@ -5,6 +7,9 @@ from middlewared.service import CallError
 
 from .base import Authenticator
 from .factory import auth_factory
+
+
+logger = logging.getLogger(__name__)
 
 
 class CloudFlareAuthenticator(Authenticator):
@@ -27,14 +32,14 @@ class CloudFlareAuthenticator(Authenticator):
             if code == 1009:
                 hint = 'Does your API token have "Zone:DNS:Edit" permissions?'
 
-            self.middleware.logger.error('Encountered CloudFlareAPIError adding TXT record: %d %s', code, e)
+            logger.error('Encountered CloudFlareAPIError adding TXT record: %d %s', code, e)
             raise CallError(
                 f'Error communicating with the Cloudflare API: {e}{f"({hint})" if hint else ""}'
             )
 
         record_id = self.find_txt_record_id(cf, zone_id, record_name, record_content)
         if record_id:
-            self.middleware.logger.debug('Successfully added TXT record with record_id: %s', record_id)
+            logger.debug('Successfully added TXT record with record_id: %s', record_id)
         else:
             raise CallError('Unable to find inserted text record via cloudflare API.')
 
@@ -66,7 +71,7 @@ class CloudFlareAuthenticator(Authenticator):
                         f'valid Cloudflare API credentials. ({hint})'
                     )
                 else:
-                    self.middleware.logger.debug(
+                    logger.debug(
                         'Unrecognised CloudFlareAPIError while finding zone_id: %d %s. '
                         'Continuing with next zone guess...', e, e
                     )
@@ -95,14 +100,14 @@ class CloudFlareAuthenticator(Authenticator):
         try:
             records = cf.zones.dns_records.get(zone_id, params=params)
         except CloudFlareAPIError as e:
-            self.middleware.logger.debug('Encountered CloudFlareAPIError getting TXT record_id: %s', e)
+            logger.debug('Encountered CloudFlareAPIError getting TXT record_id: %s', e)
             records = []
 
         if records:
             # Cleanup is returning the system to the state we found it. If, for some reason,
             # there are multiple matching records, we only delete one because we only added one.
             return records[0]['id']
-        self.middleware.logger.debug('Unable to find TXT record.')
+        logger.debug('Unable to find TXT record.')
 
     def cleanup(self, *args, **kwargs):
         raise NotImplementedError
