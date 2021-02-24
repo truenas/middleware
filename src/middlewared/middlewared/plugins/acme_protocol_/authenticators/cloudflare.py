@@ -5,7 +5,6 @@ from certbot_dns_cloudflare._internal.dns_cloudflare import _CloudflareClient
 from middlewared.schema import accepts, Dict, Str, ValidationErrors
 
 from .base import Authenticator
-from .factory import auth_factory
 
 
 logger = logging.getLogger(__name__)
@@ -56,6 +55,3 @@ class CloudFlareAuthenticator(Authenticator):
 
     def _cleanup(self, domain, validation_name, validation_content):
         self.get_cloudflare_object().del_txt_record(domain, validation_name, validation_content)
-
-
-auth_factory.register(CloudFlareAuthenticator)

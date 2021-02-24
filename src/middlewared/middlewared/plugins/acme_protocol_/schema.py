@@ -19,10 +19,10 @@ class DNSAuthenticatorService(Service):
         required for connecting to them while validating a DNS Challenge
         """
         return [
-            {'schema': [v.to_json_schema() for v in value], 'key': key}
+            {'schema': [v.to_json_schema() for v in value.attrs.values()], 'key': key}
             for key, value in self.schemas.items()
         ]
 
     @private
     def get_authenticator_schemas(self):
-        return {k: klass.SCHEMA for k, klass in auth_factory.get_authenticators()}
+        return {k: klass.SCHEMA for k, klass in auth_factory.get_authenticators().items()}

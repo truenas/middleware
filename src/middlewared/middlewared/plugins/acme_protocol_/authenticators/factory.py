@@ -2,6 +2,9 @@ import errno
 
 from middlewared.service_exception import CallError
 
+from .cloudflare import CloudFlareAuthenticator
+from .route53 import Route53Authenticator
+
 
 class AuthenticatorFactory:
 
@@ -17,8 +20,12 @@ class AuthenticatorFactory:
         return self._creators[name]
 
     def get_authenticators(self):
-        for key, authenticator in self._creators.items():
-            yield key, authenticator
+        return self._creators
 
 
 auth_factory = AuthenticatorFactory()
+for authenticator in [
+    CloudFlareAuthenticator,
+    Route53Authenticator,
+]:
+    auth_factory.register(authenticator)

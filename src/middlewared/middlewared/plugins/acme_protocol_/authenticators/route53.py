@@ -10,7 +10,6 @@ from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError
 
 from .base import Authenticator
-from .factory import auth_factory
 
 
 class Route53Authenticator(Authenticator):
@@ -105,6 +104,3 @@ class Route53Authenticator(Authenticator):
 
     def _cleanup(self, domain, validation_name, validation_content):
         self._change_txt_record('DELETE', validation_name, validation_content)
-
-
-auth_factory.register(Route53Authenticator)
