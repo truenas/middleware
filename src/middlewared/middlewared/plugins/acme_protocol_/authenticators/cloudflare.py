@@ -15,9 +15,9 @@ class CloudFlareAuthenticator(Authenticator):
     NAME = 'cloudflare'
     SCHEMA = Dict(
         'cloudflare',
-        Str('cloudflare_email', empty=False, null=True),
-        Str('api_key', empty=False, null=True),
-        Str('api_token', empty=False, null=True),
+        Str('cloudflare_email', empty=False, null=True, title='Cloudflare Email'),
+        Str('api_key', empty=False, null=True, title='API Key'),
+        Str('api_token', empty=False, null=True, title='API Token'),
     )
 
     def initialize_credentials(self):
