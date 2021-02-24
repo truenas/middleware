@@ -1,5 +1,6 @@
 import copy
 import datetime
+import errno
 
 from acme import errors, messages
 
@@ -83,16 +84,23 @@ class ACMEService(Service):
         else:
             job.set_progress(progress, 'New order for certificate issuance placed')
 
-            self.handle_authorizations(job, progress, order, dns_mapping_copy, acme_client, key)
+            dns_mapping = {d.replace('*.', '').split(':', 1)[-1]: v for d, v in dns_mapping_copy.items()}
 
             try:
-                # Polling for a maximum of 10 minutes while trying to finalize order
-                # Should we try .poll() instead first ? research please
-                return acme_client.poll_and_finalize(order, datetime.datetime.now() + datetime.timedelta(minutes=10))
-            except errors.TimeoutError:
-                raise CallError('Certificate request for final order timed out')
+                self.handle_authorizations(job, progress, order, dns_mapping, acme_client, key)
 
-    def handle_authorizations(self, job, progress, order, domain_names_dns_mapping, acme_client, key):
+                try:
+                    # Polling for a maximum of 10 minutes while trying to finalize order
+                    # Should we try .poll() instead first ? research please
+                    return acme_client.poll_and_finalize(
+                        order, datetime.datetime.now() + datetime.timedelta(minutes=10)
+                    )
+                except errors.TimeoutError:
+                    raise CallError('Certificate request for final order timed out')
+            finally:
+                self.cleanup_authorizations(order, dns_mapping, key)
+
+    def handle_authorizations(self, job, progress, order, dns_mapping, acme_client, key):
         # When this is called, it should be ensured by the function calling this function that for all authorization
         # resource, a domain name dns mapping is available
         # For multiple domain providers in domain names, I think we should ask the end user to specify which domain
@@ -100,31 +108,21 @@ class ACMEService(Service):
 
         max_progress = (progress * 4) - progress - (progress * 4 / 5)
 
-        dns_mapping = {d.replace('*.', '').split(':', 1)[-1]: v for d, v in domain_names_dns_mapping.items()}
         for authorization_resource in order.authorizations:
+            status = False
+            domain = authorization_resource.body.identifier.value
             try:
-                status = False
                 progress += (max_progress / len(order.authorizations))
-                domain = authorization_resource.body.identifier.value
                 # BOULDER DOES NOT RETURN WILDCARDS FOR NOW
                 # OTHER IMPLEMENTATIONS RIGHT NOW ASSUME THAT EVERY DOMAIN HAS A WILD CARD IN CASE OF DNS CHALLENGE
-                challenge = None
-                for chg in authorization_resource.body.challenges:
-                    if chg.typ == 'dns-01':
-                        challenge = chg
+                challenge = self.get_challenge(authorization_resource.body.challenges)
 
                 if not challenge:
-                    raise CallError(
-                        f'DNS Challenge not found for domain {authorization_resource.body.identifier.value}'
-                    )
+                    raise CallError(f'DNS Challenge not found for domain {domain}', errno=errno.ENOENT)
 
                 self.middleware.call_sync(
-                    'acme.dns.authenticator.perform_challenge', {
-                        'authenticator': dns_mapping[domain],
-                        'challenge': challenge.json_dumps(),
-                        'domain': domain,
-                        'key': key.json_dumps()
-                    }
+                    'acme.dns.authenticator.perform_challenge',
+                    self.get_acme_payload(dns_mapping, challenge, domain, key)
                 )
 
                 try:
@@ -133,3 +131,32 @@ class ACMEService(Service):
                     raise CallError(f'Error answering challenge for {domain} : {e}')
             finally:
                 job.set_progress(progress, f'DNS challenge {"completed" if status else "failed"} for {domain}')
+
+    def get_challenge(self, challenges):
+        challenge = None
+        for chg in challenges:
+            if chg.typ == 'dns-01':
+                challenge = chg
+        return challenge
+
+    def get_acme_payload(self, dns_mapping, challenge, domain, key):
+        return {
+            'authenticator': dns_mapping[domain],
+            'challenge': challenge.json_dumps(),
+            'domain': domain,
+            'key': key.json_dumps()
+        }
+
+    def cleanup_authorizations(self, order, dns_mapping, key):
+        for authorization_resource in order.authorizations:
+            domain = authorization_resource.body.identifier.value
+            challenge = self.get_challenge(authorization_resource.body.challenges)
+            if not challenge:
+                continue
+            try:
+                self.middleware.call_sync(
+                    'acme.dns.authenticator.cleanup_challenge',
+                    self.get_acme_payload(dns_mapping, challenge, domain, key)
+                )
+            except Exception:
+                self.logger.error('Failed to cleanup challenge for %r domain', domain, exc_info=True)

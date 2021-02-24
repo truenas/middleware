@@ -94,7 +94,7 @@ class Route53Authenticator(Authenticator):
             f'Timed out waiting for Route53 change. Current status: {resp["ChangeInfo"]["Status"]}'
         )
 
-    def cleanup(self, *args, **kwargs):
+    def cleanup(self, domain, validation_name, validation_content):
         raise NotImplementedError
 
 
