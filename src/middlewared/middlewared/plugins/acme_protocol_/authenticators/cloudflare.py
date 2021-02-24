@@ -16,11 +16,20 @@ class CloudFlareAuthenticator(Authenticator):
 
     NAME = 'cloudflare'
 
-    def perform(self, data):
-        cf = CloudFlare(data['cloudflare_email'], data['api_key'])
-        zone_id = self.find_cloudflare_zone_id(cf, data['domain'])
-        record_name = data['challenge'].validation_domain_name(data['domain'])
-        record_content = f'"{data["challenge"].validation(data["key"])}"'
+    def initialize_credentials(self):
+        self.cloudflare_email = self.attributes['cloudflare_email']
+        self.api_key = self.attributes['api_key']
+
+    def _validate_credentials(self, verrors):
+        for k in ('cloudflare_email', 'domain', 'api_key'):
+            if not getattr(self, k, None):
+                verrors.add(k, 'Please provide a valid value.')
+
+    def perform(self, domain, challenge, key):
+        cf = CloudFlare(self.cloudflare_email, self.api_key)
+        zone_id = self.find_cloudflare_zone_id(cf, domain)
+        record_name = challenge.validation_domain_name(domain)
+        record_content = f'"{challenge.validation(key)}"'
         record_data = {'type': 'TXT', 'name': record_name, 'content': record_content, 'ttl': 3600}
 
         try:
