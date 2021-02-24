@@ -13,10 +13,13 @@ class CoreFilesArePresentAlertClass(AlertClass):
             "https://jira.ixsystems.com/ and attach the relevant core files along with a system debug. "
             "Once the core files have been archived and attached to the ticket, they may be removed "
             "by running the following command in shell: 'rm /var/db/system/cores/*'.")
+
     products = ("CORE", "SCALE")
 
 
 class CoreFilesArePresentAlertSource(ThreadedAlertSource):
+    products = ("CORE", "SCALE")
+
     def check_sync(self):
         cores = "/var/db/system/cores"
         corefiles = []
