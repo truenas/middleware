@@ -5,12 +5,13 @@ from middlewared.service import (CRUDService, accepts, job,
                                  item_method, filterable,
                                  private, ValidationErrors)
 from middlewared.schema import Dict, Str, Int, Bool, List
-from middlewared.plugins.cluster_linux.utils import CTDBConfig
+from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from .utils import GlusterConfig
 
 
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
 CTDB_VOL_NAME = CTDBConfig.CTDB_VOL_NAME.value
+FUSE_BASE = FuseConfig.FUSE_PATH_BASE.value
 
 
 class GlusterVolumeService(CRUDService):
@@ -29,6 +30,16 @@ class GlusterVolumeService(CRUDService):
             vols = list(map(lambda i: dict(i, id=i['name']), vols))
 
         return filter_list(vols, filters, options)
+
+    @private
+    async def exists_and_started(self, vol):
+        result = {'name': vol, 'exists': False, 'started': False}
+        filters = [('id', '=', vol)]
+        for i in await self.middleware.call('gluster.volume.query', filters):
+            result['exists'] = True
+            result['started'] = i['status'] == 'Started'
+
+        return result
 
     @private
     async def common_validation(self, data, schema_name):
@@ -80,6 +91,10 @@ class GlusterVolumeService(CRUDService):
 
         schema_name = 'glustervolume_create'
         await self.middleware.call('gluster.volume.common_validation', data, schema_name)
+
+        # make sure this is started since it's responsible for sending
+        # events for which we act upon (i.e. FUSE mounting)
+        await self.middleware.call('service.start', 'glustereventsd')
 
         # before we create the gluster volume, we need to ensure
         # the ctdb shared volume is setup
