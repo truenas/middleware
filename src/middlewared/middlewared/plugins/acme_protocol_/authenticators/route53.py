@@ -1,3 +1,5 @@
+import errno
+
 import boto3
 import time
 
@@ -14,6 +16,13 @@ class Route53Authenticator(Authenticator):
 
     NAME = 'route53'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.client = boto3.Session(
+            aws_access_key_id=self.access_key_id,
+            aws_secret_access_key=self.secret_access_key,
+        ).client('route53')
+
     def initialize_credentials(self):
         self.access_key_id = self.attributes['access_key_id']
         self.secret_access_key = self.attributes['secret_access_key']
@@ -23,15 +32,25 @@ class Route53Authenticator(Authenticator):
             if not getattr(self, k, None):
                 verrors.add(k, 'Please provide a valid value.')
 
-    def perform(self, domain, validation_name, validation_content):
-        session = boto3.Session(
-            aws_access_key_id=self.access_key_id,
-            aws_secret_access_key=self.secret_access_key,
-        )
-        client = session.client('route53')
+    def _perform(self, domain, validation_name, validation_content):
+        resp_change_info = self._change_txt_record('UPSERT', validation_name, validation_content)
 
+        """
+        Wait for a change to be propagated to all Route53 DNS servers.
+        https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetChange.html
+        """
+        r = resp_change_info
+        for unused_n in range(0, 120):
+            r = self.client.get_change(Id=resp_change_info['Id'])
+            if r['ChangeInfo']['Status'] == 'INSYNC':
+                return resp_change_info['Id']
+            time.sleep(5)
+
+        raise CallError(f'Timed out waiting for Route53 change. Current status: {r["Status"]}')
+
+    def _find_zone_id_for_domain(self, domain):
         # Finding zone id for the given domain
-        paginator = client.get_paginator('list_hosted_zones')
+        paginator = self.client.get_paginator('list_hosted_zones')
         target_labels = domain.rstrip('.').split('.')
         zones = []
         try:
@@ -44,58 +63,46 @@ class Route53Authenticator(Authenticator):
                     if candidate_labels == target_labels[-len(candidate_labels):]:
                         zones.append((zone['Name'], zone['Id']))
             if not zones:
-                raise CallError(
-                    f'Unable to find a Route53 hosted zone for {domain}'
-                )
+                raise CallError(f'Unable to find a Route53 hosted zone for {domain}', errno=errno.ENOENT)
         except boto_exceptions.ClientError as e:
-            raise CallError(
-                f'Failed to get Hosted zones with provided credentials :{e}'
-            )
+            raise CallError(f'Failed to get Hosted zones with provided credentials :{e}')
 
         # Order the zones that are suffixes for our desired to domain by
         # length, this puts them in an order like:
         # ["foo.bar.baz.com", "bar.baz.com", "baz.com", "com"]
         # And then we choose the first one, which will be the most specific.
         zones.sort(key=lambda z: len(z[0]), reverse=True)
-        zone_id = zones[0][1]
+        return zones[0][1]
 
+    def _change_txt_record(self, action, validation_domain_name, validation):
+        if action not in ('UPSERT', 'DELETE'):
+            raise CallError('Please specify a valid action for changing TXT record for Route53')
+
+        zone_id = self._find_zone_id_for_domain(validation_domain_name)
         try:
-            resp = client.change_resource_record_sets(
+            response = self.client.change_resource_record_sets(
                 HostedZoneId=zone_id,
                 ChangeBatch={
+                    'Comment': 'TrueNAS-dns-route53 certificate validation ' + action,
                     'Changes': [
                         {
-                            'Action': 'UPSERT',
+                            'Action': action,
                             'ResourceRecordSet': {
-                                'Name': validation_name,
-                                'ResourceRecords': [{'Value': f'"{validation_content}"'}],
+                                'Name': validation_domain_name,
+                                'Type': 'TXT',
                                 'TTL': 3600,
-                                'Type': 'TXT'
+                                'ResourceRecords': [] if action == 'DELETE' else [{'Value': f'"{validation}"'}],
                             }
                         }
-                    ],
-                    'Comment': 'TrueNAS-dns-route53 certificate validation'
+                    ]
                 }
             )
+            return response['ChangeInfo']
         except boto_BaseClientException as e:
-            raise CallError(f'Failed to update record sets : {e}')
+            raise CallError(f'Failed to {action} Route53 record sets: {e}')
 
-        """
-        Wait for a change to be propagated to all Route53 DNS servers.
-        https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetChange.html
-        """
-        for unused_n in range(0, 120):
-            r = client.get_change(Id=resp['ChangeInfo']['Id'])
-            if r['ChangeInfo']['Status'] == 'INSYNC':
-                return resp['ChangeInfo']['Id']
-            time.sleep(5)
-
-        raise CallError(
-            f'Timed out waiting for Route53 change. Current status: {resp["ChangeInfo"]["Status"]}'
-        )
-
-    def cleanup(self, domain, validation_name, validation_content):
-        raise NotImplementedError
+    def _cleanup(self, domain, validation_name, validation_content):
+        self._change_txt_record('DELETE', validation_name, validation_content)
 
 
 auth_factory.register(Route53Authenticator)
