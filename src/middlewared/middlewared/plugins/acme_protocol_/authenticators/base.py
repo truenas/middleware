@@ -1,4 +1,4 @@
-from middlewared.service import CallError, ValidationErrors
+from middlewared.service import CallError
 
 
 class Authenticator:
