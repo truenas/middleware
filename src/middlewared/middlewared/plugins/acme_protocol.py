@@ -258,10 +258,10 @@ class DNSAuthenticatorService(CRUDService):
                 f'System does not support {data["authenticator"]} as an Authenticator'
             )
         else:
-            verrors = validate_attributes(self.schemas[data['authenticator']], data)
+            authenticator_obj = await self.middleware.call('acme.dns.authenticator.get_authenticator_internal', data)
+            authenticator_obj.validate_credentials(data)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     @accepts(
         Dict(

@@ -17,10 +17,9 @@ class CloudFlareAuthenticator(Authenticator):
         self.cloudflare_email = self.attributes['cloudflare_email']
         self.api_key = self.attributes['api_key']
 
-    def _validate_credentials(self, verrors):
-        for k in ('cloudflare_email', 'domain', 'api_key'):
-            if not getattr(self, k, None):
-                verrors.add(k, 'Please provide a valid value.')
+    @staticmethod
+    def validate_credentials(self, data):
+        raise NotImplementedError
 
     def _perform(self, domain, validation_name, validation_content):
         self.get_cloudflare_object().add_txt_record(domain, validation_name, validation_content, 3600)
