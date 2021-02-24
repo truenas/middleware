@@ -25,12 +25,11 @@ class CloudFlareAuthenticator(Authenticator):
             if not getattr(self, k, None):
                 verrors.add(k, 'Please provide a valid value.')
 
-    def perform(self, domain, challenge, key):
+    def perform(self, domain, validation_name, validation_content):
         cf = CloudFlare(self.cloudflare_email, self.api_key)
         zone_id = self.find_cloudflare_zone_id(cf, domain)
-        record_name = challenge.validation_domain_name(domain)
-        record_content = f'"{challenge.validation(key)}"'
-        record_data = {'type': 'TXT', 'name': record_name, 'content': record_content, 'ttl': 3600}
+        validation_content = f'"{validation_content}"'
+        record_data = {'type': 'TXT', 'name': validation_name, 'content': validation_content, 'ttl': 3600}
 
         try:
             cf.zones.dns_records.post(zone_id, data=record_data)
@@ -46,7 +45,7 @@ class CloudFlareAuthenticator(Authenticator):
                 f'Error communicating with the Cloudflare API: {e}{f"({hint})" if hint else ""}'
             )
 
-        record_id = self.find_txt_record_id(cf, zone_id, record_name, record_content)
+        record_id = self.find_txt_record_id(cf, zone_id, validation_name, validation_content)
         if record_id:
             logger.debug('Successfully added TXT record with record_id: %s', record_id)
         else:

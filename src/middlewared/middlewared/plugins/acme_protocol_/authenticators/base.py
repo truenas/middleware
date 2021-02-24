@@ -21,7 +21,7 @@ class Authenticator:
     def _validate_credentials(self, verrors):
         pass
 
-    def perform(self, domain, challenge, key):
+    def perform(self, domain, validation_name, validation_content):
         raise NotImplementedError
 
     def cleanup(self, *args, **kwargs):
