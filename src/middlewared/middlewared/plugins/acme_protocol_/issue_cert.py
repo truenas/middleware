@@ -14,6 +14,14 @@ class ACMEService(Service):
         private = True
 
     def issue_certificate(self, job, progress, data, csr_data):
+        """
+        How we would like to proceed with issuing an ACME cert is as follows:
+        1) Decide domains which are involved
+        2) Validate we have valid authenticators for domains involved
+        3) Place Order
+        4) Handle Authorizations
+        5) Clean up challenge ( we should do this even if 3/4 fail to ensure there are no leftovers )
+        """
         verrors = ValidationErrors()
 
         # TODO: Add ability to complete DNS validation challenge manually
@@ -61,8 +69,7 @@ class ACMEService(Service):
                     f'{domain} not specified in the CSR'
                 )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         acme_client, key = self.middleware.call_sync(
             'acme.get_acme_client_and_key', data['acme_directory_uri'], data['tos']
