@@ -6,6 +6,7 @@ import time
 from botocore import exceptions as boto_exceptions
 from botocore.errorfactory import BaseClientExceptions as boto_BaseClientException
 
+from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError
 
 from .base import Authenticator
@@ -15,6 +16,11 @@ from .factory import auth_factory
 class Route53Authenticator(Authenticator):
 
     NAME = 'route53'
+    SCHEMA = Dict(
+        'route53',
+        Str('access_key_id', required=True, empty=False),
+        Str('secret_access_key', required=True, empty=False),
+    )
 
     def initialize_credentials(self):
         self.access_key_id = self.attributes['access_key_id']
@@ -24,8 +30,9 @@ class Route53Authenticator(Authenticator):
             aws_secret_access_key=self.secret_access_key,
         ).client('route53')
 
+    @accepts(SCHEMA)
     def validate_credentials(self, data):
-        raise NotImplementedError
+        pass
 
     def _perform(self, domain, validation_name, validation_content):
         resp_change_info = self._change_txt_record('UPSERT', validation_name, validation_content)
