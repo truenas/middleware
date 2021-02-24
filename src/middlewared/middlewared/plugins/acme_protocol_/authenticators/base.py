@@ -1,4 +1,4 @@
-from middlewared.service import ValidationErrors
+from middlewared.service import CallError, ValidationErrors
 
 
 class Authenticator:
@@ -22,7 +22,19 @@ class Authenticator:
         pass
 
     def perform(self, domain, validation_name, validation_content):
+        try:
+            self._perform(domain, validation_name, validation_content)
+        except Exception as e:
+            raise CallError(f'Failed to perform {self.NAME} challenge for {domain!r} domain: {e}')
+
+    def _perform(self, domain, validation_name, validation_content):
         raise NotImplementedError
 
     def cleanup(self, domain, validation_name, validation_content):
+        try:
+            self.cleanup(domain, validation_name, validation_content)
+        except Exception as e:
+            raise CallError(f'Failed to cleanup {self.NAME} challenge for {domain!r} domain: {e}')
+
+    def _cleanup(self, domain, validation_name, validation_content):
         raise NotImplementedError
