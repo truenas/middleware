@@ -55,9 +55,5 @@ kubernetes_func()
 		section_header "docker images -a"
 		docker images -a
 		section_footer
-
-		section_header "k3s kubectl cluster-info dump"
-		k3s kubectl cluster-info dump
-		section_footer
 	fi
 }
