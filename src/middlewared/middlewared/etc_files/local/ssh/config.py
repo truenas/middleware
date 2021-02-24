@@ -20,8 +20,10 @@ def generate_ssh_config(middleware):
     ]:
         s_key = re.sub(r'([.-])', '_', k).replace('ssh_', '', 1)
         if ssh_config[s_key]:
-            with open(os.path.join(SSH_CONFIG_PATH, k), 'wb') as f:
-                f.write(base64.b64decode(ssh_config[s_key]))
+            decoded_key = base64.b64decode(ssh_config[s_key])
+            if decoded_key:
+                with open(os.path.join(SSH_CONFIG_PATH, k), 'wb') as f:
+                    f.write(decoded_key)
 
     for f in [
         'ssh_host_key', 'ssh_host_dsa_key', 'ssh_host_ecdsa_key', 'ssh_host_rsa_key', 'ssh_host_ed25519_key'
