@@ -16,21 +16,16 @@ class Route53Authenticator(Authenticator):
 
     NAME = 'route53'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def initialize_credentials(self):
+        self.access_key_id = self.attributes['access_key_id']
+        self.secret_access_key = self.attributes['secret_access_key']
         self.client = boto3.Session(
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
         ).client('route53')
 
-    def initialize_credentials(self):
-        self.access_key_id = self.attributes['access_key_id']
-        self.secret_access_key = self.attributes['secret_access_key']
-
-    def _validate_credentials(self, verrors):
-        for k in ('secret_access_key', 'access_key_id'):
-            if not getattr(self, k, None):
-                verrors.add(k, 'Please provide a valid value.')
+    def validate_credentials(self, data):
+        raise NotImplementedError
 
     def _perform(self, domain, validation_name, validation_content):
         resp_change_info = self._change_txt_record('UPSERT', validation_name, validation_content)
