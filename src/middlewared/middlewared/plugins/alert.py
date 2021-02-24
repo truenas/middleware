@@ -141,6 +141,7 @@ class AlertSerializer:
         self.middleware = middleware
 
         self.initialized = False
+        self.product_type = None
         self.classes = None
         self.nodes = None
 
@@ -160,10 +161,17 @@ class AlertSerializer:
     async def should_show_alert(self, alert):
         await self._ensure_initialized()
 
-        return self.classes.get(alert.klass.name, {}).get("policy") != "NEVER"
+        if self.product_type not in alert.klass.products:
+            return False
+
+        if self.classes.get(alert.klass.name, {}).get("policy") == "NEVER":
+            return False
+
+        return True
 
     async def _ensure_initialized(self):
         if not self.initialized:
+            self.product_type = await self.middleware.call("alert.product_type")
             self.classes = (await self.middleware.call("alertclasses.config"))["classes"]
             self.nodes = await self.middleware.call("alert.node_map")
 
@@ -420,6 +428,7 @@ class AlertService(Service):
             SEND_ALERTS_ON_READY = True
             return
 
+        product_type = await self.middleware.call("alert.product_type")
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         now = datetime.utcnow()
@@ -433,6 +442,7 @@ class AlertService(Service):
                 service_alerts = [
                     alert for alert in self.alerts
                     if (
+                        product_type in alert.klass.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) != "NEVER"
                     )
@@ -440,6 +450,7 @@ class AlertService(Service):
                 service_gone_alerts = [
                     alert for alert in gone_alerts
                     if (
+                        product_type in alert.klass.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
@@ -447,6 +458,7 @@ class AlertService(Service):
                 service_new_alerts = [
                     alert for alert in new_alerts
                     if (
+                        product_type in alert.klass.products and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
