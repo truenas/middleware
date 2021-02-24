@@ -16,5 +16,9 @@ class AuthenticatorFactory:
             raise CallError(f'Unable to locate {name!r} authenticator.', errno=errno.ENOENT)
         return self._creators[name]
 
+    def get_authenticators(self):
+        for key, authenticator in self._creators.items():
+            yield key, authenticator
+
 
 auth_factory = AuthenticatorFactory()

@@ -218,41 +218,10 @@ class DNSAuthenticatorService(CRUDService):
         datastore = 'system.acmednsauthenticator'
         cli_namespace = 'system.acme.dns_auth'
 
-    def __init__(self, *args, **kwargs):
-        super(DNSAuthenticatorService, self).__init__(*args, **kwargs)
-        self.schemas = DNSAuthenticatorService.initialize_authenticator_schemas()
-
-    @accepts()
-    def authenticator_schemas(self):
-        """
-        Get the schemas for all DNS providers we support for ACME DNS Challenge and the respective attributes
-        required for connecting to them while validating a DNS Challenge
-        """
-        return [
-            {'schema': [v.to_json_schema() for v in value], 'key': key}
-            for key, value in self.schemas.items()
-        ]
-
-    @staticmethod
-    @private
-    def initialize_authenticator_schemas():
-
-        return {
-            f_n[len('update_txt_record_'):]: [
-                Str(arg, required=True)
-                for arg in list(getattr(DNSAuthenticatorService, f_n).__code__.co_varnames)
-                [4: getattr(DNSAuthenticatorService, f_n).__code__.co_argcount]
-            ]
-            for f_n in [
-                func for func in dir(DNSAuthenticatorService)
-                if callable(getattr(DNSAuthenticatorService, func)) and func.startswith('update_txt_record_')
-            ]
-        }
-
     @private
     async def common_validation(self, data, schema_name):
         verrors = ValidationErrors()
-        if data['authenticator'] not in self.schemas:
+        if data['authenticator'] not in await self.middleware.call('acme.dns.authenticator.get_authenticator_schemas'):
             verrors.add(
                 f'{schema_name}.authenticator',
                 f'System does not support {data["authenticator"]} as an Authenticator'
