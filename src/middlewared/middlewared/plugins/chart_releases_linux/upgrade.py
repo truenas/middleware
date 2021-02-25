@@ -89,8 +89,44 @@ class ChartReleaseService(Service):
 
         return chart_release
 
-    async def upgrade_chart_release(self, job, release, options):
-        release_name = release['name']
+    @accepts(
+        Str('release_name'),
+        Dict(
+            'options',
+            Str('item_version', default='latest', empty=False)
+        )
+    )
+    def upgrade_summary(self, release_name, options):
+        """
+        Retrieve upgrade summary for `release_name` which will include which container images will be updated
+        and changelog for `options.item_version` chart version specified if applicable. If only container images
+        need to be updated, changelog will be `null`.
+
+        If chart release `release_name` does not require an upgrade, an error will be raised.
+        """
+        release = self.middleware.call_sync(
+            'chart.release.query', [['id', '=', release_name]], {'extra': {'retrieve_resources': True}, 'get': True}
+        )
+        if not release['update_available'] and not release['container_images_update_available']:
+            raise CallError('No update is available for chart release', errno=errno.ENOENT)
+
+        latest_version = release['human_version']
+        changelog = None
+        if release['update_available']:
+            catalog_item = self.middleware.call_sync('chart.release.get_version', release, options)
+            latest_version = catalog_item['human_version']
+            changelog = catalog_item['changelog']
+
+        return {
+            'container_images_to_update': {
+                k: v for k, v in release['resources']['container_images'].items() if v['update_available']
+            },
+            'latest_version': latest_version,
+            'changelog': changelog,
+        }
+
+    @private
+    async def get_version(self, release, options):
         catalog = await self.middleware.call(
             'catalog.query', [['id', '=', release['catalog']]], {'extra': {'item_details': True}},
         )
@@ -131,7 +167,12 @@ class ChartReleaseService(Service):
 
         verrors.check()
 
-        catalog_item = catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
+        return catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
+
+    async def upgrade_chart_release(self, job, release, options):
+        release_name = release['name']
+
+        catalog_item = await self.get_version(release, options)
         await self.middleware.call('catalog.version_supported_error_check', catalog_item)
 
         config = await self.middleware.call('chart.release.upgrade_values', release, catalog_item['location'])
@@ -153,7 +194,7 @@ class ChartReleaseService(Service):
 
         # We have validated configuration now
 
-        chart_path = os.path.join(release['path'], 'charts', new_version)
+        chart_path = os.path.join(release['path'], 'charts', catalog_item['version'])
         await self.middleware.run_in_thread(shutil.rmtree, chart_path, ignore_errors=True)
         await self.middleware.run_in_thread(shutil.copytree, catalog_item['location'], chart_path)
 
@@ -167,8 +208,8 @@ class ChartReleaseService(Service):
             'operation': 'UPGRADE',
             'isUpgrade': True,
             'upgradeMetadata': {
-                'oldChartVersion': current_chart['version'],
-                'newChartVersion': new_version,
+                'oldChartVersion': release['chart_metadata']['version'],
+                'newChartVersion': catalog_item['version'],
                 'preUpgradeRevision': release['version'],
             }
         })
