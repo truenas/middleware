@@ -200,12 +200,14 @@ class FailoverService(ConfigService):
     @private
     async def ha_mode(self):
 
-        if self.HA_MODE is None:
-            self.HA_MODE = await self.middleware.call(
+        # update the class attribute so that all instances
+        # of this class see the correct value
+        if FailoverService.HA_MODE is None:
+            FailoverService.HA_MODE = await self.middleware.call(
                 'failover.enclosure.detect'
             )
 
-        return self.HA_MODE
+        return FailoverService.HA_MODE
 
     @accepts()
     async def hardware(self):
