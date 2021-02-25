@@ -60,7 +60,7 @@ class VMService(Service, LibvirtConnectionMixin):
                 self.middleware.logger.debug('Received libvirtd event with unknown domain name %s', dom.name())
 
         def event_loop_execution():
-            while self.LIBVIRT_CONNECTION._o and self.LIBVIRT_CONNECTION.isAlive():
+            while self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION._o and self.LIBVIRT_CONNECTION.isAlive():
                 libvirt.virEventRunDefaultImpl()
 
         event_thread = threading.Thread(target=event_loop_execution, name='libvirt_event_loop')
