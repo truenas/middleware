@@ -11,7 +11,7 @@ class CertificateAttachmentDelegate:
     async def state(self, cert_id):
         raise NotImplementedError
 
-    async def redeploy(self):
+    async def redeploy(self, cert_id):
         raise NotImplementedError
 
 
@@ -31,7 +31,7 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
         else:
             return config[self.CERT_FIELD] == cert_id
 
-    async def redeploy(self):
+    async def redeploy(self, cert_id):
         if await self.middleware.call('service.started', self.SERVICE):
             await self.middleware.call(f'service.{self.SERVICE_VERB}', self.SERVICE)
 
@@ -43,8 +43,11 @@ class CertificateCRUDServiceAttachmentDelegate(CertificateAttachmentDelegate, Se
     async def get_filters(self, cert_id):
         return [[self.CERT_FILTER_KEY, '=', cert_id]]
 
-    async def state(self, cert_id):
-        return bool(await self.middleware.call(f'{self.NAMESPACE}.query', await self.get_filters(cert_id)))
+    async def attachments(self, cert_id):
+        return await self.middleware.call(f'{self.NAMESPACE}.query', await self.get_filters(cert_id))
 
-    async def redeploy(self):
+    async def state(self, cert_id):
+        return bool(await self.attachments(cert_id))
+
+    async def redeploy(self, cert_id):
         pass
