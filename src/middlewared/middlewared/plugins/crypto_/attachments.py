@@ -18,4 +18,4 @@ class CertificateService(Service):
 
     async def redeploy_cert_attachments(self, cert_id):
         for delegate in await self.in_use_attachments(cert_id):
-            await delegate.redeploy()
+            await delegate.redeploy(cert_id)
