@@ -1,6 +1,7 @@
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
 
 
 class MinioFSAttachmentDelegate(FSAttachmentDelegate):
@@ -46,5 +47,12 @@ class MinioFSAttachmentDelegate(FSAttachmentDelegate):
             self.middleware.logger.error('Failed to start s3', exc_info=True)
 
 
+class S3CertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
+
+    SERVICE = 's3'
+
+
 async def setup(middleware):
+    await middleware.call('certificate.register_attachment_delegate', S3CertificateAttachmentDelegate(middleware))
     await middleware.call('pool.dataset.register_attachment_delegate', MinioFSAttachmentDelegate(middleware))
+
