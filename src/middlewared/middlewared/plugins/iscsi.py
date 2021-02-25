@@ -547,8 +547,6 @@ class iSCSITargetExtentService(SharingService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._service_change('iscsitarget', 'reload')
-
         return await self._get_instance(data['id'])
 
     @accepts(
