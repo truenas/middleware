@@ -198,24 +198,28 @@ class FailoverService(ConfigService):
         """
         Checks whether this instance is licensed as a HA unit.
         """
-        if self.HA_LICENSED is None:
+        # update the class attribute so that all instances
+        # of this class see the correct value
+        if FailoverService.HA_LICENSED is None:
             info = self.middleware.call_sync('system.info')
             if info['license'] and info['license']['system_serial_ha']:
-                self.HA_LICENSED = True
+                FailoverService.HA_LICENSED = True
             else:
-                self.HA_LICENSED = False
+                FailoverService.HA_LICENSED = False
 
-        return self.HA_LICENSED
+        return FailoverService.HA_LICENSED
 
     @private
     async def ha_mode(self):
 
-        if self.HA_MODE is None:
-            self.HA_MODE = await self.middleware.call(
+        # update the class attribute so that all instances
+        # of this class see the correct value
+        if FailoverService.HA_MODE is None:
+            FailoverService.HA_MODE = await self.middleware.call(
                 'failover.enclosure.detect'
             )
 
-        return self.HA_MODE
+        return FailoverService.HA_MODE
 
     @accepts()
     async def hardware(self):
