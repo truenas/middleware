@@ -128,6 +128,7 @@ class CatalogService(Service):
                 'location': os.path.join(item_path, version),
                 'required_features': [],
                 'human_version': version,
+                'version': version,
             }
             try:
                 self.middleware.call_sync(
@@ -153,9 +154,13 @@ class CatalogService(Service):
             ('schema', 'questions.yaml', yaml.safe_load),
             ('app_readme', 'app-readme.md', str.strip),
             ('detailed_readme', 'README.md', markdown.markdown),
+            ('changelog', 'CHANGELOG.md', markdown.markdown),
         ):
-            with open(os.path.join(version_path, filename), 'r') as f:
-                version_data[key] = parser(f.read())
+            if os.path.exists(os.path.join(version_path, filename)):
+                with open(os.path.join(version_path, filename), 'r') as f:
+                    version_data[key] = parser(f.read())
+            else:
+                version_data[key] = None
 
         # We will normalise questions now so that if they have any references, we render them accordingly
         # like a field referring to available interfaces on the system
