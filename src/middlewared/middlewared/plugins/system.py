@@ -755,8 +755,13 @@ class SystemService(Service):
                 )[1]
 
                 url = f'http://{remote_ip}:6000{url}'
+                # no reason to honor proxy settings in this
+                # method since we're downloading the debug
+                # archive directly across the heartbeat
+                # interface which is point-to-point
+                proxies = {'http': '', 'https': ''}
                 standby_debug = io.BytesIO()
-                with requests.get(url, stream=True) as r:
+                with requests.get(url, stream=True, proxies=proxies) as r:
                     for i in r.iter_content(chunk_size=1048576):
                         if standby_debug.tell() > DEBUG_MAX_SIZE * 1048576:
                             raise CallError(f'Standby debug file is bigger than {DEBUG_MAX_SIZE}MiB.')
