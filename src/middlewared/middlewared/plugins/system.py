@@ -37,6 +37,7 @@ from pathlib import Path
 
 
 SYSTEM_BOOT_ID = None
+SYSTEM_FIRST_BOOT = False
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
 # Flag telling whether the system is shutting down
@@ -409,6 +410,10 @@ class SystemService(Service):
             self.MEM_INFO['physmem_size'] = psutil.virtual_memory().total
 
         return self.MEM_INFO
+
+    @private
+    async def first_boot(self):
+        return SYSTEM_FIRST_BOOT
 
     @private
     async def cpu_info(self):
@@ -1661,6 +1666,7 @@ class SystemHealthEventSource(EventSource):
 
 async def firstboot(middleware):
     if os.path.exists(FIRST_INSTALL_SENTINEL):
+        SYSTEM_FIRST_BOOT = True
         # Delete sentinel file before making clone as we
         # we do not want the clone to have the file in it.
         os.unlink(FIRST_INSTALL_SENTINEL)
