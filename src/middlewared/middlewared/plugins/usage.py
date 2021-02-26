@@ -1,7 +1,9 @@
 import json
 import asyncio
 import random
+import aiohttp
 import hashlib
+import os
 
 from copy import deepcopy
 from collections import defaultdict
@@ -61,6 +63,15 @@ class UsageService(Service):
 
         return True
 
+    async def submit_stats(self, data):
+        async with aiohttp.ClientSession(raise_for_status=True) as session:
+            await session.post(
+                'https://usage.freenas.org/submit',
+                data=json.dumps(data, sort_keys=True),
+                headers={'Content-type': 'application/json'},
+                proxy=os.environ.get('http_proxy'),
+            )
+
     def get_gather_context(self):
         datasets = self.middleware.call_sync('zfs.dataset.query')
         context = {
@@ -97,7 +108,7 @@ class UsageService(Service):
             else:
                 usage_stats.update(stats)
 
-        return json.dumps(usage_stats, sort_keys=True)
+        return usage_stats
 
     def gather_total_capacity(self, context):
         return {
