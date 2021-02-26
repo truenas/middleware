@@ -215,7 +215,11 @@ class DSCache(Service):
         This is called from a cronjob every 24 hours and when a user clicks on the
         UI button to 'rebuild directory service cache'.
         """
-        for ds in ['activedirectory', 'ldap', 'nis']:
+        available_ds = ['activedirectory', 'ldap']
+        if osc.IS_FREEBSD:
+            available_ds.append('nis')
+
+        for ds in available_ds:
             ds_state = await self.middleware.call(f'{ds}.get_state')
             if ds_state == 'HEALTHY':
                 await self.middleware.call(f'{ds}.fill_cache', True)
