@@ -1,9 +1,7 @@
 import json
 import asyncio
 import random
-import aiohttp
 import hashlib
-import os
 
 from copy import deepcopy
 from collections import defaultdict
@@ -36,13 +34,9 @@ class UsageService(Service):
                 restrict_usage = ['gather_total_capacity', 'gather_system_version']
 
             try:
-                async with aiohttp.ClientSession(raise_for_status=True) as session:
-                    await session.post(
-                        'https://usage.freenas.org/submit',
-                        data=await self.middleware.call('usage.gather', restrict_usage),
-                        headers={'Content-type': 'application/json'},
-                        proxy=os.environ.get('http_proxy'),
-                    )
+                await self.middleware.call(
+                    'usage.submit_stats', await self.middleware.call('usage.gather', restrict_usage)
+                )
             except Exception as e:
                 # We still want to schedule the next call
                 self.logger.error(e)
@@ -348,14 +342,16 @@ class UsageService(Service):
         system = await self.middleware.call('system.info')
         return {'version': system['version']}
 
+    async def retrieve_system_hash(self):
+        with open('/etc/hostid', 'rb') as f:
+            return hashlib.sha256(f.read().strip()).hexdigest()
+
     async def gather_system(self, context):
         platform = 'TrueNAS-{}'.format(await self.middleware.call(
             'system.product_type'
         ))
 
         usage_version = 1
-        with open('/etc/hostid', 'rb') as f:
-            system_hash = hashlib.sha256(f.read().strip()).hexdigest()
         datasets = await self.middleware.call(
             'zfs.dataset.query', [('type', '!=', 'VOLUME')], {'count': True}
         )
@@ -370,7 +366,7 @@ class UsageService(Service):
         )
 
         return {
-            'system_hash': system_hash,
+            'system_hash': await self.retrieve_system_hash(),
             'platform': platform,
             'usage_version': usage_version,
             'system': [{'users': users, 'snapshots': snapshots, 'zvols': zvols, 'datasets': datasets}]
