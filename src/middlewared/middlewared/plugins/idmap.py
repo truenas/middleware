@@ -408,6 +408,11 @@ class IdmapDomainService(CRUDService):
             verrors.add(f'{schema_name}.range_low', 'Idmap high range must be greater than idmap low range')
             return
 
+        if data.get('certificate') and not await self.middleware.call(
+            'certificate.query', [['id', '=', data['certificate']]]
+        ):
+            verrors.add(f'{schema_name}.certificate', 'Please specify a valid certificate.')
+
         configured_domains = await self.query()
         ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
         ad_enabled = False if await self.middleware.call('activedirectory.get_state') == 'DISABLED' else True
