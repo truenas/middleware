@@ -618,7 +618,7 @@ class PluginService(CRUDService):
 
             # We construct our version in the following manner
             # epoch!manifest_version.version.revision
-            available_version = f'{plugin_dict["epoch"]}!{plugin_git_manifest["revision"]}.' \
+            available_version = f'{plugin_dict["epoch"]}!{plugin_git_manifest.get("revision", "0")}.' \
                                 f'{plugin_dict["version"]}.{plugin_dict["revision"]}'
             plugin_version = f'{plugin["epoch"]}!{plugin_manifest.get("revision", "0")}.' \
                              f'{plugin["version"]}.{plugin["revision"]}'
