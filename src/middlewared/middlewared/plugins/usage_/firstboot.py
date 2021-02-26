@@ -1,4 +1,5 @@
 import aiohttp
+import json
 import os
 
 from middlewared.service import Service
@@ -27,13 +28,13 @@ class UsageService(Service):
 
         while retries:
             try:
-                await self.submit_stats({
+                await self.submit_stats(json.dumps({
                     'platform': 'TrueNAS-SCALE',
                     'system_hash': hash,
                     'firstboot': [{
                         'version': version,
                     }]
-                })
+                }))
             except Exception:
                 retries -= 1
                 if not retries:

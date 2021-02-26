@@ -1589,6 +1589,10 @@ async def _event_system(middleware, event_type, args):
                         await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
             else:
                 await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+
+            if await middleware.call('system.first_boot'):
+                asyncio.ensure_future(middleware.call('usage.firstboot'))
+
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
@@ -1665,6 +1669,7 @@ class SystemHealthEventSource(EventSource):
 
 
 async def firstboot(middleware):
+    global SYSTEM_FIRST_BOOT
     if os.path.exists(FIRST_INSTALL_SENTINEL):
         SYSTEM_FIRST_BOOT = True
         # Delete sentinel file before making clone as we
