@@ -33,6 +33,8 @@ class GlusterPeerService(CRUDService):
             'uuid': p.find('uuid').text,
             'hostname': p.find('hostname').text,
             'connected': p.find('connected').text,
+            'state': p.find('state').text,
+            'status': p.find('stateStr').text,
         }
 
         if data['connected'] == '1':
@@ -93,19 +95,48 @@ class GlusterPeerService(CRUDService):
         `localhost` Boolean if True, include localhost else exclude localhost
         """
 
-        peers = self.middleware.call_sync('gluster.method.run', peer.status)
+        raw_xml = subprocess.run(
+            ['gluster', 'peer', 'status', '--xml'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True
+        )
+        if raw_xml.returncode:
+            # the gluster cli utility will return stderr
+            # to stdout and vice versa on certain failures.
+            # account for this
+            err = raw_xml.stderr if raw_xml.stderr else raw_xml.stdout
+            raise CallError(f'Failed to run gluster peer status locally: {err.strip()}')
+
+        local_peers = ET.fromstring(raw_xml.stdout)
+        local_peers = self.parse_peer_status_xml(local_peers)
         if not data['localhost']:
-            return peers
+            return local_peers
 
-        try:
-            remote_node = next(i['hostname'] for i in peers if i['connected'] == 'Connected')
-        except StopIteration:
-            raise CallError('All remote peers are disconnected.')
+        rem_node = None
+        for i in local_peers:
+            # gluster has _very_ deceiving statuses for a peer
+            # being a part of the cluster, being connected, and
+            # being "healthy"
+            state = i['state'] == '3'
+            conn = i['connected'] == 'Connected'
+            status = i['status'] == 'Peer in Cluster'
+            healthy = state & conn & status
+            if healthy:
+                rem_node = i['hostname']
+                break
 
-        # this is the same as running `gluster.method.run, peer.status` but
-        # running it on the `remote_node` so that we can get 2 different
+        if rem_node is None:
+            # this means that all the peers in the cluster are
+            # "Disconnected" or "Peer Rejected" so return early
+            # here since running the command on a remote peer
+            # will produce no output
+            return local_peers
+
+        # this is the same as running `raw_xml` subprocess above but
+        # running it on the `rem_node` so that we can get 2 different
         # "views" of the peers in the TSP.
-        command = ['gluster', f'--remote-host={remote_node}', 'peer', 'status', '--xml']
+        command = ['gluster', f'--remote-host={rem_node}', 'peer', 'status', '--xml']
         cp = subprocess.run(
             command,
             stdout=subprocess.PIPE,
@@ -119,22 +150,12 @@ class GlusterPeerService(CRUDService):
             err = cp.stderr if cp.stderr else cp.stdout
             raise CallError(f'Failed running remote peer status with error: {err.strip()}')
 
-        # build our data structure by parsing the xml
-        remote_local_view = ET.fromstring(cp.stdout)
-        remote_local_view = self.parse_peer_status_xml(remote_local_view)
+        rem_peers = ET.fromstring(cp.stdout)
+        rem_peers = self.parse_peer_status_xml(rem_peers)
 
-        # this should only ever produce 1 entry
-        our_ip = [i for i in remote_local_view if i not in peers]
-        if len(our_ip) != 1:
-            raise CallError(
-                f'Remote peer: {remote_node} sees these peers: {remote_local_view}'
-                f'The local peer sees these peers: {peers}.'
-                'The local and remote peers should be the same quantity.'
-            )
+        local_peers.extend([i for i in rem_peers if i not in local_peers])
 
-        peers.append(our_ip[0])
-
-        return peers
+        return local_peers
 
     @accepts()
     async def ips_available(self):
