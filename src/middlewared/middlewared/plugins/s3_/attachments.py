@@ -55,4 +55,3 @@ class S3CertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 async def setup(middleware):
     await middleware.call('certificate.register_attachment_delegate', S3CertificateAttachmentDelegate(middleware))
     await middleware.call('pool.dataset.register_attachment_delegate', MinioFSAttachmentDelegate(middleware))
-

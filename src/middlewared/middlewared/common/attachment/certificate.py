@@ -25,7 +25,7 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
         return self.SERVICE if self.NAMESPACE == NotImplementedError else self.NAMESPACE
 
     async def state(self, cert_id):
-        config = await self.middleware.call(f'{self.get_namespace()}.config')
+        config = await self.middleware.call(f'{await self.get_namespace()}.config')
         if isinstance(config[self.CERT_FIELD], dict):
             return config[self.CERT_FIELD]['id'] == cert_id
         else:
@@ -48,6 +48,3 @@ class CertificateCRUDServiceAttachmentDelegate(CertificateAttachmentDelegate, Se
 
     async def state(self, cert_id):
         return bool(await self.attachments(cert_id))
-
-    async def redeploy(self, cert_id):
-        pass
