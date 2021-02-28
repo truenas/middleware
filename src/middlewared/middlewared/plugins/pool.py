@@ -2107,15 +2107,16 @@ class PoolDatasetService(CRUDService):
         # remove the encryption keys from the database.
         for root_ds in {pool['name'] for pool in self.middleware.call_sync('pool.query')} - {
             ds['id'] for ds in self.middleware.call_sync(
-                'pool.dataset.query', [], {'extra': {'retrieve_children': False, 'properties': []}}
+                'zfs.dataset.query', [], {'extra': {'properties': [], 'flat': False}}
             )
         }:
             filters.extend([['name', '!=', root_ds], ['name', '!^', f'{root_ds}/']])
 
         db_datasets = self.query_encrypted_roots_keys(filters)
         encrypted_roots = {
-            d['name']: d for d in self.query(filters, {'extra': {'properties': ['encryptionroot']}})
-            if d['name'] == d['encryption_root']
+            d['name']: d for d in self.middleware.call_sync(
+                'zfs.dataset.query', filters, {'extra': {'properties': ['encryptionroot']}}
+            ) if d['name'] == d['encryption_root']
         }
         to_remove = []
         check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
