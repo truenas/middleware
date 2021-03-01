@@ -153,9 +153,12 @@ http {
         ssl_ciphers EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA${"" if disabled_ciphers else "+SHA256"}:EDH+aRSA:EECDH:!RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS${disabled_ciphers};
         add_header Strict-Transport-Security max-age=${31536000 if general_settings['ui_httpsredirect'] else 0};
 
-        ## TODO: OCSP Stapling
-        #ssl_stapling on;
-        #ssl_stapling_verify on;
+        ## If oscsp stapling is a must in cert extensions, we should make sure nginx respects that
+        ## and handles clients accordingly.
+        % if 'Tlsfeature' in cert['extensions']:
+        ssl_stapling on;
+        ssl_stapling_verify on;
+        % endif
         #resolver ;
         #ssl_trusted_certificate ;
 % endif
