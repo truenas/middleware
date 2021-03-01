@@ -41,7 +41,7 @@ class VNC(Device):
         # TODO: Unable to set resolution for VNC devices
         attrs = self.data['attributes']
         return create_element(
-            'graphics', type='vnc', port=str(self.data['attributes']['vnc_port']), attribute_dict={
+            'graphics', type='spice', port=str(self.data['attributes']['vnc_port']), attribute_dict={
                 'children': [
                     create_element('listen', type='address', address=self.data['attributes']['vnc_bind']),
                 ]
@@ -91,7 +91,7 @@ class VNC(Device):
         start_args = self.get_start_attrs()
         self.web_process = subprocess.Popen(
             [
-                'websockify', '--web', '/usr/share/novnc/', '--wrap-mode=ignore',
+                'websockify', '--web', '/usr/share/spice-html5/', '--wrap-mode=ignore',
                 start_args['web_bind'], start_args['server_addr']
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
