@@ -2,7 +2,7 @@ import os
 
 from lxml import etree
 
-from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, VNC
+from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, RemoteDisplay
 from middlewared.service import CallError
 from middlewared.utils import Nid
 
@@ -83,7 +83,7 @@ class VMSupervisor(VMSupervisorBase):
 
     def commandline_args(self):
         args = []
-        for device in filter(lambda d: isinstance(d, (PCI, VNC)), self.devices):
+        for device in filter(lambda d: isinstance(d, (PCI, RemoteDisplay)), self.devices):
             args += filter(None, [device.hypervisor_args()])
         return args
 
@@ -253,5 +253,5 @@ class VMSupervisor(VMSupervisorBase):
 
     def before_start_checks(self):
         super().before_start_checks()
-        if len([d for d in self.devices if isinstance(d, VNC)]) > 1:
+        if len([d for d in self.devices if isinstance(d, RemoteDisplay)]) > 1:
             raise CallError('Only one VNC device per VM is supported')

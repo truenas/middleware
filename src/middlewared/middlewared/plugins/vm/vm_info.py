@@ -4,7 +4,7 @@ import psutil
 from middlewared.schema import accepts, Bool, Int, Str
 from middlewared.service import pass_app, Service
 
-from .devices import NIC, VNC
+from .devices import NIC, RemoteDisplay
 
 
 class VMService(Service):
@@ -37,7 +37,7 @@ class VMService(Service):
         ] + [6000, 6100]
 
         vnc_port = next((i for i in range(5900, 65535) if i not in all_ports))
-        return {'vnc_port': vnc_port, 'vnc_web': VNC.get_vnc_web_port(vnc_port)}
+        return {'vnc_port': vnc_port, 'vnc_web': RemoteDisplay.get_web_port(vnc_port)}
 
     @accepts()
     def get_vnc_ipv4(self):
@@ -174,7 +174,7 @@ class VMService(Service):
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web'):
                 vnc_web.append(
-                    f'http://{host}:{VNC.get_vnc_web_port(vnc_device["vnc_port"])}/vnc.html?autoconnect=1'
+                    f'http://{host}:{RemoteDisplay.get_web_port(vnc_device["vnc_port"])}/vnc.html?autoconnect=1'
                 )
 
         return vnc_web

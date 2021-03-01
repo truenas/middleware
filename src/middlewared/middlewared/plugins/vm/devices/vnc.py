@@ -10,7 +10,7 @@ from .device import Device
 from .utils import create_element
 
 
-class VNC(Device):
+class RemoteDisplay(Device):
 
     schema = Dict(
         'attributes',
@@ -74,14 +74,14 @@ class VNC(Device):
         ))
 
     @staticmethod
-    def get_vnc_web_port(vnc_port):
+    def get_web_port(vnc_port):
         split_port = int(str(vnc_port)[:2]) - 1
         return int(str(split_port) + str(vnc_port)[2:])
 
     def get_start_attrs(self):
         vnc_port = self.data['attributes']['vnc_port']
         vnc_bind = self.data['attributes']['vnc_bind']
-        vnc_web_port = self.get_vnc_web_port(vnc_port)
+        vnc_web_port = self.get_web_port(vnc_port)
         return {
             'web_bind': f':{vnc_web_port}' if vnc_bind == '0.0.0.0' else f'{vnc_bind}:{vnc_web_port}',
             'server_addr': f'{vnc_bind}:{vnc_port}'

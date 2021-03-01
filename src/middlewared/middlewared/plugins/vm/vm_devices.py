@@ -9,7 +9,7 @@ from middlewared.service import CallError, CRUDService, private, ValidationError
 from middlewared.utils import osc, run
 from middlewared.async_validators import check_path_resides_within_volume
 
-from .devices import CDROM, DISK, NIC, PCI, RAW, VNC
+from .devices import CDROM, DISK, NIC, PCI, RAW, RemoteDisplay
 
 
 RE_PPTDEV_NAME = re.compile(r'([0-9]+/){2}[0-9]+')
@@ -33,7 +33,7 @@ class VMDeviceService(CRUDService):
         'DISK': DISK.schema,
         'NIC': NIC.schema,
         'PCI': PCI.schema,
-        'VNC': VNC.schema,
+        'VNC': RemoteDisplay.schema,
     }
 
     class Config:

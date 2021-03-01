@@ -12,7 +12,7 @@ from lxml import etree
 
 from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
-from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, VNC # noqa
+from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, RemoteDisplay # noqa
 from middlewared.utils import osc
 
 from .utils import create_element
