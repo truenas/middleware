@@ -22,7 +22,7 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
     SERVICE_VERB = 'reload'
 
     async def get_namespace(self):
-        return self.SERVICE if self.NAMESPACE == NotImplementedError else self.NAMESPACE
+        return self.SERVICE if self.NAMESPACE is NotImplementedError else self.NAMESPACE
 
     async def state(self, cert_id):
         config = await self.middleware.call(f'{await self.get_namespace()}.config')
