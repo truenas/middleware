@@ -95,10 +95,10 @@ class VMService(Service):
                 if item['dtype'] == 'NIC':
                     if 'mac' in item['attributes']:
                         del item['attributes']['mac']
-                if item['dtype'] == 'VNC':
-                    if 'vnc_port' in item['attributes']:
-                        vnc_dict = await self.middleware.call('vm.vnc_port_wizard')
-                        item['attributes']['vnc_port'] = vnc_dict['vnc_port']
+                if item['dtype'] == 'DISPLAY':
+                    if 'port' in item['attributes']:
+                        dev_dict = await self.middleware.call('vm.vnc_port_wizard')
+                        item['attributes']['port'] = dev_dict['port']
                 if item['dtype'] == 'DISK':
                     zvol = item['attributes']['path'].replace('/dev/zvol/', '')
                     clone_dst = await self.__clone_zvol(vm['name'], zvol, created_snaps, created_clones)
