@@ -32,8 +32,8 @@ class VMService(Service):
         Returns a dict with two keys vnc_port and vnc_web.
         """
         all_ports = [
-            d['attributes'].get('vnc_port')
-            for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'VNC']]))
+            d['attributes'].get('port')
+            for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]))
         ] + [6000, 6100]
 
         vnc_port = next((i for i in range(5900, 65535) if i not in all_ports))
@@ -174,7 +174,7 @@ class VMService(Service):
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web'):
                 vnc_web.append(
-                    f'http://{host}:{RemoteDisplay.get_web_port(vnc_device["vnc_port"])}/vnc.html?autoconnect=1'
+                    f'http://{host}:{RemoteDisplay.get_web_port(vnc_device["port"])}/vnc.html?autoconnect=1'
                 )
 
         return vnc_web

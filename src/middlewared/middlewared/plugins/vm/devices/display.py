@@ -14,16 +14,16 @@ class RemoteDisplay(Device):
 
     schema = Dict(
         'attributes',
-        Str('vnc_resolution', enum=[
+        Str('resolution', enum=[
             '1920x1200', '1920x1080', '1600x1200', '1600x900',
             '1400x1050', '1280x1024', '1280x720',
             '1024x768', '800x600', '640x480',
         ], default='1024x768'),
-        Int('vnc_port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
-        Str('vnc_bind', default='0.0.0.0'),
+        Int('port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
+        Str('bind', default='0.0.0.0'),
         Bool('wait', default=False),
-        Str('vnc_password', default=None, null=True, private=True),
-        Bool('vnc_web', default=False),
+        Str('password', default=None, null=True, private=True),
+        Bool('web', default=False),
     )
 
     def __init__(self, *args, **kwargs):
@@ -32,20 +32,20 @@ class RemoteDisplay(Device):
 
     def identity(self):
         data = self.data['attributes']
-        return f'{data["vnc_bind"]}:{data["vnc_port"]}'
+        return f'{data["bind"]}:{data["port"]}'
 
     def is_available(self):
-        return self.data['attributes']['vnc_bind'] in self.middleware.call_sync('vm.device.vnc_bind_choices')
+        return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.vnc_bind_choices')
 
     def xml_linux(self, *args, **kwargs):
         # TODO: Unable to set resolution for VNC devices
         attrs = self.data['attributes']
         return create_element(
-            'graphics', type='spice', port=str(self.data['attributes']['vnc_port']), attribute_dict={
+            'graphics', type='spice', port=str(self.data['attributes']['port']), attribute_dict={
                 'children': [
-                    create_element('listen', type='address', address=self.data['attributes']['vnc_bind']),
+                    create_element('listen', type='address', address=self.data['attributes']['bind']),
                 ]
-            }, **({} if not attrs['vnc_password'] else {'passwd': attrs['vnc_password']})
+            }, **({} if not attrs['password'] else {'passwd': attrs['password']})
         ), create_element(
             'controller', type='usb', model='nec-xhci'
         ), create_element('input', type='tablet', bus='usb')
@@ -59,32 +59,32 @@ class RemoteDisplay(Device):
 
     def hypervisor_args_freebsd(self, *args, **kwargs):
         attrs = self.data['attributes']
-        width, height = (attrs.get('vnc_resolution') or '1024x768').split('x')
+        width, height = (attrs.get('resolution') or '1024x768').split('x')
         return '-s ' + ','.join(filter(
             bool, [
                 '29',
                 'fbuf',
                 'vncserver',
-                f'tcp={attrs["vnc_bind"]}:{attrs["vnc_port"]}',
+                f'tcp={attrs["bind"]}:{attrs["port"]}',
                 f'w={width}',
                 f'h={height}',
-                f'password={attrs["vnc_password"]}' if attrs.get('vnc_password') else None,
+                f'password={attrs["password"]}' if attrs.get('password') else None,
                 'wait' if attrs.get('wait') else None,
             ]
         ))
 
     @staticmethod
-    def get_web_port(vnc_port):
-        split_port = int(str(vnc_port)[:2]) - 1
-        return int(str(split_port) + str(vnc_port)[2:])
+    def get_web_port(port):
+        split_port = int(str(port)[:2]) - 1
+        return int(str(split_port) + str(port)[2:])
 
     def get_start_attrs(self):
-        vnc_port = self.data['attributes']['vnc_port']
-        vnc_bind = self.data['attributes']['vnc_bind']
-        vnc_web_port = self.get_web_port(vnc_port)
+        port = self.data['attributes']['port']
+        bind = self.data['attributes']['bind']
+        web_port = self.get_web_port(port)
         return {
-            'web_bind': f':{vnc_web_port}' if vnc_bind == '0.0.0.0' else f'{vnc_bind}:{vnc_web_port}',
-            'server_addr': f'{vnc_bind}:{vnc_port}'
+            'web_bind': f':{web_port}' if bind == '0.0.0.0' else f'{bind}:{web_port}',
+            'server_addr': f'{bind}:{port}'
         }
 
     def post_start_vm_linux(self, *args, **kwargs):

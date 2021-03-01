@@ -551,9 +551,8 @@ class UsageService(Service):
 
         for v in vms:
             nics = 0
-            vncs = 0
             disks = 0
-            vnc_list = []
+            display_list = []
 
             for d in v['devices']:
                 dtype = d['dtype']
@@ -562,15 +561,14 @@ class UsageService(Service):
                     nics += 1
                 elif dtype == 'DISK':
                     disks += 1
-                elif dtype == 'VNC':
-                    vncs += 1
+                elif dtype == 'DISPLAY':
                     attrs = d['attributes']
 
-                    vnc_list.append(
+                    display_list.append(
                         {
                             'wait': attrs.get('wait'),
-                            'vnc_resolution': attrs.get('vnc_resolution'),
-                            'web': attrs.get('vnc_web')
+                            'resolution': attrs.get('resolution'),
+                            'web': attrs.get('web')
                         }
                     )
 
@@ -583,8 +581,8 @@ class UsageService(Service):
                     'time': v['time'],
                     'nics': nics,
                     'disks': disks,
-                    'vncs': vncs,
-                    'vnc_configs': vnc_list
+                    'display_devices': len(display_list),
+                    'display_devices_configs': display_list
                 }
             )
 

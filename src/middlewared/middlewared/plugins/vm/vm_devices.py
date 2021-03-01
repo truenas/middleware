@@ -33,7 +33,7 @@ class VMDeviceService(CRUDService):
         'DISK': DISK.schema,
         'NIC': NIC.schema,
         'PCI': PCI.schema,
-        'VNC': RemoteDisplay.schema,
+        'DISPLAY': RemoteDisplay.schema,
     }
 
     class Config:
@@ -395,27 +395,27 @@ class VMDeviceService(CRUDService):
                 )
             if not await self.middleware.call('vm.device.iommu_enabled'):
                 verrors.add('attribute.pptdev', 'IOMMU support is required.')
-        elif device.get('dtype') == 'VNC':
+        elif device.get('dtype') == 'DISPLAY':
             if vm_instance:
                 if osc.IS_FREEBSD and vm_instance['bootloader'] != 'UEFI':
                     verrors.add('dtype', 'VNC only works with UEFI bootloader.')
                 if all(not d.get('id') for d in vm_instance['devices']):
                     # VM is being created so devices don't have an id yet. We can just count no of VNC devices
                     # and add a validation error if it's more then one
-                    if len([d for d in vm_instance['devices'] if d['dtype'] == 'VNC']) > 1:
-                        verrors.add('dtype', 'Only one VNC device is allowed per VM')
-                elif any(d['dtype'] == 'VNC' and d['id'] != device.get('id') for d in vm_instance['devices']):
-                    verrors.add('dtype', 'Only one VNC device is allowed per VM')
+                    if len([d for d in vm_instance['devices'] if d['dtype'] == 'DISPLAY']) > 1:
+                        verrors.add('dtype', 'Only one DISPLAY device is allowed per VM')
+                elif any(d['dtype'] == 'DISPLAY' and d['id'] != device.get('id') for d in vm_instance['devices']):
+                    verrors.add('dtype', 'Only one DISPLAY device is allowed per VM')
             all_ports = [
-                d['attributes'].get('vnc_port')
-                for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'VNC']]))
+                d['attributes'].get('port')
+                for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]))
                 if d['id'] != device.get('id')
             ]
-            if device['attributes'].get('vnc_port'):
-                if device['attributes']['vnc_port'] in all_ports:
-                    verrors.add('attributes.vnc_port', 'Specified vnc port is already in use')
+            if device['attributes'].get('port'):
+                if device['attributes']['port'] in all_ports:
+                    verrors.add('attributes.port', 'Specified display port is already in use')
             else:
-                device['attributes']['vnc_port'] = (await self.middleware.call('vm.vnc_port_wizard'))['vnc_port']
+                device['attributes']['port'] = (await self.middleware.call('vm.vnc_port_wizard'))['port']
 
         if device['dtype'] in ('RAW', 'DISK') and device['attributes'].get('physical_sectorsize')\
                 and not device['attributes'].get('logical_sectorsize'):
