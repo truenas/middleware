@@ -254,4 +254,4 @@ class VMSupervisor(VMSupervisorBase):
     def before_start_checks(self):
         super().before_start_checks()
         if len([d for d in self.devices if isinstance(d, RemoteDisplay)]) > 1:
-            raise CallError('Only one VNC device per VM is supported')
+            raise CallError('Only one Display device per VM is supported')

@@ -35,10 +35,10 @@ class RemoteDisplay(Device):
         return f'{data["bind"]}:{data["port"]}'
 
     def is_available(self):
-        return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.vnc_bind_choices')
+        return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
 
     def xml_linux(self, *args, **kwargs):
-        # TODO: Unable to set resolution for VNC devices
+        # TODO: Unable to set resolution for display devices
         attrs = self.data['attributes']
         return create_element(
             'graphics', type='spice', port=str(self.data['attributes']['port']), attribute_dict={

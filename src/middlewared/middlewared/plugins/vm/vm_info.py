@@ -10,54 +10,38 @@ from .devices import NIC, RemoteDisplay
 class VMService(Service):
 
     @accepts(Int('id'))
-    async def get_vnc(self, id):
+    async def get_display_devices(self, id):
         """
-        Get the vnc devices from a given guest.
+        Get the display devices from a given guest.
 
         Returns:
-            list(dict): with all attributes of the vnc device or an empty list.
+            list(dict): with all attributes of the display device or an empty list.
         """
-        vnc_devices = []
+        devices = []
         for device in await self.middleware.call('datastore.query', 'vm.device', [('vm', '=', id)]):
-            if device['dtype'] == 'VNC':
-                vnc = device['attributes']
-                vnc_devices.append(vnc)
-        return vnc_devices
+            if device['dtype'] == 'DISPLAY':
+                devices.append(device['attributes'])
+        return devices
 
     @accepts()
-    async def vnc_port_wizard(self):
+    async def port_wizard(self):
         """
-        It returns the next available VNC PORT and WEB VNC PORT.
+        It returns the next available Display Server Port and Web Port.
 
-        Returns a dict with two keys vnc_port and vnc_web.
+        Returns a dict with two keys `port` and `web`.
         """
         all_ports = [
             d['attributes'].get('port')
             for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]))
         ] + [6000, 6100]
 
-        vnc_port = next((i for i in range(5900, 65535) if i not in all_ports))
-        return {'vnc_port': vnc_port, 'vnc_web': RemoteDisplay.get_web_port(vnc_port)}
-
-    @accepts()
-    def get_vnc_ipv4(self):
-        """
-        Get all available IPv4 address in the system.
-
-        Returns:
-           list: will return a list of available IPv4 address.
-        """
-        default_ifaces = ['0.0.0.0', '127.0.0.1']
-        ifaces_dict_list = self.middleware.call_sync('interface.ip_in_use', {'ipv6': False})
-        ifaces = [alias_dict['address'] for alias_dict in ifaces_dict_list]
-
-        default_ifaces.extend(ifaces)
-        return default_ifaces
+        port = next((i for i in range(5900, 65535) if i not in all_ports))
+        return {'port': port, 'web': RemoteDisplay.get_web_port(port)}
 
     @accepts(Int('id'))
     async def get_attached_iface(self, id):
         """
-        Get the attached physical interfaces from a given guest.
+        Get the attached physical interfaces from a given guest. ( This endpoint will be removed in future release(s). )
 
         Returns:
             list: will return a list with all attached physical interfaces or otherwise False.
@@ -154,14 +138,14 @@ class VMService(Service):
 
     @accepts(Int('id'), Str('host', default=''))
     @pass_app()
-    async def get_vnc_web(self, app, id, host):
+    async def get_display_web_uri(self, app, id, host):
         """
-            Get the VNC URL from a given VM.
+        Get the Display URL from a given VM.
 
-            Returns:
-                list: With all URL available.
+        Returns:
+            list: With all URL available.
         """
-        vnc_web = []
+        web_uris = []
 
         host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
         try:
@@ -171,10 +155,10 @@ class VMService(Service):
         else:
             host = f'[{host}]'
 
-        for vnc_device in await self.get_vnc(id):
-            if vnc_device.get('vnc_web'):
-                vnc_web.append(
-                    f'http://{host}:{RemoteDisplay.get_web_port(vnc_device["port"])}/vnc.html?autoconnect=1'
+        for device in await self.get_display_devices(id):
+            if device.get('web'):
+                web_uris.append(
+                    f'http://{host}:{RemoteDisplay.get_web_port(device["port"])}/spice_auto.html'
                 )
 
-        return vnc_web
+        return web_uris

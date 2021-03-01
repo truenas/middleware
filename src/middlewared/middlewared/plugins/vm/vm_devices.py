@@ -73,13 +73,14 @@ class VMDeviceService(CRUDService):
         return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
 
     @accepts()
-    def vnc_bind_choices(self):
+    async def bind_choices(self):
         """
-        Available choices for VNC Bind attribute.
+        Available choices for Bind attribute.
         """
         return {
-            i['address']: i['address']
-            for i in self.middleware.call_sync('interface.ip_in_use', {'any': True, 'loopback': True})
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'static': True, 'any': True}
+            )
         }
 
     @private
@@ -118,7 +119,7 @@ class VMDeviceService(CRUDService):
     @accepts(
         Dict(
             'vmdevice_create',
-            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'VNC', 'RAW'],
+            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'DISPLAY', 'RAW'],
                 required=True),
             Int('vm', required=True),
             Dict('attributes', additional_attrs=True, default=None),
@@ -398,9 +399,9 @@ class VMDeviceService(CRUDService):
         elif device.get('dtype') == 'DISPLAY':
             if vm_instance:
                 if osc.IS_FREEBSD and vm_instance['bootloader'] != 'UEFI':
-                    verrors.add('dtype', 'VNC only works with UEFI bootloader.')
+                    verrors.add('dtype', 'Display only works with UEFI bootloader.')
                 if all(not d.get('id') for d in vm_instance['devices']):
-                    # VM is being created so devices don't have an id yet. We can just count no of VNC devices
+                    # VM is being created so devices don't have an id yet. We can just count no of Display devices
                     # and add a validation error if it's more then one
                     if len([d for d in vm_instance['devices'] if d['dtype'] == 'DISPLAY']) > 1:
                         verrors.add('dtype', 'Only one DISPLAY device is allowed per VM')
@@ -415,7 +416,7 @@ class VMDeviceService(CRUDService):
                 if device['attributes']['port'] in all_ports:
                     verrors.add('attributes.port', 'Specified display port is already in use')
             else:
-                device['attributes']['port'] = (await self.middleware.call('vm.vnc_port_wizard'))['port']
+                device['attributes']['port'] = (await self.middleware.call('vm.port_wizard'))['port']
 
         if device['dtype'] in ('RAW', 'DISK') and device['attributes'].get('physical_sectorsize')\
                 and not device['attributes'].get('logical_sectorsize'):
