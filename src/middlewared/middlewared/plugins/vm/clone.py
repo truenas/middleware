@@ -97,7 +97,7 @@ class VMService(Service):
                         del item['attributes']['mac']
                 if item['dtype'] == 'DISPLAY':
                     if 'port' in item['attributes']:
-                        dev_dict = await self.middleware.call('vm.vnc_port_wizard')
+                        dev_dict = await self.middleware.call('vm.port_wizard')
                         item['attributes']['port'] = dev_dict['port']
                 if item['dtype'] == 'DISK':
                     zvol = item['attributes']['path'].replace('/dev/zvol/', '')
