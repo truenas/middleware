@@ -42,15 +42,17 @@ class DISPLAY(Device):
         return bool(self.data['attributes'].get('password'))
 
     def web_uri(self, host, password=None):
-        params = '' if self.is_spice_type() else '?autoconnect=1'
-        if self.is_spice_type() and self.password_configured():
+        params = [] if self.is_spice_type() else ['autoconnect=1']
+        if self.password_configured():
             if not password:
                 return
 
-            params = f'?password={password}'
+            params.append(f'password={password}')
+
+        get_params = f'?{"&".join(params)}' if params else ''
 
         return f'http://{host}:{self.get_web_port(self.data["attributes"]["port"])}/' \
-               f'{"spice_auto" if self.is_spice_type() else "vnc"}.html{params}'
+               f'{"spice_auto" if self.is_spice_type() else "vnc"}.html{get_params}'
 
     def is_available(self):
         return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
