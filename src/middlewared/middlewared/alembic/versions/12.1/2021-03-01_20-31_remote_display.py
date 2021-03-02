@@ -25,7 +25,7 @@ def upgrade():
         attrs = json.loads(device['attributes'])
         attrs.update({
             'port': attrs.pop('vnc_port'),
-            'resolution': attrs.pop('vnc_resolution', '1024x768'),
+            'resolution': attrs.pop('vnc_resolution', '1024x768') or '1024x768',
             'bind': attrs.pop('vnc_bind'),
             'password': attrs.pop('vnc_password', None),
             'web': attrs.pop('vnc_web', True),

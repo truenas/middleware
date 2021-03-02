@@ -55,8 +55,10 @@ class DISPLAY(Device):
     def is_available(self):
         return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
 
+    def resolution(self):
+        return self.data['attributes']['resolution']
+
     def xml_linux(self, *args, **kwargs):
-        # TODO: Unable to set resolution for display devices
         attrs = self.data['attributes']
         return create_element(
             'graphics', type='spice' if self.is_spice_type() else 'vnc', port=str(self.data['attributes']['port']),
@@ -67,7 +69,15 @@ class DISPLAY(Device):
             }, **({} if not attrs['password'] else {'passwd': attrs['password']})
         ), create_element(
             'controller', type='usb', model='nec-xhci'
-        ), create_element('input', type='tablet', bus='usb')
+        ), create_element('input', type='tablet', bus='usb'), create_element('video', attribute_dict={
+            'children': [
+                create_element('model', type='qxl', attribute_dict={
+                    'children': [create_element(
+                        'resolution', x=self.resolution().split('x')[0], y=self.resolution().split('x')[-1]
+                    )]
+                })
+            ]
+        })
 
     def xml_freebsd(self, *args, **kwargs):
         return create_element(

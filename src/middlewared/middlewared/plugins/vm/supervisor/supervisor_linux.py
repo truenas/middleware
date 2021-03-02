@@ -55,7 +55,7 @@ class VMSupervisor(VMSupervisorBase):
                 device_xml = device.xml()
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
 
-        devices.extend([create_element('serial', type='pty'), create_element('video')])
+        devices.extend([create_element('serial', type='pty')])
         return create_element('devices', attribute_dict={'children': devices})
 
     def cpu_xml(self):
