@@ -38,7 +38,9 @@ class ChartReleaseService(Service):
     async def handle_k8s_event(self, k8s_event):
         name = get_chart_release_from_namespace(k8s_event['involved_object']['namespace'])
         async with LOCKS[name]:
-            chart_release = await self.middleware.call('chart.release.query', [['id', '=', name]])
+            chart_release = await self.middleware.call(
+                'chart.release.query', [['id', '=', name]], {'extra': {'history': True}}
+            )
             if not chart_release:
                 # It's possible the chart release got deleted
                 return
