@@ -161,10 +161,14 @@ call(
 artifacts = f"{workdir}/artifacts/"
 logs_list = [
     "/var/log/middlewared.log",
-    "/var/log/messages",
-    "/var/log/debug.log",
-    "/var/log/console.log"
+    "/var/log/messages"
 ]
+if scale:
+    logs_list.append("/var/log/debug")
+else:
+    logs_list.append("/var/log/debug.log")
+    logs_list.append("/var/log/console.log")
+
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
 
@@ -172,7 +176,8 @@ for log in logs_list:
     get_file(log, artifacts, 'root', 'testing', ip)
 
 # get dmesg and put it in artifacts
-results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
+dmesg_option = '' if scale else ' -a'
+results = SSH_TEST(f'dmesg{dmesg_option}', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/dmesg', 'w')
 dmsg.writelines(results['output'])
 dmsg.close()
