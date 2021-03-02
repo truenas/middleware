@@ -162,7 +162,7 @@ class VMDeviceService(CRUDService):
         new = device.copy()
         new.update(data)
 
-        new = await self.validate_device(new, device, update=True)
+        new = await self.validate_device(new, device)
         new = await self.update_device(new, device)
 
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
@@ -278,7 +278,7 @@ class VMDeviceService(CRUDService):
             return False
 
     @private
-    async def validate_device(self, device, old=None, vm_instance=None, update=False):
+    async def validate_device(self, device, old=None, vm_instance=None, update=True):
         # We allow vm_instance to be passed for cases where VM devices are being updated via VM and
         # the device checks should be performed with the modified vm_instance object not the one db holds
         # vm_instance should be provided at all times when handled by VMService, if VMDeviceService is interacting,
@@ -401,7 +401,7 @@ class VMDeviceService(CRUDService):
                 if osc.IS_FREEBSD and vm_instance['bootloader'] != 'UEFI':
                     verrors.add('dtype', 'Display only works with UEFI bootloader.')
 
-                if all(not d.get('id') for d in vm_instance['devices']) or not update:
+                if not update:
                     vm_instance['devices'].append(device)
 
                 await self.validate_display_devices(verrors, vm_instance)
