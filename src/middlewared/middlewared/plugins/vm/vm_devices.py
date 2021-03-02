@@ -137,7 +137,7 @@ class VMDeviceService(CRUDService):
         If `dtype` is of `DISK` type and a new Zvol is to be created, `attributes.create_zvol` will be passed as
         true with valid `attributes.zvol_name` and `attributes.zvol_volsize` values.
         """
-        data = await self.validate_device(data)
+        data = await self.validate_device(data, update=False)
         data = await self.update_device(data)
 
         id = await self.middleware.call(
@@ -162,7 +162,7 @@ class VMDeviceService(CRUDService):
         new = device.copy()
         new.update(data)
 
-        new = await self.validate_device(new, device)
+        new = await self.validate_device(new, device, update=True)
         new = await self.update_device(new, device)
 
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
@@ -278,7 +278,7 @@ class VMDeviceService(CRUDService):
             return False
 
     @private
-    async def validate_device(self, device, old=None, vm_instance=None):
+    async def validate_device(self, device, old=None, vm_instance=None, update=False):
         # We allow vm_instance to be passed for cases where VM devices are being updated via VM and
         # the device checks should be performed with the modified vm_instance object not the one db holds
         # vm_instance should be provided at all times when handled by VMService, if VMDeviceService is interacting,
@@ -400,13 +400,15 @@ class VMDeviceService(CRUDService):
             if vm_instance:
                 if osc.IS_FREEBSD and vm_instance['bootloader'] != 'UEFI':
                     verrors.add('dtype', 'Display only works with UEFI bootloader.')
-                if all(not d.get('id') for d in vm_instance['devices']):
-                    # VM is being created so devices don't have an id yet. We can just count no of Display devices
-                    # and add a validation error if it's more then one
-                    if len([d for d in vm_instance['devices'] if d['dtype'] == 'DISPLAY']) > 1:
-                        verrors.add('dtype', 'Only one DISPLAY device is allowed per VM')
-                elif any(d['dtype'] == 'DISPLAY' and d['id'] != device.get('id') for d in vm_instance['devices']):
-                    verrors.add('dtype', 'Only one DISPLAY device is allowed per VM')
+
+                if all(not d.get('id') for d in vm_instance['devices']) or not update:
+                    vm_instance['devices'].append(device)
+
+                await self.validate_display_devices(verrors, vm_instance)
+
+            if osc.IS_FREEBSD and device['attributes']['type'] != 'VNC':
+                verrors.add('attributes.type', 'Only VNC Display device is supported for this platform.')
+
             all_ports = [
                 d['attributes'].get('port')
                 for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]))
@@ -429,6 +431,24 @@ class VMDeviceService(CRUDService):
             raise verrors
 
         return device
+
+    @private
+    async def validate_display_devices(self, verrors, vm_instance):
+        devs = await self.get_display_devices(vm_instance)
+        if len(devs['vnc']) > 1:
+            verrors.add('attributes.type', 'Only one VNC Display device is supported')
+        if len(devs['spice']) > 1:
+            verrors.add('attributes.type', 'Only one SPICE Display device is supported')
+
+    @private
+    async def get_display_devices(self, vm_instance):
+        devs = {'vnc': [], 'spice': []}
+        for dev in filter(lambda d: d['dtype'] == 'DISPLAY', vm_instance['devices']):
+            if dev['attributes']['type'] == 'SPICE':
+                devs['spice'].append(dev)
+            else:
+                devs['vnc'].append(dev)
+        return devs
 
     @private
     async def failover_nic_check(self, vm_device, verrors, schema):
