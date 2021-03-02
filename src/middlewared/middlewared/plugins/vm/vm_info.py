@@ -166,18 +166,8 @@ class VMService(Service):
             host = f'[{host}]'
 
         device_credentials = {d['device_id']: d['password'] for d in options['devices_passwords']}
-        for device in await self.get_display_devices(id):
-            attrs = device['attributes']
-            params = ''
-            if attrs['password_configured']:
-                if device['id'] not in device_credentials:
-                    continue
-
-                params = f'?password={device_credentials[device["id"]]}'
-
-            if attrs.get('web'):
-                web_uris.append(
-                    f'http://{host}:{DISPLAY.get_web_port(attrs["port"])}/spice_auto.html{params}'
-                )
+        for device in map(lambda d: DISPLAY(d, middleware=self.middleware), await self.get_display_devices(id)):
+            if device.data['attributes'].get('web'):
+                web_uris.append(device.web_uri(host, device_credentials.get(device.data['id'])))
 
         return web_uris
