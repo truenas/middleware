@@ -78,6 +78,8 @@ class UserService(Service):
                     "builtin": True,
                     "sudo": False,
                     "smb": True if name in smb_builtins else False,
+                    "sudo_commands": [],
+                    "sudo_nopasswd": False,
                 }
                 existing_group["id"] = self.middleware.call_sync(
                     "datastore.insert",
@@ -195,6 +197,8 @@ class UserService(Service):
                     "group": group["id"],
                     "attributes": {},
                     "smb": False,
+                    "sudo_commands": [],
+                    "sudo_nopasswd": False,
                 }
                 existing_user["id"] = self.middleware.call_sync(
                     "datastore.insert",
