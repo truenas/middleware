@@ -12,12 +12,14 @@ class VMService(Service):
     @accepts(Int('id'))
     async def get_display_devices(self, id):
         """
-        Get the display devices from a given guest.
-
-        Returns:
-            list(dict): with all display devices or an empty list.
+        Get the display devices from a given guest. If a display device has password configured,
+        `attributes.password_configured` will be set to `true`.
         """
-        return await self.middleware.call('vm.device.query', [['vm', '=', id], ['dtype', '=', 'DISPLAY']])
+        devices = []
+        for device in await self.middleware.call('vm.device.query', [['vm', '=', id], ['dtype', '=', 'DISPLAY']]):
+            device['attributes']['password_configured'] = bool(device['attributes'].get('password'))
+            devices.append(device)
+        return devices
 
     @accepts()
     async def port_wizard(self):
