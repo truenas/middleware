@@ -168,6 +168,8 @@ class VMService(Service):
         device_credentials = {d['device_id']: d['password'] for d in options['devices_passwords']}
         for device in map(lambda d: DISPLAY(d, middleware=self.middleware), await self.get_display_devices(id)):
             if device.data['attributes'].get('web'):
-                web_uris.append(device.web_uri(host, device_credentials.get(device.data['id'])))
+                uri = device.web_uri(host, device_credentials.get(device.data['id']))
+                if uri:
+                    web_uris.append(uri)
 
         return web_uris
