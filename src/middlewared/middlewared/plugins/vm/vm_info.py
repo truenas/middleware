@@ -1,7 +1,7 @@
 import ipaddress
 import psutil
 
-from middlewared.schema import accepts, Bool, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import pass_app, Service
 
 from .devices import NIC, RemoteDisplay
@@ -15,13 +15,9 @@ class VMService(Service):
         Get the display devices from a given guest.
 
         Returns:
-            list(dict): with all attributes of the display device or an empty list.
+            list(dict): with all display devices or an empty list.
         """
-        devices = []
-        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm', '=', id)]):
-            if device['dtype'] == 'DISPLAY':
-                devices.append(device['attributes'])
-        return devices
+        return await self.middleware.call('vm.device.query', [['vm', '=', id], ['dtype', '=', 'DISPLAY']])
 
     @accepts()
     async def port_wizard(self):
@@ -136,11 +132,25 @@ class VMService(Service):
         """
         return NIC.random_mac()
 
-    @accepts(Int('id'), Str('host', default=''))
+    @accepts(
+        Int('id'),
+        Str('host', default=''),
+        Dict(
+            'options',
+            List('devices_passwords', items=[Dict(
+                'device_password',
+                Int('device_id', required=True),
+                Str('password', required=True, empty=False))
+            ])
+        )
+    )
     @pass_app()
-    async def get_display_web_uri(self, app, id, host):
+    async def get_display_web_uri(self, app, id, host, options):
         """
         Get the Display URL from a given VM.
+
+        Display devices which have a password configured must specify the password explicitly to retrieve display
+        device web uri.
 
         Returns:
             list: With all URL available.
@@ -155,10 +165,18 @@ class VMService(Service):
         else:
             host = f'[{host}]'
 
+        device_credentials = {d['device_id']: d['password'] for d in options['devices_passwords']}
         for device in await self.get_display_devices(id):
-            if device.get('web'):
+            attrs = device['attributes']
+            params = ''
+            if attrs.get('password'):
+                if device['id'] not in device_credentials:
+                    continue
+                params = f'?password={device_credentials[device["id"]]}'
+
+            if attrs.get('web'):
                 web_uris.append(
-                    f'http://{host}:{RemoteDisplay.get_web_port(device["port"])}/spice_auto.html'
+                    f'http://{host}:{RemoteDisplay.get_web_port(attrs["port"])}/spice_auto.html{params}'
                 )
 
         return web_uris
