@@ -2,7 +2,7 @@
 Normalize Remote Display VM device
 
 Revision ID: 382b7ca9bb51
-Revises: 13cd7cf67438
+Revises: d9e9d467fb39
 Create Date: 2021-02-10 00:23:15.609666+00:00
 
 """
@@ -11,7 +11,7 @@ import json
 from alembic import op
 
 revision = '382b7ca9bb51'
-down_revision = '13cd7cf67438'
+down_revision = 'd9e9d467fb39'
 branch_labels = None
 depends_on = None
 
