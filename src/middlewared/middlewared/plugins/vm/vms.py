@@ -202,7 +202,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         for i, device in enumerate(data.get('devices') or []):
             try:
                 await self.middleware.call(
-                    'vm.device.validate_device', device, devices_ids.get(device.get('id')), data
+                    'vm.device.validate_device', device, devices_ids.get(device.get('id')), data, bool(old)
                 )
                 if old:
                     # We would like to enforce the presence of "vm" attribute in each device so that

@@ -61,6 +61,8 @@ class DISPLAY(Device):
         return self.data['attributes']['resolution']
 
     def xml_linux(self, *args, **kwargs):
+        # FIXME: Resolution is not respected when we have more then 1 display device as we are not able to bind
+        #  video element to a graphic element
         attrs = self.data['attributes']
         return create_element(
             'graphics', type='spice' if self.is_spice_type() else 'vnc', port=str(self.data['attributes']['port']),
