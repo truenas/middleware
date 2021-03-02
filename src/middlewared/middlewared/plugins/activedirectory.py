@@ -365,6 +365,12 @@ class ActiveDirectoryService(ConfigService):
         if not new["enable"]:
             return
 
+        ldap_enabled = (await self.middleware.call("ldap.config"))['enable']
+        if ldap_enabled:
+            verrors.add(
+                "activedirectory_update.enable",
+                "Active Directory service may not be enabled while LDAP service is enabled."
+            )
         if not new["bindpw"] and not new["kerberos_principal"]:
             verrors.add(
                 "activedirectory_update.bindname",
@@ -531,6 +537,7 @@ class ActiveDirectoryService(ConfigService):
                 self.logger.warning("NTP request to Domain Controller failed.",
                                     exc_info=True)
             except Exception as e:
+                await self.middleware.call("kerberos.stop")
                 raise ValidationError(
                     "activedirectory_update",
                     f"Failed to validate domain configuration: {e}"
@@ -793,10 +800,19 @@ class ActiveDirectoryService(ConfigService):
         if not ad:
             ad = self.middleware.call_sync('activedirectory.config')
 
-        pdc = ActiveDirectory_Conn(conf=ad, logger=self.logger).get_pdc()
-        if not pdc:
-            self.logger.warning("Unable to find PDC emulator via DNS.")
-            return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
+        try:
+            pdc = ActiveDirectory_Conn(conf=ad, logger=self.logger).get_pdc()
+            if not pdc:
+                self.logger.warning("Unable to find PDC emulator via DNS.")
+                return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
+        except CallError:
+            AD_DNS = ActiveDirectory_DNS(conf=ad, logger=self.logger)
+            res = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 1)
+            if len(res) == 0:
+                self.logger.warning("Unable to find Domain Controller via DNS.")
+                return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
+
+            pdc = res[0]['host']
 
         c = ntplib.NTPClient()
         response = c.request(pdc)
