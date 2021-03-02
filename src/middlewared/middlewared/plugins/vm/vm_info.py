@@ -4,7 +4,7 @@ import psutil
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import pass_app, Service
 
-from .devices import NIC, RemoteDisplay
+from .devices import NIC, DISPLAY
 
 
 class VMService(Service):
@@ -32,7 +32,7 @@ class VMService(Service):
         ] + [6000, 6100]
 
         port = next((i for i in range(5900, 65535) if i not in all_ports))
-        return {'port': port, 'web': RemoteDisplay.get_web_port(port)}
+        return {'port': port, 'web': DISPLAY.get_web_port(port)}
 
     @accepts(Int('id'))
     async def get_attached_iface(self, id):
@@ -176,7 +176,7 @@ class VMService(Service):
 
             if attrs.get('web'):
                 web_uris.append(
-                    f'http://{host}:{RemoteDisplay.get_web_port(attrs["port"])}/spice_auto.html{params}'
+                    f'http://{host}:{DISPLAY.get_web_port(attrs["port"])}/spice_auto.html{params}'
                 )
 
         return web_uris

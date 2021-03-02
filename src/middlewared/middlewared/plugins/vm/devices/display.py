@@ -10,7 +10,7 @@ from .device import Device
 from .utils import create_element
 
 
-class RemoteDisplay(Device):
+class DISPLAY(Device):
 
     schema = Dict(
         'attributes',
