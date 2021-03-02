@@ -50,6 +50,15 @@ class KubernetesService(ConfigService):
         if data['node_ip'] not in await self.bindip_choices():
             verrors.add(f'{schema}.node_ip', 'Please provide a valid IP address.')
 
+        if not await self.middleware.call('route.configured_default_ipv4_route'):
+            if not data['route_v4_gateway']:
+                verrors.add(f'{schema}.route_v4_gateway', 'Please set a default route for system or for kubernetes.')
+            if not data['route_v4_interface']:
+                verrors.add(
+                    f'{schema}.route_v4_interface',
+                    'Please set a default route for system or specify default interface to be used for kubernetes.'
+                )
+
         for k, _ in await self.validate_interfaces(data):
             verrors.add(f'{schema}.{k}', 'Please specify a valid interface.')
 
