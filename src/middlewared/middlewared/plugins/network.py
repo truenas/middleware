@@ -2107,6 +2107,11 @@ class RouteService(Service):
         return filter_list([r.__getstate__() for r in rtable.routes], filters, options)
 
     @private
+    async def configured_default_ipv4_route(self):
+        route = netif.RoutingTable().default_route_ipv4
+        return bool(route or (await self.middleware.call('network.configuration.config'))['ipv4gateway'])
+
+    @private
     async def sync(self):
         config = await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
 
