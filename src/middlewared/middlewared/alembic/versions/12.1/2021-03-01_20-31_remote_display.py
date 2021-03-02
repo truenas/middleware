@@ -29,6 +29,7 @@ def upgrade():
             'bind': attrs.pop('vnc_bind'),
             'password': attrs.pop('vnc_password', None),
             'web': attrs.pop('vnc_web', True),
+            'type': 'VNC',
         })
         conn.execute("UPDATE vm_device SET attributes = ?, dtype = 'DISPLAY' WHERE id = ?", (
             json.dumps(attrs), device['id']

@@ -24,6 +24,7 @@ class DISPLAY(Device):
         Bool('wait', default=False),
         Str('password', default=None, null=True, private=True),
         Bool('web', default=False),
+        Str('type', default='SPICE', enum=['SPICE', 'VNC']),
     )
 
     def __init__(self, *args, **kwargs):
@@ -34,6 +35,23 @@ class DISPLAY(Device):
         data = self.data['attributes']
         return f'{data["bind"]}:{data["port"]}'
 
+    def is_spice_type(self):
+        return self.data['attributes']['type'] == 'SPICE'
+
+    def password_configured(self):
+        return bool(self.data['attributes'].get('password'))
+
+    def web_uri(self, host, password=None):
+        params = '' if self.is_spice_type() else '?autoconnect=1'
+        if self.is_spice_type() and self.password_configured():
+            if not password:
+                return
+
+            params = f'?password={password}'
+
+        return f'http://{host}:{self.get_web_port(self.data["attributes"]["port"])}/' \
+               f'{"spice_auto" if self.is_spice_type() else "vnc"}.html{params}'
+
     def is_available(self):
         return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
 
@@ -41,7 +59,8 @@ class DISPLAY(Device):
         # TODO: Unable to set resolution for display devices
         attrs = self.data['attributes']
         return create_element(
-            'graphics', type='spice', port=str(self.data['attributes']['port']), attribute_dict={
+            'graphics', type='spice' if self.is_spice_type() else 'vnc', port=str(self.data['attributes']['port']),
+            attribute_dict={
                 'children': [
                     create_element('listen', type='address', address=self.data['attributes']['bind']),
                 ]
@@ -91,8 +110,8 @@ class DISPLAY(Device):
         start_args = self.get_start_attrs()
         self.web_process = subprocess.Popen(
             [
-                'websockify', '--web', '/usr/share/spice-html5/', '--wrap-mode=ignore',
-                start_args['web_bind'], start_args['server_addr']
+                'websockify', '--web', f'/usr/share/{"spice-html5" if self.is_spice_type() else "novnc"}/',
+                '--wrap-mode=ignore', start_args['web_bind'], start_args['server_addr']
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
 
