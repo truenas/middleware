@@ -149,13 +149,11 @@ class VMService(Service):
     @pass_app()
     async def get_display_web_uri(self, app, id, host, options):
         """
-        Get the Display URL from a given VM.
+        Retrieve Display URI's for a given VM.
 
         Display devices which have a password configured must specify the password explicitly to retrieve display
-        device web uri.
-
-        Returns:
-            list: With all URL available.
+        device web uri. In case a password is not specified, the uri for display device in question will not be
+        retrieved because of missing password information.
         """
         web_uris = []
 
@@ -171,9 +169,10 @@ class VMService(Service):
         for device in await self.get_display_devices(id):
             attrs = device['attributes']
             params = ''
-            if attrs.get('password'):
+            if attrs['password_configured']:
                 if device['id'] not in device_credentials:
                     continue
+
                 params = f'?password={device_credentials[device["id"]]}'
 
             if attrs.get('web'):
