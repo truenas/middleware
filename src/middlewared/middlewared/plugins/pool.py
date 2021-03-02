@@ -3354,7 +3354,21 @@ class PoolDatasetService(CRUDService):
                         "type": "ALLOW",
                         "perms": {"BASIC": "FULL_CONTROL"},
                         "flags": {"BASIC": "INHERIT"}
-                    }
+                    },
+                    {
+                        "tag": "GROUP",
+                        "id": 545,
+                        "type": "ALLOW",
+                        "perms": {"BASIC": "MODIFY"},
+                        "flags": {"BASIC": "INHERIT"}
+                    },
+                    {
+                        "tag": "everyone@",
+                        "id": None,
+                        "type": "ALLOW",
+                        "perms": {"BASIC": "TRAVERSE"},
+                        "flags": {"BASIC": "NOINHERIT"}
+                    },
                 ],
             ),
             Dict(
