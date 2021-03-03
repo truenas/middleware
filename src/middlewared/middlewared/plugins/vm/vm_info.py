@@ -173,3 +173,10 @@ class VMService(Service):
                     web_uris.append(uri)
 
         return web_uris
+
+    @accepts()
+    async def resolution_choices(self):
+        """
+        Retrieve supported resolution choices for VM Display devices.
+        """
+        return {r: r for r in DISPLAY.RESOLUTION_ENUM}
