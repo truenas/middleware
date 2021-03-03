@@ -9,8 +9,10 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, send_file
 from auto_config import ip, user, password, pool_name, scale, ha
-
-pytestmark = pytest.mark.skipif(ha, reason='Skipping test for HA')
+from auto_config import dev_test
+reason = 'Skip for testing' if dev_test else 'Skipping test for HA'
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(ha or dev_test, reason=reason)
 
 dataset = f"{pool_name}/test_pool"
 dataset_url = dataset.replace('/', '%2F')

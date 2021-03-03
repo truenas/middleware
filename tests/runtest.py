@@ -43,6 +43,8 @@ Optional option
     --vm-name <VM_NAME>        - Name the the Bhyve VM
     --ha                       - Run test for HA
     --scale                    - Run test for Scale
+    --dev-test                 - Run only the test that are not mark with
+                                 pytestmark skipif dev_test is true.
     """ % argv[0]
 
 # if have no argument stop
@@ -58,7 +60,8 @@ option_list = [
     "vm-name=",
     "ha",
     "scale",
-    "update"
+    "update",
+    "dev-test"
 ]
 
 # look if all the argument are there.
@@ -75,7 +78,7 @@ testexpr = None
 ha = False
 scale = False
 update = False
-
+dev_test = False
 for output, arg in myopts:
     if output in ('-i', '--ip'):
         ip = arg
@@ -95,6 +98,8 @@ for output, arg in myopts:
         scale = True
     elif output == '--update':
         update = True
+    elif output == '--dev-test':
+        dev_test = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -123,6 +128,7 @@ pool_name = "tank"
 ha = {ha}
 scale = {scale}
 update = {update}
+dev_test = {dev_test}
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -161,10 +167,14 @@ call(
 artifacts = f"{workdir}/artifacts/"
 logs_list = [
     "/var/log/middlewared.log",
-    "/var/log/messages",
-    "/var/log/debug.log",
-    "/var/log/console.log"
+    "/var/log/messages"
 ]
+if scale:
+    logs_list.append("/var/log/debug")
+else:
+    logs_list.append("/var/log/debug.log")
+    logs_list.append("/var/log/console.log")
+
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
 
@@ -172,7 +182,8 @@ for log in logs_list:
     get_file(log, artifacts, 'root', 'testing', ip)
 
 # get dmesg and put it in artifacts
-results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
+dmesg_option = '' if scale else ' -a'
+results = SSH_TEST(f'dmesg{dmesg_option}', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/dmesg', 'w')
 dmsg.writelines(results['output'])
 dmsg.close()

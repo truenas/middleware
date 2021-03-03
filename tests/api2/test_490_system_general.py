@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # License: BSD
 
+import pytest
 import sys
 import os
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, SSH_TEST
-from auto_config import user, password, ip
-
+from auto_config import user, password, ip, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 TIMEZONE = "America/New_York"
 SYSLOGLEVEL = "F_CRIT"
 

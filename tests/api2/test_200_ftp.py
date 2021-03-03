@@ -4,13 +4,15 @@
 # License: BSD
 # Location for tests into REST API 2.0 of FreeNAS
 
+import pytest
 import sys
 import os
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST  # , RC_TEST
-# from auto_config import ip
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_Configuring_ftp():

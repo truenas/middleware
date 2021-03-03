@@ -9,7 +9,9 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, wait_on_job
-from auto_config import pool_name, scale
+from auto_config import pool_name, scale, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 dataset = f'{pool_name}/webdav-bsd-share'
 dataset_url = dataset.replace('/', '%2F')

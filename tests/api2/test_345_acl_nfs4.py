@@ -11,6 +11,10 @@ from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password, scale
 from pytest_dependency import depends
 
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+
 shell = '/usr/bin/bash' if scale else '/bin/csh'
 group = 'nogroup' if scale else 'nobody'
 ACLTEST_DATASET = f'{pool_name}/acltest'

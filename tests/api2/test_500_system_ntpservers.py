@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # License: BSD
 
-
 import os
 import pytest
 import sys
@@ -10,6 +9,9 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, PUT, SSH_TEST
 from auto_config import ntpServer, user, password, ip
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 @pytest.fixture(scope='module')

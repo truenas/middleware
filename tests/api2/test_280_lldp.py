@@ -2,12 +2,16 @@
 
 # License: BSD
 
+import pytest
 import sys
 import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, PUT, GET
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 LOCATION = "Maryville, TN"
 COUNTRY = "US"

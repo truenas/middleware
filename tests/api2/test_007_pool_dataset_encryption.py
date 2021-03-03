@@ -10,9 +10,10 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job, SSH_TEST
-from auto_config import pool_name, ha, ip, password, user
+from auto_config import pool_name, ha, ip, password, user, dev_test
 
-pytestmark = pytest.mark.skipif(ha, reason='Skipping test for HA')
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(ha or dev_test, reason='Skipping test for HA')
 
 nas_disk = GET('/boot/get_disks/', controller_a=ha).json()
 disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())

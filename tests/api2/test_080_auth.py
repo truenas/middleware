@@ -10,7 +10,10 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, SSH_TEST
-from auto_config import password, user, ip
+from auto_config import password, user, ip, dev_test
+
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 invalid_users = [
     {'username': 'root', 'password': '123'},

@@ -5,12 +5,12 @@
 import pytest
 import sys
 import os
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT
-from auto_config import scale
-
+from auto_config import scale, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 variable = 'aa.22'
 type1 = 'SYSCTL' if scale else 'RC'
 

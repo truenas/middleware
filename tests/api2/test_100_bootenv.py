@@ -3,6 +3,7 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import pytest
 import sys
 import os
 from time import sleep
@@ -10,6 +11,9 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, DELETE, GET, PUT, wait_on_job
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_get_the_activated_bootenv():

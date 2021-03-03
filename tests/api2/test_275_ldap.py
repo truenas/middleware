@@ -16,7 +16,9 @@ from functions import (
     cmd_test,
     wait_on_job
 )
-from auto_config import pool_name, ip, user, password
+from auto_config import pool_name, ip, user, password, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 try:
     from config import (

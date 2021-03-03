@@ -9,7 +9,9 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
-from auto_config import scale
+from auto_config import scale, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 group = 'root' if scale else 'wheel'
 path = '/etc' if scale else '/boot'
 path_list = ['default', 'kernel', 'zfs', 'ssh'] if scale \
