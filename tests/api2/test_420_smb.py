@@ -78,9 +78,7 @@ root_path_verification = {
 @pytest.mark.dependency(name="smb_001")
 def test_001_setting_auxilary_parameters_for_mount_smbfs(request):
     depends(request, ["shareuser"], scope="session")
-    toload = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
     payload = {
-        "smb_options": toload,
         "enable_smb1": True,
         "guest": "shareuser"
     }

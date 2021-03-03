@@ -35,3 +35,4 @@ tests/artifacts/
 tests/test-report.txt
 tests/test-report.xml
 tests/testfile.txt
+tests/config.cfg
