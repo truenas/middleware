@@ -12,7 +12,7 @@ sys.path.append(apifolder)
 from functions import GET, POST
 from auto_config import ip, dev_test, scale
 # comment pytestmark for development testing with --dev-test
-#pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_get_core_services():
