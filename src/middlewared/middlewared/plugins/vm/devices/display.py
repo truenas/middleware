@@ -12,13 +12,15 @@ from .utils import create_element
 
 class DISPLAY(Device):
 
+    RESOLUTION_ENUM = [
+        '1920x1200', '1920x1080', '1600x1200', '1600x900',
+        '1400x1050', '1280x1024', '1280x720',
+        '1024x768', '800x600', '640x480',
+    ]
+
     schema = Dict(
         'attributes',
-        Str('resolution', enum=[
-            '1920x1200', '1920x1080', '1600x1200', '1600x900',
-            '1400x1050', '1280x1024', '1280x720',
-            '1024x768', '800x600', '640x480',
-        ], default='1024x768'),
+        Str('resolution', enum=RESOLUTION_ENUM, default='1024x768'),
         Int('port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
         Str('bind', default='0.0.0.0'),
         Bool('wait', default=False),
