@@ -3,13 +3,16 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import pytest
 import sys
 import os
 from urllib.request import urlretrieve
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST
-from auto_config import ip
+from auto_config import ip, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_get_core_services():

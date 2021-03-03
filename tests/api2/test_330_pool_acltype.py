@@ -7,9 +7,11 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST
-from auto_config import ip, user, password, pool_name, scale
+from auto_config import ip, user, password, pool_name, scale, dev_test
 
-pytestmark = pytest.mark.skipif(scale is False, reason='Skipping test for Core and Enterprise')
+reason = 'Skip for testing' if dev_test else 'Skipping test for Core and Enterprise'
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(scale is False or dev_test, reason=reason)
 test1_dataset = f'{pool_name}/test1'
 
 

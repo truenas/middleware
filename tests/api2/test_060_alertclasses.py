@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
+import pytest
 import os
 import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_get_alertclasses():

@@ -9,8 +9,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE
-from auto_config import ha
-pytestmark = pytest.mark.skipif(ha, reason='Skipping test for HA')
+from auto_config import ha, dev_test
+reason = 'Skip for testing' if dev_test else 'Skipping test for HA'
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(ha or dev_test, reason=reason)
 
 
 def test_01_delete_interface_vlan1():

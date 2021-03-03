@@ -3,13 +3,16 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import pytest
 import sys
 import os
 from time import sleep
-from unittest.mock import ANY
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, DELETE, POST
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_get_certificate_query():
@@ -63,7 +66,7 @@ def test_03_verify_certificate_delete_failed():
                 num = 0
             except KeyError:
                 num = 1
-            assert job_status['exc_info']['extra']['dependencies'][num]['objects'][0]['certificate']['id'] == certificate_id,  get_job.text
+            assert job_status['exc_info']['extra']['dependencies'][num]['objects'][0]['certificate']['id'] == certificate_id, get_job.text
             break
 
 

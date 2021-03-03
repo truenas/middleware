@@ -2,6 +2,7 @@
 
 # License: BSD
 
+import pytest
 import sys
 import os
 from pytest_dependency import depends
@@ -9,8 +10,9 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE
-from auto_config import ip, pool_name
-
+from auto_config import ip, pool_name, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 ENDPOINT = ip + ':9000'
 ACCESS_KEY = 'ixsystems'

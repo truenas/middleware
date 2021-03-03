@@ -16,6 +16,10 @@ try:
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
+else:
+    from auto_config import dev_test
+    # comment pytestmark for development testing with --dev-test
+    pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 BSDReason = 'BSD_HOST is not setup for SSH_TEST'
 

@@ -11,8 +11,10 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip, user, password, pool_name, hostname, scale
+from auto_config import ip, user, password, pool_name, hostname, scale, dev_test
 from functions import PUT, POST, GET, SSH_TEST, DELETE, cmd_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 try:
     Reason = 'BSD host configuration is missing in ixautomation.conf'

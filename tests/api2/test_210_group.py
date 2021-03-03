@@ -11,9 +11,10 @@ import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE, SSH_TEST
-from auto_config import user, password, ip
+from auto_config import user, password, ip, dev_test
 from pytest_dependency import depends
-
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
 
