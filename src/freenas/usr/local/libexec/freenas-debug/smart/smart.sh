@@ -81,15 +81,20 @@ smart_func()
 	ORDER BY +id"
 	section_footer
 
-	section_header "smartctl -a"
-	if [ -f /tmp/smart.out ]; then
-		rm -f /tmp/smart.out
-	fi
+	section_header "smartctl output"
+	rm -f /tmp/smart.out 2>/dev/null
 
 	if is_linux; then
-		disks=$(lsblk -ndo name | grep -v '^sr')
+		# from /proc/devices
+		# only care about sd/vd/nvme major numbers
+		# sd* = 8 - 135
+		# vd* (virtio) = 254
+		# nvme* = 259
+		include="8,65,66,67,68,69,70,71,128,129,130,131,132,133,134,135,254,259"
+		set `lsblk -ndo name -I $include`
 	else
-		disks=$(sysctl -n kern.disks)
+		set `sysctl -n kern.disks`
+		set -- "$@" `pciconf -l |grep '^nvme'|awk -F@ '{print $1}'`
 	fi
 
 	# SAS to SATA interposers could be involed. Unfortunately,
@@ -101,21 +106,33 @@ smart_func()
 	# So, instead, we'll try to tell smartctl to do the translation
 	# and if it fails (which it will on proper SAS devices) then
 	# we'll try to run it without translation
-	for i in $disks
-	do
-		# try with translation first
-		output=$(smartctl -a -d sat /dev/$i)
-		msg="(USING TRANSLATION)"
-		if [ $? -ne 0 ]; then
-			# oops try without translation
-			output=$(smartctl -a /dev/$i)
-			msg="(NOT USING TRANSLATION)"
-		fi
-		# double-quotes are important here to
-		# maintain original formatting
-		echo "/dev/$i $msg" >> /tmp/smart.out
-		echo "$output" >> /tmp/smart.out
-		echo "" >> /tmp/smart.out
+	for i in $@; do
+		case "$i" in
+		    da*|sd*|vd*)
+			# try with translation first
+			output=$(smartctl -a -d sat /dev/$i)
+			msg="(USING TRANSLATION)"
+			if [ $? -ne 0 ]; then
+			    # oops try without translation
+			    output=$(smartctl -a /dev/$i)
+			    msg="(NOT USING TRANSLATION)"
+			fi
+			# double-quotes are important here to
+			# maintain original formatting
+			echo "/dev/$i $msg" >> /tmp/smart.out
+			echo "$output" >> /tmp/smart.out
+			echo "" >> /tmp/smart.out
+		    ;;
+		    nvme*)
+			output=$(smartctl -a -d nvme /dev/$i)
+			msg="(NVME DEVICE DETECTED)"
+			# double-quotes are important here to
+			# maintain original formatting
+			echo "/dev/$i $msg" >> /tmp/smart.out
+			echo "$output" >> /tmp/smart.out
+			echo "" >> /tmp/smart.out
+		    ;;
+		esac
 	done
 	cat /tmp/smart.out
 	${FREENAS_DEBUG_MODULEDIR}/smart/smart.nawk < /tmp/smart.out
