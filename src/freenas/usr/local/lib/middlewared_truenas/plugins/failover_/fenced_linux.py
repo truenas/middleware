@@ -29,7 +29,6 @@ class FencedService(Service):
             # doesn't mean we should fail to start fenced since it
             # (ultimately) prevents data corruption on HA systems
             boot_disks = ''
-            pass
 
         # build the shell command
         cmd = ['fenced']
@@ -99,23 +98,33 @@ class FencedService(Service):
 
 
 async def hook_pool_event(middleware, *args, **kwargs):
-    if await middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
-        if not await middleware.call('failover.licensed'):
-            if (await middleware.call('failover.ha_mode'))[0] in ('ECHOWARP', 'PUMA'):
-                if (await middleware.call('failover.fenced.run_info'))['running']:
-                    try:
-                        await middleware.call('failover.fenced.signal', {'reload': True})
-                    except CallError as e:
-                        middleware.logger.error('Failed to reload fenced: %r', e)
-                else:
-                    force = True
-                    use_zpools = True
-                    rc = await middleware.call('failover.fenced.start', force, use_zpools)
-                    if rc:
-                        for i in FencedExitCodes:
-                            if rc == i.value:
-                                middleware.logger.error('Failed to start fenced: %s', i.name)
-                                break
+    # only run this on SCALE Enterprise
+    if await middleware.call('system.product_type') != 'SCALE_ENTERPRISE':
+        return
+
+    # HA licensed systems call fenced on their own
+    if await middleware.call('failover.licensed'):
+        return
+
+    # only run this on the m/x series platform since the other
+    # platforms are either non-supported or end of life
+    if (await middleware.call('failover.ha_mode'))[0] not in ('ECHOWARP', 'PUMA'):
+        return
+
+    if (await middleware.call('failover.fenced.run_info'))['running']:
+        try:
+            await middleware.call('failover.fenced.signal', {'reload': True})
+        except CallError as e:
+            middleware.logger.error('Failed to reload fenced: %r', e)
+    else:
+        force = True
+        use_zpools = True
+        rc = await middleware.call('failover.fenced.start', force, use_zpools)
+        if rc:
+            for i in FencedExitCodes:
+                if rc == i.value:
+                    middleware.logger.error('Failed to start fenced: %s', i.name)
+                    break
 
 
 async def setup(middleware):
