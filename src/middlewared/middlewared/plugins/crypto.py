@@ -1052,10 +1052,10 @@ class CertificateService(CRUDService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_functions = {
-            'CERTIFICATE_CREATE_INTERNAL': self.__create_internal,
+            'CERTIFICATE_CREATE_INTERNAL': self.create_internal,
             'CERTIFICATE_CREATE_IMPORTED': self.__create_imported_certificate,
             'CERTIFICATE_CREATE_IMPORTED_CSR': self.__create_imported_csr,
-            'CERTIFICATE_CREATE_CSR': self.__create_csr,
+            'CERTIFICATE_CREATE_CSR': self.create_csr,
             'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
         }
 
@@ -1420,10 +1420,10 @@ class CertificateService(CRUDService):
     # APPROPRIATE METHOD IS CALLED
     # FOLLOWING TYPES ARE SUPPORTED
     # CREATE_TYPE ( STRING )          - METHOD CALLED
-    # CERTIFICATE_CREATE_INTERNAL     - __create_internal
+    # CERTIFICATE_CREATE_INTERNAL     - create_internal
     # CERTIFICATE_CREATE_IMPORTED     - __create_imported_certificate
     # CERTIFICATE_CREATE_IMPORTED_CSR - __create_imported_csr
-    # CERTIFICATE_CREATE_CSR          - __create_csr
+    # CERTIFICATE_CREATE_CSR          - create_csr
     # CERTIFICATE_CREATE_ACME         - __create_acme_certificate
 
     @accepts(
@@ -1657,8 +1657,9 @@ class CertificateService(CRUDService):
             ('rm', {'name': 'lifetime'})
         )
     )
+    @private
     @skip_arg(count=1)
-    async def __create_csr(self, job, data):
+    async def create_csr(self, job, data):
         # no signedby, lifetime attributes required
         cert_info = get_cert_info_from_data(data)
         cert_info['cert_extensions'] = data['cert_extensions']
@@ -1771,8 +1772,9 @@ class CertificateService(CRUDService):
             register=True
         )
     )
+    @private
     @skip_arg(count=1)
-    async def __create_internal(self, job, data):
+    async def create_internal(self, job, data):
 
         cert_info = get_cert_info_from_data(data)
         data['type'] = CERT_TYPE_INTERNAL
