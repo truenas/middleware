@@ -5,9 +5,11 @@ import os
 import signal
 
 from middlewared.service import Service, CallError
+from fenced.fence import ExitCode as FencedExitCodes
 
 
 PID_FILE = '/tmp/.fenced-pid'
+IS_ALIVE_SIGNAL = 0
 
 
 class FencedService(Service):
@@ -47,16 +49,16 @@ class FencedService(Service):
 
         return proc.returncode
 
-    def stop(self, banhammer=False):
+    def stop(self, banhammer=True):
         if banhammer:
-            # dont care about if it's running or not
-            # just SIGTERM anything that has `fenced` in
-            # the processes name
+            # dont care if it's running or not just
+            # SIGKILL anything that has "fenced" in
+            # the process name
             subprocess.run(['pkill', '-9', '-f', 'fenced'])
         else:
             res = self.middleware.call_sync('failover.fenced.run_info')
             if res['running'] and res['pid']:
-                os.kill(res['pid'], 9)
+                os.kill(res['pid'], signal.SIGKILL)
 
     def run_info(self):
         res = {'running': False, 'pid': ''}
@@ -67,7 +69,7 @@ class FencedService(Service):
         check_running_procs = False
         if res['pid']:
             try:
-                os.kill(res['pid'], 0)
+                os.kill(res['pid'], IS_ALIVE_SIGNAL)
             except OSError:
                 check_running_procs = True
             else:
@@ -94,3 +96,28 @@ class FencedService(Service):
                     os.kill(res['pid'], signal.SIGUSR1)
             except OSError as e:
                 raise CallError(f'Failed to signal fenced: {e}')
+
+
+async def hook_pool_event(middleware, *args, **kwargs):
+    if await middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
+        if not await middleware.call('failover.licensed'):
+            if (await middleware.call('failover.ha_mode'))[0] in ('ECHOWARP', 'PUMA'):
+                if (await middleware.call('failover.fenced.run_info'))['running']:
+                    try:
+                        await middleware.call('failover.fenced.signal', {'reload': True})
+                    except CallError as e:
+                        middleware.logger.error('Failed to reload fenced: %r', e)
+                else:
+                    force = True
+                    use_zpools = True
+                    rc = await middleware.call('failover.fenced.start', force, use_zpools)
+                    if rc:
+                        for i in FencedExitCodes:
+                            if rc == i.value:
+                                middleware.logger.error('Failed to start fenced: %s', i.name)
+                                break
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_create_or_update', hook_pool_event)
+    middleware.register_hook('pool.post_import', hook_pool_event)
