@@ -8,8 +8,10 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET, PUT, SSH_TEST, GET, DELETE
-from auto_config import user, password, ip
+from functions import POST, PUT, SSH_TEST, GET, DELETE
+from auto_config import user, password, ip, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 TESTFILE = '/tmp/.testFileCreatedViaCronjob'
 

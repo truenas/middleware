@@ -10,7 +10,9 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT
-from auto_config import ha
+from auto_config import ha, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 services = ['afp', 'cifs', 'nfs', 'snmp', 'tftp', 'webdav', 'lldp']
 

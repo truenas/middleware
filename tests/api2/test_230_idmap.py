@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
+import pytest
 import sys
 import os
-from time import sleep
-from unittest.mock import ANY
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_create_idmap_certificate():

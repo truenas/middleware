@@ -2,6 +2,7 @@
 
 # License: BSD
 
+import pytest
 import sys
 import os
 from pytest_dependency import depends
@@ -9,8 +10,9 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job
-from auto_config import pool_name, scale
-
+from auto_config import pool_name, scale, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 dataset = f"{pool_name}/tftproot"
 dataset_url = dataset.replace('/', '%2F')
 group = 'nogroup' if scale else 'nobody'

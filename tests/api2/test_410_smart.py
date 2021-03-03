@@ -8,9 +8,11 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, POST, PUT, GET
-from auto_config import interface
+from auto_config import interface, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-Reason = f"VM detected no real ATA disk"
+Reason = "VM detected no real ATA disk"
 
 interface_exist = (interface == "vtnet0" or interface == "em0" or interface == 'enp0s7')
 not_real_disk = pytest.mark.skipif(interface_exist, reason=Reason)

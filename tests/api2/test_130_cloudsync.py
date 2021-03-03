@@ -3,13 +3,15 @@
 import pytest
 import sys
 import os
+import time
+import urllib.parse
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
-from auto_config import pool_name, ip, password, user
-import time
-import urllib.parse
+from auto_config import pool_name, ip, password, user, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 dataset = f"{pool_name}/cloudsync"
 dataset_path = os.path.join("/mnt", dataset)

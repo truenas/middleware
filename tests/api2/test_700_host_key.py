@@ -9,9 +9,13 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST, ping_host
-from auto_config import user, ip, ha, scale
+from auto_config import user, ip, ha, scale, dev_test
 
-pytestmark = pytest.mark.skipif(ha or scale, reason='Skipping test for HA')
+if dev_test:
+    reason = 'Skip for testing'
+else:
+    reason = 'Skipping test for HA' if ha else 'Skipping test for SCALE'
+pytestmark = pytest.mark.skipif(ha or scale or dev_test, reason=reason)
 
 
 def test_01_verify_ssh_settings_for_root_login_before_reboot():

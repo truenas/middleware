@@ -10,6 +10,9 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password, scale
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')

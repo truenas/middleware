@@ -10,6 +10,9 @@ from time import time, sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_get_boot_disks():

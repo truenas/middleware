@@ -9,8 +9,10 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from config import *
-from auto_config import ip, user, password
+from auto_config import ip, user, password, dev_test
 from functions import GET, POST, PUT, SSH_TEST
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 Reason = 'NOIPUSERNAME, NOIPPASSWORD and NOIPHOST' \
     ' are missing in ixautomation.conf'
