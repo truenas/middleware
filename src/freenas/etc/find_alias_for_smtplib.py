@@ -63,7 +63,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
         if mailcfg['fromemail'] != '':
             margs['extra_headers'].update({
-                'From': mailcfg['fromemail']
+                'From': mailcfg['fromname'] + ' <' + mailcfg['fromemail'] + '>'
             })
 
         if em.is_multipart():
