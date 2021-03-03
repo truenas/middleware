@@ -1,7 +1,7 @@
-import os
 import psutil
-import signal
 import subprocess
+
+from urllib.parse import urlencode, quote_plus
 
 from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Range
@@ -44,14 +44,14 @@ class DISPLAY(Device):
         return bool(self.data['attributes'].get('password'))
 
     def web_uri(self, host, password=None):
-        params = [] if self.is_spice_type() else ['autoconnect=1']
+        params = {} if self.is_spice_type() else {'autoconnect': 1}
         if self.password_configured():
             if not password:
                 return
 
-            params.append(f'password={password}')
+            params['password'] = password
 
-        get_params = f'?{"&".join(params)}' if params else ''
+        get_params = f'?{urlencode(params, quote_via=quote_plus)}' if params else ''
 
         return f'http://{host}:{self.get_web_port(self.data["attributes"]["port"])}/' \
                f'{"spice_auto" if self.is_spice_type() else "vnc"}.html{get_params}'
@@ -142,8 +142,5 @@ class DISPLAY(Device):
 
     def post_stop_vm(self, *args, **kwargs):
         if self.web_process and psutil.pid_exists(self.web_process.pid):
-            if self.middleware:
-                self.middleware.call_sync('service.terminate_process', self.web_process.pid)
-            else:
-                os.kill(self.web_process.pid, signal.SIGKILL)
+            self.middleware.call_sync('service.terminate_process', self.web_process.pid)
         self.web_process = None
