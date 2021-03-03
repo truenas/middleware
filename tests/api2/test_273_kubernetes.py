@@ -5,7 +5,7 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT, wait_on_job
-from auto_config import ha, scale, pool_name, interface
+from auto_config import ha, scale, pool_name, interface, ip
 
 reason = 'Skipping test for HA' if ha else 'Skipping test for CORE'
 pytestmark = pytest.mark.skipif(ha or not scale, reason=reason)
@@ -15,10 +15,10 @@ def test_01_get_kubernetes_bindip_choices():
     results = GET('/kubernetes/bindip_choices/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['0.0.0.0'], results.text
+    assert results.json()['0.0.0.0'], results.textt
 
 
-def test_03_setup_kubernetes(request):
+def test_02_setup_kubernetes(request):
     global payload
     gateway = GET("/network/general/summary/").json()['default_routes'][0]
     payload = {
@@ -35,8 +35,21 @@ def test_03_setup_kubernetes(request):
 
 
 @pytest.mark.parametrize('data', ['pool', 'route_v4_interface', 'route_v4_gateway', 'node_ip'])
-def test_02_verify_kubernetes(data):
+def test_03_verify_kubernetes(data):
     results = GET('/kubernetes/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     assert results.json()[data] == payload[data], results.text
+
+
+def test_04_get_kubernetes_node_ip():
+    results = GET('/kubernetes/node_ip/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), str), results.text
+    assert results.json() == ip, results.text
+
+
+def test_05_get_kubernetes_events():
+    results = GET('/kubernetes/events/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
