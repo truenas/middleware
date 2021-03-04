@@ -157,9 +157,11 @@ if [ "${limit}" != "-1" ] ; then
 	truncate_files "${limit}"
 fi
 
-echo "** 97%: Copying Core Dumps"
-mkdir "$dir/cores"
-find /var/db/system/cores -type f -size -524288c -exec cp {} "$dir/cores/" \;
+if [ -d /var/db/system/cores ]; then
+	echo "** 97%: Copying Core Dumps"
+	mkdir "$dir/cores"
+	find /var/db/system/cores -type f -size -524288c -exec cp {} "$dir/cores/" \;
+fi
 
 if is_freebsd; then
 	if ! dumpfile_to_submit_exists $dumpdir ; then
