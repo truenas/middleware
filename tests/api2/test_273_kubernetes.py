@@ -5,10 +5,14 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT, wait_on_job
-from auto_config import ha, scale, pool_name, interface, ip
+from auto_config import ha, scale, pool_name, interface, ip, dev_test
 
-reason = 'Skipping test for HA' if ha else 'Skipping test for CORE'
-pytestmark = pytest.mark.skipif(ha or not scale, reason=reason)
+if dev_test:
+    reason = 'Skip for testing'
+else:
+    reason = 'Skipping test for HA' if ha else 'Skipping test for SCALE'
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(ha or not scale or dev_test, reason=reason)
 
 
 def test_01_get_kubernetes_bindip_choices():
