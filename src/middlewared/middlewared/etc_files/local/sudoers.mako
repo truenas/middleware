@@ -1,7 +1,7 @@
 <%
-	users = middleware.call_sync('user.query', [["sudo", "=", True]])
-	groups = middleware.call_sync('group.query', [["sudo", "=", True]])
-	ups_user = "nut" if IS_LINUX else "uucp"
+    users = middleware.call_sync('user.query', [["sudo", "=", True]])
+    groups = middleware.call_sync('group.query', [["sudo", "=", True]])
+    ups_user = "nut" if IS_LINUX else "uucp"
 
     def sudo_commands(commands):
         commands = list(filter(None, [command.strip() for command in commands]))
