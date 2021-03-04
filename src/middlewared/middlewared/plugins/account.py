@@ -275,6 +275,9 @@ class UserService(CRUDService):
                 group = await self.middleware.call('group.create_internal', {
                     'name': data['username'],
                     'smb': False,
+                    'sudo': False,
+                    'sudo_nopasswd': False,
+                    'sudo_commands': [],
                     'allow_duplicate_gid': False
                 }, False)
                 group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
