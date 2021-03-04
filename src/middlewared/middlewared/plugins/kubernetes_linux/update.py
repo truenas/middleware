@@ -5,7 +5,7 @@ import os
 import middlewared.sqlalchemy as sa
 
 from middlewared.common.listen import ConfigServiceListenSingleDelegate
-from middlewared.schema import Dict, IPAddr, Str
+from middlewared.schema import Bool, Dict, IPAddr, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
 
@@ -49,8 +49,23 @@ class KubernetesService(ConfigService):
         ]
 
     @private
-    async def validate_data(self, data, schema):
+    async def validate_data(self, data, schema, old_data):
         verrors = ValidationErrors()
+
+        if data.pop('migrate_applications', False):
+            if data['pool'] == old_data['pool']:
+                verrors.add(
+                    f'{schema}.migrate_applications',
+                    'Migration of applications dataset only happens when a new pool is configured.'
+                )
+            else:
+                new_ds = f'{data["pool"]}/ix-applications'
+                if await self.middleware.call('zfs.dataset.query', [['id', '=', new_ds]]):
+                    verrors.add(
+                        f'{schema}.migrate_applications',
+                        f'Migration of "{old_data["pool"]}/ix-applications" to {data["pool"]!r} not '
+                        f'possible as {new_ds} already exists.'
+                    )
 
         network_cidrs = set([
             ipaddress.ip_network(f'{ip_config["address"]}/{ip_config["netmask"]}', False)
@@ -136,6 +151,7 @@ class KubernetesService(ConfigService):
     @accepts(
         Dict(
             'kubernetes_update',
+            Bool('migrate_applications'),
             Str('pool', empty=False, null=True),
             IPAddr('cluster_cidr', cidr=True, empty=True),
             IPAddr('service_cidr', cidr=True, empty=True),
@@ -183,8 +199,9 @@ class KubernetesService(ConfigService):
         old_config.pop('dataset')
         config = old_config.copy()
         config.update(data)
+        migrate = config.get('migrate_applications')
 
-        await self.validate_data(config, 'kubernetes_update')
+        await self.validate_data(config, 'kubernetes_update', old_config)
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             config['cni_config'] = {}
