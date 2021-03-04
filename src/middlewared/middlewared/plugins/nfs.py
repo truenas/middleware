@@ -431,6 +431,12 @@ class SharingNFSService(SharingService):
 
         dev = None
         for i, path in enumerate(data["paths"]):
+            if " " in path:
+                verrors.add(
+                    f'{schema_name}.paths.{i}',
+                    'Paths for a NFS share should not contain whitespaces'
+                )
+
             stat = os.stat(path)
             if dev is None:
                 dev = stat.st_dev
