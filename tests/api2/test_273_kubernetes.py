@@ -19,7 +19,7 @@ def test_01_get_kubernetes_bindip_choices():
     results = GET('/kubernetes/bindip_choices/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['0.0.0.0'], results.textt
+    assert results.json()['0.0.0.0'], results.text
 
 
 def test_02_setup_kubernetes(request):
