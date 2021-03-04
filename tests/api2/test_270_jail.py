@@ -17,6 +17,7 @@ if dev_test:
     reason = 'Skip for testing'
 else:
     reason = 'Skipping test for HA' if ha else 'Skipping test for SCALE'
+# comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(ha or scale or dev_test, reason=reason)
 
 JOB_ID = None
