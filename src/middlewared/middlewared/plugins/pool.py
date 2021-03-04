@@ -2894,6 +2894,9 @@ class PoolDatasetService(CRUDService):
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
+        if data['type'] == 'FILESYSTEM':
+            data['xattr'] = 'SA'
+
         if osc.IS_LINUX and not data.get('acltype') and data['type'] == 'FILESYSTEM':
             data['acltype'] = 'POSIXACL'
 
@@ -2901,8 +2904,6 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             if osc.IS_FREEBSD:
                 data['aclmode'] = 'RESTRICTED'
-
-            data['xattr'] = 'SA'
 
         if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
             verrors.add(
