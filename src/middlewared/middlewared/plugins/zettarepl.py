@@ -100,6 +100,12 @@ def zettarepl_schedule(schedule):
     return schedule
 
 
+class HoldReplicationTaskException(Exception):
+    def __init__(self, reason):
+        self.reason = reason
+        super().__init__()
+
+
 class ReplicationTaskLog:
     def __init__(self, task_id, log):
         self.task_id = task_id
@@ -242,6 +248,7 @@ class ZettareplService(Service):
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
         self.replication_jobs_channels = defaultdict(list)
+        self.onetime_replication_tasks = {}
         self.queue = None
         self.process = None
         self.zettarepl = None
@@ -329,7 +336,34 @@ class ZettareplService(Service):
             except Exception:
                 raise CallError("Replication service is not running")
 
-        channels = self.replication_jobs_channels[f"task_{id}"]
+        self._run_replication_task_job(f"task_{id}", job)
+
+    def run_onetime_replication_task(self, job, task):
+        self.onetime_replication_tasks[job.id] = task
+        try:
+            self.update_tasks()
+
+            state = self.middleware.call_sync("zettarepl.get_state")
+            if "error" in state:
+                raise CallError(state["error"])
+            task_state = state["tasks"].get(f"job_{job.id}")
+            if task_state:
+                if task_state["state"] == "ERROR":
+                    raise CallError(task_state["error"])
+                if task_state["state"] == "HOLD":
+                    raise CallError(task_state["reason"])
+                if task_state["state"] != "WAITING":
+                    raise CallError(task_state)
+
+            self.queue.put(("run_task", ("ReplicationTask", f"job_{job.id}")))
+
+            self._run_replication_task_job(f"job_{job.id}", job)
+        finally:
+            self.onetime_replication_tasks.pop(job.id)
+            self.update_tasks()
+
+    def _run_replication_task_job(self, id, job):
+        channels = self.replication_jobs_channels[id]
         channel = queue.Queue()
         channels.append(channel)
         snapshot_start_message = None
@@ -523,102 +557,18 @@ class ZettareplService(Service):
 
         replication_tasks = {}
         for replication_task in await self.middleware.call("replication.query", [["enabled", "=", True]]):
-            if replication_task["direction"] == "PUSH":
-                hold = False
-                for source_dataset in replication_task["source_datasets"]:
-                    hold_task_reason = self._hold_task_reason(pools, source_dataset)
-                    if hold_task_reason:
-                        hold_tasks[f"replication_task_{replication_task['id']}"] = hold_task_reason
-                        hold = True
-                        break
-                if hold:
-                    continue
-
-            if replication_task["direction"] == "PULL":
-                hold_task_reason = self._hold_task_reason(pools, replication_task["target_dataset"])
-                if hold_task_reason:
-                    hold_tasks[f"replication_task_{replication_task['id']}"] = hold_task_reason
-                    continue
-
-            if replication_task["transport"] != "LOCAL":
-                if not await self.middleware.call("network.general.can_perform_activity", "replication"):
-                    hold_tasks[f"replication_task_{replication_task['id']}"] = (
-                        "Replication network activity is disabled"
-                    )
-                    continue
-
             try:
-                transport = await self._define_transport(
-                    replication_task["transport"],
-                    (replication_task["ssh_credentials"] or {}).get("id"),
-                    replication_task["netcat_active_side"],
-                    replication_task["netcat_active_side_listen_address"],
-                    replication_task["netcat_active_side_port_min"],
-                    replication_task["netcat_active_side_port_max"],
-                    replication_task["netcat_passive_side_connect_address"],
+                replication_tasks[f"task_{replication_task['id']}"] = await self._replication_task_definition(
+                    pools, replication_task
                 )
-            except CallError as e:
-                hold_tasks[f"replication_task_{replication_task['id']}"] = e.errmsg
-                continue
+            except HoldReplicationTaskException as e:
+                hold_tasks[f"replication_task_{replication_task['id']}"] = e.reason
 
-            properties_exclude = replication_task["properties_exclude"].copy()
-            properties_override = replication_task["properties_override"].copy()
-            for property in ["mountpoint", "sharenfs", "sharesmb"]:
-                if property not in properties_override:
-                    if property not in properties_exclude:
-                        properties_exclude.append(property)
-
-            definition = {
-                "direction": replication_task["direction"].lower(),
-                "transport": transport,
-                "source-dataset": replication_task["source_datasets"],
-                "target-dataset": replication_task["target_dataset"],
-                "recursive": replication_task["recursive"],
-                "exclude": replication_task_exclude(replication_task),
-                "properties": replication_task["properties"],
-                "properties-exclude": properties_exclude,
-                "properties-override": properties_override,
-                "replicate": replication_task["replicate"],
-                "periodic-snapshot-tasks": [
-                    f"task_{periodic_snapshot_task['id']}"
-                    for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
-                ],
-                "auto": replication_task["auto"],
-                "only-matching-schedule": replication_task["only_matching_schedule"],
-                "allow-from-scratch": replication_task["allow_from_scratch"],
-                "readonly": replication_task["readonly"].lower(),
-                "hold-pending-snapshots": replication_task["hold_pending_snapshots"],
-                "retention-policy": replication_task["retention_policy"].lower(),
-                "large-block": replication_task["large_block"],
-                "embed": replication_task["embed"],
-                "compressed": replication_task["compressed"],
-                "retries": replication_task["retries"],
-                "logging-level": (replication_task["logging_level"] or "NOTSET").lower(),
-            }
-
-            if replication_task["encryption"]:
-                definition["encryption"] = {
-                    "key": replication_task["encryption_key"],
-                    "key-format": replication_task["encryption_key_format"].lower(),
-                    "key-location": replication_task["encryption_key_location"],
-                }
-            if replication_task["naming_schema"]:
-                definition["naming-schema"] = replication_task["naming_schema"]
-            if replication_task["also_include_naming_schema"]:
-                definition["also-include-naming-schema"] = replication_task["also_include_naming_schema"]
-            if replication_task["schedule"] is not None:
-                definition["schedule"] = zettarepl_schedule(replication_task["schedule"])
-            if replication_task["restrict_schedule"] is not None:
-                definition["restrict-schedule"] = zettarepl_schedule(replication_task["restrict_schedule"])
-            if replication_task["lifetime_value"] is not None and replication_task["lifetime_unit"] is not None:
-                definition["lifetime"] = lifetime_iso8601(replication_task["lifetime_value"],
-                                                          replication_task["lifetime_unit"])
-            if replication_task["compression"] is not None:
-                definition["compression"] = replication_task["compression"].lower()
-            if replication_task["speed_limit"] is not None:
-                definition["speed-limit"] = replication_task["speed_limit"]
-
-            replication_tasks[f"task_{replication_task['id']}"] = definition
+        for job_id, replication_task in self.onetime_replication_tasks.items():
+            try:
+                replication_tasks[f"job_{job_id}"] = await self._replication_task_definition(pools, replication_task)
+            except HoldReplicationTaskException as e:
+                hold_tasks[f"job_{job_id}"] = e.reason
 
         definition = {
             "max-parallel-replication-tasks": config["max_parallel_replication_tasks"],
@@ -640,6 +590,94 @@ class ZettareplService(Service):
         }
 
         return definition, hold_tasks
+
+    async def _replication_task_definition(self, pools, replication_task):
+        if replication_task["direction"] == "PUSH":
+            for source_dataset in replication_task["source_datasets"]:
+                hold_task_reason = self._hold_task_reason(pools, source_dataset)
+                if hold_task_reason:
+                    raise HoldReplicationTaskException(hold_task_reason)
+
+        if replication_task["direction"] == "PULL":
+            hold_task_reason = self._hold_task_reason(pools, replication_task["target_dataset"])
+            if hold_task_reason:
+                raise HoldReplicationTaskException(hold_task_reason)
+
+        if replication_task["transport"] != "LOCAL":
+            if not await self.middleware.call("network.general.can_perform_activity", "replication"):
+                raise HoldReplicationTaskException("Replication network activity is disabled")
+
+        try:
+            transport = await self._define_transport(
+                replication_task["transport"],
+                (replication_task["ssh_credentials"] or {}).get("id"),
+                replication_task["netcat_active_side"],
+                replication_task["netcat_active_side_listen_address"],
+                replication_task["netcat_active_side_port_min"],
+                replication_task["netcat_active_side_port_max"],
+                replication_task["netcat_passive_side_connect_address"],
+            )
+        except CallError as e:
+            raise HoldReplicationTaskException(e.errmsg)
+
+        properties_exclude = replication_task["properties_exclude"].copy()
+        properties_override = replication_task["properties_override"].copy()
+        for property in ["mountpoint", "sharenfs", "sharesmb"]:
+            if property not in properties_override:
+                if property not in properties_exclude:
+                    properties_exclude.append(property)
+
+        definition = {
+            "direction": replication_task["direction"].lower(),
+            "transport": transport,
+            "source-dataset": replication_task["source_datasets"],
+            "target-dataset": replication_task["target_dataset"],
+            "recursive": replication_task["recursive"],
+            "exclude": replication_task_exclude(replication_task),
+            "properties": replication_task["properties"],
+            "properties-exclude": properties_exclude,
+            "properties-override": properties_override,
+            "replicate": replication_task["replicate"],
+            "periodic-snapshot-tasks": [
+                f"task_{periodic_snapshot_task['id']}"
+                for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
+            ],
+            "auto": replication_task["auto"],
+            "only-matching-schedule": replication_task["only_matching_schedule"],
+            "allow-from-scratch": replication_task["allow_from_scratch"],
+            "readonly": replication_task["readonly"].lower(),
+            "hold-pending-snapshots": replication_task["hold_pending_snapshots"],
+            "retention-policy": replication_task["retention_policy"].lower(),
+            "large-block": replication_task["large_block"],
+            "embed": replication_task["embed"],
+            "compressed": replication_task["compressed"],
+            "retries": replication_task["retries"],
+            "logging-level": (replication_task["logging_level"] or "NOTSET").lower(),
+        }
+
+        if replication_task["encryption"]:
+            definition["encryption"] = {
+                "key": replication_task["encryption_key"],
+                "key-format": replication_task["encryption_key_format"].lower(),
+                "key-location": replication_task["encryption_key_location"],
+            }
+        if replication_task["naming_schema"]:
+            definition["naming-schema"] = replication_task["naming_schema"]
+        if replication_task["also_include_naming_schema"]:
+            definition["also-include-naming-schema"] = replication_task["also_include_naming_schema"]
+        if replication_task["schedule"] is not None:
+            definition["schedule"] = zettarepl_schedule(replication_task["schedule"])
+        if replication_task["restrict_schedule"] is not None:
+            definition["restrict-schedule"] = zettarepl_schedule(replication_task["restrict_schedule"])
+        if replication_task["lifetime_value"] is not None and replication_task["lifetime_unit"] is not None:
+            definition["lifetime"] = lifetime_iso8601(replication_task["lifetime_value"],
+                                                      replication_task["lifetime_unit"])
+        if replication_task["compression"] is not None:
+            definition["compression"] = replication_task["compression"].lower()
+        if replication_task["speed_limit"] is not None:
+            definition["speed-limit"] = replication_task["speed_limit"]
+
+        return definition
 
     def _hold_task_reason(self, pools, dataset):
         pool = dataset.split("/")[0]
