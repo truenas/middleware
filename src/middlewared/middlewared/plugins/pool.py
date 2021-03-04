@@ -2726,9 +2726,12 @@ class PoolDatasetService(CRUDService):
                 ['id', '!^', f'{sys_config["basename"]}/'],
             ])
 
+        boot_pool = self.middleware.call_sync('boot.pool_name')
+        filters.append(['pool', '!=', boot_pool])
+
         for f in filters:
             if len(f) == 3 and f[0] in ('id', 'name') and f[1] == '=':
-                zfsfilters.append(['id', '=', f[3]])
+                zfsfilters.append(['id', '=', f[2]])
                 break
 
         return filter_list(
