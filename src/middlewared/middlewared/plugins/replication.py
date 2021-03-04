@@ -439,6 +439,37 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.run_replication_task", id, really_run, job)
 
+    @accepts(
+        Patch(
+            "replication_create",
+            "replication_run_onetime",
+            ("rm", {"name": "name"}),
+            ("rm", {"name": "auto"}),
+            ("rm", {"name": "schedule"}),
+            ("rm", {"name": "only_matching_schedule"}),
+            ("rm", {"name": "enabled"}),
+        ),
+    )
+    @job(logs=True)
+    async def run_onetime(self, job, data):
+        """
+        Run replication task without creating it.
+        """
+
+        data["name"] = f"Temporary replication task for job {job.id}"
+        data["schedule"] = None
+        data["only_matching_schedule"] = False
+        data["auto"] = False
+        data["enabled"] = True
+
+        verrors = ValidationErrors()
+        verrors.add_child("replication_run_onetime", await self._validate(data))
+
+        if verrors:
+            raise verrors
+
+        await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
+
     async def _validate(self, data, id=None):
         verrors = ValidationErrors()
 
