@@ -1,12 +1,13 @@
 import ipaddress
 import itertools
-import os
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
+
+from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
 
 
 class KubernetesModel(sa.Model):
@@ -34,7 +35,7 @@ class KubernetesService(ConfigService):
 
     @private
     async def k8s_extend(self, data):
-        data['dataset'] = os.path.join(data['pool'], 'ix-applications') if data['pool'] else None
+        data['dataset'] = applications_ds_name(data['pool']) if data['pool'] else None
         data.pop('cni_config')
         return data
 
@@ -59,12 +60,20 @@ class KubernetesService(ConfigService):
                     'Migration of applications dataset only happens when a new pool is configured.'
                 )
             else:
-                new_ds = f'{data["pool"]}/ix-applications'
-                if await self.middleware.call('zfs.dataset.query', [['id', '=', new_ds]]):
+                if await self.middleware.call('zfs.dataset.query', [['id', '=', applications_ds_name(data['pool'])]]):
                     verrors.add(
                         f'{schema}.migrate_applications',
-                        f'Migration of "{old_data["pool"]}/ix-applications" to {data["pool"]!r} not '
-                        f'possible as {new_ds} already exists.'
+                        f'Migration of {applications_ds_name(old_data["pool"])!r} to {data["pool"]!r} not '
+                        f'possible as {applications_ds_name(data["pool"])} already exists.'
+                    )
+
+                if not await self.middleware.call(
+                    'zfs.dataset.query', [['id', '=', applications_ds_name(old_data['pool'])]]
+                ):
+                    # Edge case but handled just to be sure
+                    verrors.add(
+                        f'{schema}.migrate_applications',
+                        f'{applications_ds_name(old_data["pool"])!r} does not exist, migration not possible.'
                     )
 
         network_cidrs = set([
@@ -203,6 +212,9 @@ class KubernetesService(ConfigService):
 
         await self.validate_data(config, 'kubernetes_update', old_config)
 
+        if migrate and config['pool'] != old_config['pool']:
+            await self.migrate_ix_applications_dataset(config['pool'], old_config['pool'])
+
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             config['cni_config'] = {}
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
@@ -214,6 +226,33 @@ class KubernetesService(ConfigService):
                 await self.middleware.call('catalog.sync_all')
 
         return await self.config()
+
+    @private
+    async def migrate_ix_applications_dataset(self, new_pool, old_pool):
+        snap_details = await self.middleware.call(
+            'zfs.snapshot.create', {'dataset': applications_ds_name(old_pool), 'naming_schema': MIGRATION_NAMING_SCHEMA}
+        )
+
+        old_ds = applications_ds_name(old_pool)
+        new_ds = applications_ds_name(new_pool)
+        migrate_job = await self.middleware.call(
+            'replication.run_onetime', {
+                'direction': 'PUSH',
+                'transport': 'LOCAL',
+                'source_datasets': [old_ds],
+                'target_dataset': new_ds,
+                'recursive': True,
+                'also_include_naming_schema': [MIGRATION_NAMING_SCHEMA],
+                'retention_policy': 'NONE',
+                'replicate': True
+            }
+        )
+        await migrate_job.wait()
+        try:
+            if migrate_job.error:
+                raise CallError(f'Failed to migrate {old_ds} to {new_ds}: {migrate_job.error}')
+        finally:
+            await self.middleware.call('zfs.snapshot.delete', snap_details['id'], {'recursive': True})
 
     @accepts()
     async def bindip_choices(self):
