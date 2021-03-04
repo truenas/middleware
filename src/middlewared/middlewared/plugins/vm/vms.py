@@ -1,6 +1,7 @@
 import asyncio
 import errno
 import re
+import warnings
 
 import middlewared.sqlalchemy as sa
 
@@ -101,9 +102,17 @@ class VMService(CRUDService, VMSupervisorMixin):
         `shutdown_timeout` indicates the time in seconds the system waits for the VM to cleanly shutdown. During system
         shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
+
+        SCALE Angelfish: Specifying `devices` is deprecated and will be removed in next major release.
         """
         async with LIBVIRT_LOCK:
             await self.middleware.run_in_thread(self._check_setup_connection)
+
+        if data.get('devices'):
+            warnings.warn(
+                'SCALE Angelfish: Specifying "devices" in "vm.create" is deprecated and will be '
+                'removed in next major release.', DeprecationWarning
+            )
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
