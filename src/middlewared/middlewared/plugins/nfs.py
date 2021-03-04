@@ -434,7 +434,7 @@ class SharingNFSService(SharingService):
             if " " in path:
                 verrors.add(
                     f'{schema_name}.paths.{i}',
-                    'Paths for a NFS share should not contain whitespaces'
+                    'Paths for a NFS share can not contain whitespace'
                 )
 
             stat = os.stat(path)
