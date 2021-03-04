@@ -942,9 +942,9 @@ class FailoverService(ConfigService):
                 if j['state'] != 'RUNNING':
                     return
                 if controller == 'LOCAL':
-                    update_local_descr = f'{j["progress"]["percent"]}%: {j["progress"]["description"]}'
+                    update_local_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
                 else:
-                    update_remote_descr = f'{j["progress"]["percent"]}%: {j["progress"]["description"]}'
+                    update_remote_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
                 job.set_progress(
                     None, (
                         f'Active Controller: {update_local_descr}\n' if not legacy_upgrade else ''
