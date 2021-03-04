@@ -812,7 +812,7 @@ class SystemService(Service):
         cp = subprocess.Popen(
             ['ixdiagnose', '-d', direc, '-s', '-F', '-p'],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            universal_newlines=True, bufsize=1,
+            encoding='utf-8', errors='ignore', bufsize=1,
         )
 
         for line in iter(cp.stdout.readline, ''):
