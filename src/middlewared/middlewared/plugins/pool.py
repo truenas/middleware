@@ -2718,16 +2718,21 @@ class PoolDatasetService(CRUDService):
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
+        filters = filters or []
         sys_config = self.middleware.call_sync('systemdataset.config')
         if sys_config['basename']:
-            zfsfilters.extend([
+            filters.extend([
                 ['id', '!=', sys_config['basename']],
                 ['id', '!^', f'{sys_config["basename"]}/'],
             ])
-        for f in filters or []:
-            if len(f) == 3:
-                if f[0] in ('id', 'name', 'pool', 'type'):
-                    zfsfilters.append(f)
+
+        boot_pool = self.middleware.call_sync('boot.pool_name')
+        filters.append(['pool', '!=', boot_pool])
+
+        for f in filters:
+            if len(f) == 3 and f[0] in ('id', 'name') and f[1] == '=':
+                zfsfilters.append(['id', '=', f[2]])
+                break
 
         return filter_list(
             self.__transform(self.middleware.call_sync(
