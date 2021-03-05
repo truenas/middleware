@@ -301,7 +301,7 @@ class FileFollowTailEventSource(EventSource):
         if fsize < bufsize:
             bufsize = fsize
         i = 0
-        with open(path) as f:
+        with open(path, encoding='utf-8', errors='ignore') as f:
             data = []
             while True:
                 i += 1
