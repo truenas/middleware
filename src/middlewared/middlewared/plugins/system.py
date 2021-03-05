@@ -678,15 +678,20 @@ class SystemService(Service):
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )
 
+    @no_auth_required
+    @accepts()
+    async def build_time(self):
+        """
+        Retrieve build time of the system.
+        """
+        buildtime = sw_buildtime()
+        return datetime.fromtimestamp(int(buildtime)) if buildtime else buildtime
+
     @accepts()
     async def info(self):
         """
         Returns basic system information.
         """
-        buildtime = sw_buildtime()
-        if buildtime:
-            buildtime = datetime.fromtimestamp(int(buildtime))
-
         time_info = await self.middleware.call('system.time_info')
         dmidecode = await self.middleware.call('system.dmidecode_info')
         cpu_info = await self.middleware.call('system.cpu_info')
@@ -696,7 +701,7 @@ class SystemService(Service):
 
         return {
             'version': self.version(),
-            'buildtime': buildtime,
+            'buildtime': await self.build_time(),
             'hostname': socket.gethostname(),
             'physmem': mem_info['physmem_size'],
             'model': cpu_info['cpu_model'],
