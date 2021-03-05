@@ -19,7 +19,8 @@ def test_01_get_kubernetes_bindip_choices():
     results = GET('/kubernetes/bindip_choices/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['0.0.0.0'], results.text
+    assert '0.0.0.0' in results.json(), results.text
+    assert ip in results.json(), results.text
 
 
 @pytest.mark.dependency(name='setup_kubernetes')
@@ -31,7 +32,7 @@ def test_02_setup_kubernetes(request):
         'pool': pool_name,
         'route_v4_interface': interface,
         'route_v4_gateway': gateway,
-        'node_ip': '0.0.0.0'
+        'node_ip': ip
     }
     results = PUT('/kubernetes/', payload)
     assert results.status_code == 200, results.text
