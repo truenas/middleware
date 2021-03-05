@@ -199,6 +199,19 @@ def test_010_check_dosmode_create(request, dm):
         assert (to_check & dm.value) != 0, f
 
 
+def test_011_check_dos_ro_cred_handling(request):
+    """
+    This test creates a file with readonly attribute set, then
+    uses the open fd to write data to the file.
+    """
+    depends(request, ["SHARE_IS_WRITABLE"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    fd = c.create_file("RO_TEST", "w", "r")
+    c.write(fd, b"TESTING123\n")
+    c.disconnect()
+
+
 @pytest.mark.dependency(name="SMB1_ENABLED")
 def test_050_enable_smb1(request):
     depends(request, ["SMB_SHARE_CREATED"])
