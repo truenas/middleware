@@ -89,25 +89,34 @@ smart_func()
 		# only care about sd/vd/nvme major numbers
 		# sd* = 8 - 135
 		# vd* (virtio) = 254
-		# nvme* = 259
+		# nvmeXnY* = 259
 		include="8,65,66,67,68,69,70,71,128,129,130,131,132,133,134,135,254,259"
-		set `lsblk -ndo name -I $include`
+		disks=$(lsblk -ndo name -I $include)
 	else
-		set `sysctl -n kern.disks`
-		set -- "$@" `pciconf -l |grep '^nvme'|awk -F@ '{print $1}'`
+		disks=$(sysctl -n kern.disks)
 	fi
 
 	# SAS to SATA interposers could be involed. Unfortunately,
 	# there is no "easy" way of identifying that there is
 	# one involved without doing some extravagant reading of
 	# specific VPD pages from the device itself. Even doing
-	# that is fraught with errors because the interposer could
-	# mistranslate those pages.
+	# that is fraught with errors because the interposer creates
+	# those pages, sometimes not creating them at all.
 	# So, instead, we'll try to tell smartctl to do the translation
 	# and if it fails (which it will on proper SAS devices) then
 	# we'll try to run it without translation
-	for i in $@; do
+	for i in $disks; do
 		case "$i" in
+		    nvd*)
+			ns=$(nvmecontrol nsid $i | awk '{print $1}')
+			output=$(smartctl -a /dev/$ns)
+		        msg="(NVME DEVICE DETECTED)"
+		        # double-quotes are important here to
+		        # maintain original formatting
+		        echo "/dev/$ns $msg" >> /tmp/smart.out
+		        echo "$output" >> /tmp/smart.out
+		        echo "" >> /tmp/smart.out
+		    ;;
 		    da*|sd*|vd*)
 			# try with translation first
 			msg="(USING TRANSLATION)"
@@ -131,8 +140,10 @@ smart_func()
 			echo "$output" >> /tmp/smart.out
 			echo "" >> /tmp/smart.out
 		    ;;
-		    nvme*)
-			output=$(smartctl -a -d nvme /dev/$i)
+	            nvme*)
+			# linux returns nvmeXnsY devices by
+			# default so catch it here.
+			output=$(smartctl -a /dev/$i)
 			msg="(NVME DEVICE DETECTED)"
 			# double-quotes are important here to
 			# maintain original formatting
