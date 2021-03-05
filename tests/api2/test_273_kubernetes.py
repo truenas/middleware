@@ -37,7 +37,7 @@ def test_02_setup_kubernetes(request):
     results = PUT('/kubernetes/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(job_id, 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
