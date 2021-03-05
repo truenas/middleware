@@ -157,14 +157,14 @@ def test_13_verify_the_private_image_id_is_deleted(request):
     assert isinstance(results.json(), dict), results.text
 
 
-def test_14_delete_private_image_with_id(request):
+def test_14_delete_public_image_with_id(request):
     depends(request, ["pull_public_image"])
     results = DELETE(f'/container/image/id/{public_image_id}/')
     assert results.status_code == 200, results.text
     assert results.json() is None, results.text
 
 
-def test_15_verify_the_private_image_id_is_deleted(request):
+def test_15_verify_the_public_image_id_is_deleted(request):
     depends(request, ["pull_public_image"])
     results = GET(f'/container/image/id/{public_image_id}/')
     assert results.status_code == 404, results.text
