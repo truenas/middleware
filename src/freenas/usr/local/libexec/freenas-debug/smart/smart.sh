@@ -110,12 +110,20 @@ smart_func()
 		case "$i" in
 		    da*|sd*|vd*)
 			# try with translation first
-			output=$(smartctl -a -d sat /dev/$i)
 			msg="(USING TRANSLATION)"
-			if [ $? -ne 0 ]; then
-			    # oops try without translation
-			    output=$(smartctl -a /dev/$i)
-			    msg="(NOT USING TRANSLATION)"
+			output=$(timeout 3 smartctl -a -d sat /dev/$i)
+			rc=$?
+			if [ $rc -ne 0 ]; then
+			    if [ $rc -eq 124 ]; then
+				# timeout returns 124 rc when
+				# the called command is terminated
+				output="TIMEOUT"
+				msg="(DEVICE TOOK TOO LONG TO RESPOND)"
+			    else
+			        # oops try without translation
+			        output=$(smartctl -a /dev/$i)
+			        msg="(NOT USING TRANSLATION)"
+			    fi
 			fi
 			# double-quotes are important here to
 			# maintain original formatting
