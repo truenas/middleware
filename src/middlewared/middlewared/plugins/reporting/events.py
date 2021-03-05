@@ -256,24 +256,7 @@ class RealtimeEventSource(EventSource):
                         break
                     data['cpu']['temperature'][i] = v[0].value
             elif osc.IS_LINUX:
-                cp = subprocess.run(['sensors', '-j'], capture_output=True, text=True)
-                try:
-                    sensors = json.loads(cp.stdout)
-                except json.decoder.JSONDecodeError:
-                    pass
-                except Exception:
-                    self.middleware.logger.error('Failed to read sensors output', exc_info=True)
-                else:
-                    core = 0
-                    for chip, value in sensors.items():
-                        for name, temps in value.items():
-                            if not name.startswith('Core '):
-                                continue
-                            for temp, value in temps.items():
-                                if 'input' in temp:
-                                    data['cpu']['temperature'][core] = 2732 + int(value * 10)
-                                    core += 1
-                                    break
+                data['cpu']['temperature'] = self._cpu_temperature()
 
             # Interface related statistics
             if last_interface_speeds['time'] < time.monotonic() - self.INTERFACE_SPEEDS_CACHE_INTERLVAL:
@@ -333,6 +316,64 @@ class RealtimeEventSource(EventSource):
 
             self.send_event('ADDED', fields=data)
             time.sleep(2)
+
+    AMD_CORE_COUNT = None
+
+    def _cpu_temperature(self):
+        temperature = {}
+        cp = subprocess.run(['sensors', '-j'], capture_output=True, text=True)
+        try:
+            sensors = json.loads(cp.stdout)
+        except json.decoder.JSONDecodeError:
+            pass
+        except Exception:
+            self.middleware.logger.error('Failed to read sensors output', exc_info=True)
+        else:
+            amd_sensor = sensors.get('k10temp-pci-00c3')
+            if amd_sensor:
+                # AMD CPU
+                if self.AMD_CORE_COUNT is None:
+                    self.AMD_CORE_COUNT = len([
+                        line
+                        for line in subprocess.run(
+                            ['lscpu', '-p=core'], capture_output=True, text=True,
+                        ).stdout.split('\n')
+                        if line.isdigit()
+                    ])
+
+                ccds = []
+                for k, v in amd_sensor.items():
+                    if k.startswith('Tccd') and v:
+                        t = list(v.values())[0]
+                        if isinstance(t, (int, float)):
+                            ccds.append(t)
+                if ccds and self.AMD_CORE_COUNT % len(ccds) == 0:
+                    temperature = dict(enumerate(sum([[t] * (self.AMD_CORE_COUNT // len(ccds)) for t in ccds], [])))
+                elif (
+                    'Tdie' in amd_sensor and
+                    amd_sensor['Tdie'] and
+                    isinstance(list(amd_sensor['Tdie'].values())[0], (int, float))
+                ):
+                    temperature = dict(enumerate([list(amd_sensor['Tdie'].values())[0]] * self.AMD_CORE_COUNT))
+                elif (
+                    'Tctl' in amd_sensor and
+                    amd_sensor['Tctl'] and
+                    isinstance(list(amd_sensor['Tctl'].values())[0], (int, float))
+                ):
+                    temperature = dict(enumerate([list(amd_sensor['Tctl'].values())[0]] * self.AMD_CORE_COUNT))
+            else:
+                core = 0
+                for chip, value in sensors.items():
+                    for name, temps in value.items():
+                        if not name.startswith('Core '):
+                            continue
+                        for temp, value in temps.items():
+                            if 'input' in temp:
+                                temperature[core] = value
+                                core += 1
+                                break
+
+        return {core: 2732 + int(value * 10) for core, value in temperature.items()}
 
 
 def setup(middleware):
