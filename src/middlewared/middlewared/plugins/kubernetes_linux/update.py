@@ -230,7 +230,11 @@ class KubernetesService(ConfigService):
     @private
     async def migrate_ix_applications_dataset(self, new_pool, old_pool):
         snap_details = await self.middleware.call(
-            'zfs.snapshot.create', {'dataset': applications_ds_name(old_pool), 'naming_schema': MIGRATION_NAMING_SCHEMA}
+            'zfs.snapshot.create', {
+                'dataset': applications_ds_name(old_pool),
+                'naming_schema': MIGRATION_NAMING_SCHEMA,
+                'recursive': True,
+            }
         )
 
         old_ds = applications_ds_name(old_pool)
