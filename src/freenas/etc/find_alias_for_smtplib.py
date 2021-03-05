@@ -50,7 +50,6 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
     with Client() as c:
         sw_name = c.call('system.product_name')
-        mailcfg = c.call('mail.config')
 
         margs = {}
         margs['extra_headers'] = dict(em)
@@ -60,11 +59,6 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
             'To': ', '.join(to_addrs_repl),
         })
         margs['subject'] = em.get('Subject')
-
-        if mailcfg['fromemail'] != '':
-            margs['extra_headers'].update({
-                'From': mailcfg['fromemail']
-            })
 
         if em.is_multipart():
             attachments = [part for part in em.walk() if part.get_content_maintype() != 'multipart']
