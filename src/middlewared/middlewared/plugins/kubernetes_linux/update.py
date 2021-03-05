@@ -59,6 +59,16 @@ class KubernetesService(ConfigService):
                     f'{schema}.migrate_applications',
                     'Migration of applications dataset only happens when a new pool is configured.'
                 )
+            elif not data['pool']:
+                verrors.add(
+                    f'{schema}.migrate_applications',
+                    'Pool must be specified when migration of ix-application dataset is desired.'
+                )
+            elif not old_data['pool']:
+                verrors.add(
+                    f'{schema}.migrate_applications',
+                    'A pool must have been configured previously for ix-application dataset migration.'
+                )
             else:
                 if await self.middleware.call('zfs.dataset.query', [['id', '=', applications_ds_name(data['pool'])]]):
                     verrors.add(
@@ -203,6 +213,10 @@ class KubernetesService(ConfigService):
         for the NAT traffic. `route_v4_interface` and `route_v4_gateway` will set a default route for the kubernetes
         cluster IPv4 traffic. Similarly `route_v6_interface` and 'route_v6_gateway` can be used to specify default
         route for IPv6 traffic.
+
+        In case user is switching pools and the new desired pool has not been configured for kubernetes before, it
+        is possible to replicate data from old pool to new pool with setting `migrate_applications` attribute. This
+        will replicate contents of old pool's ix-applications dataset to the new pool.
         """
         old_config = await self.config()
         old_config.pop('dataset')
@@ -213,7 +227,11 @@ class KubernetesService(ConfigService):
         await self.validate_data(config, 'kubernetes_update', old_config)
 
         if migrate and config['pool'] != old_config['pool']:
+            job.set_progress(
+                25, f'Migrating {applications_ds_name(old_config["pool"])} to {applications_ds_name(config["pool"])}'
+            )
             await self.migrate_ix_applications_dataset(config['pool'], old_config['pool'])
+            job.set_progress(40, 'Migration complete for ix-applications dataset')
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             config['cni_config'] = {}
