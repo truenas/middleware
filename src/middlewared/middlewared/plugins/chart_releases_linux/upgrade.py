@@ -295,7 +295,7 @@ class ChartReleaseService(Service):
         if available_versions[0] > parse_version(application['chart_metadata']['version']):
             await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
         else:
-            await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', f'"{application["id"]}"')
+            await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', application['id'])
 
     @accepts(
         Str('release_name'),
