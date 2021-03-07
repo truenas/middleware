@@ -267,7 +267,8 @@ class KubernetesService(ConfigService):
                     'recursive': True,
                     'also_include_naming_schema': [MIGRATION_NAMING_SCHEMA],
                     'retention_policy': 'NONE',
-                    'replicate': True
+                    'replicate': True,
+                    'readonly': 'IGNORE',
                 }
             )
             await migrate_job.wait()
