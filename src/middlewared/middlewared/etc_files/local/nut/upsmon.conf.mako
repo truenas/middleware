@@ -11,8 +11,8 @@
 		middleware.logger.debug(f'UPSMON: {field} field empty, upsmon will fail to start.')
 	ident = ups_config['complete_identifier']
 	xseries = (middleware.call_sync('truenas.get_chassis_hardware')).startswith('TRUENAS-X')
-	if not ups_config['shutdowncmd'] and not xseries
-            shutdown_cmd = '/sbin/shutdown -p now'
+	if not ups_config['shutdowncmd'] and not xseries:
+            shutdown_cmd = f'/sbin/shutdown -{"P" if IS_LINUX else "p" } now'
 	else:
             shutdown_cmd = ups_config['shutdowncmd'] or ''
 %>\
