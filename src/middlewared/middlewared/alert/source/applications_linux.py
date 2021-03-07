@@ -38,10 +38,10 @@ class ChartReleaseUpdateAlertClass(AlertClass, OneShotAlertClass):
     text = 'An update is available for "%(name)s" application.'
 
     async def create(self, args):
-        return Alert(ChartReleaseUpdateAlertClass, args, key=args['id'])
+        return Alert(ChartReleaseUpdateAlertClass, args, _key=args['id'])
 
     async def delete(self, alerts, query):
         return list(filter(
-            lambda alert: alert.key != str(query),
+            lambda alert: alert.key not in (str(query), f'"{query}"'),  # TODO: Remove "" check in next release
             alerts
         ))
