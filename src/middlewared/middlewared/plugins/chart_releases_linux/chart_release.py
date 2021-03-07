@@ -550,6 +550,7 @@ class ChartReleaseService(CRUDService):
         await self.post_remove_tasks(release_name, job)
 
         await self.middleware.call('chart.release.remove_chart_release_from_events_state', release_name)
+        await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', release_name)
 
         job.set_progress(100, f'{release_name!r} chart release deleted')
         return True
