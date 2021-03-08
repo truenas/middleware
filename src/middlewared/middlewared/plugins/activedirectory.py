@@ -371,6 +371,13 @@ class ActiveDirectoryService(ConfigService):
                 "activedirectory_update.enable",
                 "Active Directory service may not be enabled while LDAP service is enabled."
             )
+        if new["enable"] and old["enable"] and new["kerberos_realm"] != old["kerberos_realm"]:
+            verrors.add(
+                "activedirectory_update.kerberos_realm",
+                "Kerberos realm may not be be altered while the AD service is enabled. "
+                "This is to avoid introducing possible configuration errors that may result "
+                "in a production outage."
+            )
         if not new["bindpw"] and not new["kerberos_principal"]:
             verrors.add(
                 "activedirectory_update.bindname",
