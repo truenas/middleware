@@ -750,6 +750,12 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'])
+        os.unlink('/var/db/system/.AD_cache_backup')
+        await self.middleware.call('cache.pop', 'AD_cache')
+        flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
+        if flush.returncode != 0:
+            self.logger.warning("Failed to flush samba's general cache after stopping Active Directory service.")
+
         if (await self.middleware.call('smb.get_smb_ha_mode')) == "LEGACY" and (await self.middleware.call('failover.status')) == 'MASTER':
             try:
                 await self.middleware.call('failover.call_remote', 'activedirectory.stop')
