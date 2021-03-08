@@ -282,11 +282,12 @@ class RealtimeEventSource(EventSource):
                 data['interfaces'] = {}
                 retrieve_stat_keys = ['received_bytes', 'sent_bytes']
                 for iface in netif.list_interfaces().values():
-                    data['interfaces'][iface.name]['speed'] = last_interface_speeds['speeds'].get(iface.name)
                     for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
                         addr_data = addr.__getstate__(stats=True)
                         stats_time = time.time()
-                        data['interfaces'][iface.name] = {}
+                        data['interfaces'][iface.name] = {
+                            'speed': last_interface_speeds['speeds'].get(iface.name),
+                        }
                         for k in retrieve_stat_keys:
                             traffic_stats = 0
                             if last_interface_stats.get(iface.name):
