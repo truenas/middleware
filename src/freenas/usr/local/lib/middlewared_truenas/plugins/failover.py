@@ -274,7 +274,7 @@ class FailoverService(ConfigService):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    @pass_app()
+    @pass_app(rest=True)
     async def status(self, app):
         """
         Get the current HA status.
