@@ -175,10 +175,14 @@ class VMSupervisor(LibvirtConnectionMixin):
             )
 
         # Let's ensure that we are able to boot a GRUB based VM
-        if self.vm_data['bootloader'] == 'GRUB' and not any(
-            isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
-        ):
-            raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name} domain')
+        if self.vm_data['bootloader'] == 'GRUB':
+            if not any(isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices):
+                raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name!r} domain')
+            grub_config = (self.vm_data['grubconfig'] or '').strip()
+            if grub_config.startswith('/mnt') and not os.path.exists(grub_config):
+                raise CallError(
+                    f'Unable to locate {grub_config!r} grubconfig path for {self.libvirt_domain_name!r} domain'
+                )
 
         if len([d for d in self.devices if isinstance(d, VNC)]) > 1:
             raise CallError('Only one VNC device per VM is supported')
@@ -449,7 +453,7 @@ class VMSupervisor(LibvirtConnectionMixin):
 
             if self.vm_data['grubconfig']:
                 grub_config = self.vm_data['grubconfig'].strip()
-                if grub_config.startswith('/mnt') and os.path.exists(grub_config):
+                if grub_config.startswith('/mnt'):
                     grub_dir = os.path.dirname(grub_config)
                 else:
                     grub_dir = device_map_dir
