@@ -4,7 +4,7 @@ import pytest
 import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, DELETE
+from functions import GET, POST, DELETE, PUT, wait_on_job
 from auto_config import ha, scale, dev_test
 
 if dev_test:
@@ -15,49 +15,49 @@ else:
 pytestmark = pytest.mark.skipif(ha or not scale or dev_test, reason=reason)
 
 official_repository = 'https://github.com/truenas/charts.git'
-unofficial_repository = 'https://github.com/ericbsd/charts.git'
+truechart_repository = 'https://github.com/ericbsd/charts.git'
 official_chart = ['plex', 'nextcloud', 'minio', 'ix-chart', 'ipfs']
-unofficial_charts = [
-    'zwavejs2mqtt',
-    'unifi',
-    'tvheadend',
-    'truecommand',
-    'transmission',
-    'traefik',
-    'tautulli',
-    'sonarr',
-    'sabnzbd',
-    'readarr',
-    'radarr',
-    'qbittorrent',
-    'organizr',
-    'ombi',
-    'nzbhydra',
-    'nzbget',
-    'node-red',
-    'navidrome',
-    'lychee',
-    'lidarr',
-    'lazylibrarian',
-    'kms',
-    'jellyfin',
-    'jackett',
-    'home-assistant',
-    'heimdall',
-    'handbrake',
-    'grocy',
-    'gaps',
-    'freshrss',
-    'esphome',
-    'deluge',
-    'collabora-online',
+truechart_charts = [
+    'bazarr',
     'calibre-web',
-    'bazarr'
+    'collabora-online',
+    'deluge',
+    'esphome',
+    'freshrss',
+    'gaps',
+    'grocy',
+    'handbrake',
+    'heimdall',
+    'home-assistant',
+    'jackett',
+    'jellyfin',
+    'kms',
+    'lazylibrarian',
+    'lidarr',
+    'lychee',
+    'navidrome',
+    'node-red',
+    'nzbget',
+    'nzbhydra',
+    'ombi',
+    'organizr',
+    'qbittorrent',
+    'radarr',
+    'readarr',
+    'sabnzbd',
+    'sonarr',
+    'tautulli',
+    'traefik',
+    'transmission',
+    'truecommand',
+    'tvheadend',
+    'unifi',
+    'zwavejs2mqtt'
 ]
 
-unofficial_catalog = {
+truechart_catalog = {
     'label': 'TRUECHARTS',
-    'repository': unofficial_repository,
+    'repository': truechart_repository,
     'branch': 'master',
     'builtin': False,
     'preferred_trains': ['charts'],
@@ -100,12 +100,24 @@ def test_05_verify_official_catalog_repository_with_id():
     assert results.json()['repository'] == official_repository, results.text
 
 
+def test_06_validate_official_catalog():
+    results = POST('/catalog/validate/', 'OFFICIAL')
+    assert results.status_code == 200, results.text
+    assert results.json() is None, results.text
+
+
+def test_07_sync_official_catalog():
+    results = POST('/catalog/sync/', 'OFFICIAL')
+    assert results.status_code == 200, results.text
+    assert results.json() is None, results.text
+
+
 @pytest.mark.parametrize('chart', official_chart)
-def test_06_get_official_catalog_item(chart):
+def test_08_get_official_catalog_item(chart):
     payload = {
-        "label": "OFFICIAL",
-        "options": {
-            "cache": True
+        'label': 'OFFICIAL',
+        'options': {
+            'cache': True
         }
     }
     results = POST('/catalog/items/', payload)
@@ -114,34 +126,90 @@ def test_06_get_official_catalog_item(chart):
     assert results.json()['charts'][chart]['name'] == chart
 
 
-def test_07_set_an_unofficial_catalog():
+def test_09_set_truechart_catalog():
     global payload, results
     payload = {
-        "force": False,
-        "preferred_trains": ['charts'],
-        "label": "TRUECHARTS",
-        "repository": unofficial_repository,
-        "branch": "master"
+        'force': False,
+        'preferred_trains': ['charts'],
+        'label': 'TRUECHARTS',
+        'repository': truechart_repository,
+        'branch': 'master'
     }
     results = POST('/catalog/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
-@pytest.mark.parametrize('key', list(unofficial_catalog.keys()))
-def test_08_verify_an_unofficial_catalog_object(key):
-    assert results.json()[key] == unofficial_catalog[key], results.text
+@pytest.mark.parametrize('key', list(truechart_catalog.keys()))
+def test_10_verify_truechart_catalog_object(key):
+    assert results.json()[key] == truechart_catalog[key], results.text
 
 
-@pytest.mark.parametrize('key', list(unofficial_catalog.keys()))
-def test_09_verify_truechart_catalog_object(key):
+@pytest.mark.parametrize('key', list(truechart_catalog.keys()))
+def test_11_verify_truechart_catalog_object(key):
     results = GET('/catalog/id/TRUECHARTS/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()[key] == unofficial_catalog[key], results.text
+    assert results.json()[key] == truechart_catalog[key], results.text
 
 
-def test_25_delete_truechart_catalog():
+def test_12_validate_truechart_catalog():
+    results = POST('/catalog/validate/', 'TRUECHARTS')
+    assert results.status_code == 200, results.text
+    assert results.json() is None, results.text
+
+
+def test_13_sync_truechart_catalog():
+    results = POST('/catalog/sync/', 'TRUECHARTS')
+    assert results.status_code == 200, results.text
+    assert results.json() is None, results.text
+
+
+@pytest.mark.parametrize('chart', truechart_charts)
+def test_14_get_truechart_catalog_item(chart):
+    payload = {
+        'label': 'TRUECHARTS'
+    }
+    results = POST('/catalog/items/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['charts'][chart]['name'] == chart
+
+
+def test_15_change_truechart_preferred_trains():
+    payload = {
+        'preferred_trains': ['test']
+    }
+    results = PUT('/catalog/id/TRUECHARTS/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+def test_16_verify_truechart_catalog_preferred_trains():
+    results = GET('/catalog/id/TRUECHARTS/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert 'test' in results.json()['preferred_trains'], results.text
+
+
+def test_17_get_truechart_catalog_item_test_trains():
+    payload = {
+        'label': 'TRUECHARTS'
+    }
+    results = POST('/catalog/items/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json()['test'], dict), results.text
+
+
+def test_18_sync_all_catalog():
+    results = GET('/catalog/sync_all/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    job_status = wait_on_job(results.json(), 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_19_delete_truechart_catalog():
     results = DELETE('/catalog/id/TRUECHARTS/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool), results.text
