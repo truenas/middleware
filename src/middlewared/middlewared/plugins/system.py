@@ -5,7 +5,9 @@ from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
-from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
+from middlewared.service import (
+    CallError, ConfigService, no_auth_required, job, pass_app, private, Service, throttle, ValidationErrors
+)
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
@@ -52,6 +54,10 @@ RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
 RE_ECC_MEMORY = re.compile(r'Error Correction Type:\s*(.*ECC.*)')
 
 DEBUG_MAX_SIZE = 30
+
+
+def throttle_condition(middleware, app, *args, **kwargs):
+    return app is None or (app and app.authenticated), None
 
 
 class SystemAdvancedModel(sa.Model):
@@ -679,8 +685,10 @@ class SystemService(Service):
         )
 
     @no_auth_required
+    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    async def build_time(self):
+    @pass_app()
+    async def build_time(self, app):
         """
         Retrieve build time of the system.
         """
@@ -701,7 +709,7 @@ class SystemService(Service):
 
         return {
             'version': self.version(),
-            'buildtime': await self.build_time(),
+            'buildtime': await self.middleware.call('system.build_time'),
             'hostname': socket.gethostname(),
             'physmem': mem_info['physmem_size'],
             'model': cpu_info['cpu_model'],
