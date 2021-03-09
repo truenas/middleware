@@ -225,6 +225,21 @@ class DSCache(Service):
                 await self.middleware.call(f'{ds}.fill_cache', True)
             elif ds_state != 'DISABLED':
                 self.logger.debug('Unable to refresh [%s] cache, state is: %s' % (ds, ds_state))
+            else:
+                if ds == 'activedirectory':
+                    backup_path = "/var/db/system/.AD_cache"
+                elif ds == 'ldap':
+                    backup_path = "/var/db/system/.LDAP_cache"
+                else:
+                    backup_path = "/var/db/system/.NIS_cache"
+                try:
+                    os.unlink(backup_path)
+                except FileNotFoundError:
+                    pass
+                except Exception:
+                    self.logger.error("Failed to remove directory service cache backup [%s].",
+                                      backup_path, exc_info=true)
+
         await self.middleware.call('dscache.backup')
 
 

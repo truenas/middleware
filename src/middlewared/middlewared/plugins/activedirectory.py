@@ -759,6 +759,9 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'])
         await self.middleware.call('service.stop', 'dscache')
+        flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
+        if flush.returncode != 0:
+            self.logger.warning("Failed to flush samba's general cache after stopping Active Directory service.")
         if (await self.middleware.call('smb.get_smb_ha_mode')) == "LEGACY" and (await self.middleware.call('failover.status')) == 'MASTER':
             try:
                 await self.middleware.call('failover.call_remote', 'activedirectory.stop')
