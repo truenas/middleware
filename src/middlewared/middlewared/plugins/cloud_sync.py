@@ -30,7 +30,9 @@ import subprocess
 import tempfile
 import textwrap
 
-RE_TRANSF = re.compile(r"Transferred:\s*(?P<progress_1>.+, )(?P<progress>[0-9]+)%, (?P<progress_2>.+)$", re.S)
+RE_TRANSF1 = re.compile(r"Transferred:\s*(?P<progress_1>.+), (?P<progress>[0-9]+)%$")
+RE_TRANSF2 = re.compile(r"Transferred:\s*(?P<progress_1>.+, )(?P<progress>[0-9]+)%, (?P<progress_2>.+)$")
+RE_CHECKS = re.compile(r"Checks:\s*(?P<checks>[0-9 /]+)(, (?P<progress>[0-9]+)%)?$")
 
 REMOTES = {}
 
@@ -378,6 +380,12 @@ async def rclone_check_progress(job, proc):
     cutter = RcloneVerboseLogCutter(300)
     dropbox__restricted_content = False
     try:
+        progress1 = None
+        transferred1 = None
+        progress2 = None
+        transferred2 = None
+        progress3 = None
+        checks = None
         while True:
             read = (await proc.stdout.readline()).decode("utf-8", "ignore")
             if read == "":
@@ -391,9 +399,19 @@ async def rclone_check_progress(job, proc):
             if result:
                 job.logs_fd.write(result.encode("utf-8", "ignore"))
 
-            reg = RE_TRANSF.search(read)
-            if reg:
-                job.set_progress(int(reg.group("progress")), reg.group("progress_1") + reg.group("progress_2"))
+            if reg := RE_TRANSF1.search(read):
+                progress1 = int(reg.group("progress"))
+                transferred1 = reg.group("progress_1")
+            if reg := RE_TRANSF2.search(read):
+                progress2 = int(reg.group("progress"))
+                transferred2 = reg.group("progress_1") + reg.group("progress_2")
+            if reg := RE_CHECKS.search(read):
+                progress3 = int(reg.group("progress"))
+                checks = f'checks: {reg.group("checks")}'
+
+            progresses = list(filter(lambda v: v is not None, [progress1, progress2, progress3]))
+            if progresses:
+                job.set_progress(min(progresses), ', '.join(filter(None, [transferred1, transferred2, checks])))
     finally:
         result = cutter.flush()
         if result:
