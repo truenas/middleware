@@ -429,7 +429,7 @@ def test_13_test_directory_other_bits_function_allow(mode_bit, request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': f'{new_mode:03o}',
-            'group': 'wheel',
+            'group': 'root' if scale else 'wheel',
             'user': 'root'
         }
     )
