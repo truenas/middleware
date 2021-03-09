@@ -16,44 +16,15 @@ pytestmark = pytest.mark.skipif(ha or not scale or dev_test, reason=reason)
 
 official_repository = 'https://github.com/truenas/charts.git'
 truechart_repository = 'https://github.com/ericbsd/charts.git'
-official_chart = ['plex', 'nextcloud', 'minio', 'ix-chart', 'ipfs']
-truechart_charts = [
-    'bazarr',
-    'calibre-web',
-    'collabora-online',
-    'deluge',
-    'esphome',
-    'freshrss',
-    'gaps',
-    'grocy',
-    'handbrake',
-    'heimdall',
-    'home-assistant',
-    'jackett',
-    'jellyfin',
-    'kms',
-    'lazylibrarian',
-    'lidarr',
-    'lychee',
-    'navidrome',
-    'node-red',
-    'nzbget',
-    'nzbhydra',
-    'ombi',
-    'organizr',
-    'qbittorrent',
-    'radarr',
-    'readarr',
-    'sabnzbd',
-    'sonarr',
-    'tautulli',
-    'traefik',
-    'transmission',
-    'truecommand',
-    'tvheadend',
-    'unifi',
-    'zwavejs2mqtt'
-]
+github_official_charts = 'https://api.github.com/repos/truenas/charts/contents/charts/'
+github_truechart_charts = 'https://api.github.com/repos/ericbsd/charts/contents/charts/'
+official_chart = []
+for chart_dict in GET(github_official_charts).json():
+    official_chart.append(chart_dict['name'])
+
+truechart_charts = []
+for chart_dict in GET(github_truechart_charts).json():
+    truechart_charts.append(chart_dict['name'])
 
 truechart_catalog = {
     'label': 'TRUECHARTS',
@@ -123,7 +94,7 @@ def test_08_get_official_catalog_item(chart):
     results = POST('/catalog/items/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['charts'][chart]['name'] == chart
+    assert chart in results.json()['charts'], results.text
 
 
 def test_09_set_truechart_catalog():
@@ -173,7 +144,7 @@ def test_14_get_truechart_catalog_item(chart):
     results = POST('/catalog/items/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['charts'][chart]['name'] == chart
+    assert chart in results.json()['charts'], results.text
 
 
 def test_15_change_truechart_preferred_trains():
