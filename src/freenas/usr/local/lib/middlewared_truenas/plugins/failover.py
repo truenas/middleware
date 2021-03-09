@@ -40,6 +40,7 @@ from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.utils.contextlib import asyncnullcontext
+from middlewared.utils import osc
 
 BUFSIZE = 256
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
@@ -348,7 +349,19 @@ class FailoverService(ConfigService):
         Returns True if there is an ongoing failover event.
         """
 
-        return LockFile('/tmp/.failover_event').is_locked()
+        if osc.IS_FREEBSD:
+            return LockFile('/tmp/.failover_event').is_locked()
+        else:
+            event = self.middleware.call_sync(
+                'core.get_jobs', [
+                    ('method', 'in', [
+                        'failover.events.vrrp_master',
+                        'failover.events.vrrp_backup'
+                    ]),
+                    ('state', '=', 'RUNNING'),
+                ]
+            )
+            return bool(event)
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
