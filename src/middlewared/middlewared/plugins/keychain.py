@@ -225,7 +225,7 @@ async def get_ssh_key_pair_with_private_key(middleware, id):
 
 
 def process_ssh_keyscan_output(output):
-    return [" ".join(line.split()[1:]) for line in output.split("\n") if line and not line.startswith("# ")][-1]
+    return "\n".join([" ".join(line.split()[1:]) for line in output.split("\n") if line and not line.startswith("# ")])
 
 
 class KeychainCredentialModel(sa.Model):
