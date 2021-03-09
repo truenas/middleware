@@ -55,7 +55,7 @@ class VMSupervisor(VMSupervisorBase):
 
             if self.vm_data['grubconfig']:
                 grub_config = self.vm_data['grubconfig'].strip()
-                if grub_config.startswith('/mnt') and os.path.exists(grub_config):
+                if grub_config.startswith('/mnt'):
                     grub_dir = os.path.dirname(grub_config)
                 else:
                     grub_dir = device_map_dir
