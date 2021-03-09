@@ -2009,7 +2009,7 @@ class PoolDatasetService(CRUDService):
         # If we are unable to find the key in database, we see if we have it in memory with the KMIP server, if not,
         # there are 2 ways this can go, we don't retrieve the key or the user can sync KMIP keys and we will have it
         # with the KMIP service again through which we can retrieve them
-        datasets = self.middleware.call_sync('datastore.query', self.dataset_store, filters)
+        datasets = filter_list(self.middleware.call_sync('datastore.query', self.dataset_store), filters)
         zfs_keys = self.middleware.call_sync('kmip.retrieve_zfs_keys')
         keys = {}
         for ds in datasets:
@@ -2101,8 +2101,23 @@ class PoolDatasetService(CRUDService):
             # We don't want to do this for passive controller
             return
         filters = [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else []
+
+        # It is possible we have a pool configured but for some mistake/reason the pool did not import like
+        # during repair disks were not plugged in and system was booted, in such cases we would like to not
+        # remove the encryption keys from the database.
+        for root_ds in {pool['name'] for pool in self.middleware.call_sync('pool.query')} - {
+            ds['id'] for ds in self.middleware.call_sync(
+                'zfs.dataset.query', [], {'extra': {'properties': [], 'flat': False}}
+            )
+        }:
+            filters.extend([['name', '!=', root_ds], ['name', '!^', f'{root_ds}/']])
+
         db_datasets = self.query_encrypted_roots_keys(filters)
-        encrypted_roots = {d['name']: d for d in self.query(filters) if d['name'] == d['encryption_root']}
+        encrypted_roots = {
+            d['name']: d for d in self.middleware.call_sync(
+                'zfs.dataset.query', filters, {'extra': {'properties': ['encryptionroot']}}
+            ) if d['name'] == d['encryption_root']
+        }
         to_remove = []
         check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
             (name, {'key': db_datasets[name]}) for name in db_datasets
