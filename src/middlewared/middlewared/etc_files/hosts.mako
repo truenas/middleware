@@ -65,6 +65,6 @@
 ${network_config['hosts']}
 127.0.0.1	${hostname}.${domain_name} ${hostname}
 ::1		${hostname}.${domain_name} ${hostname}
-% if nis_enabled:
+% if IS_FREEBSD and nis_enabled:
 ${NIS_HOSTSSTR}
 % endif
