@@ -1088,7 +1088,7 @@ class JailService(CRUDService):
             List('props', default=[]),
             List(
                 'files',
-                default=['MANIFEST', 'base.txz', 'lib32.txz', 'doc.txz']
+                default=['MANIFEST', 'base.txz', 'lib32.txz']
             ),
             Str('branch', default=None, null=True)
         )
