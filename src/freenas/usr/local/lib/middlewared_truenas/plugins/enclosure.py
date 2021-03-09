@@ -566,6 +566,8 @@ class Enclosure(object):
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
             self.controller = True
+        elif self.encname.startswith("iX TrueNAS R20p"):
+            self.model = "R20"
         elif self.encname.startswith("QUANTA JB9 SIM"):
             self.model = "E60"
         elif self.encname.startswith("Storage 1729"):
