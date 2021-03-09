@@ -1272,6 +1272,8 @@ class JailService(CRUDService):
         else:
             raise CallError(f'{jail} is already running')
 
+        self.middleware.call_sync('service.restart', 'mdns')
+
         return True
 
     @accepts(Str("jail"), Bool('force', default=False))
@@ -1308,6 +1310,8 @@ class JailService(CRUDService):
             iocage.start()
         except Exception as e:
             raise CallError(str(e))
+
+        self.middleware.call_sync('service.restart', 'mdns')
 
         return True
 
