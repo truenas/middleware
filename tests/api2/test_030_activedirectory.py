@@ -357,6 +357,7 @@ def test_32_store_AD_credentials_in_a_file_for_mount_smbfs(request):
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(10)
 def test_33_mounting_SMB(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = f'mount_smbfs -N -I {ip} -W AD01 -U {ADUSERNAME} ' \
@@ -525,6 +526,7 @@ def test_52_Create_mount_point_for_SMB_on_OSX_system(request):
 
 
 @osx_host_cfg
+@pytest.mark.timeout(10)
 def test_53_Mount_SMB_share_on_OSX_system(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
     cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME

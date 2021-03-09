@@ -136,6 +136,7 @@ def test_11_creating_nfs_mountpoint(request):
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(10)
 def test_12_mounting_nfs(request):
     depends(request, ["pool_04"], scope="session")
     cmd = f'mount_nfs {ip}:{NFS_PATH} {MOUNTPOINT}'
@@ -225,6 +226,7 @@ def test_22_creating_nfs_mountpoint(request):
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(10)
 def test_23_mounting_nfs(request):
     depends(request, ["pool_04"], scope="session")
     cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)

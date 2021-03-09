@@ -161,6 +161,7 @@ def test_16_create_mount_point_for_afp_on_osx_system(request):
 
 
 @osx_host_cfg
+@pytest.mark.timeout(10)
 def test_17_mount_afp_share_on_osx_system(request):
     depends(request, ["pool_04"], scope="session")
     cmd = f'mount -t afp "afp://{ip}/{AFP_NAME}" "{MOUNTPOINT}"'
@@ -236,6 +237,7 @@ def test_25_checking_to_see_if_afp_service_is_enabled(request):
 
 # Update tests
 @osx_host_cfg
+@pytest.mark.timeout(10)
 def test_26_mount_afp_share_on_osx_system(request):
     depends(request, ["pool_04"], scope="session")
     cmd = f'mount -t afp "afp://{ip}/{AFP_NAME}" "{MOUNTPOINT}"'
