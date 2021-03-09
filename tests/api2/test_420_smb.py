@@ -180,6 +180,7 @@ def test_011_creating_smb_mountpoint_on_bsd(request):
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(10)
 def test_012_mounting_smb_on_bsd(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     cmd = f'mount_smbfs -N -I {ip} ' \
@@ -349,6 +350,7 @@ def test_031_get_filesystem_stat_from_testfilet2_and_verify(request, stat):
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(10)
 def test_032_remounting_smb_on_bsd(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     cmd = f'mount_smbfs -N -I {ip} "//guest@testnas/{SMB_NAME}" "{MOUNTPOINT}"'
@@ -633,6 +635,7 @@ def test_066_create_mount_point_for_smb_on_osx(request):
 
 
 @osx_host_cfg
+@pytest.mark.timeout(10)
 def test_067_mount_smb_share_on_osx(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     cmd = f'mount -t smbfs "smb://guest@{ip}/{SMB_NAME}" "{MOUNTPOINT}"'
@@ -792,6 +795,7 @@ def test_086_verify_smb_getparm_vfs_objects_share(request, vfs_object):
 
 # Update tests
 @osx_host_cfg
+@pytest.mark.timeout(10)
 def test_087_mount_smb_share_on_osx(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     cmd = f'mount -t smbfs "smb://guest@{ip}/{SMB_NAME}" "{MOUNTPOINT}"'

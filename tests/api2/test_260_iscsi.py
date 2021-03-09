@@ -185,6 +185,7 @@ def test_12_Creating_iSCSI_mountpoint(request):
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(10)
 def test_13_Mount_the_target_volume(request):
     depends(request, ["iscsi_10"])
     cmd = f'mount "/dev/{file_device_name}" "{file_mountpoint}"'
@@ -401,6 +402,7 @@ def test_37_creating_iscsi_mountpoint(request):
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(10)
 @pytest.mark.dependency(name="iscsi_38")
 def test_38_mount_the_zvol_target_volume(request):
     depends(request, ["iscsi_37"])
@@ -504,6 +506,7 @@ def test_49_unmount_media(request):
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(10)
 @pytest.mark.dependency(name="iscsi_50")
 def test_50_remount_the_zvol_target_volume(request):
     depends(request, ["iscsi_48"])
