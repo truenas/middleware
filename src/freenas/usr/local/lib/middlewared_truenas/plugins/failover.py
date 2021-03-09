@@ -354,9 +354,9 @@ class FailoverService(ConfigService):
         else:
             event = self.middleware.call_sync(
                 'core.get_jobs', [
-                    ('OR', [
-                        ('method', '=', 'failover.events.vrrp_master'),
-                        ('method', '=', 'failover.events.vrrp_backup')
+                    ('method', 'in', [
+                        'failover.events.vrrp_master',
+                        'failover.events.vrrp_backup'
                     ]),
                     ('state', '=', 'RUNNING'),
                 ]
