@@ -283,10 +283,16 @@ class VMSupervisorBase(LibvirtConnectionMixin):
 
     def before_start_checks(self):
         # Let's ensure that we are able to boot a GRUB based VM
-        if self.vm_data['bootloader'] == 'GRUB' and not any(
-            isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
-        ):
-            raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name} domain')
+        if self.vm_data['bootloader'] == 'GRUB':
+            if not any(
+                isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
+            ):
+                raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name!r} domain')
+            grub_config = (self.vm_data['grubconfig'] or '').strip()
+            if grub_config.startswith('/mnt') and not os.path.exists(grub_config):
+                raise CallError(
+                    f'Unable to locate {grub_config!r} grubconfig path for {self.libvirt_domain_name!r} domain'
+                )
 
     def cpu_xml(self):
         return create_element(
