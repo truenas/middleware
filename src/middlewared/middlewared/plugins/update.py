@@ -409,6 +409,7 @@ class UpdateService(Service):
         else:
             path = UPLOAD_LOCATION
         os.makedirs(path, exist_ok=True)
+        os.chmod(path, 0o755)
         return path
 
     @private
