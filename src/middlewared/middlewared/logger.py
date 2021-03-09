@@ -329,12 +329,12 @@ def setup_logging(name, debug_level, log_handler):
     _logger = Logger(name, debug_level)
     _logger.getLogger()
 
-    if 'file' in log_handler:
+    if log_handler == 'file':
         _logger.configure_logging('file')
         stream = _logger.stream()
         if stream is not None:
             sys.stdout = sys.stderr = stream
-    elif 'console' in log_handler:
+    elif log_handler == 'console':
         _logger.configure_logging('console')
     else:
         _logger.configure_logging('file')
@@ -347,14 +347,14 @@ def reconfigure_logging():
 
         stream = handler.stream
         handler.stream = handler._open()
-        if handler_name == 'file':
+        if name == 'file':
             # We want to reassign stdout/stderr if its not the default one or closed
             # which will happen on log file rotation.
             try:
                 if sys.stdout.fileno() != 1 or sys.stderr.fileno() != 2:
                     raise ValueError()
             except ValueError:
-                # ValueError can be raise if file handler is closed
+                # ValueError can be raised if file handler is closed
                 sys.stdout = handler.stream
                 sys.stderr = handler.stream
         try:
