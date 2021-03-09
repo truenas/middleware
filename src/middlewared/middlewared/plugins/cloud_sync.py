@@ -295,13 +295,13 @@ async def run_script_check(job, proc, name):
 # Prevents clogging job logs with progress reports every second
 class RcloneVerboseLogCutter:
     PREFIXES = (
-        re.compile(r"[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} INFO {2}:"),
+        re.compile(r"[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} INFO {2}:\s*$"),
         re.compile(r"Transferred:\s+"),
         re.compile(r"Errors:\s+"),
         re.compile(r"Checks:\s+"),
-        re.compile(r"Transferred:\s+"),
         re.compile(r"Elapsed time:\s+"),
         re.compile(r"Transferring:"),
+        re.compile(r" * .+"),
     )
 
     def __init__(self, interval):
@@ -319,13 +319,7 @@ class RcloneVerboseLogCutter:
             if line.rstrip("\n"):
                 # We are still reading message
 
-                i = len(self.buffer) - 1
-                if i < len(self.PREFIXES):
-                    # Next line should match this
-                    matches = self.PREFIXES[i].match(line)
-                else:
-                    # Next line should be an individual file progress
-                    matches = line.startswith(" * ")
+                matches = any(prefix.match(line) for prefix in self.PREFIXES)
 
                 if matches:
                     # Good, consuming this line to buffer and yet not writing it to logs
