@@ -3,7 +3,10 @@
 
 	network_config = middleware.call_sync('network.configuration.config')
 	ad_config = middleware.call_sync('datastore.config', 'directoryservice.activedirectory')
-	nis_enabled = middleware.call_sync('datastore.config', 'directoryservice.nis')['nis_enable']
+	if IS_FREEBSD:
+		nis_enabled = middleware.call_sync('datastore.config', 'directoryservice.nis')['nis_enable']
+	else:
+		nis_enabled = False
 
 	hostname = network_config['hostname_local']
 	domain_name = network_config['domain']
