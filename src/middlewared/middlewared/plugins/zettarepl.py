@@ -904,6 +904,7 @@ class ZettareplService(Service):
                     self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "FINISHED",
                         "datetime": datetime.utcnow(),
+                        "warnings": message.warnings,
                     })
 
                     for channel in self.replication_jobs_channels[message.task_id]:
