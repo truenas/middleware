@@ -90,6 +90,8 @@ class TrueNASService(Service):
 
         chassis = await run('dmidecode', '-s', 'system-product-name', check=False)
         chassis = chassis.stdout.decode(errors='ignore').split('\n', 1)[0].strip()
+        if chassis == 'TRUENAS-MINI':
+            return 'TRUENAS-UNKNOWN'
         if chassis.startswith(('TRUENAS-M', 'TRUENAS-X', 'TRUENAS-Z')):
             return chassis
         # We don't match a burned in name for a M, X or Z series.  Let's catch
