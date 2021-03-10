@@ -18,13 +18,15 @@ official_repository = 'https://github.com/truenas/charts.git'
 truechart_repository = 'https://github.com/ericbsd/charts.git'
 github_official_charts = 'https://api.github.com/repos/truenas/charts/contents/charts/'
 github_truechart_charts = 'https://api.github.com/repos/ericbsd/charts/contents/charts/'
-official_chart = []
+official_charts = []
 for chart_dict in GET(github_official_charts).json():
-    official_chart.append(chart_dict['name'])
+    if chart_dict['type'] == 'dir':
+        official_charts.append(chart_dict['name'])
 
 truechart_charts = []
 for chart_dict in GET(github_truechart_charts).json():
-    truechart_charts.append(chart_dict['name'])
+    if chart_dict['type'] == 'dir':
+        truechart_charts.append(chart_dict['name'])
 
 truechart_catalog = {
     'label': 'TRUECHARTS',
@@ -83,7 +85,7 @@ def test_07_sync_official_catalog():
     assert results.json() is None, results.text
 
 
-@pytest.mark.parametrize('chart', official_chart)
+@pytest.mark.parametrize('chart', official_charts)
 def test_08_get_official_catalog_item(chart):
     payload = {
         'label': 'OFFICIAL',
