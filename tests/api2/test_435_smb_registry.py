@@ -174,7 +174,7 @@ def test_008_test_presets(request, preset):
 
     to_test = DETECTED_PRESETS[preset]['params']
     to_test_aux = to_test['auxsmbconf']
-    results = PUT("/sharing/smb/id/1/",
+    results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
                   {"purpose": preset})
     assert results.status_code == 200, results.text
 
@@ -202,7 +202,7 @@ def test_009_reset_smb():
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
-    results = PUT("/sharing/smb/id/1/",
+    results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
                   {"purpose": "NO_PRESET", "timemachine": False})
     assert results.status_code == 200, results.text
 
@@ -211,13 +211,13 @@ def test_010_test_aux_param_on_update(request):
     depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     results = GET(
         '/sharing/smb', payload={
-            'query-filters': [['id', '=', 1]],
+            'query-filters': [['id', '=', SHARE_DICT["REGISTRYTEST_0"]]],
             'query-options': {'get': True},
         }
     )
     assert results.status_code == 200, results.text
     old_aux = results.json()['auxsmbconf']
-    results = PUT("/sharing/smb/id/1/",
+    results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
                   {"auxsmbconf": '\n'.join(SAMPLE_AUX)})
     assert results.status_code == 200, results.text
     new_aux = results.json()['auxsmbconf']
