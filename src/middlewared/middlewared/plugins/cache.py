@@ -238,7 +238,7 @@ class DSCache(Service):
                     pass
                 except Exception:
                     self.logger.error("Failed to remove directory service cache backup [%s].",
-                                      backup_path, exc_info=true)
+                                      backup_path, exc_info=True)
 
         await self.middleware.call('dscache.backup')
 
