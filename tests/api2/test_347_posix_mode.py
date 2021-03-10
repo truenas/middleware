@@ -275,6 +275,10 @@ def dir_mode_check(mode_bit):
         results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
         assert results['result'] is False, results['output']
 
+        # Ensure that file is deleted before trying to create
+        cmd = f'rm /mnt/{MODE_DATASET}/canary'
+        results = SSH_TEST(cmd, user, password, ip)
+
         cmd = f'touch /mnt/{MODE_DATASET}/canary'
         results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
         assert results['result'] is False, results['output']
