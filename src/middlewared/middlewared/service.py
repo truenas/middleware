@@ -1313,12 +1313,14 @@ class CoreService(Service):
     def threads_stacks(self):
         return get_threads_stacks()
 
-    @accepts(Str("method"), List("params"))
+    @accepts(Str("method"), List("params"), Str("description", null=True, default=None))
     @job(lock=lambda args: f"bulk:{args[0]}")
-    async def bulk(self, job, method, params):
+    async def bulk(self, job, method, params, description):
         """
         Will loop on a list of items for the given method, returning a list of
         dicts containing a result and error key.
+
+        `description` contains format string for job progress (e.g. "Deleting snapshot {0[dataset]}@{0[name]}")
 
         Result will be the message returned by the method being called,
         or a string of an error, in which case the error key will be the
@@ -1328,10 +1330,13 @@ class CoreService(Service):
         if not params:
             return statuses
 
-        progress_step = 100 / len(params)
-        current_progress = 0
+        for i, p in enumerate(params):
+            progress_description = f"{i} / {len(params)}"
+            if description is not None:
+                progress_description += ": " + description.format(*p)
 
-        for p in params:
+            job.set_progress(100 * i / len(params), progress_description)
+
             try:
                 msg = await self.middleware.call(method, *p)
                 error = None
@@ -1346,9 +1351,6 @@ class CoreService(Service):
                 statuses.append({"result": msg, "error": error})
             except Exception as e:
                 statuses.append({"result": None, "error": str(e)})
-
-            current_progress += progress_step
-            job.set_progress(current_progress)
 
         return statuses
 
