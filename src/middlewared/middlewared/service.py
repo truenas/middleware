@@ -1211,7 +1211,6 @@ class CoreService(Service):
         of the new location
         """
         reconfigure_logging()
-        reconfigure_logging('zettarepl_file')
         self.__kill_multiprocessing()
         self.middleware.send_event('core.reconfigure_logging', 'CHANGED')
 
