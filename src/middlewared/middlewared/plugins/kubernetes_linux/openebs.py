@@ -33,7 +33,7 @@ class KubernetesZFSVolumesService(CRUDService):
 
 class KubernetesZFSSnapshotClassService(CRUDService):
 
-    GROUPS = 'snapshot.storage.k8s.io'
+    GROUP = 'snapshot.storage.k8s.io'
     PLURAL = 'volumesnapshotclasses'
     VERSION = 'v1'
 
@@ -48,17 +48,39 @@ class KubernetesZFSSnapshotClassService(CRUDService):
                 [
                     d for d in (
                         await context['custom_object_api'].list_cluster_custom_object(
-                            group=self.GROUPS, version=self.VERSION, plural=self.PLURAL
+                            group=self.GROUP, version=self.VERSION, plural=self.PLURAL
                         )
                     )['items']
                 ],
                 filters, options
             )
 
+    async def do_create(self, data):
+        data.update({
+            'kind': 'VolumeSnapshotClass',
+            'apiVersion': f'snapshot.storage.k8s.io/{self.VERSION}',
+        })
+        async with api_client() as (api, context):
+            await context['custom_object_api'].create_cluster_custom_object(
+                group=self.GROUP, version=self.VERSION, plural=self.PLURAL, body=data
+            )
+
+    async def setup_default_snapshot_class(self):
+        await self.middleware.call('k8s.zfs.snapshotclass.create', {
+            'metadata': {
+                'name': 'zfspv-default-snapshot-class',
+                'annotations': {
+                    'snapshot.storage.kubernetes.io/is-default-class': 'true'
+                },
+            },
+            'driver': 'zfs.csi.openebs.io',
+            'deletionPolicy': 'Delete',
+        })
+
 
 class KubernetesZFSSnapshotService(CRUDService):
 
-    GROUPS = 'snapshot.storage.k8s.io'
+    GROUP = 'snapshot.storage.k8s.io'
     PLURAL = 'volumesnapshots'
     VERSION = 'v1'
 
@@ -74,7 +96,7 @@ class KubernetesZFSSnapshotService(CRUDService):
                     [
                         d for d in (
                             await context['custom_object_api'].list_namespaced_custom_object(
-                                group=self.GROUPS, version=self.VERSION, plural=self.PLURAL, namespace=namespace
+                                group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace=namespace
                             )
                         )['items']
                     ] for namespace in await self.middleware.call('k8s.namespace.namespace_names')

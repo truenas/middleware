@@ -79,6 +79,7 @@ class KubernetesService(Service):
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('k8s.gpu.setup')
         await self.middleware.call('k8s.storage_class.setup_default_storage_class')
+        await self.middleware.call('k8s.zfs.snapshotclass.setup_default_snapshot_class')
         await self.middleware.call(
             'k8s.node.remove_taints', [
                 k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
