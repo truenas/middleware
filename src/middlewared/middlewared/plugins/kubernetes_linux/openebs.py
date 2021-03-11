@@ -159,3 +159,26 @@ class KubernetesSnapshotService(CRUDService):
             await context['custom_object_api'].create_namespaced_custom_object(
                 group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace=namespace, body=data
             )
+
+
+class KubernetesZFSSnapshotService(CRUDService):
+
+    GROUP = 'zfs.openebs.io'
+    PLURAL = 'zfssnapshots'
+    VERSION = 'v1'
+
+    class Config:
+        namespace = 'k8s.zfs.snapshot'
+        private = True
+
+    @filterable
+    async def query(self, filters, options):
+        async with api_client() as (api, context):
+            return filter_list([
+                d for d in (
+                    await context['custom_object_api'].list_namespaced_custom_object(
+                        group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace='openebs'
+                    )
+                )['items']
+            ], filters, options
+            )
