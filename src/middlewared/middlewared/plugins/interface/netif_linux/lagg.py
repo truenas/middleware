@@ -37,7 +37,7 @@ class LaggMixin:
         run(["ip", "link", "set", self.name, "down"])
         for port in self.ports:
             self.delete_port(port[0])
-        run(["ip", "link", "set", self.name, "type", "bond", "mode", value.value])
+        run(["ip", "link", "set", self.name, "type", "bond", "miimon", "100", "mode", value.value])
         run(["ip", "link", "set", self.name, "up"])
 
     @property
