@@ -7,7 +7,8 @@ from .k8s import api_client
 class KubernetesPersistentVolumeClaimService(CRUDService):
 
     class Config:
-        namespace = 'k8s.persistent_volume_claim'
+        namespace = 'k8s.pvc'
+        namespace_alias = 'k8s.persistent_volume_claim'
         private = True
 
     @filterable
