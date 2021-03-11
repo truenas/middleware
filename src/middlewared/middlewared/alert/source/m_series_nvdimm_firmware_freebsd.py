@@ -12,8 +12,8 @@ class TrueNASMNVDIMMFirmwareVersionAlertClass(AlertClass):
     level = AlertLevel.EMERGENCY
     title = "Invalid NVDIMM Firmware Version"
     text = (
-        "Your NVDIMM device (nvdimm%(index)d) is using an invalid firmware version %(version)s which can cause data "
-        "loss. Please contact support."
+        "NVDIMM device (nvdimm%(index)d) is using invalid firmware version %(version)s which can cause data "
+        "loss. Please contact iXsystems Support using the form in System > Support."
     )
 
     products = ("ENTERPRISE",)

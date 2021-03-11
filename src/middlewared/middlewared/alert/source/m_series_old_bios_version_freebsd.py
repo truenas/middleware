@@ -11,8 +11,8 @@ class TrueNASMOldBIOSVersionAlertClass(AlertClass):
     level = AlertLevel.EMERGENCY
     title = "Old BIOS Version"
     text = (
-        "Your M-Series TrueNAS has an old BIOS version. "
-        "Please contact support."
+        "This TrueNAS M-Series has an old BIOS version. "
+        "Please contact iXsystems Support using the form in System > Support."
     )
 
     products = ("ENTERPRISE",)
