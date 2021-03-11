@@ -1,5 +1,6 @@
 import itertools
 
+from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -102,4 +103,36 @@ class KubernetesZFSSnapshotService(CRUDService):
                     ] for namespace in await self.middleware.call('k8s.namespace.namespace_names')
                 ])),
                 filters, options
+            )
+
+    @accepts(
+        Dict(
+            'zfs_snapshot_create',
+            Str('namespace', required=True),
+            Dict(
+                'metadata',
+                Str('name', required=True),
+                additional_attrs=True,
+            ),
+            Dict(
+                'spec',
+                Str('volumeSnapshotClassName', required=True),
+                Dict(
+                    'source',
+                    Str('persistentVolumeClaimName', required=True),
+                ),
+                additional_attrs=True,
+            ),
+            additional_attrs=True,
+        )
+    )
+    async def do_create(self, data):
+        data.update({
+            'kind': 'VolumeSnapshot',
+            'apiVersion': f'snapshot.storage.k8s.io/{self.VERSION}'
+        })
+        namespace = data.pop('namespace')
+        async with api_client() as (api, context):
+            await context['custom_object_api'].create_namespaced_custom_object(
+                group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace=namespace, body=data
             )
