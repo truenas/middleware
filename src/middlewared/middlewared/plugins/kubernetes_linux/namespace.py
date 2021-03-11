@@ -58,6 +58,9 @@ class KubernetesNamespaceService(CRUDService):
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete namespace: {e}')
 
+    async def namespace_names(self):
+        return [n['metadata']['name'] for n in await self.query()]
+
     @accepts(
         Str('namespace_name'),
         Dict(
