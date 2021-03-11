@@ -1,6 +1,6 @@
 import itertools
 
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Dict, Str, ValidationErrors
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -79,14 +79,14 @@ class KubernetesZFSSnapshotClassService(CRUDService):
         })
 
 
-class KubernetesZFSSnapshotService(CRUDService):
+class KubernetesSnapshotService(CRUDService):
 
     GROUP = 'snapshot.storage.k8s.io'
     PLURAL = 'volumesnapshots'
     VERSION = 'v1'
 
     class Config:
-        namespace = 'k8s.zfs.snapshot'
+        namespace = 'k8s.volume.snapshot'
         private = True
 
     @filterable
@@ -132,6 +132,29 @@ class KubernetesZFSSnapshotService(CRUDService):
             'apiVersion': f'snapshot.storage.k8s.io/{self.VERSION}'
         })
         namespace = data.pop('namespace')
+        verrors = ValidationErrors()
+
+        if not await self.middleware.call(
+            'k8s.zfs.snapshotclass.query', [['metadata.name', '=', data['spec']['volumeSnapshotClassName']]]
+        ):
+            verrors.add(
+                'zfs_snapshot_create.spec.volumeSnapshotClassName',
+                'Specified volumeSnapshotClassName does not exist.'
+            )
+
+        if not await self.middleware.call(
+            'k8s.pvc.query', [
+                    ['metadata.name', '=', data['spec']['source']['persistentVolumeClaimName']],
+                    ['metadata.namespace', '=', namespace]
+                ]
+        ):
+            verrors.add(
+                'zfs_snapshot_create.spec.source.persistentVolumeClaimName',
+                f'Specified persistentVolumeClaimName does not exist in {namespace}.'
+            )
+
+        verrors.check()
+
         async with api_client() as (api, context):
             await context['custom_object_api'].create_namespaced_custom_object(
                 group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace=namespace, body=data
