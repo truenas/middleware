@@ -1273,6 +1273,9 @@ class Journal:
             try:
                 with open(self.path, 'rb') as f:
                     self.journal = pickle.load(f)
+            except EOFError:
+                # file is empty
+                pass
             except Exception:
                 logger.warning('Failed to read journal', exc_info=True)
 
