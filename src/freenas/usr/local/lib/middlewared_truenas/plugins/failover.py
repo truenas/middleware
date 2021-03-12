@@ -1212,12 +1212,17 @@ class FailoverService(ConfigService):
                     'failover.call_remote', 'kmip.update_memory_keys', [kmip_keys]
                 )
             except Exception as e:
-                await self.middleware.call(
-                    'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
-                )
-                self.middleware.logger.error(
-                    'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True
-                )
+                if e.errno == CallError.ENOMETHOD:
+                    # the remote node is an older system that doesn't have
+                    # kmip.update_memory_keys method
+                    pass
+                else:
+                    await self.middleware.call(
+                        'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
+                    )
+                    self.middleware.logger.error(
+                        'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True
+                    )
             else:
                 await self.middleware.call('alert.oneshot_delete', 'FailoverKMIPKeysSyncFailed', None)
 
