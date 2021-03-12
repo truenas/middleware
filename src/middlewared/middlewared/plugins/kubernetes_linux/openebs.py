@@ -67,6 +67,9 @@ class KubernetesZFSSnapshotClassService(CRUDService):
             )
 
     async def setup_default_snapshot_class(self):
+        if await self.query([['metadata.name', '=', 'zfspv-default-snapshot-class']]):
+            return
+
         await self.middleware.call('k8s.zfs.snapshotclass.create', {
             'metadata': {
                 'name': 'zfspv-default-snapshot-class',
