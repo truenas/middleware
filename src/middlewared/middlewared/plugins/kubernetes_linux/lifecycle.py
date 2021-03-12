@@ -78,6 +78,12 @@ class KubernetesService(Service):
         node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('k8s.gpu.setup')
+        # TODO: Right now k3s is not creating all specified openebs zfs-localpv CRDs, until upstream fixes this
+        #  let's please apply the file manually and remove this once this is fixed upstream
+        k8s_config = await self.middleware.call('kubernetes.config')
+        manifest_path = os.path.join('/mnt', k8s_config['dataset'], 'k3s/server/manifests/zfs-operator.yaml')
+        if os.path.exists(manifest_path):
+            await self.middleware.call('k8s.cluster.apply_yaml_file', manifest_path)
         await self.middleware.call('k8s.storage_class.setup_default_storage_class')
         await self.middleware.call('k8s.zfs.snapshotclass.setup_default_snapshot_class')
         await self.middleware.call(
