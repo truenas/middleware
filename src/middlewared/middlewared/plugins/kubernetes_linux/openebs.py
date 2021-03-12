@@ -34,6 +34,7 @@ class KubernetesZFSVolumesService(CRUDService):
 
 class KubernetesZFSSnapshotClassService(CRUDService):
 
+    DEFAULT_SNAPSHOT_CLASS_NAME = 'zfspv-default-snapshot-class'
     GROUP = 'snapshot.storage.k8s.io'
     PLURAL = 'volumesnapshotclasses'
     VERSION = 'v1'
@@ -66,13 +67,16 @@ class KubernetesZFSSnapshotClassService(CRUDService):
                 group=self.GROUP, version=self.VERSION, plural=self.PLURAL, body=data
             )
 
+    async def default_snapshot_class_name(self):
+        return self.DEFAULT_SNAPSHOT_CLASS_NAME
+
     async def setup_default_snapshot_class(self):
         if await self.query([['metadata.name', '=', 'zfspv-default-snapshot-class']]):
             return
 
         await self.middleware.call('k8s.zfs.snapshotclass.create', {
             'metadata': {
-                'name': 'zfspv-default-snapshot-class',
+                'name': self.DEFAULT_SNAPSHOT_CLASS_NAME,
                 'annotations': {
                     'snapshot.storage.kubernetes.io/is-default-class': 'true'
                 },
@@ -161,6 +165,20 @@ class KubernetesSnapshotService(CRUDService):
         async with api_client() as (api, context):
             await context['custom_object_api'].create_namespaced_custom_object(
                 group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace=namespace, body=data
+            )
+
+    @accepts(
+        Str('snapshot_name'),
+        Dict(
+            'zfs_snapshot_delete',
+            Str('namespace', required=True),
+        )
+    )
+    async def do_delete(self, snapshot_name, options):
+        async with api_client() as (api, context):
+            await context['custom_object_api'].delete_namespaced_custom_object(
+                group=self.GROUP, version=self.VERSION, plural=self.PLURAL,
+                namespace=options['namespace'], name=snapshot_name,
             )
 
 
