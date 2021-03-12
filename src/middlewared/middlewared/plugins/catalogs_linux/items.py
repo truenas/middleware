@@ -72,6 +72,8 @@ class CatalogService(Service):
                 item_location = os.path.join(category_path, item)
                 trains[train][item] = item_data = {
                     'name': item,
+                    'categories': [],
+                    'app_readme': None,
                     'location': item_location,
                     'healthy': False,  # healthy means that each version the item hosts is valid and healthy
                     'healthy_error': None,  # An error string explaining why the item is not healthy
@@ -91,7 +93,13 @@ class CatalogService(Service):
                     continue
 
                 item_data.update(self.item_details(item_location, schema))
-                unhealthy_versions = [k for k, v in item_data['versions'].items() if not v['healthy']]
+                unhealthy_versions = []
+                for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
+                    if not item_data['app_readme'] and v['healthy']:
+                        item_data['app_readme'] = v['app_readme']
+                    elif not v['healthy']:
+                        unhealthy_versions.append(k)
+
                 if unhealthy_versions:
                     unhealthy_apps.add(f'{item} ({train} train)')
                     item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
