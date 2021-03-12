@@ -65,7 +65,8 @@ class ChartReleaseService(Service):
 
         ix_volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
         snap_name = f'{ix_volumes_ds}@{history_ver}'
-        if not await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]) and not options['force']:
+        snap_exists = bool(await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]))
+        if options['rollback_snapshot'] and not snap_exists and not options['force']:
             raise CallError(
                 f'Unable to locate {snap_name!r} snapshot for {release_name!r} volumes', errno=errno.ENOENT
             )
@@ -113,7 +114,7 @@ class ChartReleaseService(Service):
             os.path.join(release['path'], 'charts'), rollback_version,
         )
 
-        if options['rollback_snapshot']:
+        if options['rollback_snapshot'] and snap_exists:
             await self.middleware.call(
                 'zfs.snapshot.rollback', snap_name, {
                     'force': options['force'],
