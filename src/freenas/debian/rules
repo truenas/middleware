@@ -12,6 +12,8 @@ override_dh_auto_install:
 		rm -rf debian/truenas-files/usr/local/sbin.freebsd/; \
 		mkdir -p debian/truenas-files/etc; \
 		cp -a etc/default debian/truenas-files/etc/; \
+		mkdir -p debian/truenas-files/usr/local/share; \
+		cp -a usr/local/share/kubernetes_manifests debian/truenas-files/usr/local/share/; \
 		mkdir -p debian/truenas-files/usr/share/truenas; \
 		cp -a root debian/truenas-files/usr/share/truenas/; \
 		cp etc/find* debian/truenas-files/etc/; \
