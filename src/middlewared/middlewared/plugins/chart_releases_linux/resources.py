@@ -1,4 +1,5 @@
 import errno
+import os
 
 from middlewared.schema import Dict, Int, Str
 from middlewared.service import accepts, CallError, job, private, Service
@@ -122,3 +123,19 @@ class ChartReleaseService(Service):
         return await self.middleware.call(
             'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]]
         )
+
+    @private
+    async def retrieve_pv_pvc_mapping(self, release_name):
+        chart_release = await self.middleware.call('chart.release.get_instance', release_name)
+        return await self.retrieve_pv_pvc_mapping_internal(chart_release)
+
+    async def retrieve_pv_pvc_mapping_internal(self, chart_release):
+        mapping = {}
+        for pv in chart_release['resources']['persistent_volumes']:
+            claim_name = pv['spec'].get('claim_ref', {}).get('name')
+            if claim_name:
+                csi_spec = pv['spec']['csi']
+                mapping[claim_name] = os.path.join(
+                    csi_spec['volume_attributes']['openebs.io/poolname'], csi_spec['volume_handle']
+                )
+        return mapping

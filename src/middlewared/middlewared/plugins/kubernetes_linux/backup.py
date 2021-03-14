@@ -70,16 +70,9 @@ class KubernetesService(Service):
 
             with open(os.path.join(chart_release_backup_path, 'pv_info.json'), 'w') as f:
                 # We will store information which maps the pv dataset to a pvc
-                mapping = {}
-                for pv in chart_release['resources']['persistent_volumes']:
-                    claim_name = pv['spec'].get('claim_ref', {}).get('name')
-                    if claim_name:
-                        csi_spec = pv['spec']['csi']
-                        mapping[claim_name] = os.path.join(
-                            csi_spec['volume_attributes']['openebs.io/poolname'], csi_spec['volume_handle']
-                        )
-
-                f.write(json.dumps(mapping))
+                f.write(json.dumps(
+                    self.middleware.call_sync('chart.release.retrieve_pv_pvc_mapping_internal', chart_release)
+                ))
 
         job.set_progress(95, 'Taking snapshot of ix-applications')
 
