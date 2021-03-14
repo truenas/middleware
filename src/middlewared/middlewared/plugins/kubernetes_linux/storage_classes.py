@@ -61,6 +61,10 @@ class KubernetesStorageClassService(CRUDService):
             'annotations': {'storageclass.kubernetes.io/is-default-class': 'true'},
         })
         config['parameters']['poolname'] = storage_ds
+        # Default storage class is going to have delete retain policy
+        # We do not want user deployed charts to have leftover hundreds of
+        # datasets potentially with time after their relevant charts have been deleted
+        config['reclaimPolicy'] = 'Delete'
 
         if await self.query([
             ['metadata.annotations.storageclass\\.kubernetes\\.io/is-default-class', '=', 'true'],
