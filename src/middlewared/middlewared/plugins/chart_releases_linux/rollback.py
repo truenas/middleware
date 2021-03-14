@@ -63,17 +63,24 @@ class ChartReleaseService(Service):
         history_item = release['history'][rollback_version]
         history_ver = str(history_item['version'])
 
-        ix_volumes_ds = os.path.join(release['dataset'], 'volumes/ix_volumes')
-        snap_name = f'{ix_volumes_ds}@{history_ver}'
-        snap_exists = bool(await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]))
-        if options['rollback_snapshot'] and not snap_exists and not options['force']:
+        # TODO: Remove the logic for ix_volumes as moving on we would be only snapshotting volumes and only rolling
+        #  it back
+        snap_data = {'volumes': False, 'volumes/ix_volumes': False}
+        for snap in snap_data:
+            volumes_ds = os.path.join(release['dataset'], snap)
+            snap_name = f'{volumes_ds}@{history_ver}'
+            if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
+                snap_data[snap] = snap_name
+
+        if options['rollback_snapshot'] and not any(snap_data.values()) and not options['force']:
             raise CallError(
-                f'Unable to locate {snap_name!r} snapshot for {release_name!r} volumes', errno=errno.ENOENT
+                f'Unable to locate {", ".join(snap_data.keys())!r} snapshot(s) for {release_name!r} volumes',
+                errno=errno.ENOENT
             )
 
         current_dataset_paths = {
             os.path.join('/mnt', d['id']) for d in await self.middleware.call(
-                'zfs.dataset.query', [['id', '^', f'{ix_volumes_ds}/']]
+                'zfs.dataset.query', [['id', '^', f'{os.path.join(release["dataset"], "volumes/ix_volumes")}/']]
             )
         }
         history_datasets = {d['hostPath'] for d in history_item['config'].get('ixVolumes', [])}
@@ -114,14 +121,17 @@ class ChartReleaseService(Service):
             os.path.join(release['path'], 'charts'), rollback_version,
         )
 
-        if options['rollback_snapshot'] and snap_exists:
-            await self.middleware.call(
-                'zfs.snapshot.rollback', snap_name, {
-                    'force': options['force'],
-                    'recursive': True,
-                    'recursive_clones': True,
-                }
-            )
+        if options['rollback_snapshot'] and any(snap_data.values()):
+
+            for snap_name in filter(bool, snap_data.values()):
+                await self.middleware.call(
+                    'zfs.snapshot.rollback', snap_name, {
+                        'force': options['force'],
+                        'recursive': True,
+                        'recursive_clones': True,
+                    }
+                )
+                break
 
         await self.middleware.call(
             'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale'], True,
