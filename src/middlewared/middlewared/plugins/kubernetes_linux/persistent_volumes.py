@@ -21,3 +21,7 @@ class KubernetesPersistentVolumesService(CRUDService):
                 ],
                 filters, options
             )
+
+    async def do_delete(self, pv_name):
+        async with api_client() as (api, context):
+            await context['core_api'].delete_persistent_volume(pv_name)
