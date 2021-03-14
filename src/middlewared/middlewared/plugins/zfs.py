@@ -9,7 +9,7 @@ import libzfs
 
 from middlewared.schema import Any, Dict, Int, List, Str, Bool, accepts
 from middlewared.service import (
-    CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
+    CallError, CRUDService, ValidationError, ValidationErrors, filterable, job, private,
 )
 from middlewared.utils import filter_list, filter_getattrs, osc
 from middlewared.validators import ReplicationSnapshotNamingSchema
@@ -1123,6 +1123,7 @@ class ZFSSnapshot(CRUDService):
             Bool('recursive', default=False),
             Bool('recursive_clones', default=False),
             Bool('force', default=False),
+            Bool('recursive_rollback', default=False),
         ),
     )
     def rollback(self, id, options):
@@ -1135,6 +1136,9 @@ class ZFSSnapshot(CRUDService):
         `options.recursive_clones` is just like `recursive` but will also destroy any clones.
 
         `options.force` will force unmount of any clones.
+
+        `options.recursive_rollback` will do a complete recursive rollback of each child snapshots for `id`. If
+        any child does not have specified snapshot, this operation will fail.
         """
         args = []
         if options['force']:
@@ -1144,6 +1148,29 @@ class ZFSSnapshot(CRUDService):
         if options['recursive_clones']:
             args += ['-R']
 
+        if options['recursive_rollback']:
+            dataset, snap_name = id.rsplit('@', 1)
+            datasets = set({
+                f'{ds["id"]}@{snap_name}' for ds in self.middleware.call_sync(
+                    'zfs.dataset.query', [['OR', [['id', '^', f'{dataset}/'], ['id', '=', dataset]]]]
+                )
+            })
+            snapshots = set({
+                s['name'] for s in self.middleware.call_sync(
+                    'zfs.snapshot.query', [['name', 'in', list(datasets)]], {'select': ['name']}
+                )
+            })
+            if datasets ^ snapshots:
+                raise CallError(f'Unable to locate {", ".join(datasets ^ snapshots)!r} snapshots', errno=errno.ENOENT)
+
+            for snap in snapshots:
+                self.rollback_impl(args, snap)
+
+        else:
+            self.rollback_impl(args, id)
+
+    @private
+    def rollback_impl(self, args, id):
         try:
             subprocess.run(
                 ['zfs', 'rollback'] + args + [id], text=True, capture_output=True, check=True,
