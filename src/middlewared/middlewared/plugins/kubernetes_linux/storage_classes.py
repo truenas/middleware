@@ -80,4 +80,5 @@ class KubernetesStorageClassService(CRUDService):
             'parameters': {'fstype': 'zfs', 'poolname': None, 'shared': 'yes'},
             'provisioner': 'zfs.csi.openebs.io',
             'allowVolumeExpansion': True,
+            'reclaimPolicy': 'Retain',
         }
