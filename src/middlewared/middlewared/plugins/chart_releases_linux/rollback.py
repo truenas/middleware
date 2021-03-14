@@ -126,13 +126,13 @@ class ChartReleaseService(Service):
         )
 
         if options['rollback_snapshot'] and any(snap_data.values()):
-
             for snap_name in filter(bool, snap_data.values()):
                 await self.middleware.call(
                     'zfs.snapshot.rollback', snap_name, {
-                        'force': options['force'],
+                        'force': True,
                         'recursive': True,
                         'recursive_clones': True,
+                        'recursive_rollback': True,
                     }
                 )
                 break
