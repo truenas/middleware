@@ -175,5 +175,10 @@ class ChartReleaseService(Service):
     async def wait_for_pods_to_terminate(self, namespace):
         # wait for release to uninstall properly, helm right now does not support a flag for this but
         # a feature request is open in the community https://github.com/helm/helm/issues/2378
-        while await self.middleware.call('k8s.pod.query', [['metadata.namespace', '=', namespace]]):
+        while await self.middleware.call(
+            'k8s.pod.query', [
+                ['metadata.namespace', '=', namespace],
+                ['status.phase', 'in', ['Running', 'Pending']],
+            ]
+        ):
             await asyncio.sleep(5)
