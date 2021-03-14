@@ -1,3 +1,4 @@
+import collections
 import errno
 import json
 import os
@@ -69,7 +70,7 @@ class KubernetesService(Service):
 
         releases = os.listdir(backup_dir)
         len_releases = len(releases)
-        restored_chart_releases = {}
+        restored_chart_releases = collections.defaultdict(lambda: {'pv_info': {}})
 
         for index, release_name in enumerate(releases):
             job.set_progress(
@@ -108,8 +109,14 @@ class KubernetesService(Service):
                     )
 
             with open(os.path.join(r_backup_dir, 'workloads_replica_counts.json'), 'r') as f:
-                restored_chart_releases[release_name] = {'replica_counts': json.loads(f.read())}
+                restored_chart_releases[release_name]['replica_counts'] = json.loads(f.read())
 
+            pv_info_path = os.path.join(r_backup_dir, 'pv_info.json')
+            if os.path.exists(pv_info_path):
+                with open(pv_info_path, 'r') as f:
+                    restored_chart_releases[release_name]['pv_info'] = json.loads(f.read())
+
+        self.middleware.call_sync('k8s.node.add_taints', [{'key': 'ix-backup-restore', 'effect': 'NoExecute'}])
         # Now helm will recognise the releases as valid, however we don't have any actual k8s deployed resource
         # That will be adjusted with updating chart releases with their existing values and helm will see that
         # k8s resources don't exist and will create them for us
@@ -121,16 +128,80 @@ class KubernetesService(Service):
         for update_job in update_jobs:
             update_job.wait_sync()
 
+        # We should have k8s resources created now. Now a new PVC will be created as k8s won't retain the original
+        # information which was in it's state at backup time. We will get current dataset mapping and then
+        # rename old ones which were mapped to the same PVC to have the new name
+        chart_releases = {
+            c['name']: c for c in self.middleware.call_sync(
+                'chart.release.query', [], {'extra': {'retrieve_resources': True}}
+            )
+        }
+
+        for release_name in list(restored_chart_releases):
+            if release_name not in chart_releases:
+                restored_chart_releases.pop(release_name)
+            else:
+                restored_chart_releases[release_name]['resources'] = chart_releases[release_name]['resources']
+
+        datasets = set(
+            d['id'] for d in self.middleware.call_sync(
+                'zfs.dataset.query', [['id', '^', f'{os.path.join(k8s_config["dataset"], "releases")}/']], {
+                    'extra': {'retrieve_properties': False}
+                }
+            )
+        )
+        for release_name in restored_chart_releases:
+            new_mapping = self.middleware.call_sync(
+                'chart.release.retrieve_pv_pvc_mapping_internal', chart_releases[release_name]
+            )
+            old_mapping = restored_chart_releases[release_name]['pv_info']
+            # Do sanity checks now to see which datasets are present and hence can be restored to new mapping
+            missing = collections.defaultdict(list)
+            for mapping in (new_mapping, old_mapping):
+                for pvc, ds in mapping.items():
+                    if ds not in datasets:
+                        missing[pvc].append(ds)
+
+            failed = set()
+            for pvc, new_ds in filter(lambda i: i[0] not in missing, new_mapping.items()):
+                # Now we have assurance that dataset exists for new PV and old PV
+                old_ds = old_mapping[pvc]
+                try:
+                    self.middleware.call_sync('zfs.dataset.delete', new_ds, {'force': True, 'recursive': True})
+                except CallError:
+                    failed.add(pvc)
+                    self.logger.error('Failed to delete %r dataset', new_ds, exc_info=True)
+                else:
+                    try:
+                        self.middleware.call_sync('zfs.dataset.rename', old_ds, {'new_name': new_ds})
+                    except CallError:
+                        self.logger.error('Failed to rename %r to %r dataset', old_ds, new_ds, exc_info=True)
+                        failed.add(pvc)
+
+            if missing or failed:
+                error_str = f'Failed to restore PVC dataset(s) for {release_name!r}:\n'
+                count = 1
+                for m in missing:
+                    error_str += f'{count}) {m} PVC (Unable to locate {", ".join(missing[m])} dataset(s))'
+                    count += 1
+                for f in failed:
+                    error_str += f'{count}) {f} PVC (Unable to restore old PV dataset)'
+
+                self.logger.error(error_str)
+
         job.set_progress(95, 'Scaling scalable workloads')
-        for chart_release in self.middleware.call_sync(
-            'chart.release.query', [], {'extra': {'retrieve_resources': True}}
-        ):
-            restored_chart_releases[chart_release['name']]['resources'] = chart_release['resources']
 
         for chart_release in restored_chart_releases.values():
             self.middleware.call_sync(
                 'chart.release.scale_release_internal', chart_release['resources'], None,
                 chart_release['replica_counts'], True,
             )
+
+        self.middleware.call_sync(
+            'k8s.node.remove_taints', [
+                k['key'] for k in (self.middleware.call_sync('k8s.node.config')['spec']['taints'] or [])
+                if k['key'] == 'ix-backup-restore'
+            ]
+        )
 
         job.set_progress(100, f'Restore of {backup_name!r} backup complete')
