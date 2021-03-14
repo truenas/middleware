@@ -604,6 +604,16 @@ class ChartReleaseService(CRUDService):
 
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', release_name)
+
+        # If the chart release was consuming any PV's, they would have to be manually removed from k8s database
+        # because of chart release reclaim policy being retain
+        for pv in await self.middleware.call(
+            'k8s.pv.query', [
+                ['spec.csi.volume_attributes.openebs\\.io/poolname', '=', os.path.join(release_ds, 'volumes')]
+            ]
+        ):
+            await self.middleware.call('k8s.pv.delete', pv['metadata']['name'])
+
         if await self.middleware.call('zfs.dataset.query', [['id', '=', release_ds]]):
             if job:
                 job.set_progress(95, f'Removing {release_ds!r} dataset')
