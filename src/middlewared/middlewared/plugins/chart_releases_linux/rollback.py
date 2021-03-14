@@ -20,6 +20,8 @@ class ChartReleaseService(Service):
         Dict(
             'rollback_options',
             Bool('force', default=False),
+            Bool('force_rollback', default=False),
+            Bool('recreate_resources', default=False),
             Bool('rollback_snapshot', default=True),
             Str('item_version', required=True),
         )
@@ -31,15 +33,22 @@ class ChartReleaseService(Service):
 
         `item_version` is version which we want to rollback a chart release to.
 
-        `rollback_snapshot` is a boolean value which when set will rollback snapshots of ix_volumes.
+        `rollback_snapshot` is a boolean value which when set will rollback snapshots of any PVC's or ix volumes being
+        consumed by the chart release.
 
-        `force` is a boolean passed to helm for rollback of a chart release and also used for rolling back snapshots
-        of ix_volumes.
+        `force_rollback` is a boolean which when set will force rollback operation to move forward even if no
+        snapshots are found. This is only useful when `rollback_snapshot` is set.
 
-        It should be noted that rollback is not possible if a chart release is using persistent volume claims
-        as they are immutable.
-        Rollback is only functional for the actual configuration of the release at the `item_version` specified and
-        any associated `ix_volumes`.
+        `recreate_resources` is a boolean which will delete and then create the kubernetes resources on rollback
+        of chart release. This should be used with caution as if chart release is consuming immutable objects like
+        a PVC, the rollback operation can't be performed and will fail as helm tries to do a 3 way patch for rollback.
+
+        `force` is a boolean which when set will override values provided for `force_rollback` and `recreate_resources`
+        attributes and consider them as set. This option is deprecated and will be removed in next major Angelfish
+        release.
+
+        Rollback is functional for the actual configuration of the release at the `item_version` specified and
+        any associated `ix_volumes` with any PVC's which were consuming chart release storage class.
         """
         await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call(
@@ -62,6 +71,19 @@ class ChartReleaseService(Service):
 
         history_item = release['history'][rollback_version]
         history_ver = str(history_item['version'])
+        override_force = options['force']
+        force_rollback = options['force_rollback']
+        helm_force_flag = options['recreate_resources']
+        if override_force:
+            force_rollback = helm_force_flag = override_force
+
+        # If helm force flag is specified, we should see if the chart release is consuming any PVC's and if it is,
+        # let's not initiate a rollback as it's destined to fail by helm
+        if helm_force_flag and release['resources']['persistent_volume_claims']:
+            raise CallError(
+                f'Unable to rollback {release_name!r} as chart release is consuming PVC. '
+                'Please unset recreate_resources to proceed with rollback.'
+            )
 
         # TODO: Remove the logic for ix_volumes as moving on we would be only snapshotting volumes and only rolling
         #  it back
@@ -72,7 +94,7 @@ class ChartReleaseService(Service):
             if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
                 snap_data[snap] = snap_name
 
-        if options['rollback_snapshot'] and not any(snap_data.values()) and not options['force']:
+        if options['rollback_snapshot'] and not any(snap_data.values()) and not force_rollback:
             raise CallError(
                 f'Unable to locate {", ".join(snap_data.keys())!r} snapshot(s) for {release_name!r} volumes',
                 errno=errno.ENOENT
@@ -102,7 +124,7 @@ class ChartReleaseService(Service):
         job.set_progress(50, 'Scaled down workloads')
 
         command = []
-        if options['force']:
+        if helm_force_flag:
             command.append('--force')
 
         try:
