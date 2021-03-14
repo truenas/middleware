@@ -95,7 +95,11 @@ class ChartReleaseService(Service):
         # TODO: Upstream helm does not have ability to force stop a release, until we have that ability
         #  let's just try to do a best effort to scale down scaleable workloads and then scale them back up
         scale_stats = await self.middleware.call('chart.release.scale', release_name, {'replica_count': 0})
-        job.set_progress(45, 'Scaled down workloads')
+        job.set_progress(45, 'Scaling down workloads')
+
+        await self.middleware.call('chart.release.wait_for_pods_to_terminate', release['namespace'])
+
+        job.set_progress(50, 'Scaled down workloads')
 
         command = []
         if options['force']:
