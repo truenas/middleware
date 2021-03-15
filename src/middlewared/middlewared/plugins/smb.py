@@ -684,6 +684,7 @@ class SMBService(SystemServiceService):
         await self.compress(new)
 
         await self._update_service(old, new)
+        await self.middleware.call("etc.generate", "smb")
         await self.reset_smb_ha_mode()
 
         """
@@ -693,7 +694,14 @@ class SMBService(SystemServiceService):
         if old['aapl_extensions'] != new['aapl_extensions']:
             await self.apply_aapl_changes()
 
-        return await self.config()
+        new_config = await self.config()
+        if old['netbiosname_local'] != new_config['netbiosname_local']:
+            new_sid = await self.middleware.call("smb.get_system_sid")
+            await self.middleware.call("smb.set_database_sid", new_sid)
+            new_config["cifs_SID"] = new_sid
+            await self.middleware.call("smb.synchronize_group_mappings")
+
+        return new_config
 
     @private
     async def compress(self, data):

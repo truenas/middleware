@@ -118,9 +118,9 @@ class SMBService(Service):
         passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
 
         if groupmap:
-            sids_fixed = await self.middleware.call('smb.fixsid', groupmap.values())
-            if not sids_fixed:
-                groupmap = []
+            groupmap_removed = await self.middleware.call('smb.fixsid', groupmap.values())
+            if groupmap_removed:
+                groupmap = {}
 
         for b in SMBBuiltin:
             entry = groupmap.get(b.value[0])
