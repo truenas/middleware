@@ -1513,6 +1513,10 @@ class PoolService(CRUDService):
                     "destroy": false
                 }]
             }
+
+        If this is an HA system and failover is enabled and the last zpool is
+        exported/disconnected, then this will raise EOPNOTSUPP. Failover must
+        be disabled before exporting the last zpool on the system.
         """
         pool = await self.get_instance(oid)
 
@@ -1520,7 +1524,8 @@ class PoolService(CRUDService):
         is_enterprise = await self.middleware.call('system.is_enterprise')
         if pool_count == 1 and is_enterprise and await self.middleware.call('failover.licensed'):
             if not (await self.middleware.call('failover.config'))['disabled']:
-                raise CallError('Disable failover before exporting last pool on system.')
+                err = errno.EOPNOTSUPP
+                raise CallError('Disable failover before exporting last pool on system.', err)
 
         enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
         enable_on_import = {}
