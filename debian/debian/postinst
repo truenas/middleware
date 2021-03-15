@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 
-mkdir /var/trash
+mkdir -p /var/trash
 for file in \
     /etc/cron.d/certbot \
     /etc/cron.d/e2scrub_all \
