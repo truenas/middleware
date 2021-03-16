@@ -20,7 +20,13 @@ class CtdbSharedVolumeService(Service):
 
     async def validate(self):
         filters = [('id', '=', CTDB_VOL_NAME)]
-        for i in await self.middleware.call('gluster.volume.query', filters):
+        ctdb = await self.middleware.call('gluster.volume.query', filters)
+        if not ctdb:
+            # it's expected that ctdb shared volume exists when
+            # calling this method
+            raise CallError(f'{CTDB_VOL_NAME} does not exist', errno.ENOENT)
+
+        for i in ctdb:
             err_msg = f'A volume named "{CTDB_VOL_NAME}" already exists '
             if i['type'] != 'REPLICATE':
                 err_msg += (
@@ -28,17 +34,13 @@ class CtdbSharedVolumeService(Service):
                     'Please delete or rename this volume and try again.'
                 )
                 raise CallError(err_msg)
-            elif i['replicate'] < 3 or i['num_bricks'] < 3:
+            elif i['replica'] < 3 or i['num_bricks'] < 3:
                 err_msg += (
                     'but is configured in a way that '
                     'could cause data corruption. Please delete '
                     'or rename this volume and try again.'
                 )
                 raise CallError(err_msg)
-        else:
-            # it's expected that ctdb shared volume exists when
-            # calling this method
-            raise CallError(f'{CTDB_VOL_NAME} does not exist', errno.ENOENT)
 
     @job(lock=CRE_OR_DEL_LOCK)
     async def create(self, job):
@@ -93,7 +95,7 @@ class CtdbSharedVolumeService(Service):
         )
         await mount_job.wait(raise_error=True)
 
-        return await self.get_instance(CTDB_VOL_NAME)
+        return await self.middleware.call('gluster.volume.query', [('name', '=', CTDB_VOL_NAME)])
 
     @job(lock=CRE_OR_DEL_LOCK)
     async def delete(self, job):
@@ -110,7 +112,7 @@ class CtdbSharedVolumeService(Service):
 
         # umount it first
         umount_job = await self.middleware.call(
-            'gluster.volume.umount', {'name': CTDB_VOL_NAME, 'raise': True}
+            'gluster.fuse.umount', {'name': CTDB_VOL_NAME, 'raise': True}
         )
         await umount_job.wait(raise_error=True)
 
