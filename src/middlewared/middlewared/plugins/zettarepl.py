@@ -279,6 +279,7 @@ class ZettareplService(Service):
                                             self.queue, self.observer_queue)
                 )
                 self.process.start()
+                start_daemon_thread(target=self._join, args=(self.process,))
 
                 if self.observer_queue_reader is None:
                     self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
@@ -296,6 +297,18 @@ class ZettareplService(Service):
                     os.kill(self.process.pid, signal.SIGKILL)
 
                 self.process = None
+
+    def _join(self, process):
+        process.join()
+
+        restart = False
+        with self.lock:
+            if process == self.process:
+                restart = True
+
+        if restart:
+            self.logger.error("Abnormal zettarepl process termination with code %r, restarting", process.exitcode)
+            self.middleware.call_sync("zettarepl.start")
 
     def update_config(self, config):
         if self.queue:
