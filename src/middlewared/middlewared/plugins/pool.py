@@ -691,7 +691,8 @@ class PoolService(CRUDService):
             fsoptions['aclmode'] = 'passthrough'
 
         if osc.IS_LINUX:
-            fsoptions['acltype'] = 'posixacl'
+            fsoptions['acltype'] = 'posix'
+            fsoptions['aclmode'] = 'discard'
 
         dedup = data.get('deduplication')
         if dedup:
@@ -2917,8 +2918,8 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
-        Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
-        Str('acltype', enum=['NOACL', 'NFS4ACL', 'POSIXACL']),
+        Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']),
+        Str('acltype', enum=['OFF', 'NOACL', 'NFSV4', 'NFS4ACL', 'POSIX', 'POSIXACL']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         Str('xattr', enum=['ON', 'SA']),
         Ref('encryption_options'),
@@ -2983,7 +2984,8 @@ class PoolDatasetService(CRUDService):
 
         if osc.IS_LINUX and data['type'] == 'FILESYSTEM':
             if not data.get('acltype'):
-                data['acltype'] = 'POSIXACL'
+                data['acltype'] = 'POSIX'
+                data['aclmode'] = 'DISCARD'
             if not data.get('xattr'):
                 data['xattr'] = 'SA'
 
@@ -3102,7 +3104,7 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
-        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and data['acltype'] == "NFS4ACL":
+        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and data['acltype'] == "NFS4":
             await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
 
         return await self.get_instance(data['id'])
@@ -3246,8 +3248,18 @@ class PoolDatasetService(CRUDService):
             parent = parent[0]
 
         if data['type'] == 'FILESYSTEM':
-            if data.get("aclmode") and osc.IS_LINUX:
-                verrors.add(f'{schema}.aclmode', 'This field is not valid for TrueNAS Scale')
+            if data.get('acltype') or data.get('aclmode'):
+                to_check = data.copy()
+                if mode == "UPDATE":
+                    ds = await self.get_instance(data['name'])
+                    if not data.get('aclmode'):
+                        to_check['aclmode'] = ds['aclmode']['value']
+
+                    if not data.get('acltype'):
+                        to_check['acltype'] = ds['acltype']['value']
+
+                if to_check.get('acltype', 'POSIX') in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
+                    verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
 
             if data.get("acltype") and osc.IS_FREEBSD:
                 verrors.add(f'{schema}.acltype', 'This field is not valid for TrueNAS')
