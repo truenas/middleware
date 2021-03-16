@@ -1,3 +1,7 @@
+tty:x:5:apps
+dialout:x:20:apps
+cdrom:x:24:apps
+video:x:44:apps
 minio:x:473:
 builtin_administrators:x:544:
 builtin_users:x:545:
