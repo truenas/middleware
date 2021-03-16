@@ -17,7 +17,15 @@ class InterfaceService(Service):
             if osc.IS_FREEBSD:
                 netif.create_interface(vlan['vlan_vint'])
             if osc.IS_LINUX:
-                netif.create_vlan(vlan['vlan_vint'], vlan['vlan_pint'], vlan['vlan_tag'])
+                try:
+                    netif.create_vlan(vlan['vlan_vint'], vlan['vlan_pint'], vlan['vlan_tag'])
+                except FileNotFoundError:
+                    self.logger.warn(
+                        'VLAN %s parent interface %s not found, skipping.',
+                        vlan['vlan_vint'],
+                        vlan['vlan_pint'],
+                    )
+                    return
             iface = netif.get_interface(vlan['vlan_vint'])
 
         if disable_capabilities:
