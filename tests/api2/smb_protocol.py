@@ -94,7 +94,7 @@ def test_003_creating_shareuser_to_test_acls(request):
         "group_create": True,
         "password": SMB_PWD,
         "uid": next_uid,
-        "shell": "/bin/csh"}
+    }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
     smbuser_id = results.json()
@@ -265,6 +265,132 @@ def test_052_check_dosmode_create_smb1(request, dm):
         to_check = f['attrib'] & ~DOSmode.ARCHIVE.value
         c.disconnect()
         assert (to_check & dm.value) != 0, f
+
+
+@pytest.mark.dependency(name="STREAM_TESTFILE_CREATED")
+def test_060_create_base_file_for_streams_tests(request):
+    """
+    Create the base file that we will use for further stream tests.
+    """
+    depends(request, ["SMB_SHARE_CREATED"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    fd = c.create_file("streamstestfile", "w")
+    c.close(fd)
+    c.disconnect()
+
+
+@pytest.mark.dependency(name="STREAM_WRITTEN_SMB2")
+def test_061_create_and_write_stream_smb2(request):
+    """
+    Create our initial stream and write to it over SMB2/3 protocol.
+    Start with offset 0.
+    """
+    depends(request, ["STREAM_TESTFILE_CREATED"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    fd = c.create_file("streamstestfile:smb2_stream", "w")
+    c.write(fd, b'test1', 0)
+    c.close(fd)
+
+    fd2 = c.create_file("streamstestfile:smb2_stream", "w")
+    contents = c.read(fd2, 0, 5)
+    c.close(fd2)
+    c.disconnect()
+    assert(contents.decode() == "test1")
+
+
+@pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB2")
+def test_062_write_stream_large_offset_smb2(request):
+    """
+    Append to our existing stream over SMB2/3 protocol. Specify an offset that will
+    cause resuling xattr to exceed 64KiB default xattr size limit in Linux.
+    """
+    depends(request, ["STREAM_TESTFILE_CREATED"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    fd = c.create_file("streamstestfile:smb2_stream", "w")
+    c.write(fd, b'test2', 131072)
+    c.close(fd)
+
+    fd2 = c.create_file("streamstestfile:smb2_stream", "w")
+    contents = c.read(fd2, 131072, 5)
+    c.close(fd2)
+    c.disconnect()
+
+
+def test_063_stream_delete_on_close_smb2(request):
+    """
+    Set delete_on_close on alternate datastream over SMB2/3 protocol, close, then verify
+    stream was deleted.
+
+    TODO: I have open MR to expand samba python bindings to support stream enumeration.
+    Verifcation of stream deletion will have to be added once this is merged.
+    """
+    depends(request, ["STREAM_WRITTEN_SMB2", "LARGE_STREAM_WRITTEN_SMB2"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    fd = c.create_file("streamstestfile:smb2_stream", "w")
+    c.close(fd, True)
+
+    c.disconnect()
+
+
+@pytest.mark.dependency(name="STREAM_WRITTEN_SMB1")
+def test_065_create_and_write_stream_smb1(request):
+    """
+    Create our initial stream and write to it over SMB1 protocol.
+    Start with offset 0.
+    """
+    depends(request, ["STREAM_TESTFILE_CREATED"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    fd = c.create_file("streamstestfile:smb1_stream", "w")
+    c.write(fd, b'test1', 0)
+    c.close(fd)
+
+    fd2 = c.create_file("streamstestfile:smb1_stream", "w")
+    contents = c.read(fd2, 0, 5)
+    c.close(fd2)
+    c.disconnect()
+    assert(contents.decode() == "test1")
+
+
+@pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB1")
+def test_066_write_stream_large_offset_smb1(request):
+    """
+    Append to our existing stream over SMB1 protocol. Specify an offset that will
+    cause resuling xattr to exceed 64KiB default xattr size limit in Linux.
+    """
+    depends(request, ["STREAM_WRITTEN_SMB1"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    fd = c.create_file("streamstestfile:smb1_stream", "w")
+    c.write(fd, b'test2', 131072)
+    c.close(fd)
+
+    fd2 = c.create_file("streamstestfile:smb1_stream", "w")
+    contents = c.read(fd2, 131072, 5)
+    c.close(fd2)
+    c.disconnect()
+
+
+def test_067_stream_delete_on_close_smb1(request):
+    """
+    Set delete_on_close on alternate datastream over SMB1 protocol, close, then verify
+    stream was deleted.
+
+    TODO: I have open MR to expand samba python bindings to support stream enumeration.
+    Verifcation of stream deletion will have to be added once this is merged.
+    """
+    depends(request, ["STREAM_WRITTEN_SMB1", "LARGE_STREAM_WRITTEN_SMB1"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    fd = c.create_file("streamstestfile:smb1_stream", "w")
+    c.close(fd, True)
+
+    c.disconnect()
+
 
 
 def test_100_delete_smb_user(request):
