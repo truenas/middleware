@@ -210,46 +210,6 @@ class KubernetesService(Service):
             else:
                 restored_chart_releases[release_name]['resources'] = chart_releases[release_name]['resources']
 
-        job.set_progress(95, 'Restoring Persistent Volumes')
-        for release_name in restored_chart_releases:
-            new_mapping = self.middleware.call_sync(
-                'chart.release.retrieve_pv_pvc_mapping_internal', chart_releases[release_name]
-            )
-            old_mapping = restored_chart_releases[release_name]['pv_info']
-            # Do sanity checks now to see which datasets are present and hence can be restored to new mapping
-            missing = collections.defaultdict(list)
-            for mapping in (new_mapping, old_mapping):
-                for pvc, ds in mapping.items():
-                    if ds not in datasets:
-                        missing[pvc].append(ds)
-
-            failed = set()
-            for pvc, new_ds in filter(lambda i: i[0] not in missing, new_mapping.items()):
-                # Now we have assurance that dataset exists for new PV and old PV
-                old_ds = old_mapping[pvc]
-                try:
-                    self.middleware.call_sync('zfs.dataset.delete', new_ds, {'force': True, 'recursive': True})
-                except CallError:
-                    failed.add(pvc)
-                    self.logger.error('Failed to delete %r dataset', new_ds, exc_info=True)
-                else:
-                    try:
-                        self.middleware.call_sync('zfs.dataset.rename', old_ds, {'new_name': new_ds})
-                    except CallError:
-                        self.logger.error('Failed to rename %r to %r dataset', old_ds, new_ds, exc_info=True)
-                        failed.add(pvc)
-
-            if missing or failed:
-                error_str = f'Failed to restore PVC dataset(s) for {release_name!r}:\n'
-                count = 1
-                for m in missing:
-                    error_str += f'{count}) {m} PVC (Unable to locate {", ".join(missing[m])} dataset(s))'
-                    count += 1
-                for f in failed:
-                    error_str += f'{count}) {f} PVC (Unable to restore old PV dataset)'
-
-                self.logger.error(error_str)
-
         job.set_progress(97, 'Scaling scalable workloads')
 
         for chart_release in restored_chart_releases.values():
