@@ -6,15 +6,21 @@ import shutil
 import time
 import yaml
 
-from middlewared.schema import Str
+from middlewared.schema import Dict, Bool, Str
 from middlewared.service import accepts, CallError, job, Service
 
 
 class KubernetesService(Service):
 
-    @accepts(Str('backup_name'))
+    @accepts(
+        Str('backup_name'),
+        Dict(
+            'options',
+            Bool('wait_for_csi', default=True),
+        )
+    )
     @job(lock='kubernetes_restore_backup')
-    def restore_backup(self, job, backup_name):
+    def restore_backup(self, job, backup_name, options):
         """
         Restore `backup_name` chart releases backup.
 
@@ -71,8 +77,13 @@ class KubernetesService(Service):
 
         while True:
             config = self.middleware.call_sync('k8s.node.config')
-            if config['node_configured'] and not config['spec']['taints']:
+            if (
+                config['node_configured'] and not config['spec']['taints'] and (
+                    not options['wait_for_csi'] or self.middleware.call_sync('k8s.csi.config')['csi_ready']
+                )
+            ):
                 break
+
             time.sleep(5)
 
         job.set_progress(30, 'Kubernetes cluster re-initialized')
