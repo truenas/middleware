@@ -135,6 +135,10 @@ class KubernetesService(Service):
         job.set_progress(92, 'Creating kubernetes resources')
         update_jobs = []
         for chart_release in restored_chart_releases:
+            self.middleware.call_sync(
+                'chart.release.create_update_storage_class_for_chart_release',
+                chart_release, os.path.join(k8s_config['dataset'], 'releases', chart_release)
+            )
             update_jobs.append(self.middleware.call_sync('chart.release.update', chart_release, {'values': {}}))
 
         for update_job in update_jobs:

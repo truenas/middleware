@@ -427,7 +427,6 @@ class ChartReleaseService(CRUDService):
         # 2) Copy chart version into release/charts dataset
         # 3) Install the helm chart
         # 4) Create storage class
-        storage_class_name = get_storage_class_name(data['release_name'])
         try:
             job.set_progress(30, 'Creating chart release datasets')
 
@@ -472,14 +471,10 @@ class ChartReleaseService(CRUDService):
                 'chart.release.helm_action', data['release_name'], chart_path, new_values, 'install'
             )
 
-            storage_class = await self.middleware.call('k8s.storage_class.retrieve_storage_class_manifest')
-            storage_class['metadata']['name'] = storage_class_name
-            storage_class['parameters']['poolname'] = os.path.join(release_ds, 'volumes')
-            if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
-                # It should not exist already, but even if it does, that's not fatal
-                await self.middleware.call('k8s.storage_class.update', storage_class_name, storage_class)
-            else:
-                await self.middleware.call('k8s.storage_class.create', storage_class)
+            await self.middleware.call(
+                'chart.release.create_update_storage_class_for_chart_release',
+                data['release_name'], os.path.join(release_ds, 'volumes')
+            )
         except Exception:
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed ( it is possible this might have happened )
