@@ -843,7 +843,7 @@ class iSCSITargetExtentService(SharingService):
             return naa
 
     @accepts(List('ignore'))
-    async def disk_choices(self, exclude):
+    async def disk_choices(self, ignore):
         """
         Return a dict of available zvols that can be used
         when creating an extent.
