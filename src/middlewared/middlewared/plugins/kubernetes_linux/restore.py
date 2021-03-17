@@ -28,6 +28,17 @@ class KubernetesService(Service):
 
         job.set_progress(5, 'Basic validation complete')
 
+        # Add taint to force stop pods
+        self.middleware.call_sync('k8s.node.add_taints', [{'key': 'ix-stop-cluster', 'effect': 'NoExecute'}])
+
+        for container in self.middleware.call_sync('docker.container.query'):
+            try:
+                self.middleware.call_sync('docker.container.delete', container['id'])
+            except CallError:
+                # This is okay - we just want to make sure there are no leftover datasets and it's possible that
+                # because of the taint, we have containers being removed
+                pass
+
         self.middleware.call_sync('service.stop', 'kubernetes')
         shutil.rmtree('/etc/rancher', True)
         db_config = self.middleware.call_sync('datastore.config', 'services.kubernetes')
