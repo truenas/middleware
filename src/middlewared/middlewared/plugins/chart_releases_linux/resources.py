@@ -137,13 +137,17 @@ class ChartReleaseService(Service):
             claim_name = pv['spec'].get('claim_ref', {}).get('name')
             if claim_name:
                 csi_spec = pv['spec']['csi']
+                volumes_ds = csi_spec['volume_attributes']['openebs.io/poolname']
+                if os.path.join(chart_release['dataset'], 'volumes') != volumes_ds:
+                    # We are only going to backup/restore pvc's which were consuming
+                    # their respective storage class
+                    continue
+
                 pv_name = pv['metadata']['name']
                 mapping[claim_name] = {
                     'name': pv_name,
                     'pv_details': pv,
-                    'dataset': os.path.join(
-                        csi_spec['volume_attributes']['openebs.io/poolname'], csi_spec['volume_handle']
-                    ),
+                    'dataset': os.path.join(volumes_ds, csi_spec['volume_handle']),
                 }
         return mapping
 
