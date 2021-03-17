@@ -39,6 +39,7 @@ class KubernetesService(Service):
                 'force': True,
                 'recursive': True,
                 'recursive_clones': True,
+                'recursive_rollback': True,
             }
         )
 
