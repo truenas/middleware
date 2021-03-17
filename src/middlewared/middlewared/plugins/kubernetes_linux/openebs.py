@@ -1,11 +1,14 @@
 import itertools
+import os
+import tempfile
+import yaml
 
 from middlewared.schema import accepts, Dict, Str, ValidationErrors
-from middlewared.service import CRUDService, filterable
-from middlewared.utils import filter_list
+from middlewared.service import CallError, CRUDService, filterable
+from middlewared.utils import filter_list, run
 
 from .k8s import api_client
-from .utils import OPENEBS_ZFS_GROUP_NAME
+from .utils import OPENEBS_ZFS_GROUP_NAME, NODE_NAME, KUBECONFIG_FILE
 
 
 class KubernetesZFSVolumesService(CRUDService):
@@ -30,6 +33,39 @@ class KubernetesZFSVolumesService(CRUDService):
                 ],
                 filters, options
             )
+
+    @accepts(
+        Dict(
+            'zfsvolume_create',
+            Dict(
+                'metadata',
+                Str('name', required=True),
+                Str('namespace', default='openebs'),
+                additional_attrs=True,
+            ),
+            Dict(
+                'spec',
+                Str('capacity', required=True),
+                Str('fsType', default='zfs'),
+                Str('ownerNodeID', default=NODE_NAME),
+                Str('poolName', required=True),
+                Str('shared', default='yes'),
+                Str('volumeType', default='DATASET'),
+            ),
+        )
+    )
+    async def do_create(self, data):
+        # FIXME: API Client is not working - let's please change this to create ZV via api client
+        data.update({
+            'kind': 'ZFSVolume',
+            'apiVersion': f'zfs.openebs.io/{self.VERSION}',
+        })
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(yaml.dump(data))
+            f.flush()
+            cp = await run(['k3s', 'kubectl', 'apply', '-f', f.name], env=dict(os.environ, KUBECONFIG=KUBECONFIG_FILE))
+            if cp.returncode:
+                raise CallError(f'Failed to create ZFS Volume: {cp.stderr.decode()}')
 
 
 class KubernetesZFSSnapshotClassService(CRUDService):
