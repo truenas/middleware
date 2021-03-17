@@ -126,7 +126,9 @@ class ChartReleaseService(Service):
 
     @private
     async def retrieve_pv_pvc_mapping(self, release_name):
-        chart_release = await self.middleware.call('chart.release.get_instance', release_name)
+        chart_release = await self.middleware.call(
+            'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
+        )
         return await self.retrieve_pv_pvc_mapping_internal(chart_release)
 
     async def retrieve_pv_pvc_mapping_internal(self, chart_release):
