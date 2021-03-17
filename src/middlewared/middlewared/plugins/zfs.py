@@ -1155,13 +1155,8 @@ class ZFSSnapshot(CRUDService):
                     'zfs.dataset.query', [['OR', [['id', '^', f'{dataset}/'], ['id', '=', dataset]]]]
                 )
             })
-            snapshots = set({
-                s['name'] for s in self.middleware.call_sync(
-                    'zfs.snapshot.query', [['name', 'in', list(datasets)]], {'select': ['name']}
-                )
-            })
 
-            for snap in snapshots:
+            for snap in filter(lambda sn: self.middleware.call_sync('zfs.snapshot.query', [['id', '=', sn]]), datasets):
                 self.rollback_impl(args, snap)
 
         else:
