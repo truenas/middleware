@@ -1160,8 +1160,6 @@ class ZFSSnapshot(CRUDService):
                     'zfs.snapshot.query', [['name', 'in', list(datasets)]], {'select': ['name']}
                 )
             })
-            if datasets ^ snapshots:
-                raise CallError(f'Unable to locate {", ".join(datasets ^ snapshots)!r} snapshots', errno=errno.ENOENT)
 
             for snap in snapshots:
                 self.rollback_impl(args, snap)
