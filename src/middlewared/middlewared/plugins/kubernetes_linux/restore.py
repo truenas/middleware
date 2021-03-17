@@ -168,19 +168,19 @@ class KubernetesService(Service):
                         'spec': {
                             'capacity': {
                                 'storage': pv_spec['capacity']['storage'],
-                            }
-                        },
-                        'claimRef': {
-                            'name': pv_spec['claim_ref']['name'],
-                            'namespace': pv_spec['claim_ref']['namespace'],
-                        },
-                        'csi': {
-                            'volumeAttributes': {
-                                'openebs.io/poolname': pv_spec['csi']['volume_attributes']['openebs.io/poolname']
                             },
-                            'volumeHandle': pv_spec['csi']['volume_handle'],
+                            'claimRef': {
+                                'name': pv_spec['claim_ref']['name'],
+                                'namespace': pv_spec['claim_ref']['namespace'],
+                            },
+                            'csi': {
+                                'volumeAttributes': {
+                                    'openebs.io/poolname': pv_spec['csi']['volume_attributes']['openebs.io/poolname']
+                                },
+                                'volumeHandle': pv_spec['csi']['volume_handle'],
+                            },
+                            'storageClassName': pv_spec['storage_class_name'],
                         },
-                        'storageClassName': pv_spec['storage_class_name'],
                     })
                 except Exception as e:
                     failed_pv_restores.append(f'Unable to create PV for {pvc!r} PVC: {e}')
