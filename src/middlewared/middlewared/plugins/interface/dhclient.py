@@ -3,6 +3,7 @@ import subprocess
 
 from middlewared.service import private, Service
 from middlewared.utils import osc, Popen
+from middlewared.utils.cgroups import move_to_root_cgroups
 
 
 if osc.IS_FREEBSD:
@@ -41,6 +42,15 @@ class InterfaceService(Service):
             self.logger.error('Failed to run dhclient on {}: {}'.format(
                 interface, output,
             ))
+        else:
+            if osc.IS_LINUX:
+                try:
+                    with open(PIDFILE_TEMPLATE.format(interface)) as f:
+                        pid = int(f.read().strip())
+
+                    move_to_root_cgroups(pid)
+                except Exception:
+                    self.logger.warning('Failed to move dhclient to root cgroups', exc_info=True)
 
     @private
     def dhclient_status(self, interface):
