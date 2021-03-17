@@ -138,11 +138,58 @@ class KubernetesService(Service):
         # k8s resources don't exist and will create them for us
         job.set_progress(92, 'Creating kubernetes resources')
         update_jobs = []
+        datasets = set(
+            d['id'] for d in self.middleware.call_sync(
+                'zfs.dataset.query', [['id', '^', f'{os.path.join(k8s_config["dataset"], "releases")}/']], {
+                    'extra': {'retrieve_properties': False}
+                }
+            )
+        )
         for chart_release in restored_chart_releases:
+            # Before we have resources created for the chart releases, we will restore PVs if possible and then
+            # restore the chart release, so if there is any PVC expecting a PV, it will be able to claim it as soon
+            # as it is created. If this is not done in this order, PVC will request a new dataset and we will lose
+            # the mapping with the old dataset.
             self.middleware.call_sync(
                 'chart.release.create_update_storage_class_for_chart_release',
                 chart_release, os.path.join(k8s_config['dataset'], 'releases', chart_release, 'volumes')
             )
+            failed_pv_restores = []
+            for pvc, pv in restored_chart_releases[chart_release]['pv_info'].items():
+                if pv['dataset'] in datasets:
+                    failed_pv_restores.append(f'Unable to locate PV dataset {pv["dataset"]!r} for {pvc!r} PVC.')
+                    continue
+                pv_spec = pv['pv_details']['spec']
+                try:
+                    self.middleware.call_sync('k8s.pv.create', {
+                        'metadata': {
+                            'name': pv['name'],
+                        },
+                        'spec': {
+                            'capacity': {
+                                'storage': pv_spec['capacity']['storage'],
+                            }
+                        },
+                        'claimRef': {
+                            'name': pv_spec['claim_ref']['name'],
+                            'namespace': pv_spec['claim_ref']['namespace'],
+                        },
+                        'csi': {
+                            'volumeAttributes': {
+                                'openebs.io/poolname': pv_spec['csi']['volume_attributes']['openebs.io/poolname']
+                            },
+                            'volumeHandle': pv_spec['csi']['volume_handle'],
+                        },
+                        'storageClassName': pv_spec['storage_class_name'],
+                    })
+                except Exception as e:
+                    failed_pv_restores.append(f'Unable to create PV for {pvc!r} PVC: {e}')
+
+            if failed_pv_restores:
+                self.logger.error(
+                    'Failed to restore PVC(s) for %r chart release:\n%s', chart_release, '\n'.join(failed_pv_restores)
+                )
+
             update_jobs.append(self.middleware.call_sync('chart.release.update', chart_release, {'values': {}}))
 
         for update_job in update_jobs:
@@ -163,13 +210,6 @@ class KubernetesService(Service):
             else:
                 restored_chart_releases[release_name]['resources'] = chart_releases[release_name]['resources']
 
-        datasets = set(
-            d['id'] for d in self.middleware.call_sync(
-                'zfs.dataset.query', [['id', '^', f'{os.path.join(k8s_config["dataset"], "releases")}/']], {
-                    'extra': {'retrieve_properties': False}
-                }
-            )
-        )
         job.set_progress(95, 'Restoring Persistent Volumes')
         for release_name in restored_chart_releases:
             new_mapping = self.middleware.call_sync(
