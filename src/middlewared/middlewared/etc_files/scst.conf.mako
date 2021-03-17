@@ -32,9 +32,6 @@
         if extent['type'] == 'DISK':
             extent['extent_path'] = os.path.join('/dev', extent['disk'])
             extents_io['vdisk_blockio'].append(extent)
-            # dev_disk is pass-through which we would be using for disks
-            # FIXME: It is however showing kernel dumps
-            # So for now we use blockio for disks as well
         else:
             extent['extent_path'] = extent['path']
             extents_io['vdisk_fileio'].append(extent)
