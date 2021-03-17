@@ -169,6 +169,22 @@ class KubernetesService(Service):
                 if pv['dataset'] not in datasets:
                     failed_pv_restores.append(f'Unable to locate PV dataset {pv["dataset"]!r} for {pvc!r} PVC.')
                     continue
+
+                zv_details = pv['zv_details']
+                try:
+                    self.middleware.call_sync('k8s.zv.create', {
+                        'metadata': {
+                            'name': zv_details['metadata']['name'],
+                        },
+                        'spec': {
+                            'capacity': zv_details['spec']['capacity'],
+                            'poolName': zv_details['spec']['poolName'],
+                        },
+                    })
+                except Exception as e:
+                    failed_pv_restores.append(f'Unable to create ZFS Volume for {pvc!r} PVC: {e}')
+                    continue
+
                 pv_spec = pv['pv_details']['spec']
                 try:
                     self.middleware.call_sync('k8s.pv.create', {
