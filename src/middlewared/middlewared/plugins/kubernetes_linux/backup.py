@@ -76,6 +76,8 @@ class KubernetesService(Service):
 
         job.set_progress(100, f'Backup {name!r} complete')
 
+        return name
+
     @accepts()
     def list_backups(self):
         """
