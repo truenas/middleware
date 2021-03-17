@@ -71,7 +71,6 @@ class SystemAdvancedModel(sa.Model):
     adv_powerdaemon = sa.Column(sa.Boolean(), default=False)
     adv_swapondrive = sa.Column(sa.Integer(), default=2)
     adv_overprovision = sa.Column(sa.Integer(), nullable=True, default=None)
-    adv_consolemsg = sa.Column(sa.Boolean(), default=True)
     adv_traceback = sa.Column(sa.Boolean(), default=True)
     adv_advancedmode = sa.Column(sa.Boolean(), default=False)
     adv_autotune = sa.Column(sa.Boolean(), default=False)
@@ -131,6 +130,7 @@ class SystemAdvancedService(ConfigService):
 
     @private
     async def system_advanced_extend(self, data):
+        data['consolemsg'] = (await self.middleware.call('system.general.config'))['ui_consolemsg']
 
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
@@ -240,9 +240,18 @@ class SystemAdvancedService(ConfigService):
         hardware.
 
         When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
+
+        `consolemsg` is a deprecated attribute and will be removed in further releases. Please, use `consolemsg`
+        attribute in the `system.general` plugin.
         """
+        consolemsg = None
+        if 'consolemsg' in data:
+            consolemsg = data.pop('consolemsg')
+            warnings.warn("`consolemsg` has been deprecated and moved to `system.general`", DeprecationWarning)
+
         config_data = await self.config()
         config_data['sed_passwd'] = await self.sed_global_password()
+        config_data.pop('consolemsg')
         original_data = config_data.copy()
         config_data.update(data)
 
@@ -331,6 +340,9 @@ class SystemAdvancedService(ConfigService):
                 # should be enough
                 await self.middleware.call('etc.generate', 'kdump')
                 await self.middleware.call('etc.generate', 'grub')
+
+        if consolemsg is not None:
+            await self.middleware.call('system.general.update', {'ui_consolemsg': consolemsg})
 
         return await self.config()
 
@@ -952,6 +964,7 @@ class SystemGeneralModel(sa.Model):
     stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
     stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
     stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
+    stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
 
 
 class SystemGeneralService(ConfigService):
@@ -1324,6 +1337,7 @@ class SystemGeneralService(ConfigService):
             Int('ui_port', validators=[Range(min=1, max=65535)]),
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
+            Bool('ui_consolemsg'),
             Str('kbdmap'),
             Str('language', empty=False),
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
