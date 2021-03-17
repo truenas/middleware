@@ -31,6 +31,7 @@ class KubernetesService(Service):
         # Add taint to force stop pods
         self.middleware.call_sync('k8s.node.add_taints', [{'key': 'ix-stop-cluster', 'effect': 'NoExecute'}])
 
+        job.set_progress(10, 'Removing old containers')
         for container in self.middleware.call_sync('docker.container.query'):
             try:
                 self.middleware.call_sync('docker.container.delete', container['id'])
@@ -40,11 +41,13 @@ class KubernetesService(Service):
                 pass
 
         self.middleware.call_sync('service.stop', 'kubernetes')
+        job.set_progress(15, 'Stopped kubernetes')
         shutil.rmtree('/etc/rancher', True)
         db_config = self.middleware.call_sync('datastore.config', 'services.kubernetes')
         self.middleware.call_sync('datastore.update', 'services.kubernetes', db_config['id'], {'cni_config': {}})
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
+        job.set_progress(20, f'Rolling back {backup["snapshot_name"]}')
         self.middleware.call_sync(
             'zfs.snapshot.rollback', backup['snapshot_name'], {
                 'force': True,
@@ -63,6 +66,7 @@ class KubernetesService(Service):
         self.middleware.call_sync('zfs.dataset.create', {'name': k3s_ds, 'type': 'FILESYSTEM'})
         self.middleware.call_sync('zfs.dataset.mount', k3s_ds)
 
+        job.set_progress(25, 'Initializing new kubernetes cluster')
         self.middleware.call_sync('service.start', 'kubernetes')
 
         while True:
@@ -137,7 +141,7 @@ class KubernetesService(Service):
         for chart_release in restored_chart_releases:
             self.middleware.call_sync(
                 'chart.release.create_update_storage_class_for_chart_release',
-                chart_release, os.path.join(k8s_config['dataset'], 'releases', chart_release)
+                chart_release, os.path.join(k8s_config['dataset'], 'releases', chart_release, 'volumes')
             )
             update_jobs.append(self.middleware.call_sync('chart.release.update', chart_release, {'values': {}}))
 
@@ -166,6 +170,7 @@ class KubernetesService(Service):
                 }
             )
         )
+        job.set_progress(95, 'Restoring Persistent Volumes')
         for release_name in restored_chart_releases:
             new_mapping = self.middleware.call_sync(
                 'chart.release.retrieve_pv_pvc_mapping_internal', chart_releases[release_name]
@@ -205,7 +210,7 @@ class KubernetesService(Service):
 
                 self.logger.error(error_str)
 
-        job.set_progress(95, 'Scaling scalable workloads')
+        job.set_progress(97, 'Scaling scalable workloads')
 
         for chart_release in restored_chart_releases.values():
             self.middleware.call_sync(
