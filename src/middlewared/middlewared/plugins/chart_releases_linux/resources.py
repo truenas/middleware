@@ -137,9 +137,14 @@ class ChartReleaseService(Service):
             claim_name = pv['spec'].get('claim_ref', {}).get('name')
             if claim_name:
                 csi_spec = pv['spec']['csi']
-                mapping[claim_name] = os.path.join(
-                    csi_spec['volume_attributes']['openebs.io/poolname'], csi_spec['volume_handle']
-                )
+                pv_name = pv['metadata']['name']
+                mapping[claim_name] = {
+                    'name': pv_name,
+                    'pv_details': pv,
+                    'dataset': os.path.join(
+                        csi_spec['volume_attributes']['openebs.io/poolname'], csi_spec['volume_handle']
+                    ),
+                }
         return mapping
 
     @private
