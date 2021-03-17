@@ -132,7 +132,6 @@ class KubernetesService(Service):
                 with open(pv_info_path, 'r') as f:
                     restored_chart_releases[release_name]['pv_info'] = json.loads(f.read())
 
-        self.middleware.call_sync('k8s.node.add_taints', [{'key': 'ix-backup-restore', 'effect': 'NoExecute'}])
         # Now helm will recognise the releases as valid, however we don't have any actual k8s deployed resource
         # That will be adjusted with updating chart releases with their existing values and helm will see that
         # k8s resources don't exist and will create them for us
@@ -217,12 +216,5 @@ class KubernetesService(Service):
                 'chart.release.scale_release_internal', chart_release['resources'], None,
                 chart_release['replica_counts'], True,
             )
-
-        self.middleware.call_sync(
-            'k8s.node.remove_taints', [
-                k['key'] for k in (self.middleware.call_sync('k8s.node.config')['spec']['taints'] or [])
-                if k['key'] == 'ix-backup-restore'
-            ]
-        )
 
         job.set_progress(100, f'Restore of {backup_name!r} backup complete')
