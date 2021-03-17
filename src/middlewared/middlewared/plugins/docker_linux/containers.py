@@ -1,19 +1,20 @@
 import aiodocker
 
 from middlewared.schema import accepts, Str
-from middlewared.service import CRUDService, filterable
+from middlewared.service import CallError, CRUDService, filterable
 
 
 class ContainerService(CRUDService):
 
     class Config:
+        namespace = 'docker.container'
         private = True
 
     @filterable
     async def query(self, filters, options):
         containers = []
         async with aiodocker.Docker() as docker:
-            for container in (await docker.containers.list()):
+            for container in (await docker.containers.list(all=True)):
                 containers.append({
                     'id': container.id
                 })
@@ -24,6 +25,9 @@ class ContainerService(CRUDService):
         Str('container_id'),
     )
     async def do_delete(self, container_id):
-        async with aiodocker.Docker() as docker:
-            container = docker.containers.container(container_id)
-            await container.delete(force=True)
+        try:
+            async with aiodocker.Docker() as docker:
+                container = docker.containers.container(container_id)
+                await container.delete(force=True)
+        except Exception as e:
+            raise CallError(f'Unable to delete {container_id!r} container: {e}')
