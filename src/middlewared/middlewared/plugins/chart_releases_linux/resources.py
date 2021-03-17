@@ -5,7 +5,7 @@ from middlewared.schema import Dict, Int, Str
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
 
-from .utils import get_namespace
+from .utils import get_namespace, get_storage_class_name
 
 
 class ChartReleaseService(Service):
@@ -141,3 +141,14 @@ class ChartReleaseService(Service):
                     csi_spec['volume_attributes']['openebs.io/poolname'], csi_spec['volume_handle']
                 )
         return mapping
+
+    @private
+    async def create_update_storage_class_for_chart_release(self, release_name, volumes_path):
+        storage_class_name = get_storage_class_name(release_name)
+        storage_class = await self.middleware.call('k8s.storage_class.retrieve_storage_class_manifest')
+        storage_class['metadata']['name'] = storage_class_name
+        storage_class['parameters']['poolname'] = volumes_path
+        if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
+            await self.middleware.call('k8s.storage_class.update', storage_class_name, storage_class)
+        else:
+            await self.middleware.call('k8s.storage_class.create', storage_class)
