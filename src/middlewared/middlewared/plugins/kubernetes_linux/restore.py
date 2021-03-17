@@ -156,7 +156,7 @@ class KubernetesService(Service):
             )
             failed_pv_restores = []
             for pvc, pv in restored_chart_releases[chart_release]['pv_info'].items():
-                if pv['dataset'] in datasets:
+                if pv['dataset'] not in datasets:
                     failed_pv_restores.append(f'Unable to locate PV dataset {pv["dataset"]!r} for {pvc!r} PVC.')
                     continue
                 pv_spec = pv['pv_details']['spec']
