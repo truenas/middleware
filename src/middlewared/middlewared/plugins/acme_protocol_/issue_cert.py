@@ -97,6 +97,18 @@ class ACMEService(Service):
                     )
                 except errors.TimeoutError:
                     raise CallError('Certificate request for final order timed out')
+                except errors.ValidationError as e:
+                    msg = ''
+                    for authzr in e.failed_authzrs:
+                        msg += f'\nAuthorization for identifier {authzr.body.identifier} failed.'
+                        msg += '\nHere are the challenges that were not fulfilled:'
+                        for challenge in authzr.body.challenges:
+                            msg += \
+                                f'\nChallenge Type: {challenge.chall.typ}' \
+                                f'\n\nError information:' \
+                                f'\n- Type: {challenge.error.typ if challenge.error else "No error type found"}' \
+                                f'\n- Details: {challenge.error.detail if challenge.error else "No error details where found"}\n\n'
+                    raise CallError(f'Certificate request for final order failed: {msg}')
             finally:
                 self.cleanup_authorizations(order, dns_mapping, key)
 
