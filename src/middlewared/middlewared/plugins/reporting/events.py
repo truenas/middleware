@@ -9,6 +9,7 @@ import time
 import humanfriendly
 
 from middlewared.event import EventSource
+from middlewared.plugins.reporting.iostat import DiskStats
 from middlewared.utils import osc
 
 if osc.IS_FREEBSD:
@@ -29,6 +30,8 @@ class RealtimeEventSource(EventSource):
     """
 
     INTERFACE_SPEEDS_CACHE_INTERLVAL = 300
+
+    disk_stats = None
 
     @staticmethod
     def get_cpu_usages(cp_diff):
@@ -162,6 +165,7 @@ class RealtimeEventSource(EventSource):
             'time': time.monotonic(),
             'speeds': self.get_interface_speeds(),
         }
+        self.disk_stats = DiskStats(2)
 
         while not self._cancel.is_set():
             data = {}
@@ -301,9 +305,14 @@ class RealtimeEventSource(EventSource):
                             }
                             data['interfaces'][iface.name].update(details_dict)
                         last_interface_stats[iface.name] = {**data['interfaces'][iface.name], 'stats_time': stats_time}
+            data['disks'] = self.disk_stats.read()
 
             self.send_event('ADDED', fields=data)
             time.sleep(2)
+
+    def on_finish(self):
+        if self.disk_stats != None:
+            self.disk_stats.stop()
 
 
 def setup(middleware):
