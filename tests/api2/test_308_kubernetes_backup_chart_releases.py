@@ -23,7 +23,7 @@ def test_01_get_plex_version():
 
 @pytest.mark.dependency(name='release_plex')
 def test_02_create_plex_chart_release(request):
-    depends(request, ['setup_kubernetes'], scope='session')
+    # depends(request, ['setup_kubernetes'], scope='session')
     global release_id
     payload = {
         'catalog': 'OFFICIAL',
@@ -49,7 +49,8 @@ def test_03_create_kubernetes_backup_chart_releases_for_ix_applications(request)
     assert isinstance(results.json(), int), results.text
     job_status = wait_on_job(results.json(), 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    backup_name = job_status['results']['progress']['description'].split("'")[1]
+    print(job_status['results'])
+    backup_name = job_status['results']['result']
 
 
 def test_04_get_ix_applications_kubernetes_backup(request):
@@ -68,35 +69,35 @@ def test_05_restore_ix_applications_kubernetes_backup(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-@pytest.mark.dependency(name='plex_backup')
-def test_06_create_kubernetes_backup_chart_releases_for_for_plex(request):
+@pytest.mark.dependency(name='my_app_backup')
+def test_06_create_custom_name_kubernetes_chart_releases_backup(request):
     depends(request, ['release_plex'])
-    results = POST('/kubernetes/backup_chart_releases/', 'myplex')
+    results = POST('/kubernetes/backup_chart_releases/', 'mybackup')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
     job_status = wait_on_job(results.json(), 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_07_get_myplex_kubernetes_backup(request):
-    depends(request, ['plex_backup'])
+def test_07_get_custom_kubernetes_backup(request):
+    depends(request, ['my_app_backup'])
     results = GET('/kubernetes/list_backups/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert 'myplex' in results.json(), results.text
+    assert 'mybackup' in results.json(), results.text
 
 
-def test_08_restore_myplex_kubernetes_backup(request):
-    depends(request, ['plex_backup'])
-    results = POST('/kubernetes/restore_backup/', 'myplex')
+def test_08_restore_custom_kubernetes_backup(request):
+    depends(request, ['my_app_backup'])
+    results = POST('/kubernetes/restore_backup/', 'mybackup')
     assert results.status_code == 200, results.text
     job_status = wait_on_job(results.json(), 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_09_delete_myplex_kubernetes_backup(request):
-    depends(request, ['plex_backup'])
-    results = POST('/kubernetes/delete_backup/', 'myplex')
+def test_09_delete_custom_kubernetes_backup(request):
+    depends(request, ['my_app_backup'])
+    results = POST('/kubernetes/delete_backup/', 'mybackup')
     assert results.status_code == 200, results.text
     assert results.json() is None, results.text
 
@@ -108,7 +109,24 @@ def test_10_delete_ix_applications_kubernetes_backup(request):
     assert results.json() is None, results.text
 
 
-def test_11_delete_plex_chart_release(request):
+@pytest.mark.dependency(name='k8s_snapshot_regresion')
+def test_11_create_the_same_custom_kubernetes_backup_for_snapshots_regresion(request):
+    depends(request, ['my_app_backup'])
+    results = POST('/kubernetes/backup_chart_releases/', 'mybackup')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    job_status = wait_on_job(results.json(), 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_12_delete_custom_kubernetes_backup(request):
+    depends(request, ['k8s_snapshot_regresion'])
+    results = POST('/kubernetes/delete_backup/', 'mybackup')
+    assert results.status_code == 200, results.text
+    assert results.json() is None, results.text
+
+
+def test_13_delete_plex_chart_release(request):
     depends(request, ['release_plex'])
     results = DELETE(f'/chart/release/id/{release_id}/')
     assert results.status_code == 200, results.text
