@@ -1626,6 +1626,13 @@ class CertificateService(CRUDService):
         csr_data = self.middleware.call_sync(
             'certificate.get_instance', data['csr_id']
         )
+        verrors = ValidationErrors()
+        email = (self.middleware.call_sync('user.query', [['uid', '=', 0]]))[0]['email']
+        if not email:
+            verrors.add(
+                'name', 'Please configure an email address for "root" user which will be used with the ACME Server.'
+            )
+        verrors.check()
 
         data['acme_directory_uri'] += '/' if data['acme_directory_uri'][-1] != '/' else ''
 

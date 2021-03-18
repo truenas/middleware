@@ -1,17 +1,12 @@
-import boto3
 import josepy as jose
 import json
 import requests
-import time
 
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, private
 import middlewared.sqlalchemy as sa
-from middlewared.validators import validate_attributes
 
 from acme import client, messages
-from botocore import exceptions as boto_exceptions
-from botocore.errorfactory import BaseClientExceptions as boto_BaseClientException
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
@@ -144,7 +139,7 @@ class ACMERegistrationService(CRUDService):
         email = (self.middleware.call_sync('user.query', [['uid', '=', 0]]))[0]['email']
         if not email:
             raise CallError(
-                'Please specify root email address which will be used with the ACME server'
+                'Please configure an email address for "root" user which will be used with the ACME server'
             )
 
         if self.middleware.call_sync(
