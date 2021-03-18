@@ -13,6 +13,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, password, user, scale, hostname
+from pytest_dependency import depends
 from protocols import SMB
 
 MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
@@ -851,6 +852,7 @@ def test_107_delete_cifs_share():
     assert results.status_code == 200, results.text
 
 
+@pytest.mark.dependency(name="SID_CHANGED")
 def test_108_netbios_name_change_check_sid():
     """
     This test changes the netbios name of the server and then
@@ -886,11 +888,13 @@ def test_108_netbios_name_change_check_sid():
     assert new_sid != old_sid, results.text
 
 
-def test_109_create_new_smb_group_for_sid_test():
+@pytest.mark.dependency(name="SID_TEST_GROUP")
+def test_109_create_new_smb_group_for_sid_test(request):
     """
     Create testgroup and verify that groupmap entry generated
     with new SID.
     """
+    depends(request, ["SID_CHANGED"])
     global group_id
     payload = {
         "name": "testsidgroup",
@@ -910,11 +914,12 @@ def test_109_create_new_smb_group_for_sid_test():
     assert domain_sid == new_sid, groupmaps["testsidgroup"]
 
 
-def test_110_change_netbios_name_and_check_groupmap():
+def test_110_change_netbios_name_and_check_groupmap(request):
     """
     Verify that changes to netbios name result in groupmap sid
     changes.
     """
+    depends(request, ["SID_CHANGED"])
     payload = {
         "netbiosname": old_netbiosname,
     }
@@ -932,6 +937,7 @@ def test_110_change_netbios_name_and_check_groupmap():
 
 
 def test_111_delete_smb_group(request):
+    depends(request, ["SID_TEST_GROUP"])
     results = DELETE(f"/group/id/{group_id}/")
     assert results.status_code == 200, results.text
 
