@@ -97,6 +97,8 @@ class ACMEService(Service):
                     )
                 except errors.TimeoutError:
                     raise CallError('Certificate request for final order timed out')
+                except errors.ValidationError as e :
+                    raise CallError(f'Certificate request failed: {e}')
             finally:
                 self.cleanup_authorizations(order, dns_mapping, key)
 
