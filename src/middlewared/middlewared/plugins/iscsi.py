@@ -1065,7 +1065,7 @@ class iSCSITargetService(CRUDService):
         namespace = 'iscsi.target'
         datastore = 'services.iscsitarget'
         datastore_prefix = 'iscsi_target_'
-        datastore_extend = 'iscsi.target.extend'
+        datastore_post_extend = 'iscsi.target.extend'
         cli_namespace = 'sharing.iscsi.target'
 
     @private
