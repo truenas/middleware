@@ -1,7 +1,6 @@
 import os
 import pytest
 import sys
-import time
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -64,7 +63,6 @@ def test_06_create_ipfs_chart_release(request):
     job_status = wait_on_job(results.json(), 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     release_id = job_status['results']['result']['id']
-    time.sleep(5)
 
 
 def test_07_get_ipfs_chart_release_catalog(request):
@@ -157,7 +155,7 @@ def test_18_set_ipfs_chart_release_scale(request):
     payload = {
         "release_name": "ipfs",
         "scale_options": {
-            "replica_count": 0
+            "replica_count": 1
         }
     }
     results = POST('/chart/release/scale/', payload)
@@ -165,13 +163,21 @@ def test_18_set_ipfs_chart_release_scale(request):
     assert isinstance(results.json(), dict), results.text
 
 
-def test_19_set_ipfs_chart_release_scale_workloads(request):
+def test_19_verify_ipfs_pod_status_desired_is_1(request):
+    depends(request, ['release_ipfs'])
+    results = GET(f'/chart/release/id/{release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['pod_status']['desired'] == 1, results.text
+
+
+def test_20_set_ipfs_chart_release_scale_workloads(request):
     depends(request, ['release_ipfs'])
     payload = {
         "release_name": "ipfs",
         "workloads": [
             {
-                "replica_count": 0,
+                "replica_count": 2,
                 "type": "DEPLOYMENT",
                 "name": "ipfs"
             }
@@ -182,7 +188,15 @@ def test_19_set_ipfs_chart_release_scale_workloads(request):
     assert results.json() is None, results.text
 
 
-def test_20_delete_ipfs_chart_release(request):
+def test_21_verify_ipfs_pod_status_desired_is_2(request):
+    depends(request, ['release_ipfs'])
+    results = GET(f'/chart/release/id/{release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['pod_status']['desired'] == 2, results.text
+
+
+def test_22_delete_ipfs_chart_release(request):
     depends(request, ['release_ipfs'])
     results = DELETE(f'/chart/release/id/{release_id}/')
     assert results.status_code == 200, results.text
