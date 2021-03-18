@@ -81,7 +81,7 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
 
         g_config = await self.middleware.call('iscsi.global.config')
         targets = {t['id']: t for t in await self.middleware.call('iscsi.target.query')}
-        extents = {t['id']: t for t in await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])}
+        extents = {t['id']: t for t in await self.middleware.call('iscsi.extent.query') if t['enabled']}
 
         for associated_target in filter(
             lambda a: a['extent'] in extents and extents[a['extent']]['path'].startswith(f'zvol/{pool_name}/'),

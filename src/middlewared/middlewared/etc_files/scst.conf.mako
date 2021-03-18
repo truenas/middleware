@@ -5,7 +5,7 @@
 
     global_config = middleware.call_sync('iscsi.global.config')
     targets = middleware.call_sync('iscsi.target.query')
-    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]])}
+    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query') if d['enabled']}
     portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
     initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
     authenticators = defaultdict(list)

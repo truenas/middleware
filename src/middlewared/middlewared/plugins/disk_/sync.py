@@ -115,7 +115,7 @@ class DiskService(Service, ServiceChangeMixin):
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
                     for extent in await self.middleware.call(
-                        'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]
+                        'iscsi.extent.query', [['type', '!=', 'File'], ['path', '=', disk['disk_identifier']]]
                     ):
                         await self.middleware.call('iscsi.extent.delete', extent['id'])
                     if disk['disk_kmip_uid']:

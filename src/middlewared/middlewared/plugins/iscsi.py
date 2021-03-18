@@ -518,6 +518,13 @@ class iSCSITargetExtentService(SharingService):
         cli_namespace = 'sharing.iscsi.extent'
 
     @private
+    async def get_options(self, options):
+        options = await super().get_options(options)
+        options['post_extend'] = options.pop('extend', None)
+        options['extend'] = None
+        return options
+
+    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
         if data['type'] == 'ZVOL':
             return any(data['disk'][5:] == d['id'] for d in locked_datasets)
@@ -1541,7 +1548,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service_class = iSCSITargetExtentService
 
     async def get_query_filters(self, enabled, options=None):
-        return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))
+        return [['type', '!=', 'File']] + (await super().get_query_filters(enabled, options))
 
     async def is_child_of_path(self, resource, path):
         return is_child(resource[self.path_field], os.path.join('zvol', os.path.relpath(path, '/mnt')))
