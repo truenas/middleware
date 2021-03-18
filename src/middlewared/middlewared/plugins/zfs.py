@@ -504,8 +504,9 @@ class ZFSDatasetService(CRUDService):
                 props=props, top_level_props=top_level_props, user_props=user_properties, snapshots=snapshots,
                 retrieve_children=retrieve_children,
             )
-            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
-                kwargs['datasets'] = [filters[0][2]]
+            for filter in filters:
+                if len(filter) == 3 and list(filter[:2]) == ['id', '=']:
+                    kwargs.setdefault('datasets', []).append(filter[2])
 
             datasets = zfs.datasets_serialized(**kwargs)
             if flat:
