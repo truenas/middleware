@@ -1383,7 +1383,7 @@ class iSCSITargetToExtentService(CRUDService):
         namespace = 'iscsi.targetextent'
         datastore = 'services.iscsitargettoextent'
         datastore_prefix = 'iscsi_'
-        datastore_extend = 'iscsi.targetextent.extend'
+        datastore_post_extend = 'iscsi.targetextent.extend'
         cli_namespace = 'sharing.iscsi.target.extent'
 
     @accepts(Dict(
