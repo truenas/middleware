@@ -264,6 +264,7 @@ def service_config(klass, config):
         'datastore': None,
         'datastore_prefix': '',
         'datastore_extend': None,
+        'datastore_post_extend': None,
         'datastore_extend_context': None,
         'event_register': True,
         'event_send': True,
@@ -459,6 +460,7 @@ class CRUDService(ServiceChangeMixin, Service):
     async def get_options(self, options):
         options = options or {}
         options['extend'] = self._config.datastore_extend
+        options['post_extend'] = self._config.datastore_post_extend
         options['extend_context'] = self._config.datastore_extend_context
         options['prefix'] = self._config.datastore_prefix
         return options
@@ -475,6 +477,7 @@ class CRUDService(ServiceChangeMixin, Service):
             filters = []
 
         options = await self.get_options(options)
+        post_extend = options.pop('post_extend', None)
 
         # In case we are extending which may transform the result in numerous ways
         # we can only filter the final result.
@@ -489,6 +492,7 @@ class CRUDService(ServiceChangeMixin, Service):
                 filter_list, result, filters, options
             )
         else:
+            options['extend'] = post_extend
             return await self.middleware.call(
                 'datastore.query', self._config.datastore, filters, options,
             )
