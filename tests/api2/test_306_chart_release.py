@@ -123,7 +123,7 @@ def test_13_get_ipfs_chart_release_upgrade_summary(request):
 
 def test_14_redeploy_ipfs_chart_release(request):
     depends(request, ['release_ipfs'])
-    results = POST('//chart/release/redeploy/', 'ipfs')
+    results = POST('/chart/release/redeploy/', 'ipfs')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
     job_status = wait_on_job(results.json(), 300)
