@@ -75,6 +75,17 @@ class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
     pass
 
 
+class UnableToDetermineOSVersion(Exception):
+
+    """
+    Raised in JournalSync thread when we're unable
+    to detect the remote node's OS version.
+    (i.e. if remote node goes down (upgrade/reboot, etc)
+    """
+    pass
+
+
+
 class OSVersionMismatch(Exception):
 
     """
@@ -1340,8 +1351,11 @@ class JournalSync:
 
             self.journal.clear()
 
-        if not self._os_versions_match():
-            if self.journal:
+        if self.journal:
+            os_ver_match = self._os_versions_match()
+            if os_ver_match is None:
+                raise UnableToDetermineOSVersion()
+            elif not os_ver_match:
                 raise OSVersionMismatch()
 
         had_journal_items = bool(self.journal)
@@ -1434,7 +1448,14 @@ class JournalSync:
         except Exception:
             return False
 
-        return loc == rem
+        if rem is None:
+            # happens when other node goes offline
+            # (reboot/upgrade etc, etc) the log message
+            # is a little misleading in this scenario
+            # so make it a little better
+            return
+        else:
+            return loc == rem
 
 
 def hook_datastore_execute_write(middleware, sql, params):
@@ -1460,9 +1481,17 @@ def journal_sync(middleware):
             while True:
                 journal_sync.process()
                 alert = True
+        except UnableToDetermineOSVersion:
+            if alert:
+                logger.warning(
+                    'Unable to determine remote node OS version. Not syncing journal'
+                )
+                alert = False
         except OSVersionMismatch:
             if alert:
-                logger.warning('OS version does not match remote node. Not syncing journal')
+                logger.warning(
+                    'OS version does not match remote node. Not syncing journal'
+                )
                 alert = False
         except Exception:
             logger.warning('Failed to sync journal', exc_info=True)
