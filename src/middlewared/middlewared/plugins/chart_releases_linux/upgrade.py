@@ -13,7 +13,7 @@ from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
-from .utils import CONTEXT_KEY_NAME
+from .utils import CONTEXT_KEY_NAME, get_action_context
 
 
 class ChartReleaseService(Service):
@@ -211,6 +211,7 @@ class ChartReleaseService(Service):
         # Helm considers simple config change as an upgrade as well, and we have no way of determining the old/new
         # chart versions during helm upgrade in the helm template, hence the requirement for a context object.
         config[CONTEXT_KEY_NAME].update({
+            **get_action_context(release_name),
             'operation': 'UPGRADE',
             'isUpgrade': True,
             'upgradeMetadata': {
