@@ -119,19 +119,27 @@ class ChartReleaseService(Service):
         if helm_force_flag:
             command.append('--force')
 
-        try:
-            cp = await run(
-                [
-                    'helm', 'rollback', release_name, history_ver, '-n',
-                    get_namespace(release_name), '--recreate-pods'
-                ] + command, check=False,
+        cp = await run(
+            [
+                'helm', 'rollback', release_name, history_ver, '-n',
+                get_namespace(release_name), '--recreate-pods'
+            ] + command, check=False,
+        )
+        await self.middleware.call('chart.release.sync_secrets_for_release', release_name)
+
+        # Helm rollback is a bit tricky, it utilizes rollout functionality of kubernetes and rolls back the
+        # resources to specified version. However in this process, if the rollback is to fail for any reason, it's
+        # possible that some k8s resources got rolled back to previous version whereas others did not. We should
+        # in this case check if helm treats the chart release as on the previous version of the chart release, we
+        # should still do a rollback of snapshots in this case and raise the error afterwards. However if helm
+        # does not recognize the chart release on a previous version, we can just raise it right away then.
+        current_version = (
+            await self.middleware.call('chart.release.get_instance', release_name)
+        )['chart_metadata']['version']
+        if current_version != rollback_version and cp.returncode:
+            raise CallError(
+                f'Failed to rollback {release_name!r} chart release to {rollback_version!r}: {cp.stderr.decode()}'
             )
-            if cp.returncode:
-                raise CallError(
-                    f'Failed to rollback {release_name!r} chart release to {rollback_version!r}: {cp.stderr.decode()}'
-                )
-        finally:
-            await self.middleware.call('chart.release.sync_secrets_for_release', release_name)
 
         # We are going to remove old chart version copies
         await self.middleware.call(
@@ -158,6 +166,15 @@ class ChartReleaseService(Service):
         job.set_progress(100, 'Rollback complete for chart release')
 
         await self.middleware.call('chart.release.chart_releases_update_checks_internal', [['id', '=', release_name]])
+
+        if cp.returncode:
+            # This means that helm partially rolled back k8s resources and recognizes the chart release as being
+            # on the previous version, we should raise an appropriate exception explaining the behavior
+            raise CallError(
+                f'Failed to complete rollback {release_name!r} chart release to {rollback_version}. Chart release\'s '
+                f'datasets have been rolled back to {rollback_version!r} version\'s snapshot. Errors encountered '
+                f'during rollback were: {cp.stderr.decode()}'
+            )
 
         return await self.middleware.call('chart.release.get_instance', release_name)
 
