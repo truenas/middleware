@@ -16,7 +16,9 @@ from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list, get
 from middlewared.validators import Match
 
-from .utils import CHART_NAMESPACE_PREFIX, get_namespace, get_storage_class_name, Resources, run
+from .utils import (
+    CHART_NAMESPACE_PREFIX, CONTEXT_KEY_NAME, get_action_context, get_namespace, get_storage_class_name, Resources, run,
+)
 
 
 class ChartReleaseService(CRUDService):
@@ -465,6 +467,12 @@ class ChartReleaseService(CRUDService):
 
             job.set_progress(75, 'Installing Catalog Item')
 
+            new_values[CONTEXT_KEY_NAME].update({
+                **get_action_context(data['release_name']),
+                'operation': 'INSTALL',
+                'isInstall': True,
+            })
+
             # We will install the chart now and force the installation in an ix based namespace
             # https://github.com/helm/helm/issues/5465#issuecomment-473942223
             await self.middleware.call(
@@ -528,6 +536,12 @@ class ChartReleaseService(CRUDService):
         job.set_progress(25, 'Initial Validation complete')
 
         await self.perform_actions(context)
+
+        config[CONTEXT_KEY_NAME].update({
+            **get_action_context(data['release_name']),
+            'operation': 'UPDATE',
+            'isUpdate': True,
+        })
 
         await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 

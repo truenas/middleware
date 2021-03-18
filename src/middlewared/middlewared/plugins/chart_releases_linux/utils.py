@@ -1,3 +1,4 @@
+import copy
 import enum
 import os
 
@@ -23,6 +24,17 @@ class Resources(enum.Enum):
     PERSISTENT_VOLUME_CLAIM = 'persistent_volume_claims'
     POD = 'pods'
     STATEFULSET = 'statefulsets'
+
+
+def get_action_context(release_name):
+    return copy.deepcopy({
+        'operation': None,
+        'isInstall': False,
+        'isUpdate': False,
+        'isUpgrade': False,
+        'storageClassName': get_storage_class_name(release_name),
+        'upgradeMetadata': {},
+    })
 
 
 def get_namespace(release_name):
