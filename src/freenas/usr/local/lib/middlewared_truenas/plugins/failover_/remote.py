@@ -194,18 +194,9 @@ class RemoteClient(object):
 
     def get_remote_os_version(self):
 
-        if self._remote_os_version is None:
+        if self.client is not None and self._remote_os_version is None:
             try:
                 self._remote_os_version = self.client.call('system.version')
-            except AttributeError:
-                # happens when other node goes offline
-                # (upgrade, reboot, etc) self.client gets
-                # set to None which is expected. However,
-                # the JournalSync thread calls this method
-                # every 5 seconds which is particularly
-                # painful on m-series devices since those
-                # systems can take upwards of 15mins to reboot.
-                pass
             except Exception:
                 logger.error('Failed to determine OS version', exc_info=True)
 
