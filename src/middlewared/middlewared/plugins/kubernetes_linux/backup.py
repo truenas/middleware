@@ -133,7 +133,7 @@ class KubernetesService(Service):
         if not backup:
             raise CallError(f'Backup {backup_name!r} does not exist', errno=errno.ENOENT)
 
-        self.middleware.call_sync('zfs.snapshot.delete', backup['snapshot_name'])
+        self.middleware.call_sync('zfs.snapshot.delete', backup['snapshot_name'], {'recursive': True})
         shutil.rmtree(backup['backup_path'], True)
 
     @private
