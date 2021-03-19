@@ -2868,7 +2868,8 @@ class PoolDatasetService(CRUDService):
                     dataset[i]['value'] = method(dataset[i]['value'])
             del dataset['properties']
 
-            dataset['locked'] = dataset['encrypted'] and not dataset['key_loaded']
+            if all(k in dataset for k in ('encrypted', 'key_loaded')):
+                dataset['locked'] = dataset['encrypted'] and not dataset['key_loaded']
 
             if retrieve_children:
                 rv = []
