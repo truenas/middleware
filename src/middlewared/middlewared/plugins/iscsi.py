@@ -514,7 +514,6 @@ class iSCSITargetExtentService(SharingService):
         datastore = 'services.iscsitargetextent'
         datastore_prefix = 'iscsi_target_extent_'
         datastore_extend = 'iscsi.extent.extend'
-        datastore_extend_context = 'iscsi.extent.extent_extend_context'
         cli_namespace = 'sharing.iscsi.extent'
 
     @private
@@ -672,28 +671,7 @@ class iSCSITargetExtentService(SharingService):
             data['rpm'] = 'Unknown'
 
     @private
-    async def extent_extend_context(self, extra):
-        context = {
-            'disks': {},
-            'pools': {
-                p['name']: {'disks': await self.middleware.call('zfs.pool.get_disks', p['name']), 'all_flash': False}
-                for p in await self.middleware.call('pool.query', [['is_decrypted', '=', True],
-                                                                   ['status', '!=', 'OFFLINE']])
-            }
-        }
-        disks_names = {}
-        for disk in await self.middleware.call('disk.query'):
-            disks_names[disk['devname']] = disk
-            context['disks'][disk['identifier']] = disk
-
-        for pool in filter(lambda p: context['pools'][p]['disks'], context['pools']):
-            data = context['pools'][pool]
-            if all(disks_names.get(d, {}).get('type') == 'SSD' for d in data['disks']):
-                data['all_flash'] = True
-        return context
-
-    @private
-    async def extend(self, data, context):
+    async def extend(self, data):
         extent_type = data['type'].upper()
         extent_rpm = data['rpm'].upper()
 
