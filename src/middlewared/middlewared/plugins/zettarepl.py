@@ -14,6 +14,7 @@ import socket
 import threading
 import time
 import types
+import subprocess
 
 import humanfriendly
 import paramiko.ssh_exception
@@ -292,11 +293,18 @@ class ZettareplService(Service):
         with self.lock:
             if self.process:
                 self.process.terminate()
-                for i in range(50):
-                    time.sleep(0.1)
-                    if not self.process.is_alive():
-                        break
-                else:
+                event = threading.Event()
+
+                def target():
+                    try:
+                        os.waitpid(self.process.pid, 0)
+                    except ChildProcessError:
+                        pass
+                    event.set()
+
+                start_daemon_thread(target=target)
+                event.wait(5)
+                if self.process.is_alive():
                     self.logger.warning("Zettarepl was not joined in time, sending SIGKILL")
                     os.kill(self.process.pid, signal.SIGKILL)
 
