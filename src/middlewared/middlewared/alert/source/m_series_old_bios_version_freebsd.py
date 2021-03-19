@@ -24,5 +24,5 @@ class TrueNASMNVDIMMFirmwareVersionAlertSource(AlertSource):
 
     async def check(self):
         if (await self.middleware.call("truenas.get_chassis_hardware")).startswith("TRUENAS-M"):
-            if await self.middleware.call("truenas.m_series_is_old_bios_version"):
+            if await self.middleware.call("enterprise.m_series_is_old_bios_version"):
                 return Alert(TrueNASMOldBIOSVersionAlertClass)
