@@ -114,10 +114,6 @@ class DiskService(Service, ServiceChangeMixin):
                     changed = True
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
-                    for extent in await self.middleware.call(
-                        'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]
-                    ):
-                        await self.middleware.call('iscsi.extent.delete', extent['id'])
                     if disk['disk_kmip_uid']:
                         asyncio.ensure_future(self.middleware.call(
                             'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uid']
