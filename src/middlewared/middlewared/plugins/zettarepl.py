@@ -45,6 +45,7 @@ from middlewared.client import Client, ClientException
 from middlewared.logger import reconfigure_logging, setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
+from middlewared.utils.cgroups import move_to_root_cgroups
 import middlewared.utils.osc as osc
 from middlewared.utils.string import make_sentence
 
@@ -138,6 +139,7 @@ class ZettareplProcess:
     def __call__(self):
         setproctitle.setproctitle('middlewared (zettarepl)')
         osc.die_with_parent()
+        move_to_root_cgroups(os.getpid())
         if logging.getLevelName(self.debug_level) == logging.TRACE:
             # If we want TRACE then we want all debug from zettarepl
             default_level = logging.DEBUG
@@ -290,9 +292,11 @@ class ZettareplService(Service):
         with self.lock:
             if self.process:
                 self.process.terminate()
-                self.process.join(5)
-
-                if self.process.is_alive():
+                for i in range(50):
+                    time.sleep(0.1)
+                    if not self.process.is_alive():
+                        break
+                else:
                     self.logger.warning("Zettarepl was not joined in time, sending SIGKILL")
                     os.kill(self.process.pid, signal.SIGKILL)
 
@@ -308,6 +312,17 @@ class ZettareplService(Service):
 
         if restart:
             self.logger.error("Abnormal zettarepl process termination with code %r, restarting", process.exitcode)
+            for k, v in self.middleware.call_sync("zettarepl.get_state").get("tasks", {}).items():
+                if k.startswith("replication_") and v.get("state") in ("WAITING", "RUNNING"):
+                    error = f"Abnormal zettarepl process termination with code {process.exitcode}."
+                    self.middleware.call_sync("zettarepl.set_state", k, {
+                        "state": "ERROR",
+                        "datetime": datetime.utcnow(),
+                        "error": error,
+                    })
+                    task_id = k[len("replication_"):]
+                    for channel in self.replication_jobs_channels[task_id]:
+                        channel.put(ReplicationTaskError(task_id, error))
             self.middleware.call_sync("zettarepl.start")
 
     def update_config(self, config):
