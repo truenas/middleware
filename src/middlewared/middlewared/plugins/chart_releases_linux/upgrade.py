@@ -169,6 +169,7 @@ class ChartReleaseService(Service):
 
         return catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
 
+    @private
     async def upgrade_chart_release(self, job, release, options):
         release_name = release['name']
 
