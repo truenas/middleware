@@ -1164,7 +1164,7 @@ class iSCSITargetService(CRUDService):
             filters = [('name', '=', data['name'])]
             if old:
                 filters.append(('id', '!=', old['id']))
-            names = await self.middleware.call(f'{self._config.namespace}.query', filters)
+            names = await self.middleware.call(f'{self._config.namespace}.query', filters, {'force_sql_filters': True})
             if names:
                 verrors.add(f'{schema_name}.name', 'Target name already exists')
 
@@ -1177,7 +1177,7 @@ class iSCSITargetService(CRUDService):
                 filters = [('alias', '=', data['alias'])]
                 if old:
                     filters.append(('id', '!=', old['id']))
-                aliases = await self.middleware.call(f'{self._config.namespace}.query', filters)
+                aliases = await self.middleware.call(f'{self._config.namespace}.query', filters, {'force_sql_filters': True})
                 if aliases:
                     verrors.add(f'{schema_name}.alias', 'Alias already exists')
 
@@ -1317,7 +1317,8 @@ class iSCSITargetService(CRUDService):
     @private
     async def active_sessions_for_targets(self, target_id_list):
         targets = await self.middleware.call(
-            'iscsi.target.query', [['id', 'in', target_id_list]]
+            'iscsi.target.query', [['id', 'in', target_id_list]],
+            {'force_sql_filters': True},
         )
         check_targets = []
         global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
