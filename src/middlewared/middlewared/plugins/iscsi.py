@@ -1473,7 +1473,7 @@ class iSCSITargetToExtentService(CRUDService):
         if data.get('lunid') is None:
             lunids = [
                 o['lunid'] for o in await self.query(
-                    [('target', '=', target)], {'order_by': ['lunid']}
+                    [('target', '=', target)], {'order_by': ['lunid'], 'force_sql_filters': True}
                 )
             ]
             if not lunids:
@@ -1498,15 +1498,15 @@ class iSCSITargetToExtentService(CRUDService):
 
         if old_lunid != lunid and await self.query([
             ('lunid', '=', lunid), ('target', '=', target)
-        ]):
+        ], {'force_sql_filters': True}):
             verrors.add(
                 f'{schema_name}.lunid',
                 'LUN ID is already being used for this target.'
             )
 
         if old_target != target and await self.query([
-            ('target', '=', target), ('extent', '=', extent)]
-        ):
+            ('target', '=', target), ('extent', '=', extent)
+        ], {'force_sql_filters': True}):
             verrors.add(
                 f'{schema_name}.target',
                 'Extent is already in this target.'
