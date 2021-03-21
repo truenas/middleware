@@ -474,14 +474,23 @@ class ZFSDatasetService(CRUDService):
 
         with libzfs.ZFS() as zfs:
             # Handle `id` filter specially to avoiding getting all datasets
-            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+            # Process all filter elements, and allow one distinct value for `id`.
+            dataset = None
+            for filter in filters:
+                if len(filter) == 3 and list(filter[:2]) == ['id', '=']:
+                    if dataset is not None and dataset != filter[2]:
+                        return []
+
+                    dataset = filter[2]
+
+            if dataset is not None:
                 state_options = {
                     'snapshots': extra.get('snapshots', False),
                     'recursive': extra.get('recursive', True),
                     'snapshots_recursive': extra.get('snapshots_recursive', False)
                 }
                 try:
-                    datasets = [zfs.get_dataset(filters[0][2]).__getstate__(**state_options)]
+                    datasets = [zfs.get_dataset(dataset).__getstate__(**state_options)]
                 except libzfs.ZFSException:
                     datasets = []
             else:
