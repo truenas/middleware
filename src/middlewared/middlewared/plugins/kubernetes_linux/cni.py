@@ -1,6 +1,7 @@
 import asyncio
 import ipaddress
 import subprocess
+import time
 
 from middlewared.plugins.interface.netif import netif
 from middlewared.service import CallError, ConfigService
@@ -84,6 +85,14 @@ class KubernetesCNIService(ConfigService):
     def add_routes_to_kube_router_table(self):
         rt = netif.RoutingTable()
         kube_router_table = rt.routing_tables['kube-router']
+        cluster_cidr = ipaddress.ip_network(self.middleware.call_sync('kubernetes.config')['cluster_cidr'], False)
+
+        while not any(
+            r.interface == 'kube-bridge' and str(r.network) == str(cluster_cidr.network_address)
+            for r in rt.routes_internal(table_filter=254)
+        ):
+            time.sleep(5)
+
         for route in filter(lambda r: (r.interface or '') == 'kube-bridge', rt.routes_internal(table_filter=254)):
             route.table_id = kube_router_table.table_id
             if route in kube_router_table.routes:
