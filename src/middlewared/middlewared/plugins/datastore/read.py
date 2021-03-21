@@ -41,6 +41,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             Bool('get', default=False),
             Int('offset', default=0),
             Int('limit', default=0),
+            Bool('force_sql_filters', default=False),
             register=True,
         ),
     )
