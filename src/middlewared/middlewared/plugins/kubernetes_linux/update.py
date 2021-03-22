@@ -23,7 +23,7 @@ class KubernetesModel(sa.Model):
     route_v6_interface = sa.Column(sa.String(128), nullable=True)
     route_v6_gateway = sa.Column(sa.String(128), nullable=True)
     node_ip = sa.Column(sa.String(128), default='0.0.0.0')
-    cni_config = sa.Column(sa.JSON(type=dict))
+    cni_config = sa.Column(sa.JSON(type=dict), default={})
 
 
 class KubernetesService(ConfigService):
