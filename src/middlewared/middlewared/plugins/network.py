@@ -1938,7 +1938,7 @@ class InterfaceService(CRUDService):
 
             cloned_interfaces.append(name)
             try:
-                await self.middleware.call('interface.bridge_setup', bridge)
+                await self.middleware.call('interface.bridge_setup', bridge, parent_interfaces)
             except Exception:
                 self.logger.error('Error setting up bridge %s', name, exc_info=True)
             # Finally sync bridge interface
