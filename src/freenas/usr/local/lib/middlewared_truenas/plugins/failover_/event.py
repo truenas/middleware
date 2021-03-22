@@ -601,6 +601,7 @@ class FailoverService(Service):
 
                 self.run_call('jail.start_on_boot')
                 self.run_call('vm.start_on_boot')
+                self.run_call('truecommand.start_truecommand_service')
 
                 self.run_call('alert.block_failover_alerts')
                 self.run_call('alert.initialize', False)
