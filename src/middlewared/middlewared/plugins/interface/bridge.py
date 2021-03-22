@@ -28,7 +28,7 @@ class InterfaceService(Service):
             iface.delete_member(member)
 
     @private
-    def bridge_setup(self, bridge):
+    def bridge_setup(self, bridge, parent_interfaces):
         name = bridge['interface']['int_interface']
         self.logger.info(f'Setting up {name}')
         try:
@@ -51,6 +51,8 @@ class InterfaceService(Service):
 
             if member_iface.mtu != mtu:
                 member_iface.mtu = mtu
+
+            parent_interfaces.append(member)
 
         for member in members_database - members:
             try:
