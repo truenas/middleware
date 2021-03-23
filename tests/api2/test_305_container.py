@@ -63,14 +63,14 @@ def test_04_get_pull_container_image():
 @skip_container_image
 @pytest.mark.dependency(name='pull_private_image')
 def test_05_pull_a_private_container_image(request):
-    depends(request, ["setup_kubernetes"], scope="session")
+    depends(request, ['setup_kubernetes'], scope='session')
     payload = {
-        "docker_authentication": {
-            "username": docker_username,
-            "password": docker_password
+        'docker_authentication': {
+            'username': docker_username,
+            'password': docker_password
         },
-        "from_image": docker_image,
-        "tag": docker_tag
+        'from_image': docker_image,
+        'tag': docker_tag
     }
     results = POST('/container/image/pull/', payload)
     assert results.status_code == 200, results.text
@@ -80,9 +80,9 @@ def test_05_pull_a_private_container_image(request):
 
 
 def test_06_get_new_private_image_id(request):
-    depends(request, ["pull_private_image"])
+    depends(request, ['pull_private_image'])
     global private_image_id
-    results = GET("/container/image/")
+    results = GET('/container/image/')
     for result in results.json():
         if result['repo_tags'] == [f'{docker_image}:{docker_tag}']:
             private_image_id = result['id']
@@ -93,13 +93,20 @@ def test_06_get_new_private_image_id(request):
 
 
 def test_07_get_private_image_with_id(request):
-    depends(request, ["pull_private_image"])
+    depends(request, ['pull_private_image'])
     results = GET(f'/container/image/id/{private_image_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
-def test_08_change_enable_image_updates_to_True():
+def test_08_delete_private_image_with_id(request):
+    depends(request, ['pull_private_image'])
+    results = DELETE(f'/container/image/id/{private_image_id}/', {'force': True})
+    assert results.status_code == 200, results.text
+    assert results.json() is None, results.text
+
+
+def test_09_change_enable_image_updates_to_True():
     payload = {
         'enable_image_updates': True
     }
@@ -110,11 +117,11 @@ def test_08_change_enable_image_updates_to_True():
 
 
 @pytest.mark.dependency(name='pull_public_image')
-def test_09_pull_a_public_container_image(request):
-    depends(request, ["setup_kubernetes"], scope="session")
+def test_10_pull_a_public_container_image(request):
+    depends(request, ['setup_kubernetes'], scope='session')
     payload = {
-        "from_image": 'ixsystems/truecommand',
-        "tag": 'latest'
+        'from_image': 'ixsystems/truecommand',
+        'tag': 'latest'
     }
     results = POST('/container/image/pull/', payload)
     assert results.status_code == 200, results.text
@@ -123,10 +130,10 @@ def test_09_pull_a_public_container_image(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_10_get_new_public_image_id(request):
-    depends(request, ["pull_public_image"])
+def test_11_get_new_public_image_id(request):
+    depends(request, ['pull_public_image'])
     global public_image_id
-    results = GET("/container/image/")
+    results = GET('/container/image/')
     for result in results.json():
         if result['repo_tags'] == ['ixsystems/truecommand:latest']:
             public_image_id = result['id']
@@ -136,16 +143,16 @@ def test_10_get_new_public_image_id(request):
         assert False, results
 
 
-def test_11_get_public_image_with_id(request):
-    depends(request, ["pull_public_image"])
+def test_12_get_public_image_with_id(request):
+    depends(request, ['pull_public_image'])
     results = GET(f'/container/image/id/{public_image_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
 @pytest.mark.dependency(name='tc_chart_release')
-def test_12_create_ix_chart_chart_release_with(request):
-    depends(request, ['pull_truecommand_image'])
+def test_13_create_ix_chart_chart_release_with(request):
+    depends(request, ['pull_public_image'])
     global tc_release_id
     payload = {
         'catalog': 'OFFICIAL',
@@ -153,6 +160,7 @@ def test_12_create_ix_chart_chart_release_with(request):
         'release_name': 'truecommand',
         'train': 'charts',
         'values': {
+            'workloadType': 'Deployment',
             'image': {
                 'repository': 'ixsystems/truecommand',
                 'tag': 'latest'
@@ -168,8 +176,80 @@ def test_12_create_ix_chart_chart_release_with(request):
     tc_release_id = job_status['results']['result']['id']
 
 
-def test_13_set_externalInterfaces(request):
+def test_14_get_truecommand_ix_chart_catalog(request):
     depends(request, ['tc_chart_release'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['catalog'] == 'OFFICIAL', results.text
+
+
+def test_15_get_truecommand_ix_chart_train(request):
+    depends(request, ['tc_chart_release'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['catalog_train'] == 'charts', results.text
+
+
+def test_16_get_truecommand_ix_chart_name(request):
+    depends(request, ['tc_chart_release'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['name'] == 'truecommand', results.text
+
+
+def test_17_verify_ix_chart_config_workloadtype(request):
+    depends(request, ['tc_chart_release'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['config']['workloadType'] == 'Deployment', results.text
+
+
+def test_18_verify_ix_chart_config_hostnetwork_is_True(request):
+    depends(request, ['tc_chart_release'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['config']['hostNetwork'] is True, results.text
+
+
+def test_19_verify_ix_chart_config_image(request):
+    depends(request, ['tc_chart_release'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['config']['image']['repository'] == 'ixsystems/truecommand', results.text
+    assert results.json()['config']['image']['tag'] == 'latest', results.text
+
+
+def test_20_set_ix_chart_chart_release_scale_up(request):
+    depends(request, ['tc_chart_release'])
+    payload = {
+        'release_name': 'truecommand',
+        'scale_options': {
+            'replica_count': 1
+        }
+    }
+    results = POST('/chart/release/scale/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+def test_21_verify_truecomand_ix_chart_pod_status_desired_is_1(request):
+    depends(request, ['tc_chart_release'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['pod_status']['desired'] == 1, results.text
+
+
+@pytest.mark.dependency(name='tc_externalInterfaces')
+def test_22_set_externalInterfaces(request):
+    depends(request, ['tc_chart_release'])
+    global gateway
     gateway = GET('/network/general/summary/').json()['default_routes'][0]
     payload = {
         'values': {
@@ -182,7 +262,7 @@ def test_13_set_externalInterfaces(request):
                         'staticRoutes': [
                             {
                                 'destination': '0.0.0.0/0',
-                                'gateway': f'{gateway}'
+                                'gateway': gateway
                             }
                         ]
                     }
@@ -197,28 +277,28 @@ def test_13_set_externalInterfaces(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_14_set_ix_chart_chart_release_scale_up(request):
-    depends(request, ['pull_truecommand_image'])
-    payload = {
-        'release_name': 'ipfs',
-        'scale_options': {
-            'replica_count': 1
-        }
-    }
-    results = POST('/chart/release/scale/', payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-
-
-def test_15_verify_ipfs_pod_status_desired_is_1(request):
-    depends(request, ['pull_truecommand_image'])
+def test_23_verify_ix_chart_config_externalInterfaces_hostinterface(request):
+    depends(request, ['tc_externalInterfaces'])
     results = GET(f'/chart/release/id/{tc_release_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['pod_status']['desired'] == 1, results.text
+    externalInterfaces = results.json()['config']['externalInterfaces']
+    assert externalInterfaces[0]['hostInterface'] == interface, results.text
 
 
-def test_16_pull_container_images_and_set_redeploy_to_true(request):
+def test_24_verify_ix_chart_config_externalInterfaces_interface(request):
+    depends(request, ['tc_externalInterfaces'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    ipam = results.json()['config']['externalInterfaces'][0]['ipam']
+    assert f'{ip}/24' in ipam['staticIPConfigurations'], results.text
+    assert {'destination': '0.0.0.0/0', 'gateway': gateway} in ipam['staticRoutes'], results.text
+    assert ipam['type'] == 'static', results.text
+
+
+def test_25_pull_container_images_and_set_redeploy_to_true(request):
+    depends(request, ['tc_chart_release'])
     payload = {
         'release_name': 'truecommand',
         'pull_container_images_options': {
@@ -232,7 +312,8 @@ def test_16_pull_container_images_and_set_redeploy_to_true(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_17_set_truecommand_ix_chart_portforwarding(request):
+@pytest.mark.dependency(name='tc_portforwarding')
+def test_26_set_truecommand_ix_chart_portforwarding(request):
     depends(request, ['tc_chart_release'])
     payload = {
         'values': {
@@ -252,7 +333,71 @@ def test_17_set_truecommand_ix_chart_portforwarding(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_18_delete_truecommand_chart_release(request):
+def test_27_verify_ix_chart_config_portforwardinglist(request):
+    depends(request, ['tc_portforwarding'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    portForwardingList = results.json()['config']['portForwardingList'][0]
+    assert portForwardingList['containerPort'] == 80, results.texts.text
+    assert portForwardingList['nodePort'] == 20345, results.text
+    assert portForwardingList['protocol'] == 'TCP', results.text
+
+
+@pytest.mark.dependency(name='tc_updatestrategy')
+def test_28_change_truecommand_ix_chart_updatestrategy_to_recreate(request):
+    depends(request, ['tc_chart_release'])
+    payload = {
+        'values': {
+            'updateStrategy': 'Recreate'
+        }
+    }
+    results = PUT(f'/chart/release/id/{tc_release_id}/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    job_status = wait_on_job(results.json(), 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_29_verify_ix_chart_config_updatestrategy_is_changed_to_reccireate(request):
+    depends(request, ['tc_updatestrategy'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['config']['updateStrategy'] == 'Recreate', results.text
+
+
+@pytest.mark.dependency(name='tc_dnsConfig')
+def test_30_set_truecommand_ix_chart_dnsConfig(request):
+    depends(request, ['tc_chart_release'])
+    global nameservers_list
+    results = GET("/network/general/summary/")
+    assert isinstance(results.json()['nameservers'], list), results.text
+    nameservers_list = results.json()['nameservers'][:23]
+    payload = {
+        'values': {
+            'dnsConfig': {
+                'nameservers': nameservers_list,
+                'searches': []
+            },
+        }
+    }
+    results = PUT(f'/chart/release/id/{tc_release_id}/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    job_status = wait_on_job(results.json(), 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_31_verify_ix_chart_config_dnsConfig(request):
+    depends(request, ['tc_dnsConfig'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    assert results.json()['config']['updateStrategy'] == 'Recreate', results.text
+
+
+def test_40_delete_truecommand_chart_release(request):
     depends(request, ['tc_chart_release'])
     results = DELETE(f'/chart/release/id/{tc_release_id}/')
     assert results.status_code == 200, results.text
@@ -261,29 +406,15 @@ def test_18_delete_truecommand_chart_release(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_19_delete_private_image_with_id(request):
-    depends(request, ["pull_private_image"])
-    results = DELETE(f'/container/image/id/{private_image_id}/')
+def test_41_delete_public_image_with_id(request):
+    depends(request, ['pull_public_image'])
+    results = DELETE(f'/container/image/id/{public_image_id}/', {'force': True})
     assert results.status_code == 200, results.text
     assert results.json() is None, results.text
 
 
-def test_20_verify_the_private_image_id_is_deleted(request):
-    depends(request, ["pull_private_image"])
-    results = GET(f'/container/image/id/{private_image_id}/')
-    assert results.status_code == 404, results.text
-    assert isinstance(results.json(), dict), results.text
-
-
-def test_21_delete_public_image_with_id(request):
-    depends(request, ["pull_public_image"])
-    results = DELETE(f'/container/image/id/{public_image_id}/')
-    assert results.status_code == 200, results.text
-    assert results.json() is None, results.text
-
-
-def test_22_verify_the_public_image_id_is_deleted(request):
-    depends(request, ["pull_public_image"])
+def test_42_verify_the_public_image_id_is_deleted(request):
+    depends(request, ['pull_public_image'])
     results = GET(f'/container/image/id/{public_image_id}/')
     assert results.status_code == 404, results.text
     assert isinstance(results.json(), dict), results.text
