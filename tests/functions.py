@@ -23,7 +23,7 @@ global authentication
 authentication = (user, password)
 
 
-def GET(testpath, controller_a=False, **optional):
+def GET(testpath, payload={}, controller_a=False, **optional):
     url = controller1_api_url if controller_a else api_url
     if testpath.startswith('http'):
         getit = requests.get(testpath)
@@ -32,13 +32,12 @@ def GET(testpath, controller_a=False, **optional):
             auth = None
         else:
             auth = authentication
-        payload = optional.get('payload') or {}
         getit = requests.get(f'{url}{testpath}', headers=header,
                              auth=auth, data=json.dumps(payload))
     return getit
 
 
-def POST(testpath, payload=None, controller_a=False, **optional):
+def POST(testpath, payload={}, controller_a=False, **optional):
     url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
@@ -53,7 +52,7 @@ def POST(testpath, payload=None, controller_a=False, **optional):
     return postit
 
 
-def PUT(testpath, payload, controller_a=False, **optional):
+def PUT(testpath, payload={}, controller_a=False, **optional):
     url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
@@ -64,7 +63,7 @@ def PUT(testpath, payload, controller_a=False, **optional):
     return putit
 
 
-def DELETE(testpath, payload=None, controller_a=False, **optional):
+def DELETE(testpath, payload={}, controller_a=False, **optional):
     url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
@@ -72,7 +71,7 @@ def DELETE(testpath, payload=None, controller_a=False, **optional):
         auth = authentication
     deleteit = requests.delete(f'{url}{testpath}', headers=header,
                                auth=auth,
-                               data=json.dumps(payload) if payload else None)
+                               data=json.dumps(payload))
     return deleteit
 
 
