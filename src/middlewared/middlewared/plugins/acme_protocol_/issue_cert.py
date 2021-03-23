@@ -107,7 +107,7 @@ class ACMEService(Service):
                                 f'\nChallenge Type: {challenge.chall.typ}' \
                                 f'\n\nError information:' \
                                 f'\n- Type: {challenge.error.typ if challenge.error else "No error type found"}' \
-                                f'\n- Details: {challenge.error.detail if challenge.error else "No error details where found"}\n\n'
+                                f'\n- Details: {challenge.error.detail if challenge.error else "No error details were found"}\n\n'
                     raise CallError(f'Certificate request for final order failed: {msg}')
             finally:
                 self.cleanup_authorizations(order, dns_mapping, key)
