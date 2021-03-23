@@ -144,7 +144,7 @@ def test_15_get_ipfs_chart_release_events(request):
     results = POST('/chart/release/events/', 'ipfs')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
-    assert results.json()[0]['involved_object']['name'] == 'ipfs', results.text
+    assert results.json()[0]['involved_object']['namespace'] == 'ix-ipfs', results.text
 
 
 def test_16_set_ipfs_chart_release_scale(request):
@@ -375,7 +375,9 @@ def test_36_get_plex_chart_release_upgrade_summary(request):
     update_version = results.json()['latest_version'].split('_')[1]
 
 
+@pytest.mark.dependency(name='update_plex')
 def test_37_upgrade_plex_to_the_new_version(request):
+    depends(request, ['release_plex'])
     payload = {
         'release_name': 'plex',
         'upgrade_options': {
@@ -390,14 +392,16 @@ def test_37_upgrade_plex_to_the_new_version(request):
 
 
 def test_38_verify_plex_new_version(request):
-    depends(request, ['release_plex'])
+    depends(request, ['update_plex'])
     results = GET(f'/chart/release/id/{plex_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     assert results.json()['chart_metadata']['version'] == new_plex_version, results.text
 
 
+@pytest.mark.dependency(name='rollback_plex')
 def test_39_rollback_plex_to_the_old_version(request):
+    depends(request, ['update_plex'])
     payload = {
         'release_name': 'plex',
         'rollback_options': {
@@ -413,7 +417,7 @@ def test_39_rollback_plex_to_the_old_version(request):
 
 
 def test_40_verify_plex_is_at_the_old_version(request):
-    depends(request, ['release_plex'])
+    depends(request, ['rollback_plex'])
     results = GET(f'/chart/release/id/{plex_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
