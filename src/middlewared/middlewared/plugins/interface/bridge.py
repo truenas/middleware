@@ -52,6 +52,9 @@ class InterfaceService(Service):
             if member_iface.mtu != mtu:
                 member_iface.mtu = mtu
 
+            if netif.InterfaceFlags.UP not in member_iface.flags:
+                member_iface.up()
+
             parent_interfaces.append(member)
 
         for member in members_database - members:
