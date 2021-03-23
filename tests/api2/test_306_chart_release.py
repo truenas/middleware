@@ -225,7 +225,7 @@ def test_21_change_some_ipfs_schema_values(request):
                     'datasetName': 'ix-ipfs-data',
                     'mountPath': '/data/ipfs',
                     'hostPathEnabled': True,
-                    'hostPath': f'/mnt/{pool_name}/ipfs-staging'
+                    'hostPath': f'/mnt/{pool_name}/ipfs-data'
                 }
             }
         }
