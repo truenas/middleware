@@ -182,6 +182,8 @@ class GlusterVolumeService(CRUDService):
             # other items
             await (await self.middleware.call('ctdb.shared.volume.delete')).wait(raise_error=True)
         else:
+            umnt = await self.middleware.call('gluster.fuse.umount', {'name': id, 'raise': True})
+            await umnt.wait(raise_error=True)
             await self.middleware.call('gluster.method.run', volume.delete, args)
 
     @item_method
