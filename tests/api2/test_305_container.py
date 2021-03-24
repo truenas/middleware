@@ -371,9 +371,9 @@ def test_29_verify_ix_chart_config_updatestrategy_is_changed_to_reccireate(reque
 def test_30_set_truecommand_ix_chart_dnsConfig(request):
     depends(request, ['tc_chart_release'])
     global nameservers_list
-    results = GET("/network/general/summary/")
+    results = GET('/network/general/summary/')
     assert isinstance(results.json()['nameservers'], list), results.text
-    nameservers_list = results.json()['nameservers'][:23]
+    nameservers_list = results.json()['nameservers'][:2]
     payload = {
         'values': {
             'dnsConfig': {
@@ -394,7 +394,72 @@ def test_31_verify_ix_chart_config_dnsConfig(request):
     results = GET(f'/chart/release/id/{tc_release_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['config']['updateStrategy'] == 'Recreate', results.text
+    dnsConfig = results.json()['config']['dnsConfig']
+    assert dnsConfig['nameservers'] == nameservers_list, results.text
+    assert dnsConfig['searches'] == [], results.text
+
+
+@pytest.mark.dependency(name='tc_livenessProbe')
+def test_32_set_truecommand_ix_chart_livenessProbe(request):
+    depends(request, ['tc_chart_release'])
+    payload = {
+        'values': {
+            'livenessProbe': {
+                'command': ['ls /usr/share'],
+                'initialDelaySeconds': 10,
+                'periodSeconds': 15
+            }
+        }
+    }
+    results = PUT(f'/chart/release/id/{tc_release_id}/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    job_status = wait_on_job(results.json(), 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_33_verify_ix_chart_config_livenessProbe(request):
+    depends(request, ['tc_livenessProbe'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    livenessProbe = results.json()['config']['livenessProbe']
+    assert 'ls /usr/share' in livenessProbe['command'], results.text
+    assert livenessProbe['initialDelaySeconds'] == 10, results.text
+    assert livenessProbe['periodSeconds'] == 15, results.text
+
+
+@pytest.mark.dependency(name='tc_containerCAE')
+def test_34_set_truecommand_ix_chart_tc_container_Command_Args_EnvironmentVariables(request):
+    depends(request, ['tc_chart_release'])
+    payload = {
+        'values': {
+            'containerCommand': ['sleep'],
+            'containerArgs': ['infinity'],
+            'containerEnvironmentVariables': [
+                {
+                    'name': 'Eric_Var',
+                    'value': 'Something'
+                }
+            ]
+        }
+    }
+    results = PUT(f'/chart/release/id/{tc_release_id}/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    job_status = wait_on_job(results.json(), 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_35_verify_ix_chart_config_container_Command_Args_EnvironmentVariables(request):
+    depends(request, ['tc_containerCAE'])
+    results = GET(f'/chart/release/id/{tc_release_id}/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    config = results.json()['config']
+    assert 'sleep' in config['containerCommand'], results.text
+    assert 'infinity' in config['containerArgs'], results.text
+    assert {'name': 'Eric_Var', 'value': 'Something'} in config['containerEnvironmentVariables'], results.text
 
 
 def test_40_delete_truecommand_chart_release(request):
