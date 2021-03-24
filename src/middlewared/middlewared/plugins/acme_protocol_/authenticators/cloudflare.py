@@ -25,6 +25,7 @@ class CloudFlareAuthenticator(Authenticator):
         self.api_key = self.attributes.get('api_key')
         self.api_token = self.attributes.get('api_token')
 
+    @staticmethod
     @accepts(SCHEMA)
     def validate_credentials(data):
         verrors = ValidationErrors()
