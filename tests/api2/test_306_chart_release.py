@@ -260,7 +260,8 @@ def test_24_verify_ipfs_appVolumeMounts_staging(request, key):
     results = GET(f'/chart/release/id/{release_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['config']['appVolumeMounts']['staging'][key] == payload['values']['appVolumeMounts']['staging'][key], results.text
+    staging = results.json()['config']['appVolumeMounts']['staging']
+    assert staging[key] == payload['values']['appVolumeMounts']['staging'][key], results.text
 
 
 @pytest.mark.parametrize('key', ['datasetName', 'mountPath', 'hostPathEnabled', 'hostPath'])
@@ -269,24 +270,40 @@ def test_25_verify_ipfs_appVolumeMounts_data(request, key):
     results = GET(f'/chart/release/id/{release_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert results.json()['config']['appVolumeMounts']['data'][key] == payload['values']['appVolumeMounts']['data'][key], results.text
+    data = results.json()['config']['appVolumeMounts']['data']
+    assert data[key] == payload['values']['appVolumeMounts']['data'][key], results.text
 
 
-def test_26_get_ipfs_chart_release_pod_console_choices(request):
+def test_26_verify_ipfs_staging_and_data_hostpath_in_resources_host_path_volumes(request):
+    depends(request, ['ipfs_schema_values'])
+    payload = {
+        'query-options': {
+            'extra': {
+                'retrieve_resources': True
+            }
+        },
+        'query-filters': [['id', '=', 'ipfs']]}
+    results = GET('/chart/release/', payload)
+    host_path_volumes = str(results.json()[0]['resources']['host_path_volumes'])
+    assert f'/mnt/{pool_name}/ipfs-staging' in host_path_volumes, host_path_volumes
+    assert f'/mnt/{pool_name}/ipfs-data' in host_path_volumes, host_path_volumes
+
+
+def test_27_get_ipfs_chart_release_pod_console_choices(request):
     depends(request, ['release_ipfs'])
     results = POST('/chart/release/pod_console_choices/', 'ipfs')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
-def test_27_get_ipfs_chart_release_pod_logs_choices(request):
+def test_28_get_ipfs_chart_release_pod_logs_choices(request):
     depends(request, ['release_ipfs'])
     results = POST('/chart/release/pod_logs_choices/', 'ipfs')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
-def test_28_delete_ipfs_chart_release(request):
+def test_29_delete_ipfs_chart_release(request):
     depends(request, ['release_ipfs'])
     results = DELETE(f'/chart/release/id/{release_id}/')
     assert results.status_code == 200, results.text
@@ -295,7 +312,7 @@ def test_28_delete_ipfs_chart_release(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_29_delete_datasets_for_ipfs_hostPath(request):
+def test_30_delete_datasets_for_ipfs_hostPath(request):
     depends(request, ['hostPath_dataset'])
     result = DELETE(f'/pool/dataset/id/{pool_name}%2Fipfs-staging/', {'recursive': True})
     assert result.status_code == 200, result.text
@@ -303,7 +320,7 @@ def test_29_delete_datasets_for_ipfs_hostPath(request):
     assert result.status_code == 200, result.text
 
 
-def test_30_set_custom_catalog_for_testing_update():
+def test_31_set_custom_catalog_for_testing_update():
     global results
     payload = {
         'force': False,
@@ -320,11 +337,11 @@ def test_30_set_custom_catalog_for_testing_update():
 
 
 @pytest.mark.parametrize('key', list(updatechart_catalog.keys()))
-def test_31_verify_updatechart_catalog_object(key):
+def test_32_verify_updatechart_catalog_object(key):
     assert results.json()[key] == updatechart_catalog[key], results.text
 
 
-def test_32_verify_updatechart_is_in_catalog_list():
+def test_33_verify_updatechart_is_in_catalog_list():
     results = GET('/catalog/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
@@ -332,14 +349,14 @@ def test_32_verify_updatechart_is_in_catalog_list():
 
 
 @pytest.mark.parametrize('key', list(updatechart_catalog.keys()))
-def test_33_verify_updatechart_catalog_object(key):
+def test_34_verify_updatechart_catalog_object(key):
     results = GET('/catalog/id/UPDATECHARTS/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     assert results.json()[key] == updatechart_catalog[key], results.text
 
 
-def test_34_get_plex_old_version():
+def test_35_get_plex_old_version():
     global old_plex_version, new_plex_version
     results = POST('/catalog/items/', {'label': 'UPDATECHARTS'})
     old_plex_version = sorted(list(results.json()['charts']['plex']['versions'].keys()))[0]
@@ -347,7 +364,7 @@ def test_34_get_plex_old_version():
 
 
 @pytest.mark.dependency(name='release_plex')
-def test_35_create_plex_chart_release_with_old_version(request):
+def test_36_create_plex_chart_release_with_old_version(request):
     depends(request, ['setup_kubernetes'], scope='session')
     global plex_id
     payload = {
@@ -365,7 +382,7 @@ def test_35_create_plex_chart_release_with_old_version(request):
     plex_id = job_status['results']['result']['id']
 
 
-def test_36_get_plex_chart_release_upgrade_summary(request):
+def test_37_get_plex_chart_release_upgrade_summary(request):
     depends(request, ['release_plex'])
     global update_version
     results = POST('/chart/release/upgrade_summary/', {'release_name': 'plex'})
@@ -376,7 +393,7 @@ def test_36_get_plex_chart_release_upgrade_summary(request):
 
 
 @pytest.mark.dependency(name='update_plex')
-def test_37_upgrade_plex_to_the_new_version(request):
+def test_38_upgrade_plex_to_the_new_version(request):
     depends(request, ['release_plex'])
     payload = {
         'release_name': 'plex',
@@ -391,7 +408,7 @@ def test_37_upgrade_plex_to_the_new_version(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_38_verify_plex_new_version(request):
+def test_39_verify_plex_new_version(request):
     depends(request, ['update_plex'])
     results = GET(f'/chart/release/id/{plex_id}/')
     assert results.status_code == 200, results.text
@@ -400,7 +417,7 @@ def test_38_verify_plex_new_version(request):
 
 
 @pytest.mark.dependency(name='rollback_plex')
-def test_39_rollback_plex_to_the_old_version(request):
+def test_40_rollback_plex_to_the_old_version(request):
     depends(request, ['update_plex'])
     payload = {
         'release_name': 'plex',
@@ -416,7 +433,7 @@ def test_39_rollback_plex_to_the_old_version(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_40_verify_plex_is_at_the_old_version(request):
+def test_41_verify_plex_is_at_the_old_version(request):
     depends(request, ['rollback_plex'])
     results = GET(f'/chart/release/id/{plex_id}/')
     assert results.status_code == 200, results.text
@@ -424,7 +441,7 @@ def test_40_verify_plex_is_at_the_old_version(request):
     assert results.json()['chart_metadata']['version'] == old_plex_version, results.text
 
 
-def test_41_delete_plex_chart_release(request):
+def test_42_delete_plex_chart_release(request):
     depends(request, ['release_plex'])
     results = DELETE(f'/chart/release/id/{plex_id}/')
     assert results.status_code == 200, results.text
@@ -433,7 +450,7 @@ def test_41_delete_plex_chart_release(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_42_delete_truechart_catalog():
+def test_43_delete_truechart_catalog():
     results = DELETE('/catalog/id/UPDATECHARTS/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool), results.text
