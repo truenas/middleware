@@ -248,15 +248,8 @@ class RealtimeEventSource(EventSource):
             cp_times_last = cp_times
 
             # CPU temperature
-            data['cpu']['temperature'] = {}
-            if osc.IS_FREEBSD:
-                for i in itertools.count():
-                    v = sysctl.filter(f'dev.cpu.{i}.temperature')
-                    if not v:
-                        break
-                    data['cpu']['temperature'][i] = v[0].value
-            elif osc.IS_LINUX:
-                data['cpu']['temperature'] = self._cpu_temperature()
+            data['cpu']['temperature_celsius'] = self._cpu_temperature()
+            data['cpu']['temperature'] = {k: 2732 + int(v * 10) for k, v in data['cpu']['temperature_celsius'].items()}
 
             # Interface related statistics
             if last_interface_speeds['time'] < time.monotonic() - self.INTERFACE_SPEEDS_CACHE_INTERLVAL:
@@ -373,7 +366,7 @@ class RealtimeEventSource(EventSource):
                                 core += 1
                                 break
 
-        return {core: 2732 + int(value * 10) for core, value in temperature.items()}
+        return temperature
 
 
 def setup(middleware):
