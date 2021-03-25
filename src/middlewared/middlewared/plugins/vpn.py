@@ -385,17 +385,19 @@ class OpenVPNServerService(SystemServiceService):
             )
         else:
             client_cert = client_cert[0]
-            if (
+            verrors = (
                 await OpenVPN.common_validation(
                     self.middleware, {
                         **config,
                         'client_certificate': client_certificate_id
                     }, '', 'client'
                 )
-            )[0]:
+            )[0]
+            if verrors:
+                err_str = '\n'.join([f'{i + 1}) {error.errmsg}' for i, error in enumerate(verrors.errors)])
+
                 raise CallError(
-                    'Please ensure provided client certificate exists in Root CA chain '
-                    'and has necessary extensions set.'
+                    f'Please ensure provided client certificate is valid, following errors were found:\n{err_str}'
                 )
 
         client_config = [
