@@ -52,12 +52,21 @@ class CatalogService(CRUDService):
         })
         extra = context['extra']
         if extra.get('item_details'):
-            catalog['trains'] = await self.middleware.call(
-                'catalog.items', catalog['label'], {'cache': extra.get('cache', True)},
-            )
-            catalog['healthy'] = all(
-                app['healthy'] for train in catalog['trains'] for app in catalog['trains'][train].values()
-            )
+            try:
+                catalog['trains'] = await self.middleware.call(
+                    'catalog.items', catalog['label'], {'cache': extra.get('cache', True)},
+                )
+            except Exception:
+                # We do not want this to fail as it will block `catalog.query` otherwise. The error would
+                # already be logged as this is being called periodically as well.
+                catalog.update({
+                    'trains': {},
+                    'healthy': False,
+                })
+            else:
+                catalog['healthy'] = all(
+                    app['healthy'] for train in catalog['trains'] for app in catalog['trains'][train].values()
+                )
         return catalog
 
     @private
