@@ -2,6 +2,7 @@
 
 mkdir -p /var/trash
 for file in \
+    /etc/default/console-setup \
     /etc/default/inadyn
 do
     dpkg-divert --add --package truenas-files --rename --divert "/var/trash/$(echo "$file" | sed "s/\//_/g")" "$file"
