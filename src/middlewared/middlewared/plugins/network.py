@@ -1924,12 +1924,14 @@ class InterfaceService(CRUDService):
         for bridge in bridges:
             await self.middleware.call('interface.pre_bridge_setup', bridge, sync_interface_opts)
 
+        run_dhcp = []
         # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
         for interface in sorted(
             filter(lambda i: not i.startswith('br'), interfaces), key=lambda x: x.startswith('vlan')
         ):
             try:
-                await self.sync_interface(interface, wait_dhcp, sync_interface_opts[interface])
+                if await self.sync_interface(interface, sync_interface_opts[interface]):
+                    run_dhcp.append(interface)
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
@@ -1943,9 +1945,13 @@ class InterfaceService(CRUDService):
                 self.logger.error('Error setting up bridge %s', name, exc_info=True)
             # Finally sync bridge interface
             try:
-                await self.sync_interface(name, wait_dhcp, sync_interface_opts[name])
+                if await self.sync_interface(name, sync_interface_opts[name]):
+                    run_dhcp.append(name)
             except Exception:
                 self.logger.error('Failed to configure {}'.format(name), exc_info=True)
+
+        if run_dhcp:
+            await asyncio.wait([self.run_dhcp(interface, wait_dhcp) for interface in run_dhcp])
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
@@ -1990,7 +1996,7 @@ class InterfaceService(CRUDService):
         await self.middleware.call_hook('interface.post_sync')
 
     @private
-    async def sync_interface(self, name, wait_dhcp=False, options=None):
+    async def sync_interface(self, name, options):
         options = options or {}
 
         try:
@@ -2001,7 +2007,15 @@ class InterfaceService(CRUDService):
 
         aliases = await self.middleware.call('datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])])
 
-        await self.middleware.call('interface.configure', data, aliases, wait_dhcp, options)
+        return await self.middleware.call('interface.configure', data, aliases, options)
+
+    @private
+    async def run_dhcp(self, name, wait_dhcp):
+        self.logger.debug('Starting dhclient for {}'.format(name))
+        try:
+            await self.middleware.call('interface.dhclient_start', name, wait_dhcp)
+        except Exception:
+            self.logger.error('Failed to run DHCP for {}'.format(name), exc_info=True)
 
     @accepts(
         Dict(
@@ -2557,7 +2571,8 @@ async def attach_interface(middleware, iface):
     if iface['state']['cloned']:
         return
 
-    await middleware.call('interface.sync_interface', iface['name'])
+    if await middleware.call('interface.sync_interface', iface['name']):
+        await middleware.call('interface.run_dhcp', iface['name'], False)
 
 
 async def devd_ifnet_hook(middleware, data):
