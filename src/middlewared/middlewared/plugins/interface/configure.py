@@ -19,7 +19,7 @@ class InterfaceService(Service):
         namespace_alias = 'interfaces'
 
     @private
-    def configure(self, data, aliases, wait_dhcp=False, options=None):
+    def configure(self, data, aliases, options):
         options = options or {}
 
         name = data['int_interface']
@@ -242,17 +242,7 @@ class InterfaceService(Service):
             iface.up()
 
         # If dhclient is not running and dhcp is configured, lets start it
-        if not dhclient_running and data['int_dhcp']:
-            self.logger.debug('Starting dhclient for {}'.format(name))
-            self.middleware.call_sync('interface.dhclient_start', data['int_interface'], wait_dhcp)
-
-        if osc.IS_FREEBSD:
-            if data['int_ipv6auto']:
-                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
-                subprocess.call(['/etc/rc.d/rtsold', 'onerestart'], stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL, close_fds=True)
-            else:
-                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
+        return not dhclient_running and data['int_dhcp']
 
     @private
     def autoconfigure(self, iface, wait_dhcp):
