@@ -187,9 +187,9 @@ class KubernetesSnapshotService(CRUDService):
 
         if not await self.middleware.call(
             'k8s.pvc.query', [
-                    ['metadata.name', '=', data['spec']['source']['persistentVolumeClaimName']],
-                    ['metadata.namespace', '=', namespace]
-                ]
+                ['metadata.name', '=', data['spec']['source']['persistentVolumeClaimName']],
+                ['metadata.namespace', '=', namespace]
+            ]
         ):
             verrors.add(
                 'zfs_snapshot_create.spec.source.persistentVolumeClaimName',

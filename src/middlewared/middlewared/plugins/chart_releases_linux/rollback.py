@@ -121,7 +121,7 @@ class ChartReleaseService(Service):
 
         await self.middleware.call('chart.release.wait_for_pods_to_terminate', release['namespace'])
 
-        job.set_progress(50, 'Scaled down workloads')
+        job.set_progress(50, 'Rolling back chart release')
 
         command = []
         if helm_force_flag:
