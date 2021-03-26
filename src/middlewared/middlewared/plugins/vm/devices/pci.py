@@ -34,11 +34,11 @@ class PCI(Device):
 
     def is_available(self):
         if osc.IS_LINUX:
-            device = self.middleware.call_sync('vm.device.passthrough_device', self.passthru_device())
+            device = self.get_details()
             if not device['error'] and not device['available']:
                 self.detach_device()
 
-        return self.middleware.call_sync('vm.device.passthrough_device', self.passthru_device())['available']
+        return self.get_details()['available']
 
     def identity(self):
         return str(self.passthru_device())
@@ -62,9 +62,11 @@ class PCI(Device):
             except CallError:
                 self.middleware.logger.error('Failed to re-attach %s device', self.passthru_device(), exc_info=True)
 
+    def get_details(self):
+        return self.middleware.call_sync('vm.device.passthrough_device', self.passthru_device())
+
     def xml_linux(self, *args, **kwargs):
-        passthrough_choices = kwargs.pop('passthrough_choices')
-        addresses = passthrough_choices[self.passthru_device()]['iommu_group']['addresses']
+        addresses = self.get_details()['iommu_group']['addresses']
         return create_element(
             'hostdev', mode='subsystem', type='pci', managed='yes', attribute_dict={
                 'children': [
