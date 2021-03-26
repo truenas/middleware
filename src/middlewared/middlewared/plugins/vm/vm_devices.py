@@ -167,10 +167,6 @@ class VMDeviceService(CRUDService):
 
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
-        if device['dtype'] == 'PCI' and (
-            new['dtype'] != 'PCI' or new['attributes']['pptdev'] != device['attributes']['pptdev']
-        ):
-            await self.middleware.call('alert.oneshot_delete', 'PCIDeviceUnavailable', device['attributes']['pptdev'])
 
         return await self.get_instance(id)
 
@@ -218,7 +214,6 @@ class VMDeviceService(CRUDService):
                 raise
 
         if device['dtype'] == 'PCI':
-            await self.middleware.call('alert.oneshot_delete', 'PCIDeviceUnavailable', device['attributes']['pptdev'])
             device_obj = PCI(device, middleware=self.middleware)
             if await self.middleware.run_in_thread(device_obj.safe_to_reattach):
                 try:
