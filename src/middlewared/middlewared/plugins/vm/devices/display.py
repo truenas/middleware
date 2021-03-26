@@ -25,7 +25,7 @@ class DISPLAY(Device):
         Str('bind', default='0.0.0.0'),
         Bool('wait', default=False),
         Str('password', default=None, null=True, private=True),
-        Bool('web', default=False),
+        Bool('web', default=True),
         Str('type', default='SPICE', enum=['SPICE', 'VNC']),
     )
 
