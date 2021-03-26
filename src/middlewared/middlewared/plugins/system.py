@@ -198,21 +198,19 @@ class SystemAdvancedService(ConfigService):
                                        f'{schema}.syslog_tls_certificate')
 
         if data['isolated_gpu_pci_ids']:
-            gpus = await self.middleware.call('device.get_gpus')
-            if len(gpus) < 2:
+            available = set([gpu['addr']['pci_slot'] for gpu in await self.middleware.call('device.get_gpus')])
+            provided = set(data['isolated_gpu_pci_ids'])
+            not_available = provided - available
+            if not_available:
                 verrors.add(
-                    'isolated_gpu_pci_ids',
+                    f'{schema}.isolated_gpu_pci_ids',
+                    f'{", ".join(not_available)} GPU pci slots are not available or a GPU is not configured.'
+                )
+            if len(available - provided) < 1:
+                verrors.add(
+                    f'{schema}.isolated_gpu_pci_ids',
                     'A minimum of 2 GPUs are required in the host to ensure that host has at least 1 GPU available.'
                 )
-            else:
-                provided = set(data['isolated_gpu_pci_ids'])
-                available = set([gpu['addr']['pci_slot'] for gpu in gpus])
-                not_available = provided - available
-                if not_available:
-                    verrors.add(
-                        'isolated_gpu_pci_ids',
-                        f'{", ".join(not_available)} GPU pci slots are not available or a GPU is not configured.'
-                    )
 
         return verrors, data
 
@@ -263,6 +261,8 @@ class SystemAdvancedService(ConfigService):
 
         `consolemsg` is a deprecated attribute and will be removed in further releases. Please, use `consolemsg`
         attribute in the `system.general` plugin.
+
+        `isolated_gpu_pci_ids` is a list of PCI ids which are isolated from host system.
         """
         consolemsg = None
         if 'consolemsg' in data:
