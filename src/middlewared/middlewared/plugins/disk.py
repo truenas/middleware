@@ -67,6 +67,7 @@ class DiskService(CRUDService):
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
         datastore_extend_context = 'disk.disk_extend_context'
+        datastore_primary_key = 'identifier'
         event_register = False
         event_send = False
         cli_namespace = 'storage.disk'

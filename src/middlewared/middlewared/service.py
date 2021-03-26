@@ -265,6 +265,7 @@ def service_config(klass, config):
         'datastore_prefix': '',
         'datastore_extend': None,
         'datastore_extend_context': None,
+        'datastore_primary_key': 'id',
         'event_register': True,
         'event_send': True,
         'service': None,
@@ -537,7 +538,11 @@ class CRUDService(ServiceChangeMixin, Service):
         """
         Helper method to get an instance from a collection given the `id`.
         """
-        instance = await self.middleware.call(f'{self._config.namespace}.query', [['id', '=', id]], {'force_sql_filters': True})
+        instance = await self.middleware.call(
+            f'{self._config.namespace}.query',
+            [[self._config.datastore_primary_key, '=', id]],
+            {'force_sql_filters': True}
+        )
         if not instance:
             raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
         return instance[0]
