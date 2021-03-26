@@ -268,6 +268,10 @@ class SharingNFSService(SharingService):
         return ', '.join(share_task[self.path_field])
 
     @private
+    async def sharing_task_datasets(self, data):
+        return [os.path.relpath(path, '/mnt') for path in data[self.path_field]]
+
+    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
         for path in data[self.path_field]:
             if await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets):

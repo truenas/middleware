@@ -35,7 +35,7 @@ class CatalogService(CRUDService):
         cli_namespace = 'app.catalog'
 
     @private
-    async def catalog_extend_context(self, extra):
+    async def catalog_extend_context(self, rows, extra):
         k8s_dataset = (await self.middleware.call('kubernetes.config'))['dataset']
         catalogs_dir = os.path.join('/mnt', k8s_dataset, 'catalogs') if k8s_dataset else f'{TMP_IX_APPS_DIR}/catalogs'
         return {
