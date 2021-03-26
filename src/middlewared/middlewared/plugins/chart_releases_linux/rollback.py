@@ -19,7 +19,6 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'rollback_options',
-            Bool('force', default=False),
             Bool('force_rollback', default=False),
             Bool('recreate_resources', default=False),
             Bool('rollback_snapshot', default=True),
@@ -42,10 +41,6 @@ class ChartReleaseService(Service):
         `recreate_resources` is a boolean which will delete and then create the kubernetes resources on rollback
         of chart release. This should be used with caution as if chart release is consuming immutable objects like
         a PVC, the rollback operation can't be performed and will fail as helm tries to do a 3 way patch for rollback.
-
-        `force` is a boolean which when set will override values provided for `force_rollback` and `recreate_resources`
-        attributes and consider them as set. This option is deprecated and will be removed in next major Angelfish
-        release.
 
         Rollback is functional for the actual configuration of the release at the `item_version` specified and
         any associated `ix_volumes` with any PVC's which were consuming chart release storage class.
@@ -71,11 +66,8 @@ class ChartReleaseService(Service):
 
         history_item = release['history'][rollback_version]
         history_ver = str(history_item['version'])
-        override_force = options['force']
         force_rollback = options['force_rollback']
         helm_force_flag = options['recreate_resources']
-        if override_force:
-            force_rollback = helm_force_flag = override_force
 
         # If helm force flag is specified, we should see if the chart release is consuming any PVC's and if it is,
         # let's not initiate a rollback as it's destined to fail by helm
