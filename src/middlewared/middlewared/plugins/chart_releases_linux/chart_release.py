@@ -538,7 +538,7 @@ class ChartReleaseService(CRUDService):
         await self.perform_actions(context)
 
         config[CONTEXT_KEY_NAME].update({
-            **get_action_context(data['release_name']),
+            **get_action_context(chart_release),
             'operation': 'UPDATE',
             'isUpdate': True,
         })
