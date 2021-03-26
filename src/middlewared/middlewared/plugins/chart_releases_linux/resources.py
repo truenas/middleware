@@ -131,6 +131,7 @@ class ChartReleaseService(Service):
         )
         return await self.retrieve_pv_pvc_mapping_internal(chart_release)
 
+    @private
     async def retrieve_pv_pvc_mapping_internal(self, chart_release):
         mapping = {}
         release_vol_ds = os.path.join(chart_release['dataset'], 'volumes')
