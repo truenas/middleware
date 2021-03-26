@@ -73,13 +73,17 @@ class VMDeviceService(Service, PCIInfoBase):
         drivers = [e.text for e in driver.getchildren()] if driver is not None else []
 
         node_info = await self.middleware.call('vm.device.retrieve_node_information', xml)
+        error_str = ''
+        if not node_info['iommu_group'].get('number'):
+            error_str += 'Unable to determine iommu group\n'
+        if not node_info['iommu_group'].get('addresses'):
+            error_str += 'Unable to determine PCI device address\n'
+
         return {
             **node_info,
             'drivers': drivers,
-            'available': node_info['iommu_group']['number'] and all(
-                d == 'vfio-pci' for d in drivers
-            ),
-            'error': 'Unable to determine iommu group' if not node_info['iommu_group']['number'] else None,
+            'available': not error_str and all(d == 'vfio-pci' for d in drivers),
+            'error': f'Following errors were found with the device:\n{error_str}' if error_str else None,
         }
 
     async def passthrough_device_choices(self):
