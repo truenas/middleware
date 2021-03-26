@@ -76,7 +76,9 @@ class VMDeviceService(Service, PCIInfoBase):
         error_str = ''
         if not node_info['iommu_group'].get('number'):
             error_str += 'Unable to determine iommu group\n'
-        if not node_info['iommu_group'].get('addresses'):
+        if not node_info['iommu_group'].get('addresses') or not all(
+            a[k] for a in node_info['iommu_group']['addresses'] for k in a
+        ):
             error_str += 'Unable to determine PCI device address\n'
 
         return {
