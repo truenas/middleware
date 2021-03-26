@@ -590,11 +590,18 @@ class SharingTaskService(CRUDService):
     share_task_type = NotImplemented
 
     @private
-    async def sharing_task_extend_context(self, extra):
+    async def sharing_task_extend_context(self, rows, extra):
+        datasets = sum([
+            await self.middleware.call(f'{self._config.namespace}.sharing_task_datasets', row)
+            for row in rows
+        ], [])
+
         return {
-            'locked_datasets': await self.middleware.call('zfs.dataset.locked_datasets'),
-            'service_extend': (await self.middleware.call(self._config.datastore_extend_context, extra))
-            if self._config.datastore_extend_context else {}
+            'locked_datasets': await self.middleware.call('zfs.dataset.locked_datasets', datasets) if datasets else [],
+            'service_extend': (
+                await self.middleware.call(self._config.datastore_extend_context, rows, extra)
+                if self._config.datastore_extend_context else None,
+            ),
         }
 
     @private
@@ -603,6 +610,10 @@ class SharingTaskService(CRUDService):
             verrors, self.middleware, f'{schema}.{self.path_field}', data.get(self.path_field)
         )
         return verrors
+
+    @private
+    async def sharing_task_datasets(self, data):
+        return [os.path.relpath(data[self.path_field], '/mnt')]
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):

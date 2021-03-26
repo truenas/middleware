@@ -114,7 +114,7 @@ class DiskService(CRUDService):
         return disk
 
     @private
-    async def disk_extend_context(self, extra):
+    async def disk_extend_context(self, rows, extra):
         context = {
             'passwords': extra.get('passwords', False),
             'disks_keys': {},

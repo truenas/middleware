@@ -410,21 +410,41 @@ class ZFSDatasetService(CRUDService):
         private = True
         process_pool = True
 
-    def locked_datasets(self):
+    def locked_datasets(self, names=None):
+        query_filters = []
+        if names is not None:
+            query_filters.append(['id', 'in', names])
+
+        result = self.flatten_datasets(self.query(query_filters, {
+            'extra': {
+                'flat': False,  # So child datasets are also queried
+                'properties': ['encryption', 'keystatus', 'mountpoint']
+            },
+        }))
+
+        post_filters = [['encrypted', '=', True]]
+
         try:
             about_to_lock_dataset = self.middleware.call_sync('cache.get', 'about_to_lock_dataset')
         except KeyError:
             about_to_lock_dataset = None
 
-        or_filters = [
+        post_filters.append([
             'OR', [['key_loaded', '=', False]] + (
                 [['id', '=', about_to_lock_dataset], ['id', '^', f'{about_to_lock_dataset}/']]
                 if about_to_lock_dataset else []
             )
+        ])
+
+        # FIXME: libzfs bug(?) discussion pending
+        # return filter_list(result, post_filters, {'select': ['id', 'mountpoint']})
+        return [
+            {
+                'id': dataset['id'],
+                'mountpoint': dataset['properties']['mountpoint']['value']
+            }
+            for dataset in filter_list(result, post_filters)
         ]
-        return self.query([['encrypted', '=', True], or_filters], {
-            'extra': {'properties': ['encryption', 'keystatus', 'mountpoint']}, 'select': ['id', 'mountpoint']
-        })
 
     def flatten_datasets(self, datasets):
         return sum([[deepcopy(ds)] + self.flatten_datasets(ds['children']) for ds in datasets], [])
@@ -474,24 +494,40 @@ class ZFSDatasetService(CRUDService):
 
         with libzfs.ZFS() as zfs:
             # Handle `id` filter specially to avoiding getting all datasets
-            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+            if filters and filters[0][0] == 'id' and filters[0][1] in ['=', 'in']:
+                if filters[0][1] == 'in':
+                    names = list(set(filters[0][2]))
+                else:
+                    names = [filters[0][2]]
+
                 state_options = {
                     'snapshots': extra.get('snapshots', False),
                     'recursive': extra.get('recursive', True),
                     'snapshots_recursive': extra.get('snapshots_recursive', False)
                 }
-                try:
-                    datasets = [zfs.get_dataset(filters[0][2]).__getstate__(**state_options)]
-                except libzfs.ZFSException:
-                    datasets = []
+
+                if state_options['recursive']:
+                    new_names = []
+                    for name in sorted(names, key=len):
+                        if not any(name.startswith(f'{existing_name}/') for existing_name in new_names):
+                            new_names.append(name)
+                    names = new_names
+
+                datasets = []
+                for name in names:
+                    try:
+                        datasets.append(zfs.get_dataset(name).__getstate__(**state_options))
+                    except libzfs.ZFSException as e:
+                        pass
             else:
                 datasets = zfs.datasets_serialized(
                     props=props, top_level_props=top_level_props, user_props=user_properties
                 )
-                if flat:
-                    datasets = self.flatten_datasets(datasets)
-                else:
-                    datasets = list(datasets)
+
+            if flat:
+                datasets = self.flatten_datasets(datasets)
+            else:
+                datasets = list(datasets)
 
         return filter_list(datasets, filters, options)
 

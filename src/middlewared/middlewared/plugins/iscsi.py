@@ -485,6 +485,16 @@ class iSCSITargetExtentService(SharingService):
         datastore_extend_context = 'iscsi.extent.extent_extend_context'
 
     @private
+    async def sharing_task_datasets(self, data):
+        if data['type'] == 'DISK':
+            if data['disk'].startswith('zvol/'):
+                return [data['disk'][5:]]
+            else:
+                return []
+
+        return await super().sharing_task_datasets(data)
+
+    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
         if data['type'] == 'DISK':
             if data['disk'].startswith('zvol/'):
@@ -660,7 +670,7 @@ class iSCSITargetExtentService(SharingService):
         return data
 
     @private
-    async def extent_extend_context(self, extra):
+    async def extent_extend_context(self, rows, extra):
         return {'disks': {d['identifier']: d for d in await self.middleware.call('disk.query')}}
 
     @private
