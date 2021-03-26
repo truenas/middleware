@@ -73,3 +73,12 @@ class Device(ABC):
 
     def identity(self):
         raise NotImplementedError
+
+    def pre_start_vm_device_setup(self, *args, **kwargs):
+        return getattr(self, f'pre_start_vm_device_setup_{osc.SYSTEM.lower()}')(*args, **kwargs)
+
+    def pre_start_vm_device_setup_linux(self, *args, **kwargs):
+        pass
+
+    def pre_start_vm_device_setup_freebsd(self, *args, **kwargs):
+        pass

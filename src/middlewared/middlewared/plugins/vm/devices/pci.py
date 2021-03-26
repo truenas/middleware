@@ -32,12 +32,12 @@ class PCI(Device):
         if cp.returncode:
             raise CallError(f'Unable to re-attach {self.passthru_device()} PCI device: {stderr.decode()}')
 
-    def is_available(self):
-        if osc.IS_LINUX:
-            device = self.get_details()
-            if not device['error'] and not device['available']:
-                self.detach_device()
+    def pre_start_vm_device_setup_linux(self, *args, **kwargs):
+        device = self.get_details()
+        if not device['error'] and not device['available']:
+            self.detach_device()
 
+    def is_available(self):
         return self.get_details()['available']
 
     def identity(self):

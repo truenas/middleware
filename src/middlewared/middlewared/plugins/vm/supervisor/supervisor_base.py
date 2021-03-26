@@ -127,6 +127,16 @@ class VMSupervisorBase(LibvirtConnectionMixin):
 
         self.update_vm_data(vm_data)
 
+        errors = []
+        for device in self.devices:
+            try:
+                device.pre_start_vm_device_setup()
+            except Exception as e:
+                errors.append(str(e))
+        if errors:
+            errors = '\n'.join(errors)
+            raise CallError(f'Failed setting up devices before VM start:\n{errors}')
+
         unavailable_devices = self.unavailable_devices()
         if unavailable_devices:
             raise CallError(

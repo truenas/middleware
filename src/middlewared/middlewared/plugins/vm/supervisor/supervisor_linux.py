@@ -30,7 +30,7 @@ class VMSupervisor(VMSupervisorBase):
         scsi_device_no = Nid(1)
         virtual_device_no = Nid(1)
         devices = []
-        for device in self.devices:
+        for device in filter(lambda d: d.is_available(), self.devices):
             if isinstance(device, (DISK, CDROM, RAW)):
                 if device.data['attributes'].get('type') == 'VIRTIO':
                     disk_no = virtual_device_no()
