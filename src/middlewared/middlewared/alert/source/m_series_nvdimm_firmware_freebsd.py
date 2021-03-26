@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 
 class TrueNASMNVDIMMFirmwareVersionAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
-    level = AlertLevel.EMERGENCY
+    level = AlertLevel.WARNING
     title = "Invalid NVDIMM Firmware Version"
     text = (
-        "NVDIMM device (nvdimm%(index)d) is using invalid firmware version %(version)s which can cause data "
-        "loss. Please contact iXsystems Support using the form in System > Support."
+        "NVDIMM device (nvdimm%(index)d) is using a firmware version which can cause data loss if a power outage "
+        "event occurs. Please contact iXsystems Support using the form in System > Support."
     )
 
     products = ("ENTERPRISE",)
