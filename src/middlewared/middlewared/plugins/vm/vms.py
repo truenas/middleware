@@ -40,6 +40,7 @@ class VMModel(sa.Model):
     shutdown_timeout = sa.Column(sa.Integer(), default=90)
     cpu_mode = sa.Column(sa.Text())
     cpu_model = sa.Column(sa.Text(), nullable=True)
+    hide_from_msr = sa.Column(sa.Boolean(), default=False)
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -80,6 +81,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Str('grubconfig', null=True),
         List('devices', items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
+        Bool('hide_from_msr', default=False),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         Int('shutdown_timeout', default=90, valdiators=[Range(min=5, max=300)]),
         register=True,
@@ -102,6 +104,9 @@ class VMService(CRUDService, VMSupervisorMixin):
         `shutdown_timeout` indicates the time in seconds the system waits for the VM to cleanly shutdown. During system
         shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
+
+        `hide_from_msr` is a boolean which when set will hide the KVM hypervisor from standard MSR based discovery and
+        is useful to enable when doing GPU passthrough.
 
         SCALE Angelfish: Specifying `devices` is deprecated and will be removed in next major release.
         """

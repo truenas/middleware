@@ -24,6 +24,9 @@ def upgrade():
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.alter_column('adv_isolated_gpu_pci_ids', existing_type=sa.TEXT(), nullable=False)
 
+    with op.batch_alter_table('vm_vm', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('hide_from_msr', sa.Boolean(), server_default=False, nullable=False))
+
 
 def downgrade():
     pass
