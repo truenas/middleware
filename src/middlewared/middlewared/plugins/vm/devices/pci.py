@@ -66,15 +66,15 @@ class PCI(Device):
         return self.middleware.call_sync('vm.device.passthrough_device', self.passthru_device())
 
     def xml_linux(self, *args, **kwargs):
-        addresses = self.get_details()['iommu_group']['addresses']
+        address_info = {
+            k: hex(int(v)) for k, v in self.get_details()['capability'].items()
+            if k in ('domain', 'bus', 'slot', 'function')
+        }
+
         return create_element(
             'hostdev', mode='subsystem', type='pci', managed='yes', attribute_dict={
                 'children': [
-                    create_element('source', attribute_dict={
-                        'children': [
-                            create_element('address', **a) for a in addresses if all(a[k] for k in a)
-                        ]
-                    })
+                    create_element('source', attribute_dict={'children': [create_element('address', **address_info)]}),
                 ]
             }
         )
