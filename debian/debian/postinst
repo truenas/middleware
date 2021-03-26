@@ -66,3 +66,5 @@ systemctl enable zfs-zed
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
 
 systemctl set-default truenas.target
+
+sed -i.bak 's/CHARMAP="ISO-8859-15"/CHARMAP="UTF-8"/' /etc/default/console-setup
