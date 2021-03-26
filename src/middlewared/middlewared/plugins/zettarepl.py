@@ -303,8 +303,7 @@ class ZettareplService(Service):
                     event.set()
 
                 start_daemon_thread(target=target)
-                event.wait(5)
-                if self.process.is_alive():
+                if not event.wait(5):
                     self.logger.warning("Zettarepl was not joined in time, sending SIGKILL")
                     os.kill(self.process.pid, signal.SIGKILL)
 
