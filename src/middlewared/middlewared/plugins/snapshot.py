@@ -41,7 +41,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         cli_namespace = 'task.snapshot'
 
     @private
-    async def extend_context(self, extra):
+    async def extend_context(self, rows, extra):
         return {
             'state': await self.middleware.call('zettarepl.get_state'),
             'vmware': await self.middleware.call('vmware.query'),

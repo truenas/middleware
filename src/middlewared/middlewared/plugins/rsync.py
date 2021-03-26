@@ -307,7 +307,7 @@ class RsyncTaskService(TaskPathService):
         return data
 
     @private
-    async def rsync_task_extend_context(self, extra):
+    async def rsync_task_extend_context(self, rows, extra):
         jobs = {}
         for j in await self.middleware.call("core.get_jobs", [("method", "=", "rsynctask.run")],
                                             {"order_by": ["id"]}):

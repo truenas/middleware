@@ -752,6 +752,13 @@ class SharingSMBService(SharingService):
         cli_namespace = 'sharing.smb'
 
     @private
+    async def sharing_task_datasets(self, data):
+        if data[self.path_field]:
+            return [os.path.relpath(data[self.path_field], '/mnt')]
+        else:
+            return []
+
+    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
         return await self.middleware.call(
             'pool.dataset.path_in_locked_datasets', data[self.path_field], locked_datasets

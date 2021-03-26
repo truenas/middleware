@@ -39,7 +39,7 @@ class iSCSIHostService(CRUDService):
         cli_namespace = "sharing.iscsi.host"
 
     @private
-    async def extend_context(self, extra):
+    async def extend_context(self, rows, extra):
         id_to_iqns = defaultdict(list)
         for row in await self.middleware.call("datastore.query", "services.iscsihostiqn", [], {"relationships": False}):
             id_to_iqns[row["host_id"]].append(row["iqn"])

@@ -517,9 +517,19 @@ class iSCSITargetExtentService(SharingService):
         cli_namespace = 'sharing.iscsi.extent'
 
     @private
+    async def sharing_task_datasets(self, data):
+        if data['type'] == 'ZVOL':
+            if data['path'].startswith('zvol/'):
+                return [data['path'][5:]]
+            else:
+                return []
+
+        return await super().sharing_task_datasets(data)
+
+    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
         if data['type'] == 'ZVOL':
-            return any(data['disk'][5:] == d['id'] for d in locked_datasets)
+            return any(data['path'][5:] == d['id'] for d in locked_datasets)
         else:
             return await super().sharing_task_determine_locked(data, locked_datasets)
 

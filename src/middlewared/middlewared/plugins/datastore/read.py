@@ -204,27 +204,27 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
     async def _queryset_serialize(
         self, qs, table, aliases, relationships, extend, extend_context, field_prefix, select, extra_options,
     ):
+        rows = []
+        for i, row in enumerate(qs):
+            rows.append(self._serialize(row, table, aliases, relationships[i], field_prefix))
+
         if extend_context:
-            extend_context_value = await self.middleware.call(extend_context, extra_options)
+            extend_context_value = await self.middleware.call(extend_context, rows, extra_options)
         else:
             extend_context_value = None
 
-        result = []
-        for i, row in enumerate(qs):
-            result.append(await self._serialize(
-                row, table, aliases, relationships[i],
-                extend, extend_context, extend_context_value, field_prefix, select
-            ))
+        return [
+            await self._extend(data, extend, extend_context, extend_context_value, select)
+            for data in rows
+        ]
 
-        return result
-
-    async def _serialize(self, obj, table, aliases, relationships, extend, extend_context, extend_context_value,
-                         field_prefix, select):
+    def _serialize(self, obj, table, aliases, relationships, field_prefix):
         data = self._serialize_row(obj, table, aliases)
         data.update(relationships)
 
-        data = {self._strip_prefix(k, field_prefix): v for k, v in data.items()}
+        return {self._strip_prefix(k, field_prefix): v for k, v in data.items()}
 
+    async def _extend(self, data, extend, extend_context, extend_context_value, select):
         if extend:
             if extend_context:
                 data = await self.middleware.call(extend, data, extend_context_value)
