@@ -245,14 +245,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             # Memory related xml
             create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
             # Add features
-            create_element(
-                'features', attribute_dict={
-                    'children': [
-                        create_element('acpi'),
-                        create_element('msrs', unknown='ignore'),
-                    ]
-                }
-            ),
+            self.get_features_xml(),
             # Clock offset
             create_element('clock', offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'),
             # Devices
@@ -280,6 +273,21 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             )
 
         return domain_children
+
+    def get_features_xml(self):
+        features = []
+        if self.vm_data['hide_from_msr']:
+            features.append(
+                create_element('kvm', attribute_dict={'children': [create_element('hidden', state='on')]})
+            )
+        return create_element(
+            'features', attribute_dict={
+                'children': [
+                    create_element('acpi'),
+                    create_element('msrs', unknown='ignore'),
+                ] + features,
+            }
+        )
 
     def before_start_checks(self):
         # Let's ensure that we are able to boot a GRUB based VM
