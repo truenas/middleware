@@ -137,7 +137,7 @@ class ChartReleaseService(Service):
         release_vol_ds = os.path.join(chart_release['dataset'], 'volumes')
         zfs_volumes = {
             zv['metadata']['name']: zv for zv in await self.middleware.call(
-                'k8s.zv.query', [['spec.poolname', '=', release_vol_ds]]
+                'k8s.zv.query', [['spec.poolName', '=', release_vol_ds]]
             )
         }
 
