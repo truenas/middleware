@@ -9,4 +9,4 @@ class ServiceService(Service):
         if service.systemd_unit == NotImplemented:
             return []
         else:
-            return [service.systemd_unit] + service.systemd_extra_units
+            return [service.systemd_unit] + await service.systemd_extra_units()
