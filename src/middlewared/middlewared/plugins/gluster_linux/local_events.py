@@ -1,5 +1,4 @@
 import aiohttp
-import pathlib
 import contextlib
 import jwt
 import enum
