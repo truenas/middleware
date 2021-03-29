@@ -76,8 +76,8 @@ class SMBPath(enum.Enum):
     LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private', 0o700, True)
     MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/msg.sock', 0o700, False)
     RUNDIR = ('/var/run/samba4', '/var/run/samba', 0o755, True)
-    LOCKDIR = ('/var/lock', '/var/lock', 0o755, True)
-    LOGDIR = ('/var/log/samba4', '/var/log/samba', 0o755, True)
+    LOCKDIR = ('/var/run/samba4', '/var/run/samba-lock', 0o755, True)
+    LOGDIR = ('/var/log/samba4', '/var/log/samba4', 0o755, True)
     IPCSHARE = ('/var/tmp', '/tmp', 0o1777, True)
 
     def platform(self):
