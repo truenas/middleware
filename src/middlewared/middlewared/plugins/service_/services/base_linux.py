@@ -27,8 +27,10 @@ if IS_LINUX:
 
 class SimpleServiceLinux:
     systemd_unit = NotImplemented
-    systemd_extra_units = []
     systemd_async_start = False
+
+    async def systemd_extra_units(self):
+        return []
 
     async def _get_state_linux(self):
         return await self.middleware.run_in_thread(self._get_state_linux_sync)
