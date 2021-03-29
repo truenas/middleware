@@ -115,11 +115,13 @@ class ChartReleaseService(Service):
         if not release['update_available'] and not release['container_images_update_available']:
             raise CallError('No update is available for chart release', errno=errno.ENOENT)
 
-        latest_version = release['human_version']
+        latest_version = release['chart_metadata']['version']
+        latest_human_version = release['human_version']
         changelog = None
         if release['update_available']:
             catalog_item = self.middleware.call_sync('chart.release.get_version', release, options)
-            latest_version = catalog_item['human_version']
+            latest_version = catalog_item['version']
+            latest_human_version = catalog_item['human_version']
             changelog = catalog_item['changelog']
 
         return {
@@ -127,6 +129,7 @@ class ChartReleaseService(Service):
                 k: v for k, v in release['resources']['container_images'].items() if v['update_available']
             },
             'latest_version': latest_version,
+            'latest_human_version': latest_human_version,
             'changelog': changelog,
         }
 
