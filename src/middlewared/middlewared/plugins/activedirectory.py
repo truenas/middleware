@@ -6,9 +6,11 @@ import json
 import ntplib
 import os
 import pwd
+import shutil
 import socket
 import subprocess
 import threading
+import tdb
 import time
 
 from dns import resolver
@@ -1348,13 +1350,11 @@ class ActiveDirectoryService(ConfigService):
             if id.returncode != 0:
                 self.logger.debug('failed to id AD bind account [%s]: %s', ad['bindname'], id.stderr.decode())
 
-        netlist = subprocess.run(
-            [SMBCmd.NET.value, 'cache', 'list'],
-            capture_output=True,
-            check=False
-        )
-        if netlist.returncode != 0:
-            raise CallError(f'Winbind cache dump failed with error: {netlist.stderr.decode().strip()}')
+        shutil.copyfile(f'{SMBPath.LOCKDIR.platform()}/gencache.tdb', '/tmp/gencache.tdb')
+
+        gencache = tdb.Tdb('/tmp/gencache.tdb', 0, tdb.DEFAULT, os.O_RDONLY)
+        gencache_keys = [x for x in gencache.keys()]
+        gencache.close()
 
         known_domains = []
         local_users = {}
@@ -1380,9 +1380,15 @@ class ActiveDirectoryService(ConfigService):
                     'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
                 })
 
-        for line in netlist.stdout.decode().splitlines():
-            if line.startswith('Key: IDMAP/UID2SID'):
-                cached_uid = int((line.split())[1][14:])
+        for key in gencache_keys:
+            prefix = key[0:13]
+            if prefix != b'IDMAP/UID2SID' and prefix != b'IDMAP/GID2SID':
+                continue
+
+            line = key.decode()
+            if line.startswith('IDMAP/UID2SID'):
+                # tdb keys are terminated with \x00, this must be sliced off before converting to int
+                cached_uid = int(line[14:-1])
                 """
                 Do not cache local users. This is to avoid problems where a local user
                 may enter into the id range allotted to AD users.
@@ -1427,8 +1433,9 @@ class ActiveDirectoryService(ConfigService):
                         except KeyError:
                             break
 
-            if line.startswith('Key: IDMAP/GID2SID'):
-                cached_gid = int((line.split())[1][14:])
+            if line.startswith('IDMAP/GID2SID'):
+                # tdb keys are terminated with \x00, this must be sliced off before converting to int
+                cached_gid = int(line[14:-1])
                 if local_groups.get(cached_gid, None):
                     continue
 
