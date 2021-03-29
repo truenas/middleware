@@ -22,7 +22,8 @@ if __name__ == "__main__":
     advanced = {k.replace("adv_", ""): v for k, v in c.fetchone().items()}
 
     # We need to allow tpm in grub as sedutil-cli requires it
-    # TODO: Please remove kernel flag to use cgroups v1 when upstream k3s has support for cgroups v2
+    # TODO: Please remove kernel flag to use cgroups v1 when nvidia device plugin starts working
+    #  with it ( https://github.com/NVIDIA/k8s-device-plugin/issues/235 )
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 systemd.unified_cgroup_hierarchy=0"',
