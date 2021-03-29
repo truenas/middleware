@@ -22,6 +22,9 @@ class UPSService(SimpleService):
 
     systemd_unit = "nut-monitor"
 
+    async def systemd_extra_units(self):
+        return ["nut-server"] if (await self.middleware.call("ups.config"))["mode"] == "MASTER" else []
+
     async def before_start(self):
         await self.middleware.call("ups.dismiss_alerts")
 
