@@ -82,7 +82,7 @@ def test_004_changing_dataset_permissions_of_smb_dataset(request):
     global job_id
     payload = {
         "acl": [],
-        "mode": 777,
+        "mode": "777",
         "user": SMB_USER,
         "group": group,
     }
