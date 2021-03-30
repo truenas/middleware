@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import contextlib
 import json
 import os
 import subprocess
@@ -56,7 +57,7 @@ def dict_factory(cursor, row):
     return d
 
 
-def get_current_gpu_pci_ids():
+def get_current_gpu_pci_ids(root):
     from middlewared.plugins.config import FREENAS_DATABASE
     from middlewared.utils.gpu import get_gpus
     conn = sqlite3.connect(os.path.join(root, FREENAS_DATABASE))
@@ -68,10 +69,46 @@ def get_current_gpu_pci_ids():
     return [dev["pci_id"] for gpu in to_isolate for dev in gpu["devices"]]
 
 
+def update_module_files(root, config):
+    def get_path(p):
+        return os.path.join(root, p)
+
+    pci_ids = config['pci_ids']
+    for path in map(
+        get_path, [
+            'etc/initramfs-tools/modules',
+            'etc/modules',
+            'etc/modprobe.d/kvm.conf',
+            'etc/modprobe.d/nvidia.conf',
+            'etc/modprobe.d/vfio.conf',
+        ]
+    ):
+        with contextlib.suppress(OSError):
+            os.unlink(path)
+    if not pci_ids:
+        return
+
+    os.makedirs(get_path('etc/initramfs-tools'), exist_ok=True)
+    os.makedirs(get_path('etc/modprobe.d'), exist_ok=True)
+
+    for path in map(get_path, ['etc/initramfs-tools/modules', 'etc/modules']):
+        with open(path, 'w') as f:
+            f.write(f'vfio\nvfio_iommu_type1\nvfio_virqfd\nvfio_pci ids={",".join(pci_ids)}\n')
+
+    with open(get_path('etc/modprobe.d/kvm.conf'), 'w') as f:
+        f.write('options kvm ignore_msrs=1\n')
+
+    with open(get_path('etc/modprobe.d/nvidia.conf'), 'w') as f:
+        f.write('softdep nouveau pre: vfio-pci\nsoftdep nvidia pre: vfio-pci\nsoftdep nvidia* pre: vfio-pci\n')
+
+    with open(get_path('etc/modprobe.d/vfio.conf'), 'w') as f:
+        f.write(f'options vfio-pci ids={",".join(pci_ids)}\n')
+
+
 def update_initramfs_config(root):
     initramfs_config_path = os.path.join(root, "boot/initramfs_config.json")
     initramfs_config = {
-        "pci_ids": get_current_gpu_pci_ids(),
+        "pci_ids": get_current_gpu_pci_ids(root),
     }
     original_config = None
     if os.path.exists(initramfs_config_path):
@@ -81,6 +118,8 @@ def update_initramfs_config(root):
     if initramfs_config != original_config:
         with open(initramfs_config_path, "w") as f:
             f.write(json.dumps(initramfs_config))
+
+        update_module_files(root, initramfs_config)
         return True
 
     return False
