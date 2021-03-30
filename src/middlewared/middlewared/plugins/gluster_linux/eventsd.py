@@ -105,8 +105,8 @@ class GlusterEventsdService(Service):
             result = self.run_cmd(cmd)
 
             # sync the file across to all other peers
-            j = self.middleware.call_sync('gluster.eventsd.sync')
-            j.wait_sync()
+            job = self.middleware.call_sync('gluster.eventsd.sync')
+            job.wait_sync()
 
         return result
 
@@ -131,8 +131,8 @@ class GlusterEventsdService(Service):
             result = self.run_cmd(cmd)
 
             # sync the file across to all other peers
-            j = self.middleware.call_sync('gluster.eventsd.sync')
-            j.wait_sync()
+            job = self.middleware.call_sync('gluster.eventsd.sync')
+            job.wait_sync()
 
         return result
 
