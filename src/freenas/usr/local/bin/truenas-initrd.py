@@ -9,7 +9,7 @@ import pyudev
 import sqlite3
 
 
-def update_zfs_default():
+def update_zfs_default(root):
     with libzfs.ZFS() as zfs:
         disks = [disk.replace("/dev/", "") for disk in zfs.get(boot_pool).disks]
 
@@ -59,7 +59,7 @@ def dict_factory(cursor, row):
 def get_current_gpu_pci_ids():
     from middlewared.plugins.config import FREENAS_DATABASE
     from middlewared.utils.gpu import get_gpus
-    conn = sqlite3.connect(FREENAS_DATABASE)
+    conn = sqlite3.connect(os.path.join(root, FREENAS_DATABASE))
     conn.row_factory = dict_factory
     c = conn.cursor()
     c.execute("SELECT * FROM system_advanced")
@@ -68,8 +68,8 @@ def get_current_gpu_pci_ids():
     return [dev["pci_id"] for gpu in to_isolate for dev in gpu["devices"]]
 
 
-def update_initramfs_config():
-    initramfs_config_path = "/boot/initramfs_config.json"
+def update_initramfs_config(root):
+    initramfs_config_path = os.path.join(root, "boot/initramfs_config.json")
     initramfs_config = {
         "pci_ids": get_current_gpu_pci_ids(),
     }
@@ -91,6 +91,6 @@ if __name__ == "__main__":
     if root != "/":
         sys.path.append(os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
 
-    update_required = update_zfs_default() and update_initramfs_config()
+    update_required = update_zfs_default(root) and update_initramfs_config(root)
     if update_required:
         subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
