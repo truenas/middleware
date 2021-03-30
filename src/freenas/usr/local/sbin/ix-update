@@ -7,6 +7,7 @@ then
     exit 0
 fi
 
+REBOOT_SYSTEM=0
 TRUENAS_CONFIG="/data/freenas-v1.db"
 if [ -f /data/uploaded.db ]; then
     echo "Saving current ${TRUENAS_CONFIG} to ${TRUENAS_CONFIG}.bak"
@@ -28,6 +29,17 @@ migrate > $UPDATE_FAILED_LOG 2>&1
 
 echo "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')" | sqlite3 /data/freenas-v1.db
 
+truenas-initrd.py "/" > $UPDATE_FAILED_LOG 2>&1
+if [ $? -eq 1 ]; then
+	REBOOT_SYSTEM=1;
+fi
+
 rm -f $UPDATE_FAILED_LOG
 
 rm /data/need-update
+
+if [ "${REBOOT_SYSTEM}" = "1" ]; then
+	# We use force flag so that system does not actually perform a shutdown and instead reboots directly
+	# We do not have middleware running at this point, so this should be good
+	reboot -f;
+fi
