@@ -87,10 +87,10 @@ def update_initramfs_config():
 
 
 if __name__ == "__main__":
-    boot_pool, root, update_initramfs_if_changes = sys.argv[1:]
+    boot_pool, root = sys.argv[1:]
     if root != "/":
         sys.path.append(os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
 
     update_required = update_zfs_default() and update_initramfs_config()
-    if update_required and update_initramfs_if_changes == "1":
+    if update_required:
         subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
