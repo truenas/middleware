@@ -3,6 +3,7 @@ import errno
 import itertools
 import os
 
+from copy import deepcopy
 from datetime import datetime
 
 from middlewared.schema import Bool, Dict, Str
@@ -24,12 +25,20 @@ class DockerImagesService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
+        """
+        Retrieve container images present in the system.
+
+        `query-options.extra.parse_tags` is a boolean which when set will have normalized tags to be retrieved
+        for container images.
+        """
         results = []
         if not await self.middleware.call('service.started', 'docker'):
             return results
 
+        extra = deepcopy(options.get('extra', {}))
         update_cache = await self.middleware.call('container.image.image_update_cache')
         system_images = await self.middleware.call('container.image.get_system_images_tags')
+        parse_tags = extra.get('parse_tags', False)
 
         async with aiodocker.Docker() as docker:
             for image in await docker.images.list():
@@ -45,6 +54,10 @@ class DockerImagesService(CRUDService):
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
                     'update_available': not system_image and any(update_cache[r] for r in repo_tags),
                     'system_image': system_image,
+                    **(
+                        {'parsed_repo_tags': await self.middleware.call('container.image.parse_tags', repo_tags)}
+                        if parse_tags else {}
+                    )
                 })
         return filter_list(results, filters, options)
 
