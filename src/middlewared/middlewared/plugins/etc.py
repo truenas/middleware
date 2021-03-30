@@ -337,11 +337,6 @@ class EtcService(Service):
             {'type': 'py', 'path': 'libvirt', 'platform': 'Linux', 'checkpoint': None},
         ],
         'initramfs': [
-            {'type': 'mako', 'path': 'initramfs-tools/modules', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'mako', 'path': 'modules', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'mako', 'path': 'modprobe.d/kvm.conf', 'platform': 'Linux'},
-            {'type': 'mako', 'path': 'modprobe.d/nvidia.conf', 'platform': 'Linux'},
-            {'type': 'mako', 'path': 'modprobe.d/vfio.conf', 'platform': 'Linux'},
             {'type': 'py', 'path': 'initramfs_update', 'platform': 'Linux', 'checkpoint': None},
         ],
     }
