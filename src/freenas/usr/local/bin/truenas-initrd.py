@@ -141,7 +141,7 @@ def update_initramfs_config(root):
 
 
 if __name__ == "__main__":
-    root = sys.argv[1:]
+    root = sys.argv[1]
     if root != "/":
         sys.path.append(os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
 
