@@ -181,7 +181,7 @@ class BootService(Service):
 
     @private
     async def handle_initrd_zfs(self, update_initramfs_if_changes=True):
-        await run('/usr/local/bin/initrd-zfs.py', BOOT_POOL_NAME, '/', str(int(update_initramfs_if_changes)),
+        await run('/usr/local/bin/truenas-initrd.py', BOOT_POOL_NAME, '/', str(int(update_initramfs_if_changes)),
                   encoding='utf8', errors='ignore')
 
 

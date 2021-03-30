@@ -27,7 +27,7 @@ if __name__ == "__main__":
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 systemd.unified_cgroup_hierarchy=0 '
-        'amd_iommu=on iommu=pt kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on libata.allow_tpm=1"',
+        'amd_iommu=on iommu=pt kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on"',
     ]
 
     terminal = ["console"]
