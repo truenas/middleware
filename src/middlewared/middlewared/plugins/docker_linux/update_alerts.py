@@ -29,6 +29,10 @@ class DockerImagesService(Service, DockerClientMixin):
                     self.logger.error(str(e))
 
     @private
+    async def parse_tags(self, tags):
+        return [await self.parse_image_tag(tag) for tag in tags]
+
+    @private
     async def parse_image_tag(self, tag):
         # Following logic has been used from docker engine to make sure we follow the same rules/practices
         # for normalising the image name / tag
