@@ -288,6 +288,8 @@ class ConfigService(Service):
                     CallError.EREMOTENODEERROR,
                 )
 
+        self.middleware.call_sync('etc.generate', 'initramfs')
+
         if options['reboot']:
             self.middleware.run_coroutine(
                 self.middleware.call('system.reboot', {'delay': 10}), wait=False,
