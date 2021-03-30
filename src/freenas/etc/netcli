@@ -760,7 +760,7 @@ Acceptable formats are 255.255.255.0,
             break
 
     while True:
-        if failover_licensed:
+        if not failover_licensed:
             break
         yes = input(_("Configure failover settings? (y/n) "))
         if yes.lower().startswith("y"):
