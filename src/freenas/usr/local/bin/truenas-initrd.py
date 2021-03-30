@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import contextlib
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -10,7 +11,21 @@ import pyudev
 import sqlite3
 
 
-def update_zfs_default(root, boot_pool):
+logger = logging.getLogger(__name__)
+
+
+def update_zfs_default(root):
+    with libzfs.ZFS() as zfs:
+        existing_pools = [p.name for p in zfs.pools]
+
+    for i in ['freenas-boot', 'boot-pool']:
+        if i in existing_pools:
+            boot_pool = i
+            break
+    else:
+        logger.error('Failed to locate valid boot pool. Pools located were: %r', ', '.join(existing_pools))
+        return False
+
     with libzfs.ZFS() as zfs:
         disks = [disk.replace("/dev/", "") for disk in zfs.get(boot_pool).disks]
 
@@ -126,10 +141,19 @@ def update_initramfs_config(root):
 
 
 if __name__ == "__main__":
-    boot_pool, root = sys.argv[1:]
+    root = sys.argv[1:]
     if root != "/":
         sys.path.append(os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
 
-    update_required = update_zfs_default(root, boot_pool) | update_initramfs_config(root)
-    if update_required:
-        subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
+    try:
+        update_required = update_zfs_default(root) | update_initramfs_config(root)
+        if update_required:
+            subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
+    except Exception:
+        logger.error('Failed to update initramfs', exc_info=True)
+        exit(2)
+
+    # We give out an exit code of 1 when initramfs has been updated as we require a reboot of the system for the
+    # changes to have an effect. This caters to the case of uploading a database. Otherwise we give an exit code
+    # of 0 and in case of erring out
+    exit(int(update_required))
