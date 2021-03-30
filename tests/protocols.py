@@ -34,8 +34,15 @@ class SMB(object):
         self._user = None
         self._share = None
         self._host = None
+        self._smb1 = False
 
-    def connect(self, host=None, share=None, username=None, password=None):
+    def connect(self, **kwargs):
+        host = kwargs.get("host")
+        share = kwargs.get("share")
+        username = kwargs.get("username")
+        password = kwargs.get("password")
+        smb1 = kwargs.get("smb1", False)
+
         self._lp = s3param.get_context()
         self._lp.load_default()
         self._cred = credentials.Credentials()
@@ -48,7 +55,14 @@ class SMB(object):
 
         self._host = host
         self._share = share
-        self._connection = libsmb.Conn(host, share, self._lp, self._cred)
+        self._smb1 = smb1
+        self._connection = libsmb.Conn(
+            host,
+            share,
+            self._lp,
+            self._cred,
+            force_smb1=smb1,
+        )
 
     def disconnect(self):
         open_files = list(self._open_files.keys())
@@ -64,6 +78,7 @@ class SMB(object):
             "connected": True if self._connection is not None else False,
             "host": self._host,
             "share": self._share,
+            "smb1": self._smb1,
             "username": self._user,
             "open_files": self._open_files,
         }
@@ -77,23 +92,39 @@ class SMB(object):
     def ls(self, path):
         return self._connection.list(path)
 
-    def create_file(self, file, mode):
+    def create_file(self, file, mode, attributes=None, do_create=False):
+        dosmode = 0
+        f = None
+        for char in str(attributes):
+            if char == "h":
+                dosmode += libsmb.FILE_ATTRIBUTE_HIDDEN
+            elif char == "r":
+                dosmode += libsmb.FILE_ATTRIBUTE_READONLY
+            elif char == "s":
+                dosmode += libsmb.FILE_ATTRIBUTE_SYSTEM
+            elif char == "a":
+                dosmode += libsmb.FILE_ATTRIBUTE_ARCHIVE
+
         if mode == "r":
             f = self._connection.create(
                 file,
-                CreateDisposition=1,
+                CreateDisposition=1 if not do_create else 3,
                 DesiredAccess=security.SEC_GENERIC_READ,
+                FileAttributes=dosmode,
             )
         elif mode == "w":
             f = self._connection.create(
                 file,
                 CreateDisposition=3,
                 DesiredAccess=security.SEC_GENERIC_ALL,
+                FileAttributes=dosmode,
             )
+
         self._open_files[f] = {
             "filename": file,
             "fh": f,
-            "mode": mode
+            "mode": mode,
+            "attributes": dosmode
         }
         return f
 
