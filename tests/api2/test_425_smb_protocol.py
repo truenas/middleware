@@ -7,8 +7,8 @@ import enum
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user, scale, hostname
+from functions import PUT, POST, GET, DELETE, wait_on_job
+from auto_config import ip, pool_name, scale
 from pytest_dependency import depends
 from protocols import SMB
 
@@ -157,11 +157,11 @@ def test_010_check_dosmode_create(request, dm):
     c = SMB()
     c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     if dm == DOSmode.READONLY:
-        fd = c.create_file(dm.name, "w", "r")
+        c.create_file(dm.name, "w", "r")
     elif dm == DOSmode.HIDDEN:
-        fd = c.create_file(dm.name, "w", "h")
+        c.create_file(dm.name, "w", "h")
     elif dm == DOSmode.SYSTEM:
-        fd = c.create_file(dm.name, "w", "s")
+        c.create_file(dm.name, "w", "s")
     dir_listing = c.ls("/")
     for f in dir_listing:
         if f['name'] != dm.name:
@@ -229,11 +229,11 @@ def test_052_check_dosmode_create_smb1(request, dm):
     c = SMB()
     c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     if dm == DOSmode.READONLY:
-        fd = c.create_file(f'{dm.name}_smb1', "w", "r")
+        c.create_file(f'{dm.name}_smb1', "w", "r")
     elif dm == DOSmode.HIDDEN:
-        fd = c.create_file(f'{dm.name}_smb1', "w", "h")
+        c.create_file(f'{dm.name}_smb1', "w", "h")
     elif dm == DOSmode.SYSTEM:
-        fd = c.create_file(f'{dm.name}_smb1', "w", "s")
+        c.create_file(f'{dm.name}_smb1', "w", "s")
     dir_listing = c.ls("/")
     for f in dir_listing:
         if f['name'] != f'{dm.name}_smb1':
