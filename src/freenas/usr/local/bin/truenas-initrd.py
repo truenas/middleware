@@ -10,7 +10,7 @@ import pyudev
 import sqlite3
 
 
-def update_zfs_default(root):
+def update_zfs_default(root, boot_pool):
     with libzfs.ZFS() as zfs:
         disks = [disk.replace("/dev/", "") for disk in zfs.get(boot_pool).disks]
 
@@ -130,6 +130,6 @@ if __name__ == "__main__":
     if root != "/":
         sys.path.append(os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
 
-    update_required = update_zfs_default(root) and update_initramfs_config(root)
+    update_required = update_zfs_default(root, boot_pool) | update_initramfs_config(root)
     if update_required:
         subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
