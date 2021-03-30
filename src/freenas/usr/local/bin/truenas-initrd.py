@@ -7,9 +7,7 @@ import libzfs
 import pyudev
 
 
-if __name__ == "__main__":
-    boot_pool, root, update_initramfs_if_changes = sys.argv[1:]
-
+def update_zfs_default():
     with libzfs.ZFS() as zfs:
         disks = [disk.replace("/dev/", "") for disk in zfs.get(boot_pool).disks]
 
@@ -42,10 +40,18 @@ if __name__ == "__main__":
         lines.append(f"{zfs_var_name}=15")
 
     new_config = "\n".join(lines) + "\n"
-
     if new_config != original_config:
         with open(zfs_config_path, "w") as f:
             f.write(new_config)
+        return True
+    return False
 
-        if update_initramfs_if_changes == "1":
-            subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
+
+if __name__ == "__main__":
+    boot_pool, root, update_initramfs_if_changes = sys.argv[1:]
+    if root != "/":
+        sys.path.append(os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
+
+    update_required = update_zfs_default()
+    if update_required and update_initramfs_if_changes == "1":
+        subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
