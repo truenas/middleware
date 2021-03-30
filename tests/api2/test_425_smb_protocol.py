@@ -18,29 +18,6 @@ SMB_NAME = "SMBPROTO"
 smb_path = "/mnt/" + dataset
 group = 'root' if scale else 'wheel'
 
-smb_acl = [
-    {
-        "tag": 'USER',
-        "id": None,
-        "type": "ALLOW",
-        "perms": {"BASIC": "FULL_CONTROL"},
-        "flags": {"BASIC": "INHERIT"}
-    },
-    {
-        "tag": "owner@",
-        "id": None,
-        "type": "ALLOW",
-        "perms": {"BASIC": "FULL_CONTROL"},
-        "flags": {"BASIC": "INHERIT"}
-    },
-    {
-        "tag": "group@",
-        "id": None,
-        "type": "ALLOW",
-        "perms": {"BASIC": "FULL_CONTROL"},
-        "flags": {"BASIC": "INHERIT"}
-    }
-]
 
 guest_path_verification = {
     "user": "shareuser",
@@ -103,9 +80,9 @@ def test_003_creating_shareuser_to_test_acls(request):
 def test_004_changing_dataset_permissions_of_smb_dataset(request):
     depends(request, ["SMB_USER_CREATED"])
     global job_id
-    smb_acl[0]['id']=next_uid
     payload = {
-        "acl": smb_acl,
+        "acl": [],
+        "mode": 777,
         "user": SMB_USER,
         "group": group,
     }
