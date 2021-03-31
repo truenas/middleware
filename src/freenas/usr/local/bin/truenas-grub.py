@@ -5,13 +5,7 @@ import sqlite3
 
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.utils import osc
-
-
-def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
+from middlewared.utils.db import dict_factory
 
 
 if __name__ == "__main__":
