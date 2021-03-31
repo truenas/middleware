@@ -397,16 +397,8 @@ class VMWareService(CRUDService):
         return self.middleware.call_sync("vmware.query", [f])
 
     @private
-    def snapshot_begin(self, dataset, recursive):
+    def snapshot_proceed(self, dataset, qs):
         self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
-
-        # If there's a VMWare Plugin object for this filesystem
-        # snapshot the VMs before taking the ZFS snapshot.
-        # Once we've taken the ZFS snapshot we're going to log back in
-        # to VMWare and destroy all the VMWare snapshots we created.
-        # We do this because having VMWare snapshots in existence impacts
-        # the performance of your VMs.
-        qs = self._dataset_get_vms(dataset, recursive)
 
         # Generate a unique snapshot name that won't collide with anything that exists on the VMWare side.
         vmsnapname = str(uuid.uuid4())
@@ -551,13 +543,29 @@ class VMWareService(CRUDService):
             connect.Disconnect(si)
 
     @private
-    @job()
-    def periodic_snapshot_task_begin(self, job, task_id):
+    def periodic_snapshot_task_begin(self, task_id):
         task = self.middleware.call_sync("pool.snapshottask.query",
                                          [["id", "=", task_id]],
                                          {"get": True})
 
-        return self.snapshot_begin(task["dataset"], task["recursive"])
+        # If there's a VMWare Plugin object for this filesystem
+        # snapshot the VMs before taking the ZFS snapshot.
+        # Once we've taken the ZFS snapshot we're going to log back in
+        # to VMWare and destroy all the VMWare snapshots we created.
+        # We do this because having VMWare snapshots in existence impacts
+        # the performance of your VMs.
+        qs = self._dataset_get_vms(task["dataset"], task["recursive"])
+        if qs:
+            return {
+                "dataset": task["dataset"],
+                "qs": qs,
+            }
+
+    @private
+    @accepts(Any("context", private=True))
+    @job()
+    def periodic_snapshot_task_proceed(self, job, context):
+        return self.snapshot_proceed(context["dataset"], context["qs"])
 
     @private
     @accepts(Any("context", private=True))
