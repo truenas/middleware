@@ -294,6 +294,7 @@ def test_062_write_stream_large_offset_smb2(request):
     contents = c.read(fd2, 131072, 5)
     c.close(fd2)
     c.disconnect()
+    assert(contents.decode() == "test2")
 
 
 def test_063_stream_delete_on_close_smb2(request):
@@ -350,6 +351,7 @@ def test_066_write_stream_large_offset_smb1(request):
     contents = c.read(fd2, 131072, 5)
     c.close(fd2)
     c.disconnect()
+    assert(contents.decode() == "test2")
 
 
 def test_067_stream_delete_on_close_smb1(request):
