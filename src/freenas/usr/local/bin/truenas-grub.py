@@ -7,9 +7,7 @@ from middlewared.utils.db import query_config_table
 
 
 if __name__ == "__main__":
-    advanced = {
-        k.replace("adv_", ""): v for k, v in query_config_table("system_advanced").items()
-    }
+    advanced = query_config_table("system_advanced", prefix="adv_")
 
     # We need to allow tpm in grub as sedutil-cli requires it
     # TODO: Please remove kernel flag to use cgroups v1 when nvidia device plugin starts working
