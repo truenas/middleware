@@ -5,6 +5,7 @@ import logging
 import os
 import subprocess
 import sys
+import textwrap
 
 import libzfs
 import pyudev
@@ -23,8 +24,7 @@ def update_zfs_default(root):
             boot_pool = i
             break
     else:
-        logger.error('Failed to locate valid boot pool. Pools located were: %r', ', '.join(existing_pools))
-        return False
+        raise CallError(f'Failed to locate valid boot pool. Pools located were: {", ".join(existing_pools)}')
 
     with libzfs.ZFS() as zfs:
         disks = [disk.replace("/dev/", "") for disk in zfs.get(boot_pool).disks]
@@ -65,16 +65,7 @@ def update_zfs_default(root):
     return False
 
 
-def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
-
-
 def get_current_gpu_pci_ids(root):
-    from middlewared.plugins.config import FREENAS_DATABASE
-    from middlewared.utils.gpu import get_gpus
     conn = sqlite3.connect(os.path.join(root, FREENAS_DATABASE))
     conn.row_factory = dict_factory
     c = conn.cursor()
@@ -88,14 +79,14 @@ def update_module_files(root, config):
     def get_path(p):
         return os.path.join(root, p)
 
-    pci_ids = config['pci_ids']
+    pci_ids = config["pci_ids"]
     for path in map(
         get_path, [
-            'etc/initramfs-tools/modules',
-            'etc/modules',
-            'etc/modprobe.d/kvm.conf',
-            'etc/modprobe.d/nvidia.conf',
-            'etc/modprobe.d/vfio.conf',
+            "etc/initramfs-tools/modules",
+            "etc/modules",
+            "etc/modprobe.d/kvm.conf",
+            "etc/modprobe.d/nvidia.conf",
+            "etc/modprobe.d/vfio.conf",
         ]
     ):
         with contextlib.suppress(OSError):
@@ -103,21 +94,30 @@ def update_module_files(root, config):
     if not pci_ids:
         return
 
-    os.makedirs(get_path('etc/initramfs-tools'), exist_ok=True)
-    os.makedirs(get_path('etc/modprobe.d'), exist_ok=True)
+    os.makedirs(get_path("etc/initramfs-tools"), exist_ok=True)
+    os.makedirs(get_path("etc/modprobe.d"), exist_ok=True)
 
-    for path in map(get_path, ['etc/initramfs-tools/modules', 'etc/modules']):
-        with open(path, 'w') as f:
-            f.write(f'vfio\nvfio_iommu_type1\nvfio_virqfd\nvfio_pci ids={",".join(pci_ids)}\n')
+    for path in map(get_path, ["etc/initramfs-tools/modules", "etc/modules"]):
+        with open(path, "w") as f:
+            f.write(textwrap.dedent(f"""\
+            vfio
+            vfio_iommu_type1
+            vfio_virqfd
+            vfio_pci ids={','.join(pci_ids)}
+            """))
 
-    with open(get_path('etc/modprobe.d/kvm.conf'), 'w') as f:
-        f.write('options kvm ignore_msrs=1\n')
+    with open(get_path("etc/modprobe.d/kvm.conf"), "w") as f:
+        f.write("options kvm ignore_msrs=1\n")
 
-    with open(get_path('etc/modprobe.d/nvidia.conf'), 'w') as f:
-        f.write('softdep nouveau pre: vfio-pci\nsoftdep nvidia pre: vfio-pci\nsoftdep nvidia* pre: vfio-pci\n')
+    with open(get_path("etc/modprobe.d/nvidia.conf"), "w") as f:
+        f.write(textwrap.dedent("""\
+        softdep nouveau pre: vfio-pci
+        softdep nvidia pre: vfio-pci
+        softdep nvidia* pre: vfio-pci
+        """))
 
-    with open(get_path('etc/modprobe.d/vfio.conf'), 'w') as f:
-        f.write(f'options vfio-pci ids={",".join(pci_ids)}\n')
+    with open(get_path("etc/modprobe.d/vfio.conf"), "w") as f:
+        f.write(f"options vfio-pci ids={','.join(pci_ids)}\n")
 
 
 def update_initramfs_config(root):
@@ -143,14 +143,19 @@ def update_initramfs_config(root):
 if __name__ == "__main__":
     root = sys.argv[1]
     if root != "/":
-        sys.path.append(os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
+        sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
+
+    from middlewared.plugins.config import FREENAS_DATABASE
+    from middlewared.service import CallError
+    from middlewared.utils.db import dict_factory
+    from middlewared.utils.gpu import get_gpus
 
     try:
         update_required = update_zfs_default(root) | update_initramfs_config(root)
         if update_required:
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
     except Exception:
-        logger.error('Failed to update initramfs', exc_info=True)
+        logger.error("Failed to update initramfs", exc_info=True)
         exit(2)
 
     # We give out an exit code of 1 when initramfs has been updated as we require a reboot of the system for the
