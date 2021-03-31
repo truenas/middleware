@@ -192,10 +192,15 @@ class DeviceService(Service, DeviceInfoBase):
 
             # get lunid
             if disk_data['wwn']:
-                if disk.get('tran') == 'nvme':
+                if disk_data['tran'] == 'nvme':
                     disk['lunid'] = disk_data['wwn'].lstrip('eui.')
                 else:
                     disk['lunid'] = disk_data['wwn'].lstrip('0x')
+            # USB disks can use the GUID from the partition table as a uniqe ID.
+            if disk_data['tran'] == 'usb' and disk_data['pttype'] == 'gpt':
+                disk_uuid = disk_data['ptuuid'].replace('-', '')
+                if len(disk_uuid) == 32:
+                    disk['lunid'] = disk_uuid
 
         if not disk['size'] and os.path.exists(os.path.join(disk_sys_path, 'size')):
             with open(os.path.join(disk_sys_path, 'size'), 'r') as f:
