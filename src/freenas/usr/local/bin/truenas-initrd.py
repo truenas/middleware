@@ -84,7 +84,7 @@ def update_module_files(root, config):
             "etc/modprobe.d/vfio.conf",
         ]
     ):
-        with contextlib.suppress(OSError):
+        with contextlib.suppress(Exception):
             os.unlink(path)
     if not pci_ids:
         return
