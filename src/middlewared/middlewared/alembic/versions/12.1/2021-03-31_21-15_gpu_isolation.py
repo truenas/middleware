@@ -2,15 +2,15 @@
 GPU isolation property
 
 Revision ID: 72fc294965d1
-Revises: 4eaafe146314
-Create Date: 2021-13-25 21:15:42.818433+00:00
+Revises: 4a1c851b6ee6
+Create Date: 2021-13-31 21:15:42.818433+00:00
 """
 from alembic import op
 import sqlalchemy as sa
 
 
 revision = '72fc294965d1'
-down_revision = '4eaafe146314'
+down_revision = '4a1c851b6ee6'
 branch_labels = None
 depends_on = None
 

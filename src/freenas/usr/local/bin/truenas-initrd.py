@@ -65,8 +65,8 @@ def update_zfs_default(root):
 
 
 def get_current_gpu_pci_ids(root):
-    adv_config = query_config_table("system_advanced", os.path.join(root, FREENAS_DATABASE), "adv_")
-    to_isolate = [gpu for gpu in get_gpus() if gpu["addr"]["pci_slot"] in adv_config["isolated_gpu_pci_ids"]]
+    adv_config = query_config_table("system_advanced", os.path.join(root, FREENAS_DATABASE[1:]), "adv_")
+    to_isolate = [gpu for gpu in get_gpus() if gpu["addr"]["pci_slot"] in adv_config.get("isolated_gpu_pci_ids", [])]
     return [dev["pci_id"] for gpu in to_isolate for dev in gpu["devices"]]
 
 
