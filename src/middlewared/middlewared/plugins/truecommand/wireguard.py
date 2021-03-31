@@ -122,7 +122,7 @@ class TruecommandService(Service):
     @private
     async def start_truecommand_service(self):
         config = await self.middleware.call('datastore.config', 'system.truecommand')
-        if config['enabled']:
+        if config['enabled'] and await self.middleware.call('failover.is_single_master_node'):
             if Status(config['api_key_state']) == Status.CONNECTED and all(
                 config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
