@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 
 class Pipes:
@@ -19,12 +20,16 @@ class Pipes:
 
 
 class Pipe:
-    def __init__(self, middleware):
+    def __init__(self, middleware, buffered=False):
         self.middleware = middleware
 
-        r, w = os.pipe()
-        self.r = os.fdopen(r, "rb")
-        self.w = os.fdopen(w, "wb")
+        if buffered:
+            self.w = tempfile.NamedTemporaryFile(buffering=0)
+            self.r = open(self.w.name, "rb")
+        else:
+            r, w = os.pipe()
+            self.r = os.fdopen(r, "rb")
+            self.w = os.fdopen(w, "wb")
 
     async def close(self):
         await self.middleware.run_in_thread(self.r.close)
