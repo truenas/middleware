@@ -136,16 +136,15 @@ def update_initramfs_config(root):
 
 
 if __name__ == "__main__":
-    root = sys.argv[1]
-    if root != "/":
-        sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages/middlewared"))
-
-    from middlewared.plugins.config import FREENAS_DATABASE
-    from middlewared.service import CallError
-    from middlewared.utils.db import query_config_table
-    from middlewared.utils.gpu import get_gpus
-
     try:
+        root = sys.argv[1]
+        if root != "/":
+            sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages"))
+
+        from middlewared.service_exception import CallError
+        from middlewared.utils.db import FREENAS_DATABASE, query_config_table
+        from middlewared.utils.gpu import get_gpus
+
         update_required = update_zfs_default(root) | update_initramfs_config(root)
         if update_required:
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
