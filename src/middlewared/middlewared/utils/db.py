@@ -1,5 +1,19 @@
+import sqlite3
+
+from middlewared.plugins.config import FREENAS_DATABASE
+
+
 def dict_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
+
+
+def query_config_table(table, database_path=None):
+    database_path = database_path or FREENAS_DATABASE
+    conn = sqlite3.connect(database_path)
+    conn.row_factory = dict_factory
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM {table}")
+    return c.fetchone()

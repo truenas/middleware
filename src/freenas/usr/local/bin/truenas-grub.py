@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 import math
 import psutil
-import sqlite3
 
-from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.utils import osc
-from middlewared.utils.db import dict_factory
+from middlewared.utils.db import query_config_table
 
 
 if __name__ == "__main__":
-    conn = sqlite3.connect(FREENAS_DATABASE)
-    conn.row_factory = dict_factory
-    c = conn.cursor()
-    c.execute("SELECT * FROM system_advanced")
-    advanced = {k.replace("adv_", ""): v for k, v in c.fetchone().items()}
+    advanced = {
+        k.replace("adv_", ""): v for k, v in query_config_table("system_advanced").items()
+    }
 
     # We need to allow tpm in grub as sedutil-cli requires it
     # TODO: Please remove kernel flag to use cgroups v1 when nvidia device plugin starts working

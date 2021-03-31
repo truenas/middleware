@@ -9,7 +9,6 @@ import textwrap
 
 import libzfs
 import pyudev
-import sqlite3
 
 
 logger = logging.getLogger(__name__)
@@ -66,11 +65,10 @@ def update_zfs_default(root):
 
 
 def get_current_gpu_pci_ids(root):
-    conn = sqlite3.connect(os.path.join(root, FREENAS_DATABASE))
-    conn.row_factory = dict_factory
-    c = conn.cursor()
-    c.execute("SELECT * FROM system_advanced")
-    adv_config = {k.replace("adv_", ""): v for k, v in c.fetchone().items()}
+    adv_config = {
+        k.replace("adv_", ""): v
+        for k, v in query_config_table("system_advanced", os.path.join(root, FREENAS_DATABASE)).items()
+    }
     to_isolate = [gpu for gpu in get_gpus() if gpu["addr"]["pci_slot"] in adv_config["isolated_gpu_pci_ids"]]
     return [dev["pci_id"] for gpu in to_isolate for dev in gpu["devices"]]
 
@@ -100,10 +98,10 @@ def update_module_files(root, config):
     for path in map(get_path, ["etc/initramfs-tools/modules", "etc/modules"]):
         with open(path, "w") as f:
             f.write(textwrap.dedent(f"""\
-            vfio
-            vfio_iommu_type1
-            vfio_virqfd
-            vfio_pci ids={','.join(pci_ids)}
+                vfio
+                vfio_iommu_type1
+                vfio_virqfd
+                vfio_pci ids={','.join(pci_ids)}
             """))
 
     with open(get_path("etc/modprobe.d/kvm.conf"), "w") as f:
@@ -111,9 +109,9 @@ def update_module_files(root, config):
 
     with open(get_path("etc/modprobe.d/nvidia.conf"), "w") as f:
         f.write(textwrap.dedent("""\
-        softdep nouveau pre: vfio-pci
-        softdep nvidia pre: vfio-pci
-        softdep nvidia* pre: vfio-pci
+            softdep nouveau pre: vfio-pci
+            softdep nvidia pre: vfio-pci
+            softdep nvidia* pre: vfio-pci
         """))
 
     with open(get_path("etc/modprobe.d/vfio.conf"), "w") as f:
@@ -147,7 +145,7 @@ if __name__ == "__main__":
 
     from middlewared.plugins.config import FREENAS_DATABASE
     from middlewared.service import CallError
-    from middlewared.utils.db import dict_factory
+    from middlewared.utils.db import query_config_table
     from middlewared.utils.gpu import get_gpus
 
     try:
