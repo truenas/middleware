@@ -1,6 +1,6 @@
 import sqlite3
 
-from middlewared.plugins.config import FREENAS_DATABASE
+FREENAS_DATABASE = '/data/freenas-v1.db'
 
 
 def dict_factory(cursor, row):
