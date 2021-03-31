@@ -29,12 +29,15 @@ migrate > $UPDATE_FAILED_LOG 2>&1
 
 echo "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')" | sqlite3 /data/freenas-v1.db
 
-truenas-initrd.py "/" > $UPDATE_FAILED_LOG 2>&1
-if [ $? -eq 1 ]; then
-	REBOOT_SYSTEM=1;
+ret=0
+truenas-initrd.py "/" > $UPDATE_FAILED_LOG 2>&1 || ret=$?
+if [ $ret -eq 1 ]; then
+	REBOOT_SYSTEM=1
 fi
 
-rm -f $UPDATE_FAILED_LOG
+if [ $ret -le 1 ]; then
+	rm -f $UPDATE_FAILED_LOG
+fi
 
 rm /data/need-update
 
