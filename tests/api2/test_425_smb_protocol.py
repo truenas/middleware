@@ -71,7 +71,7 @@ def test_003_creating_shareuser_to_test_acls(request):
         "group_create": True,
         "password": SMB_PWD,
         "uid": next_uid,
-        "shell": "/bin/csh"}
+    }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
     smbuser_id = results.json()
@@ -79,22 +79,23 @@ def test_003_creating_shareuser_to_test_acls(request):
 
 def test_004_changing_dataset_permissions_of_smb_dataset(request):
     depends(request, ["SMB_USER_CREATED"])
-    global job_id
+    global smbproto_job_id
     payload = {
         "acl": [],
         "mode": "777",
         "user": SMB_USER,
         "group": group,
+        "options": {"stripacl": True, "recursive": True}
     }
     results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()
+    smbproto_job_id = results.json()
 
 
 @pytest.mark.dependency(name="SMB_PERMISSION_SET")
 def test_005_verify_the_job_id_is_successful(request):
     depends(request, ["SMB_USER_CREATED"])
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(smbproto_job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
