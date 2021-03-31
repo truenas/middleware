@@ -497,7 +497,10 @@ class Resource(object):
                     filterid = kwargs['id']
                     if filterid.isdigit():
                         filterid = int(filterid)
-                    method_args = [[('id', '=', filterid)], {'get': True, 'force_sql_filters': True}]
+                    method_args = [
+                        [(self.service_config['datastore_primary_key'], '=', filterid)],
+                        {'get': True, 'force_sql_filters': True}
+                    ]
                 else:
                     method_args = self._filterable_args(req)
 
