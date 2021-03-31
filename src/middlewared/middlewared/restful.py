@@ -99,7 +99,7 @@ class RESTfulAPI(object):
                     kwargs['put'] = put
                 blacklist_methods.extend(list(kwargs.values()))
 
-            service_resource = Resource(self, self.middleware, name.replace('.', '/'), **kwargs)
+            service_resource = Resource(self, self.middleware, name.replace('.', '/'), service['config'], **kwargs)
 
             """
             For CRUD services we also need a direct subresource so we can
@@ -118,7 +118,9 @@ class RESTfulAPI(object):
                 if put in self._methods:
                     kwargs['put'] = put
                 blacklist_methods.extend(list(kwargs.values()))
-                subresource = Resource(self, self.middleware, 'id/{id}', parent=service_resource, **kwargs)
+                subresource = Resource(
+                    self, self.middleware, 'id/{id}', service['config'], parent=service_resource, **kwargs
+                )
 
             for methodname, method in list(self._methods_by_service[name].items()):
                 if methodname in blacklist_methods:
@@ -140,7 +142,7 @@ class RESTfulAPI(object):
                     res_kwargs['post'] = methodname
                 else:
                     res_kwargs['get'] = methodname
-                Resource(self, self.middleware, short_methodname, parent=parent, **res_kwargs)
+                Resource(self, self.middleware, short_methodname, service['config'], parent=parent, **res_kwargs)
             await asyncio.sleep(0)  # Force context switch
 
 
@@ -341,13 +343,14 @@ class Resource(object):
     put = None
 
     def __init__(
-        self, rest, middleware, name, parent=None,
+        self, rest, middleware, name, service_config, parent=None,
         delete=None, get=None, post=None, put=None,
     ):
         self.rest = rest
         self.middleware = middleware
         self.name = name
         self.parent = parent
+        self.service_config = service_config
         self.__method_params = {}
 
         path = self.get_path()
