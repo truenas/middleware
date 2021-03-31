@@ -288,7 +288,7 @@ class ConfigService(Service):
                     CallError.EREMOTENODEERROR,
                 )
 
-        self.middleware.call_sync('etc.generate', 'initramfs')
+        self.middleware.call_sync('boot.update_initramfs')
 
         if options['reboot']:
             self.middleware.run_coroutine(

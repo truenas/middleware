@@ -336,9 +336,6 @@ class EtcService(Service):
         'libvirt': [
             {'type': 'py', 'path': 'libvirt', 'platform': 'Linux', 'checkpoint': None},
         ],
-        'initramfs': [
-            {'type': 'py', 'path': 'initramfs_update', 'platform': 'Linux', 'checkpoint': None},
-        ],
     }
     LOCKS = defaultdict(asyncio.Lock)
 
