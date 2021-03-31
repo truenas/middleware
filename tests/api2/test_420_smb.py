@@ -8,6 +8,7 @@ import pytest
 import sys
 import os
 from pytest_dependency import depends
+import json
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -959,20 +960,106 @@ def test_107_delete_cifs_share(request):
     assert results.status_code == 200, results.text
 
 
+def test_108_netbios_name_change_check_sid(request):
+    """
+    This test changes the netbios name of the server and then
+    verifies that this results in the server's domain SID changing.
+    The new SID is stored in a global variable so that we can
+    perform additional tests to verify that SIDs are rewritten
+    properly in group_mapping.tdb. old_netbiosname is stored so
+    that we can reset configuration to what it was prior to the test.
+
+    Test failure here shows that we failed to write our new SID
+    to the configuration database.
+    """
+    depends(request, ["permissions_job", "service_cifs_running", "ssh_password"], scope="session")
+    global new_sid
+    global old_netbiosname
+
+    results = GET("/smb/")
+    assert results.status_code == 200, results.text
+    old_netbiosname = results.json()["netbiosname"]
+    old_sid = results.json()["cifs_SID"]
+
+    payload = {
+        "netbiosname": "nb_new",
+    }
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+    new_sid_resp = results.json()["cifs_SID"]
+    assert old_sid != new_sid_resp, results.text
+    sleep(5)
+
+    results = GET("/smb/")
+    assert results.status_code == 200, results.text
+    new_sid = results.json()["cifs_SID"]
+    assert new_sid != old_sid, results.text
+
+
+def test_109_create_new_smb_group_for_sid_test():
+    """
+    Create testgroup and verify that groupmap entry generated
+    with new SID.
+    """
+    global group_id
+    payload = {
+        "name": "testsidgroup",
+        "smb": True,
+    }
+    results = POST("/group/", payload)
+    assert results.status_code == 200, results.text
+    group_id = results.json()
+    sleep(5)
+
+    cmd = "midclt call smb.groupmap_list"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    groupmaps = json.loads(results['output'].strip())
+    assert groupmaps.get("testsidgroup") is not None, groupmaps.keys()
+    domain_sid = groupmaps["testsidgroup"]["SID"].rsplit("-", 1)[0]
+    assert domain_sid == new_sid, groupmaps["testsidgroup"]
+
+
+def test_110_change_netbios_name_and_check_groupmap():
+    """
+    Verify that changes to netbios name result in groupmap sid
+    changes.
+    """
+    payload = {
+        "netbiosname": old_netbiosname,
+    }
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+    sleep(5)
+
+    cmd = "midclt call smb.groupmap_list"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    groupmaps = json.loads(results['output'].strip())
+    assert groupmaps.get("testsidgroup") is not None, groupmaps.keys()
+    domain_sid = groupmaps["testsidgroup"]["SID"].rsplit("-", 1)[0]
+    assert domain_sid != new_sid, groupmaps["testsidgroup"]
+
+
+def test_111_delete_smb_group(request):
+    results = DELETE(f"/group/id/{group_id}/")
+    assert results.status_code == 200, results.text
+
+
 # Now stop the service
-def test_108_disable_cifs_service_at_boot(request):
+def test_112_disable_cifs_service_at_boot(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_109_checking_to_see_if_clif_service_is_enabled_at_boot(request):
+def test_113_checking_to_see_if_clif_service_is_enabled_at_boot(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_110_stoping_clif_service(request):
+def test_114_stoping_clif_service(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
@@ -980,14 +1067,14 @@ def test_110_stoping_clif_service(request):
     sleep(1)
 
 
-def test_111_checking_if_cifs_is_stop(request):
+def test_115_checking_if_cifs_is_stop(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset
-def test_112_destroying_smb_dataset(request):
+def test_116_destroying_smb_dataset(request):
     depends(request, ["create_dataset"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
