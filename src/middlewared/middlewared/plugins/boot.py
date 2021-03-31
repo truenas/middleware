@@ -121,7 +121,7 @@ class BootService(Service):
         # register the new disks capacity which increase the size of the pool
         await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
 
-        await self.middleware.call('etc.generate', 'initramfs')
+        await self.update_initramfs()
 
     @accepts(Str('dev'))
     async def detach(self, dev):
@@ -129,7 +129,7 @@ class BootService(Service):
         Detach given `dev` from boot pool.
         """
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
-        await self.middleware.call('etc.generate', 'initramfs')
+        await self.update_initramfs()
 
     @accepts(Str('label'), Str('dev'))
     async def replace(self, label, dev):
@@ -146,7 +146,7 @@ class BootService(Service):
         zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
         await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, zfs_dev_part['name'])
         await self.middleware.call('boot.install_loader', dev)
-        await self.middleware.call('etc.generate', 'initramfs')
+        await self.update_initramfs()
 
     @accepts()
     @job(lock='boot_scrub')
@@ -178,6 +178,19 @@ class BootService(Service):
         Get Automatic Scrub Interval value in days.
         """
         return (await self.middleware.call('system.advanced.config'))['boot_scrub']
+
+    @private
+    async def update_initramfs(self):
+        """
+        Returns true if initramfs was updated and false otherwise.
+        """
+        cp = await run(
+            '/usr/local/bin/truenas-initrd.py', '/', encoding='utf8', errors='ignore', check=False
+        )
+        if cp.returncode > 1:
+            raise CallError(f'Failed to update initramfs: {cp.stderr}')
+
+        return cp.returncode == 1
 
 
 async def setup(middleware):

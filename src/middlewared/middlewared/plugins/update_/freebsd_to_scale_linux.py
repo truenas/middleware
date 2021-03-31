@@ -22,7 +22,7 @@ class UpdateService(Service):
         await run(["mount", "-a"])
 
         await self.middleware.call("etc.generate", "rc")
-        await self.middleware.call("etc.generate", "initramfs")
+        await self.middleware.call("boot.update_initramfs")
         await self.middleware.call("etc.generate", "grub")
 
         await self.middleware.call("system.reboot")
