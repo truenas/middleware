@@ -86,7 +86,8 @@ class GlusterLocalEventsService(Service):
 
     @accepts(Dict(
         'add_secret',
-        Str('secret', required=True)
+        Str('secret', required=True),
+        Bool('force', default=False),
     ))
     def add_jwt_secret(self, data):
         """
@@ -96,12 +97,26 @@ class GlusterLocalEventsService(Service):
 
         `secret` String representing the key to be used
                     to encode/decode JWT messages
+        `force` Boolean if set to True, will forcefully
+                    wipe any existing jwt key for this
+                    peer. Note, if forcefully adding a
+                    new key, the other peers in the TSP
+                    will also need to be sent this key.
 
         Note: this secret is only used for messages
         that are destined for the api endpoint at
         http://*:6000/_clusterevents for each peer
         in the trusted storage pool.
         """
+
+        if not data['force'] and self.JWT_SECRET is not None:
+            verrors = ValidationErrors()
+            verrors.add(
+                'localevent_add_jwt_secret.{data["secret"]}',
+                'An existing secret key already exists. Use force to ignore this error'
+            )
+            verrors.check()
+
         self.JWT_SECRET = data['secret']
         with open(SECRETS_FILE, 'w+') as f:
             f.write(data['secret'])
