@@ -2,7 +2,8 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.service import CallError, CRUDService, private, SharingService, ValidationErrors
+from middlewared.service import CallError, CRUDService, filterable, private, SharingService, ValidationErrors
+from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
 from middlewared.utils.path import is_child
@@ -494,6 +495,52 @@ class iSCSITargetExtentService(SharingService):
                 return False
         else:
             return await super().sharing_task_determine_locked(data, locked_datasets)
+
+    @private
+    async def get_options(self, options):
+        # Do not use `SharingService.get_options`, we'll extend rows ourselves
+        return await CRUDService.get_options(self, options)
+
+    @filterable
+    async def query(self, filters, options):
+        result = await super().query(filters, options)
+
+        get = False
+        if not isinstance(result, list):
+            get = True
+            result = [result]
+
+        if result:
+            try:
+                about_to_lock_dataset = await self.middleware.call('cache.get', 'about_to_lock_dataset')
+            except KeyError:
+                about_to_lock_dataset = None
+
+            if len(result) == 1 and result[0]['type'] == 'DISK' and about_to_lock_dataset is None:
+                # Special optimized case
+                try:
+                    dataset = await self.middleware.call(
+                        'zfs.dataset.query',
+                        [['id', '=', result[0]['disk'][5:]]],
+                        {
+                            'extra': {'properties': ['encryption', 'keystatus']},
+                            'get': True
+                        },
+                    )
+                except MatchNotFound:
+                    result[0]['locked'] = False
+                else:
+                    result[0]['locked'] = dataset['encrypted'] and not dataset['key_loaded']
+            else:
+                # Rest of the cases
+                locked_datasets = await self.middleware.call('zfs.dataset.locked_datasets')
+                for row in result:
+                    row['locked'] = await self.sharing_task_determine_locked(row, locked_datasets)
+
+        if get:
+            return result[0]
+        else:
+            return result
 
     @accepts(Dict(
         'iscsi_extent_create',
