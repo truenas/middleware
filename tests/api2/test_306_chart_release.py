@@ -333,7 +333,7 @@ def test_31_set_custom_catalog_for_testing_update():
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     # the sleep is needed or /catalog/items is not ready on time.
-    time.sleep(1)
+    time.sleep(2)
 
 
 @pytest.mark.parametrize('key', list(updatechart_catalog.keys()))
@@ -389,7 +389,7 @@ def test_37_get_plex_chart_release_upgrade_summary(request):
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     assert new_plex_version in results.json()['latest_version'], results.text
-    update_version = results.json()['latest_version'].split('_')[1]
+    update_version = results.json()['latest_version']
 
 
 @pytest.mark.dependency(name='update_plex')
