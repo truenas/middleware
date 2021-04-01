@@ -57,46 +57,23 @@ nfs_func()
         echo "NFS will ${enabled}"
         section_footer
 
-	section_header "NFS Run Status"
-	service nfs-ganesha status
-	section_footer
-
-	section_header "/etc/hosts"
-	sc "/etc/hosts"
-	section_footer
-
-	section_header "/etc/exports"
-	sc /etc/exports
+	section_header "NFS Service Status"
+	systemctl status nfs-ganesha
 	section_footer
 
 	section_header "rpcinfo -p"
 	rpcinfo -p
 	section_footer
 
-	section_header "nfsstat"
-	nfsstat
+	section_header "NFS Config (/etc/ganesha/ganesha.conf)"
+	sc "/etc/ganesha/ganesha.conf"
 	section_footer
 
-	if is_linux; then
-		section_header "/etc/ganesha/gluster.conf"
-		sc "/etc/ganesha/gluster.conf"
-		section_footer
-
-		section_header "/etc/ganesha/vfs.conf"
-		sc "/etc/ganesha/vfs.conf"
-		section_footer
-
-		section_header "/etc/ganesha/ganesha.conf"
-		sc "/etc/ganesha/ganesha.conf"
-		section_footer
-	else
-		section_header "nfsv4 locks: nfsdumpstate"
-		nfsdumpstate
-		section_footer
-	fi
-
-	section_header "Middleware Configuration"
+	section_header "NFS Service Configuration"
 	midclt call nfs.config | jq
+	section_footer
+
+	sectio_header "NFS Shares Configuration"
 	midclt call sharing.nfs.query | jq
 	section_footer
 }
