@@ -8,7 +8,7 @@ import json
 import libsgio
 
 from .device_info_base import DeviceInfoBase
-from middlewared.service import CallError, private, Service
+from middlewared.service import accepts, private, Service
 from middlewared.utils.gpu import get_gpus
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
@@ -274,9 +274,11 @@ class DeviceService(Service, DeviceInfoBase):
             gpu['available_to_host'] = gpu['addr']['pci_slot'] not in to_isolate_gpus
         return gpus
 
-    @private
-    async def get_to_isolate_pci_ids(self):
-        gpus = await self.middleware.call('device.get_gpus')
-        adv_config = await self.middleware.call('system.advanced.config')
-        to_isolate = [gpu for gpu in gpus if gpu['addr']['pci_slot'] in adv_config['isolated_gpu_pci_ids']]
-        return [dev['pci_id'] for gpu in to_isolate for dev in gpu['devices']]
+    @accepts()
+    async def gpu_pci_ids_choices(self):
+        """
+        Retrieve choices for GPU PCI ids located in the system.
+        """
+        return {
+            gpu['addr']['pci_slot']: gpu['addr']['pci_slot'] for gpu in await self.middleware.call('device.get_gpus')
+        }
