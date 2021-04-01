@@ -157,7 +157,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'sysctl_config'},
         ],
         's3': [
-            {'type': 'py', 'path': 'local/minio/certificates'},
+            {'type': 'py', 'path': 'local/minio/configure'},
         ],
         'smartd': [
             {'type': 'py', 'path': 'smartd'},
