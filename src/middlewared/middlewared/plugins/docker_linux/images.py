@@ -167,7 +167,15 @@ class DockerImagesService(CRUDService):
         with open(DEFAULT_DOCKER_IMAGES_LIST_PATH, 'r') as f:
             images = [i for i in map(str.strip, f.readlines()) if i]
 
-        images.append('quay.io/openebs/zfs-driver:ci')
+        images.extend([
+            'nvidia/k8s-device-plugin:1.0.0-beta6',
+            'k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.1.0',
+            'k8s.gcr.io/sig-storage/csi-provisioner:v2.1.0',
+            'k8s.gcr.io/sig-storage/csi-resizer:v1.1.0',
+            'k8s.gcr.io/sig-storage/snapshot-controller:v4.0.0',
+            'k8s.gcr.io/sig-storage/csi-snapshotter:v4.0.0',
+            'openebs/zfs-driver:1.4.0',
+        ])
         return list(itertools.chain(
             *[self.normalise_tag(tag) for tag in images]
         ))
