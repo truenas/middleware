@@ -132,9 +132,12 @@ class CatalogService(CRUDService):
                 await self.common_validation(
                     {'trains': await self.middleware.call('catalog.get_trains', path)}, 'catalog_create', data
                 )
-
+            except CallError as e:
+                verrors.add('catalog_create.label', f'Failed to validate catalog: {e}')
             finally:
                 await self.middleware.run_in_thread(shutil.rmtree, path, ignore_errors=True)
+
+        verrors.check()
 
         await self.middleware.call('datastore.insert', self._config.datastore, data)
 
