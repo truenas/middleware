@@ -51,7 +51,7 @@ async def setup(middleware):
         fenced_file = False
         watchdog_time = 0
         fenced_time = 0
-        if await middleware.call('system.is_enterprise') and await middleware.call('failover.licensed'):
+        if await middleware.call('failover.licensed'):
             if os.path.exists(WATCHDOG_ALERT_FILE):
                 watchdog_file = True
                 with open(WATCHDOG_ALERT_FILE, 'rb') as f:

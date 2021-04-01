@@ -454,9 +454,8 @@ class UpdateService(Service):
 
 
 async def post_update_hook(middleware):
-    if (
-        not await middleware.call('failover.licensed') or await middleware.call('failover.status') != 'BACKUP'
-    ):
+    is_ha = await middleware.call('failover.licensed')
+    if not is_ha or await middleware.call('failover.status') != 'BACKUP':
         await middleware.call('update.take_systemdataset_samba4_snapshot')
 
 
