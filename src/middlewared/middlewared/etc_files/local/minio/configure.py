@@ -4,8 +4,7 @@ import pwd
 import shutil
 
 
-def render(service, middleware):
-    s3 = middleware.call_sync('s3.config')
+def render_certificates(s3, middleware):
     minio_path = '/usr/local/etc/minio'
 
     cert = s3.get('certificate')
@@ -41,3 +40,15 @@ def render(service, middleware):
             f.write(cert['privatekey'])
         os.chown(minio_privatekey, minio_uid, minio_gid)
         os.chmod(minio_privatekey, 0o600)
+
+
+def configure_minio_sys_dir(s3):
+    storage_path = s3['storage_path']
+    minio_dir = os.path.join(storage_path, '.minio.sys')
+    shutil.rmtree(minio_dir, ignore_errors=True)
+
+
+def render(service, middleware):
+    s3 = middleware.call_sync('s3.config')
+    configure_minio_sys_dir(s3)
+    render_certificates(s3, middleware)
