@@ -4,8 +4,7 @@ DefaultDependencies=no
 
 Before=network-pre.target
 
-After=middlewared.service
-Before=local-fs.target
+After=ix-zfs.service
 
 [Service]
 Type=oneshot
