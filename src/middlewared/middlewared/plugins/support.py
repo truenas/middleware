@@ -249,7 +249,7 @@ class SupportService(ConfigService):
                 'system.debug', pipes=Pipes(output=self.middleware.pipe()),
             )
 
-            if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.licensed'):
                 debug_name = 'debug-{}.tar'.format(time.strftime('%Y%m%d%H%M%S'))
             else:
                 debug_name = 'debug-{}-{}.txz'.format(

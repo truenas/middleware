@@ -328,7 +328,7 @@ class AlertService(Service):
             'A': 'Controller A',
             'B': 'Controller B',
         }
-        if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.licensed'):
+        if await self.middleware.call('failover.licensed'):
             node = await self.middleware.call('failover.node')
             status = await self.middleware.call('failover.status')
             if status == 'MASTER':
@@ -554,15 +554,10 @@ class AlertService(Service):
         if await self.middleware.call('system.state') != 'READY':
             return False
 
-        if (
-            await self.middleware.call('system.is_enterprise') and
-            await self.middleware.call('failover.licensed') and
-            (
-                await self.middleware.call('failover.status') == 'BACKUP' or
-                await self.middleware.call('failover.in_progress')
-            )
-        ):
-            return False
+        if await self.middleware.call('failover.licensed'):
+            status = await self.middleware.call('failover.status')
+            if status == 'BACKUP' or await self.middleware.call('failover.in_progress'):
+                return False
 
         return True
 
@@ -773,12 +768,9 @@ class AlertService(Service):
     @periodic(3600, run_on_start=False)
     @private
     async def flush_alerts(self):
-        if (
-            await self.middleware.call('system.is_enterprise') and
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP'
-        ):
-            return
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return
 
         await self.middleware.call("datastore.delete", "system.alert", [])
 
@@ -1037,9 +1029,8 @@ class AlertServiceService(CRUDService):
             return False
 
         master_node = "A"
-        if await self.middleware.call("system.is_enterprise"):
-            if await self.middleware.call("failover.licensed"):
-                master_node = await self.middleware.call("failover.node")
+        if await self.middleware.call("failover.licensed"):
+            master_node = await self.middleware.call("failover.node")
 
         test_alert = Alert(
             TestAlertClass,

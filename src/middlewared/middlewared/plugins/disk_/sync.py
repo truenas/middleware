@@ -17,10 +17,9 @@ class DiskService(Service, ServiceChangeMixin):
         """
         Syncs a disk `name` with the database cache.
         """
-        if await self.middleware.call('system.is_enterprise'):
-            if await self.middleware.call('failover.licensed'):
-                if await self.middleware.call('failover.status') == 'BACKUP':
-                    return
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return
 
         # Do not sync geom classes like multipath/hast/etc
         if name.find('/') != -1:

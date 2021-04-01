@@ -228,16 +228,14 @@ class SystemDatasetService(ConfigService):
         )
 
         boot_pool = await self.middleware.call('boot.pool_name')
-        if (
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP' and
-            config.get('basename') and config['basename'] != f'{boot_pool}/.system'
-        ):
-            try:
-                os.unlink(SYSDATASET_PATH)
-            except OSError:
-                pass
-            return
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                if config.get('basename') and config['basename'] != f'{boot_pool}/.system':
+                    try:
+                        os.unlink(SYSDATASET_PATH)
+                    except OSError:
+                        pass
+                    return
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
@@ -431,8 +429,9 @@ class SystemDatasetService(ConfigService):
             return None
 
         restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-        if await self.middleware.call('failover.licensed') and await self.middleware.call('failover.status') == 'BACKUP':
-            return None
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return None
 
         for item in restartfiles:
             if os.path.exists(item):

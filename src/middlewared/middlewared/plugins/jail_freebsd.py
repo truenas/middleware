@@ -1250,7 +1250,7 @@ class JailService(CRUDService):
 
     @private
     def failover_checks(self, jail_config, verrors, schema):
-        if self.middleware.call_sync('system.is_enterprise') and self.middleware.call_sync('failover.licensed'):
+        if self.middleware.call_sync('failover.licensed'):
             jail_config = {
                 k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
             }
