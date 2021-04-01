@@ -1,71 +1,114 @@
-from aiohttp import web
+import aiohttp
+import asyncio
+
+from jwt import encode, decode
+from jwt.exceptions import DecodeError, InvalidSignatureError
 
 
 class ClusterEventsApplication(object):
 
     def __init__(self, middleware):
         self.middleware = middleware
-        self.mount_events = ('VOLUME_START', 'AFR_SUBVOL_UP')
-        self.umount_events = ('VOLUME_STOP', 'AFR_SUBVOLS_DOWN')
 
     async def process_event(self, data):
-        event = data.get('event', {})
-        msg = data.get('message', {})
+        event = data.get('event', None)
+        name = data.get('name', None)
+        method = None
 
-        # for AFR_SUBVOL* events, the name of the volume
-        # isn't included in the message so we have to
-        # deduce the name of the volume by startswith()
-        name = None
-        if event and msg:
-            subvol = msg.get('subvol', None)
-            if subvol is None:
-                name = msg.get('name', None)
-            else:
-                try:
-                    name = list(filter(subvol.startswith, self.vols))[0]
-                except IndexError:
-                    pass
+        if event is not None and name is not None:
+            if event == 'VOLUME_START':
+                method = 'gluster.fuse.mount'
+            elif event == 'VOLUME_STOP':
+                method = 'gluster.fuse.umount'
 
-        if name is not None:
-            if name in await self.middleware.call('gluster.volume.list'):
-                if event in self.mount_events:
-                    await self.middleware.call(
-                        'gluster.fuse.mount', {'name': name}
-                    )
-                elif event in self.umount_events:
-                    await self.middleware.call(
-                        'gluster.fuse.umount', {'name': name}
-                    )
+            if method is not None:
+                await self.middleware.call(method, {'name': name})
+                if data.pop('forward', False):
+                    # means the request originated from localhost
+                    # so we need to forward it out to the other
+                    # peers in the trusted storage pool
+                    await self.forward_event(data)
 
-    async def response(self):
-        # This is a little confusing but the glustereventsd daemon
-        # that is responsible for sending requests to this endpoint
-        # doesn't actually act on any of our responses. It just
-        # expects a response. So we'll always return 200 http status
-        # code for now.
-        status_code = 200
-        body = "OK"
+    async def response(self, status_code=200, err=None):
+        if status_code == 200:
+            body = 'OK'
+        elif status_code == 401:
+            body = 'Unauthorized'
+        elif status_code == 500:
+            body = f'Failed with error: {err}'
+        else:
+            body = 'Unknown'
 
-        res = web.Response(status=status_code, body=body)
+        res = aiohttp.web.Response(status=status_code, body=body)
         res.set_status(status_code)
 
         return res
 
+    async def _post(self, url, headers, json, session, timeout):
+        post_req = session.post(url, headers=headers, json=json)
+        return await asyncio.wait_for(post_req, timeout=timeout)
+
+    async def forward_event(self, data):
+        peer_urls = []
+        localhost = {'localhost': False}
+        for i in await self.middleware.call('gluster.peer.status', localhost):
+            if i['state'] == '3' and i['connected'] == 'Connected':
+                if i['status'] == 'Peer in Cluster':
+                    uri = 'http://' + i['hostname']
+                    uri += ':6000/_clusterevents'
+                    peer_urls.append(uri)
+
+        if peer_urls:
+            secret = await self.middleware.call(
+                'gluster.localevents.get_set_jwt_secret'
+            )
+            token = encode({'dummy': 'data'}, secret, algorithm='HS256')
+            headers = {
+                'JWTOKEN': token.decode('utf-8'),
+                'content-type': 'application/json'
+            }
+
+            # how long each POST request can take (in seconds)
+            timeout = 10
+
+            # now send the requests in parallel
+            async with aiohttp.ClientSession() as session:
+                tasks = []
+                for url in peer_urls:
+                    tasks.append(
+                        self._post(url, headers, data, session, timeout)
+                    )
+
+                resps = await asyncio.gather(*tasks, return_exceptions=True)
+                for url, resp in zip(tasks, resps):
+                    if isinstance(resp, asyncio.TimeoutError):
+                        self.middleware.logger.error(
+                            'Timed out sending event to %s after %d seconds',
+                            url,
+                            timeout
+                        )
+
     async def listener(self, request):
-        # request is empty when the gluster-eventsapi webhook-test
+        # request is empty when the
+        # "gluster-eventsapi webhook-test"
         # command is called from CLI
         if not await request.read():
-            await self.response()
+            return await self.response()
 
-        data = None
+        secret = await self.middleware.call(
+            'gluster.localevents.get_set_jwt_secret'
+        )
+        token = request.headers.get('JWTOKEN', None)
         try:
-            data = await request.json()
+            decode(token.encode('utf-8'), secret, algorithm='HS256')
+        except (DecodeError, InvalidSignatureError):
+            # signature failed due to bad secret (or no secret)
+            # or decode failed because no token or invalid
+            # formatted message so just return unauthorized always
+            return await self.response(status_code=401)
         except Exception as e:
-            self.middleware.logger.error(
-                'Failed to decode cluster event request: %r', e
-            )
+            # unhandled so play it safe
+            return await self.response(status_code=500, err=f'{e}')
 
-        if data is not None:
-            await self.process_event(data)
-
+        await self.process_event(await request.json())
         return await self.response()

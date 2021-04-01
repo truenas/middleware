@@ -89,11 +89,12 @@ class CtdbSharedVolumeService(Service):
             options = {'args': (CTDB_VOL_NAME,)}
             await self.middleware.call('gluster.method.run', volume.start, options)
 
-        # try to mount it locally
-        mount_job = await self.middleware.call(
-            'gluster.fuse.mount', {'name': CTDB_VOL_NAME, 'raise': True}
-        )
-        await mount_job.wait(raise_error=True)
+        # try to mount it locally and send a request
+        # to all the other peers in the TSP to also
+        # FUSE mount it
+        data = {'event': 'VOLUME_START', 'name': CTDB_VOL_NAME, 'forward': True}
+        job = await self.middleware.call('gluster.localevents.send', data)
+        await job.wait(raise_error=True)
 
         return await self.middleware.call('gluster.volume.query', [('name', '=', CTDB_VOL_NAME)])
 
@@ -107,14 +108,16 @@ class CtdbSharedVolumeService(Service):
         info = await self.middleware.call(
             'gluster.volume.exists_and_started', CTDB_VOL_NAME
         )
-        if not info['started']:
+        if not info['exists']:
             return
 
-        # umount it first
-        umount_job = await self.middleware.call(
-            'gluster.fuse.umount', {'name': CTDB_VOL_NAME, 'raise': True}
-        )
-        await umount_job.wait(raise_error=True)
+        # unmount it locally and send a request
+        # to all other peers in the TSP to also
+        # unmount it (this needs to happend before
+        # we delete it)
+        data = {'event': 'VOLUME_STOP', 'name': CTDB_VOL_NAME, 'forward': True}
+        job = await self.middleware.call('gluster.localevents.send', data)
+        await job.wait(raise_error=True)
 
         if info['started']:
             # stop the volume
