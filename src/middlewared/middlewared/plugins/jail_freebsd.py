@@ -143,6 +143,7 @@ def common_validation(middleware, options, update=False, jail=None, schema='opti
 class PluginService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         cli_private = True
 
     @accepts()
@@ -697,6 +698,7 @@ class PluginService(CRUDService):
 class JailService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         cli_private = True
 
     def __init__(self, *args, **kwargs):

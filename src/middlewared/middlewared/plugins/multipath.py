@@ -12,6 +12,8 @@ from middlewared.utils import filter_list, osc
 class MultipathService(CRUDService):
 
     class Config:
+        datastore_primary_key = 'name'
+        datastore_primary_key_type = 'string'
         cli_namespace = "storage.multipath"
 
     @filterable

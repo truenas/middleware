@@ -410,6 +410,7 @@ class NetworkVlanModel(sa.Model):
 class InterfaceService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace_alias = 'interfaces'
         cli_namespace = 'network.interface'
 
