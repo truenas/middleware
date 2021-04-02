@@ -29,6 +29,22 @@ class DockerImagesService(Service, DockerClientMixin):
                     self.logger.error(str(e))
 
     @private
+    async def retrieve_image_digest(self, tag):
+        repo_digest = None
+        parsed_tag = await self.parse_image_tag(tag)
+        registry, image_str, tag_str = parsed_tag['registry'], parsed_tag['image'], parsed_tag['tag']
+        if registry == DEFAULT_DOCKER_REGISTRY:
+            repo_digest = await self._get_repo_digest(registry, image_str, tag_str)
+
+        if not repo_digest:
+            try:
+                repo_digest = await self._get_latest_digest(registry, image_str, tag_str)
+            except CallError as e:
+                raise CallError(f'Failed to retrieve digest: {e}')
+
+        return repo_digest
+
+    @private
     async def parse_tags(self, tags):
         return [await self.parse_image_tag(tag) for tag in tags]
 
