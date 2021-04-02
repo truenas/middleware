@@ -8,9 +8,14 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, wait_on_job
-from auto_config import ip, pool_name, scale
+from auto_config import ip, pool_name, scale, dev_test
 from pytest_dependency import depends
 from protocols import SMB
+
+reason = 'Skip for testing'
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason=reason)
+
 
 dataset = f"{pool_name}/smb-proto"
 dataset_url = dataset.replace('/', '%2F')
