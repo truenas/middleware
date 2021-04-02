@@ -201,7 +201,7 @@ class GlusterVolumeService(CRUDService):
             # send the request to do the same to all other peers in
             # the TSP before we delete the volume
             data = {'event': 'VOLUME_START', 'name': id, 'forward': True}
-            await (await self.middleware.call('gluster.localevents.send', data)).wait()
+            await self.middleware.call('gluster.localevents.send', data)
             await self.middleware.call('gluster.method.run', volume.delete, args)
 
     @item_method
