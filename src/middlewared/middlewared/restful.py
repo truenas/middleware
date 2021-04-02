@@ -200,7 +200,7 @@ class OpenAPIResource(object):
                 opobject['description'] = desc
 
             accepts = method.get('accepts')
-            if method['filterable']:
+            if '{id}' not in path and method['filterable']:
                 opobject['parameters'] += [
                     {
                         'name': 'limit',
