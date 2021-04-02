@@ -497,9 +497,30 @@ class Resource(object):
                     filterid = kwargs['id']
                     if filterid.isdigit():
                         filterid = int(filterid)
+                    extra = {}
+                    text = await req.text()
+                    if text:
+                        data = await req.json()
+                        if not isinstance(data, dict):
+                            resp.set_status(400)
+                            resp.body = json.dumps({'message': 'Endpoint expects object/dict.',})
+                            return resp
+                        if data:
+                            if (
+                                'query-options' not in data or len(data['query-options']) > 1
+                                or (data['query-options'] and 'extra' not in data['query-options'])
+                            ):
+                                resp.set_status(400)
+                                resp.body = json.dumps({
+                                    'message': 'Only "query-options.extra" supported with "id" parameter.',
+                                })
+                                return resp
+                            elif data.get('query-options', {}).get('extra'):
+                                extra = data['query-options']['extra']
+
                     method_args = [
                         [(self.service_config['datastore_primary_key'], '=', filterid)],
-                        {'get': True, 'force_sql_filters': True}
+                        {'get': True, 'force_sql_filters': True, 'extra': extra}
                     ]
                 else:
                     method_args = self._filterable_args(req)
