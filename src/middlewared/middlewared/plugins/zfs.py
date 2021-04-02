@@ -928,6 +928,7 @@ class ZFSDatasetService(CRUDService):
 class ZFSSnapshot(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace = 'zfs.snapshot'
         process_pool = True
 

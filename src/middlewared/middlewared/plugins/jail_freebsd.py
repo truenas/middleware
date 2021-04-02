@@ -142,6 +142,9 @@ def common_validation(middleware, options, update=False, jail=None, schema='opti
 
 class PluginService(CRUDService):
 
+    class Config:
+        datastore_primary_key_type = 'string'
+
     @accepts()
     async def official_repositories(self):
         """
@@ -689,6 +692,9 @@ class PluginService(CRUDService):
 
 
 class JailService(CRUDService):
+
+    class Config:
+        datastore_primary_key_type = 'string'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

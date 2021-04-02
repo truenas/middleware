@@ -383,6 +383,7 @@ class NetworkVlanModel(sa.Model):
 class InterfaceService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace_alias = 'interfaces'
 
     def __init__(self, *args, **kwargs):

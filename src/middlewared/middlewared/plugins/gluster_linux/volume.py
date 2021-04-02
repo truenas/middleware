@@ -12,6 +12,7 @@ from .utils import GLUSTER_JOB_LOCK
 class GlusterVolumeService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace = 'gluster.volume'
 
     def __volume_wrapper(self, method, *args, **kwargs):
