@@ -173,7 +173,7 @@ class OpenAPIResource(object):
             },
         }
 
-    def add_path(self, path, operation, methodname, params=None):
+    def add_path(self, path, operation, methodname, service_config):
         assert operation in ('get', 'post', 'put', 'delete')
         opobject = {
             'tags': [methodname.rsplit('.', 1)[0]],
@@ -234,7 +234,7 @@ class OpenAPIResource(object):
                     'name': 'id',
                     'in': 'path',
                     'required': True,
-                    'schema': self._convert_schema(accepts[0]) if accepts else {'type': 'integer'},
+                    'schema': {'type': service_config['datastore_primary_key_type']},
                 })
 
         self._paths[f'/{path}'][operation] = opobject
@@ -366,7 +366,7 @@ class Resource(object):
                 continue
             self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}', getattr(self, f'on_{i}'))
             self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}/', getattr(self, f'on_{i}'))
-            self.rest._openapi.add_path(path, i, operation)
+            self.rest._openapi.add_path(path, i, operation, self.service_config)
             self.__map_method_params(operation)
 
         self.middleware.logger.trace(f"add route {self.get_path()}")
