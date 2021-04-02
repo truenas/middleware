@@ -189,7 +189,7 @@ class OpenAPIResource(object):
         if method and method.get('require_pipes'):
             return
         elif method:
-            desc = method.get('description')
+            desc = method.get('description') or ''
             if method.get('downloadable') or method.get('uploadable'):
                 job_desc = f'\n\nA file can be {"downloaded from" if method.get("downloadable") else "uploaded to"} ' \
                            'this end point. This end point is special, please refer to Jobs section in ' \
@@ -227,22 +227,13 @@ class OpenAPIResource(object):
                         'schema': {'type': 'string'},
                     },
                 ]
-            elif accepts and not (operation == 'delete' and method['item_method'] and len(accepts) == 1):
-                if '{id}' in path and method['filterable']:
-                    opobject['requestBody'] = self._accepts_to_request(
-                        methodname, method, [{
-                            '_attrs_order_': ['extra'],
-                            '__name__': 'query-options',
-                            '__required__': False,
-                            'additionalProperties': False,
-                            'default': {},
-                            'properties': {'extra': accepts[1]['properties']['extra']},
-                            'title': 'query-options',
-                            'type': 'object',
-                        }]
-                    )
-                else:
-                    opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
+            elif '{id}' in path and method['filterable']:
+                desc = f'{desc}\n\n' if desc else ''
+                opobject['description'] = desc + '`query-options.extra` can be specified as query parameters.'
+            elif accepts and not (operation == 'delete' and method['item_method'] and len(accepts) == 1) and (
+                '{id}' not in path and not method['filterable']
+            ):
+                opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
 
             # For now we only accept `id` as an url parameters
             if '{id}' in path:
@@ -512,26 +503,12 @@ class Resource(object):
                     if filterid.isdigit():
                         filterid = int(filterid)
                     extra = {}
-                    text = await req.text()
-                    if text:
-                        data = await req.json()
-                        if not isinstance(data, dict):
-                            resp.set_status(400)
-                            resp.body = json.dumps({'message': 'Endpoint expects object/dict.'})
-                            return resp
-                        if data:
-                            if (
-                                'query-options' not in data or len(data['query-options']) > 1 or (
-                                    data['query-options'] and 'extra' not in data['query-options']
-                                )
-                            ):
-                                resp.set_status(400)
-                                resp.body = json.dumps({
-                                    'message': 'Only "query-options.extra" supported with "id" parameter.',
-                                })
-                                return resp
-                            elif data.get('query-options', {}).get('extra'):
-                                extra = data['query-options']['extra']
+                    for key, val in list(req.query.items()):
+                        try:
+                            val = json.loads(val)
+                        except json.json.JSONDecodeError:
+                            pass
+                        extra[key] = val
 
                     method_args = [
                         [(self.service_config['datastore_primary_key'], '=', filterid)],
