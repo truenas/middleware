@@ -17,6 +17,7 @@ FUSE_BASE = FuseConfig.FUSE_PATH_BASE.value
 class GlusterVolumeService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace = 'gluster.volume'
         cli_namespace = 'service.gluster.volume'
 

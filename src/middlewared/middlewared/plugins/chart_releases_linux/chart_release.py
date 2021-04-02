@@ -24,6 +24,7 @@ from .utils import (
 class ChartReleaseService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace = 'chart.release'
         cli_namespace = 'app.chart_release'
 

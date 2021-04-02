@@ -1833,6 +1833,7 @@ class PoolService(CRUDService):
 class PoolDatasetUserPropService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace = 'pool.dataset.userprop'
         cli_namespace = 'storage.dataset.user_prop'
 
@@ -1951,6 +1952,7 @@ class PoolDatasetService(CRUDService):
     dataset_store = 'storage.encrypteddataset'
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace = 'pool.dataset'
         event_send = False
         cli_namespace = 'storage.dataset'

@@ -19,6 +19,7 @@ DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
 class DockerImagesService(CRUDService):
 
     class Config:
+        datastore_primary_key_type = 'string'
         namespace = 'container.image'
         namespace_alias = 'docker.images'
         cli_namespace = 'app.docker.image'

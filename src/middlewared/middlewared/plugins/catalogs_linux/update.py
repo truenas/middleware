@@ -32,6 +32,7 @@ class CatalogService(CRUDService):
         datastore_extend = 'catalog.catalog_extend'
         datastore_extend_context = 'catalog.catalog_extend_context'
         datastore_primary_key = 'label'
+        datastore_primary_key_type = 'string'
         cli_namespace = 'app.catalog'
 
     @private
