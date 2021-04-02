@@ -1,7 +1,7 @@
 import itertools
 
 from middlewared.schema import Dict
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 from middlewared.utils import filter_list
 from middlewared.validators import validate_attributes
 
@@ -12,6 +12,7 @@ from .utils import RESERVED_NAMES
 validation_mapping = {
     'definitions/certificate': 'certificate',
     'definitions/certificateAuthority': 'certificate_authority',
+    'validations/containerImage': 'container_image',
     'validations/nodePort': 'port_available_on_node',
 }
 
@@ -128,3 +129,23 @@ class ChartReleaseService(Service):
             await self.middleware.call('chart.release.certificate_authority_choices'), [['id', '=', value]]
         ):
             verrors.add(schema_name, 'Unable to locate certificate authority.')
+
+    @private
+    async def validate_container_image(self, verrors, value, question, schema_name, release_data):
+        # We allow chart devs to bypass container image validation in case we have a case where a registry misbehaves
+        # or maybe there is an issue in our code to correctly see if container image exists.
+        if not value or not value.get('validate', True):
+            return
+
+        # If validation is to be performed now, we expect that we at least have repo + tag available always
+        for k in filter(lambda k: not value.get(k), ('repository', 'tag')):
+            verrors.add(schema_name, f'{k!r} must be specified.')
+
+        tag = f'{value["repository"]}:{value["tag"]}'
+        try:
+            digest = await self.middleware.call('container.image.retrieve_image_digest', tag)
+        except CallError as e:
+            verrors.add(schema_name, f'Failed to validate {tag!r} image tag ({e})')
+        else:
+            if not digest:
+                verrors.add(schema_name, f'Unable to retrieve {tag!r} container image tag details.')
