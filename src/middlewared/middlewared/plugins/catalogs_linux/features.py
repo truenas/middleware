@@ -14,6 +14,7 @@ SUPPORTED_FEATURES = {
     'definitions/gpuConfiguration',
     'definitions/timezone',
     'definitions/nodeIP',
+    'validations/containerImage',
     'validations/nodePort',
 }
 
