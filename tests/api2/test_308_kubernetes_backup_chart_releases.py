@@ -62,7 +62,13 @@ def test_04_get_ix_applications_kubernetes_backup(request):
 
 def test_05_restore_ix_applications_kubernetes_backup(request):
     depends(request, ['ix_app_backup'])
-    results = POST('/kubernetes/restore_backup/', backup_name)
+    payload = {
+        "backup_name": backup_name,
+        "options": {
+            "wait_for_csi": True
+        }
+    }
+    results = POST('/kubernetes/restore_backup/', payload)
     assert results.status_code == 200, results.text
     job_status = wait_on_job(results.json(), 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -113,7 +119,10 @@ def test_09_get_custom_name_kubernetes_backup(request):
 
 def test_10_restore_custom_name_kubernetes_backup(request):
     depends(request, ['my_app_backup'])
-    results = POST('/kubernetes/restore_backup/', 'mybackup')
+    payload = {
+        "backup_name": 'mybackup',
+    }
+    results = POST('/kubernetes/restore_backup/', payload)
     assert results.status_code == 200, results.text
     job_status = wait_on_job(results.json(), 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -150,7 +159,13 @@ def test_13_delete_ipfs_chart_release(request):
 
 def test_14_restore_custom_name_kubernetes_backup(request):
     depends(request, ['my_second_backup'])
-    results = POST('/kubernetes/restore_backup/', 'mysecondbackup')
+    payload = {
+        "backup_name": 'mysecondbackup',
+        "options": {
+            "wait_for_csi": False
+        }
+    }
+    results = POST('/kubernetes/restore_backup/', payload)
     assert results.status_code == 200, results.text
     job_status = wait_on_job(results.json(), 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
