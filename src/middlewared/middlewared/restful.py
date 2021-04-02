@@ -228,7 +228,21 @@ class OpenAPIResource(object):
                     },
                 ]
             elif accepts and not (operation == 'delete' and method['item_method'] and len(accepts) == 1):
-                opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
+                if '{id}' in path and method['filterable']:
+                    opobject['requestBody'] = self._accepts_to_request(
+                        methodname, method, [{
+                            '_attrs_order_': ['extra'],
+                            '__name__': 'query-options',
+                            '__required__': False,
+                            'additionalProperties': False,
+                            'default': {},
+                            'properties': {'extra': accepts[1]['properties']['extra']},
+                            'title': 'query-options',
+                            'type': 'object',
+                        }]
+                    )
+                else:
+                    opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
 
             # For now we only accept `id` as an url parameters
             if '{id}' in path:
@@ -503,12 +517,13 @@ class Resource(object):
                         data = await req.json()
                         if not isinstance(data, dict):
                             resp.set_status(400)
-                            resp.body = json.dumps({'message': 'Endpoint expects object/dict.',})
+                            resp.body = json.dumps({'message': 'Endpoint expects object/dict.'})
                             return resp
                         if data:
                             if (
-                                'query-options' not in data or len(data['query-options']) > 1
-                                or (data['query-options'] and 'extra' not in data['query-options'])
+                                'query-options' not in data or len(data['query-options']) > 1 or (
+                                    data['query-options'] and 'extra' not in data['query-options']
+                                )
                             ):
                                 resp.set_status(400)
                                 resp.body = json.dumps({
