@@ -33,12 +33,13 @@ class ChartReleaseService(CRUDService):
         """
         Query available chart releases.
 
-        `options.extra.retrieve_resources` is a boolean when set will retrieve existing kubernetes resources
+        `query-options.extra.retrieve_resources` is a boolean when set will retrieve existing kubernetes resources
         in the chart namespace.
 
-        `options.extra.history` is a boolean when set will retrieve all chart version upgrades for a chart release.
+        `query-options.extra.history` is a boolean when set will retrieve all chart version upgrades
+        for a chart release.
 
-        `options.extra.include_chart_schema` is a boolean when set will retrieve the schema being used by
+        `query-options.extra.include_chart_schema` is a boolean when set will retrieve the schema being used by
         the chart release in question.
         """
         if not await self.middleware.call('service.started', 'kubernetes'):
