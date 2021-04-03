@@ -2911,7 +2911,10 @@ class PoolDatasetService(CRUDService):
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
             raise verrors
         else:
-            parent_ds = await self.middleware.call('pool.dataset.query', [('id', '=', data['name'].rsplit('/', 1)[0])], {'extra': {'recursive': False}})
+            parent_ds = await self.middleware.call('pool.dataset.query',
+                [('id', '=', data['name'].rsplit('/', 1)[0])],
+                {'extra': {'recursive': False}},
+            )
             await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
 
         parent_ds = parent_ds[0]
