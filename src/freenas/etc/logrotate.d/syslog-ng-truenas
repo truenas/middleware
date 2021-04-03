@@ -1,7 +1,7 @@
 /var/log/syslog
 {
 	rotate 3
-	size 10m
+	size 10M
 	missingok
 	notifempty
 	delaycompress
@@ -26,7 +26,7 @@
 /var/log/error
 {
 	rotate 3
-	size 10m
+	size 10M
 	missingok
 	notifempty
 	compress
