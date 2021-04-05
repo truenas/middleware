@@ -36,13 +36,14 @@ class CatalogService(Service):
 
         if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
             cached_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+            questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
             for train in cached_data:
                 for catalog_item in cached_data[train]:
                     for version in cached_data[train][catalog_item]['versions']:
                         version_data = cached_data[train][catalog_item]['versions'][version]
                         if not version_data.get('healthy'):
                             continue
-                        self.normalise_questions(version_data)
+                        self.normalise_questions(version_data, questions_context)
             return cached_data
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
@@ -64,6 +65,7 @@ class CatalogService(Service):
         # This allows us to use these folders for placing helm library charts and docs respectively
         trains = {'charts': {}, 'test': {}}
         options = options or {}
+        questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         unhealthy_apps = set()
         for train in os.listdir(location):
             if (
@@ -100,7 +102,7 @@ class CatalogService(Service):
                     # If the item format is not valid - there is no point descending any further into versions
                     continue
 
-                item_data.update(self.item_details(item_location, schema))
+                item_data.update(self.item_details(item_location, schema, questions_context))
                 unhealthy_versions = []
                 for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
                     if not item_data['app_readme'] and v['healthy']:
@@ -124,7 +126,7 @@ class CatalogService(Service):
         return trains
 
     @private
-    def item_details(self, item_path, schema):
+    def item_details(self, item_path, schema, questions_context):
         # Each directory under item path represents a version of the item and we need to retrieve details
         # for each version available under the item
         item_data = {'versions': {}}
@@ -158,12 +160,15 @@ class CatalogService(Service):
                 # There is no point in trying to see what questions etc the version has as it's invalid
                 continue
 
-            version_details.update({'healthy': True, **self.item_version_details(version_details['location'])})
+            version_details.update({
+                'healthy': True,
+                **self.item_version_details(version_details['location'], questions_context)
+            })
 
         return item_data
 
     @private
-    def item_version_details(self, version_path):
+    def item_version_details(self, version_path, questions_context):
         version_data = {'location': version_path, 'required_features': set()}
         for key, filename, parser in (
             ('chart_metadata', 'Chart.yaml', yaml.safe_load),
@@ -180,7 +185,7 @@ class CatalogService(Service):
 
         # We will normalise questions now so that if they have any references, we render them accordingly
         # like a field referring to available interfaces on the system
-        self.normalise_questions(version_data)
+        self.normalise_questions(version_data, questions_context)
 
         version_data['supported'] = self.middleware.call_sync('catalog.version_supported', version_data)
         version_data['required_features'] = list(version_data['required_features'])
@@ -194,16 +199,27 @@ class CatalogService(Service):
         return version_data
 
     @private
-    def normalise_questions(self, version_data):
+    async def get_normalised_questions_context(self):
+        return {
+            'nic_choices': await self.middleware.call('chart.release.nic_choices'),
+            'gpus': await self.middleware.call('k8s.gpu.available_gpus'),
+            'timezones': await self.middleware.call('system.general.timezone_choices'),
+            'node_ip': await self.middleware.call('kubernetes.node_ip'),
+            'certificates': await self.middleware.call('chart.release.certificate_choices'),
+            'certificate_authorities': await self.middleware.call('chart.release.certificate_authority_choices'),
+        }
+
+    @private
+    def normalise_questions(self, version_data, context):
         version_data['required_features'] = set()
         for question in version_data['schema']['questions']:
-            self._normalise_question(question, version_data)
+            self._normalise_question(question, version_data, context)
         version_data['required_features'] = list(version_data['required_features'])
 
-    def _normalise_question(self, question, version_data):
+    def _normalise_question(self, question, version_data, context):
         schema = question['schema']
         for attr in itertools.chain(*[schema.get(k, []) for k in ('attrs', 'items', 'subquestions')]):
-            self._normalise_question(attr, version_data)
+            self._normalise_question(attr, version_data, context)
 
         if '$ref' not in schema:
             return
@@ -213,12 +229,11 @@ class CatalogService(Service):
             version_data['required_features'].add(ref)
             if ref == 'definitions/interface':
                 data['enum'] = [
-                    {'value': i, 'description': f'{i!r} Interface'}
-                    for i in self.middleware.call_sync('chart.release.nic_choices')
+                    {'value': i, 'description': f'{i!r} Interface'} for i in context['nic_choices']
                 ]
             elif ref == 'definitions/gpuConfiguration':
                 data['attrs'] = []
-                for gpu, quantity in self.middleware.call_sync('k8s.gpu.available_gpus').items():
+                for gpu, quantity in context['gpus'].items():
                     data['attrs'].append({
                         'variable': gpu,
                         'label': f'GPU Resource ({gpu})',
@@ -234,17 +249,14 @@ class CatalogService(Service):
                         }
                     })
             elif ref == 'definitions/timezone':
-                data['enum'] = [
-                    {'value': t, 'description': f'{t!r} timezone'}
-                    for t in self.middleware.call_sync('system.general.timezone_choices')
-                ]
+                data['enum'] = [{'value': t, 'description': f'{t!r} timezone'} for t in context['timezones']]
             elif ref == 'definitions/nodeIP':
-                data['default'] = self.middleware.call_sync('kubernetes.node_ip')
+                data['default'] = context['node_ip']
             elif ref == 'definitions/certificate':
                 data.update({
                     'enum': [{'value': None, 'description': 'No Certificate'}] + [
                         {'value': i['id'], 'description': f'{i["name"]!r} Certificate'}
-                        for i in self.middleware.call_sync('chart.release.certificate_choices')
+                        for i in context['certificates']
                     ],
                     'default': None,
                     'null': True,
@@ -253,7 +265,7 @@ class CatalogService(Service):
                 data.update({
                     'enum': [{'value': None, 'description': 'No Certificate Authority'}] + [
                         {'value': i['id'], 'description': f'{i["name"]!r} Certificate Authority'}
-                        for i in self.middleware.call_sync('chart.release.certificate_authority_choices')
+                        for i in context['certificate_authorities']
                     ],
                     'default': None,
                     'null': True,
