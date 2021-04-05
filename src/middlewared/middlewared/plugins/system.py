@@ -24,6 +24,7 @@ import requests
 import shutil
 import socket
 import subprocess
+import hashlib
 try:
     import sysctl
 except ImportError:
@@ -426,6 +427,8 @@ class SystemService(Service):
         'date': None,
     }
 
+    HOST_ID = None
+
     class Config:
         cli_namespace = 'system'
 
@@ -718,6 +721,23 @@ class SystemService(Service):
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )
+
+    @accepts()
+    def host_id(self):
+        """
+        Retrieve a hex string that is generated based
+        on the contents of the `/etc/hostid` file. This
+        is a permanent value that persists across
+        reboots/upgrades and can be used as a unique
+        identifier for the machine.
+        """
+        if self.HOST_ID is None:
+            with open('/etc/hostid', 'rb') as f:
+                id = f.read().strip()
+                if id:
+                    self.HOST_ID = hashlib.sha256(id).hexdigest()
+
+        return self.HOST_ID
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
