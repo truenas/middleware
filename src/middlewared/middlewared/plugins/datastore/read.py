@@ -245,7 +245,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         for column in table.c:
             # aliases == {} when we are loading without relationships, let's leave fk values in that case
             if not column.foreign_keys or not aliases:
-                data[column.name] = obj[column]
+                data[str(column.name)] = obj[column]
 
         for foreign_key, alias in aliases.items():
             column = foreign_key.parent
