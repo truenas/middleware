@@ -2,7 +2,6 @@ import json
 import asyncio
 import random
 import aiohttp
-import hashlib
 import os
 
 from copy import deepcopy
@@ -269,8 +268,6 @@ class UsageService(Service):
 
         usage_version = 1
         version = system['version']
-        with open('/etc/hostid', 'rb') as f:
-            system_hash = hashlib.sha256(f.read().strip()).hexdigest()
         datasets = await self.middleware.call(
             'zfs.dataset.query', [('type', '!=', 'VOLUME')], {'count': True}
         )
@@ -285,7 +282,7 @@ class UsageService(Service):
         )
 
         return {
-            'system_hash': system_hash,
+            'system_hash': await self.middleware.call('system.host_id'),
             'platform': platform,
             'usage_version': usage_version,
             'version': version,
