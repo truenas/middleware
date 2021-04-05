@@ -2,7 +2,6 @@ import json
 import asyncio
 import random
 import aiohttp
-import hashlib
 import os
 
 from copy import deepcopy
@@ -354,8 +353,7 @@ class UsageService(Service):
         return {'version': system['version']}
 
     async def retrieve_system_hash(self):
-        with open('/etc/hostid', 'rb') as f:
-            return hashlib.sha256(f.read().strip()).hexdigest()
+        return await self.middleware.call('system.host_id')
 
     async def gather_system(self, context):
         platform = 'TrueNAS-{}'.format(await self.middleware.call(
