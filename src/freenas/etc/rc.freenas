@@ -90,3 +90,18 @@ ro_sqlite()
 	cp ${FREENAS_CONFIG} ${ret}
 	echo ${ret}
 }
+
+ha_hardware()
+{
+	/usr/local/bin/python3 /usr/local/lib/python3.7/site-packages/middlewared/scripts/hadetect.py | jq -r '.hardware'
+}
+
+ha_node()
+{
+	/usr/local/bin/python3 /usr/local/lib/python3.7/site-packages/middlewared/scripts/hadetect.py | jq -r '.node'
+}
+
+ha_licensed()
+{
+	/usr/local/bin/python3 /usr/local/lib/python3.7/site-packages/middlewared/scripts/hadetect.py | jq -r '.licensed'
+}
