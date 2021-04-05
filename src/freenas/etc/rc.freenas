@@ -90,3 +90,18 @@ ro_sqlite()
 	cp ${FREENAS_CONFIG} ${ret}
 	echo ${ret}
 }
+
+ha_hardware()
+{
+	/usr/local/bin/hadetect | jq -r '.hardware'
+}
+
+ha_node()
+{
+	/usr/local/bin/hadetect | jq -r '.node'
+}
+
+ha_licensed()
+{
+	/usr/local/bin/hadetect | jq -r '.licensed'
+}
