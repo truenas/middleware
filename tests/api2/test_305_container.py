@@ -462,12 +462,10 @@ def test_35_verify_ix_chart_config_container_Command_Args_EnvironmentVariables(r
     assert {'name': 'Eric_Var', 'value': 'Something'} in config['containerEnvironmentVariables'], results.text
 
 
-@pytest.mark.dependency(name='hostpath-mountpath')
-def test_36_create_datasets_hostpath_and_mountpath(request):
+@pytest.mark.dependency(name='hostpath-dataset')
+def test_36_create_datasets_hostpath(request):
     depends(request, ['pool_04'], scope='session')
     result = POST('/pool/dataset/', {'name': f'{pool_name}/tc-hostpath'})
-    assert result.status_code == 200, result.text
-    result = POST('/pool/dataset/', {'name': f'{pool_name}/tc-mountpath'})
     assert result.status_code == 200, result.text
 
 
@@ -477,10 +475,10 @@ def test_37_set_truecommand_ix_chart_volumes(request):
     global payload
     payload = {
         'values': {
-            'volume': [
+            'volumes': [
                 {
-                    'mountPath': f'/mnt/{pool_name}/tc-mountpath',
-                    'datasetName': f'{pool_name}/tc-mountpath',
+                    'mountPath': f'/mnt/{pool_name}/ix-applications/releases/truecommand/volumes/tc-mountpath',
+                    'datasetName': 'tc-mountpath'
                 }
             ]
         }
@@ -497,20 +495,20 @@ def test_38_verify_ix_chart_config_volumes(request):
     results = GET(f'/chart/release/id/{tc_release_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    payload_volume = payload['values']['volume'][0]
-    assert payload_volume in results.json()['config']['volume'], results.text
+    payload_volume = payload['values']['volumes'][0]
+    assert payload_volume in results.json()['config']['volumes'], results.text
 
 
 @pytest.mark.dependency(name='tc_hostPathVolumes')
 def test_39_set_truecommand_ix_chart_hostPathVolumes(request):
-    depends(request, ['tc_chart_release'])
+    depends(request, ['tc_chart_release', 'hostpath-dataset'])
     global payload
     payload = {
         'values': {
             'hostPathVolumes': [
                 {
                     'hostPath': f'/mnt/{pool_name}/tc-hostpath',
-                    'mountPath': f'/mnt/{pool_name}/tc-mountpath',
+                    'mountPath': f'/mnt/{pool_name}/ix-applications/releases/truecommand/volumes/tc-mountpath',
                     'readOnly': True
                 }
             ]
@@ -533,7 +531,23 @@ def test_40_verify_ix_chart_config_hostPathVolumes(request):
     assert payload_hostPathVolumes in config['hostPathVolumes'], results.text
 
 
-def test_41_delete_truecommand_chart_release(request):
+def test_41_verify_ix_chart_resources_host_path_volumes(request):
+    depends(request, ['tc_hostPathVolumes'])
+    payload = {
+        'query-options': {
+            'extra': {
+                'retrieve_resources': True
+            }
+        },
+        'query-filters': [['id', '=', tc_release_id]]
+    }
+    results = GET('/chart/release/', payload)
+    host_path_volumes = str(results.json()[0]['resources']['host_path_volumes'])
+    assert f'/mnt/{pool_name}/tc-hostpath' in host_path_volumes, host_path_volumes
+    assert f'/mnt/{pool_name}/ix-applications/releases/truecommand/volumes/tc-mountpath' in host_path_volumes, host_path_volumes
+
+
+def test_42_delete_truecommand_chart_release(request):
     depends(request, ['tc_chart_release'])
     results = DELETE(f'/chart/release/id/{tc_release_id}/')
     assert results.status_code == 200, results.text
@@ -542,22 +556,20 @@ def test_41_delete_truecommand_chart_release(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_42_delete_datasets_hostpath_and_mountpath(request):
-    depends(request, ['hostpath-mountpath'])
+def test_43_delete_datasets_hostpath_and_mountpath(request):
+    depends(request, ['hostpath-dataset'])
     result = DELETE(f'/pool/dataset/id/{pool_name}%2Ftc-hostpath/', {'recursive': True})
     assert result.status_code == 200, result.text
-    result = DELETE(f'/pool/dataset/id/{pool_name}%2Ftc-mountpath/', {'recursive': True})
-    assert result.status_code == 200, result.text
 
 
-def test_43_delete_public_image_with_id(request):
+def test_44_delete_public_image_with_id(request):
     depends(request, ['pull_public_image'])
     results = DELETE(f'/container/image/id/{public_image_id}/', {'force': True})
     assert results.status_code == 200, results.text
     assert results.json() is None, results.text
 
 
-def test_44_verify_the_public_image_id_is_deleted(request):
+def test_45_verify_the_public_image_id_is_deleted(request):
     depends(request, ['pull_public_image'])
     results = GET(f'/container/image/id/{public_image_id}/')
     assert results.status_code == 404, results.text
