@@ -12,8 +12,6 @@
 
 _interface_config()
 {
-	local failover_status="" failover_licensed=0
-
 	local saved_ifs="${IFS}"
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
@@ -43,8 +41,8 @@ _interface_config()
 	local configure_ifaces=1
 	if ! is_freenas; then
 
-		if [ "$(ha_mode)" = "MANUAL" ]; then
-			if [ ${failover_licensed} -eq 1 ]; then
+		if [ "$(ha_hardware)" = "MANUAL" ]; then
+			if [ "$(ha_licensed)" = "true" ]; then
 				configure_ifaces=0
 				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
 			fi
@@ -61,6 +59,7 @@ _interface_config()
 			carp2_skew="20"
 			internal_ip="169.254.10.2"
 		else
+			configure_ifaces=0
 			echo "# Could not determine system node"
 		fi
 
@@ -139,7 +138,7 @@ _interface_config()
 			else
 				int_passopt=""
 			fi
-			if [ "${failover_status}" = "MASTER" ]; then
+			if [ "$(/usr/local/bin/midclt call failover.status)" = "MASTER" ]; then
 				carp1_skew="1"
 			fi
 			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
