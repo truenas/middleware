@@ -35,7 +35,15 @@ class CatalogService(Service):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
 
         if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
-            return self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+            cached_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+            for train in cached_data:
+                for catalog_item in cached_data[train]:
+                    for version in cached_data[train][catalog_item]['versions']:
+                        version_data = cached_data[train][catalog_item]['versions'][version]
+                        if not version_data.get('healthy'):
+                            continue
+                        self.normalise_questions(version_data)
+            return cached_data
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
@@ -187,8 +195,10 @@ class CatalogService(Service):
 
     @private
     def normalise_questions(self, version_data):
+        version_data['required_features'] = set()
         for question in version_data['schema']['questions']:
             self._normalise_question(question, version_data)
+        version_data['required_features'] = list(version_data['required_features'])
 
     def _normalise_question(self, question, version_data):
         schema = question['schema']
