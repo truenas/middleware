@@ -45,6 +45,13 @@ async def authenticate(middleware, req):
         raise web.HTTPUnauthorized()
 
 
+def normalize_query_parameter(value):
+    try:
+        return json.loads(value)
+    except json.json.JSONDecodeError:
+        return value
+
+
 class Application:
 
     def __init__(self, host, remote_port):
@@ -200,7 +207,7 @@ class OpenAPIResource(object):
                 opobject['description'] = desc
 
             accepts = method.get('accepts')
-            if '{id}' not in path and method['filterable']:
+            if method['filterable']:
                 opobject['parameters'] += [
                     {
                         'name': 'limit',
@@ -226,8 +233,7 @@ class OpenAPIResource(object):
                         'required': False,
                         'schema': {'type': 'string'},
                     },
-                ]
-            elif '{id}' in path and method['filterable']:
+                ] if '{id}' not in path else []
                 desc = f'{desc}\n\n' if desc else ''
                 opobject['description'] = desc + '`query-options.extra` can be specified as query parameters.'
             elif accepts and not (operation == 'delete' and method['item_method'] and len(accepts) == 1) and (
@@ -432,7 +438,7 @@ class Resource(object):
 
     def _filterable_args(self, req):
         filters = []
-        options = {}
+        options = {'extra': {}}
         for key, val in list(req.query.items()):
             if '__' in key:
                 field, op = key.split('__', 1)
@@ -455,6 +461,8 @@ class Resource(object):
             elif key == 'sort':
                 options[key] = [convert(v) for v in val.split(',')]
                 continue
+            else:
+                options['extra'][key] = normalize_query_parameter(val)
 
             op_map = {
                 'eq': '=',
@@ -504,11 +512,7 @@ class Resource(object):
                         filterid = int(filterid)
                     extra = {}
                     for key, val in list(req.query.items()):
-                        try:
-                            val = json.loads(val)
-                        except json.json.JSONDecodeError:
-                            pass
-                        extra[key] = val
+                        extra[key] = normalize_query_parameter(val)
 
                     method_args = [
                         [(self.service_config['datastore_primary_key'], '=', filterid)],
