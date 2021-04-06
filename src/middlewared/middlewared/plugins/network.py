@@ -1997,7 +1997,7 @@ class InterfaceService(CRUDService):
         await self.middleware.call_hook('interface.post_sync')
 
     @private
-    async def sync_interface(self, name, options):
+    async def sync_interface(self, name, options=None):
         options = options or {}
 
         try:
