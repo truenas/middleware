@@ -333,7 +333,7 @@ def test_31_set_custom_catalog_for_testing_update():
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     # the sleep is needed or /catalog/items is not ready on time.
-    time.sleep(2)
+    time.sleep(5)
 
 
 @pytest.mark.parametrize('key', list(updatechart_catalog.keys()))
