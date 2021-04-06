@@ -192,7 +192,7 @@ class DeviceService(Service, DeviceInfoBase):
 
             # get lunid
             if disk_data['wwn']:
-                if disk.get('tran') == 'nvme':
+                if disk_data['tran'] == 'nvme':
                     disk['lunid'] = disk_data['wwn'].lstrip('eui.')
                 else:
                     disk['lunid'] = disk_data['wwn'].lstrip('0x')
