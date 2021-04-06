@@ -100,7 +100,8 @@ class DeviceService(Service, DeviceInfoBase):
         disks_cp = subprocess.run(
             ['lsblk', '-OJdb'],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            errors='ignore'
         )
         if not disks_cp.returncode:
             try:
