@@ -12,10 +12,12 @@ if __name__ == "__main__":
     # We need to allow tpm in grub as sedutil-cli requires it
     # TODO: Please remove kernel flag to use cgroups v1 when nvidia device plugin starts working
     #  with it ( https://github.com/NVIDIA/k8s-device-plugin/issues/235 )
+    # We set mpt3sas argument because of https://jira.ixsystems.com/browse/NAS-109947, let's please
+    # remove setting it once it is fixed upstream. ( https://bugzilla.redhat.com/show_bug.cgi?id=1878332 )
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 systemd.unified_cgroup_hierarchy=0 '
-        'amd_iommu=on iommu=pt kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on"',
+        'amd_iommu=on iommu=pt kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on mpt3sas.max_queue_depth=10000"',
     ]
 
     terminal = ["console"]
