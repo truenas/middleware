@@ -686,8 +686,10 @@ class iSCSITargetExtentService(SharingService):
         extent_rpm = data['rpm'].upper()
 
         if extent_type == 'ZVOL':
+            extent_type = 'DISK'
             data['disk'] = data['path']
         elif extent_type == 'FILE':
+            data['disk'] = None
             extent_size = data['filesize']
             # Legacy Compat for having 2[KB, MB, GB, etc] in database
             if not str(extent_size).isdigit():
@@ -756,6 +758,10 @@ class iSCSITargetExtentService(SharingService):
         disk = data['disk']
         path = data['path']
         if extent_type == 'ZVOL':
+            if not disk:
+                verrors.add(f'{schema_name}.disk', 'This field is required')
+                raise verrors  # They need this for anything else
+
             zvol_name = disk.split('zvol/', 1)[-1]
             zvol = await self.middleware.call('pool.dataset.query', [['id', '=', zvol_name]])
             if not zvol:
@@ -892,6 +898,8 @@ class iSCSITargetExtentService(SharingService):
             # create the extent
             if not os.path.exists(path):
                 await run(['truncate', '-s', str(data['filesize']), path])
+
+            data.pop('disk', None)
         else:
             data['path'] = data.pop('disk', None)
 
