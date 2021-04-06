@@ -24,17 +24,25 @@
     for extent in extents.values():
         if extent['locked']:
             middleware.logger.debug(
-                'Skipping generation of %r extent as the underlying resource is locked', extent['name']
+                'Skipping generation of extent %r as the underlying resource is locked', extent['name']
             )
             middleware.call_sync('iscsi.extent.generate_locked_alert', extent['id'])
             continue
 
         if extent['type'] == 'DISK':
             extent['extent_path'] = os.path.join('/dev', extent['disk'])
-            extents_io['vdisk_blockio'].append(extent)
+            extents_io_key = 'vdisk_blockio'
         else:
             extent['extent_path'] = extent['path']
-            extents_io['vdisk_fileio'].append(extent)
+            extents_io_key = 'vdisk_fileio'
+
+        if not os.path.exists(extent['extent_path']):
+            middleware.logger.debug(
+                'Skipping generation of extent %r as the underlying resource does not exist', extent['name']
+            )
+            continue
+
+        extents_io[extents_io_key].append(extent)
 
         extent['t10_dev_id'] = extent['serial']
         if not extent['xen']:
