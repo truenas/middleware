@@ -49,9 +49,11 @@ class DiskService(Service, DiskSwapMirrorBase):
             for provider in os.listdir(
                 os.path.join('/sys/block', mirror_data['real_path'].split('/')[-1], 'slaves')
             ):
-                provider_data = {'name': provider, 'id': provider}
-                with open(os.path.join('/sys/class/block', provider, 'partition'), 'r') as f:
-                    provider_data['disk'] = provider.rsplit(f.read().strip(), 1)[0].strip()
-                mirror_data['providers'].append(provider_data)
+                partition = os.path.join('/sys/class/block', provider, 'partition')
+                if os.path.exists(partition):
+                    provider_data = {'name': provider, 'id': provider}
+                    with open(partition, 'r') as f:
+                        provider_data['disk'] = provider.rsplit(f.read().strip(), 1)[0].strip()
+                    mirror_data['providers'].append(provider_data)
             mirrors.append(mirror_data)
         return filter_list(mirrors, filters, options)
