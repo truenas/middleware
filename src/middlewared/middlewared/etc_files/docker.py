@@ -39,9 +39,10 @@ def render(service, middleware):
     subprocess.run(['systemctl', 'daemon-reload'], capture_output=True, check=True)
 
     os.makedirs('/etc/docker', exist_ok=True)
+    data_root = os.path.join('/mnt', config['dataset'], 'docker')
     with open('/etc/docker/daemon.json', 'w') as f:
         f.write(json.dumps({
-            'data-root': os.path.join('/mnt', config['dataset'], 'docker'),
+            'data-root': data_root.replace(' ', r'\ '),
             'exec-opts': ['native.cgroupdriver=cgroupfs'],
             'iptables': False,
             'bridge': 'none',
