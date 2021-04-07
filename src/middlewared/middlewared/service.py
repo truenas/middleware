@@ -645,7 +645,7 @@ class SharingTaskService(CRUDService):
             'locked_datasets': await self.middleware.call('zfs.dataset.locked_datasets', datasets) if datasets else [],
             'service_extend': (
                 await self.middleware.call(self._config.datastore_extend_context, rows, extra)
-                if self._config.datastore_extend_context else None,
+                if self._config.datastore_extend_context else None
             ),
         }
 
