@@ -93,15 +93,15 @@ ro_sqlite()
 
 ha_hardware()
 {
-	/usr/local/bin/hadetect | jq -r '.hardware'
+	/usr/local/bin/hadetect | /usr/local/bin/jq -r '.hardware'
 }
 
 ha_node()
 {
-	/usr/local/bin/hadetect | jq -r '.node'
+	/usr/local/bin/hadetect | /usr/local/bin/jq -r '.node'
 }
 
 ha_licensed()
 {
-	/usr/local/bin/hadetect | jq -r '.licensed'
+	/usr/local/bin/hadetect | /usr/local/bin/jq -r '.licensed'
 }

@@ -90,8 +90,8 @@ def main():
         # then things are really broken
         pass
 
-    return json.dumps(result)
+    print(json.dumps(result))
 
 
 if __name__ == '__main__':
-    print(main())
+    main()
