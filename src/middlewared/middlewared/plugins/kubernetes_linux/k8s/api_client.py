@@ -19,6 +19,7 @@ async def api_client(context=None, api_client_kwargs=None):
         'batch_api': client.BatchV1Api(api_cl),
         'cronjob_batch_api': client.BatchV1beta1Api(api_cl),
         'custom_object_api': client.CustomObjectsApi(api_cl),
+        'extensions_api': client.ApiextensionsV1Api(api_cl),
     }
     for k in filter(lambda k: context[k], context):
         if k == 'node':
