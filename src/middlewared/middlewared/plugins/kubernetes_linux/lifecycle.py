@@ -73,6 +73,23 @@ class KubernetesService(Service):
         ]
 
     @private
+    async def ensure_k8s_crd_are_available(self):
+        required_crds = [
+            'volumesnapshots.snapshot.storage.k8s.io',
+            'volumesnapshotcontents.snapshot.storage.k8s.io',
+            'volumesnapshotclasses.snapshot.storage.k8s.io',
+            'zfsrestores.zfs.openebs.io',
+            'zfsbackups.zfs.openebs.io',
+            'zfssnapshots.zfs.openebs.io',
+            'zfsvolumes.zfs.openebs.io',
+            'network-attachment-definitions.k8s.cni.cncf.io',
+        ]
+        while len(
+            await self.middleware.call('k8s.crd.query', [['metadata.name', 'in', required_crds]])
+        ) < len(required_crds):
+            await asyncio.sleep(5)
+
+    @private
     async def post_start_internal(self):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-start', 'effect': 'NoExecute'}])
         node_config = await self.middleware.call('k8s.node.config')
@@ -83,6 +100,7 @@ class KubernetesService(Service):
         manifest_path = '/usr/local/share/kubernetes_manifests/zfs-operator.yaml'
         if os.path.exists(manifest_path):
             await self.middleware.call('k8s.cluster.apply_yaml_file', manifest_path)
+        await self.ensure_k8s_crd_are_available()
         await self.middleware.call('k8s.storage_class.setup_default_storage_class')
         await self.middleware.call('k8s.zfs.snapshotclass.setup_default_snapshot_class')
         await self.middleware.call(
