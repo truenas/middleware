@@ -1,4 +1,3 @@
-
 PORTNAME=	libhyve-remote
 PORTVERSION=	0.1.4.2
 CATEGORIES=	devel
