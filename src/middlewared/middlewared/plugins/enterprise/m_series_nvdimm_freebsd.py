@@ -25,9 +25,14 @@ class EnterpriseService(Service):
                                           stdout=subprocess.PIPE,
                                           stderr=subprocess.STDOUT).stdout
                 if "vendor: 2c80 device: 4e32" in ixnvdimm:
-                    size = 32
+                    size = 16
+                    clock_speed = 2666
                 elif "vendor: 2c80 device: 4e36" in ixnvdimm:
                     size = 16
+                    clock_speed = 2933
+                elif "vendor: 2c80 device: 4e33" in ixnvdimm:
+                    size = 32
+                    clock_speed = 2933
                 else:
                     continue
 
@@ -46,6 +51,7 @@ class EnterpriseService(Service):
                 result.append({
                     "index": int(nvdimm[len("/dev/nvdimm"):]),
                     "size": size,
+                    "clock_speed": clock_speed,
                     "firmware_version": version,
                 })
 
