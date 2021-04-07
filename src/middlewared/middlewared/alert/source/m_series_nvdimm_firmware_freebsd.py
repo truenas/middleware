@@ -26,11 +26,16 @@ class TrueNASMNVDIMMFirmwareVersionAlertSource(AlertSource):
     async def check(self):
         if (await self.middleware.call("truenas.get_chassis_hardware")).startswith("TRUENAS-M"):
             for nvdimm in await self.middleware.call("enterprise.m_series_nvdimm"):
-                size_to_version = {16: "2.2", 32: "2.4"}
-                if nvdimm["size"] not in size_to_version:
-                    raise CallError(f"Unknown NVDIMM size: {nvdimm['size']}")
+                model = (nvdimm["size"], nvdimm["clock_speed"])
+                model_to_versions = {
+                    (16, 2666): ["2.2", "2.4"],
+                    (16, 2933): ["2.2"],
+                    (32, 2933): ["2.4"],
+                }
+                if model not in model_to_versions:
+                    raise CallError(f"Unknown NVDIMM model: {nvdimm['size']}GB {nvdimm['clock_speed']}MHz")
 
-                if nvdimm["firmware_version"] != size_to_version[nvdimm["size"]]:
+                if nvdimm["firmware_version"] not in model_to_versions[model]:
                     return Alert(
                         TrueNASMNVDIMMFirmwareVersionAlertClass,
                         {"index": nvdimm["index"], "version": nvdimm["firmware_version"]},
