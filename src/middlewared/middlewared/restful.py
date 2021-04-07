@@ -235,7 +235,10 @@ class OpenAPIResource(object):
                     },
                 ] if '{id}' not in path else []
                 desc = f'{desc}\n\n' if desc else ''
-                opobject['description'] = desc + '`query-options.extra` can be specified as query parameters.'
+                opobject['description'] = desc + '`query-options.extra` can be specified as query parameters with ' \
+                                                 'prefixing them with `extra.` prefix. For example, ' \
+                                                 '`extra.retrieve_properties=false` will pass `retrieve_properties` ' \
+                                                 'as an extra argument to pool/dataset endpoint.'
             elif accepts and not (operation == 'delete' and method['item_method'] and len(accepts) == 1) and (
                 '{id}' not in path and not method['filterable']
             ):
@@ -461,8 +464,10 @@ class Resource(object):
             elif key == 'sort':
                 options[key] = [convert(v) for v in val.split(',')]
                 continue
-            else:
+            elif key.startswith('extra.'):
+                key = key[len('extra.'):]
                 options['extra'][key] = normalize_query_parameter(val)
+                continue
 
             op_map = {
                 'eq': '=',
@@ -512,7 +517,8 @@ class Resource(object):
                         filterid = int(filterid)
                     extra = {}
                     for key, val in list(req.query.items()):
-                        extra[key] = normalize_query_parameter(val)
+                        if key.startswith('extra.'):
+                            extra[key[len('extra.'):]] = normalize_query_parameter(val)
 
                     method_args = [
                         [(self.service_config['datastore_primary_key'], '=', filterid)],
