@@ -13,7 +13,7 @@ account    required     pam_nologin.so
 # access limits that are hard to express in sshd_config.
 # account  required     pam_access.so
 % if twofactor_enabled:
-auth    required    /usr/lib/security/pam_oath.so    usersfile=/etc/users.oath    window=${twofactor_auth['window']}
+auth    required    pam_oath.so    usersfile=/etc/users.oath    window=${twofactor_auth['window']}
 % endif
 
 # Standard Un*x authorization.
