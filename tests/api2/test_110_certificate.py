@@ -47,7 +47,7 @@ def test_create_idmap_certificate():
 
 def test_02_delete_used_certificate():
     global job_id
-    results = DELETE(f'/certificate/id/{certificate_id}/')
+    results = DELETE(f'/certificate/id/{certificate_id}/', True)
     assert results.status_code == 200, results.text
     job_id = int(results.text)
 

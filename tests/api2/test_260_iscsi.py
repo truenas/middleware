@@ -265,14 +265,14 @@ def test_21_Disconnect_iSCSI_target(request):
 
 def test_25_Delete_associate_iSCSI_file_targetextent(request):
     depends(request, ["iscsi_05"], scope="session")
-    results = DELETE(f"/iscsi/targetextent/id/{associate_id}/")
+    results = DELETE(f"/iscsi/targetextent/id/{associate_id}/", False)
     assert results.status_code == 200, results.text
     assert results.json(), results.text
 
 
 def test_26_Delete_iSCSI_file_target(request):
     depends(request, ["iscsi_03"])
-    results = DELETE(f"/iscsi/target/id/{target_id}/")
+    results = DELETE(f"/iscsi/target/id/{target_id}/", False)
     assert results.status_code == 200, results.text
     assert results.json(), results.text
 
@@ -568,14 +568,14 @@ def test_57_verify_the_iscsi_service_is_disabled(request):
 
 def test_58_delete_associate_iscsi_zvol_targe_and_zvol_textent(request):
     depends(request, ["iscsi_31"])
-    results = DELETE(f"/iscsi/targetextent/id/{zvol_associate_id}/")
+    results = DELETE(f"/iscsi/targetextent/id/{zvol_associate_id}/", True)
     assert results.status_code == 200, results.text
     assert results.json(), results.text
 
 
 def test_59_delete_iscsi_zvol_target(request):
     depends(request, ["iscsi_29"])
-    results = DELETE(f"/iscsi/target/id/{zvol_target_id}/")
+    results = DELETE(f"/iscsi/target/id/{zvol_target_id}/", True)
     assert results.status_code == 200, results.text
     assert results.json(), results.text
 
