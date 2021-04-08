@@ -12,7 +12,7 @@ sys.path.append(apifolder)
 from functions import GET, DELETE, POST
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
-# pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_get_certificate_query():
