@@ -74,6 +74,7 @@ class KubernetesService(Service):
 
     @private
     async def ensure_k8s_crd_are_available(self):
+        retries = 5
         required_crds = [
             'volumesnapshots.snapshot.storage.k8s.io',
             'volumesnapshotcontents.snapshot.storage.k8s.io',
@@ -86,8 +87,9 @@ class KubernetesService(Service):
         ]
         while len(
             await self.middleware.call('k8s.crd.query', [['metadata.name', 'in', required_crds]])
-        ) < len(required_crds):
+        ) < len(required_crds) and retries:
             await asyncio.sleep(5)
+            retries -= 1
 
     @private
     async def post_start_internal(self):
@@ -100,9 +102,13 @@ class KubernetesService(Service):
         manifest_path = '/usr/local/share/kubernetes_manifests/zfs-operator.yaml'
         if os.path.exists(manifest_path):
             await self.middleware.call('k8s.cluster.apply_yaml_file', manifest_path)
-        await self.ensure_k8s_crd_are_available()
-        await self.middleware.call('k8s.storage_class.setup_default_storage_class')
-        await self.middleware.call('k8s.zfs.snapshotclass.setup_default_snapshot_class')
+        try:
+            await self.ensure_k8s_crd_are_available()
+            await self.middleware.call('k8s.storage_class.setup_default_storage_class')
+            await self.middleware.call('k8s.zfs.snapshotclass.setup_default_snapshot_class')
+        except Exception as e:
+            raise CallError(f'Failed to configure PV/PVCs support: {e}')
+
         await self.middleware.call(
             'k8s.node.remove_taints', [
                 k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
