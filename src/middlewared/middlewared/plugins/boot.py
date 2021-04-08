@@ -192,6 +192,45 @@ class BootService(Service):
 
         return cp.returncode == 1
 
+    @private
+    async def expand(self):
+        boot_pool = await self.middleware.call('boot.pool_name')
+        for device in await self.middleware.call('zfs.pool.get_devices', boot_pool):
+            try:
+                await self.expand_device(device)
+            except CallError as e:
+                self.middleware.logger.error('Error trying to expand boot pool partition %r: %r', device, e)
+            except Exception:
+                self.middleware.logger.error('Error trying to expand boot pool partition %r', device, exc_info=True)
+
+    @private
+    async def expand_device(self, device):
+        disk = await self.middleware.call('disk.get_disk_from_partition', device)
+
+        partitions = await self.middleware.call('disk.list_partitions', disk)
+        if len(partitions) != 3:
+            raise CallError(f'Expected 3 partitions, found {len(partitions)}')
+
+        if partitions[-1]['name'] != device:
+            raise CallError(f'{device} is not the last partition')
+
+        if partitions[-1]['partition_number'] != 3:
+            raise CallError(f'{device} is not 3rd partition')
+
+        if partitions[-1]['start_sector'] != partitions[-2]['end_sector'] + 1:
+            raise CallError(f'{device} does not immediately follow the 2nd partition')
+
+        disk_size = await self.middleware.call('disk.get_dev_size', disk)
+        if partitions[-1]['end'] > disk_size / 1.1:
+            return
+
+        self.middleware.logger.info('Resizing boot pool partition %r from %r (disk_size = %r)',
+                                    device, partitions[-1]['end'], disk_size)
+        await run('sgdisk', '-d', '3', f'/dev/{disk}', encoding='utf-8', errors='ignore')
+        await run('sgdisk', '-N', '3', f'/dev/{disk}', encoding='utf-8', errors='ignore')
+        await run('partprobe', encoding='utf-8', errors='ignore')
+        await run('zpool', 'online', '-e', 'boot-pool', device, encoding='utf-8', errors='ignore')
+
 
 async def setup(middleware):
     global BOOT_POOL_NAME

@@ -65,12 +65,18 @@ class DiskService(Service, DiskInfoBase):
                 'partition_number': int(p['ID_PART_ENTRY_NUMBER']),
                 'partition_uuid': p['ID_PART_ENTRY_UUID'],
                 'disk': disk,
+                'start_sector': int(p['ID_PART_ENTRY_OFFSET']),
+                'start': None,
+                'end_sector': int(p['ID_PART_ENTRY_OFFSET']) + int(p['ID_PART_ENTRY_SIZE']) - 1,
+                'end': None,
                 'size': None,
                 'id': part_name,
                 'path': os.path.join('/dev', part_name),
                 'encrypted_provider': None,
             }
             if logical_sector_size:
+                part['start'] = logical_sector_size * part['start_sector']
+                part['end'] = logical_sector_size * part['end_sector']
                 part['size'] = logical_sector_size * int(p['ID_PART_ENTRY_SIZE'])
 
             encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
