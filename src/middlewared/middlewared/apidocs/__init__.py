@@ -50,6 +50,7 @@ def websocket():
             })
         events = render_template('websocket/events.md', **{'events': c.call('core.get_events')})
 
+    query_filters = render_template('websocket/query.md')
     protocol = render_template('websocket/protocol.md')
     jobs = render_template('websocket/jobs.md')
     return render_template('websocket.html', **{
@@ -57,4 +58,5 @@ def websocket():
         'services': services,
         'protocol': protocol,
         'jobs': jobs,
+        'query_filters': query_filters,
     })
