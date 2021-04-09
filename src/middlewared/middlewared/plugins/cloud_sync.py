@@ -53,7 +53,7 @@ class RcloneConfig:
 
         self.config = None
         self.tmp_file = None
-        self.tmp_file_exclude = None
+        self.tmp_file_filter = None
 
     async def __aenter__(self):
         self.tmp_file = tempfile.NamedTemporaryFile(mode="w+")
@@ -89,13 +89,23 @@ class RcloneConfig:
 
                 remote_path = "encrypted:/"
 
-            extra_args.extend(["--exclude", ".zfs", "--exclude", ".zfs/**"])
+            rclone_filter = [
+                "- .zfs",
+                "- .zfs/**",
+            ]
 
-            if self.cloud_sync.get("exclude"):
-                self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
-                self.tmp_file_exclude.write("\n".join(self.cloud_sync["exclude"]))
-                self.tmp_file_exclude.flush()
-                extra_args.extend(["--exclude-from", self.tmp_file_exclude.name])
+            for item in self.cloud_sync.get("exclude") or []:
+                rclone_filter.append(f"- {item}")
+
+            if self.cloud_sync.get("include"):
+                for item in self.cloud_sync["include"]:
+                    rclone_filter.append(f"+ {item}")
+                rclone_filter.append("- *")
+
+            self.tmp_file_filter = tempfile.NamedTemporaryFile(mode="w+")
+            self.tmp_file_filter.write("\n".join(rclone_filter))
+            self.tmp_file_filter.flush()
+            extra_args.extend(["--filter-from", self.tmp_file_filter.name])
 
         self.tmp_file.write("[remote]\n")
         for k, v in config.items():
@@ -112,8 +122,8 @@ class RcloneConfig:
             await self.provider.cleanup(self.cloud_sync, self.config)
         if self.tmp_file:
             self.tmp_file.close()
-        if self.tmp_file_exclude:
-            self.tmp_file_exclude.close()
+        if self.tmp_file_filter:
+            self.tmp_file_filter.close()
 
 
 def get_remote_path(provider, attributes):
@@ -683,6 +693,7 @@ class CloudSyncModel(sa.Model):
     pre_script = sa.Column(sa.Text())
     snapshot = sa.Column(sa.Boolean())
     bwlimit = sa.Column(sa.JSON(type=list))
+    include = sa.Column(sa.JSON(type=list))
     exclude = sa.Column(sa.JSON(type=list))
     transfers = sa.Column(sa.Integer(), nullable=True)
     follow_symlinks = sa.Column(sa.Boolean())
@@ -869,6 +880,7 @@ class CloudSyncService(TaskPathService):
         List("bwlimit", items=[Dict("cloud_sync_bwlimit",
                                     Str("time", validators=[Time()]),
                                     Int("bandwidth", validators=[Range(min=1)], null=True))]),
+        List("include", items=[Str("path", empty=False)]),
         List("exclude", items=[Str("path", empty=False)]),
         Dict("attributes", additional_attrs=True, required=True),
         Bool("snapshot", default=False),
