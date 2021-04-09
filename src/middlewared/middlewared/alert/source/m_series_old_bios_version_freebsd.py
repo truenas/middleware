@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class TrueNASMOldBIOSVersionAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
-    level = AlertLevel.EMERGENCY
+    level = AlertLevel.WARNING
     title = "Old BIOS Version"
     text = (
         "This TrueNAS M-Series has an old BIOS version. "
