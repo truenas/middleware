@@ -1,18 +1,7 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 import asyncio
 import base64
 import errno
-from lockfile import LockFile
 import logging
-try:
-    import netif
-except ImportError:
-    netif = None
 import os
 import pickle
 import queue
@@ -40,9 +29,7 @@ from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.utils.contextlib import asyncnullcontext
-from middlewared.utils import osc
 
-BUFSIZE = 256
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
 TRUENAS_VERS = re.compile(r'\d*\.?\d+')
@@ -348,20 +335,16 @@ class FailoverService(ConfigService):
         """
         Returns True if there is an ongoing failover event.
         """
-
-        if osc.IS_FREEBSD:
-            return LockFile('/tmp/.failover_event').is_locked()
-        else:
-            event = self.middleware.call_sync(
-                'core.get_jobs', [
-                    ('method', 'in', [
-                        'failover.events.vrrp_master',
-                        'failover.events.vrrp_backup'
-                    ]),
-                    ('state', '=', 'RUNNING'),
-                ]
-            )
-            return bool(event)
+        event = self.middleware.call_sync(
+            'core.get_jobs', [
+                ('method', 'in', [
+                    'failover.events.vrrp_master',
+                    'failover.events.vrrp_backup'
+                ]),
+                ('state', '=', 'RUNNING'),
+            ]
+        )
+        return bool(event)
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
@@ -1652,7 +1635,8 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     # (if appropriate, of course)
     filters = [('srv_service', '=', 'ssh')]
     ssh_enabled = remote_ssh_started = False
-    if ssh := await middleware.call('datastore.query', 'services.services', filters):
+    ssh = await middleware.call('datastore.query', 'services.services', filters)
+    if ssh:
         if ssh[0]['srv_enable']:
             ssh_enabled = True
         if await middleware.call('failover.call_remote', 'service.started', ['ssh']):
