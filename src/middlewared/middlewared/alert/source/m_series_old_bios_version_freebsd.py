@@ -19,7 +19,7 @@ class TrueNASMOldBIOSVersionAlertClass(AlertClass):
     hardware = True
 
 
-class TrueNASMNVDIMMFirmwareVersionAlertSource(AlertSource):
+class TrueNASMOldBIOSVersionAlertSource(AlertSource):
     products = ("ENTERPRISE",)
 
     async def check(self):
