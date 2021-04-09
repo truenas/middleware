@@ -12,7 +12,7 @@ class WebUIAuth(object):
             return web.Response(status=400, text='No token provided.')
         if not await self.middleware.call('auth.get_token', post['auth_token']):
             return web.Response(status=400, text='Invalid token.')
-        with open('/usr/local/www/webui/index.html', 'r') as f:
+        with open('/usr/share/truenas/webui/index.html', 'r') as f:
             index = f.read()
         index = index.replace(
             '</head>',
