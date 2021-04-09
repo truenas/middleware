@@ -196,6 +196,8 @@ class AlertService(Service):
             for module in load_modules(sources_dir):
                 for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
                     source = cls(self.middleware)
+                    if source.name in ALERT_SOURCES:
+                        raise RuntimeError(f"Alert source {source.name} is already registered")
                     ALERT_SOURCES[source.name] = source
 
         main_services_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "alert",
