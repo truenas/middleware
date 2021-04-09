@@ -464,7 +464,8 @@ class FailoverService(ConfigService):
         # Journal thread will see that this is special value and will clear journal.
         sql_queue.put(None)
 
-        self.send_small_file(FREENAS_DATABASE, FREENAS_DATABASE + '.sync')
+        token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
+        self.middleware.call_sync('failover.sendfile', token, FREENAS_DATABASE, FREENAS_DATABASE + '.sync')
         self.middleware.call_sync('failover.call_remote', 'failover.receive_database')
 
     @private
