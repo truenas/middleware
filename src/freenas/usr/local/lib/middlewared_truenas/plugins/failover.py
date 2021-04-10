@@ -514,15 +514,7 @@ class FailoverService(ConfigService):
                 reasons.append('NO_LICENSE')
 
             local = self.middleware.call_sync('failover.vip.get_states')
-            try:
-                remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
-            except Exception as e:
-                if e.errno == CallError.ENOMETHOD:
-                    # We're talking to an 11.3 system, so use the old API
-                    remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
-                else:
-                    raise
-
+            remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
                 reasons.append('DISAGREE_CARP')
 
@@ -796,6 +788,8 @@ class FailoverService(ConfigService):
         local_path = self.middleware.call_sync('update.get_update_location')
 
         if updatefile:
+            # means manual update file was provided so write it
+            # to local storage
             updatefile_name = 'updatefile.tar'
             job.set_progress(None, 'Uploading update file')
             updatefile_localpath = os.path.join(local_path, updatefile_name)
@@ -807,48 +801,30 @@ class FailoverService(ConfigService):
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                 raise CallError('Standby Controller is not ready.')
 
-            legacy_upgrade = False
-            try:
-                self.middleware.call_sync('failover.call_remote', 'failover.upgrade_version')
-            except CallError as e:
-                if e.errno == CallError.ENOMETHOD:
-                    legacy_upgrade = True
-                else:
-                    raise
-
-            if not updatefile and not legacy_upgrade:
+            if not updatefile:
+                # means no update file was provided so go out to
+                # the interwebz and download it
                 def download_callback(j):
                     job.set_progress(
                         None, j['progress']['description'] or 'Downloading upgrade files'
                     )
 
                 djob = self.middleware.call_sync('update.download', job_on_progress_cb=download_callback)
-                djob.wait_sync()
-                if djob.error:
-                    raise CallError(f'Error downloading update: {djob.error}')
+                djob.wait_sync(raise_error=True)
                 if not djob.result:
                     raise CallError('No updates available.')
 
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
-            if legacy_upgrade:
-                namespace = 'notifier'
-            else:
-                namespace = 'update'
-            self.middleware.call_sync('failover.call_remote', f'{namespace}.destroy_upload_location')
+            self.middleware.call_sync('failover.call_remote', 'update.destroy_upload_location')
             remote_path = self.middleware.call_sync(
-                'failover.call_remote', f'{namespace}.create_upload_location'
+                'failover.call_remote', 'update.create_upload_location'
             ) or '/var/tmp/firmware'
 
-            # Only send files to standby:
-            # 1. Its a manual upgrade which means it needs to go through master first
-            # 2. Its not a legacy upgrade, which means files are downloaded on master first
-            #
-            # For legacy upgrade it will be downloaded directly from standby.
-            if updatefile or not legacy_upgrade:
+            if updatefile:
+                # means update file was provided to us so send it to the standby
                 job.set_progress(None, 'Sending files to Standby Controller')
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
-
                 for f in os.listdir(local_path):
                     self.middleware.call_sync(
                         'failover.sendfile',
@@ -871,9 +847,8 @@ class FailoverService(ConfigService):
                 else:
                     update_remote_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
                 job.set_progress(
-                    None, (
-                        f'Active Controller: {update_local_descr}\n' if not legacy_upgrade else ''
-                    ) + f'Standby Controller: {update_remote_descr}'
+                    None,
+                    f'Active Controller: {update_local_descr}\n' + f'Standby Controller: {update_remote_descr}'
                 )
 
             if updatefile:
@@ -885,9 +860,8 @@ class FailoverService(ConfigService):
                 update_remote_args = []
                 update_local_args = []
 
-            # If they are the same we assume this is a clean upgrade so we start by
-            # upgrading the standby controller.
-            if legacy_upgrade or local_version == remote_version:
+            if local_version == remote_version:
+                # start the upgrade on the remote (standby) controller
                 rjob = self.middleware.call_sync(
                     'failover.call_remote', update_method, update_remote_args, {
                         'job_return': True,
@@ -897,38 +871,49 @@ class FailoverService(ConfigService):
             else:
                 rjob = None
 
-            if not legacy_upgrade:
-                ljob = self.middleware.call_sync(
-                    update_method, *update_local_args,
-                    job_on_progress_cb=partial(callback, controller='LOCAL')
-                )
-                ljob.wait_sync()
-                if ljob.error:
-                    raise CallError(ljob.error)
+            # upgrade the local (active) controller
+            ljob = self.middleware.call_sync(
+                update_method, *update_local_args,
+                job_on_progress_cb=partial(callback, controller='LOCAL')
+            )
+            ljob.wait_sync(raise_error=True)
 
-                remote_boot_id = self.middleware.call_sync(
-                    'failover.call_remote', 'system.boot_id'
-                )
+            remote_boot_id = self.middleware.call_sync('failover.call_remote', 'system.boot_id')
 
+            # check the remote (standby) controller upgrade job
             if rjob:
                 rjob.result()
 
-            self.middleware.call_sync('failover.call_remote', 'system.reboot', [
-                {'delay': 5}
-            ], {'job': True})
-
+            self.middleware.call_sync(
+                'failover.call_remote', 'system.reboot',
+                [{'delay': 5}],
+                {'job': True}
+            )
         except Exception:
             raise
 
-        if not legacy_upgrade:
-            # Update will activate the new boot environment.
-            # We want to reactivate the current boot environment so on reboot for failover
-            # the user has a chance to verify the new version is working as expected before
-            # move on and have both controllers on new version.
-            local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
-            if not local_bootenv:
-                raise CallError('Could not find current boot environment.')
-            self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
+        # The upgrade procedure will upgrade both systems simultaneously
+        # as well as activate the new BEs. The standby controller will be
+        # automatically rebooted into the new BE to "finalize" the upgrade.
+        # However, we will re-activate the old BE on the active controller
+        # to give the end-user a chance to "test" the new upgrade so in the
+        # rare case something horrendous occurs on the new version they can
+        # simply "reboot" (to cause a failover) and faill back to the
+        # controller running the old version of the software.
+        # The procedure is supposed to look like this:
+        #   1. upgrade both controllers
+        #   2. standby controller activates new BE and reboots
+        #   3. end-user verfies the standby controller upgraded without issues
+        #   4. end-user then failsover (reboots) to the newly upgraded node
+        #   5. end-user verifies that the new software functions as expected
+        #   6. end-user is then presented with a webUI option to "apply pending upgrade"
+        #   7. end-user chooses that webUI option
+        #   8. after webUI option is chosen, standby node is rebooted to "finalize" the
+        #       upgrade procedure
+        local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
+        if not local_bootenv:
+            raise CallError('Could not find current boot environment.')
+        self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
 
         # SCALE is using systemd and at the time of writing this, the
         # DefaultTimeoutStopSec setting hasn't been changed and so
@@ -965,9 +950,12 @@ class FailoverService(ConfigService):
                 errno.ETIMEDOUT
             )
 
-        if not legacy_upgrade and remote_boot_id == self.middleware.call_sync(
-            'failover.call_remote', 'system.boot_id'
-        ):
+        # we captured the `remote_boot_id` up above earlier in the upgrade process.
+        # This variable represents a 1-time unique boot id. It's supposed to be different
+        # every time the system boots up. If this check is True, then it's safe to say
+        # that the remote system never rebooted, therefore, never completing the upgrade
+        # process....which isn't good.
+        if remote_boot_id == self.middleware.call_sync('failover.call_remote', 'system.boot_id'):
             raise CallError('Standby Controller failed to reboot.')
 
         return True
