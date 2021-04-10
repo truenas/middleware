@@ -9,10 +9,6 @@ import re
 import shutil
 import socket
 import subprocess
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
 import tempfile
 import textwrap
 import time
@@ -402,25 +398,17 @@ class FailoverService(ConfigService):
 
         `reboot` as true will reboot the other controller after syncing.
         """
-        self.logger.debug('Sending database to standby controller')
+        standby = ' standby controller.'
+        self.logger.debug('Syncing database to' + standby)
         self.middleware.call_sync('failover.send_database')
-        self.logger.debug('Syncing cached keys')
+
+        self.logger.debug('Syncing cached encryption keys to' + standby)
         self.middleware.call_sync('failover.sync_keys_to_remote_node')
-        self.logger.debug('Sending license and pwenc files')
+
+        self.logger.debug('Syncing license, pwenc and authorized_keys files to' + standby)
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
         self.send_small_file('/root/.ssh/authorized_keys')
-
-        for path in ('/data/geli',):
-            if not os.path.exists(path) or not os.path.isdir(path):
-                continue
-            for f in os.listdir(path):
-                fullpath = os.path.join(path, f)
-                if not os.path.isfile(fullpath):
-                    continue
-                self.send_small_file(fullpath)
-
-        self.middleware.call_sync('failover.call_remote', 'service.restart', ['failover'])
 
         self.middleware.call_sync(
             'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
@@ -494,7 +482,10 @@ class FailoverService(ConfigService):
         reasons = set(self._disabled_reasons(app))
         if reasons != self.LAST_DISABLEDREASONS:
             self.LAST_DISABLEDREASONS = reasons
-            self.middleware.send_event('failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': list(reasons)})
+            self.middleware.send_event(
+                'failover.disabled_reasons', 'CHANGED',
+                fields={'disabled_reasons': list(reasons)}
+            )
         return list(reasons)
 
     def _disabled_reasons(self, app):
@@ -963,7 +954,12 @@ class FailoverService(ConfigService):
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
 
                 for f in os.listdir(local_path):
-                    self.middleware.call_sync('failover.sendfile', token, os.path.join(local_path, f), os.path.join(remote_path, f))
+                    self.middleware.call_sync(
+                        'failover.sendfile',
+                        token,
+                        os.path.join(local_path, f),
+                        os.path.join(remote_path, f)
+                    )
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
@@ -1038,23 +1034,40 @@ class FailoverService(ConfigService):
                 raise CallError('Could not find current boot environment.')
             self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
 
+        # SCALE is using systemd and at the time of writing this, the
+        # DefaultTimeoutStopSec setting hasn't been changed and so
+        # defaults to 90 seconds. This means when the system is sent the
+        # shutdown signal, all the associated user-space programs are
+        # asked to be shutdown. If any of those take longer than 90
+        # seconds to respond to SIGTERM then the program is sent SIGKILL.
+        # Finally, if after 90 seconds the standby controller is still
+        # responding to remote requests then play it safe and assume the
+        # reboot failed (this should be rare but my future self will
+        # appreciate the fact I wrote this out because of the inevitable
+        # complexities of gluster/k8s/vms etc etc for which I predict
+        # will exhibit this behavior :P )
         job.set_progress(None, 'Waiting on the Standby Controller to reboot.')
-
-        # Wait enough that standby controller has stopped receiving new connections and is
-        # rebooting.
         try:
             retry_time = time.monotonic()
-            shutdown_timeout = sysctl.filter('kern.init_shutdown_timeout')[0].value
+            shutdown_timeout = 90  # seconds
             while time.monotonic() - retry_time < shutdown_timeout:
-                self.middleware.call_sync('failover.call_remote', 'core.ping', [], {'timeout': 5})
+                self.middleware.call_sync(
+                    'failover.call_remote', 'core.ping', [], {'timeout': 5}
+                )
                 time.sleep(5)
         except CallError:
             pass
         else:
-            raise CallError('Standby Controller failed to reboot.', errno.ETIMEDOUT)
+            raise CallError(
+                'Timed out waiting {shutdown_timeout} seconds for the standby controller to reboot',
+                errno.ETIMEDOUT
+            )
 
         if not self.upgrade_waitstandby():
-            raise CallError('Timed out waiting Standby Controller after upgrade.')
+            raise CallError(
+                'Timed out waiting for the standby controller to upgrade.',
+                errno.ETIMEDOUT
+            )
 
         if not legacy_upgrade and remote_boot_id == self.middleware.call_sync(
             'failover.call_remote', 'system.boot_id'
