@@ -8,8 +8,6 @@ import queue
 import re
 import shutil
 import socket
-import subprocess
-import tempfile
 import textwrap
 import time
 import enum
@@ -646,6 +644,8 @@ class FailoverService(ConfigService):
     @private
     @accepts()
     async def encryption_keys(self):
+        # TODO: remove GELI key since it's
+        # not supported in SCALE
         return await self.middleware.call(
             'cache.get_or_put', 'failover_encryption_keys', 0, lambda: {'geli': {}, 'zfs': {}}
         )
@@ -676,6 +676,8 @@ class FailoverService(ConfigService):
         )
     )
     async def update_encryption_keys(self, options):
+        # TODO: remove `pools` key and `geli` logic
+        # since GELI is not supported in SCALE
         if not options['pools'] and not options['datasets']:
             raise CallError('Please specify pools/datasets to update')
 
@@ -699,6 +701,8 @@ class FailoverService(ConfigService):
         )
     )
     async def remove_encryption_keys(self, options):
+        # TODO: remove `pools` key and `geli` logic
+        # since GELI is not supported in SCALE
         if not options['pools'] and not options['datasets']:
             raise CallError('Please specify pools/datasets to remove')
 
@@ -713,114 +717,6 @@ class FailoverService(ConfigService):
             await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
             if options['sync_keys']:
                 await self.sync_keys_to_remote_node(lock=False)
-
-    @private
-    @job()
-    def attach_all_geli_providers(self, job):
-        pools = self.middleware.call_sync('pool.query', [('encrypt', '>', 0)])
-        if not pools:
-            return
-
-        failed_drive = 0
-        failed_volumes = []
-        geli_keys = self.middleware.call_sync('failover.encryption_keys')['geli']
-        for pool in pools:
-            with tempfile.NamedTemporaryFile(mode='w+') as tmp:
-                tmp.file.write(geli_keys.get(pool['name'], ''))
-                tmp.file.flush()
-                keyfile = pool['encryptkey_path']
-                procs = []
-                for encrypted_disk in self.middleware.call_sync(
-                    'datastore.query',
-                    'storage.encrypteddisk',
-                    [('encrypted_volume', '=', pool['id'])]
-                ):
-                    if encrypted_disk['encrypted_disk']:
-                        # gptid might change on the active head, so we need to rescan
-                        # See #16070
-                        try:
-                            open(
-                                f'/dev/{encrypted_disk["encrypted_disk"]["disk_name"]}', 'w'
-                            ).close()
-                        except Exception:
-                            self.logger.warning(
-                                'Failed to open dev %s to rescan.',
-                                encrypted_disk['encrypted_disk']['disk_name'],
-                            )
-                    provider = encrypted_disk['encrypted_provider']
-                    if not os.path.exists(f'/dev/{provider}.eli'):
-                        proc = subprocess.Popen(
-                            'geli attach {} -k {} {}'.format(
-                                f'-j {tmp.name}' if pool['encrypt'] == 2 else '-p',
-                                keyfile,
-                                provider,
-                            ),
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            shell=True,
-                        )
-                        procs.append(proc)
-                for proc in procs:
-                    msg = proc.communicate()[1]
-                    if proc.returncode != 0:
-                        job.set_progress(None, f'Unable to attach GELI provider: {msg}')
-                        self.logger.warn('Unable to attach GELI provider: %s', msg)
-                        failed_drive += 1
-
-                try:
-                    self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
-                        'altroot': '/mnt',
-                    })
-                except Exception as e:
-                    failed_volumes.append(pool['name'])
-                    self.logger.error('Failed to import %s pool: %s', pool['name'], str(e))
-
-        if failed_drive > 0:
-            job.set_progress(None, f'{failed_drive} drive(s) can not be attached.')
-            self.logger.error('%d drive(s) can not be attached.', failed_drive)
-
-        try:
-            if not failed_volumes:
-                try:
-                    os.unlink(FAILOVER_NEEDOP)
-                except FileNotFoundError:
-                    pass
-                self.middleware.call_sync('failover.sync_keys_to_remote_node')
-            else:
-                with open(FAILOVER_NEEDOP, 'w') as f:
-                    f.write('\n'.join(failed_volumes))
-        except Exception:
-            pass
-
-    @private
-    @job()
-    def encryption_detachall(self, job):
-        # Let us be very careful before we rip down the GELI providers
-        for pool in self.middleware.call_sync('pool.query', [('encrypt', '>', 0)]):
-            if pool['status'] == 'OFFLINE':
-                for encrypted_disk in self.middleware.call_sync(
-                    'datastore.query',
-                    'storage.encrypteddisk',
-                    [('encrypted_volume', '=', pool['id'])]
-                ):
-                    provider = encrypted_disk['encrypted_provider']
-                    cp = subprocess.run(
-                        ['geli', 'detach', provider],
-                        capture_output=True, text=True, check=False,
-                    )
-                    if cp.returncode != 0:
-                        job.set_progress(
-                            None,
-                            f'Unable to detach GELI provider {provider}: {cp.stderr}',
-                        )
-                return True
-            else:
-                job.set_progress(
-                    None,
-                    'Not detaching GELI providers because an encrypted zpool with name '
-                    f'{pool["name"]!r} is still mounted!',
-                )
-                return False
 
     @private
     async def is_single_master_node(self):
@@ -1681,28 +1577,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     middleware.send_event('failover.setup', 'ADDED', fields={})
 
 
-async def hook_sync_geli(middleware, pool=None):
-    """
-    When a new volume is created we need to sync geli file.
-    """
-    if not pool.get('encryptkey_path'):
-        return
-
-    if not await middleware.call('failover.licensed'):
-        return
-
-    try:
-        if await middleware.call(
-            'failover.call_remote', 'failover.status'
-        ) != 'BACKUP':
-            return
-    except Exception:
-        return
-
-    # TODO: failover_sync_peer is overkill as it will sync a bunch of other things
-    await middleware.call('failover.sync_to_peer')
-
-
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
     await middleware.call('enclosure.sync_zpool', pool)
     await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
@@ -1859,7 +1733,6 @@ async def setup(middleware):
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('interface.post_rollback', hook_post_rollback_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
-    middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
