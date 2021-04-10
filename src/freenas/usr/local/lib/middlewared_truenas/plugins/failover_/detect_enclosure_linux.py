@@ -2,7 +2,7 @@ import subprocess
 import re
 
 from middlewared.service import Service
-from ..failover import HA_HARDWARE
+from .ha_hardware import HA_HARDWARE
 
 ENCLOSURES_DIR = '/sys/class/enclosure/'
 

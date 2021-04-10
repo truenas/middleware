@@ -10,8 +10,6 @@ import shutil
 import socket
 import textwrap
 import time
-import enum
-
 from functools import partial
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
@@ -25,36 +23,8 @@ from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.utils.contextlib import asyncnullcontext
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
-FAILOVER_NEEDOP = '/tmp/.failover_needop'
-TRUENAS_VERS = re.compile(r'\d*\.?\d+')
 
 logger = logging.getLogger('failover')
-
-
-class HA_HARDWARE(enum.Enum):
-
-    """
-    The echostream E16 JBOD and the echostream Z-series chassis
-    are the same piece of hardware. One of the only ways to differentiate
-    them is to look at the enclosure elements in detail. The Z-series
-    chassis identifies element 0x26 as `ZSERIES_ENCLOSURE` listed below.
-    The E16 JBOD does not. The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5.
-
-    We use this fact to ensure we are looking at the internal enclosure, and
-    not a shelf. If we used a shelf to determine which node was A or B, you could
-    cause the nodes to switch identities by switching the cables for the shelf.
-    """
-
-    ZSERIES_ENCLOSURE = re.compile(r'SD_9GV12P1J_12R6K4', re.M)
-    ZSERIES_NODE = re.compile(r'3U20D-Encl-([AB])', re.M)
-    XSERIES_ENCLOSURE = re.compile(r'Enclosure Name: CELESTIC (P3215-O|P3217-B)', re.M)
-    XSERIES_NODEA = re.compile(r'ESCE A_(5[0-9A-F]{15})', re.M)
-    XSERIES_NODEB = re.compile(r'ESCE B_(5[0-9A-F]{15})', re.M)
-    MSERIES_ENCLOSURE = re.compile(r'Enclosure Name: (ECStream|iX) 4024S([ps])', re.M)
-
-    # sg_ses on linux returns slightly different text than getencstat on freeBSD
-    XSERIES_ENCLOSURE_LINUX = re.compile(r'\s*CELESTIC\s*(P3215-O|P3217-B)', re.M)
-    MSERIES_ENCLOSURE_LINUX = re.compile(r'\s*(ECStream|iX)\s*4024S([ps])', re.M)
 
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
@@ -1016,8 +986,9 @@ class FailoverService(ConfigService):
         if not local_bootenv or not remote_bootenv:
             raise CallError('Unable to determine installed version of software')
 
-        loc_findall = TRUENAS_VERS.findall(local_bootenv[0]['id'])
-        rem_findall = TRUENAS_VERS.findall(remote_bootenv[0]['id'])
+        tn_version = re.compile(r'\d*\.?\d+')
+        loc_findall = tn_version.findall(local_bootenv[0]['id'])
+        rem_findall = tn_version.findall(remote_bootenv[0]['id'])
 
         loc_vers = tuple(float(i) for i in loc_findall)
         rem_vers = tuple(float(i) for i in rem_findall)
@@ -1058,13 +1029,8 @@ class FailoverService(ConfigService):
     @private
     async def sync_keys_from_remote_node(self):
         """
-        Sync GELI and/or ZFS encryption keys from the active node.
-
-        TODO:
-            Once TruenAS >= 11.3 < 12 has been EOL'd, we should remove this method
-            (should call `failover.call_remote` `failover.sync_keys_to_remote_node`)
+        Sync ZFS encryption keys from the active node.
         """
-
         if not await self.middleware.call('failover.licensed'):
             return
 
@@ -1083,32 +1049,16 @@ class FailoverService(ConfigService):
 
         try:
             await self.middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
-        except Exception as e:
-            if e.errno == CallError.ENOMETHOD:
-                # we're talking to an older system (this happens on upgrades from 11 to 12+)
-                enc_pools = await self.middleware.call('pool.query', [('encrypt', '>', 0)])
-                if enc_pools:
-                    passphrase = await self.middleware.call('failover.call_remote', 'failover.encryption_getkey')
-                    await self.middleware.call(
-                        'failover.update_encryption_keys', {
-                            'pools': [
-                                {'name': p['name'], 'passphrase': passphrase or ''}
-                                for p in enc_pools
-                            ],
-                            'sync_keys': False,
-                        }
-                    )
-            else:
-                self.middleware.logger.error(
-                    'Failed to sync keys from active controller when syncing encryption keys', exc_info=True
-                )
+        except Exception:
+            self.middleware.logger.error(
+                'Failed to sync keys from active controller when syncing encryption keys', exc_info=True
+            )
 
     @private
     async def sync_keys_to_remote_node(self, lock=True):
         """
-        Sync GELI and/or ZFS encryption keys to the standby node.
+        Sync ZFS encryption keys to the standby node.
         """
-
         if not await self.middleware.call('failover.licensed'):
             return
 
@@ -1171,24 +1121,6 @@ async def ha_permission(middleware, app):
         '169.254.10.80',
     ):
         AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
-
-
-async def hook_pool_change_passphrase(middleware, passphrase_data):
-    """
-    Hook to set pool passphrase when its changed.
-    """
-    if not await middleware.call('failover.licensed'):
-        return
-    if passphrase_data['action'] == 'UPDATE':
-        await middleware.call(
-            'failover.update_encryption_keys', {
-                'pools': [{
-                    'name': passphrase_data['pool'], 'passphrase': passphrase_data['passphrase']
-                }]
-            }
-        )
-    else:
-        await middleware.call('failover.remove_encryption_keys', {'pools': [passphrase_data['pool']]})
 
 
 sql_queue = queue.Queue()
@@ -1579,17 +1511,6 @@ async def hook_pool_post_import(middleware, pool):
         )
 
 
-async def hook_pool_lock(middleware, pool=None):
-    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
-
-
-async def hook_pool_unlock(middleware, pool=None, passphrase=None):
-    if passphrase:
-        await middleware.call(
-            'failover.update_encryption_keys', {'pools': [{'name': pool['name'], 'passphrase': passphrase}]}
-        )
-
-
 async def hook_pool_dataset_unlock(middleware, datasets):
     datasets = [
         {'name': ds['name'], 'passphrase': ds['encryption_key']}
@@ -1639,15 +1560,6 @@ async def hook_pool_dataset_inherit_parent_encryption_root(middleware, dataset):
 
 async def hook_kmip_sync(middleware, *args, **kwargs):
     await middleware.call('failover.sync_keys_to_remote_node')
-
-
-async def hook_pool_rekey(middleware, pool=None):
-    if not pool or not pool['encryptkey_path']:
-        return
-    try:
-        await middleware.call('failover.send_small_file', pool['encryptkey_path'])
-    except Exception as e:
-        middleware.logger.warn('Failed to send encryptkey to standby node: %s', e)
 
 
 async def service_remote(middleware, service, verb, options):
@@ -1716,7 +1628,6 @@ async def setup(middleware):
     middleware.event_subscribe('system', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
-    middleware.register_hook('pool.post_change_passphrase', hook_pool_change_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('interface.post_rollback', hook_post_rollback_setup_ha, sync=True)
@@ -1724,8 +1635,6 @@ async def setup(middleware):
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
-    middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
-    middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
     middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)
     middleware.register_hook('dataset.post_delete', hook_pool_dataset_post_delete_lock, sync=True)
     middleware.register_hook('dataset.post_lock', hook_pool_dataset_post_delete_lock, sync=True)
@@ -1736,7 +1645,6 @@ async def setup(middleware):
     )
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
-    middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
