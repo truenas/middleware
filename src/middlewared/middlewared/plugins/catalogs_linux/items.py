@@ -68,8 +68,11 @@ class CatalogService(Service):
 
         for train in filter(lambda c: os.path.exists(os.path.join(location, c)), trains):
             category_path = os.path.join(location, train)
+            
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
                 item_location = os.path.join(category_path, item)
+                if (not os.path.isdir(item_location) or train.startswith('.')):
+                    continue
                 trains[train][item] = item_data = {
                     'name': item,
                     'categories': [],
