@@ -213,26 +213,6 @@ class FailoverService(ConfigService):
             'failover.internal_interface.detect'
         )
 
-    @private
-    async def get_carp_states(self, interfaces=None):
-        """
-        This method has to be left in for backwards compatibility
-        when upgrading from 11.3 to 12+
-        """
-        return await self.middleware.call(
-            'failover.vip.get_states', interfaces
-        )
-
-    @private
-    async def check_carp_states(self, local, remote):
-        """
-        This method has to be left in for backwards compatibility
-        when upgrading from 11.3 to 12+
-        """
-        return await self.middleware.call(
-            'failover.vip.check_states', local, remote
-        )
-
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
@@ -1042,7 +1022,7 @@ class FailoverService(ConfigService):
         try:
             assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
         except Exception:
-            self.middleware.logger.error(
+            self.logger.error(
                 'Failed to contact active controller when syncing encryption keys', exc_info=True
             )
             return
@@ -1050,7 +1030,7 @@ class FailoverService(ConfigService):
         try:
             await self.middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
         except Exception:
-            self.middleware.logger.error(
+            self.logger.error(
                 'Failed to sync keys from active controller when syncing encryption keys', exc_info=True
             )
 
@@ -1070,7 +1050,7 @@ class FailoverService(ConfigService):
         try:
             assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
         except Exception:
-            self.middleware.logger.error(
+            self.logger.error(
                 'Failed to contact standby controller when syncing encryption keys', exc_info=True
             )
             return
@@ -1083,7 +1063,7 @@ class FailoverService(ConfigService):
                 )
             except Exception as e:
                 await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
-                self.middleware.logger.error('Failed to sync keys with standby controller: %s', str(e), exc_info=True)
+                self.logger.error('Failed to sync keys with standby controller: %s', str(e), exc_info=True)
             else:
                 await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
             try:
@@ -1095,7 +1075,7 @@ class FailoverService(ConfigService):
                 await self.middleware.call(
                     'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
                 )
-                self.middleware.logger.error(
+                self.logger.error(
                     'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True
                 )
             else:
@@ -1114,12 +1094,7 @@ async def ha_permission(middleware, app):
 
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
-    if remote_port <= 1024 and remote_addr in (
-        '169.254.10.1',
-        '169.254.10.2',
-        '169.254.10.20',
-        '169.254.10.80',
-    ):
+    if remote_port <= 1024 and remote_addr in ('169.254.10.1', '169.254.10.2'):
         AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
 
 
@@ -1589,7 +1564,7 @@ async def service_remote(middleware, service, verb, options):
         ])
     except Exception as e:
         if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.ECONNRESET)):
-            middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)
+            middleware.logger.warning(f'Failed to run {verb}({service})', exc_info=True)
 
 
 async def ready_system_sync_keys(middleware):
@@ -1652,7 +1627,6 @@ async def setup(middleware):
 
     # Register callbacks to properly refresh HA status and send events on changes
     await middleware.call('failover.remote_subscribe', 'system', remote_status_event)
-    await middleware.call('failover.remote_subscribe', 'failover.carp_event', remote_status_event)
     await middleware.call('failover.remote_on_connect', remote_status_event)
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
