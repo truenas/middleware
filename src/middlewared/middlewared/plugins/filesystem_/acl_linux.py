@@ -43,7 +43,8 @@ class FilesystemService(Service, ACLBase):
         if not os.path.realpath(path).startswith('/mnt/'):
             verrors.add(
                 f'{schema}.path',
-                f"Changing permissions on paths outside of /mnt is not permitted: {path}"
+                "Changes to permissions on paths that are not beneath "
+                f"the directory /mnt are not permitted: {path}"
             )
 
         elif len(p.resolve().parents) == 2:
@@ -66,6 +67,10 @@ class FilesystemService(Service, ACLBase):
         gid = -1 if data['gid'] is None else data['gid']
         options = data['options']
 
+        if uid == -1 and gid == -1:
+            verrors.add("filesystem.chown.uid",
+                        "Please specify either user or group to change.")
+
         self._common_perm_path_validate("filesystem.chown",
                                         data['path'],
                                         options.get('recursive', False),
@@ -75,9 +80,6 @@ class FilesystemService(Service, ACLBase):
         if not options['recursive']:
             job.set_progress(100, 'Finished changing owner.')
             os.chown(data['path'], uid, gid)
-            return
-
-        if uid == -1 and gid == -1:
             return
 
         job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
