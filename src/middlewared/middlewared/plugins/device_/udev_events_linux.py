@@ -1,5 +1,6 @@
 import pyudev
 import subprocess
+import time
 
 from middlewared.service import private, Service
 from middlewared.utils import run, start_daemon_thread
@@ -19,8 +20,17 @@ def udev_events(middleware):
     monitor = pyudev.Monitor.from_netlink(context)
     monitor.filter_by(subsystem='block')
     monitor.filter_by(subsystem='net')
-    for device in iter(monitor.poll, None):
-        middleware.call_hook_sync(f'udev.{device.subsystem}', data={**dict(device), 'SYS_NAME': device.sys_name})
+    while True:
+        # We always want to keep polling udev, let's log what error we are
+        # seeing and fix them accordingly as we see them
+        try:
+            for device in iter(monitor.poll, None):
+                middleware.call_hook_sync(
+                    f'udev.{device.subsystem}', data={**dict(device), 'SYS_NAME': device.sys_name}
+                )
+        except Exception:
+            middleware.logger.error('Polling udev failed', exc_info=True)
+            time.sleep(10)
 
 
 def setup(middleware):
