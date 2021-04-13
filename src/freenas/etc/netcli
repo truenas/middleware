@@ -37,7 +37,6 @@ import sys
 import subprocess
 import time
 import traceback
-
 import ipaddr
 import sqlite3
 
@@ -52,6 +51,7 @@ IS_LINUX = platform.system().lower() == 'linux'
 _ = lambda s: s
 
 from middlewared.client import Client
+from middlewared.utils.generate import random_string
 
 from requests.packages.urllib3 import poolmanager
 from requests.packages.urllib3.connectionpool import HTTPSConnectionPool
@@ -813,10 +813,28 @@ Acceptable formats are 255.255.255.0,
                     continue
                 break
 
-            pwd_prompt = prompt("Password", iface.int_pass)
-            passwd = input(pwd_prompt)
-            if not passwd and iface.int_pass:
-                passwd = iface.int_pass
+            while True:
+                passwd = input("Password for the VIP (none to automatically generate one): ")
+                if not passwd:
+                    if iface.int_pass:
+                        # means an interface is being updated
+                        # and already has a generated password
+                        # so just use that one
+                        passwd = iface.int_pass
+                        break
+                    else:
+                        # generate one
+                        passwd = random_string(string_size=16)
+                        break
+                elif len(passwd) > 16:
+                    print("Password must be between 1 and 16 characters long")
+                    continue
+                else:
+                    break
+
+            # finally, we need to set the db column
+            # to what `passwd` is set to since we're
+            # writing directly to the database
             iface.int_pass = passwd
 
             print(_("Saving interface configuration:"), end=' ')
