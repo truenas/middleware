@@ -253,27 +253,7 @@ class RealtimeEventSource(EventSource):
                     if not v:
                         break
                     data['cpu']['temperature'][i] = v[0].value
-            elif osc.IS_LINUX:
-                cp = subprocess.run(['sensors', '-j'], capture_output=True, text=True)
-                try:
-                    sensors = json.loads(cp.stdout)
-                except json.decoder.JSONDecodeError:
-                    pass
-                except Exception:
-                    self.middleware.logger.error('Failed to read sensors output', exc_info=True)
-                else:
-                    for chip, value in sensors.items():
-                        for name, temps in value.items():
-                            if not name.startswith('Core '):
-                                continue
-                            core = name[5:].strip()
-                            if not core.isdigit():
-                                continue
-                            core = int(core)
-                            for temp, value in temps.items():
-                                if 'input' in temp:
-                                    data['cpu']['temperature'][core] = value
-                                    break
+            data['cpu']['temperature_celsius'] = {k: (v - 2732) / 10 for k, v in data['cpu']['temperature'].items()}
 
             # Interface related statistics
             if last_interface_speeds['time'] < time.monotonic() - self.INTERFACE_SPEEDS_CACHE_INTERLVAL:
