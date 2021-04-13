@@ -194,7 +194,7 @@ class RemoteClient(object):
 
     def get_remote_os_version(self):
 
-        if self._remote_os_version is None:
+        if self.client is not None and self._remote_os_version is None:
             try:
                 self._remote_os_version = self.client.call('system.version')
             except Exception:
