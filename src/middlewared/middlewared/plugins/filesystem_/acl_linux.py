@@ -1,4 +1,5 @@
 import errno
+import json
 import os
 import subprocess
 import stat as pystat
@@ -166,6 +167,24 @@ class FilesystemService(Service, ACLBase):
         return acl
 
     @private
+    def getacl_nfs4(self, path, simplified):
+        flags = "-jn"
+        if not simplified:
+           flags += "v"
+
+        getacl = subprocess.run(
+            ['nfs4xdr_getfacl', flags, path],
+            capture_output=True,
+            check=False
+        )
+        if getacl.returncode != 0:
+            raise CallError("Failed to get ACL for path [%s]: %s",
+                            path, getacl.stderr.decode())
+
+        output = json.loads(getacl.stdout.decode())
+        return output
+
+    @private
     def getacl_posix1e(self, path, simplified):
         st = os.stat(path)
         ret = {
@@ -224,13 +243,19 @@ class FilesystemService(Service, ACLBase):
 
             ret['acl'].append(ace)
 
+        ret['trivial'] = (len(ret['acl']) == 3)
         return ret
 
     def getacl(self, path, simplified):
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
+        # Add explicit check for ACL type
+        try:
+            ret = self.getacl_nfs4(path, simplified)
+        except CallError:
+            ret = self.getacl_posix1e(path, simplified)
 
-        return self.getacl_posix1e(path, simplified)
+        return ret
 
     @private
     def setacl_nfs4(self, job, data):
