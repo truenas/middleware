@@ -121,10 +121,10 @@ class FailoverService(Service):
                 self.middleware.call_sync('failover.status_refresh')
 
     @private
-    async def restart_service(self, service, timeout, ha=False):
+    async def restart_service(self, service, timeout):
         logger.warning('Restarting %s', service)
         return await asyncio.wait_for(
-            self.middleware.call('service.restart', service, {'ha_propagate': ha}),
+            self.middleware.call('service.restart', service, {'ha_propagate': False}),
             timeout=timeout,
         )
 
