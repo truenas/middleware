@@ -1091,16 +1091,21 @@ class CoreService(Service):
         Str('method'),
         List('args', default=[]),
         Str('filename'),
+        Bool('buffered', default=False),
     )
-    async def download(self, method, args, filename):
+    async def download(self, method, args, filename, buffered):
         """
         Core helper to call a job marked for download.
 
+        Non-`buffered` downloads will allow job to write to pipe as soon as download URL is requested, job will stay
+        blocked meanwhile. `buffered` downloads must wait for job to complete before requesting download URL, job's
+        pipe output will be buffered to ramfs.
+
         Returns the job id and the URL for download.
         """
-        job = await self.middleware.call(method, *args, pipes=Pipes(output=self.middleware.pipe()))
+        job = await self.middleware.call(method, *args, pipes=Pipes(output=self.middleware.pipe(buffered)))
         token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
-        self.middleware.fileapp.register_job(job.id)
+        self.middleware.fileapp.register_job(job.id, buffered)
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private

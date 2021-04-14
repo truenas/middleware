@@ -357,9 +357,12 @@ class FileApplication(object):
         self.loop = loop
         self.jobs = {}
 
-    def register_job(self, job_id):
+    def register_job(self, job_id, buffered):
         self.jobs[job_id] = self.middleware.loop.call_later(
-            60, lambda: asyncio.ensure_future(self._cleanup_job(job_id)))
+            3600 if buffered else 60,  # FIXME: Allow the job to run for infinite time + give 300 seconds to begin
+                                       # download instead of waiting 3600 seconds for the whole operation
+            lambda: asyncio.ensure_future(self._cleanup_job(job_id)),
+        )
 
     async def _cleanup_cancel(self, job_id):
         job_cleanup = self.jobs.pop(job_id, None)
@@ -1139,8 +1142,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                     raise
                 self.__init_procpool()
 
-    def pipe(self):
-        return Pipe(self)
+    def pipe(self, buffered=False):
+        return Pipe(self, buffered)
 
     def _call_prepare(
         self, name, serviceobj, methodobj, params, app=None, io_thread=True, job_on_progress_cb=None, pipes=None,
