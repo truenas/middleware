@@ -477,7 +477,7 @@ def test_37_set_truecommand_ix_chart_volumes(request):
         'values': {
             'volumes': [
                 {
-                    'mountPath': f'/mnt/{pool_name}/ix-applications/releases/truecommand/volumes/tc-mountpath',
+                    'mountPath': '/mnt',
                     'datasetName': 'tc-mountpath'
                 }
             ]
@@ -508,7 +508,7 @@ def test_39_set_truecommand_ix_chart_hostPathVolumes(request):
             'hostPathVolumes': [
                 {
                     'hostPath': f'/mnt/{pool_name}/tc-hostpath',
-                    'mountPath': f'/mnt/{pool_name}/ix-applications/releases/truecommand/volumes/tc-mountpath',
+                    'mountPath': '/mnt',
                     'readOnly': True
                 }
             ]
@@ -544,7 +544,6 @@ def test_41_verify_ix_chart_resources_host_path_volumes(request):
     results = GET('/chart/release/', payload)
     host_path_volumes = str(results.json()[0]['resources']['host_path_volumes'])
     assert f'/mnt/{pool_name}/tc-hostpath' in host_path_volumes, host_path_volumes
-    assert f'/mnt/{pool_name}/ix-applications/releases/truecommand/volumes/tc-mountpath' in host_path_volumes, host_path_volumes
 
 
 def test_42_delete_truecommand_chart_release(request):
