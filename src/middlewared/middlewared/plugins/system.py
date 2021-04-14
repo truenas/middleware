@@ -22,6 +22,7 @@ import requests
 import shutil
 import socket
 import subprocess
+import hashlib
 try:
     import sysctl
 except ImportError:
@@ -354,6 +355,8 @@ class SystemAdvancedService(ConfigService):
 
 class SystemService(Service):
 
+    HOST_ID = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__product_type = None
@@ -549,6 +552,23 @@ class SystemService(Service):
         """
         buildtime = sw_buildtime()
         return datetime.fromtimestamp(int(buildtime)) if buildtime else buildtime
+
+    @accepts()
+    def host_id(self):
+        """
+        Retrieve a hex string that is generated based
+        on the contents of `/etc/hostid` file. This
+        is a permanent value that persists across
+        reboots/upgrades and can be used as a unique
+        identifier for the machine.
+        """
+        if self.HOST_ID is None:
+            with open('/etc/hostid', 'rb') as f:
+                id = f.read().strip()
+                if id:
+                    self.HOST_ID = hashlib.sha256(id).hexdigest()
+
+        return self.HOST_ID
 
     @accepts()
     async def info(self):
