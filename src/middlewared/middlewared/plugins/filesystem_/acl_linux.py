@@ -182,6 +182,11 @@ class FilesystemService(Service, ACLBase):
                             path, getacl.stderr.decode())
 
         output = json.loads(getacl.stdout.decode())
+        for ace in output['acl']:
+            ace['flags'].pop('SUCCESSFUL_ACCESS', None)
+            ace['flags'].pop('FAILED_ACCESS', None)
+
+        output['acltype'] = 'NFS4'
         return output
 
     @private
@@ -259,7 +264,67 @@ class FilesystemService(Service, ACLBase):
 
     @private
     def setacl_nfs4(self, job, data):
-        raise CallError('NFSv4 ACLs are not yet implemented.', errno.ENOTSUP)
+        job.set_progress(0, 'Preparing to set acl.')
+        verrors = ValidationErrors()
+        options = data.get('options', {})
+        recursive = options.get('recursive', False)
+        do_strip = options.get('stripacl', False)
+
+        path = data.get('path', '')
+        uid = -1 if not data.get('uid') else data['uid']
+        gid = -1 if not data.get('gid') else data['gid']
+
+        self._common_perm_path_validate("filesystem.setacl",
+                                        path, recursive,
+                                        verrors)
+
+        aclcheck = ACLType.NFS4.validate(data)
+        if not aclcheck['is_valid']:
+            for err in aclcheck['errors']:
+                verrors.add(
+                    'filesystem.setacl.dacl.{err[0]}', err[1]
+                )
+
+        if do_strip:
+            stripacl = subprocess.run(
+                ['nfs4xdr_setfacl', '-b', path],
+                capture_output=True,
+                check=False
+            )
+            if stripacl.returncode != 0:
+                raise CallError("Failed to strip ACL on path: %s",
+                                stripacl.stderr.decode())
+        else:
+            payload = {
+                'acl': data['dacl'],
+                'nfs41_flags': data['nfs41_flags']
+            }
+            json_payload = json.dumps(payload)
+            setacl = subprocess.run(
+                ['nfs4xdr_setfacl', '-j', json_payload, path],
+                capture_output=True,
+                check=False
+            )
+            """
+            nfs4xr_setacl with JSON input will return validation
+            errors on exit with EX_DATAERR (65).
+            """
+            if setacl.returncode == 65:
+                err = setacl.stderr.decode()
+                json_verrors = json.loads(err.split(None, 1)[1])
+                raise CallError(json_verrors)
+            elif setacl.returncode != 0:
+                raise CallError(setacl.stderr.decode())
+
+        if not recursive:
+            job.set_progress(100, 'Finished setting NFSv4 ACL.')
+            return
+
+
+        self.acltool(path, 'clone' if not do_strip else 'strip',
+                     uid, gid, options)
+
+        job.set_progress(100, 'Finished setting NFSv4 ACL.')
 
     @private
     def gen_aclstring_posix1e(self, dacl, recursive, verrors):
