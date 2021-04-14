@@ -1,24 +1,20 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-from middlewared.utils import filter_list
-from middlewared.service import Service, private
-
 from lockfile import LockFile, AlreadyLocked
 from collections import defaultdict
 import multiprocessing
 import os
-import sqlite3
 import subprocess
 import logging
+import asyncio
 try:
     import sysctl
 except ImportError:
     sysctl = None
 import time
 import struct
+
+from middlewared.utils import filter_list
+from middlewared.service import Service, private, accepts
+from middlewared.schema import Dict, Bool, Int
 
 
 # GUI sentinel files
@@ -123,6 +119,52 @@ class FailoverService(Service):
         finally:
             if refresh:
                 self.middleware.call_sync('failover.status_refresh')
+
+    @private
+    async def restart_service(self, service, timeout):
+        logger.warning('Restarting %s', service)
+        return await asyncio.wait_for(
+            self.middleware.call('service.restart', service, {'ha_propagate': False}),
+            timeout=timeout,
+        )
+
+    @private
+    @accepts(Dict(
+        'restart_services',
+        Bool('critical', default=False),
+        Int('timeout', default=15),
+    ))
+    async def restart_services(self, data):
+        """
+        Concurrently restart services during a failover
+        master event.
+
+        `critical` Boolean when True will only restart the
+        critical services.
+        `timeout` Integer representing the maximum amount
+        of time to wait for a given service to (re)start.
+        """
+        to_restart = await self.middleware.call('datastore.query', 'services_services')
+        to_restart = [i['srv_service'] for i in to_restart if i['srv_enable']]
+        crit_services = ['iscsitarget', 'cifs', 'afp', 'nfs']
+        if data['critical']:
+            to_restart = [i for i in to_restart if i in crit_services]
+            if 'iscsitarget' in to_restart:
+                if await self.middleware.call('service.started', 'iscsitarget'):
+                    # Only restart iscsitarget when it's not already
+                    # started (ALUA/FC has it running on standby by default)
+                    to_restart.remove('iscsitarget')
+
+        exceptions = await asyncio.gather(
+            *[self.restart_service(svc, data['timeout']) for svc in to_restart],
+            return_exceptions=True
+        )
+        for svc, exc in zip(to_restart, exceptions):
+            if isinstance(exc, asyncio.TimeoutError):
+                logger.error(
+                    'Failed to restart service "%s" after %d seconds',
+                    svc, data['timeout']
+                )
 
     @private
     def generate_failover_data(self):
@@ -517,13 +559,12 @@ class FailoverService(Service):
                     pass
 
                 logger.warning('Volume imports complete.')
-                logger.warning('Restarting services.')
+                logger.warning('Updating failover status')
                 self.run_call('failover.status_refresh')
-                FREENAS_DB = '/data/freenas-v1.db'
-                conn = sqlite3.connect(FREENAS_DB)
-                c = conn.cursor()
 
+                logger.warning('Configuring RC')
                 self.run_call('etc.generate', 'rc')
+                logger.warning('Configuring system dataset')
                 self.run_call('etc.generate', 'system_dataset')
 
                 # set this immediately after pool import because ALUA
@@ -532,35 +573,24 @@ class FailoverService(Service):
                 run('/sbin/sysctl kern.cam.ctl.ha_role=0')
 
                 # Write the certs to disk based on what is written in db.
+                logger.warning('Configuring SSL')
                 self.run_call('etc.generate', 'ssl')
+                logger.warning('Restarting services.')
+
+                logger.warning('Restarting webUI services')
                 # Now we restart the appropriate services to ensure it's using correct certs.
                 self.run_call('service.restart', 'http')
 
-                c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "nfs"')
-                ret = c.fetchone()
-                if ret and ret[0] == 1:
-                    self.run_call('service.restart', 'nfs', {'ha_propagate': False})
+                # restart the critical services first
+                # each service is restarted concurrently and given a timeout value of 15
+                # seconds to restart. This is done to prevent the possibility of a service
+                # (i'm looking at you nfs) from blocking other critical services from
+                # restarting
+                logger.warning('Restarting critical services')
+                self.run_call('failover.restart_services', {'critical': True})
 
-                c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
-                ret = c.fetchone()
-                if ret and ret[0] == 1:
-                    self.run_call('service.restart', 'cifs', {'ha_propagate': False})
-
-                c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "iscsitarget"')
-                ret = c.fetchone()
-                if ret and ret[0] == 1:
-                    # Do not restart iscsitarget as it is not necessary (but breaks FC connections)
-                    if not self.middleware.call_sync('service.started', 'iscsitarget'):
-                        self.run_call('service.start', 'iscsitarget')
-
-                c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
-                ret = c.fetchone()
-                if ret and ret[0] == 1:
-                    self.run_call('service.restart', 'afp', {'ha_propagate': False})
-
+                logger.warning('Updating replication tasks')
                 self.run_call('zettarepl.update_tasks')
-
-                logger.warning('Service restarts complete.')
 
                 # TODO: This is 4 years old at this point.  Is it still needed?
                 # There appears to be a small lag if we allow NFS traffic right away. During
@@ -569,9 +599,9 @@ class FailoverService(Service):
                 # downstream effect of that, instead we take a chill pill for 1 seconds.
                 time.sleep(1)
 
+                logger.warning('Allowing network traffic.')
                 run('/sbin/pfctl -d')
 
-                logger.warning('Allowing network traffic.')
                 run_async('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
 
                 try:
@@ -579,25 +609,26 @@ class FailoverService(Service):
                 except Exception:
                     pass
 
+                logger.warning('Configuring cron')
                 self.run_call('etc.generate', 'cron')
 
                 # sync disks is disabled on passive node
+                logger.warning('Syncing all disks')
                 self.run_call('disk.sync_all')
 
                 logger.warning('Syncing enclosure')
                 self.run_call('enclosure.sync_zpool')
 
+                logger.warning('Restarting collectd')
                 self.run_call('service.restart', 'collectd', {'ha_propagate': False})
+                logger.warning('Restarting syslogd')
                 self.run_call('service.restart', 'syslogd', {'ha_propagate': False})
+                logger.warning('Restarting mdns')
                 self.run_call('service.restart', 'mdns', {'ha_propagate': False})
 
-                for i in (
-                    'smartd', 'ftp', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp', 'webdav', 'ups',
-                ):
-                    c.execute(f'SELECT srv_enable FROM services_services WHERE srv_service = "{i}"')
-                    ret = c.fetchone()
-                    if ret and ret[0] == 1:
-                        self.run_call('service.restart', i, {'ha_propagate': False})
+                # restart the remaining non-critical services
+                logger.warning('Restarting remaining services')
+                self.run_call('failover.restart_services')
 
                 self.run_call('jail.start_on_boot')
                 self.run_call('vm.start_on_boot')
@@ -611,9 +642,8 @@ class FailoverService(Service):
                     # to ensure that the system is up to date with the latest keys available
                     # from KMIP. If it's unaccessible, the already synced memory keys are used
                     # meanwhile.
+                    logger.warning('Initializing KMIP keys')
                     self.run_call('kmip.initialize_keys')
-
-                conn.close()
 
                 logger.warning('Failover event complete.')
         except AlreadyLocked:
