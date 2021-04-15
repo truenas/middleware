@@ -1063,9 +1063,9 @@ class CloudSyncService(TaskPathService):
         """
 
         cloud_sync = await self.get_instance(id)
-        if cloud_sync['locked']:
-            await self.middleware.call('cloudsync.generate_locked_alert', id)
-            return
+        if cloud_sync["locked"]:
+            await self.middleware.call("cloudsync.generate_locked_alert", id)
+            raise CallError("Dataset is locked")
 
         await self._sync(cloud_sync, options, job)
 
