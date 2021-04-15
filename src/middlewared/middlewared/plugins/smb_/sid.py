@@ -68,33 +68,37 @@ class SMBService(Service):
 
     @private
     async def fixsid(self, groupmap=None):
+        """
+        Samba generates a new domain sid when its netbios name changes or if samba's secrets.tdb
+        has been deleted. passdb.tdb will automatically reflect the new mappings, but the groupmap
+        database is not automatically updated in these circumstances. This check is performed when
+        synchronizing group mapping database. In case there entries that no longer match our local
+        system sid, group_mapping.tdb will be removed and re-generated.
+        """
         if groupmap is None:
-            groupmap = (await self.middleware.call('smb.groupmap_list').values())
+            groupmap = (await self.middleware.call('smb.groupmap_list')).values()
 
         conf = await self.middleware.call('smb.config')
         well_known_SID_prefix = "S-1-5-32"
         db_SID = conf['cifs_SID']
-        group_SID = None
-        groupmap_SID = None
-        domain_SID = await self.get_system_sid()
-        ret = True
+        system_sid = await self.get_system_sid()
+        sids_fixed = False
         for group in groupmap:
-            group_SID = str(group['SID'])
-            if well_known_SID_prefix not in group_SID:
-                domain_SID = group_SID.rsplit("-", 1)[0]
-                if groupmap_SID is not None and groupmap_SID != domain_SID:
-                    self.logger.debug(f"Groupmap table contains more than one unique domain SIDs ({groupmap_SID}) and ({domain_SID})")
-                    self.logger.debug('Inconsistent entries in group_mapping.tdb. Situation uncorrectable. Removing corrupted tdb file.')
-                    os.unlink(f"{conf['state directory']}/group_mapping.tdb")
-                    return False
-                else:
-                    groupmap_SID = domain_SID
+            domain_SID = str(group['SID']).rsplit("-", 1)[0]
+            if not domain_SID.startswith(well_known_SID_prefix) and domain_SID != system_sid:
+                self.logger.warning(
+                    "The SMB groupmap table contains entries that do not match the server's domain SID."
+                    "SMB group mappings are now being re-synchronized with the correct domain SID."
+                )
+                state_dir = await self.middleware.call('smb.getparm', 'state directory', "GLOBAL")
+                try:
+                    os.unlink(f"{state_dir}/group_mapping.tdb")
+                except FileNotFoundError:
+                    pass
+                sids_fixed = True
 
-        if db_SID != domain_SID:
-            self.logger.debug(f"Domain SID in group_mapping.tdb ({domain_SID}) is not SID in nas config ({db_SID}). Updating db")
-            ret = await self.set_database_sid(domain_SID)
-            if not ret:
-                return ret
-            ret = await self.set_system_sid("setlocalsid", domain_SID)
+        if db_SID != system_sid:
+            self.logger.warning(f"Domain SID in group_mapping.tdb ({system_sid}) is not SID in nas config ({db_SID}). Updating db")
+            await self.set_database_sid(system_sid)
 
-        return ret
+        return sids_fixed
