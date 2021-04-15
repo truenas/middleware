@@ -1814,6 +1814,7 @@ class PoolService(CRUDService):
 
         self.middleware.call_sync('etc.generate_checkpoint', 'pool_import')
 
+        self.middleware.call_sync('zettarepl.load_removal_dates')
         self.middleware.call_sync('zettarepl.update_tasks')
 
         # Configure swaps after importing pools. devd events are not yet ready at this

@@ -158,7 +158,12 @@ class PeriodicSnapshotTaskService(CRUDService):
 
     @accepts(
         Int('id', required=True),
-        Patch('periodic_snapshot_create', 'periodic_snapshot_update', ('attr', {'update': True}))
+        Patch(
+            'periodic_snapshot_create',
+            'periodic_snapshot_update',
+            ('add', {'name': 'fixate_removal_date', 'type': 'bool'}),
+            ('attr', {'update': True})
+        ),
     )
     async def do_update(self, id, data):
         """
@@ -196,6 +201,8 @@ class PeriodicSnapshotTaskService(CRUDService):
             }
         """
 
+        fixate_removal_date = data.pop('fixate_removal_date', False)
+
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -223,6 +230,12 @@ class PeriodicSnapshotTaskService(CRUDService):
         for key in ('vmware_sync', 'state'):
             new.pop(key, None)
 
+        will_change_retention_for = None
+        if fixate_removal_date:
+            will_change_retention_for = await self.middleware.call(
+                'pool.snapshottask.update_will_change_retention_for', id, data,
+            )
+
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
@@ -231,14 +244,21 @@ class PeriodicSnapshotTaskService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
+        if will_change_retention_for:
+            await self.middleware.call('pool.snapshottask.fixate_removal_date', will_change_retention_for, old)
+
         await self.middleware.call('zettarepl.update_tasks')
 
         return await self._get_instance(id)
 
     @accepts(
-        Int('id')
+        Int('id'),
+        Dict(
+            'options',
+             Bool('fixate_removal_date', default=False),
+        ),
     )
-    async def do_delete(self, id):
+    async def do_delete(self, id, options):
         """
         Delete a Periodic Snapshot Task with specific `id`
 
@@ -267,6 +287,15 @@ class PeriodicSnapshotTaskService(CRUDService):
                         f'{replication_task["name"]!r} which will break it. Please, disable that replication task '
                         f'first.',
                     )
+
+        if options['fixate_removal_date']:
+            will_change_retention_for = await self.middleware.call(
+                'pool.snapshottask.delete_will_change_retention_for', id
+            )
+
+            if will_change_retention_for:
+                task = await self.get_instance(id)
+                await self.middleware.call('pool.snapshottask.fixate_removal_date', will_change_retention_for, task)
 
         response = await self.middleware.call(
             'datastore.delete',

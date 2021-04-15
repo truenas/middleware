@@ -1,6 +1,6 @@
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, time as _time, timedelta
 import errno
 import logging
 import multiprocessing
@@ -14,7 +14,6 @@ import socket
 import threading
 import time
 import types
-import subprocess
 
 import humanfriendly
 import paramiko.ssh_exception
@@ -99,6 +98,10 @@ def zettarepl_schedule(schedule):
     schedule = {k.replace("_", "-"): v for k, v in schedule.items()}
     schedule["day-of-month"] = schedule.pop("dom")
     schedule["day-of-week"] = schedule.pop("dow")
+    for k in ["begin", "end"]:
+        if isinstance(schedule[k], _time):
+            schedule[k] = str(schedule[k])[:5]
+
     return schedule
 
 
@@ -576,21 +579,9 @@ class ZettareplService(Service):
                 hold_tasks[f"periodic_snapshot_task_{periodic_snapshot_task['id']}"] = hold_task_reason
                 continue
 
-            periodic_snapshot_tasks[f"task_{periodic_snapshot_task['id']}"] = {
-                "dataset": periodic_snapshot_task["dataset"],
-
-                "recursive": periodic_snapshot_task["recursive"],
-                "exclude": periodic_snapshot_task["exclude"],
-
-                "lifetime": lifetime_iso8601(periodic_snapshot_task["lifetime_value"],
-                                             periodic_snapshot_task["lifetime_unit"]),
-
-                "naming-schema": periodic_snapshot_task["naming_schema"],
-
-                "schedule": zettarepl_schedule(periodic_snapshot_task["schedule"]),
-
-                "allow-empty": periodic_snapshot_task["allow_empty"],
-            }
+            periodic_snapshot_tasks[f"task_{periodic_snapshot_task['id']}"] = self.periodic_snapshot_task_definition(
+                periodic_snapshot_task,
+            )
 
         replication_tasks = {}
         for replication_task in await self.middleware.call("replication.query", [["enabled", "=", True]]):
@@ -610,6 +601,7 @@ class ZettareplService(Service):
         definition = {
             "max-parallel-replication-tasks": config["max_parallel_replication_tasks"],
             "timezone": timezone,
+            "use-removal-dates": True,
             "periodic-snapshot-tasks": periodic_snapshot_tasks,
             "replication-tasks": replication_tasks,
         }
@@ -627,6 +619,23 @@ class ZettareplService(Service):
         }
 
         return definition, hold_tasks
+
+    def periodic_snapshot_task_definition(self, periodic_snapshot_task):
+        return {
+            "dataset": periodic_snapshot_task["dataset"],
+
+            "recursive": periodic_snapshot_task["recursive"],
+            "exclude": periodic_snapshot_task["exclude"],
+
+            "lifetime": lifetime_iso8601(periodic_snapshot_task["lifetime_value"],
+                                         periodic_snapshot_task["lifetime_unit"]),
+
+            "naming-schema": periodic_snapshot_task["naming_schema"],
+
+            "schedule": zettarepl_schedule(periodic_snapshot_task["schedule"]),
+
+            "allow-empty": periodic_snapshot_task["allow_empty"],
+        }
 
     async def _replication_task_definition(self, pools, replication_task):
         if replication_task["direction"] == "PUSH":
