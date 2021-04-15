@@ -361,6 +361,9 @@ class IPAddr(Str):
 class Time(Str):
 
     def clean(self, value):
+        if isinstance(value, time):
+            return value
+
         value = super(Time, self).clean(value)
         if value is None:
             return value
@@ -855,7 +858,7 @@ class Patch(object):
             return Bool(name, **spec)
         elif t == 'dict':
             return Dict(name, **spec)
-        raise ValueError('Unknown type: {0}'.format(spec['type']))
+        raise ValueError('Unknown type: {0}'.format(t))
 
     def resolve(self, schemas):
         schema = schemas.get(self.name)

@@ -1002,7 +1002,14 @@ class ZFSSnapshot(CRUDService):
             snapshots = zfs.snapshots_serialized(**kwargs)
 
         # FIXME: awful performance with hundreds/thousands of snapshots
-        return filter_list(snapshots, filters, options)
+        result = filter_list(snapshots, filters, options)
+
+        if isinstance(result, list):
+            result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
+        elif isinstance(result, dict):
+            result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result])[0]
+
+        return result
 
     @accepts(Dict(
         'snapshot_create',
