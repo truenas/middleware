@@ -155,7 +155,7 @@ class VMService(Service):
         device web uri. In case a password is not specified, the uri for display device in question will not be
         retrieved because of missing password information.
         """
-        web_uris = []
+        web_uris = {}
 
         host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
         try:
@@ -170,7 +170,7 @@ class VMService(Service):
             if device.data['attributes'].get('web'):
                 uri = device.web_uri(host, device_credentials.get(device.data['id']))
                 if uri:
-                    web_uris.append(uri)
+                    web_uris[device.data['id']] = uri
 
         return web_uris
 
