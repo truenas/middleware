@@ -1,3 +1,7 @@
+import asyncio
+
+import psutil
+
 from .base import SimpleService
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
 
@@ -27,3 +31,19 @@ class GlusterdService(SimpleService):
 
     async def after_stop(self):
         await self.middleware.call('service.stop', 'glustereventsd')
+
+        # systemd[1]: glusterd.service: Unit process 1376703 (glusterfsd) remains running after unit stopped.
+        # systemd[1]: glusterd.service: Unit process 1376720 (glusterfs) remains running after unit stopped.
+        # This prevents from tank/.system/ctdb_shared_vol from being unmounted
+        futures = [self.middleware.call('service.terminate_process', pid)
+                   for pid in await self.middleware.run_in_thread(self._glusterd_pids)]
+        if futures:
+            await asyncio.wait(futures)
+
+    def _glusterd_pids(self):
+        pids = []
+        for process in psutil.process_iter(attrs=['cmdline']):
+            if process.info['cmdline']:
+                if process.info['cmdline'][0].endswith(('/glusterd', '/glusterfs', '/glusterfsd')):
+                    pids.append(process.pid)
+        return pids
