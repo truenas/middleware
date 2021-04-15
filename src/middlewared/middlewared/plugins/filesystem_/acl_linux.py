@@ -317,6 +317,7 @@ class FilesystemService(Service, ACLBase):
                 raise CallError(setacl.stderr.decode())
 
         if not recursive:
+            os.chown(path, uid, gid);
             job.set_progress(100, 'Finished setting NFSv4 ACL.')
             return
 
