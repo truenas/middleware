@@ -354,6 +354,8 @@ class RealtimeEventSource(EventSource):
                     isinstance(list(amd_sensor['Tctl'].values())[0], (int, float))
                 ):
                     temperature = dict(enumerate([list(amd_sensor['Tctl'].values())[0]] * self.AMD_CORE_COUNT))
+                elif 'temp1' in amd_sensor and 'temp1_input' in amd_sensor['temp1']:
+                    temperature = dict(enumerate([amd_sensor['temp1']['temp1_input']] * self.AMD_CORE_COUNT))
             else:
                 core = 0
                 for chip, value in sensors.items():
