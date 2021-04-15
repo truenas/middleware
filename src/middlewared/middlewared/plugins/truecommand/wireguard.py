@@ -51,6 +51,7 @@ class TruecommandService(Service):
 
         if not await self.wireguard_connection_health():
             # Stop wireguard if it's running and start polling the api to see what's up
+            await self.middleware.call('truecommand.set_status', Status.CONNECTING.value)
             await self.stop_truecommand_service()
             await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth', None)
             await self.middleware.call('truecommand.poll_api_for_status')
@@ -127,6 +128,7 @@ class TruecommandService(Service):
                 config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
                 await self.middleware.call('service.start', 'truecommand')
+                await self.middleware.call('service.reload', 'http')
             else:
                 # start polling iX Portal to see what's up and why we don't have these values set
                 # This can happen in instances where system was polling and then was rebooted,
@@ -135,5 +137,6 @@ class TruecommandService(Service):
 
     @private
     async def stop_truecommand_service(self):
+        await self.middleware.call('service.reload', 'http')
         if await self.middleware.call('service.started', 'truecommand'):
             await self.middleware.call('service.stop', 'truecommand')
