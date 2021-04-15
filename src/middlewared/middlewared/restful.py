@@ -312,11 +312,21 @@ class OpenAPIResource(object):
             new_id = f'{methodname.replace(".", "_")}'
             self._schemas[new_id] = new_schema
             schema = f'#/components/schemas/{new_id}'
+
+        json_request = {'schema': {'$ref': schema}}
+        for i, example in enumerate(method['examples']['rest']):
+            try:
+                title, example = example.split('{', 1)
+                example = json.loads('{' + example.strip())
+            except ValueError:
+                pass
+            else:
+                json_request.setdefault('examples', {})
+                json_request['examples'][f'example_{i + 1}'] = {'summary': title.strip(), 'value': example}
+
         return {
             'content': {
-                'application/json': {
-                    'schema': {'$ref': schema},
-                },
+                'application/json': json_request,
             }
         }
 
