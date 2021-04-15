@@ -39,7 +39,7 @@ def get_gpus():
                 {
                     'pci_id': child['PCI_ID'],
                     'pci_slot': child['PCI_SLOT_NAME'],
-
+                    'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
                 }
                 for child in gpu_dev.parent.children if 'PCI_SLOT_NAME' in child and 'PCI_ID' in child
             ],
