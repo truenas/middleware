@@ -294,7 +294,12 @@ class SystemDatasetService(ConfigService):
                     try:
                         cores = Path(corepath)
                         for corefile in cores.iterdir():
-                            corefile.unlink()
+                            # /var/db/system/cores is a zfs dataset
+                            # and so can have a hidden directory ".zfs"
+                            # which is read only. Obviously, we can't
+                            # remove files there.
+                            if corefile.is_file():
+                                corefile.unlink()
                     except Exception:
                         self.logger.warning("Failed to clear old core files.", exc_info=True)
 
