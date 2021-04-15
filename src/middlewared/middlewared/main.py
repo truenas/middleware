@@ -1485,7 +1485,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         asyncio.ensure_future(self.jobs.run())
 
         # Start up middleware worker process pool
-        self.__procpool._start_queue_management_thread()
+        self.__procpool._start_executor_manager_thread()
 
         runner = web.AppRunner(app, handle_signals=False, access_log=None)
         await runner.setup()
