@@ -394,7 +394,6 @@ class GlusterVolumeService(CRUDService):
             Str('peer_path', required=True),
             required=True,
         ),
-        Bool('force', default=False),
     ))
     async def replacebrick(self, data):
         """
@@ -407,7 +406,6 @@ class GlusterVolumeService(CRUDService):
         `new_brick` Dict where
             `peer_name` key is a string representing IP or DNS name of the peer
             `peer_path` key is a string representing the full path of the brick
-        `force` Boolean, if True, forcefully replace bricks
         """
 
         src = data.pop('src_brick')
@@ -416,7 +414,7 @@ class GlusterVolumeService(CRUDService):
         new_brick = new['peer_name'] + ':' + new['peer_path']
 
         method = volume.bricks.replace_commit
-        options = {'args': (data.pop('name'), src_brick, new_brick), 'kwargs': data}
+        options = {'args': (data.pop('name'), src_brick, new_brick), 'kwargs': {'force': True}}
         return await self.middleware.call('gluster.method.run', method, options)
 
     @item_method
