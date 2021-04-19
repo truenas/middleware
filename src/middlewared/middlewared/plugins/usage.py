@@ -20,17 +20,16 @@ class UsageService(Service):
     async def start(self):
         retries = self.FAILED_RETRIES
         while retries:
-            if (
-                not (await self.middleware.call('system.general.config'))['usage_collection'] or
-                not await self.middleware.call('failover.is_single_master_node')
-            ):
-                break
+            if (await self.middleware.call('system.general.config'))['usage_collection']:
+                restrict_usage = []
+            else:
+                restrict_usage = ['gather_total_capacity', 'gather_system_version']
 
             try:
                 async with aiohttp.ClientSession(raise_for_status=True) as session:
                     await session.post(
                         'https://usage.freenas.org/submit',
-                        data=await self.middleware.call('usage.gather'),
+                        data=await self.middleware.call('usage.gather', restrict_usage),
                         headers={'Content-type': 'application/json'},
                         proxy=os.environ.get('http_proxy'),
                     )
@@ -58,7 +57,7 @@ class UsageService(Service):
 
         return True
 
-    def gather(self):
+    def get_gather_context(self):
         datasets = self.middleware.call_sync('zfs.dataset.query')
         context = {
             'network': self.middleware.call_sync('interfaces.query'),
@@ -72,13 +71,28 @@ class UsageService(Service):
             elif ds['type'] == 'VOLUME':
                 context['zvols'].append(ds)
             context['datasets'][ds['id']] = ds
+        return context
+
+    def gather(self, restrict_usage=None):
+        context = self.get_gather_context()
+        restrict_usage = restrict_usage or []
 
         return json.dumps(
             {
-                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f))
+                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f)) and (
+                    not restrict_usage or f in restrict_usage
+                )
                 for k, v in self.middleware.call_sync(f'usage.{f}', context).items()
             }, sort_keys=True
         )
+
+    def gather_total_capacity(self, context):
+        return {
+            'total_capacity': sum(
+                d['properties']['used']['parsed'] + d['properties']['available']['parsed']
+                for d in context['root_datasets'].values()
+            )
+        }
 
     def gather_backup_data(self, context):
         backed = {
@@ -260,14 +274,16 @@ class UsageService(Service):
 
         return {'network': {**bridges, **lags, **phys, **vlans}}
 
-    async def gather_system(self, context):
+    async def gather_system_version(self, context):
         system = await self.middleware.call('system.info')
+        return {'version': system['version']}
+
+    async def gather_system(self, context):
         platform = 'TrueNAS-{}'.format(await self.middleware.call(
             'system.product_type'
         ))
 
         usage_version = 1
-        version = system['version']
         datasets = await self.middleware.call(
             'zfs.dataset.query', [('type', '!=', 'VOLUME')], {'count': True}
         )
@@ -285,7 +301,6 @@ class UsageService(Service):
             'system_hash': await self.middleware.call('system.host_id'),
             'platform': platform,
             'usage_version': usage_version,
-            'version': version,
             'system': [{'users': users, 'snapshots': snapshots, 'zvols': zvols, 'datasets': datasets}]
         }
 
