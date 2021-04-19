@@ -127,9 +127,9 @@ class RealtimeEventSource(EventSource):
 
         interfaces = self.middleware.call_sync('interface.query')
         for interface in interfaces:
-            if m := RE_BASE.match(interface['state']['active_media_subtype']):
+            if m := RE_BASE.match(interface['state']['active_media_subtype'] or ''):
                 speeds[interface['name']] = int(m.group(1)) * MEGABIT
-            elif m := RE_MBS.match(interface['state']['active_media_subtype']):
+            elif m := RE_MBS.match(interface['state']['active_media_subtype'] or ''):
                 speeds[interface['name']] = int(m.group(1)) * MEGABIT
 
         types = ['BRIDGE', 'LINK_AGGREGATION', 'VLAN']
