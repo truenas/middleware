@@ -417,6 +417,7 @@ class SystemService(Service):
     CPU_INFO = {
         'cpu_model': None,
         'core_count': None,
+        'physical_core_count': None,
     }
 
     MEM_INFO = {
@@ -471,6 +472,9 @@ class SystemService(Service):
 
         if self.CPU_INFO['core_count'] is None:
             self.CPU_INFO['core_count'] = psutil.cpu_count(logical=True)
+
+        if self.CPU_INFO['physical_core_count'] is None:
+            self.CPU_INFO['physical_core_count'] = psutil.cpu_count(logical=False)
 
         return self.CPU_INFO
 
@@ -769,6 +773,7 @@ class SystemService(Service):
             'physmem': mem_info['physmem_size'],
             'model': cpu_info['cpu_model'],
             'cores': cpu_info['core_count'],
+            'physical_cores': cpu_info['physical_core_count'],
             'loadavg': os.getloadavg(),
             'uptime': time_info['uptime'],
             'uptime_seconds': time_info['uptime_seconds'],
