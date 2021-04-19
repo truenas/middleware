@@ -601,7 +601,7 @@ class ShellWorkerThread(threading.Thread):
                 if read == b'':
                     break
                 asyncio.run_coroutine_threadsafe(
-                    self.ws.send_str(read.decode('utf8')), loop=self.loop
+                    self.ws.send_str(read.decode('utf8', 'ignore')), loop=self.loop
                 ).result()
 
         def writer():
