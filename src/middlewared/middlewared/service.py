@@ -242,6 +242,7 @@ class ServiceBase(type):
             'datastore_prefix': '',
             'datastore_extend': None,
             'datastore_extend_context': None,
+            'datastore_primary_key_type': 'integer',
             'event_register': True,
             'event_send': True,
             'service': None,
