@@ -414,7 +414,11 @@ class GlusterVolumeService(CRUDService):
         new_brick = new['peer_name'] + ':' + new['peer_path']
 
         method = volume.bricks.replace_commit
-        options = {'args': (data.pop('name'), src_brick, new_brick), 'kwargs': {'force': True}}
+
+        # the python module has a bug where the "force" kwarg can be false or true
+        # when in reality, the only supported argument is force = true.
+        kwargs = {'force': True}
+        options = {'args': (data.pop('name'), src_brick, new_brick), 'kwargs': kwargs}
         return await self.middleware.call('gluster.method.run', method, options)
 
     @item_method
