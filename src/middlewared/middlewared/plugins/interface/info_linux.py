@@ -9,4 +9,4 @@ class InterfaceService(Service, InterfaceInfoBase):
         namespace_alias = 'interfaces'
 
     async def internal_interfaces(self):
-        return ['lo', 'tun', 'tap', 'bond', 'docker', 'veth', 'kube-bridge', 'kube-dummy-if', 'vnet', 'openvpn']
+        return ['lo', 'tun', 'tap', 'docker', 'veth', 'kube-bridge', 'kube-dummy-if', 'vnet', 'openvpn']
