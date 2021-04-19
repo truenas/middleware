@@ -54,7 +54,27 @@ class DiskStats:
                 time.sleep(self.interval)
 
     def read(self):
-        return self.stats
+        read_ops = 0
+        read_bytes = 0
+        write_ops = 0
+        write_bytes = 0
+        busy = 0
+        count = 0
+        for disk, current in self.stats.items():
+            read_ops += current["read_ops"]
+            read_bytes += current["read_bytes"]
+            write_ops += current["write_ops"]
+            write_bytes += current["write_bytes"]
+            busy += current["busy"]
+            count += 1
+
+        return {
+            "read_ops": read_ops,
+            "read_bytes": read_bytes,
+            "write_ops": write_ops,
+            "write_bytes": write_bytes,
+            "busy": busy / count if count else 0,
+        }
 
     def stop(self):
         self.run = False
