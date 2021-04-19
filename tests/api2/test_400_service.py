@@ -14,7 +14,7 @@ from auto_config import ha, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-services = ['afp', 'cifs', 'nfs', 'snmp', 'tftp', 'webdav', 'lldp']
+services = ['afp', 'cifs', 'iscsitarget', 'snmp', 'rsync', 'webdav', 'lldp']
 
 all_services = []
 for service in GET('/service/', controller_a=ha).json():
@@ -57,7 +57,7 @@ def test_04_looking_service_enable(svc, services_list):
 def test_05_start_service(svc):
     results = POST('/service/start/', {'service': svc})
     assert results.status_code == 200, results.text
-    assert results.json() is True
+    assert results.json() is True, results.text
     sleep(1)
 
 
@@ -72,7 +72,7 @@ def test_06_looking_if_service_is_running(svc):
 def test_07_service_stop(svc):
     results = POST('/service/stop/', {'service': svc})
     assert results.status_code == 200, results.text
-    assert results.json() is False
+    assert results.json() is False, results.text
     sleep(1)
 
 
