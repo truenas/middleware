@@ -89,6 +89,7 @@ def test_04_look_if_Directory_slash_File(request):
     assert results['result'] is True, results['output']
 
 
+@pytest.mark.skipif(scale, reason='Do not test for SCALE')
 def test_05_import_nonascii_msdosfs_fails(request):
     depends(request, ["pool_04"], scope="session")
     payload = {
