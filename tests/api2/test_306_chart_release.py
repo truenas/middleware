@@ -71,7 +71,7 @@ def test_06_create_ipfs_chart_release(request):
     results = POST('/chart/release/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
-    job_status = wait_on_job(results.json(), 300)
+    job_status = wait_on_job(results.json(), 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     release_id = job_status['results']['result']['id']
 
@@ -135,7 +135,7 @@ def test_14_redeploy_ipfs_chart_release(request):
     results = POST('/chart/release/redeploy/', 'ipfs')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
-    job_status = wait_on_job(results.json(), 300)
+    job_status = wait_on_job(results.json(), 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -232,7 +232,7 @@ def test_21_change_some_ipfs_schema_values(request):
     }
     results = PUT(f'/chart/release/id/{release_id}/', payload)
     assert results.status_code == 200, results.text
-    job_status = wait_on_job(results.json(), 300)
+    job_status = wait_on_job(results.json(), 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -308,7 +308,7 @@ def test_29_delete_ipfs_chart_release(request):
     results = DELETE(f'/chart/release/id/{release_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
-    job_status = wait_on_job(results.json(), 300)
+    job_status = wait_on_job(results.json(), 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -377,7 +377,7 @@ def test_36_create_plex_chart_release_with_old_version(request):
     results = POST('/chart/release/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
-    job_status = wait_on_job(results.json(), 300)
+    job_status = wait_on_job(results.json(), 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     plex_id = job_status['results']['result']['id']
 
@@ -404,7 +404,7 @@ def test_38_upgrade_plex_to_the_new_version(request):
     results = POST('/chart/release/upgrade/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
-    job_status = wait_on_job(results.json(), 300)
+    job_status = wait_on_job(results.json(), 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -429,7 +429,7 @@ def test_40_rollback_plex_to_the_old_version(request):
     results = POST('/chart/release/rollback/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
-    job_status = wait_on_job(results.json(), 300)
+    job_status = wait_on_job(results.json(), 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -446,7 +446,7 @@ def test_42_delete_plex_chart_release(request):
     results = DELETE(f'/chart/release/id/{plex_id}/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
-    job_status = wait_on_job(results.json(), 300)
+    job_status = wait_on_job(results.json(), 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
