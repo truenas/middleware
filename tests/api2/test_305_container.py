@@ -3,6 +3,7 @@
 import os
 import pytest
 import sys
+import time
 from pytest_dependency import depends
 # from pytest_dependency import depends
 apifolder = os.getcwd()
@@ -519,6 +520,7 @@ def test_39_set_truecommand_ix_chart_hostPathVolumes(request):
     assert isinstance(results.json(), int), results.text
     job_status = wait_on_job(results.json(), 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    time.sleep(1)
 
 
 def test_40_verify_ix_chart_config_hostPathVolumes(request):
