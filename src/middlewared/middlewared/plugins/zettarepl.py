@@ -709,6 +709,14 @@ class ZettareplService(Service):
         if replication_task["lifetime_value"] is not None and replication_task["lifetime_unit"] is not None:
             definition["lifetime"] = lifetime_iso8601(replication_task["lifetime_value"],
                                                       replication_task["lifetime_unit"])
+        if replication_task["lifetimes"]:
+            definition["lifetimes"] = {
+                f"lifetime_{i}": {
+                    "schedule": zettarepl_schedule(lifetime["schedule"]),
+                    "lifetime": lifetime_iso8601(lifetime["lifetime_value"], lifetime["lifetime_unit"]),
+                }
+                for i, lifetime in enumerate(replication_task["lifetimes"])
+            }
         if replication_task["compression"] is not None:
             definition["compression"] = replication_task["compression"].lower()
         if replication_task["speed_limit"] is not None:

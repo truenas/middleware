@@ -42,6 +42,7 @@ class ReplicationModel(sa.Model):
     repl_retention_policy = sa.Column(sa.String(120), default="NONE")
     repl_lifetime_unit = sa.Column(sa.String(120), nullable=True, default='WEEK')
     repl_lifetime_value = sa.Column(sa.Integer(), nullable=True, default=2)
+    repl_lifetimes = sa.Column(sa.JSON(type=list))
     repl_large_block = sa.Column(sa.Boolean(), default=True)
     repl_embed = sa.Column(sa.Boolean(), default=False)
     repl_compressed = sa.Column(sa.Boolean(), default=True)
@@ -189,6 +190,15 @@ class ReplicationService(CRUDService):
             Str("retention_policy", enum=["SOURCE", "CUSTOM", "NONE"], required=True),
             Int("lifetime_value", null=True, default=None, validators=[Range(min=1)]),
             Str("lifetime_unit", null=True, default=None, enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]),
+            List("lifetimes", items=[
+                Dict(
+                    "lifetime",
+                    Cron("schedule", required=True),
+                    Int("lifetime_value", validators=[Range(min=1)], required=True),
+                    Str("lifetime_unit", enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"], required=True),
+                    strict=True,
+                ),
+            ]),
             Str("compression", enum=["LZ4", "PIGZ", "PLZIP"], null=True, default=None),
             Int("speed_limit", null=True, default=None, validators=[Range(min=1)]),
             Bool("large_block", default=True),
@@ -612,6 +622,8 @@ class ReplicationService(CRUDService):
                 verrors.add("lifetime_value", "This field has no sense for specified retention policy")
             if data["lifetime_unit"] is not None:
                 verrors.add("lifetime_unit", "This field has no sense for specified retention policy")
+            if data["lifetimes"]:
+                verrors.add("lifetimes", "This field has no sense for specified retention policy")
 
         if data["enabled"]:
             for i, snapshot_task in enumerate(snapshot_tasks):
