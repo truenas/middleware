@@ -197,6 +197,13 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
     # Custom retention policy
     (dict(periodic_snapshot_tasks=["data-recursive"],
           retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK"), None),
+
+    # Complex custom retention policy
+    (dict(periodic_snapshot_tasks=["data-recursive"],
+          retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK", lifetimes=[
+              dict(schedule={"hour": "0"}, lifetime_value=30, lifetime_unit="DAY"),
+              dict(schedule={"hour": "0", "dow": "1"}, lifetime_value=1, lifetime_unit="YEAR"),
+          ]), None),
 ])
 def test_create_replication(request, credentials, periodic_snapshot_tasks, req, error):
     depends(request, ["pool_04"], scope="session")
