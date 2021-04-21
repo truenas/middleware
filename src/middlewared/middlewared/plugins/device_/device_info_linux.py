@@ -281,5 +281,6 @@ class DeviceService(Service, DeviceInfoBase):
         Retrieve choices for GPU PCI ids located in the system.
         """
         return {
-            gpu['addr']['pci_slot']: gpu['addr']['pci_slot'] for gpu in await self.middleware.call('device.get_gpus')
+            gpu['description'] or gpu['vendor'] or gpu['addr']['pci_slot']: gpu['addr']['pci_slot']
+            for gpu in await self.middleware.call('device.get_gpus')
         }
