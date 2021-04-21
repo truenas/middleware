@@ -111,7 +111,10 @@ class DiskService(CRUDService):
         else:
             disk.pop('passwd')
             disk.pop('kmip_uid')
-        disk['pool'] = context['zfs_guid_to_pool'].get(disk['zfs_guid'])
+        if disk['name'] in context['boot_pool_disks']:
+            disk['pool'] = context['boot_pool_name']
+        else:
+            disk['pool'] = context['zfs_guid_to_pool'].get(disk['zfs_guid'])
         return disk
 
     @private
@@ -121,6 +124,8 @@ class DiskService(CRUDService):
             'disks_keys': {},
 
             'pools': extra.get('pools', False),
+            'boot_pool_disks': [],
+            'boot_pool_name': None,
             'zfs_guid_to_pool': {},
         }
 
@@ -128,6 +133,9 @@ class DiskService(CRUDService):
             context['disks_keys'] = await self.middleware.call('kmip.retrieve_sed_disks_keys')
 
         if context['pools']:
+            context['boot_pool_disks'] = await self.middleware.call('boot.get_disks')
+            context['boot_pool_name'] = await self.middleware.call('boot.pool_name')
+
             for pool in await self.middleware.call('zfs.pool.query'):
                 topology = await self.middleware.call('pool.transform_topology_lightweight', pool['groups'])
                 for vdev in await self.middleware.call('pool.flatten_topology', topology):
