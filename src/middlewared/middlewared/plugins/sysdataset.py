@@ -552,3 +552,15 @@ async def pool_post_import(middleware, pool):
 
 async def setup(middleware):
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+
+    try:
+        if not os.path.exists('/var/cache/nscd') or not os.path.islink('/var/cache/nscd'):
+            if os.path.exists('/var/cache/nscd'):
+                shutil.rmtree('/var/cache/nscd')
+
+            os.makedirs('/tmp/cache/nscd', exist_ok=True)
+
+            if not os.path.islink('/var/cache/nscd'):
+                os.symlink('/tmp/cache/nscd', '/var/cache/nscd')
+    except Exception:
+        middleware.logger.error('Error moving cache away from boot pool', exc_info=True)
