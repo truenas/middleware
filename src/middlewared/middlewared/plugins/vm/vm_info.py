@@ -165,13 +165,21 @@ class VMService(Service):
         else:
             host = f'[{host}]'
 
-        device_credentials = {d['device_id']: d['password'] for d in options['devices_passwords']}
+        creds = {d['device_id']: d['password'] for d in options['devices_passwords']}
         for device in map(lambda d: DISPLAY(d, middleware=self.middleware), await self.get_display_devices(id)):
+            uri_data = {'error': None, 'uri': None}
             if device.data['attributes'].get('web'):
-                uri = device.web_uri(host, device_credentials.get(device.data['id']))
-                if uri:
-                    web_uris[device.data['id']] = uri
-
+                if device.password_configured():
+                    if creds.get(
+                        device.data['id']
+                    ) and creds[device.data['id']] != device.data['attributes']['password']:
+                        uri_data['error'] = 'Incorrect password specified'
+                    elif not creds.get(device.data['id']):
+                        uri_data['error'] = 'Password not specified'
+                uri_data['uri'] = device.web_uri(host, creds.get(device.data['id']))
+            else:
+                uri_data['error'] = 'Web display is not configured'
+            web_uris[device.data['id']] = uri_data
         return web_uris
 
     @accepts()

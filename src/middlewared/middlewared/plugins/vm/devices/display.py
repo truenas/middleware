@@ -46,7 +46,7 @@ class DISPLAY(Device):
     def web_uri(self, host, password=None):
         params = {} if self.is_spice_type() else {'autoconnect': 1}
         if self.password_configured():
-            if not password:
+            if password != self.data['attributes'].get('password'):
                 return
 
             params['password'] = password
