@@ -91,7 +91,7 @@ class Route53Authenticator(Authenticator):
                             'ResourceRecordSet': {
                                 'Name': validation_domain_name,
                                 'Type': 'TXT',
-                                'TTL': 3600,
+                                'TTL': 10,
                                 'ResourceRecords': [{'Value': f'"{validation}"'}],
                             }
                         }

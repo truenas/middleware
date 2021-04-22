@@ -49,7 +49,7 @@ class CloudFlareAuthenticator(Authenticator):
         verrors.check()
 
     def _perform(self, domain, validation_name, validation_content):
-        self.get_cloudflare_object().add_txt_record(domain, validation_name, validation_content, 3600)
+        self.get_cloudflare_object().add_txt_record(domain, validation_name, validation_content, 600)
 
     def get_cloudflare_object(self):
         if self.api_token:
