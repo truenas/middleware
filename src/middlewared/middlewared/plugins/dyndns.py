@@ -70,7 +70,7 @@ class DynDNSService(SystemServiceService):
             'default@zoneedit.com': 'zoneedit.com',
             'dyndns@3322.org': '3322.org',
             'ipv4@nsupdate.info': 'nsupdate.info',
-            'ipv6tb@he.net': 'he.net'
+            'dyndns@he.net': 'he.net'
         }
 
     @private
