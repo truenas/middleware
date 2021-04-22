@@ -7,7 +7,8 @@ from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import (
-    CallError, ConfigService, no_auth_required, job, pass_app, private, Service, throttle, ValidationErrors
+    CallError, ConfigService, no_auth_required, job, pass_app, private, rest_api_metadata,
+    Service, throttle, ValidationErrors
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
@@ -1470,6 +1471,7 @@ class SystemGeneralService(ConfigService):
 
         return await self.config()
 
+    @rest_api_metadata(extra_methods=['GET'])
     @accepts(Int('delay', default=3, validators=[Range(min=0)]))
     async def ui_restart(self, delay):
         """
