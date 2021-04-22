@@ -181,7 +181,7 @@ def pass_app(rest=False):
     return wrapper
 
 
-def rest_api_metadata(explicit_methods=None):
+def rest_api_metadata(extra_methods=None):
     """
     Allow having endpoints specify explicit rest methods.
 
@@ -192,7 +192,7 @@ def rest_api_metadata(explicit_methods=None):
     """
     def wrapper(fn):
         fn._rest_api_metadata = {
-            'explicit_methods': explicit_methods,
+            'extra_methods': extra_methods,
         }
         return fn
     return wrapper
@@ -1087,7 +1087,7 @@ class CoreService(Service):
                     'filterable': hasattr(method, '_filterable'),
                     'filterable_schema': None,
                     'pass_application': hasattr(method, '_pass_app'),
-                    'explicit_methods': method._rest_api_metadata['explicit_methods'] if hasattr(
+                    'extra_methods': method._rest_api_metadata['extra_methods'] if hasattr(
                         method, '_rest_api_metadata') else None,
                     'require_websocket': hasattr(method, '_pass_app') and not method._pass_app['rest'],
                     'job': hasattr(method, '_job'),
