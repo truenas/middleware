@@ -210,7 +210,7 @@ class SystemAdvancedService(ConfigService):
             if len(available - provided) < 1:
                 verrors.add(
                     f'{schema}.isolated_gpu_pci_ids',
-                    'A minimum of 2 GPUs are required in the host to ensure that host has at least 1 GPU available.'
+                    'A minimum of 1 GPU is required for the host to ensure it functions as desired.'
                 )
 
         return verrors, data
