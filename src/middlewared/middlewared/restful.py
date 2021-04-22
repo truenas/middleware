@@ -497,7 +497,7 @@ class Resource(object):
                     filterid = kwargs['id']
                     if filterid.isdigit():
                         filterid = int(filterid)
-                    method_args = [[('id', '=', filterid)], {'get': True}]
+                    method_args = [[('id', '=', filterid)], {'get': True, 'force_sql_filters': True}]
                 else:
                     method_args = self._filterable_args(req)
 

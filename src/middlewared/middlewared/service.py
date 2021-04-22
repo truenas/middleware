@@ -445,8 +445,9 @@ class CRUDService(ServiceChangeMixin, Service):
         options = await self.get_options(options)
 
         # In case we are extending which may transform the result in numerous ways
-        # we can only filter the final result.
-        if options['extend']:
+        # we can only filter the final result. Exception is when forced to use sql
+        # for filters for performance reasons.
+        if not options['force_sql_filters'] and options['extend']:
             datastore_options = options.copy()
             datastore_options.pop('count', None)
             datastore_options.pop('get', None)
@@ -504,7 +505,7 @@ class CRUDService(ServiceChangeMixin, Service):
         """
         Helper method to get an instance from a collection given the `id`.
         """
-        instance = await self.middleware.call(f'{self._config.namespace}.query', [('id', '=', id)])
+        instance = await self.middleware.call(f'{self._config.namespace}.query', [('id', '=', id)], {'force_sql_filters': True})
         if not instance:
             raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
         return instance[0]

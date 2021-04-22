@@ -1270,7 +1270,7 @@ class iSCSITargetService(CRUDService):
             filters = [('name', '=', data['name'])]
             if old:
                 filters.append(('id', '!=', old['id']))
-            names = await self.middleware.call(f'{self._config.namespace}.query', filters)
+            names = await self.middleware.call(f'{self._config.namespace}.query', filters, {'force_sql_filters': True})
             if names:
                 verrors.add(f'{schema_name}.name', 'Target name already exists')
 
@@ -1283,7 +1283,7 @@ class iSCSITargetService(CRUDService):
                 filters = [('alias', '=', data['alias'])]
                 if old:
                     filters.append(('id', '!=', old['id']))
-                aliases = await self.middleware.call(f'{self._config.namespace}.query', filters)
+                aliases = await self.middleware.call(f'{self._config.namespace}.query', filters, {'force_sql_filters': True})
                 if aliases:
                     verrors.add(f'{schema_name}.alias', 'Alias already exists')
 
@@ -1423,7 +1423,8 @@ class iSCSITargetService(CRUDService):
     @private
     async def active_sessions_for_targets(self, target_id_list):
         targets = await self.middleware.call(
-            'iscsi.target.query', [['id', 'in', target_id_list]]
+            'iscsi.target.query', [['id', 'in', target_id_list]],
+            {'force_sql_filters': True},
         )
         check_targets = []
         global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
@@ -1577,7 +1578,7 @@ class iSCSITargetToExtentService(CRUDService):
         if data.get('lunid') is None:
             lunids = [
                 o['lunid'] for o in await self.query(
-                    [('target', '=', target)], {'order_by': ['lunid']}
+                    [('target', '=', target)], {'order_by': ['lunid'], 'force_sql_filters': True}
                 )
             ]
             if not lunids:
@@ -1605,15 +1606,15 @@ class iSCSITargetToExtentService(CRUDService):
 
         if old_lunid != lunid and await self.query([
             ('lunid', '=', lunid), ('target', '=', target)
-        ]):
+        ], {'force_sql_filters': True}):
             verrors.add(
                 f'{schema_name}.lunid',
                 'LUN ID is already being used for this target.'
             )
 
         if old_target != target and await self.query([
-            ('target', '=', target), ('extent', '=', extent)]
-        ):
+            ('target', '=', target), ('extent', '=', extent)
+        ], {'force_sql_filters': True}):
             verrors.add(
                 f'{schema_name}.target',
                 'Extent is already in this target.'
