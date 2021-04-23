@@ -34,8 +34,9 @@ class Route53Authenticator(Authenticator):
         pass
 
     def _perform(self, domain, validation_name, validation_content):
-        resp_change_info = self._change_txt_record('UPSERT', validation_name, validation_content)
+        return self._change_txt_record('UPSERT', validation_name, validation_content)
 
+    def wait_for_records_to_propagate(self, resp_change_info):
         """
         Wait for a change to be propagated to all Route53 DNS servers.
         https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetChange.html
