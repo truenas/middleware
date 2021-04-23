@@ -1,34 +1,15 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 import asyncio
 import base64
 import errno
-from lockfile import LockFile
 import logging
-try:
-    import netif
-except ImportError:
-    netif = None
 import os
 import pickle
 import queue
 import re
 import shutil
 import socket
-import subprocess
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
-import tempfile
 import textwrap
 import time
-import enum
-
 from functools import partial
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
@@ -40,40 +21,10 @@ from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.utils.contextlib import asyncnullcontext
-from middlewared.utils import osc
 
-BUFSIZE = 256
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
-FAILOVER_NEEDOP = '/tmp/.failover_needop'
-TRUENAS_VERS = re.compile(r'\d*\.?\d+')
 
 logger = logging.getLogger('failover')
-
-
-class HA_HARDWARE(enum.Enum):
-
-    """
-    The echostream E16 JBOD and the echostream Z-series chassis
-    are the same piece of hardware. One of the only ways to differentiate
-    them is to look at the enclosure elements in detail. The Z-series
-    chassis identifies element 0x26 as `ZSERIES_ENCLOSURE` listed below.
-    The E16 JBOD does not. The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5.
-
-    We use this fact to ensure we are looking at the internal enclosure, and
-    not a shelf. If we used a shelf to determine which node was A or B, you could
-    cause the nodes to switch identities by switching the cables for the shelf.
-    """
-
-    ZSERIES_ENCLOSURE = re.compile(r'SD_9GV12P1J_12R6K4', re.M)
-    ZSERIES_NODE = re.compile(r'3U20D-Encl-([AB])', re.M)
-    XSERIES_ENCLOSURE = re.compile(r'Enclosure Name: CELESTIC (P3215-O|P3217-B)', re.M)
-    XSERIES_NODEA = re.compile(r'ESCE A_(5[0-9A-F]{15})', re.M)
-    XSERIES_NODEB = re.compile(r'ESCE B_(5[0-9A-F]{15})', re.M)
-    MSERIES_ENCLOSURE = re.compile(r'Enclosure Name: (ECStream|iX) 4024S([ps])', re.M)
-
-    # sg_ses on linux returns slightly different text than getencstat on freeBSD
-    XSERIES_ENCLOSURE_LINUX = re.compile(r'\s*CELESTIC\s*(P3215-O|P3217-B)', re.M)
-    MSERIES_ENCLOSURE_LINUX = re.compile(r'\s*(ECStream|iX)\s*4024S([ps])', re.M)
 
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
@@ -262,26 +213,6 @@ class FailoverService(ConfigService):
             'failover.internal_interface.detect'
         )
 
-    @private
-    async def get_carp_states(self, interfaces=None):
-        """
-        This method has to be left in for backwards compatibility
-        when upgrading from 11.3 to 12+
-        """
-        return await self.middleware.call(
-            'failover.vip.get_states', interfaces
-        )
-
-    @private
-    async def check_carp_states(self, local, remote):
-        """
-        This method has to be left in for backwards compatibility
-        when upgrading from 11.3 to 12+
-        """
-        return await self.middleware.call(
-            'failover.vip.check_states', local, remote
-        )
-
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
@@ -348,20 +279,16 @@ class FailoverService(ConfigService):
         """
         Returns True if there is an ongoing failover event.
         """
-
-        if osc.IS_FREEBSD:
-            return LockFile('/tmp/.failover_event').is_locked()
-        else:
-            event = self.middleware.call_sync(
-                'core.get_jobs', [
-                    ('method', 'in', [
-                        'failover.events.vrrp_master',
-                        'failover.events.vrrp_backup'
-                    ]),
-                    ('state', '=', 'RUNNING'),
-                ]
-            )
-            return bool(event)
+        event = self.middleware.call_sync(
+            'core.get_jobs', [
+                ('method', 'in', [
+                    'failover.events.vrrp_master',
+                    'failover.events.vrrp_backup'
+                ]),
+                ('state', '=', 'RUNNING'),
+            ]
+        )
+        return bool(event)
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
@@ -419,25 +346,17 @@ class FailoverService(ConfigService):
 
         `reboot` as true will reboot the other controller after syncing.
         """
-        self.logger.debug('Sending database to standby controller')
+        standby = ' standby controller.'
+        self.logger.debug('Syncing database to' + standby)
         self.middleware.call_sync('failover.send_database')
-        self.logger.debug('Syncing cached keys')
+
+        self.logger.debug('Syncing cached encryption keys to' + standby)
         self.middleware.call_sync('failover.sync_keys_to_remote_node')
-        self.logger.debug('Sending license and pwenc files')
+
+        self.logger.debug('Syncing license, pwenc and authorized_keys files to' + standby)
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
         self.send_small_file('/root/.ssh/authorized_keys')
-
-        for path in ('/data/geli',):
-            if not os.path.exists(path) or not os.path.isdir(path):
-                continue
-            for f in os.listdir(path):
-                fullpath = os.path.join(path, f)
-                if not os.path.isfile(fullpath):
-                    continue
-                self.send_small_file(fullpath)
-
-        self.middleware.call_sync('failover.call_remote', 'service.restart', ['failover'])
 
         self.middleware.call_sync(
             'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
@@ -512,7 +431,10 @@ class FailoverService(ConfigService):
         reasons = set(self._disabled_reasons(app))
         if reasons != self.LAST_DISABLEDREASONS:
             self.LAST_DISABLEDREASONS = reasons
-            self.middleware.send_event('failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': list(reasons)})
+            self.middleware.send_event(
+                'failover.disabled_reasons', 'CHANGED',
+                fields={'disabled_reasons': list(reasons)}
+            )
         return list(reasons)
 
     def _disabled_reasons(self, app):
@@ -543,15 +465,7 @@ class FailoverService(ConfigService):
                 reasons.append('NO_LICENSE')
 
             local = self.middleware.call_sync('failover.vip.get_states')
-            try:
-                remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
-            except Exception as e:
-                if e.errno == CallError.ENOMETHOD:
-                    # We're talking to an 11.3 system, so use the old API
-                    remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
-                else:
-                    raise
-
+            remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
                 reasons.append('DISAGREE_CARP')
 
@@ -673,6 +587,8 @@ class FailoverService(ConfigService):
     @private
     @accepts()
     async def encryption_keys(self):
+        # TODO: remove GELI key since it's
+        # not supported in SCALE
         return await self.middleware.call(
             'cache.get_or_put', 'failover_encryption_keys', 0, lambda: {'geli': {}, 'zfs': {}}
         )
@@ -703,6 +619,8 @@ class FailoverService(ConfigService):
         )
     )
     async def update_encryption_keys(self, options):
+        # TODO: remove `pools` key and `geli` logic
+        # since GELI is not supported in SCALE
         if not options['pools'] and not options['datasets']:
             raise CallError('Please specify pools/datasets to update')
 
@@ -726,6 +644,8 @@ class FailoverService(ConfigService):
         )
     )
     async def remove_encryption_keys(self, options):
+        # TODO: remove `pools` key and `geli` logic
+        # since GELI is not supported in SCALE
         if not options['pools'] and not options['datasets']:
             raise CallError('Please specify pools/datasets to remove')
 
@@ -740,114 +660,6 @@ class FailoverService(ConfigService):
             await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
             if options['sync_keys']:
                 await self.sync_keys_to_remote_node(lock=False)
-
-    @private
-    @job()
-    def attach_all_geli_providers(self, job):
-        pools = self.middleware.call_sync('pool.query', [('encrypt', '>', 0)])
-        if not pools:
-            return
-
-        failed_drive = 0
-        failed_volumes = []
-        geli_keys = self.middleware.call_sync('failover.encryption_keys')['geli']
-        for pool in pools:
-            with tempfile.NamedTemporaryFile(mode='w+') as tmp:
-                tmp.file.write(geli_keys.get(pool['name'], ''))
-                tmp.file.flush()
-                keyfile = pool['encryptkey_path']
-                procs = []
-                for encrypted_disk in self.middleware.call_sync(
-                    'datastore.query',
-                    'storage.encrypteddisk',
-                    [('encrypted_volume', '=', pool['id'])]
-                ):
-                    if encrypted_disk['encrypted_disk']:
-                        # gptid might change on the active head, so we need to rescan
-                        # See #16070
-                        try:
-                            open(
-                                f'/dev/{encrypted_disk["encrypted_disk"]["disk_name"]}', 'w'
-                            ).close()
-                        except Exception:
-                            self.logger.warning(
-                                'Failed to open dev %s to rescan.',
-                                encrypted_disk['encrypted_disk']['disk_name'],
-                            )
-                    provider = encrypted_disk['encrypted_provider']
-                    if not os.path.exists(f'/dev/{provider}.eli'):
-                        proc = subprocess.Popen(
-                            'geli attach {} -k {} {}'.format(
-                                f'-j {tmp.name}' if pool['encrypt'] == 2 else '-p',
-                                keyfile,
-                                provider,
-                            ),
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            shell=True,
-                        )
-                        procs.append(proc)
-                for proc in procs:
-                    msg = proc.communicate()[1]
-                    if proc.returncode != 0:
-                        job.set_progress(None, f'Unable to attach GELI provider: {msg}')
-                        self.logger.warn('Unable to attach GELI provider: %s', msg)
-                        failed_drive += 1
-
-                try:
-                    self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
-                        'altroot': '/mnt',
-                    })
-                except Exception as e:
-                    failed_volumes.append(pool['name'])
-                    self.logger.error('Failed to import %s pool: %s', pool['name'], str(e))
-
-        if failed_drive > 0:
-            job.set_progress(None, f'{failed_drive} drive(s) can not be attached.')
-            self.logger.error('%d drive(s) can not be attached.', failed_drive)
-
-        try:
-            if not failed_volumes:
-                try:
-                    os.unlink(FAILOVER_NEEDOP)
-                except FileNotFoundError:
-                    pass
-                self.middleware.call_sync('failover.sync_keys_to_remote_node')
-            else:
-                with open(FAILOVER_NEEDOP, 'w') as f:
-                    f.write('\n'.join(failed_volumes))
-        except Exception:
-            pass
-
-    @private
-    @job()
-    def encryption_detachall(self, job):
-        # Let us be very careful before we rip down the GELI providers
-        for pool in self.middleware.call_sync('pool.query', [('encrypt', '>', 0)]):
-            if pool['status'] == 'OFFLINE':
-                for encrypted_disk in self.middleware.call_sync(
-                    'datastore.query',
-                    'storage.encrypteddisk',
-                    [('encrypted_volume', '=', pool['id'])]
-                ):
-                    provider = encrypted_disk['encrypted_provider']
-                    cp = subprocess.run(
-                        ['geli', 'detach', provider],
-                        capture_output=True, text=True, check=False,
-                    )
-                    if cp.returncode != 0:
-                        job.set_progress(
-                            None,
-                            f'Unable to detach GELI provider {provider}: {cp.stderr}',
-                        )
-                return True
-            else:
-                job.set_progress(
-                    None,
-                    'Not detaching GELI providers because an encrypted zpool with name '
-                    f'{pool["name"]!r} is still mounted!',
-                )
-                return False
 
     @private
     async def is_single_master_node(self):
@@ -927,6 +739,8 @@ class FailoverService(ConfigService):
         local_path = self.middleware.call_sync('update.get_update_location')
 
         if updatefile:
+            # means manual update file was provided so write it
+            # to local storage
             updatefile_name = 'updatefile.tar'
             job.set_progress(None, 'Uploading update file')
             updatefile_localpath = os.path.join(local_path, updatefile_name)
@@ -938,50 +752,37 @@ class FailoverService(ConfigService):
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                 raise CallError('Standby Controller is not ready.')
 
-            legacy_upgrade = False
-            try:
-                self.middleware.call_sync('failover.call_remote', 'failover.upgrade_version')
-            except CallError as e:
-                if e.errno == CallError.ENOMETHOD:
-                    legacy_upgrade = True
-                else:
-                    raise
-
-            if not updatefile and not legacy_upgrade:
+            if not updatefile:
+                # means no update file was provided so go out to
+                # the interwebz and download it
                 def download_callback(j):
                     job.set_progress(
                         None, j['progress']['description'] or 'Downloading upgrade files'
                     )
 
                 djob = self.middleware.call_sync('update.download', job_on_progress_cb=download_callback)
-                djob.wait_sync()
-                if djob.error:
-                    raise CallError(f'Error downloading update: {djob.error}')
+                djob.wait_sync(raise_error=True)
                 if not djob.result:
                     raise CallError('No updates available.')
 
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
-            if legacy_upgrade:
-                namespace = 'notifier'
-            else:
-                namespace = 'update'
-            self.middleware.call_sync('failover.call_remote', f'{namespace}.destroy_upload_location')
+            self.middleware.call_sync('failover.call_remote', 'update.destroy_upload_location')
             remote_path = self.middleware.call_sync(
-                'failover.call_remote', f'{namespace}.create_upload_location'
+                'failover.call_remote', 'update.create_upload_location'
             ) or '/var/tmp/firmware'
 
-            # Only send files to standby:
-            # 1. Its a manual upgrade which means it needs to go through master first
-            # 2. Its not a legacy upgrade, which means files are downloaded on master first
-            #
-            # For legacy upgrade it will be downloaded directly from standby.
-            if updatefile or not legacy_upgrade:
+            if updatefile:
+                # means update file was provided to us so send it to the standby
                 job.set_progress(None, 'Sending files to Standby Controller')
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
-
                 for f in os.listdir(local_path):
-                    self.middleware.call_sync('failover.sendfile', token, os.path.join(local_path, f), os.path.join(remote_path, f))
+                    self.middleware.call_sync(
+                        'failover.sendfile',
+                        token,
+                        os.path.join(local_path, f),
+                        os.path.join(remote_path, f)
+                    )
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
@@ -997,9 +798,8 @@ class FailoverService(ConfigService):
                 else:
                     update_remote_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
                 job.set_progress(
-                    None, (
-                        f'Active Controller: {update_local_descr}\n' if not legacy_upgrade else ''
-                    ) + f'Standby Controller: {update_remote_descr}'
+                    None,
+                    f'Active Controller: {update_local_descr}\n' + f'Standby Controller: {update_remote_descr}'
                 )
 
             if updatefile:
@@ -1011,9 +811,8 @@ class FailoverService(ConfigService):
                 update_remote_args = []
                 update_local_args = []
 
-            # If they are the same we assume this is a clean upgrade so we start by
-            # upgrading the standby controller.
-            if legacy_upgrade or local_version == remote_version:
+            if local_version == remote_version:
+                # start the upgrade on the remote (standby) controller
                 rjob = self.middleware.call_sync(
                     'failover.call_remote', update_method, update_remote_args, {
                         'job_return': True,
@@ -1023,60 +822,91 @@ class FailoverService(ConfigService):
             else:
                 rjob = None
 
-            if not legacy_upgrade:
-                ljob = self.middleware.call_sync(
-                    update_method, *update_local_args,
-                    job_on_progress_cb=partial(callback, controller='LOCAL')
-                )
-                ljob.wait_sync()
-                if ljob.error:
-                    raise CallError(ljob.error)
+            # upgrade the local (active) controller
+            ljob = self.middleware.call_sync(
+                update_method, *update_local_args,
+                job_on_progress_cb=partial(callback, controller='LOCAL')
+            )
+            ljob.wait_sync(raise_error=True)
 
-                remote_boot_id = self.middleware.call_sync(
-                    'failover.call_remote', 'system.boot_id'
-                )
+            remote_boot_id = self.middleware.call_sync('failover.call_remote', 'system.boot_id')
 
+            # check the remote (standby) controller upgrade job
             if rjob:
                 rjob.result()
 
-            self.middleware.call_sync('failover.call_remote', 'system.reboot', [
-                {'delay': 5}
-            ], {'job': True})
-
+            self.middleware.call_sync(
+                'failover.call_remote', 'system.reboot',
+                [{'delay': 5}],
+                {'job': True}
+            )
         except Exception:
             raise
 
-        if not legacy_upgrade:
-            # Update will activate the new boot environment.
-            # We want to reactivate the current boot environment so on reboot for failover
-            # the user has a chance to verify the new version is working as expected before
-            # move on and have both controllers on new version.
-            local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
-            if not local_bootenv:
-                raise CallError('Could not find current boot environment.')
-            self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
+        # The upgrade procedure will upgrade both systems simultaneously
+        # as well as activate the new BEs. The standby controller will be
+        # automatically rebooted into the new BE to "finalize" the upgrade.
+        # However, we will re-activate the old BE on the active controller
+        # to give the end-user a chance to "test" the new upgrade so in the
+        # rare case something horrendous occurs on the new version they can
+        # simply "reboot" (to cause a failover) and faill back to the
+        # controller running the old version of the software.
+        # The procedure is supposed to look like this:
+        #   1. upgrade both controllers
+        #   2. standby controller activates new BE and reboots
+        #   3. end-user verfies the standby controller upgraded without issues
+        #   4. end-user then failsover (reboots) to the newly upgraded node
+        #   5. end-user verifies that the new software functions as expected
+        #   6. end-user is then presented with a webUI option to "apply pending upgrade"
+        #   7. end-user chooses that webUI option
+        #   8. after webUI option is chosen, standby node is rebooted to "finalize" the
+        #       upgrade procedure
+        local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
+        if not local_bootenv:
+            raise CallError('Could not find current boot environment.')
+        self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
 
+        # SCALE is using systemd and at the time of writing this, the
+        # DefaultTimeoutStopSec setting hasn't been changed and so
+        # defaults to 90 seconds. This means when the system is sent the
+        # shutdown signal, all the associated user-space programs are
+        # asked to be shutdown. If any of those take longer than 90
+        # seconds to respond to SIGTERM then the program is sent SIGKILL.
+        # Finally, if after 90 seconds the standby controller is still
+        # responding to remote requests then play it safe and assume the
+        # reboot failed (this should be rare but my future self will
+        # appreciate the fact I wrote this out because of the inevitable
+        # complexities of gluster/k8s/vms etc etc for which I predict
+        # will exhibit this behavior :P )
         job.set_progress(None, 'Waiting on the Standby Controller to reboot.')
-
-        # Wait enough that standby controller has stopped receiving new connections and is
-        # rebooting.
         try:
             retry_time = time.monotonic()
-            shutdown_timeout = sysctl.filter('kern.init_shutdown_timeout')[0].value
+            shutdown_timeout = 90  # seconds
             while time.monotonic() - retry_time < shutdown_timeout:
-                self.middleware.call_sync('failover.call_remote', 'core.ping', [], {'timeout': 5})
+                self.middleware.call_sync(
+                    'failover.call_remote', 'core.ping', [], {'timeout': 5}
+                )
                 time.sleep(5)
         except CallError:
             pass
         else:
-            raise CallError('Standby Controller failed to reboot.', errno.ETIMEDOUT)
+            raise CallError(
+                'Timed out waiting {shutdown_timeout} seconds for the standby controller to reboot',
+                errno.ETIMEDOUT
+            )
 
         if not self.upgrade_waitstandby():
-            raise CallError('Timed out waiting Standby Controller after upgrade.')
+            raise CallError(
+                'Timed out waiting for the standby controller to upgrade.',
+                errno.ETIMEDOUT
+            )
 
-        if not legacy_upgrade and remote_boot_id == self.middleware.call_sync(
-            'failover.call_remote', 'system.boot_id'
-        ):
+        # we captured the `remote_boot_id` up above earlier in the upgrade process.
+        # This variable represents a 1-time unique boot id. It's supposed to be different
+        # every time the system boots up. If this check is True, then it's safe to say
+        # that the remote system never rebooted, therefore, never completing the upgrade
+        # process....which isn't good.
+        if remote_boot_id == self.middleware.call_sync('failover.call_remote', 'system.boot_id'):
             raise CallError('Standby Controller failed to reboot.')
 
         return True
@@ -1137,8 +967,9 @@ class FailoverService(ConfigService):
         if not local_bootenv or not remote_bootenv:
             raise CallError('Unable to determine installed version of software')
 
-        loc_findall = TRUENAS_VERS.findall(local_bootenv[0]['id'])
-        rem_findall = TRUENAS_VERS.findall(remote_bootenv[0]['id'])
+        tn_version = re.compile(r'\d*\.?\d+')
+        loc_findall = tn_version.findall(local_bootenv[0]['id'])
+        rem_findall = tn_version.findall(remote_bootenv[0]['id'])
 
         loc_vers = tuple(float(i) for i in loc_findall)
         rem_vers = tuple(float(i) for i in rem_findall)
@@ -1179,13 +1010,8 @@ class FailoverService(ConfigService):
     @private
     async def sync_keys_from_remote_node(self):
         """
-        Sync GELI and/or ZFS encryption keys from the active node.
-
-        TODO:
-            Once TruenAS >= 11.3 < 12 has been EOL'd, we should remove this method
-            (should call `failover.call_remote` `failover.sync_keys_to_remote_node`)
+        Sync ZFS encryption keys from the active node.
         """
-
         if not await self.middleware.call('failover.licensed'):
             return
 
@@ -1197,39 +1023,23 @@ class FailoverService(ConfigService):
         try:
             assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
         except Exception:
-            self.middleware.logger.error(
+            self.logger.error(
                 'Failed to contact active controller when syncing encryption keys', exc_info=True
             )
             return
 
         try:
             await self.middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
-        except Exception as e:
-            if e.errno == CallError.ENOMETHOD:
-                # we're talking to an older system (this happens on upgrades from 11 to 12+)
-                enc_pools = await self.middleware.call('pool.query', [('encrypt', '>', 0)])
-                if enc_pools:
-                    passphrase = await self.middleware.call('failover.call_remote', 'failover.encryption_getkey')
-                    await self.middleware.call(
-                        'failover.update_encryption_keys', {
-                            'pools': [
-                                {'name': p['name'], 'passphrase': passphrase or ''}
-                                for p in enc_pools
-                            ],
-                            'sync_keys': False,
-                        }
-                    )
-            else:
-                self.middleware.logger.error(
-                    'Failed to sync keys from active controller when syncing encryption keys', exc_info=True
-                )
+        except Exception:
+            self.logger.error(
+                'Failed to sync keys from active controller when syncing encryption keys', exc_info=True
+            )
 
     @private
     async def sync_keys_to_remote_node(self, lock=True):
         """
-        Sync GELI and/or ZFS encryption keys to the standby node.
+        Sync ZFS encryption keys to the standby node.
         """
-
         if not await self.middleware.call('failover.licensed'):
             return
 
@@ -1241,7 +1051,7 @@ class FailoverService(ConfigService):
         try:
             assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
         except Exception:
-            self.middleware.logger.error(
+            self.logger.error(
                 'Failed to contact standby controller when syncing encryption keys', exc_info=True
             )
             return
@@ -1254,7 +1064,7 @@ class FailoverService(ConfigService):
                 )
             except Exception as e:
                 await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
-                self.middleware.logger.error('Failed to sync keys with standby controller: %s', str(e), exc_info=True)
+                self.logger.error('Failed to sync keys with standby controller: %s', str(e), exc_info=True)
             else:
                 await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
             try:
@@ -1266,7 +1076,7 @@ class FailoverService(ConfigService):
                 await self.middleware.call(
                     'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
                 )
-                self.middleware.logger.error(
+                self.logger.error(
                     'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True
                 )
             else:
@@ -1285,31 +1095,8 @@ async def ha_permission(middleware, app):
 
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
-    if remote_port <= 1024 and remote_addr in (
-        '169.254.10.1',
-        '169.254.10.2',
-        '169.254.10.20',
-        '169.254.10.80',
-    ):
+    if remote_port <= 1024 and remote_addr in ('169.254.10.1', '169.254.10.2'):
         AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
-
-
-async def hook_pool_change_passphrase(middleware, passphrase_data):
-    """
-    Hook to set pool passphrase when its changed.
-    """
-    if not await middleware.call('failover.licensed'):
-        return
-    if passphrase_data['action'] == 'UPDATE':
-        await middleware.call(
-            'failover.update_encryption_keys', {
-                'pools': [{
-                    'name': passphrase_data['pool'], 'passphrase': passphrase_data['passphrase']
-                }]
-            }
-        )
-    else:
-        await middleware.call('failover.remove_encryption_keys', {'pools': [passphrase_data['pool']]})
 
 
 sql_queue = queue.Queue()
@@ -1653,7 +1440,8 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     # (if appropriate, of course)
     filters = [('srv_service', '=', 'ssh')]
     ssh_enabled = remote_ssh_started = False
-    if ssh := await middleware.call('datastore.query', 'services.services', filters):
+    ssh = await middleware.call('datastore.query', 'services.services', filters)
+    if ssh:
         if ssh[0]['srv_enable']:
             ssh_enabled = True
         if await middleware.call('failover.call_remote', 'service.started', ['ssh']):
@@ -1685,28 +1473,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     middleware.send_event('failover.setup', 'ADDED', fields={})
 
 
-async def hook_sync_geli(middleware, pool=None):
-    """
-    When a new volume is created we need to sync geli file.
-    """
-    if not pool.get('encryptkey_path'):
-        return
-
-    if not await middleware.call('failover.licensed'):
-        return
-
-    try:
-        if await middleware.call(
-            'failover.call_remote', 'failover.status'
-        ) != 'BACKUP':
-            return
-    except Exception:
-        return
-
-    # TODO: failover_sync_peer is overkill as it will sync a bunch of other things
-    await middleware.call('failover.sync_to_peer')
-
-
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
     await middleware.call('enclosure.sync_zpool', pool)
     await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
@@ -1718,17 +1484,6 @@ async def hook_pool_post_import(middleware, pool):
             'failover.update_encryption_keys', {
                 'pools': [{'name': pool['name'], 'passphrase': pool['passphrase']}]
             }
-        )
-
-
-async def hook_pool_lock(middleware, pool=None):
-    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
-
-
-async def hook_pool_unlock(middleware, pool=None, passphrase=None):
-    if passphrase:
-        await middleware.call(
-            'failover.update_encryption_keys', {'pools': [{'name': pool['name'], 'passphrase': passphrase}]}
         )
 
 
@@ -1783,15 +1538,6 @@ async def hook_kmip_sync(middleware, *args, **kwargs):
     await middleware.call('failover.sync_keys_to_remote_node')
 
 
-async def hook_pool_rekey(middleware, pool=None):
-    if not pool or not pool['encryptkey_path']:
-        return
-    try:
-        await middleware.call('failover.send_small_file', pool['encryptkey_path'])
-    except Exception as e:
-        middleware.logger.warn('Failed to send encryptkey to standby node: %s', e)
-
-
 async def service_remote(middleware, service, verb, options):
     """
     Most of service actions need to be replicated to the standby node so we don't lose
@@ -1819,7 +1565,7 @@ async def service_remote(middleware, service, verb, options):
         ])
     except Exception as e:
         if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.ECONNRESET)):
-            middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)
+            middleware.logger.warning(f'Failed to run {verb}({service})', exc_info=True)
 
 
 async def ready_system_sync_keys(middleware):
@@ -1858,17 +1604,13 @@ async def setup(middleware):
     middleware.event_subscribe('system', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
-    middleware.register_hook('pool.post_change_passphrase', hook_pool_change_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('interface.post_rollback', hook_post_rollback_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
-    middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
-    middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
-    middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
     middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)
     middleware.register_hook('dataset.post_delete', hook_pool_dataset_post_delete_lock, sync=True)
     middleware.register_hook('dataset.post_lock', hook_pool_dataset_post_delete_lock, sync=True)
@@ -1879,7 +1621,6 @@ async def setup(middleware):
     )
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
-    middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
@@ -1887,7 +1628,6 @@ async def setup(middleware):
 
     # Register callbacks to properly refresh HA status and send events on changes
     await middleware.call('failover.remote_subscribe', 'system', remote_status_event)
-    await middleware.call('failover.remote_subscribe', 'failover.carp_event', remote_status_event)
     await middleware.call('failover.remote_on_connect', remote_status_event)
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 

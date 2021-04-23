@@ -3,7 +3,7 @@ import re
 import os
 
 from middlewared.service import Service
-from ..failover import HA_HARDWARE
+from .ha_hardware import HA_HARDWARE
 
 
 class EnclosureDetectionService(Service):
