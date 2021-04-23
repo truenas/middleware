@@ -46,7 +46,7 @@ class SMBHAMODE(enum.IntEnum):
     STANDALONE = 0
     LEGACY = 1
     UNIFIED = 2
-    CLUSTERED = 2
+    CLUSTERED = 3
 
 
 class SMBCmd(enum.Enum):
