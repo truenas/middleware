@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class CloudFlareAuthenticator(Authenticator):
 
     NAME = 'cloudflare'
+    PROPAGATION_DELAY = 60
     SCHEMA = Dict(
         'cloudflare',
         Str('cloudflare_email', empty=False, null=True, title='Cloudflare Email'),
