@@ -8,7 +8,8 @@ import logging
 from collections import defaultdict
 
 from middlewared.utils import filter_list
-from middlewared.service import Service, job
+from middlewared.service import Service, job, accepts
+from middlewared.schema import Dict, Bool, Int
 
 logger = logging.getLogger('failover')
 
@@ -34,7 +35,6 @@ logger = logging.getLogger('failover')
 
 
 class AllZpoolsFailedToImport(Exception):
-
     """
     This is raised if all zpools failed to
     import when becoming master.
@@ -43,7 +43,6 @@ class AllZpoolsFailedToImport(Exception):
 
 
 class IgnoreFailoverEvent(Exception):
-
     """
     This is raised when a failover event is ignored.
     """
@@ -51,7 +50,6 @@ class IgnoreFailoverEvent(Exception):
 
 
 class FencedError(Exception):
-
     """
     This is raised if fenced fails to run.
     """
@@ -96,37 +94,63 @@ class FailoverService(Service):
     # zpool(s) when becoming the BACKUP node
     ZPOOL_EXPORT_TIMEOUT = 4  # seconds
 
-    async def restart_background(self, services):
+    async def restart_service(self, service, timeout):
+        logger.info('Restarting %s', service)
+        return await asyncio.wait_for(
+            self.middleware.call('service.restart', service, self.HA_PROPAGATE),
+            timeout=timeout,
+        )
 
+    @accepts(Dict(
+        'restart_services',
+        Bool('critical', default=False),
+        Int('timeout', default=15),
+    ))
+    async def restart_services(self, data):
         """
-        Restarting non-critical services can cause unnecessary
-        delays during a failover event. Restart these services
-        in the background.
-        """
+        Concurrently restart services during a failover
+        master event.
 
+        `critical` Boolean when True will only restart the
+        critical services.
+        `timeout` Integer representing the maximum amount
+        of time to wait for a given service to (re)start.
+        """
+        to_restart = await self.middleware.call('datastore.query', 'services_services')
+        to_restart = [i['srv_service'] for i in to_restart if ['srv_enable']]
+        if data['critical']:
+            to_restart = [i for i in to_restart if i in self.CRITICAL_SERVICES]
+        else:
+            # non-critical services are being requested to be restarted
+            # so add these 2 services at the beginning of the `to_restart`
+            # list since they're not in the db but are required to be restarted
+            pre_services = ['rrdcached', 'collectd', 'syslogd']
+            to_restart[0:0] = pre_services
+
+            # restart any kubernetes applications
+            if self.run_call('kubernetes.config')['dataset']:
+                to_restart.append('kubernetes')
+
+        exceptions = await asyncio.gather(
+            *[self.restart_service(svc, data['timeout']) for svc in to_restart],
+            return_exceptions=True
+        )
+        for svc, exc in zip(to_restart, exceptions):
+            if isinstance(exc, asyncio.TimeoutError):
+                logger.error(
+                    'Failed to restart service "%s" after %d seconds',
+                    svc, data['timeout']
+                )
+
+    async def background(self):
+        """
+        Some methods can be backgrounded on a failover
+        event since they can take quite some time to
+        finish. So background them to not hold up the
+        entire failover event.
+        """
         logger.info('Syncing enclosure')
-        asyncio.ensure_future(self.middleware.call(
-            'enclosure.sync_zpool'
-        ))
-
-        # these don't exist in db but still need to be restarted
-        # on failover event
-        pre_services = ['collectd', 'syslogd']
-
-        for i in pre_services:
-            logger.info('Restarting service "%s"', i)
-            asyncio.ensure_future(self.middleware.call(
-                'service.restart', i, self.HA_PROPAGATE
-            ))
-
-        for i in services:
-            # the `self.CRITICAL_SERVICES` have already been restarted by the time
-            # this method is called so don't restart them again unnecessarily
-            if i['srv_service'] not in self.CRITICAL_SERVICES and i['srv_enable']:
-                logger.info('Restarting service "%s"', i['srv_service'])
-                asyncio.ensure_future(self.middleware.call(
-                    'service.restart', i['srv_service'], self.HA_PROPAGATE
-                ))
+        asyncio.ensure_future(self.middleware.call('enclosure.sync_zpool'))
 
     def run_call(self, method, *args):
         try:
@@ -177,20 +201,11 @@ class FailoverService(Service):
             }
         )
 
-        # get list of all services on system
-        # we query db directly since on SCALE calling `service.query`
-        # actually builds a list of all services and includes if they're
-        # running or not. Probing all services on the system to see if
-        # they're running takes longer than what we need since failover
-        # needs to be as fast as possible.
-        services = self.run_call('datastore.query', 'services_services')
-
         failovercfg = self.run_call('failover.config')
         interfaces = self.run_call('interface.query')
         internal_ints = self.run_call('failover.internal_interfaces')
 
         data = {
-            'services': services,
             'disabled': failovercfg['disabled'],
             'master': failovercfg['master'],
             'timeout': failovercfg['timeout'],
@@ -210,7 +225,6 @@ class FailoverService(Service):
         return data
 
     def validate(self, ifname, event):
-
         """
         When a failover event is generated we need to account for a few
         scenarios.
@@ -484,11 +498,7 @@ class FailoverService(Service):
 
         # now we restart the services, prioritizing the "critical" services
         logger.info('Restarting critical services.')
-        for i in self.CRITICAL_SERVICES:
-            for j in fobj['services']:
-                if i == j['srv_service'] and j['srv_enable']:
-                    logger.info('Restarting critical service "%s"', i)
-                    self.run_call('service.restart', i, self.HA_PROPAGATE)
+        self.run_call('failover.events.restart_services', {'critical': True})
 
         logger.info('Allowing network traffic.')
         fw_accept_job = self.run_call('failover.firewall.accept_all')
@@ -506,16 +516,14 @@ class FailoverService(Service):
         logger.info('Syncing disks')
         self.run_call('disk.sync_all')
 
+        # background any methods that can take awhile to
+        # run but shouldn't hold up the entire failover
+        # event
+        self.run_call('failover.events.background')
+
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
-
-        # restart the non-critical services in the background
-        self.run_call('failover.events.restart_background', fobj['services'])
-
-        # restart any kubernetes applications
-        if self.run_call('kubernetes.config')['dataset']:
-            logger.info('Restarting applications')
-            self.run_call('service.start', 'kubernetes')
+        self.run_call('failover.events.restart_services')
 
         # start any VMs (this will log errors if the vm(s) fail to start)
         self.run_call('vm.start_on_boot')
@@ -650,11 +658,16 @@ class FailoverService(Service):
         logger.info('Stopping collectd')
         self.run_call('service.stop', 'collectd', self.HA_PROPAGATE)
 
+        logger.info('Stopping rrdcached')
+        self.run_call('service.stop', 'rrdcached', self.HA_PROPAGATE)
+
         # we keep SSH running on both controllers (if it's enabled by user)
-        for i in fobj['services']:
-            if i['srv_service'] == 'ssh' and i['srv_enable']:
-                logger.info('Restarting SSH')
-                self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
+        for i in self.run_call('datastore.query', 'services_services'):
+            if i['srv_service'] == 'ssh':
+                if i['srv_enable']:
+                    logger.info('Restarting SSH')
+                    self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
+                break
 
         # TODO: ALUA on SCALE??
         # do something with iscsi service here
