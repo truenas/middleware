@@ -37,8 +37,11 @@ if __name__ == "__main__":
         #
         # We should test this on systems with higher memory as there are contradicting
         # docs - https://www.suse.com/support/kb/doc/?id=000016171
+        # With our custom kernel, having 256MB RAM as base is not enough.
+        # In my tests it worked with having 400MB as base RAM.
+        # TODO: Let's please see what we can do to bring this down on the kernel side perhaps
         current_mem = psutil.virtual_memory().total / 1024
-        cmdline.append(f"crashkernel={256 + math.ceil(current_mem / 16 / 1024 / 1024)}M")
+        cmdline.append(f"crashkernel={400 + math.ceil(current_mem / 16 / 1024 / 1024)}M")
 
     config.append(f'GRUB_TERMINAL="{" ".join(terminal)}"')
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
