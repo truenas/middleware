@@ -209,6 +209,7 @@ class CatalogService(Service):
             'node_ip': await self.middleware.call('kubernetes.node_ip'),
             'certificates': await self.middleware.call('chart.release.certificate_choices'),
             'certificate_authorities': await self.middleware.call('chart.release.certificate_authority_choices'),
+            'system.general.config': await self.middleware.call('system.general.config'),
         }
 
     @private
@@ -251,7 +252,10 @@ class CatalogService(Service):
                         }
                     })
             elif ref == 'definitions/timezone':
-                data['enum'] = [{'value': t, 'description': f'{t!r} timezone'} for t in context['timezones']]
+                data.update({
+                    'enum': [{'value': t, 'description': f'{t!r} timezone'} for t in context['timezones']],
+                    'default': context['system.general.config']['timezone']
+                })
             elif ref == 'definitions/nodeIP':
                 data['default'] = context['node_ip']
             elif ref == 'definitions/certificate':
