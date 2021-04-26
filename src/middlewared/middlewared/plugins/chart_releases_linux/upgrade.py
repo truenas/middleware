@@ -179,6 +179,7 @@ class ChartReleaseService(Service):
 
     @private
     async def upgrade_chart_release(self, job, release, options):
+        release_orig = copy.deepcopy(release)
         release_name = release['name']
 
         catalog_item = await self.get_version(release, options)
@@ -198,6 +199,7 @@ class ChartReleaseService(Service):
 
         config, context = await self.middleware.call(
             'chart.release.normalise_and_validate_values', catalog_item, config, False, release['dataset'],
+            release_orig,
         )
         job.set_progress(50, 'Initial validation complete for upgrading chart version')
 

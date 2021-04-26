@@ -522,6 +522,7 @@ class ChartReleaseService(CRUDService):
         create the chart release.
         """
         release = await self.get_instance(chart_release)
+        release_orig = copy.deepcopy(release)
         chart_path = os.path.join(release['path'], 'charts', release['chart_metadata']['version'])
         if not os.path.exists(chart_path):
             raise CallError(
@@ -536,7 +537,7 @@ class ChartReleaseService(CRUDService):
         # Why this is not dangerous is because the defaults will be added only if they are not present/configured for
         # the chart release.
         config, context = await self.normalise_and_validate_values(
-            version_details, config, False, release['dataset'], release,
+            version_details, config, False, release['dataset'], release_orig,
         )
 
         job.set_progress(25, 'Initial Validation complete')
