@@ -456,7 +456,8 @@ class Resource(object):
 
     def _filterable_args(self, req):
         filters = []
-        options = {'extra': {}}
+        extra_args = {}
+        options = {}
         for key, val in list(req.query.items()):
             if '__' in key:
                 field, op = key.split('__', 1)
@@ -481,7 +482,7 @@ class Resource(object):
                 continue
             elif key.startswith('extra.'):
                 key = key[len('extra.'):]
-                options['extra'][key] = normalize_query_parameter(val)
+                extra_args[key] = normalize_query_parameter(val)
                 continue
 
             op_map = {
@@ -505,6 +506,9 @@ class Resource(object):
             elif val.lower() == 'null':
                 val = None
             filters.append((field, op, val))
+
+        if extra_args:
+            options['extra'] = extra_args
 
         return [filters, options] if filters or options else []
 
