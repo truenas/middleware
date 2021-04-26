@@ -102,7 +102,8 @@ class FilesystemService(Service, ACLBase):
                                         options.get('recursive', False),
                                         verrors)
 
-        acl_is_trivial = self.middleware.call_sync('filesystem.acl_is_trivial', data['path'])
+        current_acl = self.middleware.call_sync('filesystem.getacl', data['path'])
+        acl_is_trivial = current_acl['trivial']
         if not acl_is_trivial and not options['stripacl']:
             verrors.add(
                 'filesystem.setperm.mode',
@@ -111,11 +112,14 @@ class FilesystemService(Service, ACLBase):
             )
 
         verrors.check()
+        is_nfs4acl = current_acl['acltype'] == 'NFS4'
 
         if mode is not None:
             mode = int(mode, 8)
 
-        stripacl = subprocess.run(['setfacl', '-b', data['path']],
+        setfaclcmd = 'nfs4xdr_setfacl' if is_nfs4acl else 'setfacl'
+
+        stripacl = subprocess.run([setfaclcmd, '-b', data['path']],
                                   check=False, capture_output=True)
         if stripacl.returncode != 0:
             raise CallError(f"Failed to remove POSIX1e ACL from [{data['path']}]: "
@@ -132,7 +136,7 @@ class FilesystemService(Service, ACLBase):
 
         action = 'clone' if mode else 'strip'
         job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
-        options['posixacl'] = True
+        options['posixacl'] = not is_nfs4acl
         options['do_chmod'] = True
         self.acltool(data['path'], action, uid, gid, options)
         job.set_progress(100, 'Finished setting permissions.')
