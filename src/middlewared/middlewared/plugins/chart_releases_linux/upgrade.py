@@ -352,3 +352,8 @@ class ChartReleaseService(Service):
             await job.wrap(await self.middleware.call('chart.release.redeploy', release_name))
 
         return results
+
+    @private
+    async def clear_update_alerts_for_all_chart_releases(self):
+        for chart_release in await self.middleware.call('chart.release.query'):
+            await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', chart_release['id'])

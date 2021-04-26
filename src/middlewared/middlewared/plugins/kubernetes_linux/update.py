@@ -234,6 +234,7 @@ class KubernetesService(ConfigService):
             job.set_progress(40, 'Migration complete for ix-applications dataset')
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
+            await self.middleware.call('chart.release.clear_update_alerts_for_all_chart_releases')
             config['cni_config'] = {}
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('kubernetes.status_change')
