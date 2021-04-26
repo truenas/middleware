@@ -84,6 +84,10 @@ class ChartReleaseService(CRUDService):
         retrieve_schema = extra.get('include_chart_schema')
         get_resources = extra.get('retrieve_resources')
         get_history = extra.get('history')
+        if retrieve_schema:
+            questions_context = await self.middleware.call('catalog.get_normalised_questions_context')
+        else:
+            questions_context = None
 
         if filters and len(filters) == 1 and filters[0][:2] == ['id', '=']:
             extra['namespace_filter'] = ['metadata.namespace', '=', f'{CHART_NAMESPACE_PREFIX}{filters[0][-1]}']
@@ -236,7 +240,7 @@ class ChartReleaseService(CRUDService):
                 chart_path = os.path.join(release_data['path'], 'charts', release_data['chart_metadata']['version'])
                 if os.path.exists(chart_path):
                     release_data['chart_schema'] = await self.middleware.call(
-                        'catalog.item_version_details', chart_path
+                        'catalog.item_version_details', chart_path, questions_context
                     )
                 else:
                     release_data['chart_schema'] = None
