@@ -216,7 +216,7 @@ def validate_attributes(
     schema = Dict("attributes", *schema, additional_attrs=additional_attrs, **dict_kwargs)
 
     try:
-        data[attr_key] = schema.clean(data[attr_key], old_data)
+        data[attr_key] = schema.clean(data[attr_key], old_data if old_data == NOT_PROVIDED else old_data[attr_key])
     except Error as e:
         verrors.add(e.attribute, e.errmsg, e.errno)
     except ValidationErrors as e:
