@@ -1,21 +1,14 @@
-# Copyright (c) 2019 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
-from collections import OrderedDict
 import logging
 import os
 import re
 import subprocess
+from collections import OrderedDict
 
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
-from middlewared.utils.osc import IS_FREEBSD
 
 logger = logging.getLogger(__name__)
 
@@ -419,10 +412,7 @@ class Enclosure(object):
         self.num = num
         self.stat = stat
         self.system_info = system_info
-        if IS_FREEBSD:
-            self.devname = f"ses{num}"
-        else:
-            self.devname, data = data
+        self.devname, data = data
         self.encname = ""
         self.encid = ""
         self.model = ""
@@ -434,62 +424,6 @@ class Enclosure(object):
         self._parse(data)
 
     def _parse(self, data):
-        if IS_FREEBSD:
-            self._parse_freebsd(data)
-        else:
-            self._parse_linux(data)
-
-    def _parse_freebsd(self, data):
-        status = re.search(
-            r'Enclosure Name: (.+)',
-            data)
-        if status:
-            self.encname = status.group(1).strip()
-        else:
-            self.encname = self.devname
-
-        status = re.search(
-            r'Enclosure ID: (.+)',
-            data)
-        if status:
-            self.encid = status.group(1)
-
-        self._set_model(data)
-
-        status = re.search(
-            r'Enclosure Status <(.+)>',
-            data)
-        if status:
-            self.status = status.group(1)
-
-        lname = ""
-        elements = re.findall(
-            r'Element\s+(?P<element>.+?): (?P<name>.+?)'
-            r', status: (?P<status>.+?) \((?P<value>[^)]+)\)'
-            '(?:, descriptor: \'(?P<desc>[^\']+)\')?'
-            '(?:, dev: \'(?P<dev>.+?)\')?',
-            data)
-        for element in elements:
-            slot, name, status, value, desc, dev = element
-            if name != lname:
-                lname = name
-                self.descriptors[name] = desc
-                continue
-            newvalue = self._parse_raw_value(value)
-            slot = int(slot, 16)
-            if not desc:
-                desc = f"{name} {slot}"
-            ele = self._enclosure_element(
-                slot,
-                name,
-                newvalue,
-                status,
-                desc,
-                dev)
-            if ele is not None:
-                self.append(ele)
-
-    def _parse_linux(self, data):
         cf, es = data
 
         self.encname = re.sub(r"\s+", " ", cf.splitlines()[0].strip())
@@ -1087,35 +1021,6 @@ class ArrayDevSlot(Element):
         Returns:
             True if the command succeeded, False otherwise
         """
-
-        if IS_FREEBSD:
-            return self._device_slot_set_freebsd(status)
-        else:
-            return self._device_slot_set_linux(status)
-
-    def _device_slot_set_freebsd(self, status):
-        proc = subprocess.Popen(
-            ["/usr/bin/pgrep", "setobjstat"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding='utf8',
-        )
-        pgrep = proc.communicate()[0]
-        if proc.returncode == 0 and len(pgrep.strip('\n').split('\n')) > 10:
-            # setobjstat already running, system may be stuck/hung
-            logger.warn("multiple (10) setobjstat already running, skipping...")
-            return True
-
-        cmd = f"/usr/sbin/setobjstat /dev/{self.enclosure.devname} 0x{self.slot:x} {ENCLOSURE_ACTIONS[status]}"
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            shell=True,
-        )
-        proc.communicate()
-        return not bool(proc.returncode)
-
-    def _device_slot_set_linux(self, status):
         if status == "clear":
             commands = ["--clear=fault", "--clear=ident"]
         else:
@@ -1312,10 +1217,6 @@ async def pool_post_delete(middleware, id):
 
 
 def setup(middleware):
-    if IS_FREEBSD:
-        middleware.register_hook('devd.zfs', devd_zfs_hook)
-    else:
-        middleware.register_hook('zfs.pool.events', zfs_events_hook)
-        middleware.register_hook('udev.block', udev_block_devices_hook)
-
+    middleware.register_hook('zfs.pool.events', zfs_events_hook)
+    middleware.register_hook('udev.block', udev_block_devices_hook)
     middleware.register_hook('pool.post_delete', pool_post_delete)
