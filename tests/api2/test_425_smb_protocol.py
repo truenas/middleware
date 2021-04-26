@@ -22,6 +22,7 @@ dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "SMBPROTO"
 smb_path = "/mnt/" + dataset
 group = 'root' if scale else 'wheel'
+module_prefix = 'zfs_core' if scale else 'ixnas'
 
 
 guest_path_verification = {
@@ -112,7 +113,7 @@ def test_006_creating_a_smb_share_path(request):
         "comment": "SMB Protocol Testing Share",
         "path": smb_path,
         "name": SMB_NAME,
-        "auxsmbconf": "ixnas:base_user_quota = 1G"
+        "auxsmbconf": f"{module_prefix}:base_user_quota = 1G"
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
