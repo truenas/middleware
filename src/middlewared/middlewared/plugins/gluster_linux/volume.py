@@ -332,11 +332,10 @@ class GlusterVolumeService(CRUDService):
         ], required=True),
         Str(
             'operation',
-            enum=['START', 'STOP', 'COMMIT', 'STATUS'],
+            enum=['START', 'STOP', 'COMMIT', 'STATUS', 'FORCE'],
             required=True,
         ),
         Int('replica'),
-        Bool('force', default=False)
     ))
     async def removebrick(self, data):
         """
@@ -351,8 +350,8 @@ class GlusterVolumeService(CRUDService):
             `STOP` Stop the removal of the brick(s)
             `COMMIT` Commit the removal of the brick(s)
             `STATUS` Display status of the removal of the brick(s)
+            `FORCE` Force the removal of the brick(s)
         `replica` Integer representing replica count
-        `force` Boolean, if True, forcefully run the removal operation
         """
 
         op = data.pop('operation')
@@ -361,11 +360,6 @@ class GlusterVolumeService(CRUDService):
         for i in data.pop('bricks'):
             bricks.append(i['peer_name'] + ':' + i['peer_path'])
 
-        # TODO
-        # glustercli-python has a bug where if provided the "force"
-        # option, it will concatenate it with the "start" option
-        # This is wrong, you can choose "start" or "force" exclusively
-        # (i.e. gluster volume name remove-brick peer:path start OR force)
         options = {'args': (name, bricks,), 'kwargs': data}
         if op.lower() == 'start':
             method = volume.bricks.remove_start
@@ -375,6 +369,8 @@ class GlusterVolumeService(CRUDService):
             method = volume.bricks.remove_commit
         elif op.lower() == 'status':
             method = volume.bricks.remove_status
+        elif op.lower() == 'force':
+            method = volume.bricks.remove_force
 
         return await self.middleware.call('gluster.method.run', method, options)
 
@@ -394,7 +390,6 @@ class GlusterVolumeService(CRUDService):
             Str('peer_path', required=True),
             required=True,
         ),
-        Bool('force', default=False),
     ))
     async def replacebrick(self, data):
         """
@@ -407,7 +402,6 @@ class GlusterVolumeService(CRUDService):
         `new_brick` Dict where
             `peer_name` key is a string representing IP or DNS name of the peer
             `peer_path` key is a string representing the full path of the brick
-        `force` Boolean, if True, forcefully replace bricks
         """
 
         src = data.pop('src_brick')
@@ -416,7 +410,7 @@ class GlusterVolumeService(CRUDService):
         new_brick = new['peer_name'] + ':' + new['peer_path']
 
         method = volume.bricks.replace_commit
-        options = {'args': (data.pop('name'), src_brick, new_brick), 'kwargs': data}
+        options = {'args': (data.pop('name'), src_brick, new_brick)}
         return await self.middleware.call('gluster.method.run', method, options)
 
     @item_method
