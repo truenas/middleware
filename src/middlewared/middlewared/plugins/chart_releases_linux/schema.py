@@ -44,8 +44,10 @@ def get_schema(variable_details, update):
 
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
     obj_kwargs = {k: schema_details[k] for k in filter(
-        lambda k: k in schema_details,
-        ('required', 'default', 'private', 'ipv4', 'ipv6', 'cidr', 'null', 'additional_attrs', 'default_editable')
+        lambda k: k in schema_details, (
+            'required', 'default', 'private', 'ipv4', 'ipv6', 'cidr', 'null', 'additional_attrs',
+            'default_editable', 'editable',
+        )
     )}
 
     if schema_class not in (Cron, Dict):

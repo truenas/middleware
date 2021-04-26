@@ -4,6 +4,7 @@ import re
 from urllib.parse import urlparse
 import uuid
 
+from middlewared.schema import NOT_PROVIDED
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
@@ -204,7 +205,9 @@ class UUID:
             raise ValueError(f'Invalid UUID: {e}')
 
 
-def validate_attributes(schema, data, additional_attrs=False, attr_key="attributes", dict_kwargs=None):
+def validate_attributes(
+    schema, data, additional_attrs=False, attr_key="attributes", dict_kwargs=None, old_data=NOT_PROVIDED
+):
     from middlewared.schema import Dict, Error
     from middlewared.service import ValidationErrors
     verrors = ValidationErrors()
@@ -213,7 +216,7 @@ def validate_attributes(schema, data, additional_attrs=False, attr_key="attribut
     schema = Dict("attributes", *schema, additional_attrs=additional_attrs, **dict_kwargs)
 
     try:
-        data[attr_key] = schema.clean(data[attr_key])
+        data[attr_key] = schema.clean(data[attr_key], old_data)
     except Error as e:
         verrors.add(e.attribute, e.errmsg, e.errno)
     except ValidationErrors as e:
