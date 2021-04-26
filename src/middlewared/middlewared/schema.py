@@ -41,8 +41,8 @@ class EnumMixin(object):
         self.enum = kwargs.pop('enum', None)
         super(EnumMixin, self).__init__(*args, **kwargs)
 
-    def clean(self, value):
-        value = super().clean(value)
+    def clean(self, value, old_value=NOT_PROVIDED):
+        value = super().clean(value, old_value)
         if self.enum is None:
             return value
         if value is None and self.null:
@@ -60,7 +60,7 @@ class EnumMixin(object):
 class Attribute(object):
 
     def __init__(self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
-                 validators=None, register=False, hidden=False, default_editable=True, **kwargs):
+                 validators=None, register=False, hidden=False, default_editable=True, editable=True, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs and kwargs['default'] is not NOT_PROVIDED
         self.default = kwargs.pop('default', None)
@@ -73,12 +73,13 @@ class Attribute(object):
         self.validators = validators or []
         self.register = register
         self.hidden = hidden
+        self.editable = editable
         self.default_editable = default_editable
         # When a field is marked as default non-editable, it must specify a default
         if not self.default_editable and not self.has_default:
             raise Error(self.name, 'Default value must be specified when attribute is marked as default non-editable.')
 
-    def clean(self, value):
+    def clean(self, value, old_value=NOT_PROVIDED):
         if value is None and self.null is False:
             raise Error(self.name, 'null not allowed')
         if value is NOT_PROVIDED:
@@ -87,6 +88,8 @@ class Attribute(object):
             else:
                 raise Error(self.name, 'attribute required')
         if not self.default_editable and value != self.default:
+            raise Error(self.name, 'Field is not editable.')
+        if old_value is not NOT_PROVIDED and not self.editable and value != old_value:
             raise Error(self.name, 'Field is not editable.')
         return value
 
@@ -183,8 +186,8 @@ class Str(EnumMixin, Attribute):
         self.max_length = kwargs.pop('max_length', 1024) or (2 ** 31) - 1
         super().__init__(*args, **kwargs)
 
-    def clean(self, value):
-        value = super(Str, self).clean(value)
+    def clean(self, value, old_value=NOT_PROVIDED):
+        value = super(Str, self).clean(value, old_value)
         if value is None:
             return value
         if isinstance(value, int) and not isinstance(value, bool):
@@ -228,8 +231,8 @@ class Path(Str):
         self.forwarding_slash = kwargs.pop('forwarding_slash', True)
         super().__init__(*args, **kwargs)
 
-    def clean(self, value):
-        value = super().clean(value)
+    def clean(self, value, old_value=NOT_PROVIDED):
+        value = super().clean(value, old_value)
 
         if value is None:
             return value
@@ -360,11 +363,11 @@ class IPAddr(Str):
 
 class Time(Str):
 
-    def clean(self, value):
+    def clean(self, value, old_value=NOT_PROVIDED):
         if isinstance(value, time):
             return value
 
-        value = super(Time, self).clean(value)
+        value = super(Time, self).clean(value, old_value)
         if value is None:
             return value
 
@@ -401,8 +404,8 @@ class UnixPerm(Str):
 
 class Bool(Attribute):
 
-    def clean(self, value):
-        value = super().clean(value)
+    def clean(self, value, old_value=NOT_PROVIDED):
+        value = super().clean(value, old_value)
         if value is None:
             return value
         if not isinstance(value, bool):
@@ -418,8 +421,8 @@ class Bool(Attribute):
 
 class Int(EnumMixin, Attribute):
 
-    def clean(self, value):
-        value = super(Int, self).clean(value)
+    def clean(self, value, old_value=NOT_PROVIDED):
+        value = super(Int, self).clean(value, old_value)
         if value is None:
             return value
         if not isinstance(value, int) or isinstance(value, bool):
@@ -437,8 +440,8 @@ class Int(EnumMixin, Attribute):
 
 class Float(EnumMixin, Attribute):
 
-    def clean(self, value):
-        value = super(Float, self).clean(value)
+    def clean(self, value, old_value=NOT_PROVIDED):
+        value = super(Float, self).clean(value, old_value)
         if value is None and not self.required:
             return self.default
         try:
@@ -466,8 +469,8 @@ class List(EnumMixin, Attribute):
             kwargs['default'] = []
         super(List, self).__init__(*args, **kwargs)
 
-    def clean(self, value):
-        value = super(List, self).clean(value)
+    def clean(self, value, old_value=NOT_PROVIDED):
+        value = super(List, self).clean(value, old_value)
         if value is None:
             return copy.deepcopy(self.default)
         if not isinstance(value, list):
@@ -602,8 +605,8 @@ class Dict(Attribute):
 
         return skip_attrs
 
-    def clean(self, data):
-        data = super().clean(data)
+    def clean(self, data, old_value=NOT_PROVIDED):
+        data = super().clean(data, old_value)
 
         if data is None:
             if self.null:
@@ -624,8 +627,12 @@ class Dict(Attribute):
             attr = self.attrs.get(key)
             if not attr:
                 continue
+            if not isinstance(old_value, dict) or key not in old_value:
+                old_attr_value = NOT_PROVIDED
+            else:
+                old_attr_value = old_value[key]
 
-            data[key] = self._clean_attr(attr, value, verrors)
+            data[key] = self._clean_attr(attr, value, verrors, old_attr_value)
 
         # Do not make any field and required and not populate default values
         if not self.update:
@@ -644,9 +651,9 @@ class Dict(Attribute):
                 data[attr.name] = self._clean_attr(attr, NOT_PROVIDED, verrors)
         return data
 
-    def _clean_attr(self, attr, value, verrors):
+    def _clean_attr(self, attr, value, verrors, old_value=NOT_PROVIDED):
         try:
-            return attr.clean(value)
+            return attr.clean(value, old_value)
         except Error as e:
             verrors.add(f'{self.name}.{e.attribute}', e.errmsg, e.errno)
         except ValidationErrors as e:
