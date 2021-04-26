@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import math
+import json
 import psutil
 
 from middlewared.utils import osc
@@ -8,16 +9,15 @@ from middlewared.utils.db import query_config_table
 
 if __name__ == "__main__":
     advanced = query_config_table("system_advanced", prefix="adv_")
+    kernel_extra_args = ' '.join(json.loads(advanced.get('kernel_extra_options') or []))
 
     # We need to allow tpm in grub as sedutil-cli requires it
     # TODO: Please remove kernel flag to use cgroups v1 when nvidia device plugin starts working
     #  with it ( https://github.com/NVIDIA/k8s-device-plugin/issues/235 )
-    # We set mpt3sas argument because of https://jira.ixsystems.com/browse/NAS-109947, let's please
-    # remove setting it once it is fixed upstream. ( https://bugzilla.redhat.com/show_bug.cgi?id=1878332 )
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
-        'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 systemd.unified_cgroup_hierarchy=0 '
-        'amd_iommu=on iommu=pt kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on mpt3sas.max_queue_depth=10000"',
+        'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 systemd.unified_cgroup_hierarchy=0 amd_iommu=on iommu=pt '
+        f'kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on{f" {kernel_extra_args}"if kernel_extra_args else ""}"',
     ]
 
     terminal = ["console"]

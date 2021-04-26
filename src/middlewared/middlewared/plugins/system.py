@@ -247,7 +247,7 @@ class SystemAdvancedService(ConfigService):
             Str('syslog_transport', enum=['UDP', 'TCP', 'TLS']),
             Int('syslog_tls_certificate', null=True),
             List('isolated_gpu_pci_ids', items=[Str('pci_id')]),
-            List('kernel_extra_options', items=[Str('pci_id')]),
+            List('kernel_extra_options', items=[Str('extra_option')]),
             update=True
         )
     )
