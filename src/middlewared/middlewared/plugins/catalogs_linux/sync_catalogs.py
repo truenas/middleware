@@ -32,9 +32,17 @@ class CatalogService(Service):
         """
         Sync `label` catalog to retrieve latest changes from upstream.
         """
-        catalog = await self.middleware.call('catalog.get_instance', catalog_label)
-        await self.middleware.call('catalog.update_git_repository', catalog, True)
-        await self.middleware.call('catalog.items', catalog_label, {'cache': False})
+        try:
+            catalog = await self.middleware.call('catalog.get_instance', catalog_label)
+            await self.middleware.call('catalog.update_git_repository', catalog, True)
+            await self.middleware.call('catalog.items', catalog_label, {'cache': False})
+        except Exception as e:
+            await self.middleware.call(
+                'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': catalog_label, 'error': str(e)}
+            )
+            raise
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'CatalogSyncFailed', catalog_label)
 
     @private
     def update_git_repository(self, catalog, raise_exception=False):
