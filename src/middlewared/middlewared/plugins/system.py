@@ -93,6 +93,7 @@ class SystemAdvancedModel(sa.Model):
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
     adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
     adv_isolated_gpu_pci_ids = sa.Column(sa.JSON(), default=[])
+    adv_kernel_extra_options = sa.Column(sa.JSON(), default=[])
 
 
 class SystemAdvancedService(ConfigService):
@@ -246,6 +247,7 @@ class SystemAdvancedService(ConfigService):
             Str('syslog_transport', enum=['UDP', 'TCP', 'TLS']),
             Int('syslog_tls_certificate', null=True),
             List('isolated_gpu_pci_ids', items=[Str('pci_id')]),
+            List('kernel_extra_options', items=[Str('pci_id')]),
             update=True
         )
     )
