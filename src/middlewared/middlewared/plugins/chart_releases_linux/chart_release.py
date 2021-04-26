@@ -339,7 +339,7 @@ class ChartReleaseService(CRUDService):
     async def host_path_volumes(self, pods):
         host_path_volumes = []
         for pod in pods:
-            for volume in filter(lambda v: v.get('host_path'), pod['spec']['volumes']):
+            for volume in filter(lambda v: v.get('host_path'), pod['spec']['volumes'] or []):
                 host_path_volumes.append(copy.deepcopy(volume))
         return host_path_volumes
 
