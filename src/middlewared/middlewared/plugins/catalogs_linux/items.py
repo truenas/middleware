@@ -168,7 +168,9 @@ class CatalogService(Service):
         return item_data
 
     @private
-    def item_version_details(self, version_path, questions_context):
+    def item_version_details(self, version_path, questions_context=None):
+        if not questions_context:
+            questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         version_data = {'location': version_path, 'required_features': set()}
         for key, filename, parser in (
             ('chart_metadata', 'Chart.yaml', yaml.safe_load),
