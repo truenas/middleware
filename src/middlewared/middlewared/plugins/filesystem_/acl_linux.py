@@ -64,8 +64,8 @@ class FilesystemService(Service, ACLBase):
         job.set_progress(0, 'Preparing to change owner.')
         verrors = ValidationErrors()
 
-        uid = -1 if data['uid'] is None else data['uid']
-        gid = -1 if data['gid'] is None else data['gid']
+        uid = -1 if data['uid'] is None else data.get('uid', -1)
+        gid = -1 if data['gid'] is None else data.get('gid', -1)
         options = data['options']
 
         if uid == -1 and gid == -1:
@@ -94,8 +94,8 @@ class FilesystemService(Service, ACLBase):
         mode = data.get('mode', None)
         verrors = ValidationErrors()
 
-        uid = -1 if data['uid'] is None else data['uid']
-        gid = -1 if data['gid'] is None else data['gid']
+        uid = -1 if data['uid'] is None else data.get('uid', -1)
+        gid = -1 if data['gid'] is None else data.get('gid', -1)
 
         self._common_perm_path_validate("filesystem.setperm",
                                         data['path'],
@@ -275,8 +275,8 @@ class FilesystemService(Service, ACLBase):
         do_strip = options.get('stripacl', False)
 
         path = data.get('path', '')
-        uid = -1 if not data.get('uid') else data['uid']
-        gid = -1 if not data.get('gid') else data['gid']
+        uid = -1 if data['uid'] is None else data.get('uid', -1)
+        gid = -1 if data['gid'] is None else data.get('gid', -1)
 
         self._common_perm_path_validate("filesystem.setacl",
                                         path, recursive,
@@ -439,8 +439,8 @@ class FilesystemService(Service, ACLBase):
         do_strip = options.get('stripacl', False)
         dacl = data.get('dacl', [])
         path = data['path']
-        uid = -1 if not data.get('uid') else data['uid']
-        gid = -1 if not data.get('gid') else data['gid']
+        uid = -1 if data['uid'] is None else data.get('uid', -1)
+        gid = -1 if data['gid'] is None else data.get('gid', -1)
 
         self._common_perm_path_validate("filesystem.setacl",
                                         path, recursive,
