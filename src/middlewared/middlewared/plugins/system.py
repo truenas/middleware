@@ -93,7 +93,7 @@ class SystemAdvancedModel(sa.Model):
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
     adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
     adv_isolated_gpu_pci_ids = sa.Column(sa.JSON(), default=[])
-    adv_kernel_extra_options = sa.Column(sa.JSON(), default=[])
+    adv_kernel_extra_options = sa.Column(sa.Text(), default='', nullable=False)
 
 
 class SystemAdvancedService(ConfigService):
@@ -215,6 +215,10 @@ class SystemAdvancedService(ConfigService):
                     'A minimum of 1 GPU is required for the host to ensure it functions as desired.'
                 )
 
+        for ch in ('\n', '"'):
+            if ch in data['kernel_extra_options']:
+                verrors.add('kernel_extra_options', f'{ch!r} not allowed')
+
         return verrors, data
 
     @accepts(
@@ -247,7 +251,7 @@ class SystemAdvancedService(ConfigService):
             Str('syslog_transport', enum=['UDP', 'TCP', 'TLS']),
             Int('syslog_tls_certificate', null=True),
             List('isolated_gpu_pci_ids', items=[Str('pci_id')]),
-            List('kernel_extra_options', items=[Str('extra_option')]),
+            Str('kernel_extra_options'),
             update=True
         )
     )
@@ -359,17 +363,18 @@ class SystemAdvancedService(ConfigService):
             if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
                 await self.middleware.call('kmip.sync_sed_keys')
 
-            if osc.IS_LINUX and config_data['kdump_enabled'] != original_data['kdump_enabled']:
+            generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
+            if config_data['kdump_enabled'] != original_data['kdump_enabled']:
                 # kdump changes require a reboot to take effect. So just generating the kdump config
                 # should be enough
                 await self.middleware.call('etc.generate', 'kdump')
-                await self.middleware.call('etc.generate', 'grub')
+                generate_grub = True
 
-            if osc.IS_LINUX:
-                if original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']:
-                    await self.middleware.call('boot.update_initramfs')
-                if original_data['kernel_extra_options'] != config_data['kernel_extra_options']:
-                    await self.middleware.call('etc.generate', 'grub')
+            if original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']:
+                await self.middleware.call('boot.update_initramfs')
+
+            if generate_grub:
+                await self.middleware.call('etc.generate', 'grub')
 
         if consolemsg is not None:
             await self.middleware.call('system.general.update', {'ui_consolemsg': consolemsg})

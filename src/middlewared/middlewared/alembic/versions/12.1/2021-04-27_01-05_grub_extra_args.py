@@ -17,12 +17,9 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('adv_kernel_extra_options', sa.TEXT(), nullable=True))
-
-    op.execute("UPDATE system_advanced SET adv_kernel_extra_options = '[]'")
-
-    with op.batch_alter_table('system_advanced', schema=None) as batch_op:
-        batch_op.alter_column('adv_kernel_extra_options', existing_type=sa.TEXT(), nullable=False)
+        batch_op.add_column(
+            sa.Column('adv_kernel_extra_options', sa.TEXT(), server_default='', nullable=False)
+        )
 
 
 def downgrade():
