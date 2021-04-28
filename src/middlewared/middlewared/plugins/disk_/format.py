@@ -1,3 +1,4 @@
+import contextlib
 import subprocess
 
 from middlewared.service import CallError, private, Service
@@ -68,6 +69,11 @@ class DiskService(Service):
 
         if osc.IS_LINUX:
             self.middleware.call_sync('device.settle_udev_events')
+
+        for partition in self.middleware.call_sync('disk.list_partitions', disk):
+            with contextlib.suppress(CallError):
+                # It's okay to suppress this as some partitions might not have it
+                self.middleware.call_sync('zfs.pool.clear_label', partition['path'])
 
         if sync:
             # We might need to sync with reality (e.g. devname -> uuid)
