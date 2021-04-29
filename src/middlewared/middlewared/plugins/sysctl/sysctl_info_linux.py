@@ -50,8 +50,8 @@ class SysctlService(Service, SysctlInfoBase):
     def get_arcstats_size(self):
         return self.get_arcstats()['size']
 
-    def set_value(self, key, value):
-        raise NotImplementedError
+    async def set_value(self, key, value):
+        await run(['sysctl', f'{key}={value}'])
 
     def write_to_file(self, path, value):
         with open(path, 'w') as f:
