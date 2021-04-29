@@ -277,7 +277,7 @@ class EtcService(Service):
         ],
         'hostname': [
             {'type': 'mako', 'path': 'hosts'},
-            {'type': 'py', 'path': 'hostname', 'platform': 'Linux'},
+            {'type': 'py', 'path': 'hostname', 'platform': 'Linux', 'checkpoint': 'pre_interface_sync'},
         ],
         'ssh': [
             {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
@@ -339,7 +339,7 @@ class EtcService(Service):
     }
     LOCKS = defaultdict(asyncio.Lock)
 
-    checkpoints = ['initial', 'interface_sync', 'post_init', 'pool_import']
+    checkpoints = ['initial', 'interface_sync', 'post_init', 'pool_import', 'pre_interface_sync']
 
     class Config:
         private = True
