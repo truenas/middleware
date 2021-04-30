@@ -7,7 +7,7 @@ from middlewared.pytest.unit.middleware import Middleware
 
 import importlib.util
 spec = importlib.util.spec_from_file_location(
-    "middlewared.plugins.failover", "/usr/local/lib/middlewared_truenas/plugins/failover.py"
+    "middlewared.plugins.failover", "/usr/lib/python3/dist-packages/middlewared/plugins.failover.py"
 )
 failover = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(failover)

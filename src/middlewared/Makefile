@@ -14,7 +14,7 @@ reinstall: clean
 dev: reinstall run
 
 run:
-	middlewared restart --loop-debug -P -o /usr/local/lib/middlewared_truenas --debug-level 'TRACE'
+	middlewared restart --loop-debug -P --debug-level 'TRACE'
 
 reinstall-remote:
 	sh -c 'if [ -z "${HOST}" ]; then echo "You need to set HOST"; exit 1; fi;'
