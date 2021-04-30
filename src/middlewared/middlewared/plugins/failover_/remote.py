@@ -1,17 +1,3 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
-from middlewared.client import Client, ClientException, CallTimeout
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
-from middlewared.service import CallError, Service, job, private
-from middlewared.utils import start_daemon_thread
-from middlewared.utils.osc import set_thread_name
-
-from collections import defaultdict
-from functools import partial
 import errno
 import json
 import logging
@@ -19,6 +5,15 @@ import requests
 import socket
 import threading
 import time
+from collections import defaultdict
+from functools import partial
+
+from middlewared.client import Client, ClientException, CallTimeout
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
+from middlewared.service import CallError, Service, job, private
+from middlewared.utils import start_daemon_thread
+from middlewared.utils.osc import set_thread_name
+
 
 logger = logging.getLogger('failover.remote')
 
