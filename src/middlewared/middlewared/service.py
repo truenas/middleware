@@ -870,6 +870,16 @@ class CoreService(Service):
         ], filters, options)
         return jobs
 
+    @private
+    def jobs_stop_logging(self):
+        for job in self.middleware.jobs.all().values():
+            job.stop_logging()
+
+    @private
+    def jobs_resume_logging(self):
+        for job in self.middleware.jobs.all().values():
+            job.start_logging()
+
     @accepts(Int('id'))
     @job()
     def job_wait(self, job, id):
@@ -1249,12 +1259,15 @@ class CoreService(Service):
         """
         reconfigure_logging()
         self.__kill_multiprocessing()
+        self.middleware.call_sync('core.jobs_resume_logging')
+
         self.middleware.send_event('core.reconfigure_logging', 'CHANGED')
 
     @private
     def stop_logging(self):
         stop_logging()
         self.__kill_multiprocessing()
+        self.middleware.call_sync('core.jobs_stop_logging')
 
         self.middleware.send_event('core.reconfigure_logging', 'CHANGED', fields={'stop': True})
 
