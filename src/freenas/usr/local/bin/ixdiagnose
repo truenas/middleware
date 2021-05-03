@@ -144,10 +144,6 @@ else
 	$mydir/freenas-debug -A
 fi
 
-if [ -d "/tmp/middlewared/jobs" ]; then
-	echo "** 95%: Compressing Job Logs"
-	tar -chf - -C /tmp/middlewared jobs | tar -C $dir -xf -
-fi
 echo "** 96%: Compressing System Logs"
 tar -chf - -C /var --exclude=log/journal --exclude=log/faillog --exclude=log/lastlog --exclude=log/sysstat log | tar -C $dir -xf -
 echo "** 97%: Compressing Debug Files"
