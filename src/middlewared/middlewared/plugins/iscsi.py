@@ -11,6 +11,7 @@ from middlewared.validators import Range
 
 import asyncio
 import bidict
+from collections import defaultdict
 import errno
 import hashlib
 import re
@@ -1151,16 +1152,20 @@ class iSCSITargetService(CRUDService):
         datastore = 'services.iscsitarget'
         datastore_prefix = 'iscsi_target_'
         datastore_extend = 'iscsi.target.extend'
+        datastore_extend_context = 'iscsi.target.extend_context'
 
     @private
-    async def extend(self, data):
+    async def extend(self, data, context):
         data['mode'] = data['mode'].upper()
-        data['groups'] = await self.middleware.call(
-            'datastore.query',
-            'services.iscsitargetgroups',
-            [('iscsi_target', '=', data['id'])],
-        )
-        for group in data['groups']:
+        data['groups'] = context['groups'][data['id']]
+        return data
+
+    @private
+    async def extend_context(self, extra):
+        groups = defaultdict(list)
+        for group in await self.middleware.call('datastore.query', 'services.iscsitargetgroups'):
+            groups[group['iscsi_target']['id']].append(group)
+
             group.pop('id')
             group.pop('iscsi_target')
             group.pop('iscsi_target_initialdigest')
@@ -1173,7 +1178,10 @@ class iSCSITargetService(CRUDService):
             group['authmethod'] = AUTHMETHOD_LEGACY_MAP.get(
                 group.pop('iscsi_target_authtype')
             )
-        return data
+
+        return {
+            'groups': groups,
+        }
 
     @accepts(Dict(
         'iscsi_target_create',
