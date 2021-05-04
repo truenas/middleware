@@ -51,6 +51,9 @@ def get_login_failures(now, messages):
         if message.strip():
             if message.startswith(yesterday):
                 if re.search(r"\b(fail(ures?|ed)?|invalid|bad|illegal|auth.*error)\b", message, re.I):
+                    if "sshd" not in message:
+                        continue
+
                     login_failures.append(message)
 
             if not message.startswith(yesterday) and not message.startswith(today):
