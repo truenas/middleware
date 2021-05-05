@@ -60,15 +60,20 @@ class CatalogService(CRUDService):
                 )
             except Exception:
                 # We do not want this to fail as it will block `catalog.query` otherwise. The error would
-                # already be logged as this is being called periodically as well.
+                # already be logged as this is being called periodically as well and an alert would be
+                # generated as well to notify the user syncing of X catalog failed.
                 catalog.update({
                     'trains': {},
                     'healthy': False,
+                    'error': True,
                 })
             else:
-                catalog['healthy'] = all(
-                    app['healthy'] for train in catalog['trains'] for app in catalog['trains'][train].values()
-                )
+                catalog.update({
+                    'healthy': all(
+                        app['healthy'] for train in catalog['trains'] for app in catalog['trains'][train].values()
+                    ),
+                    'error': False,
+                })
         return catalog
 
     @private
