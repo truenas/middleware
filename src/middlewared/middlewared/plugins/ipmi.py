@@ -172,6 +172,13 @@ class IPMIService(CRUDService):
             cmd = str(options.get('seconds'))
         await run('ipmitool', 'chassis', 'identify', cmd)
 
+    @accepts()
+    async def clear_sel(self):
+        """
+        Clear IPMI System Event Log
+        """
+        await run('ipmitool', 'sel', 'clear')
+
 
 async def setup(middleware):
 
