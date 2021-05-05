@@ -28,7 +28,7 @@ class ChartReleaseService(Service):
     ):
         schema_name = f'chart_release_{"update" if update else "create"}'
         attrs = list(itertools.chain.from_iterable(
-            get_schema(q, update) for q in item_version_details['schema']['questions']
+            get_schema(q, update, old_values) for q in item_version_details['schema']['questions']
         ))
         dict_obj = update_conditional_defaults(
             Dict(schema_name, *attrs, update=update, additional_attrs=True), {
@@ -39,7 +39,7 @@ class ChartReleaseService(Service):
         verrors = validate_attributes(
             attrs, {'values': new_values}, True, attr_key='values', dict_kwargs={
                 'conditional_defaults': dict_obj.conditional_defaults, 'update': update,
-            }, old_data=old_values if old_values == NOT_PROVIDED else {'values': old_values}
+            }
         )
         return {
             'verrors': verrors,
