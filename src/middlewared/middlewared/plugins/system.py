@@ -806,20 +806,23 @@ class SystemService(Service):
         product = dmidecode['system-product-name']
         return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
 
-    # Sync the clock
     @private
-    def sync_clock(self):
+    def get_synced_clock_time(self):
+        """
+        Will return synced clock time if ntpd has synced with ntp servers
+        otherwise will return none
+        """
         client = ntplib.NTPClient()
-        clock = None
-        # Tries to get default ntpd server
         try:
-            response = client.request("localhost")
-            if response.version:
-                clock = datetime.fromtimestamp(response.tx_time, timezone.utc)
+            response = client.request('localhost')
         except Exception:
             # Cannot connect to NTP server
-            self.middleware.logger.debug('Error while connecting to NTP server')
-        return clock
+            self.logger.debug('Error while connecting to NTP server', exc_info=True)
+        else:
+            if response.leap != 3:
+                # https://github.com/darkhelmet/ntpstat/blob/11f1d49cf4041169e1f741f331f65645b67680d8/ntpstat.c#L172
+                # if leap second indicator is 3, it means that the clock has not been synchronized
+                return datetime.fromtimestamp(response.tx_time, timezone.utc)
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
     async def feature_enabled(self, name):
@@ -1627,7 +1630,7 @@ async def _update_birthday_data(middleware, birthday=None):
 
     # get current time and use as birthday
     if birthday is None:
-        birthday = await middleware.call('system.sync_clock')
+        birthday = await middleware.call('system.get_synced_clock_time')
 
         middleware.logger.debug('Updating birthday data')
         # update db with new birthday
@@ -1646,7 +1649,7 @@ async def _update_birthday(middleware):
 
     middleware.logger.debug('Waiting for clock sync to update system birthday')
     while birthday is None:
-        birthday = await middleware.call('system.sync_clock')
+        birthday = await middleware.call('system.get_synced_clock_time')
 
         # sleep for 1 day and try again
         if birthday is None:
