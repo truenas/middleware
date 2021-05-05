@@ -817,9 +817,9 @@ class SystemService(Service):
             response = client.request('localhost')
         except Exception:
             # Cannot connect to NTP server
-            self.logger.debug('Error while connecting to NTP server', exc_info=True)
+            self.logger.error('Error while connecting to NTP server', exc_info=True)
         else:
-            if response.leap != 3:
+            if response.version and response.leap != 3:
                 # https://github.com/darkhelmet/ntpstat/blob/11f1d49cf4041169e1f741f331f65645b67680d8/ntpstat.c#L172
                 # if leap second indicator is 3, it means that the clock has not been synchronized
                 return datetime.fromtimestamp(response.tx_time, timezone.utc)
@@ -1621,41 +1621,17 @@ class SystemGeneralService(ConfigService):
         CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
-async def _update_birthday_data(middleware, birthday=None):
-
-    birthday = (await middleware.call('system.info'))['birthday']
-    if birthday is not None:
-        # already been set
-        return
-
-    # get current time and use as birthday
-    if birthday is None:
-        birthday = await middleware.call('system.get_synced_clock_time')
-
-        middleware.logger.debug('Updating birthday data')
-        # update db with new birthday
-        settings = await middleware.call('datastore.config', 'system.settings')
-        await middleware.call('datastore.update', 'system.settings', settings['id'], {
-            'stg_birthday': birthday,
-        })
-
-
 async def _update_birthday(middleware):
-
-    birthday = None
-    timeout = 3600 * 24
-
-    middleware.register_hook('interface.post_sync', _update_birthday_data)
-
-    middleware.logger.debug('Waiting for clock sync to update system birthday')
-    while birthday is None:
+    while True:
         birthday = await middleware.call('system.get_synced_clock_time')
-
-        # sleep for 1 day and try again
-        if birthday is None:
-            await asyncio.sleep(timeout)
-
-    await _update_birthday_data(middleware, birthday)
+        if birthday:
+            middleware.logger.debug('Updating birthday data')
+            # update db with new birthday
+            settings = await middleware.call('datastore.config', 'system.settings')
+            await middleware.call('datastore.update', 'system.settings', settings['id'], {'stg_birthday': birthday})
+            break
+        else:
+            await asyncio.sleep(300)
 
 
 async def _event_system(middleware, event_type, args):
