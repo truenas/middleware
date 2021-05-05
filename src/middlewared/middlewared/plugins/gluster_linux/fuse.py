@@ -127,11 +127,9 @@ class GlusterFuseService(Service):
                             mounted.append(True)
                 except Exception as e:
                     if data['raise']:
-                        raise CallError(f'Unhandled exception trying to mount {path}: {e}')
+                        raise CallError(e)
                     else:
-                        self.logger.error(
-                            'Unhandled exception trying to mount %s', path, exc_info=True
-                        )
+                        self.logger.error('Unhandled exception', exc_info=True)
                         continue
 
             # always start it back up
