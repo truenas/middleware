@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from collections import OrderedDict
 import copy
 from datetime import datetime
@@ -183,7 +184,8 @@ class JobsDeque(object):
         self.maxlen = maxlen
         self.count = 0
         self.__dict = OrderedDict()
-        shutil.rmtree(LOGS_DIR)
+        with contextlib.suppress(FileNotFoundError):
+            shutil.rmtree(LOGS_DIR)
 
     def __getitem__(self, item):
         return self.__dict[item]
