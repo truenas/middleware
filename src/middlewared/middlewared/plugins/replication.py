@@ -196,7 +196,6 @@ class ReplicationService(CRUDService):
                     Cron("schedule", required=True),
                     Int("lifetime_value", validators=[Range(min=1)], required=True),
                     Str("lifetime_unit", enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"], required=True),
-                    strict=True,
                 ),
             ]),
             Str("compression", enum=["LZ4", "PIGZ", "PLZIP"], null=True, default=None),
