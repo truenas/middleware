@@ -193,7 +193,7 @@ class ReplicationService(CRUDService):
             List("lifetimes", items=[
                 Dict(
                     "lifetime",
-                    Cron("schedule", required=True),
+                    Cron("schedule"),
                     Int("lifetime_value", validators=[Range(min=1)], required=True),
                     Str("lifetime_unit", enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"], required=True),
                     strict=True,
