@@ -302,6 +302,8 @@ class PluginService(CRUDService):
             'branch': branch,
         })
 
+        self.middleware.call_sync('service.restart', 'mdns')
+
         new_plugin = self.middleware.call_sync('plugin._get_instance', jail_name)
         new_plugin['install_notes'] = install_notes.strip()
 
