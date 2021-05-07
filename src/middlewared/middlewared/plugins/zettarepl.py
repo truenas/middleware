@@ -711,6 +711,8 @@ class ZettareplService(Service):
             definition["naming-schema"] = replication_task["naming_schema"]
         if replication_task["also_include_naming_schema"]:
             definition["also-include-naming-schema"] = replication_task["also_include_naming_schema"]
+        if replication_task["name_regex"]:
+            definition["name-regex"] = replication_task["name_regex"]
         if replication_task["schedule"] is not None:
             definition["schedule"] = zettarepl_schedule(replication_task["schedule"])
         if replication_task["restrict_schedule"] is not None:
