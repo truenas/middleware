@@ -843,11 +843,7 @@ class AlertService(Service):
 
     @private
     async def product_type(self):
-        product_type = await self.middleware.call("system.product_type")
-        # FIXME
-        if product_type == "SCALE":
-            product_type = "CORE"
-        return product_type
+        return await self.middleware.call("system.product_type")
 
 
 class AlertServiceModel(sa.Model):

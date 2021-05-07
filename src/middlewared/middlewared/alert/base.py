@@ -49,7 +49,7 @@ class AlertClass(metaclass=AlertClassMeta):
     text = None
 
     exclude_from_list = False
-    products = ("CORE", "ENTERPRISE")
+    products = ("CORE", "ENTERPRISE", "SCALE", "SCALE_ENTERPRISE")
     hardware = False
 
     def __init__(self, middleware):
@@ -186,7 +186,7 @@ class Alert:
 class AlertSource:
     schedule = IntervalSchedule(timedelta())
 
-    products = ("CORE", "ENTERPRISE")
+    products = ("CORE", "ENTERPRISE", "SCALE", "SCALE_ENTERPRISE")
     failover_related = False
     run_on_backup_node = True
 
