@@ -1,5 +1,6 @@
 from datetime import datetime, time
 import os
+import re
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, Str
@@ -29,6 +30,7 @@ class ReplicationModel(sa.Model):
     repl_source_datasets = sa.Column(sa.JSON(type=list))
     repl_exclude = sa.Column(sa.JSON(type=list))
     repl_naming_schema = sa.Column(sa.JSON(type=list))
+    repl_name_regex = sa.Column(sa.String(120), nullable=True)
     repl_auto = sa.Column(sa.Boolean(), default=True)
     repl_schedule_minute = sa.Column(sa.String(100), nullable=True, default="00")
     repl_schedule_hour = sa.Column(sa.String(100), nullable=True, default="*")
@@ -168,6 +170,7 @@ class ReplicationService(CRUDService):
                 Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])]),
             List("also_include_naming_schema", items=[
                 Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])]),
+            Str("name_regex", null=True, default=None, empty=False),
             Bool("auto", required=True),
             Cron(
                 "schedule",
@@ -236,6 +239,7 @@ class ReplicationService(CRUDService):
           replication task. Only push replication tasks can be bound to periodic snapshot tasks.
         * `naming_schema` is a list of naming schemas for pull replication
         * `also_include_naming_schema` is a list of naming schemas for push replication
+        * `name_regex` will replicate all snapshots which names match specified regular expression
         * `auto` allows replication to run automatically on schedule or after bound periodic snapshot task
         * `schedule` is a schedule to run replication task. Only `auto` replication tasks without bound periodic
           snapshot tasks can have a schedule
@@ -496,10 +500,11 @@ class ReplicationService(CRUDService):
             if data["naming_schema"]:
                 verrors.add("naming_schema", "This field has no sense for push replication")
 
-            if not snapshot_tasks and not data["also_include_naming_schema"]:
+            if not snapshot_tasks and not data["also_include_naming_schema"] and not data["name_regex"]:
                 verrors.add(
                     "periodic_snapshot_tasks", "You must at least either bind a periodic snapshot task or provide "
-                                               "\"Also Include Naming Schema\" for push replication task"
+                                               "\"Also Include Naming Schema\" or \"Name Regex\" for push replication "
+                                               "task"
                 )
 
             if data["schedule"] is None and data["auto"] and not data["periodic_snapshot_tasks"]:
@@ -513,8 +518,8 @@ class ReplicationService(CRUDService):
             if data["periodic_snapshot_tasks"]:
                 verrors.add("periodic_snapshot_tasks", "Pull replication can't be bound to a periodic snapshot task")
 
-            if not data["naming_schema"]:
-                verrors.add("naming_schema", "Naming schema is required for pull replication")
+            if not data["naming_schema"] and not data["name_regex"]:
+                verrors.add("naming_schema", "Naming schema or Name regex are required for pull replication")
 
             if data["also_include_naming_schema"]:
                 verrors.add("also_include_naming_schema", "This field has no sense for pull replication")
@@ -611,6 +616,15 @@ class ReplicationService(CRUDService):
         else:
             if data["only_matching_schedule"]:
                 verrors.add("only_matching_schedule", "You can't have only-matching-schedule without schedule")
+
+        if data["name_regex"]:
+            try:
+                re.compile(f"({data['name_regex']})$")
+            except Exception as e:
+                verrors.add("name_regex", f"Invalid regex: {e}")
+
+            if data["naming_schema"] or data["also_include_naming_schema"]:
+                verrors.add("name_regex", "Naming regex can't be used with Naming schema")
 
         if data["retention_policy"] == "CUSTOM":
             if data["lifetime_value"] is None:
