@@ -824,7 +824,7 @@ class SystemService(Service):
                 # if leap second indicator is 3, it means that the clock has not been synchronized
                 return datetime.fromtimestamp(response.tx_time, timezone.utc)
 
-    @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
+    @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'VM']))
     async def feature_enabled(self, name):
         """
         Returns whether the `feature` is enabled or not

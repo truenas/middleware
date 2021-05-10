@@ -17,8 +17,8 @@ e.g. `ws://truenas.domain/websocket`
     {
         "id": "6841f242-840a-11e6-a437-00e04d680384",
         "msg": "method",
-        "method": "jail.start",
-        "params": ["jail_name"]
+        "method": "catalog.sync_all",
+        "params": []
     }
 
 #### Server answers with `job_id`.
@@ -50,7 +50,7 @@ Response:
     {
       "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
       "msg": "result",
-      "result": [{'id': 53, 'method': 'jail.start', 'arguments': ['abc'], 'logs_path': None, 'logs_excerpt': None, 'progress': {'percent': None, 'description': None, 'extra': None}, 'result': True, 'error': None, 'exception': None, 'exc_info': None, 'state': 'SUCCESS', 'time_started': {"$date": 1571300596053}, 'time_finished': null}]
+      "result": [{"id": 53, "method": "catalog.sync_all", "arguments": [], "logs_path": null, "logs_excerpt": null, "progress": {"percent": 100, "description": "Syncing TEST catalog", "extra": null}, "result": null, "error": null, "exception": null, "exc_info": null, "state": "SUCCESS", "time_started": {"$date": 1571300596053}, "time_finished": null}]
     }
 
 ### Uploading / Downloading Files

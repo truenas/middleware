@@ -267,24 +267,6 @@ class UsageService(Service):
 
         return output
 
-    async def gather_jails_freebsd(self, context):
-        try:
-            jails = await self.middleware.call('jail.query')
-        except Exception:
-            jails = []
-        jail_list = []
-
-        for j in jails:
-            jail_list.append(
-                {
-                    'nat': bool(j['nat']),
-                    'release': j['release'],
-                    'vnet': bool(j['vnet'])
-                }
-            )
-
-        return {'jails': jail_list}
-
     async def gather_network(self, context):
         network = context['network']
 

@@ -146,7 +146,7 @@ Event Response Example:
     {
         "msg": "added", "collection": "core.get_jobs", "id": 26,
         "fields": {
-            "id": 26, "method": "jail.stop", "arguments": ["abc"],
+            "id": 26, "method": "chart.release.redeploy", "arguments": ["abc"],
             "logs_path": null, "logs_excerpt": null,
             "progress": {"percent": null, "description": null, "extra": null},
             "result": null, "error": null, "exception": null, "exc_info": null,
@@ -155,7 +155,7 @@ Event Response Example:
         }
     }
 
-The event above was generated when a jail was stopped and a job for stopping the jail started.
+The event above was generated when a chart release was re-deployed and a job for re-deploying the chart release started.
 The event response shows that system has registered the job and the job is waiting to be executed.
 
 ### Websocket Client Unsubscription
