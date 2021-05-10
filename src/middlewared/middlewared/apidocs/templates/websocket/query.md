@@ -56,14 +56,14 @@ Javascript:
 
 #### Conjunctions
 
-Queries with no defined conjunction assume `AND`. However, the conjunction `OR` is also supported by using the syntax illustrated below. We can use `jail.query` with `OR` to filter jails by release.
+Queries with no defined conjunction assume `AND`. However, the conjunction `OR` is also supported by using the syntax illustrated below. We can use `chart.release.query` with `OR` to filter chart releases by name.
 
 Javascript:
     :::javascript
     ["OR", 
       [
-        ["release","=", "11.2-RELEASE"],
-        ["release","=", "11.3-RELEASE"],
+        ["name","=", "firstchart"],
+        ["name","=", "secondchart"],
       ]
     ]
 

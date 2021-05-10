@@ -22,7 +22,7 @@ class InterfaceService(Service, InterfaceTypeBase):
 
     async def get_next_name(self, type):
         # For bridge we want to start with 2 because bridge0/bridge1 may have been used
-        # for Jails/VM.
+        # for VM.
         if type == InterfaceType.BRIDGE:
             return await self.middleware.call('interface.get_next', 'bridge', 2)
 

@@ -14,9 +14,7 @@ class InterfaceService(Service, InterfaceCapabilitiesBase):
         return [c for c in netif.InterfaceCapability.__members__]
 
     async def to_disable_evil_nic_capabilities(self, check_iface=True):
-        nics = set(await self.middleware.call('jail.nic_capability_checks', None, check_iface))
-        nics.update(await self.middleware.call('vm.device.nic_capability_checks', None, check_iface))
-        return list(nics)
+        return list(await self.middleware.call('vm.device.nic_capability_checks', None, check_iface))
 
     def enable_capabilities(self, iface, capabilities):
         enabled = []

@@ -22,7 +22,7 @@ class InterfaceService(Service):
 
         members = set(iface.members)
         for member in members - members_database:
-            # These interfaces may be added dynamically for Jails/VMs
+            # These interfaces may be added dynamically for VMs
             if member.startswith(('vnet', 'epair', 'tap')):
                 continue
             iface.delete_member(member)

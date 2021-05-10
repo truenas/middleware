@@ -1393,11 +1393,6 @@ class PoolService(CRUDService):
         else:
             encrypt = 0
 
-        activated_jail_pool = None
-        if osc.IS_FREEBSD:
-            with contextlib.suppress(Exception):
-                activated_jail_pool = await self.middleware.call('jail.get_activated_pool')
-
         pool_name = data.get('name') or pool['name']
         pool_id = None
         try:
@@ -1446,16 +1441,6 @@ class PoolService(CRUDService):
             if passfile:
                 os.unlink(passfile)
             raise
-
-        if activated_jail_pool:
-            # It is possible the imported pool had iocage set up. System will give preference to
-            # the already configured pool in this case, user can always change this later
-            try:
-                await self.middleware.call('jail.activate', activated_jail_pool)
-            except CallError as e:
-                self.middleware.logger.debug(
-                    f'Failed to activate {activated_jail_pool} after importing {pool_name} pool: {e}'
-                )
 
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.middleware.call('keyvalue.has_key', key):

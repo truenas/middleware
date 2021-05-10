@@ -911,8 +911,7 @@ class InterfaceService(CRUDService):
 
         interface_id = None
         if data['type'] == 'BRIDGE':
-            # For bridge we want to start with 2 because bridge0/bridge1 may have been used
-            # for Jails/VM.
+            # For bridge we want to start with 2 because bridge0/bridge1 may have been used for VM.
             name = data.get('name') or await self.middleware.call('interface.get_next_name', InterfaceType.BRIDGE)
             try:
                 async for i in self.__create_interface_datastore(data, {
@@ -1477,7 +1476,7 @@ class InterfaceService(CRUDService):
                 if iface['name'] in await self.middleware.call('interface.to_disable_evil_nic_capabilities', False):
                     verrors.add(
                         'interface_update.disable_offload_capabilities',
-                        f'Capabilities for {oid} cannot be enabled as there are Jail/VM(s) which need them disabled.'
+                        f'Capabilities for {oid} cannot be enabled as there are VM(s) which need them disabled.'
                     )
         verrors.check()
 
@@ -1967,7 +1966,7 @@ class InterfaceService(CRUDService):
             if name.startswith(internal_interfaces):
                 continue
 
-            # bridge0/bridge1 are special, may be used by Jails/VM
+            # bridge0/bridge1 are special, may be used by VM
             if name in ('bridge0', 'bridge1'):
                 continue
 

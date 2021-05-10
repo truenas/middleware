@@ -540,13 +540,11 @@ class ShellWorkerThread(threading.Thread):
         super(ShellWorkerThread, self).__init__(daemon=True)
 
     def get_command(self, options):
-        allowed_options = ('jail', 'vm_id')
+        allowed_options = ('chart_release', 'vm_id')
         if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
 
-        if options.get('jail'):
-            return ['/usr/local/bin/iocage', 'console', '-f', options['jail']]
-        elif options.get('vm_id'):
+        if options.get('vm_id'):
             if osc.IS_FREEBSD:
                 return ['/usr/bin/cu', '-l', f'nmdm{options["vm_id"]}B']
             else:
@@ -715,7 +713,6 @@ class ShellApplication(object):
                 authenticated = True
 
                 options = data.get('options', {})
-                options['jail'] = data.get('jail') or options.get('jail')
                 if options.get('vm_id'):
                     options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
                 if options.get('chart_release_name'):
