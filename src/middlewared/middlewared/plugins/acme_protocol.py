@@ -19,7 +19,7 @@ class ACMERegistrationModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     uri = sa.Column(sa.String(200))
-    directory = sa.Column(sa.String(200))
+    directory = sa.Column(sa.String(200), unique=True)
     tos = sa.Column(sa.String(200))
     new_account_uri = sa.Column(sa.String(200))
     new_nonce_uri = sa.Column(sa.String(200))
@@ -202,7 +202,7 @@ class ACMEDNSAuthenticatorModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     authenticator = sa.Column(sa.String(64))
-    name = sa.Column(sa.String(64))
+    name = sa.Column(sa.String(64), unique=True)
     attributes = sa.Column(sa.JSON(encrypted=True))
 
 

@@ -49,7 +49,7 @@ class EnclosureLabelModel(sa.Model):
     __tablename__ = 'truenas_enclosurelabel'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    encid = sa.Column(sa.String(200))
+    encid = sa.Column(sa.String(200), unique=True)
     label = sa.Column(sa.String(200))
 
 

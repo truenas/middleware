@@ -162,8 +162,8 @@ class IdmapDomainModel(sa.Model):
     __tablename__ = 'directoryservice_idmap_domain'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_domain_name = sa.Column(sa.String(120))
-    idmap_domain_dns_domain_name = sa.Column(sa.String(255), nullable=True)
+    idmap_domain_name = sa.Column(sa.String(120), unique=True)
+    idmap_domain_dns_domain_name = sa.Column(sa.String(255), nullable=True, unique=True)
     idmap_domain_range_low = sa.Column(sa.Integer())
     idmap_domain_range_high = sa.Column(sa.Integer())
     idmap_domain_idmap_backend = sa.Column(sa.String(120), default='rid')

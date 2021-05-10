@@ -16,7 +16,7 @@ class TunableModel(sa.Model):
     tun_type = sa.Column(sa.String(20), default='loader')
     tun_comment = sa.Column(sa.String(100))
     tun_enabled = sa.Column(sa.Boolean(), default=True)
-    tun_var = sa.Column(sa.String(128))
+    tun_var = sa.Column(sa.String(128), unique=True)
 
 
 TUNABLE_TYPES = ['SYSCTL'] + ([] if osc.IS_LINUX else ['LOADER', 'RC'])

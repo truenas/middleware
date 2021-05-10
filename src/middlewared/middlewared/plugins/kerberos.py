@@ -723,7 +723,7 @@ class KerberosKeytabModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     keytab_file = sa.Column(sa.EncryptedText())
-    keytab_name = sa.Column(sa.String(120))
+    keytab_name = sa.Column(sa.String(120), unique=True)
 
 
 class KerberosKeytabService(CRUDService):

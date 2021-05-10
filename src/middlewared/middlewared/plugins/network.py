@@ -392,7 +392,7 @@ class NetworkLaggInterfaceMemberModel(sa.Model):
 
     id = sa.Column(sa.Integer, primary_key=True)
     lagg_ordernum = sa.Column(sa.Integer())
-    lagg_physnic = sa.Column(sa.String(120))
+    lagg_physnic = sa.Column(sa.String(120), unique=True)
     lagg_interfacegroup_id = sa.Column(sa.ForeignKey('network_lagginterface.id', ondelete='CASCADE'), index=True)
 
 

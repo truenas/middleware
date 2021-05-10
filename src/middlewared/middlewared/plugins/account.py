@@ -102,7 +102,7 @@ class UserModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     bsdusr_uid = sa.Column(sa.Integer())
-    bsdusr_username = sa.Column(sa.String(16), default='User &')
+    bsdusr_username = sa.Column(sa.String(16), default='User &', unique=True)
     bsdusr_unixhash = sa.Column(sa.String(128), default='*')
     bsdusr_smbhash = sa.Column(sa.EncryptedText(), default='*')
     bsdusr_home = sa.Column(sa.String(255), default="/nonexistent")
@@ -987,7 +987,7 @@ class GroupModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     bsdgrp_gid = sa.Column(sa.Integer())
-    bsdgrp_group = sa.Column(sa.String(120))
+    bsdgrp_group = sa.Column(sa.String(120), unique=True)
     bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
     bsdgrp_sudo = sa.Column(sa.Boolean(), default=False)
     bsdgrp_sudo_nopasswd = sa.Column(sa.Boolean())
