@@ -32,6 +32,7 @@ from collections import namedtuple
 import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
+import contextlib
 import errno
 import fcntl
 import functools
@@ -530,7 +531,8 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, ws, input_queue, loop, options):
+    def __init__(self, middleware, ws, input_queue, loop, options):
+        self.middleware = middleware
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
@@ -593,36 +595,44 @@ class ShellWorkerThread(threading.Thread):
             Reader thread for reading from pty file descriptor
             and forwarding it to the websocket.
             """
-            while True:
-                try:
-                    read = os.read(master_fd, 1024)
-                except OSError:
-                    break
-                if read == b'':
-                    break
-                asyncio.run_coroutine_threadsafe(
-                    self.ws.send_str(read.decode('utf8', 'ignore')), loop=self.loop
-                ).result()
+            try:
+                while True:
+                    try:
+                        read = os.read(master_fd, 1024)
+                    except OSError:
+                        break
+                    if read == b'':
+                        break
+                    asyncio.run_coroutine_threadsafe(
+                        self.ws.send_bytes(read), loop=self.loop
+                    ).result()
+            except Exception:
+                self.middleware.logger.error("Error in ShellWorkerThread.reader", exc_info=True)
+                self.abort()
 
         def writer():
             """
             Writer thread for reading from input_queue and write to
             the shell pty file descriptor.
             """
-            while True:
-                try:
-                    get = self.input_queue.get(timeout=1)
-                    if isinstance(get, ShellResize):
-                        fcntl.ioctl(master_fd, termios.TIOCSWINSZ, struct.pack("HHHH", get.rows, get.cols, 0, 0))
-                    else:
-                        os.write(master_fd, get)
-                except queue.Empty:
-                    # If we timeout waiting in input query lets make sure
-                    # the shell process is still alive
+            try:
+                while True:
                     try:
-                        os.kill(self.shell_pid, 0)
-                    except ProcessLookupError:
-                        break
+                        get = self.input_queue.get(timeout=1)
+                        if isinstance(get, ShellResize):
+                            fcntl.ioctl(master_fd, termios.TIOCSWINSZ, struct.pack("HHHH", get.rows, get.cols, 0, 0))
+                        else:
+                            os.write(master_fd, get)
+                    except queue.Empty:
+                        # If we timeout waiting in input query lets make sure
+                        # the shell process is still alive
+                        try:
+                            os.kill(self.shell_pid, 0)
+                        except ProcessLookupError:
+                            break
+            except Exception:
+                self.middleware.logger.error("Error in ShellWorkerThread.writer", exc_info=True)
+                self.abort()
 
         t_reader = threading.Thread(target=reader, daemon=True)
         t_reader.start()
@@ -647,6 +657,14 @@ class ShellWorkerThread(threading.Thread):
 
     def die(self):
         self._die = True
+
+    def abort(self):
+        asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
+
+        with contextlib.suppress(ProcessLookupError):
+            os.kill(self.shell_pid, signal.SIGTERM)
+
+        self.die()
 
 
 class ShellConnectionData(object):
@@ -685,12 +703,7 @@ class ShellApplication(object):
         async for msg in ws:
             if authenticated:
                 # Add content of every message received in input queue
-                try:
-                    input_queue.put(msg.data.encode())
-                except UnicodeEncodeError:
-                    # Should we handle Encode error?
-                    # xterm.js seems to operate with the websocket in text mode,
-                    pass
+                input_queue.put(msg.data)
             else:
                 try:
                     data = json.loads(msg.data)
@@ -727,7 +740,8 @@ class ShellApplication(object):
                     )
 
                 conndata.t_worker = ShellWorkerThread(
-                    ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), options=options
+                    middleware=self.middleware, ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(),
+                    options=options,
                 )
                 conndata.t_worker.start()
 
