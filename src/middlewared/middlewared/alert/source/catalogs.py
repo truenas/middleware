@@ -16,3 +16,20 @@ class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
             lambda alert: alert.key != str(query),
             alerts
         ))
+
+
+class CatalogSyncFailedAlertClass(AlertClass, OneShotAlertClass):
+    deleted_automatically = False
+    level = AlertLevel.CRITICAL
+    category = AlertCategory.APPLICATIONS
+    title = 'Unable to Sync Catalog'
+    text = 'Failed to sync %(catalog)s catalog: %(error)s'
+
+    async def create(self, args):
+        return Alert(CatalogSyncFailedAlertClass, args, _key=args['catalog'])
+
+    async def delete(self, alerts, query):
+        return list(filter(
+            lambda alert: alert.key != str(query),
+            alerts
+        ))
