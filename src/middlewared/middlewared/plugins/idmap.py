@@ -283,7 +283,6 @@ class IdmapDomainService(CRUDService):
 
         while datalen >= 4:
             k = int.from_bytes(data_bytes[:4], byteorder='little') & 0xFFFFFFFF
-            self.logger.debug('%d', k)
             data_bytes = data_bytes[4:]
             datalen = datalen - 4
             k = (k * c1) & 0xFFFFFFFF
@@ -296,7 +295,7 @@ class IdmapDomainService(CRUDService):
         if datalen > 0:
             k = 0
             if datalen >= 3:
-                k = k | int.from_bytes(data_bytes[2], byteorder='little') << 16
+                k = k | data_bytes[2] << 16
             if datalen >= 2:
                 k = k | data_bytes[1] << 8
             if datalen >= 1:
