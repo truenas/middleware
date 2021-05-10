@@ -39,6 +39,7 @@ STATUS_DESC = [
 
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
 R_SERIES_REGEX = re.compile(r"ECStream (FS2|DSS212S[ps])")
+R20A_REGEX = re.compile(r"SMC SC826-P")
 R50_REGEX = re.compile(r"iX eDrawer4048S([12])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
@@ -356,7 +357,7 @@ class Enclosures(object):
             system_info["system_product"] and
             system_info["system_product"].startswith("TRUENAS-") and
             "-MINI-" not in system_info["system_product"] and
-            system_info["system_product"] != "TRUENAS-R20"
+            system_info["system_product"] not in ["TRUENAS-R20", "TRUENAS-R20A"]
         ):
             blacklist.append("AHCI SGPIO Enclosure 2.00")
 
@@ -367,10 +368,10 @@ class Enclosures(object):
             if any(s in enclosure.encname for s in blacklist):
                 continue
             if (
-                system_info["system_product"] == "TRUENAS-R20" and
+                system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"] and
                 enclosure.encname == "AHCI SGPIO Enclosure 2.00"
             ):
-                if enclosure.model == "R20, Drawer #2":
+                if enclosure.model.endswith("Drawer #2"):
                     enclosures_tail.append(enclosure)
 
                 continue
@@ -482,20 +483,20 @@ class Enclosure(object):
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
             self.controller = True
-        elif R_SERIES_REGEX.match(self.encname):
+        elif R_SERIES_REGEX.match(self.encname) or R20A_REGEX.match(self.encname):
             self.model = self.system_info["system_product"].replace("TRUENAS-", "")
             self.controller = True
-            if self.model == "R20":
+            if self.model in ["R20", "R20A"]:
                 self.model = f"{self.model}, Drawer #1"
             if self.model == "R40":
                 index = [v for v in self.stat.values() if "ECStream FS2" in v].index(data)
                 self.model = f"{self.model}, Drawer #{index + 1}"
         elif (
-            self.system_info["system_product"] == "TRUENAS-R20" and
+            self.system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"] and
             self.encname == "AHCI SGPIO Enclosure 2.00" and
             len(data.splitlines()) == 6
         ):
-            self.model = "R20, Drawer #2"
+            self.model = f"{self.system_info['system_product'].replace('TRUENAS-', '')}, Drawer #2"
             self.controller = True
         elif m := R50_REGEX.match(self.encname):
             self.model = f"R50, Drawer #{m.group(1)}"
