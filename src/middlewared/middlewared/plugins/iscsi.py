@@ -457,7 +457,7 @@ class iSCSITargetExtentModel(sa.Model):
     __tablename__ = 'services_iscsitargetextent'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_extent_name = sa.Column(sa.String(120))
+    iscsi_target_extent_name = sa.Column(sa.String(120), unique=True)
     iscsi_target_extent_serial = sa.Column(sa.String(16))
     iscsi_target_extent_type = sa.Column(sa.String(120))
     iscsi_target_extent_path = sa.Column(sa.String(120))
