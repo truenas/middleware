@@ -235,7 +235,7 @@ class PoolModel(sa.Model):
     __tablename__ = 'storage_volume'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    vol_name = sa.Column(sa.String(120))
+    vol_name = sa.Column(sa.String(120), unique=True)
     vol_guid = sa.Column(sa.String(50))
     vol_encrypt = sa.Column(sa.Integer(), default=0)
     vol_encryptkey = sa.Column(sa.String(50))
@@ -247,7 +247,7 @@ class EncryptedDiskModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     encrypted_volume_id = sa.Column(sa.ForeignKey('storage_volume.id', ondelete='CASCADE'))
     encrypted_disk_id = sa.Column(sa.ForeignKey('storage_disk.disk_identifier', ondelete='SET NULL'), nullable=True)
-    encrypted_provider = sa.Column(sa.String(120))
+    encrypted_provider = sa.Column(sa.String(120), unique=True)
 
 
 class PoolService(CRUDService):

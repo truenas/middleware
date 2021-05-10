@@ -496,7 +496,7 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_pblocksize = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_avail_threshold = sa.Column(sa.Integer(), nullable=True)
     iscsi_target_extent_comment = sa.Column(sa.String(120))
-    iscsi_target_extent_naa = sa.Column(sa.String(34))
+    iscsi_target_extent_naa = sa.Column(sa.String(34), unique=True)
     iscsi_target_extent_insecure_tpc = sa.Column(sa.Boolean(), default=True)
     iscsi_target_extent_xen = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_rpm = sa.Column(sa.String(20), default='SSD')
@@ -1030,8 +1030,8 @@ class iSCSITargetModel(sa.Model):
     __tablename__ = 'services_iscsitarget'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_name = sa.Column(sa.String(120))
-    iscsi_target_alias = sa.Column(sa.String(120), nullable=True)
+    iscsi_target_name = sa.Column(sa.String(120), unique=True)
+    iscsi_target_alias = sa.Column(sa.String(120), nullable=True, unique=True)
     iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
 
 

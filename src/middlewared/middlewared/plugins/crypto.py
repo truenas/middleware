@@ -964,7 +964,7 @@ class CertificateModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     cert_type = sa.Column(sa.Integer())
-    cert_name = sa.Column(sa.String(120))
+    cert_name = sa.Column(sa.String(120), unique=True)
     cert_certificate = sa.Column(sa.Text(), nullable=True)
     cert_privatekey = sa.Column(sa.EncryptedText(), nullable=True)
     cert_CSR = sa.Column(sa.Text(), nullable=True)
@@ -1982,7 +1982,7 @@ class CertificateAuthorityModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     cert_type = sa.Column(sa.Integer())
-    cert_name = sa.Column(sa.String(120))
+    cert_name = sa.Column(sa.String(120), unique=True)
     cert_certificate = sa.Column(sa.Text(), nullable=True)
     cert_privatekey = sa.Column(sa.EncryptedText(), nullable=True)
     cert_CSR = sa.Column(sa.Text(), nullable=True)
