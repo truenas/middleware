@@ -13,7 +13,6 @@ from middlewared.event import EventSource
 from middlewared.utils import osc
 
 from .iostat import DiskStats
-from .share_stats import ShareStats
 
 if osc.IS_FREEBSD:
     import sysctl
@@ -167,7 +166,6 @@ class RealtimeEventSource(EventSource):
             'speeds': self.get_interface_speeds(),
         }
         disk_stats = DiskStats()
-        share_stats = ShareStats(self.middleware)
 
         while not self._cancel_sync.is_set():
             data = {}
@@ -304,7 +302,6 @@ class RealtimeEventSource(EventSource):
                     }
 
             data['disks'] = disk_stats.get()
-            data['shares'] = share_stats.get()
 
             self.send_event('ADDED', fields=data)
             time.sleep(2)
