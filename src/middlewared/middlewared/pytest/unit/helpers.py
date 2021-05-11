@@ -1,5 +1,6 @@
 import functools
 import sys
+from unittest.mock import Mock
 
 from middlewared.utils import osc
 from middlewared.utils.plugins import LoadPluginsMixin
@@ -13,6 +14,7 @@ if osc.IS_FREEBSD:
 
 def load_compound_service(name):
     lpm = LoadPluginsMixin()
+    lpm.event_register = Mock()
     lpm._load_plugins()
     service = lpm.get_service(name)
     return functools.partial(_compound_service_wrapper, service)
