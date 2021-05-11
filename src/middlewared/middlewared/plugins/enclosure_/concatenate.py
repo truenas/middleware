@@ -36,7 +36,7 @@ class EnclosureService(Service):
             for elements in enclosure["elements"]:
                 for element in elements["elements"]:
                     element["original"] = {
-                        "enclosure": original_id,
+                        "enclosure_id": original_id,
                         "slot": element["slot"],
                     }
 
