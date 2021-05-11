@@ -322,7 +322,7 @@ class PoolService(CRUDService):
                     ('pool', 'in', vol_names),
                     ('type', 'in', types),
                 ],
-                {'extra': {'retrieve_properties': False}},
+                {'extra': {'retrieve_properties': False}, 'order_by': ['name']},
             )
         ]
 
