@@ -1,5 +1,5 @@
 from middlewared.schema import Any, Str, accepts, Int
-from middlewared.service import Service, private
+from middlewared.service import Service, private, job
 from middlewared.utils import filter_list, osc
 
 from collections import namedtuple
@@ -211,7 +211,8 @@ class DSCache(Service):
 
         return res
 
-    async def refresh(self):
+    @job(lock="dscache_refresh")
+    async def refresh(self, job):
         """
         This is called from a cronjob every 24 hours and when a user clicks on the
         UI button to 'rebuild directory service cache'.
@@ -223,7 +224,7 @@ class DSCache(Service):
         for ds in available_ds:
             ds_state = await self.middleware.call(f'{ds}.get_state')
             if ds_state == 'HEALTHY':
-                await self.middleware.call(f'{ds}.fill_cache', True)
+                await job.wrap(await self.middleware.call(f'{ds}.fill_cache', True))
             elif ds_state != 'DISABLED':
                 self.logger.debug('Unable to refresh [%s] cache, state is: %s' % (ds, ds_state))
             else:

@@ -6,7 +6,7 @@ import tdb
 
 from base64 import b64encode, b64decode
 from middlewared.schema import accepts
-from middlewared.service import Service, private
+from middlewared.service import Service, private, job
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.service_exception import CallError
 from middlewared.utils import run, osc
@@ -182,8 +182,9 @@ class DirectoryServices(Service):
         return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
 
     @accepts()
-    async def cache_refresh(self):
-        return await self.middleware.call('dscache.refresh')
+    @job()
+    async def cache_refresh(self, job):
+        return await job.wrap(await self.middleware.call('dscache.refresh'))
 
     @private
     async def ssl_choices(self, dstype):
