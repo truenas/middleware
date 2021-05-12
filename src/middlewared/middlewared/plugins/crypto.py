@@ -801,7 +801,7 @@ class CryptoKeyService(Service):
                 not_valid_before
             ).not_valid_after(
                 not_valid_after
-            ).serial_number(options.get('serial') or 1)
+            ).serial_number(options.get('serial') or random.randint(1000, pow(2, 30)))
 
         if san:
             cert = cert.add_extension(san, False)
