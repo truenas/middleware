@@ -3135,6 +3135,7 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
+        ('edit', _add_inherit('special_small_blocks')),
         ('add', Inheritable('quota_warning', value=Int('quota_warning', validators=[Range(0, 100)]))),
         ('add', Inheritable('quota_critical', value=Int('quota_critical', validators=[Range(0, 100)]))),
         ('add', Inheritable('refquota_warning', value=Int('refquota_warning', validators=[Range(0, 100)]))),
