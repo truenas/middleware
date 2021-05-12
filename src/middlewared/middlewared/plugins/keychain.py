@@ -630,6 +630,8 @@ class KeychainCredentialService(CRUDService):
         # Make sure SSH is enabled
         if not service["enable"]:
             await self.middleware.call("service.update", "ssh", {"enable": True})
+
+        if service["state"] != "RUNNING":
             await self.middleware.call("service.start", "ssh")
 
             # This might be the first time of the service being enabled
