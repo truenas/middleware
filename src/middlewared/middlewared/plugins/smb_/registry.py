@@ -132,12 +132,9 @@ class SharingSMBService(Service):
         gl.update({
             'fruit_enabled': globalconf.get('fruit_enabled', None),
             'ad_enabled': globalconf.get('ad_enabled', None),
-            'afp_shares': globalconf.get('afp_shares', None),
             'nfs_exports': globalconf.get('nfs_exports', None),
             'smb_shares': globalconf.get('smb_shares', None)
         })
-        if gl['afp_shares'] is None:
-            gl['afp_shares'] = await self.middleware.call('sharing.afp.query', [['enabled', '=', True]])
         if gl['nfs_exports'] is None:
             gl['nfs_exports'] = await self.middleware.call('sharing.nfs.query', [['enabled', '=', True]])
         if gl['smb_shares'] is None:
@@ -248,18 +245,6 @@ class SharingSMBService(Service):
                 await self.middleware.call('datastore.update', 'sharing.cifs_share',
                                            data['id'], {'cifs_durablehandle': False})
                 data['durablehandle'] = False
-
-        if any(filter(lambda x: f"{x['path']}/" in f"{conf['path']}/" or f"{conf['path']}/" in f"{x['path']}/", gl['afp_shares'])):
-            self.logger.debug("SMB share [%s] is also an AFP share. "
-                              "Applying parameters for mixed-protocol share.", data['name'])
-            conf.update({
-                "fruit:locking": "netatalk",
-                "fruit:metadata": "netatalk",
-                "fruit:resource": "file",
-                "strict locking": "auto",
-                "streams_xattr:prefix": "user.",
-                "streams_xattr:store_stream_type": "no"
-            })
 
     @private
     @filterable

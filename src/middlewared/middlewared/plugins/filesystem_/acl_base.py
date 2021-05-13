@@ -402,7 +402,7 @@ class ACLBase(ServicePartBase):
 
     @accepts(
         Str('acl_type', default='OPEN', enum=ACLDefault.options()),
-        Str('share_type', default='NONE', enum=['NONE', 'AFP', 'SMB', 'NFS']),
+        Str('share_type', default='NONE', enum=['NONE', 'SMB', 'NFS']),
     )
     async def get_default_acl(self, acl_type, share_type):
         """
