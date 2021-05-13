@@ -5,6 +5,9 @@ from .enums import Status
 
 async def _event_system(middleware, event_type, args):
     if args['id'] == 'ready':
+        if await middleware.call('failover.licensed'):
+            return
+
         await middleware.call('truecommand.start_truecommand_service')
 
 
@@ -20,4 +23,5 @@ async def setup(middleware):
 
     middleware.event_subscribe('system', _event_system)
     if await middleware.call('system.ready'):
-        asyncio.ensure_future(middleware.call('truecommand.start_truecommand_service'))
+        if not await middleware.call('failover.licensed'):
+            asyncio.ensure_future(middleware.call('truecommand.start_truecommand_service'))
