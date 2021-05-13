@@ -813,6 +813,7 @@ class FailoverService(Service):
                     run('/usr/sbin/service watchdogd quietstart')
                     self.run_call('service.stop', 'smartd', {'ha_propagate': False})
                     self.run_call('service.stop', 'collectd', {'ha_propagate': False})
+                    self.run_call('truecommand.stop_truecommand_service')
                     self.run_call('jail.stop_on_shutdown')
                     for vm in (self.run_call('vm.query', [['status.state', '=', 'RUNNING']]) or []):
                         self.run_call('vm.poweroff', vm['id'], True)
