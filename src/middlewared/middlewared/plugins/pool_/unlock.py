@@ -15,7 +15,6 @@ class PoolDatasetService(Service):
         """
         await self.middleware.call('pool.dataset.get_instance', dataset)
         services = {
-            'afp': 'AFP',
             'cifs': 'SMB',
             'ftp': 'FTP',
             'iscsitarget': 'iSCSI',

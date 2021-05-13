@@ -1,6 +1,5 @@
 from middlewared.utils import osc
 
-from .afp import AFPService
 from .cifs import CIFSService
 from .docker import DockerService
 from .dynamicdns import DynamicDNSService
@@ -62,7 +61,6 @@ from .pseudo.misc import (
 )
 
 all_services = [
-    AFPService,
     CIFSService,
     DSCacheService,
     DynamicDNSService,

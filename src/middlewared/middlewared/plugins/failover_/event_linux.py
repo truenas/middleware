@@ -67,7 +67,7 @@ class FailoverService(Service):
 
     # list of critical services that get restarted first
     # before the other services during a failover event
-    CRITICAL_SERVICES = ['iscsitarget', 'cifs', 'nfs', 'afp']
+    CRITICAL_SERVICES = ['iscsitarget', 'cifs', 'nfs']
 
     # option to be given when changing the state of a service
     # during a failover event, we do not want to replicate
