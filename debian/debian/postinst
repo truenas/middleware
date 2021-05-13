@@ -34,7 +34,6 @@ systemctl disable scst
 systemctl disable inadyn
 systemctl disable tftpd-hpa
 systemctl disable proftpd
-systemctl disable netatalk
 systemctl disable nmbd
 systemctl disable smbd
 systemctl disable winbind

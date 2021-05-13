@@ -102,9 +102,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
         ],
-        'afpd': [
-            {'type': 'py', 'path': 'afpd', 'checkpoint': 'pool_import'},
-        ],
         'cron': [
             {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
@@ -150,7 +147,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/kdump-tools', 'platform': 'Linux'},
         ],
         'rc': [
-            {'type': 'py', 'path': 'rc.conf', 'platform': 'FreeBSD'},
             {'type': 'py', 'path': 'systemd', 'platform': 'Linux'},
         ],
         'sysctl': [

@@ -740,12 +740,13 @@ class SharingSMBModel(sa.Model):
     cifs_durablehandle = sa.Column(sa.Boolean())
     cifs_streams = sa.Column(sa.Boolean())
     cifs_timemachine = sa.Column(sa.Boolean(), default=False)
+    cifs_timemachine_quota = sa.Column(sa.Integer(), default=0)
     cifs_vuid = sa.Column(sa.String(36))
     cifs_shadowcopy = sa.Column(sa.Boolean())
     cifs_fsrvp = sa.Column(sa.Boolean())
     cifs_enabled = sa.Column(sa.Boolean(), default=True)
     cifs_share_acl = sa.Column(sa.Text())
-    cifs_cluster_volname = sa.Column(sa.String(255), nullable=False)
+    cifs_cluster_volname = sa.Column(sa.String(255))
 
 
 class SharingSMBService(SharingService):
@@ -793,6 +794,7 @@ class SharingSMBService(SharingService):
         Bool('ro', default=False),
         Bool('browsable', default=True),
         Bool('timemachine', default=False),
+        Int('timemachine_quota', default=0),
         Bool('recyclebin', default=False),
         Bool('guestok', default=False),
         Bool('abe', default=False),
@@ -1388,6 +1390,8 @@ async def pool_post_import(middleware, pool):
         By the time the post-import hook is called, the smb.configure should have
         already completed and initialized the SMB service.
         """
+        await middleware.call('sharing.smb.disable_acl_if_trivial')
+        await middleware.call('sharing.smb.set_timemachine_quotas')
         asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
         return
 
@@ -1398,6 +1402,8 @@ async def pool_post_import(middleware, pool):
             ('path', '^', f'{path}/'),
         ])
     ]):
+        await middleware.call('sharing.smb.disable_acl_if_trivial')
+        await middleware.call('sharing.smb.set_timemachine_quotas')
         asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
 
 
@@ -1414,6 +1420,8 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         mDNS may need to be reloaded if a time machine share is located on
         the share being attached.
         """
+        await self.middleware.call('sharing.smb.disable_acl_if_trivial')
+        await self.middleware.call('sharing.smb.set_timemachine_quotas')
         reg_sync = await self.middleware.call('sharing.smb.sync_registry')
         await reg_sync.wait()
         await self.middleware.call('service.reload', 'mdns')

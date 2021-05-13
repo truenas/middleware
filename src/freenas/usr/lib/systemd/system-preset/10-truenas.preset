@@ -33,7 +33,6 @@ disable apache2.service
 disable wsdd.service
 disable libvirtd.service
 disable winbind.service
-disable netatalk.service
 disable glusterd*
 disable docker*
 disable kubelet*
