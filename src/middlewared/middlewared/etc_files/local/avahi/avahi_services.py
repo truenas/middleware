@@ -67,19 +67,16 @@ class mDNSService(object):
             return True
 
         if self.service == 'ADISK':
-            afp_is_running = any(filter_list(
-                self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]
-            ))
             smb_is_running = any(filter_list(
                 self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]
             ))
-            if afp_is_running or smb_is_running:
+            if smb_is_running:
                 return True
             else:
                 return False
 
         if self.service == 'AFPOVERTCP':
-            return any(filter_list(self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]))
+            return any(filter_list(self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]))
 
         if self.service == 'SMB':
             return any(filter_list(self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]))
@@ -127,57 +124,32 @@ class mDNSService(object):
 
         if self.service == 'ADISK':
             iindex = [AvahiConst.AVAHI_IF_UNSPEC]
-            afp_is_running = any(filter_list(
-                self.service_info, [('service', '=', 'afp'), GENERATE_SERVICE_FILTER]
-            ))
             smb_is_running = any(filter_list(
                 self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]
             ))
 
-            if afp_is_running:
-                afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
-            else:
-                afp_shares = []
             if smb_is_running:
                 smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
             else:
                 smb_shares = []
 
-            afp = set([(x['name'], x['path']) for x in afp_shares])
             smb = set([(x['name'], x['path']) for x in smb_shares])
-            if len(afp | smb) == 0:
+            if len(smb) == 0:
                 return (None, [AvahiConst.AVAHI_IF_UNSPEC])
 
-            mixed_shares = afp & smb
-            afp.difference_update(mixed_shares)
-            smb.difference_update(mixed_shares)
-            if afp_shares or smb_shares:
+            if smb_shares:
                 iindex = []
                 dkno = 0
                 txtrecord['sys'] = 'waMa=0,adVF=0x100'
-                for i in mixed_shares:
-                    smb_advu = (list(filter(lambda x: i[0] == x['name'], smb_shares)))[0]['vuid']
-                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x83,adVU={smb_advu}'
-                    dkno += 1
-
                 for i in smb:
                     smb_advu = (list(filter(lambda x: i[0] == x['name'], smb_shares)))[0]['vuid']
-                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x82,adVU={smb_advu}'
-                    dkno += 1
-
-                for i in afp:
-                    afp_advu = (list(filter(lambda x: i[0] == x['name'], afp_shares)))[0]['vuid']
-                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x81,adVU={afp_advu}'
+                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x83,adVU={smb_advu}'
                     dkno += 1
 
                 if smb:
                     smb_iindex = self._get_interfaceindex('SMB')
                     if smb_iindex != [AvahiConst.AVAHI_IF_UNSPEC]:
                         iindex.extend(smb_iindex)
-                if afp:
-                    afp_iindex = self._get_interfaceindex('AFP')
-                    if afp_iindex != [AvahiConst.AVAHI_IF_UNSPEC]:
-                        iindex.extend(afp_iindex)
 
                 if not iindex:
                     iindex = [AvahiConst.AVAHI_IF_UNSPEC]
@@ -214,7 +186,7 @@ class mDNSService(object):
         bind_ip = []
         if service is None:
             service = self.service
-        if service in ['AFP', 'NFS', 'SMB']:
+        if service in ['NFS', 'SMB']:
             bind_ip = self.middleware.call_sync(f'{service.lower()}.config')['bindip']
 
         if service in ['HTTP', 'HTTPS']:
