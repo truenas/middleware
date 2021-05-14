@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import functools
 import re
 import time
@@ -18,6 +18,7 @@ from middlewared.utils.asyncio_ import asyncio_map
 
 
 RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)
+RE_TIME_SCSIPRINT_EXTENDED = re.compile(r'Please wait (\d+) minutes for test to complete')
 
 
 async def annotate_disk_smart_tests(middleware, devices, disk):
@@ -434,6 +435,11 @@ class SMARTTestService(CRUDService):
                     self.logger.error('Unable to parse expected_result_time: %r', e)
                 else:
                     expected_result_time = expected_result_time.astimezone(timezone.utc).replace(tzinfo=None)
+            elif time_details := re.search(RE_TIME_SCSIPRINT_EXTENDED, result):
+                expected_result_time = datetime.utcnow() + timedelta(minutes=int(time_details.group(1)))
+            elif 'Self Test has begun' in result:
+                # scsiprint.cpp does not always print expected result time
+                expected_result_time = datetime.utcnow() + timedelta(minutes=1)
 
             if expected_result_time:
                 output['expected_result_time'] = expected_result_time
