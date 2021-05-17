@@ -259,8 +259,7 @@ class InterfaceService(Service):
         name = iface.name
 
         # Interface not in database lose addresses
-        for address in iface.addresses:
-            iface.remove_address(address)
+        iface.flush()
 
         dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
         # Kill dhclient if its running for this interface

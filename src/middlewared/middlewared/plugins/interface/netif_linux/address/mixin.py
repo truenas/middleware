@@ -18,6 +18,10 @@ class AddressMixin:
     def add_address(self, address):
         self._address_op("add", address)
 
+    def flush(self):
+        # Remove all configured ip addresses
+        run(['ip', 'addr', 'flush', 'dev', self.name, 'scope', 'global'])
+
     def remove_address(self, address):
         self._address_op("del", address)
 
