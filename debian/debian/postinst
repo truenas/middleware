@@ -51,6 +51,9 @@ update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 update-alternatives --set arptables /usr/sbin/arptables-legacy
 update-alternatives --set ebtables /usr/sbin/ebtables-legacy
 
+# Add nut to dialout group - NAS-110578
+usermod -a -G dialout nut
+
 # Copy to /conf/base
 for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf /var/log; do
     mkdir -p "$(dirname "/conf/base/$bit")"
