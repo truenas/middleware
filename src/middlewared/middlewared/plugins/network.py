@@ -1973,6 +1973,16 @@ class InterfaceService(CRUDService):
 
             # If there are no interfaces configured we start DHCP on all
             if not interfaces:
+                # We should unconfigure interface first before doing autoconfigure. This can be required for cases
+                # like the following:
+                # 1) Fresh install with system having 1 NIC
+                # 2) Configure static ip for the NIC leaving dhcp checked
+                # 3) Test changes
+                # 4) Do not save changes and wait for time out
+                # 5) Rollback happens where the only nic is removed from database
+                # 6) If we don't unconfigure, autoconfigure is called which is supposed to start dhclient on the
+                #    interface. However this will result in the static ip still being set.
+                await self.middleware.call('interface.unconfigure', iface, cloned_interfaces, parent_interfaces)
                 dhclient_aws.append(asyncio.ensure_future(
                     self.middleware.call('interface.autoconfigure', iface, wait_dhcp)
                 ))
