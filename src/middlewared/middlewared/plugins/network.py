@@ -1007,10 +1007,8 @@ class InterfaceService(CRUDService):
         return f'{prefix}{number}'
 
     async def _common_validation(self, verrors, schema_name, data, itype, update=None):
-        if update:
-            filters = [('id', '!=', update['id'])]
-        else:
-            filters = []
+        def _get_filters(key):
+            return [[key, '!=', update['id']]] if update else []
 
         validation_attrs = {
             'aliases': ['Active node IP address', ' cannot be changed.', ' is required when configuring HA'],
@@ -1019,24 +1017,27 @@ class InterfaceService(CRUDService):
             'failover_group': ['Failover group number', ' cannot be changed.' ' is required when configuring HA'],
             'mtu': ['MTU', ' cannot be changed.'],
             'ipv4_dhcp': ['DHCP', ' cannot be changed.'],
-            'ipv6_auto': ['Autconfig for IPv6', ' cannot be changed.'],
+            'ipv6_auto': ['Autoconfig for IPv6', ' cannot be changed.'],
         }
 
         ifaces = {
             i['name']: i
-            for i in await self.middleware.call('interface.query', filters)
+            for i in await self.middleware.call('interface.query', _get_filters('id'))
         }
+        datastore_ifaces = await self.middleware.call(
+            'datastore.query', 'network.interfaces', _get_filters('int_interface')
+        )
 
         if 'name' in data and data['name'] in ifaces:
             verrors.add(f'{schema_name}.name', 'Interface name is already in use.')
 
         if data.get('ipv4_dhcp') and any(
-            filter(lambda x: x['ipv4_dhcp'] and not x['fake'], ifaces.values())
+            filter(lambda x: x['int_dhcp'] and not ifaces[x['int_interface']]['fake'], datastore_ifaces)
         ):
             verrors.add(f'{schema_name}.ipv4_dhcp', 'Only one interface can be used for DHCP.')
 
         if data.get('ipv6_auto') and any(
-            filter(lambda x: x['ipv6_auto'] and not x['fake'], ifaces.values())
+            filter(lambda x: x['int_ipv6auto'] and not ifaces[x['int_interface']]['fake'], datastore_ifaces)
         ):
             verrors.add(
                 f'{schema_name}.ipv6_auto',
