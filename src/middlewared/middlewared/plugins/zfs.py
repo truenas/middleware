@@ -1113,8 +1113,12 @@ class ZFSSnapshot(CRUDService):
 
     @accepts(Dict(
         'snapshot_clone',
-        Str('snapshot'),
-        Str('dataset_dst'),
+        Str('snapshot', required=True, empty=False),
+        Str('dataset_dst', required=True, empty=False),
+        Dict(
+            'dataset_properties',
+            additional_attrs=True,
+        )
     ))
     def clone(self, data):
         """
@@ -1126,14 +1130,12 @@ class ZFSSnapshot(CRUDService):
 
         snapshot = data.get('snapshot', '')
         dataset_dst = data.get('dataset_dst', '')
-
-        if not snapshot or not dataset_dst:
-            return False
+        props = data['dataset_properties']
 
         try:
             with libzfs.ZFS() as zfs:
                 snp = zfs.get_snapshot(snapshot)
-                snp.clone(dataset_dst)
+                snp.clone(dataset_dst, props)
                 dataset = zfs.get_dataset(dataset_dst)
                 if dataset.type.name == 'FILESYSTEM':
                     dataset.mount_recursive()
