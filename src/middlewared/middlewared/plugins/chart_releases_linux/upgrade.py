@@ -326,7 +326,7 @@ class ChartReleaseService(Service):
         """
         await self.middleware.call('kubernetes.validate_k8s_setup')
         images = [
-            {'orig_tag': tag, **(await self.middleware.call('container.image.parse_image_tag', tag))}
+            {'orig_tag': tag, 'from_image': tag.rsplit(':', 1)[0], 'tag': tag.rsplit(':', 1)[-1]}
             for tag in (await self.middleware.call(
                 'chart.release.query', [['id', '=', release_name]],
                 {'extra': {'retrieve_resources': True}, 'get': True}
@@ -336,7 +336,7 @@ class ChartReleaseService(Service):
 
         bulk_job = await self.middleware.call(
             'core.bulk', 'container.image.pull', [
-                [{'from_image': f'{image["registry"]}/{image["image"]}', 'tag': image['tag']}]
+                [{'from_image': image['from_image'], 'tag': image['tag']}]
                 for image in images
             ]
         )
