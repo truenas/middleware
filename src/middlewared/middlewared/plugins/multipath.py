@@ -83,6 +83,5 @@ class MultipathService(CRUDService):
                 'status': g.find("./config/State").text,
                 'children': children,
             }),
-        else:
-            doc = None
-            return result
+
+        return result
