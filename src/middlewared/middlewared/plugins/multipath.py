@@ -7,6 +7,9 @@ from middlewared.utils import filter_list
 
 class MultipathService(CRUDService):
 
+    class Config:
+        datastore_primary_key_type = 'string'
+
     @filterable
     def query(self, filters, options):
         """
