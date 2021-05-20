@@ -214,8 +214,13 @@ class DNSAuthenticatorService(CRUDService):
         cli_namespace = 'system.acme.dns_auth'
 
     @private
-    async def common_validation(self, data, schema_name):
+    async def common_validation(self, data, schema_name, old=None):
         verrors = ValidationErrors()
+        filters = [['name', '!=', old['name']]] if old else []
+        filters.append(['name', '=', data['name']])
+        if await self.query(filters):
+            verrors.add(f'{schema_name}.name', 'Specified name is already in use')
+
         if data['authenticator'] not in await self.middleware.call('acme.dns.authenticator.get_authenticator_schemas'):
             verrors.add(
                 f'{schema_name}.authenticator',
@@ -308,7 +313,7 @@ class DNSAuthenticatorService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self.common_validation(new, 'dns_authenticator_update')
+        await self.common_validation(new, 'dns_authenticator_update', old)
 
         await self.middleware.call(
             'datastore.update',
