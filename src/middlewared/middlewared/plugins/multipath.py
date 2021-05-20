@@ -55,6 +55,18 @@ class MultipathService(CRUDService):
         return filter_list(self.__get_multipaths(), filters=filters or [], options=options or {})
 
     def __get_multipaths(self):
+        # we use the built-in xml module here because we had previously
+        # used lxml. For reasons that still are unknown, lxml was
+        # allocating/leaking memory that was never reclaimed. It's unknown
+        # if this was a text book definition of a memory leak or if this
+        # was "expected" behavior that we needed to account for. This
+        # method runs in our io thread pool which is where we were seeing
+        # the problem. Running this in our process pool "fixed" the memory
+        # allocation problem but it's unclear if we just "moved" the leak
+        # there instead. So...do NOT use lxml here unless you _really_
+        # know what you're doing and/or understand the intricies of lxml
+        # underneath the hood. Be sure and monitor memory usage if you make
+        # a change here :-)
         doc = ET.fromstring(sysctl.filter("kern.geom.confxml")[0].value)
         result = []
         for g in doc.iterfind(".//class[name = 'MULTIPATH']/geom"):
