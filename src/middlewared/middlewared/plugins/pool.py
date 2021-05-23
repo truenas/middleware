@@ -2934,6 +2934,7 @@ class PoolDatasetService(CRUDService):
                 Str('value', requried=True),
             )],
         ),
+        Bool('create_ancestors', default=False),
         register=True,
     ))
     @pass_app(rest=True)
@@ -2981,9 +2982,25 @@ class PoolDatasetService(CRUDService):
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         else:
+            parent_name = data['name'].rsplit('/', 1)[0]
+            if data['create_ancestors']:
+                # If we want to create ancestors, let's just ensure that we have at least one parent which exists
+                while not await self.middleware.call(
+                    'pool.dataset.query',
+                    [['id', '=', parent_name]], {
+                        'extra': {'retrieve_children': False, 'properties': []}
+                    }
+                ):
+                    if '/' not in parent_name:
+                        # Root dataset / pool does not exist
+                        verrors.add('pool_dataset_create.name', 'Pool where dataset is to be created does not exist')
+                        verrors.check()
+
+                    parent_name = parent_name.rsplit('/', 1)[0]
+
             parent_ds = await self.middleware.call(
                 'pool.dataset.query',
-                [('id', '=', data['name'].rsplit('/', 1)[0])],
+                [('id', '=', parent_name)],
                 {'extra': {'retrieve_children': False}}
             )
             await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
