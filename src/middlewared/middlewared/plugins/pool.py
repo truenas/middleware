@@ -2993,9 +2993,7 @@ class PoolDatasetService(CRUDService):
                 ):
                     if '/' not in parent_name:
                         # Root dataset / pool does not exist
-                        verrors.add('pool_dataset_create.name', 'Pool where dataset is to be created does not exist')
-                        verrors.check()
-
+                        break
                     parent_name = parent_name.rsplit('/', 1)[0]
 
             parent_ds = await self.middleware.call(
@@ -3124,6 +3122,7 @@ class PoolDatasetService(CRUDService):
             'name': data['name'],
             'type': data['type'],
             'properties': props,
+            'create_ancestors': data['create_ancestors'],
         })
 
         dataset_data = {
@@ -3293,10 +3292,14 @@ class PoolDatasetService(CRUDService):
             )
 
         if not parent:
-            verrors.add(
-                f'{schema}.name',
-                'Please specify a pool which exists for the dataset/volume to be created'
-            )
+            # This will only be true on dataset creation
+            if data['create_ancestors']:
+                verrors.add(
+                    f'{schema}.name',
+                    'Please specify a pool which exists for the dataset/volume to be created'
+                )
+            else:
+                verrors.add(f'{schema}.name', 'Parent dataset does not exist for specified name')
         else:
             parent = parent[0]
 
