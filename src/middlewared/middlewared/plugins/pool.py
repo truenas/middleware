@@ -3126,6 +3126,9 @@ class PoolDatasetService(CRUDService):
             attr.enum.append('INHERIT')
         return {'name': name, 'method': add}
 
+    def _user_props_rename(name):
+        return {'name': name, 'new_name': 'user_properties_update'}
+
     @accepts(Str('id', required=True), Patch(
         'pool_dataset_create', 'pool_dataset_update',
         ('rm', {'name': 'name'}),
@@ -3145,6 +3148,7 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
+        ('edit', _user_props_rename('user_properties')),
         ('add', Inheritable('quota_warning', value=Int('quota_warning', validators=[Range(0, 100)]))),
         ('add', Inheritable('quota_critical', value=Int('quota_critical', validators=[Range(0, 100)]))),
         ('add', Inheritable('refquota_warning', value=Int('refquota_warning', validators=[Range(0, 100)]))),
@@ -3169,7 +3173,6 @@ class PoolDatasetService(CRUDService):
                 }]
             }
         """
-
         verrors = ValidationErrors()
 
         dataset = await self.middleware.call('pool.dataset.query', [('id', '=', id)])
@@ -3223,7 +3226,7 @@ class PoolDatasetService(CRUDService):
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
-        props.update(await self._get_create_update_user_props(data['user_properties'], True))
+        props.update(await self._get_create_update_user_props(data['user_properties_update'], True))
 
         try:
             await self.middleware.call('zfs.dataset.update', id, {'properties': props})
@@ -3330,9 +3333,10 @@ class PoolDatasetService(CRUDService):
                             'Volume size should be a multiple of volume block size'
                         )
 
-        if 'user_properties' in data:
-            for index, prop in enumerate(data['user_properties']):
-                prop_schema = f'{schema}.user_properties.{index}'
+        user_prop_key = 'user_properties' if mode == 'CREATE' else 'user_properties_update'
+        if user_prop_key in data:
+            for index, prop in enumerate(data[user_prop_key]):
+                prop_schema = f'{schema}.{user_prop_key}.{index}'
                 if mode == 'CREATE':
                     if 'value' not in prop:
                         verrors.add(f'{prop_schema}.value', 'Value is required when creating user property')
