@@ -772,6 +772,7 @@ class ZFSDatasetService(CRUDService):
 
     @accepts(Dict(
         'dataset_create',
+        Bool('create_ancestors', default=False),
         Str('name', required=True),
         Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
         Dict(
@@ -810,7 +811,10 @@ class ZFSDatasetService(CRUDService):
         try:
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(data['name'].split('/')[0])
-                pool.create(data['name'], params, fstype=getattr(libzfs.DatasetType, data['type']), sparse_vol=sparse)
+                pool.create(
+                    data['name'], params, fstype=getattr(libzfs.DatasetType, data['type']),
+                    sparse_vol=sparse, create_ancestors=data['create_ancestors'],
+                )
         except libzfs.ZFSException as e:
             self.logger.error('Failed to create dataset', exc_info=True)
             raise CallError(f'Failed to create dataset: {e}')
