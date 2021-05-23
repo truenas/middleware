@@ -850,45 +850,39 @@ class ZFSDatasetService(CRUDService):
                     for k in ['quota', 'refquota']:
                         if k in properties:
                             properties[k] = properties.pop(k)  # Set them last
-                    for k, v in properties.items():
-
-                        # If prop already exists we just update it,
-                        # otherwise create a user property
-                        prop = dataset.properties.get(k)
-                        try:
-                            if prop:
-                                if v.get('source') == 'INHERIT':
-                                    prop.inherit(recursive=v.get('recursive', False))
-                                elif 'value' in v and (
-                                    prop.value != v['value'] or prop.source.name == 'INHERITED'
-                                ):
-                                    prop.value = v['value']
-                                elif 'parsed' in v and (
-                                    prop.parsed != v['parsed'] or prop.source.name == 'INHERITED'
-                                ):
-                                    prop.parsed = v['parsed']
-                            else:
-                                if v.get('source') == 'INHERIT':
-                                    pass
-                                else:
-                                    if 'value' not in v:
-                                        raise ValidationError(
-                                            'properties', f'properties.{k} needs a "value" attribute'
-                                        )
-                                    if ':' not in k:
-                                        raise ValidationError(
-                                            'properties', f'User property needs a colon (:) in its name`'
-                                        )
-                                    prop = libzfs.ZFSUserProperty(v['value'])
-                                    dataset.properties[k] = prop
-                        except libzfs.ZFSException as e:
-                            raise ZFSSetPropertyError(k, str(e))
+                    self.update_zfs_object_props(properties, dataset)
 
         except libzfs.ZFSException as e:
             self.logger.error('Failed to update dataset', exc_info=True)
             raise CallError(f'Failed to update dataset: {e}')
         else:
             return data
+
+    def update_zfs_object_props(self, properties, zfs_object):
+        for k, v in properties.items():
+            # If prop already exists we just update it,
+            # otherwise create a user property
+            prop = zfs_object.properties.get(k)
+            try:
+                if prop:
+                    if v.get('source') == 'INHERIT':
+                        prop.inherit(recursive=v.get('recursive', False))
+                    elif 'value' in v and (prop.value != v['value'] or prop.source.name == 'INHERITED'):
+                        prop.value = v['value']
+                    elif 'parsed' in v and (prop.parsed != v['parsed'] or prop.source.name == 'INHERITED'):
+                        prop.parsed = v['parsed']
+                else:
+                    if v.get('source') == 'INHERIT':
+                        pass
+                    else:
+                        if 'value' not in v:
+                            raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
+                        if ':' not in k:
+                            raise ValidationError('properties', f'User property needs a colon (:) in its name`')
+                        prop = libzfs.ZFSUserProperty(v['value'])
+                        zfs_object.properties[k] = prop
+            except libzfs.ZFSException as e:
+                raise ZFSSetPropertyError(k, str(e))
 
     @accepts(
         Str('id'),
