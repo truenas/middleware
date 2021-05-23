@@ -2912,6 +2912,15 @@ class PoolDatasetService(CRUDService):
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
+        List(
+            'user_properties',
+            items=[Dict(
+                'user_property',
+                Str('key', required=True),
+                Str('value'),
+                Bool('remove'),
+            )],
+        ),
         register=True,
     ))
     @pass_app(rest=True)
@@ -2959,7 +2968,11 @@ class PoolDatasetService(CRUDService):
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         else:
-            parent_ds = await self.middleware.call('pool.dataset.query', [('id', '=', data['name'].rsplit('/', 1)[0])], {'extra': {'retrieve_children': False}})
+            parent_ds = await self.middleware.call(
+                'pool.dataset.query',
+                [('id', '=', data['name'].rsplit('/', 1)[0])],
+                {'extra': {'retrieve_children': False}}
+            )
             await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
 
         verrors.check()
@@ -3302,6 +3315,22 @@ class PoolDatasetService(CRUDService):
                             f'{schema}.volsize',
                             'Volume size should be a multiple of volume block size'
                         )
+
+        if 'user_properties' in data:
+            for index, prop in enumerate(data['user_properties']):
+                prop_schema = f'{schema}.user_properties.{index}'
+                if mode == 'CREATE':
+                    if 'value' not in prop:
+                        verrors.add(f'{prop_schema}.value', 'Value is required when creating user property')
+                    if prop.get('remove'):
+                        verrors.add(
+                            f'{prop_schema}.remove', 'This field can only be specified when updating property'
+                        )
+                else:
+                    if prop.get('value') and prop.get('remove'):
+                        verrors.add(f'{prop_schema}.remove', 'Either "value" or "remove" can be specified but not both')
+                    elif not prop.get('value') and not prop.get('remove'):
+                        verrors.add(f'{prop_schema}.value', 'Either "value" or "remove" must be specified')
 
     def __handle_zfs_set_property_error(self, e, properties_definitions):
         zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
