@@ -2916,7 +2916,7 @@ class PoolDatasetService(CRUDService):
             'user_properties',
             items=[Dict(
                 'user_property',
-                Str('key', required=True),
+                Str('key', required=True, validators=[Match(r'.*:.*')]),
                 Str('value'),
                 Bool('remove'),
             )],
@@ -3085,7 +3085,10 @@ class PoolDatasetService(CRUDService):
             name = real_name or i
             props[name] = data[i] if not transform else transform(data[i])
 
-        props.update(encryption_dict)
+        props.update(
+            **encryption_dict,
+            **(await self._get_create_update_user_props(data['user_properties']))
+        )
 
         await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
@@ -3108,6 +3111,15 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
 
         return await self.get_instance(data['id'])
+
+    async def _get_create_update_user_props(self, user_properties, update=False):
+        props = {}
+        for prop in user_properties:
+            if 'value' in prop:
+                props[prop['key']] = {'value': prop['value']} if update else prop['value']
+            elif prop.get('remove'):
+                props[prop['key']] = {'source': 'INHERIT'}
+        return props
 
     def _add_inherit(name):
         def add(attr):
@@ -3210,6 +3222,8 @@ class PoolDatasetService(CRUDService):
                 props[name] = {'source': 'INHERIT'}
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
+
+        props.update(await self._get_create_update_user_props(data['user_properties'], True))
 
         try:
             await self.middleware.call('zfs.dataset.update', id, {'properties': props})
@@ -3327,9 +3341,9 @@ class PoolDatasetService(CRUDService):
                             f'{prop_schema}.remove', 'This field can only be specified when updating property'
                         )
                 else:
-                    if prop.get('value') and prop.get('remove'):
-                        verrors.add(f'{prop_schema}.remove', 'Either "value" or "remove" can be specified but not both')
-                    elif not prop.get('value') and not prop.get('remove'):
+                    if 'value' in prop and prop.get('remove'):
+                        verrors.add(f'{prop_schema}.remove', 'When "value" is specified, this cannot be set')
+                    elif not any(k in prop for k in ('value', 'remove')):
                         verrors.add(f'{prop_schema}.value', 'Either "value" or "remove" must be specified')
 
     def __handle_zfs_set_property_error(self, e, properties_definitions):
