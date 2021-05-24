@@ -174,7 +174,7 @@ class FilesystemService(Service, ACLBase):
     def getacl_nfs4(self, path, simplified):
         flags = "-jn"
         if not simplified:
-           flags += "v"
+            flags += "v"
 
         getacl = subprocess.run(
             ['nfs4xdr_getfacl', flags, path],
@@ -321,10 +321,9 @@ class FilesystemService(Service, ACLBase):
                 raise CallError(setacl.stderr.decode())
 
         if not recursive:
-            os.chown(path, uid, gid);
+            os.chown(path, uid, gid)
             job.set_progress(100, 'Finished setting NFSv4 ACL.')
             return
-
 
         self.acltool(path, 'clone' if not do_strip else 'strip',
                      uid, gid, options)
