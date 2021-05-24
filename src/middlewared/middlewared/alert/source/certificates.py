@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.schedule import CrontabSchedule
 
 
 class CertificateIsExpiringAlertClass(AlertClass):
@@ -25,6 +26,9 @@ class CertificateExpiredAlertClass(AlertClass):
 
 
 class CertificateIsExpiringAlertSource(AlertSource):
+    schedule = CrontabSchedule(hour=0)  # every 24 hours
+    run_on_backup_node = False
+
     async def check(self):
         alerts = []
 
@@ -60,6 +64,9 @@ class CertificateRevokedAlertClass(AlertClass):
 
 
 class CertificateRevokedAlertSource(AlertSource):
+    schedule = CrontabSchedule(hour=0)  # every 24 hours
+    run_on_backup_node = False
+
     async def check(self):
         alerts = []
 
@@ -114,6 +121,9 @@ class CertificateParsingFailedAlertClass(AlertClass):
 
 
 class CertificateParsingFailedAlertSource(AlertSource):
+    schedule = CrontabSchedule(hour=0)  # every 24 hours
+    run_on_backup_node = False
+
     async def check(self):
         alerts = []
 
