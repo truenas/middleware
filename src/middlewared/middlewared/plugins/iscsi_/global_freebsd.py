@@ -19,28 +19,34 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
         Get a list of currently running iSCSI sessions. This includes initiator and target names
         and the unique connection IDs.
         """
-        async def transform(tag, text):
-            if tag in (
-                'target_portal_group_tag', 'max_data_segment_length', 'max_burst_length',
-                'first_burst_length',
-            ) and text.isdigit():
-                return int(text)
-            if tag in ('immediate_data', 'iser'):
-                return bool(int(text))
-            if tag in ('header_digest', 'data_digest', 'offload') and text == 'None':
-                return None
-            return text
-
+        tags = {
+            'first': (
+                'target_portal_group_tag',
+                'max_data_segment_length',
+                'max_burst_length',
+                'first_burst_length'
+            ),
+            'second': (
+                'immediate_data',
+                'iser'
+            ),
+            'third': (
+                'header_digest',
+                'data_digest',
+                'offload',
+            ),
+        }
+        xml = (await run(['ctladm', 'islist', '-x'], check=False, encoding='utf8')).stdout
         sessions = []
-        xml = (await run(
-            ['ctladm', 'islist', '-x'],
-            check=False,
-            encoding='utf8'
-        )).stdout
         for connection in ET.fromstring(xml).findall('.//connection'):
-            sessions.append({
-                i.tag: await transform(i.tag, i.text) for i in connection
-            })
+            for j in connection:
+                if j.tag in tags['first'] and j.text.isdigit():
+                    sessions.append({j.tag: int(j.text)})
+                elif j.tag in tags['second']:
+                    sessions.append({j.tag: bool(int(j.text))})
+                elif j.tag in tags['third'] and j.text == 'None':
+                    sessions.append({j.tag: None})
+
         return filter_list(sessions, filters, options)
 
     async def terminate_luns_for_pool(self, pool_name):
