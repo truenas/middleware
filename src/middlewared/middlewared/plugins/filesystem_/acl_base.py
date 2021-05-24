@@ -15,9 +15,6 @@ class ACLType(enum.Enum):
     def validate(self, theacl):
         errors = []
         ace_keys = self.value[1]
-        if not self.value[0] & OS_FLAG:
-            errors.append("The host operating system does not support"
-                          f"ACLType [{self.name}]")
 
         if self != ACLType.NFS4 and theacl.get('nfs41flags'):
             errors.append(f"NFS41 ACL flags are not valid for ACLType [{self.name}]")
@@ -25,20 +22,14 @@ class ACLType(enum.Enum):
         for idx, entry in enumerate(theacl['dacl']):
             extra = set(entry.keys()) - set(ace_keys)
             missing = set(ace_keys) - set(entry.keys())
-            if osc.IS_FREEBSD:
-                if extra:
-                    errors.append(f"ACL entry [{idx}] contains invalid extra key(s): {extra}")
-                if missing:
-                    errors.append(f"ACL entry [{idx}] is missing required keys(s): {missing}")
-            else:
-                if extra:
-                    errors.append(
-                        (idx, f"ACL entry contains invalid extra key(s): {extra}")
-                    )
-                if missing:
-                    errors.append(
-                        (idx, f"ACL entry is missing required keys(s): {missing}")
-                    )
+            if extra:
+                errors.append(
+                    (idx, f"ACL entry contains invalid extra key(s): {extra}")
+                )
+            if missing:
+                errors.append(
+                    (idx, f"ACL entry is missing required keys(s): {missing}")
+                )
 
         return {"is_valid": len(errors) == 0, "errors": errors}
 
