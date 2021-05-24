@@ -1366,6 +1366,14 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         try:
             async for msg in ws:
+                if msg.type == web.WSMsgType.ERROR:
+                    self.logger.error('Websocket error: %r', msg.data)
+                    continue
+
+                if msg.type != web.WSMsgType.TEXT:
+                    self.logger.error('Invalid websocket message type: %r', msg.type)
+                    continue
+
                 if not connection.authenticated and len(msg.data) > 8192:
                     await ws.close(message='Anonymous connection max message length is 8 kB'.encode('utf-8'))
                     break
