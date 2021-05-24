@@ -799,7 +799,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
     def __init__(
         self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
         log_handler=None, startup_seq_path=None, trace_malloc=False,
-        log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s'
+        log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
+        debug_mode=True,
     ):
         super().__init__(overlay_dirs)
         self.logger = logger.Logger(
@@ -814,6 +815,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.debug_level = debug_level
         self.log_handler = log_handler
         self.log_format = log_format
+        self.debug_mode = debug_mode
         self.startup_seq = 0
         self.startup_seq_path = startup_seq_path
         self.app = None
@@ -1643,6 +1645,9 @@ def main():
     parser.add_argument('--loop-debug', action='store_true')
     parser.add_argument('--trace-malloc', '-tm', action='store', nargs=2, type=int, default=False)
     parser.add_argument('--overlay-dirs', '-o', action='append')
+    parser.add_argument('')
+    parser.add_argument(f'--enable-debug-mode', dest='debug_mode', action='store_true')
+    parser.add_argument(f'--disable-debug-mode', dest='debug_mode', action='store_false')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -1654,6 +1659,7 @@ def main():
         'console',
         'file',
     ], default='console')
+    parser.set_defaults(debug_mode=True)
     args = parser.parse_args()
 
     pidpath = '/var/run/middlewared.pid'
@@ -1685,6 +1691,7 @@ def main():
         debug_level=args.debug_level,
         log_handler=args.log_handler,
         startup_seq_path=startup_seq_path,
+        debug_mode=args.debug_mode,
     ).run()
 
 
