@@ -15,7 +15,15 @@ def get_gpus():
         raise CallError(f'Unable to list available gpus: {stderr.decode()}')
 
     gpus = []
-    gpu_slots = [line.strip() for line in stdout.decode().splitlines() if 'VGA compatible controller' in line]
+    gpu_slots = [
+        line.strip()
+        for line in stdout.decode().splitlines() if any(
+            k in line for k in (
+                'VGA compatible controller',
+                'Display controller',
+            )
+        )
+    ]
     for gpu_line in gpu_slots:
         addr = gpu_line.split()[0]
         addr_re = RE_PCI_ADDR.match(addr)
