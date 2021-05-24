@@ -1,14 +1,14 @@
 from .apidocs import app as apidocs_app
 from .client import ejson as json
 from .common.event_source.manager import EventSourceManager
-from .event import EventSource, Events
+from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 import middlewared.service
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
-from .utils import osc, start_daemon_thread, sw_version
+from .utils import osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
