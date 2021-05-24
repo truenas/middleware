@@ -1002,12 +1002,20 @@ class ZFSSnapshot(CRUDService):
             snapshots = zfs.snapshots_serialized(**kwargs)
 
         # FIXME: awful performance with hundreds/thousands of snapshots
+        select = options.pop('select', None)
         result = filter_list(snapshots, filters, options)
 
-        if isinstance(result, list):
-            result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
-        elif isinstance(result, dict):
-            result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result])[0]
+        if not select or 'retention' in select:
+            if isinstance(result, list):
+                result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
+            elif isinstance(result, dict):
+                result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result])[0]
+
+        if select:
+            if isinstance(result, list):
+                result = [{k: v for k, v in item.items() if k in select} for item in result]
+            elif isinstance(result, dict):
+                result = {k: v for k, v in result.items() if k in select}
 
         return result
 
