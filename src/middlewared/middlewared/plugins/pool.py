@@ -3167,6 +3167,14 @@ class PoolDatasetService(CRUDService):
         ('add', Inheritable('quota_critical', value=Int('quota_critical', validators=[Range(0, 100)]))),
         ('add', Inheritable('refquota_warning', value=Int('refquota_warning', validators=[Range(0, 100)]))),
         ('add', Inheritable('refquota_critical', value=Int('refquota_critical', validators=[Range(0, 100)]))),
+        ('add', List(
+            'user_properties',
+            items=[Dict(
+                'user_property',
+                Str('key', required=True, validators=[Match(r'.*:.*')]),
+                Str('value', required=True),
+            )],
+        )),
         ('attr', {'update': True}),
     ))
     async def do_update(self, id, data):
@@ -3197,7 +3205,7 @@ class PoolDatasetService(CRUDService):
             data['name'] = dataset[0]['name']
             if data['type'] == 'VOLUME':
                 data['volblocksize'] = dataset[0]['volblocksize']['value']
-            await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE')
+            await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE', cur_dataset=dataset[0])
             if 'volsize' in data:
                 if data['volsize'] < dataset[0]['volsize']['parsed']:
                     verrors.add('pool_dataset_update.volsize',
@@ -3255,7 +3263,7 @@ class PoolDatasetService(CRUDService):
 
         return await self.get_instance(id)
 
-    async def __common_validation(self, verrors, schema, data, mode, parent=None):
+    async def __common_validation(self, verrors, schema, data, mode, parent=None, cur_dataset=None):
         assert mode in ('CREATE', 'UPDATE')
 
         if parent is None:
@@ -3348,7 +3356,7 @@ class PoolDatasetService(CRUDService):
                         )
 
         user_prop_key = 'user_properties' if mode == 'CREATE' else 'user_properties_update'
-        if user_prop_key in data:
+        if user_prop_key in data and (mode == 'CREATE' or not data.get('user_properties')):
             for index, prop in enumerate(data[user_prop_key]):
                 prop_schema = f'{schema}.{user_prop_key}.{index}'
                 if mode == 'CREATE':
@@ -3363,6 +3371,22 @@ class PoolDatasetService(CRUDService):
                         verrors.add(f'{prop_schema}.remove', 'When "value" is specified, this cannot be set')
                     elif not any(k in prop for k in ('value', 'remove')):
                         verrors.add(f'{prop_schema}.value', 'Either "value" or "remove" must be specified')
+
+        if mode == 'UPDATE':
+            if data.get('user_properties') and data.get('user_properties_update'):
+                verrors.add(
+                    f'{schema}.user_properties_update',
+                    'Should not be specified when "user_properties" are explicitly specified'
+                )
+            elif data.get('user_properties'):
+                # Let's normalize this so that we create/update/remove user props accordingly
+                user_props = {p['key'] for p in data['user_properties']}
+                data['user_properties_update'] = data['user_properties']
+                for prop_key in [k for k in cur_dataset['user_properties'] if k not in user_props]:
+                    data['user_properties_update'].append({
+                        'key': prop_key,
+                        'remove': True,
+                    })
 
     def __handle_zfs_set_property_error(self, e, properties_definitions):
         zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
