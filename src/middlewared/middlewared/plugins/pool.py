@@ -2803,6 +2803,16 @@ class PoolDatasetService(CRUDService):
             ), filters, options
         )
 
+    def _internal_user_props(self):
+        return [
+            'org.freenas:description',
+            'org.freenas:quota_warning',
+            'org.freenas:quota_critical',
+            'org.freenas:refquota_warning',
+            'org.freenas:refquota_critical',
+            'org.truenas:managedby',
+        ]
+
     def __transform(self, datasets, retrieve_children, children_filters):
         """
         We need to transform the data zfs gives us to make it consistent/user-friendly,
@@ -2852,6 +2862,10 @@ class PoolDatasetService(CRUDService):
                 dataset[i] = dataset['properties'][orig_name]
                 if method:
                     dataset[i]['value'] = method(dataset[i]['value'])
+
+            dataset['user_properties'] = {
+                k: v for k, v in dataset['properties'].items() if ':' in k and k not in self._internal_user_props()
+            }
             del dataset['properties']
 
             if all(k in dataset for k in ('encrypted', 'key_loaded')):
