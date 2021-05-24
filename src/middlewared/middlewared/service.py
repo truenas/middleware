@@ -856,6 +856,13 @@ class CoreService(Service):
             for i in self.middleware.get_wsclients().values()
         ], filters, options)
 
+    @accepts(Bool('debug_mode'))
+    async def set_debug_mode(self, debug_mode):
+        """
+        Set `debug_mode` for middleware.
+        """
+        self.middleware.debug_mode = debug_mode
+
     @private
     def get_tasks(self):
         for task in asyncio.all_tasks(loop=self.middleware.loop):
