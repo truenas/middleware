@@ -491,26 +491,15 @@ class SystemService(Service):
 
     @private
     async def time_info(self):
-
-        time_info = {}
-
-        if osc.IS_FREEBSD:
-            time_constant = time.CLOCK_UPTIME
-        else:
-            time_constant = time.CLOCK_MONOTONIC_RAW
-
-        uptime_seconds = time.clock_gettime(time_constant)
-        uptime = str(timedelta(seconds=uptime_seconds))
+        uptime_seconds = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
         current_time = time.time()
-        boot_time = datetime.fromtimestamp((current_time - uptime_seconds))
-        date_time = datetime.fromtimestamp(current_time, timezone.utc)
 
-        time_info['uptime_seconds'] = uptime_seconds
-        time_info['uptime'] = uptime
-        time_info['boot_time'] = boot_time
-        time_info['datetime'] = date_time
-
-        return time_info
+        return {
+            'uptime_seconds': uptime_seconds,
+            'uptime': str(timedelta(seconds=uptime_seconds)),
+            'boot_time': datetime.fromtimestamp((current_time - uptime_seconds), timezone.utc),
+            'datetime': datetime.fromtimestamp(current_time, timezone.utc),
+        }
 
     @private
     async def dmidecode_info(self):
