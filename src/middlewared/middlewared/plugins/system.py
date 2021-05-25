@@ -622,7 +622,7 @@ class SystemService(Service):
             'system_product': product,
             'system_product_version': product_version,
             'license': await self.middleware.run_in_thread(self._get_license),
-            'boottime': datetime.fromtimestamp(psutil.boot_time()),
+            'boottime': datetime.fromtimestamp(psutil.boot_time(), timezone.utc),
             'datetime': datetime.utcnow(),
             'birthday': birthday_date,
             'timezone': timezone_setting,
