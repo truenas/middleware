@@ -264,14 +264,8 @@ class FilesystemService(Service):
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 
-        if osc.IS_LINUX:
-            posix1e_acl = self.middleware.call_sync('filesystem.getacl_posix1e', path, True)
-            return True if len(posix1e_acl['acl']) == 3 else False
-
-        if not os.pathconf(path, 64):
-            return True
-
-        return acl.ACL(file=path).is_trivial
+        acl = self.middleware.call_sync('filesystem.getacl', path, True)
+        return acl['trivial']
 
 
 class FileFollowTailEventSource(EventSource):
