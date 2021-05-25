@@ -273,6 +273,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/sudoers'}
         ],
         'syslogd': [
+            {'type': 'mako', 'path': 'default/syslog-ng', 'checkpoint': 'pool_import'},
             {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
         ],
         'hostname': [
