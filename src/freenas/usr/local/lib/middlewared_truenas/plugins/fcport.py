@@ -1,18 +1,8 @@
-# Copyright (c) 2019 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 import re
 import subprocess
+from xml.etree import ElementTree as ET
 
-from lxml import etree
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
-
+import sysctl
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CRUDService, filterable, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -31,31 +21,29 @@ class FCPortService(CRUDService):
 
     @filterable
     def query(self, filters, options):
-        node = None
+        status = {'local': '', 'remote': ''}
         if self.middleware.call_sync("failover.licensed"):
-            node = self.middleware.call_sync("failover.node")
+            if self.middleware.call_sync("failover.status") == 'MASTER':
+                status['local'] = ' (Active Controller)'
+                status['remote'] = ' (Standby Controller)'
+            else:
+                status['local'] = ' (Standby Controller)'
+                status['remote'] = ' (Active Controller)'
 
         fcportmap = {}
         for fbtt in self.middleware.call_sync("datastore.query", "services.fibrechanneltotarget"):
             fcportmap[fbtt["fc_port"]] = fbtt["fc_target"]
 
-        proc = subprocess.Popen([
-            "/usr/sbin/ctladm",
-            "portlist",
-            "-x",
-        ], stdout=subprocess.PIPE, encoding="utf8")
-        data = proc.communicate()[0]
-        doc = etree.fromstring(data)
         results = []
-        for e in doc.xpath("//frontend_type[text()='camtgt']"):
-            tag_port = e.getparent()
-            name = tag_port.xpath("./port_name")[0].text
+        xml = subprocess.check_output(["ctladm", "portlist", "-x"], encoding="utf-8")
+        for e in ET.fromstring(xml).findall(".//*[frontend_type='camtgt']"):
+            name = e.find("./port_name").text
             reg = re.search(r"\d+", name)
             if reg:
                 port = reg.group(0)
             else:
                 port = "0"
-            vport = tag_port.xpath("./physical_port")[0].text
+            vport = e.find("./physical_port").text
             if vport != "0":
                 name += f"/{vport}"
             state = "NO_LINK"
@@ -92,23 +80,26 @@ class FCPortService(CRUDService):
             else:
                 mode = "DISABLED"
                 target = None
-            initiators = []
-            for i in tag_port.xpath("./initiator"):
-                initiators.append(i.text)
 
-            if node:
-                for e in doc.xpath("//frontend_type[text()='ha']"):
-                    parent = e.getparent()
-                    port_name = parent.xpath("./port_name")[0].text
+            # we're in the camtgt loop which means the initiators
+            # here represent the local ports of this controller
+            initiators = []
+            for i in e.findall("./initiator"):
+                initiators.append(i.text + status['local'])
+
+            if status['local']:
+                # loop over other controller ports
+                for j in ET.fromstring(xml).findall(".//*[frontend_type='ha']"):
+                    port_name = j.find("./port_name").text
                     if ":" in port_name:
                         port_name = port_name.split(":", 1)[1]
-                    physical_port = parent.xpath("./physical_port")[0].text
+                    physical_port = j.find("./physical_port").text
                     if physical_port != "0":
                         port_name += f"/{physical_port}"
                     if port_name != name:
                         continue
-                    for i in parent.xpath("./initiator"):
-                        initiators.append(f"{i.text} (TrueNAS Controller {'2' if node == 'A' else '1'})")
+                    for i in j.findall("./initiator"):
+                        initiators.append(i.text + status['remote'])
 
             results.append(dict(
                 id=name,
