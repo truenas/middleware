@@ -5,7 +5,7 @@ except ImportError:
 
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
 from middlewared.schema import Bool, Dict, Int, IPAddr, Str, accepts
-from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
+from middlewared.service import CallError, CRUDService, filterable, filter_list, ValidationErrors
 from middlewared.utils import filter_list, run
 from middlewared.validators import Netmask
 
@@ -174,14 +174,14 @@ class IPMIService(CRUDService):
         await run('ipmitool', 'chassis', 'identify', cmd)
 
     @filterable
-    async def query_sel(self):
+    async def query_sel(self, filters, options):
         """
         Query IPMI System Event Log
         """
-        return [
+        return filter_list([
             record._asdict()
             for record in parse_ipmitool_output(await run('ipmitool', '-c', 'sel', 'elist'))
-        ]
+        ])
 
     @accepts()
     async def clear_sel(self):
