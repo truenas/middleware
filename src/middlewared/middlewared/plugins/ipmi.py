@@ -181,7 +181,7 @@ class IPMIService(CRUDService):
         return filter_list([
             record._asdict()
             for record in parse_ipmitool_output(await run('ipmitool', '-c', 'sel', 'elist'))
-        ])
+        ], filters, options)
 
     @accepts()
     async def clear_sel(self):
