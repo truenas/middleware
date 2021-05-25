@@ -93,7 +93,7 @@ class DiskService(CRUDService):
     @private
     async def disk_extend(self, disk, context):
         disk.pop('enabled', None)
-        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+        for key in ['advpowermgmt', 'hddstandby']:
             disk[key] = disk[key].upper()
         try:
             disk['size'] = int(disk['size'])
@@ -165,9 +165,6 @@ class DiskService(CRUDService):
         Dict(
             'disk_update',
             Bool('togglesmart'),
-            Str('acousticlevel', enum=[
-                'DISABLED', 'MINIMUM', 'MEDIUM', 'MAXIMUM'
-            ]),
             Str('advpowermgmt', enum=[
                 'DISABLED', '1', '64', '127', '128', '192', '254'
             ]),
@@ -236,7 +233,7 @@ class DiskService(CRUDService):
                 asyncio.ensure_future(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
             new['kmip_uid'] = None
 
-        for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
+        for key in ['advpowermgmt', 'hddstandby']:
             new[key] = new[key].title()
 
         self._compress_enclosure(new)
@@ -249,7 +246,7 @@ class DiskService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt', 'acousticlevel']):
+        if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt']):
             await self.middleware.call('disk.power_management', new['name'])
 
         if any(
@@ -279,7 +276,7 @@ class DiskService(CRUDService):
     async def copy_settings(self, old, new):
         await self.middleware.call('disk.update', new['identifier'], {
             k: v for k, v in old.items() if k in [
-                'togglesmart', 'acousticlevel', 'advpowermgmt', 'description', 'hddstandby', 'hddstandby_force',
+                'togglesmart', 'advpowermgmt', 'description', 'hddstandby', 'hddstandby_force',
                 'smartoptions', 'critical', 'difference', 'informational',
             ]
         })
@@ -673,7 +670,7 @@ class DiskService(CRUDService):
     async def configure_power_management(self):
         """
         This runs on boot to properly configure all power management options
-        (Advanced Power Management, Automatic Acoustic Management and IDLE) for all disks.
+        (Advanced Power Management and IDLE) for all disks.
         """
         # Do not run power management on ENTERPRISE
         if await self.middleware.call('system.product_type') == 'ENTERPRISE':

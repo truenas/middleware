@@ -13,15 +13,6 @@ class DiskService(Service):
             check=False,
         ))
 
-        acousticlevel_map = {
-            'MINIMUM': '128',
-            'MEDIUM': '254',
-            'MAXIMUM': '254',
-        }
-        asyncio.ensure_future(run(
-            'hdparm', '-M', acousticlevel_map.get(disk['acousticlevel'], '0'), f'/dev/{dev}', check=False,
-        ))
-
         if disk['hddstandby'] != 'ALWAYS ON':
             if int(disk['hddstandby']) <= 20:
                 # Values from 1 to 240 specify multiples of 5 seconds
