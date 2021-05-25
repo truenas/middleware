@@ -44,7 +44,6 @@ class DiskModel(sa.Model):
     disk_hddstandby = sa.Column(sa.String(120), default="Always On")
     disk_hddstandby_force = sa.Column(sa.Boolean(), default=False)
     disk_advpowermgmt = sa.Column(sa.String(120), default="Disabled")
-    disk_acousticlevel = sa.Column(sa.String(120), default="Disabled")
     disk_togglesmart = sa.Column(sa.Boolean(), default=True)
     disk_smartoptions = sa.Column(sa.String(120))
     disk_expiretime = sa.Column(sa.DateTime(), nullable=True)
