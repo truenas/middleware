@@ -2931,8 +2931,7 @@ class PoolDatasetService(CRUDService):
             items=[Dict(
                 'user_property',
                 Str('key', required=True, validators=[Match(r'.*:.*')]),
-                Str('value'),
-                Bool('remove'),
+                Str('value', requried=True),
             )],
         ),
         register=True,
@@ -3140,9 +3139,6 @@ class PoolDatasetService(CRUDService):
             attr.enum.append('INHERIT')
         return {'name': name, 'method': add}
 
-    def _user_props_rename(name):
-        return {'name': name, 'new_name': 'user_properties_update'}
-
     @accepts(Str('id', required=True), Patch(
         'pool_dataset_create', 'pool_dataset_update',
         ('rm', {'name': 'name'}),
@@ -3162,17 +3158,17 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
-        ('edit', _user_props_rename('user_properties')),
         ('add', Inheritable('quota_warning', value=Int('quota_warning', validators=[Range(0, 100)]))),
         ('add', Inheritable('quota_critical', value=Int('quota_critical', validators=[Range(0, 100)]))),
         ('add', Inheritable('refquota_warning', value=Int('refquota_warning', validators=[Range(0, 100)]))),
         ('add', Inheritable('refquota_critical', value=Int('refquota_critical', validators=[Range(0, 100)]))),
         ('add', List(
-            'user_properties',
+            'user_properties_update',
             items=[Dict(
                 'user_property',
                 Str('key', required=True, validators=[Match(r'.*:.*')]),
-                Str('value', required=True),
+                Str('value'),
+                Bool('remove'),
             )],
         )),
         ('attr', {'update': True}),
@@ -3355,25 +3351,15 @@ class PoolDatasetService(CRUDService):
                             'Volume size should be a multiple of volume block size'
                         )
 
-        user_prop_key = 'user_properties' if mode == 'CREATE' else 'user_properties_update'
-        if user_prop_key in data and (mode == 'CREATE' or not data.get('user_properties')):
-            for index, prop in enumerate(data[user_prop_key]):
-                prop_schema = f'{schema}.{user_prop_key}.{index}'
-                if mode == 'CREATE':
-                    if 'value' not in prop:
-                        verrors.add(f'{prop_schema}.value', 'Value is required when creating user property')
-                    if prop.get('remove'):
-                        verrors.add(
-                            f'{prop_schema}.remove', 'This field can only be specified when updating property'
-                        )
-                else:
+        if mode == 'UPDATE':
+            if data.get('user_properties_update') and not data.get('user_properties'):
+                for index, prop in enumerate(data['user_properties_update']):
+                    prop_schema = f'{schema}.user_properties_update.{index}'
                     if 'value' in prop and prop.get('remove'):
                         verrors.add(f'{prop_schema}.remove', 'When "value" is specified, this cannot be set')
                     elif not any(k in prop for k in ('value', 'remove')):
                         verrors.add(f'{prop_schema}.value', 'Either "value" or "remove" must be specified')
-
-        if mode == 'UPDATE':
-            if data.get('user_properties') and data.get('user_properties_update'):
+            elif data.get('user_properties') and data.get('user_properties_update'):
                 verrors.add(
                     f'{schema}.user_properties_update',
                     'Should not be specified when "user_properties" are explicitly specified'
