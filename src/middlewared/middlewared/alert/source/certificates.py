@@ -112,24 +112,24 @@ class CertificateChecksAlertSource(AlertSource):
 
     async def check(self):
         alerts = []
+
+        # system certs/cas
         certs = await self.middleware.call('certificate.query', [['certificate', '!=', None]])
         certs.extend(await self.middleware.call('certificateauthority.query'))
 
-        # make the sure certs have been parsed correctly
-        parsed = []
+        # service certs/cas
+        check_for_revocation = await self._get_service_certs()
+        check_for_revocation.extend(await self._get_cas())
+
+        parsed = {}
         for cert in certs:
+            # make the sure certs have been parsed correctly
             if not cert['parsed']:
                 alerts.append(Alert(
                     CertificateParsingFailedAlertClass,
                     {"type": cert["cert_type"].capitalize(), "name": cert["name"]},
                 ))
             else:
-                parsed.append(cert)
-
-        if parsed:
-            revoked_certs = [i for i in await self._get_service_certs() + await self._get_cas() if i['id']]
-
-            for cert in parsed:
                 # check the parsed certificate(s) for expiration
                 if cert['cert_type'].capitalize() == 'CERTIFICATE':
                     diff = (datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - datetime.utcnow()).days
@@ -145,12 +145,14 @@ class CertificateChecksAlertSource(AlertSource):
                                 {'name': cert['name']}, key=[cert['name']]
                             ))
 
-                # check the parsed certificate(s) for revocation
-                for revoked in revoked_certs:
-                    if revoked['id'] == cert['id'] and cert['revoked']:
-                        alerts.append(Alert(
-                            CertificateRevokedAlertClass,
-                            {'service': revoked['service'], 'type': revoked['type']}
-                        ))
+                parsed[cert['id']] = cert['revoked']
+
+        # check the parsed certificate(s) for revocation
+        for i in check_for_revocation:
+            if i['id'] in parsed and parsed[i['id']]['revoked']:
+                alerts.append(Alert(
+                    CertificateRevokedAlertClass,
+                    {'service': i['service'], 'type': i['type']}
+                ))
 
         return alerts
