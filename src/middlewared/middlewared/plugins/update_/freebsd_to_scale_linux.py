@@ -51,7 +51,8 @@ class UpdateService(Service):
             """
         else:
             disks = await self.middleware.call("boot.get_disks")
-            efi_partition_uuid = (await run(["grub-probe", "--device", f"/dev/{disks[0]}p1", "--target=fs_uuid"],
+            partition = await self.middleware.call("disk.get_partition_for_disk", disks[0], 1)
+            efi_partition_uuid = (await run(["grub-probe", "--device", f"/dev/{partition}", "--target=fs_uuid"],
                                             encoding="utf-8", errors="ignore")).stdout.strip()
             bsd_loader = f"""\
                 insmod zfs
