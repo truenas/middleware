@@ -24,7 +24,7 @@ from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, Simple
 from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
-    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
+    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref, NOT_PROVIDED,
 )
 from middlewared.service import (
     ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
@@ -83,6 +83,8 @@ class Inheritable(EnumMixin, Attribute):
     def clean(self, value):
         if value == 'INHERIT':
             return value
+        elif value is NOT_PROVIDED and self.has_default:
+            return copy.deepcopy(self.default)
 
         return self.value.clean(value)
 
