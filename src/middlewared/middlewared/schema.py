@@ -892,6 +892,26 @@ class Patch(object):
         return schema
 
 
+class OROperator:
+    def __init__(self, *schemas):
+        self.schemas = schemas
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+        attr_verrors = ValidationErrors()
+        for attr in self.schemas:
+            try:
+                attr.validate(value)
+            except ValidationErrors as e:
+                attr_verrors.extend(e)
+            else:
+                break
+        else:
+            verrors.extend(attr_verrors)
+
+        verrors.check()
+
+
 class ResolverError(Exception):
     pass
 
@@ -928,8 +948,14 @@ def resolve_methods(schemas, to_resolve):
             raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
 
 
-def validate_return_type(result, schema):
-    pass
+def validate_return_type(func, result, schema):
+    if not schema and result is None:
+        return
+    elif not schema:
+        raise ValueError(f'Return schema missing for {func.__name__!r}')
+
+    verrors = ValidationErrors()
+
 
 
 def returns(*schema):
@@ -938,13 +964,13 @@ def returns(*schema):
             async def nf(*args, **kwargs):
                 res = await f(*args, **kwargs)
                 if DEBUG_MODE:
-                    validate_return_type(res, list(schema))
+                    validate_return_type(f, res, list(schema))
                 return res
         else:
             def nf(*args, **kwargs):
                 res = f(*args, **kwargs)
                 if DEBUG_MODE:
-                    validate_return_type(res, list(schema))
+                    validate_return_type(f, res, list(schema))
                 return res
 
         from middlewared.utils.type import copy_function_metadata
