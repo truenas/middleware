@@ -25,7 +25,6 @@ class DevType(enum.Enum):
 
 class ServiceType(enum.Enum):
     ADISK = ('_adisk._tcp.', 9)
-    AFPOVERTCP = ('_afpovertcp._tcp.', 548)
     DEV_INFO = ('_device-info._tcp.', 9)
     FTP = ('_ftp._tcp.', 21)
     HTTP = ('_http._tcp.', 80)
@@ -74,9 +73,6 @@ class mDNSService(object):
                 return True
             else:
                 return False
-
-        if self.service == 'AFPOVERTCP':
-            return any(filter_list(self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]))
 
         if self.service == 'SMB':
             return any(filter_list(self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]))
