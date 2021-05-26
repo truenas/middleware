@@ -2910,7 +2910,7 @@ class PoolDatasetService(CRUDService):
         Int('refquota_critical', validators=[Range(0, 100)]),
         Int('reservation'),
         Int('refreservation'),
-        Int('special_small_block_size'),
+        Inheritable('special_small_block_size', value=Int('special_small_block_size')),
         Int('copies'),
         Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
         Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
@@ -3260,7 +3260,8 @@ class PoolDatasetService(CRUDService):
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
-        props.update(await self._get_create_update_user_props(data['user_properties_update'], True))
+        if data.get('user_properties_update'):
+            props.update(await self._get_create_update_user_props(data['user_properties_update'], True))
 
         try:
             await self.middleware.call('zfs.dataset.update', id, {'properties': props})
@@ -3325,12 +3326,12 @@ class PoolDatasetService(CRUDService):
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
 
             c_value = data.get('special_small_block_size')
-            if 'special_small_block_size' in data and not (
+            if 'special_small_block_size' in data and c_value != 'INHERIT' and not (
                 c_value == 0 or 512 <= data['special_small_block_size'] <= 1048576 or c_value % 512 == 0
             ):
                 verrors.add(
                     f'{schema}.special_small_block_size',
-                    'This field can be 0 or multiple of 512, up to 1048576'
+                    'This field can be "INHERIT", 0 or multiple of 512, up to 1048576'
                 )
         elif data['type'] == 'VOLUME':
             if mode == 'CREATE' and 'volsize' not in data:
