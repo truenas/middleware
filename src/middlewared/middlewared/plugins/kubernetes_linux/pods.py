@@ -1,11 +1,10 @@
 import json
 
 from aiohttp.client_exceptions import ClientConnectionError
-from datetime import datetime
 from dateutil.parser import parse, ParserError
 from kubernetes_asyncio.watch import Watch
 
-from middlewared.main import EventSource
+from middlewared.event import EventSource
 from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 

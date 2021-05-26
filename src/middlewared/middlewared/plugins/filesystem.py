@@ -17,7 +17,7 @@ try:
 except ImportError:
     pyinotify = None
 
-from middlewared.main import EventSource
+from middlewared.event import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
 from middlewared.service import private, CallError, Service, job
 from middlewared.utils import filter_list, osc
