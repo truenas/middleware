@@ -76,9 +76,11 @@ class ZFSKeyFormat(enum.Enum):
 
 
 class Inheritable(EnumMixin, Attribute):
-    def __init__(self, *args, **kwargs):
-        self.value = kwargs.pop('value')
-        super(Inheritable, self).__init__(*args, **kwargs)
+    def __init__(self, schema, **kwargs):
+        self.schema = schema
+        if not self.schema.has_default and 'default' not in kwargs:
+            kwargs['default'] = 'INHERIT'
+        super(Inheritable, self).__init__(self.schema.name, **kwargs)
 
     def clean(self, value):
         if value == 'INHERIT':
@@ -86,16 +88,16 @@ class Inheritable(EnumMixin, Attribute):
         elif value is NOT_PROVIDED and self.has_default:
             return copy.deepcopy(self.default)
 
-        return self.value.clean(value)
+        return self.schema.clean(value)
 
     def validate(self, value):
         if value == 'INHERIT':
             return
 
-        return self.value.validate(value)
+        return self.schema.validate(value)
 
     def to_json_schema(self, parent=None):
-        schema = self.value.to_json_schema(parent)
+        schema = self.schema.to_json_schema(parent)
         type_schema = schema.pop('type')
         schema['nullable'] = 'null' in type_schema
         if schema['nullable']:
@@ -2903,35 +2905,33 @@ class PoolDatasetService(CRUDService):
         ]),
         Bool('sparse'),
         Bool('force_size'),
-        Str('comments'),
-        Str('sync', enum=[
-            'STANDARD', 'ALWAYS', 'DISABLED',
-        ]),
-        Str('compression', enum=ZFS_COMPRESSION_ALGORITHM_CHOICES),
-        Str('atime', enum=['ON', 'OFF']),
-        Str('exec', enum=['ON', 'OFF']),
-        Str('managedby', empty=False),
+        Inheritable(Str('comments')),
+        Inheritable(Str('sync', enum=['STANDARD', 'ALWAYS', 'DISABLED'])),
+        Inheritable(Str('compression', enum=ZFS_COMPRESSION_ALGORITHM_CHOICES)),
+        Inheritable(Str('atime', enum=['ON', 'OFF'])),
+        Inheritable(Str('exec', enum=['ON', 'OFF'])),
+        Inheritable(Str('managedby', empty=False)),
         Int('quota', null=True, validators=[Or(Range(min=1024**3), Exact(0))]),
-        Int('quota_warning', validators=[Range(0, 100)]),
-        Int('quota_critical', validators=[Range(0, 100)]),
+        Inheritable(Int('quota_warning', validators=[Range(0, 100)])),
+        Inheritable(Int('quota_critical', validators=[Range(0, 100)])),
         Int('refquota', null=True, validators=[Or(Range(min=1024**3), Exact(0))]),
-        Int('refquota_warning', validators=[Range(0, 100)]),
-        Int('refquota_critical', validators=[Range(0, 100)]),
+        Inheritable(Int('refquota_warning', validators=[Range(0, 100)])),
+        Inheritable(Int('refquota_critical', validators=[Range(0, 100)])),
         Int('reservation'),
         Int('refreservation'),
-        Inheritable('special_small_block_size', value=Int('special_small_block_size'), default='INHERIT'),
-        Int('copies'),
-        Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
-        Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
-        Str('readonly', enum=['ON', 'OFF']),
-        Str('recordsize', enum=[
+        Inheritable(Int('special_small_block_size')),
+        Inheritable(Int('copies')),
+        Inheritable(Str('snapdir', enum=['VISIBLE', 'HIDDEN'])),
+        Inheritable(Str('deduplication', enum=['ON', 'VERIFY', 'OFF'])),
+        Inheritable(Str('readonly', enum=['ON', 'OFF'])),
+        Inheritable(Str('recordsize', enum=[
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
-        ]),
-        Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
-        Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']),
-        Str('acltype', enum=['OFF', 'NOACL', 'NFSV4', 'NFS4ACL', 'POSIX', 'POSIXACL']),
+        ])),
+        Inheritable(Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED'])),
+        Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD'])),
+        Inheritable(Str('acltype', enum=['OFF', 'NOACL', 'NFSV4', 'NFS4ACL', 'POSIX', 'POSIXACL'])),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
-        Str('xattr', enum=['ON', 'SA']),
+        Inheritable(Str('xattr', enum=['ON', 'SA'])),
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
@@ -3019,17 +3019,8 @@ class PoolDatasetService(CRUDService):
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
-        if osc.IS_LINUX and data['type'] == 'FILESYSTEM':
-            if not data.get('acltype'):
-                data['acltype'] = 'POSIX'
-                data['aclmode'] = 'DISCARD'
-            if not data.get('xattr'):
-                data['xattr'] = 'SA'
-
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
-            if osc.IS_FREEBSD:
-                data['aclmode'] = 'RESTRICTED'
 
         if parent_ds['locked']:
             verrors.add(
@@ -3085,36 +3076,36 @@ class PoolDatasetService(CRUDService):
             if uri and uri not in [
                 '::1', '127.0.0.1', *[d['address'] for d in await self.middleware.call('interface.ip_in_use')]
             ]:
-                data['managedby'] = uri if not data.get('managedby') else f'{data["managedby"]}@{uri}'
+                data['managedby'] = uri if not data['managedby'] != 'INHERIT' else f'{data["managedby"]}@{uri}'
 
         props = {}
         for i, real_name, transform, inheritable in (
-            ('aclmode', None, str.lower, False),
-            ('acltype', None, str.lower, False),
-            ('atime', None, str.lower, False),
-            ('casesensitivity', None, str.lower, False),
-            ('comments', 'org.freenas:description', None, False),
-            ('compression', None, str.lower, False),
-            ('copies', None, lambda x: str(x), False),
-            ('deduplication', 'dedup', str.lower, False),
-            ('exec', None, str.lower, False),
-            ('managedby', 'org.truenas:managedby', None, False),
-            ('quota', None, _none, False),
-            ('quota_warning', 'org.freenas:quota_warning', str, False),
-            ('quota_critical', 'org.freenas:quota_critical', str, False),
-            ('readonly', None, str.lower, False),
-            ('recordsize', None, None, False),
-            ('refquota', None, _none, False),
-            ('refquota_warning', 'org.freenas:refquota_warning', str, False),
-            ('refquota_critical', 'org.freenas:refquota_critical', str, False),
+            ('aclmode', None, str.lower, True),
+            ('acltype', None, str.lower, True),
+            ('atime', None, str.lower, True),
+            ('casesensitivity', None, str.lower, True),
+            ('comments', 'org.freenas:description', None, True),
+            ('compression', None, str.lower, True),
+            ('copies', None, lambda x: str(x), True),
+            ('deduplication', 'dedup', str.lower, True),
+            ('exec', None, str.lower, True),
+            ('managedby', 'org.truenas:managedby', None, True),
+            ('quota', None, _none, True),
+            ('quota_warning', 'org.freenas:quota_warning', str, True),
+            ('quota_critical', 'org.freenas:quota_critical', str, True),
+            ('readonly', None, str.lower, True),
+            ('recordsize', None, None, True),
+            ('refquota', None, _none, True),
+            ('refquota_warning', 'org.freenas:refquota_warning', str, True),
+            ('refquota_critical', 'org.freenas:refquota_critical', str, True),
             ('refreservation', None, _none, False),
             ('reservation', None, _none, False),
-            ('snapdir', None, str.lower, False),
+            ('snapdir', None, str.lower, True),
             ('sparse', None, None, False),
-            ('sync', None, str.lower, False),
+            ('sync', None, str.lower, True),
             ('volblocksize', None, None, False),
             ('volsize', None, lambda x: str(x), False),
-            ('xattr', None, str.lower, False),
+            ('xattr', None, str.lower, True),
             ('special_small_block_size', 'special_small_blocks', None, True),
         ):
             if i not in data or (inheritable and data[i] == 'INHERIT'):
@@ -3159,11 +3150,6 @@ class PoolDatasetService(CRUDService):
                 props[prop['key']] = {'source': 'INHERIT'}
         return props
 
-    def _add_inherit(name):
-        def add(attr):
-            attr.enum.append('INHERIT')
-        return {'name': name, 'method': add}
-
     @accepts(Str('id', required=True), Patch(
         'pool_dataset_create', 'pool_dataset_update',
         ('rm', {'name': 'name'}),
@@ -3175,18 +3161,6 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'encryption'}),  # Create time only attribute
         ('rm', {'name': 'encryption_options'}),  # Create time only attribute
         ('rm', {'name': 'inherit_encryption'}),  # Create time only attribute
-        ('edit', _add_inherit('atime')),
-        ('edit', _add_inherit('exec')),
-        ('edit', _add_inherit('sync')),
-        ('edit', _add_inherit('compression')),
-        ('edit', _add_inherit('deduplication')),
-        ('edit', _add_inherit('readonly')),
-        ('edit', _add_inherit('recordsize')),
-        ('edit', _add_inherit('snapdir')),
-        ('add', Inheritable('quota_warning', value=Int('quota_warning', validators=[Range(0, 100)]))),
-        ('add', Inheritable('quota_critical', value=Int('quota_critical', validators=[Range(0, 100)]))),
-        ('add', Inheritable('refquota_warning', value=Int('refquota_warning', validators=[Range(0, 100)]))),
-        ('add', Inheritable('refquota_critical', value=Int('refquota_critical', validators=[Range(0, 100)]))),
         ('add', List(
             'user_properties_update',
             items=[Dict(
@@ -3218,7 +3192,9 @@ class PoolDatasetService(CRUDService):
         """
         verrors = ValidationErrors()
 
-        dataset = await self.middleware.call('pool.dataset.query', [('id', '=', id)])
+        dataset = await self.middleware.call(
+            'pool.dataset.query', [('id', '=', id)], {'extra': {'retrieve_children': False}}
+        )
         if not dataset:
             verrors.add('id', f'{id} does not exist', errno.ENOENT)
         else:
@@ -3251,7 +3227,7 @@ class PoolDatasetService(CRUDService):
             ('refquota_critical', 'org.freenas:refquota_critical', str, True),
             ('reservation', None, _none, False),
             ('refreservation', None, _none, False),
-            ('copies', None, None, False),
+            ('copies', None, None, True),
             ('snapdir', None, str.lower, True),
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
@@ -3314,21 +3290,17 @@ class PoolDatasetService(CRUDService):
             parent = parent[0]
 
         if data['type'] == 'FILESYSTEM':
-            if data.get('acltype') or data.get('aclmode'):
+            if data.get('acltype', 'INHERIT') != 'INHERIT' or data.get('aclmode', 'INHERIT') != 'INHERIT':
                 to_check = data.copy()
-                if mode == "UPDATE":
-                    ds = await self.get_instance(data['name'])
+                if mode == 'UPDATE':
                     if not data.get('aclmode'):
-                        to_check['aclmode'] = ds['aclmode']['value']
+                        to_check['aclmode'] = cur_dataset['aclmode']['value']
 
                     if not data.get('acltype'):
-                        to_check['acltype'] = ds['acltype']['value']
+                        to_check['acltype'] = cur_dataset['acltype']['value']
 
                 if to_check.get('acltype', 'POSIX') in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
                     verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
-
-            if data.get("acltype") and osc.IS_FREEBSD:
-                verrors.add(f'{schema}.acltype', 'This field is not valid for TrueNAS')
 
             for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
