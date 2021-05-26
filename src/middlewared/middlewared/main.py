@@ -5,6 +5,7 @@ from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
+from .settings import DEBUG_MODE
 from .schema import Error as SchemaError
 import middlewared.service
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
@@ -800,7 +801,6 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
         log_handler=None, startup_seq_path=None, trace_malloc=False,
         log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
-        debug_mode=True,
     ):
         super().__init__(overlay_dirs)
         self.logger = logger.Logger(
@@ -815,7 +815,6 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.debug_level = debug_level
         self.log_handler = log_handler
         self.log_format = log_format
-        self.debug_mode = debug_mode
         self.startup_seq = 0
         self.startup_seq_path = startup_seq_path
         self.app = None
@@ -1630,6 +1629,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
 
 def main():
+    global DEBUG_MODE
     # Workaround for development
     modpath = os.path.realpath(os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -1683,6 +1683,8 @@ def main():
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
+    DEBUG_MODE = args.debug_mode
+
     Middleware(
         loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
@@ -1691,7 +1693,6 @@ def main():
         debug_level=args.debug_level,
         log_handler=args.log_handler,
         startup_seq_path=startup_seq_path,
-        debug_mode=args.debug_mode,
     ).run()
 
 
