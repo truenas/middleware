@@ -954,17 +954,25 @@ def validate_return_type(func, result, schemas):
     elif not schemas:
         raise ValueError(f'Return schema missing for {func.__name__!r}')
 
+    result = copy.deepcopy(result)
     if not isinstance(result, tuple):
         result = [result]
 
     verrors = ValidationErrors()
     for res_entry, schema in zip(result, schemas):
-        try:
-            schema.validate(res_entry)
-        except ValidationErrors as ve:
-            verrors.extend(ve)
-
+        clean_and_validate_arg(verrors, schema, res_entry)
     verrors.check()
+
+
+def clean_and_validate_arg(verrors, attr, arg):
+    try:
+        value = attr.clean(arg)
+        attr.validate(value)
+        return value
+    except Error as e:
+        verrors.add(e.attribute, e.errmsg, e.errno)
+    except ValidationErrors as e:
+        verrors.extend(e)
 
 
 def returns(*schema):
@@ -1019,20 +1027,10 @@ def accepts(*schema):
 
             verrors = ValidationErrors()
 
-            def clean_and_validate_arg(attr, arg):
-                try:
-                    value = attr.clean(arg)
-                    attr.validate(value)
-                    return value
-                except Error as e:
-                    verrors.add(e.attribute, e.errmsg, e.errno)
-                except ValidationErrors as e:
-                    verrors.extend(e)
-
             # Iterate over positional args first, excluding self
             i = 0
             for _ in args[args_index:]:
-                args[args_index + i] = clean_and_validate_arg(nf.accepts[i], args[args_index + i])
+                args[args_index + i] = clean_and_validate_arg(verrors, nf.accepts[i], args[args_index + i])
                 i += 1
 
             # Use i counter to map keyword argument to rpc positional
@@ -1052,7 +1050,7 @@ def accepts(*schema):
                     i += 1
                     continue
 
-                kwargs[kwarg] = clean_and_validate_arg(attr, value)
+                kwargs[kwarg] = clean_and_validate_arg(verrors, attr, value)
 
             if verrors:
                 raise verrors
