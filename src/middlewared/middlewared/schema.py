@@ -948,14 +948,23 @@ def resolve_methods(schemas, to_resolve):
             raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
 
 
-def validate_return_type(func, result, schema):
-    if not schema and result is None:
+def validate_return_type(func, result, schemas):
+    if not schemas and result is None:
         return
-    elif not schema:
+    elif not schemas:
         raise ValueError(f'Return schema missing for {func.__name__!r}')
 
-    verrors = ValidationErrors()
+    if not isinstance(result, tuple):
+        result = [result]
 
+    verrors = ValidationErrors()
+    for res_entry, schema in zip(result, schemas):
+        try:
+            schema.validate(res_entry)
+        except ValidationErrors as ve:
+            verrors.extend(ve)
+
+    verrors.check()
 
 
 def returns(*schema):
