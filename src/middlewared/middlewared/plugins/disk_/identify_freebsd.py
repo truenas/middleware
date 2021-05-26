@@ -1,11 +1,7 @@
 import os
 
 from bsd import geom
-from lxml import etree
-from xml.etree import ElementTree
-
 from middlewared.service import Service
-
 from .identify_base import DiskIdentifyBase
 
 
@@ -68,32 +64,32 @@ class DiskService(Service, DiskIdentifyBase):
                 return search.text
 
         elif tp == 'serial':
-            search = geom.class_by_name('DISK').xml.find(
-                f'.//provider/config[ident = "{value}"]/../../name'
-            )
+            xml = geom.class_by_name('DISK').xml
+            search = xml.find(f'.//provider/config[ident = "{value}"]/../../name')
             if search is not None:
                 return search.text
-            # Builtin xml xpath do not understand normalize-space
-            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
-            search = search.xpath(
-                './/provider/config['
-                f'normalize-space(ident) = normalize-space("{value}")'
-                ']/../../name'
-            )
-            if len(search) > 0:
-                return search[0].text
+
+            # remove leading/trailing and more than single whitespace char(s)
+            _value = ' '.join(value.split())
+            search = xml.find(f'.//provider/config[ident = "{_value}"]/../../name')
+            if search is not None:
+                return search.text
+
             disks = self.middleware.call_sync('disk.query', [('serial', '=', value)])
             if disks:
                 return disks[0]['name']
 
         elif tp == 'serial_lunid':
-            # Builtin xml xpath do not understand concat
-            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
-            search = search.xpath(
-                f'.//provider/config[concat(ident,"_",lunid) = "{value}"]/../../name'
-            )
-            if len(search) > 0:
-                return search[0].text
+            xml = geom.class_by_name('DISK').xml
+            _ident, _lunid = value.split('_')
+            found_ident = xml.find(f'.//provider/config[ident = "{_ident}"]/../../name')
+            if found_ident is not None:
+                found_lunid = xml.find(f'.//provider/config[lunid = "{_lunid}"]/../../name')
+                if found_lunid is not None:
+                    # means the identifier and lunid given to us
+                    # matches a disk on the system so just return
+                    # the found_ident name
+                    return found_ident.text
 
         elif tp == 'devicename':
             if os.path.exists(f'/dev/{value}'):
