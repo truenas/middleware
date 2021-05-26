@@ -53,12 +53,7 @@ class DiskService(Service, DiskInfoBase):
             ),
             block_device.children
         ):
-            if disk.startswith('nvme'):
-                # This is a hack for nvme disks, however let's please come up with a better way
-                # to link disks with their partitions
-                part_name = f'{disk}p{p["ID_PART_ENTRY_NUMBER"]}'
-            else:
-                part_name = f'{disk}{p["ID_PART_ENTRY_NUMBER"]}'
+            part_name = self.get_partition_for_disk(disk, p['ID_PART_ENTRY_NUMBER'])
             part = {
                 'name': part_name,
                 'partition_type': p['ID_PART_ENTRY_TYPE'],
@@ -142,3 +137,11 @@ class DiskService(Service, DiskInfoBase):
             # nvme partitions would be like nvmen1p1 where disk is nvmen1
             part_num = f'p{part_num}'
         return part_name.rsplit(part_num, 1)[0].strip()
+
+    def get_partition_for_disk(self, disk, partition):
+        if disk.startswith('nvme'):
+            # This is a hack for nvme disks, however let's please come up with a better way
+            # to link disks with their partitions
+            return f'{disk}p{partition}'
+        else:
+            return f'{disk}{partition}'
