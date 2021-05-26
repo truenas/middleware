@@ -69,11 +69,18 @@ class DiskService(Service, DiskIdentifyBase):
             if search is not None:
                 return search.text
 
-            # remove leading/trailing and more than single whitespace char(s)
+            # normalize the passed in value by stripping leading/trailing and more
+            # than single-space char(s) on the passed in data to us as well as the
+            # xml data that's returned from the system. We'll check to see if we
+            # have a match on the normalized data and return the name accordingly
             _value = ' '.join(value.split())
-            search = xml.find(f'.//provider/config[ident = "{_value}"]/../../name')
-            if search is not None:
-                return search.text
+            for i in xml.findall('.//provider/config/ident'):
+                raw = i.text
+                _ident = ' '.join(raw.split())
+                if _value == _ident:
+                    name = xml.find(f'.//provider/config[ident = "{raw}"]/../../name')
+                    if name is not None:
+                        return name.text
 
             disks = self.middleware.call_sync('disk.query', [('serial', '=', value)])
             if disks:
