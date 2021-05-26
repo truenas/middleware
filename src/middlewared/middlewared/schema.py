@@ -10,6 +10,7 @@ import os
 from croniter import croniter
 
 from middlewared.service_exception import ValidationErrors
+from middlewared.settings import DEBUG_MODE
 from middlewared.utils import filter_list
 
 NOT_PROVIDED = object()
@@ -925,6 +926,31 @@ def resolve_methods(schemas, to_resolve):
                 resolved += 1
         if resolved == 0:
             raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
+
+
+def validate_return_type(result, schema):
+    pass
+
+
+def returns(*schema):
+    def wrap(f):
+        if asyncio.iscoroutinefunction(f):
+            async def nf(*args, **kwargs):
+                res = await f(*args, **kwargs)
+                if DEBUG_MODE:
+                    validate_return_type(res, list(schema))
+                return res
+        else:
+            def nf(*args, **kwargs):
+                res = f(*args, **kwargs)
+                if DEBUG_MODE:
+                    validate_return_type(res, list(schema))
+                return res
+
+        from middlewared.utils.type import copy_function_metadata
+        copy_function_metadata(f, nf)
+        return nf
+    return wrap
 
 
 def accepts(*schema):
