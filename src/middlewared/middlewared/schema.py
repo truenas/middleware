@@ -893,8 +893,25 @@ class Patch(object):
 
 
 class OROperator:
-    def __init__(self, *schemas):
+    def __init__(self, name, *schemas):
+        self.name = name
         self.schemas = schemas
+
+    def clean(self, value):
+        found = False
+        final_value = value
+        for index, i in enumerate(self.schemas):
+            try:
+                tmpval = copy.deepcopy(value)
+                final_value = i.clean(tmpval)
+            except (Error, ValidationErrors):
+                pass
+            else:
+                found = True
+                break
+        if found is not True:
+            raise Error(self.name, 'Result does not match specified schema')
+        return final_value
 
     def validate(self, value):
         verrors = ValidationErrors()
