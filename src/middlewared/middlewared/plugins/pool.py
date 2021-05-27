@@ -2864,6 +2864,12 @@ class PoolDatasetService(CRUDService):
                 if method:
                     dataset[i]['value'] = method(dataset[i]['value'])
 
+            if 'mountpoint' in dataset:
+                # This is treated specially to keep backwards compatibility with API
+                dataset['mountpoint'] = dataset['mountpoint']['value']
+            if dataset['type'] == 'VOLUME':
+                dataset['mountpoint'] = None
+
             dataset['user_properties'] = {
                 k: v for k, v in dataset['properties'].items() if ':' in k and k not in self._internal_user_props()
             }
