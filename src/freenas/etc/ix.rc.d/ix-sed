@@ -7,11 +7,17 @@
 # REQUIRE: ix-syncdisks
 # BEFORE: ix-zfs
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 unlock_drives()
 {
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call disk.sed_unlock_all > /dev/null
+	# carp event script in the failover plugin has to call this
+	# since running this method on both controllers at the same
+	# time (on HA systems) can cause, ultimately, the disks to
+	# not get unlocked
+	if [ "$(ha_licensed)" = "false" ]; then
+		LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call disk.sed_unlock_all > /dev/null
+	fi
 }
 
 name="ix-sed"

@@ -519,6 +519,14 @@ class FailoverService(Service):
                 if attach_all_job.error:
                     logger.error('Failed to attach geli providers: %s', attach_all_job.error)
 
+                try:
+                    self.middleware.call_sync('disk.sed_unlock_all')
+                except Exception as e:
+                    # failing here doesn't mean the zpool won't mount
+                    # we could have only failed to unlock 1 disk
+                    # so log an error and move on
+                    logger.error('Failed to unlock SED disks with error: %r', e)
+
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
                 for volume in fobj['volumes']:
