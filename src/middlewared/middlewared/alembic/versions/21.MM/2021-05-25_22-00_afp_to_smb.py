@@ -33,16 +33,7 @@ def upgrade():
     has_cifs_home = bool(conn.execute("SELECT * FROM sharing_cifs_share WHERE cifs_home = 1"))
     disable_acl_if_trivial = []
     for share in conn.execute("SELECT * FROM sharing_afp_share").fetchall():
-        cifs_auxsmbconf = [
-            "fruit:locking = netatalk",
-            "fruit:metadata = netatalk",
-            "fruit:resource = file",
-            "streams_xattr:prefix = user.",
-            "streams_xattr:store_stream_type = no",
-            "oplocks = no",
-            "level2 oplocks = no",
-            "strict locking = auto",
-        ]
+        cifs_auxsmbconf = []
         share_disable_acl_if_trivial = False
         if share["afp_allow"].strip():
             cifs_auxsmbconf.append(f"valid users = {share['afp_allow'].strip()}")
@@ -63,6 +54,16 @@ def upgrade():
         cifs_auxsmbconf.append(f"force directory mode = 0{share['afp_dperm']}")
         if share["afp_auxparams"].strip():
             cifs_auxsmbconf.append(textwrap.indent(f"\nNetatalk Auxiliary Parameters:\n\n{share['afp_auxparams']}", "; "))
+        if cifs_auxsmbconf:
+            # They will not be automatically appended by the preset in this case
+            cifs_auxsmbconf.extend([
+                "fruit:metadata = netatalk",
+                "fruit:resource = file",
+                "streams_xattr:prefix = user.",
+                "streams_xattr:store_stream_type = no",
+                "oplocks = no",
+                "level2 oplocks = no",
+            ])
 
         cifs_share = {
             "cifs_purpose": "MULTI_PROTOCOL_AFP",

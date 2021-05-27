@@ -131,14 +131,12 @@ class SMBSharePreset(enum.Enum):
         'streams': True,
         'durablehandle': False,
         'auxsmbconf': '\n'.join([
-            'fruit:locking = netatalk',
             'fruit:metadata = netatalk',
             'fruit:resource = file',
             'streams_xattr:prefix = user.',
             'streams_xattr:store_stream_type = no',
             'oplocks = no',
             'level2 oplocks = no',
-            'strict locking = auto',
         ])
     }}
     MULTI_PROTOCOL_NFS = {"verbose_name": "Multi-protocol (NFSv3/SMB) shares", "params": {
