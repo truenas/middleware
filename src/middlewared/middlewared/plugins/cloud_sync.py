@@ -195,8 +195,10 @@ async def rclone(middleware, job, cloud_sync, dry_run=False):
                 snapshot = {"dataset": dataset["name"], "name": snapshot_name}
                 await middleware.call("zfs.snapshot.create", dict(snapshot, recursive=recursive))
 
-                relpath = os.path.relpath(path, dataset["mountpoint"])
-                path = os.path.normpath(os.path.join(dataset["mountpoint"], ".zfs", "snapshot", snapshot_name, relpath))
+                relpath = os.path.relpath(path, dataset["properties"]["mountpoint"]["value"])
+                path = os.path.normpath(os.path.join(
+                    dataset["properties"]["mountpoint"]["value"], ".zfs", "snapshot", snapshot_name, relpath
+                ))
 
             args.extend([path, config.remote_path])
         else:
@@ -453,23 +455,25 @@ def rclone_encrypt_password(password):
 def get_dataset_recursive(datasets, directory):
     datasets = [
         dict(dataset, prefixlen=len(
-            os.path.dirname(os.path.commonprefix([dataset["mountpoint"] + "/", directory + "/"]))))
+            os.path.dirname(os.path.commonprefix(
+                [dataset["properties"]["mountpoint"]["value"] + "/", directory + "/"]))
+        ))
         for dataset in datasets
-        if dataset["mountpoint"]
+        if dataset["properties"]["mountpoint"]["value"] != "none"
     ]
 
     dataset = sorted(
         [
             dataset
             for dataset in datasets
-            if (directory + "/").startswith(dataset["mountpoint"] + "/")
+            if (directory + "/").startswith(dataset["properties"]["mountpoint"]["value"] + "/")
         ],
         key=lambda dataset: dataset["prefixlen"],
         reverse=True
     )[0]
 
     return dataset, any(
-        (ds["mountpoint"] + "/").startswith(directory + "/")
+        (ds["properties"]["mountpoint"]["value"] + "/").startswith(directory + "/")
         for ds in datasets
         if ds != dataset
     )
