@@ -1009,6 +1009,7 @@ def returns(*schema):
 
         from middlewared.utils.type import copy_function_metadata
         copy_function_metadata(f, nf)
+        nf.wraps = f
         return nf
     return wrap
 
@@ -1021,7 +1022,8 @@ def accepts(*schema):
         elif further_only_hidden:
             raise ValueError("You can't have non-hidden arguments after hidden")
 
-    def wrap(f):
+    def wrap(func):
+        f = func.wraps if hasattr(func, 'wraps') else func
         if inspect.getfullargspec(f).defaults:
             raise ValueError("All public method default arguments should be specified in @accepts()")
 
@@ -1074,14 +1076,14 @@ def accepts(*schema):
 
             return args, kwargs
 
-        if asyncio.iscoroutinefunction(f):
+        if asyncio.iscoroutinefunction(func):
             async def nf(*args, **kwargs):
                 args, kwargs = clean_and_validate_args(args, kwargs)
-                return await f(*args, **kwargs)
+                return await func(*args, **kwargs)
         else:
             def nf(*args, **kwargs):
                 args, kwargs = clean_and_validate_args(args, kwargs)
-                return f(*args, **kwargs)
+                return func(*args, **kwargs)
 
         from middlewared.utils.type import copy_function_metadata
         copy_function_metadata(f, nf)
