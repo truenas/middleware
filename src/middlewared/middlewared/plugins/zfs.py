@@ -483,8 +483,7 @@ class ZFSDatasetService(CRUDService):
         datasets which does not incur the performance penalty.
 
         `query-options.extra.properties` is a list of properties which should be retrieved. If null ( by default ),
-        it would retrieve all properties, if empty, it will retrieve no property ( `mountpoint` is special in this
-        case and is controlled by `query-options.extra.mountpoint` attribute ).
+        it would retrieve all properties, if empty, it will retrieve no property.
 
         We provide 2 ways how zfs.dataset.query returns dataset's data. First is a flat structure ( default ), which
         means that all the datasets in the system are returned as separate objects which also contain all the data
