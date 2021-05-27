@@ -42,7 +42,7 @@ import time
 import threading
 
 from abc import ABC, abstractmethod
-from lxml import etree
+from xml.etree import ElementTree as etree
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
