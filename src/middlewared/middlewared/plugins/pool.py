@@ -2828,6 +2828,7 @@ class PoolDatasetService(CRUDService):
                 ('org.freenas:refquota_critical', 'refquota_critical', None),
                 ('org.truenas:managedby', 'managedby', None),
                 ('dedup', 'deduplication', str.upper),
+                ('mountpoint', None, _null),
                 ('aclmode', None, str.upper),
                 ('acltype', None, str.upper),
                 ('xattr', None, str.upper),
