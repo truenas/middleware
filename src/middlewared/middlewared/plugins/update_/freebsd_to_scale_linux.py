@@ -28,7 +28,7 @@ class UpdateService(Service):
         await self.middleware.call("system.reboot")
 
     @private
-    async def freebsd_grub(self, default):
+    async def freebsd_grub(self):
         pool_name = await self.middleware.call("boot.pool_name")
         for dataset in await self.middleware.call("zfs.dataset.query", [["name", "^", f"{pool_name}/"]]):
             if dataset["properties"].get("truenas:12", {}).get("value") == "1":
@@ -37,10 +37,10 @@ class UpdateService(Service):
         else:
             return ""
 
-        is_default = (
+        if (
             await self.middleware.call("zfs.pool.query", [["name", "=", pool_name]], {"get": True})
-        )["properties"]["bootfs"]["value"] == dataset["name"]
-        if default != is_default:
+        )["properties"]["bootfs"]["value"] != dataset["name"]:
+            # Grub can only boot FreeBSD if pool `bootfs` is set to FreeBSD dataset
             return ""
 
         if await self.middleware.call("boot.get_boot_type") == "BIOS":
@@ -63,7 +63,7 @@ class UpdateService(Service):
             """
 
         return textwrap.dedent(f"""\
-            menuentry "TrueNAS <=12" {{
+            menuentry "TrueNAS CORE" {{
                 insmod part_gpt
                 {bsd_loader}
             }}
