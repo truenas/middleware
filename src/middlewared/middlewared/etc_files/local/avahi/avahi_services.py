@@ -139,7 +139,7 @@ class mDNSService(object):
                 txtrecord['sys'] = 'waMa=0,adVF=0x100'
                 for i in smb:
                     smb_advu = (list(filter(lambda x: i[0] == x['name'], smb_shares)))[0]['vuid']
-                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x83,adVU={smb_advu}'
+                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x82,adVU={smb_advu}'
                     dkno += 1
 
                 if smb:
