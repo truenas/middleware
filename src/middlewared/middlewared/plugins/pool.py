@@ -3285,12 +3285,12 @@ class PoolDatasetService(CRUDService):
         if data['type'] == 'FILESYSTEM':
             if data.get('acltype', 'INHERIT') != 'INHERIT' or data.get('aclmode', 'INHERIT') != 'INHERIT':
                 to_check = data.copy()
-                if mode == 'UPDATE':
-                    if not data.get('aclmode'):
-                        to_check['aclmode'] = cur_dataset['aclmode']['value']
+                check_ds = cur_dataset if mode == 'UPDATE' else parent
+                if data.get('aclmode', 'INHERIT') == 'INHERIT':
+                    to_check['aclmode'] = check_ds['aclmode']['value']
 
-                    if not data.get('acltype'):
-                        to_check['acltype'] = cur_dataset['acltype']['value']
+                if data.get('acltype', 'INHERIT') == 'INHERIT':
+                    to_check['acltype'] = check_ds['acltype']['value']
 
                 if to_check.get('acltype', 'POSIX') in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
                     verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
