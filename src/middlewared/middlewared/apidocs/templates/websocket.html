@@ -257,6 +257,19 @@
                      </div>
                    </th></tr>
                    {% endif %}
+                   {% if method.returns %}
+                   <tr><th>
+                     Return Arguments:
+                     <div>
+                     {% for return_schema in method.returns %}
+                     <div style="float: left; margin-right: 10px;">
+                       <div style="background-color: #ddd; white-space: pre; font-family: Courier;">{{ return_schema|json }}</div>
+                     </div>
+                     {% endfor %}
+                     <div style="clear: both;"></div>
+                     </div>
+                   </th></tr>
+                   {% endif %}
                  </thead>
                  <tbody>
                    <tr><td>
