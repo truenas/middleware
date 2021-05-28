@@ -19,7 +19,7 @@ import psutil
 
 from middlewared.common.environ import environ_update
 import middlewared.main
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, OROperator, Patch, Ref, Str, returns_internal
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.settings import DEBUG_MODE
 from middlewared.utils import filter_list, osc
@@ -456,7 +456,16 @@ class SystemServiceService(ConfigService):
             asyncio.ensure_future(fut)
 
 
-class CRUDService(ServiceChangeMixin, Service):
+class CRUDServiceMetabase(ServiceBase):
+
+    def __new__(cls, *args, **kwargs):
+        klass = super().__new__(cls, *args, **kwargs)
+        query_method = klass.query.wraps if hasattr(klass.query, 'returns') else klass.query
+        klass.query = returns_internal(query_method, schema=[klass.QUERY_PARAMETERS])
+        return klass
+
+
+class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     """
     CRUD service abstract class
 
@@ -465,6 +474,13 @@ class CRUDService(ServiceChangeMixin, Service):
 
     CRUD stands for Create Retrieve Update Delete.
     """
+
+    QUERY_PARAMETERS = OROperator(
+        'query_result',
+        List('query_result', items=[Dict('result_entry', additional_attrs=True)]),
+        Int('count'),
+        Dict('result_entry', additional_attrs=True),
+    )
 
     def __init__(self, middleware):
         super().__init__(middleware)
