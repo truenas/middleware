@@ -455,6 +455,7 @@ class SharingSMBService(Service):
                 conf['fruit:time machine max size'] = f'{data["timemachine_quota"]}G'
 
         if data['afp']:
+            conf['fruit:encoding'] = 'native'
             conf['fruit:metadata'] = 'netatalk'
             conf['fruit:resource'] = 'file'
             conf['streams_xattr:prefix'] = 'user.'
