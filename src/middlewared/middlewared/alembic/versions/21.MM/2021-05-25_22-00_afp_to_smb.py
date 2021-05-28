@@ -61,7 +61,7 @@ def upgrade():
         umask_inv = "%o" % (~int(share["afp_umask"], 8) & 0o777)
         cifs_auxsmbconf.append(f"create mask = 0{umask_inv}")
         cifs_auxsmbconf.append(f"directory mode = 0{umask_inv}")
-        cifs_auxsmbconf.append(f"force create mask = 0{share['afp_fperm']}")
+        cifs_auxsmbconf.append(f"force create mode = 0{share['afp_fperm']}")
         cifs_auxsmbconf.append(f"force directory mode = 0{share['afp_dperm']}")
         if share["afp_auxparams"].strip():
             cifs_auxsmbconf.append(textwrap.indent(f"\nNetatalk Auxiliary Parameters:\n\n{share['afp_auxparams']}", "; "))

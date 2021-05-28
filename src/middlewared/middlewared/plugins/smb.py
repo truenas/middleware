@@ -601,6 +601,10 @@ class SMBService(SystemServiceService):
             except (ValueError, TypeError):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
+        if not new['aapl_extensions']:
+            if await self.middleware.call('sharing.smb.query', [['afp', '=', True]], {'count': True}):
+                verrors.add('smb_update.aapl_extensions', 'This option must be enabled when AFP shares are present')
+
     @accepts(Dict(
         'smb_update',
         Str('netbiosname', max_length=15),
@@ -911,7 +915,7 @@ class SharingSMBService(SharingService):
                 except OSError as e:
                     raise CallError(f'Failed to create {path}: {e}')
 
-        if old['purpose'] != new['purpose'] or old['afp'] != new['afp']:
+        if old['purpose'] != new['purpose']:
             await self.apply_presets(new)
 
         if ha_mode == SMBHAMODE.CLUSTERED:
@@ -1196,6 +1200,10 @@ class SharingSMBService(SharingService):
             verrors.add(f'{schema_name}.name',
                         'Path suffix may not contain more than two components.')
 
+        if data['afp']:
+            if not (await self.middleware.call('smb.config'))['aapl_extensions']:
+                verrors.add(f'{schema_name}.afp', 'Please enable Apple extensions first.')
+
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
         home_filters = [('home', '=', True)]
@@ -1301,16 +1309,7 @@ class SharingSMBService(SharingService):
         from preset if user-defined aux parameters already exist. In this
         case user-defined takes precedence.
         """
-        if data["afp"]:
-            params = {
-                'acl': True,
-                'aapl_name_mangling': True,
-                'streams': True,
-                'durablehandle': False,
-                'auxsmbconf': '',
-            }
-        else:
-            params = (SMBSharePreset[data["purpose"]].value)["params"].copy()
+        params = (SMBSharePreset[data["purpose"]].value)["params"].copy()
         aux = params.pop("auxsmbconf")
         data.update(params)
         if data["auxsmbconf"]:
