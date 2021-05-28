@@ -65,14 +65,6 @@ def upgrade():
         cifs_auxsmbconf.append(f"force directory mode = 0{share['afp_dperm']}")
         if share["afp_auxparams"].strip():
             cifs_auxsmbconf.append(textwrap.indent(f"\nNetatalk Auxiliary Parameters:\n\n{share['afp_auxparams']}", "; "))
-        if cifs_auxsmbconf:
-            # They will not be automatically appended by the preset in this case
-            cifs_auxsmbconf.extend([
-                "fruit:metadata = netatalk",
-                "fruit:resource = file",
-                "streams_xattr:prefix = user.",
-                "streams_xattr:store_stream_type = no",
-            ])
 
         cifs_share = {
             "cifs_purpose": "NO_PRESET",

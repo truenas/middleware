@@ -454,6 +454,12 @@ class SharingSMBService(Service):
             if data['timemachine_quota']:
                 conf['fruit:time machine max size'] = f'{data["timemachine_quota"]}G'
 
+        if data['afp']:
+            conf['fruit:metadata'] = 'netatalk'
+            conf['fruit:resource'] = 'file'
+            conf['streams_xattr:prefix'] = 'user'
+            conf['streams_xattr:store_stream_type'] = 'no'
+
         if data['recyclebin']:
             conf.update({
                 "recycle:repository": ".recycle/%D/%U" if gl['ad_enabled'] else ".recycle/%U",
