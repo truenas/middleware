@@ -108,6 +108,8 @@ def upgrade():
         if share["afp_home"]:
             has_cifs_home = True
 
+        conn.execute("UPDATE services_cifs SET cifs_srv_aapl_extensions = 1")
+
     if disable_acl_if_trivial:
         conn.execute("INSERT INTO system_keyvalue (\"key\", value) VALUES (?, ?)",
                      ("smb_disable_acl_if_trivial", json.dumps(disable_acl_if_trivial)))
