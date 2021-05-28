@@ -1010,6 +1010,7 @@ def returns(*schema):
         from middlewared.utils.type import copy_function_metadata
         copy_function_metadata(f, nf)
         nf.wraps = f
+        nf.returns = list(schema)
         return nf
     return wrap
 
@@ -1088,6 +1089,8 @@ def accepts(*schema):
         from middlewared.utils.type import copy_function_metadata
         copy_function_metadata(f, nf)
         nf.accepts = list(schema)
+        if hasattr(func, 'returns'):
+            nf.returns = func.returns
         nf.wraps = f
         nf.wrap = wrap
 
