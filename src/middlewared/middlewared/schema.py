@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import functools
 from collections import defaultdict
 from datetime import datetime, time
 import errno
@@ -992,27 +993,30 @@ def clean_and_validate_arg(verrors, attr, arg):
         verrors.extend(e)
 
 
-def returns(*schema):
-    def wrap(f):
-        if asyncio.iscoroutinefunction(f):
-            async def nf(*args, **kwargs):
-                res = await f(*args, **kwargs)
-                if DEBUG_MODE:
-                    validate_return_type(f, res, list(schema))
-                return res
-        else:
-            def nf(*args, **kwargs):
-                res = f(*args, **kwargs)
-                if DEBUG_MODE:
-                    validate_return_type(f, res, list(schema))
-                return res
+def returns_internal(f, **kwargs):
+    schema = kwargs['schema']
+    if asyncio.iscoroutinefunction(f):
+        async def nf(*args, **kwargs):
+            res = await f(*args, **kwargs)
+            if DEBUG_MODE:
+                validate_return_type(f, res, schema)
+            return res
+    else:
+        def nf(*args, **kwargs):
+            res = f(*args, **kwargs)
+            if DEBUG_MODE:
+                validate_return_type(f, res, schema)
+            return res
 
-        from middlewared.utils.type import copy_function_metadata
-        copy_function_metadata(f, nf)
-        nf.wraps = f
-        nf.returns = list(schema)
-        return nf
-    return wrap
+    from middlewared.utils.type import copy_function_metadata
+    copy_function_metadata(f, nf)
+    nf.wraps = f
+    nf.returns = schema
+    return nf
+
+
+def returns(*schema):
+    return functools.partial(returns_internal, schema=list(schema))
 
 
 def accepts(*schema):
