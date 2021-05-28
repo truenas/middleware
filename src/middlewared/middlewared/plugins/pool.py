@@ -3136,10 +3136,12 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
-        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and data['acltype'] == "NFS4":
+        created_ds = await self.get_instance(data['id'])
+
+        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and created_ds['acltype'] == "NFSV4":
             await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
 
-        return await self.get_instance(data['id'])
+        return created_ds
 
     async def _get_create_update_user_props(self, user_properties, update=False):
         props = {}
