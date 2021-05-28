@@ -1307,12 +1307,7 @@ class SharingSMBService(SharingService):
                 'aapl_name_mangling': True,
                 'streams': True,
                 'durablehandle': False,
-                'auxsmbconf': '\n'.join([
-                    'fruit:metadata = netatalk',
-                    'fruit:resource = file',
-                    'streams_xattr:prefix = user.',
-                    'streams_xattr:store_stream_type = no',
-                ])
+                'auxsmbconf': '',
             }
         else:
             params = (SMBSharePreset[data["purpose"]].value)["params"].copy()
