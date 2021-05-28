@@ -718,8 +718,8 @@ class ZFSDatasetService(CRUDService):
     def unload_key(self, id, options):
         force = options.pop('force_umount')
         if options.pop('umount') and self.middleware.call_sync(
-            'zfs.dataset.get_instance', id
-        )['properties']['mountpoint']['value']:
+            'zfs.dataset.query', [['id', '=', id]], {'extra': {'retrieve_children': False}, 'get': True}
+        )['properties'].get('mountpoint', {}).get('value', 'none') != 'none':
             self.umount(id, {'force': force})
         try:
             with libzfs.ZFS() as zfs:

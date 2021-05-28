@@ -78,7 +78,7 @@ class ZFSKeyFormat(enum.Enum):
 class Inheritable(EnumMixin, Attribute):
     def __init__(self, schema, **kwargs):
         self.schema = schema
-        if not self.schema.has_default and 'default' not in kwargs:
+        if not self.schema.has_default and 'default' not in kwargs and kwargs.pop('has_default', True):
             kwargs['default'] = 'INHERIT'
         super(Inheritable, self).__init__(self.schema.name, **kwargs)
 
@@ -2908,7 +2908,7 @@ class PoolDatasetService(CRUDService):
         Inheritable(Str('comments')),
         Inheritable(Str('sync', enum=['STANDARD', 'ALWAYS', 'DISABLED'])),
         Inheritable(Str('compression', enum=ZFS_COMPRESSION_ALGORITHM_CHOICES)),
-        Inheritable(Str('atime', enum=['ON', 'OFF'])),
+        Inheritable(Str('atime', enum=['ON', 'OFF']), has_default=False),
         Inheritable(Str('exec', enum=['ON', 'OFF'])),
         Inheritable(Str('managedby', empty=False)),
         Int('quota', null=True, validators=[Or(Range(min=1024**3), Exact(0))]),
@@ -2919,17 +2919,17 @@ class PoolDatasetService(CRUDService):
         Inheritable(Int('refquota_critical', validators=[Range(0, 100)])),
         Int('reservation'),
         Int('refreservation'),
-        Inheritable(Int('special_small_block_size')),
+        Inheritable(Int('special_small_block_size'), has_default=False),
         Inheritable(Int('copies')),
         Inheritable(Str('snapdir', enum=['VISIBLE', 'HIDDEN'])),
         Inheritable(Str('deduplication', enum=['ON', 'VERIFY', 'OFF'])),
         Inheritable(Str('readonly', enum=['ON', 'OFF'])),
         Inheritable(Str('recordsize', enum=[
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
-        ])),
-        Inheritable(Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED'])),
-        Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD'])),
-        Inheritable(Str('acltype', enum=['OFF', 'NOACL', 'NFSV4', 'NFS4ACL', 'POSIX', 'POSIXACL'])),
+        ]), has_default=False),
+        Inheritable(Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']), has_default=False),
+        Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']), has_default=False),
+        Inheritable(Str('acltype', enum=['OFF', 'NOACL', 'NFSV4', 'NFS4ACL', 'POSIX', 'POSIXACL']), has_default=False),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         Inheritable(Str('xattr', enum=['ON', 'SA'])),
         Ref('encryption_options'),
