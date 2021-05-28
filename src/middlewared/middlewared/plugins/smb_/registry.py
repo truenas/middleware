@@ -451,6 +451,9 @@ class SharingSMBService(Service):
             conf["fruit:time machine"] = "yes"
             conf["fruit:locking"] = "none"
 
+            if data['timemachine_quota']:
+                conf['fruit:time machine max size'] = f'{data["timemachine_quota"]}G'
+
         if data['recyclebin']:
             conf.update({
                 "recycle:repository": ".recycle/%D/%U" if gl['ad_enabled'] else ".recycle/%U",

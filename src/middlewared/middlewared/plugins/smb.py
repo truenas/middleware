@@ -1389,7 +1389,6 @@ async def pool_post_import(middleware, pool):
         already completed and initialized the SMB service.
         """
         await middleware.call('sharing.smb.disable_acl_if_trivial')
-        await middleware.call('sharing.smb.set_timemachine_quotas')
         asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
         return
 
@@ -1401,7 +1400,6 @@ async def pool_post_import(middleware, pool):
         ])
     ]):
         await middleware.call('sharing.smb.disable_acl_if_trivial')
-        await middleware.call('sharing.smb.set_timemachine_quotas')
         asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
 
 
@@ -1419,7 +1417,6 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         the share being attached.
         """
         await self.middleware.call('sharing.smb.disable_acl_if_trivial')
-        await self.middleware.call('sharing.smb.set_timemachine_quotas')
         reg_sync = await self.middleware.call('sharing.smb.sync_registry')
         await reg_sync.wait()
         await self.middleware.call('service.reload', 'mdns')
