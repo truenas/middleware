@@ -1312,8 +1312,6 @@ class SharingSMBService(SharingService):
                     'fruit:resource = file',
                     'streams_xattr:prefix = user.',
                     'streams_xattr:store_stream_type = no',
-                    'oplocks = no',
-                    'level2 oplocks = no',
                 ])
             }
         else:
