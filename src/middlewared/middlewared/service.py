@@ -1006,7 +1006,6 @@ class CoreService(Service):
                 # For CRUD.do_{update,delete} they need to be accounted
                 # as "item_method", since they are just wrapped.
                 item_method = None
-                filterable_schema = None
                 if is_service_class(svc, CRUDService):
                     """
                     For CRUD the create/update/delete are special.
@@ -1035,7 +1034,7 @@ class CoreService(Service):
                             method = getattr(svc, attr)
                         if method is None:
                             continue
-                    elif attr in ('do_update'):
+                    elif attr in ('do_update',):
                         continue
 
                 if method is None:
