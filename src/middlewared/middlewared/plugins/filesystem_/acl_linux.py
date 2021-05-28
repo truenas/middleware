@@ -316,7 +316,6 @@ class FilesystemService(Service, ACLBase):
         else:
             payload = {
                 'acl': data['dacl'],
-                'nfs41_flags': data['nfs41_flags']
             }
             json_payload = json.dumps(payload)
             setacl = subprocess.run(
