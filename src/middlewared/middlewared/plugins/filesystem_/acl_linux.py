@@ -294,6 +294,16 @@ class FilesystemService(Service, ACLBase):
                     'filesystem.setacl.dacl.{err[0]}', err[1]
                 )
 
+        path_acltype = self.getacl(path)['acltype']
+        if path_acltype != ACLType.NFS4.name:
+            verrors.add(
+                'filesystem.setacl.acltype',
+                f'ACL type mismatch. On-disk format is [{path_acltype}], '
+                f'but received [{data.get("acltype")}].'
+            )
+
+        verrors.check()
+
         if do_strip:
             stripacl = subprocess.run(
                 ['nfs4xdr_setfacl', '-b', path],
@@ -456,6 +466,14 @@ class FilesystemService(Service, ACLBase):
                 verrors.add(
                     'filesystem.setacl.dacl.{err[0]}', err[1]
                 )
+
+        path_acltype = self.getacl(path)['acltype']
+        if path_acltype != ACLType.POSIX1E.name:
+            verrors.add(
+                'filesystem.setacl.acltype',
+                f'ACL type mismatch. On-disk format is [{path_acltype}], '
+                f'but received [{data.get("acltype")}].'
+            )
 
         if do_strip and dacl:
             verrors.add(
