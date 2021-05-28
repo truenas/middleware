@@ -29,6 +29,17 @@ def upgrade():
     with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
         batch_op.alter_column('cifs_timemachine_quota', existing_type=sa.INTEGER(), nullable=False)
 
+    with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('cifs_afp', sa.Boolean(), nullable=True))
+
+    op.execute("UPDATE sharing_cifs_share SET cifs_afp = 0")
+    op.execute("""
+        UPDATE sharing_cifs_share SET cifs_purpose = 'NO_PRESET', cifs_afp = 1 WHERE cifs_purpose = 'MULTI_PROTOCOL_AFP'
+    """)
+
+    with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
+        batch_op.alter_column('cifs_afp', existing_type=sa.BOOLEAN(), nullable=False)
+
     conn = op.get_bind()
     has_cifs_home = bool(conn.execute("SELECT * FROM sharing_cifs_share WHERE cifs_home = 1"))
     disable_acl_if_trivial = []
@@ -66,7 +77,7 @@ def upgrade():
             ])
 
         cifs_share = {
-            "cifs_purpose": "MULTI_PROTOCOL_AFP",
+            "cifs_purpose": "NO_PRESET",
             "cifs_path": share["afp_path"],
             "cifs_path_suffix": "",
             "cifs_home": not has_cifs_home and share["afp_home"],
@@ -92,6 +103,7 @@ def upgrade():
             "cifs_share_acl": "",
             "cifs_cluster_volname": "",
             "cifs_timemachine_quota": share["afp_timemachine_quota"],
+            "cifs_afp": True,
         }
 
         conn.execute(

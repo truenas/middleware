@@ -125,20 +125,6 @@ class SMBSharePreset(enum.Enum):
             'ixnas:default_user_quota=1T' if osc.IS_FREEBSD else 'zfs_core:base_user_quota=1T',
         ])
     }}
-    MULTI_PROTOCOL_AFP = {"verbose_name": "Multi-protocol (AFP/SMB) shares", "params": {
-        'acl': True,
-        'aapl_name_mangling': True,
-        'streams': True,
-        'durablehandle': False,
-        'auxsmbconf': '\n'.join([
-            'fruit:metadata = netatalk',
-            'fruit:resource = file',
-            'streams_xattr:prefix = user.',
-            'streams_xattr:store_stream_type = no',
-            'oplocks = no',
-            'level2 oplocks = no',
-        ])
-    }}
     MULTI_PROTOCOL_NFS = {"verbose_name": "Multi-protocol (NFSv3/SMB) shares", "params": {
         'acl': False,
         'streams': False,
@@ -745,6 +731,7 @@ class SharingSMBModel(sa.Model):
     cifs_enabled = sa.Column(sa.Boolean(), default=True)
     cifs_share_acl = sa.Column(sa.Text())
     cifs_cluster_volname = sa.Column(sa.String(255))
+    cifs_afp = sa.Column(sa.Boolean())
 
 
 class SharingSMBService(SharingService):
@@ -807,6 +794,7 @@ class SharingSMBService(SharingService):
         Str('auxsmbconf', max_length=None, default=''),
         Bool('enabled', default=True),
         Str('cluster_volname', default=''),
+        Bool('afp', default=False),
         register=True
     ))
     async def do_create(self, data):
@@ -923,7 +911,7 @@ class SharingSMBService(SharingService):
                 except OSError as e:
                     raise CallError(f'Failed to create {path}: {e}')
 
-        if old['purpose'] != new['purpose']:
+        if old['purpose'] != new['purpose'] or old['afp'] != new['afp']:
             await self.apply_presets(new)
 
         if ha_mode == SMBHAMODE.CLUSTERED:
@@ -1313,7 +1301,23 @@ class SharingSMBService(SharingService):
         from preset if user-defined aux parameters already exist. In this
         case user-defined takes precedence.
         """
-        params = (SMBSharePreset[data["purpose"]].value)["params"].copy()
+        if data["afp"]:
+            params = {
+                'acl': True,
+                'aapl_name_mangling': True,
+                'streams': True,
+                'durablehandle': False,
+                'auxsmbconf': '\n'.join([
+                    'fruit:metadata = netatalk',
+                    'fruit:resource = file',
+                    'streams_xattr:prefix = user.',
+                    'streams_xattr:store_stream_type = no',
+                    'oplocks = no',
+                    'level2 oplocks = no',
+                ])
+            }
+        else:
+            params = (SMBSharePreset[data["purpose"]].value)["params"].copy()
         aux = params.pop("auxsmbconf")
         data.update(params)
         if data["auxsmbconf"]:
