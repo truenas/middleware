@@ -894,9 +894,10 @@ class Patch(object):
 
 
 class OROperator:
-    def __init__(self, name, *schemas):
+    def __init__(self, name, *schemas, **kwargs):
         self.name = name
         self.schemas = schemas
+        self.description = kwargs.get('description')
 
     def clean(self, value):
         found = False
@@ -928,6 +929,14 @@ class OROperator:
             verrors.extend(attr_verrors)
 
         verrors.check()
+
+    def to_json_schema(self):
+        return {
+            'anyOf': [i.to_json_schema() for i in self.schemas],
+            'nullable': False,
+            '_name_': self.name,
+            'description': self.description,
+        }
 
 
 class ResolverError(Exception):
