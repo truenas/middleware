@@ -71,7 +71,6 @@
 
         try:
             if middleware.call_sync('cache.get', 'SMB_REG_INITIALIZED') is True:
-                middleware.call_sync('sharing.smb.set_timemachine_quotas')
                 middleware.call_sync('sharing.smb.sync_registry')
                 return
         except KeyError:
