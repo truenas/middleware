@@ -457,7 +457,7 @@ class SharingSMBService(Service):
         if data['afp']:
             conf['fruit:metadata'] = 'netatalk'
             conf['fruit:resource'] = 'file'
-            conf['streams_xattr:prefix'] = 'user'
+            conf['streams_xattr:prefix'] = 'user.'
             conf['streams_xattr:store_stream_type'] = 'no'
 
         if data['recyclebin']:
