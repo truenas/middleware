@@ -896,7 +896,7 @@ class Patch(object):
 class OROperator:
     def __init__(self, name, *schemas, **kwargs):
         self.name = name
-        self.schemas = schemas
+        self.schemas = list(schemas)
         self.description = kwargs.get('description')
 
     def clean(self, value):
@@ -938,6 +938,11 @@ class OROperator:
             'description': self.description,
         }
 
+    def resolve(self, schemas):
+        for index, i in enumerate(self.schemas):
+            self.schemas[index] = i.resolve(schemas)
+        return self
+
 
 class ResolverError(Exception):
     pass
@@ -951,7 +956,7 @@ def resolver(schemas, f):
         new_params = []
         schema_obj = getattr(f, schema_type)
         for p in schema_obj:
-            if isinstance(p, (Patch, Ref, Attribute)):
+            if isinstance(p, (Patch, Ref, Attribute, OROperator)):
                 new_params.append(p.resolve(schemas))
             else:
                 raise ResolverError('Invalid parameter definition {0}'.format(p))
