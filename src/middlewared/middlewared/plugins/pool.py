@@ -2784,6 +2784,8 @@ class PoolDatasetService(CRUDService):
         `query-options.extra.properties` which when `null` ( which is the default ) will retrieve all properties
         and otherwise a list can be specified like `["type", "used", "available"]` to retrieve selective properties.
         If no properties are desired, in that case an empty list should be sent.
+
+        `query-options.extra.snapshots` can be set to retrieve snapshot(s) of dataset in question.
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
@@ -2796,11 +2798,15 @@ class PoolDatasetService(CRUDService):
         extra = copy.deepcopy(options.get('extra', {}))
         retrieve_children = extra.get('retrieve_children', True)
         props = extra.get('properties')
+        snapshots = extra.get('snapshots')
         return filter_list(
             self.__transform(self.middleware.call_sync(
                 'zfs.dataset.query', zfsfilters, {
                     'extra': {
-                        'flat': extra.get('flat', True), 'retrieve_children': retrieve_children, 'properties': props,
+                        'flat': extra.get('flat', True),
+                        'retrieve_children': retrieve_children,
+                        'properties': props,
+                        'snapshots': snapshots,
                     }
                 }
             ), retrieve_children, internal_datasets_filters,
