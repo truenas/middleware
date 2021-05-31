@@ -946,18 +946,19 @@ class ResolverError(Exception):
 def resolver(schemas, f):
     if not callable(f):
         return
-    if not hasattr(f, 'accepts'):
-        return
-    new_params = []
-    for p in f.accepts:
-        if isinstance(p, (Patch, Ref, Attribute)):
-            new_params.append(p.resolve(schemas))
-        else:
-            raise ResolverError('Invalid parameter definition {0}'.format(p))
 
-    # FIXME: for some reason assigning params (f.accepts = new_params) does not work
-    f.accepts.clear()
-    f.accepts.extend(new_params)
+    for schema_type in filter(lambda s: hasattr(f, s), ('accepts', 'returns')):
+        new_params = []
+        schema_obj = getattr(f, schema_type)
+        for p in schema_obj:
+            if isinstance(p, (Patch, Ref, Attribute)):
+                new_params.append(p.resolve(schemas))
+            else:
+                raise ResolverError('Invalid parameter definition {0}'.format(p))
+
+        # FIXME: for some reason assigning params (f.accepts = new_params) does not work
+        schema_obj.clear()
+        schema_obj.extend(new_params)
 
 
 def resolve_methods(schemas, to_resolve):
