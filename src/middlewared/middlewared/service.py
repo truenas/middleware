@@ -1,3 +1,4 @@
+import copy
 from collections import defaultdict, namedtuple
 from functools import wraps
 
@@ -19,9 +20,7 @@ import psutil
 
 from middlewared.common.environ import environ_update
 import middlewared.main
-from middlewared.schema import (
-    accepts, Any, Bool, Dict, Int, List, OROperator, Ref, Patch, Str, returns_internal, returns
-)
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, OROperator, Patch, Ref, returns, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.settings import DEBUG_MODE
 from middlewared.utils import filter_list, osc
@@ -396,6 +395,7 @@ class ConfigServiceMetabase(ServiceBase):
 
     def __new__(cls, name, bases, attrs):
         klass = super().__new__(cls, name, bases, attrs)
+        return klass
         namespace = klass._config.namespace
         if any(
             name == c_name and len(bases) == len(c_bases) and all(
@@ -492,43 +492,56 @@ class CRUDServiceMetabase(ServiceBase):
 
     def __new__(cls, name, bases, attrs):
         klass = super().__new__(cls, name, bases, attrs)
-        namespace = klass._config.namespace
         if any(
-            name == c_name and len(bases) == len(c_bases) and all(
-                b.__name__ == c_b for b, c_b in zip(bases, c_bases)
-            )
+            name == c_name and len(bases) == len(c_bases) and all(b.__name__ == c_b for b, c_b in zip(bases, c_bases))
             for c_name, c_bases in (
                 ('CRUDService', ('ServiceChangeMixin', 'Service')),
                 ('SharingTaskService', ('CRUDService',)),
-                ('SharingService', ('CRUDService',)),
-                ('TaskPathService', ('CRUDService',)),
+                ('SharingService', ('SharingTaskService',)),
+                ('TaskPathService', ('SharingTaskService',)),
             )
         ):
             return klass
 
+        namespace = klass._config.namespace
+        if klass.RESULT_ENTRY_KEY == NotImplementedError:
+            klass.RESULT_ENTRY_KEY = f'{namespace.replace(".", "_")}_entry'
         if klass.RESULT_ENTRY == NotImplementedError:
-            klass.RESULT_ENTRY = Dict(f'{namespace}.entry', additional_attrs=True, update=True)
+            klass.RESULT_ENTRY = Dict(klass.RESULT_ENTRY_KEY, additional_attrs=True, update=True)
+
+        klass.RESULT_ENTRY.register = True
 
         if klass.QUERY_PARAMETERS == NotImplementedError:
+            query_result_entry = copy.deepcopy(klass.RESULT_ENTRY)
+            query_result_entry.register = False
             klass.QUERY_PARAMETERS = OROperator(
                 'query_result',
-                List('query_result', items=[klass.RESULT_ENTRY]),
-                Int('count'),
                 klass.RESULT_ENTRY,
+                List('query_result', items=[query_result_entry]),
+                Int('count'),
             )
 
         query_method = klass.query.wraps if hasattr(klass.query, 'returns') else klass.query
-        klass.query = returns_internal(query_method, schema=[klass.QUERY_PARAMETERS])
+        klass.query = returns(klass.QUERY_PARAMETERS)(query_method)
+
         for m_name in filter(lambda m: hasattr(klass, m), ('do_create', 'do_update')):
-            schema = klass.RESULT_ENTRY
-            schema.name = f'{namespace}.{m_name.split("_")[-1]}'
-            schema.title = f'{namespace} {m_name.split("_")[-1]} format'
-            setattr(klass, m_name, returns_internal(getattr(klass, m_name), schema=[schema]))
+            for d_name, decorator in filter(
+                lambda d: not hasattr(getattr(klass, m_name), d[0]), (('returns', returns), ('accepts', accepts))
+            ):
+                new_name = f'{namespace.replace(".", "_")}_{m_name.split("_")[-1]}'
+                if d_name == 'returns':
+                    new_name += '_returns'
+
+                schema = [Patch(klass.RESULT_ENTRY_KEY, new_name, register=True)]
+                if m_name == 'do_update' and d_name == 'accepts':
+                    schema.insert(0, Str('id'))
+
+                setattr(klass, m_name, decorator(*schema)(getattr(klass, m_name)))
 
         if hasattr(klass, 'do_delete') and not hasattr(klass.do_delete, 'returns'):
-            klass.do_delete = returns_internal(klass.do_delete, schema=[Bool(
+            klass.do_delete = returns(Bool(
                 'deleted', description='Will return `true` if `id` is deleted successfully'
-            )])
+            ))(klass.do_delete)
 
         return klass
 
@@ -545,6 +558,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
 
     QUERY_PARAMETERS = NotImplementedError
     RESULT_ENTRY = NotImplementedError
+    RESULT_ENTRY_KEY = NotImplementedError
 
     def __init__(self, middleware):
         super().__init__(middleware)
