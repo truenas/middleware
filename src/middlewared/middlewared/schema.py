@@ -2,7 +2,7 @@ import asyncio
 import copy
 import functools
 from collections import defaultdict
-from datetime import datetime, time
+from datetime import datetime, time, timedelta, timezone
 import errno
 import inspect
 import ipaddress
@@ -383,6 +383,22 @@ class Time(Str):
     def validate(self, value):
         return super().validate(str(value))
 
+
+class Datetime(Str):
+
+    def clean(self, value):
+        if isinstance(value, datetime):
+            return value
+        value = super().clean(value)
+        if value is None:
+            return value
+        try:
+            return datetime.fromtimestamp(value / 1000, tz=timezone.utc) + timedelta(milliseconds=value % 1000)
+        except (TypeError, ValueError):
+            raise ValueError('Invalid datetime specified')
+
+    def validate(self, value):
+        return super().validate(str(value))
 
 class UnixPerm(Str):
 
