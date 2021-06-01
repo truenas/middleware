@@ -1046,13 +1046,13 @@ def returns(*schema):
             async def nf(*args, **kwargs):
                 res = await f(*args, **kwargs)
                 if DEBUG_MODE:
-                    validate_return_type(f, res, schema)
+                    validate_return_type(f, res, nf.returns)
                 return res
         else:
             def nf(*args, **kwargs):
                 res = f(*args, **kwargs)
                 if DEBUG_MODE:
-                    validate_return_type(f, res, schema)
+                    validate_return_type(f, res, nf.returns)
                 return res
 
         from middlewared.utils.type import copy_function_metadata
