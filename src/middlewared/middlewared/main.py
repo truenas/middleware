@@ -749,7 +749,10 @@ class ShellApplication(object):
 
             try:
                 kqueue = select.kqueue()
-                kevent = select.kevent(t_worker.shell_pid, select.KQ_FILTER_PROC, select.KQ_EV_ADD | select.KQ_EV_ENABLE, select.KQ_NOTE_EXIT)
+                kevent = select.kevent(
+                    t_worker.shell_pid,
+                    select.KQ_FILTER_PROC, select.KQ_EV_ADD | select.KQ_EV_ENABLE, select.KQ_NOTE_EXIT
+                )
                 kqueue.control([kevent], 0)
 
                 os.kill(t_worker.shell_pid, signal.SIGTERM)
@@ -922,7 +925,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                         delay = method._periodic.interval
 
                     method_name = f'{service_name}.{task_name}'
-                    self.logger.debug(f"Setting up periodic task {method_name} to run every {method._periodic.interval} seconds")
+                    self.logger.debug(
+                        f"Setting up periodic task {method_name} to run every {method._periodic.interval} seconds"
+                    )
 
                     self.loop.call_later(
                         delay,
@@ -1361,24 +1366,27 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         for thread_id, stack in get_threads_stacks().items():
             self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
 
-    def _tracemalloc_start(self):
+    def _tracemalloc_start(self, limit, interval):
         """
         Run an endless loop grabbing snapshots of allocated memory using
         the python's builtin "tracemalloc" module.
+
+        `limit` integer representing number of lines to print showing
+                highest memory consumer
+        `interval` integer representing the time in seconds to wait
+                before taking another memory snapshot
         """
         # set the thread name
         osc.set_thread_name('tracemalloc_monitor')
 
+        # if given bogus numbers, default both of them respectively
+        if limit <= 0:
+            limit = 5
+        if interval <= 0:
+            interval = 5
+
         # initalize tracemalloc
         tracemalloc.start()
-
-        # change this to limit the number of lines
-        # showing the highest memory consumer
-        limit = 5
-
-        # how often to sleep in seconds before
-        # taking another memory snapshot
-        interval = 5
 
         # filters for the snapshots so we can
         # ignore modules that we don't care about
@@ -1402,13 +1410,16 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
                 prev = curr
                 curr = None
+                stats = f'\nTop {limit} consumers:'
                 for idx, stat in enumerate(diff[:limit], 1):
-                    self.logger.debug(f'#{idx}: {stat}')
+                    stats += f'#{idx}: {stat}\n'
 
-            # print the memory used by the tracemalloc module itself
-            tm_mem = tracemalloc.get_tracemalloc_memory()
-            # add a newline at end of output to make logs more readable
-            self.logger.debug(f'Memory used by tracemalloc module: {tm_mem:.1f} KiB\n')
+                # print the memory used by the tracemalloc module itself
+                tm_mem = tracemalloc.get_tracemalloc_memory()
+                # add a newline at end of output to make logs more readable
+                stats += f'Memory used by tracemalloc module: {tm_mem:.1f} KiB\n'
+
+                self.logger.debug(stats)
 
             time.sleep(interval)
 
@@ -1553,7 +1564,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         await web.UnixSite(runner, '/var/run/middlewared.sock').start()
 
         if self.trace_malloc:
-            _thr = threading.Thread(target=self._tracemalloc_start)
+            limit = self.trace_malloc[0]
+            interval = self.trace_malloc[1]
+            _thr = threading.Thread(target=self._tracemalloc_start, args=(limit, interval,))
             _thr.setDaemon(True)
             _thr.start()
 
@@ -1611,7 +1624,7 @@ def main():
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--loop-debug', action='store_true')
-    parser.add_argument('--trace-malloc', action='store_true')
+    parser.add_argument('--trace-malloc', '-tm', action='store', nargs=2, type=int, default=False)
     parser.add_argument('--overlay-dirs', '-o', action='append')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
