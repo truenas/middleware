@@ -1,3 +1,4 @@
+from middlewared.schema import Bool, Dict, Str, List, returns
 from middlewared.service import accepts, private, Service
 
 from .authenticators.factory import auth_factory
@@ -13,6 +14,26 @@ class DNSAuthenticatorService(Service):
         self.schemas = self.get_authenticator_schemas()
 
     @accepts()
+    @returns(List(
+        'authenticator_schemas',
+        title='Authenticator Schemas',
+        items=[Dict(
+            'schema_entry',
+            Str('key', required=True),
+            List(
+                'schema',
+                items=[Dict(
+                    'attribute_schema',
+                    Str('_name_', required=True),
+                    Str('title', required=True),
+                    Bool('_required_', required=True),
+                    additional_attrs=True,
+                    title='Attribute Schema',
+                )],
+            ),
+            title='Authenticator Schema'
+        )],
+    ))
     def authenticator_schemas(self):
         """
         Get the schemas for all DNS providers we support for ACME DNS Challenge and the respective attributes
