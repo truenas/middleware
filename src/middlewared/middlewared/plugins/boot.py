@@ -1,7 +1,7 @@
 import os
 
-from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, Service, job, private
+from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, Str
+from middlewared.service import CallError, Service, job, private, returns
 from middlewared.utils import osc, run
 from middlewared.validators import Range
 
@@ -25,6 +25,88 @@ class BootService(Service):
         return BOOT_POOL_NAME
 
     @accepts()
+    @returns(
+        Dict(
+            'boot_pool_state',
+            Str('name'),
+            Str('id'),
+            Str('guid'),
+            Str('hostname'),
+            Str('status'),
+            Bool('healthy'),
+            Int('error_count'),
+            Dict(
+                'root_dataset',
+                Str('id'),
+                Str('name'),
+                Str('pool'),
+                Str('type'),
+                Dict(
+                    'properties',
+                    additional_attrs=True,
+                ),
+                Str('mountpoint', null=True),
+                Bool('encrypted'),
+                Str('encryption_root', null=True),
+                Bool('key_loaded'),
+            ),
+            Dict(
+                'properties',
+                additional_attrs=True,
+            ),
+            List('features', items=[Dict(
+                'feature_item',
+                Str('name'),
+                Str('guid'),
+                Str('description'),
+                Str('state'),
+            )]),
+            Dict(
+                'scan',
+                Str('function'),
+                Str('state'),
+                Datetime('start_time', null=True),
+                Datetime('end_time', null=True),
+                Float('percentage'),
+                Int('bytes_to_process'),
+                Int('bytes_processed'),
+                Datetime('pause', null=True),
+                Int('errors'),
+                Int('bytes_issued', null=True),
+                Int('total_secs_left', null=True),
+
+            ),
+            Dict(
+                'root_vdev',
+                Str('type'),
+                Str('path', null=True),
+                Str('guid'),
+                Str('status'),
+                Dict(
+                    'stats',
+                    Int('timestamp'),
+                    Int('read_errors'),
+                    Int('write_errors'),
+                    Int('checksum_errors'),
+                    List('ops', items=[Int('op')]),
+                    List('bytes', items=[Int('byte')]),
+                    Int('size'),
+                    Int('allocated'),
+                    Int('fragmentation'),
+                    Int('self_healed'),
+                    Int('configured_ashift'),
+                    Int('logical_ashift'),
+                    Int('physical_ashift'),
+                ),
+            ),
+            Dict(
+                'groups',
+                additional_attrs=True,
+            ),
+            Str('status_code'),
+            Str('status_detail'),
+        ),
+    )
     async def get_state(self):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.
@@ -32,6 +114,7 @@ class BootService(Service):
         return await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)], {'get': True})
 
     @accepts()
+    @returns(List('disks', items=[Str('disk')]))
     async def get_disks(self):
         """
         Returns disks of the boot pool.
@@ -75,6 +158,7 @@ class BootService(Service):
             Bool('expand', default=False),
         ),
     )
+    @returns()
     @job(lock='boot_attach')
     async def attach(self, job, dev, options):
         """
@@ -124,6 +208,7 @@ class BootService(Service):
         await self.update_initramfs()
 
     @accepts(Str('dev'))
+    @returns()
     async def detach(self, dev):
         """
         Detach given `dev` from boot pool.
@@ -132,6 +217,7 @@ class BootService(Service):
         await self.update_initramfs()
 
     @accepts(Str('label'), Str('dev'))
+    @returns()
     async def replace(self, label, dev):
         """
         Replace device `label` on boot pool with `dev`.
@@ -149,6 +235,7 @@ class BootService(Service):
         await self.update_initramfs()
 
     @accepts()
+    @returns()
     @job(lock='boot_scrub')
     async def scrub(self, job):
         """
@@ -160,6 +247,7 @@ class BootService(Service):
     @accepts(
         Int('interval', validators=[Range(min=1)])
     )
+    @returns(Int('interval'))
     async def set_scrub_interval(self, interval):
         """
         Set Automatic Scrub Interval value in days.
@@ -173,6 +261,7 @@ class BootService(Service):
         return interval
 
     @accepts()
+    @returns(Int('interval'))
     async def get_scrub_interval(self):
         """
         Get Automatic Scrub Interval value in days.
