@@ -392,13 +392,43 @@ class CompoundService(Service):
         return f"<CompoundService: {', '.join([repr(part) for part in self.parts])}>"
 
 
-class ConfigService(ServiceChangeMixin, Service):
+class ConfigServiceMetabase(ServiceBase):
+
+    def __new__(cls, name, bases, attrs):
+        klass = super().__new__(cls, name, bases, attrs)
+        namespace = klass._config.namespace
+        if any(
+            name == c_name and len(bases) == len(c_bases) and all(
+                b.__name__ == c_b for b, c_b in zip(bases, c_bases)
+            )
+            for c_name, c_bases in (
+                ('ConfigService', ('ServiceChangeMixin', 'Service')),
+                ('SystemServiceService', ('ConfigService',)),
+            )
+        ):
+            return klass
+
+        if klass.CONFIG_ENTRY == NotImplementedError:
+            klass.CONFIG_ENTRY = Dict(f'{namespace}.entry', additional_attrs=True, update=True)
+
+        for m_name in filter(lambda m: hasattr(klass, m), ('config', 'do_update')):
+            schema = klass.CONFIG_ENTRY
+            schema.name = f'{namespace}.{m_name.split("_")[-1]}'
+            schema.title = f'{namespace} {m_name.split("_")[-1]} format'
+            setattr(klass, m_name, returns_internal(getattr(klass, m_name), schema=[schema]))
+
+        return klass
+
+
+class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase):
     """
     Config service abstract class
 
     Meant for services that provide a single set of attributes which can be
     updated or not.
     """
+
+    CONFIG_ENTRY = NotImplementedError
 
     @accepts()
     async def config(self):
