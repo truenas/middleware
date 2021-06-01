@@ -395,8 +395,7 @@ class ConfigServiceMetabase(ServiceBase):
 
     def __new__(cls, name, bases, attrs):
         klass = super().__new__(cls, name, bases, attrs)
-        return klass
-        namespace = klass._config.namespace
+        namespace = klass._config.namespace.replace('.', '_')
         if any(
             name == c_name and len(bases) == len(c_bases) and all(
                 b.__name__ == c_b for b, c_b in zip(bases, c_bases)
@@ -408,14 +407,24 @@ class ConfigServiceMetabase(ServiceBase):
         ):
             return klass
 
-        if klass.CONFIG_ENTRY == NotImplementedError:
-            klass.CONFIG_ENTRY = Dict(f'{namespace}.entry', additional_attrs=True, update=True)
+        if klass.CONFIG_ENTRY_KEY == NotImplementedError:
+            klass.CONFIG_ENTRY_KEY = f'{namespace}_entry'
 
-        for m_name in filter(lambda m: hasattr(klass, m), ('config', 'do_update')):
-            schema = klass.CONFIG_ENTRY
-            schema.name = f'{namespace}.{m_name.split("_")[-1]}'
-            schema.title = f'{namespace} {m_name.split("_")[-1]} format'
-            setattr(klass, m_name, returns_internal(getattr(klass, m_name), schema=[schema]))
+        if klass.CONFIG_ENTRY == NotImplementedError:
+            klass.CONFIG_ENTRY = Dict(klass.CONFIG_ENTRY_KEY, additional_attrs=True, update=True)
+
+        klass.CONFIG_ENTRY.register = True
+        klass.config = returns(klass.CONFIG_ENTRY)(klass.config)
+
+        if hasattr(klass, 'do_update'):
+            for m_name, decorator in filter(
+                lambda m: not hasattr(klass.do_update, m[0]),
+                (('returns', returns), ('accepts', accepts))
+            ):
+                new_name = f'{namespace}_update'
+                if m_name == 'returns':
+                    new_name += '_returns'
+                klass.do_update = decorator(Patch(klass.CONFIG_ENTRY_KEY, new_name, register=True))(klass.do_update)
 
         return klass
 
@@ -429,6 +438,7 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
     """
 
     CONFIG_ENTRY = NotImplementedError
+    CONFIG_ENTRY_KEY = NotImplementedError
 
     @accepts()
     async def config(self):
@@ -534,6 +544,7 @@ class CRUDServiceMetabase(ServiceBase):
 
                 schema = [Patch(klass.RESULT_ENTRY_KEY, new_name, register=True)]
                 if m_name == 'do_update' and d_name == 'accepts':
+                    # TODO: See what we can do about making this intelligent
                     schema.insert(0, Str('id'))
 
                 setattr(klass, m_name, decorator(*schema)(getattr(klass, m_name)))
