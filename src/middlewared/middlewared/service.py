@@ -515,7 +515,11 @@ class CRUDServiceMetabase(ServiceBase):
 
         namespace = klass._config.namespace
         if klass.RESULT_ENTRY_KEY == NotImplementedError:
-            klass.RESULT_ENTRY_KEY = f'{namespace.replace(".", "_")}_entry'
+            if klass.RESULT_ENTRY != NotImplementedError:
+                klass.RESULT_ENTRY_KEY = klass.RESULT_ENTRY.name
+            else:
+                klass.RESULT_ENTRY_KEY = f'{namespace.replace(".", "_")}_entry'
+
         if klass.RESULT_ENTRY == NotImplementedError:
             klass.RESULT_ENTRY = Dict(klass.RESULT_ENTRY_KEY, additional_attrs=True, update=True)
 
@@ -526,9 +530,9 @@ class CRUDServiceMetabase(ServiceBase):
             query_result_entry.register = False
             klass.QUERY_PARAMETERS = OROperator(
                 'query_result',
+                Int('count'),
                 klass.RESULT_ENTRY,
                 List('query_result', items=[query_result_entry]),
-                Int('count'),
             )
 
         query_method = klass.query.wraps if hasattr(klass.query, 'returns') else klass.query

@@ -6,7 +6,7 @@ import yaml
 from catalog_validation.utils import VALID_TRAIN_REGEX
 from pkg_resources import parse_version
 
-from middlewared.schema import Bool, Dict, List, Str
+from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, private, Service, ValidationErrors
 
 
@@ -28,6 +28,7 @@ class CatalogService(Service):
             List('trains', items=[Str('train_name')]),
         )
     )
+    @returns(Dict('trains', additional_attrs=True))
     def items(self, label, options):
         """
         Retrieve item details for `label` catalog.
