@@ -3,7 +3,7 @@ import json
 import requests
 
 from middlewared.plugins.acme_protocol_.authenticators.factory import auth_factory
-from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
+from middlewared.schema import Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, private
 import middlewared.sqlalchemy as sa
 
@@ -216,14 +216,17 @@ class DNSAuthenticatorService(CRUDService):
 
     RESULT_ENTRY = Dict(
         'acme_dns_authenticator_entry',
-        Int('id'),
-        Str('authenticator', enum=[authenticator for authenticator in auth_factory.get_authenticators()]),
+        Int('id', required=True),
+        Str(
+            'authenticator', enum=[authenticator for authenticator in auth_factory.get_authenticators()],
+            required=True
+        ),
         Dict(
             'attributes',
             additional_attrs=True,
             description='Specific attributes of each `authenticator`'
         ),
-        Str('name', description='User defined name of authenticator'),
+        Str('name', description='User defined name of authenticator', required=True),
     )
 
     @private
@@ -246,11 +249,10 @@ class DNSAuthenticatorService(CRUDService):
         verrors.check()
 
     @accepts(
-        Dict(
+        Patch(
+            'acme_dns_authenticator_entry',
             'dns_authenticator_create',
-            Str('authenticator', required=True),
-            Str('name', required=True),
-            Dict('attributes', additional_attrs=True, required=True)
+            ('rm', {'name': 'id'}),
         )
     )
     async def do_create(self, data):
@@ -291,11 +293,13 @@ class DNSAuthenticatorService(CRUDService):
 
     @accepts(
         Int('id'),
-        Dict(
+        Patch(
+            'acme_dns_authenticator_entry',
             'dns_authenticator_update',
-            Str('name'),
-            Dict('attributes', additional_attrs=True)
-        )
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'authenticator'}),
+            ('attr', {'update': True}),
+        ),
     )
     async def do_update(self, id, data):
         """
