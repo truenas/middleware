@@ -2,6 +2,7 @@ import josepy as jose
 import json
 import requests
 
+from middlewared.plugins.acme_protocol_.authenticators.factory import auth_factory
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, private
 import middlewared.sqlalchemy as sa
@@ -85,7 +86,7 @@ class ACMERegistrationService(CRUDService):
         """
         Register with ACME Server
 
-        Create a regisration for a specific ACME Server registering root user with it
+        Create a registration for a specific ACME Server registering root user with it
 
         `acme_directory_uri` is a directory endpoint for any ACME Server
 
@@ -212,6 +213,18 @@ class DNSAuthenticatorService(CRUDService):
         namespace = 'acme.dns.authenticator'
         datastore = 'system.acmednsauthenticator'
         cli_namespace = 'system.acme.dns_auth'
+
+    RESULT_ENTRY = Dict(
+        'acme_dns_authenticator_entry',
+        Int('id'),
+        Str('authenticator', enum=[authenticator for authenticator in auth_factory.get_authenticators()]),
+        Dict(
+            'attributes',
+            additional_attrs=True,
+            description='Specific attributes of each `authenticator`'
+        ),
+        Str('name', description='User defined name of authenticator'),
+    )
 
     @private
     async def common_validation(self, data, schema_name, old=None):
