@@ -2786,6 +2786,10 @@ class PoolDatasetService(CRUDService):
         If no properties are desired, in that case an empty list should be sent.
 
         `query-options.extra.snapshots` can be set to retrieve snapshot(s) of dataset in question.
+
+        `query-options.extra.snapshots_recursive` can be set to retrieve snapshot(s) recursively of dataset in question.
+        If `query-options.extra.snapshots_recursive` and `query-options.extra.snapshots` are set, snapshot(s) will be
+        retrieved recursively.
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
@@ -2799,6 +2803,7 @@ class PoolDatasetService(CRUDService):
         retrieve_children = extra.get('retrieve_children', True)
         props = extra.get('properties')
         snapshots = extra.get('snapshots')
+        snapshots_recursive = extra.get('snapshots_recursive')
         return filter_list(
             self.__transform(self.middleware.call_sync(
                 'zfs.dataset.query', zfsfilters, {
@@ -2807,6 +2812,7 @@ class PoolDatasetService(CRUDService):
                         'retrieve_children': retrieve_children,
                         'properties': props,
                         'snapshots': snapshots,
+                        'snapshots_recursive': snapshots_recursive,
                     }
                 }
             ), retrieve_children, internal_datasets_filters,
