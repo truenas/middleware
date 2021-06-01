@@ -76,6 +76,7 @@ class Attribute(object):
         self.register = register
         self.hidden = hidden
         self.editable = editable
+        self.resolved = False
         # When a field is marked as non-editable, it must specify a default
         if not self.editable and not self.has_default:
             raise Error(self.name, 'Default value must be specified when attribute is marked as non-editable.')
@@ -152,6 +153,7 @@ class Attribute(object):
             Dict('schema-test', ...)
         )
         """
+        self.resolved = True
         if self.register:
             schemas.add(self)
         return self
@@ -555,9 +557,11 @@ class List(EnumMixin, Attribute):
 
     def resolve(self, schemas):
         for index, i in enumerate(self.items):
-            self.items[index] = i.resolve(schemas)
+            if not i.resolved:
+                self.items[index] = i.resolve(schemas)
         if self.register:
             schemas.add(self)
+        self.resolved = True
         return self
 
     def copy(self):
@@ -717,9 +721,11 @@ class Dict(Attribute):
 
     def resolve(self, schemas):
         for name, attr in list(self.attrs.items()):
-            self.attrs[name] = attr.resolve(schemas)
+            if not attr.resolved:
+                self.attrs[name] = attr.resolve(schemas)
         if self.register:
             schemas.add(self)
+        self.resolved = True
         return self
 
     def copy(self):
@@ -847,6 +853,7 @@ class Ref(object):
 
     def __init__(self, name):
         self.name = name
+        self.resolved = False
 
     def resolve(self, schemas):
         schema = schemas.get(self.name)
@@ -854,6 +861,8 @@ class Ref(object):
             raise ResolverError('Schema {0} does not exist'.format(self.name))
         schema = schema.copy()
         schema.register = False
+        schema.resolved = True
+        self.resolved = True
         return schema
 
 
@@ -864,6 +873,7 @@ class Patch(object):
         self.newname = newname
         self.patches = patches
         self.register = register
+        self.resolved = False
 
     def convert(self, spec):
         t = spec.pop('type')
@@ -906,6 +916,8 @@ class Patch(object):
                     setattr(schema, key, val)
         if self.register:
             schemas.add(schema)
+        schema.resolved = True
+        self.resolved = True
         return schema
 
 
@@ -914,6 +926,7 @@ class OROperator:
         self.name = name
         self.schemas = list(schemas)
         self.description = kwargs.get('description')
+        self.resolved = False
 
     def clean(self, value):
         found = False
@@ -956,7 +969,9 @@ class OROperator:
 
     def resolve(self, schemas):
         for index, i in enumerate(self.schemas):
-            self.schemas[index] = i.resolve(schemas)
+            if not i.resolved:
+                self.schemas[index] = i.resolve(schemas)
+        self.resolved = True
         return self
 
 
@@ -968,14 +983,15 @@ def resolver(schemas, f):
     if not callable(f):
         return
 
-    for schema_type in filter(lambda s: hasattr(f, s), ('accepts', 'returns')):
+    for schema_type in filter(functools.partial(hasattr, f), ('accepts', 'returns')):
         new_params = []
         schema_obj = getattr(f, schema_type)
         for p in schema_obj:
             if isinstance(p, (Patch, Ref, Attribute, OROperator)):
-                new_params.append(p.resolve(schemas))
+                resolved = p if p.resolved else p.resolve(schemas)
+                new_params.append(resolved)
             else:
-                raise ResolverError('Invalid parameter definition {0}'.format(p))
+                raise ResolverError(f'Invalid parameter definition {p}')
 
         # FIXME: for some reason assigning params (f.accepts = new_params) does not work
         schema_obj.clear()
@@ -1024,30 +1040,27 @@ def clean_and_validate_arg(verrors, attr, arg):
         verrors.extend(e)
 
 
-def returns_internal(f, **kwargs):
-    schema = kwargs['schema']
-    if asyncio.iscoroutinefunction(f):
-        async def nf(*args, **kwargs):
-            res = await f(*args, **kwargs)
-            if DEBUG_MODE:
-                validate_return_type(f, res, schema)
-            return res
-    else:
-        def nf(*args, **kwargs):
-            res = f(*args, **kwargs)
-            if DEBUG_MODE:
-                validate_return_type(f, res, schema)
-            return res
-
-    from middlewared.utils.type import copy_function_metadata
-    copy_function_metadata(f, nf)
-    nf.wraps = f
-    nf.returns = schema
-    return nf
-
-
 def returns(*schema):
-    return functools.partial(returns_internal, schema=list(schema))
+    def returns_internal(f):
+        if asyncio.iscoroutinefunction(f):
+            async def nf(*args, **kwargs):
+                res = await f(*args, **kwargs)
+                if DEBUG_MODE:
+                    validate_return_type(f, res, schema)
+                return res
+        else:
+            def nf(*args, **kwargs):
+                res = f(*args, **kwargs)
+                if DEBUG_MODE:
+                    validate_return_type(f, res, schema)
+                return res
+
+        from middlewared.utils.type import copy_function_metadata
+        copy_function_metadata(f, nf)
+        nf.wraps = f
+        nf.returns = list(schema)
+        return nf
+    return returns_internal
 
 
 def accepts(*schema):

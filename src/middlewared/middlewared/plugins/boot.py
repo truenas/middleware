@@ -1,7 +1,7 @@
 import os
 
-from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, Str
-from middlewared.service import CallError, Service, job, private, returns
+from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, Str, returns
+from middlewared.service import CallError, Service, job, private
 from middlewared.utils import osc, run
 from middlewared.validators import Range
 
