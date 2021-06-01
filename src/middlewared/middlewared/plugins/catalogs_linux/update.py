@@ -5,7 +5,7 @@ import shutil
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Bool, Dict, List, Str, ValidationErrors
+from middlewared.schema import Bool, Dict, List, Patch, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, job, private
 from middlewared.validators import Match
 
@@ -34,6 +34,20 @@ class CatalogService(CRUDService):
         datastore_primary_key = 'label'
         datastore_primary_key_type = 'string'
         cli_namespace = 'app.catalog'
+
+    RESULT_ENTRY = Dict(
+        'catalog_entry',
+        Str('label', required=True, validators=[Match(r'^\w+[\w.-]*$')], max_length=60),
+        Str('repository', required=True, empty=False),
+        Str('branch', required=True, empty=False),
+        Str('location', required=True),
+        Str('id', required=True),
+        List('preferred_trains'),
+        Dict('trains', additional_attrs=True),
+        Bool('healthy'),
+        Bool('error'),
+        Bool('builtin'),
+    )
 
     @private
     async def catalog_extend_context(self, rows, extra):
@@ -100,15 +114,17 @@ class CatalogService(CRUDService):
         verrors.check()
 
     @accepts(
-        Dict(
+        Patch(
+            'catalog_entry',
             'catalog_create',
-            Bool('force', default=False),
-            List('preferred_trains'),
-            Str('label', required=True, empty=False, validators=[Match(r'^\w+[\w.-]*$')], max_length=60),
-            Str('repository', required=True, empty=False),
-            Str('branch', default='master'),
-            register=True,
-        )
+            ('add', Bool('force', default=False)),
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'trains'}),
+            ('rm', {'name': 'healthy'}),
+            ('rm', {'name': 'error'}),
+            ('rm', {'name': 'builtin'}),
+            ('rm', {'name': 'location'}),
+        ),
     )
     @job(lock=lambda args: f'catalog_create_{args[0]["label"]}')
     async def do_create(self, job, data):

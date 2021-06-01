@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from middlewared.schema import accepts, Str
+from middlewared.schema import accepts, Str, returns
 from middlewared.service import job, private, Service
 
 from .utils import pull_clone_repository
@@ -10,6 +10,7 @@ from .utils import pull_clone_repository
 class CatalogService(Service):
 
     @accepts()
+    @returns()
     @job(lock='sync_catalogs')
     async def sync_all(self, job):
         """
@@ -28,6 +29,7 @@ class CatalogService(Service):
             asyncio.ensure_future(self.middleware.call('chart.release.chart_releases_update_checks_internal'))
 
     @accepts(Str('label', required=True))
+    @returns()
     async def sync(self, catalog_label):
         """
         Sync `label` catalog to retrieve latest changes from upstream.
