@@ -959,7 +959,7 @@ class OROperator:
 
         verrors.check()
 
-    def to_json_schema(self):
+    def to_json_schema(self, parent=None):
         return {
             'anyOf': [i.to_json_schema() for i in self.schemas],
             'nullable': False,

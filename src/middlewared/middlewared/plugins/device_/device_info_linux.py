@@ -8,6 +8,8 @@ import json
 import libsgio
 
 from .device_info_base import DeviceInfoBase
+
+from middlewared.schema import Dict, returns, Str
 from middlewared.service import accepts, private, Service
 from middlewared.utils.gpu import get_gpus
 
@@ -276,6 +278,9 @@ class DeviceService(Service, DeviceInfoBase):
         return gpus
 
     @accepts()
+    @returns(Dict(
+        'gpu_pci_id_choices', additional_attrs=True, description='Returns PCI id(s) of GPU(s) located in the system'
+    ))
     async def gpu_pci_ids_choices(self):
         """
         Retrieve choices for GPU PCI ids located in the system.
