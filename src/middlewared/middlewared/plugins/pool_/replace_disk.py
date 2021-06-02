@@ -2,7 +2,7 @@ import asyncio
 import errno
 import os
 
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import item_method, job, Service, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import osc
@@ -19,6 +19,7 @@ class PoolService(Service):
         Str('passphrase', private=True),
         Bool('preserve_settings', default=True),
     ))
+    @returns(Bool('replaced_successfully'))
     @job(lock='pool_replace')
     async def replace(self, job, oid, options):
         """

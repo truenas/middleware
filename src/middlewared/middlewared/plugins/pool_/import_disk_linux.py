@@ -5,11 +5,10 @@ import subprocess
 
 import psutil
 
-from middlewared.service import Service
+from middlewared.schema import accepts, List, returns, Str
+from middlewared.service import private, Service
 from middlewared.utils import Popen, run
 from middlewared.utils.contextlib import asyncnullcontext
-
-from .import_disk_base import ImportDiskBase
 
 logger = logging.getLogger(__name__)
 
@@ -77,17 +76,24 @@ class MountFsContextManager:
             await run("umount", self.path)
 
 
-class PoolService(Service, ImportDiskBase):
+class PoolService(Service):
 
     RE_NLS = re.compile(r"nls_(.+)\.ko")
 
+    @private
     async def import_disk_kernel_module_context_manager(self, fs_type):
         return asyncnullcontext()
 
+    @private
     async def import_disk_mount_fs_context_manager(self, device, src, fs_type, fs_options):
         return MountFsContextManager(self.middleware, device, src, fs_type, fs_options, ['ro'])
 
+    @accepts()
+    @returns(List('locales', items=[Str('locale')]))
     def import_disk_msdosfs_locales(self):
+        """
+        Get a list of locales for msdosfs type to be used in `pool.import_disk`.
+        """
         result = {"utf8"}
         kernel = subprocess.check_output(["uname", "-r"], encoding="utf8").strip()
         for name in os.listdir(os.path.join("/lib/modules", kernel, "kernel/fs/nls")):
