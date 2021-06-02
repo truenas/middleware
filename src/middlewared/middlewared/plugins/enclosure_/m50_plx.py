@@ -1,10 +1,6 @@
 import re
 
 from middlewared.service import Service, private
-from middlewared.utils.osc import IS_FREEBSD
-
-if IS_FREEBSD:
-    import sysctl
 
 
 class EnclosureService(Service):
@@ -18,6 +14,7 @@ class EnclosureService(Service):
         if system_product is None or not ("TRUENAS-M50" in system_product or "TRUENAS-M60" in system_product):
             return []
 
+        """
         nvme_to_nvd = self.middleware.call_sync('disk.nvme_to_nvd_map')
 
         slot_to_nvd = {}
@@ -55,3 +52,6 @@ class EnclosureService(Service):
             4,
             slot_to_nvd
         )
+        """
+
+        return []
