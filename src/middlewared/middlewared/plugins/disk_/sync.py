@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middlewared.utils import osc
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -69,16 +68,6 @@ class DiskService(Service, ServiceChangeMixin):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return
 
-        if osc.IS_FREEBSD:
-            for i in range(10):
-                if i > 0:
-                    await asyncio.sleep(1)
-
-                if await self.middleware.call('device.devd_connected'):
-                    break
-            else:
-                self.logger.warning('Starting disk.sync_all when devd is not connected yet')
-
         sys_disks = await self.middleware.call('device.get_disks')
 
         # output logging information to middlewared.log in case we sync disks
@@ -141,7 +130,11 @@ class DiskService(Service, ServiceChangeMixin):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 changed = True
 
-            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+            try:
+                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+            except Exception:
+                self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
+                                             disk['disk_identifier'], exc_info=True)
 
             seen_disks[name] = disk
 
@@ -178,7 +171,11 @@ class DiskService(Service, ServiceChangeMixin):
                     await self.middleware.call('datastore.insert', 'storage.disk', disk)
                     changed = True
 
-                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+                try:
+                    await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+                except Exception:
+                    self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
+                                                 disk['disk_identifier'], exc_info=True)
 
         if changed:
             await self.middleware.call('disk.restart_services_after_sync')
