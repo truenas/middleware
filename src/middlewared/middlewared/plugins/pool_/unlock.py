@@ -1,4 +1,4 @@
-from middlewared.schema import Str
+from middlewared.schema import Dict, returns, Str
 from middlewared.service import accepts, private, Service
 
 
@@ -9,6 +9,7 @@ class PoolDatasetService(Service):
         event_send = False
 
     @accepts(Str('dataset'))
+    @returns(Dict('services_to_restart', additional_attrs=True))
     async def unlock_services_restart_choices(self, dataset):
         """
         Get a mapping of services identifiers and labels that can be restart on dataset unlock.

@@ -24,7 +24,7 @@ from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, Simple
 from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
-    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref, NOT_PROVIDED,
+    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref, returns, NOT_PROVIDED,
 )
 from middlewared.service import (
     ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
@@ -142,6 +142,15 @@ class PoolResilverService(ConfigService):
         datastore_extend = 'pool.resilver.resilver_extend'
         cli_namespace = 'storage.resilver'
 
+    CONFIG_ENTRY = Dict(
+        'pool_resilver_entry',
+        Int('id', required=True),
+        Str('begin', validators=[Time()], required=True),
+        Str('end', validators=[Time()], required=True),
+        Bool('enabled', required=True),
+        List('weekday', required=True, items=[Int('weekday', validators=[Range(min=1, max=7)])])
+    )
+
     @private
     async def resilver_extend(self, data):
         data['begin'] = data['begin'].strftime('%H:%M')
@@ -173,12 +182,10 @@ class PoolResilverService(ConfigService):
         return verrors, data
 
     @accepts(
-        Dict(
-            'pool_resilver',
-            Str('begin', validators=[Time()]),
-            Str('end', validators=[Time()]),
-            Bool('enabled'),
-            List('weekday', items=[Int('weekday', validators=[Range(min=1, max=7)])])
+        Patch(
+            'pool_resilver_entry', 'pool_resilver',
+            ('rm', {'name': 'id'}),
+            ('attr', {'update': True})
         )
     )
     async def do_update(self, data):
