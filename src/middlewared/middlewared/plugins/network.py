@@ -1,8 +1,10 @@
-from middlewared.service import (CallError, ConfigService, CRUDService, Service,
-                                 filterable, pass_app, private)
+from middlewared.service import (
+    CallError, ConfigService, CRUDService, Service, filterable, pass_app, private
+)
 from middlewared.utils import Popen, filter_list, run
-from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
-                                ValidationErrors, accepts)
+from middlewared.schema import (
+    accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
+)
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
 from middlewared.utils.generate import random_string
@@ -65,6 +67,44 @@ class NetworkConfigurationService(ConfigService):
         datastore_prefix = 'gc_'
         datastore_extend = 'network.configuration.network_config_extend'
         cli_namespace = 'network.configuration'
+
+    CONFIG_ENTRY = Dict(
+        'network_configuration_entry',
+        Int('id', required=True),
+        Str('hostname', required=True, validators=[Hostname()]),
+        Str('domain', required=True, validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')],),
+        IPAddr('ipv4gateway', required=True),
+        IPAddr('ipv6gateway', required=True, allow_zone_index=True),
+        IPAddr('nameserver1', required=True),
+        IPAddr('nameserver2', required=True),
+        IPAddr('nameserver3', required=True),
+        Str('httpproxy', required=True),
+        Bool('netwait_enabled', required=True),
+        List('netwait_ip', required=True, items=[Str('netwait_ip')]),
+        Str('hosts', required=True),
+        List('domains', required=True, items=[Str('domain')]),
+        Dict(
+            'service_announcement',
+            Bool('netbios'),
+            Bool('mdns'),
+            Bool('wsd'),
+        ),
+        Dict(
+            'activity',
+            Str('type', enum=['ALLOW', 'DENY'], required=True),
+            List('activities', items=[Str('activity')]),
+            strict=True
+        ),
+        Str('hostname_local', required=True, validators=[Hostname()]),
+        Dict(
+            'state',
+            IPAddr('ipv4gateway', required=True),
+            IPAddr('ipv6gateway', required=True, allow_zone_index=True),
+            IPAddr('nameserver1', required=True),
+            IPAddr('nameserver2', required=True),
+            IPAddr('nameserver3', required=True),
+        )
+    )
 
     @private
     def network_config_extend(self, data):
@@ -182,34 +222,15 @@ class NetworkConfigurationService(ConfigService):
         return verrors
 
     @accepts(
-        Dict(
-            'global_configuration_update',
-            Str('hostname', validators=[Hostname()]),
-            Str('hostname_b', validators=[Hostname()]),
-            Str('hostname_virtual', validators=[Hostname()]),
-            Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
-            List('domains', items=[Str('domains')]),
-            Dict(
-                'service_announcement',
-                Bool('netbios', default=False),
-                Bool('mdns', default=True),
-                Bool('wsd', default=True),
-            ),
-            IPAddr('ipv4gateway'),
-            IPAddr('ipv6gateway', allow_zone_index=True),
-            IPAddr('nameserver1'),
-            IPAddr('nameserver2'),
-            IPAddr('nameserver3'),
-            Str('httpproxy'),
-            Bool('netwait_enabled'),
-            List('netwait_ip', items=[Str('netwait_ip')]),
-            Str('hosts'),
-            Dict('activity',
-                 Str('type', enum=['ALLOW', 'DENY'], required=True),
-                 List('activities', items=[Str('activity')]),
-                 strict=True),
-            update=True
-        )
+        Patch(
+            'network_configuration_entry', 'global_configuration_update',
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'hostname_local'}),
+            ('rm', {'name': 'state'}),
+            ('add', Str('hostname_b', validators=[Hostname()])),
+            ('add', Str('hostname_virtual', validators=[Hostname()])),
+            ('attr', {'update': True}),
+        ),
     )
     async def do_update(self, data):
         """
@@ -253,7 +274,7 @@ class NetworkConfigurationService(ConfigService):
         # that parameter
         if virt_hostname_changed:
             if await self.middleware.call('activedirectory.get_state') != "DISABLED":
-                verrors.add('global_confiugration_update.hostname_virtual',
+                verrors.add('global_configuration_update.hostname_virtual',
                             'This parameter may not be changed after joining Active Directory (AD). '
                             'If it must be changed, the proper procedure is to leave the AD domain '
                             'and then alter the parameter before re-joining the domain.')
@@ -418,6 +439,62 @@ class InterfaceService(CRUDService):
         super().__init__(*args, **kwargs)
         self._original_datastores = {}
         self._rollback_timer = None
+
+    RESULT_ENTRY = Dict(
+        'interface_entry',
+        Str('id', required=True),
+        Str('name', required=True),
+        Bool('fake', required=True),
+        Str('type', required=True),
+        Dict(
+            'state',
+            Str('name', required=True),
+            Str('orig_name', required=True),
+            Str('description', required=True),
+            Int('mtu', required=True),
+            Bool('cloned', required=True),
+            List('flags', items=[Str('flag')], required=True),
+            List('nd6_flags', required=True),
+            List('capabilities', required=True),
+            Str('link_state', required=True),
+            Str('media_type', required=True),
+            Str('media_subtype', required=True),
+            Str('active_media_type', required=True),
+            Str('active_media_subtype', required=True),
+            List('supported_media', required=True),
+            List('media_options', required=True, null=True),
+            Str('link_address', required=True),
+            Str('link_address', required=True),
+            List('aliases', required=True, items=[Dict(
+                'alias',
+                Str('type', required=True),
+                Str('address', required=True),
+                Str('netmask'),
+                Str('broadcast'),
+            )]),
+            List('vrrp_config', null=True),
+            required=True
+        ),
+        List('aliases', required=True, items=[Dict(
+            'alias',
+            Str('type', required=True),
+            Str('address', required=True),
+            Str('netmask', required=True),
+        )]),
+        Bool('ipv4_dhcp', required=True),
+        Bool('ipv6_auto', required=True),
+        Bool('disable_offload_capabilities', required=True),
+        Str('description', required=True),
+        Str('options', required=True),
+        Int('mtu', null=True, required=True),
+        Str('vlan_parent_interface', null=True),
+        Int('vlan_tag', null=True),
+        Int('vlan_pcp', null=True),
+        List('lag_ports', items=[Str('lag_port')]),
+        List('lag_ports', items=[Str('lag_port')]),
+        List('bridge_members', items=[Str('member')]),  # FIXME: Please document fields for HA Hardware
+        additional_attrs=True,
+    )
 
     @filterable
     def query(self, filters, options):
@@ -748,6 +825,7 @@ class InterfaceService(CRUDService):
         return self._original_datastores
 
     @accepts()
+    @returns(Bool('changes_pending'))
     async def has_pending_changes(self):
         """
         Returns whether there are pending interfaces changes to be applied or not.
@@ -788,9 +866,10 @@ class InterfaceService(CRUDService):
         self._original_datastores = {}
 
     @accepts()
+    @returns(Int('remaining_seconds', null=True))
     async def checkin_waiting(self):
         """
-        Returns wether or not we are waiting user to checkin the applied network changes
+        Returns whether or not we are waiting user to checkin the applied network changes
         before they are rolled back.
         Value is in number of seconds or null.
         """
@@ -1657,7 +1736,7 @@ class InterfaceService(CRUDService):
 
         await self.delete_network_interface(oid)
 
-        return oid
+        return True
 
     @private
     async def delete_network_interface(self, oid):
@@ -1685,6 +1764,7 @@ class InterfaceService(CRUDService):
         return oid
 
     @accepts()
+    @returns(IPAddr('websocket_local_address', null=True))
     @pass_app()
     async def websocket_local_ip(self, app):
         """
@@ -1713,6 +1793,7 @@ class InterfaceService(CRUDService):
                 return local_address.split(":")[0]
 
     @accepts()
+    @returns(Str('websocket_interface', null=True))
     @pass_app()
     async def websocket_interface(self, app):
         """
@@ -1733,6 +1814,7 @@ class InterfaceService(CRUDService):
         List('exclude_types', items=[Str('type', enum=[type.name for type in InterfaceType])]),
         List('include'),
     ))
+    @returns(Dict('available_interfaces', additional_attrs=True))
     async def choices(self, options):
         """
         Choices of available network interfaces.
@@ -1769,6 +1851,7 @@ class InterfaceService(CRUDService):
         return choices
 
     @accepts(Str('id', null=True, default=None))
+    @returns(Dict('bridge_members_choices', additional_attrs=True))
     async def bridge_members_choices(self, id):
         """
         Return available interface choices for `bridge_members` attribute.
@@ -1791,6 +1874,7 @@ class InterfaceService(CRUDService):
         return choices
 
     @accepts(Str('id', null=True, default=None))
+    @returns(Dict('lag_ports_choices', additional_attrs=True))
     async def lag_ports_choices(self, id):
         """
         Return available interface choices for `lag_ports` attribute.
@@ -1817,6 +1901,7 @@ class InterfaceService(CRUDService):
         return choices
 
     @accepts()
+    @returns(Dict('vlan_parent_interface_choices', additional_attrs=True))
     async def vlan_parent_interface_choices(self):
         """
         Return available interface choices for `vlan_parent_interface` attribute.
@@ -2039,6 +2124,13 @@ class InterfaceService(CRUDService):
             Bool('static', default=False),
         )
     )
+    @returns(List('in_use_ips', items=[Dict(
+        'in_use_ip',
+        Str('type', required=True),
+        IPAddr('address', required=True),
+        Int('netmask', required=True),
+        Str('broadcast'),
+    )]))
     def ip_in_use(self, choices):
         """
         Get all IPv4 / Ipv6 from all valid interfaces, excluding tap and epair.
@@ -2133,6 +2225,17 @@ class RouteService(Service):
         cli_namespace = 'network.route'
 
     @filterable
+    @returns(List('system_routes', items=[Dict(
+        'system_route',
+        IPAddr('network', required=True),
+        IPAddr('netmask', required=True),
+        IPAddr('gateway', null=True, required=True),
+        Str('interface', required=True),
+        List('flags', required=True),
+        Int('table_id', required=True),
+        Int('scope', required=True),
+        Str('preferred_source', null=True, required=True),
+    )]))
     def system_routes(self, filters, options):
         """
         Get current/applied network routes.
@@ -2150,7 +2253,7 @@ class RouteService(Service):
         config = await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
 
         # Generate dhclient.conf so we can ignore routes (def gw) option
-        # in case there is one explictly set in network config
+        # in case there is one explicitly set in network config
         await self.middleware.call('etc.generate', 'network')
 
         ipv4_gateway = config['gc_ipv4gateway'] or None
@@ -2233,6 +2336,7 @@ class RouteService(Service):
                 routing_table.delete(routing_table.default_route_ipv6)
 
     @accepts(Str('ipv4_gateway'))
+    @returns(Bool('gateway_reachable'))
     def ipv4gw_reachable(self, ipv4_gateway):
         """
             Get the IPv4 gateway and verify if it is reachable by any interface.
@@ -2315,13 +2419,21 @@ class StaticRouteService(CRUDService):
         datastore_extend = 'staticroute.upper'
         cli_namespace = 'network.static_route'
 
-    @accepts(Dict(
-        'staticroute_create',
-        IPAddr('destination', network=True),
-        IPAddr('gateway', allow_zone_index=True),
-        Str('description', default=''),
-        register=True
-    ))
+    RESULT_ENTRY = Dict(
+        'staticroute_entry',
+        IPAddr('destination', network=True, required=True),
+        IPAddr('gateway', allow_zone_index=True, required=True),
+        Str('description', required=True, default=''),
+        Int('id', required=True),
+    )
+
+    @accepts(
+        Patch(
+            'staticroute_entry', 'staticroute_create',
+            ('rm', {'name': 'id'}),
+            register=True
+        )
+    )
     async def do_create(self, data):
         """
         Create a Static Route.
@@ -2445,6 +2557,7 @@ class DNSService(Service):
         cli_namespace = 'network.dns'
 
     @filterable
+    @returns(List('name_servers', items=[Dict('name_server', IPAddr('nameserver', required=True))]))
     async def query(self, filters, options):
         """
         Query Name Servers with `query-filters` and `query-options`.
@@ -2495,6 +2608,14 @@ class NetworkGeneralService(Service):
         cli_namespace = 'network.general'
 
     @accepts()
+    @returns(
+        Dict(
+            'network_summary',
+            Dict('ips', additional_attrs=True, required=True),
+            List('default_routes', items=[IPAddr('default_route')], required=True),
+            List('nameservers', items=[IPAddr('nameserver')], required=True),
+        )
+    )
     async def summary(self):
         """
         Retrieve general information for current Network.

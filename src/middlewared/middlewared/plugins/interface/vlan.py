@@ -1,4 +1,4 @@
-from middlewared.service import Service
+from middlewared.service import private, Service
 from middlewared.utils import osc
 
 from .netif import netif
@@ -9,6 +9,7 @@ class InterfaceService(Service):
     class Config:
         namespace_alias = 'interfaces'
 
+    @private
     def vlan_setup(self, vlan, disable_capabilities, parent_interfaces):
         self.logger.info('Setting up {}'.format(vlan['vlan_vint']))
         try:

@@ -1,6 +1,7 @@
 import asyncio
 from collections import namedtuple
 
+from middlewared.schema import Dict, List, returns, Str
 from middlewared.service import accepts, Service, private
 
 PreparedDelegate = namedtuple("PreparedDelegate", ["delegate", "state", "addresses"])
@@ -21,6 +22,12 @@ class InterfaceService(Service):
         self.delegates.append(delegate)
 
     @accepts()
+    @returns(List('services_to_be_restarted', items=[Dict(
+        'service_restart',
+        Str('type', required=True),
+        Str('service', required=True),
+        List('ips', required=True, items=[Str('ip')]),
+    )]))
     async def services_restarted_on_sync(self):
         """
         Returns which services will be set to listen on 0.0.0.0 (and, thus, restarted) on sync.

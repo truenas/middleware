@@ -1,4 +1,4 @@
-from middlewared.service import Service
+from middlewared.service import private, Service
 
 from .netif import netif
 
@@ -8,6 +8,7 @@ class InterfaceService(Service):
     class Config:
         namespace_alias = 'interfaces'
 
+    @private
     def lag_setup(self, lagg, members, disable_capabilities, parent_interfaces, sync_interface_opts):
         name = lagg['lagg_interface']['int_interface']
         self.logger.info('Setting up {}'.format(name))
