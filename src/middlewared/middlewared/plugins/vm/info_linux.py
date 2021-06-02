@@ -4,10 +4,10 @@ import subprocess
 
 from lxml import etree
 
+from middlewared.schema import Bool, Dict, Int, returns, Str
 from middlewared.service import accepts, Service
 from middlewared.utils import run
 
-from .info_base import VMInfoBase
 from .utils import get_virsh_command_args
 
 
@@ -16,19 +16,45 @@ RE_VENDOR_AMD = re.compile(r'AuthenticAMD')
 RE_VENDOR_INTEL = re.compile(r'GenuineIntel')
 
 
-class VMService(Service, VMInfoBase):
+class VMService(Service):
 
     CPU_MODEL_CHOICES = {}
 
+    @accepts()
+    @returns(Bool('supports_virtualization'))
     async def supports_virtualization(self):
+        """
+        Returns "true" if system supports virtualization, "false" otherwise
+        """
         cp = await run(['kvm-ok'], check=False)
         return cp.returncode == 0
 
+    @accepts()
+    @returns(Int('vcpus'))
     async def maximum_supported_vcpus(self):
+        """
+        Returns maximum supported VCPU's
+        """
         return 255
 
+    @accepts()
+    @returns(Dict(
+        'cpu_flags',
+        Bool('intel_vmx', required=True),
+        Bool('unrestricted_guest', required=True),
+        Bool('amd_rvi', required=True),
+        Bool('amd_asids', required=True),
+    ))
     async def flags(self):
-        flags = self.flags_base.copy()
+        """
+        Returns a dictionary with CPU flags for the hypervisor.
+        """
+        flags = {
+            'intel_vmx': False,
+            'unrestricted_guest': False,
+            'amd_rvi': False,
+            'amd_asids': False,
+        }
         supports_vm = await self.supports_virtualization()
         if not supports_vm:
             return flags
@@ -54,11 +80,17 @@ class VMService(Service, VMInfoBase):
 
         return flags
 
+    @accepts(Int('id'))
+    @returns(Str('console_device'))
     async def get_console(self, id):
+        """
+        Get the console device from a given guest.
+        """
         vm = await self.middleware.call('vm.get_instance', id)
         return f'{vm["id"]}_{vm["name"]}'
 
     @accepts()
+    @returns(Dict('cpu_model_choices', additional_attrs=True))
     def cpu_model_choices(self):
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.

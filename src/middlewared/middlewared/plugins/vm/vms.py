@@ -5,7 +5,7 @@ import warnings
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range
 from middlewared.utils import osc
@@ -51,7 +51,22 @@ class VMService(CRUDService, VMSupervisorMixin):
         datastore_extend = 'vm.extend_vm'
         cli_namespace = 'service.vm'
 
+    RESULT_ENTRY = Patch(
+        'vm_create',
+        'vm_entry',
+        ('edit', {'name': 'devices', 'method': lambda v: setattr(v, 'items', [Ref('vm_device_entry')])}),
+        ('add', Dict(
+            'status',
+            Str('state', required=True),
+            Int('pid', null=True, required=True),
+            Str('domain_state', required=True),
+        )),
+        ('add', Int('id')),
+    )
+    RESULT_ENTRY_KEY = 'vm_entry'
+
     @accepts()
+    @returns(Dict('bootloader_options', additional_attrs=True))
     async def bootloader_options(self):
         """
         Supported motherboard firmware options.
@@ -62,9 +77,6 @@ class VMService(CRUDService, VMSupervisorMixin):
     async def extend_vm(self, vm):
         vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
         vm['status'] = await self.middleware.call('vm.status', vm['id'])
-        if osc.IS_FREEBSD:
-            vm.pop('cpu_mode', None)
-            vm.pop('cpu_model', None)
         return vm
 
     @accepts(Dict(
@@ -383,6 +395,12 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @item_method
     @accepts(Int('id'))
+    @returns(Dict(
+        'vm_status',
+        Str('state', required=True),
+        Int('pid', null=True, required=True),
+        Str('domain_state', required=True),
+    ))
     def status(self, id):
         """
         Get the status of `id` VM.
