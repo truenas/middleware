@@ -1,13 +1,39 @@
 import json
 import re
 
-from middlewared.service import accepts, CallError, private, Service, Str
+from middlewared.schema import Bool, Dict, Int, List, returns, Str
+from middlewared.service import accepts, CallError, private, Service
 
 RE_SATA_DOM_LIFETIME = re.compile(r'^164\s+.*\s+([0-9]+)$', re.M)
 
 
 class DiskService(Service):
     @accepts(Str('name'))
+    @returns(List('smart_attributes', items=[Dict(
+        'smart_attribute',
+        Int('id', required=True),
+        Int('value', required=True),
+        Int('worst', required=True),
+        Int('thresh', required=True),
+        Str('name', required=True),
+        Str('when_failed', required=True),
+        Dict(
+            'flags',
+            Int('value', required=True),
+            Str('string', required=True),
+            Bool('prefailure', required=True),
+            Bool('updated_online', required=True),
+            Bool('performance', required=True),
+            Bool('error_rate', required=True),
+            Bool('event_count', required=True),
+            Bool('auto_keep', required=True),
+        ),
+        Dict(
+            'raw',
+            Int('value', required=True),
+            Str('string', required=True),
+        )
+    )]))
     async def smart_attributes(self, name):
         """
         Returns S.M.A.R.T. attributes values for specified disk name.
