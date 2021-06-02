@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Bool, Dict
+from middlewared.schema import Bool, Dict, Int, Patch
 from middlewared.service import accepts, ConfigService
 
 
@@ -17,11 +17,17 @@ class ContainerService(ConfigService):
         datastore = 'services.container'
         cli_namespace = 'app.container.config'
 
+    CONFIG_ENTRY = Dict(
+        'container_entry',
+        Bool('enable_image_updates'),
+        Int('id'),
+    )
+
     @accepts(
-        Dict(
-            'container_update',
-            Bool('enable_image_updates'),
-            update=True,
+        Patch(
+            'container_entry', 'container_update',
+            ('rm', {'name': 'id'}),
+            ('attr', {'update': True}),
         )
     )
     async def do_update(self, data):
