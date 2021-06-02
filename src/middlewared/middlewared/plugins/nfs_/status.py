@@ -1,9 +1,13 @@
 from psutil._pslinux import Connections
 
+from middlewared.schema import accepts, Int, returns
 from middlewared.service import Service
 
 
 class NFSService(Service):
+
+    @accepts()
+    @returns(Int('number_of_clients'))
     def client_count(self):
         """
         Return currently connected clients count.
