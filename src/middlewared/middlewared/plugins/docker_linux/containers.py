@@ -31,3 +31,5 @@ class ContainerService(CRUDService):
                 await container.delete(force=True)
         except Exception as e:
             raise CallError(f'Unable to delete {container_id!r} container: {e}')
+        else:
+            return True

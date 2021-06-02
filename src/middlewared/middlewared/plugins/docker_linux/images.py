@@ -6,7 +6,7 @@ import os
 from copy import deepcopy
 from datetime import datetime
 
-from middlewared.schema import Bool, Dict, Str
+from middlewared.schema import Bool, Datetime, Dict, Int, List, returns, Str
 from middlewared.service import accepts, CallError, filterable, job, private, CRUDService
 from middlewared.utils import filter_list
 
@@ -23,6 +23,26 @@ class DockerImagesService(CRUDService):
         namespace = 'container.image'
         namespace_alias = 'docker.images'
         cli_namespace = 'app.docker.image'
+
+    RESULT_ENTRY = Dict(
+        'container_image_entry',
+        Str('id'),
+        Dict('labels', additional_attrs=True),
+        List('repo_tags', items=[Str('repo_tag')]),
+        List('repo_digests', items=[Str('repo_digest')]),
+        Int('size'),
+        Bool('dangling'),
+        Bool('update_available'),
+        Bool('system_image'),
+        Datetime('created'),
+        List('parsed_repo_tags', items=[Dict(
+            'parsed_repo_tag',
+            Str('image'),
+            Str('tag'),
+            Str('registry'),
+            Str('complete_tag'),
+        )])
+    )
 
     @filterable
     async def query(self, filters, options):
@@ -47,7 +67,7 @@ class DockerImagesService(CRUDService):
                 system_image = any(tag in system_images for tag in repo_tags)
                 results.append({
                     'id': image['Id'],
-                    'labels': image['Labels'],
+                    'labels': image['Labels'] or {},
                     'repo_tags': repo_tags,
                     'repo_digests': image.get('RepoDigests') or [],
                     'size': image['Size'],
@@ -76,6 +96,7 @@ class DockerImagesService(CRUDService):
             Str('tag', default=None, null=True),
         )
     )
+    @returns(List('pull_result', items=[Dict('pull_result_entry', Str('status'), additional_attrs=True)]))
     @job()
     async def pull(self, job, data):
         """
@@ -121,6 +142,7 @@ class DockerImagesService(CRUDService):
             await docker.images.delete(name=id, force=options['force'])
 
         await self.middleware.call('container.image.remove_image_from_cache', image)
+        return True
 
     @private
     async def load_images_from_file(self, path):
