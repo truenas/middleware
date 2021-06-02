@@ -539,6 +539,7 @@ class CRUDServiceMetabase(ServiceBase):
         if klass.QUERY_PARAMETERS == NotImplementedError:
             query_result_entry = copy.deepcopy(klass.RESULT_ENTRY)
             query_result_entry.register = False
+            query_result_entry.update = True
             klass.QUERY_PARAMETERS = OROperator(
                 'query_result',
                 Int('count'),

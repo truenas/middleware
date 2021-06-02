@@ -36,7 +36,7 @@ class KubernetesNamespaceService(CRUDService):
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create namespace: {e}')
             else:
-                return await self.query([['metadata.name', '=', data['metadata.name']]], {'get': True})
+                return await self.query([['metadata.name', '=', data['body']['metadata']['name']]], {'get': True})
 
     @accepts(
         Str('namespace'),
