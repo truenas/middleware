@@ -1,7 +1,7 @@
 import errno
 import re
 
-from middlewared.schema import accepts, Int, Str
+from middlewared.schema import accepts, Bool, Int, returns, Str
 from middlewared.service import CallError, item_method, Service
 
 
@@ -67,6 +67,7 @@ class VMService(Service):
 
     @item_method
     @accepts(Int('id'), Str('name', default=None))
+    @returns(Bool('successfully_cloned'))
     async def clone(self, id, name):
         """
         Clone the VM `id`.

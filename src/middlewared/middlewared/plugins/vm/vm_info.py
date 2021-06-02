@@ -1,8 +1,9 @@
 import ipaddress
 import psutil
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import pass_app, Service
+from middlewared.validators import MACAddr
 
 from .devices import NIC, DISPLAY
 
@@ -10,6 +11,7 @@ from .devices import NIC, DISPLAY
 class VMService(Service):
 
     @accepts(Int('id'))
+    @returns(List('display_devices', items=[Ref('vm_device_entry')]))
     async def get_display_devices(self, id):
         """
         Get the display devices from a given guest. If a display device has password configured,
@@ -22,6 +24,11 @@ class VMService(Service):
         return devices
 
     @accepts()
+    @returns(Dict(
+        'available_display_port',
+        Int('port', required=True, description='Available server port'),
+        Int('web', required=True, description='Web port to be used based on available `port`'),
+    ))
     async def port_wizard(self):
         """
         It returns the next available Display Server Port and Web Port.
@@ -36,27 +43,13 @@ class VMService(Service):
         port = next((i for i in range(5900, 65535) if i not in all_ports))
         return {'port': port, 'web': DISPLAY.get_web_port(port)}
 
-    @accepts(Int('id'))
-    async def get_attached_iface(self, id):
-        """
-        Get the attached physical interfaces from a given guest. ( This endpoint will be removed in future release(s). )
-
-        Returns:
-            list: will return a list with all attached physical interfaces or otherwise False.
-        """
-        ifaces = []
-        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm', '=', id)]):
-            if device['dtype'] == 'NIC':
-                if_attached = device['attributes'].get('nic_attach')
-                if if_attached:
-                    ifaces.append(if_attached)
-
-        if ifaces:
-            return ifaces
-        else:
-            return False
-
     @accepts()
+    @returns(Dict(
+        'vmemory_in_use',
+        Int('RNP', required=True, description='Running but not provisioned'),
+        Int('PRD', required=True, description='Provisioned but not running'),
+        Int('RPRD', required=True, description='Running and provisioned'),
+    ))
     async def get_vmemory_in_use(self):
         """
         The total amount of virtual memory in MB used by guests
@@ -80,6 +73,7 @@ class VMService(Service):
         return memory_allocation
 
     @accepts(Bool('overcommit', default=False))
+    @returns(Int('available_memory'))
     async def get_available_memory(self, overcommit):
         """
         Get the current maximum amount of available memory to be allocated for VMs.
@@ -125,6 +119,7 @@ class VMService(Service):
         return max(0, free + arc_shrink - vms_memory_used - swap_used)
 
     @accepts()
+    @returns(Str('mac', validators=[MACAddr(separator=':')]),)
     def random_mac(self):
         """
         Create a random mac address.
@@ -146,6 +141,7 @@ class VMService(Service):
             ])
         )
     )
+    @returns(Dict('display_devices_uri', additional_attrs=True))
     @pass_app()
     async def get_display_web_uri(self, app, id, host, options):
         """
@@ -183,6 +179,10 @@ class VMService(Service):
         return web_uris
 
     @accepts()
+    @returns(Dict(
+        'resolution_choices',
+        *[Str(r, enum=[r]) for r in DISPLAY.RESOLUTION_ENUM]
+    ))
     async def resolution_choices(self):
         """
         Retrieve supported resolution choices for VM Display devices.

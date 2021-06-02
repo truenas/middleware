@@ -4,7 +4,7 @@ import re
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.utils import osc, run
 from middlewared.async_validators import check_path_resides_within_volume
@@ -36,6 +36,12 @@ class VMDeviceService(CRUDService):
         'DISPLAY': DISPLAY.schema,
     }
 
+    RESULT_ENTRY = Patch(
+        'vmdevice_create', 'vm_device_entry',
+        ('add', Int('id')),
+    )
+    RESULT_ENTRY_KEY = 'vm_device_entry'
+
     class Config:
         namespace = 'vm.device'
         datastore = 'vm.device'
@@ -66,6 +72,7 @@ class VMDeviceService(CRUDService):
         return device
 
     @accepts()
+    @returns(Dict('available_interfaces', additional_attrs=True))
     def nic_attach_choices(self):
         """
         Available choices for NIC Attach attribute.
@@ -73,6 +80,7 @@ class VMDeviceService(CRUDService):
         return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
 
     @accepts()
+    @returns(Dict('available_ips', additional_attrs=True))
     async def bind_choices(self):
         """
         Available choices for Bind attribute.
