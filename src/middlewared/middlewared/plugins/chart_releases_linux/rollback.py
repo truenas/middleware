@@ -4,7 +4,7 @@ import shutil
 
 from pkg_resources import parse_version
 
-from middlewared.schema import Bool, Dict, Str
+from middlewared.schema import Bool, Dict, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 
 from .utils import get_namespace, run
@@ -25,6 +25,7 @@ class ChartReleaseService(Service):
             Str('item_version', required=True),
         )
     )
+    @returns(Ref('chart_release_entry'))
     @job(lock=lambda args: f'chart_release_rollback_{args[0]}')
     async def rollback(self, job, release_name, options):
         """

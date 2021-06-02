@@ -3,7 +3,7 @@ import errno
 
 from collections import defaultdict
 
-from middlewared.schema import Dict, Int, List, Str
+from middlewared.schema import Dict, Int, List, Str, returns
 from middlewared.service import accepts, CallError, private, Service
 
 from .utils import SCALEABLE_RESOURCES
@@ -15,6 +15,7 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @accepts()
+    @returns(Dict('scaleable_resources', additional_attrs=True))
     async def scaleable_resources(self):
         """
         Returns choices for types of workloads which can be scaled up/down.
@@ -28,6 +29,19 @@ class ChartReleaseService(Service):
             Int('replica_count', required=True),
         )
     )
+    @returns(Dict(
+        'scale_chart_release',
+        Dict(
+            'before_scale',
+            *[Dict(r.value, additional_attrs=True) for r in SCALEABLE_RESOURCES],
+            required=True
+        ),
+        Dict(
+            'after_scale',
+            *[Dict(r.value, additional_attrs=True) for r in SCALEABLE_RESOURCES],
+            required=True
+        ),
+    ))
     async def scale(self, release_name, options):
         """
         Scale a `release_name` chart release to `scale_options.replica_count` specified.

@@ -9,7 +9,7 @@ import tempfile
 
 from pkg_resources import parse_version
 
-from middlewared.schema import Bool, Dict, Str
+from middlewared.schema import Bool, Dict, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
@@ -61,6 +61,7 @@ class ChartReleaseService(Service):
             Str('item_version', default='latest'),
         )
     )
+    @returns(Ref('chart_release_entry'))
     @job(lock=lambda args: f'chart_release_upgrade_{args[0]}')
     async def upgrade(self, job, release_name, options):
         """
@@ -130,6 +131,16 @@ class ChartReleaseService(Service):
             Str('item_version', default='latest', empty=False)
         )
     )
+    @returns(Dict(
+        'upgrade_summary',
+        Dict(
+            'container_images_to_update', additional_attrs=True,
+            description='Dictionary of container image(s) which have an update available against the same tag',
+        ),
+        Str('latest_version'),
+        Str('latest_human_version'),
+        Str('changelog', max_length=5000),
+    ))
     def upgrade_summary(self, release_name, options):
         """
         Retrieve upgrade summary for `release_name` which will include which container images will be updated
@@ -345,6 +356,10 @@ class ChartReleaseService(Service):
             Bool('redeploy', default=True),
         )
     )
+    @returns(Dict(
+        'container_images', additional_attrs=True,
+        description='Dictionary of container image(s) with container image tag as key and update status as value'
+    ))
     @job(lock=lambda args: f'pull_container_images{args[0]}')
     async def pull_container_images(self, job, release_name, options):
         """
