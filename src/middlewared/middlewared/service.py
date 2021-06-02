@@ -225,6 +225,17 @@ def filterable(fn):
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
 
 
+def filterable_returns(schema):
+    def filterable_internal(fn):
+        return returns(OROperator(
+            'filterable_result',
+            Int('count'),
+            schema,
+            List('query_result', items=[schema]),
+        ))(fn)
+    return filterable_internal
+
+
 class ServiceBase(type):
     """
     Metaclass of all services
