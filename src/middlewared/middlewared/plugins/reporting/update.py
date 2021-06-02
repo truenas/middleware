@@ -206,7 +206,7 @@ class ReportingService(ConfigService):
     @returns(List('reporting_data', items=[Dict(
         'graph_reporting_data',
         Str('name', required=True),
-        Str('identifier', required=True),
+        Str('identifier', required=True, null=True),
         List('data'),
         Dict(
             'aggregations',

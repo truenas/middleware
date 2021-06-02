@@ -128,6 +128,8 @@ class ZFSPoolService(CRUDService):
                         prop.parsed = v['parsed']
         except libzfs.ZFSException as e:
             raise CallError(str(e))
+        else:
+            return options
 
     @accepts(Str('pool'), Dict(
         'options',
@@ -142,6 +144,8 @@ class ZFSPoolService(CRUDService):
             if e.code == libzfs.Error.UMOUNTFAILED:
                 errno_ = errno.EBUSY
             raise CallError(str(e), errno_)
+        else:
+            return True
 
     @accepts(Str('pool', required=True))
     def upgrade(self, pool):
@@ -821,6 +825,8 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             self.logger.error('Failed to create dataset', exc_info=True)
             raise CallError(f'Failed to create dataset: {e}')
+        else:
+            return data
 
     @accepts(
         Str('id'),
@@ -880,6 +886,8 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             self.logger.error('Failed to update dataset', exc_info=True)
             raise CallError(f'Failed to update dataset: {e}')
+        else:
+            return data
 
     def do_delete(self, id, options=None):
         options = options or {}
@@ -911,6 +919,7 @@ class ZFSDatasetService(CRUDService):
             if "Device busy" in error or "dataset is busy" in error:
                 errno_ = errno.EBUSY
             raise CallError(f'Failed to delete dataset: {error}', errno_)
+        return True
 
     @accepts(Str('name'), Dict('options', Bool('recursive', default=False)))
     def mount(self, name, options):

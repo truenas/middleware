@@ -68,7 +68,7 @@ class KubernetesZFSVolumesService(CRUDService):
                 raise CallError(f'Failed to create ZFS Volume: {cp.stderr.decode()}')
 
         return await self.query([
-            ['metadata.name', '=', data['metadata.name']],
+            ['metadata.name', '=', data['metadata']['name']],
             ['metadata.namespace', '=', data['namespace']],
         ], {'get': True})
 

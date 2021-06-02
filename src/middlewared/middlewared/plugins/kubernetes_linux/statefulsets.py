@@ -45,7 +45,7 @@ class KubernetesStatefulsetService(CRUDService):
                 raise CallError(f'Unable to create statefulset: {e}')
             else:
                 return await self.query([
-                    ['metadata.name', '=', data['metadata.name']],
+                    ['metadata.name', '=', data['body']['metadata']['name']],
                     ['metadata.namespace', '=', data['namespace']],
                 ], {'get': True})
 
