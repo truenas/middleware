@@ -2,7 +2,7 @@ import asyncio
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Bool, Dict, Str
+from middlewared.schema import Bool, Dict, Int, IPAddr, Str
 from middlewared.service import accepts, ConfigService, private, ValidationErrors
 from middlewared.validators import Range
 
@@ -34,6 +34,17 @@ class TruecommandService(ConfigService):
         datastore = 'system.truecommand'
         datastore_extend = 'truecommand.tc_extend'
         cli_namespace = 'system.truecommand'
+
+    CONFIG_ENTRY = Dict(
+        'truecommand_entry',
+        Int('id', required=True),
+        Str('api_key', required=True),
+        Str('status', required=True, enum=[s.value for s in Status]),
+        Str('status_reason', required=True, enum=[s.value for s in StatusReason]),
+        Str('remote_url', required=True),
+        IPAddr('remote_ip_address', required=True),
+        Bool('enabled', required=True),
+    )
 
     @private
     async def tc_extend(self, config):
