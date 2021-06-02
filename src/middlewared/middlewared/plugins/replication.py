@@ -191,6 +191,7 @@ class ReplicationService(CRUDService):
             Str("readonly", enum=["SET", "REQUIRE", "IGNORE"], default="SET"),
             Bool("hold_pending_snapshots", default=False),
             Str("retention_policy", enum=["SOURCE", "CUSTOM", "NONE"], required=True),
+            Str("retention_policy", enum=["SOURCE", "CUSTOM", "NONE"], required=True),
             Int("lifetime_value", null=True, default=None, validators=[Range(min=1)]),
             Str("lifetime_unit", null=True, default=None, enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]),
             List("lifetimes", items=[
