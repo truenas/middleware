@@ -2,6 +2,7 @@ import re
 import subprocess
 import time
 
+from middlewared.schema import Bool, Dict, IPAddr, returns, Str
 from middlewared.service import accepts, CallError, no_auth_required, periodic, pass_app, private, Service, throttle
 from middlewared.utils import osc, Popen, run
 
@@ -104,6 +105,14 @@ class TruecommandService(Service):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
+    @returns(Dict(
+        'truecommand_connected',
+        Bool('connected', required=True),
+        IPAddr('truecommand_ip', null=True, required=True),
+        Str('truecommand_url', null=True, required=True),
+        Str('status', required=True),
+        Str('status_reason', required=True),
+    ))
     @pass_app()
     async def connected(self, app):
         """
