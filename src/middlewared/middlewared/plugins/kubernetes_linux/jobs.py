@@ -35,6 +35,11 @@ class KubernetesJobService(CRUDService):
                 await context['batch_api'].create_namespaced_job(namespace=data['namespace'], body=data['body'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create job: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', data['metadata.name']],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -48,6 +53,11 @@ class KubernetesJobService(CRUDService):
                 )
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to patch {name} job: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', name],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -62,6 +72,8 @@ class KubernetesJobService(CRUDService):
                 await context['batch_api'].delete_namespaced_job(name, options['namespace'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete job: {e}')
+            else:
+                return True
 
 
 class KubernetesCronJobService(CRUDService):
@@ -87,6 +99,11 @@ class KubernetesCronJobService(CRUDService):
                 )
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create job: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', data['metadata.name']],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -100,6 +117,11 @@ class KubernetesCronJobService(CRUDService):
                 )
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to patch {name} job: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', name],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -114,3 +136,5 @@ class KubernetesCronJobService(CRUDService):
                 await context['cronjob_batch_api'].delete_namespaced_cron_job(name, options['namespace'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete job: {e}')
+            else:
+                return True

@@ -42,6 +42,11 @@ class KubernetesSecretService(CRUDService):
                 )
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create secret: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', data['metadata.name']],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -55,6 +60,11 @@ class KubernetesSecretService(CRUDService):
                 )
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to patch {name} secret: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', name],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -69,6 +79,8 @@ class KubernetesSecretService(CRUDService):
                 await context['core_api'].delete_namespaced_secret(name, options['namespace'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete secret: {e}')
+            else:
+                return True
 
     @accepts(
         Str('secret_name'),

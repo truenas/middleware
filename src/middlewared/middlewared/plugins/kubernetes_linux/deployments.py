@@ -39,6 +39,11 @@ class KubernetesDeploymentService(CRUDService):
                 await context['apps_api'].create_namespaced_deployment(namespace=data['namespace'], body=data['body'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create deployment: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', data['metadata.name']],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -52,6 +57,11 @@ class KubernetesDeploymentService(CRUDService):
                 )
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to patch {name} deployment: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', name],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -66,3 +76,5 @@ class KubernetesDeploymentService(CRUDService):
                 await context['apps_api'].delete_namespaced_deployment(name, options['namespace'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete deployment: {e}')
+            else:
+                return True

@@ -34,3 +34,5 @@ class KubernetesPersistentVolumeClaimService(CRUDService):
     async def do_delete(self, pvc_name, options):
         async with api_client() as (api, context):
             await context['core_api'].delete_namespaced_persistent_volume_claim(pvc_name, options['namespace'])
+
+        return True

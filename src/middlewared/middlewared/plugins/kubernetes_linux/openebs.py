@@ -67,6 +67,11 @@ class KubernetesZFSVolumesService(CRUDService):
             if cp.returncode:
                 raise CallError(f'Failed to create ZFS Volume: {cp.stderr.decode()}')
 
+        return await self.query([
+            ['metadata.name', '=', data['metadata.name']],
+            ['metadata.namespace', '=', data['namespace']],
+        ], {'get': True})
+
 
 class KubernetesZFSSnapshotClassService(CRUDService):
 
@@ -102,6 +107,8 @@ class KubernetesZFSSnapshotClassService(CRUDService):
             await context['custom_object_api'].create_cluster_custom_object(
                 group=self.GROUP, version=self.VERSION, plural=self.PLURAL, body=data
             )
+
+        return data
 
     async def default_snapshot_class_name(self):
         return self.DEFAULT_SNAPSHOT_CLASS_NAME
@@ -202,6 +209,7 @@ class KubernetesSnapshotService(CRUDService):
             await context['custom_object_api'].create_namespaced_custom_object(
                 group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace=namespace, body=data
             )
+        return data
 
     @accepts(
         Str('snapshot_name'),
@@ -216,6 +224,7 @@ class KubernetesSnapshotService(CRUDService):
                 group=self.GROUP, version=self.VERSION, plural=self.PLURAL,
                 namespace=options['namespace'], name=snapshot_name,
             )
+        return True
 
 
 class KubernetesZFSSnapshotService(CRUDService):
