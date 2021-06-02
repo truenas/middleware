@@ -1,3 +1,4 @@
+from middlewared.schema import Bool, returns
 from middlewared.service import accepts, CallError, job, periodic, private, Service
 
 from .connection import KMIPServerMixin
@@ -36,6 +37,7 @@ class KMIPService(Service, KMIPServerMixin):
             return True
 
     @accepts()
+    @returns(Bool('pending_kmip_sync'))
     async def kmip_sync_pending(self):
         """
         Returns true or false based on if there are keys which are to be synced from local database to remote KMIP

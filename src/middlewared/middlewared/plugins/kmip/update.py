@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 
+from middlewared.schema import Bool, Dict, Int, Patch, Str
 from middlewared.service import accepts, CallError, ConfigService, job, private, ValidationErrors
-from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Port
 
 
@@ -24,6 +24,18 @@ class KMIPService(ConfigService):
         datastore_extend = 'kmip.kmip_extend'
         cli_namespace = 'system.kmip'
 
+    CONFIG_ENTRY = Dict(
+        'kmip_entry',
+        Int('id', required=True),
+        Bool('enabled', required=True),
+        Bool('manage_sed_disks', required=True),
+        Bool('manage_zfs_keys', required=True),
+        Int('certificate', null=True, required=True),
+        Int('certificate_authority', null=True, required=True),
+        Int('port', validators=[Port()], required=True),
+        Str('server', required=True, null=True),
+    )
+
     @private
     async def kmip_extend(self, data):
         for k in filter(lambda v: data[v], ('certificate', 'certificate_authority')):
@@ -31,19 +43,14 @@ class KMIPService(ConfigService):
         return data
 
     @accepts(
-        Dict(
-            'kmip_update',
-            Bool('enabled'),
-            Bool('force_clear'),
-            Bool('manage_sed_disks'),
-            Bool('manage_zfs_keys'),
-            Bool('change_server'),
-            Bool('validate'),
-            Int('certificate', null=True),
-            Int('certificate_authority', null=True),
-            Int('port', validators=[Port()]),
-            Str('server'),
-            update=True
+        Patch(
+            'kmip_entry', 'kmip_update',
+            ('rm', {'name': 'id'}),
+            ('add', Bool('enabled')),
+            ('add', Bool('force_clear')),
+            ('add', Bool('change_server')),
+            ('add', Bool('validate')),
+            ('attr', {'update': True}),
         )
     )
     @job(lock='kmip_update')
