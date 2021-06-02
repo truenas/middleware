@@ -1,7 +1,7 @@
 from collections import defaultdict
 
+from middlewared.schema import Dict, Int, Patch, returns
 from middlewared.service import accepts, item_method, Service
-from middlewared.schema import Int, Patch
 
 
 class PeriodicSnapshotTaskService(Service):
@@ -18,6 +18,7 @@ class PeriodicSnapshotTaskService(Service):
             ("attr", {"update": True}),
         ),
     )
+    @returns(Dict("snapshots", additional_attrs=True))
     async def update_will_change_retention_for(self, id, data):
         """
         Returns a list of snapshots which will change the retention if periodic snapshot task `id` is updated
@@ -42,6 +43,7 @@ class PeriodicSnapshotTaskService(Service):
     @accepts(
         Int("id"),
     )
+    @returns(Dict("snapshots", additional_attrs=True))
     async def delete_will_change_retention_for(self, id):
         """
         Returns a list of snapshots which will change the retention if periodic snapshot task `id` is deleted.
