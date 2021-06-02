@@ -1,5 +1,5 @@
 from middlewared.service import (
-    CallError, ConfigService, CRUDService, Service, filterable, pass_app, private
+    CallError, ConfigService, CRUDService, Service, filterable, filterable_returns, pass_app, private
 )
 from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import (
@@ -2225,7 +2225,7 @@ class RouteService(Service):
         cli_namespace = 'network.route'
 
     @filterable
-    @returns(List('system_routes', items=[Dict(
+    @filterable_returns(Dict(
         'system_route',
         IPAddr('network', required=True),
         IPAddr('netmask', required=True),
@@ -2235,7 +2235,7 @@ class RouteService(Service):
         Int('table_id', required=True),
         Int('scope', required=True),
         Str('preferred_source', null=True, required=True),
-    )]))
+    ))
     def system_routes(self, filters, options):
         """
         Get current/applied network routes.
@@ -2557,7 +2557,7 @@ class DNSService(Service):
         cli_namespace = 'network.dns'
 
     @filterable
-    @returns(List('name_servers', items=[Dict('name_server', IPAddr('nameserver', required=True))]))
+    @filterable_returns(Dict('name_server', IPAddr('nameserver', required=True)))
     async def query(self, filters, options):
         """
         Query Name Servers with `query-filters` and `query-options`.
