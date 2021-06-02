@@ -3,8 +3,8 @@ import errno
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
-from middlewared.service import CallError, ConfigService, filterable, private, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str
+from middlewared.service import CallError, ConfigService, filterable, filterable_returns, private, ValidationErrors
 from middlewared.utils import filter_list, osc, run
 from middlewared.validators import Range
 
@@ -28,6 +28,16 @@ class ReportingService(ConfigService):
         datastore = 'system.reporting'
         cli_namespace = 'system.reporting'
 
+    CONFIG_ENTRY = Dict(
+        'reporting_entry',
+        Bool('cpu_in_percentage', required=True),
+        Str('graphite', required=True),
+        Bool('graphite_separateinstances', required=True),
+        Int('graph_age', validators=[Range(min=1, max=60)], required=True),
+        Int('graph_points', validators=[Range(min=1, max=4096)], required=True),
+        Int('id', required=True),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__rrds = {}
@@ -35,16 +45,12 @@ class ReportingService(ConfigService):
             self.__rrds[name] = klass(self.middleware)
 
     @accepts(
-        Dict(
-            'reporting_update',
-            Bool('cpu_in_percentage'),
-            Str('graphite'),
-            Bool('graphite_separateinstances'),
-            Int('graph_age', validators=[Range(min=1, max=60)]),
-            Int('graph_points', validators=[Range(min=1, max=4096)]),
-            Bool('confirm_rrd_destroy'),
-            update=True
-        )
+        Patch(
+            'reporting_entry', 'reporting_update',
+            ('add', Bool('confirm_rrd_destroy')),
+            ('rm', {'name': 'id'}),
+            ('attr', {'update': True}),
+        ),
     )
     async def do_update(self, data):
         """
@@ -137,6 +143,15 @@ class ReportingService(ConfigService):
         return await self.config()
 
     @filterable
+    @filterable_returns(Dict(
+        'graph',
+        Str('name'),
+        Str('title'),
+        Str('vertical_label'),
+        List('identifiers', items=[Str('identifier')], null=True),
+        Bool('stacked'),
+        Bool('stacked_show_total'),
+    ))
     def graphs(self, filters, options):
         return filter_list([
             i.__getstate__() for i in self.__rrds.values() if i.has_data()
@@ -188,6 +203,19 @@ class ReportingService(ConfigService):
             register=True,
         )
     )
+    @returns(List('reporting_data', items=[Dict(
+        'graph_reporting_data',
+        Str('name', required=True),
+        Str('identifier', required=True),
+        List('data'),
+        Dict(
+            'aggregations',
+            List('min'),
+            List('max'),
+            List('mean'),
+        ),
+        additional_attrs=True
+    )]))
     def get_data(self, graphs, query):
         """
         Get reporting data for given graphs.

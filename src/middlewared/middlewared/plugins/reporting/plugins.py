@@ -295,4 +295,4 @@ class ARCResultPlugin(RRDBase):
         return 'ARC Requests ({identifier})'
 
     def get_identifiers(self):
-        return ('demand_data', 'demand_metadata', 'prefetch_data', 'prefetch_metadata')
+        return ['demand_data', 'demand_metadata', 'prefetch_data', 'prefetch_metadata']
