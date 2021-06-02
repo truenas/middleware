@@ -31,6 +31,8 @@ class KubernetesStorageClassService(CRUDService):
                 await context['storage_api'].create_storage_class(data)
             except client.exceptions.ApiException as e:
                 raise CallError(f'Failed to create storage class: {e}')
+            else:
+                return data
 
     async def do_update(self, name, data):
         async with api_client() as (api, context):
@@ -38,6 +40,8 @@ class KubernetesStorageClassService(CRUDService):
                 await context['storage_api'].patch_storage_class(name, data)
             except client.exceptions.ApiException as e:
                 raise CallError(f'Failed to create storage class: {e}')
+            else:
+                return data
 
     async def do_delete(self, name):
         async with api_client() as (api, context):
@@ -45,6 +49,8 @@ class KubernetesStorageClassService(CRUDService):
                 await context['storage_api'].delete_storage_class(name)
             except client.exceptions.ApiException as e:
                 raise CallError(f'Failed to delete storage class: {e}')
+            else:
+                return True
 
     async def setup_default_storage_class(self):
         try:

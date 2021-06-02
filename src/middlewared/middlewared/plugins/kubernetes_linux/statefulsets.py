@@ -43,6 +43,11 @@ class KubernetesStatefulsetService(CRUDService):
                 )
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create statefulset: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', data['metadata.name']],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -56,6 +61,11 @@ class KubernetesStatefulsetService(CRUDService):
                 )
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to patch {name} statefulset: {e}')
+            else:
+                return await self.query([
+                    ['metadata.name', '=', name],
+                    ['metadata.namespace', '=', data['namespace']],
+                ], {'get': True})
 
     @accepts(
         Str('name'),
@@ -70,3 +80,5 @@ class KubernetesStatefulsetService(CRUDService):
                 await context['apps_api'].delete_namespaced_stateful_set(name, options['namespace'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete statefulset: {e}')
+            else:
+                return True

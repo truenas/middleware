@@ -1,11 +1,22 @@
 from collections import defaultdict
 
+from middlewared.schema import Dict, List, returns, Str
 from middlewared.service import accepts, private, Service
 
 
 class KubernetesService(Service):
 
     @accepts()
+    @returns(List('kubernetes_node_events', items=[Dict(
+        'event',
+        Dict(
+            'metadata',
+            Str('name'),
+            additional_attrs=True,
+        ),
+        Str('message'),
+        additional_attrs=True,
+    )]))
     async def events(self):
         """
         Returns events for kubernetes node.

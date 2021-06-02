@@ -35,6 +35,8 @@ class KubernetesNamespaceService(CRUDService):
                 await context['core_api'].create_namespace(body=data['body'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to create namespace: {e}')
+            else:
+                return await self.query([['metadata.name', '=', data['metadata.name']]], {'get': True})
 
     @accepts(
         Str('namespace'),
@@ -49,6 +51,8 @@ class KubernetesNamespaceService(CRUDService):
                 await context['core_api'].patch_namespace(namespace, body=data['body'])
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to update namespace: {e}')
+            else:
+                return await self.query([['metadata.name', '=', namespace]], {'get': True})
 
     @accepts(Str('namespace'))
     async def do_delete(self, namespace):
@@ -57,6 +61,8 @@ class KubernetesNamespaceService(CRUDService):
                 await context['core_api'].delete_namespace(namespace)
             except client.exceptions.ApiException as e:
                 raise CallError(f'Unable to delete namespace: {e}')
+            else:
+                return True
 
     async def namespace_names(self):
         return [n['metadata']['name'] for n in await self.query()]

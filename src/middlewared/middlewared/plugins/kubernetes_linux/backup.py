@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime
 
 from middlewared.client.ejson import JSONEncoder
-from middlewared.schema import Str
+from middlewared.schema import Dict, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 
 from .utils import BACKUP_NAME_PREFIX, UPDATE_BACKUP_PREFIX
@@ -17,6 +17,7 @@ class KubernetesService(Service):
     @accepts(
         Str('backup_name', null=True, default=None)
     )
+    @returns(Str('backup_name'))
     @job(lock='chart_releases_backup')
     def backup_chart_releases(self, job, backup_name):
         """
@@ -87,6 +88,7 @@ class KubernetesService(Service):
         return name
 
     @accepts()
+    @returns(Dict('backups', additional_attrs=True))
     def list_backups(self):
         """
         List existing chart releases backups.

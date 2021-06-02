@@ -68,7 +68,9 @@ class KubernetesPersistentVolumesService(CRUDService):
     async def do_create(self, data):
         async with api_client() as (api, context):
             await context['core_api'].create_persistent_volume(data)
+        return data
 
     async def do_delete(self, pv_name):
         async with api_client() as (api, context):
             await context['core_api'].delete_persistent_volume(pv_name)
+        return True
