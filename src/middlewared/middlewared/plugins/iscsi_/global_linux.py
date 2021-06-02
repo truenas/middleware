@@ -1,13 +1,12 @@
 import glob
 import os
 
-from middlewared.service import Service
+from middlewared.schema import Bool, Dict, Int, Str
+from middlewared.service import filterable, filterable_returns, private, Service
 from middlewared.utils import filter_list, run
 
-from .global_base import GlobalActionsBase
 
-
-class ISCSIGlobalService(Service, GlobalActionsBase):
+class ISCSIGlobalService(Service):
 
     class Config:
         datastore_extend = 'iscsi.global.config_extend'
@@ -16,7 +15,29 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
         service_model = 'iscsitargetglobalconfiguration'
         namespace = 'iscsi.global'
 
+    @filterable
+    @filterable_returns(Dict(
+        'session',
+        Str('initiator'),
+        Str('initiator_addr'),
+        Str('initiator_alias', null=True),
+        Str('target'),
+        Str('target_alias'),
+        Str('header_digest', null=True),
+        Str('data_digest', null=True),
+        Int('max_data_segment_length', null=True),
+        Int('max_receive_data_segment_length', null=True),
+        Int('max_burst_length', null=True),
+        Int('first_burst_length', null=True),
+        Bool('immediate_data'),
+        Bool('iser'),
+        Bool('offload'),
+    ))
     def sessions(self, filters, options):
+        """
+        Get a list of currently running iSCSI sessions. This includes initiator and target names
+        and the unique connection IDs.
+        """
         sessions = []
         global_info = self.middleware.call_sync('iscsi.global.config')
         base_path = '/sys/kernel/scst_tgt/targets/iscsi'
@@ -75,6 +96,7 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
                 sessions.append(session_dict)
         return filter_list(sessions, filters, options)
 
+    @private
     async def terminate_luns_for_pool(self, pool_name):
         if not await self.middleware.call('service.started', 'iscsitarget'):
             return
