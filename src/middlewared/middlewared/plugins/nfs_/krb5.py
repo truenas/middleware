@@ -3,7 +3,7 @@ from middlewared.service import private, Service
 from middlewared.service_exception import CallError
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.directoryservices import DSStatus
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Bool, Dict, returns, Str
 
 
 class NFSService(Service):
@@ -69,6 +69,7 @@ class NFSService(Service):
             Str('password', required=True, private=True)
         )
     )
+    @returns(Bool('principal_add_status'))
     async def add_principal(self, data):
         """
         Use user-provided admin credentials to kinit, add NFS SPN

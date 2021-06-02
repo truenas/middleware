@@ -6,7 +6,7 @@ import socket
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Match, Range
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
@@ -45,6 +45,27 @@ class NFSService(SystemServiceService):
         datastore_extend = 'nfs.nfs_extend'
         cli_namespace = "service.nfs"
 
+    CONFIG_ENTRY = Dict(
+        'nfs_entry',
+        Int('id', required=True),
+        Int('servers', validators=[Range(min=1, max=256)], required=True),
+        Bool('udp', required=True),
+        Bool('allow_nonroot', required=True),
+        Bool('v4', required=True),
+        Bool('v4_v3owner', required=True),
+        Bool('v4_krb', required=True),
+        Str('v4_domain', required=True),
+        List('bindip', items=[IPAddr('ip')], required=True),
+        Int('mountd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
+        Int('rpcstatd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
+        Int('rpclockd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
+        Bool('userd_manage_gids', required=True),
+        Bool('mountd_log', required=True),
+        Bool('statd_lockd_log', required=True),
+        Bool('v4_krb_enabled', required=True),
+        Bool('userd_manage_gids', required=True),
+    )
+
     @private
     async def nfs_extend(self, nfs):
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
@@ -59,6 +80,7 @@ class NFSService(SystemServiceService):
         return nfs
 
     @accepts()
+    @returns(Dict('bindip_choices', additional_attrs=True))
     async def bindip_choices(self):
         """
         Returns ip choices for NFS service to use
@@ -97,23 +119,12 @@ class NFSService(SystemServiceService):
 
             return []
 
-    @accepts(Dict(
-        'nfs_update',
-        Int('servers', validators=[Range(min=1, max=256)]),
-        Bool('udp'),
-        Bool('allow_nonroot'),
-        Bool('v4'),
-        Bool('v4_v3owner'),
-        Bool('v4_krb'),
-        Str('v4_domain'),
-        List('bindip', items=[IPAddr('ip')]),
-        Int('mountd_port', null=True, validators=[Range(min=1, max=65535)]),
-        Int('rpcstatd_port', null=True, validators=[Range(min=1, max=65535)]),
-        Int('rpclockd_port', null=True, validators=[Range(min=1, max=65535)]),
-        Bool('userd_manage_gids'),
-        Bool('mountd_log'),
-        Bool('statd_lockd_log'),
-        update=True
+    @accepts(Patch(
+        'nfs_entry', 'nfs_update',
+        ('rm', {'name': 'id'}),
+        ('rm', {'name': 'v4_krb_enabled'}),
+        ('rm', {'name': 'userd_manage_gids'}),
+        ('attr', {'update': True}),
     ))
     async def do_update(self, data):
         """
@@ -226,9 +237,7 @@ class NFSService(SystemServiceService):
 
         await self._update_service(old, new)
 
-        await self.nfs_extend(new)
-
-        return new
+        return await self.config()
 
 
 class NFSShareModel(sa.Model):
@@ -262,6 +271,14 @@ class SharingNFSService(SharingService):
         datastore_prefix = "nfs_"
         datastore_extend = "sharing.nfs.extend"
         cli_namespace = "sharing.nfs"
+
+    RESULT_ENTRY = Patch(
+        'sharingnfs_create', 'sharing_nfs_entry',
+        ('add', Int('id')),
+        ('add', Bool('locked')),
+        register=True,
+    )
+    RESULT_ENTRY_KEY = 'sharing_nfs_entry'
 
     async def human_identifier(self, share_task):
         return ', '.join(share_task[self.path_field])
@@ -379,6 +396,7 @@ class SharingNFSService(SharingService):
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self._service_change("nfs", "reload")
+        return True
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
