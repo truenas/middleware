@@ -14,7 +14,7 @@ except ImportError:
     get_nsid = None
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Ref, returns, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -71,6 +71,41 @@ class DiskService(CRUDService):
         event_register = False
         event_send = False
         cli_namespace = 'storage.disk'
+
+    RESULT_ENTRY = Dict(
+        'disk_entry',
+        Str('identifier', required=True),
+        Str('name', required=True),
+        Str('subsystem', required=True),
+        Int('number', required=True),
+        Str('serial', required=True),
+        Int('size', required=True),
+        Str('multipath_name', required=True),
+        Str('multipath_member', required=True),
+        Str('description', required=True),
+        Str('transfermode', required=True),
+        Str('hddstandby', required=True),
+        Bool('hddstandby_force', required=True),
+        Bool('togglesmart', required=True),
+        Str('advpowermgmt', required=True),
+        Str('smartoptions', required=True),
+        Datetime('expiretime', required=True, null=True),
+        Int('critical', required=True, null=True),
+        Int('difference', required=True, null=True),
+        Int('informational', required=True, null=True),
+        Str('model', required=True, null=True),
+        Int('rotationrate', required=True, null=True),
+        Str('type', required=True, null=True),
+        Str('zfs_guid', required=True, null=True),
+        Str('devname', required=True),
+        Dict(
+            'enclosure',
+            Int('number'),
+            Int('slot'),
+            null=True, required=True
+        ),
+        Str('pool', null=True, required=True),
+    )
 
     @filterable
     async def query(self, filters, options):
@@ -306,6 +341,7 @@ class DiskService(CRUDService):
             return disk["name"]
 
     @accepts(Bool("join_partitions", default=False))
+    @returns(List('unused_disks', items=[Ref('disk_entry')]))
     async def get_unused(self, join_partitions):
         """
         Helper method to get all disks that are not in use, either by the boot

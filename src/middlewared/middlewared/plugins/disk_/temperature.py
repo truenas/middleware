@@ -9,6 +9,7 @@ except ImportError:
     cam = None
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
+from middlewared.schema import Dict, Int, returns
 from middlewared.service import accepts, List, private, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -75,6 +76,7 @@ class DiskService(Service):
         Str('name'),
         Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
     )
+    @returns(Int('temperature', null=True))
     async def temperature(self, name, powermode):
         """
         Returns temperature for device `name` using specified S.M.A.R.T. `powermode`.
@@ -100,6 +102,7 @@ class DiskService(Service):
         List('names', items=[Str('name')]),
         Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
     )
+    @returns(Dict('disks_temperatures', additional_attrs=True))
     async def temperatures(self, names, powermode):
         """
         Returns temperatures for a list of devices (runs in parallel).
