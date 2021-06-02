@@ -1,7 +1,7 @@
 import errno
 import os
 
-from middlewared.schema import Dict, Int, Str
+from middlewared.schema import Dict, Int, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
 
@@ -28,6 +28,7 @@ class ChartReleaseService(Service):
         return choices
 
     @accepts(Str('release_name'))
+    @returns(Dict('pod_console_choices', additional_attrs=True))
     async def pod_console_choices(self, release_name):
         """
         Returns choices for console access to a chart release.
@@ -38,6 +39,7 @@ class ChartReleaseService(Service):
         return await self.retrieve_pod_with_containers(release_name)
 
     @accepts(Str('release_name'))
+    @returns(Dict('pod_log_choices', additional_attrs=True))
     async def pod_logs_choices(self, release_name):
         """
         Returns choices for accessing logs of any container in any pod in a chart release.
@@ -89,6 +91,7 @@ class ChartReleaseService(Service):
         job.pipes.output.w.write((logs or '').encode())
 
     @accepts()
+    @returns(Dict('nic_choices', additional_attrs=True))
     async def nic_choices(self):
         """
         Available choices for NIC which can be added to a pod in a chart release.
@@ -96,6 +99,7 @@ class ChartReleaseService(Service):
         return await self.middleware.call('interface.choices')
 
     @accepts()
+    @returns(List('used_ports', items=[Int('used_port')]))
     async def used_ports(self):
         """
         Returns ports in use by applications.
@@ -107,6 +111,7 @@ class ChartReleaseService(Service):
         })))
 
     @accepts()
+    @returns(List('certificate_choices', items=[Ref('certificate_entry')]))
     async def certificate_choices(self):
         """
         Returns certificates which can be used by applications.
@@ -116,6 +121,7 @@ class ChartReleaseService(Service):
         )
 
     @accepts()
+    @returns(List('certificate_authority_choices', items=[Ref('certificateauthority_entry')]))
     async def certificate_authority_choices(self):
         """
         Returns certificate authorities which can be used by applications.

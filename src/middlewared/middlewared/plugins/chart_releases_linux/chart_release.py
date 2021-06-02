@@ -11,7 +11,7 @@ import yaml
 
 from pkg_resources import parse_version
 
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns
 from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list, get
 from middlewared.validators import Match
@@ -27,6 +27,64 @@ class ChartReleaseService(CRUDService):
         datastore_primary_key_type = 'string'
         namespace = 'chart.release'
         cli_namespace = 'app.chart_release'
+
+    RESULT_ENTRY = Dict(
+        'chart_release_entry',
+        Str('name', required=True),
+        Dict('info', additional_attrs=True),
+        Dict('config', additional_attrs=True),
+        List('hooks'),
+        Int('version', required=True, description='Version of chart release'),
+        Str('namespace', required=True),
+        Dict(
+            'chart_metadata',
+            Str('name', required=True, description='Name of application'),
+            Str('version', required=True, description='Version of application'),
+            Str('latest_chart_version', required=True, description='Latest available version of application'),
+            additional_attrs=True,
+        ),
+        Str('id', required=True),
+        Str('catalog', required=True),
+        Str('catalog_train', required=True),
+        Str('path', required=True),
+        Str('dataset', required=True),
+        Str('status', required=True),
+        List('used_ports', items=[
+            Dict(
+                'port',
+                Int('port', required=True),
+                Str('protocol', required=True),
+            )
+        ], required=True),
+        Dict(
+            'pod_status',
+            Int('available', required=True),
+            Int('desired', required=True),
+        ),
+        Bool('update_available', required=True),
+        Str('human_version', required=True, description='Human friendly version identifier for chart release'),
+        Str(
+            'human_latest_version', required=True,
+            description='Human friendly latest available version identifier for chart release'
+        ),
+        Bool(
+            'container_images_update_available', required=True,
+            description='Will be set when any image(s) being used in the chart release has a newer version available'
+        ),
+        Dict('portals', additional_attrs=True),
+        Dict('chart_schema', null=True, additional_attrs=True),
+        Dict('history', additional_attrs=True),
+        Dict(
+            'resources',
+            Dict('storage_class', additional_attrs=True),
+            List('persistent_volumes'),
+            List('host_path_volumes'),
+            Dict('container_images', additional_attrs=True),
+            List('truenas_certificates', items=[Int('certificate_id')]),
+            List('truenas_certificate_authorities', items=[Int('certificate_authority_id')]),
+            *[List(r.value) for r in Resources],
+        ),
+    )
 
     @filterable
     async def query(self, filters, options):
@@ -602,6 +660,7 @@ class ChartReleaseService(CRUDService):
                 raise CallError(f'Failed to {tn_action} chart release: {stderr.decode()}')
 
     @accepts(Str('release_name'))
+    @returns(RESULT_ENTRY)
     @job(lock=lambda args: f'chart_release_redeploy_{args[0]}')
     async def redeploy(self, job, release_name):
         """
