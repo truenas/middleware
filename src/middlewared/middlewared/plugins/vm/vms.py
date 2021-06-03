@@ -63,7 +63,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         )),
         ('add', Int('id')),
     )
-    RESULT_ENTRY_KEY = 'vm_entry'
 
     @accepts()
     @returns(Dict('bootloader_options', additional_attrs=True))

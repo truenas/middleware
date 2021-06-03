@@ -278,7 +278,6 @@ class SharingNFSService(SharingService):
         ('add', Bool('locked')),
         register=True,
     )
-    RESULT_ENTRY_KEY = 'sharing_nfs_entry'
 
     async def human_identifier(self, share_task):
         return ', '.join(share_task[self.path_field])

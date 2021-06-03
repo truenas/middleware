@@ -406,7 +406,6 @@ class ConfigServiceMetabase(ServiceBase):
 
     def __new__(cls, name, bases, attrs):
         klass = super().__new__(cls, name, bases, attrs)
-        namespace = klass._config.namespace.replace('.', '_')
         if any(
             name == c_name and len(bases) == len(c_bases) and all(
                 b.__name__ == c_b for b, c_b in zip(bases, c_bases)
@@ -418,14 +417,15 @@ class ConfigServiceMetabase(ServiceBase):
         ):
             return klass
 
-        if klass.CONFIG_ENTRY_KEY == NotImplementedError:
-            klass.CONFIG_ENTRY_KEY = f'{namespace}_entry'
+        namespace = klass._config.namespace.replace('.', '_')
+        config_entry_key = f'{namespace}_entry'
 
         if klass.CONFIG_ENTRY == NotImplementedError:
-            klass.CONFIG_ENTRY = Dict(klass.CONFIG_ENTRY_KEY, additional_attrs=True, update=True)
+            klass.CONFIG_ENTRY = Dict(config_entry_key, additional_attrs=True)
 
-        klass.CONFIG_ENTRY.register = True
-        klass.config = returns(klass.CONFIG_ENTRY)(klass.config)
+        config_entry = copy.deepcopy(klass.CONFIG_ENTRY)
+        config_entry.register = True
+        klass.config = returns(config_entry)(klass.config)
 
         if hasattr(klass, 'do_update'):
             for m_name, decorator in filter(
@@ -435,7 +435,7 @@ class ConfigServiceMetabase(ServiceBase):
                 new_name = f'{namespace}_update'
                 if m_name == 'returns':
                     new_name += '_returns'
-                klass.do_update = decorator(Patch(klass.CONFIG_ENTRY_KEY, new_name, register=True))(klass.do_update)
+                klass.do_update = decorator(Patch(config_entry_key, new_name, register=True))(klass.do_update)
 
         return klass
 
@@ -449,7 +449,6 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
     """
 
     CONFIG_ENTRY = NotImplementedError
-    CONFIG_ENTRY_KEY = NotImplementedError
 
     @accepts()
     async def config(self):
@@ -524,41 +523,36 @@ class CRUDServiceMetabase(ServiceBase):
         ):
             return klass
 
-        namespace = klass._config.namespace
-        if klass.RESULT_ENTRY_KEY == NotImplementedError:
-            if klass.RESULT_ENTRY != NotImplementedError:
-                klass.RESULT_ENTRY_KEY = klass.RESULT_ENTRY.name
-            else:
-                klass.RESULT_ENTRY_KEY = f'{namespace.replace(".", "_")}_entry'
-
+        namespace = klass._config.namespace.replace('.', '_')
+        entry_key = f'{namespace}_entry'
         if klass.RESULT_ENTRY == NotImplementedError:
-            klass.RESULT_ENTRY = Dict(klass.RESULT_ENTRY_KEY, additional_attrs=True, update=True)
+            klass.RESULT_ENTRY = Dict(entry_key, additional_attrs=True)
+        else:
+            entry_key = getattr(klass.RESULT_ENTRY, 'newname' if isinstance(klass.RESULT_ENTRY, Patch) else 'name')
 
-        klass.RESULT_ENTRY.register = True
-
-        if klass.QUERY_PARAMETERS == NotImplementedError:
-            query_result_entry = copy.deepcopy(klass.RESULT_ENTRY)
-            query_result_entry.register = False
-            query_result_entry.update = True
-            klass.QUERY_PARAMETERS = OROperator(
-                'query_result',
-                Int('count'),
-                klass.RESULT_ENTRY,
-                List('query_result', items=[query_result_entry]),
-            )
+        result_entry = copy.deepcopy(klass.RESULT_ENTRY)
+        result_entry.register = True
+        result_entry.update = True
+        query_result_entry = copy.deepcopy(result_entry)
+        query_result_entry.register = False
 
         query_method = klass.query.wraps if hasattr(klass.query, 'returns') else klass.query
-        klass.query = returns(klass.QUERY_PARAMETERS)(query_method)
+        klass.query = returns(OROperator(
+            'query_result',
+            Int('count'),
+            result_entry,
+            List('query_result', items=[query_result_entry]),
+        ))(query_method)
 
         for m_name in filter(lambda m: hasattr(klass, m), ('do_create', 'do_update')):
             for d_name, decorator in filter(
                 lambda d: not hasattr(getattr(klass, m_name), d[0]), (('returns', returns), ('accepts', accepts))
             ):
-                new_name = f'{namespace.replace(".", "_")}_{m_name.split("_")[-1]}'
+                new_name = f'{namespace}_{m_name.split("_")[-1]}'
                 if d_name == 'returns':
                     new_name += '_returns'
 
-                schema = [Patch(klass.RESULT_ENTRY_KEY, new_name, register=True)]
+                schema = [Patch(entry_key, new_name, register=True)]
                 if m_name == 'do_update' and d_name == 'accepts':
                     # TODO: See what we can do about making this intelligent
                     schema.insert(0, Str('id'))
@@ -583,9 +577,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     CRUD stands for Create Retrieve Update Delete.
     """
 
-    QUERY_PARAMETERS = NotImplementedError
     RESULT_ENTRY = NotImplementedError
-    RESULT_ENTRY_KEY = NotImplementedError
 
     def __init__(self, middleware):
         super().__init__(middleware)
