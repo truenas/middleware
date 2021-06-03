@@ -25,7 +25,7 @@ from middlewared.alert.base import (
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
 from middlewared.client.client import ReserveFDException
-from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch, Ref
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Patch, returns, Ref, Str
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -260,6 +260,7 @@ class AlertService(Service):
         await self.flush_alerts()
 
     @accepts()
+    @returns(List('alert_policies', items=[Str('policy', enum=POLICIES)]))
     async def list_policies(self):
         """
         List all alert policies which indicate the frequency of the alerts.
@@ -267,6 +268,17 @@ class AlertService(Service):
         return POLICIES
 
     @accepts()
+    @returns(List('categories', items=[Dict(
+        'category',
+        Str('id'),
+        Str('title'),
+        List('classes', items=[Dict(
+            'category_class',
+            Str('id'),
+            Str('title'),
+            Str('level'),
+        )])
+    )]))
     async def list_categories(self):
         """
         List all types of alerts which the system can issue.
@@ -311,6 +323,24 @@ class AlertService(Service):
         ]
 
     @accepts()
+    @returns(List('alerts', items=[Dict(
+        'alert',
+        Str('uuid'),
+        Str('source'),
+        Str('klass'),
+        Any('args'),
+        Str('node'),
+        Str('key'),
+        Datetime('datetime'),
+        Datetime('last_occurrence'),
+        Bool('dismissed'),
+        Any('mail', null=True),
+        Str('text'),
+        Str('id'),
+        Str('level'),
+        Str('formatted', null=True),
+        Bool('one_shot'),
+    )]))
     async def list(self):
         """
         List all types of alerts including active/dismissed currently in the system.
@@ -864,7 +894,18 @@ class AlertServiceService(CRUDService):
         datastore_order_by = ["name"]
         cli_namespace = "system.alert.service"
 
+    RESULT_ENTRY = Patch(
+        'alert_service_create', 'alertservice_entry',
+        ('add', Int('id')),
+        ('add', Str('type__title')),
+    )
+
     @accepts()
+    @returns(List('alert_service_types', items=[Dict(
+        'alert_service_type',
+        Str('name', required=True),
+        Str('title', required=True),
+    )]))
     async def list_types(self):
         """
         List all types of supported Alert services which can be configured with the system.
@@ -950,7 +991,7 @@ class AlertServiceService(CRUDService):
 
         await self._extend(data)
 
-        return data
+        return await self.get_instance(data["id"])
 
     @accepts(Int("id"), Patch(
         "alert_service_create",
@@ -974,9 +1015,7 @@ class AlertServiceService(CRUDService):
 
         await self.middleware.call("datastore.update", self._config.datastore, id, new)
 
-        await self._extend(new)
-
-        return new
+        return await self.get_instance(id)
 
     @accepts(Int("id"))
     async def do_delete(self, id):
@@ -988,6 +1027,7 @@ class AlertServiceService(CRUDService):
     @accepts(
         Ref('alert_service_create')
     )
+    @returns(Bool('successful_test', description='Is `true` if test is successful'))
     async def test(self, data):
         """
         Send a test alert using `type` of Alert Service.
@@ -1059,6 +1099,12 @@ class AlertClassesService(ConfigService):
         datastore = "system.alertclasses"
         cli_namespace = "system.alert.class"
 
+    CONFIG_ENTRY = Dict(
+        "alertclasses_entry",
+        Int("id"),
+        Dict("classes", additional_attrs=True),
+    )
+
     @accepts(Dict(
         "alert_classes_update",
         Dict("classes", additional_attrs=True),
@@ -1107,7 +1153,7 @@ class AlertClassesService(ConfigService):
 
         await self.middleware.call("datastore.update", self._config.datastore, old["id"], new)
 
-        return new
+        return await self.config()
 
 
 async def _event_system(middleware, event_type, args):
