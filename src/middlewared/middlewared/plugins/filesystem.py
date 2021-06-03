@@ -18,8 +18,8 @@ except ImportError:
     pyinotify = None
 
 from middlewared.event import EventSource
-from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
-from middlewared.service import private, CallError, Service, job
+from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
+from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list, osc
 from middlewared.utils.path import is_child
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
@@ -31,6 +31,18 @@ class FilesystemService(Service):
         cli_namespace = 'storage.filesystem'
 
     @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
+    @filterable_returns(Dict(
+        'path_entry',
+        Str('name', required=True),
+        Path('path', required=True),
+        Path('realpath', required=True),
+        Str('type', required=True, enum=['DIRECTORY', 'FILESYSTEM', 'SYMLINK', 'OTHER']),
+        Int('size', required=True, null=True),
+        Int('mode', required=True, null=True),
+        Bool('acl', required=True, null=True),
+        Int('uid', required=True, null=True),
+        Int('gid', required=True, null=True),
+    ))
     def listdir(self, path, filters, options):
         """
         Get the contents of a directory.
@@ -84,6 +96,22 @@ class FilesystemService(Service):
         return filter_list(rv, filters=filters or [], options=options or {})
 
     @accepts(Str('path'))
+    @returns(Dict(
+        'path_stats',
+        Int('size', required=True),
+        Int('mode', required=True),
+        Int('uid', required=True),
+        Int('gid', required=True),
+        Float('atime', required=True),
+        Float('mtime', required=True),
+        Float('ctime', required=True),
+        Int('dev', required=True),
+        Int('inode', required=True),
+        Int('nlink', required=True),
+        Str('user', null=True, required=True),
+        Str('group', null=True, required=True),
+        Bool('acl', required=True),
+    ))
     def stat(self, path):
         """
         Return the filesystem stat(2) for a given `path`.
@@ -196,6 +224,7 @@ class FilesystemService(Service):
             Int('mode'),
         ),
     )
+    @returns(Bool('successful_put'))
     @job(pipes=["input"])
     async def put(self, job, path, options):
         """
@@ -218,6 +247,24 @@ class FilesystemService(Service):
         return True
 
     @accepts(Str('path'))
+    @returns(Dict(
+        'path_statfs',
+        List('flags', required=True),
+        List('fsid', required=True),
+        Str('fstype', required=True),
+        Str('source', required=True),
+        Str('dest', required=True),
+        Int('blocksize', required=True),
+        Int('total_blocks', required=True),
+        Int('free_blocks', required=True),
+        Int('avail_blocks', required=True),
+        Int('files', required=True),
+        Int('free_files', required=True),
+        Int('name_max', required=True),
+        Int('total_bytes', required=True),
+        Int('free_bytes', required=True),
+        Int('avail_bytes', required=True),
+    ))
     def statfs(self, path):
         """
         Return stats from the filesystem of a given path.
@@ -255,6 +302,7 @@ class FilesystemService(Service):
         }
 
     @accepts(Str('path'))
+    @returns(Bool('paths_acl_is_trivial'))
     def acl_is_trivial(self, path):
         """
         Returns True if the ACL can be fully expressed as a file mode without losing
