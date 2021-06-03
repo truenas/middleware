@@ -16,14 +16,14 @@ class DeviceService(Service):
 
 
 def udev_events(middleware):
-    context = pyudev.Context()
-    monitor = pyudev.Monitor.from_netlink(context)
-    monitor.filter_by(subsystem='block')
-    monitor.filter_by(subsystem='net')
     while True:
         # We always want to keep polling udev, let's log what error we are
         # seeing and fix them accordingly as we see them
         try:
+            context = pyudev.Context()
+            monitor = pyudev.Monitor.from_netlink(context)
+            monitor.filter_by(subsystem='block')
+            monitor.filter_by(subsystem='net')
             for device in iter(monitor.poll, None):
                 middleware.call_hook_sync(
                     f'udev.{device.subsystem}', data={**dict(device), 'SYS_NAME': device.sys_name}
