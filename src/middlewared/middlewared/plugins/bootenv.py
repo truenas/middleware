@@ -48,7 +48,7 @@ class BootEnvService(CRUDService):
         cp = subprocess.run([self.BE_TOOL, 'list', '-H'], capture_output=True, text=True)
         datasets_origins = [
             d['properties']['origin']['parsed']
-            for d in self.middleware.call_sync('zfs.dataset.query')
+            for d in self.middleware.call_sync('zfs.dataset.query', [], {'extra': {'properties': ['origin']}})
         ]
         boot_pool = self.middleware.call_sync('boot.pool_name')
         for line in cp.stdout.strip().split('\n'):
@@ -113,7 +113,9 @@ class BootEnvService(CRUDService):
                 children = False
                 for snap in ds['snapshots']:
                     if snap['name'] not in datasets_origins:
-                        be['rawspace'] += snap['properties']['used']['parsed']
+                        be['rawspace'] += self.middleware.call_sync(
+                            'zfs.snapshot.query', [['id', '=', snap['name']]], {'extra': {'properties': ['used']}}
+                        )['properties']['used']['parsed']
                     else:
                         children = True
 
