@@ -978,6 +978,11 @@ class OROperator:
         self.resolved = True
         return self
 
+    def copy(self):
+        cp = copy.deepcopy(self)
+        cp.register = False
+        return cp
+
 
 class ResolverError(Exception):
     pass

@@ -5,7 +5,7 @@ from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, returns, Str
 from middlewared.service import (
     CallError, ConfigService, no_auth_required, job, pass_app, private, rest_api_metadata,
     Service, throttle, ValidationErrors
@@ -1216,6 +1216,7 @@ class SystemGeneralService(ConfigService):
         return self._timezone_choices
 
     @accepts()
+    @returns(Dict('country_choices', additional_attrs=True, register=True))
     async def country_choices(self):
         """
         Returns country choices.

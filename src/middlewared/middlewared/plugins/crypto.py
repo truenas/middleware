@@ -12,7 +12,7 @@ import re
 import subprocess
 
 from middlewared.async_validators import validate_country
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
+from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, OROperator, Patch, Ref, returns, Str
 from middlewared.service import CallError, CRUDService, job, periodic, private, Service, skip_arg, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.validators import Email, IpAddress, Range
@@ -984,6 +984,61 @@ class CertificateService(CRUDService):
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate'
 
+    RESULT_ENTRY = Dict(
+        'certificate_entry',
+        Int('id'),
+        Int('type'),
+        Str('name'),
+        Str('certificate', null=True, max_length=None),
+        Str('privatekey', null=True, max_length=None),
+        Str('CSR', null=True, max_length=None),
+        Str('acme_uri', null=True),
+        Dict('domains_authenticators', additional_attrs=True, null=True),
+        Int('renew_days'),
+        Datetime('revoked_date', null=True),
+        Dict('signedby', additional_attrs=True, null=True),
+        Str('root_path'),
+        Dict('acme', additional_attrs=True, null=True),
+        Str('certificate_path', null=True),
+        Str('privatekey_path', null=True),
+        Str('csr_path', null=True),
+        Str('cert_type'),
+        Bool('revoked'),
+        OROperator('issuer', Str('issuer', null=True), Dict('issuer', additional_attrs=True, null=True)),
+        List('chain_list', items=[Str('certificate', max_length=None)]),
+        Str('country', null=True),
+        Str('state', null=True),
+        Str('city', null=True),
+        Str('organization', null=True),
+        Str('organizational_unit', null=True),
+        List('san', items=[Str('san_entry')], null=True),
+        Str('email', null=True),
+        Str('DN', null=True),
+        Str('subject_name_hash', null=True),
+        Str('digest_algorithm', null=True),
+        Str('from', null=True),
+        Str('common', null=True, max_length=None),
+        Str('until', null=True),
+        Str('fingerprint', null=True),
+        Str('key_type', null=True),
+        Str('internal', null=True),
+        Int('lifetime', null=True),
+        Int('serial', null=True),
+        Int('key_length', null=True),
+        Bool('chain', null=True),
+        Bool('CA_type_existing'),
+        Bool('CA_type_internal'),
+        Bool('CA_type_intermediate'),
+        Bool('cert_type_existing'),
+        Bool('cert_type_internal'),
+        Bool('cert_type_CSR'),
+        Bool('parsed'),
+        Dict('extensions', additional_attrs=True),
+        List('revoked_certs'),
+        Str('crl_path'),
+        Int('signed_certificates'),
+    )
+
     PROFILES = {
         'Openvpn Server Certificate': {
             'cert_extensions': {
@@ -1060,6 +1115,10 @@ class CertificateService(CRUDService):
         }
 
     @accepts()
+    @returns(Dict(
+        'certificate_profiles',
+        *[Dict(profile, additional_attrs=True) for profile in PROFILES]
+    ))
     async def profiles(self):
         """
         Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
@@ -1068,6 +1127,7 @@ class CertificateService(CRUDService):
         return self.PROFILES
 
     @accepts()
+    @returns(Ref('country_choices'))
     async def country_choices(self):
         """
         Returns country choices for creating a certificate/csr.
@@ -1367,6 +1427,7 @@ class CertificateService(CRUDService):
             job.set_progress(progress)
 
     @accepts()
+    @returns(Dict('acme_server_choices', additional_attrs=True))
     async def acme_server_choices(self):
         """
         Dictionary of popular ACME Servers with their directory URI endpoints which we display automatically
@@ -1378,6 +1439,10 @@ class CertificateService(CRUDService):
         }
 
     @accepts()
+    @returns(Dict(
+        'ec_curve_choices',
+        *[Str(k, enum=[k]) for k in CryptoKeyService.ec_curves]
+    ))
     async def ec_curve_choices(self):
         """
         Dictionary of supported EC curves.
@@ -1385,6 +1450,10 @@ class CertificateService(CRUDService):
         return {k: k for k in CryptoKeyService.ec_curves}
 
     @accepts()
+    @returns(Dict(
+        'private_key_type_choices',
+        *[Str(k, enum=[k]) for k in ('RSA', 'EC')]
+    ))
     async def key_type_choices(self):
         """
         Dictionary of supported key types for certificates.
@@ -1392,6 +1461,10 @@ class CertificateService(CRUDService):
         return {k: k for k in ['RSA', 'EC']}
 
     @accepts()
+    @returns(Dict(
+        'extended_key_usage_choices',
+        *[Str(k, enum=[k]) for k in EKU_OIDS]
+    ))
     async def extended_key_usage_choices(self):
         """
         Dictionary of choices for `ExtendedKeyUsage` extension which can be passed over to `usages` attribute.
@@ -1990,6 +2063,12 @@ class CertificateAuthorityModel(sa.Model):
     cert_signedby_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
 
 
+def get_ca_result_entry():
+    entry = copy.deepcopy(CertificateService.RESULT_ENTRY)
+    entry.name = 'certificateauthority_entry'
+    return entry
+
+
 class CertificateAuthorityService(CRUDService):
 
     class Config:
@@ -1997,6 +2076,8 @@ class CertificateAuthorityService(CRUDService):
         datastore_extend = 'certificate.cert_extend'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate.authority'
+
+    RESULT_ENTRY = get_ca_result_entry()
 
     PROFILES = {
         'Openvpn Root CA': {
@@ -2065,6 +2146,10 @@ class CertificateAuthorityService(CRUDService):
         }
 
     @accepts()
+    @returns(Dict(
+        'certificate_authority_profiles',
+        *[Dict(profile, additional_attrs=True) for profile in PROFILES]
+    ))
     async def profiles(self):
         """
         Returns a dictionary of predefined options for specific use cases i.e OpenVPN certificate authority
@@ -2353,6 +2438,7 @@ class CertificateAuthorityService(CRUDService):
             register=True
         )
     )
+    @returns(Ref('certificate_entry'))
     async def ca_sign_csr(self, data):
         """
         Sign CSR by Certificate Authority of `ca_id`
