@@ -148,11 +148,10 @@ class CertificateChecksAlertSource(AlertSource):
                 parsed[cert['id']] = cert['revoked']
 
         # check the parsed certificate(s) for revocation
-        for i in check_for_revocation:
-            if i['id'] in parsed and parsed[i['id']]['revoked']:
-                alerts.append(Alert(
-                    CertificateRevokedAlertClass,
-                    {'service': i['service'], 'type': i['type']}
-                ))
+        for i in filter(lambda i: parsed.get(i['id']), check_for_revocation):
+            alerts.append(Alert(
+                CertificateRevokedAlertClass,
+                {'service': i['service'], 'type': i['type']}
+            ))
 
         return alerts
