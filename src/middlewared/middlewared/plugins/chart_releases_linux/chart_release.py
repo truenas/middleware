@@ -479,15 +479,15 @@ class ChartReleaseService(CRUDService):
                 'isInstall': True,
             })
 
+            await self.middleware.call(
+                'chart.release.create_update_storage_class_for_chart_release',
+                data['release_name'], os.path.join(release_ds, 'volumes')
+            )
+
             # We will install the chart now and force the installation in an ix based namespace
             # https://github.com/helm/helm/issues/5465#issuecomment-473942223
             await self.middleware.call(
                 'chart.release.helm_action', data['release_name'], chart_path, new_values, 'install'
-            )
-
-            await self.middleware.call(
-                'chart.release.create_update_storage_class_for_chart_release',
-                data['release_name'], os.path.join(release_ds, 'volumes')
             )
         except Exception:
             # Do a rollback here
