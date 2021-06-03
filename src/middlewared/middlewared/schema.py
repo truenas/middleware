@@ -871,7 +871,7 @@ class Patch(object):
     def __init__(self, name, newname, *patches, register=False):
         self.name = name
         self.newname = newname
-        self.patches = patches
+        self.patches = list(patches)
         self.register = register
         self.resolved = False
 

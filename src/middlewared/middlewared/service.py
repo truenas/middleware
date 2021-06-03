@@ -528,11 +528,25 @@ class CRUDServiceMetabase(ServiceBase):
         if klass.RESULT_ENTRY == NotImplementedError:
             klass.RESULT_ENTRY = Dict(entry_key, additional_attrs=True)
         else:
-            entry_key = getattr(klass.RESULT_ENTRY, 'newname' if isinstance(klass.RESULT_ENTRY, Patch) else 'name')
+            # We would like to ensure that not all fields are required as select can filter out fields
+            if isinstance(klass.RESULT_ENTRY, Patch):
+                entry_key = klass.RESULT_ENTRY.newname
+            elif isinstance(klass.RESULT_ENTRY, Ref):
+                entry_key = f'{klass.RESULT_ENTRY.name}_ref_entry'
+            elif isinstance(klass.RESULT_ENTRY, Dict):
+                entry_key = klass.RESULT_ENTRY.name
+            else:
+                raise ValueError('Result entry should be Dict/Patch/Ref instance')
 
         result_entry = copy.deepcopy(klass.RESULT_ENTRY)
+        if isinstance(result_entry, Ref):
+            result_entry = Patch(result_entry.name, entry_key)
+        if isinstance(result_entry, Patch):
+            result_entry.patches.append(('attr', {'update': True}))
+        else:
+            result_entry.update = True
+
         result_entry.register = True
-        result_entry.update = True
         query_result_entry = copy.deepcopy(result_entry)
         query_result_entry.register = False
 
