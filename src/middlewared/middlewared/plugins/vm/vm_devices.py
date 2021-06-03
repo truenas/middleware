@@ -40,7 +40,6 @@ class VMDeviceService(CRUDService):
         'vmdevice_create', 'vm_device_entry',
         ('add', Int('id')),
     )
-    RESULT_ENTRY_KEY = 'vm_device_entry'
 
     class Config:
         namespace = 'vm.device'
