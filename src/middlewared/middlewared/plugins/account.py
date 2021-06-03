@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable, job
 )
@@ -131,6 +131,22 @@ class UserService(CRUDService):
         datastore_extend = 'user.user_extend'
         datastore_prefix = 'bsdusr_'
         cli_namespace = 'account.user'
+
+    # FIXME: Please see if dscache can potentially alter result(s) format, without ad, it doesn't seem to
+    RESULT_ENTRY = Patch(
+        'user_create', 'user_entry',
+        ('rm', {'name': 'group'}),
+        ('rm', {'name': 'group_create'}),
+        ('rm', {'name': 'home_mode'}),
+        ('rm', {'name': 'password'}),
+        ('add', Dict('group', additional_attrs=True)),
+        ('add', Int('id')),
+        ('add', Bool('builtin')),
+        ('add', Bool('id_type_both')),
+        ('add', Bool('local')),
+        ('add', Str('unixhash')),
+        ('add', Str('smbhash')),
+    )
 
     @private
     async def user_extend(self, user):
@@ -381,7 +397,7 @@ class UserService(CRUDService):
                 self.logger.warn('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
 
-        return pk
+        return await self.get_instance(pk)
 
     @accepts(
         Int('id'),
@@ -550,7 +566,7 @@ class UserService(CRUDService):
         if user['smb'] and must_change_pdb_entry:
             await self.middleware.call('smb.synchronize_passdb')
 
-        return pk
+        return await self.get_instance(pk)
 
     @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
     async def do_delete(self, pk, options):
@@ -588,9 +604,10 @@ class UserService(CRUDService):
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')
 
-        return pk
+        return True
 
     @accepts(Int('user_id', default=None, null=True))
+    @returns(Dict('shell_choices', additional_attrs=True))
     def shell_choices(self, user_id):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
@@ -617,11 +634,24 @@ class UserService(CRUDService):
         Str('username', default=None),
         Int('uid', default=None)
     ))
+    @returns(Dict(
+        'user_information',
+        Str('pw_name'),
+        Str('pw_gecos'),
+        Str('pw_dir'),
+        Str('pw_shell'),
+        Int('pw_uid'),
+        Int('pw_gid'),
+    ))
     async def get_user_obj(self, data):
         """
         Returns dictionary containing information from struct passwd for the user specified by either
         the username or uid. Bypasses user cache.
         """
+        verrors = ValidationErrors()
+        if not data['username'] and not data['uid']:
+            verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
+        verrors.check()
         return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'])
 
     @item_method
@@ -630,6 +660,7 @@ class UserService(CRUDService):
         Str('key'),
         Any('value'),
     )
+    @returns(Bool('attributes_set'))
     async def set_attribute(self, pk, key, value):
         """
         Set user general purpose `attributes` dictionary `key` to `value`.
@@ -655,6 +686,7 @@ class UserService(CRUDService):
         Int('id'),
         Str('key'),
     )
+    @returns(Bool('successful_attribute_update'))
     async def pop_attribute(self, pk, key):
         """
         Remove user general purpose `attributes` dictionary `key`.
@@ -676,6 +708,7 @@ class UserService(CRUDService):
             return False
 
     @accepts()
+    @returns(Int('next_available_uid'))
     async def get_next_uid(self):
         """
         Get the next available/free uid.
@@ -694,6 +727,7 @@ class UserService(CRUDService):
 
     @no_auth_required
     @accepts()
+    @returns(Bool('root_has_password'))
     async def has_root_password(self):
         """
         Return whether the root user has a valid password set.
@@ -1011,6 +1045,17 @@ class GroupService(CRUDService):
         datastore_extend = 'group.group_extend'
         cli_namespace = 'account.group'
 
+    RESULT_ENTRY = Patch(
+        'group_create', 'group_entry',
+        ('rm', {'name': 'name'}),
+        ('rm', {'name': 'allow_duplicate_gid'}),
+        ('add', Int('id')),
+        ('add', Str('group')),
+        ('add', Bool('builtin')),
+        ('add', Bool('id_type_both')),
+        ('add', Bool('local')),
+    )
+
     @private
     async def group_extend(self, group):
         # Get group membership
@@ -1088,7 +1133,7 @@ class GroupService(CRUDService):
 
         `smb` specifies whether the group should be mapped into an NT group.
         """
-        return await self.create_internal(data)
+        return await self.get_instance(await self.create_internal(data))
 
     @private
     async def create_internal(self, data, reload_users=True):
@@ -1195,7 +1240,7 @@ class GroupService(CRUDService):
         if add_groupmap:
             await self.middleware.call('smb.groupmap_add', group['group'])
 
-        return pk
+        return await self.get_instance(pk)
 
     @accepts(Int('id'), Dict('options', Bool('delete_users', default=False)))
     async def do_delete(self, pk, options):
@@ -1226,8 +1271,10 @@ class GroupService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        return pk
+        return True
 
+    @accepts()
+    @returns(Int('next_available_gid'))
     async def get_next_gid(self):
         """
         Get the next available/free gid.
@@ -1249,11 +1296,21 @@ class GroupService(CRUDService):
         Str('groupname', default=None),
         Int('gid', default=None)
     ))
+    @returns(Dict(
+        'group_info',
+        Str('gr_name'),
+        Int('gr_gid'),
+        List('gr_mem'),
+    ))
     async def get_group_obj(self, data):
         """
         Returns dictionary containing information from struct grp for the group specified by either
         the groupname or gid. Bypasses group cache.
         """
+        verrors = ValidationErrors()
+        if not data['groupname'] and not data['gid']:
+            verrors.add('get_group_obj.groupname', 'Either "groupname" or "gid" must be specified')
+        verrors.check()
         return await self.middleware.call('dscache.get_uncached_group', data['groupname'], data['gid'])
 
     async def __common_validation(self, verrors, data, schema, pk=None):
