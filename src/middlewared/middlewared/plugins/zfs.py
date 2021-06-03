@@ -1015,7 +1015,9 @@ class ZFSSnapshot(CRUDService):
         with libzfs.ZFS() as zfs:
             # Handle `id` filter to avoid getting all snapshots first
             kwargs = dict(holds=False, mounted=False, props=properties)
-            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+            if filters and len(filters) == 1 and len(filters[0]) == 3 and filters[0][0] in (
+                'id', 'name'
+            ) and filters[0][1] == '=':
                 kwargs['datasets'] = [filters[0][2]]
 
             snapshots = zfs.snapshots_serialized(**kwargs)
