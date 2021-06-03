@@ -36,6 +36,11 @@ class CronJobService(CRUDService):
         namespace = 'cronjob'
         cli_namespace = 'task.cron_job'
 
+    RESULT_ENTRY = Patch(
+        'cron_job_create', 'cron_job_entry',
+        ('add', Int('id')),
+    )
+
     @private
     def cron_extend(self, data):
         Cron.convert_db_format_to_schedule(data)
