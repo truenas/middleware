@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import SystemServiceService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 
@@ -28,12 +28,29 @@ class DynDNSService(SystemServiceService):
         datastore_prefix = "ddns_"
         cli_namespace = "service.dyndns"
 
+    CONFIG_ENTRY = Dict(
+        'dyndns_entry',
+        Str('provider', required=True),
+        Bool('checkip_ssl', required=True),
+        Str('checkip_server', required=True),
+        Str('checkip_path', required=True),
+        Bool('ssl', required=True),
+        Str('custom_ddns_server', required=True),
+        Str('custom_ddns_path', required=True),
+        List('domain', items=[Str('domain')], required=True),
+        Str('username', required=True),
+        Str('password', required=True),
+        Int('period', required=True),
+        Int('id', required=True),
+    )
+
     @private
     async def dyndns_extend(self, dyndns):
         dyndns["domain"] = dyndns["domain"].replace(',', ' ').replace(';', ' ').split()
         return dyndns
 
     @accepts()
+    @returns(Dict('dynamic_dns_provider_choices', additional_attrs=True))
     async def provider_choices(self):
         """
         List supported Dynamic DNS Service Providers.
@@ -92,20 +109,9 @@ class DynDNSService(SystemServiceService):
 
         verrors.check()
 
-    @accepts(Dict(
-        'dyndns_update',
-        Str('provider'),
-        Bool('checkip_ssl'),
-        Str('checkip_server'),
-        Str('checkip_path'),
-        Bool('ssl'),
-        Str('custom_ddns_server'),
-        Str('custom_ddns_path'),
-        List('domain', items=[Str('domain')], empty=False),
-        Str('username'),
-        Str('password'),
-        Int('period'),
-        update=True
+    @accepts(Patch(
+        'dyndns_entry', 'dyndns_update',
+        ('attr', {'update': True}),
     ))
     async def do_update(self, data):
         """
