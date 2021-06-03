@@ -4,8 +4,8 @@ except ImportError:
     kld = None
 
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
-from middlewared.schema import Bool, Dict, Int, IPAddr, Str, accepts
-from middlewared.service import CallError, CRUDService, filterable, filter_list, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str
+from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list, run
 from middlewared.validators import Netmask
 
@@ -21,7 +21,15 @@ class IPMIService(CRUDService):
     class Config:
         cli_namespace = 'network.ipmi'
 
+    # TODO: Test me please
+    RESULT_ENTRY = Patch(
+        'ipmi_update', 'ipmi_entry',
+        ('add', Int('id', required=True)),
+        ('add', Int('channel', required=True)),
+    )
+
     @accepts()
+    @returns(Bool('ipmi_loaded'))
     async def is_loaded(self):
         """
         Returns a boolean true value indicating if ipmi device is loaded.
@@ -29,6 +37,7 @@ class IPMIService(CRUDService):
         return os.path.exists('/dev/ipmi0')
 
     @accepts()
+    @returns(List('ipmi_channels', items=[Int('ipmi_channel')]))
     async def channels(self):
         """
         Return a list with the IPMI channels available.
@@ -77,13 +86,14 @@ class IPMIService(CRUDService):
         return filter_list(result, filters, options)
 
     @accepts(Int('channel'), Dict(
-        'ipmi',
+        'ipmi_update',
         IPAddr('ipaddress', v6=False),
         Str('netmask', validators=[Netmask(ipv6=False, prefix_length=False)]),
         IPAddr('gateway', v6=False),
         Str('password', private=True),
         Bool('dhcp'),
         Int('vlan', null=True),
+        register=True
     ))
     async def do_update(self, id, data):
         """
@@ -173,6 +183,7 @@ class IPMIService(CRUDService):
             cmd = str(options.get('seconds'))
         await run('ipmitool', 'chassis', 'identify', cmd)
 
+    # TODO: Document me as well please
     @filterable
     async def query_sel(self, filters, options):
         """
