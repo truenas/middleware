@@ -66,11 +66,21 @@ def upgrade():
         if share["afp_auxparams"].strip():
             cifs_auxsmbconf.append(textwrap.indent(f"\nNetatalk Auxiliary Parameters:\n\n{share['afp_auxparams']}", "; "))
 
+        cifs_path_suffix = ""
+        cifs_home = False
+        if share["afp_home"]:
+            if not has_cifs_home:
+                cifs_home = True
+            else:
+                cifs_path_suffix = "%U"
+
+            has_cifs_home = True
+
         cifs_share = {
             "cifs_purpose": "NO_PRESET",
             "cifs_path": share["afp_path"],
-            "cifs_path_suffix": "",
-            "cifs_home": not has_cifs_home and share["afp_home"],
+            "cifs_path_suffix": cifs_path_suffix,
+            "cifs_home": cifs_home,
             "cifs_name": f"AFP_{share['afp_name']}",
             "cifs_comment": share["afp_comment"],
             "cifs_ro": False,
@@ -104,9 +114,6 @@ def upgrade():
         share_id = conn.execute("SELECT last_insert_rowid()").fetchall()[0][0]
         if share_disable_acl_if_trivial:
             disable_acl_if_trivial.append(share_id)
-
-        if share["afp_home"]:
-            has_cifs_home = True
 
         conn.execute("UPDATE services_cifs SET cifs_srv_aapl_extensions = 1")
 
