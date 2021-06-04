@@ -2340,6 +2340,8 @@ class VMDeviceService(CRUDService):
             path = device['attributes'].get('path')
             if not path:
                 verrors.add('attributes.path', 'Path is required.')
+            elif ',' in path:
+                verrors.add('attributes.path', 'Comma is not allowed in cdrom path.')
             elif not os.path.exists(path):
                 verrors.add('attributes.path', f'Unable to locate CDROM device at {path}')
             elif not await self.disk_uniqueness_integrity_check(device, vm_instance):
