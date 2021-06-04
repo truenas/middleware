@@ -898,27 +898,36 @@ class Patch(object):
         schema = schema.copy()
         schema.name = self.newname
         for operation, patch in self.patches:
-            if operation == 'add':
-                if isinstance(patch, dict):
-                    new = self.convert(dict(patch))
-                else:
-                    new = copy.deepcopy(patch)
-                schema.attrs[new.name] = new
-            elif operation == 'rm':
-                del schema.attrs[patch['name']]
-            elif operation == 'edit':
-                attr = schema.attrs[patch['name']]
-                if 'method' in patch:
-                    patch['method'](attr)
-                    schema.attrs[patch['name']] = attr.resolve(schemas)
-            elif operation == 'attr':
-                for key, val in list(patch.items()):
-                    setattr(schema, key, val)
+            if operation == 'replace':
+                # This is for convenience where it's hard sometimes to change attrs in a large dict
+                # with custom function(s) outlining the operation - it's easier to just replace the attr
+                self._resolve_internal(schema, schemas, 'rm', patch['name'])
+                operation = 'add'
+                patch = patch['new']
+            self._resolve_internal(schema, schemas, operation, patch)
         if self.register:
             schemas.add(schema)
         schema.resolved = True
         self.resolved = True
         return schema
+
+    def _resolve_internal(self, schema, schemas, operation, patch):
+        if operation == 'add':
+            if isinstance(patch, dict):
+                new = self.convert(dict(patch))
+            else:
+                new = copy.deepcopy(patch)
+            schema.attrs[new.name] = new
+        elif operation == 'rm':
+            del schema.attrs[patch['name']]
+        elif operation == 'edit':
+            attr = schema.attrs[patch['name']]
+            if 'method' in patch:
+                patch['method'](attr)
+                schema.attrs[patch['name']] = attr.resolve(schemas)
+        elif operation == 'attr':
+            for key, val in list(patch.items()):
+                setattr(schema, key, val)
 
 
 class OROperator:
