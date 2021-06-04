@@ -1,6 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.listen import SystemServiceListenSingleDelegate
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
 from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
@@ -31,6 +31,26 @@ class S3Service(SystemServiceService):
         datastore_extend = "s3.config_extend"
         cli_namespace = "service.s3"
 
+    CONFIG_ENTRY = Dict(
+        's3_entry',
+        Str('bindip', required=True),
+        Int('bindport', validators=[Range(min=1, max=65535)], required=True),
+        Str(
+            'access_key', validators=[Match(r'^\w+$', explanation='Should only contain alphanumeric characters')],
+            max_length=20, required=True
+        ),
+        Str(
+            'secret_key', validators=[Match(r'^\w+$', explanation='Should only contain alphanumeric characters')],
+            max_length=40, required=True
+        ),
+        Bool('browser', required=True),
+        Str('storage_path', required=True),
+        Int('certificate', null=True, required=True),
+        Int('id', required=True),
+    )
+
+    @accepts()
+    @returns(Dict('s3_bindip_choices', additional_attrs=True))
     async def bindip_choices(self):
         """
         Return ip choices for S3 service to use.
@@ -49,19 +69,13 @@ class S3Service(SystemServiceService):
             s3['certificate'] = s3['certificate']['id']
         return s3
 
-    @accepts(Dict(
-        's3_update',
-        Str('bindip'),
-        Int('bindport', validators=[Range(min=1, max=65535)]),
-        Str('access_key', validators=[Match("^\w+$", explanation="Should only contain alphanumeric characters")],
-            max_length=20),
-        Str('secret_key', validators=[Match("^\w+$", explanation="Should only contain alphanumeric characters")],
-            max_length=40),
-        Bool('browser'),
-        Str('storage_path'),
-        Int('certificate', null=True),
-        update=True,
-    ))
+    @accepts(
+        Patch(
+            's3_entry', 's3_update',
+            ('rm', {'name': 'id'}),
+            ('attr', {'update': True}),
+        )
+    )
     async def do_update(self, data):
         """
         Update S3 Service Configuration.
