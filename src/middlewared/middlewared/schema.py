@@ -901,9 +901,9 @@ class Patch(object):
             if operation == 'replace':
                 # This is for convenience where it's hard sometimes to change attrs in a large dict
                 # with custom function(s) outlining the operation - it's easier to just replace the attr
-                self._resolve_internal(schema, schemas, 'rm', patch['name'])
+                name = patch['name'] if isinstance(patch, dict) else patch.name
+                self._resolve_internal(schema, schemas, 'rm', {'name': name})
                 operation = 'add'
-                patch = patch['new']
             self._resolve_internal(schema, schemas, operation, patch)
         if self.register:
             schemas.add(schema)
