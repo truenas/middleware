@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.validators import Email, Match, Or, Range
 from middlewared.service import SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -31,25 +31,32 @@ class SNMPService(SystemServiceService):
         datastore_prefix = 'snmp_'
         cli_namespace = 'service.snmp'
 
-    @accepts(Dict(
-        'snmp_update',
-        Str('location'),
-        Str('contact', validators=[Or(Email(), Match(r'^[-_a-zA-Z0-9\s]*$'))]),
-        Bool('traps'),
-        Bool('v3'),
-        Str('community', validators=[Match(r'^[-_.a-zA-Z0-9\s]*$')],
-            default='public'),
-        Str('v3_username', max_length=20),
-        Str('v3_authtype', enum=['', 'MD5', 'SHA']),
-        Str('v3_password'),
-        Str('v3_privproto', enum=[None, 'AES', 'DES'], null=True),
-        Str('v3_privpassphrase'),
-        Int('loglevel', validators=[Range(min=0, max=7)]),
-        Str('options', max_length=None),
-        Bool('zilstat'),
-        Bool('iftop'),
-        update=True
-    ))
+    CONFIG_ENTRY = Dict(
+        'snmp_entry',
+        Str('location', required=True),
+        Str('contact', required=True, validators=[Or(Email(), Match(r'^[-_a-zA-Z0-9\s]*$'))]),
+        Bool('traps', required=True),
+        Bool('v3', required=True),
+        Str('community', validators=[Match(r'^[-_.a-zA-Z0-9\s]*$')], default='public', required=True),
+        Str('v3_username', max_length=20, required=True),
+        Str('v3_authtype', enum=['', 'MD5', 'SHA'], required=True),
+        Str('v3_password', required=True),
+        Str('v3_privproto', enum=[None, 'AES', 'DES'], null=True, required=True),
+        Str('v3_privpassphrase', required=True, null=True),
+        Int('loglevel', validators=[Range(min=0, max=7)], required=True),
+        Str('options', max_length=None, required=True),
+        Bool('zilstat', required=True),
+        Bool('iftop', required=True),
+        Int('id', required=True),
+    )
+
+    @accepts(
+        Patch(
+            'snmp_entry', 'snmp_update',
+            ('rm', {'name': 'id'}),
+            ('attr', {'update': True}),
+        )
+    )
     async def do_update(self, data):
         """
         Update SNMP Service Configuration.
