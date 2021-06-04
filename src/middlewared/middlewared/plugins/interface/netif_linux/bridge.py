@@ -12,7 +12,11 @@ __all__ = ["create_bridge", "BridgeMixin"]
 
 
 def create_bridge(name):
-    run(["ip", "link", "add", name, "type", "bridge"])
+    cmd = [
+        "ip", "link", "add", name, "type", "bridge",
+        "stp_state", "1"  # enable stp by default 1 == on 0 == off
+    ]
+    run(cmd)
     interface.Interface(name).up()
 
 
