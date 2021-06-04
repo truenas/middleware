@@ -3,7 +3,7 @@ import hashlib
 import os
 import syslog
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
 from middlewared.validators import Range
 from middlewared.service import private, SystemServiceService
 import middlewared.sqlalchemy as sa
@@ -50,29 +50,75 @@ class SSHService(SystemServiceService):
         datastore_prefix = "ssh_"
         cli_namespace = 'service.ssh'
 
+    CONFIG_ENTRY = Dict(
+        'ssh_entry',
+        List('bindiface', items=[Str('iface')], required=True),
+        Int('tcpport', validators=[Range(min=1, max=65535)], required=True),
+        Bool('rootlogin', required=True),
+        Bool('passwordauth', required=True),
+        Bool('kerberosauth', required=True),
+        Bool('tcpfwd', required=True),
+        Bool('compression', required=True),
+        Str(
+            'sftp_log_level', enum=['', 'QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE', 'DEBUG', 'DEBUG2', 'DEBUG3'],
+            required=True
+        ),
+        Str(
+            'sftp_log_facility', enum=[
+                '', 'DAEMON', 'USER', 'AUTH', 'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3', 'LOCAL4',
+                'LOCAL5', 'LOCAL6', 'LOCAL7'
+            ], required=True
+        ),
+        List('weak_ciphers', items=[Str('cipher', enum=['AES128-CBC', 'NONE'])], required=True),
+        Str('options', max_length=None, required=True),
+        Str('privatekey', required=True, max_length=None),
+        Str('host_dsa_key', required=True, max_length=None, null=True),
+        Str('host_dsa_key_pub', required=True, max_length=None, null=True),
+        Str('host_dsa_key_cert_pub', required=True, max_length=None, null=True),
+        Str('host_ecdsa_key', required=True, max_length=None, null=True),
+        Str('host_ecdsa_key_pub', required=True, max_length=None, null=True),
+        Str('host_ecdsa_key_cert_pub', required=True, max_length=None, null=True),
+        Str('host_ed25519_key', required=True, max_length=None, null=True),
+        Str('host_ed25519_key_pub', required=True, max_length=None, null=True),
+        Str('host_ed25519_key_cert_pub', required=True, max_length=None, null=True),
+        Str('host_key', required=True, max_length=None, null=True),
+        Str('host_key_pub', required=True, max_length=None, null=True),
+        Str('host_rsa_key', required=True, max_length=None, null=True),
+        Str('host_rsa_key_pub', required=True, max_length=None, null=True),
+        Str('host_rsa_key_cert_pub', required=True, max_length=None, null=True),
+        Int('id', required=True),
+    )
+
     @accepts()
+    @returns(Dict('ssh_bind_interfaces_choices', additional_attrs=True))
     def bindiface_choices(self):
         """
         Available choices for the bindiface attribute of SSH service.
         """
         return self.middleware.call_sync('interface.choices')
 
-    @accepts(Dict(
-        'ssh_update',
-        List('bindiface', items=[Str('iface')]),
-        Int('tcpport', validators=[Range(min=1, max=65535)]),
-        Bool('rootlogin'),
-        Bool('passwordauth'),
-        Bool('kerberosauth'),
-        Bool('tcpfwd'),
-        Bool('compression'),
-        Str('sftp_log_level', enum=["", "QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG2", "DEBUG3"]),
-        Str('sftp_log_facility', enum=["", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4",
-                                       "LOCAL5", "LOCAL6", "LOCAL7"]),
-        List('weak_ciphers', items=[Str('cipher', enum=['AES128-CBC', 'NONE'])]),
-        Str('options', max_length=None),
-        update=True
-    ))
+    @accepts(
+        Patch(
+            'ssh_entry', 'ssh_update',
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'privatekey'}),
+            ('rm', {'name': 'host_dsa_key'}),
+            ('rm', {'name': 'host_dsa_key_pub'}),
+            ('rm', {'name': 'host_dsa_key_cert_pub'}),
+            ('rm', {'name': 'host_ecdsa_key'}),
+            ('rm', {'name': 'host_ecdsa_key_pub'}),
+            ('rm', {'name': 'host_ecdsa_key_cert_pub'}),
+            ('rm', {'name': 'host_ed25519_key'}),
+            ('rm', {'name': 'host_ed25519_key_pub'}),
+            ('rm', {'name': 'host_ed25519_key_cert_pub'}),
+            ('rm', {'name': 'host_key'}),
+            ('rm', {'name': 'host_key_pub'}),
+            ('rm', {'name': 'host_rsa_key'}),
+            ('rm', {'name': 'host_rsa_key_pub'}),
+            ('rm', {'name': 'host_rsa_key_cert_pub'}),
+            ('attr', {'update': True}),
+        )
+    )
     async def do_update(self, data):
         """
         Update settings of SSH daemon service.
@@ -124,7 +170,7 @@ class SSHService(SystemServiceService):
             syslog.syslog(syslog.LOG_ERR, 'ECDSA Fingerprint of the SSH KEY: ' + ssh_fingerprint)
             syslog.closelog()
 
-        return new
+        return await self.config()
 
     @private
     def save_keys(self):
