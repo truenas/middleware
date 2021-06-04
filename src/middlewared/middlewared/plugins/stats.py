@@ -1,5 +1,5 @@
 from middlewared.client import ejson as json
-from middlewared.schema import Dict, Int, List, Str, accepts
+from middlewared.schema import accepts, Dict, Int, List, returns, Str
 from middlewared.service import CallError, Service, ValidationError
 from middlewared.utils import Popen
 
@@ -21,6 +21,7 @@ class StatsService(Service):
         cli_private = True
 
     @accepts()
+    @returns(Dict('stats_sources', additional_attrs=True))
     def get_sources(self):
         """
         Returns an object with all available sources tried with metric datasets.
@@ -38,6 +39,14 @@ class StatsService(Service):
         return sources
 
     @accepts(Str('source'), Str('type'))
+    @returns(Dict(
+        'dataset_info',
+        Str('source', required=True),
+        Str('type', required=True),
+        Dict('datasets', additional_attrs=True, required=True),
+        Int('step'),
+        Int('last_update'),
+    ))
     async def get_dataset_info(self, source, _type):
         """
         Returns info about a given dataset from some source.
@@ -87,6 +96,12 @@ class StatsService(Service):
             Str('end', default='now'),
         ),
     )
+    @returns(Dict(
+        'stats_data',
+        Str('about', required=True, max_length=None),
+        Dict('meta', additional_attrs=True),
+        List('data'),
+    ))
     async def get_data(self, data_list, stats):
         """
         Get data points from rrd files.
