@@ -7,7 +7,7 @@ import time
 
 from middlewared.pipe import Pipes
 from middlewared.plugins.system import DEBUG_MAX_SIZE
-from middlewared.schema import Bool, Dict, Int, List, Str, accepts
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.network import INTERNET_TIMEOUT
@@ -30,26 +30,33 @@ class SupportModel(sa.Model):
     secondary_email = sa.Column(sa.String(200))
     secondary_phone = sa.Column(sa.String(200))
 
-
 class SupportService(ConfigService):
 
     class Config:
         datastore = 'system.support'
         cli_namespace = 'system.support'
 
-    @accepts(Dict(
-        'support_update',
-        Bool('enabled', null=True),
-        Str('name'),
-        Str('title'),
-        Str('email'),
-        Str('phone'),
-        Str('secondary_name'),
-        Str('secondary_title'),
-        Str('secondary_email'),
-        Str('secondary_phone'),
-        update=True
-    ))
+    CONFIG_ENTRY = Dict(
+        'support_entry',
+        Bool('enabled', null=True, required=True),
+        Str('name', required=True),
+        Str('title', required=True),
+        Str('email', required=True),
+        Str('phone', required=True),
+        Str('secondary_name', required=True),
+        Str('secondary_title', required=True),
+        Str('secondary_email', required=True),
+        Str('secondary_phone', required=True),
+        Int('id', required=True),
+    )
+
+    @accepts(
+        Patch(
+            'support_entry', 'support_update',
+            ('rm', {'name': 'id'}),
+            ('attr', {'update': True}),
+        )
+    )
     async def do_update(self, data):
         """
         Update Proactive Support settings.
@@ -78,6 +85,7 @@ class SupportService(ConfigService):
         return await self.config()
 
     @accepts()
+    @returns(Bool('proactive_support_is_available'))
     async def is_available(self):
         """
         Returns whether Proactive Support is available for this product type and current license.
@@ -93,6 +101,7 @@ class SupportService(ConfigService):
         return license['contract_type'] in ['SILVER', 'GOLD']
 
     @accepts()
+    @returns(Bool('proactive_support_is_available_and_enabled'))
     async def is_available_and_enabled(self):
         """
         Returns whether Proactive Support is available and enabled.
@@ -101,22 +110,23 @@ class SupportService(ConfigService):
         return await self.is_available() and (await self.config())['enabled']
 
     @accepts()
+    @returns(List('support_fields', items=[List('support_field', items=[Str('field')])]))
     async def fields(self):
         """
         Returns list of pairs of field names and field titles for Proactive Support.
         """
+        return [
+            ['name', 'Contact Name'],
+            ['title', 'Contact Title'],
+            ['email', 'Contact E-mail'],
+            ['phone', 'Contact Phone'],
+            ['secondary_name', 'Secondary Contact Name'],
+            ['secondary_title', 'Secondary Contact Title'],
+            ['secondary_email', 'Secondary Contact E-mail'],
+            ['secondary_phone', 'Secondary Contact Phone'],
+        ]
 
-        return (
-            ("name", "Contact Name"),
-            ("title", "Contact Title"),
-            ("email", "Contact E-mail"),
-            ("phone", "Contact Phone"),
-            ("secondary_name", "Secondary Contact Name"),
-            ("secondary_title", "Secondary Contact Title"),
-            ("secondary_email", "Secondary Contact E-mail"),
-            ("secondary_phone", "Secondary Contact Phone"),
-        )
-
+    # TODO: Document this please
     @accepts(
         Str('username'),
         Str('password'),
@@ -169,6 +179,11 @@ class SupportService(ConfigService):
         Str('name'),
         Str('email', validators=[Email()]),
         List('cc', items=[Str('email', validators=[Email()])])
+    ))
+    @returns(Dict(
+        'new_ticket_response',
+        Int('ticket', null=True),
+        Str('url', null=True),
     ))
     @job()
     async def new_ticket(self, job, data):
