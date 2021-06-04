@@ -722,7 +722,10 @@ class Dict(Attribute):
     def resolve(self, schemas):
         for name, attr in list(self.attrs.items()):
             if not attr.resolved:
-                self.attrs[name] = attr.resolve(schemas)
+                new_name = attr.newname if isinstance(attr, Patch) else name
+                self.attrs[new_name] = attr.resolve(schemas)
+                if new_name != name:
+                    self.attrs.pop(name)
         if self.register:
             schemas.add(self)
         self.resolved = True

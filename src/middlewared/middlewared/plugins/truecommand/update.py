@@ -38,11 +38,11 @@ class TruecommandService(ConfigService):
     CONFIG_ENTRY = Dict(
         'truecommand_entry',
         Int('id', required=True),
-        Str('api_key', required=True),
+        Str('api_key', required=True, null=True),
         Str('status', required=True, enum=[s.value for s in Status]),
         Str('status_reason', required=True, enum=[s.value for s in StatusReason]),
-        Str('remote_url', required=True),
-        IPAddr('remote_ip_address', required=True),
+        Str('remote_url', required=True, null=True),
+        IPAddr('remote_ip_address', required=True, null=True),
         Bool('enabled', required=True),
     )
 
