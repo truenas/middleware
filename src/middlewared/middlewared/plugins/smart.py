@@ -7,10 +7,10 @@ from itertools import chain
 import asyncio
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Datetime, Dict, Int, Float, List, Patch, returns, Str
 from middlewared.validators import Range
 from middlewared.service import (
-    CRUDService, filterable, filter_list, job, private, SystemServiceService, ValidationErrors
+    CRUDService, filterable, filterable_returns, filter_list, job, private, SystemServiceService, ValidationErrors
 )
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -139,6 +139,11 @@ class SMARTTestService(CRUDService):
         datastore_prefix = 'smarttest_'
         namespace = 'smart.test'
         cli_namespace = 'task.smart_test'
+
+    RESULT_ENTRY = Patch(
+        'smart_task_create', 'smart_task_entry',
+        ('add', Int('id')),
+    )
 
     @private
     async def smart_test_extend(self, data):
@@ -274,7 +279,7 @@ class SMARTTestService(CRUDService):
 
         asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
-        return data
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id', validators=[Range(min=1)]),
@@ -326,7 +331,7 @@ class SMARTTestService(CRUDService):
 
         asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
-        return await self.query(filters=[('id', '=', id)], options={'get': True})
+        return await self.get_instance(id)
 
     @accepts(
         Int('id')
@@ -357,6 +362,14 @@ class SMARTTestService(CRUDService):
             ]
         )
     )
+    @returns(List('smart_manual_test', items=[Dict(
+        'smart_manual_test_disk_response',
+        Str('disk', required=True),
+        Str('identifier', required=True),
+        Str('error', required=True, null=True),
+        Datetime('expected_result_time'),
+        Int('job'),
+    )]))
     async def manual_test(self, disks):
         """
         Run manual SMART tests for `disks`.
@@ -405,7 +418,7 @@ class SMARTTestService(CRUDService):
         return await asyncio_map(self.__manual_test, test_disks_list, 16)
 
     async def __manual_test(self, disk):
-        output = {}
+        output = {'error': None}
 
         try:
             new_test_num = max(
@@ -457,6 +470,20 @@ class SMARTTestService(CRUDService):
         }
 
     @filterable
+    @filterable_returns(Dict(
+        'disk_smart_test_result',
+        Str('disk', required=True),
+        List('tests', items=[Dict(
+            'test_result',
+            Int('num', required=True),
+            Str('description', required=True),
+            Str('status', required=True),
+            Str('status_verbose', required=True),
+            Float('remaining', required=True),
+            Int('lifetime', required=True),
+            Str('lba_of_first_error', null=True, required=True),
+        )])
+    ))
     async def results(self, filters, options):
         """
         Get disk(s) S.M.A.R.T. test(s) results.
@@ -618,20 +645,28 @@ class SmartService(SystemServiceService):
         datastore_prefix = "smart_"
         cli_namespace = "service.smart"
 
+    CONFIG_ENTRY = Dict(
+        'smart_entry',
+        Int('interval', required=True),
+        Int('id', required=True),
+        Str('powermode', required=True, enum=SMARTCTL_POWERMODES),
+        Int('difference', required=True),
+        Int('informational', required=True),
+        Int('critical', required=True),
+    )
+
     @private
     async def smart_extend(self, smart):
         smart["powermode"] = smart["powermode"].upper()
         return smart
 
-    @accepts(Dict(
-        'smart_update',
-        Int('interval'),
-        Str('powermode', enum=SMARTCTL_POWERMODES),
-        Int('difference'),
-        Int('informational'),
-        Int('critical'),
-        update=True
-    ))
+    @accepts(
+        Patch(
+            'smart_entry', 'smart_update',
+            ('rm', {'name': 'id'}),
+            ('attr', {'update': True}),
+        )
+    )
     async def do_update(self, data):
         """
         Update SMART Service Configuration.
@@ -660,6 +695,4 @@ class SmartService(SystemServiceService):
             await self.middleware.call("service.restart", "collectd")
             await self._service_change("snmp", "restart")
 
-        await self.smart_extend(new)
-
-        return new
+        return await self.config()
