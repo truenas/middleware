@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Str
+from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
@@ -36,6 +36,19 @@ class SystemDatasetService(ConfigService):
         datastore_extend = 'systemdataset.config_extend'
         datastore_prefix = 'sys_'
         cli_namespace = 'system.system_dataset'
+
+    CONFIG_ENTRY = Dict(
+        'systemdataset_entry',
+        Int('id', required=True),
+        Str('pool', required=True),
+        Str('uuid', required=True),
+        Str('uuid_b', required=True, null=True),
+        Bool('is_decrypted', required=True),
+        Str('basename', required=True),
+        Str('uuid_a', required=True),
+        Bool('syslog', required=True),
+        Str('path', required=True),
+    )
 
     @private
     async def config_extend(self, config):
@@ -84,6 +97,7 @@ class SystemDatasetService(ConfigService):
         return config
 
     @accepts()
+    @returns(Dict('systemdataset_pool_choices', additional_attrs=True))
     async def pool_choices(self):
         """
         Retrieve pool choices which can be used for configuring system dataset.
@@ -396,7 +410,7 @@ class SystemDatasetService(ConfigService):
             await init_job.wait()
             if init_job.error:
                 self.logger.error(
-                    'Failed to initilize %s directory with error: %s',
+                    'Failed to initialize %s directory with error: %s',
                     CTDBConfig.CTDB_VOL_NAME.value,
                     init_job.error
                 )
