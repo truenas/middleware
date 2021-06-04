@@ -95,11 +95,17 @@ class RsyncdService(SystemServiceService):
         datastore_prefix = "rsyncd_"
         cli_namespace = 'service.rsync'
 
-    @accepts(Dict(
-        'rsyncd_update',
-        Int('port', validators=[Range(min=1, max=65535)]),
-        Str('auxiliary', max_length=None),
-        update=True
+    CONFIG_ENTRY = Dict(
+        'rsyncd_entry',
+        Int('port', required=True, validators=[Range(min=1, max=65535)]),
+        Int('id', required=True),
+        Str('auxiliary', required=True, max_length=None),
+    )
+
+    @accepts(Patch(
+        'rsyncd_entry', 'rsyncd_update',
+        ('rm', {'name': 'id'}),
+        ('attr', {'update': True}),
     ))
     async def do_update(self, data):
         """
@@ -144,6 +150,12 @@ class RsyncModService(SharingService):
         datastore_extend = 'rsyncmod.rsync_mod_extend'
         cli_namespace = 'service.rsync_mod'
 
+    RESULT_ENTRY = Patch(
+        'rsyncmod_create', 'rsyncmod_entry',
+        ('add', Bool('locked')),
+        ('add', Int('id')),
+    )
+
     @private
     async def rsync_mod_extend(self, data):
         data['hostsallow'] = data['hostsallow'].split()
@@ -181,7 +193,7 @@ class RsyncModService(SharingService):
         Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
         Str('path', required=True, max_length=RSYNC_PATH_LIMIT),
-        Str('mode', enum=['RO', 'RW', 'WO']),
+        Str('mode', enum=['RO', 'RW', 'WO'], required=True),
         Int('maxconn'),
         Str('user', default='nobody'),
         Str('group', default='nobody'),
@@ -296,6 +308,14 @@ class RsyncTaskService(TaskPathService):
         datastore_extend = 'rsynctask.rsync_task_extend'
         datastore_extend_context = 'rsynctask.rsync_task_extend_context'
         cli_namespace = 'task.rsync'
+
+    RESULT_ENTRY = Patch(
+        'rsync_task_create', 'rsync_task_entry',
+        ('rm', {'name': 'validate_rpath'}),
+        ('add', Int('id')),
+        ('add', Bool('locked')),
+        ('add', Dict('job', null=True, additional_attrs=True)),
+    )
 
     @private
     async def rsync_task_extend(self, data, context):
