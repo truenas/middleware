@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 import re
@@ -457,12 +458,7 @@ class Enclosure(object):
                 if element_type is not None and element_number is not None:
                     dev = ""
                     if element_type == "Array Device Slot":
-                        try:
-                            dev = os.listdir(
-                                f"/sys/class/enclosure/{self.devname}/Disk #{element_number:02X}/device/block"
-                            )[0]
-                        except (FileNotFoundError, IndexError):
-                            pass
+                        dev = self._array_device_slot_dev(element_number)
 
                     element = self._enclosure_element(
                         element_number,
@@ -478,6 +474,20 @@ class Enclosure(object):
                 element_number = None
             else:
                 element_number = None
+
+    def _array_device_slot_dev(self, element_number):
+        try:
+            return os.listdir(f"/sys/class/enclosure/{self.devname}/Disk #{element_number:02X}/device/block")[0]
+        except (FileNotFoundError, IndexError):
+            pass
+
+        if slot := glob.glob(f"/sys/class/enclosure/{self.devname[len('bsg/'):]}/slot{element_number:02} *"):
+            try:
+                return os.listdir(f"{slot[0]}/device/block")[0]
+            except (FileNotFoundError, IndexError):
+                pass
+
+        return ""
 
     def _set_model(self, data):
         if M_SERIES_REGEX.match(self.encname):
