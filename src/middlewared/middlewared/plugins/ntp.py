@@ -24,6 +24,12 @@ class NTPServerService(CRUDService):
         datastore_prefix = 'ntp_'
         cli_namespace = 'system.ntp_server'
 
+    RESULT_ENTRY = Patch(
+        'ntp_create', 'ntp_entry',
+        ('rm', {'name': 'force'}),
+        ('add', Int('id')),
+    )
+
     @accepts(Dict(
         'ntp_create',
         Str('address'),
@@ -64,7 +70,7 @@ class NTPServerService(CRUDService):
 
         await self.middleware.call('service.restart', 'ntpd')
 
-        return data
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -91,7 +97,7 @@ class NTPServerService(CRUDService):
 
         await self.middleware.call('service.restart', 'ntpd')
 
-        return new
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -104,8 +110,8 @@ class NTPServerService(CRUDService):
 
         return response
 
-    @private
     @staticmethod
+    @private
     def test_ntp_server(addr):
         client = ntplib.NTPClient()
         server_alive = False
