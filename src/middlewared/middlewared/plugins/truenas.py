@@ -3,7 +3,7 @@ import errno
 import json
 import os
 
-from middlewared.schema import accepts, Bool, Dict, Str
+from middlewared.schema import accepts, Bool, Dict, Patch, returns, Str
 from middlewared.service import cli_private, job, private, Service
 import middlewared.sqlalchemy as sa
 
@@ -42,6 +42,7 @@ class TrueNASService(Service):
         cli_namespace = "system.truenas"
 
     @accepts()
+    @returns(Str('system_chassis_hardware'))
     @cli_private
     async def get_chassis_hardware(self):
         """
@@ -97,6 +98,7 @@ class TrueNASService(Service):
         return 'TRUENAS-UNKNOWN'
 
     @accepts()
+    @returns(Str('eula', max_length=None, null=True))
     @cli_private
     def get_eula(self):
         """
@@ -108,6 +110,7 @@ class TrueNASService(Service):
             return f.read()
 
     @accepts()
+    @returns(Bool('system_eula_accepted'))
     @cli_private
     async def is_eula_accepted(self):
         """
@@ -131,6 +134,7 @@ class TrueNASService(Service):
         with open(EULA_PENDING_PATH, "w"):
             pass
 
+    # TODO: Document this please
     @accepts()
     async def get_customer_information(self):
         """
@@ -201,6 +205,7 @@ class TrueNASService(Service):
         }
 
     @accepts()
+    @returns(Bool('is_production_system'))
     async def is_production(self):
         """
         Returns if system is marked as production.
@@ -208,6 +213,10 @@ class TrueNASService(Service):
         return await self.middleware.call('keyvalue.get', 'truenas:production', False)
 
     @accepts(Bool('production'), Bool('attach_debug', default=False))
+    @returns(Patch(
+        'new_ticket_response', 'set_production',
+        ('attr', {'null': True}),
+    ))
     @job()
     async def set_production(self, job, production, attach_debug):
         """

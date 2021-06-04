@@ -184,6 +184,7 @@ class SupportService(ConfigService):
         'new_ticket_response',
         Int('ticket', null=True),
         Str('url', null=True),
+        register=True
     ))
     @job()
     async def new_ticket(self, job, data):
