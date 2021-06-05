@@ -6,7 +6,7 @@ import yaml
 from catalog_validation.utils import VALID_TRAIN_REGEX
 from pkg_resources import parse_version
 
-from middlewared.schema import Bool, Dict, Str
+from middlewared.schema import Bool, Dict, List, Str
 from middlewared.service import accepts, private, Service, ValidationErrors
 
 
@@ -23,6 +23,8 @@ class CatalogService(Service):
         Dict(
             'options',
             Bool('cache', default=True),
+            Bool('retrieve_all_trains', default=True),
+            List('trains', items=[Str('train_name')]),
         )
     )
     def items(self, label, options):
@@ -31,13 +33,24 @@ class CatalogService(Service):
 
         `options.cache` is a boolean which when set will try to get items details for `label` catalog from cache
         if available.
+
+        `options.retrieve_all_trains` is a boolean value which when set will retrieve information for all the trains
+        present in the catalog ( it is set by default ).
+
+        `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
+        of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
+        all_trains = options['retrieve_all_trains']
 
         if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
             cached_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
             questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-            for train in cached_data:
+            for train in list(cached_data):
+                if not all_trains and train not in options['trains']:
+                    cached_data.pop(train)
+                    continue
+
                 for catalog_item in cached_data[train]:
                     for version in cached_data[train][catalog_item]['versions']:
                         version_data = cached_data[train][catalog_item]['versions'][version]
@@ -48,11 +61,19 @@ class CatalogService(Service):
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
-        self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
+        if all_trains:
+            # We can only safely say that the catalog is healthy if we retrieve data for all trains
+            self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
 
-        trains = self.get_trains(catalog['location'], {'alert': True, 'label': label})
+        trains = self.get_trains(
+            catalog['location'], {'alert': True, 'label': label, 'all_trains': all_trains, 'trains': options['trains']}
+        )
 
-        self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
+        if all_trains:
+            # We will only update cache if we are retrieving data of all trains for a catalog
+            # which happens when we sync catalog(s) periodically or manually
+            self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
+
         if label == self.middleware.call_sync('catalog.official_catalog_label'):
             # Update feature map cache whenever official catalog is updated
             self.middleware.call_sync('catalog.get_feature_map', False)
@@ -65,6 +86,8 @@ class CatalogService(Service):
         # This allows us to use these folders for placing helm library charts and docs respectively
         trains = {'charts': {}, 'test': {}}
         options = options or {}
+        all_trains = options.get('all_trains', True)
+        trains_filter = options.get('trains', [])
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         unhealthy_apps = set()
         if options.get('alert') and options.get('label'):
@@ -81,7 +104,10 @@ class CatalogService(Service):
 
             trains[train] = {}
 
-        for train in filter(lambda c: os.path.exists(os.path.join(location, c)), trains):
+        for train in filter(
+            lambda c: (all_trains or c in trains_filter) and os.path.exists(os.path.join(location, c)),
+            trains
+        ):
             category_path = os.path.join(location, train)
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
                 item_location = os.path.join(category_path, item)
