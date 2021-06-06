@@ -56,7 +56,12 @@ class CatalogService(CRUDService):
         if extra.get('item_details'):
             try:
                 catalog['trains'] = await self.middleware.call(
-                    'catalog.items', catalog['label'], {'cache': extra.get('cache', True)},
+                    'catalog.items', catalog['label'], {
+                        'cache': extra.get('cache', True),
+                        'retrieve_all_trains': extra.get('retrieve_all_trains', True),
+                        'trains': extra.get('trains', []),
+                        'skip_retrieving_versions': extra.get('skip_retrieving_versions'),
+                    },
                 )
             except Exception:
                 # We do not want this to fail as it will block `catalog.query` otherwise. The error would
