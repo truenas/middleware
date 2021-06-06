@@ -18,7 +18,7 @@ class CatalogService(Service):
         catalogs = await self.middleware.call('catalog.query')
         catalog_len = len(catalogs)
         for index, catalog in enumerate(catalogs):
-            job.set_progress(((index + 1) / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
+            job.set_progress((index / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
             try:
                 await self.middleware.call('catalog.sync', catalog['id'])
             except Exception as e:
