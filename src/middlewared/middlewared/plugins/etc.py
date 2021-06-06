@@ -221,6 +221,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux', 'checkpoint': 'pool_import'},
         ],
         'docker': [
+            {'type': 'mako', 'path': 'systemd/system/docker.service.d/http-proxy.conf', 'checkpoint': None},
             {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': None},
         ],
         'inetd': [
