@@ -13,7 +13,7 @@ def render(service, middleware):
             'cniVersion': '0.3.1',
             'name': 'multus-cni-network',
             'type': 'multus',
-            'logLevel': 'debug',
+            'logLevel': 'error',
             'LogFile': '/var/log/multus.log',
             'kubeconfig': '/etc/cni/net.d/multus.d/multus.kubeconfig',
             'delegates': [middleware.call_sync('k8s.cni.kube_router_config')]
