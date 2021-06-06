@@ -119,20 +119,19 @@ class CatalogService(Service):
 
         for train in os.listdir(location):
             if (
-                not os.path.isdir(os.path.join(location, train)) or train.startswith('.') or 
-                train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
+                not (all_trains or train in trains_filter) or not os.path.isdir(
+                    os.path.join(location, train)
+                ) or train.startswith('.') or train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
             ):
                 continue
 
             trains[train] = {}
-
-        for train in filter(
-            lambda c: (all_trains or c in trains_filter) and os.path.exists(os.path.join(location, c)),
-            trains
-        ):
             category_path = os.path.join(location, train)
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
                 item_location = os.path.join(category_path, item)
+                if not os.path.isdir(item_location):
+                    continue
+
                 trains[train][item] = self.retrieve_item_details(item_location, {
                     'questions_context': questions_context,
                 })
