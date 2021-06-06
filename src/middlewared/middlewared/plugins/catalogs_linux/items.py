@@ -209,9 +209,10 @@ class CatalogService(Service):
 
     @private
     async def get_normalised_questions_context(self):
+        k8s_started = await self.middleware.call('service.started', 'kubernetes')
         return {
             'nic_choices': await self.middleware.call('chart.release.nic_choices'),
-            'gpus': await self.middleware.call('k8s.gpu.available_gpus'),
+            'gpus': await self.middleware.call('k8s.gpu.available_gpus') if k8s_started else {},
             'timezones': await self.middleware.call('system.general.timezone_choices'),
             'node_ip': await self.middleware.call('kubernetes.node_ip'),
             'certificates': await self.middleware.call('chart.release.certificate_choices'),
