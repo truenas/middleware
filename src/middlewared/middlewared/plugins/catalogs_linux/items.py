@@ -48,23 +48,30 @@ class CatalogService(Service):
         all_trains = options['retrieve_all_trains']
 
         if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
-            cached_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+            orig_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+            cached_data = {}
             questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-            for train in list(cached_data):
+            for train in orig_data:
                 if not all_trains and train not in options['trains']:
-                    cached_data.pop(train)
                     continue
 
-                for catalog_item in list(cached_data[train]):
+                train_data = {}
+                for catalog_item in orig_data[train]:
+                    train_data[catalog_item] = {
+                        k: v for k, v in orig_data[train][catalog_item].items()
+                        if k != 'versions' or not options['skip_retrieving_versions']
+                    }
                     if options['skip_retrieving_versions']:
-                        cached_data[train][catalog_item].pop('versions')
                         continue
 
-                    for version in cached_data[train][catalog_item]['versions']:
-                        version_data = cached_data[train][catalog_item]['versions'][version]
+                    for version in train_data[catalog_item]['versions']:
+                        version_data = train_data[catalog_item]['versions'][version]
                         if not version_data.get('healthy'):
                             continue
                         self.normalise_questions(version_data, questions_context)
+
+                cached_data[train] = train_data
+
             return cached_data
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
