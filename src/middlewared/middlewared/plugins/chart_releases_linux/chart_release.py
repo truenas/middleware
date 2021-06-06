@@ -42,7 +42,8 @@ class ChartReleaseService(CRUDService):
         `query-options.extra.include_chart_schema` is a boolean when set will retrieve the schema being used by
         the chart release in question.
         """
-        if not await self.middleware.call('service.started', 'kubernetes'):
+        k8s_config = await self.middleware.call('kubernetes.config')
+        if not await self.middleware.call('service.started', 'kubernetes') or not k8s_config['dataset']:
             # We use filter_list here to ensure that `options` are respected, options like get: true
             return filter_list([], filters, options)
 
@@ -77,7 +78,6 @@ class ChartReleaseService(CRUDService):
 
                 update_catalog_config[catalog['label']][train] = train_data
 
-        k8s_config = await self.middleware.call('kubernetes.config')
         k8s_node_ip = await self.middleware.call('kubernetes.node_ip')
         options = options or {}
         extra = copy.deepcopy(options.get('extra', {}))
