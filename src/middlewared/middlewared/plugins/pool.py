@@ -3129,7 +3129,7 @@ class PoolDatasetService(CRUDService):
 
         props.update(
             **encryption_dict,
-            **(await self._get_create_update_user_props(data['user_properties']))
+            **(await self.get_create_update_user_props(data['user_properties']))
         )
 
         await self.middleware.call('zfs.dataset.create', {
@@ -3157,7 +3157,8 @@ class PoolDatasetService(CRUDService):
 
         return created_ds
 
-    async def _get_create_update_user_props(self, user_properties, update=False):
+    @private
+    async def get_create_update_user_props(self, user_properties, update=False):
         props = {}
         for prop in user_properties:
             if 'value' in prop:
@@ -3262,7 +3263,7 @@ class PoolDatasetService(CRUDService):
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
         if data.get('user_properties_update'):
-            props.update(await self._get_create_update_user_props(data['user_properties_update'], True))
+            props.update(await self.get_create_update_user_props(data['user_properties_update'], True))
 
         try:
             await self.middleware.call('zfs.dataset.update', id, {'properties': props})

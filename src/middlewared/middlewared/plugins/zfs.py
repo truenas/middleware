@@ -8,12 +8,12 @@ from copy import deepcopy
 
 import libzfs
 
-from middlewared.schema import Any, Dict, Int, List, Str, Bool, accepts
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job, private,
 )
 from middlewared.utils import filter_list, filter_getattrs
-from middlewared.validators import ReplicationSnapshotNamingSchema
+from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
 
 class ZFSSetPropertyError(CallError):
@@ -1096,6 +1096,41 @@ class ZFSSnapshot(CRUDService):
         finally:
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
+
+    @accepts(
+        Str('id'), Dict(
+            'snapshot_update',
+            List(
+                'user_properties_update',
+                items=[Dict(
+                    'user_property',
+                    Str('key', required=True, validators=[Match(r'.*:.*')]),
+                    Str('value'),
+                    Bool('remove'),
+                )],
+            ),
+        )
+    )
+    def do_update(self, snap_id, data):
+        verrors = ValidationErrors()
+        props = data['user_properties_update']
+        for index, prop in enumerate(props):
+            if prop.get('remove') and 'value' in prop:
+                verrors.add(
+                    f'snapshot_update.user_properties_update.{index}.remove',
+                    'Must not be set when value is specified'
+                )
+        verrors.check()
+
+        try:
+            with libzfs.ZFS() as zfs:
+                snap = zfs.get_snapshot(snap_id)
+                user_props = self.middleware.call_sync('pool.dataset.get_create_update_user_props', props, True)
+                self.middleware.call_sync('zfs.dataset.update_zfs_object_props', user_props, snap)
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+        else:
+            return self.middleware.call_sync('zfs.snapshot.get_instance', snap_id)
 
     @accepts(Dict(
         'snapshot_remove',
