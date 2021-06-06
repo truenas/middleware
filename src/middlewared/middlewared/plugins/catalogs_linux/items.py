@@ -127,9 +127,10 @@ class CatalogService(Service):
         return trains
 
     @private
-    def retrieve_item_details(self, item_location, options):
+    def retrieve_item_details(self, item_location, options=None):
         item = item_location.rsplit('/', 1)[-1]
         train = item_location.rsplit('/', 2)[-2]
+        options = options or {}
         questions_context = options.get('questions_context') or self.middleware.call_sync(
             'catalog.get_normalised_questions_context'
         )
