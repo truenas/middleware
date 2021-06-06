@@ -119,6 +119,7 @@ class CatalogService(Service):
                     'healthy': False,  # healthy means that each version the item hosts is valid and healthy
                     'healthy_error': None,  # An error string explaining why the item is not healthy
                     'versions': {},
+                    'latest_version': None,
                 }
 
                 schema = f'{train}.{item}'
@@ -137,10 +138,13 @@ class CatalogService(Service):
                 item_data.update(self.item_details(item_location, schema, questions_context))
                 unhealthy_versions = []
                 for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
-                    if not item_data['app_readme'] and v['healthy']:
-                        item_data['app_readme'] = v['app_readme']
-                    elif not v['healthy']:
+                    if not v['healthy']:
                         unhealthy_versions.append(k)
+                    else:
+                        if not item_data['app_readme']:
+                            item_data['app_readme'] = v['app_readme']
+                        if not item_data['latest_version']:
+                            item_data['latest_version'] = k
 
                 if unhealthy_versions:
                     if train in preferred_trains:
