@@ -19,7 +19,7 @@ import psutil
 
 from middlewared.common.environ import environ_update
 import middlewared.main
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
@@ -546,20 +546,32 @@ class CRUDService(ServiceChangeMixin, Service):
         return rv
 
     @private
-    async def get_instance(self, id):
+    @accepts(
+        Any('id'),
+        Patch(
+            'query-options', 'query-options-get_instance',
+            ('edit', {
+                'name': 'force_sql_filters',
+                'method': lambda x: setattr(x, 'default', True),
+            }),
+            register=True,
+        ),
+    )
+    async def get_instance(self, id, options):
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
         """
-        return await self._get_instance(id)
+        return await self._get_instance(id, options)
 
-    async def _get_instance(self, id):
+    @accepts(Any('id'), Ref('query-options-get_instance'))
+    async def _get_instance(self, id, options):
         """
         Helper method to get an instance from a collection given the `id`.
         """
         instance = await self.middleware.call(
             f'{self._config.namespace}.query',
             [[self._config.datastore_primary_key, '=', id]],
-            {'force_sql_filters': True}
+            options
         )
         if not instance:
             raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
