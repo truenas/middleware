@@ -6,7 +6,7 @@ import yaml
 from catalog_validation.utils import VALID_TRAIN_REGEX
 from pkg_resources import parse_version
 
-from middlewared.schema import Bool, Dict, Str
+from middlewared.schema import Bool, Dict, List, Str
 from middlewared.service import accepts, private, Service, ValidationErrors
 
 
@@ -23,6 +23,9 @@ class CatalogService(Service):
         Dict(
             'options',
             Bool('cache', default=True),
+            Bool('retrieve_all_trains', default=True),
+            Bool('retrieve_versions', default=True),
+            List('trains', items=[Str('train_name')]),
         )
     )
     def items(self, label, options):
@@ -31,28 +34,69 @@ class CatalogService(Service):
 
         `options.cache` is a boolean which when set will try to get items details for `label` catalog from cache
         if available.
+
+        `options.retrieve_all_trains` is a boolean value which when set will retrieve information for all the trains
+        present in the catalog ( it is set by default ).
+
+        `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
+        of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
+
+        `options.retrieve_versions` can be unset to skip retrieving version details of each catalog item. This
+        can help in cases to optimize performance.
         """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
+        all_trains = options['retrieve_all_trains']
 
         if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
-            cached_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
-            questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-            for train in cached_data:
-                for catalog_item in cached_data[train]:
-                    for version in cached_data[train][catalog_item]['versions']:
-                        version_data = cached_data[train][catalog_item]['versions'][version]
+            orig_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+            questions_context = None if not options['retrieve_versions'] else self.middleware.call_sync(
+                'catalog.get_normalised_questions_context'
+            )
+            cached_data = {}
+            for train in orig_data:
+                if not all_trains and train not in options['trains']:
+                    continue
+
+                train_data = {}
+                for catalog_item in orig_data[train]:
+                    train_data[catalog_item] = {
+                        k: v for k, v in orig_data[train][catalog_item].items()
+                        if k != 'versions' or options['retrieve_versions']
+                    }
+                    if not options['retrieve_versions']:
+                        continue
+
+                    for version in train_data[catalog_item]['versions']:
+                        version_data = train_data[catalog_item]['versions'][version]
                         if not version_data.get('healthy'):
                             continue
                         self.normalise_questions(version_data, questions_context)
+
+                cached_data[train] = train_data
+
             return cached_data
         elif not os.path.exists(catalog['location']):
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
-        self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
+        if all_trains:
+            # We can only safely say that the catalog is healthy if we retrieve data for all trains
+            self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
 
-        trains = self.get_trains(catalog['location'], {'alert': True, 'label': label})
+        trains = self.get_trains(
+            catalog['location'], {
+                'alert': True,
+                'label': label,
+                'all_trains': all_trains,
+                'trains': options['trains'],
+                'retrieve_versions': options['retrieve_versions'],
+            }
+        )
 
-        self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
+        if all_trains:
+            # We will only update cache if we are retrieving data of all trains for a catalog
+            # which happens when we sync catalog(s) periodically or manually
+            self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
+
         if label == self.middleware.call_sync('catalog.official_catalog_label'):
             # Update feature map cache whenever official catalog is updated
             self.middleware.call_sync('catalog.get_feature_map', False)
@@ -65,6 +109,9 @@ class CatalogService(Service):
         # This allows us to use these folders for placing helm library charts and docs respectively
         trains = {'charts': {}, 'test': {}}
         options = options or {}
+        all_trains = options.get('all_trains', True)
+        trains_filter = options.get('trains', [])
+        retrieve_versions = options.get('retrieve_versions', True)
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         unhealthy_apps = set()
         if options.get('alert') and options.get('label'):
@@ -74,54 +121,26 @@ class CatalogService(Service):
 
         for train in os.listdir(location):
             if (
-                not os.path.isdir(os.path.join(location, train)) or train.startswith('.') or 
-                train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
+                not (all_trains or train in trains_filter) or not os.path.isdir(
+                    os.path.join(location, train)
+                ) or train.startswith('.') or train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
             ):
                 continue
 
             trains[train] = {}
-
-        for train in filter(lambda c: os.path.exists(os.path.join(location, c)), trains):
             category_path = os.path.join(location, train)
             for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
                 item_location = os.path.join(category_path, item)
-                trains[train][item] = item_data = {
-                    'name': item,
-                    'categories': [],
-                    'app_readme': None,
-                    'location': item_location,
-                    'healthy': False,  # healthy means that each version the item hosts is valid and healthy
-                    'healthy_error': None,  # An error string explaining why the item is not healthy
-                    'versions': {},
-                }
-
-                schema = f'{train}.{item}'
-                try:
-                    self.middleware.call_sync('catalog.validate_catalog_item', item_location, schema, False)
-                except ValidationErrors as verrors:
-                    item_data['healthy_error'] = f'Following error(s) were found with {item!r}:\n'
-                    for verror in verrors:
-                        item_data['healthy_error'] += f'{verror[0]}: {verror[1]}'
-
-                    if train in preferred_trains:
-                        unhealthy_apps.add(f'{item} ({train} train)')
-                    # If the item format is not valid - there is no point descending any further into versions
+                if not os.path.isdir(item_location):
                     continue
 
-                item_data.update(self.item_details(item_location, schema, questions_context))
-                unhealthy_versions = []
-                for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
-                    if not item_data['app_readme'] and v['healthy']:
-                        item_data['app_readme'] = v['app_readme']
-                    elif not v['healthy']:
-                        unhealthy_versions.append(k)
-
-                if unhealthy_versions:
-                    if train in preferred_trains:
-                        unhealthy_apps.add(f'{item} ({train} train)')
-                    item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
-                else:
-                    item_data['healthy'] = True
+                trains[train][item] = self.retrieve_item_details(item_location, {
+                    'questions_context': questions_context,
+                })
+                if not retrieve_versions:
+                    trains[train][item].pop('versions')
+                if train in preferred_trains and not trains[train][item]['healthy']:
+                    unhealthy_apps.add(f'{item} ({train} train)')
 
         if unhealthy_apps:
             self.middleware.call_sync(
@@ -131,6 +150,56 @@ class CatalogService(Service):
             )
 
         return trains
+
+    @private
+    def retrieve_item_details(self, item_location, options=None):
+        item = item_location.rsplit('/', 1)[-1]
+        train = item_location.rsplit('/', 2)[-2]
+        options = options or {}
+        questions_context = options.get('questions_context') or self.middleware.call_sync(
+            'catalog.get_normalised_questions_context'
+        )
+        item_data = {
+            'name': item,
+            'categories': [],
+            'app_readme': None,
+            'location': item_location,
+            'healthy': False,  # healthy means that each version the item hosts is valid and healthy
+            'healthy_error': None,  # An error string explaining why the item is not healthy
+            'versions': {},
+            'latest_version': None,
+            'latest_app_version': None,
+        }
+
+        schema = f'{train}.{item}'
+        try:
+            self.middleware.call_sync('catalog.validate_catalog_item', item_location, schema, False)
+        except ValidationErrors as verrors:
+            item_data['healthy_error'] = f'Following error(s) were found with {item!r}:\n'
+            for verror in verrors:
+                item_data['healthy_error'] += f'{verror[0]}: {verror[1]}'
+
+            # If the item format is not valid - there is no point descending any further into versions
+            return item_data
+
+        item_data.update(self.item_details(item_location, schema, questions_context))
+        unhealthy_versions = []
+        for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
+            if not v['healthy']:
+                unhealthy_versions.append(k)
+            else:
+                if not item_data['app_readme']:
+                    item_data['app_readme'] = v['app_readme']
+                if not item_data['latest_version']:
+                    item_data['latest_version'] = k
+                    item_data['latest_app_version'] = v['chart_metadata'].get('appVersion')
+
+        if unhealthy_versions:
+            item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
+        else:
+            item_data['healthy'] = True
+
+        return item_data
 
     @private
     def item_details(self, item_path, schema, questions_context):
