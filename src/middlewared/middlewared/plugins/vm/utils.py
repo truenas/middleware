@@ -1,12 +1,7 @@
-from lxml import etree
-
-from middlewared.utils import osc
+from xml.etree import ElementTree as etree
 
 
-if osc.IS_LINUX:
-    LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
-else:
-    LIBVIRT_URI = 'bhyve+unix:///system'
+LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
 
 
 def create_element(*args, **kwargs):
