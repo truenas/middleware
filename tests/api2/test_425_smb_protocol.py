@@ -5,6 +5,7 @@ import sys
 import os
 import enum
 from time import sleep
+from base64 import b64decode, b64encode
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, wait_on_job
@@ -36,6 +37,58 @@ root_path_verification = {
     "user": "root",
     "group": group,
     "acl": False
+}
+
+class DOSmode(enum.Enum):
+    READONLY = 1
+    HIDDEN = 2
+    SYSTEM = 4
+    ARCHIVE = 32
+
+
+netatalk_metadata = """
+AAUWBwACAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAEAAAAmgAAAAAAAAAIAAABYgAAABAAAAAJAAAA
+egAAACAAAAAOAAABcgAAAASAREVWAAABdgAAAAiASU5PAAABfgAAAAiAU1lOAAABhgAAAAiAU1Z+
+AAABjgAAAARQTEFQbHRhcAQQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAIbmGsyG5hrOAAAAAKEvSOAAAAAAAAAAAAAAAAAcBAAAAAAAA9xS5YAAAAAAZ
+AAAA
+"""
+
+parsed_meta = """
+QUZQAAAAAQAAAAAAgAAAAFBMQVBsdGFwBBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAA
+"""
+
+apple_kmdlabel = """
+8oBNzAaTG04NeBVAT078KCEjrzPrwPTUuZ4MXK1qVRDlBqLATmFSDFO2hXrS5VWsrg1DoZqeX6kF
+zDEInIzw2XrZkI9lY3jvMAGXu76QvwrpRGv1G3Ehj+0=
+"""
+
+apple_kmditemusertags = """
+YnBsaXN0MDCgCAAAAAAAAAEBAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAJ
+"""
+
+AFPXattr = {
+    "org.netatalk.Metadata": {
+        "smbname": "AFP_AfpInfo",
+        "text": netatalk_metadata,
+        "bytes": b64decode(netatalk_metadata),
+        "smb_text": parsed_meta,
+        "smb_bytes": b64decode(parsed_meta)
+    },
+    "com.apple.metadata:_kMDItemUserTags": {
+        "smbname": "com.apple.metadata_kMDItemUserTags",
+        "text": apple_kmditemusertags,
+        "bytes": b64decode(apple_kmditemusertags)
+    },
+    "com.apple.metadata:kMDLabel_anemgxoe73iplck2hfuumqxdbu": {
+        "smbname": "com.apple.metadatakMDLabel_anemgxoe73iplck2hfuumqxdbu",
+        "text": apple_kmdlabel,
+        "bytes": b64decode(apple_kmdlabel)
+    },
 }
 
 
@@ -502,19 +555,128 @@ def test_092_set_smb_quota(request, proto):
     assert qt[0]['hard_limit'] is None, qt
 
 
-def test_100_delete_smb_user(request):
+@pytest.mark.dependency(name="AFP_ENABLED")
+def test_150_change_share_to_afp(request):
+    depends(request, ["SMB_SHARE_CREATED"])
+    results = PUT(f"/sharing/smb/id/{smb_id}/", {"afp": True})
+    assert results.status_code == 200, results.text
+
+
+@pytest.mark.dependency(name="SSH_XATTR_SET")
+@pytest.mark.parametrize('xat', AFPXattr.keys())
+def test_151_set_xattr_via_ssh(request, xat):
+    """
+    Iterate through AFP xattrs and set them on testfile
+    via SSH.
+    """
+    #depends(request, ["AFP_ENABLED"])
+    afptestfile = f'{smb_path}/afp_xattr_testfile'
+    cmd = f'touch {afptestfile} && chown {SMB_USER} {afptestfile} && '
+    cmd += f'chmod 777 {afptestfile} && '
+    cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
+    cmd += f'attr -q -s {xat} {afptestfile}'
+
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, {"cmd": cmd, "res": results['output']}
+
+
+@pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")
+@pytest.mark.parametrize('xat', AFPXattr.keys())
+def test_152_check_xattr_via_smb(request, xat):
+    """
+    Read xattr that was written via SSH and verify that
+    data is same when viewed over SMB.
+    """
+    depends(request, ["SSH_XATTR_SET"])
+    afptestfile = f'afp_xattr_testfile:{AFPXattr[xat]["smbname"]}'
+    bytes = AFPXattr[xat]["smb_bytes"] if xat == "org.netatalk.Metadata" else AFPXattr[xat]["bytes"]
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    fd = c.create_file(afptestfile, "w")
+    xat_bytes = c.read(fd, 0, len(bytes) + 1)
+    c.close(fd)
+    c.disconnect()
+
+    err = {
+        "name": xat,
+        "b64data": b64encode(bytes)
+    }
+
+    # Python base64 library appends a `\t` to end of byte string
+    assert xat_bytes == bytes, str(err)
+
+
+@pytest.mark.dependency(name="XATTR_CHECK_SMB_UNLINK")
+@pytest.mark.parametrize('xat', AFPXattr.keys())
+def test_153_unlink_xattr_via_smb(request, xat):
+    """
+    Open AFP xattr, set "delete on close" flag, then close.
+    """
+    depends(request, ["XATTR_CHECK_SMB_READ"])
+    afptestfile = f'afp_xattr_testfile:{AFPXattr[xat]["smbname"]}'
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    fd = c.create_file(afptestfile, "w")
+    c.close(fd, True)
+    c.disconnect()
+
+
+@pytest.mark.dependency(name="XATTR_CHECK_SMB_WRITE")
+@pytest.mark.parametrize('xat', AFPXattr.keys())
+def test_154_write_afp_xattr_via_smb(request, xat):
+    """
+    Write xattr over SMB
+    """
+    depends(request, ["XATTR_CHECK_SMB_UNLINK"])
+    afptestfile = f'afp_xattr_testfile:{AFPXattr[xat]["smbname"]}'
+    payload = AFPXattr[xat]["smb_bytes"] if xat == "org.netatalk.Metadata" else AFPXattr[xat]["bytes"]
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    fd = c.create_file(afptestfile, "w")
+    c.write(fd, payload)
+    c.close(fd)
+    c.disconnect()
+
+
+@pytest.mark.parametrize('xat', AFPXattr.keys())
+def test_155_ssh_read_afp_xattr(request, xat):
+    """
+    Read xattr that was set via SMB protocol directly via
+    SSH and verify that data is the same.
+    """
+    depends(request, ["XATTR_CHECK_SMB_WRITE"])
+    # Netatalk-compatible xattr gets additional
+    # metadata written to it, which makes comparison
+    # of all bytes problematic.
+    if xat == "org.netatalk.Metadata":
+        return
+
+    afptestfile = f'{smb_path}/afp_xattr_testfile'
+    cmd = f'attr -q -g {xat} {afptestfile} | base64'
+    results = SSH_TEST(cmd, user, password, ip)
+    if xat == "org.netatalk.Metadata":
+        with open("/tmp/stuff", "w") as f:
+            f.write(f"NETATALK: {results['output']}")
+
+    assert results['result'] is True, results['output']
+    xat_data = b64decode(results['output'])
+    assert AFPXattr[xat]['bytes'] == xat_data, results['output']
+
+
+@pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")
+def test_200_delete_smb_user(request):
     depends(request, ["SMB_USER_CREATED"])
     results = DELETE(f"/user/id/{smbuser_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
 
-def test_101_delete_smb_share(request):
+def test_201_delete_smb_share(request):
     depends(request, ["SMB_SHARE_CREATED"])
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_102_disable_smb1(request):
+def test_202_disable_smb1(request):
     depends(request, ["SMB1_ENABLED"])
     payload = {
         "enable_smb1": False,
@@ -523,7 +685,7 @@ def test_102_disable_smb1(request):
     assert results.status_code == 200, results.text
 
 
-def test_103_stopping_smb_service(request):
+def test_203_stopping_smb_service(request):
     depends(request, ["SMB_SERVICE_STARTED"])
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
@@ -531,13 +693,13 @@ def test_103_stopping_smb_service(request):
     sleep(1)
 
 
-def test_104_checking_if_smb_is_stoped(request):
+def test_204_checking_if_smb_is_stoped(request):
     depends(request, ["SMB_SERVICE_STARTED"])
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_105_destroying_smb_dataset(request):
+def test_205_destroying_smb_dataset(request):
     depends(request, ["SMB_DATASET_CREATED"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
