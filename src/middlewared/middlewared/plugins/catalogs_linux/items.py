@@ -24,7 +24,7 @@ class CatalogService(Service):
             'options',
             Bool('cache', default=True),
             Bool('retrieve_all_trains', default=True),
-            Bool('skip_retrieving_versions', default=False),
+            Bool('retrieve_versions', default=True),
             List('trains', items=[Str('train_name')]),
         )
     )
@@ -41,7 +41,7 @@ class CatalogService(Service):
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
 
-        `options.skip_retrieving_versions` can be set to skip retrieving version details of each catalog item. This
+        `options.retrieve_versions` can be unset to skip retrieving version details of each catalog item. This
         can help in cases to optimize performance.
         """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
@@ -59,9 +59,9 @@ class CatalogService(Service):
                 for catalog_item in orig_data[train]:
                     train_data[catalog_item] = {
                         k: v for k, v in orig_data[train][catalog_item].items()
-                        if k != 'versions' or not options['skip_retrieving_versions']
+                        if k != 'versions' or options['retrieve_versions']
                     }
-                    if options['skip_retrieving_versions']:
+                    if not options['retrieve_versions']:
                         continue
 
                     for version in train_data[catalog_item]['versions']:
@@ -86,7 +86,7 @@ class CatalogService(Service):
                 'label': label,
                 'all_trains': all_trains,
                 'trains': options['trains'],
-                'skip_retrieving_versions': options['skip_retrieving_versions'],
+                'retrieve_versions': options['retrieve_versions'],
             }
         )
 
@@ -109,7 +109,7 @@ class CatalogService(Service):
         options = options or {}
         all_trains = options.get('all_trains', True)
         trains_filter = options.get('trains', [])
-        skip_retrieving_versions = options.get('skip_retrieving_versions')
+        retrieve_versions = options.get('retrieve_versions', True)
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         unhealthy_apps = set()
         if options.get('alert') and options.get('label'):
@@ -136,7 +136,7 @@ class CatalogService(Service):
                 trains[train][item] = self.retrieve_item_details(item_location, {
                     'questions_context': questions_context,
                 })
-                if skip_retrieving_versions:
+                if not retrieve_versions:
                     trains[train][item].pop('versions')
                 if train in preferred_trains and not trains[train][item]['healthy']:
                     unhealthy_apps.add(f'{item} ({train} train)')

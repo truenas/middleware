@@ -60,7 +60,7 @@ class CatalogService(CRUDService):
                         'cache': extra.get('cache', True),
                         'retrieve_all_trains': extra.get('retrieve_all_trains', True),
                         'trains': extra.get('trains', []),
-                        'skip_retrieving_versions': extra.get('skip_retrieving_versions'),
+                        'retrieve_versions': extra.get('retrieve_versions', True),
                     },
                 )
             except Exception:
