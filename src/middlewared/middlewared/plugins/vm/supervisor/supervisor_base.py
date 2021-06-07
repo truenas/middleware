@@ -7,8 +7,7 @@ import shutil
 import sys
 import threading
 import time
-
-from lxml import etree
+from xml.etree import ElementTree as etree
 
 from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
