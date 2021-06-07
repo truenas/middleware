@@ -430,6 +430,8 @@ class ConfigServiceMetabase(ServiceBase):
         if klass.CONFIG_ENTRY == NotImplementedError:
             klass.CONFIG_ENTRY = Dict(config_entry_key, additional_attrs=True)
 
+        config_entry_key = getattr(klass.CONFIG_ENTRY, 'newname' if isinstance(klass.CONFIG_ENTRY, Patch) else 'name')
+
         config_entry = copy.deepcopy(klass.CONFIG_ENTRY)
         config_entry.register = True
         klass.config = returns(config_entry)(klass.config)
@@ -442,7 +444,16 @@ class ConfigServiceMetabase(ServiceBase):
                 new_name = f'{namespace}_update'
                 if m_name == 'returns':
                     new_name += '_returns'
-                klass.do_update = decorator(Patch(config_entry_key, new_name, register=True))(klass.do_update)
+                patch_entry = Patch(config_entry_key, new_name, register=True)
+                schema = [patch_entry]
+                if m_name == 'accepts':
+                    patch_entry.patches.append(('rm', {
+                        'name': klass._config.datastore_primary_key,
+                        'safe_delete': True,
+                    }))
+                    patch_entry.patches.append(('attr', {'update': True}))
+                    schema.insert(0, get_datastore_primary_key_schema(klass))
+                klass.do_update = decorator(*schema)(klass.do_update)
 
         return klass
 
