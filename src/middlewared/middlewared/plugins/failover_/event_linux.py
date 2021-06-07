@@ -557,6 +557,8 @@ class FailoverService(Service):
         # start any VMs (this will log errors if the vm(s) fail to start)
         self.run_call('vm.start_on_boot')
 
+        self.run_call('truecommand.start_truecommand_service')
+
         logger.info('Initializing alert system')
         self.run_call('alert.block_failover_alerts')
         self.run_call('alert.initialize', False)
@@ -689,6 +691,8 @@ class FailoverService(Service):
 
         logger.info('Stopping rrdcached')
         self.run_call('service.stop', 'rrdcached', self.HA_PROPAGATE)
+
+        self.run_call('truecommand.stop_truecommand_service')
 
         # we keep SSH running on both controllers (if it's enabled by user)
         for i in self.run_call('datastore.query', 'services_services'):
