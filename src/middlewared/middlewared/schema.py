@@ -17,6 +17,20 @@ from middlewared.utils import filter_list
 NOT_PROVIDED = object()
 
 
+def convert_schema(spec):
+    t = spec.pop('type')
+    name = spec.pop('name')
+    if t in ('int', 'integer'):
+        return Int(name, **spec)
+    elif t in ('str', 'string'):
+        return Str(name, **spec)
+    elif t in ('bool', 'boolean'):
+        return Bool(name, **spec)
+    elif t == 'dict':
+        return Dict(name, **spec)
+    raise ValueError(f'Unknown type: {t}')
+
+
 class Schemas(dict):
 
     def add(self, schema):
@@ -878,19 +892,6 @@ class Patch(object):
         self.register = register
         self.resolved = False
 
-    def convert(self, spec):
-        t = spec.pop('type')
-        name = spec.pop('name')
-        if t in ('int', 'integer'):
-            return Int(name, **spec)
-        elif t in ('str', 'string'):
-            return Str(name, **spec)
-        elif t in ('bool', 'boolean'):
-            return Bool(name, **spec)
-        elif t == 'dict':
-            return Dict(name, **spec)
-        raise ValueError('Unknown type: {0}'.format(t))
-
     def resolve(self, schemas):
         schema = schemas.get(self.name)
         if not schema:
@@ -917,7 +918,7 @@ class Patch(object):
     def _resolve_internal(self, schema, schemas, operation, patch):
         if operation == 'add':
             if isinstance(patch, dict):
-                new = self.convert(dict(patch))
+                new = convert_schema(dict(patch))
             else:
                 new = copy.deepcopy(patch)
             schema.attrs[new.name] = new
