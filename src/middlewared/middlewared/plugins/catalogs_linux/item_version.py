@@ -27,6 +27,8 @@ class CatalogService(Service):
         item_location = os.path.join(catalog['location'], options['train'], item_name)
         if not os.path.exists(item_location):
             raise CallError(f'Unable to locate {item_name!r} at {item_location!r}', errno=errno.ENOENT)
+        elif not os.path.isdir(item_location):
+            raise CallError(f'{item_location!r} must be a directory')
 
         if options['cache'] and self.middleware.call_sync(
             'cache.has_key', f'catalog_{options["catalog"]}_train_details'
