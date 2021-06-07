@@ -20,7 +20,7 @@ import psutil
 
 from middlewared.common.environ import environ_update
 import middlewared.main
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, OROperator, Patch, Ref, returns, Str
+from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.settings import conf
 from middlewared.utils import filter_list, osc
@@ -234,6 +234,13 @@ def filterable_returns(schema):
             List('query_result', items=[schema]),
         ))(fn)
     return filterable_internal
+
+
+def get_datastore_primary_key_schema(klass):
+    return convert_schema({
+        'type': klass._config.datastore_primary_key_type,
+        'name': klass._config.datastore_primary_key,
+    })
 
 
 class ServiceBase(type):
@@ -539,23 +546,24 @@ class CRUDServiceMetabase(ServiceBase):
                 raise ValueError('Result entry should be Dict/Patch/Ref instance')
 
         result_entry = copy.deepcopy(klass.RESULT_ENTRY)
+        query_result_entry = copy.deepcopy(klass.RESULT_ENTRY)
         if isinstance(result_entry, Ref):
-            result_entry = Patch(result_entry.name, entry_key)
+            query_result_entry = Patch(result_entry.name, entry_key)
         if isinstance(result_entry, Patch):
-            result_entry.patches.append(('attr', {'update': True}))
+            query_result_entry.patches.append(('attr', {'update': True}))
         else:
-            result_entry.update = True
+            query_result_entry.update = True
 
         result_entry.register = True
-        query_result_entry = copy.deepcopy(result_entry)
         query_result_entry.register = False
 
         query_method = klass.query.wraps if hasattr(klass.query, 'returns') else klass.query
         klass.query = returns(OROperator(
             'query_result',
             Int('count'),
+            query_result_entry,
+            List('query_result', items=[copy.deepcopy(query_result_entry)]),
             result_entry,
-            List('query_result', items=[query_result_entry]),
         ))(query_method)
 
         for m_name in filter(lambda m: hasattr(klass, m), ('do_create', 'do_update')):
@@ -566,11 +574,18 @@ class CRUDServiceMetabase(ServiceBase):
                 if d_name == 'returns':
                     new_name += '_returns'
 
-                schema = [Patch(entry_key, new_name, register=True)]
-                if m_name == 'do_update' and d_name == 'accepts':
-                    # TODO: See what we can do about making this intelligent
-                    schema.insert(0, Str('id'))
+                patch_entry = Patch(entry_key, new_name, register=True)
+                schema = []
+                if d_name == 'accepts':
+                    patch_entry.patches.append(('rm', {
+                        'name': klass._config.datastore_primary_key,
+                        'safe_delete': True,
+                    }))
+                    if m_name == 'do_update':
+                        patch_entry.patches.append(('attr', {'update': True}))
+                        schema.append(get_datastore_primary_key_schema(klass))
 
+                schema.append(patch_entry)
                 setattr(klass, m_name, decorator(*schema)(getattr(klass, m_name)))
 
         if hasattr(klass, 'do_delete') and not hasattr(klass.do_delete, 'returns'):
