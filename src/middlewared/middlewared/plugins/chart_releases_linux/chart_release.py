@@ -48,7 +48,9 @@ class ChartReleaseService(CRUDService):
             return filter_list([], filters, options)
 
         update_catalog_config = {}
-        catalogs = await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
+        catalogs = await self.middleware.call(
+            'catalog.query', [], {'extra': {'item_details': True, 'retrieve_versions': False}}
+        )
         container_images = {}
         for image in await self.middleware.call('container.image.query'):
             for tag in image['repo_tags']:
@@ -60,20 +62,11 @@ class ChartReleaseService(CRUDService):
             for train in catalog['trains']:
                 train_data = {}
                 for catalog_item in catalog['trains'][train]:
-                    versions = {
-                        k: v for k, v in catalog['trains'][train][catalog_item]['versions'].items() if v['healthy']
-                    }
-                    max_version = max(
-                        [parse_version(v) for v in versions],
-                        default=parse_version('0.0.0')
-                    )
-                    app_version = None
-                    if str(max_version) in versions:
-                        app_version = versions[str(max_version)]['chart_metadata'].get('appVersion')
-
+                    max_version = catalog['trains'][train][catalog_item]['latest_version'] or '0.0.0'
+                    app_version = catalog['trains'][train][catalog_item]['latest_app_version'] or '0.0.0'
                     train_data[catalog_item] = {
-                        'chart_version': max_version,
-                        'app_version': app_version,
+                        'chart_version': parse_version(max_version),
+                        'app_version': parse_version(app_version),
                     }
 
                 update_catalog_config[catalog['label']][train] = train_data

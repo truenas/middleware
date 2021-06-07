@@ -49,8 +49,10 @@ class CatalogService(Service):
 
         if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
             orig_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+            questions_context = None if not options['retrieve_versions'] else self.middleware.call_sync(
+                'catalog.get_normalised_questions_context'
+            )
             cached_data = {}
-            questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
             for train in orig_data:
                 if not all_trains and train not in options['trains']:
                     continue
@@ -166,6 +168,7 @@ class CatalogService(Service):
             'healthy_error': None,  # An error string explaining why the item is not healthy
             'versions': {},
             'latest_version': None,
+            'latest_app_version': None,
         }
 
         schema = f'{train}.{item}'
@@ -189,6 +192,7 @@ class CatalogService(Service):
                     item_data['app_readme'] = v['app_readme']
                 if not item_data['latest_version']:
                     item_data['latest_version'] = k
+                    item_data['latest_app_version'] = v['chart_metadata'].get('appVersion')
 
         if unhealthy_versions:
             item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
