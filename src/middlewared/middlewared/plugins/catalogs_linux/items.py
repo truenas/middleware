@@ -167,6 +167,7 @@ class CatalogService(Service):
             'healthy_error': None,  # An error string explaining why the item is not healthy
             'versions': {},
             'latest_version': None,
+            'latest_app_version': None,
         }
 
         schema = f'{train}.{item}'
@@ -190,6 +191,7 @@ class CatalogService(Service):
                     item_data['app_readme'] = v['app_readme']
                 if not item_data['latest_version']:
                     item_data['latest_version'] = k
+                    item_data['latest_app_version'] = v['chart_metadata'].get('appVersion')
 
         if unhealthy_versions:
             item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
