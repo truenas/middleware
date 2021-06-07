@@ -22,7 +22,7 @@ from middlewared.common.environ import environ_update
 import middlewared.main
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, OROperator, Patch, Ref, returns, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
-from middlewared.settings import DEBUG_MODE
+from middlewared.settings import conf
 from middlewared.utils import filter_list, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.logger import Logger, reconfigure_logging, stop_logging
@@ -990,8 +990,12 @@ class CoreService(Service):
         """
         Set `debug_mode` for middleware.
         """
-        global DEBUG_MODE
-        DEBUG_MODE = debug_mode
+        conf.debug_mode = debug_mode
+
+    @accepts()
+    @returns(Bool('debug_mode_enabled'))
+    async def debug_mode_enabled(self):
+        return conf.debug_mode
 
     @private
     def get_tasks(self):
