@@ -923,6 +923,8 @@ class Patch(object):
                 new = copy.deepcopy(patch)
             schema.attrs[new.name] = new
         elif operation == 'rm':
+            if patch.get('safe_delete') and patch['name'] not in schema.attrs:
+                return
             del schema.attrs[patch['name']]
         elif operation == 'edit':
             attr = schema.attrs[patch['name']]
