@@ -1,6 +1,5 @@
 import re
-
-from lxml import etree
+from xml.etree import ElementTree as etree
 
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
@@ -25,23 +24,23 @@ class VMDeviceService(Service, PCIInfoBase):
     @private
     def retrieve_node_information(self, xml):
         info = {'capability': {}, 'iommu_group': {'number': None, 'addresses': []}}
-        capability = next((e for e in xml.getchildren() if e.tag == 'capability' and e.get('type') == 'pci'), None)
+        capability = next((e for e in list(xml) if e.tag == 'capability' and e.get('type') == 'pci'), None)
         if capability is None:
             return info
 
-        for child in capability.getchildren():
+        for child in list(capability):
             if child.tag == 'iommuGroup':
                 if not child.get('number'):
                     continue
                 info['iommu_group']['number'] = int(child.get('number'))
-                for address in child.getchildren():
+                for address in list(child):
                     info['iommu_group']['addresses'].append({
                         'domain': address.get('domain'),
                         'bus': address.get('bus'),
                         'slot': address.get('slot'),
                         'function': address.get('function'),
                     })
-            elif not child.getchildren() and child.text:
+            elif not list(child) and child.text:
                 info['capability'][child.tag] = child.text
 
         return info
@@ -69,8 +68,8 @@ class VMDeviceService(Service, PCIInfoBase):
             return data
 
         xml = etree.fromstring(cp.stdout.decode().strip())
-        driver = next((e for e in xml.getchildren() if e.tag == 'driver'), None)
-        drivers = [e.text for e in driver.getchildren()] if driver is not None else []
+        driver = next((e for e in list(xml) if e.tag == 'driver'), None)
+        drivers = [e.text for e in list(driver)] if driver is not None else []
 
         node_info = await self.middleware.call('vm.device.retrieve_node_information', xml)
         error_str = ''
