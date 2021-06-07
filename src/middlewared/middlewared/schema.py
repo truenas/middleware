@@ -11,7 +11,7 @@ import os
 from croniter import croniter
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.settings import DEBUG_MODE
+from middlewared.settings import conf
 from middlewared.utils import filter_list
 
 NOT_PROVIDED = object()
@@ -1066,13 +1066,13 @@ def returns(*schema):
         if asyncio.iscoroutinefunction(f):
             async def nf(*args, **kwargs):
                 res = await f(*args, **kwargs)
-                if DEBUG_MODE:
+                if conf.debug_mode:
                     validate_return_type(f, res, nf.returns)
                 return res
         else:
             def nf(*args, **kwargs):
                 res = f(*args, **kwargs)
-                if DEBUG_MODE:
+                if conf.debug_mode:
                     validate_return_type(f, res, nf.returns)
                 return res
 

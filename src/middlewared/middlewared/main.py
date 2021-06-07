@@ -5,7 +5,7 @@ from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
-from .settings import DEBUG_MODE
+from .settings import conf
 from .schema import Error as SchemaError
 import middlewared.service
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
@@ -1629,7 +1629,6 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
 
 def main():
-    global DEBUG_MODE
     # Workaround for development
     modpath = os.path.realpath(os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -1682,7 +1681,7 @@ def main():
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
-    DEBUG_MODE = args.debug_mode
+    conf.debug_mode = args.debug_mode
 
     Middleware(
         loop_debug=args.loop_debug,
