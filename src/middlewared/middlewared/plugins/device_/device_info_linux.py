@@ -279,7 +279,10 @@ class DeviceService(Service, DeviceInfoBase):
 
     @accepts()
     @returns(Dict(
-        'gpu_pci_id_choices', additional_attrs=True, description='Returns PCI id(s) of GPU(s) located in the system'
+        'gpu_pci_id_choices',
+        additional_attrs=True,
+        description='Returns PCI id(s) of GPU(s) located in the system',
+        example={'Red Hat, Inc. QXL paravirtual graphic card': '0000:00:02.0'}
     ))
     async def gpu_pci_ids_choices(self):
         """

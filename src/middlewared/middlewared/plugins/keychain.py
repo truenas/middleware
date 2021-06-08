@@ -366,6 +366,7 @@ class KeychainCredentialService(CRUDService):
         return new
 
     @accepts(Int("id"), Dict("options", Bool("cascade", default=False)))
+    @returns()
     async def do_delete(self, id, options):
         """
         Delete Keychain Credential with specific `id`
@@ -393,7 +394,7 @@ class KeychainCredentialService(CRUDService):
 
                 await delegate.unbind(row)
 
-        return await self.middleware.call(
+        await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
             id,

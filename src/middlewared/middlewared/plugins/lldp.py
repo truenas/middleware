@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, returns, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, Ref, returns, Str, ValidationErrors
 from middlewared.service import SystemServiceService
 import middlewared.sqlalchemy as sa
 
@@ -34,11 +34,6 @@ class LLDPService(SystemServiceService):
         """
         return await self.middleware.call('system.general.country_choices')
 
-    @accepts(Patch(
-        'lldp_entry', 'lldp_update',
-        ('rm', {'name': 'id'}),
-        ('attr', {'update': True}),
-    ))
     async def do_update(self, data):
         """
         Update LLDP Service Configuration.

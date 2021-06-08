@@ -28,7 +28,11 @@ class ChartReleaseService(Service):
         return choices
 
     @accepts(Str('release_name'))
-    @returns(Dict('pod_console_choices', additional_attrs=True))
+    @returns(Dict(
+        'pod_console_choices',
+        additional_attrs=True,
+        example={'plex-d4559844b-zcgq9': ['plex']},
+    ))
     async def pod_console_choices(self, release_name):
         """
         Returns choices for console access to a chart release.
@@ -39,7 +43,11 @@ class ChartReleaseService(Service):
         return await self.retrieve_pod_with_containers(release_name)
 
     @accepts(Str('release_name'))
-    @returns(Dict('pod_log_choices', additional_attrs=True))
+    @returns(Dict(
+        'pod_log_choices',
+        additional_attrs=True,
+        example={'plex-d4559844b-zcgq9': ['plex']},
+    ))
     async def pod_logs_choices(self, release_name):
         """
         Returns choices for accessing logs of any container in any pod in a chart release.

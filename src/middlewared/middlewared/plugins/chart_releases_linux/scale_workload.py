@@ -15,7 +15,10 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @accepts()
-    @returns(Dict('scaleable_resources', additional_attrs=True))
+    @returns(Dict(
+        'scaleable_resources',
+        *[Str(r.name, enum=[r.name]) for r in SCALEABLE_RESOURCES],
+    ))
     async def scaleable_resources(self):
         """
         Returns choices for types of workloads which can be scaled up/down.

@@ -239,6 +239,7 @@ class UserService(CRUDService):
         Dict('attributes', additional_attrs=True),
         register=True,
     ))
+    @returns(Int('primary_key'))
     async def do_create(self, data):
         """
         Create a new user.
@@ -397,7 +398,7 @@ class UserService(CRUDService):
                 self.logger.warn('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
 
-        return await self.get_instance(pk)
+        return pk
 
     @accepts(
         Int('id'),
@@ -408,6 +409,7 @@ class UserService(CRUDService):
             ('rm', {'name': 'group_create'}),
         ),
     )
+    @returns(Int('primary_key'))
     async def do_update(self, pk, data):
         """
         Update attributes of an existing user.
@@ -566,9 +568,10 @@ class UserService(CRUDService):
         if user['smb'] and must_change_pdb_entry:
             await self.middleware.call('smb.synchronize_passdb')
 
-        return await self.get_instance(pk)
+        return pk
 
     @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
+    @returns(Int('primary_key'))
     async def do_delete(self, pk, options):
         """
         Delete user `id`.
@@ -604,10 +607,17 @@ class UserService(CRUDService):
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')
 
-        return True
+        return pk
 
     @accepts(Int('user_id', default=None, null=True))
-    @returns(Dict('shell_choices', additional_attrs=True))
+    @returns(Dict(
+        'shell_choices',
+        additional_attrs=True,
+        example={
+            '/usr/bin/sh': 'sh',
+            '/usr/bin/zsh': 'zsh',
+        }
+    ))
     def shell_choices(self, user_id):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
@@ -751,6 +761,7 @@ class UserService(CRUDService):
             update=True,
         )
     )
+    @returns()
     @pass_app()
     async def set_root_password(self, app, password, options):
         """
@@ -1121,6 +1132,7 @@ class GroupService(CRUDService):
         List('users', items=[Int('id')], required=False),
         register=True,
     ))
+    @returns(Int('primary_key'))
     async def do_create(self, data):
         """
         Create a new group.
@@ -1133,7 +1145,7 @@ class GroupService(CRUDService):
 
         `smb` specifies whether the group should be mapped into an NT group.
         """
-        return await self.get_instance(await self.create_internal(data))
+        return await self.create_internal(data)
 
     @private
     async def create_internal(self, data, reload_users=True):
@@ -1184,6 +1196,7 @@ class GroupService(CRUDService):
             ('attr', {'update': True}),
         ),
     )
+    @returns(Int('primary_key'))
     async def do_update(self, pk, data):
         """
         Update attributes of an existing group.
@@ -1240,9 +1253,10 @@ class GroupService(CRUDService):
         if add_groupmap:
             await self.middleware.call('smb.groupmap_add', group['group'])
 
-        return await self.get_instance(pk)
+        return pk
 
     @accepts(Int('id'), Dict('options', Bool('delete_users', default=False)))
+    @returns(Int('primary_key'))
     async def do_delete(self, pk, options):
         """
         Delete group `id`.
@@ -1271,7 +1285,7 @@ class GroupService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        return True
+        return pk
 
     @accepts()
     @returns(Int('next_available_gid'))

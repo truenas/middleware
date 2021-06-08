@@ -1711,6 +1711,7 @@ class InterfaceService(CRUDService):
         return await self._get_instance(new['name'])
 
     @accepts(Str('id'))
+    @returns(Str('interface_id'))
     async def do_delete(self, oid):
         """
         Delete Interface of `id`.
@@ -1737,7 +1738,7 @@ class InterfaceService(CRUDService):
 
         await self.delete_network_interface(oid)
 
-        return True
+        return oid
 
     @private
     async def delete_network_interface(self, oid):

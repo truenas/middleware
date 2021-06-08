@@ -129,6 +129,7 @@ class DockerImagesService(CRUDService):
             Bool('force', default=False),
         )
     )
+    @returns()
     async def do_delete(self, id, options):
         """
         `options.force` should be used to force delete an image even if it's in use by a stopped container.
@@ -142,7 +143,6 @@ class DockerImagesService(CRUDService):
             await docker.images.delete(name=id, force=options['force'])
 
         await self.middleware.call('container.image.remove_image_from_cache', image)
-        return True
 
     @private
     async def load_images_from_file(self, path):

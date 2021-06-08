@@ -181,13 +181,6 @@ class PoolResilverService(ConfigService):
 
         return verrors, data
 
-    @accepts(
-        Patch(
-            'pool_resilver_entry', 'pool_resilver',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True})
-        )
-    )
     async def do_update(self, data):
         """
         Configure Pool Resilver Priority.

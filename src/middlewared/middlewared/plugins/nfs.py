@@ -388,13 +388,13 @@ class SharingNFSService(SharingService):
 
         return await self.get_instance(id)
 
+    @returns()
     async def do_delete(self, id):
         """
         Delete NFS Share of `id`.
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self._service_change("nfs", "reload")
-        return True
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):

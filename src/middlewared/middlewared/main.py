@@ -1644,8 +1644,8 @@ def main():
     parser.add_argument('--loop-debug', action='store_true')
     parser.add_argument('--trace-malloc', '-tm', action='store', nargs=2, type=int, default=False)
     parser.add_argument('--overlay-dirs', '-o', action='append')
-    parser.add_argument(f'--enable-debug-mode', dest='debug_mode', action='store_true')
-    parser.add_argument(f'--disable-debug-mode', dest='debug_mode', action='store_false')
+    parser.add_argument('--enable-debug-mode', dest='debug_mode', action='store_true')
+    parser.add_argument('--disable-debug-mode', dest='debug_mode', action='store_false')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
