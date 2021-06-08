@@ -63,6 +63,7 @@ class VMService(Service, VMInfoBase):
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.
         """
+        self.middleware.call_sync('vm.check_setup_libvirt')
         base_path = '/usr/share/libvirt/cpu_map'
         if self.CPU_MODEL_CHOICES or not os.path.exists(base_path):
             return self.CPU_MODEL_CHOICES
