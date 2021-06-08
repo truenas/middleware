@@ -16,7 +16,6 @@ class ChartReleaseService(Service):
 
     @accepts()
     @returns(Dict(
-        'scaleable_resources',
         *[Str(r.name, enum=[r.name]) for r in SCALEABLE_RESOURCES],
     ))
     async def scaleable_resources(self):

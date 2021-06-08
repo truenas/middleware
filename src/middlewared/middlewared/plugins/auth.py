@@ -271,9 +271,7 @@ class AuthService(Service):
         )
 
     @accepts(Str('username'), Str('password'))
-    @returns(Bool(
-        'user_check', description='Is `true` if `username` was successfully validated with provided `password`'
-    ))
+    @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
     async def check_user(self, username, password):
         """
         Verify username and password
@@ -515,7 +513,7 @@ class TwoFactorAuthService(ConfigService):
         return True
 
     @accepts()
-    @returns(Str('provisioning_uri', title='Provisioning URI'))
+    @returns(Str(title='Provisioning URI'))
     async def provisioning_uri(self):
         """
         Returns the provisioning URI for the OTP. This can then be encoded in a QR Code and used to

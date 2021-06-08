@@ -132,7 +132,6 @@ class ChartReleaseService(Service):
         )
     )
     @returns(Dict(
-        'upgrade_summary',
         Dict(
             'container_images_to_update', additional_attrs=True,
             description='Dictionary of container image(s) which have an update available against the same tag',

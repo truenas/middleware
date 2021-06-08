@@ -80,7 +80,7 @@ class NFSService(SystemServiceService):
         return nfs
 
     @accepts()
-    @returns(Dict('bindip_choices', additional_attrs=True))
+    @returns(Dict(additional_attrs=True))
     async def bindip_choices(self):
         """
         Returns ip choices for NFS service to use

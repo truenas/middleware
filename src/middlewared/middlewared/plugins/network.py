@@ -823,7 +823,7 @@ class InterfaceService(CRUDService):
         return self._original_datastores
 
     @accepts()
-    @returns(Bool('changes_pending'))
+    @returns(Bool())
     async def has_pending_changes(self):
         """
         Returns whether there are pending interfaces changes to be applied or not.
@@ -1766,7 +1766,7 @@ class InterfaceService(CRUDService):
         return oid
 
     @accepts()
-    @returns(IPAddr('websocket_local_address', null=True))
+    @returns(IPAddr(null=True))
     @pass_app()
     async def websocket_local_ip(self, app):
         """
@@ -1795,7 +1795,7 @@ class InterfaceService(CRUDService):
                 return local_address.split(":")[0]
 
     @accepts()
-    @returns(Str('websocket_interface', null=True))
+    @returns(Str(null=True))
     @pass_app()
     async def websocket_interface(self, app):
         """
@@ -1853,7 +1853,7 @@ class InterfaceService(CRUDService):
         return choices
 
     @accepts(Str('id', null=True, default=None))
-    @returns(Dict('bridge_members_choices', additional_attrs=True))
+    @returns(Dict(additional_attrs=True))
     async def bridge_members_choices(self, id):
         """
         Return available interface choices for `bridge_members` attribute.
@@ -1876,7 +1876,7 @@ class InterfaceService(CRUDService):
         return choices
 
     @accepts(Str('id', null=True, default=None))
-    @returns(Dict('lag_ports_choices', additional_attrs=True))
+    @returns(Dict(additional_attrs=True))
     async def lag_ports_choices(self, id):
         """
         Return available interface choices for `lag_ports` attribute.
@@ -1903,7 +1903,7 @@ class InterfaceService(CRUDService):
         return choices
 
     @accepts()
-    @returns(Dict('vlan_parent_interface_choices', additional_attrs=True))
+    @returns(Dict(additional_attrs=True))
     async def vlan_parent_interface_choices(self):
         """
         Return available interface choices for `vlan_parent_interface` attribute.
@@ -2338,7 +2338,7 @@ class RouteService(Service):
                 routing_table.delete(routing_table.default_route_ipv6)
 
     @accepts(Str('ipv4_gateway'))
-    @returns(Bool('gateway_reachable'))
+    @returns(Bool())
     def ipv4gw_reachable(self, ipv4_gateway):
         """
             Get the IPv4 gateway and verify if it is reachable by any interface.

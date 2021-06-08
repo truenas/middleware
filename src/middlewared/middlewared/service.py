@@ -1021,7 +1021,7 @@ class CoreService(Service):
         conf.debug_mode = debug_mode
 
     @accepts()
-    @returns(Bool('debug_mode_enabled'))
+    @returns(Bool())
     async def debug_mode_enabled(self):
         return conf.debug_mode
 

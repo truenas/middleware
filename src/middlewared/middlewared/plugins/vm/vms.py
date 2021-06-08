@@ -65,7 +65,9 @@ class VMService(CRUDService, VMSupervisorMixin):
     )
 
     @accepts()
-    @returns(Dict('bootloader_options', additional_attrs=True))
+    @returns(Dict(
+        *[Str(k, enum=[v]) for k, v in BOOT_LOADER_OPTIONS.items()],
+    ))
     async def bootloader_options(self):
         """
         Supported motherboard firmware options.

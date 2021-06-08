@@ -21,7 +21,7 @@ class VMService(Service):
     CPU_MODEL_CHOICES = {}
 
     @accepts()
-    @returns(Bool('supports_virtualization'))
+    @returns(Bool())
     async def supports_virtualization(self):
         """
         Returns "true" if system supports virtualization, "false" otherwise
@@ -30,7 +30,7 @@ class VMService(Service):
         return cp.returncode == 0
 
     @accepts()
-    @returns(Int('vcpus'))
+    @returns(Int())
     async def maximum_supported_vcpus(self):
         """
         Returns maximum supported VCPU's
@@ -90,7 +90,13 @@ class VMService(Service):
         return f'{vm["id"]}_{vm["name"]}'
 
     @accepts()
-    @returns(Dict('cpu_model_choices', additional_attrs=True))
+    @returns(Dict(
+        additional_attrs=True,
+        example={
+            '486': '486',
+            'pentium': 'pentium',
+        }
+    ))
     def cpu_model_choices(self):
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.

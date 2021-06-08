@@ -611,7 +611,6 @@ class UserService(CRUDService):
 
     @accepts(Int('user_id', default=None, null=True))
     @returns(Dict(
-        'shell_choices',
         additional_attrs=True,
         example={
             '/usr/bin/sh': 'sh',
@@ -670,7 +669,7 @@ class UserService(CRUDService):
         Str('key'),
         Any('value'),
     )
-    @returns(Bool('attributes_set'))
+    @returns(Bool())
     async def set_attribute(self, pk, key, value):
         """
         Set user general purpose `attributes` dictionary `key` to `value`.
@@ -696,7 +695,7 @@ class UserService(CRUDService):
         Int('id'),
         Str('key'),
     )
-    @returns(Bool('successful_attribute_update'))
+    @returns(Bool())
     async def pop_attribute(self, pk, key):
         """
         Remove user general purpose `attributes` dictionary `key`.
@@ -737,7 +736,7 @@ class UserService(CRUDService):
 
     @no_auth_required
     @accepts()
-    @returns(Bool('root_has_password'))
+    @returns(Bool())
     async def has_root_password(self):
         """
         Return whether the root user has a valid password set.

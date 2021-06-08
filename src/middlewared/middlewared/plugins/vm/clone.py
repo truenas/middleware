@@ -67,7 +67,7 @@ class VMService(Service):
 
     @item_method
     @accepts(Int('id'), Str('name', default=None))
-    @returns(Bool('successfully_cloned'))
+    @returns(Bool())
     async def clone(self, id, name):
         """
         Clone the VM `id`.
