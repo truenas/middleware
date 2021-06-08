@@ -440,8 +440,9 @@ class IdmapDomainService(CRUDService):
             existing_range = range(i['range_low'], i['range_high'])
             if range(max(existing_range[0], new_range[0]), min(existing_range[-1], new_range[-1]) + 1):
                 verrors.add(f'{schema_name}.range_low',
-                            'new idmap range conflicts with existing range for domain '
-                            f'[{i["name"]}].')
+                            f'new idmap range [{data["range_low"]}-{data["range_high"]}] '
+                            'conflicts with existing range for domain '
+                            f'[{i["name"]}], range: [{i["range_low"]}-{i["range_high"]}].')
 
     @private
     async def validate_options(self, schema_name, data, verrors, check=['MISSING', 'EXTRA']):
