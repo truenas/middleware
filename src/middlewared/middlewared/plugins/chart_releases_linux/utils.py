@@ -60,3 +60,13 @@ def get_storage_class_name(release):
 
 def get_network_attachment_definition_name(release, count):
     return f'ix-{release}-{count}'
+
+
+SCALEABLE_RESOURCES = [
+    Resources.DEPLOYMENT,
+    Resources.STATEFULSET,
+]
+SCALE_DOWN_ANNOTATION = {
+    'key': 'ix\\.upgrade\\.scale\\.down\\.workload',
+    'value': ['true', '1'],
+}
