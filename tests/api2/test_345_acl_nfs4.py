@@ -22,6 +22,9 @@ dataset_url = ACLTEST_DATASET.replace('/', '%2F')
 
 ACLTEST_SUBDATASET = f'{pool_name}/acltest/sub1'
 subdataset_url = ACLTEST_SUBDATASET.replace('/', '%2F')
+getfaclcmd = "nfs4xdr_getfacl" if scale else "getfacl"
+setfaclcmd = "nfs4xdr_setfacl" if scale else "setfacl"
+group0 = "root" if scale else "wheel"
 
 base_permset = {
     "READ_DATA": False,
@@ -163,6 +166,10 @@ IMPLEMENTED_ALLOW = [
     "READ_ACL",
     "WRITE_ACL",
 ]
+
+if scale:
+    IMPLEMENTED_DENY.remove("READ_ATTRIBUTES")
+    IMPLEMENTED_ALLOW.remove("READ_ATTRIBUTES")
 
 JOB_ID = None
 
@@ -369,7 +376,8 @@ def test_12_prepare_recursive_tests(request):
     depends(request, ["HAS_NFS4_ACLS", "ssh_password"], scope="session")
     result = POST(
         '/pool/dataset/', {
-            'name': ACLTEST_SUBDATASET
+            'name': ACLTEST_SUBDATASET,
+            'acltype': 'NFSV4',
         }
     )
     assert result.status_code == 200, result.text
@@ -572,7 +580,7 @@ def test_21_creating_shareuser_to_test_acls():
         "group_create": True,
         "password": ACL_PWD,
         "uid": next_uid,
-        "shell": shell}
+    }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
     acluser_id = results.json()
@@ -635,7 +643,7 @@ def test_23_test_acl_function_deny(perm, request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': payload_acl,
-            'group': 'wheel',
+            'group': group0,
             'user': 'root',
             'options': {'recursive': True},
         }
@@ -654,7 +662,7 @@ def test_23_test_acl_function_deny(perm, request):
         cmd = f'stat /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm in ["DELETE", "DELETE_CHILD", "FULL_DELETE"]:
-        cmd = f'rm /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'rm -f /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "READ_DATA":
         cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
@@ -666,10 +674,10 @@ def test_23_test_acl_function_deny(perm, request):
         cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "READ_ACL":
-        cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'{getfaclcmd} /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "WRITE_ACL":
-        cmd = f'setfacl -b /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'{setfaclcmd} -b /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "WRITE_OWNER":
         cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
@@ -684,9 +692,14 @@ def test_23_test_acl_function_deny(perm, request):
     DELETE_CHILD is permitted on parent, or DELETE is permitted on
     file. This means that it should succeed when tested in isolation,
     but fail when combined.
+
+    Unfortunately, this is implemented differenting in FreeBSD vs Linux.
+    Former follows above recommendation, latter does not in that denial
+    of DELETE on file takes precedence over allow of DELETE_CHILD.
     """
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_deny {to_deny}'
-    if perm in ["DELETE", "DELETE_CHILD"]:
+    expected_delete = ["DELETE_CHILD"] if scale else ["DELETE"]
+    if perm in expected_delete:
         assert results['result'] is True, errstr
 
         # unfortunately, we now need to recreate our testfile.
@@ -697,6 +710,9 @@ def test_23_test_acl_function_deny(perm, request):
         cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
+
+    elif perm == "READ_ATTRIBUTES" and scale:
+        assert results['result'] is True, errstr
 
     else:
         assert results['result'] is False, errstr
@@ -770,10 +786,10 @@ def test_24_test_acl_function_allow(perm, request):
         cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "READ_ACL":
-        cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'{getfaclcmd} /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "WRITE_ACL":
-        cmd = f'setfacl -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'{setfaclcmd} -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "WRITE_OWNER":
         cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
@@ -866,10 +882,10 @@ def test_25_test_acl_function_omit(perm, request):
         cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "READ_ACL":
-        cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'{getfaclcmd} /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "WRITE_ACL":
-        cmd = f'setfacl -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'{setfaclcmd} -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
 
     elif perm == "WRITE_OWNER":
         cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
@@ -977,13 +993,13 @@ def test_25_test_acl_function_allow_restrict(perm, request):
         assert results['result'] is False, errstr
 
     if "READ_ACL" not in tests_to_skip:
-        cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'{getfaclcmd} /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
 
     if "WRITE_ACL" not in tests_to_skip:
-        cmd = f'setfacl -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
+        cmd = f'{setfaclcmd} -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
@@ -1021,7 +1037,7 @@ def test_26_file_execute_deny(request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': payload_acl,
-            'group': 'wheel',
+            'group': group0,
             'user': 'root',
             'options': {'recursive': True},
         }
@@ -1074,7 +1090,7 @@ def test_27_file_execute_allow(request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': payload_acl,
-            'group': 'wheel',
+            'group': group0,
             'user': 'root',
             'options': {'recursive': True},
         }
@@ -1125,7 +1141,7 @@ def test_28_file_execute_omit(request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': payload_acl,
-            'group': 'wheel',
+            'group': group0,
             'user': 'root',
             'options': {'recursive': True},
         }
@@ -1159,3 +1175,4 @@ def test_30_delete_dataset(request):
         f'/pool/dataset/id/{dataset_url}/'
     )
     assert result.status_code == 200, result.text
+
