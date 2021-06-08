@@ -743,6 +743,7 @@ class SharingSMBModel(sa.Model):
     cifs_vuid = sa.Column(sa.String(36))
     cifs_shadowcopy = sa.Column(sa.Boolean())
     cifs_fsrvp = sa.Column(sa.Boolean())
+    cifs_favorite = sa.Column(sa.Boolean())
     cifs_enabled = sa.Column(sa.Boolean(), default=True)
     cifs_share_acl = sa.Column(sa.Text())
     cifs_cluster_volname = sa.Column(sa.String(255), nullable=False)
@@ -805,6 +806,7 @@ class SharingSMBService(SharingService):
         Bool('streams', default=True),
         Bool('fsrvp', default=False),
         Str('auxsmbconf', max_length=None, default=''),
+        Bool('favorite', default=False),
         Bool('enabled', default=True),
         Str('cluster_volname', default=''),
         register=True

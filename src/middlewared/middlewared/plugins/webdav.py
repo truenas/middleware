@@ -16,6 +16,7 @@ class WebDAVSharingModel(sa.Model):
     webdav_path = sa.Column(sa.String(255))
     webdav_ro = sa.Column(sa.Boolean(), default=False)
     webdav_perm = sa.Column(sa.Boolean(), default=True)
+    webdav_favorite = sa.Column(sa.Boolean())
     webdav_enabled = sa.Column(sa.Boolean(), default=True)
 
 
@@ -53,6 +54,7 @@ class WebDAVSharingService(SharingService):
             Str('comment'),
             Str('name', required=True, empty=False),
             Str('path', required=True, empty=False),
+            Bool('favorite', default=False),
             Bool('enabled', default=True),
             register=True
         )

@@ -248,6 +248,7 @@ class NFSShareModel(sa.Model):
     nfs_mapall_user = sa.Column(sa.String(120), nullable=True, default='')
     nfs_mapall_group = sa.Column(sa.String(120), nullable=True, default='')
     nfs_security = sa.Column(sa.MultiSelectField())
+    nfs_favorite = sa.Column(sa.Boolean())
     nfs_enabled = sa.Column(sa.Boolean(), default=True)
 
 
@@ -296,6 +297,7 @@ class SharingNFSService(SharingService):
             "security",
             items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
         ),
+        Bool("favorite", default=False),
         Bool("enabled", default=True),
         register=True,
         strict=True,
