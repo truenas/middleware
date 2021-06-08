@@ -47,7 +47,8 @@ def test_02_create_dataset(request):
     depends(request, ["pool_04"], scope="session")
     result = POST(
         '/pool/dataset/', {
-            'name': dataset
+            'name': dataset,
+            "acltype": "NFSV4"
         }
     )
     assert result.status_code == 200, result.text

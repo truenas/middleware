@@ -95,7 +95,8 @@ def test_002_creating_smb_dataset(request):
     depends(request, ["pool_04", "smb_001"], scope="session")
     payload = {
         "name": dataset,
-        "share_type": "SMB"
+        "share_type": "SMB",
+        "acltype": "NFSV4"
     }
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
@@ -750,7 +751,7 @@ def test_080_verify_that_timemachine_is_true(request):
     assert results.json()['timemachine'] is True, results.text
 
 
-@pytest.mark.parametrize('vfs_object', ["ixnas", "fruit", "streams_xattr"])
+@pytest.mark.parametrize('vfs_object', ["fruit", "streams_xattr"])
 def test_081_verify_smb_getparm_vfs_objects_share(request, vfs_object):
     depends(request, ["permissions_job", "service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
@@ -785,7 +786,7 @@ def test_085_verify_that_recyclebin_is_true(request):
     assert results.json()['recyclebin'] is True, results.text
 
 
-@pytest.mark.parametrize('vfs_object', ["ixnas", "crossrename", "recycle"])
+@pytest.mark.parametrize('vfs_object', ["crossrename", "recycle"])
 def test_086_verify_smb_getparm_vfs_objects_share(request, vfs_object):
     depends(request, ["permissions_job", "service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'

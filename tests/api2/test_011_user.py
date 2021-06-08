@@ -294,7 +294,8 @@ def test_30_creating_home_dataset(request):
     depends(request, ["pool_04"], scope="session")
     payload = {
         "name": dataset,
-        "share_type": "SMB"
+        "share_type": "SMB",
+        "acltype": "NFSV4"
     }
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
@@ -328,7 +329,7 @@ def test_31_creating_user_with_homedir(request):
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
     user_id = results.json()
-    time.sleep(2)
+    time.sleep(5)
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
