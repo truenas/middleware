@@ -142,7 +142,7 @@ class PoolResilverService(ConfigService):
         datastore_extend = 'pool.resilver.resilver_extend'
         cli_namespace = 'storage.resilver'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'pool_resilver_entry',
         Int('id', required=True),
         Str('begin', validators=[Time()], required=True),

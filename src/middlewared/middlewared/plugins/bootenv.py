@@ -22,7 +22,7 @@ class BootEnvService(CRUDService):
         cli_namespace = 'system.bootenv'
 
     BE_TOOL = 'zectl' if osc.IS_LINUX else 'beadm'
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'bootenv_entry',
         Str('id'),
         Str('realname'),

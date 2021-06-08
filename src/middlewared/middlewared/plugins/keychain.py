@@ -242,7 +242,7 @@ class KeychainCredentialService(CRUDService):
         datastore = "system.keychaincredential"
         cli_namespace = "system.keychain_credential"
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         "keychain_credential_create", "keychain_credential_entry",
         ("add", Int("id")),
     )

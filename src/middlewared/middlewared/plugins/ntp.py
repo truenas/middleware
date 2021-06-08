@@ -24,7 +24,7 @@ class NTPServerService(CRUDService):
         datastore_prefix = 'ntp_'
         cli_namespace = 'system.ntp_server'
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'ntp_create', 'ntp_entry',
         ('rm', {'name': 'force'}),
         ('add', Int('id')),

@@ -110,7 +110,7 @@ class MailService(ConfigService):
         datastore_extend = 'mail.mail_extend'
         cli_namespace = 'system.mail'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'mail_entry',
         Str('fromemail', validators=[Email()], required=True),
         Str('fromname', required=True),

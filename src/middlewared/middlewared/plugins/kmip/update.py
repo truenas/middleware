@@ -24,7 +24,7 @@ class KMIPService(ConfigService):
         datastore_extend = 'kmip.kmip_extend'
         cli_namespace = 'system.kmip'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'kmip_entry',
         Int('id', required=True),
         Bool('enabled', required=True),

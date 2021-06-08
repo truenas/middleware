@@ -17,7 +17,7 @@ class ContainerService(ConfigService):
         datastore = 'services.container'
         cli_namespace = 'app.container.config'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'container_entry',
         Bool('enable_image_updates'),
         Int('id'),

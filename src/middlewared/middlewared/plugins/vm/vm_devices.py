@@ -36,7 +36,7 @@ class VMDeviceService(CRUDService):
         'DISPLAY': DISPLAY.schema,
     }
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'vmdevice_create', 'vm_device_entry',
         ('add', Int('id')),
     )

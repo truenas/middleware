@@ -984,7 +984,7 @@ class CertificateService(CRUDService):
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate'
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'certificate_entry',
         Int('id'),
         Int('type'),
@@ -2064,7 +2064,7 @@ class CertificateAuthorityModel(sa.Model):
 
 
 def get_ca_result_entry():
-    entry = copy.deepcopy(CertificateService.RESULT_ENTRY)
+    entry = copy.deepcopy(CertificateService.ENTRY)
     entry.name = 'certificateauthority_entry'
     return entry
 
@@ -2077,7 +2077,7 @@ class CertificateAuthorityService(CRUDService):
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate.authority'
 
-    RESULT_ENTRY = get_ca_result_entry()
+    ENTRY = get_ca_result_entry()
 
     PROFILES = {
         'Openvpn Root CA': {

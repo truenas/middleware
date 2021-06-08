@@ -896,7 +896,7 @@ class AlertServiceService(CRUDService):
         datastore_order_by = ["name"]
         cli_namespace = "system.alert.service"
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'alert_service_create', 'alertservice_entry',
         ('add', Int('id')),
         ('add', Str('type__title')),
@@ -1101,7 +1101,7 @@ class AlertClassesService(ConfigService):
         datastore = "system.alertclasses"
         cli_namespace = "system.alert.class"
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         "alertclasses_entry",
         Int("id"),
         Dict("classes", additional_attrs=True),

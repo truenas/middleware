@@ -51,7 +51,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         datastore_extend = 'vm.extend_vm'
         cli_namespace = 'service.vm'
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'vm_create',
         'vm_entry',
         ('edit', {'name': 'devices', 'method': lambda v: setattr(v, 'items', [Ref('vm_device_entry')])}),

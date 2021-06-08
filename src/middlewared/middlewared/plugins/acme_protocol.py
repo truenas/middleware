@@ -214,7 +214,7 @@ class DNSAuthenticatorService(CRUDService):
         datastore = 'system.acmednsauthenticator'
         cli_namespace = 'system.acme.dns_auth'
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'acme_dns_authenticator_entry',
         Int('id', required=True),
         Str(

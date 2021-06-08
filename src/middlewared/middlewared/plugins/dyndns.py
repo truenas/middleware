@@ -28,7 +28,7 @@ class DynDNSService(SystemServiceService):
         datastore_prefix = "ddns_"
         cli_namespace = "service.dyndns"
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'dyndns_entry',
         Str('provider', required=True),
         Bool('checkip_ssl', required=True),

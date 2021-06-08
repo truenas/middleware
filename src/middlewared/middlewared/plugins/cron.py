@@ -36,7 +36,7 @@ class CronJobService(CRUDService):
         namespace = 'cronjob'
         cli_namespace = 'task.cron_job'
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'cron_job_create', 'cron_job_entry',
         ('add', Int('id')),
     )

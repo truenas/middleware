@@ -24,7 +24,7 @@ class DockerImagesService(CRUDService):
         namespace_alias = 'docker.images'
         cli_namespace = 'app.docker.image'
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'container_image_entry',
         Str('id'),
         Dict('labels', additional_attrs=True),

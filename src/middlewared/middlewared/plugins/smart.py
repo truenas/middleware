@@ -139,7 +139,7 @@ class SMARTTestService(CRUDService):
         namespace = 'smart.test'
         cli_namespace = 'task.smart_test'
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'smart_task_create', 'smart_task_entry',
         ('add', Int('id')),
     )
@@ -637,7 +637,7 @@ class SmartService(SystemServiceService):
         datastore_prefix = "smart_"
         cli_namespace = "service.smart"
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'smart_entry',
         Int('interval', required=True),
         Int('id', required=True),
