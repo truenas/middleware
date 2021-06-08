@@ -169,6 +169,7 @@ class CatalogService(Service):
             'versions': {},
             'latest_version': None,
             'latest_app_version': None,
+            'latest_human_version': None,
         }
 
         schema = f'{train}.{item}'
@@ -193,6 +194,10 @@ class CatalogService(Service):
                 if not item_data['latest_version']:
                     item_data['latest_version'] = k
                     item_data['latest_app_version'] = v['chart_metadata'].get('appVersion')
+                    item_data['latest_human_version'] = ''
+                    if item_data['latest_app_version']:
+                        item_data['latest_human_version'] = f'{item_data["latest_app_version"]}_'
+                    item_data['latest_human_version'] += k
 
         if unhealthy_versions:
             item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
