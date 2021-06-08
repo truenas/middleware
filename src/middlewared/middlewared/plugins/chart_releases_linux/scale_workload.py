@@ -6,13 +6,7 @@ from collections import defaultdict
 from middlewared.schema import Dict, Int, List, Str
 from middlewared.service import accepts, CallError, private, Service
 
-from .utils import Resources
-
-
-SCALEABLE_RESOURCES = [
-    Resources.DEPLOYMENT,
-    Resources.STATEFULSET,
-]
+from .utils import SCALEABLE_RESOURCES
 
 
 class ChartReleaseService(Service):
@@ -182,3 +176,27 @@ class ChartReleaseService(Service):
             ]
         ):
             await asyncio.sleep(5)
+
+    @private
+    async def get_workload_to_pod_mapping(self, namespace):
+        mapping = {'replicaset': defaultdict(dict), 'pod': defaultdict(dict)}
+        for key in ('replicaset', 'pod'):
+            for r in await self.middleware.call(
+                f'k8s.{key}.query', [
+                    ['metadata.namespace', '=', namespace],
+                    ['metadata', 'rin', 'owner_references'],
+                ], {'select': ['metadata']}
+            ):
+                for owner_reference in filter(lambda o: o.get('uid'), r['metadata']['owner_references'] or []):
+                    mapping[key][owner_reference['uid']][r['metadata']['uid']] = r
+
+        pod_mapping = defaultdict(list)
+        for parent, replicasets in mapping['replicaset'].items():
+            for replicaset in map(lambda r: mapping['replicaset'][parent][r], replicasets):
+                if replicaset['metadata']['uid'] not in mapping['pod']:
+                    continue
+                pod_mapping[parent].extend([
+                    p['metadata']['name'] for p in mapping['pod'][replicaset['metadata']['uid']].values()
+                ])
+
+        return pod_mapping

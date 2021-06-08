@@ -13,13 +13,35 @@ from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
-from .utils import CONTEXT_KEY_NAME, get_action_context
+from .utils import CONTEXT_KEY_NAME, get_action_context, SCALEABLE_RESOURCES, SCALE_DOWN_ANNOTATION
 
 
 class ChartReleaseService(Service):
 
     class Config:
         namespace = 'chart.release'
+
+    @private
+    async def scale_down_workloads_before_snapshot(self, release):
+        resources = {r.value: {} for r in SCALEABLE_RESOURCES}
+        pod_mapping = await self.middleware.call('chart.release.get_workload_to_pod_mapping', release['namespace'])
+        pods_to_watch_for = []
+        for resource in SCALEABLE_RESOURCES:
+            for workload in await self.middleware.call(
+                f'k8s.{resource.name.lower()}.query', [
+                    [f'metadata.annotations.{SCALE_DOWN_ANNOTATION["key"]}', 'in',
+                     SCALE_DOWN_ANNOTATION['value']],
+                    ['metadata.namespace', '=', release['namespace']],
+                ]
+            ):
+                workload['replicas'] = 0
+                resources[resource.value][workload['metadata']['name']] = workload
+                pods_to_watch_for.extend(pod_mapping[workload['metadata']['uid']])
+
+        # Now we have list of scaleable workloads which should be scaled down, we would like to now get the
+        # list of pods which are attached to these workloads and once they are no more, we can safely say it's
+        # been scaled down successfully and no one is consuming it anymore
+        return pods_to_watch_for
 
     @accepts(
         Str('release_name'),
