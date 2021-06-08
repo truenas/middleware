@@ -599,10 +599,13 @@ class CRUDServiceMetabase(ServiceBase):
                 schema.append(patch_entry)
                 setattr(klass, m_name, decorator(*schema)(getattr(klass, m_name)))
 
-        if hasattr(klass, 'do_delete') and not hasattr(klass.do_delete, 'returns'):
-            klass.do_delete = returns(Bool(
-                'deleted', description='Will return `true` if `id` is deleted successfully'
-            ))(klass.do_delete)
+        if hasattr(klass, 'do_delete'):
+            if not hasattr(klass.do_delete, 'accepts'):
+                klass.do_delete = accepts(get_datastore_primary_key_schema(klass))(klass.do_delete)
+            if not hasattr(klass.do_delete, 'returns'):
+                klass.do_delete = returns(Bool(
+                    'deleted', description='Will return `true` if `id` is deleted successfully'
+                ))(klass.do_delete)
 
         return klass
 
