@@ -60,6 +60,7 @@ class ChartReleaseService(CRUDService):
             'pod_status',
             Int('available', required=True),
             Int('desired', required=True),
+            required=True,
         ),
         Bool('update_available', required=True),
         Str('human_version', required=True, description='Human friendly version identifier for chart release'),

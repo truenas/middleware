@@ -388,7 +388,6 @@ class SharingNFSService(SharingService):
 
         return await self.get_instance(id)
 
-    @accepts(Int("id"))
     async def do_delete(self, id):
         """
         Delete NFS Share of `id`.

@@ -66,6 +66,7 @@ class ChartReleaseService(Service):
             Str('container_name', required=True, empty=False),
         )
     )
+    @returns()
     @job(lock='chart_release_logs', pipes=['output'])
     def pod_logs(self, job, release_name, options):
         """

@@ -1,7 +1,7 @@
 import contextlib
 import errno
 
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.validators import Range
@@ -160,10 +160,6 @@ class CronJobService(CRUDService):
 
         return await self._get_instance(data['id'])
 
-    @accepts(
-        Int('id', validators=[Range(min=1)]),
-        Patch('cron_job_create', 'cron_job_update', ('attr', {'update': True}))
-    )
     async def do_update(self, id, data):
         """
         Update cronjob of `id`.
@@ -193,9 +189,6 @@ class CronJobService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(
-        Int('id')
-    )
     async def do_delete(self, id):
         """
         Delete cronjob of `id`.
@@ -214,6 +207,7 @@ class CronJobService(CRUDService):
         Int('id'),
         Bool('skip_disabled', default=False),
     )
+    @returns()
     @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True, lock_queue_size=1)
     def run(self, job, id, skip_disabled):
         """

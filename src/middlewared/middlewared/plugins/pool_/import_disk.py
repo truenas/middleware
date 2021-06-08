@@ -21,6 +21,7 @@ class PoolService(Service):
         Dict('fs_options', additional_attrs=True),
         Str('dst_path')
     )
+    @returns()
     @job(lock=lambda args: 'volume_import', logs=True, abortable=True)
     async def import_disk(self, job, device, fs_type, fs_options, dst_path):
         """

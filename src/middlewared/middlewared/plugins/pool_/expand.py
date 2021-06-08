@@ -5,7 +5,7 @@ import subprocess
 
 from middlewared.job import Pipes
 from middlewared.service import CallError, item_method, job, Service
-from middlewared.schema import accepts, Dict, Int, Str
+from middlewared.schema import accepts, Dict, Int, returns, Str
 from middlewared.utils import osc, run
 from middlewared.utils.shell import join_commandline
 
@@ -30,6 +30,7 @@ class PoolService(Service):
             ),
         )
     )
+    @returns()
     @job(lock='pool_expand')
     async def expand(self, job, id, options):
         """

@@ -109,10 +109,6 @@ class DynDNSService(SystemServiceService):
 
         verrors.check()
 
-    @accepts(Patch(
-        'dyndns_entry', 'dyndns_update',
-        ('attr', {'update': True}),
-    ))
     async def do_update(self, data):
         """
         Update dynamic dns service configuration.

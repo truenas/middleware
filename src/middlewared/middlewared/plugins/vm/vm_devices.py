@@ -154,11 +154,6 @@ class VMDeviceService(CRUDService):
 
         return await self.get_instance(id)
 
-    @accepts(Int('id'), Patch(
-        'vmdevice_create',
-        'vmdevice_update',
-        ('attr', {'update': True}),
-    ))
     async def do_update(self, id, data):
         """
         Update a VM device of `id`.

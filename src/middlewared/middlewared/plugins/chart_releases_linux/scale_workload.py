@@ -136,6 +136,7 @@ class ChartReleaseService(Service):
             empty=False,
         ),
     )
+    @returns()
     async def scale_workloads(self, release_name, workloads):
         """
         Scale workloads in a chart release to specified `replica_count`.

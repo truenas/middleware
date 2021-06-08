@@ -2720,9 +2720,6 @@ class CertificateAuthorityService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(
-        Int('id')
-    )
     async def do_delete(self, id):
         """
         Delete a Certificate Authority of `id`

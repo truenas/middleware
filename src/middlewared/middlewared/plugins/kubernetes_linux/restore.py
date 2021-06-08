@@ -6,7 +6,7 @@ import shutil
 import time
 import yaml
 
-from middlewared.schema import Dict, Bool, Str
+from middlewared.schema import Dict, Bool, returns, Str
 from middlewared.service import accepts, CallError, job, Service
 
 
@@ -19,6 +19,7 @@ class KubernetesService(Service):
             Bool('wait_for_csi', default=True),
         )
     )
+    @returns()
     @job(lock='kubernetes_restore_backup')
     def restore_backup(self, job, backup_name, options):
         """

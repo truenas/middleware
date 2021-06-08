@@ -4,7 +4,7 @@ import re
 import signal
 import subprocess
 
-from middlewared.schema import accepts, Bool, Ref, Str
+from middlewared.schema import accepts, Bool, Ref, returns, Str
 from middlewared.service import CallError, job, private, Service
 from middlewared.utils import osc, Popen, run
 
@@ -57,6 +57,7 @@ class DiskService(Service):
         Bool('synccache', default=True),
         Ref('swap_removal_options'),
     )
+    @returns()
     @job(
         lock=lambda args: args[0],
         description=lambda dev, mode, *args: f'{mode.replace("_", " ").title()} wipe of disk {dev}',

@@ -16,6 +16,7 @@ class KubernetesStorageClassService(CRUDService):
     class Config:
         namespace = 'k8s.storage_class'
         private = True
+        datastore_primary_key_type = 'string'
 
     @filterable
     async def query(self, filters, options):

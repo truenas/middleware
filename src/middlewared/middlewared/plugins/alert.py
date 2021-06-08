@@ -386,6 +386,7 @@ class AlertService(Service):
             return None
 
     @accepts(Str("uuid"))
+    @returns()
     async def dismiss(self, uuid):
         """
         Dismiss `id` alert.
@@ -417,6 +418,7 @@ class AlertService(Service):
         self._send_alert_deleted_event(alert)
 
     @accepts(Str("uuid"))
+    @returns()
     async def restore(self, uuid):
         """
         Restore `id` alert which had been dismissed.
@@ -1105,10 +1107,6 @@ class AlertClassesService(ConfigService):
         Dict("classes", additional_attrs=True),
     )
 
-    @accepts(Dict(
-        "alert_classes_update",
-        Dict("classes", additional_attrs=True),
-    ))
     async def do_update(self, data):
         """
         Update default Alert settings.

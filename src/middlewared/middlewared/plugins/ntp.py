@@ -99,7 +99,6 @@ class NTPServerService(CRUDService):
 
         return await self.get_instance(id)
 
-    @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete NTP server of `id`.

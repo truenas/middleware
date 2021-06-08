@@ -204,6 +204,7 @@ class FilesystemService(Service):
         return data
 
     @accepts(Str('path'))
+    @returns()
     @job(pipes=["output"])
     async def get(self, job, path):
         """

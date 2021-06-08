@@ -1,7 +1,7 @@
 import errno
 import os
 
-from middlewared.schema import accepts, Bool, Dict, Str
+from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, Service
 
 
@@ -19,6 +19,20 @@ class CatalogService(Service):
             Str('train', required=True),
         )
     )
+    @returns(Dict(
+        'item_details',
+        Str('name', required=True),
+        List('categories', items=[Str('category')], required=True),
+        Str('app_readme', null=True, required=True),
+        Str('location', required=True),
+        Bool('healthy', required=True),
+        Str('healthy_error', required=True, null=True),
+        Str('healthy_error', required=True, null=True),
+        Dict('versions', required=True, additional_attrs=True),
+        Str('latest_version', required=True, null=True),
+        Str('latest_app_version', required=True, null=True),
+        Str('icon_url', required=True, null=True),
+    ))
     def get_item_details(self, item_name, options):
         """
         Retrieve information of `item_name` `item_version_details.catalog` catalog item.

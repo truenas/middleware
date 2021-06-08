@@ -49,6 +49,7 @@ class KMIPService(Service, KMIPServerMixin):
 
     @periodic(interval=86400)
     @accepts()
+    @returns()
     async def sync_keys(self):
         """
         Sync ZFS/SED keys between KMIP Server and TN database.
@@ -60,6 +61,7 @@ class KMIPService(Service, KMIPServerMixin):
         await self.middleware.call('kmip.sync_sed_keys')
 
     @accepts()
+    @returns()
     async def clear_sync_pending_keys(self):
         """
         Clear all keys which are pending to be synced between KMIP server and TN database.

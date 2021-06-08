@@ -81,11 +81,6 @@ class InitShutdownScriptService(CRUDService):
 
         return await self._get_instance(data['id'])
 
-    @accepts(Int('id'), Patch(
-        'init_shutdown_script_create',
-        'init_shutdown_script_update',
-        ('attr', {'update': True}),
-    ))
     async def do_update(self, id, data):
         """
         Update initshutdown script task of `id`.
@@ -108,7 +103,6 @@ class InitShutdownScriptService(CRUDService):
 
         return await self._get_instance(new['id'])
 
-    @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete init/shutdown task of `id`.

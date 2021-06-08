@@ -112,11 +112,6 @@ class FTPService(SystemServiceService):
             data['ssltls_certificate'] = data['ssltls_certificate']['id']
         return data
 
-    @accepts(Patch(
-        'ftp_entry', 'ftp_update',
-        ('rm', {'name': 'id'}),
-        ('attr', {'update': True}),
-    ))
     async def do_update(self, data):
         """
         Update ftp service configuration.

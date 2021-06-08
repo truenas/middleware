@@ -1,13 +1,10 @@
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
-from .encryption_base import DiskEncryptionBase
 
+class DiskService(Service):
 
-class DiskService(Service, DiskEncryptionBase):
-    def decrypt(self, job, devices, passphrase):
-        raise NotImplementedError()
-
+    @private
     async def remove_encryption(self, device):
         cp = await run('cryptsetup', 'close', device, check=False, encoding='utf8')
         if cp.returncode:

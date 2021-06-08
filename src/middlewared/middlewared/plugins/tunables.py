@@ -99,14 +99,6 @@ class TunableService(CRUDService):
 
         return await self._get_instance(data['id'])
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'tunable_create',
-            'tunable_update',
-            ('attr', {'update': True})
-        )
-    )
     async def do_update(self, id, data):
         """
         Update Tunable of `id`.
@@ -143,7 +135,6 @@ class TunableService(CRUDService):
 
         return await self.get_instance(id)
 
-    @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete Tunable of `id`.

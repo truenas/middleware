@@ -831,6 +831,7 @@ class InterfaceService(CRUDService):
         return bool(self._original_datastores)
 
     @accepts()
+    @returns()
     async def rollback(self):
         """
         Rollback pending interfaces changes.
@@ -851,6 +852,7 @@ class InterfaceService(CRUDService):
         await self.sync()
 
     @accepts()
+    @returns()
     async def checkin(self):
         """
         After interfaces changes are committed with checkin timeout this method needs to be called
@@ -881,6 +883,7 @@ class InterfaceService(CRUDService):
         Bool('rollback', default=True),
         Int('checkin_timeout', default=60),
     ))
+    @returns()
     async def commit(self, options):
         """
         Commit/apply pending interfaces changes.
@@ -2425,13 +2428,6 @@ class StaticRouteService(CRUDService):
         Int('id', required=True),
     )
 
-    @accepts(
-        Patch(
-            'staticroute_entry', 'staticroute_create',
-            ('rm', {'name': 'id'}),
-            register=True
-        )
-    )
     async def do_create(self, data):
         """
         Create a Static Route.
@@ -2452,14 +2448,6 @@ class StaticRouteService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'staticroute_create',
-            'staticroute_update',
-            ('attr', {'update': True})
-        )
-    )
     async def do_update(self, id, data):
         """
         Update Static Route of `id`.
@@ -2479,7 +2467,6 @@ class StaticRouteService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(Int('id'))
     def do_delete(self, id):
         """
         Delete Static Route of `id`.

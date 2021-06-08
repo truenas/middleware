@@ -11,7 +11,7 @@ import tempfile
 
 from datetime import datetime
 
-from middlewared.schema import Bool, Dict, accepts
+from middlewared.schema import accepts, Bool, Dict, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.pool import GELI_KEYPATH
@@ -39,6 +39,7 @@ class ConfigService(Service):
         Bool('pool_keys', default=False),
         Bool('root_authorized_keys', default=False),
     ))
+    @returns()
     @job(pipes=["output"])
     async def save(self, job, options):
         """
@@ -82,6 +83,7 @@ class ConfigService(Service):
             os.remove(filename)
 
     @accepts()
+    @returns()
     @job(pipes=["input"])
     def upload(self, job):
         """
@@ -227,6 +229,7 @@ class ConfigService(Service):
                 )
 
     @accepts(Dict('options', Bool('reboot', default=True)))
+    @returns()
     @job(lock='config_reset', logs=True)
     def reset(self, job, options):
         """

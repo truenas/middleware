@@ -8,7 +8,6 @@ import asyncio
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
 from middlewared.schema import accepts, Bool, Cron, Datetime, Dict, Int, Float, List, Patch, returns, Str
-from middlewared.validators import Range
 from middlewared.service import (
     CRUDService, filterable, filterable_returns, filter_list, job, private, SystemServiceService, ValidationErrors
 )
@@ -281,10 +280,6 @@ class SMARTTestService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id', validators=[Range(min=1)]),
-        Patch('smart_task_create', 'smart_task_update', ('attr', {'update': True}))
-    )
     async def do_update(self, id, data):
         """
         Update SMART Test Task of `id`.
@@ -333,9 +328,6 @@ class SMARTTestService(CRUDService):
 
         return await self.get_instance(id)
 
-    @accepts(
-        Int('id')
-    )
     async def do_delete(self, id):
         """
         Delete SMART Test Task of `id`.
@@ -660,13 +652,6 @@ class SmartService(SystemServiceService):
         smart["powermode"] = smart["powermode"].upper()
         return smart
 
-    @accepts(
-        Patch(
-            'smart_entry', 'smart_update',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True}),
-        )
-    )
     async def do_update(self, data):
         """
         Update SMART Service Configuration.

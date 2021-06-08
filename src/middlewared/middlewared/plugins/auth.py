@@ -425,7 +425,7 @@ class TwoFactorAuthService(ConfigService):
             required=True
         ),
         Int('id', required=True),
-        Str('secret', required=True),
+        Str('secret', required=True, null=True),
     )
 
     @private
