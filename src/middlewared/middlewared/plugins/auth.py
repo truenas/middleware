@@ -76,6 +76,7 @@ class SessionManager:
         self.sessions[app.session_id] = session
 
         app.authenticated = True
+        app.authenticated_credentials = credentials
 
         app.register_callback("on_message", self._app_on_message)
         app.register_callback("on_close", self._app_on_close)
@@ -155,6 +156,9 @@ class SessionManagerCredentials:
     def is_valid(self):
         return True
 
+    def authorize(self, method, resource):
+        return True
+
     def notify_used(self):
         pass
 
@@ -175,7 +179,11 @@ class LoginPasswordSessionManagerCredentials(SessionManagerCredentials):
 
 
 class ApiKeySessionManagerCredentials(SessionManagerCredentials):
-    pass
+    def __init__(self, api_key):
+        self.api_key = api_key
+
+    def authorize(self, method, resource):
+        return self.api_key.authorize(method, resource)
 
 
 class TokenSessionManagerCredentials(SessionManagerCredentials):
@@ -357,8 +365,8 @@ class AuthService(Service):
         """
         Authenticate session using API Key.
         """
-        if await self.middleware.call('api_key.authenticate', api_key):
-            self.session_manager.login(app, ApiKeySessionManagerCredentials())
+        if api_key_object := await self.middleware.call('api_key.authenticate', api_key):
+            self.session_manager.login(app, ApiKeySessionManagerCredentials(api_key_object))
             return True
 
         return False

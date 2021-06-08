@@ -15,7 +15,7 @@ from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, ValidationError, ValidationErrors, MatchNotFound
 
 
-async def authenticate(middleware, req):
+async def authenticate(middleware, req, method, resource):
 
     auth = req.headers.get('Authorization')
     if auth is None:
@@ -39,8 +39,12 @@ async def authenticate(middleware, req):
     elif auth.startswith('Bearer '):
         key = auth.split(' ', 1)[1]
 
-        if await middleware.call('api_key.authenticate', key) is None:
+        api_key = await middleware.call('api_key.authenticate', key)
+        if api_key is None:
             raise web.HTTPUnauthorized()
+
+        if not api_key.authorize(method, resource):
+            raise web.HTTPForbidden()
     else:
         raise web.HTTPUnauthorized()
 
@@ -436,8 +440,15 @@ class Resource(object):
 
             async def on_method(req, *args, **kwargs):
                 resp = web.Response()
+                info = req.match_info.route.resource.get_info()
+                if "path" in info:
+                    resource = info["path"][len("/api/v2.0"):]
+                elif "formatter" in info:
+                    resource = info["formatter"][len("/api/v2.0"):]
+                else:
+                    resource = None
                 if not self.rest._methods[getattr(self, method)]['no_auth_required']:
-                    await authenticate(self.middleware, req)
+                    await authenticate(self.middleware, req, method.upper(), resource)
                 kwargs.update(dict(req.match_info))
                 return await do(method, req, resp, *args, **kwargs)
 

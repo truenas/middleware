@@ -71,6 +71,7 @@ class Application(object):
         self.request = request
         self.response = response
         self.authenticated = False
+        self.authenticated_credentials = None
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.session_id = str(uuid.uuid4())
@@ -324,9 +325,14 @@ class Application(object):
                 self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
                 return
 
-            if not self.authenticated and not hasattr(methodobj, '_no_auth_required'):
-                self.send_error(message, errno.EACCES, 'Not authenticated')
-                return
+            if not hasattr(methodobj, '_no_auth_required'):
+                if not self.authenticated:
+                    self.send_error(message, errno.EACCES, 'Not authenticated')
+                    return
+
+                if not self.authenticated_credentials.authorize('CALL', message['method']):
+                    self.send_error(message, errno.EACCES, 'Not authorized')
+                    return
 
             asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
             return
@@ -342,6 +348,10 @@ class Application(object):
             return
 
         if message['msg'] == 'sub':
+            if not self.authenticated_credentials.authorize('SUBSCRIBE', message['name']):
+                self.send_error(message, errno.EACCES, 'Not authorized')
+                return
+
             await self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
             await self.unsubscribe(message['id'])
@@ -446,6 +456,7 @@ class FileApplication(object):
 
     async def upload(self, request):
         denied = True
+        api_key = None
         auth = request.headers.get('Authorization')
         if auth:
             if auth.startswith('Basic '):
@@ -466,7 +477,7 @@ class FileApplication(object):
             elif auth.startswith('Bearer '):
                 key = auth.split(' ', 1)[1]
 
-                if await self.middleware.call('api_key.authenticate', key):
+                if api_key := await self.middleware.call('api_key.authenticate', key):
                     denied = False
         else:
             qs = urllib.parse.parse_qs(request.query_string)
@@ -501,6 +512,12 @@ class FileApplication(object):
 
         if 'method' not in data:
             return web.Response(status=422)
+
+        if api_key is not None:
+            if not api_key.authorize('CALL', data['method']):
+                resp = web.Response()
+                resp.set_status(403)
+                return resp
 
         filepart = await reader.next()
 

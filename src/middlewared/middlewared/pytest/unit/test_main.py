@@ -36,6 +36,7 @@ async def test__normal_service(caplog, method):
     fut = asyncio.Future()
     application = Application(middleware, asyncio.get_event_loop(), Mock(), Mock(send_str=AsyncMock(side_effect=fut.set_result)))
     application.authenticated = True
+    application.authenticated_credentials = Mock(authorize=Mock(return_value=True))
     application.handshake = True
     await application.on_message({"id": "1", "msg": "method", "method": f"mock.{method}", "params": [{"password": "secret"}]})
     await fut
@@ -74,6 +75,7 @@ async def test__job_service(caplog, method):
     fut = asyncio.Future()
     application = Application(middleware, asyncio.get_event_loop(), Mock(), Mock(send_str=AsyncMock(side_effect=fut.set_result)))
     application.authenticated = True
+    application.authenticated_credentials = Mock(authorize=Mock(return_value=True))
     application.handshake = True
     await application.on_message({"id": "1", "msg": "method", "method": f"job.{method}", "params": [{"password": "secret"}]})
     await fut
