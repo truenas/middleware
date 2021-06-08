@@ -35,7 +35,7 @@ class TruecommandService(ConfigService):
         datastore_extend = 'truecommand.tc_extend'
         cli_namespace = 'system.truecommand'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'truecommand_entry',
         Int('id', required=True),
         Str('api_key', required=True, null=True),

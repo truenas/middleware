@@ -427,12 +427,12 @@ class ConfigServiceMetabase(ServiceBase):
         namespace = klass._config.namespace.replace('.', '_')
         config_entry_key = f'{namespace}_entry'
 
-        if klass.CONFIG_ENTRY == NotImplementedError:
-            klass.CONFIG_ENTRY = Dict(config_entry_key, additional_attrs=True)
+        if klass.ENTRY == NotImplementedError:
+            klass.ENTRY = Dict(config_entry_key, additional_attrs=True)
 
-        config_entry_key = getattr(klass.CONFIG_ENTRY, 'newname' if isinstance(klass.CONFIG_ENTRY, Patch) else 'name')
+        config_entry_key = getattr(klass.ENTRY, 'newname' if isinstance(klass.ENTRY, Patch) else 'name')
 
-        config_entry = copy.deepcopy(klass.CONFIG_ENTRY)
+        config_entry = copy.deepcopy(klass.ENTRY)
         config_entry.register = True
         klass.config = returns(config_entry)(klass.config)
 
@@ -465,7 +465,7 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
     updated or not.
     """
 
-    CONFIG_ENTRY = NotImplementedError
+    ENTRY = NotImplementedError
 
     @accepts()
     async def config(self):
@@ -542,21 +542,21 @@ class CRUDServiceMetabase(ServiceBase):
 
         namespace = klass._config.namespace.replace('.', '_')
         entry_key = f'{namespace}_entry'
-        if klass.RESULT_ENTRY == NotImplementedError:
-            klass.RESULT_ENTRY = Dict(entry_key, additional_attrs=True)
+        if klass.ENTRY == NotImplementedError:
+            klass.ENTRY = Dict(entry_key, additional_attrs=True)
         else:
             # We would like to ensure that not all fields are required as select can filter out fields
-            if isinstance(klass.RESULT_ENTRY, Patch):
-                entry_key = klass.RESULT_ENTRY.newname
-            elif isinstance(klass.RESULT_ENTRY, Ref):
-                entry_key = f'{klass.RESULT_ENTRY.name}_ref_entry'
-            elif isinstance(klass.RESULT_ENTRY, Dict):
-                entry_key = klass.RESULT_ENTRY.name
+            if isinstance(klass.ENTRY, Patch):
+                entry_key = klass.ENTRY.newname
+            elif isinstance(klass.ENTRY, Ref):
+                entry_key = f'{klass.ENTRY.name}_ref_entry'
+            elif isinstance(klass.ENTRY, Dict):
+                entry_key = klass.ENTRY.name
             else:
                 raise ValueError('Result entry should be Dict/Patch/Ref instance')
 
-        result_entry = copy.deepcopy(klass.RESULT_ENTRY)
-        query_result_entry = copy.deepcopy(klass.RESULT_ENTRY)
+        result_entry = copy.deepcopy(klass.ENTRY)
+        query_result_entry = copy.deepcopy(klass.ENTRY)
         if isinstance(result_entry, Ref):
             query_result_entry = Patch(result_entry.name, entry_key)
         if isinstance(result_entry, Patch):
@@ -619,7 +619,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     CRUD stands for Create Retrieve Update Delete.
     """
 
-    RESULT_ENTRY = NotImplementedError
+    ENTRY = NotImplementedError
 
     def __init__(self, middleware):
         super().__init__(middleware)

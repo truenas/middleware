@@ -50,7 +50,7 @@ class SSHService(SystemServiceService):
         datastore_prefix = "ssh_"
         cli_namespace = 'service.ssh'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'ssh_entry',
         List('bindiface', items=[Str('iface')], required=True),
         Int('tcpport', validators=[Range(min=1, max=65535)], required=True),

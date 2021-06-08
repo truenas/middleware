@@ -33,7 +33,7 @@ class KubernetesService(ConfigService):
         datastore_extend = 'kubernetes.k8s_extend'
         cli_namespace = 'app.kubernetes'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'kubernetes_entry',
         Str('pool', required=True, null=True),
         IPAddr('cluster_cidr', required=True, cidr=True, empty=True),

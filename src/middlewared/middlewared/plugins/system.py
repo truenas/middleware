@@ -105,7 +105,7 @@ class SystemAdvancedService(ConfigService):
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'system_advanced_entry',
         Bool('advancedmode', required=True),
         Bool('autotune', required=True),
@@ -1081,7 +1081,7 @@ class SystemGeneralService(ConfigService):
         self._kbdmap_choices = None
         self._country_choices = {}
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'system_general_entry',
         Patch(
             'certificate_entry', 'ui_certificate',

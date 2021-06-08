@@ -28,7 +28,7 @@ class ReportingService(ConfigService):
         datastore = 'system.reporting'
         cli_namespace = 'system.reporting'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'reporting_entry',
         Bool('cpu_in_percentage', required=True),
         Str('graphite', required=True),

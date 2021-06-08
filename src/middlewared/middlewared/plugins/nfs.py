@@ -45,7 +45,7 @@ class NFSService(SystemServiceService):
         datastore_extend = 'nfs.nfs_extend'
         cli_namespace = "service.nfs"
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'nfs_entry',
         Int('id', required=True),
         Int('servers', validators=[Range(min=1, max=256)], required=True),
@@ -272,7 +272,7 @@ class SharingNFSService(SharingService):
         datastore_extend = "sharing.nfs.extend"
         cli_namespace = "sharing.nfs"
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'sharingnfs_create', 'sharing_nfs_entry',
         ('add', Int('id')),
         ('add', Bool('locked')),

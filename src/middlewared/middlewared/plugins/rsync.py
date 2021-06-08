@@ -95,7 +95,7 @@ class RsyncdService(SystemServiceService):
         datastore_prefix = "rsyncd_"
         cli_namespace = 'service.rsync'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'rsyncd_entry',
         Int('port', required=True, validators=[Range(min=1, max=65535)]),
         Int('id', required=True),
@@ -145,7 +145,7 @@ class RsyncModService(SharingService):
         datastore_extend = 'rsyncmod.rsync_mod_extend'
         cli_namespace = 'service.rsync_mod'
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'rsyncmod_create', 'rsyncmod_entry',
         ('add', Bool('locked')),
         ('add', Int('id')),
@@ -303,7 +303,7 @@ class RsyncTaskService(TaskPathService):
         datastore_extend_context = 'rsynctask.rsync_task_extend_context'
         cli_namespace = 'task.rsync'
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'rsync_task_create', 'rsync_task_entry',
         ('rm', {'name': 'validate_rpath'}),
         ('add', Int('id')),

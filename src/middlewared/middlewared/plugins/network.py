@@ -68,7 +68,7 @@ class NetworkConfigurationService(ConfigService):
         datastore_extend = 'network.configuration.network_config_extend'
         cli_namespace = 'network.configuration'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'network_configuration_entry',
         Int('id', required=True),
         Str('hostname', required=True, validators=[Hostname()]),
@@ -440,7 +440,7 @@ class InterfaceService(CRUDService):
         self._original_datastores = {}
         self._rollback_timer = None
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'interface_entry',
         Str('id', required=True),
         Str('name', required=True),
@@ -2420,7 +2420,7 @@ class StaticRouteService(CRUDService):
         datastore_extend = 'staticroute.upper'
         cli_namespace = 'network.static_route'
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'staticroute_entry',
         IPAddr('destination', network=True, required=True),
         IPAddr('gateway', allow_zone_index=True, required=True),

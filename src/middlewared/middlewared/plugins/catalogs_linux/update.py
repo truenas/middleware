@@ -35,7 +35,7 @@ class CatalogService(CRUDService):
         datastore_primary_key_type = 'string'
         cli_namespace = 'app.catalog'
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'catalog_entry',
         Str('label', required=True, validators=[Match(r'^\w+[\w.-]*$')], max_length=60),
         Str('repository', required=True, empty=False),

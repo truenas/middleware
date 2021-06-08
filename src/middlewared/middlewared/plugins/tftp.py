@@ -26,7 +26,7 @@ class TFTPService(SystemServiceService):
         datastore_prefix = "tftp_"
         cli_namespace = "service.tftp"
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'tftp_entry',
         Bool('newfiles', required=True),
         Str('directory', required=True),

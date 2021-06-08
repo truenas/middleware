@@ -32,7 +32,7 @@ class TunableService(CRUDService):
         super(TunableService, self).__init__(*args, **kwargs)
         self.__default_sysctl = {}
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'tunable_create', 'tunable_entry',
         ('add', Int('id')),
     )

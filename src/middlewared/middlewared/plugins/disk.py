@@ -72,7 +72,7 @@ class DiskService(CRUDService):
         event_send = False
         cli_namespace = 'storage.disk'
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'disk_entry',
         Str('identifier', required=True),
         Str('name', required=True),

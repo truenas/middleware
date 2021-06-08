@@ -18,7 +18,7 @@ class LLDPService(SystemServiceService):
         datastore_prefix = 'lldp_'
         cli_namespace = 'service.lldp'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'lldp_entry',
         Bool('intdesc', required=True),
         Str('country', max_length=2, required=True),

@@ -22,7 +22,7 @@ class IPMIService(CRUDService):
         cli_namespace = 'network.ipmi'
 
     # TODO: Test me please
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'ipmi_update', 'ipmi_entry',
         ('add', Int('id', required=True)),
         ('add', Int('channel', required=True)),

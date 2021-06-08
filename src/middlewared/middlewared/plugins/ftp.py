@@ -59,7 +59,7 @@ class FTPService(SystemServiceService):
         datastore_extend = "ftp.ftp_extend"
         cli_namespace = "service.ftp"
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'ftp_entry',
         Int('port', validators=[Range(min=1, max=65535)], required=True),
         Int('clients', validators=[Range(min=1, max=10000)], required=True),

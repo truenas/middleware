@@ -31,7 +31,7 @@ class S3Service(SystemServiceService):
         datastore_extend = "s3.config_extend"
         cli_namespace = "service.s3"
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         's3_entry',
         Str('bindip', required=True),
         Int('bindport', validators=[Range(min=1, max=65535)], required=True),

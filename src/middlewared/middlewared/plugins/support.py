@@ -37,7 +37,7 @@ class SupportService(ConfigService):
         datastore = 'system.support'
         cli_namespace = 'system.support'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'support_entry',
         Bool('enabled', null=True, required=True),
         Str('name', required=True),

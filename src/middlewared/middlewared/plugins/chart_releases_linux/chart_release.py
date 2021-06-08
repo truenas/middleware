@@ -28,7 +28,7 @@ class ChartReleaseService(CRUDService):
         namespace = 'chart.release'
         cli_namespace = 'app.chart_release'
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'chart_release_entry',
         Str('name', required=True),
         Dict('info', additional_attrs=True),
@@ -661,7 +661,7 @@ class ChartReleaseService(CRUDService):
                 raise CallError(f'Failed to {tn_action} chart release: {stderr.decode()}')
 
     @accepts(Str('release_name'))
-    @returns(RESULT_ENTRY)
+    @returns(ENTRY)
     @job(lock=lambda args: f'chart_release_redeploy_{args[0]}')
     async def redeploy(self, job, release_name):
         """

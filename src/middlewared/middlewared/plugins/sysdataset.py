@@ -37,7 +37,7 @@ class SystemDatasetService(ConfigService):
         datastore_prefix = 'sys_'
         cli_namespace = 'system.system_dataset'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'systemdataset_entry',
         Int('id', required=True),
         Str('pool', required=True),

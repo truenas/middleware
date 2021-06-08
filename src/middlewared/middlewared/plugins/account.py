@@ -133,7 +133,7 @@ class UserService(CRUDService):
         cli_namespace = 'account.user'
 
     # FIXME: Please see if dscache can potentially alter result(s) format, without ad, it doesn't seem to
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'user_create', 'user_entry',
         ('rm', {'name': 'group'}),
         ('rm', {'name': 'group_create'}),
@@ -1045,7 +1045,7 @@ class GroupService(CRUDService):
         datastore_extend = 'group.group_extend'
         cli_namespace = 'account.group'
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'group_create', 'group_entry',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'allow_duplicate_gid'}),

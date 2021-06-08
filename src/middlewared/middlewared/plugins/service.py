@@ -26,7 +26,7 @@ class ServiceService(CRUDService):
     class Config:
         cli_namespace = "service"
 
-    RESULT_ENTRY = Dict(
+    ENTRY = Dict(
         'service_entry',
         Int('id'),
         Str('service'),

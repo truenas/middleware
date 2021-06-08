@@ -413,7 +413,7 @@ class TwoFactorAuthService(ConfigService):
         namespace = 'auth.twofactor'
         cli_namespace = 'auth.two_factor'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'auth_twofactor_entry',
         Bool('enabled', required=True),
         Int('otp_digits', validators=[Range(min=6, max=8)], required=True),

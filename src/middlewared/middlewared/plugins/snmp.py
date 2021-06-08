@@ -31,7 +31,7 @@ class SNMPService(SystemServiceService):
         datastore_prefix = 'snmp_'
         cli_namespace = 'service.snmp'
 
-    CONFIG_ENTRY = Dict(
+    ENTRY = Dict(
         'snmp_entry',
         Str('location', required=True),
         Str('contact', required=True, validators=[Or(Email(), Match(r'^[-_a-zA-Z0-9\s]*$'))]),

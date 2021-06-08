@@ -33,7 +33,7 @@ class InitShutdownScriptService(CRUDService):
         datastore_extend = 'initshutdownscript.init_shutdown_script_extend'
         cli_namespace = 'system.init_shutdown_script'
 
-    RESULT_ENTRY = Patch(
+    ENTRY = Patch(
         'init_shutdown_script_create', 'init_shutdown_script_entry',
         ('add', Int('id', required=True)),
     )
