@@ -358,7 +358,10 @@ class ChartReleaseService(Service):
     )
     @returns(Dict(
         'container_images', additional_attrs=True,
-        description='Dictionary of container image(s) with container image tag as key and update status as value'
+        description='Dictionary of container image(s) with container image tag as key and update status as value',
+        example={
+            'plexinc/pms-docker:1.23.2.4656-85f0adf5b': 'Updated image',
+        }
     ))
     @job(lock=lambda args: f'pull_container_images{args[0]}')
     async def pull_container_images(self, job, release_name, options):

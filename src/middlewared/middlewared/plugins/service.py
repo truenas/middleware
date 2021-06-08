@@ -92,6 +92,7 @@ class ServiceService(CRUDService):
             Bool('enable', default=False),
         ),
     )
+    @returns(Int('service_primary_key'))
     async def do_update(self, id_or_name, data):
         """
         Update service entry of `id_or_name`.
@@ -106,9 +107,11 @@ class ServiceService(CRUDService):
                 raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
             id_or_name = svc[0]['id']
 
-        await self.middleware.call('datastore.update', 'services.services', id_or_name, {'srv_enable': data['enable']})
+        rv = await self.middleware.call(
+            'datastore.update', 'services.services', id_or_name, {'srv_enable': data['enable']}
+        )
         await self.middleware.call('etc.generate', 'rc')
-        return await self.get_instance(id_or_name)
+        return rv
 
     @accepts(
         Str('service'),

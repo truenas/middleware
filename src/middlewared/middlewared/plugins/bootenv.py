@@ -203,6 +203,7 @@ class BootEnvService(CRUDService):
         Str('name', required=True, validators=[Match(RE_BE_NAME)]),
         Str('source'),
     ))
+    @returns(Str('bootenv_name'))
     async def do_create(self, data):
         """
         Create a new boot environment using `name`.
@@ -229,12 +230,13 @@ class BootEnvService(CRUDService):
             await run(args, encoding='utf8', check=True)
         except subprocess.CalledProcessError as cpe:
             raise CallError(f'Failed to create boot environment: {cpe.stdout}')
-        return await self.get_instance(data['name'])
+        return data['name']
 
     @accepts(Str('id'), Dict(
         'bootenv_update',
         Str('name', required=True, validators=[Match(RE_BE_NAME)]),
     ))
+    @returns(Str('bootenv_name'))
     async def do_update(self, oid, data):
         """
         Update `id` boot environment name with a new provided valid `name`.
@@ -249,7 +251,7 @@ class BootEnvService(CRUDService):
             await run(self.BE_TOOL, 'rename', oid, data['name'], encoding='utf8', check=True)
         except subprocess.CalledProcessError as cpe:
             raise CallError(f'Failed to update boot environment: {cpe.stdout}')
-        return await self.get_instance(data['name'])
+        return data['name']
 
     async def _clean_be_name(self, verrors, schema, name):
         beadm_names = (await (await Popen(
