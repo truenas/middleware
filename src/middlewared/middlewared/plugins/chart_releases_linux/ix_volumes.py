@@ -2,7 +2,7 @@ import errno
 import os
 
 from middlewared.schema import Str
-from middlewared.service import accepts, CallError, private, Service
+from middlewared.service import accepts, CallError, private, returns, Service
 
 
 class ChartReleaseService(Service):
@@ -32,6 +32,7 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Str('volume_name'),
     )
+    @returns()
     async def remove_ix_volume(self, release_name, volume_name):
         """
         Remove `volume_name` ix_volume from `release_name` chart release.

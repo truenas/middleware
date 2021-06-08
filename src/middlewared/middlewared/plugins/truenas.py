@@ -119,6 +119,7 @@ class TrueNASService(Service):
         return not os.path.exists(EULA_PENDING_PATH)
 
     @accepts()
+    @returns()
     async def accept_eula(self):
         """
         Accept TrueNAS EULA.

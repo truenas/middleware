@@ -158,6 +158,7 @@ class BootService(Service):
             Bool('expand', default=False),
         ),
     )
+    @returns()
     @job(lock='boot_attach')
     async def attach(self, job, dev, options):
         """
@@ -207,6 +208,7 @@ class BootService(Service):
         await self.update_initramfs()
 
     @accepts(Str('dev'))
+    @returns()
     async def detach(self, dev):
         """
         Detach given `dev` from boot pool.
@@ -215,6 +217,7 @@ class BootService(Service):
         await self.update_initramfs()
 
     @accepts(Str('label'), Str('dev'))
+    @returns()
     async def replace(self, label, dev):
         """
         Replace device `label` on boot pool with `dev`.
@@ -232,6 +235,7 @@ class BootService(Service):
         await self.update_initramfs()
 
     @accepts()
+    @returns()
     @job(lock='boot_scrub')
     async def scrub(self, job):
         """

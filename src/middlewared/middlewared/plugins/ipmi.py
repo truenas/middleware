@@ -167,6 +167,7 @@ class IPMIService(CRUDService):
         Int('seconds'),
         Bool('force'),
     ))
+    @returns()
     async def identify(self, options):
         """
         Turn on IPMI chassis identify light.
@@ -195,6 +196,7 @@ class IPMIService(CRUDService):
         ], filters, options)
 
     @accepts()
+    @returns()
     async def clear_sel(self):
         """
         Clear IPMI System Event Log

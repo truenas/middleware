@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.schema import accepts, Dict, Int, Str
+from middlewared.schema import accepts, Dict, Int, returns, Str
 from middlewared.service import CallError, job, Service, ValidationErrors
 from middlewared.utils import osc
 
@@ -16,6 +16,7 @@ class PoolService(Service):
             Str('passphrase'),
         )
     )
+    @returns()
     @job(lock=lambda args: f'pool_attach_{args[0]}')
     async def attach(self, job, oid, options):
         """

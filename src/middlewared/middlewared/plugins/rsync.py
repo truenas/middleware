@@ -33,7 +33,7 @@ import os
 import shlex
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
+from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch, returns
 from middlewared.validators import Range, Match
 from middlewared.service import (
     CallError, SystemServiceService, ValidationErrors, job, item_method, private, SharingService, TaskPathService,
@@ -102,11 +102,6 @@ class RsyncdService(SystemServiceService):
         Str('auxiliary', required=True, max_length=None),
     )
 
-    @accepts(Patch(
-        'rsyncd_entry', 'rsyncd_update',
-        ('rm', {'name': 'id'}),
-        ('attr', {'update': True}),
-    ))
     async def do_update(self, data):
         """
         Update Rsyncd Service Configuration.
@@ -259,7 +254,6 @@ class RsyncModService(SharingService):
 
         return await self.get_instance(id)
 
-    @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete Rsyncmod module of `id`.
@@ -639,7 +633,6 @@ class RsyncTaskService(TaskPathService):
 
         return await self.get_instance(id)
 
-    @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete Rsync Task of `id`.
@@ -701,6 +694,7 @@ class RsyncTaskService(TaskPathService):
 
     @item_method
     @accepts(Int('id'))
+    @returns()
     @job(lock=lambda args: args[-1], lock_queue_size=1, logs=True)
     def run(self, job, id):
         """

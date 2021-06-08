@@ -35,7 +35,7 @@ class DeviceService(Service):
                 Str('pci_slot', required=True),
                 Str('vm_pci_slot', required=True),
             )]),
-            Str('vendor', required=True),
+            Str('vendor', required=True, null=True),
             Bool('available_to_host', required=True),
         ),
         ]),

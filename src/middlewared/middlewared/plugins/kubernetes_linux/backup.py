@@ -133,6 +133,7 @@ class KubernetesService(Service):
         return backups
 
     @accepts(Str('backup_name'))
+    @returns()
     def delete_backup(self, backup_name):
         """
         Delete `backup_name` chart releases backup.

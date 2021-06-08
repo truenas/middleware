@@ -196,9 +196,6 @@ class CatalogService(CRUDService):
 
         return await self.get_instance(id)
 
-    @accepts(
-        Str('id'),
-    )
     def do_delete(self, id):
         catalog = self.middleware.call_sync('catalog.get_instance', id)
         if catalog['builtin']:

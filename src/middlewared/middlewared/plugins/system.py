@@ -719,6 +719,7 @@ class SystemService(Service):
         return LICENSE_FILE
 
     @accepts(Str('license'))
+    @returns()
     def license_update(self, license):
         """
         Update license file.
@@ -871,6 +872,7 @@ class SystemService(Service):
         return False
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
+    @returns()
     @job()
     async def reboot(self, job, options):
         """
@@ -892,6 +894,7 @@ class SystemService(Service):
         await Popen(['/sbin/shutdown', '-r', 'now'])
 
     @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
+    @returns()
     @job()
     async def shutdown(self, job, options):
         """
@@ -953,6 +956,7 @@ class SystemService(Service):
         return dump
 
     @accepts()
+    @returns()
     @job(lock='system.debug', pipes=['output'])
     def debug(self, job):
         """

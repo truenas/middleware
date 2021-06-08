@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Bool, Dict, Int, Patch
-from middlewared.service import accepts, ConfigService
+from middlewared.schema import Bool, Dict, Int
+from middlewared.service import ConfigService
 
 
 class ContainerModel(sa.Model):
@@ -23,13 +23,6 @@ class ContainerService(ConfigService):
         Int('id'),
     )
 
-    @accepts(
-        Patch(
-            'container_entry', 'container_update',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True}),
-        )
-    )
     async def do_update(self, data):
         """
         When `enable_image_updates` is set, system will check if existing container images need to be updated. System

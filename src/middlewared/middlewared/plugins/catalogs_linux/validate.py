@@ -4,13 +4,14 @@ import os
 from catalog_validation.exceptions import ValidationErrors as CatalogValidationErrors
 from catalog_validation.validation import validate_catalog, validate_catalog_item, validate_catalog_item_version
 
-from middlewared.schema import Str
+from middlewared.schema import returns, Str
 from middlewared.service import accepts, CallError, private, Service, ValidationErrors
 
 
 class CatalogService(Service):
 
     @accepts(Str('label'))
+    @returns()
     async def validate(self, label):
         """
         Validates `label` catalog format which includes validating trains and applications with their versions.

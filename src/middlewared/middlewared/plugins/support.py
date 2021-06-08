@@ -30,6 +30,7 @@ class SupportModel(sa.Model):
     secondary_email = sa.Column(sa.String(200))
     secondary_phone = sa.Column(sa.String(200))
 
+
 class SupportService(ConfigService):
 
     class Config:
@@ -50,13 +51,6 @@ class SupportService(ConfigService):
         Int('id', required=True),
     )
 
-    @accepts(
-        Patch(
-            'support_entry', 'support_update',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True}),
-        )
-    )
     async def do_update(self, data):
         """
         Update Proactive Support settings.
@@ -320,6 +314,7 @@ class SupportService(ConfigService):
         Str('username', private=True),
         Str('password', private=True),
     ))
+    @returns()
     @job(pipes=["input"])
     async def attach_ticket(self, job, data):
         """

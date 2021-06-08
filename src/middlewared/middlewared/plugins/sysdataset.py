@@ -47,7 +47,7 @@ class SystemDatasetService(ConfigService):
         Str('basename', required=True),
         Str('uuid_a', required=True),
         Bool('syslog', required=True),
-        Str('path', required=True),
+        Str('path', required=True, null=True),
     )
 
     @private

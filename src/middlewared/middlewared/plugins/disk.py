@@ -14,7 +14,7 @@ except ImportError:
     get_nsid = None
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -84,10 +84,14 @@ class DiskService(CRUDService):
         Str('multipath_member', required=True),
         Str('description', required=True),
         Str('transfermode', required=True),
-        Str('hddstandby', required=True),
+        Str(
+            'hddstandby', required=True, enum=[
+                'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
+            ]
+        ),
         Bool('hddstandby_force', required=True),
         Bool('togglesmart', required=True),
-        Str('advpowermgmt', required=True),
+        Str('advpowermgmt', required=True, enum=['DISABLED', '1', '64', '127', '128', '192', '254']),
         Str('smartoptions', required=True),
         Datetime('expiretime', required=True, null=True),
         Int('critical', required=True, null=True),
@@ -105,6 +109,8 @@ class DiskService(CRUDService):
             null=True, required=True
         ),
         Str('pool', null=True, required=True),
+        Str('passwd', private=True),
+        Str('kmip_uid', null=True),
     )
 
     @filterable
@@ -197,29 +203,24 @@ class DiskService(CRUDService):
 
     @accepts(
         Str('id'),
-        Dict(
-            'disk_update',
-            Bool('togglesmart'),
-            Str('advpowermgmt', enum=[
-                'DISABLED', '1', '64', '127', '128', '192', '254'
-            ]),
-            Str('description'),
-            Str('hddstandby', enum=[
-                'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
-            ]),
-            Bool('hddstandby_force'),
-            Str('passwd', private=True),
-            Str('smartoptions'),
-            Int('critical', null=True),
-            Int('difference', null=True),
-            Int('informational', null=True),
-            Dict(
-                'enclosure',
-                Int('number'),
-                Int('slot'),
-                null=True,
-            ),
-            update=True
+        Patch(
+            'disk_entry', 'disk_update',
+            ('rm', {'name': 'identifier'}),
+            ('rm', {'name': 'name'}),
+            ('rm', {'name': 'subsystem'}),
+            ('rm', {'name': 'serial'}),
+            ('rm', {'name': 'kmip_uid'}),
+            ('rm', {'name': 'size'}),
+            ('rm', {'name': 'multipath_name'}),
+            ('rm', {'name': 'multipath_member'}),
+            ('rm', {'name': 'transfermode'}),
+            ('rm', {'name': 'expiretime'}),
+            ('rm', {'name': 'model'}),
+            ('rm', {'name': 'rotationrate'}),
+            ('rm', {'name': 'type'}),
+            ('rm', {'name': 'zfs_guid'}),
+            ('rm', {'name': 'devname'}),
+            ('attr', {'update': True}),
         )
     )
     async def do_update(self, id, data):

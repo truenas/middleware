@@ -1,6 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.listen import SystemServiceListenSingleDelegate
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
@@ -69,13 +69,6 @@ class S3Service(SystemServiceService):
             s3['certificate'] = s3['certificate']['id']
         return s3
 
-    @accepts(
-        Patch(
-            's3_entry', 's3_update',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True}),
-        )
-    )
     async def do_update(self, data):
         """
         Update S3 Service Configuration.

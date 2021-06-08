@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Email, Match, Or, Range
 from middlewared.service import SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -50,13 +50,6 @@ class SNMPService(SystemServiceService):
         Int('id', required=True),
     )
 
-    @accepts(
-        Patch(
-            'snmp_entry', 'snmp_update',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True}),
-        )
-    )
     async def do_update(self, data):
         """
         Update SNMP Service Configuration.

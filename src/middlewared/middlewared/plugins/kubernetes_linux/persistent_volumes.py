@@ -10,6 +10,7 @@ class KubernetesPersistentVolumesService(CRUDService):
     class Config:
         namespace = 'k8s.pv'
         private = True
+        datastore_primary_key_type = 'string'
 
     @filterable
     async def query(self, filters, options):

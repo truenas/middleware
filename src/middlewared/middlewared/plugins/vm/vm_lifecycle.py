@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int
+from middlewared.schema import accepts, Bool, Dict, Int, returns
 from middlewared.service import CallError, item_method, job, Service
 from middlewared.utils import osc
 
@@ -9,6 +9,7 @@ class VMService(Service, VMSupervisorMixin):
 
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit', default=False)))
+    @returns()
     async def start(self, id, options):
         """
         Start a VM.
@@ -58,6 +59,7 @@ class VMService(Service, VMSupervisorMixin):
             Bool('force_after_timeout', default=False),
         ),
     )
+    @returns()
     @job(lock=lambda args: f'stop_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
     def stop(self, job, id, options):
         """
@@ -85,6 +87,7 @@ class VMService(Service, VMSupervisorMixin):
 
     @item_method
     @accepts(Int('id'))
+    @returns()
     def poweroff(self, id):
         """
         Poweroff a VM.
@@ -97,6 +100,7 @@ class VMService(Service, VMSupervisorMixin):
 
     @item_method
     @accepts(Int('id'))
+    @returns()
     @job(lock=lambda args: f'restart_vm_{args[0]}')
     def restart(self, job, id):
         """

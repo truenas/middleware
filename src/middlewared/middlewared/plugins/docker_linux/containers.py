@@ -2,6 +2,7 @@ import aiodocker
 
 from middlewared.schema import accepts, Str
 from middlewared.service import CallError, CRUDService, filterable
+from middlewared.utils import filter_list
 
 
 class ContainerService(CRUDService):
@@ -19,7 +20,7 @@ class ContainerService(CRUDService):
                     'id': container.id
                 })
 
-        return containers
+        return filter_list(containers, filters, options)
 
     @accepts(
         Str('container_id'),
