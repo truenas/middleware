@@ -1,6 +1,8 @@
 import asyncio
 import copy
 import functools
+import json
+import textwrap
 from collections import defaultdict
 from datetime import datetime, time, timedelta, timezone
 import errno
@@ -75,8 +77,10 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
-                 validators=None, register=False, hidden=False, editable=True, **kwargs):
+    def __init__(
+        self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
+        validators=None, register=False, hidden=False, editable=True, example=None, **kwargs
+    ):
         self.name = name
         self.has_default = 'default' in kwargs and kwargs['default'] is not NOT_PROVIDED
         self.default = kwargs.pop('default', None)
@@ -91,6 +95,13 @@ class Attribute(object):
         self.hidden = hidden
         self.editable = editable
         self.resolved = False
+        if example:
+            self.description = (description or '') + '\n' + textwrap.dedent(f'''
+            Example(s):
+            ```
+            {json.dumps(example, indent=4)}
+            ```
+            ''')
         # When a field is marked as non-editable, it must specify a default
         if not self.editable and not self.has_default:
             raise Error(self.name, 'Default value must be specified when attribute is marked as non-editable.')
