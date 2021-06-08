@@ -600,7 +600,14 @@ class List(EnumMixin, Attribute):
 
 class Dict(Attribute):
 
-    def __init__(self, name='', *attrs, **kwargs):
+    def __init__(self, *attrs, **kwargs):
+        # TODO: Let's please perhaps have name as a keyword argument when we add support for
+        # optional name argument in accepts decorator
+        if list(attrs) and isinstance(attrs[0], str):
+            name = attrs[0]
+            attrs = list(attrs[1:])
+        else:
+            name = ''
         self.additional_attrs = kwargs.pop('additional_attrs', False)
         self.conditional_defaults = kwargs.pop('conditional_defaults', {})
         self.strict = kwargs.pop('strict', False)
@@ -949,8 +956,9 @@ class Patch(object):
 
 
 class OROperator:
-    def __init__(self, name='', *schemas, **kwargs):
-        self.name = name
+    def __init__(self, *schemas, **kwargs):
+        self.name = kwargs.get('name', '')
+        self.title = kwargs.get('title') or self.name
         self.schemas = list(schemas)
         self.description = kwargs.get('description')
         self.resolved = False
@@ -1096,6 +1104,8 @@ def returns(*schema):
         nf.wraps = f
         for s in list(schema):
             s.name = s.name or f.__name__
+            if hasattr(s, 'title'):
+                s.title = s.title or s.name
         nf.returns = list(schema)
         return nf
     return returns_internal
