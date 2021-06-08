@@ -452,7 +452,6 @@ class ConfigServiceMetabase(ServiceBase):
                         'safe_delete': True,
                     }))
                     patch_entry.patches.append(('attr', {'update': True}))
-                    schema.insert(0, get_datastore_primary_key_schema(klass))
                 klass.do_update = decorator(*schema)(klass.do_update)
 
         return klass

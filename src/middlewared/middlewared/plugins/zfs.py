@@ -890,10 +890,17 @@ class ZFSDatasetService(CRUDService):
         else:
             return data
 
-    def do_delete(self, id, options=None):
-        options = options or {}
-        force = options.get('force', False)
-        recursive = options.get('recursive', False)
+    @accepts(
+        Str('id'),
+        Dict(
+            'options',
+            Bool('force', default=False),
+            Bool('recursive', default=False),
+        )
+    )
+    def do_delete(self, id, options):
+        force = options['force']
+        recursive = options['recursive']
 
         args = []
         if force:
