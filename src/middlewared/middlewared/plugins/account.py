@@ -22,7 +22,7 @@ import stat
 import time
 from pathlib import Path
 
-SKEL_PATH = '/usr/share/skel/'
+SKEL_PATH = '/etc/skel/'
 
 
 def pw_checkname(verrors, attribute, name):
