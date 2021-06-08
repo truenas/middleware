@@ -96,7 +96,7 @@ class DockerImagesService(CRUDService):
             Str('tag', default=None, null=True),
         )
     )
-    @returns(List('pull_result', items=[Dict('pull_result_entry', Str('status'), additional_attrs=True)]))
+    @returns(List(items=[Dict('pull_result_entry', Str('status'), additional_attrs=True)]))
     @job()
     async def pull(self, job, data):
         """

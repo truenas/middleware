@@ -71,7 +71,7 @@ class VMDeviceService(CRUDService):
         return device
 
     @accepts()
-    @returns(Dict('available_interfaces', additional_attrs=True))
+    @returns(Dict(additional_attrs=True))
     def nic_attach_choices(self):
         """
         Available choices for NIC Attach attribute.
@@ -79,7 +79,7 @@ class VMDeviceService(CRUDService):
         return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
 
     @accepts()
-    @returns(Dict('available_ips', additional_attrs=True))
+    @returns(Dict(additional_attrs=True))
     async def bind_choices(self):
         """
         Available choices for Bind attribute.

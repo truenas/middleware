@@ -18,7 +18,7 @@ class VMDeviceService(Service):
         namespace = 'vm.device'
 
     @accepts()
-    @returns(Bool('iommu_enabled'))
+    @returns(Bool())
     async def iommu_enabled(self):
         """
         Returns "true" if iommu is enabled, "false" otherwise
@@ -115,7 +115,7 @@ class VMDeviceService(Service):
         }
 
     @accepts()
-    @returns(List('passthrough_device_choices', items=[Ref('passthrough_device')], register=True))
+    @returns(List(items=[Ref('passthrough_device')], register=True))
     async def passthrough_device_choices(self):
         """
         Available choices for PCI passthru devices.

@@ -29,7 +29,6 @@ class ChartReleaseService(Service):
 
     @accepts(Str('release_name'))
     @returns(Dict(
-        'pod_console_choices',
         additional_attrs=True,
         example={'plex-d4559844b-zcgq9': ['plex']},
     ))
@@ -44,7 +43,6 @@ class ChartReleaseService(Service):
 
     @accepts(Str('release_name'))
     @returns(Dict(
-        'pod_log_choices',
         additional_attrs=True,
         example={'plex-d4559844b-zcgq9': ['plex']},
     ))
@@ -100,7 +98,7 @@ class ChartReleaseService(Service):
         job.pipes.output.w.write((logs or '').encode())
 
     @accepts()
-    @returns(Dict('nic_choices', additional_attrs=True))
+    @returns(Dict(additional_attrs=True))
     async def nic_choices(self):
         """
         Available choices for NIC which can be added to a pod in a chart release.
@@ -108,7 +106,7 @@ class ChartReleaseService(Service):
         return await self.middleware.call('interface.choices')
 
     @accepts()
-    @returns(List('used_ports', items=[Int('used_port')]))
+    @returns(List(items=[Int('used_port')]))
     async def used_ports(self):
         """
         Returns ports in use by applications.
@@ -120,7 +118,7 @@ class ChartReleaseService(Service):
         })))
 
     @accepts()
-    @returns(List('certificate_choices', items=[Ref('certificate_entry')]))
+    @returns(List(items=[Ref('certificate_entry')]))
     async def certificate_choices(self):
         """
         Returns certificates which can be used by applications.
@@ -130,7 +128,7 @@ class ChartReleaseService(Service):
         )
 
     @accepts()
-    @returns(List('certificate_authority_choices', items=[Ref('certificateauthority_entry')]))
+    @returns(List(items=[Ref('certificateauthority_entry')]))
     async def certificate_authority_choices(self):
         """
         Returns certificate authorities which can be used by applications.

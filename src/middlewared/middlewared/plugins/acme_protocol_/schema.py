@@ -15,7 +15,6 @@ class DNSAuthenticatorService(Service):
 
     @accepts()
     @returns(List(
-        'authenticator_schemas',
         title='Authenticator Schemas',
         items=[Dict(
             'schema_entry',

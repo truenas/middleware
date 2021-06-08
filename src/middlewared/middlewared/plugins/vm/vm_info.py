@@ -11,7 +11,7 @@ from .devices import NIC, DISPLAY
 class VMService(Service):
 
     @accepts(Int('id'))
-    @returns(List('display_devices', items=[Ref('vm_device_entry')]))
+    @returns(List(items=[Ref('vm_device_entry')]))
     async def get_display_devices(self, id):
         """
         Get the display devices from a given guest. If a display device has password configured,
@@ -180,7 +180,6 @@ class VMService(Service):
 
     @accepts()
     @returns(Dict(
-        'resolution_choices',
         *[Str(r, enum=[r]) for r in DISPLAY.RESOLUTION_ENUM]
     ))
     async def resolution_choices(self):
