@@ -228,10 +228,10 @@ def filterable(fn):
 def filterable_returns(schema):
     def filterable_internal(fn):
         return returns(OROperator(
-            'filterable_result',
             Int('count'),
             schema,
             List('query_result', items=[schema]),
+            name='filterable_result',
         ))(fn)
     return filterable_internal
 
@@ -569,11 +569,11 @@ class CRUDServiceMetabase(ServiceBase):
 
         query_method = klass.query.wraps if hasattr(klass.query, 'returns') else klass.query
         klass.query = returns(OROperator(
-            'query_result',
             Int('count'),
             query_result_entry,
             List('query_result', items=[copy.deepcopy(query_result_entry)]),
             result_entry,
+            name='query_result',
         ))(query_method)
 
         for m_name in filter(lambda m: hasattr(klass, m), ('do_create', 'do_update')):

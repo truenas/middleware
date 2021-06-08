@@ -9,7 +9,6 @@ class DeviceService(Service):
 
     @accepts(Str('type', enum=['SERIAL', 'DISK', 'GPU']))
     @returns(OROperator(
-        'device_info',
         List('serial_info', items=[Dict(
             'serial_info',
             Str('name', required=True),
@@ -40,6 +39,7 @@ class DeviceService(Service):
         ),
         ]),
         Dict('disk_info', additional_attrs=True),
+        name='device_info',
     ))
     async def get_info(self, _type):
         """
