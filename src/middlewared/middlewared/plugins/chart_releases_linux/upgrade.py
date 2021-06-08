@@ -25,7 +25,6 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'upgrade_options',
-            Bool('update_container_images', default=True),
             Dict('values', additional_attrs=True),
             Str('item_version', default='latest'),
         )
@@ -37,9 +36,7 @@ class ChartReleaseService(Service):
 
         `upgrade_options.item_version` specifies to which item version chart release should be upgraded to.
 
-        System will update container images being used by `release_name` chart release. This can be controlled
-        right now by `upgrade_options.update_container_images` option but this is deprecated and will be removed
-        in the future where system will always update container images in use by a chart release as a chart release
+        System will update container images being used by `release_name` chart release as a chart release
         upgrade is not considered complete until the images in use have also been updated to latest versions.
 
         During upgrade, `upgrade_options.values` can be specified to apply configuration changes for configuration
@@ -55,15 +52,12 @@ class ChartReleaseService(Service):
 
         # We need to update container images before upgrading chart version as it's possible that the chart version
         # in question needs newer image hashes.
-        if options['update_container_images']:
-            # TODO: Always do this in the future
-            job.set_progress(10, 'Updating container images')
-            await (
-                await self.middleware.call('chart.release.pull_container_images', release_name, {'redeploy': False})
-            ).wait(raise_error=True)
-            job.set_progress(30, 'Updated container images')
+        job.set_progress(10, 'Updating container images')
+        await (
+            await self.middleware.call('chart.release.pull_container_images', release_name, {'redeploy': False})
+        ).wait(raise_error=True)
+        job.set_progress(30, 'Updated container images')
 
-        job.set_progress(40, 'Created snapshot for upgrade')
         # If a snapshot of the volumes already exist with the same name in case of a failed upgrade, we will remove
         # it as we want the current point in time being reflected in the snapshot
         # TODO: Remove volumes/ix_volumes check in next release as we are going to do a recursive snapshot
@@ -79,6 +73,7 @@ class ChartReleaseService(Service):
                 'dataset': os.path.join(release['dataset'], 'volumes'), 'name': release['version'], 'recursive': True
             }
         )
+        job.set_progress(40, 'Created snapshot for upgrade')
 
         if release['update_available']:
             await self.upgrade_chart_release(job, release, options)
