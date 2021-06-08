@@ -78,7 +78,7 @@ class EnumMixin(object):
 class Attribute(object):
 
     def __init__(
-        self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
+        self, name='', title=None, description=None, required=False, null=False, empty=True, private=False,
         validators=None, register=False, hidden=False, editable=True, example=None, **kwargs
     ):
         self.name = name
@@ -427,6 +427,7 @@ class Datetime(Str):
     def validate(self, value):
         return super().validate(str(value))
 
+
 class UnixPerm(Str):
 
     def validate(self, value):
@@ -599,7 +600,7 @@ class List(EnumMixin, Attribute):
 
 class Dict(Attribute):
 
-    def __init__(self, name, *attrs, **kwargs):
+    def __init__(self, name='', *attrs, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
         self.conditional_defaults = kwargs.pop('conditional_defaults', {})
         self.strict = kwargs.pop('strict', False)
@@ -768,7 +769,7 @@ class Cron(Dict):
 
     FIELDS = ['minute', 'hour', 'dom', 'month', 'dow']
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name='', **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
         exclude = kwargs.pop('exclude', [])
         defaults = kwargs.pop('defaults', {})
@@ -948,7 +949,7 @@ class Patch(object):
 
 
 class OROperator:
-    def __init__(self, name, *schemas, **kwargs):
+    def __init__(self, name='', *schemas, **kwargs):
         self.name = name
         self.schemas = list(schemas)
         self.description = kwargs.get('description')
@@ -1093,6 +1094,8 @@ def returns(*schema):
         from middlewared.utils.type import copy_function_metadata
         copy_function_metadata(f, nf)
         nf.wraps = f
+        for s in list(schema):
+            s.name = s.name or f.__name__
         nf.returns = list(schema)
         return nf
     return returns_internal
