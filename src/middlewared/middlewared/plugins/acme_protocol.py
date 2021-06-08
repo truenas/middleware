@@ -248,13 +248,6 @@ class DNSAuthenticatorService(CRUDService):
 
         verrors.check()
 
-    @accepts(
-        Patch(
-            'acme_dns_authenticator_entry',
-            'dns_authenticator_create',
-            ('rm', {'name': 'id'}),
-        )
-    )
     async def do_create(self, data):
         """
         Create a DNS Authenticator
@@ -341,9 +334,6 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(
-        Int('id', required=True)
-    )
     async def do_delete(self, id):
         """
         Delete DNS Authenticator of `id`
