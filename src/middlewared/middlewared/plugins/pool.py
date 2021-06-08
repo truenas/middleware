@@ -3033,6 +3033,8 @@ class PoolDatasetService(CRUDService):
 
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
+            data['acltype'] = 'NFSV4'
+            data['aclmode'] = 'RESTRICTED'
 
         if parent_ds['locked']:
             verrors.add(
