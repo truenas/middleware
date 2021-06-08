@@ -522,6 +522,7 @@ def main():
     parser.add_argument('-u', '--uri')
     parser.add_argument('-U', '--username')
     parser.add_argument('-P', '--password')
+    parser.add_argument('-K', '--api-key')
     parser.add_argument('-t', '--timeout', type=int)
 
     subparsers = parser.add_subparsers(help='sub-command help', dest='name')
@@ -560,6 +561,9 @@ def main():
                     if args.username and args.password:
                         if not c.call('auth.login', args.username, args.password):
                             raise ValueError('Invalid username or password')
+                    elif args.api_key:
+                        if not c.call('auth.login_with_api_key', args.api_key):
+                            raise ValueError('Invalid API key')
                 except Exception as e:
                     print("Failed to login: ", e)
                     sys.exit(0)

@@ -33,7 +33,7 @@ def GET(testpath, payload=None, controller_a=False, **optional):
             auth = None
         else:
             auth = authentication
-        getit = requests.get(f'{url}{testpath}', headers=header,
+        getit = requests.get(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
                              auth=auth, data=json.dumps(data))
     return getit
 
@@ -46,10 +46,10 @@ def POST(testpath, payload=None, controller_a=False, **optional):
     else:
         auth = authentication
     if payload is None:
-        postit = requests.post(f'{url}{testpath}', headers=header,
+        postit = requests.post(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
                                auth=auth)
     else:
-        postit = requests.post(f'{url}{testpath}', headers=header,
+        postit = requests.post(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
                                auth=auth, data=json.dumps(data))
     return postit
 
@@ -61,7 +61,7 @@ def PUT(testpath, payload=None, controller_a=False, **optional):
         auth = None
     else:
         auth = authentication
-    putit = requests.put(f'{url}{testpath}', headers=header,
+    putit = requests.put(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
                          auth=auth, data=json.dumps(data))
     return putit
 
@@ -73,7 +73,7 @@ def DELETE(testpath, payload=None, controller_a=False, **optional):
         auth = None
     else:
         auth = authentication
-    deleteit = requests.delete(f'{url}{testpath}', headers=header,
+    deleteit = requests.delete(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
                                auth=auth,
                                data=json.dumps(data))
     return deleteit

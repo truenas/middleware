@@ -4,7 +4,7 @@ import string
 
 from passlib.hash import pbkdf2_sha256
 
-from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Patch
 from middlewared.service import CRUDService, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -17,6 +17,15 @@ class APIKeyModel(sa.Model):
     name = sa.Column(sa.String(200))
     key = sa.Column(sa.Text())
     created_at = sa.Column(sa.DateTime())
+    allowlist = sa.Column(sa.JSON(type=list))
+
+
+class ApiKey:
+    def __init__(self, api_key):
+        self.api_key = api_key
+
+    def authorize(self, method, resource):
+        return not self.api_key["allowlist"] or {"method": method, "resource": resource} in self.api_key["allowlist"]
 
 
 class ApiKeyService(CRUDService):
@@ -36,7 +45,14 @@ class ApiKeyService(CRUDService):
         Dict(
             "api_key_create",
             Str("name", required=True, empty=False),
-            register=True
+            List("allowlist", items=[
+                Dict(
+                    "allowlist_item",
+                    Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE"]),
+                    Str("resource", required=True),
+                ),
+            ]),
+            register=True,
         )
     )
     async def do_create(self, data):
@@ -130,7 +146,7 @@ class ApiKeyService(CRUDService):
         if not pbkdf2_sha256.verify(key, db_key["key"]):
             return None
 
-        return db_key
+        return ApiKey(db_key)
 
     async def _validate(self, schema_name, data, id=None):
         verrors = ValidationErrors()
