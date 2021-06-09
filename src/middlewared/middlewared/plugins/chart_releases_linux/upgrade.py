@@ -22,8 +22,8 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def scale_down_workloads_before_snapshot(self, release):
-        resources = {r.value: {} for r in SCALEABLE_RESOURCES}
+    async def scale_down_workloads_before_snapshot(self, job, release):
+        resources = []
         pod_mapping = await self.middleware.call('chart.release.get_workload_to_pod_mapping', release['namespace'])
         pods_to_watch_for = []
         for resource in SCALEABLE_RESOURCES:
@@ -34,14 +34,24 @@ class ChartReleaseService(Service):
                     ['metadata.namespace', '=', release['namespace']],
                 ]
             ):
-                workload['replicas'] = 0
-                resources[resource.value][workload['metadata']['name']] = workload
+                resources.append({
+                    'replica_count': 0,
+                    'type': resource.name,
+                    'name': workload['metadata']['name'],
+                })
                 pods_to_watch_for.extend(pod_mapping[workload['metadata']['uid']])
 
-        # Now we have list of scaleable workloads which should be scaled down, we would like to now get the
-        # list of pods which are attached to these workloads and once they are no more, we can safely say it's
-        # been scaled down successfully and no one is consuming it anymore
-        return pods_to_watch_for
+        if not resources:
+            return
+
+        job.set_progress(35, f'Scaling down {", ".join([r["name"] for r in resources])} workload(s)')
+        await self.middleware.call('chart.release.scale_workloads', release['id'], resources)
+        await self.middleware.call(
+            'chart.release.wait_for_pods_to_terminate', release['namespace'], [
+                ['metadata.name', 'in', pods_to_watch_for],
+            ]
+        )
+        job.set_progress(40, 'Successfully scaled down workload(s)')
 
     @accepts(
         Str('release_name'),
@@ -80,6 +90,8 @@ class ChartReleaseService(Service):
         ).wait(raise_error=True)
         job.set_progress(30, 'Updated container images')
 
+        await self.scale_down_workloads_before_snapshot(job, release)
+
         # If a snapshot of the volumes already exist with the same name in case of a failed upgrade, we will remove
         # it as we want the current point in time being reflected in the snapshot
         # TODO: Remove volumes/ix_volumes check in next release as we are going to do a recursive snapshot
@@ -95,7 +107,7 @@ class ChartReleaseService(Service):
                 'dataset': os.path.join(release['dataset'], 'volumes'), 'name': release['version'], 'recursive': True
             }
         )
-        job.set_progress(40, 'Created snapshot for upgrade')
+        job.set_progress(50, 'Created snapshot for upgrade')
 
         if release['update_available']:
             await self.upgrade_chart_release(job, release, options)
