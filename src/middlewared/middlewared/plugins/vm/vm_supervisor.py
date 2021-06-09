@@ -24,14 +24,15 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
         self.vms[new['name']] = vm
 
     def _clear(self):
-        self.vms = {}
+        VMSupervisorMixin.vms = {}
 
     def _vm_from_name(self, vm_name):
         return self.middleware.call_sync('vm.query', [['name', '=', vm_name]], {'get': True})
 
     def _undefine_domain(self, vm_name):
-        if self._has_domain(vm_name):
-            self.vms.pop(vm_name).undefine_domain()
+        domain = self.vms.pop(vm_name, None)
+        if domain and domain.domain:
+            domain.undefine_domain()
         else:
             VMSupervisor(self._vm_from_name(vm_name), self.middleware).undefine_domain()
 
