@@ -569,9 +569,9 @@ class CRUDServiceMetabase(ServiceBase):
 
         query_method = klass.query.wraps if hasattr(klass.query, 'returns') else klass.query
         klass.query = returns(OROperator(
-            Int('count'),
-            query_result_entry,
             List('query_result', items=[copy.deepcopy(query_result_entry)]),
+            query_result_entry,
+            Int('count'),
             result_entry,
             name='query_result',
         ))(query_method)

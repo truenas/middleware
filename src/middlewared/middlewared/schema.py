@@ -420,7 +420,7 @@ class Datetime(Str):
         if value is None:
             return value
         try:
-            return datetime.fromtimestamp(value / 1000, tz=timezone.utc) + timedelta(milliseconds=value % 1000)
+            return datetime.fromtimestamp(float(value), tz=timezone.utc)
         except (TypeError, ValueError):
             raise ValueError('Invalid datetime specified')
 
@@ -989,6 +989,8 @@ class OROperator:
         for attr in self.schemas:
             try:
                 attr.validate(value)
+            except TypeError:
+                pass
             except ValidationErrors as e:
                 attr_verrors.extend(e)
             else:
