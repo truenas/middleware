@@ -33,7 +33,7 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
         if self._has_domain(vm_name):
             self.vms.pop(vm_name).undefine_domain()
         else:
-            VMSupervisor(self._vm_from_name(vm_name)).undefine_domain()
+            VMSupervisor(self._vm_from_name(vm_name), self.middleware).undefine_domain()
 
     def _check_add_domain(self, vm_name):
         if not self._has_domain(vm_name):
