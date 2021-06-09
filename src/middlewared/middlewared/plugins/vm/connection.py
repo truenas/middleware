@@ -24,7 +24,7 @@ class LibvirtConnectionMixin:
         except libvirt.libvirtError as e:
             raise CallError(f'Failed to close libvirt connection: {e}')
         else:
-            self.LIBVIRT_CONNECTION = None
+            LibvirtConnectionMixin.LIBVIRT_CONNECTION = None
 
     def _is_connection_alive(self):
         with contextlib.suppress(libvirt.libvirtError):
