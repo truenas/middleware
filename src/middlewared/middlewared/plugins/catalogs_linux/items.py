@@ -92,7 +92,7 @@ class CatalogService(Service):
             }
         )
 
-        if all_trains:
+        if all_trains and options['retrieve_versions']:
             # We will only update cache if we are retrieving data of all trains for a catalog
             # which happens when we sync catalog(s) periodically or manually
             self.middleware.call_sync('cache.put', f'catalog_{label}_train_details', trains, 86400)
