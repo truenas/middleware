@@ -6,7 +6,7 @@ import shutil
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, List, Str, ValidationErrors
-from middlewared.service import accepts, CallError, CRUDService, private
+from middlewared.service import accepts, CallError, CRUDService, job, private
 from middlewared.validators import Match
 
 from .utils import convert_repository_to_path
@@ -110,7 +110,8 @@ class CatalogService(CRUDService):
             register=True,
         )
     )
-    async def do_create(self, data):
+    @job(lock=lambda args: f'catalog_create_{args[0]["label"]}')
+    async def do_create(self, job, data):
         """
         `catalog_create.preferred_trains` specifies trains which will be displayed in the UI directly for a user.
         """
@@ -133,6 +134,7 @@ class CatalogService(CRUDService):
             data['preferred_trains'] = ['charts']
 
         if not data.pop('force'):
+            job.set_progress(40, f'Validating {data["label"]!r} catalog')
             # We will validate the catalog now to ensure it's valid wrt contents / format
             path = os.path.join(
                 TMP_IX_APPS_DIR, 'validate_catalogs', convert_repository_to_path(data['repository'], data['branch'])
@@ -147,12 +149,18 @@ class CatalogService(CRUDService):
                 verrors.add('catalog_create.label', f'Failed to validate catalog: {e}')
             finally:
                 await self.middleware.run_in_thread(shutil.rmtree, path, ignore_errors=True)
+        else:
+            job.set_progress(50, 'Skipping validation of catalog')
 
         verrors.check()
+
+        job.set_progress(60, 'Completed Validation')
 
         await self.middleware.call('datastore.insert', self._config.datastore, data)
 
         asyncio.ensure_future(self.middleware.call('catalog.sync', data['label']))
+
+        job.set_progress(100, f'Successfully added {data["label"]!r} catalog')
 
         return await self.get_instance(data['label'])
 
