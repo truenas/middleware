@@ -99,7 +99,7 @@ class Attribute(object):
             self.description = (description or '') + '\n' + textwrap.dedent(f'''
             Example(s):
             ```
-            {json.dumps(example, indent=4)}
+            ''') + json.dumps(example, indent=4) + textwrap.dedent('''
             ```
             ''')
         # When a field is marked as non-editable, it must specify a default
