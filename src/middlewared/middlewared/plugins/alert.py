@@ -25,7 +25,7 @@ from middlewared.alert.base import (
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
 from middlewared.client.client import ReserveFDException
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Patch, returns, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Patch, returns, Ref, Str, Text
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -328,9 +328,9 @@ class AlertService(Service):
         Str('uuid'),
         Str('source'),
         Str('klass'),
-        Any('args'),
+        Any('args', null=True),
         Str('node'),
-        Str('key'),
+        Text('key', null=True),
         Datetime('datetime'),
         Datetime('last_occurrence'),
         Bool('dismissed'),
@@ -338,7 +338,7 @@ class AlertService(Service):
         Str('text'),
         Str('id'),
         Str('level'),
-        Str('formatted', null=True),
+        Text('formatted', null=True),
         Bool('one_shot'),
     )]))
     async def list(self):
@@ -826,16 +826,9 @@ class AlertService(Service):
         if not issubclass(klass, OneShotAlertClass):
             raise CallError(f"Alert class {klass!r} is not a one-shot alert class")
 
-        alert = await klass(self.middleware).create(args)
+        alert = await self._oneshot_create(klass, args)
         if alert is None:
             return
-
-        alert.source = ""
-        alert.klass = alert.klass
-
-        alert.node = self.node
-
-        self.__handle_alert(alert)
 
         self.alerts = [a for a in self.alerts if a.uuid != alert.uuid] + [alert]
 
@@ -864,6 +857,44 @@ class AlertService(Service):
 
         if deleted:
             await self.middleware.call("alert.send_alerts")
+
+    @private
+    @accepts(Str("klass"), List("alerts_args", items=[Any("args", null=True)]))
+    @job(lock="process_alerts", transient=True)
+    async def oneshot_replace(self, job, klass, alerts_args):
+        try:
+            klass = AlertClass.class_by_name[klass]
+        except KeyError:
+            raise CallError(f"Invalid alert class: {klass!r}")
+
+        if not issubclass(klass, OneShotAlertClass):
+            raise CallError(f"Alert class {klass!r} is not a one-shot alert class")
+
+        uuids = set()
+        for args in alerts_args:
+            alert = await self._oneshot_create(klass, args)
+            if alert is None:
+                continue
+
+            self.alerts = [a for a in self.alerts if a.uuid != alert.uuid] + [alert]
+            uuids.add(alert.uuid)
+
+        self.alerts = [a for a in self.alerts if a.klass == klass and a.uuid not in uuids]
+
+        await self.middleware.call("alert.send_alerts")
+
+    async def _oneshot_create(self, klass, args):
+        alert = await klass(self.middleware).create(args)
+        if alert is None:
+            return
+
+        alert.source = ""
+
+        alert.node = self.node
+
+        self.__handle_alert(alert)
+
+        return alert
 
     @private
     def alert_source_clear_run(self, name):

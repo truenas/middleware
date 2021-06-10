@@ -244,11 +244,17 @@ class Str(EnumMixin, Attribute):
         verrors = ValidationErrors()
 
         if value and len(str(value)) > self.max_length:
-            verrors.add(self.name, f'Value greater than {self.max_length} not allowed')
+            verrors.add(self.name, f'Value with more than {self.max_length} characters is not allowed')
 
         verrors.check()
 
         return super().validate(value)
+
+
+class Text(Str):
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = None
+        super().__init__(*args, **kwargs)
 
 
 class Path(Str):
