@@ -334,7 +334,7 @@ def test_31_set_custom_catalog_for_testing_update():
     job_id = results.json()
     job_status = wait_on_job(job_id, 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = job_status['result']
+    results = job_status['results']['result']
     assert isinstance(results, dict), results.text
     # the sleep is needed or /catalog/items is not ready on time.
     time.sleep(5)

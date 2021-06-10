@@ -113,7 +113,7 @@ def test_09_set_truechart_catalog():
     job_id = results.json()
     job_status = wait_on_job(job_id, 300)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = job_status['result']
+    results = job_status['results']['result']
     assert isinstance(results, dict), results.text
 
 
