@@ -3,6 +3,8 @@ import os
 from middlewared.service import Service
 from middlewared.utils import run
 
+from copy import deepcopy
+
 
 GPU_CONFIG = {
     'NVIDIA': {
