@@ -110,12 +110,16 @@ def test_09_set_truechart_catalog():
     }
     results = POST('/catalog/', payload)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['result']
+    assert isinstance(results, dict), results.text
 
 
 @pytest.mark.parametrize('key', list(truechart_catalog.keys()))
 def test_10_verify_truechart_catalog_object(key):
-    assert results.json()[key] == truechart_catalog[key], results.text
+    assert results[key] == truechart_catalog[key], results.text
 
 
 @pytest.mark.parametrize('key', list(truechart_catalog.keys()))

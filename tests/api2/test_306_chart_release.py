@@ -331,14 +331,18 @@ def test_31_set_custom_catalog_for_testing_update():
     }
     results = POST('/catalog/', payload)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['result']
+    assert isinstance(results, dict), results.text
     # the sleep is needed or /catalog/items is not ready on time.
     time.sleep(5)
 
 
 @pytest.mark.parametrize('key', list(updatechart_catalog.keys()))
 def test_32_verify_updatechart_catalog_object(key):
-    assert results.json()[key] == updatechart_catalog[key], results.text
+    assert results[key] == updatechart_catalog[key], results.text
 
 
 def test_33_verify_updatechart_is_in_catalog_list():
