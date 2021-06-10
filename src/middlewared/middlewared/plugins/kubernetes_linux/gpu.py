@@ -105,15 +105,19 @@ class KubernetesGPUService(Service):
             # Let's not make this fatal as k8s can function well without GPU
             self.logger.error('Unable to configure GPU for node: %s', e)
 
-    async def setup_internal(self):
+    async def get_system_gpus(self):
         gpus = await self.middleware.call('device.get_info', 'GPU')
+        supported_gpus = {'NVIDIA', 'INTEL'}
+        return supported_gpus.intersection(set([gpu['vendor'] for gpu in gpus if gpu['available_to_host']]))
+
+    async def setup_internal(self):
         to_remove = set(GPU_CONFIG.keys())
         daemonsets = {
             f'{d["metadata"]["namespace"]}_{d["metadata"]["name"]}': d
             for d in await self.middleware.call('k8s.daemonset.query')
         }
-        supported_gpus = {'NVIDIA', 'INTEL'}
-        found_gpus = supported_gpus.intersection(set([gpu['vendor'] for gpu in gpus if gpu['available_to_host']]))
+        k8s_config = await self.middleware.call('kubernetes.config')
+        found_gpus = await self.get_system_gpus() if k8s_config['configure_gpus'] else set()
         if found_gpus:
             to_remove = to_remove - found_gpus
             for gpu in found_gpus:

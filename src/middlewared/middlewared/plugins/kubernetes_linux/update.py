@@ -36,6 +36,7 @@ class KubernetesService(ConfigService):
 
     ENTRY = Dict(
         'kubernetes_entry',
+        Bool('configure_gpus', required=True),
         Str('pool', required=True, null=True),
         IPAddr('cluster_cidr', required=True, cidr=True, empty=True),
         IPAddr('service_cidr', required=True, cidr=True, empty=True),
@@ -187,7 +188,6 @@ class KubernetesService(ConfigService):
     @accepts(
         Patch(
             'kubernetes_entry', 'kubernetes_update',
-            ('add', Bool('configure_gpus')),
             ('add', Bool('migrate_applications')),
             ('rm', {'name': 'id'}),
             ('rm', {'name': 'dataset'}),
