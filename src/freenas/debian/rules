@@ -7,6 +7,7 @@
 override_dh_auto_install:
 	sh -c "\
 		mkdir -p debian/truenas-files/etc; \
+		cp -a lib debian/truenas-files/; \
 		cp -a usr debian/truenas-files/; \
 		rm -rf debian/truenas-files/usr/local/bin.freebsd/; \
 		rm -rf debian/truenas-files/usr/local/sbin.freebsd/; \
