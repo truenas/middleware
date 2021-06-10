@@ -24,6 +24,7 @@ class KubernetesModel(sa.Model):
     route_v6_gateway = sa.Column(sa.String(128), nullable=True)
     node_ip = sa.Column(sa.String(128), default='0.0.0.0')
     cni_config = sa.Column(sa.JSON(type=dict), default={})
+    configure_gpus = sa.Column(sa.Boolean(), default=True, nullable=False)
 
 
 class KubernetesService(ConfigService):
@@ -186,6 +187,7 @@ class KubernetesService(ConfigService):
     @accepts(
         Patch(
             'kubernetes_entry', 'kubernetes_update',
+            ('add', Bool('configure_gpus')),
             ('add', Bool('migrate_applications')),
             ('rm', {'name': 'id'}),
             ('rm', {'name': 'dataset'}),
