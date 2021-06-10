@@ -460,6 +460,7 @@ class SharingSMBService(Service):
             conf['fruit:resource'] = 'file'
             conf['streams_xattr:prefix'] = 'user.'
             conf['streams_xattr:store_stream_type'] = 'no'
+            conf['streams_xattr:xattr_compat'] = 'true'
 
         if data['recyclebin']:
             conf.update({
