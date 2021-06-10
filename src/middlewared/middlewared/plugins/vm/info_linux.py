@@ -1,8 +1,7 @@
 import os
 import re
 import subprocess
-
-from lxml import etree
+from xml.etree import ElementTree as etree
 
 from middlewared.schema import Bool, Dict, Int, returns, Str
 from middlewared.service import accepts, Service
@@ -110,7 +109,7 @@ class VMService(Service):
         with open(os.path.join(base_path, 'index.xml'), 'r') as f:
             index_xml = etree.fromstring(f.read().strip())
 
-        for arch in filter(lambda a: a.tag == 'arch' and a.get('name'), index_xml.getchildren()):
+        for arch in filter(lambda a: a.tag == 'arch' and a.get('name'), list(index_xml)):
             cp = subprocess.Popen(
                 get_virsh_command_args() + ['cpu-models', arch.get('name') if arch.get('name') != 'x86' else 'x86_64'],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
