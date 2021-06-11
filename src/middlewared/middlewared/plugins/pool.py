@@ -3216,6 +3216,7 @@ class PoolDatasetService(CRUDService):
 
         properties_definitions = (
             ('aclmode', None, str.lower, True),
+            ('acltype', None, str.lower, True),
             ('atime', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
             ('sync', None, str.lower, True),
