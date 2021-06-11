@@ -300,6 +300,7 @@ class PoolService(CRUDService):
         Returns all available datasets, except the following:
             1. system datasets
             2. glusterfs datasets
+            3. application(s) internal datasets
 
         .. examples(websocket)::
 
@@ -328,11 +329,9 @@ class PoolService(CRUDService):
             y['name'] for y in await self.middleware.call(
                 'zfs.dataset.query',
                 [
-                    ('name', 'rnin', '.glusterfs'),
-                    ('name', 'rnin', '.system'),
                     ('pool', 'in', vol_names),
                     ('type', 'in', types),
-                ],
+                ] + await self.middleware.call('pool.dataset.internal_datasets_filters'),
                 {'extra': {'retrieve_properties': False}, 'order_by': ['name']},
             )
         ]
