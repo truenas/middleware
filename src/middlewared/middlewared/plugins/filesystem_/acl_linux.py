@@ -501,6 +501,7 @@ class FilesystemService(Service, ACLBase):
                                 f'{setacl.stderr.decode()}')
 
         if not recursive:
+            os.chown(path, uid, gid)
             job.set_progress(100, 'Finished setting POSIX1e ACL.')
             return
 
