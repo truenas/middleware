@@ -5,6 +5,7 @@ from middlewared.service import accepts, job, private, SharingService, SystemSer
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
+from pathlib import Path
 
 import asyncio
 import codecs
@@ -839,6 +840,7 @@ class SharingSMBService(SharingService):
 
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
+        await self.legacy_afp_check(data, 'sharingsmb_create', verrors)
 
         verrors.check()
 
@@ -905,6 +907,7 @@ class SharingSMBService(SharingService):
         new['vuid'] = await self.generate_vuid(new['timemachine'], new['vuid'])
         await self.clean(new, 'sharingsmb_update', verrors, id=id)
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
+        await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
 
         verrors.check()
 
@@ -1072,6 +1075,28 @@ class SharingSMBService(SharingService):
         else:
             return await super().query(filters, options)
         return result
+
+    @private
+    async def legacy_afp_check(self, data, schema, verrors):
+        to_check = Path(data['path']).resolve(strict=True)
+        legacy_afp = await self.query([
+            ("afp", "=", True),
+            ("enabled", "=", True),
+            ("id", "!=", data.get("id"))
+        ])
+        for share in legacy_afp:
+            if share['afp'] == data['afp']:
+                continue
+            s = Path(share['path']).resolve(strict=(not share['locked']))
+            if s.is_relative_to(to_check) or to_check.is_relative_to(s):
+                verrors.add(
+                    f"{schema}.afp",
+                    "Compatibility settings for legacy AFP shares (paths that once hosted "
+                    "AFP shares that have been converted to SMB shares) must be "
+                    "consistent with the legacy AFP compatibility settings of any existing SMB "
+                    f"share that exports the same paths. The new share [{data['name']}] conflicts "
+                    f"with share [{share['name']}] on path [{share['path']}]."
+                )
 
     @private
     async def check_aapl(self, data):
