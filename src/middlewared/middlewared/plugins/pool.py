@@ -4211,6 +4211,26 @@ class PoolScrubService(CRUDService):
         namespace = 'pool.scrub'
         cli_namespace = 'storage.scrub'
 
+    ENTRY = Dict(
+        'pool_scrub_entry',
+        Int('pool', validators=[Range(min=1)], required=True),
+        Int('threshold', validators=[Range(min=0)], required=True),
+        Str('description', required=True),
+        Cron(
+            'schedule',
+            defaults={
+                'minute': '00',
+                'hour': '00',
+                'dow': '7'
+            },
+            required=True,
+        ),
+        Bool('enabled', default=True, required=True),
+        Int('id', required=True),
+        Str('pool_name', required=True),
+        register=True
+    )
+
     @private
     async def pool_scrub_extend(self, data):
         pool = data.pop('volume')
@@ -4254,21 +4274,13 @@ class PoolScrubService(CRUDService):
         return verrors, data
 
     @accepts(
-        Dict(
-            'pool_scrub_create',
-            Int('pool', validators=[Range(min=1)], required=True),
-            Int('threshold', validators=[Range(min=0)]),
-            Str('description'),
-            Cron(
-                'schedule',
-                defaults={
-                    'minute': '00',
-                    'hour': '00',
-                    'dow': '7'
-                }
-            ),
-            Bool('enabled', default=True),
-            register=True
+        Patch(
+            'pool_scrub_entry', 'pool_scrub_entry',
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'pool_name'}),
+            ('edit', {'name': 'threshold', 'method': lambda x: setattr(x, 'required', False)}),
+            ('edit', {'name': 'schedule', 'method': lambda x: setattr(x, 'required', False)}),
+            ('edit', {'name': 'description', 'method': lambda x: setattr(x, 'required', False)}),
         )
     )
     async def do_create(self, data):
@@ -4315,12 +4327,8 @@ class PoolScrubService(CRUDService):
 
         await self.middleware.call('service.restart', 'cron')
 
-        return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
+        return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id', validators=[Range(min=1)]),
-        Patch('pool_scrub_create', 'pool_scrub_update', ('attr', {'update': True}))
-    )
     async def do_update(self, id, data):
         """
         Update scrub task of `id`.
@@ -4370,6 +4378,7 @@ class PoolScrubService(CRUDService):
         return response
 
     @accepts(Str('name'), Int('threshold', default=35))
+    @returns()
     async def run(self, name, threshold):
         """
         Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.
