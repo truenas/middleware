@@ -38,7 +38,7 @@ RE_CHECKS = re.compile(r"Checks:\s*(?P<checks>[0-9 /]+)(, (?P<progress>[0-9]+)%)
 
 REMOTES = {}
 
-OAUTH_URL = "https://freenas.org/oauth"
+OAUTH_URL = "https://www.truenas.com/oauth"
 
 RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
 
