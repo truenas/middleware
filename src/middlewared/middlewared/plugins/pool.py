@@ -265,6 +265,62 @@ class PoolService(CRUDService):
         event_send = False
         cli_namespace = 'storage.pool'
 
+    ENTRY = Dict(
+        'pool_entry',
+        Int('id', required=True),
+        Str('name', required=True),
+        Str('guid', required=True),
+        Int('encrypt', required=True),
+        Str('encryptkey', required=True),
+        Str('encryptkey_path', null=True, required=True),
+        Bool('is_decrypted', required=True),
+        Str('status', required=True),
+        Str('path', required=True),
+        Dict(
+            'scan',
+            additional_attrs=True,
+            required=True,
+            null=True,
+            example={
+                'function': None,
+                'state': None,
+                'start_time': None,
+                'end_time': None,
+                'percentage': None,
+                'bytes_to_process': None,
+                'bytes_processed': None,
+                'bytes_issued': None,
+                'pause': None,
+                'errors': None,
+                'total_secs_left': None,
+            }
+        ),
+        Bool('healthy', required=True),
+        Str('status_detail', required=True, null=True),
+        Dict(
+            'autotrim',
+            required=True,
+            additional_attrs=True,
+            example={
+                'parsed': 'off',
+                'rawvalue': 'off',
+                'source': 'DEFAULT',
+                'value': 'off',
+            }
+        ),
+        Dict(
+            'topology',
+            List('data', required=True),
+            List('log', required=True),
+            List('cache', required=True),
+            List('spare', required=True),
+            List('special', required=True),
+            List('dedup', required=True),
+            required=True,
+            null=True,
+        )
+    )
+
     @item_method
     @accepts(
         Int('id', required=True),
@@ -295,6 +351,7 @@ class PoolService(CRUDService):
         )
 
     @accepts(List('types', items=[Str('type', enum=['FILESYSTEM', 'VOLUME'])], default=['FILESYSTEM', 'VOLUME']))
+    @returns(List(items=[Str('filesystem_name')]))
     async def filesystem_choices(self, types):
         """
         Returns all available datasets, except the following:
@@ -337,6 +394,7 @@ class PoolService(CRUDService):
         ]
 
     @accepts(Int('id', required=True))
+    @returns(Bool('pool_is_upgraded'))
     @item_method
     async def is_upgraded(self, oid):
         """
@@ -385,6 +443,7 @@ class PoolService(CRUDService):
             return False
 
     @accepts(Int('id'))
+    @returns(Bool('upgraded'))
     @item_method
     async def upgrade(self, oid):
         """
@@ -496,22 +555,11 @@ class PoolService(CRUDService):
                 },
             })
 
-        if osc.IS_FREEBSD and pool['encrypt'] > 0:
-            if zpool:
-                pool['is_decrypted'] = True
-            else:
-                decrypted = True
-                for ed in self.middleware.call_sync(
-                    'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-                ):
-                    if not os.path.exists(f'/dev/{ed["encrypted_provider"]}.eli'):
-                        decrypted = False
-                        break
-                pool['is_decrypted'] = decrypted
-            pool['encryptkey_path'] = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
-        else:
-            pool['encryptkey_path'] = None
-            pool['is_decrypted'] = True
+        # Let's keep below keys until api 2.1 to keep backwards compatibility
+        pool.update({
+            'encryptkey_path': None,
+            'is_decrypted': True,
+        })
         return pool
 
     @accepts(Dict(
@@ -985,48 +1033,27 @@ class PoolService(CRUDService):
 
     @item_method
     @accepts(Int('id', required=False, default=None, null=True))
+    @returns(List('pool_disks', items=[Str('disk')]))
     async def get_disks(self, oid):
         """
         Get all disks in use by pools.
         If `id` is provided only the disks from the given pool `id` will be returned.
         """
         filters = []
+        disks = []
         if oid:
             filters.append(('id', '=', oid))
         for pool in await self.query(filters):
             if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
-                for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
-                    yield i
-            elif osc.IS_FREEBSD:
-                for encrypted_disk in await self.middleware.call(
-                    'datastore.query',
-                    'storage.encrypteddisk',
-                    [('encrypted_volume', '=', pool['id'])]
-                ):
-                    # Use provider and not disk because a disk is not a guarantee
-                    # to point to correct device if its locked and its not in the system
-                    # (e.g. temporarily). See #50291
-                    prov = encrypted_disk["encrypted_provider"]
-                    if not prov:
-                        continue
-
-                    disk_name = await self.middleware.call('disk.label_to_disk', prov)
-                    if not disk_name:
-                        continue
-
-                    disk = await self.middleware.call('disk.query', [('name', '=', disk_name)])
-                    if not disk:
-                        continue
-                    disk = disk[0]
-
-                    if os.path.exists(os.path.join("/dev", disk['devname'])):
-                        yield disk['devname']
+                disks.extend(list(await self.middleware.call('zfs.pool.get_disks', pool['name'])))
+        return disks
 
     @item_method
     @accepts(Int('id'), Dict(
         'options',
         Str('label', required=True),
     ))
+    @returns(Bool('detached'))
     async def detach(self, oid, options):
         """
         Detach a disk from pool of id `id`.
@@ -1080,6 +1107,7 @@ class PoolService(CRUDService):
         'options',
         Str('label', required=True),
     ))
+    @returns(Bool('offline_successful'))
     async def offline(self, oid, options):
         """
         Offline a disk from pool of id `id`.
@@ -1131,6 +1159,7 @@ class PoolService(CRUDService):
         'options',
         Str('label', required=True),
     ))
+    @returns(Bool('online_successful'))
     async def online(self, oid, options):
         """
         Online a disk from pool of id `id`.
@@ -1180,6 +1209,7 @@ class PoolService(CRUDService):
         'options',
         Str('label', required=True),
     ))
+    @returns()
     async def remove(self, oid, options):
         """
         Remove a disk from pool of id `id`.
@@ -1307,6 +1337,17 @@ class PoolService(CRUDService):
             sysctl.filter('vfs.zfs.vdev.scrub_max_active')[0].value = scrub_max_active
 
     @accepts()
+    @returns(List(
+        'pools_available_for_import',
+        title='Pools Available For Import',
+        items=[Dict(
+            'pool_info',
+            Str('name', required=True),
+            Str('guid', required=True),
+            Str('status', required=True),
+            Str('hostname', required=True),
+        )]
+    ))
     @job()
     async def import_find(self, job):
         """
@@ -1339,6 +1380,7 @@ class PoolService(CRUDService):
         Str('passphrase', private=True),
         Bool('enable_attachments'),
     ))
+    @returns(Bool('successful_import'))
     @job(lock='import_pool', pipes=['input'], check_pipes=False)
     async def import_pool(self, job, data):
         """
@@ -1479,6 +1521,7 @@ class PoolService(CRUDService):
             Bool('destroy', default=False),
         ),
     )
+    @returns()
     @job(lock='pool_export')
     async def export(self, job, oid, options):
         """
@@ -1636,6 +1679,12 @@ class PoolService(CRUDService):
 
     @item_method
     @accepts(Int('id'))
+    @returns(List(items=[Dict(
+        'attachment',
+        Str('type', required=True),
+        Str('service', required=True, null=True),
+        List('attachments', items=[Str('attachment_name')]),
+    )], register=True))
     async def attachments(self, oid):
         """
         Return a list of services dependent of this pool.
@@ -1648,6 +1697,13 @@ class PoolService(CRUDService):
 
     @item_method
     @accepts(Int('id'))
+    @returns(List(items=[Dict(
+        'process',
+        Int('pid', required=True),
+        Str('name', required=True),
+        Str('service'),
+        Str('cmdline', max_length=None),
+    )], register=True))
     async def processes(self, oid):
         """
         Returns a list of running processes using this pool.
