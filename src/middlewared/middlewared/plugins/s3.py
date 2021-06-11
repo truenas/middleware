@@ -1,6 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.listen import SystemServiceListenSingleDelegate
-from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
 from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
@@ -35,14 +35,8 @@ class S3Service(SystemServiceService):
         's3_entry',
         Str('bindip', required=True),
         Int('bindport', validators=[Range(min=1, max=65535)], required=True),
-        Str(
-            'access_key', validators=[Match(r'^\w+$', explanation='Should only contain alphanumeric characters')],
-            max_length=20, required=True
-        ),
-        Str(
-            'secret_key', validators=[Match(r'^\w+$', explanation='Should only contain alphanumeric characters')],
-            max_length=40, required=True
-        ),
+        Str('access_key', max_length=20, required=True),
+        Str('secret_key', max_length=40, required=True),
         Bool('browser', required=True),
         Str('storage_path', required=True),
         Int('certificate', null=True, required=True),
@@ -69,6 +63,15 @@ class S3Service(SystemServiceService):
             s3['certificate'] = s3['certificate']['id']
         return s3
 
+    @accepts(Patch(
+        's3_entry', 's3_update',
+        ('edit', {'name': 'access_key', 'method': lambda x: setattr(
+            x, 'validators', [Match(r'^\w+$', explanation='Should only contain alphanumeric characters')]
+        )}),
+        ('edit', {'name': 'secret_key', 'method': lambda x: setattr(
+            x, 'validators', [Match(r'^\w+$', explanation='Should only contain alphanumeric characters')]
+        )}),
+    ))
     async def do_update(self, data):
         """
         Update S3 Service Configuration.
