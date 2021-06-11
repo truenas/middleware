@@ -1882,6 +1882,12 @@ class PoolDatasetUserPropService(CRUDService):
         namespace = 'pool.dataset.userprop'
         cli_namespace = 'storage.dataset.user_prop'
 
+    ENTRY = Dict(
+        'pool_dataset_userprop_entry',
+        Str('id', required=True),
+        Dict('properties', additional_attrs=True, required=True),
+    )
+
     @filterable
     def query(self, filters, options):
         """
@@ -1991,10 +1997,71 @@ class PoolDatasetEncryptionModel(sa.Model):
     kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
+def get_props_of_interest_mapping():
+    return [
+        ('org.freenas:description', 'comments', None),
+        ('org.freenas:quota_warning', 'quota_warning', None),
+        ('org.freenas:quota_critical', 'quota_critical', None),
+        ('org.freenas:refquota_warning', 'refquota_warning', None),
+        ('org.freenas:refquota_critical', 'refquota_critical', None),
+        ('org.truenas:managedby', 'managedby', None),
+        ('dedup', 'deduplication', str.upper),
+        ('mountpoint', None, _null),
+        ('aclmode', None, str.upper),
+        ('acltype', None, str.upper),
+        ('xattr', None, str.upper),
+        ('atime', None, str.upper),
+        ('casesensitivity', None, str.upper),
+        ('exec', None, str.upper),
+        ('sync', None, str.upper),
+        ('compression', None, str.upper),
+        ('compressratio', None, None),
+        ('origin', None, None),
+        ('quota', None, _null),
+        ('refquota', None, _null),
+        ('reservation', None, _null),
+        ('refreservation', None, _null),
+        ('copies', None, None),
+        ('snapdir', None, str.upper),
+        ('readonly', None, str.upper),
+        ('recordsize', None, None),
+        ('sparse', None, None),
+        ('volsize', None, None),
+        ('volblocksize', None, None),
+        ('keyformat', 'key_format', lambda o: o.upper() if o != 'none' else None),
+        ('encryption', 'encryption_algorithm', lambda o: o.upper() if o != 'off' else None),
+        ('used', None, None),
+        ('available', None, None),
+        ('special_small_blocks', 'special_small_block_size', None),
+        ('pbkdf2iters', None, None),
+    ]
+
+
 class PoolDatasetService(CRUDService):
 
     attachment_delegates = []
     dataset_store = 'storage.encrypteddataset'
+    ENTRY = Dict(
+        'pool_dataset_entry',
+        Str('id', required=True),
+        Str('type', required=True),
+        Str('name', required=True),
+        Str('pool', required=True),
+        Bool('encrypted'),
+        Bool('encryption_root', null=True),
+        Bool('key_loaded', null=True),
+        List('children', required=True),
+        Dict('user_properties', additional_attrs=True, required=True),
+        Bool('locked'),
+        *[Dict(
+            p[1] or p[0],
+            Any('parsed', null=True),
+            Str('rawvalue', null=True),
+            Str('value', null=True),
+            Str('source', null=True),
+        ) for p in get_props_of_interest_mapping() if (p[1] or p[0]) != 'mountpoint'],
+        Str('mountpoint', null=True),
+    )
 
     class Config:
         datastore_primary_key_type = 'string'
@@ -2003,6 +2070,9 @@ class PoolDatasetService(CRUDService):
         cli_namespace = 'storage.dataset'
 
     @accepts()
+    @returns(Dict(
+        *[Str(k, enum=[k]) for k in ZFS_COMPRESSION_ALGORITHM_CHOICES],
+    ))
     async def compression_choices(self):
         """
         Retrieve compression algorithm supported by ZFS.
@@ -2010,6 +2080,9 @@ class PoolDatasetService(CRUDService):
         return {v: v for v in ZFS_COMPRESSION_ALGORITHM_CHOICES}
 
     @accepts()
+    @returns(Dict(
+        *[Str(k, enum=[k]) for k in ZFS_ENCRYPTION_ALGORITHM_CHOICES],
+    ))
     async def encryption_algorithm_choices(self):
         """
         Retrieve encryption algorithms supported for ZFS dataset encryption.
@@ -2204,6 +2277,7 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call('datastore.delete', self.dataset_store, ds['id'])
 
     @accepts(Str('id'))
+    @returns()
     @job(lock='dataset_export_keys', pipes=['output'])
     def export_keys(self, job, id):
         """
@@ -2234,6 +2308,7 @@ class PoolDatasetService(CRUDService):
         Str('id'),
         Bool('download', default=False),
     )
+    @returns(Str('key', null=True))
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
     def export_key(self, job, id, download):
         """
@@ -2265,6 +2340,7 @@ class PoolDatasetService(CRUDService):
             Bool('force_umount', default=False),
         )
     )
+    @returns(Bool('locked'))
     @job(lock=lambda args: 'dataset_lock')
     async def lock(self, job, id, options):
         """
@@ -2324,6 +2400,15 @@ class PoolDatasetService(CRUDService):
             ),
         )
     )
+    @returns(Dict(
+        List('unlocked', items=[Str('dataset')], required=True),
+        Dict(
+            'failed',
+            required=True,
+            additional_attrs=True,
+            example={'vol1/enc': {'error': 'Invalid Key', 'skipped': []}},
+        ),
+    ))
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
     def unlock(self, job, id, options):
         """
@@ -2496,6 +2581,16 @@ class PoolDatasetService(CRUDService):
             ),
         )
     )
+    @returns(List(items=[Dict(
+        'dataset_encryption_summary',
+        Str('name', required=True),
+        Str('key_format', required=True),
+        Bool('key_present_in_database', required=True),
+        Bool('valid_key', required=True),
+        Bool('locked', required=True),
+        Str('unlock_error', required=True, null=True),
+        Bool('unlock_successful', required=True),
+    )]))
     @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
     def encryption_summary(self, job, id, options):
         """
@@ -2635,6 +2730,7 @@ class PoolDatasetService(CRUDService):
             Str('key', validators=[Range(min=64, max=64)], default=None, null=True, private=True),
         )
     )
+    @returns()
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
     async def change_key(self, job, id, options):
         """
@@ -2731,6 +2827,7 @@ class PoolDatasetService(CRUDService):
         await self.middleware.call_hook('dataset.change_key', data)
 
     @accepts(Str('id'))
+    @returns()
     async def inherit_parent_encryption_properties(self, id):
         """
         Allows inheriting parent's encryption root discarding its current encryption settings. This
@@ -2891,43 +2988,7 @@ class PoolDatasetService(CRUDService):
         """
 
         def transform(dataset):
-            for orig_name, new_name, method in (
-                ('org.freenas:description', 'comments', None),
-                ('org.freenas:quota_warning', 'quota_warning', None),
-                ('org.freenas:quota_critical', 'quota_critical', None),
-                ('org.freenas:refquota_warning', 'refquota_warning', None),
-                ('org.freenas:refquota_critical', 'refquota_critical', None),
-                ('org.truenas:managedby', 'managedby', None),
-                ('dedup', 'deduplication', str.upper),
-                ('mountpoint', None, _null),
-                ('aclmode', None, str.upper),
-                ('acltype', None, str.upper),
-                ('xattr', None, str.upper),
-                ('atime', None, str.upper),
-                ('casesensitivity', None, str.upper),
-                ('exec', None, str.upper),
-                ('sync', None, str.upper),
-                ('compression', None, str.upper),
-                ('compressratio', None, None),
-                ('origin', None, None),
-                ('quota', None, _null),
-                ('refquota', None, _null),
-                ('reservation', None, _null),
-                ('refreservation', None, _null),
-                ('copies', None, None),
-                ('snapdir', None, str.upper),
-                ('readonly', None, str.upper),
-                ('recordsize', None, None),
-                ('sparse', None, None),
-                ('volsize', None, None),
-                ('volblocksize', None, None),
-                ('keyformat', 'key_format', lambda o: o.upper() if o != 'none' else None),
-                ('encryption', 'encryption_algorithm', lambda o: o.upper() if o != 'off' else None),
-                ('used', None, None),
-                ('available', None, None),
-                ('special_small_blocks', 'special_small_block_size', None),
-                ('pbkdf2iters', None, None),
-            ):
+            for orig_name, new_name, method in get_props_of_interest_mapping():
                 if orig_name not in dataset['properties']:
                     continue
                 i = new_name or orig_name
@@ -3500,6 +3561,7 @@ class PoolDatasetService(CRUDService):
 
     @item_method
     @accepts(Str('id'))
+    @returns()
     async def promote(self, id):
         """
         Promote the cloned dataset `id`.
@@ -3613,10 +3675,11 @@ class PoolDatasetService(CRUDService):
                 Bool('stripacl', default=False),
                 Bool('recursive', default=False),
                 Bool('traverse', default=False),
-            )
-
+            ),
+            register=True,
         ),
     )
+    @returns(Ref('pool_dataset_permission'))
     @item_method
     @job(lock="dataset_permission_change")
     async def permission(self, job, id, data):
@@ -3736,6 +3799,7 @@ class PoolDatasetService(CRUDService):
             raise CallError(pjob.error)
         return data
 
+    # TODO: Document this please
     @accepts(
         Str('ds', required=True),
         Str('quota_type', enum=['USER', 'GROUP', 'DATASET']),
@@ -3794,6 +3858,7 @@ class PoolDatasetService(CRUDService):
             'quota_value': 0
         }])
     )
+    @returns()
     @item_method
     async def set_quota(self, ds, data):
         """
@@ -3916,6 +3981,7 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call('zfs.dataset.set_quota', dataset, quota_list)
 
     @accepts(Str('pool'))
+    @returns(Str())
     async def recommended_zvol_blocksize(self, pool):
         """
         Helper method to get recommended size for a new zvol (dataset of type VOLUME).
@@ -3954,6 +4020,7 @@ class PoolDatasetService(CRUDService):
 
     @item_method
     @accepts(Str('id', required=True))
+    @returns(Ref('attachments'))
     async def attachments(self, oid):
         """
         Return a list of services dependent of this dataset.
@@ -3990,6 +4057,7 @@ class PoolDatasetService(CRUDService):
 
     @item_method
     @accepts(Str('id', required=True))
+    @returns(Ref('processes'))
     async def processes(self, oid):
         """
         Return a list of processes using this dataset.
