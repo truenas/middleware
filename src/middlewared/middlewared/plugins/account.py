@@ -658,7 +658,7 @@ class UserService(CRUDService):
         the username or uid. Bypasses user cache.
         """
         verrors = ValidationErrors()
-        if not data['username'] and not data['uid']:
+        if not data['username'] and data['uid'] is None:
             verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
         verrors.check()
         return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'])
@@ -1321,7 +1321,7 @@ class GroupService(CRUDService):
         the groupname or gid. Bypasses group cache.
         """
         verrors = ValidationErrors()
-        if not data['groupname'] and not data['gid']:
+        if not data['groupname'] and data['gid'] is None:
             verrors.add('get_group_obj.groupname', 'Either "groupname" or "gid" must be specified')
         verrors.check()
         return await self.middleware.call('dscache.get_uncached_group', data['groupname'], data['gid'])
