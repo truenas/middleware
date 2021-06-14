@@ -437,7 +437,7 @@ class UsageService(Service):
         return {'services': service_list}
 
     async def gather_sharing(self, context):
-        services = ['afp', 'iscsi', 'nfs', 'smb', 'webdav']
+        services = ['iscsi', 'nfs', 'smb', 'webdav']
         sharing_list = []
 
         async def gather_service(service):
@@ -461,17 +461,6 @@ class UsageService(Service):
                             'acl': s['acl'],
                             'fsrvp': s['fsrvp'],
                             'streams': s['streams'],
-                        }
-                    )
-                elif service == 'afp':
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'home': s['home'],
-                            'timemachine': s['timemachine'],
-                            'zerodev': s['nodev'],
-                            'nostat': s['nostat'],
-                            'unixpriv': s['upriv']
                         }
                     )
                 elif service == 'nfs':

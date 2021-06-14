@@ -71,7 +71,8 @@
 
         try:
             if middleware.call_sync('cache.get', 'SMB_REG_INITIALIZED') is True:
-                return middleware.call_sync('sharing.smb.sync_registry')
+                middleware.call_sync('sharing.smb.sync_registry')
+                return
         except KeyError:
             pass
 
