@@ -1078,7 +1078,7 @@ class SharingSMBService(SharingService):
 
     @private
     async def legacy_afp_check(self, data, schema, verrors):
-        to_check = Path(data['path']).resolve(strict=True)
+        to_check = Path(data['path']).resolve(strict=False)
         legacy_afp = await self.query([
             ("afp", "=", True),
             ("enabled", "=", True),
