@@ -8,8 +8,15 @@ from time import sleep
 from base64 import b64decode, b64encode
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, wait_on_job
-from auto_config import ip, pool_name, scale, dev_test
+from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
+from auto_config import (
+    ip,
+    pool_name,
+    scale,
+    dev_test,
+    user,
+    password,
+)
 from pytest_dependency import depends
 from protocols import SMB
 
@@ -38,6 +45,7 @@ root_path_verification = {
     "group": group,
     "acl": False
 }
+
 
 class DOSmode(enum.Enum):
     READONLY = 1
@@ -90,14 +98,6 @@ AFPXattr = {
         "bytes": b64decode(apple_kmdlabel)
     },
 }
-
-
-class DOSmode(enum.Enum):
-    READONLY = 1
-    HIDDEN = 2
-    SYSTEM = 4
-    ARCHIVE = 32
-
 
 SMB_USER = "smbuser"
 SMB_PWD = "smb1234"
@@ -569,7 +569,7 @@ def test_151_set_xattr_via_ssh(request, xat):
     Iterate through AFP xattrs and set them on testfile
     via SSH.
     """
-    #depends(request, ["AFP_ENABLED"])
+    # depends(request, ["AFP_ENABLED"])
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'touch {afptestfile} && chown {SMB_USER} {afptestfile} && '
     cmd += f'chmod 777 {afptestfile} && '
