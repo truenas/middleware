@@ -252,7 +252,7 @@ class FilesystemService(Service, ACLBase):
             ace['tag'] = tag.upper()
             if id.isdigit():
                 ace['id'] = int(id)
-            elif ace['tag'] != 'OTHER':
+            elif ace['tag'] not in ['OTHER', 'MASK']:
                 ace['tag'] += '_OBJ'
 
             ret['acl'].append(ace)
