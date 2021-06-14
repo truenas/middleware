@@ -25,7 +25,7 @@ SMB_NAME = "TestCifsSMB"
 smb_path = "/mnt/" + dataset
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
-group = 'root' if scale else 'wheel'
+group = 'shareuser' if scale else 'wheel'
 
 try:
     from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
