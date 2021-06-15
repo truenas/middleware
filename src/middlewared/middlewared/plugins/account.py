@@ -1057,7 +1057,6 @@ class GroupService(CRUDService):
 
     ENTRY = Patch(
         'group_create', 'group_entry',
-        ('rm', {'name': 'name'}),
         ('rm', {'name': 'allow_duplicate_gid'}),
         ('add', Int('id')),
         ('add', Str('group')),
@@ -1068,6 +1067,7 @@ class GroupService(CRUDService):
 
     @private
     async def group_extend(self, group):
+        group['name'] = group['group']
         # Get group membership
         group['users'] = [
             gm['user']['id']
@@ -1091,10 +1091,9 @@ class GroupService(CRUDService):
 
     @private
     async def group_compress(self, group):
-        if 'local' in group:
-            group.pop('local')
-        if 'id_type_both' in group:
-            group.pop('id_type_both')
+        group.pop('name', None)
+        group.pop('local', None)
+        group.pop('id_type_both', None)
         return group
 
     @filterable
