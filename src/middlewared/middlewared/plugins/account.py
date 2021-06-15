@@ -1069,8 +1069,24 @@ class GroupService(CRUDService):
     @private
     async def group_extend(self, group):
         # Get group membership
-        group['users'] = [gm['user']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('group', '=', group['id'])], {'prefix': 'bsdgrpmember_'})]
-        group['users'] += [gmu['id'] for gmu in await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_group_id', '=', group['id'])])]
+        group['users'] = [
+            gm['user']['id']
+            for gm in await self.middleware.call(
+                'datastore.query',
+                'account.bsdgroupmembership',
+                [('group', '=', group['id'])],
+                {'prefix': 'bsdgrpmember_'}
+            )
+        ]
+        group['users'] += [
+            gmu['id']
+            for gmu in await self.middleware.call(
+                'datastore.query',
+                'account.bsdusers',
+                [('bsdusr_group_id', '=', group['id'])]
+            )
+            if gmu['id'] not in group['users']
+        ]
         return group
 
     @private
@@ -1234,14 +1250,33 @@ class GroupService(CRUDService):
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
 
         if 'users' in data:
-            existing = {i['bsdgrpmember_user']['id']: i for i in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('bsdgrpmember_group', '=', pk)])}
+            primary_users = {
+                u['id']
+                for u in await self.middleware.call(
+                    'datastore.query',
+                    'account.bsdusers',
+                    [('bsdusr_group', '=', pk)],
+                )
+            }
+            existing = {
+                i['bsdgrpmember_user']['id']: i
+                for i in await self.middleware.call(
+                    'datastore.query',
+                    'account.bsdgroupmembership',
+                    [('bsdgrpmember_group', '=', pk)]
+                )
+            }
             to_remove = set(existing.keys()) - set(data['users'])
             for i in to_remove:
                 await self.middleware.call('datastore.delete', 'account.bsdgroupmembership', existing[i]['id'])
 
-            to_add = set(data['users']) - set(existing.keys())
+            to_add = set(data['users']) - set(existing.keys()) - primary_users
             for i in to_add:
-                await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': i})
+                await self.middleware.call(
+                    'datastore.insert',
+                    'account.bsdgroupmembership',
+                    {'bsdgrpmember_group': pk, 'bsdgrpmember_user': i},
+                )
 
         await self.middleware.call('service.reload', 'user')
 
@@ -1375,12 +1410,35 @@ class GroupService(CRUDService):
                 )
 
         if 'users' in data:
-            existing = set([i['id'] for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('id', 'in', data['users'])])])
+            existing = {
+                i['id']
+                for i in await self.middleware.call(
+                    'datastore.query',
+                    'account.bsdusers',
+                    [('id', 'in', data['users'])],
+                )
+            }
             notfound = set(data['users']) - existing
             if notfound:
                 verrors.add(
                     f'{schema}.users',
                     f'Following users do not exist: {", ".join(map(str, notfound))}',
+                )
+
+            primary_users = await self.middleware.call(
+                'datastore.query',
+                'account.bsdusers',
+                [('bsdusr_group', '=', pk)],
+            )
+            notfound = []
+            for user in primary_users:
+                if user['id'] not in data['users']:
+                    notfound.append(user['bsdusr_username'])
+            if notfound:
+                verrors.add(
+                    f'{schema}.users',
+                    f'This group is primary for the following users: {", ".join(map(str, notfound))}. '
+                    'You can\'t remote them.',
                 )
 
         if 'sudo_commands' in data:
