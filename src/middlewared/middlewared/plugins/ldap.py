@@ -1052,6 +1052,7 @@ class LDAPService(ConfigService):
             cache_data['groups'].update({g.gr_name: {
                 'id': group_next_index,
                 'gid': g.gr_gid,
+                'name': g.gr_name,
                 'group': g.gr_name,
                 'builtin': False,
                 'sudo': False,

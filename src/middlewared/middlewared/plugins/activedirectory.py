@@ -1456,6 +1456,7 @@ class ActiveDirectoryService(ConfigService):
                         cache_data['groups'].update({group_data.gr_name: {
                             'id': group_next_index,
                             'gid': group_data.gr_gid,
+                            'name': group_data.gr_name,
                             'group': group_data.gr_name,
                             'builtin': False,
                             'sudo': False,
