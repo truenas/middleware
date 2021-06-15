@@ -2034,6 +2034,7 @@ def get_props_of_interest_mapping():
         ('available', None, None),
         ('special_small_blocks', 'special_small_block_size', None),
         ('pbkdf2iters', None, None),
+        ('creation', None, None),
     ]
 
 
