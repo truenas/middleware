@@ -228,6 +228,8 @@ class FilesystemService(Service, ACLBase):
         for entry in entries:
             if entry.startswith("#"):
                 continue
+
+            entry = entry.split("\t")[0]
             ace = {
                 "default": False,
                 "tag": None,
