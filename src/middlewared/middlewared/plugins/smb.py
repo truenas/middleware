@@ -1409,7 +1409,7 @@ async def pool_post_import(middleware, pool):
         By the time the post-import hook is called, the smb.configure should have
         already completed and initialized the SMB service.
         """
-        await middleware.call('sharing.smb.disable_acl_if_trivial')
+        await middleware.call('smb.disable_acl_if_trivial')
         asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
         return
 
@@ -1420,7 +1420,7 @@ async def pool_post_import(middleware, pool):
             ('path', '^', f'{path}/'),
         ])
     ]):
-        await middleware.call('sharing.smb.disable_acl_if_trivial')
+        await middleware.call('smb.disable_acl_if_trivial')
         asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
 
 
@@ -1437,7 +1437,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         mDNS may need to be reloaded if a time machine share is located on
         the share being attached.
         """
-        await self.middleware.call('sharing.smb.disable_acl_if_trivial')
+        await self.middleware.call('smb.disable_acl_if_trivial')
         reg_sync = await self.middleware.call('sharing.smb.sync_registry')
         await reg_sync.wait()
         await self.middleware.call('service.reload', 'mdns')
