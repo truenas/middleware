@@ -71,6 +71,8 @@ class S3Service(SystemServiceService):
         ('edit', {'name': 'secret_key', 'method': lambda x: setattr(
             x, 'validators', [Match(r'^\w+$', explanation='Should only contain alphanumeric characters')]
         )}),
+        ('rm', {'name': 'id'}),
+        ('attr', {'update': True}),
     ))
     async def do_update(self, data):
         """
