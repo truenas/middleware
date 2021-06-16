@@ -359,7 +359,7 @@ class DiskService(CRUDService):
     @private
     async def get_reserved(self):
         reserved = list(await self.middleware.call('boot.get_disks'))
-        reserved += [i async for i in await self.middleware.call('pool.get_disks')]
+        reserved += await self.middleware.call('pool.get_disks')
         if osc.IS_FREEBSD:
             # FIXME: Make this freebsd specific for now
             reserved += [i async for i in self.__get_iscsi_targets()]

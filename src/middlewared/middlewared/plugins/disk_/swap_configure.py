@@ -23,7 +23,7 @@ class DiskService(Service):
         swap_redundancy = await self.middleware.call('disk.swap_redundancy')
         used_partitions_in_mirror = set()
         create_swap_devices = {}
-        disks = [i async for i in await self.middleware.call('pool.get_disks')]
+        disks = await self.middleware.call('pool.get_disks')
         disks.extend(await self.middleware.call('boot.get_disks'))
         existing_swap_devices = {'mirrors': [], 'partitions': []}
         mirrors = await self.middleware.call('disk.get_swap_mirrors')
