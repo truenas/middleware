@@ -6,6 +6,7 @@ import io
 import os
 import shutil
 import subprocess
+import contextlib
 import time
 from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, Dict, Int, List, Patch, Str
@@ -870,14 +871,13 @@ class KerberosKeytabService(CRUDService):
     async def do_ktutil_list(self, data):
         kt = data.get("kt_name", keytab.SYSTEM.value)
         if KRB5.platform() == KRB5.MIT:
-            ktutil = await Popen(['ktutil'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 stdin=subprocess.PIPE)
-            output = await ktutil.communicate(f'rkt {kt}\nlist\nq\n'.encode())
-            if output[1]:
-                raise CallError(output[1].decode())
-            ret = '\n'.join(output[0].decode().splitlines()[4:-1])
+            ktutil = await run(["klist", "-tek"], check=False)
+            if ktutil.returncode != 0:
+                raise CallError(ktutil.stderr.decode())
+            ret = ktutil.stdout.decode().splitlines()
+            if len(ret) < 4:
+                return []
+            ret = '\n'.join(ret[3:])
         else:
             ktutil = await run(["ktutil", "-k", kt, "-v", "list"], check=False)
             if ktutil.returncode != 0:
@@ -941,12 +941,15 @@ class KerberosKeytabService(CRUDService):
                         'aliases': fields[4].split() if len(fields) == 5 else []
                     })
         else:
-            for line in kt_list_output.splitlines():
+            for idx, line in enumerate(kt_list_output.splitlines()):
                 fields = line.split()
                 keytab_entries.append({
-                    'slot': fields[0],
-                    'kvno': fields[1],
-                    'principal': fields[2],
+                    'slot': idx + 1,
+                    'kvno': fields[0],
+                    'principal': fields[3],
+                    'etype': fields[4][1:-1].strip('DEPRECATED:'),
+                    'etype_deprecated': fields[4][1:].startswith('DEPRECATED'),
+                    'date': time.strptime(fields[1], '%m/%d/%y'),
                 })
 
         return keytab_entries
@@ -972,7 +975,7 @@ class KerberosKeytabService(CRUDService):
         ad = await self.middleware.call('activedirectory.config')
         pruned_list = []
         for i in keytab_list:
-            if ad['netbiosname'].upper() not in i['principal'].upper():
+            if ad['netbiosname'].casefold() not in i['principal'].casefold():
                 pruned_list.append(i)
 
         return pruned_list
@@ -983,7 +986,7 @@ class KerberosKeytabService(CRUDService):
         Generate a temporary keytab to separate out the machine account keytab principal.
         ktutil copy returns 1 even if copy succeeds.
         """
-        if os.path.exists(keytab['SAMBA'].value):
+        with contextlib.suppress(OSError):
             os.remove(keytab['SAMBA'].value)
 
         if KRB5.platform() == KRB5.HEIMDAL:
@@ -997,11 +1000,11 @@ class KerberosKeytabService(CRUDService):
                 raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
         else:
             kt_copy = await Popen(['ktutil'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 stdin=subprocess.PIPE)
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  stdin=subprocess.PIPE)
             output = await kt_copy.communicate(
-                f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}'.encode()
+                f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}\nq\n'.encode()
             )
             if output[1]:
                 raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {output[1].decode()}")
@@ -1028,18 +1031,27 @@ class KerberosKeytabService(CRUDService):
                 seen_principals.append(i['principal'])
 
         else:
+            """
+            The pruned keytab must be written to a new file to avoid duplication of
+            entries.
+            """
             rkt = f"rkt {keytab.SAMBA.value}"
-            wkt = f"wkt {keytab.SAMBA.value}"
-            for i in reversed(to_delete):
-                ktutil_remove = await Popen(['ktutil'],
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE,
-                                            stdin=subprocess.PIPE)
-                output = await ktutil_remove.communicate(
-                    f'{rkt}\ndelent {i["slot"]}\n{wkt}'
-                )
-                if output[1]:
-                    raise CallError(output[1].decode())
+            wkt = "wkt /var/db/system/samba4/samba_mit.keytab"
+            delents = "\n".join(f"delent {x['slot']}" for x in reversed(to_delete))
+            ktutil_remove = await Popen(['ktutil'],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        stdin=subprocess.PIPE)
+            output = await ktutil_remove.communicate(
+                f'{rkt}\n{delents}\n{wkt}\nq\n'.encode()
+            )
+            if output[1]:
+                raise CallError(output[1].decode())
+
+            with contextlib.suppress(OSError):
+                os.remove(keytab.SAMBA.value)
+
+            os.rename("/var/db/system/samba4/samba_mit.keytab", keytab.SAMBA.value)
 
     @private
     async def kerberos_principal_choices(self):
