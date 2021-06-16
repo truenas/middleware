@@ -5,7 +5,7 @@ import tempfile
 
 from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.service import CallError, SystemServiceService, private
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Patch, Ref, returns, Str, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
 from middlewared.validators import Port, Range
@@ -237,6 +237,26 @@ class OpenVPNServerService(SystemServiceService):
         datastore_extend = 'openvpn.server.server_extend'
         cli_namespace = 'service.openvpn.server'
 
+    ENTRY = Dict(
+        'openvpn_server_entry',
+        Bool('tls_crypt_auth_enabled', required=True),
+        Int('id', required=True),
+        Int('netmask', validators=[Range(min=0, max=128)], required=True),
+        Int('server_certificate', null=True, required=True),
+        Int('port', validators=[Port()], required=True),
+        Int('root_ca', null=True, required=True),
+        IPAddr('server', required=True),
+        Str('additional_parameters', required=True),
+        Str('authentication_algorithm', null=True, required=True),
+        Str('cipher', null=True, required=True),
+        Str('compression', null=True, enum=['LZO', 'LZ4'], required=True),
+        Str('device_type', enum=['TUN', 'TAP'], required=True),
+        Str('protocol', enum=PROTOCOLS, required=True),
+        Str('tls_crypt_auth', null=True, required=True),
+        Str('topology', null=True, enum=['NET30', 'P2P', 'SUBNET'], required=True),
+        Str('interface', required=True),
+    )
+
     @private
     async def server_extend(self, data):
         data.update({
@@ -279,6 +299,12 @@ class OpenVPNServerService(SystemServiceService):
             )
 
     @accepts()
+    @returns(Dict(
+        'openvpn_authentication_algorithm_choices',
+        additional_attrs=True,
+        register=True,
+        example={'RSA-SHA512': '512 bit digest size'}
+    ))
     async def authentication_algorithm_choices(self):
         """
         Returns a dictionary of valid authentication algorithms which can be used with OpenVPN server.
@@ -286,6 +312,12 @@ class OpenVPNServerService(SystemServiceService):
         return OpenVPN.digests()
 
     @accepts()
+    @returns(Dict(
+        'openvpn_cipher_choices',
+        additional_attrs=True,
+        example={'RC2-40-CBC': '(40 bit key by default, 64 bit block)'},
+        register=True,
+    ))
     async def cipher_choices(self):
         """
         Returns a dictionary of valid ciphers which can be used with OpenVPN server.
@@ -340,6 +372,7 @@ class OpenVPNServerService(SystemServiceService):
         return key.strip()
 
     @accepts()
+    @returns(Ref('openvpn_server_entry'))
     async def renew_static_key(self):
         """
         Reset OpenVPN server's TLS static key which will be used to encrypt/authenticate control channel packets.
@@ -353,6 +386,7 @@ class OpenVPNServerService(SystemServiceService):
         Int('client_certificate_id'),
         Str('server_address', null=True, default=None)
     )
+    @returns(Str('openvpn_client_config', max_length=None))
     async def client_configuration_generation(self, client_certificate_id, server_address):
         """
         Returns a configuration for OpenVPN client which can be used with any client to connect to FN/TN OpenVPN
@@ -436,24 +470,12 @@ class OpenVPNServerService(SystemServiceService):
         return '\n'.join(filter(bool, client_config)).strip()
 
     @accepts(
-        Dict(
-            'openvpn_server_update',
-            Bool('tls_crypt_auth_enabled'),
-            Int('netmask', validators=[Range(min=0, max=128)]),
-            Int('server_certificate', null=True),
-            Int('port', validators=[Port()]),
-            Int('root_ca', null=True),
-            IPAddr('server'),
-            Str('additional_parameters'),
-            Str('authentication_algorithm', null=True),
-            Str('cipher', null=True),
-            Str('compression', null=True, enum=['LZO', 'LZ4']),
-            Str('device_type', enum=['TUN', 'TAP']),
-            Str('protocol', enum=PROTOCOLS),
-            Str('tls_crypt_auth', null=True),
-            Str('topology', null=True, enum=['NET30', 'P2P', 'SUBNET']),
-            update=True
-        )
+        Patch(
+            'openvpn_server_entry', 'openvpn_server_update',
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'interface'}),
+            ('attr', {'update': True}),
+        ),
     )
     async def do_update(self, data):
         """
@@ -508,6 +530,25 @@ class OpenVPNClientService(SystemServiceService):
         datastore_extend = 'openvpn.client.client_extend'
         cli_namespace = 'service.openvpn.client'
 
+    ENTRY = Dict(
+        'openvpn_client_entry',
+        Bool('nobind', required=True),
+        Bool('tls_crypt_auth_enabled', required=True),
+        Int('client_certificate', null=True, required=True),
+        Int('id', required=True),
+        Int('root_ca', null=True, required=True),
+        Int('port', validators=[Port()], required=True),
+        Str('additional_parameters', required=True),
+        Str('authentication_algorithm', null=True, required=True),
+        Str('cipher', null=True, required=True),
+        Str('compression', null=True, enum=['LZO', 'LZ4'], required=True),
+        Str('device_type', enum=['TUN', 'TAP'], required=True),
+        Str('interface', required=True),
+        Str('protocol', enum=PROTOCOLS, required=True),
+        Str('remote', required=True),
+        Str('tls_crypt_auth', null=True, required=True),
+    )
+
     @private
     async def client_extend(self, data):
         data.update({
@@ -519,6 +560,7 @@ class OpenVPNClientService(SystemServiceService):
         return data
 
     @accepts()
+    @returns(Ref('openvpn_authentication_algorithm_choices'))
     async def authentication_algorithm_choices(self):
         """
         Returns a dictionary of valid authentication algorithms which can be used with OpenVPN server.
@@ -526,6 +568,7 @@ class OpenVPNClientService(SystemServiceService):
         return OpenVPN.digests()
 
     @accepts()
+    @returns(Ref('openvpn_cipher_choices'))
     async def cipher_choices(self):
         """
         Returns a dictionary of valid ciphers which can be used with OpenVPN server.
@@ -602,23 +645,12 @@ class OpenVPNClientService(SystemServiceService):
             )
 
     @accepts(
-        Dict(
-            'openvpn_client_update',
-            Bool('nobind'),
-            Bool('tls_crypt_auth_enabled'),
-            Int('client_certificate', null=True),
-            Int('root_ca', null=True),
-            Int('port', validators=[Port()]),
-            Str('additional_parameters'),
-            Str('authentication_algorithm', null=True),
-            Str('cipher', null=True),
-            Str('compression', null=True, enum=['LZO', 'LZ4']),
-            Str('device_type', enum=['TUN', 'TAP']),
-            Str('protocol', enum=PROTOCOLS),
-            Str('remote'),
-            Str('tls_crypt_auth', null=True),
-            update=True
-        )
+        Patch(
+            'openvpn_client_entry', 'openvpn_client_update',
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'interface'}),
+            ('attr', {'update': True}),
+        ),
     )
     async def do_update(self, data):
         """
