@@ -29,6 +29,15 @@ class WebDAVSharingService(SharingService):
         namespace = 'sharing.webdav'
         cli_namespace = 'sharing.webdav'
 
+    ENTRY = Patch(
+        'webdav_share_create', 'webdav_share_entry',
+        ('add', Bool('locked', required=True)),
+        ('add', Int('id', required=True)),
+        ('edit', {'name': 'comment', 'method': lambda x: setattr(x, 'required', True)}),
+        ('edit', {'name': 'perm', 'method': lambda x: setattr(x, 'required', True)}),
+        ('edit', {'name': 'ro', 'method': lambda x: setattr(x, 'required', True)}),
+    )
+
     @private
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
@@ -125,9 +134,6 @@ class WebDAVSharingService(SharingService):
 
         return await self.get_instance(id)
 
-    @accepts(
-        Int('id')
-    )
     async def do_delete(self, id):
         """
         Update Webdav Share of `id`.
@@ -163,16 +169,17 @@ class WebDAVService(SystemServiceService):
         datastore_extend = 'webdav.upper'
         cli_namespace = 'service.webdav'
 
-    @accepts(Dict(
-        'webdav_update',
-        Str('protocol', enum=['HTTP', 'HTTPS', "HTTPHTTPS"]),
-        Int('tcpport'),
-        Int('tcpportssl'),
-        Str('password'),
-        Str('htauth', enum=['NONE', 'BASIC', 'DIGEST']),
-        Int('certssl', null=True),
-        update=True
-    ))
+    ENTRY = Dict(
+        'webdav_entry',
+        Str('protocol', enum=['HTTP', 'HTTPS', 'HTTPHTTPS'], required=True),
+        Int('id', required=True),
+        Int('tcpport', required=True),
+        Int('tcpportssl', required=True),
+        Str('password', required=True),
+        Str('htauth', enum=['NONE', 'BASIC', 'DIGEST'], required=True),
+        Int('certssl', null=True, required=True),
+    )
+
     async def do_update(self, data):
         """
         Update Webdav Service Configuration.
