@@ -469,15 +469,18 @@ class ChartReleaseService(CRUDService):
         if version not in catalog['trains'][data['train']][data['item']]['versions']:
             raise CallError(f'Unable to locate "{data["version"]}" catalog item version.', errno=errno.ENOENT)
 
-        item_details = catalog['trains'][data['train']][data['item']]['versions'][version]
-        await self.middleware.call('catalog.version_supported_error_check', item_details)
+        item_details = catalog['trains'][data['train']][data['item']]
+        item_version_details = item_details['versions'][version]
+        await self.middleware.call('catalog.version_supported_error_check', item_version_details)
 
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values = data['values']
-        new_values, context = await self.normalise_and_validate_values(item_details, new_values, False, release_ds)
+        new_values, context = await self.normalise_and_validate_values(
+            item_version_details, new_values, False, release_ds
+        )
 
         job.set_progress(25, 'Initial Validation completed')
 
@@ -498,7 +501,9 @@ class ChartReleaseService(CRUDService):
             job.set_progress(45, 'Created chart release datasets')
 
             chart_path = os.path.join('/mnt', release_ds, 'charts', version)
-            await self.middleware.run_in_thread(lambda: shutil.copytree(item_details['location'], chart_path))
+            await self.middleware.call(
+                'chart.release.copy_item_files', item_details['location'], chart_path, item_version_details['location']
+            )
 
             job.set_progress(55, 'Completed setting up chart release')
             # Before finally installing the release, we will perform any actions which might be required
@@ -557,6 +562,20 @@ class ChartReleaseService(CRUDService):
             await self.middleware.call('chart.release.refresh_events_state', data['release_name'])
             job.set_progress(100, 'Chart release created')
             return await self.get_instance(data['release_name'])
+
+    @private
+    def copy_item_files(self, item_path, chart_version_path, item_version_path):
+        # item location would be location of the catalog item and not any of it's version(s)
+        # chart version path would be path of item version in chart release dataset
+        files_of_interest = ['upgrade_info.json', 'upgrade_strategy']
+        if all(os.path.exists(os.path.join(item_path, f)) for f in files_of_interest):
+            for f in files_of_interest:
+                shutil.copy(os.path.join(item_path, f), os.path.join(chart_version_path.rsplit('/', 1)[0], f))
+
+        # rmtree is useful in upgrades in case a rollback was performed and for some reason
+        # the old chart version path was not nuked due to failure etc
+        shutil.rmtree(chart_version_path, ignore_errors=True)
+        shutil.copytree(item_version_path, chart_version_path)
 
     @accepts(
         Str('chart_release'),

@@ -3,7 +3,6 @@ import copy
 import errno
 import json
 import os
-import shutil
 import subprocess
 import tempfile
 
@@ -245,8 +244,10 @@ class ChartReleaseService(Service):
         # We have validated configuration now
 
         chart_path = os.path.join(release['path'], 'charts', catalog_item['version'])
-        await self.middleware.run_in_thread(shutil.rmtree, chart_path, ignore_errors=True)
-        await self.middleware.run_in_thread(shutil.copytree, catalog_item['location'], chart_path)
+        await self.middleware.call(
+            'chart.release.copy_item_files', catalog_item['location'].rsplit('/', 1)[0], chart_path,
+            catalog_item['location']
+        )
 
         await self.middleware.call('chart.release.perform_actions', context)
 
