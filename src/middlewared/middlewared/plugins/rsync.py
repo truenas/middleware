@@ -506,7 +506,7 @@ class RsyncTaskService(TaskPathService):
         Bool('preserveperm'),
         Bool('preserveattr'),
         Bool('delayupdates'),
-        List('extra', items=[Str('extra')]),
+        List('extra', items=[Str('extra')], default=[]),
         Bool('enabled', default=True),
         register=True,
     ))
