@@ -1489,6 +1489,7 @@ class SystemGeneralService(ConfigService):
             ('rm', {'name': 'usage_collection_is_set'}),
             ('rm', {'name': 'wizardshown'}),
             ('rm', {'name': 'id'}),
+            ('replace', Int('ui_certificate', null=True)),
             ('attr', {'update': True}),
         )
     )
