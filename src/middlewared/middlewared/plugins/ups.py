@@ -1,6 +1,7 @@
 import csv
 import datetime
 import dateutil.tz
+import functools
 import glob
 import io
 import os
@@ -47,9 +48,13 @@ class UPSModel(sa.Model):
     ups_shutdowncmd = sa.Column(sa.String(255), nullable=True)
 
 
+@functools.cache
+def drivers_available():
+    return set(os.listdir('/lib/nut'))
+
+
 class UPSService(SystemServiceService):
 
-    DRIVERS_AVAILABLE = set(os.listdir('/lib/nut'))
     ENTRY = Dict(
         'ups_entry',
         Bool('emailnotify', required=True),
@@ -137,7 +142,7 @@ class UPSService(SystemServiceService):
                     driver_str, driver_annotation = m.group(1), m.group(2)
                 for driver in driver_str.split(' or '):  # can be "blazer_ser or blazer_usb"
                     driver = driver.strip()
-                    if driver not in self.DRIVERS_AVAILABLE:
+                    if driver not in drivers_available():
                         continue
                     for i, field in enumerate(list(row)):
                         row[i] = field
