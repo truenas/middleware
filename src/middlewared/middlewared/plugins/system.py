@@ -792,7 +792,7 @@ class SystemService(Service):
         Dict('license', additional_attrs=True, null=True),  # TODO: Fill this in please
         Datetime('boottime', required=True),
         Datetime('datetime', required=True),
-        Datetime('birthday', required=True),
+        Datetime('birthday', required=True, null=True),
         Str('timezone', required=True),
         Str('system_manufacturer', required=True),
         Bool('ecc_memory', required=True),
