@@ -8,17 +8,12 @@ import re
 import syslog
 import socket
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
 from middlewared.validators import Email, Range, Port
 
-
-if osc.IS_FREEBSD:
-    DRIVER_BIN_DIR = '/usr/local/libexec/nut'
-elif osc.IS_LINUX:
-    DRIVER_BIN_DIR = '/lib/nut'
 
 RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
 RE_UPS_STATUS = re.compile(r'ups.status: (.*)')
@@ -53,10 +48,35 @@ class UPSModel(sa.Model):
 
 
 class UPSService(SystemServiceService):
-    try:
-        DRIVERS_AVAILABLE = set(os.listdir(DRIVER_BIN_DIR))
-    except FileNotFoundError:
-        DRIVERS_AVAILABLE = set()
+
+    DRIVERS_AVAILABLE = set(os.listdir('/lib/nut'))
+    ENTRY = Dict(
+        'ups_entry',
+        Bool('emailnotify', required=True),
+        Bool('powerdown', required=True),
+        Bool('rmonitor', required=True),
+        Int('id', required=True),
+        Int('nocommwarntime', null=True, required=True),
+        Int('remoteport', validators=[Port()], required=True),
+        Int('shutdowntimer', required=True),
+        Int('hostsync', validators=[Range(min=0)], required=True),
+        Str('description', required=True),
+        Str('driver', required=True),
+        Str('extrausers', max_length=None, required=True),
+        Str('identifier', empty=False, required=True),
+        Str('mode', enum=['MASTER', 'SLAVE'], required=True),
+        Str('monpwd', required=True),
+        Str('monuser', empty=False, required=True),
+        Str('options', max_length=None, required=True),
+        Str('optionsupsd', max_length=None, required=True),
+        Str('port', required=True),
+        Str('remotehost', required=True),
+        Str('shutdown', enum=['LOWBATT', 'BATT'], required=True),
+        Str('shutdowncmd', null=True, required=True),
+        Str('complete_identifier', required=True),
+        Str('subject', required=True),
+        List('toemail', items=[Str('email', validators=[Email()])], required=True),
+    )
 
     class Config:
         datastore = 'services.ups'
@@ -76,6 +96,7 @@ class UPSService(SystemServiceService):
         return data
 
     @accepts()
+    @returns(List(items=[Str('port_choice')]))
     async def port_choices(self):
         ports = [x for x in glob.glob('/dev/cua*') if x.find('.') == -1]
         ports.extend(glob.glob('/dev/ugen*'))
@@ -84,6 +105,7 @@ class UPSService(SystemServiceService):
         return ports
 
     @accepts()
+    @returns(Dict(additional_attrs=True, example={'blazer_ser$CPM-800': 'WinPower ups 2 CPM-800 (blazer_ser)'}))
     def driver_choices(self):
         """
         Returns choices of UPS drivers supported by the system.
@@ -180,32 +202,13 @@ class UPSService(SystemServiceService):
         return verrors, data
 
     @accepts(
-        Dict(
-            'ups_update',
-            Bool('emailnotify'),
-            Bool('powerdown'),
-            Bool('rmonitor'),
-            Int('nocommwarntime', null=True),
-            Int('remoteport', validators=[Port()]),
-            Int('shutdowntimer'),
-            Int('hostsync', validators=[Range(min=0)]),
-            Str('description'),
-            Str('driver'),
-            Str('extrausers', max_length=None),
-            Str('identifier', empty=False),
-            Str('mode', enum=['MASTER', 'SLAVE']),
-            Str('monpwd', empty=False),
-            Str('monuser', empty=False),
-            Str('options', max_length=None),
-            Str('optionsupsd', max_length=None),
-            Str('port'),
-            Str('remotehost'),
-            Str('shutdown', enum=['LOWBATT', 'BATT']),
-            Str('shutdowncmd', null=True),
-            Str('subject'),
-            List('toemail', items=[Str('email', validators=[Email()])]),
-            update=True
-        )
+        Patch(
+            'ups_entry', 'ups_update',
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'complete_identifier'}),
+            ('edit', {'name': 'monpwd', 'method': lambda x: setattr(x, 'empty', False)}),
+            ('attr', {'update': True}),
+        ),
     )
     async def do_update(self, data):
         """
