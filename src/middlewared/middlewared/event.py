@@ -1,5 +1,10 @@
 import asyncio
+import copy
+import contextlib
+import json
 import threading
+
+from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
 
 
 class Events(object):
@@ -33,6 +38,9 @@ class Events(object):
 
 class EventSource(object):
 
+    ACCEPTS = Any(null=True)
+    RETURNS = Any(null=True)
+
     def __init__(self, middleware, name, arg, send_event, unsubscribe_all):
         self.middleware = middleware
         self.name = name
@@ -41,6 +49,16 @@ class EventSource(object):
         self.unsubscribe_all = unsubscribe_all
         self._cancel = asyncio.Event()
         self._cancel_sync = threading.Event()
+        self.ACCEPTS.name = name.replace('.', '_')
+        self.RETURNS.name = f'{name.replace(".", "_")}_returns'
+
+    async def validate_arg(self):
+        verrors = ValidationErrors()
+        with contextlib.suppress(json.JSONDecodeError):
+            self.arg = json.loads(self.arg)
+
+        self.arg = clean_and_validate_arg(verrors, self.ACCEPTS, self.arg)
+        verrors.check()
 
     async def process(self):
         try:
