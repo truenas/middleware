@@ -372,8 +372,10 @@ class Client(object):
         elif msg == 'nosub':
             if message['collection'] in self._event_callbacks:
                 event = self._event_callbacks[message['collection']]
-                event['error'] = message['error']['reason'] or message['error']['error']
+                if 'error' in message:
+                    event['error'] = message['error']['reason'] or message['error']['error']
                 event['ready'].set()
+                event['event'].set()
 
     def on_open(self):
         features = []
@@ -460,24 +462,31 @@ class Client(object):
 
         return c.result
 
-    def subscribe(self, name, callback):
-        ready = Event()
-        _id = str(uuid.uuid4())
-        self._event_callbacks[name] = {
-            'id': _id,
-            'callback': callback,
-            'ready': ready,
+    @staticmethod
+    def event_payload():
+        return {
+            'id': str(uuid.uuid4()),
+            'callback': None,
+            'ready': Event(),
             'error': None,
+            'event': Event(),
         }
+
+    def subscribe(self, name, callback, payload=None):
+        payload = payload or self.event_payload()
+        payload.update({
+            'callback': callback,
+        })
+        self._event_callbacks[name] = payload
         self._send({
             'msg': 'sub',
-            'id': _id,
+            'id': payload['id'],
             'name': name,
         })
-        ready.wait()
+        payload['ready'].wait()
         if self._event_callbacks[name]['error']:
             raise ValueError(self._event_callbacks[name]['error'])
-        return _id
+        return payload['id']
 
     def unsubscribe(self, id):
         self._send({
@@ -636,7 +645,8 @@ def main():
     elif args.name == 'subscribe':
         with Client(uri=args.uri) as c:
 
-            event = Event()
+            subscribe_payload = c.event_payload()
+            event = subscribe_payload['event']
             number = 0
 
             def cb(mtype, **message):
@@ -646,10 +656,13 @@ def main():
                 if args.number and number >= args.number:
                     event.set()
 
-            c.subscribe(args.event, cb)
+            c.subscribe(args.event, cb, subscribe_payload)
 
             if not event.wait(timeout=args.timeout):
                 sys.exit(1)
+
+            if subscribe_payload['error']:
+                raise ValueError(subscribe_payload['error'])
             sys.exit(0)
     elif args.name == 'waitready':
         """

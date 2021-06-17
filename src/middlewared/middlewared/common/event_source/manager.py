@@ -7,6 +7,7 @@ from collections import defaultdict, namedtuple
 
 from middlewared.event import EventSource
 from middlewared.schema import ValidationErrors
+from middlewared.service import CallError
 
 IdentData = namedtuple("IdentData", ["app", "name", "arg"])
 
@@ -58,9 +59,7 @@ class EventSourceManager:
             try:
                 await self.instances[name][arg].validate_arg()
             except ValidationErrors as e:
-                await self.unsubscribe(
-                    ident, app.get_error_dict(errno.EAGAIN, str(e), sys.exc_info(), etype='VALIDATION', extra=list(e))
-                )
+                await self.unsubscribe(ident, e)
             else:
                 asyncio.ensure_future(self.instances[name][arg].process())
         else:
@@ -79,8 +78,20 @@ class EventSourceManager:
             await instance.cancel()
 
     async def send_no_sub_message(self, ident, error=None):
-        error = {'error': error} if error else {}
-        ident.app._send({'msg': 'nosub', 'collection': self.get_full_name(ident.name, ident.arg), **error})
+        error_dict = {}
+        if error:
+            if isinstance(error, ValidationErrors):
+                error_dict['error'] = ident.app.get_error_dict(
+                    errno.EAGAIN, str(error), etype='VALIDATION', extra=list(error)
+                )
+            elif isinstance(error, CallError):
+                error_dict['error'] = ident.app.get_error_dict(
+                    error.errno, str(error), extra=error.extra
+                )
+            else:
+                error_dict['error'] = ident.app.get_error_dict(errno.EINVAL, str(error))
+
+        ident.app._send({'msg': 'nosub', 'collection': self.get_full_name(ident.name, ident.arg), **error_dict})
 
     async def unsubscribe_app(self, app):
         for ident, ident_data in list(self.idents.items()):

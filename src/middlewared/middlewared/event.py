@@ -1,10 +1,10 @@
 import asyncio
-import copy
 import contextlib
 import json
 import threading
 
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
+from middlewared.service import CallError
 
 
 class Events(object):
@@ -61,16 +61,18 @@ class EventSource(object):
         verrors.check()
 
     async def process(self):
+        error = None
         try:
             await self.run()
-        except Exception:
+        except Exception as e:
+            error = e
             self.middleware.logger.error('EventSource %r run() failed', self.name, exc_info=True)
         try:
             await self.on_finish()
         except Exception:
             self.middleware.logger.error('EventSource %r on_finish() failed', self.name, exc_info=True)
 
-        await self.unsubscribe_all()
+        await self.unsubscribe_all(error)
 
     async def run(self):
         await self.middleware.run_in_thread(self.run_sync)
