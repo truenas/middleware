@@ -4,6 +4,7 @@ import functools
 from collections import defaultdict, namedtuple
 
 from middlewared.event import EventSource
+from middlewared.schema import ValidationErrors
 
 IdentData = namedtuple("IdentData", ["app", "name", "arg"])
 
@@ -51,7 +52,14 @@ class EventSourceManager:
                 functools.partial(self._send_event, name, arg),
                 functools.partial(self._unsubscribe_all, name, arg),
             )
-            asyncio.ensure_future(self.instances[name][arg].process())
+            # Validate that specified `arg` is acceptable wrt event source in question
+            try:
+                await self.instances[name][arg].validate_arg()
+            except ValidationErrors:
+                await self.unsubscribe(ident)
+                raise
+            else:
+                asyncio.ensure_future(self.instances[name][arg].process())
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
