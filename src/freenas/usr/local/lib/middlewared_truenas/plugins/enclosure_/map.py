@@ -20,7 +20,7 @@ MAPPINGS = [
         ]),
     ]),
     ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-X$"), [
-        VersionMapping(re.compile("1\.0"), [
+        VersionMapping(re.compile(r"1\.0"), [
             MappingSlot(1, 0, False),
             MappingSlot(1, 1, False),
             MappingSlot(1, 3, False),
