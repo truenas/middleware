@@ -1344,6 +1344,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                         'description': inspect.getdoc(n[1]),
                         'private': False,
                         'wildcard_subscription': False,
+                        'accepts': n[1].ACCEPTS,
+                        'returns': n[1].RETURNS,
                     }
                 ),
                 self.event_source_manager.event_sources.items()

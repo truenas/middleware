@@ -1333,6 +1333,8 @@ class CoreService(Service):
             events[name] = {
                 'description': attrs['description'],
                 'wildcard_subscription': attrs['wildcard_subscription'],
+                'accepts': self.get_json_schema(list(filter(bool, [attrs['accepts']])), attrs['description']),
+                'returns': self.get_json_schema(list(filter(bool, [attrs['returns']])), attrs['description']),
             }
 
         return events
