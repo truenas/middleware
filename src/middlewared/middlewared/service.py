@@ -1254,35 +1254,13 @@ class CoreService(Service):
 
                 method_schemas = {'accepts': None, 'returns': None}
                 for schema_type in method_schemas:
-                    schema = getattr(method, schema_type, None)
-                    if schema:
-                        schema = [i.to_json_schema() for i in schema if not getattr(i, 'hidden', False)]
-
-                        names = set()
-                        for i in schema:
-                            names.add(i['_name_'])
-
-                            if i.get('type') == 'object':
-                                for j in i['properties'].values():
-                                    names.add(j['_name_'])
-
-                        args_descriptions_doc = doc or ''
-                        if attr == 'update':
-                            if do_create := getattr(svc, 'do_create', None):
-                                args_descriptions_doc += "\n" + inspect.getdoc(do_create)
-
-                        args_descriptions = self._cli_args_descriptions(args_descriptions_doc, names)
-
-                        for i in schema:
-                            if not i.get('description') and i['_name_'] in args_descriptions:
-                                i['description'] = args_descriptions[i['_name_']]
-
-                            if i.get('type') == 'object':
-                                for j in i['properties'].values():
-                                    if not j.get('description') and j['_name_'] in args_descriptions:
-                                        j['description'] = args_descriptions[j['_name_']]
-
-                    method_schemas[schema_type] = schema
+                    args_descriptions_doc = doc or ''
+                    if attr == 'update':
+                        if do_create := getattr(svc, 'do_create', None):
+                            args_descriptions_doc += "\n" + inspect.getdoc(do_create)
+                    method_schemas[schema_type] = self.get_json_schema(
+                        getattr(method, schema_type, None), args_descriptions_doc
+                    )
 
                 data['{0}.{1}'.format(name, attr)] = {
                     'description': doc,
@@ -1313,6 +1291,34 @@ class CoreService(Service):
                     data[f'{name}.query']['filterable_schema'] = None
 
         return data
+
+    @private
+    def get_json_schema(self, schema, args_descriptions_doc):
+        if not schema:
+            return schema
+
+        args_descriptions_doc = args_descriptions_doc or ''
+        schema = [i.to_json_schema() for i in schema if not getattr(i, 'hidden', False)]
+
+        names = set()
+        for i in schema:
+            names.add(i['_name_'])
+
+            if i.get('type') == 'object':
+                for j in i['properties'].values():
+                    names.add(j['_name_'])
+
+        args_descriptions = self._cli_args_descriptions(args_descriptions_doc, names)
+        for i in schema:
+            if not i.get('description') and i['_name_'] in args_descriptions:
+                i['description'] = args_descriptions[i['_name_']]
+
+            if i.get('type') == 'object':
+                for j in i['properties'].values():
+                    if not j.get('description') and j['_name_'] in args_descriptions:
+                        j['description'] = args_descriptions[j['_name_']]
+
+        return schema
 
     @accepts()
     def get_events(self):
