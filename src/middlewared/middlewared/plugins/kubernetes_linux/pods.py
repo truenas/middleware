@@ -1,12 +1,12 @@
-import json
-
 from aiohttp.client_exceptions import ClientConnectionError
 from dateutil.parser import parse, ParserError
 from kubernetes_asyncio.watch import Watch
 
 from middlewared.event import EventSource
+from middlewared.schema import Dict, Int, Str
 from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list
+from middlewared.validators import Range
 
 from .k8s import api_client
 
@@ -56,28 +56,26 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
     to null ( which is the default ), it will not limit the bytes returned. To clarify, `tail_lines`
     is applied first and the required number of lines are retrieved and then `limit_bytes` is applied.
     """
+    ACCEPTS = Dict(
+        Int('tail_lines', default=500, validators=[Range(min=1)]),
+        Int('limit_bytes', default=None, null=True, validators=[Range(min=1)]),
+        Str('release_name', required=True),
+        Str('pod_name', required=True),
+        Str('container_name', required=True),
+    )
 
     def __init__(self, *args, **kwargs):
         super(KubernetesPodLogsFollowTailEventSource, self).__init__(*args, **kwargs)
         self.watch = None
 
     async def run(self):
-        options = {}
-        if self.arg:
-            options = json.loads(self.arg)
-
-        release = options.get('release_name')
-        pod = options.get('pod_name')
-        container = options.get('container_name')
-        tail_lines = options.get('tail_lines', 500)
-        limit_bytes = options.get('limit_bytes')
+        release = self.arg['release_name']
+        pod = self.arg['pod_name']
+        container = self.arg['container_name']
+        tail_lines = self.arg['tail_lines']
+        limit_bytes = self.arg['limit_bytes']
 
         await self.middleware.call('chart.release.validate_pod_log_args', release, pod, container)
-        if tail_lines is not None and tail_lines < 1:
-            raise CallError('Tail lines must be null or greater then 0.')
-        elif limit_bytes is not None and limit_bytes < 1:
-            raise CallError('Limit bytes must be null or greater then 0.')
-
         release_data = await self.middleware.call('chart.release.get_instance', release)
 
         async with api_client() as (api, context):
