@@ -65,8 +65,13 @@ class KubernetesCNIService(ConfigService):
                 {
                     'bridge': 'kube-bridge',
                     'ipam': {
-                        'subnet': config['cluster_cidr'],
                         'type': 'host-local',
+                        "ranges": [[{
+                            "subnet": config['cluster_cidr'],
+                        }]],
+                        "routes": [{
+                            "dst": config['service_cidr'],
+                        }],
                     },
                     'isDefaultGateway': True,
                     'name': 'kubernetes',
