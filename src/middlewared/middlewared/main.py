@@ -122,20 +122,23 @@ class Application(object):
             'formatted': ''.join(traceback.format_exception(*exc_info)),
         }
 
-    def send_error(self, message, errno, reason=None, exc_info=None, etype=None, extra=None):
+    def get_error_dict(self, errno, reason=None, exc_info=None, etype=None, extra=None):
         error_extra = {}
         if self._py_exceptions and exc_info:
             error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
+        return dict({
+            'error': errno,
+            'type': etype,
+            'reason': reason,
+            'trace': self._tb_error(exc_info) if exc_info else None,
+            'extra': extra,
+        }, **error_extra)
+
+    def send_error(self, message, errno, reason=None, exc_info=None, etype=None, extra=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
-            'error': dict({
-                'error': errno,
-                'type': etype,
-                'reason': reason,
-                'trace': self._tb_error(exc_info) if exc_info else None,
-                'extra': extra,
-            }, **error_extra),
+            'error': self.get_error_dict(errno, reason, exc_info, etype, extra),
         })
 
     async def call_method(self, message, serviceobj, methodobj):

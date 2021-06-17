@@ -58,15 +58,17 @@ class EventSourceManager:
             try:
                 await self.instances[name][arg].validate_arg()
             except ValidationErrors as e:
-                await self.unsubscribe(ident)
-                app.send_error(arg, errno.EAGAIN, str(e), sys.exc_info(), etype='VALIDATION', extra=list(e))
+                await self.unsubscribe(
+                    ident, app.get_error_dict(errno.EAGAIN, str(e), sys.exc_info(), etype='VALIDATION', extra=list(e))
+                )
             else:
                 asyncio.ensure_future(self.instances[name][arg].process())
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
-    async def unsubscribe(self, ident):
+    async def unsubscribe(self, ident, error=None):
         ident_data = self.idents.pop(ident)
+        await self.send_no_sub_message(ident_data, error)
 
         idents = self.subscriptions[ident_data.name][ident_data.arg]
         idents.remove(ident)
@@ -75,6 +77,10 @@ class EventSourceManager:
                                          "unsubscribed", ident_data.name, ident_data.arg)
             instance = self.instances[ident_data.name].pop(ident_data.arg)
             await instance.cancel()
+
+    async def send_no_sub_message(self, ident, error=None):
+        error = {'error': error} if error else {}
+        ident.app._send({'msg': 'nosub', 'collection': self.get_full_name(ident.name, ident.arg), **error})
 
     async def unsubscribe_app(self, app):
         for ident, ident_data in list(self.idents.items()):
@@ -91,8 +97,8 @@ class EventSourceManager:
 
             ident_data.app.send_event(self.get_full_name(name, arg), event_type, **kwargs)
 
-    async def _unsubscribe_all(self, name, arg):
+    async def _unsubscribe_all(self, name, arg, error=None):
         for ident in self.subscriptions[name][arg]:
-            self.idents.pop(ident)
+            await self.send_no_sub_message(self.idents.pop(ident), error)
 
         self.subscriptions[name][arg].clear()
