@@ -4,7 +4,6 @@ import json
 import threading
 
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
-from middlewared.service import CallError
 
 
 class Events(object):
