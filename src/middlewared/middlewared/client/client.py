@@ -370,11 +370,10 @@ class Client(object):
                         event['ready'].set()
                         break
         elif msg == 'nosub':
-            for event in self._event_callbacks.values():
-                if message['id'] == event['id']:
-                    event['error'] = message['error']['error']
-                    event['ready'].set()
-                    break
+            if message['collection'] in self._event_callbacks:
+                event = self._event_callbacks[message['collection']]
+                event['error'] = message['error']['reason'] or message['error']['error']
+                event['ready'].set()
 
     def on_open(self):
         features = []
@@ -527,14 +526,10 @@ def main():
         ), default='progressbar',
     )
     iparser.add_argument('method', nargs='+')
-
-    iparser = subparsers.add_parser('ping', help='Ping')
-
-    iparser = subparsers.add_parser('waitready', help='Wait server')
-
+    subparsers.add_parser('ping', help='Ping')
+    subparsers.add_parser('waitready', help='Wait server')
     iparser = subparsers.add_parser('sql', help='Run SQL command')
     iparser.add_argument('sql', nargs='+')
-
     iparser = subparsers.add_parser('subscribe', help='Subscribe to event')
     iparser.add_argument('event')
     iparser.add_argument('-n', '--number', type=int, help='Number of events to wait before exit')
