@@ -1,5 +1,7 @@
 import asyncio
+import errno
 import functools
+import sys
 
 from collections import defaultdict, namedtuple
 
@@ -55,9 +57,9 @@ class EventSourceManager:
             # Validate that specified `arg` is acceptable wrt event source in question
             try:
                 await self.instances[name][arg].validate_arg()
-            except ValidationErrors:
+            except ValidationErrors as e:
                 await self.unsubscribe(ident)
-                raise
+                app.send_error(arg, errno.EAGAIN, str(e), sys.exc_info(), etype='VALIDATION', extra=list(e))
             else:
                 asyncio.ensure_future(self.instances[name][arg].process())
         else:
