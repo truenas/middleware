@@ -8,10 +8,14 @@ class Events(object):
         self.__events = {}
         self.__events_private = set()
 
-    def register(self, name, description, private=False):
+    def register(self, name, description, private=False, returns=None):
         if name in self.__events:
             raise ValueError(f'Event {name!r} already registered.')
-        self.__events[name] = description
+        self.__events[name] = {
+            'description': description,
+            'accepts': None,
+            'returns': returns,
+        }
         if private:
             self.__events_private.add(name)
 
@@ -21,9 +25,9 @@ class Events(object):
     def __iter__(self):
         for k, v in self.__events.items():
             yield k, {
-                'description': v,
                 'private': k in self.__events_private,
-                'wildcard_subscription': True
+                'wildcard_subscription': True,
+                **v,
             }
 
 

@@ -1353,18 +1353,18 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, private=False):
+    def event_register(self, name, description, private=False, returns=None):
         """
         All events middleware can send should be registered so they are properly documented
         and can be browsed in documentation page without source code inspection.
         """
-        self.__events.register(name, description, private=private)
+        self.__events.register(name, description, private, returns)
 
     def send_event(self, name, event_type, **kwargs):
 
         if name not in self.__events:
             # We should eventually deny events that are not registered to ensure every event is
-            # documented but for backward-compability and safety just log it for now.
+            # documented but for backward-compatibility and safety just log it for now.
             self.logger.warning(f'Event {name!r} not registered.')
 
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
