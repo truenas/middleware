@@ -1,4 +1,3 @@
-import asyncio
 import errno
 import os
 import shutil
@@ -173,10 +172,12 @@ class CatalogService(CRUDService):
         job.set_progress(60, 'Completed Validation')
 
         await self.middleware.call('datastore.insert', self._config.datastore, data)
+        job.set_progress(70, f'Successfully added {data["label"]!r} catalog')
 
-        asyncio.ensure_future(self.middleware.call('catalog.sync', data['label']))
+        job.set_progress(80, f'Syncing {data["label"]} catalog')
+        self.middleware.call('catalog.sync', data['label'])
 
-        job.set_progress(100, f'Successfully added {data["label"]!r} catalog')
+        job.set_progress(100, f'Successfully synced {data["label"]!r} catalog')
 
         return await self.get_instance(data['label'])
 
