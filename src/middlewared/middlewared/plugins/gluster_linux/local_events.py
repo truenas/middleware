@@ -21,6 +21,7 @@ class AllowedEvents(enum.Enum):
     CTDB_START = 'CTDB_START'
     CTDB_STOP = 'CTDB_STOP'
     SMB_STOP = 'SMB_STOP'
+    CLJOBS_PROCESS = 'CLJOBS_PROCESS'
 
 
 class GlusterLocalEventsService(Service):

@@ -6,6 +6,7 @@ from middlewared.plugins.smb import SMBCmd
 import os
 import subprocess
 import time
+import asyncio
 
 
 class SMBService(Service):
@@ -72,6 +73,11 @@ class SMBService(Service):
         Accounts that are 'locked' in the UI will have their corresponding passdb entry
         disabled.
         """
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if ha_mode == "CLUSTERED":
+            self.logger.debug("passdb support not yet implemented in clustered TrueNAS.")
+            # return
+
         if passdb_backend is None:
             passdb_backend = await self.middleware.call('smb.getparm',
                                                         'passdb backend',
@@ -101,12 +107,17 @@ class SMBService(Service):
             CallError(f'Failed to retrieve passdb entry for {username}: {p.stderr.decode()}')
         entry = p.stdout.decode()
         if not entry:
-            next_rid = str(await self.middleware.call('smb.get_next_rid'))
+            cmd = [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username]
+
+            next_rid = await self.middleware.call('smb.get_next_rid')
+            if next_rid != -1:
+                cmd.extend(['-U', str(next_rid)])
+
+            cmd.append('-t')
             self.logger.debug("User [%s] does not exist in the passdb.tdb file. "
                               "Creating entry with rid [%s].", username, next_rid)
             pdbcreate = await Popen(
-                [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username, '-U', next_rid, '-t'],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
             )
             await pdbcreate.communicate(input=" \n \n".encode())
             setntpass = await run([SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
@@ -147,6 +158,11 @@ class SMBService(Service):
 
     @private
     async def remove_passdb_user(self, username):
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if ha_mode == "CLUSTERED":
+            self.logger.debug("passdb support not yet implemented in clustered TrueNAS.")
+            return
+
         deluser = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-x', username], check=False)
         if deluser.returncode != 0:
             raise CallError(f'Failed to delete user [{username}]: {deluser.stderr.decode()}')
@@ -175,6 +191,34 @@ class SMBService(Service):
             self.logger.warning("Samba gencache flush failed with error: %s", net.stderr.decode())
 
     @private
+    async def set_cluster_lock_wait(self):
+        """
+        Set cluster-wide PASS_DB lock with 5 minute timeout.
+        In theory this should give us plenty of time to finish passdb operations.
+        Other nodes will block waiting for this to be released. Trying once per
+        minute to synchronize passdb.
+        """
+        pnn = (await self.middleware.call('ctdb.general.status'))[0]['pnn']
+
+        while True:
+            try:
+                lock = await self.middleware.call('clustercache.get', 'PASSDB_LOCK')
+                if lock["node"] == pnn:
+                    return
+            except KeyError:
+                pass
+
+            try:
+                await self.middleware.call(
+                    'clustercache.put', "PASSDB_LOCK",
+                    {"node": pnn}, 300, {"flag": "CREATE"}
+                )
+                return
+            except KeyError:
+                self.logger.debug("waiting for clustered PASSDB_LOCK")
+                await asyncio.sleep(60)
+
+    @private
     @job(lock="passdb_sync")
     async def synchronize_passdb(self, job):
         """
@@ -184,12 +228,17 @@ class SMBService(Service):
         Delete any entries in the passdb_tdb file that don't exist in the config file.
         This method may cause temporary service disruption for SMB.
         """
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+
         passdb_backend = await self.middleware.call('smb.getparm',
                                                     'passdb backend',
                                                     'global')
 
         if not passdb_backend.startswith('tdbsam'):
             return
+
+        if ha_mode == 'CLUSTERED':
+            await self.set_cluster_lock_wait()
 
         conf_users = await self.middleware.call('user.query', [("smb", "=", True)])
         for u in conf_users:
@@ -204,5 +253,11 @@ class SMBService(Service):
                         await self.remove_passdb_user(entry['username'])
                     except Exception:
                         self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
+                        if ha_mode == "CLUSTERED":
+                            break
+
                         await self.passdb_reinit(conf_users)
                         return
+
+        if ha_mode == "CLUSTERED":
+            await self.middleware.call("clustercache.pop", "PASSDB_LOCK")

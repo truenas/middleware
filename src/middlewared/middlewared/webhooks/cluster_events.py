@@ -26,12 +26,16 @@ class ClusterEventsApplication(object):
                 method = ('service.stop', 'ctdb')
             elif event == 'SMB_STOP':
                 method = ('service.stop', 'cifs')
+            elif event == 'CLJOBS_PROCESS':
+                method = 'clusterjob.process_queue'
 
             if method is not None:
                 if event.startswith('VOLUME'):
                     await self.middleware.call(method, {'name': name})
                 elif event.startswith(('CTDB', 'SMB')):
                     await self.middleware.call(method[0], method[1])
+                elif event == 'CLJOBS_PROCESS':
+                    await self.middleware.call(method)
 
                 if data.pop('forward', False):
                     # means the request originated from localhost
