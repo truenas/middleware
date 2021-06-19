@@ -1,4 +1,7 @@
+import contextlib
+import functools
 import itertools
+import json
 import markdown
 import os
 import yaml
@@ -7,7 +10,7 @@ from catalog_validation.utils import VALID_TRAIN_REGEX
 from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, List, returns, Str
-from middlewared.service import accepts, private, Service, ValidationErrors
+from middlewared.service import accepts, job, private, Service, ValidationErrors
 
 
 ITEM_KEYS = ['icon_url']
@@ -48,7 +51,8 @@ class CatalogService(Service):
             }
         }
     ))
-    def items(self, label, options):
+    @job(lock=lambda args: f'{args[0]}_catalog_item_retrieval_{json.dumps(args[1])}')
+    def items(self, job, label, options):
         """
         Retrieve item details for `label` catalog.
 
@@ -77,7 +81,9 @@ class CatalogService(Service):
                 return {}
 
         if options['cache'] and cache_available:
+            job.set_progress(10, 'Retrieving cached content')
             orig_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
+            job.set_progress(60, 'Normalizing cached content')
             questions_context = None if not options['retrieve_versions'] else self.middleware.call_sync(
                 'catalog.get_normalised_questions_context'
             )
@@ -103,23 +109,17 @@ class CatalogService(Service):
 
                 cached_data[train] = train_data
 
+            job.set_progress(100, 'Retrieved catalog item(s) details successfully')
             return cached_data
         elif not os.path.exists(catalog['location']):
+            job.set_progress(5, f'Cloning {label!r} catalog repository')
             self.middleware.call_sync('catalog.update_git_repository', catalog, True)
 
         if all_trains:
             # We can only safely say that the catalog is healthy if we retrieve data for all trains
             self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
 
-        trains = self.get_trains(
-            catalog['location'], {
-                'alert': True,
-                'label': label,
-                'all_trains': all_trains,
-                'trains': options['trains'],
-                'retrieve_versions': options['retrieve_versions'],
-            }
-        )
+        trains = self.get_trains(job, catalog['location'], options)
 
         if all_trains and options['retrieve_versions']:
             # We will only update cache if we are retrieving data of all trains for a catalog
@@ -130,23 +130,13 @@ class CatalogService(Service):
             # Update feature map cache whenever official catalog is updated
             self.middleware.call_sync('catalog.get_feature_map', False)
 
+        job.set_progress(100, f'Successfully retrieved {label!r} catalog information')
         return trains
 
     @private
-    def get_trains(self, location, options=None):
-        # We make sure we do not dive into library and docs folders and not consider those a train
-        # This allows us to use these folders for placing helm library charts and docs respectively
-        trains = {'charts': {}, 'test': {}}
-        options = options or {}
-        all_trains = options.get('all_trains', True)
-        trains_filter = options.get('trains', [])
-        questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-        unhealthy_apps = set()
-        if options.get('alert') and options.get('label'):
-            preferred_trains = self.middleware.call_sync('catalog.get_instance', options['label'])['preferred_trains']
-        else:
-            preferred_trains = []
-
+    def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
+        train_names = []
+        trains_filter = trains_filter or []
         for train in os.listdir(location):
             if (
                 not (all_trains or train in trains_filter) or not os.path.isdir(
@@ -154,28 +144,54 @@ class CatalogService(Service):
                 ) or train.startswith('.') or train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
             ):
                 continue
+            train_names.append(train)
+        return train_names
 
+    @private
+    def get_trains(self, job, location, catalog, options):
+        # We make sure we do not dive into library and docs folders and not consider those a train
+        # This allows us to use these folders for placing helm library charts and docs respectively
+        trains = {'charts': {}, 'test': {}}
+        questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
+        unhealthy_apps = set()
+        preferred_trains = catalog['preferred_trains']
+
+        trains_to_traverse = self.retrieve_train_names(location, options['retrieve_all_trains'], options['trains'])
+        # In order to calculate job progress, we need to know number of items we would be traversing
+        items = {}
+        for train in trains_to_traverse:
+            items.update({
+                i: train for i in os.listdir(os.path.join(location, train))
+                if os.path.isdir(os.path.join(location, train, i))
+            })
+
+        job.set_progress(8, f'Retrieving {", ".join(trains_to_traverse)!r} train(s) information')
+
+        total_items = len(items)
+        for index, item in enumerate(items):
+            train = items[item]
             trains[train] = {}
-            category_path = os.path.join(location, train)
-            for item in filter(lambda p: os.path.isdir(os.path.join(category_path, p)), os.listdir(category_path)):
-                item_location = os.path.join(category_path, item)
-                if not os.path.isdir(item_location):
-                    continue
+            item_location = os.path.join(location, train, item)
+            job.set_progress(
+                ((index / total_items) * (90 - 10)) + 10,
+                f'Retrieving information of {item!r} item from {train!r} train'
+            )
 
-                trains[train][item] = self.retrieve_item_details(item_location, {
-                    'questions_context': questions_context,
-                    'retrieve_versions': options.get('retrieve_versions', True),
-                })
-                if train in preferred_trains and not trains[train][item]['healthy']:
-                    unhealthy_apps.add(f'{item} ({train} train)')
+            trains[train][item] = self.retrieve_item_details(item_location, {
+                'questions_context': questions_context,
+                'retrieve_versions': options['retrieve_versions'],
+            })
+            if train in preferred_trains and not trains[train][item]['healthy']:
+                unhealthy_apps.add(f'{item} ({train} train)')
 
         if unhealthy_apps:
             self.middleware.call_sync(
                 'alert.oneshot_create', 'CatalogNotHealthy', {
-                    'catalog': options['label'], 'apps': ', '.join(unhealthy_apps)
+                    'catalog': catalog['id'], 'apps': ', '.join(unhealthy_apps)
                 }
             )
 
+        job.set_progress(90, f'Retrieved {", ".join(trains_to_traverse)} train(s) information')
         return trains
 
     @private
