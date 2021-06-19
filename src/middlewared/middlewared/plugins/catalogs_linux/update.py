@@ -176,7 +176,9 @@ class CatalogService(CRUDService):
         job.set_progress(70, f'Successfully added {data["label"]!r} catalog')
 
         job.set_progress(80, f'Syncing {data["label"]} catalog')
-        await self.middleware.call('catalog.sync', data['label'])
+        sync_job = await self.middleware.call('catalog.sync', data['label'])
+        if sync_job.error:
+            raise CallError(f'Catalog was added successfully but failed to sync: {sync_job.error}')
 
         job.set_progress(100, f'Successfully synced {data["label"]!r} catalog')
 
