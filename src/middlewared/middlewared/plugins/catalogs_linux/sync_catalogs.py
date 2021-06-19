@@ -20,23 +20,24 @@ class CatalogService(Service):
         catalog_len = len(catalogs)
         for index, catalog in enumerate(catalogs):
             job.set_progress((index / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
-            try:
-                await self.middleware.call('catalog.sync', catalog['id'])
-            except Exception as e:
-                self.logger.error('Failed to sync %r catalog: %s', catalog['id'], e)
+            sync_job = await self.middleware.call('catalog.sync', catalog['id'])
+            await sync_job.wait()
 
         if await self.middleware.call('service.started', 'kubernetes'):
             asyncio.ensure_future(self.middleware.call('chart.release.chart_releases_update_checks_internal'))
 
     @accepts(Str('label', required=True))
     @returns()
-    async def sync(self, catalog_label):
+    @job(lock=lambda args: f'{args[0]}_catalog_sync')
+    async def sync(self, job, catalog_label):
         """
         Sync `label` catalog to retrieve latest changes from upstream.
         """
         try:
             catalog = await self.middleware.call('catalog.get_instance', catalog_label)
+            job.set_progress(5, 'Updating catalog repository')
             await self.middleware.call('catalog.update_git_repository', catalog, True)
+            job.set_progress(15, 'Reading catalog information')
             await self.middleware.call('catalog.items', catalog_label, {'cache': False})
         except Exception as e:
             await self.middleware.call(
@@ -45,6 +46,7 @@ class CatalogService(Service):
             raise
         else:
             await self.middleware.call('alert.oneshot_delete', 'CatalogSyncFailed', catalog_label)
+            job.set_progress(100, f'Synced {catalog_label!r} catalog')
 
     @private
     def update_git_repository(self, catalog, raise_exception=False):
