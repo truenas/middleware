@@ -23,6 +23,7 @@ class CatalogService(Service):
         Dict(
             'options',
             Bool('cache', default=True),
+            Bool('cache_only', default=False),
             Bool('retrieve_all_trains', default=True),
             Bool('retrieve_versions', default=True),
             List('trains', items=[Str('train_name')]),
@@ -54,6 +55,10 @@ class CatalogService(Service):
         `options.cache` is a boolean which when set will try to get items details for `label` catalog from cache
         if available.
 
+        `options.cache_only` is a boolean which when set will force usage of cache only for retrieving catalog
+        information. If the content for the catalog in question is not cached, no content would be returned. If
+        `options.cache` is unset, this attribute has no effect.
+
         `options.retrieve_all_trains` is a boolean value which when set will retrieve information for all the trains
         present in the catalog ( it is set by default ).
 
@@ -65,8 +70,13 @@ class CatalogService(Service):
         """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
+        cache_available = False
+        if options['cache']:
+            cache_available = self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details')
+            if not cache_available and options['cache_only']:
+                return {}
 
-        if options['cache'] and self.middleware.call_sync('cache.has_key', f'catalog_{label}_train_details'):
+        if options['cache'] and cache_available:
             orig_data = self.middleware.call_sync('cache.get', f'catalog_{label}_train_details')
             questions_context = None if not options['retrieve_versions'] else self.middleware.call_sync(
                 'catalog.get_normalised_questions_context'
