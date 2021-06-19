@@ -159,7 +159,7 @@ class CatalogService(CRUDService):
                 await self.middleware.call('catalog.update_git_repository', {**data, 'location': path}, True)
                 await self.middleware.call('catalog.validate_catalog_from_path', path)
                 await self.common_validation(
-                    {'trains': await self.middleware.call('catalog.get_trains', path)}, 'catalog_create', data
+                    {'trains': await self.middleware.call('catalog.retrieve_train_names', path)}, 'catalog_create', data
                 )
             except CallError as e:
                 verrors.add('catalog_create.label', f'Failed to validate catalog: {e}')
