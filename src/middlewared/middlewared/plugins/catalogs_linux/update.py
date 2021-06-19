@@ -70,10 +70,11 @@ class CatalogService(CRUDService):
             try:
                 catalog['trains'] = await self.middleware.call(
                     'catalog.items', catalog['label'], {
-                        'cache': extra.get('cache', True),
+                        'cache': True,
+                        'cache_only': await self.official_catalog_label() != catalog['label'],
                         'retrieve_all_trains': extra.get('retrieve_all_trains', True),
                         'trains': extra.get('trains', []),
-                        'retrieve_versions': extra.get('retrieve_versions', True),
+                        'retrieve_versions': extra.get('retrieve_versions', False),
                     },
                 )
             except Exception:

@@ -447,29 +447,20 @@ class ChartReleaseService(CRUDService):
         if await self.query([['id', '=', data['release_name']]]):
             raise CallError(f'Chart release with {data["release_name"]} already exists.', errno=errno.EEXIST)
 
-        catalog = await self.middleware.call(
-            'catalog.query', [['id', '=', data['catalog']]], {'extra': {'item_details': True}}
-        )
-        if not catalog:
-            raise CallError(f'Unable to locate {data["catalog"]!r} catalog', errno=errno.ENOENT)
-        else:
-            catalog = catalog[0]
-        if data['train'] not in catalog['trains']:
-            raise CallError(f'Unable to locate "{data["train"]}" catalog train.', errno=errno.ENOENT)
-        if data['item'] not in catalog['trains'][data['train']]:
-            raise CallError(f'Unable to locate "{data["item"]}" catalog item.', errno=errno.ENOENT)
-
+        catalog = await self.middleware.call('catalog.get_instance', data['catalog'])
+        item_details = await self.middleware.call('catalog.get_item_details', data['item'], {
+            'catalog': data['catalog'],
+            'train': data['train'],
+        })
         version = data['version']
         if version == 'latest':
             version = await self.middleware.call(
-                'chart.release.get_latest_version_from_item_versions',
-                catalog['trains'][data['train']][data['item']]['versions']
+                'chart.release.get_latest_version_from_item_versions', item_details['versions']
             )
 
         if version not in catalog['trains'][data['train']][data['item']]['versions']:
             raise CallError(f'Unable to locate "{data["version"]}" catalog item version.', errno=errno.ENOENT)
 
-        item_details = catalog['trains'][data['train']][data['item']]['versions'][version]
         await self.middleware.call('catalog.version_supported_error_check', item_details)
 
         k8s_config = await self.middleware.call('kubernetes.config')

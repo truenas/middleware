@@ -174,35 +174,20 @@ class ChartReleaseService(Service):
 
     @private
     async def get_version(self, release, options):
-        catalog = await self.middleware.call(
-            'catalog.query', [['id', '=', release['catalog']]], {'extra': {'item_details': True}},
-        )
-        if not catalog:
-            raise CallError(f'Unable to locate {release["catalog"]!r} catalog', errno=errno.ENOENT)
-        else:
-            catalog = catalog[0]
-
         current_chart = release['chart_metadata']
         chart = current_chart['name']
-        if release['catalog_train'] not in catalog['trains']:
-            raise CallError(
-                f'Unable to locate {release["catalog_train"]!r} catalog train in {release["catalog"]!r}',
-                errno=errno.ENOENT,
-            )
-        if chart not in catalog['trains'][release['catalog_train']]:
-            raise CallError(
-                f'Unable to locate {chart!r} catalog item in {release["catalog"]!r} '
-                f'catalog\'s {release["catalog_train"]!r} train.', errno=errno.ENOENT
-            )
+        item_details = await self.middleware.call('catalog.get_item_details', chart, {
+            'catalog': release['catalog'],
+            'train': release['catalog_train'],
+        })
 
         new_version = options['item_version']
         if new_version == 'latest':
             new_version = await self.middleware.call(
-                'chart.release.get_latest_version_from_item_versions',
-                catalog['trains'][release['catalog_train']][chart]['versions']
+                'chart.release.get_latest_version_from_item_versions', item_details['versions']
             )
 
-        if new_version not in catalog['trains'][release['catalog_train']][chart]['versions']:
+        if new_version not in item_details['versions']:
             raise CallError(f'Unable to locate specified {new_version!r} item version.')
 
         verrors = ValidationErrors()
@@ -214,7 +199,7 @@ class ChartReleaseService(Service):
 
         verrors.check()
 
-        return catalog['trains'][release['catalog_train']][chart]['versions'][new_version]
+        return item_details['versions'][new_version]
 
     @private
     async def upgrade_chart_release(self, job, release, options):
