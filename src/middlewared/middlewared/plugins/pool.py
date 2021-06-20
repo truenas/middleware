@@ -2049,7 +2049,7 @@ class PoolDatasetService(CRUDService):
         Str('name', required=True),
         Str('pool', required=True),
         Bool('encrypted'),
-        Bool('encryption_root', null=True),
+        Str('encryption_root', null=True),
         Bool('key_loaded', null=True),
         List('children', required=True),
         Dict('user_properties', additional_attrs=True, required=True),
