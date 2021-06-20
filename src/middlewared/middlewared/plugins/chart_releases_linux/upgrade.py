@@ -321,14 +321,11 @@ class ChartReleaseService(Service):
 
     @private
     async def chart_release_update_check(self, catalog_item, application):
-        available_versions = [
-            parse_version(version) for version, data in catalog_item['versions'].items() if data['healthy']
-        ]
-        if not available_versions:
+        latest_version = catalog_item['latest_version']
+        if not latest_version:
             return
 
-        available_versions.sort(reverse=True)
-        if available_versions[0] > parse_version(application['chart_metadata']['version']):
+        if parse_version(latest_version) > parse_version(application['chart_metadata']['version']):
             await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
         else:
             await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', application['id'])
