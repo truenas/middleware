@@ -107,9 +107,7 @@ class ChartReleaseService(CRUDService):
             return filter_list([], filters, options)
 
         update_catalog_config = {}
-        catalogs = await self.middleware.call(
-            'catalog.query', [], {'extra': {'item_details': True, 'retrieve_versions': False}}
-        )
+        catalogs = await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
         container_images = {}
         for image in await self.middleware.call('container.image.query'):
             for tag in image['repo_tags']:
