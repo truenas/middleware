@@ -202,7 +202,7 @@ class CatalogService(Service):
             item = item_key.removesuffix(f'_{train}')
             item_location = os.path.join(location, train, item)
             job.set_progress(
-                ((index / total_items) * (90 - 10)) + 10,
+                int((index / total_items) * 80) + 10,
                 f'Retrieving information of {item!r} item from {train!r} train'
             )
 
