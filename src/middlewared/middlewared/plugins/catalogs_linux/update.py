@@ -78,7 +78,9 @@ class CatalogService(CRUDService):
             'item_sync_params': await self.middleware.call(
                 'catalog.sync_items_params'
             ) if extra.get('item_details') else None,
-            'all_jobs': await self.middleware.call('core.get_jobs') if extra.get('item_details') else [],
+            'all_jobs': await self.middleware.call(
+                'core.get_jobs', [['method', '=', 'catalog.items']]
+            ) if extra.get('item_details') else [],
         }
 
     @private
@@ -125,7 +127,6 @@ class CatalogService(CRUDService):
             # data has not been retrieved as well due to this
             caching_job = filter_list(
                 context['all_jobs'], [
-                    ['method', '=', 'catalog.items'],
                     ['arguments', '=', [catalog['id'], context['item_sync_params']]]
                 ]
             )
