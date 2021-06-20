@@ -31,6 +31,7 @@ class CatalogService(Service):
         Dict('versions', required=True, additional_attrs=True),
         Str('latest_version', required=True, null=True),
         Str('latest_app_version', required=True, null=True),
+        Str('latest_human_version', required=True, null=True),
         Str('icon_url', required=True, null=True),
     ))
     def get_item_details(self, item_name, options):

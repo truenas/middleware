@@ -138,7 +138,7 @@ class ChartReleaseService(Service):
         ),
         Str('latest_version'),
         Str('latest_human_version'),
-        Str('changelog', max_length=5000),
+        Str('changelog', max_length=None, null=True),
     ))
     def upgrade_summary(self, release_name, options):
         """

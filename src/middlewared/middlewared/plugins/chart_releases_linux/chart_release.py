@@ -456,9 +456,10 @@ class ChartReleaseService(CRUDService):
                 'chart.release.get_latest_version_from_item_versions', item_details['versions']
             )
 
-        if version not in catalog['trains'][data['train']][data['item']]['versions']:
+        if version not in item_details['versions']:
             raise CallError(f'Unable to locate "{data["version"]}" catalog item version.', errno=errno.ENOENT)
 
+        item_details = item_details['versions'][version]
         await self.middleware.call('catalog.version_supported_error_check', item_details)
 
         k8s_config = await self.middleware.call('kubernetes.config')
