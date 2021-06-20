@@ -78,7 +78,8 @@ class CatalogService(Service):
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
 
         `options.retrieve_versions` can be unset to skip retrieving version details of each catalog item. This
-        can help in cases to optimize performance.
+        can help in cases to optimize performance. Retrieving versions would be deprecated in the next major
+        release from this endpoint.
         """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
