@@ -38,7 +38,8 @@ class CatalogService(Service):
             job.set_progress(5, 'Updating catalog repository')
             await self.middleware.call('catalog.update_git_repository', catalog, True)
             job.set_progress(15, 'Reading catalog information')
-            await self.middleware.call('catalog.items', catalog_label, {'cache': False})
+            item_job = await self.middleware.call('catalog.items', catalog_label, await self.sync_items_params())
+            await item_job.wait(raise_error=True)
         except Exception as e:
             await self.middleware.call(
                 'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': catalog_label, 'error': str(e)}
@@ -47,6 +48,16 @@ class CatalogService(Service):
         else:
             await self.middleware.call('alert.oneshot_delete', 'CatalogSyncFailed', catalog_label)
             job.set_progress(100, f'Synced {catalog_label!r} catalog')
+
+    @private
+    async def sync_items_params(self):
+        return {
+            'cache': False,
+            'cache_only': False,
+            'retrieve_all_trains': True,
+            'retrieve_versions': True,
+            'trains': [],
+        }
 
     @private
     def update_git_repository(self, catalog, raise_exception=False):
