@@ -122,7 +122,7 @@ class NICChoices(object):
 
         if self.nolagg:
             # vlan devices are not valid parents of laggs
-            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("lagg")]
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("bond")]
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
         if self.novlan:
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
@@ -198,7 +198,7 @@ class NICChoices(object):
                         self._NIClist.remove(interface[0])
 
         if self.nobridge:
-            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("bridge")]
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("br")]
 
         if self.noepair:
             niclist = copy.deepcopy(self._NIClist)
@@ -806,7 +806,7 @@ Acceptable formats are 255.255.255.0,
             while True:
                 intcrit = input(_("Mark interface as Critical for Failover? (y/n) "))
                 if intcrit.lower().startswith("y"):
-                    if iface.int_interface.startswith('lagg'):
+                    if iface.int_interface.startswith('bond'):
                         with Client() as c:
                             data = c.call('datastore.query', 'network.lagginterface', [('lagg_interface_id', '=', iface.id)])
                             if data and data[0]['lagg_protocol'] == 'failover':
@@ -967,7 +967,7 @@ def create_lagg_interface():
     if not lagg_nics:
         return True
 
-    lagg_name = 'lagg%d' % lagg_index
+    lagg_name = 'bond%d' % lagg_index
     iface = Interfaces(
         int_interface=lagg_name,
         int_name=lagg_name,
