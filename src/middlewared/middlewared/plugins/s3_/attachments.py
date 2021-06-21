@@ -12,7 +12,7 @@ class MinioFSAttachmentDelegate(FSAttachmentDelegate):
         results = []
 
         s3_config = await self.middleware.call('s3.config')
-        if not s3_config['storage_path']:
+        if not s3_config['storage_path'] or not os.path.exists(s3_config['storage_path']):
             return results
         else:
             s3_ds = await self.middleware.call('zfs.dataset.path_to_dataset', s3_config['storage_path'])
