@@ -39,7 +39,7 @@ STATUS_DESC = [
 ]
 
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
-R_SERIES_REGEX = re.compile(r"ECStream (FS2|DSS212S[ps])")
+R_SERIES_REGEX = re.compile(r"(ECStream|iX) (FS1|FS2|DSS212S[ps])")
 R20A_REGEX = re.compile(r"SMC SC826-P")
 R50_REGEX = re.compile(r"iX eDrawer4048S([12])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
@@ -227,8 +227,6 @@ class EnclosureService(CRUDService):
         """
         Sync enclosure of a given ZFS pool
         """
-
-        # As we are only interfacing with SES we can skip mapping enclosures or working with non-SES enclosures
 
         encs = self.__get_enclosures()
         if len(list(encs)) == 0:
