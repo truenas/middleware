@@ -41,7 +41,6 @@ class UnableToDetermineOSVersion(Exception):
     pass
 
 
-
 class OSVersionMismatch(Exception):
 
     """
@@ -371,6 +370,13 @@ class FailoverService(ConfigService):
 
         self.middleware.call_sync(
             'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
+        )
+
+        # need to make sure the license information is updated on the standby node since
+        # it's cached in memory
+        _prev = self.middleware.call_sync('system.product_type')
+        self.middleware.call_sync(
+            'failover.call_remote', 'core.call_hook', ['system.post_license_update', [_prev]]
         )
 
         if options['reboot']:
