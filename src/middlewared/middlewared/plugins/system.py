@@ -355,6 +355,16 @@ class SystemAdvancedService(ConfigService):
 
 class SystemService(Service):
 
+    DMIDECODE_CACHE = {
+        'ecc-memory': None,
+        'baseboard-manufacturer': None,
+        'baseboard-product-name': None,
+        'system-manufacturer': None,
+        'system-product-name': None,
+        'system-serial-number': None,
+        'system-version': None,
+    }
+
     CPU_INFO = {
         'cpu_model': None,
         'core_count': None,
@@ -416,6 +426,58 @@ class SystemService(Service):
             'boot_time': datetime.fromtimestamp(psutil.boot_time(), timezone.utc),
             'datetime': datetime.fromtimestamp(current_time, timezone.utc),
         }
+
+    @private
+    async def dmidecode_info(self):
+
+        """
+        dmidecode data is mostly static so cache the results
+        """
+
+        if self.DMIDECODE_CACHE['ecc-memory'] is None:
+            # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
+            # After discussing with nap, we determined that checking -t 17 did not work well with some systems,
+            # so we check -t 16 now only to see if it reports ECC memory
+            ecc = bool(RE_ECC_MEMORY.findall((await run(['dmidecode', '-t', '16'])).stdout.decode(errors='ignore')))
+            self.DMIDECODE_CACHE['ecc-memory'] = ecc
+
+        if self.DMIDECODE_CACHE['baseboard-manufacturer'] is None:
+            bm = (
+                (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
+            self.DMIDECODE_CACHE['baseboard-manufacturer'] = bm
+
+        if self.DMIDECODE_CACHE['baseboard-product-name'] is None:
+            bpn = (
+                (await run(["dmidecode", "-s", "baseboard-product-name"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
+            self.DMIDECODE_CACHE['baseboard-product-name'] = bpn
+
+        if self.DMIDECODE_CACHE['system-manufacturer'] is None:
+            sm = (
+                (await run(["dmidecode", "-s", "system-manufacturer"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
+            self.DMIDECODE_CACHE['system-manufacturer'] = sm
+
+        if self.DMIDECODE_CACHE['system-product-name'] is None:
+            spn = (
+                (await run(["dmidecode", "-s", "system-product-name"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
+            self.DMIDECODE_CACHE['system-product-name'] = spn
+
+        if self.DMIDECODE_CACHE['system-serial-number'] is None:
+            ssn = (
+                (await run(["dmidecode", "-s", "system-serial-number"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
+            self.DMIDECODE_CACHE['system-serial-number'] = ssn
+
+        if self.DMIDECODE_CACHE['system-version'] is None:
+            sv = (
+                (await run(["dmidecode", "-s", "system-version"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
+            self.DMIDECODE_CACHE['system-version'] = sv
+
+        return self.DMIDECODE_CACHE
 
     @no_auth_required
     @accepts()
