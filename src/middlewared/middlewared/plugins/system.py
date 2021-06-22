@@ -375,10 +375,7 @@ class SystemService(Service):
         'physmem_size': None,
     }
 
-    BIRTHDAY_DATE = {
-        'date': None,
-    }
-
+    BIRTHDAY_DATE = None
     HOST_ID = None
 
     def __init__(self, *args, **kwargs):
@@ -388,10 +385,10 @@ class SystemService(Service):
     @private
     async def birthday(self):
 
-        if self.BIRTHDAY_DATE['date'] is None:
+        if self.BIRTHDAY_DATE is None:
             birth = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
             if birth != datetime(1970, 1, 1):
-                self.BIRTHDAY_DATE['date'] = birth
+                self.BIRTHDAY_DATE = birth
 
         return self.BIRTHDAY_DATE
 
@@ -701,8 +698,6 @@ class SystemService(Service):
         dmidecode = await self.middleware.call('system.dmidecode_info')
         cpu_info = await self.middleware.call('system.cpu_info')
         mem_info = await self.middleware.call('system.mem_info')
-        birthday = await self.middleware.call('system.birthday')
-        timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         return {
             'version': self.version(),
@@ -720,15 +715,15 @@ class SystemService(Service):
             'license': await self.middleware.run_in_thread(self._get_license),
             'boottime': time_info['boot_time'],
             'datetime': time_info['datetime'],
-            'birthday': birthday['date'],
-            'timezone': timezone_setting,
+            'birthday': await self.middleware.call('system.birthday'),
+            'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': dmidecode['system-manufacturer'] if dmidecode['system-manufacturer'] else None,
             'ecc_memory': dmidecode['ecc-memory'],
         }
 
     @private
     async def is_ix_hardware(self):
-        product = (await self.middleware.call('system.info'))['system_product']
+        product = (await self.middleware.call('system.dmidecode_info'))['system-product-name']
         return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
 
     # Sync the clock
@@ -1548,15 +1543,13 @@ async def _update_birthday_data(middleware, birthday=None):
 async def _update_birthday(middleware):
 
     birthday = None
-    timeout = 3600 * 24
+    timeout = 900
 
     middleware.register_hook('interface.post_sync', _update_birthday_data)
 
     middleware.logger.debug('Waiting for clock sync to update system birthday')
     while birthday is None:
         birthday = await middleware.call('system.sync_clock')
-
-        # sleep for 1 day and try again
         if birthday is None:
             await asyncio.sleep(timeout)
 
