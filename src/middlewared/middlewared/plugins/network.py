@@ -2044,7 +2044,7 @@ class InterfaceService(CRUDService):
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
         internal_interfaces = await self.middleware.call('interface.internal_interfaces')
-        if await self.middleware.call('failover.licensed'):
+        if await self.middleware.call('system.is_enterprise'):
             internal_interfaces.extend(await self.middleware.call('failover.internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
 
