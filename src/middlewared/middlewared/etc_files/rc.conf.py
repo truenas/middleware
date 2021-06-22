@@ -410,11 +410,7 @@ def watchdog_config(middleware, context):
         # Bug #7337 -- blacklist AMD systems for now
         model = sysctl.filter('hw.model')
         if not model or 'AMD' not in model[0].value:
-            product = subprocess.run(
-                ['dmidecode', '-s', 'baseboard-product-name'],
-                capture_output=True,
-                errors='ignore',
-            ).stdout.split('\n')[0].strip()
+            product = middleware.call_sync('system.dmidecode_info')['baseboard-product-name']
 
             if product in ('C2750D4I', 'C2550D4I') and _bmc_watchdog_is_broken():
                 return [

@@ -1,14 +1,7 @@
-# Copyright (c) 2015 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 import logging
 import re
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
-from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +40,8 @@ class SensorsAlertSource(AlertSource):
 
     async def check(self):
         baseboard_manufacturer = (
-            (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors="ignore")
-        ).strip()
+            await self.middleware.call('system.dmidecode_info')
+        )['baseboard-manufacturer']
 
         failover_hardware = await self.middleware.call("failover.hardware")
 
