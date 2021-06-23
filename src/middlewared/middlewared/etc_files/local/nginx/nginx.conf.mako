@@ -71,7 +71,7 @@
         ssl_configuration = True
         middleware.call_sync('alert.oneshot_delete', 'WebUiCertificateSetupFailed', None)
 
-    system_version = middleware.call_sync('system.info')['version']
+    system_version = middleware.call_sync('system.version')
 
     if not any(i in general_settings['ui_httpsprotocols'] for i in ('TLSv1', 'TLSv1.1')):
         disabled_ciphers = ':!SHA1:!SHA256:!SHA384'
