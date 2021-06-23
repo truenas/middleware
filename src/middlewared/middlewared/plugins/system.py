@@ -524,27 +524,39 @@ class SystemService(Service):
             self.DMIDECODE_CACHE['ecc-memory'] = ecc
 
         if self.DMIDECODE_CACHE['baseboard-manufacturer'] is None:
-            bm = ((await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors='ignore')).strip()
+            bm = (
+                (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['baseboard-manufacturer'] = bm
 
         if self.DMIDECODE_CACHE['baseboard-product-name'] is None:
-            bpn = ((await run(["dmidecode", "-s", "baseboard-product-name"], check=False)).stdout.decode(errors='ignore')).strip()
+            bpn = (
+                (await run(["dmidecode", "-s", "baseboard-product-name"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['baseboard-product-name'] = bpn
 
         if self.DMIDECODE_CACHE['system-manufacturer'] is None:
-            sm = ((await run(["dmidecode", "-s", "system-manufacturer"], check=False)).stdout.decode(errors='ignore')).strip()
+            sm = (
+                (await run(["dmidecode", "-s", "system-manufacturer"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['system-manufacturer'] = sm
 
         if self.DMIDECODE_CACHE['system-product-name'] is None:
-            spn = ((await run(["dmidecode", "-s", "system-product-name"], check=False)).stdout.decode(errors='ignore')).strip()
+            spn = (
+                (await run(["dmidecode", "-s", "system-product-name"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['system-product-name'] = spn
 
         if self.DMIDECODE_CACHE['system-serial-number'] is None:
-            ssn = ((await run(["dmidecode", "-s", "system-serial-number"], check=False)).stdout.decode(errors='ignore')).strip()
+            ssn = (
+                (await run(["dmidecode", "-s", "system-serial-number"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['system-serial-number'] = ssn
 
         if self.DMIDECODE_CACHE['system-version'] is None:
-            sv = ((await run(["dmidecode", "-s", "system-version"], check=False)).stdout.decode(errors='ignore')).strip()
+            sv = (
+                (await run(["dmidecode", "-s", "system-version"], check=False)).stdout.decode(errors='ignore')
+            ).strip()
             self.DMIDECODE_CACHE['system-version'] = sv
 
         return self.DMIDECODE_CACHE
@@ -1485,7 +1497,7 @@ class SystemGeneralService(ConfigService):
             'system_general_entry', 'general_settings',
             ('add', Str(
                 'sysloglevel', enum=[
-                    'F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE','F_INFO', 'F_DEBUG', 'F_IS_DEBUG'
+                    'F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG', 'F_IS_DEBUG'
                 ]
             )),
             ('add', Str('syslogserver')),
@@ -1729,27 +1741,25 @@ async def _event_system(middleware, event_type, args):
         SYSTEM_READY = True
 
         # Check if birthday is already set
-        birthday = (await middleware.call('system.info'))['birthday']
-
-        # try to set birthday in background
+        birthday = await middleware.call('system.birthday')
         if birthday is None:
+            # try to set birthday in background
             asyncio.ensure_future(_update_birthday(middleware))
 
-        if osc.IS_LINUX:
-            if (await middleware.call('system.advanced.config'))['kdump_enabled']:
-                cp = await run(['kdump-config', 'status'], check=False)
-                if cp.returncode:
-                    middleware.logger.error('Failed to retrieve kdump-config status: %s', cp.stderr.decode())
-                else:
-                    if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
-                        await middleware.call('alert.oneshot_create', 'KdumpNotReady', None)
-                    else:
-                        await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+        if (await middleware.call('system.advanced.config'))['kdump_enabled']:
+            cp = await run(['kdump-config', 'status'], check=False)
+            if cp.returncode:
+                middleware.logger.error('Failed to retrieve kdump-config status: %s', cp.stderr.decode())
             else:
-                await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+                if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
+                    await middleware.call('alert.oneshot_create', 'KdumpNotReady', None)
+                else:
+                    await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+        else:
+            await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
 
-            if await middleware.call('system.first_boot'):
-                asyncio.ensure_future(middleware.call('usage.firstboot'))
+        if await middleware.call('system.first_boot'):
+            asyncio.ensure_future(middleware.call('usage.firstboot'))
 
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
