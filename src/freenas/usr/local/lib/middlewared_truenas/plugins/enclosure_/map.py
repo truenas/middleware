@@ -139,16 +139,11 @@ class EnclosureService(Service):
 
             elements.append(element)
 
-        info = await self.middleware.call("system.info")
-        if '-MINI-' in info["system_product"]:
-            model = info["system_product"]
-        else:
-            model = info["system_product"].replace("TRUENAS-", "")
-        return [
+        mapped = [
             {
                 "id": "mapped_enclosure_0",
                 "name": "Drive Bays",
-                "model": model,
+                "model": enclosures[0].model,
                 "controller": True,
                 "elements": [
                     {
@@ -161,3 +156,8 @@ class EnclosureService(Service):
                 ],
             }
         ]
+        #Add shelves back in
+        for enclosure in enclosures:
+            if enclosure.controller == false:
+                mapped.append(enclosure)
+        return mapped
