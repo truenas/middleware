@@ -143,7 +143,7 @@ class EnclosureService(Service):
             {
                 "id": "mapped_enclosure_0",
                 "name": "Drive Bays",
-                "model": enclosures[0].model,
+                "model": enclosures[0]['model'],
                 "controller": True,
                 "elements": [
                     {
@@ -161,7 +161,7 @@ class EnclosureService(Service):
         # ability to support expansion shelves, then we need to add them
         # back in here so drive identification works
         for enclosure in enclosures:
-            if enclosure.controller == false:
+            if enclosure['controller'] == False:
                 mapped.append(enclosure)
 
         return mapped
