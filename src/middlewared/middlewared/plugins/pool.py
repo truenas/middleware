@@ -4002,23 +4002,37 @@ class PoolDatasetService(CRUDService):
         """
         pool = await self.middleware.call('pool.query', [['name', '=', pool]])
         if not pool:
-            raise CallError('Pool not found.', errno.ENOENT)
-        pool = pool[0]
-        numdisks = 4
-        for vdev in pool['topology']['data']:
+            raise CallError(f'"{pool}" not found.', errno.ENOENT)
+
+        """
+        Cheatsheat for blocksizes is as follows:
+        2w/3w mirror = 16K
+        3wZ1, 4wZ2, 5wZ3 = 16K
+        4w/5wZ1, 5w/6wZ2, 6w/7wZ3 = 32K
+        6w/7w/8w/9wZ1, 7w/8w/9w/10wZ2, 8w/9w/10w/11wZ3 = 64K
+        10w+Z1, 11w+Z2, 12w+Z3 = 128K
+
+        If the zpool was forcefully created with mismatched
+        vdev geometry (i.e. 3wZ1 and a 5wZ1) then we calculate
+        the blocksize based on the largest vdev of the zpool.
+        """
+        maxdisks = 1
+        for vdev in pool[0]['topology']['data']:
             if vdev['type'] == 'RAIDZ1':
-                num = len(vdev['children']) - 1
+                disks = len(vdev['children']) - 1
             elif vdev['type'] == 'RAIDZ2':
-                num = len(vdev['children']) - 2
+                disks = len(vdev['children']) - 2
             elif vdev['type'] == 'RAIDZ3':
-                num = len(vdev['children']) - 3
+                disks = len(vdev['children']) - 3
             elif vdev['type'] == 'MIRROR':
-                num = 1
+                disks = maxdisks
             else:
-                num = len(vdev['children'])
-            if num > numdisks:
-                numdisks = num
-        return '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
+                disks = len(vdev['children'])
+
+            if disks > maxdisks:
+                maxdisks = disks
+
+        return f'{max(16, min(128, 2 ** ((maxdisks * 8) - 1).bit_length()))}'
 
     @item_method
     @accepts(Str('id', required=True))
