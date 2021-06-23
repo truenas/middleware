@@ -662,6 +662,10 @@ class SystemService(Service):
             return "READY"
         return "BOOTING"
 
+    @private
+    async def license(self):
+        return await self.middleware.run_in_thread(self._get_license)
+
     @staticmethod
     def _get_license():
         if not os.path.exists(LICENSE_FILE):
@@ -822,7 +826,7 @@ class SystemService(Service):
             'system_serial': dmidecode['system-serial-number'] if dmidecode['system-serial-number'] else None,
             'system_product': dmidecode['system-product-name'] if dmidecode['system-product-name'] else None,
             'system_product_version': dmidecode['system-version'] if dmidecode['system-version'] else None,
-            'license': await self.middleware.run_in_thread(self._get_license),
+            'license': await self.middleware.call('system.license'),
             'boottime': time_info['boot_time'],
             'datetime': time_info['datetime'],
             'birthday': birthday['date'],
@@ -866,7 +870,7 @@ class SystemService(Service):
             return False
         elif is_core:
             return True
-        license = await self.middleware.run_in_thread(self._get_license)
+        license = await self.middleware.call('system.license')
         if license and name in license['features']:
             return True
         return False

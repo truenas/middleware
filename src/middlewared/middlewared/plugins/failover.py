@@ -163,8 +163,8 @@ class FailoverService(ConfigService):
         # update the class attribute so that all instances
         # of this class see the correct value
         if FailoverService.HA_LICENSED is None:
-            info = self.middleware.call_sync('system.info')
-            if info['license'] and info['license']['system_serial_ha']:
+            info = self.middleware.call_sync('system.license')
+            if info is not None and info['system_serial_ha']:
                 FailoverService.HA_LICENSED = True
             else:
                 FailoverService.HA_LICENSED = False
