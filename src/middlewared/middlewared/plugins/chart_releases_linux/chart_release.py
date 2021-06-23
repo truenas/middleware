@@ -123,7 +123,7 @@ class ChartReleaseService(CRUDService):
                     app_version = catalog['trains'][train][catalog_item]['latest_app_version'] or '0.0.0'
                     train_data[catalog_item] = {
                         'chart_version': parse_version(max_version),
-                        'app_version': parse_version(app_version),
+                        'app_version': app_version,
                     }
 
                 update_catalog_config[catalog['label']][train] = train_data
