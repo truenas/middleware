@@ -347,10 +347,10 @@ class RealtimeEventSource(EventSource):
 
     def _amd_cpu_temperature(self, amd_sensor):
         if self.AMD_SYSTEM_INFO is None:
-            self.AMD_SYSTEM_INFO = self.middleware.call_sync('system.info')
+            self.AMD_SYSTEM_INFO = self.middleware.call_sync('system.cpu_info')
 
-        cpu_model = self.AMD_SYSTEM_INFO['model']
-        core_count = self.AMD_SYSTEM_INFO['physical_cores']
+        cpu_model = self.AMD_SYSTEM_INFO['cpu_model']
+        core_count = self.AMD_SYSTEM_INFO['physical_core_count']
 
         ccds = []
         for k, v in amd_sensor.items():
