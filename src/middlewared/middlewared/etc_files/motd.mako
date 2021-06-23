@@ -1,5 +1,5 @@
 <%
-	buildtime = middleware.call_sync('system.info')['buildtime']
+	buildtime = middleware.call_sync('system.build_time')
 	motd = middleware.call_sync('system.advanced.config')['motd']
 %>\
 % if IS_FREEBSD:
