@@ -347,7 +347,9 @@ class UpdateService(Service):
 
         try:
             try:
-                self.middleware.call_sync('update.install_manual_impl', job, str(update_file.absolute()), dest_extracted)
+                self.middleware.call_sync(
+                    'update.install_manual_impl', job, str(update_file.absolute()), dest_extracted
+                )
             except Exception as e:
                 self.logger.debug('Applying manual update failed', exc_info=True)
                 raise CallError(str(e), errno.EFAULT)
@@ -448,7 +450,7 @@ class UpdateService(Service):
             self.logger.info('Deleting dataset %s snapshot %s', dataset, snapshot)
             subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
 
-        current_version = "-".join(self.middleware.call_sync("system.info")["version"].split("-")[1:])
+        current_version = "-".join(self.middleware.call_sync("system.version").split("-")[1:])
         snapshot = f'update--{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}--{current_version}'
         subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
 
