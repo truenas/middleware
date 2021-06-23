@@ -556,7 +556,7 @@ class AlertService(Service):
                             support = await self.middleware.call("support.config")
                             msg = [f"* {alert.formatted}" for alert in new_hardware_alerts]
 
-                            serial = (await self.middleware.call("system.info"))["system_serial"]
+                            serial = (await self.middleware.call("system.dmidecode_info"))["system-serial-number"]
 
                             for name, verbose_name in await self.middleware.call("support.fields"):
                                 value = support[name]
