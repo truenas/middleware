@@ -156,8 +156,12 @@ class EnclosureService(Service):
                 ],
             }
         ]
-        #Add shelves back in
+
+        # if we have future products that need to be mapped and/or have the
+        # ability to support expansion shelves, then we need to add them
+        # back in here so drive identification works
         for enclosure in enclosures:
             if enclosure.controller == false:
                 mapped.append(enclosure)
+
         return mapped
