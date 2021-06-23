@@ -544,7 +544,6 @@ class Enclosure(object):
             self.model = self.system_info["system_product"]
             self.controller = True
 
-
     def _parse_raw_value(self, value):
         newvalue = 0
         for i, v in enumerate(value.split(' ')):
