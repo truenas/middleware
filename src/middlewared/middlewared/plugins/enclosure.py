@@ -344,32 +344,34 @@ class EnclosureService(CRUDService):
                     element.device_slot_set("clear")
 
     def __get_enclosures(self):
-        return Enclosures(self.middleware.call_sync("enclosure.get_ses_enclosures"),
-                          self.middleware.call_sync("system.info"))
+        return Enclosures(
+            self.middleware.call_sync("enclosure.get_ses_enclosures"),
+            self.middleware.call_sync("system.dmidecode_info")["system-product-name"]
+        )
 
 
 class Enclosures(object):
 
-    def __init__(self, stat, system_info):
+    def __init__(self, stat, product_name):
         blacklist = [
             "VirtualSES",
         ]
-        if (
-            system_info["system_product"] and
-            system_info["system_product"].startswith("TRUENAS-") and
-            "-MINI-" not in system_info["system_product"] and
-            system_info["system_product"] not in ["TRUENAS-R20", "TRUENAS-R20A"]
-        ):
-            blacklist.append("AHCI SGPIO Enclosure 2.00")
+        if product_name:
+            if (
+                product_name.startswith("TRUENAS-") and
+                "-MINI-" not in product_name and
+                product_name not in ["TRUENAS-R20", "TRUENAS-R20A"]
+            ):
+                blacklist.append("AHCI SGPIO Enclosure 2.00")
 
         self.__enclosures = []
         enclosures_tail = []
         for num, data in stat.items():
-            enclosure = Enclosure(num, data, stat, system_info)
+            enclosure = Enclosure(num, data, stat, product_name)
             if any(s in enclosure.encname for s in blacklist):
                 continue
             if (
-                system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"] and
+                product_name and product_name in ["TRUENAS-R20", "TRUENAS-R20A"] and
                 enclosure.encname == "AHCI SGPIO Enclosure 2.00"
             ):
                 if enclosure.model.endswith("Drawer #2"):
@@ -410,10 +412,10 @@ class Enclosures(object):
 
 class Enclosure(object):
 
-    def __init__(self, num, data, stat, system_info):
+    def __init__(self, num, data, stat, product_name):
         self.num = num
         self.stat = stat
-        self.system_info = system_info
+        self.product_name = product_name
         self.devname, data = data
         self.encname = ""
         self.encid = ""
@@ -494,7 +496,7 @@ class Enclosure(object):
             self.model = "M Series"
             self.controller = True
         elif R_SERIES_REGEX.match(self.encname) or R20A_REGEX.match(self.encname):
-            self.model = self.system_info["system_product"].replace("TRUENAS-", "")
+            self.model = self.product_name.replace("TRUENAS-", "")
             self.controller = True
             if self.model in ["R20", "R20A"]:
                 self.model = f"{self.model}, Drawer #1"
@@ -502,11 +504,11 @@ class Enclosure(object):
                 index = [v for v in self.stat.values() if "ECStream FS2" in v].index(data)
                 self.model = f"{self.model}, Drawer #{index + 1}"
         elif (
-            self.system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"] and
+            self.product_name in ["TRUENAS-R20", "TRUENAS-R20A"] and
             self.encname == "AHCI SGPIO Enclosure 2.00" and
             len(data.splitlines()) == 6
         ):
-            self.model = f"{self.system_info['system_product'].replace('TRUENAS-', '')}, Drawer #2"
+            self.model = f"{self.product_name.replace('TRUENAS-', '')}, Drawer #2"
             self.controller = True
         elif m := R50_REGEX.match(self.encname):
             self.model = f"R50, Drawer #{m.group(1)}"
