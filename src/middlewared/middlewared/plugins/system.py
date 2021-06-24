@@ -802,15 +802,15 @@ class SystemService(Service):
         List('loadavg', required=True),
         Str('uptime', required=True),
         Float('uptime_seconds', required=True),
-        Str('system_serial', required=True),
-        Str('system_product', required=True),
-        Str('system_product_version', required=True),
+        Str('system_serial', required=True, null=True),
+        Str('system_product', required=True, null=True),
+        Str('system_product_version', required=True, null=True),
         Dict('license', additional_attrs=True, null=True),  # TODO: Fill this in please
         Datetime('boottime', required=True),
         Datetime('datetime', required=True),
         Datetime('birthday', required=True, null=True),
         Str('timezone', required=True),
-        Str('system_manufacturer', required=True),
+        Str('system_manufacturer', required=True, null=True),
         Bool('ecc_memory', required=True),
     ))
     async def info(self):
