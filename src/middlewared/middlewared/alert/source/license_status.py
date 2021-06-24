@@ -1,9 +1,3 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from collections import defaultdict
 from datetime import date, timedelta
 import textwrap
@@ -44,29 +38,30 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
     run_on_backup_node = False
 
     def check_sync(self):
-        license = self.middleware.call_sync('system.info')['license']
         alerts = []
-        if license is None:
+
+        local_license = self.middleware.call_sync('system.license')
+        if local_license is None:
             return Alert(LicenseAlertClass, "Your TrueNAS has no license, contact support.")
 
-        serial = self.middleware.call_sync('system.dmidecode_info')['system-serial-number']
-
-        if license['system_serial'] != serial and license['system_serial_ha'] != serial:
+        # check if this node's system serial matches the serial in the license
+        local_serial = self.middleware.call_sync('system.dmidecode_info')['system-serial-number']
+        if local_serial not in (local_license['system_serial'], local_license['system_serial_ha']):
             alerts.append(Alert(LicenseAlertClass, 'System serial does not match license.'))
 
-        standby_info = None
+        standby_license = standby_serial = None
         try:
-            if self.middleware.call_sync('failover.licensed'):
-                standby_info = self.middleware.call_sync('failover.call_remote', 'system.info')
+            if local_license['system_serial_ha']:
+                standby_license = self.middleware.call_sync('failover.call_remote', 'system.license')
+                standby_serial = self.middleware.call_sync(
+                    'failover.call_remote', 'system.dmidecode_info')['system-serial-number']
         except Exception:
             pass
 
-        if (
-            standby_info and standby_info.get('license') and
-            standby_info['system_serial'] != standby_info['license']['system_serial'] and
-            standby_info['system_serial'] != standby_info['license']['system_serial_ha']
-        ):
-            alerts.append(Alert(LicenseAlertClass, 'System serial of standby node does not match license.',))
+        if standby_license and standby_serial is not None:
+            # check if the remote node's system serial matches the serial in the license
+            if standby_serial not in (standby_license['system_serial'], standby_license['system_serial_ha']):
+                alerts.append(Alert(LicenseAlertClass, 'System serial of standby node does not match license.',))
 
         chassis_hardware = self.middleware.call_sync('truenas.get_chassis_hardware')
         hardware = chassis_hardware.replace('TRUENAS-', '').split('-')
@@ -169,16 +164,16 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
                 if days == 0:
                     alert_klass = LicenseHasExpiredAlertClass
-                    alert_text = textwrap.dedent(f"""\
+                    alert_text = textwrap.dedent("""\
                         SUPPORT CONTRACT EXPIRATION. To reactivate and continue to receive technical support and
                         assistance, contact iXsystems @ telephone: 1-855-473-7449
                     """)
                     subject = "Your TrueNAS support contract has expired"
-                    opening = textwrap.dedent(f"""\
+                    opening = textwrap.dedent("""\
                         As of today, your support contract has ended. You will no longer be eligible for technical
                         support and assistance for your TrueNAS system.
                     """)
-                    encouraging = textwrap.dedent(f"""\
+                    encouraging = textwrap.dedent("""\
                         It is still not too late to renew your contract but you must do so as soon as possible by
                         contacting your authorized TrueNAS Reseller or iXsystems (sales@iXsystems.com) today to avoid
                         additional costs and lapsed-contract fees.
@@ -195,7 +190,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                             This is the final reminder regarding the impending expiration of your TrueNAS
                             {contract_type} support contract. As of today, it is set to expire in 2 weeks.
                         """)
-                        encouraging = textwrap.dedent(f"""\
+                        encouraging = textwrap.dedent("""\
                             We encourage you to urgently contact your authorized TrueNAS Reseller or iXsystems
                             (sales@iXsystems.com) directly to renew your contract before expiration so that you continue
                             to enjoy the peace of mind and benefits that come with our support contracts.
@@ -208,7 +203,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                             available to you as an active support contract customer at:
                             https://www.ixsystems.com/support/ and click on the “TrueNAS Arrays” tab.
                         """)
-                        encouraging = textwrap.dedent(f"""\
+                        encouraging = textwrap.dedent("""\
                             We encourage you to contact your authorized TrueNAS Reseller or iXsystems directly
                             (sales@iXsystems.com) to renew your contract before expiration. Doing so ensures that
                             you continue to enjoy the peace of mind and benefits that come with support coverage.
