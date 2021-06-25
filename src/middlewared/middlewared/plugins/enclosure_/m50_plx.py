@@ -10,11 +10,12 @@ class EnclosureService(Service):
 
     @private
     def m50_plx_enclosures(self):
-        system_product = self.middleware.call_sync("system.info")["system_product"]
-        if system_product is None or not ("TRUENAS-M50" in system_product or "TRUENAS-M60" in system_product):
+        """
+        # TODO: fix on SCALE
+        product = self.middleware.call_sync("system.dmidecode_info")["system-product-name"]
+        if product is None or not ("TRUENAS-M50" in product or "TRUENAS-M60" in product):
             return []
 
-        """
         nvme_to_nvd = self.middleware.call_sync('disk.nvme_to_nvd_map')
 
         slot_to_nvd = {}

@@ -193,7 +193,7 @@ class TrueNASService(Service):
         return result
 
     async def __fetch_customer_information_immutable_data(self):
-        license = (await self.middleware.call('system.info'))['license']
+        license = await self.middleware.call('system.license')
         if license is None:
             return None
 
@@ -227,7 +227,7 @@ class TrueNASService(Service):
         await self.middleware.call('keyvalue.set', 'truenas:production', production)
 
         if not was_production and production:
-            serial = (await self.middleware.call('system.info'))["system_serial"]
+            serial = (await self.middleware.call('system.dmidecode_info'))["system-serial-number"]
             return await job.wrap(await self.middleware.call('support.new_ticket', {
                 "title": f"System has been just put into production ({serial})",
                 "body": "This system has been just put into production",

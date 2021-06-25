@@ -13,7 +13,7 @@
         uname = os.uname()
 
         hw_machine = uname.machine
-        hw_model = middleware.call_sync("system.info")["model"]
+        hw_model = middleware.call_sync("system.cpu_info")["cpu_model"]
         kern_ostype = uname.sysname
         kern_osrelease = uname.release
         kern_osrevision = uname.version

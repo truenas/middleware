@@ -1,4 +1,5 @@
 import asyncio
+import socket
 
 from middlewared.service import CallError, job, private, Service
 
@@ -143,13 +144,12 @@ class TruecommandService(Service, TruecommandAPIMixin):
         # We are going to register the api key with the portal and if it fails,
         # We are going to fail hard and fast without saving any information in the database if we fail to
         # register for whatever reason.
-        sys_info = await self.middleware.call('system.info')
         response = await self._post_call(payload={
             'action': 'add-truecommand-wg-key',
             'apikey': config['api_key'],
             'nas_pubkey': config['wg_public_key'],
-            'hostname': sys_info['hostname'],
-            'sysversion': sys_info['version'],
+            'hostname': socket.gethostname(),
+            'sysversion': await self.middleware.call('system.version'),
         })
 
         if response['error']:
@@ -162,4 +162,4 @@ class TruecommandService(Service, TruecommandAPIMixin):
         elif response['state'].lower() == 'denied':
             # Discussed with Ken and he said it's safe to assume that if we get denied
             # we should assume the API Key is invalid
-            raise CallError(f'The provided API Key is invalid.')
+            raise CallError('The provided API Key is invalid.')

@@ -61,12 +61,12 @@ MAPPINGS = [
 class EnclosureService(Service):
     @private
     async def map_enclosures(self, enclosures):
-        info = await self.middleware.call("system.info")
-        if info["system_product"]:
+        info = await self.middleware.call("system.dmidecode_info")
+        if info["system-product-name"] is not None:
             for product_mapping in MAPPINGS:
-                if product_mapping.product_re.match(info["system_product"]):
+                if product_mapping.product_re.match(info["system-product-name"]):
                     for version_mapping in product_mapping.mappings:
-                        if version_mapping.version_re.match(info["system_product_version"]):
+                        if version_mapping.version_re.match(info["system-version"]):
                             return await self._map_enclosures(enclosures, version_mapping.slots)
 
         return enclosures

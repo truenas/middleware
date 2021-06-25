@@ -88,7 +88,7 @@ class SupportService(ConfigService):
         if not await self.middleware.call('system.is_enterprise'):
             return False
 
-        license = (await self.middleware.call('system.info'))['license']
+        license = await self.middleware.call('system.license')
         if license is None:
             return False
 
@@ -202,7 +202,7 @@ class SupportService(ConfigService):
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
-            license = (await self.middleware.call('system.info'))['license']
+            license = await self.middleware.call('system.license')
             if license:
                 data['company'] = license['customer_name']
             else:

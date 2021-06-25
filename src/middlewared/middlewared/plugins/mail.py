@@ -323,7 +323,7 @@ class MailService(ConfigService):
         else:
             interval = timedelta(seconds=interval)
 
-        sw_name = self.middleware.call_sync('system.info')['version'].split('-', 1)[0]
+        sw_name = self.middleware.call_sync('system.version').split('-', 1)[0]
 
         channel = message.get('channel')
         if not channel:
