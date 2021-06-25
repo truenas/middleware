@@ -21,7 +21,6 @@ import json
 import os
 import pickle
 import smtplib
-import socket
 import syslog
 
 
@@ -406,9 +405,13 @@ class MailService(ConfigService):
             msg['Cc'] = ', '.join(message.get('cc'))
         msg['Date'] = formatdate()
 
-        local_hostname = socket.gethostname()
-
-        msg['Message-ID'] = "<%s-%s.%s@%s>" % (sw_name.lower(), datetime.utcnow().strftime("%Y%m%d.%H%M%S.%f"), base64.urlsafe_b64encode(os.urandom(3)), local_hostname)
+        local_hostname = self.middleware.call_sync('system.hostname')
+        msg['Message-ID'] = "<%s-%s.%s@%s>" % (
+            sw_name.lower(),
+            datetime.utcnow().strftime("%Y%m%d.%H%M%S.%f"),
+            base64.urlsafe_b64encode(os.urandom(3)),
+            local_hostname
+        )
 
         extra_headers = message.get('extra_headers') or {}
         for key, val in list(extra_headers.items()):
@@ -463,7 +466,7 @@ class MailService(ConfigService):
         self.middleware.call_sync('network.general.will_perform_activity', 'mail')
 
         if local_hostname is None:
-            local_hostname = socket.gethostname()
+            local_hostname = self.middleware.call_sync('system.hostname')
 
         if not config['outgoingserver'] or not config['port']:
             # See NOTE below.
