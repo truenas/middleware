@@ -145,7 +145,7 @@ class FailoverService(Service):
             to_restart[0:0] = pre_services
 
             # restart any kubernetes applications
-            if self.run_call('kubernetes.config')['dataset']:
+            if (await self.middleware.call('kubernetes.config'))['dataset']:
                 to_restart.append('kubernetes')
 
         exceptions = await asyncio.gather(
