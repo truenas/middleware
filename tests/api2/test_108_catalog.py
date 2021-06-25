@@ -82,7 +82,11 @@ def test_06_validate_official_catalog():
 def test_07_sync_official_catalog():
     results = POST('/catalog/sync/', 'OFFICIAL')
     assert results.status_code == 200, results.text
-    assert results.json() is None, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert results is None, results.text
 
 
 @pytest.mark.parametrize('chart', official_charts)
@@ -95,8 +99,12 @@ def test_08_get_official_catalog_item(chart):
     }
     results = POST('/catalog/items/', payload)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    assert chart in results.json()['charts'], results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert isinstance(results, dict), str(job_status['results'])
+    assert chart in results['charts'], str(job_status['results'])
 
 
 def test_09_set_truechart_catalog():
@@ -139,7 +147,11 @@ def test_12_validate_truechart_catalog():
 def test_13_sync_truechart_catalog():
     results = POST('/catalog/sync/', 'TRUECHARTS')
     assert results.status_code == 200, results.text
-    assert results.json() is None, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert results is None, results.text
 
 
 @pytest.mark.parametrize('chart', truechart_charts)
@@ -149,8 +161,12 @@ def test_14_get_truechart_catalog_item(chart):
     }
     results = POST('/catalog/items/', payload)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    assert chart in results.json()['charts'], results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert isinstance(results, dict), str(job_status['results'])
+    assert chart in results['charts'], str(job_status['results'])
 
 
 def test_15_change_truechart_preferred_trains():
@@ -175,7 +191,11 @@ def test_17_get_truechart_catalog_item_test_trains():
     }
     results = POST('/catalog/items/', payload)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json()['test'], dict), results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert isinstance(results['test'], dict), str(job_status['results'])
 
 
 def test_18_sync_all_catalog():
