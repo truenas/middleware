@@ -514,6 +514,7 @@ class ZFSDatasetService(CRUDService):
         retrieve_children = extra.get('retrieve_children', True)
         snapshots = extra.get('snapshots')
         snapshots_recursive = extra.get('snapshots_recursive')
+        snapshots_properties = extra.get('snapshots_properties')
         if not retrieve_properties:
             # This is a short hand version where consumer can specify that they don't want any property to
             # be retrieved
@@ -524,7 +525,7 @@ class ZFSDatasetService(CRUDService):
             # Handle `id` filter specially to avoiding getting all datasets
             kwargs = dict(
                 props=props, user_props=user_properties, snapshots=snapshots, retrieve_children=retrieve_children,
-                snapshots_recursive=snapshots_recursive,
+                snapshots_recursive=snapshots_recursive, snapshot_props=snapshots_properties
             )
             if filters and filters[0][0] == 'id':
                 if filters[0][1] == '=':
