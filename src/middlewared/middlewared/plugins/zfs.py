@@ -514,7 +514,7 @@ class ZFSDatasetService(CRUDService):
         retrieve_children = extra.get('retrieve_children', True)
         snapshots = extra.get('snapshots')
         snapshots_recursive = extra.get('snapshots_recursive')
-        snapshots_properties = extra.get('snapshots_properties')
+        snapshots_properties = extra.get('snapshots_properties', [])
         if not retrieve_properties:
             # This is a short hand version where consumer can specify that they don't want any property to
             # be retrieved
