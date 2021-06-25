@@ -523,7 +523,7 @@ class TwoFactorAuthService(ConfigService):
         return pyotp.totp.TOTP(
             config['secret'], interval=config['interval'], digits=config['otp_digits']
         ).provisioning_uri(
-            f'{socket.gethostname()}@{await self.middleware.call("system.product_name")}',
+            f'{await self.middleware.call("system.hostname")}@{await self.middleware.call("system.product_name")}',
             'iXsystems'
         )
 

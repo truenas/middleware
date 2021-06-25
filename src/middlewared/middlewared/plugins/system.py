@@ -606,6 +606,10 @@ class SystemService(Service):
     async def is_enterprise(self):
         return await self.middleware.call('system.product_type') in ['ENTERPRISE', 'SCALE_ENTERPRISE']
 
+    @private
+    async def hostname(self):
+        return socket.gethostname()
+
     @no_auth_required
     @accepts()
     @returns(Str('product_name'))
@@ -827,7 +831,7 @@ class SystemService(Service):
         return {
             'version': self.version(),
             'buildtime': await self.middleware.call('system.build_time'),
-            'hostname': socket.gethostname(),
+            'hostname': await self.middleware.call('system.hostname'),
             'physmem': mem_info['physmem_size'],
             'model': cpu_info['cpu_model'],
             'cores': cpu_info['core_count'],

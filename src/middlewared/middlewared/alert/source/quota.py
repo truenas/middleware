@@ -1,7 +1,6 @@
 from datetime import timedelta
 import logging
 import os
-import socket
 
 try:
     from bsd import getmntinfo
@@ -47,8 +46,10 @@ class QuotaAlertSource(ThreadedAlertSource):
                 except (KeyError, ValueError):
                     d[k] = default
 
+        # call this outside the for loop since we don't need to check
+        # for every dataset that could be potentially be out of quota...
+        hostname = self.middleware.call_sync("system.hostname")
         datasets = sorted(datasets, key=lambda ds: ds["name"])
-
         for dataset in datasets:
             for quota_property in ["quota", "refquota"]:
                 try:
@@ -90,8 +91,6 @@ class QuotaAlertSource(ThreadedAlertSource):
                     continue
 
                 quota_name = quota_property[0].upper() + quota_property[1:]
-
-                hostname = socket.gethostname()
                 args = {
                     "name": quota_name,
                     "dataset": dataset["name"],

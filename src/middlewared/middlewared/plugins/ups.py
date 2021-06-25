@@ -7,7 +7,6 @@ import io
 import os
 import re
 import syslog
-import socket
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
@@ -351,7 +350,7 @@ class UPSService(SystemServiceService):
                 # battery.runtime.low: 900
 
                 ups_name = config['identifier']
-                hostname = socket.gethostname()
+                hostname = await self.middleware.call('system.hostname')
                 current_time = datetime.datetime.now(tz=dateutil.tz.tzlocal()).strftime('%a %b %d %H:%M:%S %Z %Y')
                 ups_subject = config['subject'].replace('%d', current_time).replace('%h', hostname)
                 body = f'NOTIFICATION: {notify_type!r}\n\nUPS: {ups_name!r}\n\n'

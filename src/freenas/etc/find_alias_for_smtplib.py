@@ -5,7 +5,6 @@ import json
 import os
 import re
 import requests
-import socket
 import sys
 import syslog
 
@@ -55,7 +54,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
         margs['extra_headers'] = dict(em)
         margs['extra_headers'].update({
             'X-Mailer': sw_name,
-            f'X-{sw_name}-Host': socket.gethostname(),
+            f'X-{sw_name}-Host': c.call('system.hostname'),
             'To': ', '.join(to_addrs_repl),
         })
         margs['subject'] = em.get('Subject')
