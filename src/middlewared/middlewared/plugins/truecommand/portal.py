@@ -1,5 +1,4 @@
 import asyncio
-import socket
 
 from middlewared.service import CallError, job, private, Service
 
@@ -148,7 +147,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
             'action': 'add-truecommand-wg-key',
             'apikey': config['api_key'],
             'nas_pubkey': config['wg_public_key'],
-            'hostname': socket.gethostname(),
+            'hostname': await self.middleware.call('system.hostname'),
             'sysversion': await self.middleware.call('system.version'),
         })
 
