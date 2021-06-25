@@ -1,7 +1,6 @@
 from datetime import timedelta
 import logging
 import os
-import socket
 
 try:
     from bsd import getmntinfo
@@ -90,8 +89,6 @@ class QuotaAlertSource(ThreadedAlertSource):
                     continue
 
                 quota_name = quota_property[0].upper() + quota_property[1:]
-
-                hostname = socket.gethostname()
                 args = {
                     "name": quota_name,
                     "dataset": dataset["name"],
@@ -116,6 +113,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                         to = None
 
                     if to is not None:
+                        hostname = self.middleware.call_sync('system.hostname')
                         mail = {
                             "to": [to],
                             "subject": f"{hostname}: {quota_name} exceeded on dataset {dataset['name']}",
