@@ -2,12 +2,11 @@ import errno
 import json
 import requests
 import simplejson
-import socket
 import time
 
 from middlewared.pipe import Pipes
 from middlewared.plugins.system import DEBUG_MAX_SIZE
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.network import INTERNET_TIMEOUT
@@ -263,7 +262,7 @@ class SupportService(ConfigService):
                 debug_name = 'debug-{}.tar'.format(time.strftime('%Y%m%d%H%M%S'))
             else:
                 debug_name = 'debug-{}-{}.txz'.format(
-                    socket.gethostname().split('.')[0],
+                    await (self.middleware.call('system.hostname')).split('.')[0],
                     time.strftime('%Y%m%d%H%M%S'),
                 )
 
