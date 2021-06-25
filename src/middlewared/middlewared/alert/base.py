@@ -1,5 +1,4 @@
 from datetime import timedelta
-import socket
 import enum
 import json
 import logging
@@ -250,7 +249,7 @@ class AlertService:
 
     async def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = await self.middleware.call("system.product_name")
-        hostname = socket.gethostname()
+        hostname = await self.middleware.call('system.hostname')
         if await self.middleware.call("system.is_enterprise"):
             node_map = await self.middleware.call("alert.node_map")
         else:
@@ -273,7 +272,7 @@ class ThreadedAlertService(AlertService):
 
     def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = self.middleware.call_sync("system.product_name")
-        hostname = socket.gethostname()
+        hostname = await self.middleware.call('system.hostname')
         if self.middleware.call_sync("system.is_enterprise"):
             node_map = self.middleware.call_sync("alert.node_map")
         else:
