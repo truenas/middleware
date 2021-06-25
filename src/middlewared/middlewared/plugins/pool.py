@@ -2943,6 +2943,9 @@ class PoolDatasetService(CRUDService):
         `query-options.extra.snapshots_recursive` can be set to retrieve snapshot(s) recursively of dataset in question.
         If `query-options.extra.snapshots_recursive` and `query-options.extra.snapshots` are set, snapshot(s) will be
         retrieved recursively.
+
+        `query-options.extra.snapshots_properties` can be specified to list out properties which should be retrieved
+        for snapshot(s) related to each dataset.
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
@@ -2966,6 +2969,7 @@ class PoolDatasetService(CRUDService):
                         'properties': props,
                         'snapshots': snapshots,
                         'snapshots_recursive': snapshots_recursive,
+                        'snapshots_properties': extra.get('snapshots_properties')
                     }
                 }
             ), retrieve_children, internal_datasets_filters,
