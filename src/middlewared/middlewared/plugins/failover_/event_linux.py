@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 import time
 import contextlib
 import shutil
@@ -641,8 +642,8 @@ class FailoverService(Service):
         # So if we panic here, middleware will check for this file and send an appropriate email.
         # ticket 39114
         with contextlib.suppress(Exception):
-            with open(self.WATCHDOG_ALERT_FILE, 'w') as f:
-                f.write(int(time.time()))
+            with open(self.WATCHDOG_ALERT_FILE, 'wb') as f:
+                f.write(int(time.time()).to_bytes(4, sys.byteorder))
                 f.flush()  # be sure it goes straight to disk
                 os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
 
