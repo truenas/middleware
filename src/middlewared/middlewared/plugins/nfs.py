@@ -59,7 +59,6 @@ class NFSService(SystemServiceService):
         Int('mountd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
         Int('rpcstatd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
         Int('rpclockd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
-        Bool('userd_manage_gids', required=True),
         Bool('mountd_log', required=True),
         Bool('statd_lockd_log', required=True),
         Bool('v4_krb_enabled', required=True),
@@ -123,7 +122,6 @@ class NFSService(SystemServiceService):
         'nfs_entry', 'nfs_update',
         ('rm', {'name': 'id'}),
         ('rm', {'name': 'v4_krb_enabled'}),
-        ('rm', {'name': 'userd_manage_gids'}),
         ('attr', {'update': True}),
     ))
     async def do_update(self, data):
