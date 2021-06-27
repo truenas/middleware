@@ -9,7 +9,7 @@ from middlewared.service import accepts, CallError, CRUDService, job, private
 from middlewared.utils import filter_list
 from middlewared.validators import Match
 
-from .utils import convert_repository_to_path
+from .utils import convert_repository_to_path, get_cache_key
 
 OFFICIAL_LABEL = 'OFFICIAL'
 TMP_IX_APPS_DIR = '/tmp/ix-applications'
@@ -259,6 +259,11 @@ class CatalogService(CRUDService):
         # Let's delete any unhealthy alert if we had one
         self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', id)
         self.middleware.call_sync('alert.oneshot_delete', 'CatalogSyncFailed', id)
+
+        # Remove cached content of the catalog in question so that if a catalog is created again
+        # with same label but different repo/branch, we don't reuse old cache
+        self.middleware.call_sync('cache.pop', get_cache_key(id, True))
+        self.middleware.call_sync('cache.pop', get_cache_key(id, False))
 
         return ret
 
