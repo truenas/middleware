@@ -11,6 +11,8 @@ from pkg_resources import parse_version
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service, ValidationErrors
 
+from .utils import get_cache_key
+
 
 ITEM_KEYS = ['icon_url']
 
@@ -22,12 +24,7 @@ class CatalogService(Service):
 
     @private
     def cached(self, label, retrieve_versions):
-        return self.middleware.call_sync('cache.has_key', self.cache_key(label, retrieve_versions))
-
-    @private
-    def cache_key(self, label, retrieve_versions):
-        suffix = '' if retrieve_versions else '_without_versions'
-        return f'catalog_{label}_train_details{suffix}'
+        return self.middleware.call_sync('cache.has_key', get_cache_key(label, retrieve_versions))
 
     @accepts(
         Str('label'),
@@ -84,11 +81,11 @@ class CatalogService(Service):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
         cache_available = False
-        cache_key = self.cache_key(label, options['retrieve_versions'])
+        cache_key = get_cache_key(label, options['retrieve_versions'])
         if options['cache']:
             cache_available = self.middleware.call_sync('cache.has_key', cache_key)
             if not cache_available and not options['retrieve_versions']:
-                cache_key = self.cache_key(label, True)
+                cache_key = get_cache_key(label, True)
                 cache_available = self.middleware.call_sync('cache.has_key', cache_key)
             if not cache_available and options['cache_only']:
                 return {}
@@ -142,7 +139,7 @@ class CatalogService(Service):
             # come with a case where system is trying to access cached data but it has expired and it's
             # reading again from disk hence the extra 1 hour.
             if options['retrieve_versions']:
-                self.middleware.call_sync('cache.put', self.cache_key(label, True), trains, 90000)
+                self.middleware.call_sync('cache.put', get_cache_key(label, True), trains, 90000)
                 trains_copy = {}
                 for train in trains:
                     trains_copy[train] = {}
@@ -152,7 +149,7 @@ class CatalogService(Service):
                         trains_copy[train][item] = item_data
             else:
                 trains_copy = trains
-            self.middleware.call_sync('cache.put', self.cache_key(label, False), trains_copy, 90000)
+            self.middleware.call_sync('cache.put', get_cache_key(label, False), trains_copy, 90000)
 
         if label == self.middleware.call_sync('catalog.official_catalog_label'):
             # Update feature map cache whenever official catalog is updated
