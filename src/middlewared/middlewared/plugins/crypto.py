@@ -1195,10 +1195,10 @@ class CertificateService(CRUDService):
             cert.update({
                 'revoked_certs': list(filter(lambda c: c['revoked_date'], ca_chain)),
                 'crl_path': os.path.join(root_path, f'{cert["name"]}.crl'),
-                'can_be_revoked': bool(cert['privatekey']),
+                'can_be_revoked': bool(cert['privatekey']) and not cert['revoked'],
             })
         else:
-            cert['can_be_revoked'] = bool(cert['signedby'])
+            cert['can_be_revoked'] = bool(cert['signedby']) and not cert['revoked']
 
         if not os.path.exists(root_path):
             os.makedirs(root_path, 0o755, exist_ok=True)
@@ -1947,10 +1947,15 @@ class CertificateService(CRUDService):
                     'certificate_update.revoked',
                     'A CSR cannot be marked as revoked.'
                 )
-            elif new['revoked'] and not new['can_be_revoked']:
+            elif new['revoked'] and not old['revoked'] and not new['can_be_revoked']:
                 verrors.add(
                     'certificate_update.revoked',
                     'Only certificate(s) can be revoked which have a CA present on the system'
+                )
+            elif old['revoked'] and not new['revoked']:
+                verrors.add(
+                    'certificate_update.revoked',
+                    'Certificate has already been revoked and this cannot be reversed'
                 )
 
             verrors.check()
@@ -2703,6 +2708,11 @@ class CertificateAuthorityService(CRUDService):
                 verrors.add(
                     'certificate_authority_update.revoked',
                     'Only Certificate Authorities with a privatekey can be marked as revoked.'
+                )
+            elif old['revoked'] and not new['revoked']:
+                verrors.add(
+                    'certificate_authority_update.revoked',
+                    'Certificate Authority has already been revoked and this cannot be reversed'
                 )
 
             if verrors:
