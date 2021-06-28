@@ -55,6 +55,26 @@ MAPPINGS = [
             MappingSlot(1, 3, False),
         ]),
     ]),
+    ProductMapping(re.compile(r"TRUENAS-R10$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 4, False),
+            MappingSlot(0, 8, False),
+            MappingSlot(0, 12, False),
+            MappingSlot(0, 1, False),
+            MappingSlot(0, 5, False),
+            MappingSlot(0, 9, False),
+            MappingSlot(0, 13, False),
+            MappingSlot(0, 2, False),
+            MappingSlot(0, 6, False),
+            MappingSlot(0, 10, False),
+            MappingSlot(0, 14, False),
+            MappingSlot(0, 3, False),
+            MappingSlot(0, 7, False),
+            MappingSlot(0, 11, False),
+            MappingSlot(0, 15, False),
+        ]),
+    ]),
 ]
 
 
@@ -119,12 +139,11 @@ class EnclosureService(Service):
 
             elements.append(element)
 
-        info = await self.middleware.call("system.info")
-        return [
+        mapped = [
             {
                 "id": "mapped_enclosure_0",
                 "name": "Drive Bays",
-                "model": info["system_product"],
+                "model": enclosures[0]["model"],
                 "controller": True,
                 "elements": [
                     {
@@ -137,3 +156,12 @@ class EnclosureService(Service):
                 ],
             }
         ]
+
+        # if we have future products that need to be mapped and/or have the
+        # ability to support expansion shelves, then we need to add them
+        # back in here so drive identification works
+        for enclosure in enclosures:
+            if not enclosure["controller"]:
+                mapped.append(enclosure)
+
+        return mapped
