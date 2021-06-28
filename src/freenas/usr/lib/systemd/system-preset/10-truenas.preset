@@ -42,6 +42,7 @@ disable libvirt*
 disable k3s*
 disable cni*
 disable kube-router*
+disable containerd*
 
 # We want middlewared to import pools
 disable zfs-mount.service
