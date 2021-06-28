@@ -4,7 +4,7 @@ import errno
 from collections import defaultdict
 
 from middlewared.schema import Dict, Int, List, Str, returns
-from middlewared.service import accepts, CallError, private, Service
+from middlewared.service import accepts, CallError, job, private, Service
 
 from .utils import SCALEABLE_RESOURCES
 
@@ -44,7 +44,8 @@ class ChartReleaseService(Service):
             required=True
         ),
     ))
-    async def scale(self, release_name, options):
+    @job(lock=lambda args: f'{args[0]}_chart_release_scale')
+    async def scale(self, job, release_name, options):
         """
         Scale a `release_name` chart release to `scale_options.replica_count` specified.
 
@@ -56,12 +57,27 @@ class ChartReleaseService(Service):
         )
         resources = release['resources']
         replica_counts = await self.get_replica_count_for_resources(resources)
-
+        job.set_progress(20, f'Scaling workload(s) to {options["replica_count"]!r} replica(s)')
         try:
             await self.scale_release_internal(resources, options['replica_count'])
         except Exception:
             # This is a best effort to get relevant workloads back to replica count which they were on before
             await self.scale_release_internal(resources, replica_counts=replica_counts)
+            raise
+        else:
+            desired_pods_count = sum(
+                len(replica_counts[r.value]) * options['replica_count'] for r in SCALEABLE_RESOURCES
+            )
+            job.set_progress(40, f'Waiting for pods to be scaled to {desired_pods_count!r} replica(s)')
+            while await self.middleware.call(
+                'k8s.pod.query', [
+                    ['metadata.namespace', '=', release['namespace']],
+                    ['status.phase', 'in', ['Running', 'Pending']],
+                ], {'count': True}
+            ) != desired_pods_count:
+                await asyncio.sleep(5)
+
+        job.set_progress(100, f'Scaled workload(s) successfully to {options["replica_count"]!r} replica(s)')
 
         return {
             'before_scale': replica_counts,
