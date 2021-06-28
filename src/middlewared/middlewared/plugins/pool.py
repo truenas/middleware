@@ -3429,6 +3429,9 @@ class PoolDatasetService(CRUDService):
         else:
             parent = parent[0]
 
+        # We raise validation errors here as parent could be used down to validate other aspects of the dataset
+        verrors.check()
+
         if data['type'] == 'FILESYSTEM':
             if data.get('acltype', 'INHERIT') != 'INHERIT' or data.get('aclmode', 'INHERIT') != 'INHERIT':
                 to_check = data.copy()
