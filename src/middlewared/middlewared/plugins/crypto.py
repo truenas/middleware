@@ -1192,15 +1192,13 @@ class CertificateService(CRUDService):
             ))
 
             ca_chain = await self.middleware.call('certificateauthority.get_ca_chain', cert['id'])
-
-            cert['revoked_certs'] = list(filter(
-                lambda c: c['revoked_date'],
-                ca_chain
-            ))
-
-            cert['crl_path'] = os.path.join(
-                root_path, f'{cert["name"]}.crl'
-            )
+            cert.update({
+                'revoked_certs': list(filter(lambda c: c['revoked_date'], ca_chain)),
+                'crl_path': os.path.join(root_path, f'{cert["name"]}.crl'),
+                'can_be_revoked': bool(cert['privatekey']),
+            })
+        else:
+            cert['can_be_revoked'] = bool(cert['signedby'])
 
         if not os.path.exists(root_path):
             os.makedirs(root_path, 0o755, exist_ok=True)
