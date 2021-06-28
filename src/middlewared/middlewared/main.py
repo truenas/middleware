@@ -263,7 +263,9 @@ class Application(object):
     async def on_message(self, message):
         if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
             log_message = copy.deepcopy(message)
-            log_message['params'] = self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+            log_message['params'] = self.middleware.dump_args(
+                log_message.get('params', []), method_name=log_message['method']
+            )
         else:
             log_message = message
 
