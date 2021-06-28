@@ -197,7 +197,7 @@ class DockerImagesService(CRUDService):
             'k8s.gcr.io/sig-storage/csi-resizer:v1.1.0',
             'k8s.gcr.io/sig-storage/snapshot-controller:v4.0.0',
             'k8s.gcr.io/sig-storage/csi-snapshotter:v4.0.0',
-            'openebs/zfs-driver:1.4.0',
+            'openebs/zfs-driver:ci',
         ])
         return list(itertools.chain(
             *[self.normalise_tag(tag) for tag in images]
