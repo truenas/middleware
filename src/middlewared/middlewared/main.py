@@ -24,7 +24,7 @@ from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
-from collections import defaultdict
+from collections import defaultdict, deque
 
 import argparse
 import asyncio
@@ -34,6 +34,7 @@ import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
+import copy
 import errno
 import fcntl
 import functools
@@ -57,10 +58,9 @@ import urllib.parse
 import uuid
 import tracemalloc
 
-from . import logger
+from systemd.daemon import notify as systemd_notify
 
-if osc.IS_LINUX:
-    from systemd.daemon import notify as systemd_notify
+from . import logger
 
 
 class Application(object):
@@ -96,6 +96,11 @@ class Application(object):
         self.__callbacks[name].append(method)
 
     def _send(self, data):
+        self.middleware.socket_messages_queue.append({
+            'type': 'outgoing',
+            'session_id': self.session_id,
+            'message': data,
+        })
         asyncio.run_coroutine_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
 
     def _tb_error(self, exc_info):
@@ -256,6 +261,17 @@ class Application(object):
         self.middleware.unregister_wsclient(self)
 
     async def on_message(self, message):
+        if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
+            log_message = copy.deepcopy(message)
+            log_message['params'] = self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+        else:
+            log_message = message
+
+        self.middleware.socket_messages_queue.append({
+            'type': 'incoming',
+            'session_id': self.session_id,
+            'message': log_message,
+        })
         # Run callbacks registered in plugins for on_message
         for method in self.__callbacks['on_message']:
             try:
@@ -838,6 +854,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
+        self.socket_messages_queue = deque(maxlen=1000)
 
     def __init_services(self):
         from middlewared.service import CoreService
