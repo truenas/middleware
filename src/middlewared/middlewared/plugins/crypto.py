@@ -1947,6 +1947,11 @@ class CertificateService(CRUDService):
                     'certificate_update.revoked',
                     'A CSR cannot be marked as revoked.'
                 )
+            elif new['revoked'] and not new['can_be_revoked']:
+                verrors.add(
+                    'certificate_update.revoked',
+                    'Only certificate(s) can be revoked which have a CA present on the system'
+                )
 
             verrors.check()
 
