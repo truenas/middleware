@@ -325,7 +325,7 @@ class AuthService(Service):
 
     @cli_private
     @no_auth_required
-    @accepts(Str('username'), Str('password'), Str('otp_token', null=True, default=None))
+    @accepts(Str('username'), Str('password', private=True), Str('otp_token', null=True, default=None))
     @returns(Bool('successful_login'))
     @pass_app()
     async def login(self, app, username, password, otp_token):
