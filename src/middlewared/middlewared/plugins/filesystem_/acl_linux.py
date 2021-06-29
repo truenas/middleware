@@ -171,23 +171,6 @@ class FilesystemService(Service, ACLBase):
         return acl
 
     @private
-    def id_to_name(self, id, idtype):
-        if idtype == "GROUP":
-            try:
-                group_obj = self.middleware.call_sync("group.get_group_obj", {"gid": id})
-                name = group_obj['gr_name']
-            except Exception:
-                name = None
-        elif idtype == "USER":
-            try:
-                user_obj = self.middleware.call_sync("user.get_user_obj", {"uid": id})
-                name = user_obj['pw_name']
-            except Exception:
-                name = None
-
-        return name
-
-    @private
     def getacl_nfs4(self, path, simplified, resolve_ids):
         flags = "-jn"
 
@@ -206,11 +189,17 @@ class FilesystemService(Service, ACLBase):
         output = json.loads(getacl.stdout.decode())
         for ace in output['acl']:
             if resolve_ids and ace['id'] != -1:
-                ace['who'] = self.id_to_name(ace['id'], ace['tag'])
+                ace['who'] = self.middleware.call_sync(
+                    'idmap.id_to_name', ace['id'], ace['tag']
+                )
             elif resolve_ids and ace['tag'] == 'group@':
-                ace['who'] = self.id_to_name(output['gid'], "GROUP")
+                ace['who'] = self.middleware.call_sync(
+                    'idmap.id_to_name', output['gid'], 'GROUP'
+                )
             elif resolve_ids and ace['tag'] == 'owner@':
-                ace['who'] = self.id_to_name(output['uid'], "USER")
+                ace['who'] = self.middleware.call_sync(
+                    'idmap.id_to_name', output['uid'], 'USER'
+                )
             elif resolve_ids:
                 ace['who'] = None
 
@@ -282,12 +271,16 @@ class FilesystemService(Service, ACLBase):
             if id.isdigit():
                 ace['id'] = int(id)
                 if resolve_ids:
-                    ace['who'] = self.id_to_name(ace['id'], ace['tag'])
+                    ace['who'] = self.middleware.call_sync(
+                        'idmap.id_to_name', ace['id'], ace['tag']
+                    )
 
             elif ace['tag'] not in ['OTHER', 'MASK']:
                 if resolve_ids:
                     to_check = st.st_gid if ace['tag'] == "GROUP" else st.st_uid
-                    ace['who'] = self.id_to_name(to_check, ace['tag'])
+                    ace['who'] = self.middleware.call_sync(
+                        'idmap.id_to_name', to_check, ace['tag']
+                    )
 
                 ace['tag'] += '_OBJ'
 
@@ -303,7 +296,6 @@ class FilesystemService(Service, ACLBase):
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
         # Add explicit check for ACL type
-        self.logger.debug("resolve_ids: %s", resolve_ids)
         try:
             ret = self.getacl_nfs4(path, simplified, resolve_ids)
         except CallError:

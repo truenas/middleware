@@ -1,4 +1,5 @@
 import enum
+import asyncio
 import errno
 import os
 import datetime
@@ -778,6 +779,40 @@ class IdmapDomainService(CRUDService):
             rv = {"id_type": "USER", "id": uid}
 
         return rv
+
+    @private
+    async def id_to_name(self, id, id_type):
+        idtype = IDType[id_type]
+        idmap_timeout = 5.0
+
+        if idtype == IDType.GROUP or idtype == IDType.BOTH:
+            method = "group.get_group_obj"
+            to_check = {"gid": id}
+            key= 'gr_name'
+        elif idtype == IDType.USER:
+            method = "user.get_user_obj"
+            to_check = {"uid": id}
+            key = 'pw_name'
+        else:
+            raise CallError(f"Unsupported id_type: [{idtype.name}]")
+
+        try:
+            ret = await asyncio.wait_for(
+                self.middleware.call(method, to_check),
+                timeout = idmap_timeout
+            )
+            name = ret[key]
+        except asyncio.TimeoutError:
+            self.logger.debug(
+                "timeout encountered while trying to convert %s id %s "
+                "to name. This may indicate significant networking issue.",
+                id_type.lower(), id
+            )
+            name = None
+        except KeyError:
+            name = None
+
+        return name
 
     @private
     async def unixid_to_sid(self, data):
