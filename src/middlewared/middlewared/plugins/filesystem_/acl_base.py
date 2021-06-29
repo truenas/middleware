@@ -292,34 +292,40 @@ class ACLBase(ServicePartBase):
     @accepts(
         Str('path'),
         Bool('simplified', default=True),
+        Bool('resolve_ids', default=False),
     )
-    def getacl(self, path, simplified):
+    def getacl(self, path, simplified, resolve_ids):
         """
         Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The acl type is indicated
-        by the `ACLType` key.
+        by the `acltype` key.
+
+        `simplified` - effect of this depends on ACL type on underlying filesystem. In the case of
+        NFSv4 ACLs simplified permissions and flags are returned for ACL entries where applicable.
+        NFSv4 errata below. In the case of POSIX1E ACls, this setting has no impact on returned ACL.
+
+        `resolve_ids` - adds additional `who` key to each ACL entry, that converts the numeric id to
+        a user name or group name. In the case of owner@ and group@ (NFSv4) or USER_OBJ and GROUP_OBJ
+        (POSIX1E), st_uid or st_gid will be converted from stat() return for file. In the case of
+        MASK (POSIX1E), OTHER (POSIX1E), everyone@ (NFSv4), key `who` will be included, but set to null.
+        In case of failure to resolve the id to a name, `who` will be set to null. This option should
+        only be used if resolving ids to names is required.
 
         Errata about ACLType NFSv4:
 
-        `simplified` returns a shortened form of the ACL permset and flags.
+        `simplified` returns a shortened form of the ACL permset and flags where applicable. If permissions
+        have been simplified, then the `perms` object will contain only a single `BASIC` key with a string
+        describing the underlying permissions set.
 
         `TRAVERSE` sufficient rights to traverse a directory, but not read contents.
 
         `READ` sufficient rights to traverse a directory, and read file contents.
 
-        `MODIFIY` sufficient rights to traverse, read, write, and modify a file. Equivalent to modify_set.
+        `MODIFIY` sufficient rights to traverse, read, write, and modify a file.
 
         `FULL_CONTROL` all permissions.
 
         If the permisssions do not fit within one of the pre-defined simplified permissions types, then
         the full ACL entry will be returned.
-
-        In all cases we replace USER_OBJ, GROUP_OBJ, and EVERYONE with owner@, group@, everyone@ for
-        consistency with getfacl and setfacl. If one of aforementioned special tags is used, 'id' must
-        be set to None.
-
-        An inheriting empty everyone@ ACE is appended to non-trivial ACLs in order to enforce Windows
-        expectations regarding permissions inheritance. This entry is removed from NT ACL returned
-        to SMB clients when 'ixnas' samba VFS module is enabled. We also remove it here to avoid confusion.
         """
 
     @accepts(

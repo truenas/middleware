@@ -171,8 +171,9 @@ class FilesystemService(Service, ACLBase):
         return acl
 
     @private
-    def getacl_nfs4(self, path, simplified):
+    def getacl_nfs4(self, path, simplified, resolve_ids):
         flags = "-jn"
+
         if not simplified:
             flags += "v"
 
@@ -187,6 +188,21 @@ class FilesystemService(Service, ACLBase):
 
         output = json.loads(getacl.stdout.decode())
         for ace in output['acl']:
+            if resolve_ids and ace['id'] != -1:
+                ace['who'] = self.middleware.call_sync(
+                    'idmap.id_to_name', ace['id'], ace['tag']
+                )
+            elif resolve_ids and ace['tag'] == 'group@':
+                ace['who'] = self.middleware.call_sync(
+                    'idmap.id_to_name', output['gid'], 'GROUP'
+                )
+            elif resolve_ids and ace['tag'] == 'owner@':
+                ace['who'] = self.middleware.call_sync(
+                    'idmap.id_to_name', output['uid'], 'USER'
+                )
+            elif resolve_ids:
+                ace['who'] = None
+
             ace['flags'].pop('SUCCESSFUL_ACCESS', None)
             ace['flags'].pop('FAILED_ACCESS', None)
 
@@ -199,7 +215,7 @@ class FilesystemService(Service, ACLBase):
         return output
 
     @private
-    def getacl_posix1e(self, path, simplified):
+    def getacl_posix1e(self, path, simplified, resolve_ids):
         st = os.stat(path)
         ret = {
             'uid': st.st_uid,
@@ -254,22 +270,36 @@ class FilesystemService(Service, ACLBase):
             ace['tag'] = tag.upper()
             if id.isdigit():
                 ace['id'] = int(id)
+                if resolve_ids:
+                    ace['who'] = self.middleware.call_sync(
+                        'idmap.id_to_name', ace['id'], ace['tag']
+                    )
+
             elif ace['tag'] not in ['OTHER', 'MASK']:
+                if resolve_ids:
+                    to_check = st.st_gid if ace['tag'] == "GROUP" else st.st_uid
+                    ace['who'] = self.middleware.call_sync(
+                        'idmap.id_to_name', to_check, ace['tag']
+                    )
+
                 ace['tag'] += '_OBJ'
+
+            elif resolve_ids:
+                ace['who'] = None
 
             ret['acl'].append(ace)
 
         ret['trivial'] = (len(ret['acl']) == 3)
         return ret
 
-    def getacl(self, path, simplified):
+    def getacl(self, path, simplified, resolve_ids):
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
         # Add explicit check for ACL type
         try:
-            ret = self.getacl_nfs4(path, simplified)
+            ret = self.getacl_nfs4(path, simplified, resolve_ids)
         except CallError:
-            ret = self.getacl_posix1e(path, simplified)
+            ret = self.getacl_posix1e(path, simplified, resolve_ids)
 
         return ret
 
