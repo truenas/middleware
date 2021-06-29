@@ -499,9 +499,6 @@ class Enclosure(object):
             self.controller = True
             if self.model in ["R20", "R20A"]:
                 self.model = f"{self.model}, Drawer #1"
-            if self.model == "R40":
-                index = [v for v in self.stat.values() if "ECStream FS2" in v].index(data)
-                self.model = f"{self.model}, Drawer #{index + 1}"
         elif (
             self.product_name in ["TRUENAS-R20", "TRUENAS-R20A"] and
             self.encname == "AHCI SGPIO Enclosure 2.00" and
