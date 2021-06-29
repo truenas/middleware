@@ -292,11 +292,21 @@ class ACLBase(ServicePartBase):
     @accepts(
         Str('path'),
         Bool('simplified', default=True),
+        Bool('resolve_ids', default=False),
     )
-    def getacl(self, path, simplified):
+    def getacl(self, path, simplified, resolve_ids):
         """
         Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The acl type is indicated
-        by the `ACLType` key.
+        by the `acltype` key.
+
+        `simplified` NFSv4 - returns a shortened form of the ACL permset, POSIX1E - this is a no-op.
+
+        `resolve_ids` - adds additional `who` key to each ACL entry, that converts the numeric id to
+        a user name or group name. In the case of owner@ and group@ (NFSv4) or USER_OBJ and GROUP_OBJ
+        (POSIX1E), st_uid or st_gid will be converted from stat() return for file. In all other cases.
+        MASK (POSIX1E), OTHER (POSIX1E), everyone@ (NFSv4), key `who` will be included, but set to null.
+        In case of failure to resolve the id to a name, `who` will be set to null. This option should
+        only be used if resolving ids to names is required.
 
         Errata about ACLType NFSv4:
 
@@ -312,10 +322,6 @@ class ACLBase(ServicePartBase):
 
         If the permisssions do not fit within one of the pre-defined simplified permissions types, then
         the full ACL entry will be returned.
-
-        In all cases we replace USER_OBJ, GROUP_OBJ, and EVERYONE with owner@, group@, everyone@ for
-        consistency with getfacl and setfacl. If one of aforementioned special tags is used, 'id' must
-        be set to None.
 
         An inheriting empty everyone@ ACE is appended to non-trivial ACLs in order to enforce Windows
         expectations regarding permissions inheritance. This entry is removed from NT ACL returned
