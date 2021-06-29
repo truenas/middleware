@@ -788,7 +788,7 @@ class IdmapDomainService(CRUDService):
         if idtype == IDType.GROUP or idtype == IDType.BOTH:
             method = "group.get_group_obj"
             to_check = {"gid": id}
-            key= 'gr_name'
+            key = 'gr_name'
         elif idtype == IDType.USER:
             method = "user.get_user_obj"
             to_check = {"uid": id}
@@ -799,7 +799,7 @@ class IdmapDomainService(CRUDService):
         try:
             ret = await asyncio.wait_for(
                 self.middleware.call(method, to_check),
-                timeout = idmap_timeout
+                timeout=idmap_timeout
             )
             name = ret[key]
         except asyncio.TimeoutError:
