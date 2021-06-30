@@ -369,14 +369,6 @@ class Enclosures(object):
             enclosure = Enclosure(num, data, stat, product_name)
             if any(s in enclosure.encname for s in blacklist):
                 continue
-            if (
-                product_name and product_name in ["TRUENAS-R20", "TRUENAS-R20A"] and
-                enclosure.encname == "AHCI SGPIO Enclosure 2.00"
-            ):
-                if enclosure.model.endswith("Drawer #2"):
-                    enclosures_tail.append(enclosure)
-
-                continue
 
             self.__enclosures.append(enclosure)
 
@@ -497,14 +489,14 @@ class Enclosure(object):
         elif R_SERIES_REGEX.match(self.encname) or R20A_REGEX.match(self.encname):
             self.model = self.product_name.replace("TRUENAS-", "")
             self.controller = True
-            if self.model in ["R20", "R20A"]:
-                self.model = f"{self.model}, Drawer #1"
         elif (
-            self.product_name in ["TRUENAS-R20", "TRUENAS-R20A"] and
             self.encname == "AHCI SGPIO Enclosure 2.00" and
-            len(data.splitlines()) == 6
+            self.system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"]
         ):
-            self.model = f"{self.product_name.replace('TRUENAS-', '')}, Drawer #2"
+            self.model = self.product_name.replace("TRUENAS-", "")
+            self.controller = True
+        elif self.encname.startswith("iX TrueNAS R20p"):
+            self.model = self.product_name.replace("TRUENAS-", "")
             self.controller = True
         elif m := R50_REGEX.match(self.encname):
             self.model = f"R50, Drawer #{m.group(1)}"
@@ -512,8 +504,6 @@ class Enclosure(object):
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
             self.controller = True
-        elif self.encname.startswith("iX TrueNAS R20p"):
-            self.model = "R20"
         elif self.encname.startswith("QUANTA JB9 SIM"):
             self.model = "E60"
         elif self.encname.startswith("Storage 1729"):
