@@ -315,7 +315,7 @@ class FilesystemService(Service, ACLBase):
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
-        self._common_perm_path_validate("filesystem.setacl",
+        self._common_perm_path_validate("filesystem_acl",
                                         path, recursive,
                                         verrors)
 
@@ -323,13 +323,13 @@ class FilesystemService(Service, ACLBase):
         if not aclcheck['is_valid']:
             for err in aclcheck['errors']:
                 verrors.add(
-                    'filesystem.setacl.dacl.{err[0]}', err[1]
+                    'filesystem_acl.dacl.{err[0]}', err[1]
                 )
 
         path_acltype = self.getacl(path)['acltype']
         if path_acltype != ACLType.NFS4.name:
             verrors.add(
-                'filesystem.setacl.acltype',
+                'filesystem_acl.acltype',
                 f'ACL type mismatch. On-disk format is [{path_acltype}], '
                 f'but received [{data.get("acltype")}].'
             )
@@ -362,7 +362,11 @@ class FilesystemService(Service, ACLBase):
             if setacl.returncode == 65:
                 err = setacl.stderr.decode()
                 json_verrors = json.loads(err.split(None, 1)[1])
-                raise CallError(json_verrors)
+                for entry in json_verrors:
+                    for schema, err in entry.items():
+                        verrors.add(f'filesystem_acl.{schema.replace("acl", "dacl")}', err)
+
+                verrors.check()
             elif setacl.returncode != 0:
                 raise CallError(setacl.stderr.decode())
 
@@ -398,11 +402,10 @@ class FilesystemService(Service, ACLBase):
         has_named = False
         has_def_named = False
         has_default = False
+        aclstring = ""
 
         for idx, ace in enumerate(dacl):
-            if idx == 0:
-                aclstring = ""
-            else:
+            if idx != 0:
                 aclstring += ","
 
             if ace['id'] == -1:
@@ -414,7 +417,7 @@ class FilesystemService(Service, ACLBase):
 
             if duplicate_who is True:
                 verrors.add(
-                    'filesystem.setacl.dacl.{idx}',
+                    'filesystem_acl.dacl.{idx}',
                     f'More than one {"default" if ace["default"] else ""} '
                     f'{ace["tag"]} entry is not permitted'
                 )
@@ -441,21 +444,21 @@ class FilesystemService(Service, ACLBase):
 
         if has_named and not has_tag['MASK']:
             verrors.add(
-                'filesystem.setacl.dacl',
+                'filesystem_acl.dacl',
                 'Named (user or group) POSIX ACL entries '
                 'require a mask entry to be present in the ACL.'
             )
 
         elif has_def_named and not has_tag['DEF_MASK']:
             verrors.add(
-                'filesystem.setacl.dacl',
+                'filesystem_acl.dacl',
                 'Named default (user or group) POSIX ACL entries '
                 'require a default mask entry to be present in the ACL.'
             )
 
         if recursive and not has_default:
             verrors.add(
-                'filesystem.setacl.dacl',
+                'filesystem_acl.dacl',
                 'Default ACL entries are required in order to apply '
                 'ACL recursively.'
             )
@@ -463,13 +466,13 @@ class FilesystemService(Service, ACLBase):
         for entry in required_entries:
             if not has_tag[entry]:
                 verrors.add(
-                    'filesystem.setacl.dacl',
+                    'filesystem_acl.dacl',
                     f'Presence of [{entry}] entry is required.'
                 )
 
             if has_default and not has_tag[f"DEF_{entry}"]:
                 verrors.add(
-                    'filesystem.setacl.dacl',
+                    'filesystem_acl.dacl',
                     f'Presence of default [{entry}] entry is required.'
                 )
 
@@ -487,7 +490,7 @@ class FilesystemService(Service, ACLBase):
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
-        self._common_perm_path_validate("filesystem.setacl",
+        self._common_perm_path_validate("filesystem_acl",
                                         path, recursive,
                                         verrors)
 
@@ -495,20 +498,20 @@ class FilesystemService(Service, ACLBase):
         if not aclcheck['is_valid']:
             for err in aclcheck['errors']:
                 verrors.add(
-                    'filesystem.setacl.dacl.{err[0]}', err[1]
+                    'filesystem_acl.dacl.{err[0]}', err[1]
                 )
 
         path_acltype = self.getacl(path)['acltype']
         if path_acltype != ACLType.POSIX1E.name:
             verrors.add(
-                'filesystem.setacl.acltype',
+                'filesystem_acl.acltype',
                 f'ACL type mismatch. On-disk format is [{path_acltype}], '
                 f'but received [{data.get("acltype")}].'
             )
 
         if do_strip and dacl:
             verrors.add(
-                'filesystem.setacl.dacl',
+                'filesystem_acl.dacl',
                 'Simulatenously setting and removing ACL from path is invalid.'
             )
 
