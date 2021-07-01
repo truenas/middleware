@@ -104,9 +104,9 @@ class EnclosureService(CRUDService):
                         "elements": elements,
                         "has_slot_status": has_slot_status
                     })
-            #Ensure first R-series expander is in order independent of cabling
+            # Ensure R50's first expander is first in the list independent of cabling
             if "eDrawer4048S1" in enclosure['name']:
-                enclosures.insert(0,enclosure)
+                enclosures.insert(0, enclosure)
             else:
                 enclosures.append(enclosure)
 
@@ -497,7 +497,7 @@ class Enclosure(object):
             self.model = f"{self.product_name.replace('TRUENAS-', '')}, Drawer #2"
             self.controller = True
         elif m := R50_REGEX.match(self.encname):
-            self.model = self.system_info["system_product"].replace("TRUENAS-", "")
+            self.model = self.product_name.replace("TRUENAS-", "")
             self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"

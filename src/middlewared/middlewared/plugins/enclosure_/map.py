@@ -210,8 +210,8 @@ class EnclosureService(Service):
         return enclosures
 
     async def _map_enclosures(self, enclosures, slots):
-        #Ensure jbods can't messup ordering by filtering them out
-        controller_enclosures = list(filter(lambda x: x['controller'],enclosures))
+        # Ensure JBODs don't effect ordering by filtering them out
+        controller_enclosures = list(filter(lambda x: x['controller'], enclosures))
         elements = []
         has_slot_status = False
         for slot, mapping in enumerate(slots, 1):
