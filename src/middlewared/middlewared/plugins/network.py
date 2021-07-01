@@ -24,6 +24,7 @@ import subprocess
 
 from .interface.netif import netif
 from .interface.type_base import InterfaceType
+from .interface.lag_options import XmitHashChoices, LacpduRateChoices
 
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
@@ -406,6 +407,8 @@ class NetworkLaggInterfaceModel(sa.Model):
     id = sa.Column(sa.Integer, primary_key=True)
     lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id'))
     lagg_protocol = sa.Column(sa.String(120))
+    lagg_xmit_hash_policy = sa.Column(sa.String(8), nullable=True)
+    lagg_lacpdu_rate = sa.Column(sa.String(4), nullable=True)
 
 
 class NetworkLaggInterfaceMemberModel(sa.Model):
@@ -472,6 +475,19 @@ class InterfaceService(CRUDService):
                 Str('broadcast'),
             )]),
             List('vrrp_config', null=True),
+            # lagg section
+            Str('protocol', null=True),
+            List('ports', items=[Dict(
+                'lag_ports',
+                Str('name'),
+                List('flags', items=[Str('flag')])
+            )]),
+            Str('xmit_hash_policy', default=None, null=True),
+            Str('lacpdu_rate', default=None, null=True),
+            # vlan section
+            Str('parent', null=True),
+            Int('tag', null=True),
+            Int('pcp', null=True),
             required=True
         ),
         List('aliases', required=True, items=[Dict(
@@ -482,13 +498,14 @@ class InterfaceService(CRUDService):
         )]),
         Bool('ipv4_dhcp', required=True),
         Bool('ipv6_auto', required=True),
-        Bool('disable_offload_capabilities'),
         Str('description', required=True, null=True),
         Str('options', required=True),
         Int('mtu', null=True, required=True),
+        Bool('disable_offload_capabilities'),
         Str('vlan_parent_interface', null=True),
         Int('vlan_tag', null=True),
         Int('vlan_pcp', null=True),
+        Str('lag_protocol'),
         List('lag_ports', items=[Str('lag_port')]),
         List('bridge_members', items=[Str('member')]),  # FIXME: Please document fields for HA Hardware
         additional_attrs=True,
@@ -948,6 +965,8 @@ class InterfaceService(CRUDService):
         ]),
         List('bridge_members'),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
+        Str('xmit_hash_policy', enum=[i.value for i in XmitHashChoices], default=None, null=True),
+        Str('lacpdu_rate', enum=[i.value for i in LacpduRateChoices], default=None, null=True),
         List('lag_ports', items=[Str('interface')]),
         Str('vlan_parent_interface'),
         Int('vlan_tag', validators=[Range(min=1, max=4094)]),
@@ -1019,17 +1038,26 @@ class InterfaceService(CRUDService):
             lag_id = None
             lagports_ids = []
             try:
-                async for i in self.__create_interface_datastore(data, {
-                    'interface': name,
-                }):
-                    interface_id = i
+                async for interface_id in self.__create_interface_datastore(data, {'interface': name}):
+                    lag_proto = data['lag_protocol'].lower()
+                    xmit = lacpdu_rate = None
+                    if lag_proto in ('lacp', 'loadbalance'):
+                        # Based on stress testing done by the performance team, we default to layer2+3
+                        # because the system default is layer2 and with the system default outbound
+                        # traffic did not use the other ports in the lagg. Using layer2+3 fixed it.
+                        xmit = data['xmit_hash_policy'].lower() if data['xmit_hash_policy'] is not None else 'layer2+3'
 
-                lag_id = await self.middleware.call(
-                    'datastore.insert',
-                    'network.lagginterface',
-                    {'lagg_interface': interface_id, 'lagg_protocol': data['lag_protocol'].lower()},
-                )
-                lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
+                        if lag_proto == 'lacp':
+                            # obviously, lacpdu_rate does not apply to any lagg mode except for lacp
+                            lacpdu_rate = data['lacpdu_rate'].lower() if data['lacpdu_rate'] else 'slow'
+
+                    lag_id = await self.middleware.call('datastore.insert', 'network.lagginterface', {
+                        'lagg_interface': interface_id,
+                        'lagg_protocol': lag_proto,
+                        'lagg_xmit_hash_policy': xmit,
+                        'lagg_lacpdu_rate': lacpdu_rate,
+                    })
+                    lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
             except Exception:
                 if lag_id:
                     with contextlib.suppress(Exception):
@@ -1815,6 +1843,23 @@ class InterfaceService(CRUDService):
             for alias in iface['aliases']:
                 if alias['address'] == local_ip:
                     return iface
+
+    @accepts()
+    @returns(Dict(*[Str(i.value, enum=[i.value]) for i in XmitHashChoices]))
+    async def xmit_hash_policy_choices(self):
+        """
+        Available transmit hash policies for the LACP or LOADBALANCE
+        lagg type interfaces.
+        """
+        return {i.value: i.value for i in XmitHashChoices}
+
+    @accepts()
+    @returns(Dict(*[Str(i.value, enum=[i.value]) for i in LacpduRateChoices]))
+    async def lacpdu_rate_choices(self):
+        """
+        Available lacpdu rate policies for the LACP lagg type interfaces.
+        """
+        return {i.value: i.value for i in LacpduRateChoices}
 
     @accepts(Dict(
         'options',
