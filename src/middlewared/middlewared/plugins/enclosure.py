@@ -489,12 +489,14 @@ class Enclosure(object):
         elif R_SERIES_REGEX.match(self.encname) or R20_REGEX.match(self.encname):
             self.model = self.product_name.replace("TRUENAS-", "")
             self.controller = True
-        elif (
-            self.encname == "AHCI SGPIO Enclosure 2.00" and
-            self.product_name in ["TRUENAS-R20", "TRUENAS-R20A"]
-        ):
-            self.model = self.product_name.replace("TRUENAS-", "")
-            self.controller = True
+        elif self.encname == "AHCI SGPIO Enclosure 2.00":
+            if self.product_name in ["TRUENAS-R20", "TRUENAS-R20A"]:
+                self.model = self.product_name.replace("TRUENAS-", "")
+                self.controller = True
+            elif MINI_REGEX.match(self.encname):
+                # TrueNAS Mini's do not have their product name stripped
+                self.model = self.product_name
+                self.controller = True
         elif m := R50_REGEX.match(self.encname):
             self.model = f"R50, Drawer #{m.group(1)}"
             self.controller = True
@@ -523,12 +525,6 @@ class Enclosure(object):
             self.model = "ES24F"
         elif self.encname.startswith("CELESTIC X2012"):
             self.model = "ES12"
-        elif (
-            self.encname == "AHCI SGPIO Enclosure 2.00" and
-            MINI_REGEX.match(self.system_info["system_product"])
-        ):
-            self.model = self.system_info["system_product"]
-            self.controller = True
 
     def _parse_raw_value(self, value):
         newvalue = 0
