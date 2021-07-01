@@ -46,7 +46,7 @@ STATUS_DESC = [
 
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
 R_SERIES_REGEX = re.compile(r"(ECStream|iX) (FS1|FS2|DSS212S[ps])")
-R20A_REGEX = re.compile(r"SMC SC826-P")
+R20_REGEX = re.compile(r"(iX TrueNAS R20p|SMC SC826-P)")
 R50_REGEX = re.compile(r"iX eDrawer4048S([12])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
@@ -370,14 +370,6 @@ class Enclosures(object):
             enclosure = Enclosure(num, data, stat, system_info)
             if any(s in enclosure.encname for s in blacklist):
                 continue
-            if (
-                system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"] and
-                enclosure.encname == "AHCI SGPIO Enclosure 2.00"
-            ):
-                if enclosure.model.endswith("Drawer #2"):
-                    enclosures_tail.append(enclosure)
-
-                continue
 
             self.__enclosures.append(enclosure)
 
@@ -545,26 +537,23 @@ class Enclosure(object):
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
             self.controller = True
-        elif R_SERIES_REGEX.match(self.encname) or R20A_REGEX.match(self.encname):
+        elif R_SERIES_REGEX.match(self.encname) or R20_REGEX.match(self.encname):
             self.model = self.system_info["system_product"].replace("TRUENAS-", "")
             self.controller = True
-            if self.model in ["R20", "R20A"]:
-                self.model = f"{self.model}, Drawer #1"
-        elif (
-            self.system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"] and
-            self.encname == "AHCI SGPIO Enclosure 2.00" and
-            len(data.splitlines()) == 6
-        ):
-            self.model = f"{self.system_info['system_product'].replace('TRUENAS-', '')}, Drawer #2"
-            self.controller = True
+        elif self.encname == "AHCI SGPIO Enclosure 2.00":
+            if self.system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"]:
+                self.model = self.system_info["system_product"].replace("TRUENAS-", "")
+                self.controller = True
+            elif MINI_REGEX.match(self.system_info["system_product"]):
+                # TrueNAS Mini's do not have their product name stripped
+                self.model = self.system_info["system_product"]
+                self.controller = True
         elif m := R50_REGEX.match(self.encname):
             self.model = f"R50, Drawer #{m.group(1)}"
             self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
             self.controller = True
-        elif self.encname.startswith("iX TrueNAS R20p"):
-            self.model = "R20"
         elif self.encname.startswith("QUANTA JB9 SIM"):
             self.model = "E60"
         elif self.encname.startswith("Storage 1729"):
@@ -587,12 +576,6 @@ class Enclosure(object):
             self.model = "ES24F"
         elif self.encname.startswith("CELESTIC X2012"):
             self.model = "ES12"
-        elif (
-            self.encname == "AHCI SGPIO Enclosure 2.00" and
-            MINI_REGEX.match(self.system_info["system_product"])
-        ):
-            self.model = self.system_info["system_product"]
-            self.controller = True
 
     def _parse_raw_value(self, value):
         newvalue = 0
