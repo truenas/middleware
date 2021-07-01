@@ -496,7 +496,7 @@ class Enclosure(object):
         ):
             self.model = f"{self.product_name.replace('TRUENAS-', '')}, Drawer #2"
             self.controller = True
-        elif m := R50_REGEX.match(self.encname):
+        elif R50_REGEX.match(self.encname):
             self.model = self.product_name.replace("TRUENAS-", "")
             self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
