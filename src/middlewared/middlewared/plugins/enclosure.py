@@ -104,13 +104,14 @@ class EnclosureService(CRUDService):
                         "elements": elements,
                         "has_slot_status": has_slot_status
                     })
-
-            enclosures.append(enclosure)
+            #Ensure first R-series expander is in order independent of cabling
+            if "eDrawer4048S1" in enclosure['name']:
+                enclosures.insert(0,enclosure)
+            else:
+                enclosures.append(enclosure)
 
         enclosures.extend(self.middleware.call_sync("enclosure.m50_plx_enclosures"))
         enclosures.extend(self.middleware.call_sync("enclosure.r50_nvme_enclosures"))
-
-        enclosures = self.middleware.call_sync("enclosure.concatenate_enclosures", enclosures)
 
         enclosures = self.middleware.call_sync("enclosure.map_enclosures", enclosures)
 
@@ -364,23 +365,12 @@ class Enclosures(object):
                 blacklist.append("AHCI SGPIO Enclosure 2.00")
 
         self.__enclosures = []
-        enclosures_tail = []
         for num, data in stat.items():
             enclosure = Enclosure(num, data, stat, product_name)
             if any(s in enclosure.encname for s in blacklist):
                 continue
-            if (
-                product_name and product_name in ["TRUENAS-R20", "TRUENAS-R20A"] and
-                enclosure.encname == "AHCI SGPIO Enclosure 2.00"
-            ):
-                if enclosure.model.endswith("Drawer #2"):
-                    enclosures_tail.append(enclosure)
-
-                continue
 
             self.__enclosures.append(enclosure)
-
-        self.__enclosures.extend(enclosures_tail)
 
     def __iter__(self):
         for e in list(self.__enclosures):
@@ -507,7 +497,7 @@ class Enclosure(object):
             self.model = f"{self.product_name.replace('TRUENAS-', '')}, Drawer #2"
             self.controller = True
         elif m := R50_REGEX.match(self.encname):
-            self.model = f"R50, Drawer #{m.group(1)}"
+            self.model = self.system_info["system_product"].replace("TRUENAS-", "")
             self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
