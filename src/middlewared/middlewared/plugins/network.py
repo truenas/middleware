@@ -24,6 +24,7 @@ import subprocess
 
 from .interface.netif import netif
 from .interface.type_base import InterfaceType
+from .interface.lag_options import XmitHashChoices, LacpduRateChoices
 
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
@@ -950,8 +951,8 @@ class InterfaceService(CRUDService):
         ]),
         List('bridge_members'),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
-        Str('xmit_hash_policy', enum=['LAYER2', 'LAYER2+3', 'LAYER3+4'], default=None, null=True),
-        Str('lacpdu_rate', enum=['SLOW', 'FAST'], default=None, null=True),
+        Str('xmit_hash_policy', enum=[i.value for i in XmitHashChoices], default=None, null=True),
+        Str('lacpdu_rate', enum=[i.value for i in LacpduRateChoices], default=None, null=True),
         List('lag_ports', items=[Str('interface')]),
         Str('vlan_parent_interface'),
         Int('vlan_tag', validators=[Range(min=1, max=4094)]),
@@ -1828,6 +1829,23 @@ class InterfaceService(CRUDService):
             for alias in iface['aliases']:
                 if alias['address'] == local_ip:
                     return iface
+
+    @accepts()
+    @returns(Dict(*[Str(i.value, enum=[i.value]) for i in XmitHashChoices]))
+    async def xmit_hash_policy_choices(self):
+        """
+        Available transmit hash policies for the LACP or LOADBALANCE
+        lagg type interfaces.
+        """
+        return {i.value: i.value for i in XmitHashChoices}
+
+    @accepts()
+    @returns(Dict(*[Str(i.value, enum=[i.value]) for i in LacpduRateChoices]))
+    async def lacpdu_rate_choices(self):
+        """
+        Available lacpdu rate policies for the LACP lagg type interfaces.
+        """
+        return {i.value: i.value for i in LacpduRateChoices}
 
     @accepts(Dict(
         'options',
