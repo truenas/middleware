@@ -406,6 +406,8 @@ class NetworkLaggInterfaceModel(sa.Model):
     id = sa.Column(sa.Integer, primary_key=True)
     lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id'))
     lagg_protocol = sa.Column(sa.String(120))
+    lagg_xmit_hash_policy = sa.Column(sa.String(8), nullable=True)
+    lagg_lacpdu_rate = sa.Column(sa.String(4), nullable=True)
 
 
 class NetworkLaggInterfaceMemberModel(sa.Model):
@@ -948,6 +950,8 @@ class InterfaceService(CRUDService):
         ]),
         List('bridge_members'),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
+        Str('xmit_hash_policy', enum=['LAYER2', 'LAYER2+3', 'LAYER3+4'], default=None, null=True),
+        Str('lacpdu_rate', enum=['SLOW', 'FAST'], default=None, null=True),
         List('lag_ports', items=[Str('interface')]),
         Str('vlan_parent_interface'),
         Int('vlan_tag', validators=[Range(min=1, max=4094)]),
@@ -1019,17 +1023,26 @@ class InterfaceService(CRUDService):
             lag_id = None
             lagports_ids = []
             try:
-                async for i in self.__create_interface_datastore(data, {
-                    'interface': name,
-                }):
-                    interface_id = i
+                async for interface_id in self.__create_interface_datastore(data, {'interface': name}):
+                    lag_proto = data['lag_protocol'].lower()
+                    xmit = lacpdu_rate = None
+                    if lag_proto in ('lacp', 'loadbalance'):
+                        # Based on stress testing done by the performance team, we default to layer2+3
+                        # because the system default is layer2 and with the system default outbound
+                        # traffic did not use the other ports in the lagg. Using layer2+3 fixed it.
+                        xmit = data['xmit_hash_policy'].lower() if data['xmit_hash_policy'] is not None else 'layer2+3'
 
-                lag_id = await self.middleware.call(
-                    'datastore.insert',
-                    'network.lagginterface',
-                    {'lagg_interface': interface_id, 'lagg_protocol': data['lag_protocol'].lower()},
-                )
-                lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
+                        if lag_proto == 'lacp':
+                            # obviously, lacpdu_rate does not apply to any lagg mode except for lacp
+                            lacpdu_rate = data['lacpdu_rate'].lower() if data['lacpdu_rate'] else 'slow'
+
+                    lag_id = await self.middleware.call('datastore.insert', 'network.lagginterface', {
+                        'lagg_interface': interface_id,
+                        'lagg_protocol': lag_proto,
+                        'lagg_xmit_hash_policy': xmit,
+                        'lagg_lacpdu_rate': lacpdu_rate,
+                    })
+                    lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
             except Exception:
                 if lag_id:
                     with contextlib.suppress(Exception):
