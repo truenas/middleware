@@ -268,6 +268,24 @@ MAPPINGS = [
             MappingSlot(0, 15, False),
         ]),
     ]),
+    ProductMapping(re.compile(r"TRUENAS-R20A?$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(2, 0, False),
+            MappingSlot(2, 1, False),
+            MappingSlot(2, 2, False),
+            MappingSlot(2, 3, False),
+            MappingSlot(2, 4, False),
+            MappingSlot(2, 5, False),
+            MappingSlot(2, 6, False),
+            MappingSlot(2, 7, False),
+            MappingSlot(2, 8, False),
+            MappingSlot(2, 9, False),
+            MappingSlot(2, 10, False),
+            MappingSlot(2, 11, False),
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+        ]),
+    ]),
     ProductMapping(re.compile(r"TRUENAS-R40$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(0, 0, False),
