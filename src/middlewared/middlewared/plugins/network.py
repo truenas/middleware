@@ -474,6 +474,19 @@ class InterfaceService(CRUDService):
                 Str('broadcast'),
             )]),
             List('vrrp_config', null=True),
+            # lagg section
+            Str('protocol', null=True),
+            List('ports', items=[Dict(
+                'lag_ports',
+                Str('name'),
+                List('flags', items=[Str('flag')])
+            )]),
+            Str('xmit_hash_policy', default=None, null=True),
+            Str('lacpdu_rate', default=None, null=True),
+            # vlan section
+            Str('parent', null=True),
+            Int('tag', null=True),
+            Int('pcp', null=True),
             required=True
         ),
         List('aliases', required=True, items=[Dict(
@@ -484,13 +497,14 @@ class InterfaceService(CRUDService):
         )]),
         Bool('ipv4_dhcp', required=True),
         Bool('ipv6_auto', required=True),
-        Bool('disable_offload_capabilities'),
         Str('description', required=True, null=True),
         Str('options', required=True),
         Int('mtu', null=True, required=True),
+        Bool('disable_offload_capabilities'),
         Str('vlan_parent_interface', null=True),
         Int('vlan_tag', null=True),
         Int('vlan_pcp', null=True),
+        Str('lag_protocol'),
         List('lag_ports', items=[Str('lag_port')]),
         List('bridge_members', items=[Str('member')]),  # FIXME: Please document fields for HA Hardware
         additional_attrs=True,
