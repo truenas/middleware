@@ -484,11 +484,7 @@ class Enclosure(object):
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
             self.controller = True
-        elif (
-             R_SERIES_REGEX.match(self.encname) or 
-             R20_REGEX.match(self.encname) or
-             R50_REGEX.match(self.encname)
-        ):
+        elif R_SERIES_REGEX.match(self.encname) or R20_REGEX.match(self.encname) or R50_REGEX.match(self.encname):
             self.model = self.product_name.replace("TRUENAS-", "")
             self.controller = True
         elif self.encname == "AHCI SGPIO Enclosure 2.00":
