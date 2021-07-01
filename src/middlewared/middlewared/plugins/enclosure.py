@@ -493,7 +493,7 @@ class Enclosure(object):
             if self.product_name in ["TRUENAS-R20", "TRUENAS-R20A"]:
                 self.model = self.product_name.replace("TRUENAS-", "")
                 self.controller = True
-            elif MINI_REGEX.match(self.encname):
+            elif MINI_REGEX.match(self.product_name):
                 # TrueNAS Mini's do not have their product name stripped
                 self.model = self.product_name
                 self.controller = True
