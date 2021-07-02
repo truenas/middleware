@@ -1033,6 +1033,7 @@ class CertificateService(CRUDService):
         Bool('cert_type_internal'),
         Bool('cert_type_CSR'),
         Bool('parsed'),
+        Bool('can_be_revoked'),
         Dict('extensions', additional_attrs=True),
         List('revoked_certs'),
         Str('crl_path'),
