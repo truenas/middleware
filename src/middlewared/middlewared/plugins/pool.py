@@ -3750,7 +3750,7 @@ class PoolDatasetService(CRUDService):
             if disks > maxdisks:
                 maxdisks = disks
 
-        return f'{max(16, min(128, 2 ** ((maxdisks * 8) - 1).bit_length()))}'
+        return f'{max(16, min(128, 2 ** ((maxdisks * 8) - 1).bit_length()))}K'
 
     @item_method
     @accepts(Str('id', required=True))
