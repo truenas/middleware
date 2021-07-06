@@ -1,5 +1,7 @@
 import errno
 
+from pkg_resources import parse_version
+
 from middlewared.service import CallError, private, Service
 
 
@@ -15,4 +17,4 @@ class ChartReleaseService(Service):
         elif all(not item_version['healthy'] for item_version in item_versions.values()):
             raise CallError('No healthy item version found', errno=errno.ENOENT)
 
-        return sorted(item_versions or ['latest'], reverse=True)[0]
+        return str(sorted(map(parse_version, item_versions) or ['latest'], reverse=True)[0])
