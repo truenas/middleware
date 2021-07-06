@@ -24,6 +24,12 @@ copy_templates()
 		if [ "$nfile" = "/etc/login.conf" ] ; then
 			cap_mkdb /etc/login.conf
 		fi
+
+		# We copy profile file to /usr/local/etc to reflect with upstream changes
+		# https://forums.freebsd.org/threads/what-happened-to-etc-profile.78406/
+		if [ "$nfile" = "/etc/profile" -a -f "$nfile" ]; then
+			cp "$nfile" "/usr/local$nfile"
+		fi
 	done
 }
 
