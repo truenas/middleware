@@ -1,8 +1,8 @@
 import json
 
 from middlewared.schema import Dict, Bool
-from middlewared.service import CallError, Service, accepts, private
-from middlewared.utils import run
+from middlewared.service import CallError, Service, accepts, private, filterable
+from middlewared.utils import run, filter_list
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
 
 
@@ -35,6 +35,15 @@ class CtdbGeneralService(Service):
             )
 
         return result
+
+    @private
+    @filterable
+    async def getdbmap(self, filters, options):
+        """
+        List all clustered TDB databases that the CTDB daemon has attached to.
+        """
+        result = await self.middleware.call('ctdb.general.wrapper', ['getdbmap'])
+        return filter_list(result['dbmap'], filters, options)
 
     @accepts(Dict(
         'ctdb_status',
