@@ -1210,7 +1210,8 @@ class PoolService(CRUDService):
         Str('label', required=True),
     ))
     @returns()
-    async def remove(self, oid, options):
+    @job(lock=lambda args: f'{args[0]}_remove')
+    async def remove(self, job, oid, options):
         """
         Remove a disk from pool of id `id`.
 
@@ -1244,13 +1245,15 @@ class PoolService(CRUDService):
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
+        job.set_progress(20, f'Initiating removal of {options["label"]!r} ZFS device')
         await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
+        job.set_progress(40, 'Waiting for removal of ZFS device to complete')
         # We would like to wait not for the removal to actually complete for cases where the removal might not
         # be synchronous like removing top level vdevs except for slog and l2arc
-        await self.middleware.call('zfs.pool.wait', pool['name'], 'REMOVE')
+        await self.middleware.call('zfs.pool.wait', pool['name'], {'activity_type': 'REMOVE'})
+        job.set_progress(60, 'Removal of ZFS device complete')
 
         if found[1]['type'] != 'DISK':
             disk_paths = [d['path'] for d in found[1]['children']]
@@ -1274,6 +1277,7 @@ class PoolService(CRUDService):
                 wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
                 wipe_jobs.append((disk, wipe_job))
 
+        job.set_progress(70, 'Wiping disks')
         error_str = ''
         for index, item in enumerate(wipe_jobs):
             disk, wipe_job = item
@@ -1283,6 +1287,8 @@ class PoolService(CRUDService):
 
         if error_str:
             raise CallError(f'Failed to wipe disks:\n{error_str}')
+
+        job.set_progress(100, 'Successfully completed wiping disks')
 
     @private
     def configure_resilver_priority(self):
