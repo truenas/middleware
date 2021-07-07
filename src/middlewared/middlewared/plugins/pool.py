@@ -1256,6 +1256,9 @@ class PoolService(CRUDService):
             raise verrors
 
         await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
+        # We would like to wait not for the removal to actually complete for cases where the removal might not
+        # be synchronous like removing top level vdevs except for slog and l2arc
+        await self.middleware.call('zfs.pool.wait', pool['name'], 'REMOVE')
 
         if found[1]['type'] != 'DISK':
             disk_paths = [d['path'] for d in found[1]['children']]
