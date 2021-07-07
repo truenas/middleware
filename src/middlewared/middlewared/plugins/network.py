@@ -2157,7 +2157,7 @@ class InterfaceService(CRUDService):
                 [('int_interface', '=', name)], {'get': True}
             )
         except IndexError:
-            self.logger.info('{} is not in interfaces database'.format(name))
+            self.logger.info('%s is not in interfaces database', name)
             return
 
         aliases = await self.middleware.call(
@@ -2735,40 +2735,32 @@ async def configure_http_proxy(middleware, *args, **kwargs):
 
 
 async def attach_interface(middleware, iface):
-    if not iface:
-        return
-
-    # We dont handle the following interfaces in middlewared
-    if iface.startswith(('epair', 'tun', 'tap', 'veth', 'kube-bridge')):
-        return
-
-    iface = await middleware.call('interface.query', [('name', '=', iface)])
-    if not iface:
-        return
-
-    iface = iface[0]
-    # We only want to sync physical interfaces that are hot-plugged,
-    # not cloned interfaces with might be a race condition with original devd.
-    # See #33294 as an example.
-    if iface['state']['cloned']:
-        return
-
-    if await middleware.call('interface.sync_interface', iface['name']):
-        await middleware.call('interface.run_dhcp', iface['name'], False)
-
-
-async def devd_ifnet_hook(middleware, data):
-    if data.get('system') != 'IFNET' or data.get('type') != 'ATTACH':
-        return
-
-    await attach_interface(middleware, data.get('subsystem'))
+    if await middleware.call('interface.sync_interface', iface):
+        await middleware.call('interface.run_dhcp', iface, False)
 
 
 async def udevd_ifnet_hook(middleware, data):
+    """
+    This hook is called on udevd interface type events. It's purpose
+    is to:
+        1. if this is a physical interface being added
+            (all other interface types are ignored)
+        2. remove any IPs on said interface if they dont
+            exist in the db and/or start dhcp on it
+        3. OR add any IPs on said interface if they exist
+            in the db
+    """
     if data.get('SUBSYSTEM') != 'net' and data.get('ACTION') != 'add':
         return
 
-    await attach_interface(middleware, data.get('INTERFACE'))
+    iface = data.get('INTERFACE')
+    if iface is None or iface.startswith(tuple(netif.CLONED_PREFIXES)):
+        # if the udevd event for the interface doesn't have a name (doubt this happens on SCALE)
+        # or if the interface startswith CLONED_PREFIXES, then we return since we only care about
+        # physical interfaces that are hot-plugged into the system.
+        return
+
+    await attach_interface(middleware, iface)
 
 
 async def setup(middleware):
@@ -2777,12 +2769,7 @@ async def setup(middleware):
     # Configure http proxy on startup and on network.config events
     asyncio.ensure_future(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
-
-    if osc.IS_LINUX:
-        middleware.register_hook('udev.net', udevd_ifnet_hook)
-    else:
-        # Listen to IFNET events so we can sync on interface attach
-        middleware.register_hook('devd.ifnet', devd_ifnet_hook)
+    middleware.register_hook('udev.net', udevd_ifnet_hook)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

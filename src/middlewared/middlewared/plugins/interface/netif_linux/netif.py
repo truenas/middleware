@@ -3,7 +3,7 @@ import logging
 import os
 
 from .bridge import create_bridge
-from .interface import Interface
+from .interface import Interface, CLONED_PREFIXES
 from .lagg import AggregationProtocol, create_lagg
 from .utils import run
 from .vlan import create_vlan
@@ -11,7 +11,7 @@ from .vlan import create_vlan
 logger = logging.getLogger(__name__)
 
 __all__ = ["AggregationProtocol", "create_vlan", "create_interface", "destroy_interface", "get_interface",
-           "list_interfaces"]
+           "list_interfaces", "CLONED_PREFIXES"]
 
 
 def create_interface(name):

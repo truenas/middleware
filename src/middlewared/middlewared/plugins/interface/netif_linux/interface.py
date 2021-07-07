@@ -141,7 +141,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
 
         if self.name.startswith('bond'):
             state.update({
-                'protocol': self.protocol.name,
+                'protocol': self.protocol.name if self.protocol is not None else self.protocol,
                 'ports': [{'name': p, 'flags': [x.name for x in f]} for p, f in self.ports],
                 'xmit_hash_policy': self.xmit_hash_policy,
                 'lacpdu_rate': self.lacpdu_rate,
