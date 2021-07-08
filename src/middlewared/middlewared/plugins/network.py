@@ -2125,9 +2125,14 @@ class InterfaceService(CRUDService):
                 # 6) If we don't unconfigure, autoconfigure is called which is supposed to start dhclient on the
                 #    interface. However this will result in the static ip still being set.
                 await self.middleware.call('interface.unconfigure', iface, cloned_interfaces, parent_interfaces)
-                dhclient_aws.append(asyncio.ensure_future(
-                    self.middleware.call('interface.autoconfigure', iface, wait_dhcp)
-                ))
+                if not iface.cloned:
+                    # We only autoconfigure physical interfaces because if this is a delete operation
+                    # and the interface that was deleted is a "clone" (vlan/br/bond) interface, then
+                    # interface.unconfigure deletes the interface. Physical interfaces can't be "deleted"
+                    # like virtual interfaces.
+                    dhclient_aws.append(asyncio.ensure_future(
+                        self.middleware.call('interface.autoconfigure', iface, wait_dhcp)
+                    ))
             else:
                 # Destroy interfaces which are not in database
 
