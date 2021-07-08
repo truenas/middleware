@@ -2380,7 +2380,8 @@ class RouteService(Service):
                     #       gateway manually (even though dhclient will
                     #       do this for us) it will fail expectedly here.
                     # Either way, let's log the error.
-                    self.logger.error('Failed adding %s as default gateway: %r', ipv4_gateway, e)
+                    gw = ipv4_gateway.__getstate__()['gateway']
+                    self.logger.error('Failed adding %s as default gateway: %r', gw, e)
             elif ipv4_gateway != routing_table.default_route_ipv4:
                 _from = routing_table.default_route_ipv4.gateway
                 _to = ipv4_gateway.gateway
