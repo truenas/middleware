@@ -130,8 +130,8 @@ network_func()
 	ip rule list
 	section_footer
 
-	section_header "Iptables Rules (iptables-save)"
-	iptables-save
+	section_header "Iptables Rules (iptables-save -c)"
+	iptables-save -c
 	section_footer
 
 	section_header "IPVS rules (ipvsadm -L)"
