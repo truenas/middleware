@@ -6,7 +6,7 @@ import sys
 
 import sentry_sdk
 
-from .utils import osc, sw_version, sw_version_is_stable
+from .utils import sw_version, sw_version_is_stable
 
 
 # markdown debug is also considered useless
@@ -25,10 +25,11 @@ logging.getLogger('git.cmd').setLevel(logging.WARN)
 logging.getLogger('googleapiclient').setLevel(logging.ERROR)
 # registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
 logging.getLogger('passlib.registry').setLevel(logging.INFO)
-if osc.IS_LINUX:
-    # It logs each call made to the k8s api server when in debug mode, so we set the level to warn
-    logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
-    logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
+# dont need internal debug messages from pyroute2.ndb
+logging.getLogger('pyroute2.ndb').setLevel(logging.WARN)
+# It logs each call made to the k8s api server when in debug mode, so we set the level to warn
+logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
+logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
 
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
@@ -58,8 +59,10 @@ class CrashReporting(object):
         else:
             self.sentinel_file_path = '/data/.crashreporting_disabled'
         self.logger = logging.getLogger('middlewared.logger.CrashReporting')
+        url = 'https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2'
+        query = '?timeout=3'
         sentry_sdk.init(
-            'https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2?timeout=3',
+            url + query,
             release=sw_version(),
             integrations=[],
             default_integrations=False,

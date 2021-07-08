@@ -1,6 +1,6 @@
-# -*- coding=utf-8 -*-
 import logging
 import subprocess
+import pyroute2
 
 from .address import AddressFamily, AddressMixin
 from .bridge import BridgeMixin
@@ -157,7 +157,11 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         return state
 
     def up(self):
-        run(["ip", "link", "set", self.name, "up"])
+        with pyroute2.NDB().interface[self.name] as i:
+            # this context manager waits until the interface
+            # is up and "ready" before exiting
+            i['state'] = 'up'
 
     def down(self):
-        run(["ip", "link", "set", self.name, "down"])
+        with pyroute2.NDB().interface[self.name] as i:
+            i['state'] = 'down'
