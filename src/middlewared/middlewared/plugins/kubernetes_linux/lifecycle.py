@@ -50,14 +50,19 @@ class KubernetesService(Service):
         for rule in await self.iptable_rules():
             cp = await run(['iptables', '-A'] + rule, check=False)
             if cp.returncode:
-                self.logger.error('Failed to append %s iptable rule to isolate kubernetes', ', '.join(rule))
+                self.logger.error(
+                    'Failed to append %r iptable rule to isolate kubernetes: %r',
+                    ', '.join(rule), cp.stderr.decode(errors='ignore')
+                )
 
     @private
     async def remove_iptables_rules(self):
         for rule in await self.iptable_rules():
             cp = await run(['iptables', '-D'] + rule, check=False)
             if cp.returncode:
-                self.logger.error('Failed to delete %s iptable rule', ', '.join(rule))
+                self.logger.error(
+                    'Failed to delete %r iptable rule: %r', ', '.join(rule), cp.stderr.decode(errors='ignore')
+                )
 
     @private
     async def iptable_rules(self):
