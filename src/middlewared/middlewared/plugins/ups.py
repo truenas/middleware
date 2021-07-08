@@ -1,6 +1,4 @@
 import csv
-import datetime
-import dateutil.tz
 import functools
 import glob
 import io
@@ -306,16 +304,10 @@ class UPSService(SystemServiceService):
             await self.dismiss_alerts()
 
             if notify_type in alert_mapping:
-                await self.middleware.call(
-                    'alert.oneshot_create', alert_mapping[notify_type], {'ups': config['identifier']}
-                )
-
-            if False:
-                # Email user with the notification event and details
+                # Send user with the notification event and details
                 # We send the email in the following format ( inclusive line breaks )
 
-                # NOTIFICATION: 'LOWBATT'
-                # UPS: 'ups'
+                # UPS Statistics: 'ups'
                 #
                 # Statistics recovered:
                 #
@@ -330,12 +322,7 @@ class UPSService(SystemServiceService):
                 #
                 # 4) Remaining battery runtime when UPS switches to LB (seconds)
                 # battery.runtime.low: 900
-
-                ups_name = config['identifier']
-                hostname = await self.middleware.call('system.hostname')
-                current_time = datetime.datetime.now(tz=dateutil.tz.tzlocal()).strftime('%a %b %d %H:%M:%S %Z %Y')
-                ups_subject = config['subject'].replace('%d', current_time).replace('%h', hostname)
-                body = f'NOTIFICATION: {notify_type!r}\n\nUPS: {ups_name!r}\n\n'
+                body = f'<br><br>UPS Statistics: {config["identifier"]!r}<br><br>'
 
                 # Let's gather following stats
                 data_points = {
@@ -356,14 +343,18 @@ class UPSService(SystemServiceService):
                 )
 
                 if recovered_stats:
-                    body += 'Statistics recovered:\n\n'
+                    body += 'Statistics recovered:<br><br>'
                     # recovered_stats is expected to be a list in this format
                     # [('battery.charge', '5'), ('battery.charge.low', '10'), ('battery.runtime', '1860')]
                     for index, stat in enumerate(recovered_stats):
-                        body += f'{index + 1}) {data_points[stat[0]]}\n  {stat[0]}: {stat[1]}\n\n'
-
+                        body += f'{index + 1}) {data_points[stat[0]]}<br> ' \
+                                f'&nbsp;&nbsp;&nbsp; {stat[0]}: {stat[1]}<br><br>'
                 else:
-                    body += 'Statistics could not be recovered\n'
+                    body += 'Statistics could not be recovered<br>'
+
+                await self.middleware.call(
+                    'alert.oneshot_create', alert_mapping[notify_type], {'ups': config['identifier'], 'body': body}
+                )
         else:
             self.middleware.logger.debug(f'Unrecognized UPS notification event: {notify_type}')
 
