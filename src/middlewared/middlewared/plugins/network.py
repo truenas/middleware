@@ -2324,14 +2324,17 @@ class RouteService(Service):
             if interfaces:
                 interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
             else:
-                interfaces = [
-                    interface
-                    for interface in netif.list_interfaces().keys()
-                    if not (
-                        re.match("^(br|bridge|epair|ipfw|lo)[0-9]+", interface) or
-                        ":" in interface
-                    )
-                ]
+                interfaces = []
+                internal_interfaces = await self.middleware.call('interface.internal_interfaces')
+                internal_interfaces.extend(await self.middleware.call('failover.internal_interfaces'))
+                internal_interfaces = tuple(internal_interfaces)
+                for interface in netif.list_interfaces().keys():
+                    if not interface.startswith(internal_interfaces):
+                        # only add interfaces that are not marked
+                        # as internal interfaces since those are
+                        # managed differently
+                        interfaces.append(interface)
+
             for interface in interfaces:
                 dhclient_running, dhclient_pid = await self.middleware.call('interface.dhclient_status', interface)
                 if dhclient_running:
@@ -2341,6 +2344,7 @@ class RouteService(Service):
                         # Make sure to get first route only
                         ipv4_gateway = reg_routers.group(1).split(' ')[0]
                         break
+
         routing_table = netif.RoutingTable()
         if ipv4_gateway:
             ipv4_gateway = netif.Route('0.0.0.0', '0.0.0.0', ipaddress.ip_address(str(ipv4_gateway)))
