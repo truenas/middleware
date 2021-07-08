@@ -12,7 +12,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, S
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
-from middlewared.validators import Email, Range, Port
+from middlewared.validators import Range, Port
 
 
 RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
@@ -56,7 +56,6 @@ class UPSService(SystemServiceService):
 
     ENTRY = Dict(
         'ups_entry',
-        Bool('emailnotify', required=True),
         Bool('powerdown', required=True),
         Bool('rmonitor', required=True),
         Int('id', required=True),
@@ -78,8 +77,6 @@ class UPSService(SystemServiceService):
         Str('shutdown', enum=['LOWBATT', 'BATT'], required=True),
         Str('shutdowncmd', null=True, required=True),
         Str('complete_identifier', required=True),
-        Str('subject', required=True),
-        List('toemail', items=[Str('email', validators=[Email()])], required=True),
     )
 
     class Config:
@@ -94,7 +91,6 @@ class UPSService(SystemServiceService):
     async def ups_config_extend(self, data):
         data['mode'] = data['mode'].upper()
         data['shutdown'] = data['shutdown'].upper()
-        data['toemail'] = [v for v in data['toemail'].split(';') if v]
         host = 'localhost' if data['mode'] == 'MASTER' else data['remotehost']
         data['complete_identifier'] = f'{data["identifier"]}@{host}:{data["remoteport"]}'
         return data
@@ -194,12 +190,6 @@ class UPSService(SystemServiceService):
                     'This field is required'
                 )
 
-        to_emails = data.get('toemail')
-        if to_emails:
-            data['toemail'] = ';'.join(to_emails)
-        else:
-            data['toemail'] = ''
-
         data['mode'] = data['mode'].lower()
         data['shutdown'] = data['shutdown'].lower()
 
@@ -218,8 +208,6 @@ class UPSService(SystemServiceService):
         """
         Update UPS Service Configuration.
 
-        `emailnotify` when enabled, sends out notifications of different UPS events via email.
-
         `powerdown` when enabled, sets UPS to power off after shutting down the system.
 
         `nocommwarntime` is a value in seconds which makes UPS Service wait the specified seconds before alerting that
@@ -229,8 +217,6 @@ class UPSService(SystemServiceService):
         initiating a shutdown. This only applies when `shutdown` is set to "BATT".
 
         `shutdowncmd` is the command which is executed to initiate a shutdown. It defaults to "poweroff".
-
-        `toemail` is a list of valid email id's on which notification emails are sent.
         """
         config = await self.config()
         config.pop('complete_identifier')
@@ -242,7 +228,6 @@ class UPSService(SystemServiceService):
 
         old_config['mode'] = old_config['mode'].lower()
         old_config['shutdown'] = old_config['shutdown'].lower()
-        old_config['toemail'] = ';'.join(old_config['toemail']) if old_config['toemail'] else ''
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             if config['identifier'] != old_config['identifier']:
@@ -328,7 +313,7 @@ class UPSService(SystemServiceService):
                     'alert.oneshot_create', alert_mapping[notify_type], {'ups': config['identifier']}
                 )
 
-            if config['emailnotify']:
+            if False:
                 # Email user with the notification event and details
                 # We send the email in the following format ( inclusive line breaks )
 
@@ -382,20 +367,6 @@ class UPSService(SystemServiceService):
 
                 else:
                     body += 'Statistics could not be recovered\n'
-
-                # Subject and body defined, send email
-                job = await self.middleware.call(
-                    'mail.send', {
-                        'subject': ups_subject,
-                        'text': body,
-                        'to': config['toemail']
-                    }
-                )
-
-                await job.wait()
-                if job.error:
-                    self.middleware.logger.debug(f'Failed to send UPS status email: {job.error}')
-
         else:
             self.middleware.logger.debug(f'Unrecognized UPS notification event: {notify_type}')
 
