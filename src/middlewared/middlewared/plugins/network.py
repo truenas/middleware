@@ -10,8 +10,9 @@ from middlewared.utils import osc
 from middlewared.utils.generate import random_string
 from middlewared.validators import Hostname, Match, Range
 
-import asyncio
 from collections import defaultdict
+from pyroute2.netlink.exceptions import NetlinkError
+import asyncio
 import contextlib
 import ipaddress
 import itertools
@@ -2354,7 +2355,27 @@ class RouteService(Service):
             # Otherwise change it
             if not routing_table.default_route_ipv4:
                 self.logger.info('Adding IPv4 default route to {}'.format(ipv4_gateway.gateway))
-                routing_table.add(ipv4_gateway)
+                try:
+                    routing_table.add(ipv4_gateway)
+                except NetlinkError as e:
+                    # Error could be (101, Network host unreachable)
+                    # This error occurs in random race conditions.
+                    # For example, can occur in the following scenario:
+                    #   1. delete all configured interfaces on system
+                    #   2. interface.sync() gets called and starts dhcp
+                    #       on all interfaces detected on the system
+                    #   3. route.sync() gets called which eventually
+                    #       calls dhclient_leases which reads a file on
+                    #       disk to see if we have any previously
+                    #       defined default gateways from dhclient.
+                    #       However, by the time we read this file,
+                    #       dhclient could still be requesting an
+                    #       address from the DHCP server
+                    #   4. so when we try to install our own default
+                    #       gateway manually (even though dhclient will
+                    #       do this for us) it will fail expectedly here.
+                    # Either way, let's log the error.
+                    self.logger.error('Failed adding %s as default gateway: %r', ipv4_gateway, e)
             elif ipv4_gateway != routing_table.default_route_ipv4:
                 _from = routing_table.default_route_ipv4.gateway
                 _to = ipv4_gateway.gateway
