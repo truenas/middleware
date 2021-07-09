@@ -40,7 +40,7 @@ STATUS_DESC = [
 
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
 R_SERIES_REGEX = re.compile(r"(ECStream|iX) (FS1|FS2|DSS212S[ps])")
-R20_REGEX = re.compile(r"(iX TrueNAS R20p|SMC SC826-P)")
+R20_REGEX = re.compile(r"(iX (TrueNAS R20|2012S)p|SMC SC826-P)")
 R50_REGEX = re.compile(r"iX eDrawer4048S([12])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
