@@ -138,6 +138,10 @@ network_func()
 	ipvsadm -L
 	section_footer
 
+	section_header "IPSET rules (ipset --list)"
+	ipset --list
+	section_footer
+
 	section_header "ARP entries (arp -an)"
 	arp -an
 	section_footer
