@@ -153,6 +153,10 @@ class KubernetesService(Service):
 
 
 async def post_system_update_hook(middleware):
+    if not (await middleware.call('kubernetes.config'))['dataset']:
+        # If k8s is not configured, there is nothing to backup
+        return
+
     backups = [
         v for k, v in (await middleware.call('kubernetes.list_backups')).items()
         if k.startswith(UPDATE_BACKUP_PREFIX)
