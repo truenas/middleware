@@ -157,11 +157,11 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         return state
 
     def up(self):
-        with pyroute2.NDB().interface[self.name] as i:
+        with pyroute2.NDB().interfaces[self.name] as i:
             # this context manager waits until the interface
             # is up and "ready" before exiting
             i['state'] = 'up'
 
     def down(self):
-        with pyroute2.NDB().interface[self.name] as i:
+        with pyroute2.NDB().interfaces[self.name] as i:
             i['state'] = 'down'
