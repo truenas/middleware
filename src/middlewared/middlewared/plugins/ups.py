@@ -288,7 +288,7 @@ class UPSService(SystemServiceService):
                         try:
                             await self.middleware.call('failover.call_remote', 'ups.upssched_event', 'shutdown')
                         except Exception as e:
-                            syslog.syslog(syslog.LOG_ERROR, f'failed shutting down passive node with error {e}')
+                            syslog.syslog(syslog.LOG_ERR, f'failed shutting down passive node with error {e}')
 
                 syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown"')
                 await run('upsmon', '-c', 'fsd', check=False)
