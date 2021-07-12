@@ -54,7 +54,13 @@ def test_04_get_chart_release_nic_choices():
 def test_05_get_ipfs_version():
     global ipfs_version
     results = POST('/catalog/items/', {'label': 'OFFICIAL'})
-    ipfs_version = list(results.json()['charts']['ipfs']['versions'].keys())[0]
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert isinstance(results, dict), str(job_status['results'])
+    ipfs_version = list(results['charts']['ipfs']['versions'].keys())[0]
 
 
 @pytest.mark.dependency(name='release_ipfs')
@@ -363,8 +369,14 @@ def test_34_verify_updatechart_catalog_object(key):
 def test_35_get_plex_old_version():
     global old_plex_version, new_plex_version
     results = POST('/catalog/items/', {'label': 'UPDATECHARTS'})
-    old_plex_version = sorted(list(results.json()['charts']['plex']['versions'].keys()))[0]
-    new_plex_version = sorted(list(results.json()['charts']['plex']['versions'].keys()))[-1]
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert isinstance(results, dict), str(job_status['results'])
+    old_plex_version = sorted(list(results['charts']['plex']['versions'].keys()))[0]
+    new_plex_version = sorted(list(results['charts']['plex']['versions'].keys()))[-1]
 
 
 @pytest.mark.dependency(name='release_plex')
