@@ -1437,7 +1437,7 @@ class GroupService(CRUDService):
                 verrors.add(
                     f'{schema}.users',
                     f'This group is primary for the following users: {", ".join(map(str, notfound))}. '
-                    'You can\'t remote them.',
+                    'You can\'t remove them.',
                 )
 
         if 'sudo_commands' in data:
