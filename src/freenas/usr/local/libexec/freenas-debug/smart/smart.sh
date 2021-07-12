@@ -151,6 +151,15 @@ smart_func()
 			echo "$output" >> /tmp/smart.out
 			echo "" >> /tmp/smart.out
 		    ;;
+	            *)
+			output=$(smartctl -a /dev/$i)
+			msg=""
+			# double-quotes are important here to
+			# maintain original formatting
+			echo "/dev/$i $msg" >> /tmp/smart.out
+			echo "$output" >> /tmp/smart.out
+			echo "" >> /tmp/smart.out
+		    ;;
 		esac
 	done
 	cat /tmp/smart.out
