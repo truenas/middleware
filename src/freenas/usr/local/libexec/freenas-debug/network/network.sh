@@ -104,6 +104,7 @@ network_func()
 			echo "No interfaces marked critical for failover"
 		fi
 		section_footer
+	fi
 
 	section_header "Default Route"
 	route -n show default|grep gateway|awk '{ print $2 }'
