@@ -292,6 +292,7 @@ class SupportService(ConfigService):
                             raise CallError('Debug too large to attach', errno.EFBIG)
                         tjob.pipes.input.w.write(r)
                 finally:
+                    debug_job.pipes.output.r.read()
                     tjob.pipes.input.w.close()
 
             await self.middleware.run_in_thread(copy)
