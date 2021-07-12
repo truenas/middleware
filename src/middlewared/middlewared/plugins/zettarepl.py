@@ -393,9 +393,12 @@ class ZettareplService(Service):
             )
 
         if data_progress_message is not None:
+            # Destination can result being larger than source
+            # Do this to avoid displaying progress like "[total 11.11 TiB out of 11.04 TiB]"
+            total = max(data_progress_message.dst_size, data_progress_message.src_size)
             text += (
                 f" [total {humanfriendly.format_size(data_progress_message.dst_size, binary=True)} of "
-                f"{humanfriendly.format_size(data_progress_message.src_size, binary=True)}]"
+                f"{humanfriendly.format_size(total, binary=True)}]"
             )
 
         job.set_progress(progress, text)
