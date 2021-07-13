@@ -322,10 +322,6 @@ class SystemDatasetService(ConfigService):
 
             corepath = f'{SYSDATASET_PATH}/cores'
             if os.path.exists(corepath):
-                # FIXME: corefile for LINUX
-                if osc.IS_FREEBSD:
-                    # FIXME: sysctl module not working
-                    await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
                 os.chmod(corepath, 0o775)
 
                 if await self.middleware.call('keyvalue.get', 'run_migration', False):
@@ -335,6 +331,9 @@ class SystemDatasetService(ConfigService):
                             corefile.unlink()
                     except Exception:
                         self.logger.warning("Failed to clear old core files.", exc_info=True)
+
+                await run('umount', '/var/lib/systemd/coredump', check=False)
+                await run('mount', '--bind', corepath, '/var/lib/systemd/coredump')
 
             await self.__nfsv4link(config)
 
