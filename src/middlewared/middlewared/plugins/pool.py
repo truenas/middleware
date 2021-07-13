@@ -2907,10 +2907,11 @@ class PoolDatasetService(CRUDService):
         """
         verrors = ValidationErrors()
 
+        parent = None
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         else:
-            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
+            parent = await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
 
         mountpoint = os.path.join('/mnt', data['name'])
         if os.path.exists(mountpoint):
@@ -2927,11 +2928,12 @@ class PoolDatasetService(CRUDService):
             if osc.IS_FREEBSD:
                 data['aclmode'] = 'RESTRICTED'
 
-        if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
-            verrors.add(
-                'pool_dataset_create.name',
-                f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
-            )
+        if parent:
+            if parent['encrypted'] and not parent['key_loaded']:
+                verrors.add(
+                    'pool_dataset_create.name',
+                    f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
+                )
 
         encryption_dict = {}
         inherit_encryption_properties = data.pop('inherit_encryption')
@@ -3162,7 +3164,8 @@ class PoolDatasetService(CRUDService):
 
         parent = await self.middleware.call(
             'zfs.dataset.query',
-            [('id', '=', data['name'].rsplit('/')[0])]
+            [('id', '=', data['name'].rsplit('/')[0])],
+            {'extra': {'recursive': False}},
         )
 
         if not parent:
@@ -3233,6 +3236,8 @@ class PoolDatasetService(CRUDService):
                             f'{schema}.volsize',
                             'Volume size should be a multiple of volume block size'
                         )
+
+        return parent
 
     def __handle_zfs_set_property_error(self, e, properties_definitions):
         zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
