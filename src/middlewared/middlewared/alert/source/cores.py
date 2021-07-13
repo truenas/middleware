@@ -2,7 +2,6 @@ import os
 import time
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
-from middlewared.utils.osc import IS_FREEBSD
 
 
 class CoreFilesArePresentAlertClass(AlertClass):
@@ -30,7 +29,7 @@ class CoreFilesArePresentAlertSource(ThreadedAlertSource):
             return
 
         for file in listdir:
-            if not file.endswith(".core"):
+            if not file.endswith(".zst"):
                 continue
 
             path = os.path.join(cores, file)
@@ -38,11 +37,7 @@ class CoreFilesArePresentAlertSource(ThreadedAlertSource):
                 continue
 
             unlink = False
-            if IS_FREEBSD and file == "syslog-ng.core":
-                unlink = True
-            elif file == "su.core":
-                unlink = True
-            elif os.stat(path).st_mtime < time.time() - 86400 * 5:
+            if os.stat(path).st_mtime < time.time() - 86400 * 5:
                 unlink = True
             else:
                 corefiles.append(file)
