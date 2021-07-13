@@ -493,8 +493,13 @@ class CpuTempThread(threading.Thread):
             temperatures = []
             try:
                 for i in range(self.numcpu):
-                    raw_temperature = int(sysctl.filter(f"dev.cpu.{i}.temperature")[0].value)
-                    temperatures.append((raw_temperature - 2732) * 100)
+                    raw_temperature = sysctl.filter(f"dev.cpu.{i}.temperature")
+                    if not raw_temperature:
+                        # VMs don't report cpu temperature so just return here
+                        return 0
+                    else:
+                        raw_temperature = int(raw_temperature[0].value)
+                        temperatures.append((raw_temperature - 2732) * 100)
             except Exception as e:
                 print(f"Failed to get CPU temperature: {e!r}")
                 temperatures = []
