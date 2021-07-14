@@ -1310,7 +1310,7 @@ class CoreService(Service):
                 if f'{name}.create' in data:
                     data[f'{name}.query']['filterable_schema'] = data[f'{name}.create']['accepts'][0]
                 else:
-                    data[f'{name}.query']['filterable_schema'] = []
+                    data[f'{name}.query']['filterable_schema'] = None
 
         return data
 
