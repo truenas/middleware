@@ -233,3 +233,23 @@ class RoutingTable:
             kwargs[key] = value
 
         ip.route(op, **kwargs)
+
+
+class RuleTable:
+
+    @property
+    def rules(self):
+        rules = []
+        tables = {t.table_id: t for t in RoutingTable().routing_tables.values()}
+        for rule in ip.get_rules():
+            attrs = dict(rule['attrs'])
+            if not all(k in attrs for k in ('FRA_TABLE', 'FRA_PRIORITY')):
+                continue
+
+            rules.append({
+                'table': tables[attrs['FRA_TABLE']],
+                'priority': attrs['FRA_PRIORITY'],
+                'source_addr': attrs.get('FRA_SRC'),
+            })
+
+        return rules
