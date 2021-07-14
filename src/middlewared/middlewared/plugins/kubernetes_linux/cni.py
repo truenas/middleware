@@ -7,6 +7,7 @@ from middlewared.plugins.interface.netif import netif
 from middlewared.service import CallError, ConfigService
 
 from .k8s import api_client, service_accounts
+from .utils import KUBEROUTER_RULE_PRIORITY, KUBEROUTER_TABLE_ID, KUBEROUTER_TABLE_NAME
 
 
 class KubernetesCNIService(ConfigService):
@@ -36,20 +37,13 @@ class KubernetesCNIService(ConfigService):
             'datastore.update', 'services.kubernetes', kube_config['id'], {'cni_config': cni_config}
         )
         await self.middleware.call('etc.generate', 'cni')
+
+        # Let's create kube-router routing table
+        route_table = netif.RouteTable(KUBEROUTER_TABLE_ID, KUBEROUTER_TABLE_NAME)
+        if not route_table.exists:
+            route_table.create()
+
         await self.middleware.call('service.start', 'kuberouter')
-
-        rt = netif.RoutingTable()
-        timeout = 60
-        while timeout > 0:
-            if 'kube-router' not in rt.routing_tables:
-                await asyncio.sleep(2)
-                timeout -= 2
-            else:
-                break
-
-        if 'kube-router' not in rt.routing_tables:
-            raise CallError('Unable to locate kube-router routing table. Please refer to kuberouter logs.')
-
         await self.middleware.call('k8s.cni.add_user_route_to_kube_router_table')
 
     async def validate_cni_integrity(self, cni, config=None):
@@ -107,7 +101,7 @@ class KubernetesCNIService(ConfigService):
             return
 
         rt = netif.RoutingTable()
-        kube_router_table = rt.routing_tables['kube-router']
+        kube_router_table = rt.routing_tables[KUBEROUTER_TABLE_NAME]
         for k in filter(lambda k: config[f'{k}_gateway'] and config[f'{k}_interface'], ('route_v4', 'route_v6')):
             factory = ipaddress.IPv4Address if k.endswith('v4') else ipaddress.IPv6Address
             rt.add(netif.Route(
