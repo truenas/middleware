@@ -13,7 +13,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 first_ups_list = [
     'rmonitor',
-    'emailnotify',
     'mode',
     'shutdown',
     'port',
@@ -25,7 +24,6 @@ first_ups_list = [
 
 second_ups_list = [
     'rmonitor',
-    'emailnotify',
     'mode',
     'shutdown',
     'port',
@@ -58,7 +56,6 @@ def test_04_Set_UPS_options():
     global payload, results
     payload = {
         'rmonitor': True,
-        'emailnotify': True,
         'mode': 'MASTER',
         'shutdown': 'BATT',
         'port': '655',
@@ -151,7 +148,6 @@ def test_17_Change_UPS_options():
     global payload, results
     payload = {
         'rmonitor': False,
-        'emailnotify': False,
         'mode': 'SLAVE',
         'shutdown': 'LOWBATT',
         'port': '65535',
