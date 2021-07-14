@@ -14,7 +14,7 @@ from .address.types import AddressFamily
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Route", "RouteFlags", "RoutingTable", "RouteTable", "IPRoute"]
+__all__ = ["Route", "RouteFlags", "RoutingTable", "RouteTable", "IPRoute", "RuleTable"]
 
 DEFAULT_TABLE_ID = 254  # This is the default table named as "main" and most of what we do happens here
 ip = IPRoute()
@@ -262,3 +262,6 @@ class RuleTable:
 
     def delete_rule(self, priority):
         ip.rule('delete', priority=priority)
+
+    def rule_exists(self, priority):
+        return any(priority == rule['priority'] for rule in self.rules)
