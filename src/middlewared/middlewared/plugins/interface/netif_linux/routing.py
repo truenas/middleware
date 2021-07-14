@@ -75,6 +75,14 @@ class RouteTable:
         self.table_id = table_id
         self.table_name = table_name
 
+    def create(self):
+        with open("/etc/iproute2/rt_tables", "a+") as f:
+            f.write(f'{self.table_id} {self.table_name}\n')
+
+    @property
+    def exists(self):
+        return self.table_name in RoutingTable().routing_tables
+
     @property
     def is_reserved(self):
         return self.table_id in (255, 254, 253, 0)
