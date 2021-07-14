@@ -952,11 +952,11 @@ class AlertServiceService(CRUDService):
 
     @accepts(Dict(
         "alert_service_create",
-        Str("name"),
+        Str("name", required=True, empty=False),
         Str("type", required=True),
-        Dict("attributes", additional_attrs=True),
-        Str("level", enum=list(AlertLevel.__members__)),
-        Bool("enabled"),
+        Dict("attributes", required=True, additional_attrs=True),
+        Str("level", required=True, enum=list(AlertLevel.__members__)),
+        Bool("enabled", default=True),
         register=True,
     ))
     async def do_create(self, data):
