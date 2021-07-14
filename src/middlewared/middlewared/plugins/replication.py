@@ -3,7 +3,7 @@ import os
 import re
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, returns, Str
 from middlewared.service import item_method, job, private, CallError, CRUDService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
@@ -679,6 +679,7 @@ class ReplicationService(CRUDService):
 
     @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
              Int("ssh_credentials", null=True, default=None))
+    @returns(List("datasets", items=[Str("dataset")]))
     async def list_datasets(self, transport, ssh_credentials):
         """
         List datasets on remote side
@@ -728,6 +729,7 @@ class ReplicationService(CRUDService):
         return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 
     @accepts()
+    @returns(List("naming_schemas", items=[Str("naming_schema")]))
     async def list_naming_schemas(self):
         """
         List all naming schemas used in periodic snapshot and replication tasks.
@@ -750,6 +752,7 @@ class ReplicationService(CRUDService):
         Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
         Int("ssh_credentials", null=True, default=None),
     )
+    @returns(Int())
     async def count_eligible_manual_snapshots(self, datasets, naming_schema, transport, ssh_credentials):
         """
         Count how many existing snapshots of `dataset` match `naming_schema`.
@@ -779,9 +782,16 @@ class ReplicationService(CRUDService):
         Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
         Int("ssh_credentials", null=True, default=None),
     )
+    @returns(Dict(
+        additional_attrs=True,
+        example={
+            "backup/work": ["auto-2019-10-15_13-00", "auto-2019-10-15_09-00"],
+            "backup/games": ["auto-2019-10-15_13-00"],
+        },
+    ))
     async def target_unmatched_snapshots(self, direction, source_datasets, target_dataset, transport, ssh_credentials):
         """
-        Check if target has any snapshots that do not exist on source.
+        Check if target has any snapshots that do not exist on source. Returns these snapshots grouped by dataset.
 
         .. examples(websocket)::
 
@@ -797,13 +807,6 @@ class ReplicationService(CRUDService):
                     "SSH",
                     4
                 ]
-            }
-
-        Returns
-
-            {
-                "backup/work": ["auto-2019-10-15_13-00", "auto-2019-10-15_09-00"],
-                "backup/games": ["auto-2019-10-15_13-00"],
             }
         """
         return await self.middleware.call("zettarepl.target_unmatched_snapshots", direction, source_datasets,
