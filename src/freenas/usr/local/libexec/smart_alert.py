@@ -14,6 +14,9 @@ def main():
     if message is None:
         return
 
+    if "nvme" in device and "number of Error Log entries increased" in message:
+        return
+
     with Client() as c:
         c.call("alert.oneshot_create", "SMART", {"device": device, "message": message})
 
