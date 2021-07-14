@@ -20,7 +20,7 @@ fi
 size=${osize}
 if [ -n "${osize}" ]; then
 	size=`echo "${osize}" | awk '/^[0-9]*$/'`
-	gsize=`echo "${osize}" | awk '/^[0-9]*TB?$/ { FS="T"; print $1*1000 } /^[0-9]*GB?$/ { FS="G"; print $1 }'`
+	gsize=`echo "${osize}" | awk -F '[GT]' '/^[0-9]*TB?$/ { print $1*1000 } /^[0-9]*GB?$/ { print $1 }'`
 	if [ -n "${gsize}" ]; then
 		# Supplied size in gigabytes or terabytes convert to bytes
 		if [ ${gsize} -lt 8000 ]; then
@@ -45,9 +45,13 @@ else
 	echo "Resizing ${dev} to full capacity"
 fi
 
-# ATA and SCSI have completely different resize commands.
+# ATA, SCSI and NVMe have completely different resize commands.
 # SAT we handle as ATA via pass-through, but with some complications.
-devtype=`camcontrol devtype ${dev} 2>/dev/null`
+if nvmecontrol nsid ${dev} >/dev/null 2>/dev/null; then
+	devtype="nvme"
+else
+	devtype=`camcontrol devtype ${dev} 2>/dev/null`
+fi
 case "$devtype" in
 satl)
 	# For SATL disks we first need to try to enable descriptor format
@@ -194,6 +198,72 @@ Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe -P3
 		echo "Resize completed successfully."
 	else
 		echo "Resize failed."
+		exit 1
+	fi
+	;;
+nvme)
+	# Get controller and current namespace ID.
+	ctrlr=`nvmecontrol nsid ${dev}`
+	nsid=${ctrlr##*[[:space:]]}
+	ctrlr=${ctrlr%%[[:space:]]*}
+
+	# Check Namespace Management is supported by the controller.
+	nsm=`nvmecontrol identify ${ctrlr} | grep -c "Namespace Management: *Supported"`
+	if [ ${nsm} -eq 0 ]; then
+		echo "Namespace management not supported, can't resize"
+		exit 1
+	fi
+
+	# Get current LBA format of the namespace.
+	lbaf=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk -F '#' '/Current LBA Format/ { print $2 }'`
+	sector=`nvmecontrol identify -n 0xffffffff ${ctrlr} | awk "/LBA Format #${lbaf}:/ { print \\$6}"`
+	if [ -z "${lbaf}" -o -z "${sector}" ]; then
+		echo "Can't get current LBA format"
+		exit 1
+	fi
+
+	# Make sure we have enough capacity to not fail after delete.
+	if [ -n "${size}" ]; then
+		ucap=`nvmecontrol identify ${ctrlr} | awk '/Unallocated NVM Capacity:/ { print $4 }'`
+		osize=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk '/^Size:/ { print $2}'`
+		if [ "${size}" -gt $((${ucap} / ${sector} + ${osize})) ]; then
+			echo "Not enough capacity."
+			exit 1
+		fi
+	fi
+
+	echo "Deleting old namespace."
+	nvmecontrol ns delete -n ${nsid} ${ctrlr} >/dev/null
+	if [ $? -ne 0 ]; then
+		echo "Can't delete old namespace, but continue any way"
+	fi
+	if [ -z "${size}" ]; then
+		ucap=`nvmecontrol identify ${ctrlr} | awk '/Unallocated NVM Capacity:/ { print $4 }'`
+		size=$((${ucap} / ${sector}))
+	fi
+
+	echo "Creating new namespace."
+	nsid=`nvmecontrol ns create -s ${size} -f ${lbaf} -n 1 -d 0 ${ctrlr} | awk '/namespace [0-9]+ created/ { print $2 }'`
+	if [ -z "${nsid}" ]; then
+		echo "Namespace creation failed"
+		exit 1
+	fi
+
+	echo "Attaching new namespace."
+	nvmecontrol ns attach -n ${nsid} -c 0xffffffff ${ctrlr} >/dev/null
+	if [ $? -ne 0 ]; then
+		echo "Namespace attach failed"
+		exit 1
+	fi
+
+	echo "Rescanning namespaces."
+	devctl disable ${ctrlr}
+	devctl enable ${ctrlr}
+	nsize=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk '/^Size:/ { print $2}'`
+	if [ ${nsize} -eq ${size} ]; then
+		echo "Resize completed successfully."
+	else
+		echo "Size \"${nsize}\" does not match requested.  Resize failed."
 		exit 1
 	fi
 	;;
