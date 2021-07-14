@@ -1,10 +1,9 @@
-import asyncio
 import ipaddress
 import subprocess
 import time
 
 from middlewared.plugins.interface.netif import netif
-from middlewared.service import CallError, ConfigService
+from middlewared.service import ConfigService
 
 from .k8s import api_client, service_accounts
 from .utils import KUBEROUTER_RULE_PRIORITY, KUBEROUTER_TABLE_ID, KUBEROUTER_TABLE_NAME
@@ -125,6 +124,10 @@ class KubernetesCNIService(ConfigService):
             # TODO: We should raise an exception but right now this is broken upstream and raising an exception
             #  here means we won't be cleaning/flushing the locally configured routes adding to the issue
             self.logger.error('Failed to cleanup kube-router configuration: %r', stderr.decode())
+
+        rule_table = netif.RuleTable()
+        if rule_table.rule_exists(KUBEROUTER_RULE_PRIORITY):
+            rule_table.delete_rule(KUBEROUTER_RULE_PRIORITY)
 
         tables = netif.RoutingTable().routing_tables
         for t_name in filter(lambda t: t in tables, ('kube-router', 'kube-router-dsr')):
