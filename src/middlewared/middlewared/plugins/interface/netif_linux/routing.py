@@ -253,3 +253,12 @@ class RuleTable:
             })
 
         return rules
+
+    def add_rule(self, table_id, priority, source_addr=None):
+        kwargs = {'table': table_id, 'priority': priority}
+        if source_addr:
+            kwargs['src'] = source_addr
+        ip.rule('add', **kwargs)
+
+    def delete_rule(self, priority):
+        ip.rule('delete', priority=priority)
