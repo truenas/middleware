@@ -122,7 +122,10 @@ class KubernetesCNIService(ConfigService):
         cp = subprocess.Popen(['kube-router', '--cleanup-config'], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         stderr = cp.communicate()[1]
         if cp.returncode:
-            raise CallError(f'Failed to cleanup kube-router configuration: {stderr.decode()}')
+            # Let's log the error as to why kube-router was not able to clean up ipvs bits
+            # TODO: We should raise an exception but right now this is broken upstream and raising an exception
+            #  here means we won't be cleaning/flushing the locally configured routes adding to the issue
+            self.logger.error('Failed to cleanup kube-router configuration: %r', stderr.decode())
 
         tables = netif.RoutingTable().routing_tables
         for t_name in filter(lambda t: t in tables, ('kube-router', 'kube-router-dsr')):
