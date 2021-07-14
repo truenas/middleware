@@ -42,6 +42,11 @@ class KubernetesCNIService(ConfigService):
         route_table = netif.RouteTable(KUBEROUTER_TABLE_ID, KUBEROUTER_TABLE_NAME)
         if not route_table.exists:
             route_table.create()
+        # We will add a rule now to forward pod traffic to the kube-router table
+        # so that user can make use of policy based routing
+        rule_table = netif.RuleTable()
+        if not rule_table.rule_exists(KUBEROUTER_RULE_PRIORITY):
+            rule_table.add_rule(KUBEROUTER_TABLE_ID, KUBEROUTER_RULE_PRIORITY, kube_config['cluster_cidr'])
 
         await self.middleware.call('service.start', 'kuberouter')
         await self.middleware.call('k8s.cni.add_user_route_to_kube_router_table')
