@@ -241,7 +241,7 @@ class RuleTable:
     def rules(self):
         rules = []
         tables = {t.table_id: t for t in RoutingTable().routing_tables.values()}
-        for rule in ip.get_rules():
+        for rule in filter(lambda r: r.get('attrs'), ip.get_rules()):
             attrs = dict(rule['attrs'])
             if not all(k in attrs for k in ('FRA_TABLE', 'FRA_PRIORITY')):
                 continue
