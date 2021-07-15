@@ -462,12 +462,15 @@ class ReplicationService(CRUDService):
             ("rm", {"name": "schedule"}),
             ("rm", {"name": "only_matching_schedule"}),
             ("rm", {"name": "enabled"}),
+            ("add", Bool("only_from_scratch", default=False)),
         ),
     )
     @job(logs=True)
     async def run_onetime(self, job, data):
         """
         Run replication task without creating it.
+
+        If `only_from_scratch` is `true` then replication will fail if target dataset already exists.
         """
 
         data["name"] = f"Temporary replication task for job {job.id}"
