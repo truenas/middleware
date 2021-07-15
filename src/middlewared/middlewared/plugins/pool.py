@@ -2081,7 +2081,7 @@ class PoolDatasetService(CRUDService):
 
     @accepts()
     @returns(Dict(
-        *[Str(k, enum=[k]) for k in ZFS_CHECKSUM_CHOICES if v != 'OFF'],
+        *[Str(k, enum=[k]) for k in ZFS_CHECKSUM_CHOICES if k != 'OFF'],
     ))
     async def checksum_choices(self):
         """
