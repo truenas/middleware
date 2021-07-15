@@ -22,7 +22,7 @@ class KubernetesService(SimpleService):
 
     async def _start_linux(self):
         await super()._start_linux()
-        timeout = 20
+        timeout = 40
         # First time when k8s is started, it takes a bit more time to initialise itself properly
         # and we need to have sleep here so that after start is called post_start is not dismissed
         while timeout > 0:
