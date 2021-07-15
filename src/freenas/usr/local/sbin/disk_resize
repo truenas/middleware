@@ -225,8 +225,8 @@ nvme)
 	# Make sure we have enough capacity to not fail after delete.
 	if [ -n "${size}" ]; then
 		ucap=`nvmecontrol identify ${ctrlr} | awk '/Unallocated NVM Capacity:/ { print $4 }'`
-		osize=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk '/^Size:/ { print $2}'`
-		if [ "${size}" -gt $((${ucap} / ${sector} + ${osize})) ]; then
+		ocap=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk '/^NVM Capacity:/ { print $3}'`
+		if [ "${size}" -gt $(((${ucap} + ${ocap}) / ${sector})) ]; then
 			echo "Not enough capacity."
 			exit 1
 		fi
