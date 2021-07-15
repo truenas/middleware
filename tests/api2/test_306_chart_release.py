@@ -163,7 +163,11 @@ def test_16_set_ipfs_chart_release_scale(request):
     }
     results = POST('/chart/release/scale/', payload)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert isinstance(results, dict), str(job_status['results'])
 
 
 def test_17_verify_ipfs_pod_status_desired_is_1(request):
