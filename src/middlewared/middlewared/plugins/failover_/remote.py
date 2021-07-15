@@ -9,7 +9,7 @@ from collections import defaultdict
 from functools import partial
 
 from middlewared.client import Client, ClientException, CallTimeout
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import start_daemon_thread
 from middlewared.utils.osc import set_thread_name
@@ -224,6 +224,7 @@ class FailoverService(Service):
             Any('callback'),
         ),
     )
+    @returns(Any(null=True))
     def call_remote(self, method, args, options):
         """
         Call a method in the other node.
