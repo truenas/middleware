@@ -63,6 +63,10 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
         Str('pod_name', required=True),
         Str('container_name', required=True),
     )
+    RETURNS = Dict(
+        Str('data', required=True),
+        Str('timestamp', required=True, null=True)
+    )
 
     def __init__(self, *args, **kwargs):
         super(KubernetesPodLogsFollowTailEventSource, self).__init__(*args, **kwargs)
