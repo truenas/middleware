@@ -10,13 +10,13 @@ from middlewared.settings import conf
 class Events(object):
 
     def __init__(self):
-        self.__events = {}
+        self._events = {}
         self.__events_private = set()
 
     def register(self, name, description, private=False, returns=None):
-        if name in self.__events:
+        if name in self._events:
             raise ValueError(f'Event {name!r} already registered.')
-        self.__events[name] = {
+        self._events[name] = {
             'description': description,
             'accepts': None,
             'returns': returns,
@@ -25,10 +25,10 @@ class Events(object):
             self.__events_private.add(name)
 
     def __contains__(self, name):
-        return name in self.__events
+        return name in self._events
 
     def __iter__(self):
-        for k, v in self.__events.items():
+        for k, v in self._events.items():
             yield k, {
                 'private': k in self.__events_private,
                 'wildcard_subscription': True,
