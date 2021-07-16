@@ -1,3 +1,4 @@
+import functools
 import importlib
 import inspect
 import itertools
@@ -130,7 +131,22 @@ class LoadPluginsMixin(object):
         to_resolve = []
         for service in list(self._services.values()):
             for attr in dir(service):
-                to_resolve.append(getattr(service, attr))
+                method = getattr(service, attr)
+                if not callable(method):
+                    continue
+                to_resolve.append({
+                    'keys': ['accepts', 'returns'],
+                    'has_key': functools.partial(hasattr, method),
+                    'get_attr': functools.partial(getattr, method),
+                })
+
+        for name, attrs in self.get_events():
+            to_resolve.append({
+                'keys': ['accepts', 'returns'],
+                'has_key': lambda k: k in attrs,
+                'get_attr': lambda k: attrs[k],
+            })
+
         resolve_methods(self._schemas, to_resolve)
 
     def add_service(self, service):
