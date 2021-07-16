@@ -1102,7 +1102,7 @@ class FailoverService(ConfigService):
 
 async def ha_permission(middleware, app):
     # Skip if session was already authenticated
-    if app.authenticated is True:
+    if app is not None and app.authenticated is True:
         return
 
     # We only care for remote connections (IPv4), in the interlink
