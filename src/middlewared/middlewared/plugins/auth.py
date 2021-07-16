@@ -5,7 +5,6 @@ import random
 import re
 import socket
 import string
-import subprocess
 import time
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, returns, Str
@@ -14,7 +13,7 @@ from middlewared.service import (
     pass_app, private, cli_private, CallError,
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, Popen
+from middlewared.utils import run
 from middlewared.validators import Range
 
 
@@ -544,21 +543,23 @@ async def check_permission(middleware, app):
         return
 
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
-
     if not (remote_addr.startswith('127.') or remote_addr == '::1'):
         return
 
-    remote = '{0}:{1}'.format(remote_addr, remote_port)
+    remote = f'{remote_addr}:{remote_port}'
+    data = (await run(['lsof', f'-i@{remote}', '-n', '-Fnu'], encoding='utf-8')).stdout
+    for line in iter(data.splitlines()):
+        key = line[0]
+        value = line[1:]
+        authenticated = True
+        if key == 'u':
+            authenticated &= (key == '0')
+        if key == 'n':
+            authenticated &= (value in remote)
 
-    proc = await Popen([
-        '/usr/bin/sockstat', '-46c', '-p', str(remote_port)
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-    data = await proc.communicate()
-    for line in data[0].strip().splitlines()[1:]:
-        cols = line.decode().split()
-        if cols[-3 if osc.IS_LINUX else -2] == remote and cols[0] == 'root':
+        if authenticated:
             AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
-            break
+            return
 
 
 def setup(middleware):
