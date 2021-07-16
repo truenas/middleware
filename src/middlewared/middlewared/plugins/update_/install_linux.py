@@ -19,13 +19,14 @@ class UpdateService(Service):
         )
 
     @private
-    def install_manual_impl(self, job, path, dest_extracted):
+    def install_manual_impl(self, job, path, dest_extracted, options=None):
         self._install(
             path,
             lambda progress, description: job.set_progress((0.5 + 0.5 * progress) * 100, description),
+            options,
         )
 
-    def _install(self, path, progress_callback):
+    def _install(self, path, progress_callback, options=None):
         with open(SCALE_MANIFEST_FILE) as f:
             old_manifest = json.load(f)
 
@@ -39,4 +40,4 @@ class UpdateService(Service):
             if not can_update(old_version, new_version):
                 raise CallError(f'Unable to downgrade from {old_version} to {new_version}')
 
-            self.middleware.call_sync("update.install_scale", mounted, progress_callback)
+            self.middleware.call_sync("update.install_scale", mounted, progress_callback, options)

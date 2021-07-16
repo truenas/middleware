@@ -17,7 +17,9 @@ run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encodi
 
 class UpdateService(Service):
     @private
-    def install_scale(self, mounted, progress_callback):
+    def install_scale(self, mounted, progress_callback, options=None):
+        options = options or {}
+
         with open(os.path.join(mounted, "manifest.json")) as f:
             manifest = json.load(f)
 
@@ -39,6 +41,7 @@ class UpdateService(Service):
             "old_root": "/",
             "pool_name": boot_pool_name,
             "src": mounted,
+            **options,
         }
 
         if osc.IS_FREEBSD:

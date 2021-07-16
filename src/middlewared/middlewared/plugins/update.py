@@ -323,9 +323,15 @@ class UpdateService(Service):
         await self.middleware.call('alert.alert_source_clear_run', 'HasUpdate')
         return success
 
-    @accepts(Str('path'))
+    @accepts(
+        Str('path'),
+        Dict(
+            'options',
+            Bool('cleanup', default=True),
+        )
+    )
     @job(lock='updatemanual')
-    def manual(self, job, path):
+    def manual(self, job, path, options):
         """
         Update the system using a manual update file.
 
@@ -348,7 +354,7 @@ class UpdateService(Service):
         try:
             try:
                 self.middleware.call_sync(
-                    'update.install_manual_impl', job, str(update_file.absolute()), dest_extracted
+                    'update.install_manual_impl', job, str(update_file.absolute()), dest_extracted, options,
                 )
             except Exception as e:
                 self.logger.debug('Applying manual update failed', exc_info=True)
