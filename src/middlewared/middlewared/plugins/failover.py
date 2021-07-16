@@ -12,7 +12,7 @@ import textwrap
 import time
 from functools import partial
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
@@ -78,17 +78,24 @@ class FailoverService(ConfigService):
         datastore_extend = 'failover.failover_extend'
         cli_namespace = 'system.failover'
 
+    ENTRY = Dict(
+        'failover_entry',
+        Int('id', required=True),
+        Bool('disabled', required=True),
+        Int('timeout', required=True),
+        Bool('master', required=True),
+    )
+
     @private
     async def failover_extend(self, data):
         data['master'] = await self.middleware.call('failover.node') == data.pop('master_node')
         return data
 
-    @accepts(Dict(
-        'failover_update',
-        Bool('disabled'),
-        Int('timeout'),
-        Bool('master', null=True),
-        update=True,
+    @accepts(Patch(
+        'failover_entry', 'failover_update',
+        ('edit', {'name': 'master', 'method': lambda x: setattr(x, 'null', True)}),
+        ('rm', {'name': 'id'}),
+        ('attr', {'update': True}),
     ))
     async def do_update(self, data):
         """
@@ -156,6 +163,7 @@ class FailoverService(ConfigService):
             raise CallError('Unable to change node state in MANUAL mode')
 
     @accepts()
+    @returns(Bool())
     def licensed(self):
         """
         Checks whether this instance is licensed as a HA unit.
@@ -173,7 +181,6 @@ class FailoverService(ConfigService):
 
     @private
     async def ha_mode(self):
-
         # update the class attribute so that all instances
         # of this class see the correct value
         if FailoverService.HA_MODE is None:
@@ -184,6 +191,7 @@ class FailoverService(ConfigService):
         return FailoverService.HA_MODE
 
     @accepts()
+    @returns(Str())
     async def hardware(self):
         """
         Returns the hardware type for an HA system.
@@ -193,12 +201,10 @@ class FailoverService(ConfigService):
           BHYVE
           MANUAL
         """
-
-        hardware = await self.middleware.call('failover.ha_mode')
-
-        return hardware[0]
+        return (await self.middleware.call('failover.ha_mode'))[0]
 
     @accepts()
+    @returns(Str())
     async def node(self):
         """
         Returns the slot position in the chassis that
@@ -207,25 +213,21 @@ class FailoverService(ConfigService):
           B - Seconde Node
           MANUAL - slot position in chassis could not be determined
         """
-
-        node = await self.middleware.call('failover.ha_mode')
-
-        return node[1]
+        return (await self.middleware.call('failover.ha_mode'))[1]
 
     @private
     @accepts()
+    @returns(List(Str('interface')))
     async def internal_interfaces(self):
         """
         This is a p2p ethernet connection on HA systems.
         """
-
-        return await self.middleware.call(
-            'failover.internal_interface.detect'
-        )
+        return await self.middleware.call('failover.internal_interface.detect')
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
+    @returns(Str())
     @pass_app(rest=True)
     async def status(self, app):
         """
@@ -239,7 +241,6 @@ class FailoverService(ConfigService):
             ERROR
             SINGLE
         """
-
         status = await self._status(app)
         if status != self.LAST_STATUS:
             self.LAST_STATUS = status
@@ -248,7 +249,6 @@ class FailoverService(ConfigService):
         return status
 
     async def _status(self, app):
-
         try:
             status = await self.middleware.call('cache.get', 'failover_status')
         except KeyError:
@@ -285,6 +285,7 @@ class FailoverService(ConfigService):
         await self.middleware.call('failover.disabled_reasons')
 
     @accepts()
+    @returns(Bool())
     def in_progress(self):
         """
         Returns True if there is an ongoing failover event.
@@ -303,6 +304,7 @@ class FailoverService(ConfigService):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
+    @returns(List(Str('ip')))
     @pass_app()
     async def get_ips(self, app):
         """
@@ -327,11 +329,11 @@ class FailoverService(ConfigService):
         return [i for i in set(addrs + v4addrs + v6addrs) if i not in ('0.0.0.0', '::')]
 
     @accepts()
+    @returns(Bool())
     async def force_master(self):
         """
         Force this controller to become MASTER.
         """
-
         # Skip if we are already MASTER
         if await self.middleware.call('failover.status') == 'MASTER':
             return False
@@ -342,7 +344,7 @@ class FailoverService(ConfigService):
         for i in await self.middleware.call('interface.query', [('failover_critical', '!=', None)]):
             if i['failover_vhid']:
                 await self.middleware.call('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
-                break
+                return True
 
         return False
 
@@ -350,6 +352,7 @@ class FailoverService(ConfigService):
         'options',
         Bool('reboot', default=False),
     ))
+    @returns()
     def sync_to_peer(self, options):
         """
         Sync database and files to the other controller.
@@ -383,6 +386,7 @@ class FailoverService(ConfigService):
             self.middleware.call_sync('failover.call_remote', 'system.reboot', [{'delay': 2}])
 
     @accepts()
+    @returns()
     def sync_from_peer(self):
         """
         Sync database and files from the other controller.
@@ -430,6 +434,7 @@ class FailoverService(ConfigService):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
+    @returns(List(Str('reason')))
     @pass_app()
     def disabled_reasons(self, app):
         """
@@ -558,6 +563,7 @@ class FailoverService(ConfigService):
             ],
         ),
     ))
+    @returns(Bool())
     async def unlock(self, options):
         """
         Unlock pools in HA, syncing passphrase between controllers and forcing this controller
@@ -581,6 +587,15 @@ class FailoverService(ConfigService):
             Bool('restart_services', default=True),
         )
     )
+    @returns(Dict(
+        List('unlocked', items=[Str('dataset')], required=True),
+        Dict(
+            'failed',
+            required=True,
+            additional_attrs=True,
+            example={'vol1/enc': {'error': 'Invalid Key', 'skipped': []}},
+        ),
+    ))
     @job(lock=lambda args: f'failover_dataset_unlock_{args[0]}')
     async def unlock_zfs_datasets(self, job, pool_name, data):
         # Unnlock all (if any) zfs datasets for `pool_name`
@@ -689,6 +704,7 @@ class FailoverService(ConfigService):
             Bool('active'),
         ),
     )
+    @returns()
     async def control(self, action, options):
         if not options:
             # The node making the call is the one we want to make MASTER by default
@@ -725,6 +741,7 @@ class FailoverService(ConfigService):
         'failover_upgrade',
         Str('train', empty=False),
     ))
+    @returns(Bool())
     @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
     def upgrade(self, job, options):
         """
@@ -949,6 +966,7 @@ class FailoverService(ConfigService):
         return False
 
     @accepts()
+    @returns(Bool())
     def upgrade_pending(self):
         """
         Verify if HA upgrade is pending.
@@ -997,6 +1015,7 @@ class FailoverService(ConfigService):
         return False
 
     @accepts()
+    @returns(Bool())
     @job(lock='failover_upgrade_finish')
     def upgrade_finish(self, job):
         """
@@ -1415,7 +1434,6 @@ async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
 
 
 async def hook_setup_ha(middleware, *args, **kwargs):
-
     if not await middleware.call('failover.licensed'):
         return
 
@@ -1604,7 +1622,6 @@ async def service_remote(middleware, service, verb, options):
 
 
 async def ready_system_sync_keys(middleware):
-
     await middleware.call('failover.sync_keys_from_remote_node')
 
 
