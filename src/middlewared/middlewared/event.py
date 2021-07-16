@@ -4,6 +4,7 @@ import json
 import threading
 
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
+from middlewared.settings import conf
 
 
 class Events(object):
@@ -44,12 +45,22 @@ class EventSource(object):
         self.middleware = middleware
         self.name = name
         self.arg = arg
-        self.send_event = send_event
+        self.send_event_internal = send_event
         self.unsubscribe_all = unsubscribe_all
         self._cancel = asyncio.Event()
         self._cancel_sync = threading.Event()
         self.ACCEPTS.name = name.replace('.', '_')
         self.RETURNS.name = f'{name.replace(".", "_")}_returns'
+
+    def send_event(self, event_type, **kwargs):
+        if conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
+            verrors = ValidationErrors()
+            clean_and_validate_arg(verrors, self.RETURNS, kwargs.get('fields'))
+            if verrors:
+                asyncio.ensure_future(self.unsubscribe_all(verrors))
+                return
+
+        self.send_event_internal(event_type, **kwargs)
 
     async def validate_arg(self):
         verrors = ValidationErrors()
