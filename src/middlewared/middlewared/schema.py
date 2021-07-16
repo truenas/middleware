@@ -4,7 +4,7 @@ import functools
 import json
 import textwrap
 from collections import defaultdict
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, time, timezone
 import errno
 import inspect
 import ipaddress
@@ -1025,13 +1025,13 @@ class ResolverError(Exception):
     pass
 
 
-def resolver(schemas, f):
-    if not callable(f):
+def resolver(schemas, obj):
+    if not isinstance(obj, dict) or not all(k in obj for k in ('keys', 'get_attr', 'has_key')):
         return
 
-    for schema_type in filter(functools.partial(hasattr, f), ('accepts', 'returns')):
+    for schema_type in filter(obj['has_key'], obj['keys']):
         new_params = []
-        schema_obj = getattr(f, schema_type)
+        schema_obj = obj['get_attr'](schema_type)
         for p in schema_obj:
             if isinstance(p, (Patch, Ref, Attribute, OROperator)):
                 resolved = p if p.resolved else p.resolve(schemas)

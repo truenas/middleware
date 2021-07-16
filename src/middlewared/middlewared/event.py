@@ -52,7 +52,7 @@ class EventSource(object):
         for i in (('ACCEPTS', name.replace('.', '_')), ('RETURNS', f'{name.replace(".", "_")}_returns')):
             doc_type = getattr(self, i[0])
             doc_type.name = i[1]
-            setattr(self, i[0], list(doc_type))
+            setattr(self, i[0], [doc_type])
 
     def send_event(self, event_type, **kwargs):
         if conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
