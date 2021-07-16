@@ -1,7 +1,6 @@
 import asyncio
 import errno
 import functools
-import sys
 
 from collections import defaultdict, namedtuple
 

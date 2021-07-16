@@ -4,7 +4,7 @@ from kubernetes_asyncio.watch import Watch
 
 from middlewared.event import EventSource
 from middlewared.schema import Dict, Int, Str
-from middlewared.service import CallError, CRUDService, filterable
+from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 from middlewared.validators import Range
 
