@@ -16,13 +16,12 @@ class ProcessesEventSource(EventSource):
     """
 
     def run_sync(self):
-        options = {}
-        if self.arg:
-            options = json.loads(self.arg)
-        options.setdefault("interval", 10)
-        options.setdefault("cpu_percent", 0.1)
-        options.setdefault("memory_percent", 0.1)
-
+        options = {
+            "interval": 10,
+            "cpu_percent": 0.1,
+            "memory_percent": 0.1,
+            **(self.arg or {})
+        }
         if options["interval"] < 5:
             raise CallError("Interval should be >= 5")
 
