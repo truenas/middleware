@@ -210,6 +210,7 @@ class ChartReleaseService(Service):
         await self.middleware.call('catalog.version_supported_error_check', catalog_item)
 
         config = await self.middleware.call('chart.release.upgrade_values', release, catalog_item['location'])
+        release_orig['config'] = config
 
         # We will be performing validation for values specified. Why we want to allow user to specify values here
         # is because the upgraded catalog item version might have different schema which potentially means that
