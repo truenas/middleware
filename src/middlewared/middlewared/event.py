@@ -18,8 +18,8 @@ class Events(object):
             raise ValueError(f'Event {name!r} already registered.')
         self._events[name] = {
             'description': description,
-            'accepts': None,
-            'returns': returns,
+            'accepts': [],
+            'returns': list(returns) if returns else [],
         }
         if private:
             self.__events_private.add(name)
@@ -49,13 +49,15 @@ class EventSource(object):
         self.unsubscribe_all = unsubscribe_all
         self._cancel = asyncio.Event()
         self._cancel_sync = threading.Event()
-        self.ACCEPTS.name = name.replace('.', '_')
-        self.RETURNS.name = f'{name.replace(".", "_")}_returns'
+        for i in (('ACCEPTS', name.replace('.', '_')), ('RETURNS', f'{name.replace(".", "_")}_returns')):
+            doc_type = getattr(self, i[0])
+            doc_type.name = i[1]
+            setattr(self, i[0], list(doc_type))
 
     def send_event(self, event_type, **kwargs):
         if conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
             verrors = ValidationErrors()
-            clean_and_validate_arg(verrors, self.RETURNS, kwargs.get('fields'))
+            clean_and_validate_arg(verrors, self.RETURNS[0], kwargs.get('fields'))
             if verrors:
                 asyncio.ensure_future(self.unsubscribe_all(verrors))
                 return
@@ -67,7 +69,7 @@ class EventSource(object):
         with contextlib.suppress(json.JSONDecodeError, TypeError):
             self.arg = json.loads(self.arg)
 
-        self.arg = clean_and_validate_arg(verrors, self.ACCEPTS, self.arg)
+        self.arg = clean_and_validate_arg(verrors, self.ACCEPTS[0], self.arg)
         verrors.check()
 
     async def process(self):
