@@ -1823,14 +1823,23 @@ class InterfaceService(CRUDService):
         if not remote_port:
             return
 
-        for line in (await run("sockstat", "-46", encoding="utf-8")).stdout.split("\n")[1:]:
-            line = line.split()
-            if osc.IS_LINUX:
-                line.pop()  # STATE column
-            local_address = line[-2]
-            foreign_address = line[-1]
-            if foreign_address.endswith(f":{remote_port}"):
-                return local_address.split(":")[0]
+        data = (await run(['lsof', '-Fn', f'-i:{remote_port}', '-n'], encoding='utf-8')).stdout
+        for line in iter(data.splitlines()):
+            # line we're interested in looks like "n127.0.0.1:x11->127.0.0.1:44812"
+            found = line.find('->')
+            if found < 0:
+                # -1 on failure
+                continue
+
+            if line.endswith(f':{remote_port}'):
+                base = line[1:].split('->')[0]
+                if '[' in base:
+                    # ipv6 line looks like this "[2001:aaaa:bbbb:cccc:dddd::100]:http"
+                    # only care about address in between the brackets
+                    return base.split('[', 1)[1].split(']')[0]
+                else:
+                    # ipv4 line looks like "192.168.1.103:http"
+                    return base.split(':')[0]
 
     @accepts()
     @returns(Str(null=True))
