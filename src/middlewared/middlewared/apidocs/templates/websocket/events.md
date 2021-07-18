@@ -22,6 +22,16 @@ This event can be subscribed to with the wildcard `*` as the event name.
 This event cannot be subscribed to with the wildcard `*` as the event name.
 {% endif %}
 
+{% if attrs.accepts %}
+#### Accept Arguments
+    :::javascript
+    {{ attrs.accepts|json|safe|indent(8) }}
+{% endif %}
+{% if attrs.returns %}
+#### Return Arguments
+    :::javascript
+    {{ attrs.returns|json|safe|indent(8) }}
+{% endif %}
 {% endfor %}
 
 ## Subscribing to Events
