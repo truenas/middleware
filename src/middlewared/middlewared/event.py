@@ -19,10 +19,13 @@ class Events(object):
         self._events[name] = {
             'description': description,
             'accepts': [],
-            'returns': [returns] if returns else [],
+            'returns': [returns] if returns else [Any(name, null=True)],
         }
         if private:
             self.__events_private.add(name)
+
+    def get_event(self, name):
+        return self._events.get(name)
 
     def __contains__(self, name):
         return name in self._events
