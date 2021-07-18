@@ -628,6 +628,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
                 f'{self._config.namespace}.query',
                 f'Sent on {self._config.namespace} changes.',
                 self._config.private,
+                returns=Ref(self.ENTRY.name),
             )
 
     @private

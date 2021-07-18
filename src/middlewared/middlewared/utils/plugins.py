@@ -144,7 +144,7 @@ class LoadPluginsMixin(object):
             to_resolve.append({
                 'keys': ['accepts', 'returns'],
                 'has_key': lambda k: k in attrs,
-                'get_attr': lambda k: attrs[k],
+                'get_attr': functools.partial(dict.get, attrs),
             })
 
         resolve_methods(self._schemas, to_resolve)
