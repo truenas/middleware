@@ -6,7 +6,7 @@ from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .settings import conf
-from .schema import Error as SchemaError
+from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
 from .utils import osc, sw_version
@@ -1370,6 +1370,12 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             self.logger.warning(f'Event {name!r} not registered.')
 
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
+
+        event_data = self.__events.get_event(name)
+        if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
+            verrors = ValidationErrors()
+            clean_and_validate_arg(verrors, event_data['returns'][0], kwargs.get('fields'))
+            verrors.check()
 
         self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')
 
