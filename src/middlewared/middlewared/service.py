@@ -627,7 +627,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             self.middleware.event_register(
                 f'{self._config.namespace}.query',
                 f'Sent on {self._config.namespace} changes.',
-                self._config.private
+                self._config.private,
             )
 
     @private
@@ -1333,8 +1333,8 @@ class CoreService(Service):
             events[name] = {
                 'description': attrs['description'],
                 'wildcard_subscription': attrs['wildcard_subscription'],
-                'accepts': self.get_json_schema(list(filter(bool, [attrs['accepts']])), attrs['description']),
-                'returns': self.get_json_schema(list(filter(bool, [attrs['returns']])), attrs['description']),
+                'accepts': self.get_json_schema(list(filter(bool, attrs['accepts'])), attrs['description']),
+                'returns': self.get_json_schema(list(filter(bool, attrs['returns'])), attrs['description']),
             }
 
         return events

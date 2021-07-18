@@ -1,6 +1,5 @@
 import asyncio
 import copy
-import functools
 import json
 import textwrap
 from collections import defaultdict
