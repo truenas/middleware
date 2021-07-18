@@ -19,7 +19,7 @@ class Events(object):
         self._events[name] = {
             'description': description,
             'accepts': [],
-            'returns': list(returns) if returns else [],
+            'returns': [returns] if returns else [],
         }
         if private:
             self.__events_private.add(name)
@@ -36,10 +36,28 @@ class Events(object):
             }
 
 
-class EventSource(object):
+class EventSourceMetabase(type):
 
-    ACCEPTS = Any(null=True)
-    RETURNS = Any(null=True)
+    def __new__(cls, name, bases, attrs):
+        klass = super().__new__(cls, name, bases, attrs)
+        if name == 'EventSource' and bases == ():
+            return klass
+
+        for i in (('ACCEPTS', name.lower()), ('RETURNS', f'{name.lower()}_returns')):
+            doc_type = getattr(klass, i[0])
+            if doc_type == NotImplementedError:
+                doc_type = Any(null=True)
+            if not doc_type.name:
+                doc_type.name = i[1]
+            setattr(klass, i[0], [doc_type])
+
+        return klass
+
+
+class EventSource(metaclass=EventSourceMetabase):
+
+    ACCEPTS = NotImplementedError
+    RETURNS = NotImplementedError
 
     def __init__(self, middleware, name, arg, send_event, unsubscribe_all):
         self.middleware = middleware
@@ -49,10 +67,6 @@ class EventSource(object):
         self.unsubscribe_all = unsubscribe_all
         self._cancel = asyncio.Event()
         self._cancel_sync = threading.Event()
-        for i in (('ACCEPTS', name.replace('.', '_')), ('RETURNS', f'{name.replace(".", "_")}_returns')):
-            doc_type = getattr(self, i[0])
-            doc_type.name = i[1]
-            setattr(self, i[0], [doc_type])
 
     def send_event(self, event_type, **kwargs):
         if conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
