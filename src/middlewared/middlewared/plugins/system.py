@@ -1869,12 +1869,6 @@ async def firstboot(middleware):
                 middleware.logger.error(
                     'Failed to set keep attribute for Initial-Install boot environment: %s', cp.stderr.decode()
                 )
-            if osc.IS_LINUX:
-                cp = await run(
-                    'zfs', 'set', 'org.zectl:bootloader=grub', os.path.join(boot_pool, 'ROOT'), check=False
-                )
-                if cp.returncode != 0:
-                    middleware.logger.error('Failed to set bootloader as grub for zectl: %s', cp.stderr.decode())
 
 
 async def update_timeout_value(middleware, *args):
