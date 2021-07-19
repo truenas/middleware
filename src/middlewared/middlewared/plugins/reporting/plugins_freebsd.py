@@ -65,13 +65,45 @@ class DiskTempPlugin(RRDBase):
 
     def get_identifiers(self):
         disks_for_temperature_monitoring = self.middleware.call_sync('disk.disks_for_temperature_monitoring')
-        ids = []
+        disks = []
         for entry in glob.glob(f'{self._base_path}/disktemp-*'):
             ident = entry.rsplit('-', 1)[-1]
             if ident in disks_for_temperature_monitoring and os.path.exists(os.path.join(entry, 'temperature.rrd')):
-                ids.append(ident)
+                disks.append(ident)
+
+        multipaths = {}
+        for disk in self.middleware.call_sync('disk.query'):
+            if disk['multipath_name']:
+                multipaths[disk['name']] = disk['multipath_name']
+                multipaths[disk['multipath_member']] = disk['multipath_name']
+
+        ids = []
+        for disk in disks:
+            if multipath := multipaths.get(disk):
+                ids.append(multipath)
+            else:
+                ids.append(disk)
+
         ids.sort(key=RRDBase._sort_disks)
         return ids
+
+    def get_defs(self, identifier):
+        return super().get_defs(self._process_identifier(identifier))
+
+    def export(self, identifier, starttime, endtime, aggregate=True):
+        return super().export(self._process_identifier(identifier), starttime, endtime, aggregate)
+
+    def _process_identifier(self, identifier):
+        if identifier.startswith('disk'):
+            disk = self.middleware.call_sync('disk.query', [['multipath_name', '=', identifier]], {'get': True})
+            members = [disk['name'], disk['multipath_member']]
+            for member in members:
+                if os.path.exists(f'{self._base_path}/disktemp-{member}/temperature.rrd'):
+                    return member
+
+            raise ValueError(f'None of the multipath {identifier!r} members {members!r} has disk temperature rrd file')
+
+        return identifier
 
 
 class CTLPlugin(RRDBase):

@@ -15,6 +15,14 @@ def main():
         return
 
     with Client() as c:
+        multipath = c.call(
+            "disk.query",
+            ["OR", [["name", "=", device], ["multipath_member", "=", device]]],
+            {"get": True},
+        )
+        if multipath["multipath_name"]:
+            device = multipath["multipath_name"]
+
         c.call("alert.oneshot_create", "SMART", {"device": device, "message": message})
 
 
