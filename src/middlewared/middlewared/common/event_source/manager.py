@@ -6,7 +6,7 @@ from collections import defaultdict, namedtuple
 
 from middlewared.event import EventSource
 from middlewared.schema import ValidationErrors
-from middlewared.service import CallError
+from middlewared.service_exception import CallError
 
 IdentData = namedtuple("IdentData", ["app", "name", "arg"])
 
