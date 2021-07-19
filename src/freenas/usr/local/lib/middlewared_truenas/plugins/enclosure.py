@@ -267,13 +267,6 @@ class EnclosureService(CRUDService):
                 if disk is None:
                     continue
 
-                try:
-                    element = self._get_ses_slot_for_disk(disk)
-                except MatchNotFound:
-                    pass
-                else:
-                    element.device_slot_set("fault")
-
             # We want spares to only identify slot for Z-series
             # See #32706
             if self.middleware.call_sync("truenas.get_chassis_hardware").startswith("TRUENAS-Z"):
@@ -282,26 +275,25 @@ class EnclosureService(CRUDService):
                 spare_value = "clear"
 
             for node in pool["groups"]["spare"]:
-                for vdev in node["children"]:
-                    for dev in vdev["children"]:
-                        if dev["path"] is None:
-                            continue
+                if node["path"] is None:
+                    continue
 
-                        label = dev["path"].replace("/dev/", "")
-                        disk = label2disk.get(label)
+                label = node["path"].replace("/dev/", "")
+                disk = label2disk.get(label)
+                if disk is None:
+                    continue
 
-                        if disk is None:
-                            continue
+                if node["status"] != "AVAIL":
+                    # when a hot-spare gets automatically attached to a zpool
+                    # its status is reported as "UNAVAIL"
+                    continue
 
-                        if dev["status"] != "AVAIL":
-                            continue
+                seen_devs.append(node["path"])
 
-                        seen_devs.append(dev["path"])
-
-                        element = encs.find_device_slot(disk)
-                        if element:
-                            self.logger.debug(f"{spare_value}ing bay slot for %r", disk)
-                            element.device_slot_set(spare_value)
+                element = encs.find_device_slot(disk)
+                if element:
+                    self.logger.debug(f"{spare_value}ing bay slot for %r", disk)
+                    element.device_slot_set(spare_value)
 
             """
             Go through all devs in the pool
