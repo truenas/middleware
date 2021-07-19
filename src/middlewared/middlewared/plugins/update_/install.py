@@ -38,10 +38,8 @@ class UpdateService(Service):
             "old_root": "/",
             "pool_name": boot_pool_name,
             "src": mounted,
+            "devices": self.middleware.call_sync("zfs.pool.get_devices", boot_pool_name),
         }
-
-        if osc.IS_FREEBSD:
-            command["devices"] = self.middleware.call_sync("zfs.pool.get_devices", boot_pool_name)
 
         p = subprocess.Popen(
             ["python3", "-m", "truenas_install"], cwd=mounted, stdin=subprocess.PIPE,
@@ -69,6 +67,14 @@ class UpdateService(Service):
                 raise CallError(error)
             else:
                 raise CallError(stderr)
+
+        cp = subprocess.Popen(
+            ["zfs", "set", "org.zectl:bootloader=grub", os.path.join(boot_pool_name, "ROOT")],
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
+        )
+        err = cp.communicate()[1]
+        if cp.returncode != 0:
+            raise CallError(f'Failed to set bootloader as grub for zectl: {err.decode()!r}')
 
     @private
     def ensure_free_space(self, pool_name, size):
