@@ -181,7 +181,11 @@ class SMBService(Service):
         conflict. Winbindd will regenerate the removed ones as-needed.
         """
         must_reload = False
-        tdb_handle = tdb.open(f"{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb")
+
+        try:
+            tdb_handle = tdb.open(f"{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb")
+        except FileNotFoundError:
+            return must_reload
 
         try:
             group_hwm_bytes = tdb_handle.get(b'GROUP HWM\00')
