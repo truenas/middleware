@@ -285,16 +285,19 @@ class ServiceService(CRUDService):
         """
         try:
             process = psutil.Process(pid)
+            process.terminate()
+            gone, alive = psutil.wait_procs([process], timeout)
         except psutil.NoSuchProcess:
             raise CallError("Process does not exist")
 
-        process.terminate()
-
-        gone, alive = psutil.wait_procs([process], timeout)
         if not alive:
             return True
 
-        alive[0].kill()
+        try:
+            alive[0].kill()
+        except psutil.NoSuchProcess:
+            return True
+
         return False
 
 
