@@ -151,11 +151,17 @@ class KubernetesService(Service):
         ]
         if locked_datasets:
             raise CallError(
-                f'Please unlock following dataset(s) before starting kubernetes: {", ".join(locked_datasets)}'
+                f'Please unlock following dataset(s) before starting kubernetes: {", ".join(locked_datasets)}',
+                errno=CallError.EDATASETISLOCKED,
             )
+
         iface_errors = await self.middleware.call('kubernetes.validate_interfaces', config)
         if iface_errors:
             raise CallError(f'Unable to lookup configured interfaces: {", ".join([v[1] for v in iface_errors])}')
+
+        errors = await self.middleware.call('kubernetes.validate_config')
+        if errors:
+            raise CallError(str(errors))
 
     @private
     def status_change(self):
