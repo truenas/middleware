@@ -234,6 +234,7 @@ class ErrnoMixin:
     ESERVICESTARTFAILURE = 202
     EALERTCHECKERUNAVAILABLE = 203
     EREMOTENODEERROR = 204
+    EDATASETISLOCKED = 205
 
     @classmethod
     def _get_errname(cls, code):

@@ -1,5 +1,7 @@
 import asyncio
 
+from middlewared.service import CallError
+
 from .base import SimpleService
 
 
@@ -9,7 +11,20 @@ class KubernetesService(SimpleService):
     systemd_unit = 'k3s'
 
     async def before_start(self):
-        await self.middleware.call('kubernetes.validate_k8s_fs_setup')
+        try:
+            await self.middleware.call('kubernetes.validate_k8s_fs_setup')
+        except CallError as e:
+            if e.errno != CallError.EDATASETISLOCKED:
+                await self.middleware.call(
+                    'alert.oneshot_create',
+                    'ApplicationsConfigurationFailed',
+                    {'error': e.errmsg},
+                )
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
+
+            raise
+
         for key, value in (
             ('vm.panic_on_oom', 0),
             ('vm.overcommit_memory', 1),

@@ -185,6 +185,17 @@ class KubernetesService(ConfigService):
             errors.append((k, data[k]))
         return errors
 
+    @private
+    async def validate_config(self):
+        data = await self.middleware.call('kubernetes.config')
+        data.pop('id')
+        data.pop('dataset')
+
+        try:
+            await self.validate_data(data, 'kubernetes', data)
+        except ValidationErrors as e:
+            return e
+
     @accepts(
         Patch(
             'kubernetes_entry', 'kubernetes_update',
