@@ -51,9 +51,16 @@ def test_04_get_chart_release_nic_choices():
     assert interface in results.json(), results.text
 
 
+@pytest.mark.dependency(name='ipfs_version')
 def test_05_get_ipfs_version():
     global ipfs_version
-    results = POST('/catalog/items/', {'label': 'OFFICIAL', 'retrieve_versions': True})
+    payload = {
+        'label': 'OFFICIAL',
+        'options': {
+            'retrieve_versions': True
+        }
+    }
+    results = POST('/catalog/items/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 300)
@@ -65,7 +72,7 @@ def test_05_get_ipfs_version():
 
 @pytest.mark.dependency(name='release_ipfs')
 def test_06_create_ipfs_chart_release(request):
-    depends(request, ['setup_kubernetes'], scope='session')
+    depends(request, ['setup_kubernetes', 'ipfs_version'], scope='session')
     global release_id
     payload = {
         'catalog': 'OFFICIAL',
@@ -370,9 +377,16 @@ def test_34_verify_updatechart_catalog_object(key):
     assert results.json()[key] == updatechart_catalog[key], results.text
 
 
+@pytest.mark.dependency(name='plex_version')
 def test_35_get_plex_old_version():
     global old_plex_version, new_plex_version
-    results = POST('/catalog/items/', {'label': 'UPDATECHARTS', 'retrieve_versions': True})
+    payload = {
+        'label': 'UPDATECHARTS',
+        'options': {
+            'retrieve_versions': True
+        }
+    }
+    results = POST('/catalog/items/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 300)
@@ -385,7 +399,7 @@ def test_35_get_plex_old_version():
 
 @pytest.mark.dependency(name='release_plex')
 def test_36_create_plex_chart_release_with_old_version(request):
-    depends(request, ['setup_kubernetes'], scope='session')
+    depends(request, ['setup_kubernetes', 'plex_version'], scope='session')
     global plex_id
     payload = {
         'catalog': 'UPDATECHARTS',
