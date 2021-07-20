@@ -22,7 +22,7 @@ def render(service, middleware):
     ]
     kube_api_server_args = [
         'service-node-port-range=9000-65535',
-        'enable-admission-plugins=NodeRestriction,NamespaceLifecycle,ServiceAccount,AlwaysPullImages',
+        'enable-admission-plugins=NodeRestriction,NamespaceLifecycle,ServiceAccount',
         'audit-log-path=/var/log/k3s_server_audit.log',
         'audit-log-maxage=30',
         'audit-log-maxbackup=10',
