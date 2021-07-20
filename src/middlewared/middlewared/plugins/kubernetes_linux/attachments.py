@@ -27,7 +27,7 @@ class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
         return attachment['id']
 
     async def delete(self, attachments):
-        await self.middleware.call('kubernetes.update', {'pool': None})
+        await (await self.middleware.call('kubernetes.update', {'pool': None})).wait(raise_error=True)
 
     async def toggle(self, attachments, enabled):
         await getattr(self, 'start' if enabled else 'stop')(attachments)
