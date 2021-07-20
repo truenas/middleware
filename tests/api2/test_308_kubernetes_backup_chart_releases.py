@@ -1,6 +1,7 @@
 import os
 import pytest
 import sys
+
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -15,15 +16,28 @@ else:
 pytestmark = pytest.mark.skipif(ha or not scale or dev_test, reason=reason)
 
 
+@pytest.mark.dependency(name='plex_version')
 def test_01_get_plex_version():
     global plex_version
-    results = POST('/catalog/items/', {'label': 'OFFICIAL'})
-    plex_version = list(results.json()['charts']['plex']['versions'].keys())[0]
+    payload = {
+        'label': 'OFFICIAL',
+        'options': {
+            'retrieve_versions': True
+        }
+    }
+    results = POST('/catalog/items/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    results = job_status['results']['result']
+    assert isinstance(results, dict), str(job_status['results'])
+    plex_version = list(results['charts']['plex']['versions'].keys())[0]
 
 
 @pytest.mark.dependency(name='release_plex')
 def test_02_create_plex_chart_release(request):
-    depends(request, ['setup_kubernetes'], scope='session')
+    depends(request, ['setup_kubernetes', 'plex_version'], scope='session')
     global plex_id
     payload = {
         'catalog': 'OFFICIAL',
