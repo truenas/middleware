@@ -4225,7 +4225,10 @@ class PoolDatasetService(CRUDService):
                 else:
                     self.logger.info('Killing process %r (%r) that holds dataset %r', process['pid'],
                                      process['cmdline'], oid)
-                    await self.middleware.call('service.terminate_process', process['pid'])
+                    try:
+                        await self.middleware.call('service.terminate_process', process['pid'])
+                    except CallError as e:
+                        self.logger.warning('Error killing process: %r', e)
 
         processes = await self.middleware.call('pool.dataset.processes', oid)
         if not processes:
