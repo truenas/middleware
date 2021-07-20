@@ -154,13 +154,11 @@ class KubernetesService(ConfigService):
             verrors.add(f'{schema}.node_ip', 'Please provide a valid IP address.')
 
         if not await self.middleware.call('route.configured_default_ipv4_route'):
-            if not data['route_v4_gateway']:
-                verrors.add(f'{schema}.route_v4_gateway', 'Please set a default route for system or for kubernetes.')
-            if not data['route_v4_interface']:
-                verrors.add(
-                    f'{schema}.route_v4_interface',
-                    'Please set a default route for system or specify default interface to be used for kubernetes.'
-                )
+            verrors.add(
+                f'{schema}.route_v4_interface',
+                'Please, set IPv4 Default Gateway (it can be fake) in Network → Global Configuration and then '
+                'update Kubernetes settings. Currently, k3s cannot be used without a default route.'
+            )
 
         for k, _ in await self.validate_interfaces(data):
             verrors.add(f'{schema}.{k}', 'Please specify a valid interface.')
