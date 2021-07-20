@@ -182,6 +182,7 @@ class SMBModel(sa.Model):
     cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
     cifs_srv_next_rid = sa.Column(sa.Integer(), nullable=False)
     cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
+    cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
 
 
 class WBCErr(enum.Enum):
@@ -631,6 +632,7 @@ class SMBService(SystemServiceService):
         Str('filemask'),
         Str('dirmask'),
         Bool('ntlmv1_auth'),
+        Bool('multichannel', default=False),
         List('bindip', items=[IPAddr('ip')]),
         Str('smb_options', max_length=None),
         update=True,
