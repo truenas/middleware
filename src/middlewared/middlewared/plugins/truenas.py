@@ -81,7 +81,7 @@ class TrueNASService(Service):
 
         data = await self.middleware.call('system.dmidecode_info')
         chassis = data['system-product-name']
-        if chassis.startswith(('TRUENAS-M', 'TRUENAS-X', 'TRUENAS-Z')):
+        if chassis.startswith(('TRUENAS-M', 'TRUENAS-X', 'TRUENAS-Z', 'TRUENAS-R')):
             return chassis
         # We don't match a burned in name for a M, X or Z series.  Let's catch
         # the case where we are a M, X or Z. (shame on you production!)
