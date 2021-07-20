@@ -47,54 +47,17 @@ class TrueNASService(Service):
     async def get_chassis_hardware(self):
         """
         Returns what type of hardware this is, detected from dmidecode.
-
-        TRUENAS-X10-HA-D
-        TRUENAS-X10-S
-        TRUENAS-X20-HA-D
-        TRUENAS-X20-S
-        TRUENAS-M40-HA
-        TRUENAS-M40-S
-        TRUENAS-M50-HA
-        TRUENAS-M50-S
-        TRUENAS-M60-HA
-        TRUENAS-M60-S
-        TRUENAS-Z20-S
-        TRUENAS-Z20-HA-D
-        TRUENAS-Z30-HA-D
-        TRUENAS-Z30-S
-        TRUENAS-Z35-HA-D
-        TRUENAS-Z35-S
-        TRUENAS-Z50-HA-D
-        TRUENAS-Z50-S
-
-        Nothing in dmidecode but a M, X or Z class machine:
-        (Note this means production didn't burn the hardware model
-        into SMBIOS. We can detect this case by looking at the
-        motherboard)
-        TRUENAS-M
-        TRUENAS-X
-        TRUENAS-Z
-
-        Really NFI about hardware at this point.  TrueNAS on a Dell?
-        TRUENAS-UNKNOWN
         """
+        dmi = await self.middleware.call('system.dmidecode_info')
+        if dmi['system-product-name'].startswith(('TRUENAS-Z', 'TRUENAS-M', 'TRUENAS-X', 'TRUENAS-R')):
+            return dmi['system-product-name']
 
-        data = await self.middleware.call('system.dmidecode_info')
-        chassis = data['system-product-name']
-        if chassis.startswith(('TRUENAS-M', 'TRUENAS-X', 'TRUENAS-Z', 'TRUENAS-R')):
-            return chassis
-        # We don't match a burned in name for a M, X or Z series.  Let's catch
-        # the case where we are a M, X or Z. (shame on you production!)
-        motherboard = data['baseboard-manufacturer']
-        motherboard_model = data['baseboard-product-name']
-        if motherboard_model == 'X11DPi-NT' or motherboard_model == 'X11SPi-TF':
-            return 'TRUENAS-M'
-        if motherboard_model == 'iXsystems TrueNAS X10':
+        if dmi['baseboard-product-name'] == 'iXsystems TrueNAS X10':
+            # could be that production didn't burn in the correct x-series
+            # model information so let's check the motherboard model as a
+            # last resort
             return 'TRUENAS-X'
-        if motherboard == 'GIGABYTE':
-            return 'TRUENAS-Z'
 
-        # Give up
         return 'TRUENAS-UNKNOWN'
 
     @accepts()
