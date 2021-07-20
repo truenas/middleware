@@ -377,6 +377,7 @@ class SharingSMBService(Service):
                     })
                 elif acltype == "POSIX" or acltype == "UNKNOWN":
                     data['vfsobjects'].append('acl_xattr')
+                    conf['inherit acls'] = 'yes'
                 else:
                     self.logger.debug("ACLs are disabled on path %s. "
                                       "Disabling NT ACL support.",
