@@ -525,6 +525,11 @@ class SMBService(SystemServiceService):
         except ValidationErrors as errs:
             verrors.add_child('smb_update.smb_options', errs)
 
+        if new.get('multichannel', False) is True:
+            verrors.add(
+                'smb_update.multichannel',
+                'Multichannel SMB is not supported at this time'
+            )
         if new.get('unixcharset') and new['unixcharset'] not in await self.unixcharset_choices():
             verrors.add(
                 'smb_update.unixcharset',
