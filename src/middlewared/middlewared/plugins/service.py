@@ -302,27 +302,31 @@ class ServiceService(CRUDService):
                     return service_name
 
     @accepts(Int("pid"), Int("timeout", default=10))
-    @returns(Bool('process_terminated'))
+    @returns(Bool(
+        "process_terminated_nicely",
+        description="`true` is process has been successfully terminated with `TERM` and `false` if we had to use `KILL`"
+    ))
     def terminate_process(self, pid, timeout):
         """
         Terminate process by `pid`.
 
         First send `TERM` signal, then, if was not terminated in `timeout` seconds, send `KILL` signal.
-
-        Returns `true` is process has been successfully terminated with `TERM` and `false` if we had to use `KILL`.
         """
         try:
             process = psutil.Process(pid)
+            process.terminate()
+            gone, alive = psutil.wait_procs([process], timeout)
         except psutil.NoSuchProcess:
             raise CallError("Process does not exist")
 
-        process.terminate()
-
-        gone, alive = psutil.wait_procs([process], timeout)
         if not alive:
             return True
 
-        alive[0].kill()
+        try:
+            alive[0].kill()
+        except psutil.NoSuchProcess:
+            return True
+
         return False
 
 
