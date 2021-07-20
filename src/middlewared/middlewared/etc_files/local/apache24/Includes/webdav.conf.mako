@@ -7,13 +7,14 @@
 	import subprocess
 
 	from string import digits, ascii_uppercase, ascii_lowercase
-	from middlewared.utils import osc
+
+	web_shares = middleware.call_sync('sharing.webdav.query', [['enabled', '=', True]])
+	if not web_shares:
+		raise FileShouldNotExist()
 
 	# Check to see if there is a webdav lock databse directory, if not create
 	# one. Take care of necessary permissions whilst creating it!
-	apache_dir = service.APACHE_DIR
-	if osc.IS_LINUX:
-		apache_dir = apache_dir.replace('local/', '')
+	apache_dir = service.APACHE_DIR.replace('local/', '')
 	oscmd = f'/etc/{apache_dir}/var'
 	if not os.path.isdir(oscmd):
 		os.mkdir(oscmd, 0o774)
@@ -29,7 +30,6 @@
 
 	webdav_config = middleware.call_sync('webdav.config')
 	auth_type = webdav_config['htauth'].lower()
-	web_shares = middleware.call_sync('sharing.webdav.query', [['enabled', '=', True]])
 	password = webdav_config["password"]
 
 	# Generating relevant password files
