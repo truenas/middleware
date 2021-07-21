@@ -111,7 +111,7 @@ digit = ''.join(random.choices(string.digits, k=2))
 hostname = f'test{digit}'
 domain = f'test{digit}.nb.ixsystems.com'
 
-cfg_content = f"""#!/usr/bin/env python3.6
+cfg_content = f"""#!/usr/bin/env python{version}
 
 user = "root"
 password = "{passwd}"
@@ -153,15 +153,14 @@ cfg_file.writelines(f'sshKey = "{Key}"\n')
 cfg_file.close()
 
 
-call(
-    [
-        f"pytest-{version}",
-        "-v",
-        "--junitxml",
-        'results/api_v2_tests_result.xml',
-        f"api2/{testName}"
-    ]
-)
+call([
+    f"pytest-{version}",
+    "-v",
+    "-o", "junit_family=xunit2",
+    "--junitxml",
+    'results/api_v2_tests_result.xml',
+    f"api2/{testName}"
+])
 
 # get useful logs
 artifacts = f"{workdir}/artifacts/"
