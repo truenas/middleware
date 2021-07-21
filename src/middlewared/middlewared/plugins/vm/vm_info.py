@@ -93,7 +93,7 @@ class VMService(Service):
         # swap used space is accounted for used physical memory because
         # 1. processes (including VMs) can be swapped out
         # 2. we want to avoid using swap
-        swap_used = psutil.swap_memory().used * (await self.middleware.call('sysctl.get_pagesize'))
+        swap_used = psutil.swap_memory().used
 
         # Difference between current ARC total size and the minimum allowed
         arc_total = await self.middleware.call('sysctl.get_arcstats_size')
