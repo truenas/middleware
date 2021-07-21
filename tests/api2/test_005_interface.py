@@ -194,28 +194,28 @@ def test_14_compare_payload_with_get_vlan1_interface_result_output_(dkey):
 def test_15_set_interface_for_ha():
     payload = {
         'ipv4_dhcp': False,
+        'failover_critical': True,
+        'failover_vhid': vhid,
+        'failover_group': 1,
         "aliases": [
             {
                 'type': 'INET',
                 'address': controller1_ip,
-                'netmask': 24
+                'netmask': 23
             }
         ],
-        'failover_critical': True,
-        'failover_vhid': vhid,
-        'failover_group': 1,
         'failover_aliases': [
             {
                 'type': 'INET',
                 'address': controller2_ip,
-                'netmask': 24
             }
         ],
         'failover_virtual_aliases': [
             {
                 'type': 'INET',
                 'address': virtual_ip,
-                'netmask': 32}],
+            }
+        ],
     }
 
     results = PUT(f'/interface/id/{interface}/', payload, controller_a=ha)
