@@ -9,7 +9,7 @@ After=systemd-remount-fs.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=rm -rf /var/log
-ExecStart=cp -a /conf/base/var/log /var/
+ExecStart=mkdir /var/log
 
 [Install]
 WantedBy=multi-user.target
