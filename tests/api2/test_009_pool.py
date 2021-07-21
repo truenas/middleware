@@ -3,12 +3,11 @@
 import pytest
 import sys
 import os
-import time
 import re
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET
+from functions import POST, GET, wait_on_job
 from auto_config import pool_name, ha, scale
 
 IMAGES = {}
@@ -29,19 +28,6 @@ def pool_data():
     return {}
 
 
-def expect_state(job_id, state):
-    for _ in range(60):
-        job = GET(f"/core/get_jobs/?id={job_id}").json()[0]
-        if job["state"] in ["WAITING", "RUNNING"]:
-            time.sleep(1)
-            continue
-        if job["state"] == state:
-            return job
-        else:
-            assert False, str(job)
-    assert False, str(job)
-
-
 def test_01_get_pool():
     results = GET("/pool/")
     assert results.status_code == 200, results.text
@@ -58,7 +44,8 @@ def test_02_wipe_all_pool_disk():
         }
         results = POST('/disk/wipe/', payload)
         job_id = results.json()
-        expect_state(job_id, "SUCCESS")
+        job_status = wait_on_job(job_id, 180)
+        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @pytest.mark.skipif(not ha, reason="Skip for Core")
@@ -76,7 +63,8 @@ def test_03_creating_ha_pool():
     results = POST("/pool/", payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    expect_state(job_id, "SUCCESS")
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @pytest.mark.dependency(name="pool_04")
@@ -94,7 +82,8 @@ def test_04_creating_a_pool():
     results = POST("/pool/", payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    expect_state(job_id, "SUCCESS")
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_05_get_pool_id(request, pool_data):
