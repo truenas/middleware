@@ -54,7 +54,7 @@ update-alternatives --set ebtables /usr/sbin/ebtables-legacy
 usermod -a -G dialout nut
 
 # Copy to /conf/base
-for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf /var/log; do
+for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf; do
     mkdir -p "$(dirname "/conf/base/$bit")"
     cp -aR "$bit" "/conf/base/$bit"
 done

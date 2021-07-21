@@ -215,7 +215,7 @@ def configure_syslog(middleware):
             else:
                 os.unlink("/var/log")
 
-            shutil.copytree("/conf/base/var/log", "/var/log")
+            os.mkdir("/var/log", 0o755)
 
         reconfigure_logging(middleware)
 
@@ -249,7 +249,7 @@ def configure_syslog(middleware):
     else:
         # This is the first time syslog is going to log to this
         # directory, so create the log directory and sync files.
-        shutil.copytree("/conf/base/var/log", log_path)
+        os.mkdir(log_path)
         os.chmod(log_path, 0o755)
         os.chown(log_path, 0, 0)
         subprocess.run(f"rsync -avz /var/log/* {shlex.quote(log_path + '/')}", shell=True,
@@ -265,10 +265,6 @@ def configure_syslog(middleware):
         symlink = True
     if symlink:
         os.symlink(log_path, "/var/log")
-
-    # Let's make sure that the permissions for directories/files in /var/log
-    # reflect that of /conf/base/var/log
-    subprocess.run("mtree -c -p /conf/base/var/log | mtree -eu", cwd="/var/log", shell=True, stdout=subprocess.DEVNULL)
 
     reconfigure_logging(middleware)
 
