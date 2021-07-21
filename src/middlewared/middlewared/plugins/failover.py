@@ -304,7 +304,7 @@ class FailoverService(ConfigService):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    @returns(List(Str('ip')))
+    @returns(List('ips', items=[Str('ip')]))
     @pass_app()
     async def get_ips(self, app):
         """
@@ -434,7 +434,7 @@ class FailoverService(ConfigService):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    @returns(List(Str('reason')))
+    @returns(List('reasons', items=[Str('reason')]))
     @pass_app()
     def disabled_reasons(self, app):
         """
