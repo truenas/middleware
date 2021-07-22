@@ -315,10 +315,6 @@ class FilesystemService(Service, ACLBase):
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
-        self._common_perm_path_validate("filesystem_acl",
-                                        path, recursive,
-                                        verrors)
-
         aclcheck = ACLType.NFS4.validate(data)
         if not aclcheck['is_valid']:
             for err in aclcheck['errors']:
@@ -490,10 +486,6 @@ class FilesystemService(Service, ACLBase):
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
-        self._common_perm_path_validate("filesystem_acl",
-                                        path, recursive,
-                                        verrors)
-
         aclcheck = ACLType.POSIX1E.validate(data)
         if not aclcheck['is_valid']:
             for err in aclcheck['errors']:
@@ -548,7 +540,19 @@ class FilesystemService(Service, ACLBase):
         job.set_progress(100, 'Finished setting POSIX1e ACL.')
 
     def setacl(self, job, data):
-        acltype = ACLType[data['acltype']]
+        verrors = ValidationErrors()
+        self._common_perm_path_validate("filesystem.setacl",
+                                        data['path'],
+                                        data['options']['recursive'],
+                                        verrors)
+        verrors.check()
+
+        if 'acltype' in data:
+            acltype = ACLType[data['acltype']]
+        else:
+            path_acltype = self.getacl(data['path'])['acltype']
+            acltype = ACLType[path_acltype]
+
         if acltype == ACLType.NFS4:
             return self.setacl_nfs4(job, data)
         else:
