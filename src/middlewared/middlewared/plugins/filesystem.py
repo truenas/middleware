@@ -23,12 +23,28 @@ from middlewared.service import private, CallError, filterable_returns, Service,
 from middlewared.utils import filter_list, osc
 from middlewared.utils.path import is_child
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
 
 
 class FilesystemService(Service):
 
     class Config:
         cli_namespace = 'storage.filesystem'
+
+    def resolve_cluster_path(self, path):
+        if not path.startswith('CLUSTER:'):
+            return path
+
+        gluster_volume = path[8:].split("/")[0]
+        if gluster_volume == CTDBConfig.CTDB_VOL_NAME.value:
+            raise CallError('access to ctdb volume is not permitted.', errno.EPERM)
+
+        is_mounted = self.middleware.call_sync('gluster.fuse.is_mounted', {'name': gluster_volume})
+        if not is_mounted:
+            raise CallError(f'{gluster_volume}: cluster volume is not mounted.', errno.ENXIO)
+
+        cluster_path = path.replace('CLUSTER:', '/cluster/')
+        return cluster_path
 
     @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
     @filterable_returns(Dict(
@@ -58,6 +74,7 @@ class FilesystemService(Service):
           gid(int): group id of entry onwer
           acl(bool): extended ACL is present on file
         """
+        path = self.resolve_cluster_path(path)
         if not os.path.exists(path):
             raise CallError(f'Directory {path} does not exist', errno.ENOENT)
 
@@ -77,7 +94,7 @@ class FilesystemService(Service):
 
             data = {
                 'name': entry.name,
-                'path': entry.path,
+                'path': entry.path.replace('/cluster/', 'CLUSTER:'),
                 'realpath': os.path.realpath(entry.path) if etype == 'SYMLINK' else entry.path,
                 'type': etype,
             }
@@ -86,7 +103,7 @@ class FilesystemService(Service):
                 data.update({
                     'size': stat.st_size,
                     'mode': stat.st_mode,
-                    'acl': False if self.acl_is_trivial(data["realpath"]) else True,
+                    'acl': False if self.acl_is_trivial(data["path"]) else True,
                     'uid': stat.st_uid,
                     'gid': stat.st_gid,
                 })
@@ -116,6 +133,7 @@ class FilesystemService(Service):
         """
         Return the filesystem stat(2) for a given `path`.
         """
+        path = self.resolve_cluster_path(path)
         try:
             stat = os.stat(path, follow_symlinks=False)
         except FileNotFoundError:
@@ -310,6 +328,7 @@ class FilesystemService(Service):
         any access rules, or if the path does not support NFSv4 ACLs (for example
         a path on a tmpfs filesystem).
         """
+        path = self.resolve_cluster_path(path)
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 

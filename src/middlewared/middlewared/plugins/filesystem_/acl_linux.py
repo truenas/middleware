@@ -31,14 +31,29 @@ class FilesystemService(Service, ACLBase):
         if acltool.returncode != 0:
             raise CallError(f"acltool [{action}] on path {path} failed with error: [{acltool.stderr.decode().strip()}]")
 
-    def _common_perm_path_validate(self, schema, path, recursive, verrors):
+    def _common_perm_path_validate(self, schema, data, verrors):
+        is_cluster = data['path'].startswith('CLUSTER')
+        try:
+            data['path'] = self.middleware.call_sync('filesystem.resolve_cluster_path', data['path'])
+        except CallError as e:
+            if e.errno != errno.ENXIO:
+                raise
+
+            verrors.add(f'{schema}.path', e.errmsg)
+            return
+
+        path = data['path']
+
         p = Path(path)
         if not p.is_absolute():
             verrors.add(f'{schema}.path', 'Must be an absolute path.')
             return
 
-        if p.is_file() and recursive:
+        if p.is_file() and data['options']['recursive']:
             verrors.add(f'{schema}.path', 'Recursive operations on a file are invalid.')
+            return
+
+        if is_cluster:
             return
 
         if not os.path.realpath(path).startswith('/mnt/'):
@@ -72,10 +87,7 @@ class FilesystemService(Service, ACLBase):
             verrors.add("filesystem.chown.uid",
                         "Please specify either user or group to change.")
 
-        self._common_perm_path_validate("filesystem.chown",
-                                        data['path'],
-                                        options.get('recursive', False),
-                                        verrors)
+        self._common_perm_path_validate("filesystem.chown", data, verrors)
         verrors.check()
 
         if not options['recursive']:
@@ -97,10 +109,7 @@ class FilesystemService(Service, ACLBase):
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
-        self._common_perm_path_validate("filesystem.setperm",
-                                        data['path'],
-                                        options.get('recursive', False),
-                                        verrors)
+        self._common_perm_path_validate("filesystem.setperm", data, verrors)
 
         current_acl = self.middleware.call_sync('filesystem.getacl', data['path'])
         acl_is_trivial = current_acl['trivial']
@@ -293,6 +302,8 @@ class FilesystemService(Service, ACLBase):
         return ret
 
     def getacl(self, path, simplified, resolve_ids):
+        path = self.middleware.call_sync('filesystem.resolve_cluster_path', path)
+
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
         # Add explicit check for ACL type
@@ -541,10 +552,7 @@ class FilesystemService(Service, ACLBase):
 
     def setacl(self, job, data):
         verrors = ValidationErrors()
-        self._common_perm_path_validate("filesystem.setacl",
-                                        data['path'],
-                                        data['options']['recursive'],
-                                        verrors)
+        self._common_perm_path_validate("filesystem.setacl", data, verrors)
         verrors.check()
 
         if 'acltype' in data:
@@ -552,6 +560,8 @@ class FilesystemService(Service, ACLBase):
         else:
             path_acltype = self.getacl(data['path'])['acltype']
             acltype = ACLType[path_acltype]
+
+        data['path'] = data['path'].replace('CLUSTER:', '/cluster')
 
         if acltype == ACLType.NFS4:
             return self.setacl_nfs4(job, data)
