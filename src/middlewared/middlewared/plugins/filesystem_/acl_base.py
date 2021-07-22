@@ -247,7 +247,7 @@ class ACLBase(ServicePartBase):
                 Bool('autoinherit', default=False),
                 Bool('protected', default=False),
             ),
-            Str('acltype', enum=[x.name for x in ACLType], default=ACLType.NFS4.name),
+            Str('acltype', enum=[x.name for x in ACLType], null=True),
             Dict(
                 'options',
                 Bool('stripacl', default=False),
