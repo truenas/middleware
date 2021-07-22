@@ -263,6 +263,11 @@ class ACLBase(ServicePartBase):
         Set ACL of a given path. Takes the following parameters:
         `path` full path to directory or file.
 
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
+
         `dacl` ACL entries. Formatting depends on the underlying `acltype`. NFS4ACL requires
         NFSv4 entries. POSIX1e requires POSIX1e entries.
 
@@ -375,7 +380,12 @@ class ACLBase(ServicePartBase):
     @job(lock="perm_change")
     def setperm(self, job, data):
         """
-        Remove extended ACL from specified path.
+        Set unix permissions on given `path`.
+
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
 
         If `mode` is specified then the mode will be applied to the
         path and files and subdirectories depending on which `options` are

@@ -31,7 +31,12 @@ class FilesystemService(Service):
     class Config:
         cli_namespace = 'storage.filesystem'
 
+    @private
     def resolve_cluster_path(self, path):
+        """
+        Convert a "CLUSTER:"-prefixed path to an absolute path
+        on the server.
+        """
         if not path.startswith(FuseConfig.FUSE_PATH_SUBST.value):
             return path
 
@@ -62,6 +67,11 @@ class FilesystemService(Service):
     def listdir(self, path, filters, options):
         """
         Get the contents of a directory.
+
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
 
         Each entry of the list consists of:
           name(str): name of the file
@@ -132,6 +142,11 @@ class FilesystemService(Service):
     def stat(self, path):
         """
         Return the filesystem stat(2) for a given `path`.
+
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
         """
         path = self.resolve_cluster_path(path)
         try:
@@ -325,8 +340,12 @@ class FilesystemService(Service):
     def acl_is_trivial(self, path):
         """
         Returns True if the ACL can be fully expressed as a file mode without losing
-        any access rules, or if the path does not support NFSv4 ACLs (for example
-        a path on a tmpfs filesystem).
+        any access rules.
+
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
         """
         path = self.resolve_cluster_path(path)
         if not os.path.exists(path):
