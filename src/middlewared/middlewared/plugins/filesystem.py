@@ -32,7 +32,7 @@ class FilesystemService(Service):
         cli_namespace = 'storage.filesystem'
 
     def resolve_cluster_path(self, path):
-        if not path.startswith('CLUSTER:'):
+        if not path.startswith(FuseConfig.FUSE_PATH_SUBST.value):
             return path
 
         gluster_volume = path[8:].split("/")[0]
@@ -94,7 +94,7 @@ class FilesystemService(Service):
 
             data = {
                 'name': entry.name,
-                'path': entry.path.replace('/cluster/', 'CLUSTER:'),
+                'path': entry.path.replace(f'{FuseConfig.FUSE_PATH_BASE.value}/', FuseConfig.FUSE_PATH_SUBST.value),
                 'realpath': os.path.realpath(entry.path) if etype == 'SYMLINK' else entry.path,
                 'type': etype,
             }
