@@ -23,12 +23,33 @@ from middlewared.service import private, CallError, filterable_returns, Service,
 from middlewared.utils import filter_list, osc
 from middlewared.utils.path import is_child
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
+from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 
 
 class FilesystemService(Service):
 
     class Config:
         cli_namespace = 'storage.filesystem'
+
+    @private
+    def resolve_cluster_path(self, path):
+        """
+        Convert a "CLUSTER:"-prefixed path to an absolute path
+        on the server.
+        """
+        if not path.startswith(FuseConfig.FUSE_PATH_SUBST.value):
+            return path
+
+        gluster_volume = path[8:].split("/")[0]
+        if gluster_volume == CTDBConfig.CTDB_VOL_NAME.value:
+            raise CallError('access to ctdb volume is not permitted.', errno.EPERM)
+
+        is_mounted = self.middleware.call_sync('gluster.fuse.is_mounted', {'name': gluster_volume})
+        if not is_mounted:
+            raise CallError(f'{gluster_volume}: cluster volume is not mounted.', errno.ENXIO)
+
+        cluster_path = path.replace(FuseConfig.FUSE_PATH_SUBST.value, f'{FuseConfig.FUSE_PATH_BASE.value}/')
+        return cluster_path
 
     @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
     @filterable_returns(Dict(
@@ -47,6 +68,11 @@ class FilesystemService(Service):
         """
         Get the contents of a directory.
 
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
+
         Each entry of the list consists of:
           name(str): name of the file
           path(str): absolute path of the entry
@@ -58,6 +84,7 @@ class FilesystemService(Service):
           gid(int): group id of entry onwer
           acl(bool): extended ACL is present on file
         """
+        path = self.resolve_cluster_path(path)
         if not os.path.exists(path):
             raise CallError(f'Directory {path} does not exist', errno.ENOENT)
 
@@ -77,7 +104,7 @@ class FilesystemService(Service):
 
             data = {
                 'name': entry.name,
-                'path': entry.path,
+                'path': entry.path.replace(f'{FuseConfig.FUSE_PATH_BASE.value}/', FuseConfig.FUSE_PATH_SUBST.value),
                 'realpath': os.path.realpath(entry.path) if etype == 'SYMLINK' else entry.path,
                 'type': etype,
             }
@@ -86,7 +113,7 @@ class FilesystemService(Service):
                 data.update({
                     'size': stat.st_size,
                     'mode': stat.st_mode,
-                    'acl': False if self.acl_is_trivial(data["realpath"]) else True,
+                    'acl': False if self.acl_is_trivial(data["path"]) else True,
                     'uid': stat.st_uid,
                     'gid': stat.st_gid,
                 })
@@ -115,7 +142,13 @@ class FilesystemService(Service):
     def stat(self, path):
         """
         Return the filesystem stat(2) for a given `path`.
+
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
         """
+        path = self.resolve_cluster_path(path)
         try:
             stat = os.stat(path, follow_symlinks=False)
         except FileNotFoundError:
@@ -307,9 +340,14 @@ class FilesystemService(Service):
     def acl_is_trivial(self, path):
         """
         Returns True if the ACL can be fully expressed as a file mode without losing
-        any access rules, or if the path does not support NFSv4 ACLs (for example
-        a path on a tmpfs filesystem).
+        any access rules.
+
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
         """
+        path = self.resolve_cluster_path(path)
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 
