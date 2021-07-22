@@ -23,7 +23,7 @@ from middlewared.service import private, CallError, filterable_returns, Service,
 from middlewared.utils import filter_list, osc
 from middlewared.utils.path import is_child
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
-from middlewared.plugins.cluster_linux.utils import CTDBConfig
+from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 
 
 class FilesystemService(Service):
@@ -43,7 +43,7 @@ class FilesystemService(Service):
         if not is_mounted:
             raise CallError(f'{gluster_volume}: cluster volume is not mounted.', errno.ENXIO)
 
-        cluster_path = path.replace('CLUSTER:', '/cluster/')
+        cluster_path = path.replace(FuseConfig.FUSE_PATH_SUBST.value, f'{FuseConfig.FUSE_PATH_BASE.value}/')
         return cluster_path
 
     @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))

@@ -8,6 +8,7 @@ class FuseConfig(enum.Enum):
     the gluster volumes locally.
     """
     FUSE_PATH_BASE = '/cluster'
+    FUSE_PATH_SUBST = 'CLUSTER:'
 
 
 class CTDBConfig(enum.Enum):

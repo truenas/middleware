@@ -7,6 +7,7 @@ from pathlib import Path
 
 from middlewared.service import private, CallError, ValidationErrors, Service
 from middlewared.plugins.smb import SMBBuiltin
+from middlewared.plugins.cluster_linux.utils import FuseConfig
 from .acl_base import ACLBase, ACLDefault, ACLType
 
 
@@ -32,7 +33,7 @@ class FilesystemService(Service, ACLBase):
             raise CallError(f"acltool [{action}] on path {path} failed with error: [{acltool.stderr.decode().strip()}]")
 
     def _common_perm_path_validate(self, schema, data, verrors):
-        is_cluster = data['path'].startswith('CLUSTER')
+        is_cluster = data['path'].startswith('FuseConfig.FUSE_PATH_SUBST.value')
         try:
             data['path'] = self.middleware.call_sync('filesystem.resolve_cluster_path', data['path'])
         except CallError as e:
