@@ -17,6 +17,7 @@ class AllowedEvents(enum.Enum):
     EVENTS = (
         'VOLUME_START',
         'VOLUME_STOP',
+        'CTDB_START',
     )
 
 

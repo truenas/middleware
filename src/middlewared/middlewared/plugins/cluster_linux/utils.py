@@ -1,5 +1,51 @@
 import os
+import asyncio
 import enum
+
+from middlewared.service import Service, ValidationErrors
+
+
+class ClusterUtils(Service):
+    class Config:
+        namespace = 'cluster.utils'
+        private = True
+
+    async def _resolve_hostname(self, loop, hostname, timeout):
+        try:
+            ip = await asyncio.wait_for(loop.getaddrinfo(hostname, None), timeout=timeout)
+            return ip[0][4][0]
+        except asyncio.TimeoutError:
+            raise
+        except Exception:
+            return
+
+    async def resolve_hostnames(self, hostnames):
+        """
+        Takes a list of hostnames to be asynchronously resolved to their respective IP address.
+        If IP addresses are given, then it will simply return the IP address
+        """
+        hostnames = list(set(hostnames))
+        loop = asyncio.get_event_loop()
+        timeout = 5
+        verrors = ValidationErrors()
+
+        results = await asyncio.gather(
+            *[self._resolve_hostname(loop, host, timeout) for host in hostnames],
+            return_exceptions=True
+        )
+
+        ips = []
+        for host, result in zip(hostnames, results):
+            if isinstance(result, (type(None), asyncio.TimeoutError)):
+                verrors.add(f'resolve_hostname.{host}', 'Failed to resolve hostname')
+            else:
+                ips.append(result)
+
+        # if any hostnames failed to be resolved
+        # it will be raised here
+        verrors.check()
+
+        return list(set(ips))
 
 
 class FuseConfig(enum.Enum):
