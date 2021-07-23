@@ -165,14 +165,12 @@ call([
 # get useful logs
 artifacts = f"{workdir}/artifacts/"
 logs_list = [
+    "/var/log/daemon.log",
+    "/var/log/debug",
     "/var/log/middlewared.log",
-    "/var/log/messages"
+    "/var/log/messages",
+    "/var/log/syslog",
 ]
-if scale:
-    logs_list.append("/var/log/debug")
-else:
-    logs_list.append("/var/log/debug.log")
-    logs_list.append("/var/log/console.log")
 
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
@@ -189,6 +187,6 @@ dmsg.close()
 
 # get core.get_jobs and put it in artifacts
 results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
-dmsg = open(f'{artifacts}/core_get_job', 'w')
+dmsg = open(f'{artifacts}/core.get_jobs', 'w')
 dmsg.writelines(results['output'])
 dmsg.close()
