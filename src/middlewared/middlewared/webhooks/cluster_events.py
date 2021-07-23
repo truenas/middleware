@@ -22,11 +22,15 @@ class ClusterEventsApplication(object):
                 method = 'gluster.fuse.umount'
             elif event == 'CTDB_START':
                 method = ('service.start', 'ctdb')
+            elif event == 'CTDB_STOP':
+                method = ('service.stop', 'ctdb')
+            elif event == 'SMB_STOP':
+                method = ('service.stop', 'cifs')
 
             if method is not None:
                 if event.startswith('VOLUME'):
                     await self.middleware.call(method, {'name': name})
-                elif event.startswith('CTDB'):
+                elif event.startswith(('CTDB', 'SMB')):
                     await self.middleware.call(method[0], method[1])
 
                 if data.pop('forward', False):

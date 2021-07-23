@@ -49,9 +49,7 @@ class CtdbSharedVolumeService(Service):
         by ctdb daemon.
         """
         # check if ctdb shared volume already exists and started
-        info = await self.middleware.call(
-            'gluster.volume.exists_and_started', CTDB_VOL_NAME
-        )
+        info = await self.middleware.call('gluster.volume.exists_and_started', CTDB_VOL_NAME)
         if not info['exists']:
             # get the peers in the TSP
             peers = await self.middleware.call('gluster.peer.query')
@@ -139,23 +137,29 @@ class CtdbSharedVolumeService(Service):
         """
 
         # nothing to delete if it doesn't exist
-        info = await self.middleware.call(
-            'gluster.volume.exists_and_started', CTDB_VOL_NAME
-        )
+        info = await self.middleware.call('gluster.volume.exists_and_started', CTDB_VOL_NAME)
         if not info['exists']:
             return
 
-        # unmount it locally and send a request
-        # to all other peers in the TSP to also
-        # unmount it (this needs to happend before
-        # we delete it)
-        data = {'event': 'VOLUME_STOP', 'name': CTDB_VOL_NAME, 'forward': True}
+        data = {'event': None, 'name': CTDB_VOL_NAME, 'forward': True}
+
+        # need to stop smb locally and on all peers
+        if await self.middleware.call('service.started', 'cifs'):
+            data['event'] = 'SMB_STOP'
+            await self.middleware.call('gluster.localevents.send', data)
+
+        # need to stop ctdb locally and on all peers
+        data['event'] = 'CTDB_STOP'
         await self.middleware.call('gluster.localevents.send', data)
 
+        # need to unmount the gluster fuse mountpoint locally and on all peers
+        data['event'] = 'VOLUME_STOP'
+        await self.middleware.call('gluster.localevents.send', data)
+
+        # stop the gluster volume
         if info['started']:
-            # stop the volume
             options = {'args': (CTDB_VOL_NAME,), 'kwargs': {'force': True}}
             await self.middleware.call('gluster.method.run', volume.stop, options)
 
-        # now delete it
+        # finally, we delete it
         await self.middleware.call('gluster.method.run', volume.delete, {'args': (CTDB_VOL_NAME,)})
