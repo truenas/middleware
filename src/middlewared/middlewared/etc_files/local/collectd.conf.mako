@@ -43,7 +43,8 @@
 %>
 Hostname "${hostname}"
 BaseDir "${base_dir}"
-PluginDir "/usr${"/local" if IS_FREEBSD else ""}/lib/collectd"
+PluginDir "/usr/lib/collectd"
+TypesDB "/usr/share/collectd/types.db.truenas"
 
 LoadPlugin aggregation
 LoadPlugin cpu
@@ -60,7 +61,6 @@ LoadPlugin uptime
 LoadPlugin syslog
 LoadPlugin threshold
 LoadPlugin zfs_arc
-LoadPlugin ${"nfsstat" if IS_FREEBSD else "nfs"}
 LoadPlugin write_graphite
 LoadPlugin python
 % if IS_FREEBSD:
@@ -104,13 +104,7 @@ LoadPlugin zfs_arc_v2
 % endif
 
 <Plugin "disk">
-% if IS_LINUX:
 	Disk "/^disk/by-partuuid/"
-% else:
-	Disk "/^gptid/"
-	Disk "/^md/"
-	Disk "/^pass/"
-% endif
 	IgnoreSelected true
 </Plugin>
 
@@ -119,9 +113,7 @@ LoadPlugin zfs_arc_v2
 </Plugin>
 
 <Plugin "interface">
-% if IS_LINUX:
 	Interface "lo"
-% else:
 	Interface "lo0"
 	Interface "ipfw0"
 	Interface "pflog0"
@@ -170,10 +162,8 @@ LoadPlugin zfs_arc_v2
 	Mountpoint "/^\/boot/"
 	Mountpoint "/^\/var/db/system"
 	FSType "tmpfs"
-% if IS_LINUX:
 	FSType "bindfs"
 	FSType "devtmpfs"
-% else:
 	FSType "devfs"
 	FSType "nullfs"
 	FSType "fdescfs"
@@ -187,8 +177,11 @@ LoadPlugin zfs_arc_v2
 	LogTraces true
 	Interactive false
 	Import "disktemp"
+	Import "nfsstat"
 
 	<Module "disktemp">
+	</Module>
+	<Module "nfsstat">
 	</Module>
 </Plugin>
 
