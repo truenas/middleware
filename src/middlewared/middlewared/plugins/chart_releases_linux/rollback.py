@@ -127,6 +127,7 @@ class ChartReleaseService(Service):
             ] + command, check=False,
         )
         await self.middleware.call('chart.release.sync_secrets_for_release', release_name)
+        await self.middleware.call('chart.release.refresh_events_state', release_name)
 
         # Helm rollback is a bit tricky, it utilizes rollout functionality of kubernetes and rolls back the
         # resources to specified version. However in this process, if the rollback is to fail for any reason, it's

@@ -254,6 +254,7 @@ class ChartReleaseService(Service):
         job.set_progress(60, 'Upgrading chart release version')
 
         await self.middleware.call('chart.release.helm_action', release_name, chart_path, config, 'upgrade')
+        await self.middleware.call('chart.release.refresh_events_state', release_name)
 
     @private
     def upgrade_values(self, release, new_version_path):
