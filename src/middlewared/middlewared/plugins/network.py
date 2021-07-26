@@ -655,9 +655,9 @@ class InterfaceService(CRUDService):
             if lag:
                 lag = lag[0]
                 if lag['protocol'] in ('lacp', 'loadbalance'):
-                    iface.update({'xmit_hash_policy': lag['xmit_hash_policy'].upper()})
+                    iface.update({'xmit_hash_policy': lag.get('xmit_hash_policy', 'layer2+3').upper()})
                     if lag['protocol'] == 'lacp':
-                        iface.update({'lacpdu_rate': lag['lacpdu_rate'].upper()})
+                        iface.update({'lacpdu_rate': lag.get('lacpdu_rate', 'slow').upper()})
 
                 iface.update({'lag_protocol': lag['protocol'].upper(), 'lag_ports': []})
                 for port in self.middleware.call_sync(
@@ -1647,11 +1647,21 @@ class InterfaceService(CRUDService):
                         {'members': data['bridge_members']},
                     )
             elif iface['type'] == 'LINK_AGGREGATION':
+                xmit = lacpdu = None
+                if new['lag_protocol'] in ('LACP', 'LOADBALANCE'):
+                    xmit = new.get('xmit_hash_policy', 'layer2+3')
+                    if new['lag_protocl'] == 'LACP':
+                        lacpdu = new.get('lacpdu_rate', 'slow')
+
                 lag_id = await self.middleware.call(
                     'datastore.update',
                     'network.lagginterface',
                     [('lagg_interface', '=', config['id'])],
-                    {'lagg_protocol': new['lag_protocol'].lower()},
+                    {
+                        'lagg_protocol': new['lag_protocol'].lower(),
+                        'lagg_xmit_hash_policy': xmit,
+                        'lagg_lacpdu_rate': lacpdu,
+                    },
                 )
                 if 'lag_ports' in data:
                     await self.middleware.call(
