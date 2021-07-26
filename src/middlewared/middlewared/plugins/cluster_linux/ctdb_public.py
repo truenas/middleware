@@ -2,9 +2,10 @@ from pathlib import Path
 
 from middlewared.schema import Dict, IPAddr, Int, Str, Bool
 from middlewared.service import (accepts, job, filterable,
-                                 CRUDService, ValidationErrors)
-from middlewared.utils import filter_list
+                                 CRUDService, ValidationErrors, private)
+from middlewared.utils import filter_list, run
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
+from middlewared.validators import IpAddress
 
 
 PUB_LOCK = CTDBConfig.PUB_LOCK.value
@@ -18,61 +19,84 @@ class CtdbPublicIpService(CRUDService):
 
     @filterable
     def query(self, filters, options):
-        # logic is as follows:
-        #   1. if ctdb daemon is started
-        #       ctdb just reads the /etc public ip file and loads
-        #       the ips written there into the cluster. However,
-        #       if a public ip is added/removed, it doesn't
-        #       mean the ctdb cluster has been reloaded to
-        #       see the changes in the file. So return what
-        #       the daemon sees.
-        #   2. if the ctdb shared volume is mounted and the /etc/ public
-        #       ip file exists and is a symlink and the symlink is
-        #       pointed to the /cluster public ip file then read it and
-        #       return the contents
-        ips = []
+        normalized = []
+        ctdb_ips = []
         if self.middleware.call_sync('service.started', 'ctdb'):
             ips = self.middleware.call_sync('ctdb.general.ips')
-            ips = list(map(lambda i: dict(i, id=i['pnn']), ips))
+            ctdb_ips = list(map(lambda i: dict(i, id=i['public_ip'], enabled=(i['pnn'] >= 0)), ips))
+
+        try:
+            shared_vol = Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
+            mounted = shared_vol.is_mount()
+        except Exception:
+            # can happen when mounted but glusterd service
+            # is stopped/crashed etc
+            mounted = False
+
+        etc_ips = []
+        if mounted:
+            pub_ip_file = Path(CTDBConfig.GM_PUB_IP_FILE.value)
+            etc_ip_file = Path(CTDBConfig.ETC_PUB_IP_FILE.value)
+            if pub_ip_file.exists():
+                if etc_ip_file.is_symlink() and etc_ip_file.resolve() == pub_ip_file:
+                    with open(pub_ip_file) as f:
+                        for idx, i in enumerate(f.read().splitlines()):
+                            if not i.startswith('#'):
+                                enabled = True
+                                public_ip = i.split('/')[0]
+                            else:
+                                enabled = False
+                                public_ip = i.split('#')[1].split('/')[0]
+
+                            etc_ips.append({
+                                'id': public_ip,
+                                'pnn': -1 if not enabled else idx,
+                                'enabled': enabled,
+                                'public_ip': public_ip,
+                                'interfaces': [{
+                                    'name': i.split()[-1],
+                                    'active': False,
+                                    'available': False,
+                                }]
+                            })
+
+        # if the public ip was gracefully disabled and ctdb daemon is running
+        # then it will report the public ip address information, however,
+        # if the ctdb daemon was restarted after it was disabled then it
+        # won't report it at all, yet, it's still written to the config
+        # file prepended with a "#". This is by design so we need to
+        # make sure we normalize the output of what ctdb daemon reports
+        # and what's been written to the public address config file
+        normalized.extend(list(i for i in etc_ips if i not in ctdb_ips))
+
+        return filter_list(normalized, filters, options)
+
+    @private
+    async def realloc(self):
+        re = await run(['ctdb', 'ipreallocate'], encoding='utf8', errors='ignore', check=False)
+        if re.returncode:
+            # this isn't fatal it just means the newly added public ip won't show
+            # up until the ctdb service has been restarted so just log a message
+            self.logger.warning('Failed to gracefully reallocate public ip to running ctdb config: %r', re.stderr)
+
+    @private
+    async def update_running_config(self, data, disable=False):
+        if not disable:
+            ip = f'{data["ip"]}/{data["netmask"]} {data["interface"]}'
+            add = await run(['ctdb', 'addip', ip], encoding='utf8', errors='ignore', check=False)
+            if add.returncode:
+                # this isn't fatal it just means the newly added public ip won't show
+                # up until the ctdb service has been restarted so just log a message
+                self.logger.warning('Failed to gracefully add public ip to running ctdb config: %r', add.stderr)
         else:
-            try:
-                shared_vol = Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
-                mounted = shared_vol.is_mount()
-            except Exception:
-                # can happen when mounted but glusterd service
-                # is stopped/crashed etc
-                mounted = False
+            rem = await run(['ctdb', 'delip', data['public_ip']], encoding='utf8', errors='ignore', check=False)
+            if rem.returncode:
+                # this isn't fatal it just means the public ip that was removed won't
+                # go away until the ctdb service has been restarted so just log a message
+                self.logger.warning('Failed to gracefully disable public ip in running ctdb config: %r', rem.stderr)
 
-            if mounted:
-                pub_ip_file = Path(CTDBConfig.GM_PUB_IP_FILE.value)
-                etc_ip_file = Path(CTDBConfig.ETC_PUB_IP_FILE.value)
-                if pub_ip_file.exists():
-                    if etc_ip_file.is_symlink() and etc_ip_file.resolve() == pub_ip_file:
-                        with open(pub_ip_file) as f:
-                            for idx, i in enumerate(f.read().splitlines()):
-                                # we build a list of dicts that match what the
-                                # ctdb daemon returns if it's running to keep
-                                # things consistent
-                                if not i.startswith('#'):
-                                    enabled = True
-                                    public_ip = i.split('/')[0]
-                                else:
-                                    enabled = False
-                                    public_ip = i.split('#')[1]
-
-                                ips.append({
-                                    'id': idx,
-                                    'pnn': idx,
-                                    'enabled': enabled,
-                                    'public_ip': public_ip,
-                                    'interfaces': [{
-                                        'name': i.split()[-1],
-                                        'active': False,
-                                        'available': False,
-                                    }]
-                                })
-
-        return filter_list(ips, filters, options)
+        # necessary for a removal or addition
+        await self.middleware.call('ctdb.public.ips.realloc')
 
     @accepts(Dict(
         'public_create',
@@ -96,10 +120,14 @@ class CtdbPublicIpService(CRUDService):
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
 
+        if await self.middleware.call('service.started', 'ctdb'):
+            # make sure the running config is updated
+            await self.middleware.call('ctdb.public.ips.update_running_config', data)
+
         return await self.middleware.call('ctdb.public.ips.query', [('public_ip', '=', data['ip'])])
 
     @accepts(
-        Int('id'),
+        Str('ip', validators=[IpAddress()], required=True),
         Dict(
             'public_update',
             Bool('enable', required=True),
@@ -108,9 +136,9 @@ class CtdbPublicIpService(CRUDService):
     @job(lock=PUB_LOCK)
     async def do_update(self, job, id, option):
         """
-        Update Public IP address from the ctdb cluster with pnn value of `id`.
+        Update Public IP address in the ctdb cluster.
 
-        `id` integer representing the PNN value of the node
+        `ip` string representing the public ip address
         `enable` boolean. When True, enable the node else disable the node.
         """
 
@@ -122,5 +150,9 @@ class CtdbPublicIpService(CRUDService):
 
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
+
+        if await self.middleware.call('service.started', 'ctdb'):
+            # make sure the running config is updated
+            await self.middleware.call('ctdb.public.ips.update_running_config', data, True)
 
         return await self.get_instance(id)
