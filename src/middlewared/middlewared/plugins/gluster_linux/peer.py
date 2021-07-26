@@ -68,6 +68,9 @@ class GlusterPeerService(CRUDService):
 
         `hostname` String representing an IP(v4/v6) address or DNS name
         """
+        # we need to verify that we can resolve the hostname to an IP address
+        # or clustering, in general, is going to fail in spectacular ways
+        await self.middleware.call('cluster.utils.resolve_hostnames', [data['hostname']])
 
         await self.middleware.call('gluster.method.run', peer.attach, {'args': (data['hostname'],)})
         return await self.middleware.call('gluster.peer.query', [('hostname', '=', data['hostname'])])

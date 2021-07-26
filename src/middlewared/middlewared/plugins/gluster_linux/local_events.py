@@ -14,10 +14,11 @@ LOCAL_WEBHOOK_URL = GlusterConfig.LOCAL_WEBHOOK_URL.value
 
 
 class AllowedEvents(enum.Enum):
-    EVENTS = (
-        'VOLUME_START',
-        'VOLUME_STOP',
-    )
+    VOLUME_START = 'VOLUME_START'
+    VOLUME_STOP = 'VOLUME_STOP'
+    CTDB_START = 'CTDB_START'
+    CTDB_STOP = 'CTDB_STOP'
+    SMB_STOP = 'SMB_STOP'
 
 
 class GlusterLocalEventsService(Service):
@@ -31,7 +32,7 @@ class GlusterLocalEventsService(Service):
     @private
     async def validate(self, data):
         verrors = ValidationErrors()
-        allowed = AllowedEvents.EVENTS.value
+        allowed = [i.value for i in AllowedEvents]
 
         if data['event'] not in allowed:
             verrors.add(

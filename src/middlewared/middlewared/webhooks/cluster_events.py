@@ -20,9 +20,19 @@ class ClusterEventsApplication(object):
                 method = 'gluster.fuse.mount'
             elif event == 'VOLUME_STOP':
                 method = 'gluster.fuse.umount'
+            elif event == 'CTDB_START':
+                method = ('service.start', 'ctdb')
+            elif event == 'CTDB_STOP':
+                method = ('service.stop', 'ctdb')
+            elif event == 'SMB_STOP':
+                method = ('service.stop', 'cifs')
 
             if method is not None:
-                await self.middleware.call(method, {'name': name})
+                if event.startswith('VOLUME'):
+                    await self.middleware.call(method, {'name': name})
+                elif event.startswith(('CTDB', 'SMB')):
+                    await self.middleware.call(method[0], method[1])
+
                 if data.pop('forward', False):
                     # means the request originated from localhost
                     # so we need to forward it out to the other
