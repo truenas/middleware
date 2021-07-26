@@ -603,6 +603,7 @@ class ChartReleaseService(CRUDService):
 
         job.set_progress(90, 'Syncing secrets for chart release')
         await self.middleware.call('chart.release.sync_secrets_for_release', chart_release)
+        await self.middleware.call('chart.release.refresh_events_state', chart_release)
 
         job.set_progress(100, 'Update completed for chart release')
         return await self.get_instance(chart_release)
