@@ -5,7 +5,7 @@ from middlewared.schema import Dict, Int, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
 
-from .utils import get_namespace, get_storage_class_name
+from .utils import get_namespace, get_storage_class_name, Resources
 
 
 class ChartReleaseService(Service):
@@ -186,3 +186,33 @@ class ChartReleaseService(Service):
             await self.middleware.call('k8s.storage_class.update', storage_class_name, storage_class)
         else:
             await self.middleware.call('k8s.storage_class.create', storage_class)
+
+    @accepts(Str('release_name'))
+    @returns(Dict(
+        Int('available', required=True),
+        Int('desired', required=True),
+        Str('status', required=True, enum=['ACTIVE', 'DEPLOYING', 'STOPPED'])
+    ))
+    async def pod_status(self, release_name):
+        """
+        Retrieve available/desired pods status for a chart release and it's current state.
+        """
+        status = {'available': 0, 'desired': 0}
+        for resource in (Resources.DEPLOYMENT, Resources.STATEFULSET):
+            for r_data in await self.middleware.call(
+                f'k8s.{resource.name.lower()}.query', [['metadata.namespace', '=', get_namespace(release_name)]],
+            ):
+                status.update({
+                    'available': (r_data['status']['ready_replicas'] or 0),
+                    'desired': (r_data['status']['replicas'] or 0),
+                })
+        pod_diff = status['available'] - status['desired']
+        r_status = 'ACTIVE'
+        if pod_diff == 0 and status['desired'] == 0:
+            r_status = 'STOPPED'
+        elif pod_diff < 0:
+            r_status = 'DEPLOYING'
+        return {
+            'status': r_status,
+            **status,
+        }
