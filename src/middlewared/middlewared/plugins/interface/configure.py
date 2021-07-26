@@ -23,6 +23,7 @@ class InterfaceService(Service):
         options = options or {}
 
         name = data['int_interface']
+        self.logger.info('Configuring interface %r', name)
 
         iface = netif.get_interface(name)
 
@@ -257,6 +258,7 @@ class InterfaceService(Service):
     @private
     def unconfigure(self, iface, cloned_interfaces, parent_interfaces):
         name = iface.name
+        self.logger.info('Unconfiguring interface %r', name)
 
         # Interface not in database lose addresses
         iface.flush()
