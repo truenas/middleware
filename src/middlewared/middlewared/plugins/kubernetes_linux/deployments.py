@@ -26,11 +26,12 @@ class KubernetesDeploymentService(CRUDService):
                 func = functools.partial(context['apps_api'].list_deployment_for_all_namespaces)
 
             deployments = [d.to_dict() for d in (await func()).items]
-            events = await self.middleware.call(
-                'kubernetes.get_events_of_resource_type', 'Deployment', [d['metadata']['uid'] for d in deployments]
-            )
-            for deployment in deployments:
-                deployment['events'] = events[deployment['metadata']['uid']]
+            if options['extra'].get('events'):
+                events = await self.middleware.call(
+                    'kubernetes.get_events_of_resource_type', 'Deployment', [d['metadata']['uid'] for d in deployments]
+                )
+                for deployment in deployments:
+                    deployment['events'] = events[deployment['metadata']['uid']]
 
         return filter_list(deployments, filters, options)
 

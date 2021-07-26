@@ -100,6 +100,9 @@ class ChartReleaseService(CRUDService):
 
         `query-options.extra.include_chart_schema` is a boolean when set will retrieve the schema being used by
         the chart release in question.
+
+        `query-options.extra.resource_events` is a boolean when set will retrieve individual events of each resource.
+        This only has effect if `query-options.extra.retrieve_resources` is set.
         """
         k8s_config = await self.middleware.call('kubernetes.config')
         if not await self.middleware.call('service.started', 'kubernetes') or not k8s_config['dataset']:
@@ -177,7 +180,11 @@ class ChartReleaseService(CRUDService):
         workload_status = collections.defaultdict(lambda: {'desired': 0, 'available': 0})
 
         for resource in Resources:
-            for r_data in await self.middleware.call(f'k8s.{resource.name.lower()}.query', resources_filters):
+            for r_data in await self.middleware.call(
+                f'k8s.{resource.name.lower()}.query', resources_filters, {
+                    'extra': {'events': extra.get('resource_events', False)}
+                }
+            ):
                 release_name = r_data['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
                 resources[resource.value][release_name].append(r_data)
                 if resource in (Resources.DEPLOYMENT, Resources.STATEFULSET):
