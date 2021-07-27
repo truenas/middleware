@@ -256,19 +256,13 @@ class WebDAVService(SystemServiceService):
 
 async def pool_post_import(middleware, pool):
     """
-    Makes sure to reload WebDAV if a pool is imported and there are shares configured for it.
+    Makes sure to reload WebDAV if a pool is imported.
     """
     if pool is None:
         asyncio.ensure_future(middleware.call('etc.generate', 'webdav'))
         return
 
-    path = f'/mnt/{pool["name"]}'
-    if await middleware.call('sharing.webdav.query', [
-        ('OR', [
-            ('path', '=', path),
-            ('path', '^', f'{path}/'),
-        ])
-    ]):
+    if await middleware.call('service.started_or_enabled', 'webdav'):
         asyncio.ensure_future(middleware.call('service.reload', 'webdav'))
 
 

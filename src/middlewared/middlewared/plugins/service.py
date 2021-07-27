@@ -155,6 +155,16 @@ class ServiceService(CRUDService):
         state = await service_object.get_state()
         return state.running
 
+    @accepts(Str('service'))
+    @returns(Bool('service_started_or_enabled',
+                  description='Will return `true` if service is started or enabled to start automatically.'))
+    async def started_or_enabled(self, service):
+        """
+        Test if service specified by `service` is started or enabled to start automatically.
+        """
+        svc = await self.middleware.call('service.query', [['service', '=', service]], {'get': True})
+        return svc['state'] == 'RUNNING' or svc['enable']
+
     @accepts(
         Str('service'),
         Ref('service-control'),
