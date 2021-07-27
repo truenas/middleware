@@ -89,7 +89,7 @@ class GlusterEventsdService(Service):
         result = None
 
         cw = self.middleware.call_sync('gluster.eventsd.webhooks')
-        if data['url'] not in list(cw['webhooks']):
+        if data['url'] not in cw['webhooks'].values():
             # there doesn't seem to be an upper limit on the amount
             # of webhook endpoints that can be added to the daemon
             # so place an arbitrary limit of 5 (for now)
@@ -126,7 +126,7 @@ class GlusterEventsdService(Service):
 
         # get the current webhooks
         cw = self.middleware.call_sync('gluster.eventsd.webhooks')
-        if data['url'] in list(cw['webhooks']):
+        if data['url'] in cw['webhooks'].values():
             cmd = self.format_cmd(data, delete=True)
             result = self.run_cmd(cmd)
 
