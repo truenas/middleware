@@ -707,15 +707,11 @@ class RsyncTaskService(TaskPathService):
                 )
 
             if not rsync['quiet']:
-                rsync_alert = {
+                self.middleware.call_sync('alert.oneshot_create', 'RsyncFailed', {
                     'id': rsync['id'],
                     'direction': rsync['direction'],
                     'path': rsync['path'],
-                }
-                if err:
-                    rsync_alert['additional_info'] = err
-
-                self.middleware.call_sync('alert.oneshot_create', 'RsyncFailed', rsync_alert)
+                })
 
             if err:
                 msg = f'{err} Check logs for further information'
