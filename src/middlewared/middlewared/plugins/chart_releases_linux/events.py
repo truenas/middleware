@@ -54,9 +54,7 @@ class ChartReleaseService(Service):
         for chart_release in await self.middleware.call('chart.release.query', filters):
             async with LOCKS[chart_release['name']]:
                 ChartReleaseService.CHART_RELEASES[chart_release['name']] = {
-                    'lock': asyncio.Lock(),
                     'data': chart_release,
-                    'queue': copy.deepcopy(self.get_queue()),
                     'poll': False,
                 }
 
@@ -65,10 +63,10 @@ class ChartReleaseService(Service):
     def get_queue(self):
         iterable = []
         cur = 2
-        while cur <= 300:
+        while cur <= 1024:
             iterable.append(cur)
             cur *= 2
-        return collections.deque(iterable)
+        return iterable
 
     @private
     async def remove_chart_release_from_events_state(self, chart_release_name):
@@ -83,21 +81,45 @@ class ChartReleaseService(Service):
                 # It's possible the chart release got deleted
                 return
 
-            status = await self.middleware.call('chart.release.pod_status', name)
-            cached_chart_release = self.CHART_RELEASES[name]
-            if status['status'] != cached_chart_release['data']['status']:
-                # raise event
-                async with LOCKS[name]:
-                    cached_chart_release['data'].update({
-                        'status': status['status'],
-                        'pod_status': {
-                            'desired': status['desired'],
-                            'available': status['available'],
-                        }
-                    })
-                    self.middleware.send_event(
-                        'chart.release.query', 'CHANGED', id=name, fields=cached_chart_release['data']
-                    )
+            async with LOCKS[name]:
+                status = await self.middleware.call('chart.release.pod_status', name)
+                cached_chart_release = self.CHART_RELEASES[name]
+                if status['status'] != 'DEPLOYING':
+                    cached_chart_release['poll'] = False
+                    await self.changed_status_event(name, status, cached_chart_release)
+                elif not cached_chart_release['poll']:
+                    cached_chart_release['poll'] = True
+                    asyncio.ensure_future(self.poll_chart_release_status(name))
+
+    @private
+    async def changed_status_event(self, name, new_status, cached_chart_release):
+        if new_status['status'] != cached_chart_release['data']['status']:
+            cached_chart_release['data'].update({
+                'status': new_status['status'],
+                'pod_status': {
+                    'desired': new_status['desired'],
+                    'available': new_status['available'],
+                }
+            })
+            self.middleware.send_event(
+                'chart.release.query', 'CHANGED', id=name, fields=cached_chart_release['data']
+            )
+
+    @private
+    async def poll_chart_release_status(self, name):
+        queue = copy.deepcopy(self.get_queue())
+        while queue:
+            async with LOCKS[name]:
+                release_data = self.CHART_RELEASES.get(name)
+                if not release_data or not release_data['poll']:
+                    break
+                status = await self.middleware.call('chart.release.pod_status', name)
+                await self.changed_status_event(name, status, release_data)
+                if status['status'] != 'DEPLOYING':
+                    release_data['poll'] = False
+                    break
+
+            await asyncio.sleep(queue.pop(0))
 
 
 async def chart_release_event(middleware, event_type, args):
