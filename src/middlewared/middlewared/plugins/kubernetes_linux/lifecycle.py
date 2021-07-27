@@ -76,8 +76,14 @@ class KubernetesService(Service):
         # rules-when-name-localhost-is-used-instead-of-127-0-0
         # We don't use localhost name directly because it adds duplicate entries
         return [
-            ['INPUT', '-p', 'tcp', '-s', f'{node_ip},127.0.0.1', '--dport', '6443', '-j', 'ACCEPT'],
-            ['INPUT', '-p', 'tcp', '--dport', '6443', '-j', 'DROP'],
+            [
+                'INPUT', '-p', 'tcp', '-s', f'{node_ip},127.0.0.1', '--dport', '6443', '-j', 'ACCEPT', '-m', 'comment',
+                '--comment', 'iX Custom Rule to allow access to k8s cluster from internal TrueNAS connections'
+            ],
+            [
+                'INPUT', '-p', 'tcp', '--dport', '6443', '-j', 'DROP', '-m', 'comment', '--comment',
+                'iX Custom Rule to drop connection requests to k8s cluster from external sources'
+            ],
         ]
 
     @private
