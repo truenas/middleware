@@ -1,5 +1,6 @@
 import asyncio
 import collections
+import functools
 
 from middlewared.schema import Dict, List, Str, returns
 from middlewared.service import accepts, private, Service
@@ -49,7 +50,22 @@ class ChartReleaseService(Service):
     async def refresh_events_state(self, chart_release_name=None):
         filters = [['id', '=', chart_release_name]] if chart_release_name else []
         for chart_release in await self.middleware.call('chart.release.query', filters):
-            ChartReleaseService.CHART_RELEASES[chart_release['name']] = chart_release
+            ChartReleaseService.CHART_RELEASES[chart_release['name']] = {
+                'lock': asyncio.Lock(),
+                'data': chart_release,
+                'queue': self.get_queue(),
+                'poll': False,
+            }
+
+    @private
+    @functools.cache
+    def get_queue(self):
+        iterable = []
+        cur = 2
+        while cur <= 300:
+            iterable.append(cur)
+            cur *= 2
+        return iterable
 
     @private
     async def remove_chart_release_from_events_state(self, chart_release_name):
@@ -64,16 +80,19 @@ class ChartReleaseService(Service):
                 return
 
             status = await self.middleware.call('chart.release.pod_status', name)
-            if status['status'] != self.CHART_RELEASES[name]['status']:
+            cached_chart_release = self.CHART_RELEASES[name]
+            if status['status'] != cached_chart_release['data']['status']:
                 # raise event
-                ChartReleaseService.CHART_RELEASES[name].update({
+                cached_chart_release['data'].update({
                     'status': status['status'],
                     'pod_status': {
                         'desired': status['desired'],
                         'available': status['available'],
                     }
                 })
-                self.middleware.send_event('chart.release.query', 'CHANGED', id=name, fields=self.CHART_RELEASES[name])
+                self.middleware.send_event(
+                    'chart.release.query', 'CHANGED', id=name, fields=cached_chart_release['data']
+                )
 
 
 async def chart_release_event(middleware, event_type, args):
