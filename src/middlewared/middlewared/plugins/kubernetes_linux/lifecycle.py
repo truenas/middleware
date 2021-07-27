@@ -72,8 +72,11 @@ class KubernetesService(Service):
             # Even if user selects 0.0.0.0, k8s is going to auto select a node ip in this case
             return []
 
+        # https://unix.stackexchange.com/questions/591113/iptables-inserts-duplicate-
+        # rules-when-name-localhost-is-used-instead-of-127-0-0
+        # We don't use localhost name directly because it adds duplicate entries
         return [
-            ['INPUT', '-p', 'tcp', '-s', f'{node_ip},localhost', '--dport', '6443', '-j', 'ACCEPT'],
+            ['INPUT', '-p', 'tcp', '-s', f'{node_ip},127.0.0.1', '--dport', '6443', '-j', 'ACCEPT'],
             ['INPUT', '-p', 'tcp', '--dport', '6443', '-j', 'DROP'],
         ]
 
