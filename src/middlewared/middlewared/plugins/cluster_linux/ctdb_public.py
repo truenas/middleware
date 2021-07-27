@@ -19,7 +19,6 @@ class CtdbPublicIpService(CRUDService):
 
     @filterable
     def query(self, filters, options):
-        normalized = []
         ctdb_ips = []
         if self.middleware.call_sync('service.started', 'ctdb'):
             ips = self.middleware.call_sync('ctdb.general.ips')
@@ -40,7 +39,7 @@ class CtdbPublicIpService(CRUDService):
             if pub_ip_file.exists():
                 if etc_ip_file.is_symlink() and etc_ip_file.resolve() == pub_ip_file:
                     with open(pub_ip_file) as f:
-                        for idx, i in enumerate(f.read().splitlines()):
+                        for i in f.read().splitlines():
                             if not i.startswith('#'):
                                 enabled = True
                                 public_ip = i.split('/')[0]
@@ -50,7 +49,7 @@ class CtdbPublicIpService(CRUDService):
 
                             etc_ips.append({
                                 'id': public_ip,
-                                'pnn': -1 if not enabled else idx,
+                                'pnn': -1 if not enabled else 'N/A',
                                 'enabled': enabled,
                                 'public_ip': public_ip,
                                 'interfaces': [{
@@ -67,36 +66,47 @@ class CtdbPublicIpService(CRUDService):
         # file prepended with a "#". This is by design so we need to
         # make sure we normalize the output of what ctdb daemon reports
         # and what's been written to the public address config file
-        normalized.extend(list(i for i in etc_ips if i not in ctdb_ips))
+        normalized = []
+        if not ctdb_ips:
+            # means the ctdb daemon didn't return any type of
+            # public address information so just return the
+            # contents of etc_ips
+            # NOTE: the contents of the etc file could be empty
+            # (or not there) because it's a symlink pointed to
+            # the cluster shared volume. In this case, there
+            # isn't much we can do
+            normalized = etc_ips
+        else:
+            if not etc_ips:
+                # means the ctdb daemon is reporting public address(es)
+                # however we're unable to read the config file which
+                # could happen if the ctdb shared volume was umounted
+                # while the ctdb daemon is running so we just return
+                # what the daemon sees
+                normalized = ctdb_ips
+            else:
+                # means the ctdb daemon is reporting public address(es)
+                # and we have public addresses written to the config file
+                # but it doesn't mean they necessarily match each other
+                # so we need to normalize the output so the returned output
+                # is always the same between the 2
+                normalized.extend([i for i in ctdb_ips if i['public_ip'] not in [j.keys() for j in etc_ips]])
 
         return filter_list(normalized, filters, options)
 
     @private
-    async def realloc(self):
-        re = await run(['ctdb', 'ipreallocate'], encoding='utf8', errors='ignore', check=False)
-        if re.returncode:
-            # this isn't fatal it just means the newly added public ip won't show
-            # up until the ctdb service has been restarted so just log a message
-            self.logger.warning('Failed to gracefully reallocate public ip to running ctdb config: %r', re.stderr)
-
-    @private
-    async def update_running_config(self, data, disable=False):
-        if not disable:
-            ip = f'{data["ip"]}/{data["netmask"]} {data["interface"]}'
-            add = await run(['ctdb', 'addip', ip], encoding='utf8', errors='ignore', check=False)
-            if add.returncode:
+    async def reload(self):
+        """
+        Reload the public addresses configuration file on the ctdb nodes. When it completes
+        the public addresses will be reconfigured and reassigned across the cluster as
+        necessary.
+        """
+        if await self.middleware.call('service.started', 'ctdb'):
+            re = await run(['ctdb', 'reloadips'], encoding='utf8', errors='ignore', check=False)
+            if re.returncode:
                 # this isn't fatal it just means the newly added public ip won't show
                 # up until the ctdb service has been restarted so just log a message
-                self.logger.warning('Failed to gracefully add public ip to running ctdb config: %r', add.stderr)
-        else:
-            rem = await run(['ctdb', 'delip', data['public_ip']], encoding='utf8', errors='ignore', check=False)
-            if rem.returncode:
-                # this isn't fatal it just means the public ip that was removed won't
-                # go away until the ctdb service has been restarted so just log a message
-                self.logger.warning('Failed to gracefully disable public ip in running ctdb config: %r', rem.stderr)
-
-        # necessary for a removal or addition
-        await self.middleware.call('ctdb.public.ips.realloc')
+                self.logger.warning('Failed to reload public ip addresses %r', re.stderr)
 
     @accepts(Dict(
         'public_create',
@@ -119,10 +129,7 @@ class CtdbPublicIpService(CRUDService):
 
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
-
-        if await self.middleware.call('service.started', 'ctdb'):
-            # make sure the running config is updated
-            await self.middleware.call('ctdb.public.ips.update_running_config', data)
+        await self.middleware.call('ctdb.public.ips.reload')
 
         return await self.middleware.call('ctdb.public.ips.query', [('public_ip', '=', data['ip'])])
 
@@ -150,9 +157,6 @@ class CtdbPublicIpService(CRUDService):
 
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
-
-        if await self.middleware.call('service.started', 'ctdb'):
-            # make sure the running config is updated
-            await self.middleware.call('ctdb.public.ips.update_running_config', data, True)
+        await self.middleware.call('ctdb.public.ips.reload')
 
         return await self.get_instance(id)
