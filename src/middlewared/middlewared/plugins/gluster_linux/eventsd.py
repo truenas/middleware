@@ -187,6 +187,10 @@ class GlusterEventsdService(Service):
                 webhook_file.parent.mkdir(exist_ok=True)
                 # create the webhooks file if it doesnt exist
                 webhook_file.touch(exist_ok=True)
+                # make sure the file is initialized to empty
+                # json formatted file since 3rd party binary
+                # expects it to be
+                webhook_file.write_text('{}') if not webhook_file.read_text() else None
             except Exception as e:
                 raise CallError(
                     f'Failed creating {webhook_file} with error: {e}'
