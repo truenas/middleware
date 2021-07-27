@@ -202,6 +202,9 @@ class ChartReleaseService(Service):
             for r_data in await self.middleware.call(
                 f'k8s.{resource.name.lower()}.query', [['metadata.namespace', '=', get_namespace(release_name)]],
             ):
+                # Detail about ready_replicas/replicas
+                # https://stackoverflow.com/questions/66317251/couldnt-understand-availablereplicas-
+                # readyreplicas-unavailablereplicas-in-dep
                 status.update({
                     'available': (r_data['status']['ready_replicas'] or 0),
                     'desired': (r_data['status']['replicas'] or 0),
