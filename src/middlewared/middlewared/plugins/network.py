@@ -655,9 +655,9 @@ class InterfaceService(CRUDService):
             if lag:
                 lag = lag[0]
                 if lag['protocol'] in ('lacp', 'loadbalance'):
-                    iface.update({'xmit_hash_policy': lag.get('xmit_hash_policy', 'layer2+3').upper()})
+                    iface.update({'xmit_hash_policy': (lag.get('xmit_hash_policy') or 'layer2+3').upper()})
                     if lag['protocol'] == 'lacp':
-                        iface.update({'lacpdu_rate': lag.get('lacpdu_rate', 'slow').upper()})
+                        iface.update({'lacpdu_rate': (lag.get('lacpdu_rate') or 'slow').upper()})
 
                 iface.update({'lag_protocol': lag['protocol'].upper(), 'lag_ports': []})
                 for port in self.middleware.call_sync(
