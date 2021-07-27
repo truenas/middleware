@@ -16,6 +16,7 @@ LOCKS = collections.defaultdict(asyncio.Lock)
 class ChartReleaseService(Service):
 
     CHART_RELEASES = {}
+    MAX_SECONDS = 1024
 
     class Config:
         namespace = 'chart.release'
@@ -63,7 +64,7 @@ class ChartReleaseService(Service):
     def get_queue(self):
         iterable = []
         cur = 2
-        while cur <= 1024:
+        while cur <= self.MAX_SECONDS:
             iterable.append(cur)
             cur *= 2
         return iterable
@@ -108,7 +109,7 @@ class ChartReleaseService(Service):
     @private
     async def poll_chart_release_status(self, name):
         queue = copy.deepcopy(self.get_queue())
-        while queue:
+        while True:
             async with LOCKS[name]:
                 release_data = self.CHART_RELEASES.get(name)
                 if not release_data or not release_data['poll']:
@@ -119,7 +120,7 @@ class ChartReleaseService(Service):
                     release_data['poll'] = False
                     break
 
-            await asyncio.sleep(queue.pop(0))
+            await asyncio.sleep(queue.pop(0) if queue else self.MAX_SECONDS)
 
 
 async def chart_release_event(middleware, event_type, args):
