@@ -1650,7 +1650,7 @@ class InterfaceService(CRUDService):
                 xmit = lacpdu = None
                 if new['lag_protocol'] in ('LACP', 'LOADBALANCE'):
                     xmit = new.get('xmit_hash_policy', 'layer2+3')
-                    if new['lag_protocl'] == 'LACP':
+                    if new['lag_protocol'] == 'LACP':
                         lacpdu = new.get('lacpdu_rate', 'slow')
 
                 lag_id = await self.middleware.call(
