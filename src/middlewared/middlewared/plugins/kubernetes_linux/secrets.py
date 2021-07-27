@@ -22,9 +22,7 @@ class KubernetesSecretService(CRUDService):
         label_selector = options.get('extra', {}).get('label_selector')
         kwargs = {k: v for k, v in [('label_selector', label_selector)] if v}
         async with api_client() as (api, context):
-            if len(filters) == 1 and len(filters[0]) == 3 and all(
-                a == d for a, d in zip(filters[0][:2], ['metadata.namespace', '='])
-            ):
+            if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0])[:2] == ['metadata.namespace', '=']:
                 func = functools.partial(context['core_api'].list_namespaced_secret, namespace=filters[0][2], **kwargs)
             else:
                 func = functools.partial(context['core_api'].list_secret_for_all_namespaces, **kwargs)

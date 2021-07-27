@@ -18,9 +18,7 @@ class KubernetesDeploymentService(CRUDService):
     @filterable
     async def query(self, filters, options):
         async with api_client() as (api, context):
-            if len(filters) == 1 and len(filters[0]) == 3 and all(
-                a == d for a, d in zip(filters[0][:2], ['metadata.namespace', '='])
-            ):
+            if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0])[:2] == ['metadata.namespace', '=']:
                 func = functools.partial(context['apps_api'].list_namespaced_deployment, namespace=filters[0][2])
             else:
                 func = functools.partial(context['apps_api'].list_deployment_for_all_namespaces)
