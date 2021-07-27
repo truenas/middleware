@@ -2,7 +2,9 @@ import aiohttp
 import contextlib
 import jwt
 import enum
+import asyncio
 
+from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Str, Bool
 from middlewared.service import (accepts, Service,
                                  private, ValidationErrors)
@@ -62,7 +64,22 @@ class GlusterLocalEventsService(Service):
         token = jwt.encode({'dummy': 'data'}, secret, algorithm='HS256')
         headers = {'JWTOKEN': token.decode('utf-8'), 'content-type': 'application/json'}
         async with aiohttp.ClientSession() as sess:
-            await sess.post(LOCAL_WEBHOOK_URL, headers=headers, json=data, timeout=5)
+            status = reason = None
+            try:
+                res = await sess.post(LOCAL_WEBHOOK_URL, headers=headers, json=data, timeout=5)
+            except asyncio.exceptions.TimeoutError:
+                status = 500
+                reason = 'Timed out waiting for a response'
+            else:
+                if res.status != 200:
+                    status = res.status
+                    reason = res.reason
+
+            if status is not None:
+                # something failed
+                raise CallError(
+                    f'Failed to send event: {data["event"]} with status code of: {status} with reason: {reason}'
+                )
 
     @accepts()
     def get_set_jwt_secret(self):
