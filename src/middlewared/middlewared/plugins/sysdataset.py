@@ -509,7 +509,9 @@ class SystemDatasetService(ConfigService):
 
         if await self.middleware.call('service.started', 'cifs'):
             restart.insert(0, 'cifs')
-        for service in ['open-vm-tools', 'webdav']:
+        if await self.middleware.call('service.started_or_enabled', 'webdav'):
+            restart.append('webdav')
+        for service in ['open-vm-tools']:
             restart.append(service)
 
         if await self.middleware.call('service.started', 'glusterd'):
