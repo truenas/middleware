@@ -54,10 +54,12 @@ class KubernetesService(Service):
                     'Failed to append %r iptable rule to isolate kubernetes: %r',
                     ', '.join(rule), cp.stderr.decode(errors='ignore')
                 )
+                # If adding first rule fails for whatever reason, we won't be adding the second one
+                break
 
     @private
     async def remove_iptables_rules(self):
-        for rule in await self.iptable_rules():
+        for rule in reversed(await self.iptable_rules()):
             cp = await run(['iptables', '-D'] + rule, check=False)
             if cp.returncode:
                 self.logger.error(
@@ -78,11 +80,13 @@ class KubernetesService(Service):
         return [
             [
                 'INPUT', '-p', 'tcp', '-s', f'{node_ip},127.0.0.1', '--dport', '6443', '-j', 'ACCEPT', '-m', 'comment',
-                '--comment', 'iX Custom Rule to allow access to k8s cluster from internal TrueNAS connections'
+                '--comment', 'iX Custom Rule to allow access to k8s cluster from internal TrueNAS connections',
+                '--wait'
             ],
             [
                 'INPUT', '-p', 'tcp', '--dport', '6443', '-j', 'DROP', '-m', 'comment', '--comment',
-                'iX Custom Rule to drop connection requests to k8s cluster from external sources'
+                'iX Custom Rule to drop connection requests to k8s cluster from external sources',
+                '--wait'
             ],
         ]
 
