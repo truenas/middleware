@@ -230,6 +230,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': 'interface_sync'},
             {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': 'interface_sync'}
         ],
+        'wsd': [
+            {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'interface_sync'},
+        ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
             {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
