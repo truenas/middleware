@@ -1,14 +1,14 @@
-import os
-import time
+from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert, IntervalSchedule
+from middlewared.utils import run
 
 
 class CoreFilesArePresentAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "Core Files Found in System Database"
-    text = ("The following system core files were found: %(corefiles)s. Please create a ticket at "
+    text = ("Core files for the following executables were found: %(corefiles)s. Please create a ticket at "
             "https://jira.ixsystems.com/ and attach the relevant core files along with a system debug. "
             "Once the core files have been archived and attached to the ticket, they may be removed "
             "by running the following command in shell: 'rm /var/db/system/cores/*'.")
@@ -16,34 +16,16 @@ class CoreFilesArePresentAlertClass(AlertClass):
     products = ("CORE", "SCALE")
 
 
-class CoreFilesArePresentAlertSource(ThreadedAlertSource):
-    products = ("CORE", "SCALE")
+class CoreFilesArePresentAlertSource(AlertSource):
+    schedule = IntervalSchedule(timedelta(minutes=5))
 
-    def check_sync(self):
-        cores = "/var/db/system/cores"
+    products = ("SCALE",)
+
+    async def check(self):
         corefiles = []
-
-        try:
-            listdir = os.listdir(cores)
-        except Exception:
-            return
-
-        for file in listdir:
-            if not file.endswith(".zst"):
-                continue
-
-            path = os.path.join(cores, file)
-            if not os.path.isfile(path):
-                continue
-
-            unlink = False
-            if os.stat(path).st_mtime < time.time() - 86400 * 5:
-                unlink = True
-            else:
-                corefiles.append(file)
-
-            if unlink:
-                os.unlink(path)
+        for coredump in await self.middleware.call("system.coredumps"):
+            if coredump["corefile"] == "present":
+                corefiles.append(f"{coredump['exe']} ({coredump['time']})")
 
         if corefiles:
             return Alert(CoreFilesArePresentAlertClass, {"corefiles": ', '.join(corefiles)})
