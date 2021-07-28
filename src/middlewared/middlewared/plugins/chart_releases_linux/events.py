@@ -63,6 +63,11 @@ class ChartReleaseService(Service):
             ChartReleaseService.CHART_RELEASES.pop(chart_release_name, None)
 
     @private
+    async def clear_cached_chart_releases(self):
+        for name in list(self.CHART_RELEASES):
+            await self.remove_chart_release_from_events_state(name)
+
+    @private
     async def handle_k8s_event(self, k8s_event):
         name = get_chart_release_from_namespace(k8s_event['involved_object']['namespace'])
         async with EVENT_LOCKS[name]:
