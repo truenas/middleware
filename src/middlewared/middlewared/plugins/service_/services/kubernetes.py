@@ -53,6 +53,7 @@ class KubernetesService(SimpleService):
     async def before_stop(self):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-stop', 'effect': 'NoExecute'}])
         await asyncio.sleep(10)
+        await self.middleware.call('chart.release.clear_cached_chart_releases')
         await self.middleware.call('kubernetes.remove_iptables_rules')
 
     async def after_stop(self):
