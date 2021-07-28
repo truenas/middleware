@@ -120,7 +120,6 @@ LoadPlugin zfs_arc_v2
 	Interface "pfsync0"
 	Interface "plip0"
 	Interface "/^usbus/"
-% endif
 	IgnoreSelected true
 </Plugin>
 
