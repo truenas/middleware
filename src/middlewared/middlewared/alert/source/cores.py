@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert, IntervalSchedule
-from middlewared.utils import run
 
 
 class CoreFilesArePresentAlertClass(AlertClass):
@@ -25,6 +24,9 @@ class CoreFilesArePresentAlertSource(AlertSource):
         corefiles = []
         for coredump in await self.middleware.call("system.coredumps"):
             if coredump["corefile"] == "present":
+                if coredump["exe"] == "/usr/sbin/syslog-ng":
+                    continue
+
                 corefiles.append(f"{coredump['exe']} ({coredump['time']})")
 
         if corefiles:
