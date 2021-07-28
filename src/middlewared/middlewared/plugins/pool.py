@@ -742,12 +742,9 @@ class PoolService(CRUDService):
             'mountpoint': f'/{data["name"]}',
             **encryption_dict
         }
-        if osc.IS_FREEBSD:
-            fsoptions['aclmode'] = 'passthrough'
 
-        if osc.IS_LINUX:
-            fsoptions['acltype'] = 'posix'
-            fsoptions['aclmode'] = 'discard'
+        fsoptions['acltype'] = 'posix'
+        fsoptions['aclmode'] = 'discard'
 
         dedup = data.get('deduplication')
         if dedup:
@@ -3179,6 +3176,9 @@ class PoolDatasetService(CRUDService):
 
         parent_ds = parent_ds[0]
         mountpoint = os.path.join('/mnt', data['name'])
+        if data.get('acltype') == 'INHERIT' and len(data['name'].split('/')) == 2:
+            data['acltype'] = 'POSIX'
+
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
@@ -3186,6 +3186,9 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             data['acltype'] = 'NFSV4'
             data['aclmode'] = 'RESTRICTED'
+
+        if data['type'] == 'FILESYSTEM':
+            data['aclinherit'] = 'PASSTHROUGH' if data['acltype'] == 'NFSV4' else 'DISCARD'
 
         if parent_ds['locked']:
             verrors.add(
@@ -3245,6 +3248,7 @@ class PoolDatasetService(CRUDService):
 
         props = {}
         for i, real_name, transform, inheritable in (
+            ('aclinherit', None, str.lower, True),
             ('aclmode', None, str.lower, True),
             ('acltype', None, str.lower, True),
             ('atime', None, str.lower, True),
@@ -3380,6 +3384,7 @@ class PoolDatasetService(CRUDService):
             raise verrors
 
         properties_definitions = (
+            ('aclinherit', None, str.lower, True),
             ('aclmode', None, str.lower, True),
             ('acltype', None, str.lower, True),
             ('atime', None, str.lower, True),
