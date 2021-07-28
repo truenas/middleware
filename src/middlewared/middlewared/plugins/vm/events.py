@@ -56,8 +56,11 @@ class VMService(Service, LibvirtConnectionMixin):
                 state = 'UNKNOWN'
 
             vm_id = dom.name().split('_')[0]
-            if vm_id.isdigit():
-                self.middleware.send_event('vm.query', emit_type, id=int(vm_id), fields={'state': state})
+            # We do not send an event on removed because that would already be done by vm.delete
+            if vm_id.isdigit() and emit_type != 'REMOVED' and dom.name() in vms:
+                vm = vms[dom.name()]
+                vm['status']['state'] = state
+                self.middleware.send_event('vm.query', emit_type, id=int(vm_id), fields=vm)
             else:
                 self.middleware.logger.debug('Received libvirtd event with unknown domain name %s', dom.name())
 
