@@ -127,6 +127,21 @@ system_func()
 	midclt call alert.list | jq .
 	section_footer
 
+	section_header "Core files"
+	for row in $(midclt call "system.coredumps" | jq -r ".[] | @base64"); do
+		_jq() {
+			echo ${row} | base64 --decode | jq -r ${1}
+		}
+
+		if [ "$(_jq '.corefile')" = "present" ]; then
+			coredumpctl info "$(_jq '.pid')"
+			echo
+			echo
+			echo
+		fi
+	done
+	section_footer
+
 	section_header "Dump configuration"
 	midclt call system.general.config | jq 'del(.ui_certificate.privatekey)'
 	midclt call system.advanced.config | jq 'del(.sed_user, .sed_passwd)'
