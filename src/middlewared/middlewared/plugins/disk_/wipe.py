@@ -68,6 +68,14 @@ class DiskService(Service):
             for part in await self.middleware.call('disk.list_partitions', dev):
                 await self.wipe_quick(part['name'], part['size'])
 
+        # we have to force GEOM to retaste the disks since if this is a QUICK
+        # format and the disks had previous partition tables on them, we run
+        # like 4 instances of `dd`. Using regular GEOM utilities, they will
+        # actually wait for the related thread to become idle before returning
+        # from the syscall. `dd` doesn't do this so we force GEOM to retaste
+        # all the disks here before calling "gpart destroy"
+        await run(['sysctl', 'kern.geom.conftxt'], check=False)
+
         await self.middleware.call('disk.destroy_partitions', dev)
 
         if mode == 'QUICK':
