@@ -3176,7 +3176,7 @@ class PoolDatasetService(CRUDService):
 
         parent_ds = parent_ds[0]
         mountpoint = os.path.join('/mnt', data['name'])
-        if data.get('acltype') == 'INHERIT' and len(data['name'].split('/')) == 2:
+        if data.get('acltype', 'INHERIT') == 'INHERIT' and len(data['name'].split('/')) == 2:
             data['acltype'] = 'POSIX'
 
         if os.path.exists(mountpoint):
@@ -3187,7 +3187,7 @@ class PoolDatasetService(CRUDService):
             data['acltype'] = 'NFSV4'
             data['aclmode'] = 'RESTRICTED'
 
-        if data['type'] == 'FILESYSTEM':
+        if data['type'] == 'FILESYSTEM' and data.get('acltype', 'INHERIT') != 'INHERIT':
             data['aclinherit'] = 'PASSTHROUGH' if data['acltype'] == 'NFSV4' else 'DISCARD'
 
         if parent_ds['locked']:
