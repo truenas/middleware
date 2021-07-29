@@ -1,4 +1,7 @@
+import html
 import json
+
+import html2text
 import requests
 
 from middlewared.alert.base import ThreadedAlertService
@@ -20,7 +23,7 @@ class SlackAlertService(ThreadedAlertService):
             self.attributes["url"],
             headers={"Content-type": "application/json"},
             data=json.dumps({
-                "text": self._format_alerts(alerts, gone_alerts, new_alerts),
+                "text": html.escape(html2text.html2text(self._format_alerts(alerts, gone_alerts, new_alerts))),
             }),
             timeout=INTERNET_TIMEOUT,
         )
