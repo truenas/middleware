@@ -1019,7 +1019,7 @@ class LDAPService(ConfigService):
             if is_local_user:
                 continue
 
-            cache_data['users'].update({u.pw_name: {
+            entry = {
                 'id': user_next_index,
                 'uid': u.pw_uid,
                 'username': u.pw_name,
@@ -1041,7 +1041,8 @@ class LDAPService(ConfigService):
                 'groups': [],
                 'sshpubkey': None,
                 'local': False
-            }})
+            }
+            self.middleware.call_sync('dscache.insert', self._config.namespace, 'USER', entry)
             user_next_index += 1
 
         for g in grp_list:
@@ -1049,7 +1050,7 @@ class LDAPService(ConfigService):
             if is_local_user:
                 continue
 
-            cache_data['groups'].update({g.gr_name: {
+            entry = {
                 'id': group_next_index,
                 'gid': g.gr_gid,
                 'name': g.gr_name,
@@ -1060,16 +1061,10 @@ class LDAPService(ConfigService):
                 'sudo_commands': [],
                 'users': [],
                 'local': False
-            }})
+            }
+            self.middleware.call_sync('dscache.insert', self._config.namespace, 'GROUP', entry)
             group_next_index += 1
-
-        self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data)
-        self.middleware.call_sync('dscache.backup')
 
     @private
     async def get_cache(self):
-        if not await self.middleware.call('cache.has_key', 'LDAP_cache'):
-            await self.middleware.call('ldap.fill_cache')
-            self.logger.debug('cache fill is in progress.')
-            return {'users': {}, 'groups': {}}
-        return await self.middleware.call('cache.get', 'LDAP_cache')
+        return await self.middleware.call('dscache.entries', self._config.namespace)
