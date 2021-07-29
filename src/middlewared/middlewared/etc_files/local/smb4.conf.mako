@@ -223,6 +223,7 @@
             that the openldap server have the Samba LDAP schema extensions.
             """
             if db['role'] == "ad_member":
+                pc.update({'passdb backend': 'tdbsam:/root/samba/private/passdb.tdb'})
                 pc.update({
                     'server role': 'member server',
                     'kerberos method': 'secrets and keytab',
@@ -268,6 +269,7 @@
                 })
 
             elif db['role'] == "standalone":
+                pc.update({'passdb backend': 'tdbsam:/root/samba/private/passdb.tdb'})
                 pc.update({'server role': 'standalone'})
                 pc.update({'workgroup': db['cifs']['workgroup'].upper()})
 
