@@ -1484,7 +1484,9 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def get_cache(self):
-        return await self.middleware.call('dscache.entries', self._config.namespace)
+        users = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'USER')
+        groups = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'GROUP')
+        return {"USERS": users, "GROUPS": groups}
 
 
 class WBStatusThread(threading.Thread):

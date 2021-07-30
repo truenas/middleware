@@ -251,6 +251,10 @@ class DSCache(Service):
             return res
 
         if is_name_check and filters[0][1] == '=':
+            # exists in local sqlite database, return results
+            if res:
+                return res
+
             entry = await self.retrieve(enabled_ds.upper(), {
                 'idtype': objtype[:-1],
                 'who': filters[0][2],
@@ -258,6 +262,10 @@ class DSCache(Service):
             return [entry] if entry else []
 
         if is_id_check and filters[0][1] == '=':
+            # exists in local sqlite database, return results
+            if res:
+                return res
+
             entry = await self.retrieve(enabled_ds.upper(), {
                 'idtype': objtype[:-1],
                 'id': filters[0][2],
