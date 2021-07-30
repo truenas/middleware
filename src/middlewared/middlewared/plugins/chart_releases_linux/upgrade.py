@@ -9,7 +9,7 @@ import tempfile
 
 from pkg_resources import parse_version
 
-from middlewared.schema import Bool, Dict, Ref, Str, returns
+from middlewared.schema import Bool, Dict, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
@@ -132,15 +132,24 @@ class ChartReleaseService(Service):
         )
     )
     @returns(Dict(
+        Bool('image_update_available', required=True),
+        Bool('item_update_available', required=True),
         Dict(
             'container_images_to_update', additional_attrs=True,
             description='Dictionary of container image(s) which have an update available against the same tag',
         ),
         Str('latest_version'),
         Str('latest_human_version'),
+        Str('upgrade_version'),
+        Str('upgrade_human_version'),
         Str('changelog', max_length=None, null=True),
+        List('available_versions_for_upgrade', items=[Dict(
+            'version_info',
+            Str('version', required=True),
+            Str('human_version', required=True),
+        )])
     ))
-    def upgrade_summary(self, release_name, options):
+    async def upgrade_summary(self, release_name, options):
         """
         Retrieve upgrade summary for `release_name` which will include which container images will be updated
         and changelog for `options.item_version` chart version specified if applicable. If only container images
@@ -148,32 +157,56 @@ class ChartReleaseService(Service):
 
         If chart release `release_name` does not require an upgrade, an error will be raised.
         """
-        release = self.middleware.call_sync(
+        release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {'extra': {'retrieve_resources': True}, 'get': True}
         )
         if not release['update_available'] and not release['container_images_update_available']:
             raise CallError('No update is available for chart release', errno=errno.ENOENT)
 
-        latest_version = release['chart_metadata']['version']
-        latest_human_version = release['human_version']
+        version_info = {
+            'latest_version': release['chart_metadata']['version'],
+            'upgrade_version': release['chart_metadata']['version'],
+            'latest_human_version': release['human_version'],
+            'upgrade_human_version': release['human_version'],
+        }
         changelog = None
+        all_newer_versions = []
         if release['update_available']:
-            catalog_item = self.middleware.call_sync('chart.release.get_version', release, options)
-            latest_version = catalog_item['version']
-            latest_human_version = catalog_item['human_version']
-            changelog = catalog_item['changelog']
+            available_items = await self.get_versions(release, options)
+            latest_item = available_items['latest_version']
+            upgrade_version = available_items['specified_version']
+            version_info.update({
+                'latest_version': latest_item['version'],
+                'latest_human_version': latest_item['human_version'],
+                'upgrade_version': upgrade_version['version'],
+                'upgrade_human_version': upgrade_version['human_version'],
+            })
+            changelog = upgrade_version['changelog']
+            all_newer_versions = [
+                {
+                    'version': v['version'],
+                    'human_version': v['human_version'],
+                } for v in available_items['versions'].values()
+                if parse_version(v['version']) > parse_version(release['chart_metadata']['version'])
+            ]
 
         return {
             'container_images_to_update': {
                 k: v for k, v in release['resources']['container_images'].items() if v['update_available']
             },
-            'latest_version': latest_version,
-            'latest_human_version': latest_human_version,
             'changelog': changelog,
+            'available_versions_for_upgrade': all_newer_versions,
+            'item_update_available': release['update_available'],
+            'image_update_available': release['container_images_update_available'],
+            **version_info,
         }
 
     @private
     async def get_version(self, release, options):
+        return (await self.get_versions(release, options))['specified_version']
+
+    @private
+    async def get_versions(self, release, options):
         current_chart = release['chart_metadata']
         chart = current_chart['name']
         item_details = await self.middleware.call('catalog.get_item_details', chart, {
@@ -199,7 +232,13 @@ class ChartReleaseService(Service):
 
         verrors.check()
 
-        return item_details['versions'][new_version]
+        return {
+            'specified_version': item_details['versions'][new_version],
+            'versions': item_details['versions'],
+            'latest_version': item_details['versions'][await self.middleware.call(
+                'chart.release.get_latest_version_from_item_versions', item_details['versions']
+            )]
+        }
 
     @private
     async def upgrade_chart_release(self, job, release, options):
