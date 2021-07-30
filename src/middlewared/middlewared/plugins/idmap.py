@@ -901,9 +901,9 @@ class IdmapDomainService(CRUDService):
         }
 
     @private
-    async def sythetic_group(self, ds, grp):
-        idmap_info = self.get_idmap_info(ds, group['gr_gid'])
-        sid = await self.unixid_to_sid({"id": group['gr_gid'], "id_type": "GROUPR"})
+    async def synthetic_group(self, ds, grp):
+        idmap_info = await self.get_idmap_info(ds, grp['gr_gid'])
+        sid = await self.unixid_to_sid({"id": grp['gr_gid'], "id_type": "GROUP"})
         rid = int(sid.rsplit('-', 1)[1])
         return {
             'id': 100000 + idmap_info[0] + rid,

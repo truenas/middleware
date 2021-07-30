@@ -134,7 +134,7 @@ class DSCache(Service):
             raise CallError("`who` or `id` entry is required to uniquely "
                             "identify the entry to be retrieved.")
 
-        tdb_name = f'{ds}_{data["idtype"].lower()}'
+        tdb_name = f'{ds.lower()}_{data["idtype"].lower()}'
         prefix = "NAME" if who_str else "ID"
         tdb_key = f'{prefix}_{who_str if who_str else who_id}'
 
@@ -154,12 +154,12 @@ class DSCache(Service):
                     pwdobj = await self.middleware.call('dscache.get_uncached_user',
                                                         who_str, who_id)
                     entry = await self.middleware.call('idmap.synthetic_user',
-                                                       ds, pwdobj)
+                                                       ds.lower(), pwdobj)
                 else:
                     grpobj = await self.middleware.call('dscache.get_uncached_group',
                                                         who_str, who_id)
                     entry = await self.middleware.call('idmap.synthetic_group',
-                                                       ds, grpobj)
+                                                       ds.lower(), grpobj)
                 await self.insert(ds, data['idtype'], entry)
             except KeyError:
                 entry = None
@@ -251,14 +251,14 @@ class DSCache(Service):
             return res
 
         if is_name_check and filters[0][1] == '=':
-            entry = await self.retrieve(enabled_ds, {
+            entry = await self.retrieve(enabled_ds.upper(), {
                 'idtype': objtype[:-1],
                 'who': filters[0][2],
             }, {'synthensize': True})
             return [entry] if entry else []
 
         if is_id_check and filters[0][1] == '=':
-            entry = await self.retrieve(enabled_ds, {
+            entry = await self.retrieve(enabled_ds.upper(), {
                 'idtype': objtype[:-1],
                 'id': filters[0][2],
             }, {'synthesize': True})
