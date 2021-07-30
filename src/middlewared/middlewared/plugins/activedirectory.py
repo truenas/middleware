@@ -1315,6 +1315,20 @@ class ActiveDirectoryService(ConfigService):
         self.logger.debug("Successfully left domain: %s", ad['domainname'])
 
     @private
+    def get_gencache_sid(self, tdb_key):
+        gencache = tdb.Tdb('/tmp/gencache.tdb', 0, tdb.DEFAULT, os.O_RDONLY)
+        try:
+            tdb_val = gencache.get(tdb_key)
+        finally:
+            gencache.close()
+
+        decoded_sid = tdb_val[8:-5].decode()
+        if decoded_sid == '-':
+            return None
+
+        return decoded_sid
+
+    @private
     @job(lock='fill_ad_cache')
     def fill_cache(self, job, force=False):
         """
@@ -1329,10 +1343,6 @@ class ActiveDirectoryService(ConfigService):
         may be revised in the future, but we want to keep things as simple as possible
         here since the list of entries numbers perhaps in the tens of thousands.
         """
-        if self.middleware.call_sync('cache.has_key', 'AD_cache') and not force:
-            raise CallError('AD cache already exists. Refusing to generate cache.')
-
-        self.middleware.call_sync('cache.pop', 'AD_cache')
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
         id_type_both_backends = [
@@ -1361,9 +1371,7 @@ class ActiveDirectoryService(ConfigService):
         local_groups = {}
         local_users.update({x['uid']: x for x in self.middleware.call_sync('user.query')})
         local_users.update({x['gid']: x for x in self.middleware.call_sync('group.query')})
-        cache_data = {'users': {}, 'groups': {}}
         configured_domains = self.middleware.call_sync('idmap.query')
-        user_next_index = group_next_index = 300000000
         for d in configured_domains:
             if d['name'] == 'DS_TYPE_ACTIVEDIRECTORY':
                 known_domains.append({
@@ -1385,6 +1393,11 @@ class ActiveDirectoryService(ConfigService):
             if prefix != b'IDMAP/UID2SID' and prefix != b'IDMAP/GID2SID':
                 continue
 
+            sid = self.get_gencache_sid(key)
+            if sid is None:
+                return
+
+            rid = int(sid.rsplit("-", 1)[1])
             line = key.decode()
             if line.startswith('IDMAP/UID2SID'):
                 # tdb keys are terminated with \x00, this must be sliced off before converting to int
@@ -1404,8 +1417,8 @@ class ActiveDirectoryService(ConfigService):
                         """
                         try:
                             user_data = pwd.getpwuid(cached_uid)
-                            cache_data['users'].update({user_data.pw_name: {
-                                'id': user_next_index,
+                            entry = {
+                                'id': 100000 + d['low_id'] + rid,
                                 'uid': user_data.pw_uid,
                                 'username': user_data.pw_name,
                                 'unixhash': None,
@@ -1427,8 +1440,8 @@ class ActiveDirectoryService(ConfigService):
                                 'sshpubkey': None,
                                 'local': False,
                                 'id_type_both': d['id_type_both']
-                            }})
-                            user_next_index += 1
+                            }
+                            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
                             break
                         except KeyError:
                             break
@@ -1453,8 +1466,8 @@ class ActiveDirectoryService(ConfigService):
                         except KeyError:
                             break
 
-                        cache_data['groups'].update({group_data.gr_name: {
-                            'id': group_next_index,
+                        entry = {
+                            'id': 100000 + d['low_id'] + rid,
                             'gid': group_data.gr_gid,
                             'name': group_data.gr_name,
                             'group': group_data.gr_name,
@@ -1465,33 +1478,15 @@ class ActiveDirectoryService(ConfigService):
                             'users': [],
                             'local': False,
                             'id_type_both': d['id_type_both']
-                        }})
-                        group_next_index += 1
+                        }
+                        self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
                         break
-
-        if not cache_data.get('users'):
-            return
-        sorted_cache = {}
-        sorted_cache['users'] = dict(sorted(cache_data['users'].items()))
-        sorted_cache['groups'] = dict(sorted(cache_data['groups'].items()))
-
-        self.middleware.call_sync('cache.put', 'AD_cache', sorted_cache)
-        self.middleware.call_sync('dscache.backup')
 
     @private
     async def get_cache(self):
-        """
-        Returns cached AD user and group information. If proactive caching is enabled
-        then this will contain all AD users and groups, otherwise it contains the
-        users and groups that were present in the winbindd cache when the cache was
-        last filled. The cache expires and is refilled every 24 hours, or can be
-        manually refreshed by calling fill_cache(True).
-        """
-        if not await self.middleware.call('cache.has_key', 'AD_cache'):
-            await self.middleware.call('activedirectory.fill_cache')
-            self.logger.debug('cache fill is in progress.')
-            return {'users': {}, 'groups': {}}
-        return await self.middleware.call('cache.get', 'AD_cache')
+        users = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'USER')
+        groups = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'GROUP')
+        return {"USERS": users, "GROUPS": groups}
 
 
 class WBStatusThread(threading.Thread):

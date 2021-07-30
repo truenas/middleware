@@ -346,7 +346,6 @@ class SystemDatasetService(ConfigService):
             # The following should be backgrounded since they may be quite
             # long-running.
             await self.middleware.call('smb.configure', False)
-            await self.middleware.call('dscache.initialize')
 
         return config
 

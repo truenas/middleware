@@ -849,3 +849,72 @@ class IdmapDomainService(CRUDService):
             return None
 
         return wb.stdout.decode().strip()
+
+    @private
+    async def get_idmap_info(self, ds, id):
+        low_range = None
+        id_type_both = False
+        domains = await self.query()
+
+        for d in domains:
+            if ds == 'activedirectory' and d['name'] == 'DS_TYPE_LDAP':
+                continue
+
+            if ds == 'ldap' and d['name'] != 'DS_TYPE_LDAP':
+                continue
+
+            if id in range(d['range_low'], d['range_high']):
+                low_range = d['range_low']
+                id_type_both = d['idmap_backend'] in ['AUTORID', 'RID']
+                break
+
+        return (low_range, id_type_both)
+
+    @private
+    async def synthetic_user(self, ds, passwd):
+        idmap_info = await self.get_idmap_info(ds, passwd['pw_uid'])
+        sid = await self.unixid_to_sid({"id": passwd['pw_uid'], "id_type": "USER"})
+        rid = int(sid.rsplit('-', 1)[1])
+        return {
+            'id': 100000 + idmap_info[0] + rid,
+            'uid': passwd['pw_uid'],
+            'username': passwd['pw_name'],
+            'unixhash': None,
+            'smbhash': None,
+            'group': {},
+            'home': '',
+            'shell': '',
+            'full_name': passwd['pw_gecos'],
+            'builtin': False,
+            'email': '',
+            'password_disabled': False,
+            'locked': False,
+            'sudo': False,
+            'sudo_nopasswd': False,
+            'sudo_commands': [],
+            'microsoft_account': False,
+            'attributes': {},
+            'groups': [],
+            'sshpubkey': None,
+            'local': False,
+            'id_type_both': idmap_info[1],
+        }
+
+    @private
+    async def synthetic_group(self, ds, grp):
+        idmap_info = await self.get_idmap_info(ds, grp['gr_gid'])
+        sid = await self.unixid_to_sid({"id": grp['gr_gid'], "id_type": "GROUP"})
+        rid = int(sid.rsplit('-', 1)[1])
+        return {
+            'id': 100000 + idmap_info[0] + rid,
+            'gid': grp['gr_gid'],
+            'name': grp['gr_name'],
+            'group': grp['gr_name'],
+            'builtin': False,
+            'sudo': False,
+            'sudo_nopasswd': False,
+            'sudo_commands': [],
+            'users': [],
+            'local': False,
+            'id_type_both': idmap_info[1],
+        }
