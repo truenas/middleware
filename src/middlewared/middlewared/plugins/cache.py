@@ -1,15 +1,12 @@
 from middlewared.schema import Any, Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, private, job
-from middlewared.utils import filter_list, osc
+from middlewared.utils import filter_list
 from middlewared.service_exception import CallError, MatchNotFound
 
 from collections import namedtuple
 import time
 import pwd
 import grp
-import os
-import tdb
-import json
 
 
 class CacheService(Service):
@@ -122,7 +119,8 @@ class DSCache(Service):
 
     @accepts(
         Str('directory_service', required=True, enum=["ACTIVEDIRECTORY", "LDAP"]),
-        Dict('principal_info',
+        Dict(
+            'principal_info',
             Str('idtype', enum=['USER', 'GROUP']),
             Str('who'),
             Int('id'),
@@ -223,7 +221,6 @@ class DSCache(Service):
             'gr_gid': g.gr_gid,
             'gr_mem': g.gr_mem
         }
-
 
     @accepts(
         Str('objtype', enum=['USERS', 'GROUPS'], default='USERS'),
