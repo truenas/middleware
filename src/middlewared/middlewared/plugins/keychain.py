@@ -559,6 +559,7 @@ class KeychainCredentialService(CRUDService):
         Int("private_key", required=True),
         Str("cipher", enum=["STANDARD", "FAST", "DISABLED"], default="STANDARD"),
         Int("connect_timeout", default=10),
+        register=True,
     ))
     @returns(Ref("keychain_credential_entry"))
     def remote_ssh_semiautomatic_setup(self, data):
@@ -626,6 +627,63 @@ class KeychainCredentialService(CRUDService):
                 "connect_timeout": data["connect_timeout"],
             }
         })
+
+    @accepts(Dict(
+        'setup_ssh_connection',
+        Dict(
+            'private_key',
+            Bool('generate_key', default=True),
+            Int('existing_key_id'),
+            Str('name', empty=False),
+        ),
+        Str('setup_type', required=True, enum=['SEMI-AUTOMATIC', 'MANUAL']),
+        Patch(
+            'keychain_remote_ssh_semiautomatic_setup', 'semi_automatic_setup',
+            ('attr', {'null': True}),
+            ('attr', {'default': None}),
+        ),
+        Patch(
+            'keychain_credential_create', 'manual_setup',
+            ('attr', {'null': True}),
+            ('attr', {'default': None}),
+        )
+    ))
+    async def setup_ssh_connection(self, options):
+        # We have 2 steps to be performed here
+        # 1) Save SSH key pair if it's not already specified
+        # 2) Do a semi-automatic setup or a manual setup
+        verrors = ValidationErrors()
+        pkey_config = options['private_key']
+        schema_name = 'setup_ssh_connection'
+        if pkey_config['generate_key']:
+            if pkey_config['existing_key_id']:
+                verrors.add(
+                    f'{schema_name}.existing_key_id', 'Should not be specified when "generate_key" is set'
+                )
+            if not pkey_config['name']:
+                verrors.add(f'{schema_name}.name', 'Must be set when SSH Key pair is to be generated')
+            elif await self.middleware.call('keychaincredential.query', [['name', '=', pkey_config['name']]]):
+                verrors.add(f'{schema_name}.name', 'Is already in use by another SSH Key pair')
+        else:
+            if not pkey_config['existing_key_id']:
+                verrors.add(
+                    f'{schema_name}.existing_key_id', 'Must be specified when SSH Key pair is not to be generated'
+                )
+            elif not await self.middleware.call(
+                'keychaincredential.query', [['id', '=', pkey_config['existing_key_id']]]
+            ):
+                verrors.add(f'{schema_name}.existing_key_id', 'SSH Key Pair not found')
+
+        mapping = {'SEMI-AUTOMATIC': 'semi_automatic_setup', 'MANUAL': 'manual_setup'}
+        for setup_type, opposite_type in [['SEMI-AUTOMATIC', 'MANUAL'], ['MANUAL', 'SEMI-AUTOMATIC']]:
+            if not options[mapping[setup_type]]:
+                verrors.add(f'{schema_name}.{mapping[setup_type]}', f'Must be specified for {setup_type!r} setup')
+            if options[mapping[opposite_type]]:
+                verrors.add(
+                    f'{schema_name}.{mapping[opposite_type]}', f'Must not be specified for {setup_type!r} setup'
+                )
+
+        verrors.check()
 
     @private
     @accepts(Dict(
