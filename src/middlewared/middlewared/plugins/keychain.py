@@ -650,10 +650,17 @@ class KeychainCredentialService(CRUDService):
             default=None,
         )
     ))
+    @returns(Ref('keychain_credential_entry'))
     async def setup_ssh_connection(self, options):
-        # We have 2 steps to be performed here
-        # 1) Save SSH key pair if it's not already specified
-        # 2) Do a semi-automatic setup or a manual setup
+        """
+        Creates a SSH Connection performing the following steps:
+
+        1) Generating SSH Key Pair if required
+        2) Setting up SSH Credentials based on `setup_type`
+
+        In case (2) fails, it will be ensured that SSH Key Pair generated ( if applicable ) in the process is
+        removed.
+        """
         verrors = ValidationErrors()
         pkey_config = options['private_key']
         schema_name = 'setup_ssh_connection'
