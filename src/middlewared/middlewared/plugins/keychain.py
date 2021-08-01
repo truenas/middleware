@@ -642,10 +642,12 @@ class KeychainCredentialService(CRUDService):
             ('attr', {'null': True}),
             ('attr', {'default': None}),
         ),
-        Patch(
-            'keychain_credential_create', 'manual_setup',
-            ('attr', {'null': True}),
-            ('attr', {'default': None}),
+        Dict(
+            'manual_setup',
+            Str('name', required=True),
+            Dict('attributes', additional_attrs=True, required=True),
+            null=True,
+            default=None,
         )
     ))
     async def setup_ssh_connection(self, options):
@@ -684,6 +686,33 @@ class KeychainCredentialService(CRUDService):
                 )
 
         verrors.check()
+
+        # We are going to generate a SSH Key pair now if required
+        if pkey_config['generate_key']:
+            key_config = await self.middleware.call('keychaincredential.generate_ssh_key_pair')
+            ssh_key_pair = await self.middleware.call('keychaincredential.create', {
+                'name': pkey_config['name'],
+                'type': 'SSH_KEY_PAIR',
+                'attributes': key_config,
+            })
+        else:
+            ssh_key_pair = await self.middleware.call('keychaincredential.get_instance', pkey_config['existing_key_id'])
+
+        try:
+            if options['setup_type'] == 'SEMI-AUTOMATIC':
+                resp = await self.middleware.call(
+                    'keychaincredential.remote_ssh_semiautomatic_setup', options['semi_automatic_setup']
+                )
+            else:
+                resp = await self.middleware.call(
+                    'keychaincredential.create', {**options['manual_setup'], 'type': 'SSH_CREDENTIALS'}
+                )
+        except Exception:
+            if pkey_config['generate_key']:
+                await self.middleware.call('keychaincredential.delete', ssh_key_pair['id'])
+            raise
+        else:
+            return resp
 
     @private
     @accepts(Dict(
