@@ -41,6 +41,7 @@ class VMModel(sa.Model):
     cpu_mode = sa.Column(sa.Text())
     cpu_model = sa.Column(sa.Text(), nullable=True)
     hide_from_msr = sa.Column(sa.Boolean(), default=False)
+    ensure_display_device = sa.Column(sa.Boolean(), default=True)
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -95,6 +96,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         List('devices', items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Bool('hide_from_msr', default=False),
+        Bool('ensure_display_device', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         Int('shutdown_timeout', default=90, valdiators=[Range(min=5, max=300)]),
         register=True,
