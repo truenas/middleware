@@ -42,6 +42,8 @@ class VMModel(sa.Model):
     cpu_model = sa.Column(sa.Text(), nullable=True)
     hide_from_msr = sa.Column(sa.Boolean(), default=False)
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
+    arch_type = sa.Column(sa.String(255), default=None, nullable=True)
+    machine_type = sa.Column(sa.String(255), default=None, nullable=True)
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -99,6 +101,8 @@ class VMService(CRUDService, VMSupervisorMixin):
         Bool('ensure_display_device', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         Int('shutdown_timeout', default=90, valdiators=[Range(min=5, max=300)]),
+        Str('arch_type', null=True, default=None),
+        Str('machine_type', null=True, default=None),
         register=True,
     ))
     async def do_create(self, data):
@@ -120,6 +124,13 @@ class VMService(CRUDService, VMSupervisorMixin):
         For headless installations like ubuntu server this is required for the guest to operate properly. However
         for cases where consumer would like to use GPU passthrough and does not want a display device added should set
         this to `false`.
+
+        `arch_type` refers to architecture type and can be specified for the guest. By default the value is `null` and
+        system in this case will choose a reasonable default based on host.
+
+        `machine_type` refers to machine type of the guest based on the architecture type selected with `arch_type`.
+        By default the value is `null` and system in this case will choose a reasonable default based on `arch_type`
+        configuration.
 
         `shutdown_timeout` indicates the time in seconds the system waits for the VM to cleanly shutdown. During system
         shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
