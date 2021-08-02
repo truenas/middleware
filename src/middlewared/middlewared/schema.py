@@ -754,7 +754,7 @@ class Dict(Attribute):
     def resolve(self, schemas):
         for name, attr in list(self.attrs.items()):
             if not attr.resolved:
-                new_name = attr.newname if isinstance(attr, Patch) else name
+                new_name = attr.schema_name if isinstance(attr, Patch) else name
                 self.attrs[new_name] = attr.resolve(schemas)
                 if new_name != name:
                     self.attrs.pop(name)
@@ -903,22 +903,22 @@ class Ref(object):
 
 class Patch(object):
 
-    def __init__(self, name, newname, *patches, register=False):
-        self.name = name
-        self.newname = newname
+    def __init__(self, orig_name, newname, *patches, register=False):
+        self.schema_name = orig_name
+        self.name = newname
         self.patches = list(patches)
         self.register = register
         self.resolved = False
 
     def resolve(self, schemas):
-        schema = schemas.get(self.name)
+        schema = schemas.get(self.schema_name)
         if not schema:
             raise ResolverError(f'Schema {self.name} not found')
         elif not isinstance(schema, Dict):
             raise ValueError('Patch non-dict is not allowed')
 
         schema = schema.copy()
-        schema.name = self.newname
+        schema.name = self.name
         for operation, patch in self.patches:
             if operation == 'replace':
                 # This is for convenience where it's hard sometimes to change attrs in a large dict
