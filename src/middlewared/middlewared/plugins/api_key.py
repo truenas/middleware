@@ -8,7 +8,6 @@ from passlib.hash import pbkdf2_sha256
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Patch
 from middlewared.service import CRUDService, private, ValidationErrors
-from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 
 
