@@ -30,6 +30,8 @@ class ApiKey:
 
 class ApiKeyService(CRUDService):
 
+    keys = {}
+
     class Config:
         namespace = "api_key"
         datastore = "account.api_key"
@@ -74,6 +76,8 @@ class ApiKeyService(CRUDService):
             data
         )
 
+        await self.load_keys()
+
         return self._serve(data, key)
 
     @accepts(
@@ -112,6 +116,8 @@ class ApiKeyService(CRUDService):
             new,
         )
 
+        await self.load_keys()
+
         return self._serve(await self._get_instance(id), key)
 
     @accepts(
@@ -127,7 +133,16 @@ class ApiKeyService(CRUDService):
             id
         )
 
+        await self.load_keys()
+
         return response
+
+    @private
+    async def load_keys(self):
+        self.keys = {
+            key["id"]: key
+            for key in await self.middleware.call("datastore.query", "account.api_key")
+        }
 
     @private
     async def authenticate(self, key):
@@ -138,9 +153,8 @@ class ApiKeyService(CRUDService):
             return None
 
         try:
-            db_key = await self.middleware.call("datastore.query", "account.api_key", [("id", "=", key_id)],
-                                                {"get": True})
-        except MatchNotFound:
+            db_key = self.keys[key_id]
+        except KeyError:
             return None
 
         if not pbkdf2_sha256.verify(key, db_key["key"]):
@@ -164,3 +178,7 @@ class ApiKeyService(CRUDService):
             return data
 
         return dict(data, key=f"{data['id']}-{key}")
+
+
+async def setup(middleware):
+    await middleware.call("api_key.load_keys")
