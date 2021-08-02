@@ -16,7 +16,12 @@ class VMSupervisor(VMSupervisorBase):
         return []
 
     def os_xml(self):
-        children = [create_element('type', attribute_dict={'text': 'hvm'})]
+        children = [create_element(
+            'type',
+            attribute_dict={'text': 'hvm'}, **{
+                k[:-5]: self.vm_data[k] for k in filter(lambda t: self.vm_data[t], ('arch_type', 'machine_type'))
+            }
+        )]
         if self.vm_data['bootloader'] == 'UEFI':
             children.append(
                 create_element(
