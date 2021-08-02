@@ -116,6 +116,11 @@ class VMService(CRUDService, VMSupervisorMixin):
         `vcpus` specifies total number of CPU sockets. `cores` specifies number of cores per socket. `threads`
         specifies number of threads per core.
 
+        `ensure_display_device` when set ( the default ) will ensure that the guest always has access to a video device.
+        For headless installations like ubuntu server this is required for the guest to operate properly. However
+        for cases where consumer would like to use GPU passthrough and does not want a display device added should set
+        this to `false`.
+
         `shutdown_timeout` indicates the time in seconds the system waits for the VM to cleanly shutdown. During system
         shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
