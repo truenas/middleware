@@ -223,16 +223,31 @@ class VMService(CRUDService, VMSupervisorMixin):
             elif not await self.middleware.call('vm.supports_virtualization'):
                 verrors.add(schema_name, 'This system does not support virtualization.')
 
-        if osc.IS_LINUX:
-            if data.get('grubconfig'):
-                verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
-            if data.get('cpu_mode') != 'CUSTOM' and data.get('cpu_model'):
-                verrors.add(
-                    f'{schema_name}.cpu_model',
-                    'This attribute should not be specified when "cpu_mode" is not "CUSTOM".'
-                )
-            elif data.get('cpu_model') and data['cpu_model'] not in await self.middleware.call('vm.cpu_model_choices'):
-                verrors.add(f'{schema_name}.cpu_model', 'Please select a valid CPU model.')
+        if data.get('arch_type') or data.get('machine_type'):
+            choices = await self.middleware.call('vm.guest_architecture_and_machine_choices')
+            if data.get('arch_type') and data['arch_type'] not in choices:
+                verrors.add(f'{schema_name}.arch_type', 'Specified architecture type is not supported on this system')
+            if data.get('machine_type'):
+                if not data.get('arch_type'):
+                    verrors.add(
+                        f'{schema_name}.arch_type', f'Must be specified when "{schema_name}.machine_type" is set'
+                    )
+                elif data['arch_type'] in choices and data['machine_type'] not in choices[data['arch_type']]:
+                    verrors.add(
+                        f'{schema_name}.machine_type',
+                        f'Specified machine type is not supported for {choices[data["arch_type"]]!r} architecture type'
+                    )
+
+        # TODO: Let's please remove this attribute
+        if data.get('grubconfig'):
+            verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
+        if data.get('cpu_mode') != 'CUSTOM' and data.get('cpu_model'):
+            verrors.add(
+                f'{schema_name}.cpu_model',
+                'This attribute should not be specified when "cpu_mode" is not "CUSTOM".'
+            )
+        elif data.get('cpu_model') and data['cpu_model'] not in await self.middleware.call('vm.cpu_model_choices'):
+            verrors.add(f'{schema_name}.cpu_model', 'Please select a valid CPU model.')
 
         if 'name' in data:
             filters = [('name', '=', data['name'])]
