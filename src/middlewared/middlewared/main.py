@@ -1392,9 +1392,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
         event_data = self.__events.get_event(name)
-        if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
+        if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED') and 'cleared' not in kwargs:
             verrors = ValidationErrors()
-            clean_and_validate_arg(verrors, event_data['returns'][0], kwargs.get('fields'))
+            clean_and_validate_arg(verrors, event_data['returns'][0], kwargs['fields'])
             verrors.check()
 
         self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')
