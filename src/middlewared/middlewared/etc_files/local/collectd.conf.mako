@@ -166,7 +166,6 @@ LoadPlugin zfs_arc_v2
 	FSType "devfs"
 	FSType "nullfs"
 	FSType "fdescfs"
-% endif
 	IgnoreSelected true
 	LogOnce true
 </Plugin>
