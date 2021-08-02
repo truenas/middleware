@@ -3176,7 +3176,9 @@ class PoolDatasetService(CRUDService):
 
         parent_ds = parent_ds[0]
         mountpoint = os.path.join('/mnt', data['name'])
-        if data.get('acltype', 'INHERIT') == 'INHERIT' and len(data['name'].split('/')) == 2:
+        if data['type'] == 'FILESYSTEM' and data.get('acltype', 'INHERIT') == 'INHERIT' and len(
+            data['name'].split('/')
+        ) == 2:
             data['acltype'] = 'POSIX'
 
         if os.path.exists(mountpoint):
