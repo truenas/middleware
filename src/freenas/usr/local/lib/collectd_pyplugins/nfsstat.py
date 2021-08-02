@@ -8,9 +8,6 @@ READ_INTERVAL = 10.0
 collectd.info('Loading "nfsstat" python plugin')
 
 bus = dbus.SystemBus()
-proxy = bus.get_object("org.ganesha.nfsd", "/org/ganesha/nfsd/ExportMgr")
-exportmgr = dbus.Interface(proxy, dbus_interface="org.ganesha.nfsd.exportmgr")
-exportstats = dbus.Interface(proxy, dbus_interface="org.ganesha.nfsd.exportstats")
 
 
 class Stats:
@@ -36,6 +33,13 @@ class NFSStat(object):
         self.errors = set()
 
     def read(self):
+        try:
+            proxy = bus.get_object("org.ganesha.nfsd", "/org/ganesha/nfsd/ExportMgr")
+            exportmgr = dbus.Interface(proxy, dbus_interface="org.ganesha.nfsd.exportmgr")
+            exportstats = dbus.Interface(proxy, dbus_interface="org.ganesha.nfsd.exportstats")
+        except Exception:
+            return
+
         try:
             stats = Stats()
             for export in exportmgr.ShowExports()[1]:
