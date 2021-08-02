@@ -41,7 +41,7 @@ class VMSupervisor(VMSupervisorBase):
                 device_xml = device.xml()
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
 
-        if not any(isinstance(device, DISPLAY) for device in self.devices):
+        if self.vm_data['ensure_display_device'] and not any(isinstance(device, DISPLAY) for device in self.devices):
             # We should add a video device if there is no display device configured because most by
             # default if not all headless servers like ubuntu etc require it to boot
             devices.append(create_element('video'))
