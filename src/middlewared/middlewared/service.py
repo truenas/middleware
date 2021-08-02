@@ -431,7 +431,7 @@ class ConfigServiceMetabase(ServiceBase):
         if klass.ENTRY == NotImplementedError:
             klass.ENTRY = Dict(config_entry_key, additional_attrs=True)
 
-        config_entry_key = getattr(klass.ENTRY, 'newname' if isinstance(klass.ENTRY, Patch) else 'name')
+        config_entry_key = klass.ENTRY.name
 
         config_entry = copy.deepcopy(klass.ENTRY)
         config_entry.register = True
@@ -698,12 +698,10 @@ class CRUDServiceMetabase(ServiceBase):
             klass.ENTRY = Dict(entry_key, additional_attrs=True)
         else:
             # We would like to ensure that not all fields are required as select can filter out fields
-            if isinstance(klass.ENTRY, Patch):
-                entry_key = klass.ENTRY.newname
+            if isinstance(klass.ENTRY, (Dict, Patch)):
+                entry_key = klass.ENTRY.name
             elif isinstance(klass.ENTRY, Ref):
                 entry_key = f'{klass.ENTRY.name}_ref_entry'
-            elif isinstance(klass.ENTRY, Dict):
-                entry_key = klass.ENTRY.name
             else:
                 raise ValueError('Result entry should be Dict/Patch/Ref instance')
 
@@ -780,7 +778,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
                 f'{self._config.namespace}.query',
                 f'Sent on {self._config.namespace} changes.',
                 self._config.private,
-                returns=Ref(self.ENTRY.newname if isinstance(self.ENTRY, Patch) else self.ENTRY.name),
+                returns=Ref(self.ENTRY.name),
             )
 
     @private
