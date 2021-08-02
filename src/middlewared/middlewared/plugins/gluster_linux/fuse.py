@@ -106,7 +106,7 @@ class GlusterFuseService(Service):
                             raise CallError(f'Failed creating {path} with error: {e}')
 
                         local_path = Path('localhost:/').joinpath(j['name'])
-                        cmd = ['mount', '-t', 'glusterfs', str(local_path), str(path)]
+                        cmd = ['mount', '-o', 'acl', '-t', 'glusterfs', str(local_path), str(path)]
                         cp = await run(cmd, check=False)
                         if cp.returncode:
                             errmsg = cp.stderr.decode().strip()
