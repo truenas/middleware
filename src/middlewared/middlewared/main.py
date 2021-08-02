@@ -1392,6 +1392,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
         event_data = self.__events.get_event(name)
+        # TODO: Temporarily skip events which are CHANGED but have cleared set for validation as CHANGED
+        #  will be removed in next release and this case wouldn't be applicable
         if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED') and 'cleared' not in kwargs:
             verrors = ValidationErrors()
             clean_and_validate_arg(verrors, event_data['returns'][0], kwargs['fields'])
