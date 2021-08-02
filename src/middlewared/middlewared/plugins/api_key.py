@@ -1,5 +1,7 @@
 from datetime import datetime
+import fnmatch
 import random
+import re
 import string
 
 from passlib.hash import pbkdf2_sha256
@@ -24,8 +26,30 @@ class ApiKey:
     def __init__(self, api_key):
         self.api_key = api_key
 
+        self.exact = {}
+        self.patterns = {}
+        for entry in self.api_key["allowlist"]:
+            method = entry["method"]
+            resource = entry["resource"]
+            if "*" in resource:
+                self.patterns.setdefault(method, [])
+                self.patterns[method].append(re.compile(fnmatch.translate(resource)))
+            else:
+                self.exact.setdefault(method, set())
+                self.exact[method].add(resource)
+
     def authorize(self, method, resource):
-        return not self.api_key["allowlist"] or {"method": method, "resource": resource} in self.api_key["allowlist"]
+        if not self.api_key["allowlist"]:
+            return True
+
+        if (exact := self.exact.get(method)) and resource in exact:
+            return True
+
+        if patterns := self.patterns.get(method):
+            if any(pattern.match(resource) for pattern in patterns):
+                return True
+
+        return False
 
 
 class ApiKeyService(CRUDService):
