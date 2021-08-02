@@ -849,7 +849,9 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_delete', rv)
         if self._config.event_send:
+            # TODO: Changed event on removal is deprecated and will be removed in next release
             self.middleware.send_event(f'{self._config.namespace}.query', 'CHANGED', id=id, cleared=True)
+            self.middleware.send_event(f'{self._config.namespace}.query', 'REMOVED', id=id, cleared=True)
         return rv
 
     @private
