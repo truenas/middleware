@@ -1,7 +1,7 @@
 """API key allowlist
 
 Revision ID: 410b83305c45
-Revises: bd637e18fb0b
+Revises: 1857e74d5f11
 Create Date: 2021-06-08 18:23:04.487592+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '410b83305c45'
-down_revision = 'bd637e18fb0b'
+down_revision = '1857e74d5f11'
 branch_labels = None
 depends_on = None
 
