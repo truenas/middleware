@@ -59,6 +59,7 @@ class DatastoreService(Service):
                 id=id,
                 cleared=True,
             )
+            await self._send_event(options, "REMOVED", id=id, cleared=True)
 
     async def _fields(self, options, row, get=True):
         query_options = {"get": get}
