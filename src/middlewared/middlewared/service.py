@@ -851,7 +851,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         if self._config.event_send:
             # TODO: Changed event on removal is deprecated and will be removed in next release
             self.middleware.send_event(f'{self._config.namespace}.query', 'CHANGED', id=id, cleared=True)
-            self.middleware.send_event(f'{self._config.namespace}.query', 'REMOVED', id=id, cleared=True)
+            self.middleware.send_event(f'{self._config.namespace}.query', 'REMOVED', id=id)
         return rv
 
     @private
