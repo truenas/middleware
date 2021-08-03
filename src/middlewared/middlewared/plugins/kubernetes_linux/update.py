@@ -171,6 +171,14 @@ class KubernetesService(ConfigService):
             for k2 in ('gateway', 'interface'):
                 verrors.add(f'{schema}.{k}_{k2}', f'{k}_gateway and {k}_interface must be specified together.')
 
+        if data['route_v4_gateway']:
+            gateway = ipaddress.ip_address(data['route_v4_gateway'])
+            if not any(gateway in network_cidr for network_cidr in network_cidrs):
+                verrors.add(
+                    f'{schema}.route_v4_gateway',
+                    'Specified value is not present on any network cidr in use by the system'
+                )
+
         verrors.check()
 
     @private
