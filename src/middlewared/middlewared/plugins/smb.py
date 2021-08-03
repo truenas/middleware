@@ -353,7 +353,7 @@ class SMBService(SystemServiceService):
 
     @private
     def set_passdb_backend(self, backend_type):
-        if backend_type not in ['tdbsam', 'ldapsam']:
+        if backend_type not in ['tdbsam:/root/samba/private/passdb.tdb', 'ldapsam']:
             raise CallError(f'Unsupported passdb backend type: [{backend_type}]', errno.EINVAL)
         try:
             LP_CTX.load(SMBPath.GLOBALCONF.platform())
