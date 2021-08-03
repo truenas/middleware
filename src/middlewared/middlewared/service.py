@@ -1238,6 +1238,7 @@ class CoreService(Service):
                     Currently the following sections are available:
 
                       .. examples:: - goes into `__all__` list in examples
+                      .. examples(cli):: - goes into `cli` list in examples
                       .. examples(rest):: - goes into `rest` list in examples
                       .. examples(websocket):: - goes into `websocket` list in examples
                     """
@@ -1265,7 +1266,7 @@ class CoreService(Service):
 
                 data['{0}.{1}'.format(name, attr)] = {
                     'description': doc,
-                    'cli_description': (doc or '').split('.')[0].replace('\n', ' '),
+                    'cli_description': (doc or '').split('\n\n')[0].split('.')[0].replace('\n', ' '),
                     'examples': examples,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': hasattr(method, '_no_auth_required'),
