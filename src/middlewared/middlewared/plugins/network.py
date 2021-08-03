@@ -989,6 +989,23 @@ class InterfaceService(CRUDService):
 
         For VLAN `type` the following attributes are required: vlan_parent_interface,
         vlan_tag and vlan_pcp.
+
+        .. examples(cli)::
+
+        Create a bridge interface:
+
+        > network interface create name=br0 type=BRIDGE bridge_members=enp0s3,enp0s4
+            aliases="192.168.0.10"
+
+        Create a link aggregation interface that has multiple IP addresses in multiple subnets:
+
+        > network interface create name=bond0 type=LINK_AGGREGATION lag_protocol=LACP
+            lag_ports=enp0s8,enp0s9 aliases="192.168.0.20/30","192.168.1.20/30"
+
+        Create a DHCP-enabled VLAN interface
+
+        > network interface create name=vlan0 type=VLAN vlan_parent_interface=enp0s10
+            vlan_tag=10 vlan_pcp=4 ipv4_dhcp=true ipv6_auto=true
         """
 
         await self.__check_failover_disabled()
@@ -1579,6 +1596,12 @@ class InterfaceService(CRUDService):
     async def do_update(self, oid, data):
         """
         Update Interface of `id`.
+
+        .. examples(cli)::
+
+        Update network interface static IP:
+
+        > network interface update enp0s3 aliases="192.168.0.10"
         """
         await self.__check_failover_disabled()
 
