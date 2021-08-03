@@ -353,7 +353,7 @@ class SMBService(SystemServiceService):
 
     @private
     def set_passdb_backend(self, backend_type):
-        if backend_type not in ['tdbsam', 'ldapsam']:
+        if backend_type not in ['tdbsam:/root/samba/private/passdb.tdb', 'ldapsam']:
             raise CallError(f'Unsupported passdb backend type: [{backend_type}]', errno.EINVAL)
         try:
             LP_CTX.load(SMBPath.GLOBALCONF.platform())
@@ -443,7 +443,8 @@ class SMBService(SystemServiceService):
         samba potentially try to write our local users and groups to the remote
         LDAP server.
         """
-        if await self.middleware.call("smb.getparm", "passdb backend", "global") == "tdbsam":
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+        if passdb_backend.startswith('tdbsam'):
             job.set_progress(40, 'Synchronizing passdb and groupmap.')
             await self.middleware.call('etc.generate', 'user')
             pdb_job = await self.middleware.call("smb.synchronize_passdb")

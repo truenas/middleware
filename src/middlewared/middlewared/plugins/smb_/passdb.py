@@ -25,13 +25,15 @@ class SMBService(Service):
         if not os.path.exists(f'{private_dir}/passdb.tdb'):
             return pdbentries
 
-        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') != 'tdbsam':
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+        if not passdb_backend.startswith('tdbsam'):
             return pdbentries
 
         if not verbose:
             pdb = await run([SMBCmd.PDBEDIT.value, '-L', '-d', '0'], check=False)
             if pdb.returncode != 0:
                 raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
+
             for p in (pdb.stdout.decode()).splitlines():
                 entry = p.split(':')
                 try:
@@ -75,7 +77,7 @@ class SMBService(Service):
                                                         'passdb backend',
                                                         'global')
 
-        if passdb_backend != 'tdbsam':
+        if not passdb_backend.startswith('tdbsam'):
             return
 
         bsduser = await self.middleware.call('user.query', [
@@ -186,7 +188,7 @@ class SMBService(Service):
                                                     'passdb backend',
                                                     'global')
 
-        if passdb_backend != 'tdbsam':
+        if not passdb_backend.startswith('tdbsam'):
             return
 
         conf_users = await self.middleware.call('user.query', [("smb", "=", True)])
