@@ -29,4 +29,4 @@ class ReportingDbAlertSource(ThreadedAlertSource):
             used = format_size(used, binary=True)
             threshold = format_size(rrd_size_alert_threshold, binary=True)
 
-            return Alert(ReportingDbAlertClass, {'used': used, 'threshold': threshold})
+            return Alert(ReportingDbAlertClass, {'used': used, 'threshold': threshold}, key=None)

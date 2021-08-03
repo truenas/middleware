@@ -120,6 +120,7 @@ LoadPlugin zfs_arc_v2
 	Interface "pfsync0"
 	Interface "plip0"
 	Interface "/^usbus/"
+	Interface "/^veth/"
 	IgnoreSelected true
 </Plugin>
 
@@ -159,7 +160,8 @@ LoadPlugin zfs_arc_v2
 
 <Plugin "df">
 	Mountpoint "/^\/boot/"
-	Mountpoint "/^\/var/db/system"
+	Mountpoint "/^\/mnt\/[^/]+\/ix-applications/"
+	Mountpoint "/^\/var\/db\/system/"
 	FSType "tmpfs"
 	FSType "bindfs"
 	FSType "devtmpfs"
