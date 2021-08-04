@@ -1536,7 +1536,7 @@ class SharingSMBService(SharingService):
             if share['home']:
                 share['name'] = 'homes'
 
-        ha_mode = await self.middleawre.call('smb.get_smb_ha_mode')
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         registry_shares = await self.middleware.call('sharing.smb.reg_listshares')
         cf_active = set([x['name'].casefold() for x in active_shares])
         cf_reg = set([x.casefold() for x in registry_shares])

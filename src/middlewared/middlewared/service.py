@@ -1163,11 +1163,7 @@ class TDBWrapCRUDService(CRUDService):
     async def query(self, filters, options):
         is_clustered = await self.is_clustered()
         if not is_clustered:
-            res = await self.middleware.call(
-                'datastore.query',
-                self._config.datastore,
-                filters, options
-            )
+            res = await super().query(filters, options)
             return res
 
         if not await self.cluster_healthy():
