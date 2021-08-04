@@ -14,12 +14,28 @@ import sys
 from ldap.controls import SimplePagedResultsControl
 from urllib.parse import urlparse
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService, ValidationErrors
+from middlewared.service import job, private, TDBWrapConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus, SSL
 
+LDAP_SMBCONF_PARAMS = {
+    "server role": "member server",
+    "kerberos method": None,
+    "security": "user",
+    "ldap admin dn": None,
+    "ldap suffix": None,
+    "ldap replication sleep": "1000",
+    "ldap passwd sync": "Yes",
+    "ldap ssl": None,
+    "ldapsam:trusted": "Yes",
+    "domain logons": "Yes",
+    "passdb backend": None,
+    "local master": "No",
+    "domain master": "No",
+    "preferred master": "No",
+}
 
 _int32 = struct.Struct('!i')
 
@@ -419,13 +435,87 @@ class LDAPModel(sa.Model):
     ldap_disable_freenas_cache = sa.Column(sa.Boolean())
 
 
-class LDAPService(ConfigService):
+class LDAPService(TDBWrapConfigService):
+    tdb_defaults = {
+        "id": 1,
+        "hostname": [],
+        "basedn": "",
+        "binddn": "",
+        "bindpw": "",
+        "anonbind": False,
+        "ssl": "OFF",
+        "timeout": 10,
+        "dns_timeout": 10,
+        "has_samba_schema": False,
+        "auxiliary_parameters": "",
+        "schema": "RFC2307",
+        "enable": False,
+        "kerberos_principal": "",
+        "validate_certificates": True,
+        "disable_freenas_cache": False,
+        "certificate": None,
+        "kerberos_realm": None,
+        "cert_name": None,
+        "uri_list": []
+    }
+
     class Config:
         service = "ldap"
         datastore = 'directoryservice.ldap'
         datastore_extend = "ldap.ldap_extend"
         datastore_prefix = "ldap_"
         cli_namespace = "directory_service.ldap"
+
+    @private
+    async def convert_schema_to_registry(self, data_in):
+        """
+        Convert middleware schema SMB shares to an SMB service definition
+        """
+        data_out = {}
+        if data_in['enable'] is False or data_in['has_samba_schema'] is False:
+            return data_out
+
+        params = LDAP_SMBCONF_PARAMS.copy()
+        for k, v in params.items():
+            if v is None:
+                continue
+            data_out[k] = {"parsed": v}
+
+        passdb_backend = f'ldapsam:{" ".join(data_in["uri_list"])}'
+        data_out.update({
+            "passdb backend": {"parsed": passdb_backend},
+            "ldap admin dn": {"parsed": data_in["binddn"]},
+            "ldap suffix": {"parsed": data_in["basedn"]},
+            "ldap ssl": {"raw": "start tls" if data_in['ssl'] == "STARTTLS" else "off"},
+        })
+
+        if data_in['kerberos_principal']:
+            data_out["kerberos method"] = "system keytab"
+
+        return data_out
+
+    @private
+    async def diff_conf_and_registry(self, data):
+        smbconf = (await self.middleware.call('smb.reg_globals'))['ds']
+        to_check = await self.convert_schema_to_registry(data)
+
+        r = smbconf
+        s_keys = set(to_check.keys())
+        r_keys = set(r.keys())
+        intersect = s_keys.intersection(r_keys)
+        return {
+            'added': {x: to_check[x] for x in s_keys - r_keys},
+            'removed': {x: r[x] for x in r_keys - s_keys},
+            'modified': {x: to_check[x] for x in intersect if to_check[x] != r[x]},
+        }
+
+    @private
+    async def synchronize(self, data=None):
+        if data is None:
+            data = await self.config()
+
+        diff = await self.diff_conf_and_registry(data)
+        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
     @private
     async def ldap_extend(self, data):
@@ -500,6 +590,10 @@ class LDAPService(ConfigService):
 
     @private
     async def common_validate(self, new, old, verrors):
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if ha_mode == "clustered":
+            verrors.add("ldap_upate", "Clustered LDAP service not yet implemented")
+
         if not new["enable"]:
             return
 
@@ -684,6 +778,7 @@ class LDAPService(ConfigService):
         requires the presence of Samba LDAP schema extensions on the remote
         LDAP server.
         """
+        await self.middleware.call("smb.cluster_check")
         verrors = ValidationErrors()
         must_reload = False
         old = await self.config()
@@ -706,13 +801,7 @@ class LDAPService(ConfigService):
                 verrors.check()
 
         await self.ldap_compress(new)
-        await self.middleware.call(
-            'datastore.update',
-            'directoryservice.ldap',
-            old['id'],
-            new,
-            {'prefix': 'ldap_'}
-        )
+        out = await super().do_update(new)
 
         if must_reload:
             if new['enable']:
@@ -720,7 +809,7 @@ class LDAPService(ConfigService):
             else:
                 await self.middleware.call('ldap.stop')
 
-        return await self.config()
+        return out
 
     @private
     def port_is_listening(self, host, port, timeout=1):
@@ -839,12 +928,7 @@ class LDAPService(ConfigService):
         try:
             verrors.check()
         except Exception:
-            await self.middleware.call(
-                'datastore.update',
-                'directoryservice.ldap',
-                ldap['id'],
-                {'ldap_enable': False}
-            )
+            await super().do_update({"enable": False})
             raise CallError('Automatically disabling LDAP service due to invalid configuration.',
                             errno.EINVAL)
 
@@ -897,7 +981,7 @@ class LDAPService(ConfigService):
 
         if ret and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the LDAP domain name [{ret}]')
-            await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
+            await self.middleware.call('smb.update', {'workgroup': ret})
 
         return ret
 
@@ -943,13 +1027,11 @@ class LDAPService(ConfigService):
         If state is 'HEALTHY' or 'FAULTED', then stop the service first before restarting it to ensure
         that the service begins in a clean state.
         """
-        ldap = await self.config()
-
         ldap_state = await self.middleware.call('ldap.get_state')
         if ldap_state in ['LEAVING', 'JOINING']:
             raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
 
-        await self.middleware.call('datastore.update', self._config.datastore, ldap['id'], {'ldap_enable': True})
+        ldap = await super().do_update({"enable": True})
         if ldap['kerberos_realm']:
             await self.middleware.call('kerberos.start')
 
@@ -964,33 +1046,53 @@ class LDAPService(ConfigService):
             await self.nslcd_cmd('restart')
 
         if ldap['has_samba_schema']:
-            await self.middleware.call('etc.generate', 'smb')
+            await self.middleware.call('smb.initialize_globals')
+            await self.synchronize()
+            await self.middleware.call('idmap.synchronize')
             await self.middleware.call('smb.store_ldap_admin_password')
+            await self.middleware.call('idmap.synchronize')
             await self.middleware.call('service.restart', 'cifs')
-            await self.middleware.call('smb.set_passdb_backend', 'ldapsam')
 
         await self.set_state(DSStatus['HEALTHY'])
         await self.middleware.call('service.start', 'dscache')
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if ha_mode == 'CLUSTERED':
+            await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload')
 
     @private
     async def stop(self):
-        ldap = await self.config()
-        await self.middleware.call('datastore.update', self._config.datastore, ldap['id'], {'ldap_enable': False})
+        ldap = await super().do_update({"enable": False})
+
         await self.set_state(DSStatus['LEAVING'])
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
         if ldap['has_samba_schema']:
-            await self.middleware.call('etc.generate', 'smb')
+            await self.synchronize()
+            await self.middleware.call('idmap.synchronize')
             await self.middleware.call('service.restart', 'cifs')
             await self.middleware.call('smb.synchronize_passdb')
             await self.middleware.call('smb.synchronize_group_mappings')
-        await self.middleware.call('smb.set_passdb_backend', 'tdbsam:/root/samba/private/passdb.tdb')
+
         await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.middleware.call('service.stop', 'dscache')
         await self.nslcd_cmd('stop')
         await self.set_state(DSStatus['DISABLED'])
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if ha_mode == 'CLUSTERED':
+            await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload')
+
+    @private
+    async def cluster_reload(self):
+        enabled = (await self.config())['enable']
+        await self.middleware.call('etc.generate', 'rc')
+        await self.middleware.call('etc.generate', 'nss')
+        await self.middleware.call('etc.generate', 'ldap')
+        await self.middleware.call('etc.generate', 'pam')
+        cmd = 'start' if enabled else 'stop'
+        await self.nscld_cmd(cmd)
+        await self.middleware.call(f'service.{cmd}', 'dscache')
 
     @private
     @job(lock='fill_ldap_cache')

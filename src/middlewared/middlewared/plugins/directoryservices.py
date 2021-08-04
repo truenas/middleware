@@ -3,14 +3,27 @@ import json
 import os
 import struct
 import tdb
+import errno
 
 from base64 import b64encode, b64decode
 from middlewared.schema import accepts
 from middlewared.service import Service, private, job
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.service_exception import CallError
-from middlewared.utils import run, osc
+from middlewared.utils import run
 from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
+
+
+DEFAULT_AD_CONF = {
+    "id": 1,
+    "bindname": "",
+    "verbose_logging": False,
+    "kerberos_principal": "",
+    "kerberos_realm": None,
+    "createcomputer": "",
+    "disable_freenas_cache": False,
+    "restrict_pam": False
+}
 
 
 class DSStatus(enum.Enum):
@@ -24,7 +37,6 @@ class DSStatus(enum.Enum):
 class DSType(enum.Enum):
     AD = 'activedirectory'
     LDAP = 'ldap'
-    NIS = 'nis'
 
 
 class SSL(enum.Enum):
@@ -145,22 +157,29 @@ class DirectoryServices(Service):
 
         `HEALTHY` Directory Service is enabled, and last status check has passed.
         """
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        svc = 'clustercache' if ha_mode == 'CLUSTERED' else 'cache'
+
         try:
-            return (await self.middleware.call('cache.get', 'DS_STATE'))
+            return await self.middleware.call(f'{svc}.get', 'DS_STATE')
         except KeyError:
             ds_state = {}
             for srv in DSType:
-                if srv is DSType.NIS and osc.IS_LINUX:
-                    continue
-
                 try:
                     res = await self.middleware.call(f'{srv.value}.started')
                     ds_state[srv.value] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name
                 except Exception:
                     ds_state[srv.value] = DSStatus.FAULTED.name
 
-            await self.middleware.call('cache.put', 'DS_STATE', ds_state)
+            await self.middleware.call(f'{svc}.put', 'DS_STATE', ds_state, 60)
             return ds_state
+
+        except CallError as e:
+            if e.errno is not errno.ENXIO:
+                raise
+
+            self.logger.debug("Unable to determine directory services state while cluster is unhealthy")
+            return {"activedirectory": "DISABLED", "ldap": "DISABLED"}
 
     @private
     async def set_state(self, new):
@@ -168,18 +187,19 @@ class DirectoryServices(Service):
             'activedirectory': DSStatus.DISABLED.name,
             'ldap': DSStatus.DISABLED.name,
         }
-        if osc.IS_FREEBSD:
-            ds_state.update({'nis': DSStatus.DISABLED.name})
+
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        svc = 'clustercache' if ha_mode == 'CLUSTERED' else 'cache'
 
         try:
-            old_state = await self.middleware.call('cache.get', 'DS_STATE')
+            old_state = await self.middleware.call(f'{svc}.get', 'DS_STATE')
             ds_state.update(old_state)
         except KeyError:
             self.logger.trace("No previous DS_STATE exists. Lazy initializing for %s", new)
 
         ds_state.update(new)
         self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state)
-        return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
+        return await self.middleware.call(f'{svc}.put', 'DS_STATE', ds_state)
 
     @accepts()
     @job()
@@ -201,18 +221,16 @@ class DirectoryServices(Service):
 
     @private
     async def ssl_choices(self, dstype):
-        return [] if DSType(dstype.lower()) == DSType.NIS else [x.value for x in list(SSL)]
+        return [x.value for x in list(SSL)]
 
     @private
     async def sasl_wrapping_choices(self, dstype):
-        return [] if DSType(dstype.lower()) == DSType.NIS else [x.value for x in list(SASL_Wrapping)]
+        return [x.value for x in list(SASL_Wrapping)]
 
     @private
     async def nss_info_choices(self, dstype):
         ds = DSType(dstype.lower())
         ret = []
-        if ds == DSType.NIS:
-            return ret
 
         for x in list(NSS_Info):
             if ds in x.value[1]:
@@ -244,6 +262,8 @@ class DirectoryServices(Service):
         Writes the current secrets database to the freenas config file.
         """
         ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
+        if ha_mode == "CLUSTERED":
+            return
 
         if ha_mode == "UNIFIED":
             if self.middleware.call_sync("failover.status") != "MASTER":
@@ -280,6 +300,9 @@ class DirectoryServices(Service):
         automates this backup, but care should be taken before manually invoking restores.
         """
         ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
+
+        if ha_mode == "CLUSTERED":
+            return True
 
         if ha_mode == "UNIFIED":
             if self.middleware.call_sync("failover.status") != "MASTER":
@@ -322,6 +345,11 @@ class DirectoryServices(Service):
         single value.
         """
         ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
+        if ha_mode == 'CLUSTERED':
+            # with clustered server we don't want misbehaving node to
+            # potentially muck around with clustered secrets.
+            return True
+
         with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
             rv = s.has_domain(domain)
 
@@ -343,6 +371,9 @@ class DirectoryServices(Service):
         we have in our database.
         """
         ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
+        if ha_mode == 'CLUSTERED':
+            return
+
         smb_config = self.middleware.call_sync('smb.config')
         if domain is None:
             domain = smb_config['workgroup']
@@ -376,7 +407,7 @@ class DirectoryServices(Service):
         return list(db_secrets.keys())
 
     @private
-    async def initialize(self):
+    async def initialize(self, data=None):
         """
         Ensure that secrets.tdb at a minimum exists. If it doesn't exist, try to restore
         from a backup stored in our config file. If this fails, try to use what
@@ -384,9 +415,16 @@ class DirectoryServices(Service):
         environment with a samba schema in use, we just need to write the password into
         secrets.tdb.
         """
-        ldap_conf = await self.middleware.call("ldap.config")
-        ldap_enabled = ldap_conf['enable']
-        ad_enabled = (await self.middleware.call("activedirectory.config"))['enable']
+        if data is None:
+            ldap_conf = await self.middleware.call("ldap.config")
+            ldap_enabled = ldap_conf['enable']
+            ad_enabled = (await self.middleware.call("activedirectory.config"))['enable']
+        else:
+            ldap_enabled = data['ldap']
+            ad_enabled = data['activedirectory']
+            if ldap_enabled:
+                ldap_conf = await self.middleware.call("ldap.config")
+
         workgroup = (await self.middleware.call("smb.config"))["workgroup"]
         is_kerberized = ad_enabled
 

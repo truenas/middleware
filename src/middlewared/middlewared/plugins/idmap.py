@@ -4,10 +4,10 @@ import errno
 import os
 import datetime
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors
 from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
+from middlewared.utils import run, filter_list
 from middlewared.validators import Range
 from middlewared.plugins.smb import SMBCmd, WBCErr
 
@@ -25,6 +25,9 @@ class DSType(enum.Enum):
     DS_TYPE_NIS = 3
     DS_TYPE_FREEIPA = 4
     DS_TYPE_DEFAULT_DOMAIN = 5
+
+    def choices():
+        return [x.name for x in DSType]
 
 
 class IDType(enum.Enum):
@@ -82,7 +85,7 @@ class IdmapBackend(enum.Enum):
             'linked_service': {"required": False, "default": "LOCAL_ACCOUNT"},
         },
         'has_secrets': False,
-        'services': ['AD'],
+        'services': ['AD', 'LDAP'],
     }
     RFC2307 = {
         'description': 'Looks up IDs in the Active Directory LDAP server '
@@ -172,7 +175,48 @@ class IdmapDomainModel(sa.Model):
     idmap_domain_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
 
 
-class IdmapDomainService(CRUDService):
+class IdmapDomainService(TDBWrapCRUDService):
+
+    tdb_defaults = [
+        {
+            "id": 1,
+            "name": "DS_TYPE_ACTIVEDIRECTORY",
+            "dns_domain_name": None,
+            "range_low": 90000001,
+            "range_high": 200000001,
+            "idmap_backend": "AUTORID",
+            "options": {
+                "rangesize": 10000000
+            },
+            "certificate": None
+        },
+        {
+            "id": 2,
+            "name": "DS_TYPE_LDAP",
+            "dns_domain_name": None,
+            "range_low": 10000,
+            "range_high": 90000000,
+            "idmap_backend": "LDAP",
+            "options": {
+                "ldap_base_dn": "",
+                "ldap_user_dn": "",
+                "ldap_url": "",
+                "ssl": "OFF"
+            },
+            "certificate": None
+        },
+        {
+            "id": 5,
+            "name": "DS_TYPE_DEFAULT_DOMAIN",
+            "dns_domain_name": None,
+            "range_low": 90000001,
+            "range_high": 100000000,
+            "idmap_backend": "TDB",
+            "options": {},
+            "certificate": None
+        }
+    ]
+
     class Config:
         datastore = 'directoryservice.idmap_domain'
         datastore_prefix = 'idmap_domain_'
@@ -326,6 +370,11 @@ class IdmapDomainService(CRUDService):
         Stop samba, remove the winbindd_cache.tdb file, start samba, flush samba's cache.
         This should be performed after finalizing idmap changes.
         """
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if ha_mode == 'CLUSTERED':
+            self.logger.warning("clear_idmap_cache is unsafe on clustered smb servers.")
+            return
+
         await self.middleware.call('service.stop', 'cifs')
 
         try:
@@ -418,8 +467,9 @@ class IdmapDomainService(CRUDService):
             verrors.add(f'{schema_name}.certificate', 'Please specify a valid certificate.')
 
         configured_domains = await self.query()
-        ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
-        ad_enabled = False if await self.middleware.call('activedirectory.get_state') == 'DISABLED' else True
+        ds_state = await self.middleware.call("directoryservices.get_state")
+        ldap_enabled = True if ds_state['ldap'] in ['HEALTHY', 'JOINING'] else False
+        ad_enabled = True if ds_state['activedirectory'] in ['HEALTHY', 'JOINING'] else False
         new_range = range(data['range_low'], data['range_high'])
         idmap_backend = data.get('idmap_backend')
         for i in configured_domains:
@@ -603,7 +653,9 @@ class IdmapDomainService(CRUDService):
         `sssd_compat` generate idmap low range based on same algorithm that SSSD uses by default.
         """
         verrors = ValidationErrors()
-        if data['name'] in [x['name'] for x in await self.query()]:
+
+        old = await self.query()
+        if data['name'] in [x['name'] for x in old]:
             verrors.add('idmap_domain_create.name', 'Domain names must be unique.')
 
         if data['options'].get('sssd_compat'):
@@ -640,13 +692,11 @@ class IdmapDomainService(CRUDService):
         final_options = IdmapBackend[data['idmap_backend']].defaults()
         final_options.update(data['options'])
         data['options'] = final_options
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
+
+        data['id'] = await super().do_create(data)
+        out = await self.query([('id', '=', id)], {'get': True})
+        await self.synchronize()
+        return out
 
     @accepts(
         Int('id', required=True),
@@ -660,7 +710,8 @@ class IdmapDomainService(CRUDService):
         """
         Update a domain by id.
         """
-        old = await self._get_instance(id)
+
+        old = await self.query([('id', '=', id)], {'get': True})
         new = old.copy()
         if data.get('idmap_backend') and data['idmap_backend'] != old['idmap_backend']:
             """
@@ -719,27 +770,28 @@ class IdmapDomainService(CRUDService):
                                        domain, secret)
             await self.middleware.call("directoryservices.backup_secrets")
 
-        await self.idmap_compress(new)
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
+        await super().do_update(id, new)
+
+        out = await self.query([('id', '=', id)], {'get': True})
+        await self.synchronize()
         cache_job = await self.middleware.call('idmap.clear_idmap_cache')
         await cache_job.wait()
-        return await self._get_instance(id)
+        return out
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete a domain by id. Deletion of default system domains is not permitted.
+        In case of registry config for clustered server, this will remove all smb4.conf
+        entries for the domain associated with the id.
         """
         if id <= 5:
             entry = await self._get_instance(id)
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
+
+        ret = await super().delete(id)
+        await self.synchronize()
+        return ret
 
     @private
     async def name_to_sid(self, name):
@@ -918,3 +970,86 @@ class IdmapDomainService(CRUDService):
             'local': False,
             'id_type_both': idmap_info[1],
         }
+
+    async def idmap_to_smbconf(self, data=None):
+        rv = {}
+        if data is None:
+            idmap = await self.query()
+        else:
+            idmap = data
+
+        ds_state = await self.middleware.call('directoryservices.get_state')
+        workgroup = await self.middleware.call('smb.getparm', 'workgroup', 'global')
+        ad_enabled = ds_state['activedirectory'] in ['HEALTHY', 'JOINING', 'FAULTED']
+        ldap_enabled = ds_state['ldap'] in ['HEALTHY', 'JOINING', 'FAULTED']
+        ad_idmap = filter_list(idmap, [('name', '=', DSType.DS_TYPE_ACTIVEDIRECTORY.name)], {'get': True}) if ad_enabled else None
+
+        for i in idmap:
+            if i['name'] == DSType.DS_TYPE_DEFAULT_DOMAIN.name:
+                if ad_idmap and ad_idmap['idmap_backend'] == 'AUTORID':
+                    continue
+                domain = "*"
+            elif i['name'] == DSType.DS_TYPE_ACTIVEDIRECTORY.name:
+                if not ad_enabled:
+                    continue
+                if i['idmap_backend'] == 'AUTORID':
+                    domain = "*"
+                else:
+                    domain = workgroup
+            elif i['name'] == DSType.DS_TYPE_LDAP.name:
+                if not ldap_enabled:
+                    continue
+                domain = workgroup
+                # This will need to be re-implemented once LDAP directory service is clustered
+                if i['idmap_backend'] == 'LDAP':
+                    """
+                    In case of default LDAP backend, populate values from ldap form.
+                    """
+                    idmap_prefix = f"idmap config {domain} :"
+                    ldap = await self.middleware.call('ldap.config')
+                    rv.update({
+                        f"{idmap_prefix} backend": i['idmap_backend'].lower(),
+                        f"{idmap_prefix} range": f"{i['range_low']} - {i['range_high']}",
+                        f"{idmap_prefix} ldap_base_dn": ldap['basedn'],
+                        f"{idmap_prefix} ldap_url": ' '.join(ldap['uri_list']),
+                    })
+                    continue
+            else:
+                domain = i['name']
+
+            idmap_prefix = f"idmap config {domain} :"
+            rv.update({
+                f"{idmap_prefix} backend": {"raw": i['idmap_backend'].lower()},
+                f"{idmap_prefix} range": {"raw": f"{i['range_low']} - {i['range_high']}"}
+            })
+            for k, v in i['options'].items():
+                if v is True:
+                    v = "True"
+                elif v is False:
+                    v = "False"
+
+                rv.update({
+                    f"{idmap_prefix} {k}": {"parsed": v},
+                })
+
+        return rv
+
+    @private
+    async def diff_conf_and_registry(self, data, idmaps):
+        r = idmaps
+        s_keys = set(data.keys())
+        r_keys = set(r.keys())
+        intersect = s_keys.intersection(r_keys)
+        return {
+            'added': {x: data[x] for x in s_keys - r_keys},
+            'removed': {x: r[x] for x in r_keys - s_keys},
+            'modified': {x: data[x] for x in intersect if data[x] != r[x]},
+        }
+
+    @private
+    async def synchronize(self):
+        config_idmap = await self.query()
+        idmaps = await self.idmap_to_smbconf(config_idmap)
+        to_check = (await self.middleware.call('smb.reg_globals'))['idmap']
+        diff = await self.diff_conf_and_registry(idmaps, to_check)
+        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)

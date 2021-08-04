@@ -1,5 +1,5 @@
 from middlewared.schema import Any, Str, Ref, Int, Dict, Bool, accepts
-from middlewared.service import Service, private, job
+from middlewared.service import Service, private, job, filterable
 from middlewared.utils import filter_list
 from middlewared.service_exception import CallError, MatchNotFound
 
@@ -7,6 +7,169 @@ from collections import namedtuple
 import time
 import pwd
 import grp
+import json
+
+
+class ClusterCacheService(Service):
+    tdb_options = {
+        "cluster": True,
+        "data_type": "STRING"
+    }
+
+    class Config:
+        private = True
+
+    @accepts(Str('key'))
+    async def get(self, key):
+        """
+        Get `key` from cache.
+
+        Raises:
+            KeyError: not found in the cache
+            CallError: issue with clustered key-value store
+
+        CLOCK_REALTIME because clustered
+        """
+        payload = {
+            "name": 'middlewared',
+            "key": key,
+            "tdb-options": self.tdb_options
+        }
+        try:
+            tdb_value = await self.middleware.call('tdb.fetch', payload)
+        except MatchNotFound:
+            raise KeyError(key)
+
+        expires = float(tdb_value[:12])
+        now = time.clock_gettime(time.CLOCK_REALTIME)
+        if expires and now > expires:
+            await self.middleware.call('tdb.remove', payload)
+            raise KeyError(f'{key} has expired')
+
+        is_encrypted = bool(int(tdb_value[14]))
+        if is_encrypted:
+            raise NotImplementedError
+
+        data = json.loads(tdb_value[18:])
+        return data
+
+    @accepts(Str('key'))
+    async def pop(self, key):
+        """
+        Removes and returns `key` from cache.
+        """
+        payload = {
+            "name": 'middlewared',
+            "key": key,
+            "tdb-options": self.tdb_options
+        }
+        try:
+            tdb_value = await self.middleware.call('tdb.fetch', payload)
+        except MatchNotFound:
+            tdb_value = None
+
+        if tdb_value:
+            await self.middleware.call('tdb.remove', payload)
+            # Will uncomment / add handling for private entries
+            # once there's a cluster-wide method for encrypting data
+            # is_encrypted = bool(int(tdb_value[14]))
+            tdb_value = json.loads(tdb_value[18:])
+
+        return tdb_value
+
+    @accepts(Str('key'))
+    async def has_key(self, key):
+        try:
+            await self.middleware.call('tdb.fetch', {
+                "name": 'middlewared',
+                "key": key,
+                "tdb-options": self.tdb_options
+            })
+            return True
+        except MatchNotFound:
+            return False
+
+    @accepts(
+        Str('key'),
+        Dict('value', additional_attrs=True),
+        Int('timeout', default=0),
+        Dict('options', Str('flag', enum=["CREATE", "REPLACE"], default=None, null=True), Bool('private', default=False),)
+    )
+    async def put(self, key, value, timeout, options):
+        """
+        Put `key` of `value` in the cache. `timeout` specifies time limit
+        after which it will be removed.
+
+        The following options are supported:
+        `flag` optionally specifies insertion behavior.
+        `CREATE` flag raises KeyError if entry exists. `UPDATE` flag
+        raises KeyError if entry does not exist. When no flags are specified
+        then entry is simply inserted.
+
+        `private` determines whether data should be encrypted before being
+        committed to underlying storage backend.
+        """
+        if options['private']:
+            # will implement in later commit
+            raise NotImplementedError
+
+        if timeout != 0:
+            ts = f'{time.clock_gettime(time.CLOCK_REALTIME) + timeout:.2f}'
+        else:
+            ts = '0000000000.00'
+
+        tdb_key = key
+
+        # This format must not be changed without careful consideration
+        # Zeros are left as padding in middle to expand boolean options if needed
+        tdb_val = f'{ts}{int(options["private"])}0000{json.dumps(value)}'
+
+        if options['flag']:
+            has_entry = False
+            try:
+                has_entry = bool(await self.get(tdb_key))
+            except KeyError:
+                pass
+
+            if options['flag'] == "CREATE" and has_entry:
+                raise KeyError(key)
+
+            if options['flag'] == "UPDATE" and not has_entry:
+                raise KeyError(key)
+
+        await self.middleware.call('tdb.store', {
+            'name': 'middlewared',
+            'key': tdb_key,
+            'value': {'payload': tdb_val},
+            'tdb-options': self.tdb_options
+        })
+        return
+
+    @filterable
+    async def query(self, filters, options):
+        def cache_convert_fn(tdb_key, tdb_val, entries):
+            entries.append({
+                "key": tdb_key,
+                "timeout": float(tdb_val[:12]),
+                "private": bool(int(tdb_val[14])),
+                "value": json.loads(tdb_val[18:])
+            })
+            return True
+
+        if not filters:
+            filters = []
+        if not options:
+            options = {}
+
+        parsed = []
+        tdb_entries = await self.middleware.call('tdb.entries', {
+            'name': 'middlewared',
+            'tdb-options': self.tdb_options
+        })
+        for entry in tdb_entries:
+            cache_convert_fn(entry['key'], entry['val'], parsed)
+
+        return filter_list(parsed, filters, options)
 
 
 class CacheService(Service):
@@ -110,11 +273,10 @@ class DSCache(Service):
             {"action": "SET", "key": f'ID_{entry[id_key]}', "val": entry},
             {"action": "SET", "key": f'NAME_{entry[name_key]}', "val": entry}
         ]
-        await self.middleware.call(
-            'tdb.batch_ops',
-            f'{ds.lower()}_{idtype.lower()}',
-            ops
-        )
+        await self.middleware.call('tdb.batch_ops', {
+            "name": f'{ds.lower()}_{idtype.lower()}',
+            "ops": ops
+        })
         return True
 
     @accepts(
@@ -139,7 +301,7 @@ class DSCache(Service):
         tdb_key = f'{prefix}_{who_str if who_str else who_id}'
 
         try:
-            entry = await self.middleware.call("tdb.fetch", tdb_name, tdb_key)
+            entry = await self.middleware.call("tdb.fetch", {"name": tdb_name, "key": tdb_key})
         except MatchNotFound:
             entry = None
 
@@ -174,11 +336,10 @@ class DSCache(Service):
         Str('idtype', required=True, enum=["USER", "GROUP"]),
     )
     async def entries(self, ds, idtype):
-        entries = await self.middleware.call(
-            'tdb.entries',
-            f'{ds.lower()}_{idtype.lower()}',
-            [('key', '^', 'ID')]
-        )
+        entries = await self.middleware.call('tdb.entries', {
+            'name': f'{ds.lower()}_{idtype.lower()}',
+            'query-filters': [('key', '^', 'ID')]
+        })
         return [x['val'] for x in entries]
 
     def get_uncached_user(self, username=None, uid=None):
@@ -284,8 +445,8 @@ class DSCache(Service):
         UI button to 'rebuild directory service cache'.
         """
         for ds in ['activedirectory', 'ldap']:
-            await self.middleware.call('tdb.wipe', f'{ds}_user')
-            await self.middleware.call('tdb.wipe', f'{ds}_group')
+            await self.middleware.call('tdb.wipe', {'name': f'{ds}_user'})
+            await self.middleware.call('tdb.wipe', {'name': f'{ds}_group'})
 
             ds_state = await self.middleware.call(f'{ds}.get_state')
 
