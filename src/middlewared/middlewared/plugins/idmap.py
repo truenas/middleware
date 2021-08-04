@@ -1008,10 +1008,10 @@ class IdmapDomainService(TDBWrapCRUDService):
                     idmap_prefix = f"idmap config {domain} :"
                     ldap = await self.middleware.call('ldap.config')
                     rv.update({
-                        f"{idmap_prefix} backend": i['idmap_backend'].lower(),
-                        f"{idmap_prefix} range": f"{i['range_low']} - {i['range_high']}",
-                        f"{idmap_prefix} ldap_base_dn": ldap['basedn'],
-                        f"{idmap_prefix} ldap_url": ' '.join(ldap['uri_list']),
+                        f"{idmap_prefix} backend": {"raw": i['idmap_backend'].lower()},
+                        f"{idmap_prefix} range": {"raw": f"{i['range_low']} - {i['range_high']}"},
+                        f"{idmap_prefix} ldap_base_dn": {"raw": ldap['basedn']},
+                        f"{idmap_prefix} ldap_url": {"raw": ' '.join(ldap['uri_list'])},
                     })
                     continue
             else:
