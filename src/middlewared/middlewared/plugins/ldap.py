@@ -481,11 +481,12 @@ class LDAPService(TDBWrapConfigService):
                 continue
             data_out[k] = {"parsed": v}
 
+        passdb_backend = f'ldapsam:{" ".join(data_in["uri_list"])}'
         data_out.update({
-            "passdb backend": {"parsed": data_in["uri_list"]},
+            "passdb backend": {"parsed": passdb_backend},
             "ldap admin dn": {"parsed": data_in["binddn"]},
             "ldap suffix": {"parsed": data_in["basedn"]},
-            "ldap ssl": {"parsed": "start tls" if data_in['ssl'] == "STARTTLS" else "off"},
+            "ldap ssl": {"raw": "start tls" if data_in['ssl'] == "STARTTLS" else "off"},
         })
 
         if data_in['kerberos_principal']:
@@ -505,7 +506,7 @@ class LDAPService(TDBWrapConfigService):
         return {
             'added': {x: to_check[x] for x in s_keys - r_keys},
             'removed': {x: r[x] for x in r_keys - s_keys},
-            'modified': {x: (to_check[x], r[x]) for x in intersect if to_check[x] != r[x]},
+            'modified': {x: to_check[x] for x in intersect if to_check[x] != r[x]},
         }
 
     @private
