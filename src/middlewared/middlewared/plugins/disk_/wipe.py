@@ -31,7 +31,7 @@ class DiskService(Service):
             size = self._get_size(f)
             if size is None or size == 0:
                 # no size means nothing else will work
-                self.logger.error('Unable to determine size of "%s"', dev)
+                self.logger.error('Unable to determine size of "%s"', data['dev'])
                 return
             elif size < 33554432 and data['mode'] == 'QUICK':
                 # we wipe the first and last 33554432 bytes (32MB) of the
