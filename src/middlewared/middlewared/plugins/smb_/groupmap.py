@@ -85,12 +85,12 @@ class SMBService(Service):
         async def add_to_payload(payload, alias, key, members):
             idx = next((i for i, x in enumerate(payload[key]) if x["alias"] == alias), None)
             if not idx:
-                payload["ADDMEM"].append({
+                payload[key].append({
                     "alias": alias,
                     "members": members,
                 })
             else:
-                payload["ADDMEM"][idx]["members"].append(members)
+                payload[key][idx]["members"].append(members)
 
         if diff.get("ADDMEM"):
             await add_to_payload(payload, alias, "ADDMEM", diff["ADDMEM"])
@@ -142,7 +142,7 @@ class SMBService(Service):
                                                  {'groupname': admin_group})
             admin_sid = await self.middleware.call(
                 'idmap.unixid_to_sid',
-                {"id_type": "GROUP", "id": grp_obj["gid"]}
+                {"id_type": "GROUP", "id": grp_obj["gr_gid"]}
             )
             if admin_sid:
                 expected.append(admin_sid)
