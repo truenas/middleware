@@ -13,7 +13,7 @@ class SystemService(Service):
         coredumps = []
         coredumpctl = await run("coredumpctl", "list", "--no-pager", encoding="utf-8", errors="ignore", check=False)
         if coredumpctl.returncode != 0:
-            return
+            return []
 
         lines = coredumpctl.stdout.splitlines()
         header = lines.pop(0)
