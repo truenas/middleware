@@ -25,8 +25,6 @@ DEFAULT_AD_CONF = {
     "restrict_pam": False
 }
 
-MIDTDB_LOCK = None
-
 
 class DSStatus(enum.Enum):
     DISABLED = enum.auto()
