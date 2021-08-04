@@ -208,4 +208,5 @@ class GlusterEventsdService(Service):
         # implementation is very much broken so now we remove
         # localhost api endpoint (it if it's there)
         data = {'url': LOCAL_WEBHOOK_URL}
-        self.middleware.call_sync('gluster.eventsd.delete', data)
+        if self.middleware.call_sync('service.started', 'glustereventsd'):
+            self.middleware.call_sync('gluster.eventsd.delete', data)
