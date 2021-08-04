@@ -534,6 +534,8 @@ class SystemDatasetService(ConfigService):
             if _from:
                 cp = await run('rsync', '-az', f'{SYSDATASET_PATH}/', '/tmp/system.new', check=False)
                 if cp.returncode == 0:
+                    # Let's make sure that we don't have coredump directory mounted
+                    await run('umount', '/var/lib/systemd/coredump', check=False)
                     await self.__umount(_from, config['uuid'])
                     await self.__umount(_to, config['uuid'])
                     await self.__mount(_to, config['uuid'], SYSDATASET_PATH)
