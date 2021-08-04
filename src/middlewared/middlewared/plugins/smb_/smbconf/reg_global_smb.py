@@ -11,6 +11,18 @@ LOGLEVEL_MAP = bidict({
 
 
 class GlobalSchema(RegistrySchema):
+    def convert_schema_to_registry(self, data_in, data_out):
+        super().convert_schema_to_registry(data_in, data_out)
+        data_out.update({
+            'disable spoolss': {'parsed': True},
+            'dns proxy': {'parsed': False},
+            'load printers': {'parsed': False},
+            'max log size': {'parsed': 5120},
+            'printcap name': {'parsed': '/dev/null'},
+            'restrict anonymous': {'parsed': 2},
+        })
+        return
+
     def smb_proto_transform(entry, conf):
         val = conf.pop(entry.smbconf, entry.default)
         if val == entry.default:
