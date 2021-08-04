@@ -514,7 +514,7 @@ class LDAPService(TDBWrapConfigService):
             data = await self.config()
 
         diff = await self.diff_conf_and_registry(data)
-        await self.middleware.call('smb.reg_apply_conf_diff', diff)
+        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
     @private
     async def ldap_extend(self, data):

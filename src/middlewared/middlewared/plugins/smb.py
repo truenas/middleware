@@ -2,7 +2,7 @@ from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import accepts, job, private, SharingService, TDBWrapConfigService, ValidationErrors, filterable
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
@@ -483,7 +483,7 @@ class SMBService(TDBWrapConfigService):
         ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
         if ad_enabled:
             await self.middleware.call('activedirectory.synchronize')
-            ldap_enabled = false
+            ldap_enabled = False
         else:
             ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
             if ldap_enabled:
@@ -530,7 +530,7 @@ class SMBService(TDBWrapConfigService):
         job.set_progress(65, 'Initializing directory services')
         await self.middleware.call(
             "directoryservices.initialize",
-            {"activedirectory": ad_enable, "ldap": ldap_enable}
+            {"activedirectory": ad_enabled, "ldap": ldap_enabled}
         )
 
         job.set_progress(70, 'Checking SMB server status.')
@@ -912,6 +912,9 @@ class SharingSMBService(SharingService):
 
         `purpose` applies common configuration presets depending on intended purpose.
 
+        `path` path to export over the SMB protocol. If server is clustered, then this path will be
+        relative to the `cluster_volname`.
+
         `timemachine` when set, enables Time Machine backups for this share.
 
         `ro` when enabled, prohibits write access to the share.
@@ -1087,6 +1090,8 @@ class SharingSMBService(SharingService):
                 await self.close_share(oldname)
                 try:
                     await self.middleware.call('sharing.smb.reg_delshare', oldname)
+                except MatchNotFound:
+                    pass
                 except Exception:
                     self.logger.warning('Failed to remove stale share [%s]',
                                         old['name'], exc_info=True)
@@ -1147,6 +1152,9 @@ class SharingSMBService(SharingService):
         try:
             await self.middleware.call('sharing.smb.reg_delshare',
                                        share['name'] if not share['home'] else 'homes')
+        except MatchNotFound:
+            pass
+
         except Exception:
             self.logger.warn('Failed to remove registry entry for [%s].', share['name'], exc_info=True)
 

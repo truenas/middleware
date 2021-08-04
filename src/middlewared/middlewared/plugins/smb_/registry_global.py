@@ -1,13 +1,10 @@
 from middlewared.service import private, Service
 from middlewared.service_exception import CallError
-from middlewared.utils import run
 from middlewared.plugins.smb_.smbconf.reg_global_smb import GlobalSchema
 from middlewared.plugins.activedirectory import AD_SMBCONF_PARAMS
 from middlewared.plugins.ldap import LDAP_SMBCONF_PARAMS
-from middlewared.plugins.smb import SMBCmd
 
 import errno
-import json
 
 DEFAULT_GLOBAL_PARAMETERS = {
     "dns proxy": {"smbconf": "dns proxy", "default": False},
@@ -30,14 +27,6 @@ class SMBService(Service):
     class Config:
         service = 'cifs'
         service_verb = 'restart'
-
-    @private
-    async def reg_default_params(self):
-        ret = {}
-        ret['smb'] = DEFAULT_GLOBAL_PARAMETERS.keys()
-        ret['ad'] = AD_SMBCONF_PARAMS.keys()
-        ret['ldap'] = LDAP_SMBCONF_PARAMS.keys()
-        return ret
 
     @private
     async def strip_idmap(self, reg_defaults):
@@ -103,54 +92,9 @@ class SMBService(Service):
         return ret
 
     @private
-    async def global_setparm(self, data):
-        cmd = await run([SMBCmd.NET.value, '--json', 'conf', 'setparm', json.dumps(data)], check=False)
-        if cmd.returncode != 0:
-            raise CallError(f"Failed to set payload: {data}, error: "
-                            f"{cmd.stderr.decode().strip()}")
-
-    @private
-    async def global_delparm(self, data):
-        cmd = await run([SMBCmd.NET.value, '--json', 'conf', 'delparm', json.dumps(data)], check=False)
-        if cmd.returncode != 0:
-            raise CallError(f"Failed to delete parameter(s) [{data}]: "
-                            f"{cmd.stderr.decode().strip()}")
-
-    @private
-    async def reg_apply_conf_diff(self, diff):
-        set_payload = {"service": "global", "parameters": diff["added"] | diff["modified"]}
-        del_payload = {"service": "global", "parameters": diff["removed"]}
-
-        if set_payload["parameters"]:
-            await self.global_setparm(set_payload)
-
-        if del_payload["parameters"]:
-            await self.global_delparm(del_payload)
-
-    @private
     async def reg_update(self, data):
         diff = await self.diff_conf_and_registry(data, True)
-        await self.reg_apply_conf_diff(diff)
-
-    @private
-    async def get_smb_homedir(self, gen_params):
-        homedir = "/home"
-        if "HOMES" in gen_params['shares']:
-            homedir = (await self.middleware.call("sharing.smb.reg_showshare", "HOMES"))['path']
-        return homedir
-
-    @private
-    async def pam_is_required(self, gen_params):
-        """
-        obey pam restictions parameter is requried to allow pam_mkhomedir to operate on share connect.
-        It is also required to enable kerberos auth in LDAP environments
-        """
-        if "HOMES" in gen_params['shares']:
-            return True
-        if gen_params['role'] == 'ldap_member':
-            return True
-
-        return False
+        await self.middleware.call('smb.apply_conf_diff', 'GLOBAL', diff)
 
     @private
     async def get_ds_role(self, params):

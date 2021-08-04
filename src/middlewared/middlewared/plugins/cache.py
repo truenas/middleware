@@ -68,10 +68,10 @@ class ClusterCacheService(Service):
         except MatchNotFound:
             tdb_value = None
 
-        is_encrypted = False
-
         if tdb_value:
             await self.middleware.call('tdb.remove', payload)
+            # Will uncomment / add handling for private entries
+            # once there's a cluster-wide method for encrypting data
             # is_encrypted = bool(int(tdb_value[14]))
             tdb_value = json.loads(tdb_value[18:])
 

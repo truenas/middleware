@@ -87,12 +87,6 @@ class TDBWrap(object):
         open_flags = os.O_CREAT | os.O_RDWR
         open_mode = 0o600
 
-        if tdb_type == 'INTERNAL':
-            tdb_flags |= tdb.INTERNAL
-
-        if not options.get('mmap', True):
-            tdb_flags |= tdb.NOMMAP
-
         if not tdb_flags & tdb.INTERNAL:
             name = f'{TDBPath[tdb_type].value}/{name}.tdb'
 

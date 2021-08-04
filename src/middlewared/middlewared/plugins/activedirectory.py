@@ -37,6 +37,7 @@ AD_SMBCONF_PARAMS = {
     "winbind max domain connections": 10,
     "client ldap sasl wrapping": "seal",
     "template shell": "/bin/sh",
+    "template homedir": None,
     "ads dns update": None,
     "realm": None,
     "allow trusted domains": None,
@@ -264,6 +265,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         if data_in.get("nss_info"):
             data_out["winbind nss info"] = {"parsed": data_in["nss_info"]}
+
+        try:
+            home_share = await self.middleware.call('sharing.smb.reg_showshare', 'homes')
+            home_path = home_share['path']['raw']
+        except MatchNotFound:
+            home_path = 'home'
+
+        data_out['template homedir'] = {"parsed": f'{home_path}/%D/%U'}
 
         return
 
@@ -561,7 +570,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         ret = await super().do_update(new)
 
         diff = await self.diff_conf_and_registry(new)
-        await self.middleware.call('smb.reg_apply_conf_diff', diff)
+        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
         job = None
         if not old['enable'] and new['enable']:
@@ -598,7 +607,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             data = await self.config()
 
         diff = await self.diff_conf_and_registry(data)
-        await self.middleware.call('smb.reg_apply_conf_diff', diff)
+        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
     @private
     async def set_state(self, state):

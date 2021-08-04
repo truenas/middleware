@@ -50,7 +50,7 @@ class ShareSchema(RegistrySchema):
         """
         Convert middleware schema SMB shares to an SMB service definition
         """
-        def order_vfs_objects(vfs_objects, is_clustered):
+        def order_vfs_objects(vfs_objects, is_clustered, purpose):
             vfs_objects_special = ('catia', 'zfs_space', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
                                    'noacl', 'ixnas', 'acl_xattr', 'zfsacl', 'nfs4acl_xattr',
                                    'glusterfs', 'crossrename', 'recycle', 'zfs_core', 'aio_fbsd', 'io_uring')
@@ -72,6 +72,11 @@ class ShareSchema(RegistrySchema):
             if 'noacl' in vfs_objects and 'ixnas' in vfs_objects:
                 vfs_objects.remove('ixnas')
 
+            if purpose == 'ENHANCED_TIMEMACHINE':
+                vfs_objects.append('tmprotect')
+            elif purpose == 'WORM_DROPBOX':
+                vfs_objects.append('worm')
+
             for obj in vfs_objects:
                 if obj not in vfs_objects_special:
                     vfs_objects_ordered.append(obj)
@@ -90,7 +95,12 @@ class ShareSchema(RegistrySchema):
 
         super().convert_schema_to_registry(data_in, data_out)
 
-        data_out['vfs objects']['parsed'] = order_vfs_objects(data_out['vfs objects']['parsed'], is_clustered)
+        ordered_vfs_objects = order_vfs_objects(
+            data_out['vfs objects']['parsed'],
+            is_clustered,
+            data_in['purpose'],
+        )
+        data_out['vfs objects']['parsed'] = ordered_vfs_objects
 
         """
         Some presets contain values that users can override via aux

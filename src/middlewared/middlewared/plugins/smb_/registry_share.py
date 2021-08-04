@@ -1,5 +1,5 @@
 from middlewared.service import private, Service, filterable
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
 from middlewared.plugins.smb import SMBCmd, SMBHAMODE
 from middlewared.plugins.smb_.smbconf.reg_service import ShareSchema
@@ -70,11 +70,18 @@ class SharingSMBService(Service):
 
         netconf = await run(cmd, check=False)
         if netconf.returncode != 0:
+            # net_conf needs to be reworked to return errors consistently.
             if action != 'getparm':
-                self.logger.debug('netconf failure for command [%s]: %s',
+                self.logger.trace('netconf failure for command [%s]: %s',
                                   cmd, netconf.stderr.decode())
+
+            errmsg = netconf.stderr.decode().strip()
+            if 'SBC_ERR_NO_SUCH_SERVICE' in errmsg or 'does not exist' in errmsg:
+                svc = share if share else json.loads(args[0])['service']
+                raise MatchNotFound(svc)
+
             raise CallError(
-                f'net conf {action} [{cmd}] failed with error: {netconf.stderr.decode()}'
+                f'net conf {action} [{cmd}] failed with error: {errmsg}'
             )
 
         if jsoncmd:
@@ -225,7 +232,7 @@ class SharingSMBService(Service):
             await self.reg_setparm(set_payload)
 
         if del_payload["parameters"]:
-            await self.reg_setparm(del_payload)
+            await self.reg_delparm(del_payload)
 
         return
 
@@ -302,12 +309,5 @@ class SharingSMBService(Service):
 
         ss = ShareSchema(self.middleware)
         ss.convert_schema_to_registry(data, conf)
-
-        """
-        if data['purpose'] == 'ENHANCED_TIMEMACHINE':
-            data['vfsobjects'].append('tmprotect')
-        elif data['purpose'] == 'WORM_DROPBOX':
-            data['vfsobjects'].append('worm')
-        """
 
         return conf

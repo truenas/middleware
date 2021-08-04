@@ -1173,7 +1173,6 @@ class TDBWrapCRUDService(CRUDService):
         if not await self.cluster_healthy():
             return copy.deepcopy(self.tdb_defaults)
 
-
         res = await self.middleware.call('tdb.query', {
             'name': self._config.namespace,
             'tdb-options': self.tdb_options.copy()

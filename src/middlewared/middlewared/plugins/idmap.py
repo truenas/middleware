@@ -1052,4 +1052,4 @@ class IdmapDomainService(TDBWrapCRUDService):
         idmaps = await self.idmap_to_smbconf(config_idmap)
         to_check = (await self.middleware.call('smb.reg_globals'))['idmap']
         diff = await self.diff_conf_and_registry(idmaps, to_check)
-        await self.middleware.call('smb.reg_apply_conf_diff', diff)
+        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)

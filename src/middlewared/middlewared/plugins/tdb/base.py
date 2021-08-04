@@ -31,12 +31,6 @@ class TDBService(Service, TDBMixin, SchemaMixin):
                     errno.EINVAL
                 )
 
-        if options['backend'] == 'INTERNAL' and options['cluster']:
-            raise CallError(
-                f'{name}: INTERNAL backend not supported for clustered tdb.',
-                errno.EINVAL
-            )
-
         if not options['cluster']:
             return
 
@@ -104,10 +98,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Dict('value', required=True, additional_attrs=True),
         Dict(
             'tdb-options',
-            Str('backend', enum=['PERSISTENT', 'VOLATILE', 'INTERNAL'], default='PERSISTENT'),
+            Str('backend', enum=['PERSISTENT', 'VOLATILE'], default='PERSISTENT'),
             Str('tdb_type', enum=['BASIC', 'CRUD', 'CONFIG'], default='BASIC'),
             Str('data_type', enum=['JSON', 'STRING', 'BYTES'], default='JSON'),
-            Bool('mmap', default=True),
             Bool('cluster', default=False),
             Int('read_backoff', default=0),
             Dict('service_version', Int('major', default=0), Int('minor', default=0)),
