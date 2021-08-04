@@ -94,7 +94,7 @@ class SMBService(Service):
     @private
     async def reg_update(self, data):
         diff = await self.diff_conf_and_registry(data, True)
-        await self.middleware.call('smb.apply_conf_diff', 'GLOBAL', diff)
+        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
     @private
     async def get_ds_role(self, params):
