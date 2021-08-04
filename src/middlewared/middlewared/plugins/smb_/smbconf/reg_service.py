@@ -209,6 +209,8 @@ class ShareSchema(RegistrySchema):
 
     def durable_set(entry, val, data_in, data_out):
         data_out['posix locking'] = {"parsed": not val}
+        data_out['kernel share modes'] = {"parsed": not val}
+        data_out['kernel oplocks'] = {"parsed": not val}
         return
 
     def recycle_get(entry, conf):
@@ -449,7 +451,7 @@ class ShareSchema(RegistrySchema):
         RegObj("timemachine", "fruit:time machine", True),
         RegObj("timemachine_quota", "fruit:time machine max size", "",
                smbconf_parser=tmquot_get),
-        RegObj("durable handle", "posix locking", True,
+        RegObj("durablehandle", "posix locking", True,
                smbconf_parser=durable_get, schema_parser=durable_set),
         RegObj("recyclebin", None, False,
                smbconf_parser=recycle_get, schema_parser=recycle_set),
