@@ -1317,6 +1317,21 @@ class SharingSMBService(SharingService):
                 f'{schema_name}.cluster_volname',
                 'Cluster volume name is required for clustered shares.'
             )
+            return
+
+        cluster_volumes = await self.middleware.call('gluster.volume.list')
+
+        try:
+            cluster_volumes.remove('ctdb_shared_vol')
+        except ValueError:
+            pass
+
+        if data['cluster_volname'] not in cluster_volumes:
+            verrors.add(
+                f'{schema_name}.cluster_volname',
+                f'{data["cluster_volname"]}: cluster volume does not exist. '
+                f'Choices are: {cluster_volumes}.'
+            )
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
