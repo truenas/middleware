@@ -148,8 +148,11 @@ class EnclosureService(CRUDService):
 
         return await self._get_instance(id)
 
-    def _get_slot(self, slot_filter, enclosure_query=None):
-        for enclosure in self.middleware.call_sync("enclosure.query", enclosure_query or []):
+    def _get_slot(self, slot_filter, enclosure_query=None, enclosure_info=None):
+        if enclosure_info is None:
+            enclosure_info = self.middleware.call_sync("enclosure.query", enclosure_query or [])
+
+        for enclosure in enclosure_info:
             try:
                 elements = next(filter(lambda element: element["name"] == "Array Device Slot",
                                        enclosure["elements"]))["elements"]
@@ -160,8 +163,8 @@ class EnclosureService(CRUDService):
 
         raise MatchNotFound()
 
-    def _get_slot_for_disk(self, disk):
-        return self._get_slot(lambda element: element["data"]["Device"] == disk)
+    def _get_slot_for_disk(self, disk, enclosure_info=None):
+        return self._get_slot(lambda element: element["data"]["Device"] == disk, enclosure_info=enclosure_info)
 
     def _get_ses_slot(self, enclosure, element):
         if "original" in element:
@@ -206,7 +209,7 @@ class EnclosureService(CRUDService):
             raise CallError("Error setting slot status")
 
     @private
-    def sync_disk(self, id):
+    def sync_disk(self, id, enclosure_info=None):
         disk = self.middleware.call_sync(
             'disk.query',
             [['identifier', '=', id]],
@@ -214,7 +217,7 @@ class EnclosureService(CRUDService):
         )
 
         try:
-            enclosure, element = self._get_slot_for_disk(disk["name"])
+            enclosure, element = self._get_slot_for_disk(disk["name"], enclosure_info)
         except MatchNotFound:
             disk_enclosure = None
         else:
