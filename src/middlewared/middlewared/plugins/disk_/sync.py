@@ -82,6 +82,7 @@ class DiskService(Service, ServiceChangeMixin):
         seen_disks = {}
         serials = []
         changed = False
+        encs = await self.middleware.call('enclosure.query')
         for disk in (
             await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
         ):
@@ -131,7 +132,7 @@ class DiskService(Service, ServiceChangeMixin):
                 changed = True
 
             try:
-                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], encs)
             except Exception:
                 self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
                                              disk['disk_identifier'], exc_info=True)
@@ -172,7 +173,7 @@ class DiskService(Service, ServiceChangeMixin):
                     changed = True
 
                 try:
-                    await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+                    await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], encs)
                 except Exception:
                     self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
                                                  disk['disk_identifier'], exc_info=True)
