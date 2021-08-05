@@ -410,11 +410,13 @@ class PoolService(CRUDService):
         options = options or {}
         if isinstance(x, dict):
             if options.get('device_disk', True):
+                if 'label_to_dev_disk_cache' not in options:
+                    options['label_to_dev_disk_cache'] = self.middleware.call_sync('disk.label_to_dev_disk_cache')
                 path = x.get('path')
                 if path is not None:
                     device = disk = None
                     if path.startswith('/dev/'):
-                        args = [path[5:]] + ([] if osc.IS_LINUX else [options.get('geom_scan', True)])
+                        args = [path[5:], False, options['label_to_dev_disk_cache']]
                         device = self.middleware.call_sync('disk.label_to_dev', *args)
                         disk = self.middleware.call_sync('disk.label_to_disk', *args)
                     x['device'] = device

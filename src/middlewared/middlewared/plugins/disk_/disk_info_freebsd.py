@@ -74,12 +74,32 @@ class DiskService(Service, DiskInfoBase):
     def get_swap_devices(self):
         return [os.path.join('/dev', i.devname) for i in getswapinfo()]
 
-    def label_to_dev(self, label, *args):
-        geom_scan = args[0] if args else True
+    def label_to_dev_disk_cache(self):
+        label_to_dev = {}
+        for label in geom.class_by_name('LABEL').xml:
+            if (name := label.find('name')) is not None:
+                if (provider := label.find('provider/name')) is not None:
+                    label_to_dev[provider.text] = name.text
+
+        dev_to_disk = {}
+        for label in geom.class_by_name('PART').xml:
+            if (name := label.find('name')) is not None:
+                if (provider := label.find('provider/name')) is not None:
+                    dev_to_disk[provider.text] = name.text
+
+        return {
+            'label_to_dev': label_to_dev,
+            'dev_to_disk': dev_to_disk,
+        }
+
+    def label_to_dev(self, label, geom_scan=True, cache=None):
         if label.endswith('.nop'):
             label = label[:-4]
         elif label.endswith('.eli'):
             label = label[:-4]
+
+        if cache is not None:
+            return cache['label_to_dev'].get(label)
 
         if geom_scan:
             geom.scan()
@@ -88,11 +108,13 @@ class DiskService(Service, DiskInfoBase):
         if prov is not None:
             return prov.text
 
-    def label_to_disk(self, label, *args):
-        geom_scan = args[0] if args else True
-        if geom_scan:
-            geom.scan()
-        dev = self.label_to_dev(label, geom_scan) or label
+    def label_to_disk(self, label, geom_scan=True, cache=None):
+        if cache is None:
+            if geom_scan:
+                geom.scan()
+        dev = self.label_to_dev(label, geom_scan, cache) or label
+        if cache is not None:
+            return cache['dev_to_disk'].get(dev)
         part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
         if part is not None:
             return part.text
