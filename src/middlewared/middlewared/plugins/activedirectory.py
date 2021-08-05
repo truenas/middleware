@@ -673,7 +673,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             if realms:
                 realm_id = realms[0]['id']
             else:
-                realm_id = await self.middleware.call('kerberos.realm.create',
+                realm_id = await self.middleware.call('kerberos.realm.direct_create',
                                                       {'realm': ad['domainname'].upper()})
 
             await self.direct_update({"kerberos_realm": realm_id})
@@ -814,6 +814,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if smb_ha_mode == 'CLUSTERED':
             job.set_progress(70, 'Propagating changes to cluster.')
             await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload')
+
+        await self.set_state(DSStatus['DISABLED'])
         job.set_progress(100, 'Active Directory stop completed.')
 
     @private
@@ -937,6 +939,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         verrors = ValidationErrors()
         config = await self.config()
         if not config['enable']:
+            await self.set_state(DSStatus['DISABLED'])
             return False
 
         await self.common_validate(config, config, verrors)
@@ -1350,9 +1353,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
             'enable': False,
             'site': None,
             'kerberos_realm': None,
+            'kerberos_principal': '',
             'domainname': '',
         }
         await self.middleware.call('activedirectory.update', payload)
+        await self.set_state(DSStatus['DISABLED'])
         if smb_ha_mode == 'LEGACY' and (await self.middleware.call('failover.status')) == 'MASTER':
             try:
                 await self.middleware.call('failover.call_remote', 'activedirectory.leave', [data])
