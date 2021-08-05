@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middlewared.utils import osc
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -72,7 +71,8 @@ class DiskService(Service, ServiceChangeMixin):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return
 
-        if osc.IS_FREEBSD:
+        if not await self.middleware.call('device.devd_connected'):
+            # try for 10 seconds to wait on devd before we continue
             for i in range(10):
                 if i > 0:
                     await asyncio.sleep(1)
@@ -96,6 +96,7 @@ class DiskService(Service, ServiceChangeMixin):
         seen_disks = {}
         serials = []
         changed = False
+        encs = await self.middleware.call('enclosure.query')
         for disk in (
             await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
         ):
@@ -148,7 +149,7 @@ class DiskService(Service, ServiceChangeMixin):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 changed = True
 
-            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], encs)
 
             seen_disks[name] = disk
 
@@ -185,7 +186,7 @@ class DiskService(Service, ServiceChangeMixin):
                     await self.middleware.call('datastore.insert', 'storage.disk', disk)
                     changed = True
 
-                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], encs)
 
         if changed:
             await self.middleware.call('disk.restart_services_after_sync')
