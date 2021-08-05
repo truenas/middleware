@@ -693,7 +693,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         final_options.update(data['options'])
         data['options'] = final_options
 
-        data['id'] = await super().do_create(data)
+        id = await super().do_create(data)
         out = await self.query([('id', '=', id)], {'get': True})
         await self.synchronize()
         return out
@@ -789,7 +789,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             entry = await self._get_instance(id)
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
 
-        ret = await super().delete(id)
+        ret = await self.direct_delete(id)
         await self.synchronize()
         return ret
 
