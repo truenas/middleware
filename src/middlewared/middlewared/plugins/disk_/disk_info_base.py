@@ -33,11 +33,11 @@ class DiskInfoBase(ServicePartBase):
     async def get_swap_devices(self):
         raise NotImplementedError()
 
-    async def label_to_dev(self, label, *args):
+    async def label_to_dev(self, label, geom_scan=True, cache=None):
         raise NotImplementedError()
 
     @private
-    async def label_to_disk(self, label, *args):
+    async def label_to_disk(self, label, geom_scan=True, cache=None):
         raise NotImplementedError()
 
     @private
