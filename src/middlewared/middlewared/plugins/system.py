@@ -857,6 +857,10 @@ class SystemService(Service):
         return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
 
     @private
+    async def is_enterprise_ix_hardware(self):
+        return await self.middleware.call('truenas.get_chassis_hardware') != 'TRUENAS-UNKNOWN'
+
+    @private
     def get_synced_clock_time(self):
         """
         Will return synced clock time if ntpd has synced with ntp servers
