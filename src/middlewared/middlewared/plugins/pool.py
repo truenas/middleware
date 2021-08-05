@@ -3882,6 +3882,9 @@ class PoolDatasetService(CRUDService):
         'obj_used` - the nubmer of objects currently owned by `id`.
 
         `obj_used_percent` - the percentage of the `obj_quota` currently used.
+
+        Note: SMB client requests to set a quota granting no space will result
+        in an on-disk quota of 1 KiB.
         """
         dataset = (await self.get_instance(ds))['name']
         quota_list = await self.middleware.call(

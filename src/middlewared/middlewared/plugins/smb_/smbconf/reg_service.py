@@ -305,7 +305,7 @@ class ShareSchema(RegistrySchema):
             data_out['vfs objects']['parsed'].append("nfs4acl_xattr")
             data_out.update({
                 "nfs4acl_xattr:nfs4_id_numeric": {"parsed": True},
-                "nfs4acl_xattr:validate_mode": {"parsed": True},
+                "nfs4acl_xattr:validate_mode": {"parsed": False},
                 "nfs4acl_xattr:xattr_name": {"parsed": "system.nfs4_acl_xdr"},
                 "nfs4acl_xattr:encoding": {"parsed": "xdr"},
                 "nfs4:chown": {"parsed": True}
@@ -425,6 +425,12 @@ class ShareSchema(RegistrySchema):
     def afp_set(entry, val, data_in, data_out):
         if not val:
             return
+
+        if 'fruit' not in data_out['vfs objects']['parsed']:
+            data_out['vfs objects']['parsed'].append("fruit")
+
+        if 'catia' not in data_out['vfs objects']['parsed']:
+            data_out['vfs objects']['parsed'].append("catia")
 
         data_out['fruit:encoding'] = {"parsed": 'native'}
         data_out['fruit:metadata'] = {"parsed": 'netatalk'}
