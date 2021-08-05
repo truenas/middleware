@@ -53,7 +53,7 @@ class ShareSchema(RegistrySchema):
         def order_vfs_objects(vfs_objects, is_clustered, purpose):
             vfs_objects_special = ('catia', 'zfs_space', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
                                    'noacl', 'ixnas', 'acl_xattr', 'zfsacl', 'nfs4acl_xattr',
-                                   'glusterfs', 'crossrename', 'recycle', 'zfs_core', 'aio_fbsd', 'io_uring')
+                                   'glusterfs', 'crossrename', 'winmsa', 'recycle', 'zfs_core', 'aio_fbsd', 'io_uring')
 
             cluster_safe_objects = ['catia', 'fruit', 'streams_xattr', 'acl_xattr', 'recycle', 'glusterfs', 'io_ring']
 
@@ -127,17 +127,19 @@ class ShareSchema(RegistrySchema):
                 """
                 if auxparam.strip() == "vfs objects":
                     vfsobjects = val.strip().split()
-                    if data_in['fruit_enableed']:
+                    if data_in['fruit_enabled']:
                         vfsobjects.append('fruit')
                     if data_in['shadowcopy']:
                         vfsobjects.append('shadow_copy_zfs')
-                    data_out['vfs objects'] = {"parsed": order_vfs_objects(vfsobjects, is_clustered)}
+                    data_out['vfs objects'] = {"parsed": order_vfs_objects(vfsobjects, is_clustered, None)}
                 else:
                     data_out[auxparam.strip()] = {"raw": val.strip()}
 
             except Exception:
-                self.logger.debug("[%s] contains invalid auxiliary parameter: [%s]",
-                                  data_in['auxsmbconf'], param)
+                self.middleware.logger.debug(
+                    "[%s] contains invalid auxiliary parameter: [%s]",
+                    data_in['auxsmbconf'], param
+                )
 
         self._normalize_config(data_out)
         return

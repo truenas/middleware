@@ -131,6 +131,7 @@ class SMBService(Service):
         parameters to reflect the specified smb service configuration.
         """
         to_set = {}
+        data['ds_state'] = await self.middleware.call('directoryservices.get_state')
         gs = GlobalSchema()
         gs.convert_schema_to_registry(data, to_set)
 
