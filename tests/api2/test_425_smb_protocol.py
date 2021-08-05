@@ -136,31 +136,9 @@ def test_003_creating_shareuser_to_test_acls(request):
     smbuser_id = results.json()
 
 
-def test_004_changing_dataset_permissions_of_smb_dataset(request):
-    depends(request, ["SMB_USER_CREATED"])
-    global smbproto_job_id
-    payload = {
-        "acl": [],
-        "mode": "777",
-        "user": SMB_USER,
-        "group": group,
-        "options": {"stripacl": True, "recursive": True}
-    }
-    results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
-    assert results.status_code == 200, results.text
-    smbproto_job_id = results.json()
-
-
-@pytest.mark.dependency(name="SMB_PERMISSION_SET")
-def test_005_verify_the_job_id_is_successful(request):
-    depends(request, ["SMB_USER_CREATED"])
-    job_status = wait_on_job(smbproto_job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
 @pytest.mark.dependency(name="SMB_SHARE_CREATED")
 def test_006_creating_a_smb_share_path(request):
-    depends(request, ["SMB_PERMISSION_SET"])
+    depends(request, ["SMB_DATASET_CREATED"])
     global payload, results, smb_id
     payload = {
         "comment": "SMB Protocol Testing Share",
@@ -533,7 +511,7 @@ def test_092_set_smb_quota(request, proto):
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
-        hardlimit=0,
+        hardlimit=-1,
         target=SMB_USER,
         smb1=(proto == "SMB1")
     )
@@ -555,6 +533,18 @@ def test_092_set_smb_quota(request, proto):
     assert qt[0]['hard_limit'] is None, qt
 
 
+def test_95_strip_quota(request):
+    """
+    This test removes any quota set for the test smb user
+    """
+    depends(request, ["BA_ADDED_TO_USER"])
+    payload = [
+        {'quota_type': 'USER', 'id': SMB_USER, 'quota_value': 0},
+    ]
+    results = POST(f'/pool/dataset/id/{dataset_url}/set_quota', payload)
+    assert results.status_code == 200, results.text
+
+
 @pytest.mark.dependency(name="AFP_ENABLED")
 def test_150_change_share_to_afp(request):
     depends(request, ["SMB_SHARE_CREATED"])
@@ -572,7 +562,6 @@ def test_151_set_xattr_via_ssh(request, xat):
     # depends(request, ["AFP_ENABLED"])
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'touch {afptestfile} && chown {SMB_USER} {afptestfile} && '
-    cmd += f'chmod 777 {afptestfile} && '
     cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
     cmd += f'attr -q -s {xat} {afptestfile}'
 
