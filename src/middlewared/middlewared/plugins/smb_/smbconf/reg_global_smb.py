@@ -21,6 +21,12 @@ class GlobalSchema(RegistrySchema):
             'printcap name': {'parsed': '/dev/null'},
             'restrict anonymous': {'parsed': 2},
         })
+
+        ds_state = data_in.pop('ds_state')
+        if ds_state['ldap'] in ['LEAVING', 'DISABLED']:
+            data_out.update({
+                'passdb backend': {'parsed': 'tdbsam:/root/samba/private/passdb.tdb'},
+            })
         return
 
     def smb_proto_transform(entry, conf):

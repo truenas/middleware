@@ -71,5 +71,8 @@ class CIFSService(SimpleService):
     async def after_stop(self):
         await self.middleware.call("service.reload", "mdns")
 
+    async def before_reload(self):
+        await self.middleware.call("sharing.smb.sync_registry")
+
     async def after_reload(self):
         await self.middleware.call("service.reload", "mdns")
