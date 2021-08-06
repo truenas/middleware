@@ -342,27 +342,25 @@ class EnclosureService(CRUDService):
                     element.device_slot_set("clear")
 
     def __get_enclosures(self):
-        return Enclosures(self.middleware.call_sync("enclosure.get_ses_enclosures"),
-                          self.middleware.call_sync("system.info"))
+        return Enclosures(
+            self.middleware.call_sync("enclosure.get_ses_enclosures"),
+            self.middleware.call_sync("system.dmidecode_info")["system-product-name"]
+        )
 
 
 class Enclosures(object):
 
-    def __init__(self, stat, system_info):
+    def __init__(self, stat, product):
         blacklist = [
             "VirtualSES",
         ]
-        if (
-            system_info["system_product"] and
-            system_info["system_product"].startswith("TRUENAS-") and
-            "-MINI-" not in system_info["system_product"] and
-            system_info["system_product"] not in ["TRUENAS-R20", "TRUENAS-R20A"]
-        ):
-            blacklist.append("AHCI SGPIO Enclosure 2.00")
+        if product is not None and product.startswith("TRUENAS-"):
+            if "-MINI-" not in product and product not in ["TRUENAS-R20", "TRUENAS-R20A"]:
+                blacklist.append("AHCI SGPIO Enclosure 2.00")
 
         self.__enclosures = []
         for num, data in stat.items():
-            enclosure = Enclosure(num, data, stat, system_info)
+            enclosure = Enclosure(num, data, stat, product)
             if any(s in enclosure.encname for s in blacklist):
                 continue
 
@@ -397,14 +395,11 @@ class Enclosures(object):
 
 class Enclosure(object):
 
-    def __init__(self, num, data, stat, system_info):
+    def __init__(self, num, data, stat, product):
         self.num = num
         self.stat = stat
-        self.system_info = system_info
-        if IS_FREEBSD:
-            self.devname = f"ses{num}"
-        else:
-            self.devname, data = data
+        self.product = product
+        self.devname = f"ses{num}"
         self.encname = ""
         self.encid = ""
         self.model = ""
@@ -531,15 +526,15 @@ class Enclosure(object):
             self.model = "M Series"
             self.controller = True
         elif R_SERIES_REGEX.match(self.encname) or R20_REGEX.match(self.encname) or R50_REGEX.match(self.encname):
-            self.model = self.system_info["system_product"].replace("TRUENAS-", "")
+            self.model = self.product.replace("TRUENAS-", "")
             self.controller = True
         elif self.encname == "AHCI SGPIO Enclosure 2.00":
-            if self.system_info["system_product"] in ["TRUENAS-R20", "TRUENAS-R20A"]:
-                self.model = self.system_info["system_product"].replace("TRUENAS-", "")
+            if self.product in ["TRUENAS-R20", "TRUENAS-R20A"]:
+                self.model = self.product.replace("TRUENAS-", "")
                 self.controller = True
-            elif MINI_REGEX.match(self.system_info["system_product"]):
+            elif MINI_REGEX.match(self.product):
                 # TrueNAS Mini's do not have their product name stripped
-                self.model = self.system_info["system_product"]
+                self.model = self.product
                 self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
