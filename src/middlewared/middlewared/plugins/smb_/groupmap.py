@@ -353,15 +353,24 @@ class SMBService(Service):
 
         groups = await self.middleware.call('group.query', [('builtin', '=', False), ('smb', '=', True)])
         g_dict = {x["gid"]: x for x in groups}
+        intersect = set(g_dict.keys()).intersection(set(groupmap["local"].keys()))
 
         set_to_add = set(g_dict.keys()) - set(groupmap["local"].keys())
         set_to_del = set(groupmap["local"].keys()) - set(g_dict.keys())
+        set_to_mod = set([x for x in intersect if groupmap['local'][x]['nt_name'] != g_dict[x]['group']])
 
         to_add = [{
             "gid": g_dict[x]["gid"],
             "nt_name": g_dict[x]["group"],
             "group_type_str": "local"
         } for x in set_to_add]
+
+        to_mod = [{
+            "gid": g_dict[x]["gid"],
+            "nt_name": g_dict[x]["group"],
+            "sid": groupmap["local"][x]["sid"],
+            "group_type_str": "local"
+        } for x in set_to_mod]
 
         to_del = [{
             "sid": groupmap["local"][x]["sid"]
@@ -384,6 +393,9 @@ class SMBService(Service):
 
         if to_add:
             payload["ADD"] = [{"groupmap": to_add}]
+
+        if to_mod:
+            payload["MOD"] = [{"groupmap": to_mod}]
 
         if to_del:
             payload["DEL"] = [{"groupmap": to_del}]
