@@ -151,6 +151,7 @@ def test_008_creating_a_smb_share_path(request):
         "home": False,
         "name": SMB_NAME,
         "guestok": True,
+        "purpose": "NO_PRESET",
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
@@ -765,7 +766,7 @@ def test_083_verify_smb_getparm_fruit_time_machine_is_yes(request):
     cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == 'yes', results['output']
+    assert bool(results['output'].strip()) is True, results['output']
 
 
 def test_084_change_recyclebin_to_true(request):
@@ -939,20 +940,22 @@ def test_104_verify_smb_sharesec_change_for(request, ae):
 
 
 def test_105_verify_smbclient_127_0_0_1_connection(request):
+    """
+    Anonymous IPC$ access attempt should fail with NT_STATUS_ACCESS_DENIED
+    """
     depends(request, ["permissions_job", "service_cifs_running", "ssh_password"], scope="session")
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'TestCifsSMB' in results['output'], results['output']
-    assert 'My Test SMB Share' in results['output'], results['output']
+    assert results['result'] is False, results['output']
+    assert 'NT_STATUS_ACCESS_DENIED' in results['output'], results['output']
 
 
-def test_106_verify_midclt_call_smb_getparm_access_based_share_enum_is_null(request):
+def test_106_verify_midclt_call_smb_getparm_access_based_share_enum_is_false(request):
     depends(request, ["permissions_job", "service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == 'null', results['output']
+    assert results['output'].strip() == "False", results['output']
 
 
 def test_107_delete_cifs_share(request):
@@ -1019,9 +1022,16 @@ def test_109_create_new_smb_group_for_sid_test(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     groupmaps = json.loads(results['output'].strip())
-    assert groupmaps.get("testsidgroup") is not None, groupmaps.keys()
-    domain_sid = groupmaps["testsidgroup"]["SID"].rsplit("-", 1)[0]
-    assert domain_sid == new_sid, groupmaps["testsidgroup"]
+
+    test_entry = None
+    for entry in groupmaps['local'].values():
+        if entry['nt_name'] == 'testsidgroup':
+            test_entry = entry
+            break
+
+    assert test_entry is not None, groupmaps['local'].values()
+    domain_sid = test_entry['sid'].rsplit("-", 1)[0]
+    assert domain_sid == new_sid, groupmaps['local'].values()
 
 
 def test_110_change_netbios_name_and_check_groupmap(request):
@@ -1041,9 +1051,16 @@ def test_110_change_netbios_name_and_check_groupmap(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     groupmaps = json.loads(results['output'].strip())
-    assert groupmaps.get("testsidgroup") is not None, groupmaps.keys()
-    domain_sid = groupmaps["testsidgroup"]["SID"].rsplit("-", 1)[0]
-    assert domain_sid != new_sid, groupmaps["testsidgroup"]
+
+    test_entry = None
+    for entry in groupmaps['local'].values():
+        if entry['nt_name'] == 'testsidgroup':
+            test_entry = entry
+            break
+
+    assert test_entry is not None, groupmaps['local'].values()
+    domain_sid = test_entry['sid'].rsplit("-", 1)[0]
+    assert domain_sid != new_sid, groupmaps['local'].values()
 
 
 def test_111_delete_smb_group(request):

@@ -50,7 +50,7 @@ class ShareSchema(RegistrySchema):
         """
         Convert middleware schema SMB shares to an SMB service definition
         """
-        def order_vfs_objects(vfs_objects, is_clustered, purpose):
+        def order_vfs_objects(vfs_objects, is_clustered, fruit_enabled, purpose):
             vfs_objects_special = ('catia', 'zfs_space', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
                                    'noacl', 'ixnas', 'acl_xattr', 'zfsacl', 'nfs4acl_xattr',
                                    'glusterfs', 'crossrename', 'winmsa', 'recycle', 'zfs_core', 'aio_fbsd', 'io_uring')
@@ -58,6 +58,9 @@ class ShareSchema(RegistrySchema):
             cluster_safe_objects = ['catia', 'fruit', 'streams_xattr', 'acl_xattr', 'recycle', 'glusterfs', 'io_ring']
 
             vfs_objects_ordered = []
+
+            if fruit_enabled and 'fruit' not in vfs_objects:
+                vfs_objects.append('fruit')
 
             if is_clustered:
                 for obj in vfs_objects.copy():
@@ -98,6 +101,7 @@ class ShareSchema(RegistrySchema):
         ordered_vfs_objects = order_vfs_objects(
             data_out['vfs objects']['parsed'],
             is_clustered,
+            data_in['fruit_enabled'],
             data_in['purpose'],
         )
         data_out['vfs objects']['parsed'] = ordered_vfs_objects
@@ -127,11 +131,9 @@ class ShareSchema(RegistrySchema):
                 """
                 if auxparam.strip() == "vfs objects":
                     vfsobjects = val.strip().split()
-                    if data_in['fruit_enabled']:
-                        vfsobjects.append('fruit')
                     if data_in['shadowcopy']:
                         vfsobjects.append('shadow_copy_zfs')
-                    data_out['vfs objects'] = {"parsed": order_vfs_objects(vfsobjects, is_clustered, None)}
+                    data_out['vfs objects'] = {"parsed": order_vfs_objects(vfsobjects, is_clustered, data_in['fruit_enabled'], None)}
                 else:
                     data_out[auxparam.strip()] = {"raw": val.strip()}
 
@@ -252,6 +254,9 @@ class ShareSchema(RegistrySchema):
             "recycle:directory_mode": {"parsed": "0777"},
             "recycle:subdir_mode": {"parsed": "0700"},
         })
+        data_out['vfs objects']['parsed'].extend([
+            "recycle", "crossrename"
+        ])
 
         return
 

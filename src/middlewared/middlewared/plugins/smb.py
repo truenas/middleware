@@ -646,8 +646,14 @@ class SMBService(TDBWrapConfigService):
                         f'NetBIOS name [{new[i]}] conflicts with workgroup name.'
                     )
 
-        if new['guest'] == 'root':
-            verrors.add('smb_update.guest', '"root" is not a permitted guest account')
+        if new['guest']:
+            if new['guest'] == 'root':
+                verrors.add('smb_update.guest', '"root" is not a permitted guest account')
+
+            try:
+                await self.middleware.call("user.get_user_obj", {"username": new["guest"]})
+            except KeyError:
+                verrors.add('smb_update.guest', f'{new["guest"]}: user does not exist')
 
         if new.get('bindip'):
             bindip_choices = list((await self.bindip_choices()).keys())
@@ -1341,6 +1347,8 @@ class SharingSMBService(SharingService):
         that the path should be dynamically set to the user's home directory on the LDAP server.
         Local user auth to SMB shares is prohibited when LDAP is enabled with a samba schema.
         """
+        smb_config = None
+
         home_result = await self.home_exists(
             data['home'], schema_name, verrors, old)
 
@@ -1385,9 +1393,20 @@ class SharingSMBService(SharingService):
             verrors.add(f'{schema_name}.name',
                         'Path suffix may not contain more than two components.')
 
-        if data['afp']:
-            if not (await self.middleware.call('smb.config'))['aapl_extensions']:
-                verrors.add(f'{schema_name}.afp', 'Please enable Apple extensions first.')
+        for entry in ['afp', 'timemachine']:
+            if not data[entry]:
+                continue
+            if not smb_config:
+                smb_config = await self.middleware.call('smb.config')
+
+            if smb_config['aapl_extensions']:
+                continue
+
+            verrors.add(
+                f'{schema_name}.{entry}',
+                'Apple SMB2/3 protocol extension support is required by this parameter. '
+                'This feature may be enabled in the general SMB server configuration.'
+            )
 
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
