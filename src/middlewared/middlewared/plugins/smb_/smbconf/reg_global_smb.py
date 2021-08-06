@@ -13,14 +13,27 @@ LOGLEVEL_MAP = bidict({
 class GlobalSchema(RegistrySchema):
     def convert_schema_to_registry(self, data_in, data_out):
         super().convert_schema_to_registry(data_in, data_out)
+        shares = data_in.pop('shares')
+
+        """
+        When guest access permitted on any share:
+        1) enable anonymous IPC$ share access and anonymous access to SAMR
+           and LSADCERPC services.
+        2) map to guest on bad user.
+        """
+        guest_enabled = any(filter(lambda x: x['guestok'], shares))
+
         data_out.update({
             'disable spoolss': {'parsed': True},
             'dns proxy': {'parsed': False},
             'load printers': {'parsed': False},
             'max log size': {'parsed': 5120},
             'printcap name': {'parsed': '/dev/null'},
-            'restrict anonymous': {'parsed': 2},
+            'restrict anonymous': {'parsed': 0 if guest_enabled else 2},
         })
+
+        if guest_enabled:
+            data_out['map to guest'] = {'parsed': 'Bad User'}
 
         ds_state = data_in.pop('ds_state')
         if ds_state['ldap'] in ['LEAVING', 'DISABLED']:
