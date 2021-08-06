@@ -1023,13 +1023,10 @@ class IdmapDomainService(TDBWrapCRUDService):
                 f"{idmap_prefix} range": {"raw": f"{i['range_low']} - {i['range_high']}"}
             })
             for k, v in i['options'].items():
-                if v is True:
-                    v = "True"
-                elif v is False:
-                    v = "False"
+                backend_parameter = "realm" if k == "ldap_realm" else k
 
                 rv.update({
-                    f"{idmap_prefix} {k}": {"parsed": v},
+                    f"{idmap_prefix} {backend_parameter}": {"parsed": v},
                 })
 
         return rv
