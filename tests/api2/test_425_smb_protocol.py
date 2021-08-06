@@ -545,9 +545,19 @@ def test_95_strip_quota(request):
     assert results.status_code == 200, results.text
 
 
+@pytest.mark.dependency(name="AAPL_ENABLED")
+def test_140_enable_aapl(request):
+    depends(request, ["SMB_SHARE_CREATED"])
+    payload = {
+        "aapl_extensions": True,
+    }
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+
+
 @pytest.mark.dependency(name="AFP_ENABLED")
 def test_150_change_share_to_afp(request):
-    depends(request, ["SMB_SHARE_CREATED"])
+    depends(request, ["SMB_SHARE_CREATED", "AAPL_ENABLED"])
     results = PUT(f"/sharing/smb/id/{smb_id}/", {"afp": True})
     assert results.status_code == 200, results.text
 
@@ -669,6 +679,7 @@ def test_202_disable_smb1(request):
     depends(request, ["SMB1_ENABLED"])
     payload = {
         "enable_smb1": False,
+        "aapl_extensions": False,
     }
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
