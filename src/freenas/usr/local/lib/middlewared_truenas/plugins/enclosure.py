@@ -1,9 +1,3 @@
-# Copyright (c) 2019 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from collections import OrderedDict
 import logging
 import os
@@ -248,6 +242,8 @@ class EnclosureService(CRUDService):
 
         seen_devs = []
         label2disk = {}
+        cache = self.middleware.call_sync("disk.label_to_dev_disk_cache")
+        hardware = self.middleware.call_sync("truenas.get_chassis_hardware")
         for pool in pools:
             try:
                 pool = self.middleware.call_sync("zfs.pool.query", [["name", "=", pool]], {"get": True})
@@ -255,7 +251,7 @@ class EnclosureService(CRUDService):
                 continue
 
             label2disk.update({
-                label: self.middleware.call_sync("disk.label_to_disk", label)
+                label: self.middleware.call_sync("disk.label_to_disk", label, False, cache)
                 for label in self.middleware.call_sync("zfs.pool.get_devices", pool["id"])
             })
 
@@ -270,9 +266,12 @@ class EnclosureService(CRUDService):
                 if disk is None:
                     continue
 
-            # We want spares to only identify slot for Z-series
-            # See #32706
-            if self.middleware.call_sync("truenas.get_chassis_hardware").startswith("TRUENAS-Z"):
+            if hardware.startswith("TRUENAS-Z"):
+                # We want spares to have identify set on the enclosure slot for
+                # Z-series systems only see #32706 for details. Gist is that
+                # the other hardware platforms "identify" light is red which
+                # causes customer confusion because they see red and think
+                # something is wrong.
                 spare_value = "identify"
             else:
                 spare_value = "clear"
@@ -309,11 +308,14 @@ class EnclosureService(CRUDService):
                 seen_devs.append(label)
 
                 try:
-                    element = self._get_ses_slot_for_disk(disk)
-                except MatchNotFound:
-                    pass
-                else:
-                    element.device_slot_set("clear")
+                    element = encs.find_device_slot(disk)
+                    if element:
+                        element.device_slot_set("clear")
+                except AssertionError:
+                    # happens for pmem devices since those
+                    # are NVDIMM sticks internal to each
+                    # controller
+                    continue
 
         disks = []
         for label in seen_devs:
