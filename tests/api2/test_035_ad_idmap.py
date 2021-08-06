@@ -257,10 +257,9 @@ def test_08_test_backend_options(request, backend):
             assert res == v, f"[{k}]: {res}"
         except json.decoder.JSONDecodeError:
             res = results['output'].strip()
-            if v is True:
-                v = "Yes"
-            elif v is False:
-                v = "No"
+            if isinstance(v, bool):
+                v = str(v)
+
             assert v.casefold() == res.casefold(), f"[{k}]: {res}"
 
     if set_secret:
