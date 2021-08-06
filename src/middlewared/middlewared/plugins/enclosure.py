@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import glob
 import logging
 import os
@@ -245,6 +246,7 @@ class EnclosureService(CRUDService):
 
         seen_devs = []
         label2disk = {}
+        hardware = self.middleware.call_sync("truenas.get_chassis_hardware")
         for pool in pools:
             try:
                 pool = self.middleware.call_sync("zfs.pool.query", [["name", "=", pool]], {"get": True})
@@ -267,9 +269,12 @@ class EnclosureService(CRUDService):
                 if disk is None:
                     continue
 
-            # We want spares to only identify slot for Z-series
-            # See #32706
-            if self.middleware.call_sync("truenas.get_chassis_hardware").startswith("TRUENAS-Z"):
+            if hardware.startswith("TRUENAS-Z"):
+                # We want spares to have identify set on the enclosure slot for
+                # Z-series systems only see #32706 for details. Gist is that
+                # the other hardware platforms "identify" light is red which
+                # causes customer confusion because they see red and think
+                # something is wrong.
                 spare_value = "identify"
             else:
                 spare_value = "clear"
@@ -306,11 +311,14 @@ class EnclosureService(CRUDService):
                 seen_devs.append(label)
 
                 try:
-                    element = self._get_ses_slot_for_disk(disk)
-                except MatchNotFound:
-                    pass
-                else:
-                    element.device_slot_set("clear")
+                    element = encs.find_device_slot(disk)
+                    if element:
+                        element.device_slot_set("clear")
+                except AssertionError:
+                    # happens for pmem devices since those
+                    # are NVDIMM sticks internal to each
+                    # controller
+                    continue
 
         disks = []
         for label in seen_devs:
