@@ -375,7 +375,8 @@ class UserService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
-            await self.middleware.call('smb.synchronize_passdb')
+            gm_job = await self.middleware.call('smb.synchronize_passdb')
+            await gm_job.wait()
 
         if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -566,7 +567,8 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
         if user['smb'] and must_change_pdb_entry:
-            await self.middleware.call('smb.synchronize_passdb')
+            gm_job = await self.middleware.call('smb.synchronize_passdb')
+            await gm_job.wait()
 
         return pk
 
@@ -1186,7 +1188,8 @@ class GroupService(CRUDService):
             await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
-            await self.middleware.call('smb.synchronize_group_mappings')
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
 
         return pk
 
@@ -1262,7 +1265,8 @@ class GroupService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         if groupmap_changed:
-            await self.middleware.call('smb.synchronize_group_mappings')
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
 
         return pk
 
@@ -1276,14 +1280,12 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        if group['smb']:
-            await self.middleware.call('smb.synchronize_group_mappings')
-
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 
         nogroup = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', 'nogroup')],
                                              {'prefix': 'bsdgrp_', 'get': True})
+
         for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])],
                                             {'prefix': 'bsdusr_'}):
             if options['delete_users']:
@@ -1293,6 +1295,10 @@ class GroupService(CRUDService):
                                            {'prefix': 'bsdusr_'})
 
         await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
+
+        if group['smb']:
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
 
         await self.middleware.call('service.reload', 'user')
 
