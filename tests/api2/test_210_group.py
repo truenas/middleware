@@ -143,8 +143,9 @@ def test_18_check_groupmap_added(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     if results['result'] is True:
-        groupmap = (json.loads(results['output'])).get('newgroup')
-        assert groupmap is not None, results['output']
+        groupmap = json.loads(results['output'])
+        local_maps = groupmap['local'].values()
+        assert len(local_maps) != 0, results['output']
 
 
 # Delete the group
@@ -197,8 +198,9 @@ def test_24_check_groupmap_added(request):
     assert results['result'] is True, results['output']
     global groupmap
     if results['result'] is True:
-        groupmap = (json.loads(results['output'])).get('smbgroup')
-        assert groupmap is not None, results['output']
+        groupmap = json.loads(results['output'])
+        local_maps = groupmap['local'].values()
+        assert len(local_maps) != 0, results['output']
 
 
 def test_25_test_name_change_smb_group(request):
@@ -210,20 +212,27 @@ def test_25_test_name_change_smb_group(request):
     assert results.status_code == 200, results.text
 
 
-def test_26_old_groupmap_removed_after_name_change(request):
+def test_26_groupmap_entry_nt_name_change(request):
     """
-    "net groupmap list" does not show group mappings for unix groups that no
-    longer exist. For this reason, we must use tdbdump to verify that the old
-    SID entry has been properly removed. Stale groupmap entries may cause
-    difficult-to-diagnose group mapping issues.
     """
     depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
-    cmd = 'tdbdump /var/db/system/samba4/group_mapping.tdb'
+    cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
+    gm = None
+
+    for groupmap_entry in groupmap['local'].values():
+        if groupmap_entry['nt_name'] == 'smbgroup':
+            gm = groupmap_entry
+            break
+
     if results['result'] is True:
-        for entry in results['output'].splitlines():
-            assert groupmap['SID'] not in entry, entry
+        new = json.loads(results['output'])
+        old_sid = gm['sid']
+        new_entry = new['local'].get(str(gm['gid']))
+        assert new_entry, results['output']
+        assert old_sid == new_entry['sid'], results['output']
+        assert gm['nt_name'] != new_entry['nt_name'], results['output']
 
 
 def test_27_new_groupmap_added_after_name_change(request):
@@ -236,8 +245,9 @@ def test_27_new_groupmap_added_after_name_change(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     if results['result'] is True:
-        groupmap = (json.loads(results['output'])).get('newsmbgroup')
-        assert groupmap is not None, results['output']
+        groupmap = json.loads(results['output'])
+        local_maps = groupmap['local'].values()
+        assert len(local_maps) != 0, results['output']
 
 
 def test_28_convert_smb_group_to_non_smb(request):
