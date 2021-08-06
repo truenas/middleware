@@ -357,7 +357,7 @@ class SMBService(Service):
 
         set_to_add = set(g_dict.keys()) - set(groupmap["local"].keys())
         set_to_del = set(groupmap["local"].keys()) - set(g_dict.keys())
-        set_to_mod = set([x['gid'] for x in groupmap['local'].values() if x['nt_name'] != g_dict[x['gid']]['group']])
+        set_to_mod = set([x for x in intersect if groupmap['local'][x]['nt_name'] != g_dict[x]['group']])
 
         to_add = [{
             "gid": g_dict[x]["gid"],
