@@ -334,6 +334,7 @@ class SystemDatasetService(ConfigService):
                         self.logger.warning("Failed to clear old core files.", exc_info=True)
 
                 await run('umount', '/var/lib/systemd/coredump', check=False)
+                os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
                 await run('mount', '--bind', corepath, '/var/lib/systemd/coredump')
 
             await self.__nfsv4link(config)
