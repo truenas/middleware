@@ -142,6 +142,20 @@ class EnclosureService(CRUDService):
 
         return await self._get_instance(id)
 
+    @private
+    def build_slot_for_disks_dict(self, enclosure_info=None):
+        if enclosure_info is None:
+            enclosure_info = self.middleware.call_sync('enclosure.query')
+
+        results = {}
+        for enc in enclosure_info:
+            slots = next(filter(lambda x: x["name"] == "Array Device Slot", enc["elements"]))["elements"]
+            results.update({
+                j["slot"] * 1000 + enc["number"]: j["data"]["Device"] or None for j in slots
+            })
+
+        return results
+
     def _get_slot(self, slot_filter, enclosure_query=None, enclosure_info=None):
         if enclosure_info is None:
             enclosure_info = self.middleware.call_sync("enclosure.query", enclosure_query or [])
