@@ -736,6 +736,13 @@ def test_078_unmount_smb_share_on_osx(request):
 
 def test_079_change_timemachine_to_true(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
+    payload = {
+        "aapl_extensions": True
+    }
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+
+    depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     global vuid
     payload = {
         'timemachine': True,
@@ -761,12 +768,27 @@ def test_081_verify_smb_getparm_vfs_objects_share(request, vfs_object):
     assert vfs_object in results['output'], results['output']
 
 
-def test_083_verify_smb_getparm_fruit_time_machine_is_yes(request):
+def test_082_verify_smb_getparm_fruit_time_machine_is_yes(request):
     depends(request, ["permissions_job", "service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert bool(results['output'].strip()) is True, results['output']
+
+
+def test_083_disable_time_machine(request):
+    depends(request, ["permissions_job", "service_cifs_running"], scope="session")
+    payload = {
+        'timemachine': False,
+    }
+    results = PUT(f"/sharing/smb/id/{smb_id}/", payload)
+    assert results.status_code == 200, results.text
+
+    payload = {
+        "aapl_extensions": False
+    }
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_084_change_recyclebin_to_true(request):
