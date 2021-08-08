@@ -860,30 +860,26 @@ class ZFSDatasetService(CRUDService):
             return data
 
     def update_zfs_object_props(self, properties, zfs_object):
+        verrors = ValidationErrors()
         for k, v in properties.items():
             # If prop already exists we just update it,
             # otherwise create a user property
             prop = zfs_object.properties.get(k)
-            try:
-                if prop:
-                    if v.get('source') == 'INHERIT':
-                        prop.inherit(recursive=v.get('recursive', False))
-                    elif 'value' in v and (prop.value != v['value'] or prop.source.name == 'INHERITED'):
-                        prop.value = v['value']
-                    elif 'parsed' in v and (prop.parsed != v['parsed'] or prop.source.name == 'INHERITED'):
-                        prop.parsed = v['parsed']
-                else:
-                    if v.get('source') == 'INHERIT':
-                        pass
-                    else:
-                        if 'value' not in v:
-                            raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
-                        if ':' not in k:
-                            raise ValidationError('properties', f'User property needs a colon (:) in its name`')
-                        prop = libzfs.ZFSUserProperty(v['value'])
-                        zfs_object.properties[k] = prop
-            except libzfs.ZFSException as e:
-                raise ZFSSetPropertyError(k, str(e))
+            if v.get('source') == 'INHERIT':
+                if not prop:
+                    verrors.add(f'properties.{k}', 'Property does not exist and cannot be inherited')
+            else:
+                if not any(i in v for i in ('parsed', 'value')):
+                    verrors.add(f'properties.{k}', '"value" or "parsed" must be specified when setting a property')
+                if not prop and ':' not in k:
+                    verrors.add(f'properties.{k}', 'User property needs a colon (:) in its name')
+
+        verrors.check()
+
+        try:
+            zfs_object.update_properties(properties)
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed to update properties: {e!r}')
 
     @accepts(
         Str('id'),
