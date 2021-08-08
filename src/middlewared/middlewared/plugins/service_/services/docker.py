@@ -10,3 +10,7 @@ class DockerService(SimpleService):
         # https://jira.ixsystems.com/browse/NAS-108883 we see that docker did not start right away
         # and takes 17 seconds to initialize.
         await self._unit_action('Start', timeout=30)
+
+    async def _stop_linux(self):
+        await super()._stop_linux()
+        await self._systemd_unit('containerd', 'stop')
