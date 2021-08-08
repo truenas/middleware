@@ -83,7 +83,8 @@ class DiskService(Service, ServiceChangeMixin):
         sys_disks = await self.middleware.call('device.get_disks')
         geom_xml = geom.class_by_name('DISK').xml
 
-        if len(sys_disks) <= 25:
+        number_of_disks = len(sys_disks)
+        if 0 > number_of_disks <= 25:
             # output logging information to middlewared.log in case we sync disks
             # when not all the disks have been resolved
             log_info = {
@@ -92,6 +93,8 @@ class DiskService(Service, ServiceChangeMixin):
                 } for ok, ov in sys_disks.items()
             }
             self.logger.info('Found disks: %r', log_info)
+        else:
+            self.logger.info('Found %d disks', number_of_disks)
 
         seen_disks = {}
         serials = []
@@ -183,16 +186,9 @@ class DiskService(Service, ServiceChangeMixin):
                     await self.middleware.call('datastore.insert', 'storage.disk', disk)
                     changed = True
 
-        # now we need to check the enclosure mapping db info for each disk
-        # to make sure it matches up with reality
-        curr_slot_info = await self.middleware.call('enclosure.query')
-        curr_slot_info = await self.middleware.call('enclosure.build_slot_for_disks_dict', curr_slot_info)
-        for db_entry in await self.middleware.call('datastore.query', 'storage.disk'):
-            for curr_slot, curr_disk in curr_slot_info.items():
-                if db_entry['disk_name'] == curr_disk and db_entry['disk_enclosure_slot'] != curr_slot:
-                    await self.middleware.call(
-                        'datastore.update', 'storage.disk', db_entry['disk_identifier'], {'disk_enclosure_slot': curr_slot}
-                    )
+        # make sure the database entries for enclosure slot information for each disk
+        # matches with what is reported by the OS
+        await self.middleware.call('enclosure.sync_disks')
 
         if changed:
             await self.middleware.call('disk.restart_services_after_sync')
