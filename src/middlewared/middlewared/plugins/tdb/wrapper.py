@@ -30,7 +30,7 @@ class TDBWrap(object):
     def get(self, key):
         tdb_key = key.encode()
         if self.options['data_type'] == 'BYTES':
-            tdb_key +=  b"\x00"
+            tdb_key += b"\x00"
 
         tdb_val = self.hdl.get(tdb_key)
         if self.options['data_type'] == 'BYTES':
@@ -44,7 +44,7 @@ class TDBWrap(object):
     def store(self, key, val):
         tdb_key = key.encode()
         if self.options['data_type'] == 'BYTES':
-            tdb_key +=  b"\x00"
+            tdb_key += b"\x00"
 
         tdb_val = val.encode()
 
@@ -53,7 +53,7 @@ class TDBWrap(object):
     def delete(self, key):
         tdb_key = key.encode()
         if self.options['data_type'] == 'BYTES':
-            tdb_key +=  b"\x00"
+            tdb_key += b"\x00"
 
         self.hdl.delete(tdb_key)
 
