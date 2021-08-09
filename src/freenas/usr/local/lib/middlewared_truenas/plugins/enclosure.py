@@ -149,7 +149,7 @@ class EnclosureService(CRUDService):
         for enc in enclosure_info:
             slots = next(filter(lambda x: x["name"] == "Array Device Slot", enc["elements"]))["elements"]
             results.update({
-                j["slot"] * 1000 + enc["number"]: j["data"]["Device"] or None for j in slots
+                enc["number"] * 1000 + j["slot"]: j["data"]["Device"] or None for j in slots
             })
 
         return results
