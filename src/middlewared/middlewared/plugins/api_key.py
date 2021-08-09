@@ -99,7 +99,7 @@ class ApiKeyService(CRUDService):
             data
         )
 
-        await self.load_keys()
+        await self.load_key(data["id"])
 
         return self._serve(data, key)
 
@@ -139,7 +139,7 @@ class ApiKeyService(CRUDService):
             new,
         )
 
-        await self.load_keys()
+        await self.load_key(id)
 
         return self._serve(await self._get_instance(id), key)
 
@@ -156,7 +156,7 @@ class ApiKeyService(CRUDService):
             id
         )
 
-        await self.load_keys()
+        self.keys.pop(id)
 
         return response
 
@@ -166,6 +166,15 @@ class ApiKeyService(CRUDService):
             key["id"]: key
             for key in await self.middleware.call("datastore.query", "account.api_key")
         }
+
+    @private
+    async def load_key(self, id):
+        self.keys[id] = await self.middleware.call(
+            "datastore.query",
+            "account.api_key",
+            [["id", "=", id]],
+            {"get": True},
+        )
 
     @private
     async def authenticate(self, key):
