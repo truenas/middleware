@@ -1,5 +1,6 @@
 <%
 	import os
+	import ipaddress
 
 	ssh_config = middleware.call_sync('ssh.config')
 	if not os.path.exists('/root/.ssh'):
@@ -16,7 +17,10 @@
 	for iface in ifaces:
 		for alias in iface.get('state', {}).get('aliases', []):
 			if alias.get('type') in ('INET', 'INET6') and alias.get('address'):
-				bind_ifaces.append(alias['address'])
+				if ipaddress.ip_address(alias['address']).is_link_local:
+					bind_ifaces.append(f"{alias['address']}%{iface['name']}")
+				else:
+					bind_ifaces.append(alias['address'])
 
 	if bind_ifaces:
 		bind_ifaces.insert(0, '127.0.0.1')
