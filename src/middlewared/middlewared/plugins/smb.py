@@ -7,6 +7,7 @@ from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
 from pathlib import Path
+from base64 import b64decode
 
 import asyncio
 import codecs
@@ -16,10 +17,11 @@ import os
 import re
 import subprocess
 import uuid
+import shutil
+import struct
 
 try:
     from samba.samba3 import param
-    from samba.samba3 import passdb
 except ImportError:
     param = None
 
@@ -385,8 +387,18 @@ class SMBService(TDBWrapConfigService):
         next_rid = (await self.config())['next_rid']
         if next_rid == 0:
             try:
-                private_dir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
-                next_rid = passdb.PDB(f"tdbsam:{private_dir}/passdb.tdb").new_rid()
+                shutil.copyfile(
+                    f"{SMBPath.LEGACYPRIVATE.platform()}/passdb.tdb",
+                    f"{SMBPath.LEGACYPRIVATE.platform()}/tmppassdb.tdb"
+                )
+                tdb_rid = await self.middleware.call('tdb.fetch', {
+                    "name": f"{SMBPath.LEGACYPRIVATE.platform()}/tmppassdb.tdb",
+                    "key": "NEXT_RID",
+                    "tdb-options": {"backend": "CUSTOM", "data_type": "BYTES"},
+                })
+                decoded = b64decode(tdb_rid)
+                next_rid = struct.unpack("<L", decoded)[0]
+
             except Exception:
                 self.logger.warning("Failed to initialize RID counter from passdb. "
                                     "Using default value for initialization.", exc_info=True)

@@ -98,7 +98,7 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Dict('value', required=True, additional_attrs=True),
         Dict(
             'tdb-options',
-            Str('backend', enum=['PERSISTENT', 'VOLATILE'], default='PERSISTENT'),
+            Str('backend', enum=['PERSISTENT', 'VOLATILE', 'CUSTOM'], default='PERSISTENT'),
             Str('tdb_type', enum=['BASIC', 'CRUD', 'CONFIG'], default='BASIC'),
             Str('data_type', enum=['JSON', 'STRING', 'BYTES'], default='JSON'),
             Bool('cluster', default=False),
@@ -140,7 +140,7 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         elif data['tdb-options']['data_type'] == 'STRING':
             data = tdb_val
         elif data['tdb-options']['data_type'] == 'BYTES':
-            data = b64encode(tdb_val)
+            data = b64encode(tdb_val).decode()
 
         return data
 
@@ -306,6 +306,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
     @private
     async def setup(self):
         for p in TDBPath:
+            if TDBPath.CUSTOM:
+                continue
+
             os.makedirs(p.value, mode=0o700, exist_ok=True)
 
 
