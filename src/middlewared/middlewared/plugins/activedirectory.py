@@ -24,8 +24,6 @@ from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
 import middlewared.utils.osc as osc
 
-from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
-
 AD_SMBCONF_PARAMS = {
     "server role": "member server",
     "kerberos method": "secrets and keytab",
@@ -1356,7 +1354,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             'kerberos_principal': '',
             'domainname': '',
         }
-        await self.middleware.call('activedirectory.update', payload)
+        new = await self.middleware.call('activedirectory.direct_update', payload)
         await self.set_state(DSStatus['DISABLED'])
         if smb_ha_mode == 'LEGACY' and (await self.middleware.call('failover.status')) == 'MASTER':
             try:
@@ -1369,6 +1367,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
             self.logger.warning("Failed to flush samba's general cache after leaving Active Directory.")
 
         await self.middleware.call('kerberos.stop')
+        await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
+        await self.synchronize(new)
+        await self.middleware.call('idmap.synchronize')
+        await self.middleware.call('service.restart', 'cifs')
         return
 
     @private
@@ -1563,7 +1566,7 @@ class WBStatusThread(threading.Thread):
         self.middleware = kwargs.get('middleware')
         self.logger = self.middleware.logger
         self.finished = threading.Event()
-        self.state = MSG_WINBIND_ONLINE
+        self.state = DSStatus.FAULTED.value
 
     def parse_msg(self, data):
         if data == str(DSStatus.LEAVING.value):

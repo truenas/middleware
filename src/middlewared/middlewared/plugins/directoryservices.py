@@ -11,8 +11,6 @@ from middlewared.service import Service, private, job
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.service_exception import CallError
 from middlewared.utils import run
-from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
-
 
 DEFAULT_AD_CONF = {
     "id": 1,
@@ -28,10 +26,10 @@ DEFAULT_AD_CONF = {
 
 class DSStatus(enum.Enum):
     DISABLED = enum.auto()
-    FAULTED = MSG_WINBIND_OFFLINE
+    FAULTED = 1028  # MSG_WINBIND_OFFLINE
     LEAVING = enum.auto()
     JOINING = enum.auto()
-    HEALTHY = MSG_WINBIND_ONLINE
+    HEALTHY = 1027  # MSG_WINBIND_ONLINE
 
 
 class DSType(enum.Enum):
