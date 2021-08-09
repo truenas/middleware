@@ -1151,7 +1151,7 @@ class InterfaceService(CRUDService):
                 'Virtual IP address', ' cannot be changed.', ' is required when configuring HA'
             ],
             'failover_group': [
-                'Failover group number', ' cannot be changed.' ' is required when configuring HA'
+                'Failover group number', ' cannot be changed.', ' is required when configuring HA'
             ],
             'mtu': ['MTU', ' cannot be changed.'],
             'ipv4_dhcp': ['DHCP', ' cannot be changed.'],
