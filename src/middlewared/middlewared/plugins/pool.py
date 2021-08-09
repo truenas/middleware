@@ -2387,7 +2387,7 @@ class PoolDatasetService(CRUDService):
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
         async def detach(delegate):
-            await delegate.stop((await delegate.query(self.__attachments_path(ds), True)))
+            await delegate.stop(await delegate.query(self.__attachments_path(ds), True))
 
         try:
             await self.middleware.call('cache.put', 'about_to_lock_dataset', id)
@@ -2413,8 +2413,8 @@ class PoolDatasetService(CRUDService):
             'unlock_options',
             Bool('key_file', default=False),
             Bool('recursive', default=False),
-            Bool('toggle_attachments'),
-            List('services_restart', default=[]),
+            Str('attachments_list_mode', enum=['ALLOW', 'DENY'], default='DENY'),
+            List('attachments_list', default=[]),
             List(
                 'datasets', items=[
                     Dict(
@@ -2450,6 +2450,13 @@ class PoolDatasetService(CRUDService):
 
         Uploading a json file which contains encrypted dataset keys can be specified with
         `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
+
+        `attachments_list_mode` and `attachments_list` controls which attachments (shares, tasks)
+        should be put in action after unlocking pool. By default all attachments are handled, which might
+        theoretically lead to service interruption when daemons configurations are reloaded (this should not happen,
+        and if this happens it should be considered a bug). As TrueNAS does not have a state for resources that
+        should be unlocked but are still locked, using this option will put the system into an inconsistent state
+        so it should really never be used.
         """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset.get_instance', id)
@@ -2479,23 +2486,6 @@ class PoolDatasetService(CRUDService):
             else:
                 if not bool(self.query_encrypted_roots_keys([['name', '=', id]])) and id not in keys_supplied:
                     verrors.add('unlock_options.datasets', f'Please specify key for {id}')
-
-        services_to_restart = set(options['services_restart'])
-        if 'toggle_attachments' in options and options['services_restart']:
-            verrors.add(
-                'unlock_options.toggle_attachments',
-                'This field should not be specified when "unlock_options.services_restart" is specified explicitly.'
-            )
-        elif options['services_restart']:
-            diff = services_to_restart - set(
-                self.middleware.call_sync('pool.dataset.unlock_services_restart_choices', id).keys()
-            )
-            if diff:
-                verrors.add('unlock_options.services_restart', f'{",".join(diff)} cannot be restarted on dataset unlock.')
-        elif options.get('toggle_attachments'):
-            services_to_restart = set(
-                self.middleware.call_sync('pool.dataset.unlock_services_restart_choices', id).keys()
-            )
 
         verrors.check()
 
@@ -2566,12 +2556,15 @@ class PoolDatasetService(CRUDService):
                 else:
                     unlocked.append(name)
 
+        services_to_restart = set()
         if self.middleware.call_sync('system.ready'):
             services_to_restart.add('disk')
             if '/' not in id:
                 services_to_restart.add('system_datasets')
 
         if unlocked:
+            self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset, options)
+
             def dataset_data(unlocked_dataset):
                 return {
                     'encryption_key': keys_supplied.get(unlocked_dataset), 'name': unlocked_dataset,
@@ -2590,6 +2583,25 @@ class PoolDatasetService(CRUDService):
             )
 
         return {'unlocked': unlocked, 'failed': failed}
+
+    @private
+    async def unlock_handle_attachments(self, dataset, options):
+        for attachment_delegate in PoolDatasetService.attachment_delegates:
+            if options['attachments_list_mode'] == 'ALLOW':
+                if attachment_delegate.name not in options['attachments_list']:
+                    continue
+            if options['attachments_list_mode'] == 'DENY':
+                if attachment_delegate.name in options['attachments_list']:
+                    continue
+
+            # FIXME: put this into `VMFSAttachmentDelegate`
+            if attachment_delegate.name == 'vm':
+                await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)
+                continue
+
+            attachments = await attachment_delegate.query(self.__attachments_path(dataset), True, {'locked': False})
+            if attachments:
+                await attachment_delegate.start(attachments)
 
     @accepts(
         Str('id'),
