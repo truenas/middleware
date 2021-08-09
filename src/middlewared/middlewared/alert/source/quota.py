@@ -103,16 +103,26 @@ class QuotaAlertSource(ThreadedAlertSource):
                 owner = self._get_owner(dataset)
                 if owner != 0:
                     try:
-                        bsduser = self.middleware.call_sync(
-                            "datastore.query",
-                            "account.bsdusers",
-                            [["bsdusr_uid", "=", owner]],
-                            {"get": True},
+                        self.middleware.call_sync(
+                            'user.get_user_obj', {'uid': owner}
                         )
-                        to = bsduser["bsdusr_email"] or None
-                    except IndexError:
-                        logger.debug("Unable to query bsduser with uid %r", owner)
+                        user_exists = True
+                    except KeyError:
+                        user_exists = False
                         to = None
+                        logger.debug("Unable to query bsduser with uid %r", owner)
+
+                    if user_exists:
+                        try:
+                            bsduser = self.middleware.call_sync(
+                                "datastore.query",
+                                "account.bsdusers",
+                                [["bsdusr_uid", "=", owner]],
+                                {"get": True},
+                            )
+                            to = bsduser["bsdusr_email"] or None
+                        except IndexError:
+                            to = None
 
                     if to is not None:
                         mail = {
