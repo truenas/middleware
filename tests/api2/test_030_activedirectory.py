@@ -600,6 +600,10 @@ def test_60_disable_activedirectory(request):
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
 
+    disable_job = results.json()['job_id']
+    job_status = wait_on_job(disable_job, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
 
 def test_61_get_activedirectory_state(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
