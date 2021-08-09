@@ -576,8 +576,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if not old['enable'] and new['enable']:
             job = (await self.middleware.call('activedirectory.start')).id
 
-        elif new['enable'] and not old['enable']:
-            await self.stop()
+        elif not new['enable'] and old['enable']:
+            job = (await self.middleware.call('activedirectory.stop')).id
 
         elif new['enable'] and old['enable']:
             await self.middleware.call('service.restart', 'cifs')
