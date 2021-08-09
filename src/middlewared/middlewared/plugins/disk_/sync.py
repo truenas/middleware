@@ -99,7 +99,6 @@ class DiskService(Service, ServiceChangeMixin):
         seen_disks = {}
         serials = []
         changed = False
-        encs = await self.middleware.call('enclosure.query')
         for disk in (
             await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
         ):
