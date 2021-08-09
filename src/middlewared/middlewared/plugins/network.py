@@ -933,7 +933,7 @@ class InterfaceService(CRUDService):
             'aliases': ['Active node IP address', ' cannot be changed.', ' is required when configuring HA'],
             'failover_aliases': ['Standby node IP address', ' cannot be changed.', ' is required when configuring HA'],
             'failover_virtual_aliases': ['Virtual IP address', ' cannot be changed.', ' is required when configuring HA'],
-            'failover_group': ['Failover group number', ' cannot be changed.' ' is required when configuring HA'],
+            'failover_group': ['Failover group number', ' cannot be changed.', ' is required when configuring HA'],
             'mtu': ['MTU', ' cannot be changed.'],
             'ipv4_dhcp': ['DHCP', ' cannot be changed.'],
             'ipv6_auto': ['Autconfig for IPv6', ' cannot be changed.'],
