@@ -11,6 +11,7 @@ from middlewared.service_exception import CallError
 class TDBPath(enum.Enum):
     VOLATILE = '/var/run/tdb/volatile'
     PERSISTENT = '/root/tdb/persistent'
+    CUSTOM = ''
 
 
 class TDBWrap(object):
@@ -28,20 +29,31 @@ class TDBWrap(object):
 
     def get(self, key):
         tdb_key = key.encode()
+        if self.options['data_type'] == 'BYTES':
+            tdb_key += b"\x00"
 
         tdb_val = self.hdl.get(tdb_key)
-        tdb_val = tdb_val.decode()
+        if self.options['data_type'] == 'BYTES':
+            return tdb_val
+
+        if tdb_val is not None:
+            tdb_val = tdb_val.decode()
 
         return tdb_val
 
     def store(self, key, val):
         tdb_key = key.encode()
+        if self.options['data_type'] == 'BYTES':
+            tdb_key += b"\x00"
+
         tdb_val = val.encode()
 
         self.hdl.store(tdb_key, tdb_val)
 
     def delete(self, key):
         tdb_key = key.encode()
+        if self.options['data_type'] == 'BYTES':
+            tdb_key += b"\x00"
 
         self.hdl.delete(tdb_key)
 
@@ -87,7 +99,7 @@ class TDBWrap(object):
         open_flags = os.O_CREAT | os.O_RDWR
         open_mode = 0o600
 
-        if not tdb_flags & tdb.INTERNAL:
+        if tdb_type != 'CUSTOM':
             name = f'{TDBPath[tdb_type].value}/{name}.tdb'
 
         self.hdl = tdb.Tdb(name, 0, tdb_flags, open_flags, open_mode)

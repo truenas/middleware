@@ -13,7 +13,6 @@ class TDBMixin:
 
     def _get(self, tdb_handle, key):
         tdb_val = tdb_handle.get(key)
-
         return tdb_val if tdb_val else None
 
     def _set(self, tdb_handle, key, val):
