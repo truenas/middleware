@@ -1566,7 +1566,7 @@ class WBStatusThread(threading.Thread):
         self.middleware = kwargs.get('middleware')
         self.logger = self.middleware.logger
         self.finished = threading.Event()
-        self.state = 1027
+        self.state = DSStatus.FAULTED.value
 
     def parse_msg(self, data):
         if data == str(DSStatus.LEAVING.value):
