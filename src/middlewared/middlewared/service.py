@@ -969,7 +969,6 @@ class SharingTaskService(CRUDService):
     path_field = 'path'
     enabled_field = 'enabled'
     locked_field = 'locked'
-    service_type = NotImplemented
     locked_alert_class = NotImplemented
     share_task_type = NotImplemented
 
@@ -1059,7 +1058,6 @@ class SharingTaskService(CRUDService):
 
 
 class SharingService(SharingTaskService):
-    service_type = 'share'
     locked_alert_class = 'ShareLocked'
 
     @private
@@ -1068,7 +1066,6 @@ class SharingService(SharingTaskService):
 
 
 class TaskPathService(SharingTaskService):
-    service_type = 'task'
     locked_alert_class = 'TaskLocked'
 
     @private

@@ -80,7 +80,7 @@ class PoolDatasetService(Service):
     @private
     async def restart_services_after_unlock(self, dataset_name, services_to_restart):
         try:
-            to_restart = [[i] for i in set(services_to_restart) - {'vms'}]
+            to_restart = [[i] for i in set(services_to_restart)]
             if not to_restart:
                 return
 
@@ -92,8 +92,6 @@ class PoolDatasetService(Service):
                         'Failed to restart %r service after %r unlock: %s',
                         to_restart[idx], dataset_name, srv_status['error']
                     )
-            if 'vms' in services_to_restart:
-                await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset_name)
         except Exception:
             self.logger.error(
                 'Failed to restart %r services after %r unlock', ', '.join(services_to_restart), id, exc_info=True,

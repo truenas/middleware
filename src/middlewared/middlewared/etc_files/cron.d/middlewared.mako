@@ -25,6 +25,8 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
     if job["locked"]:
         middleware.call_sync('rsynctask.generate_locked_alert', job['id'])
         continue
+    else:
+        middleware.call_sync('rsynctask.remove_locked_alert', job['id'])
 %>\
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call rsynctask.run {job['id']}"))}
     % endfor
@@ -34,6 +36,8 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
     if job["locked"]:
         middleware.call_sync('cloudsync.generate_locked_alert', job['id'])
         continue
+    else:
+        middleware.call_sync('cloudsync.remove_locked_alert', job['id'])
 %>\
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call cloudsync.sync {job['id']}"))}
     % endfor
