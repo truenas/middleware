@@ -26,10 +26,10 @@ DEFAULT_AD_CONF = {
 
 class DSStatus(enum.Enum):
     DISABLED = enum.auto()
-    FAULTED = 1028 # MSG_WINBIND_OFFLINE
+    FAULTED = 1028  # MSG_WINBIND_OFFLINE
     LEAVING = enum.auto()
     JOINING = enum.auto()
-    HEALTHY = 1027 # MSG_WINBIND_ONLINE
+    HEALTHY = 1027  # MSG_WINBIND_ONLINE
 
 
 class DSType(enum.Enum):
