@@ -44,6 +44,7 @@
 Hostname "${hostname}"
 BaseDir "${base_dir}"
 PluginDir "/usr/lib/collectd"
+TypesDB "/usr/share/collectd/types.db"
 TypesDB "/usr/share/collectd/types.db.truenas"
 
 LoadPlugin aggregation
