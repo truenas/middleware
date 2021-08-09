@@ -1615,13 +1615,10 @@ class InterfaceService(CRUDService):
             verrors, 'interface_update', new, iface['type'], update=iface
         )
         licensed = await self.middleware.call('failover.licensed')
-        if licensed and iface.get('disable_offload_capabilities') != new.get('disable_offload_capabilities'):
-            if not new['disable_offload_capabilities']:
-                if iface['name'] in await self.middleware.call('interface.to_disable_evil_nic_capabilities', False):
-                    verrors.add(
-                        'interface_update.disable_offload_capabilities',
-                        f'Capabilities for {oid} cannot be enabled as there are VM(s) which need them disabled.'
-                    )
+        if licensed:
+            if new.get('ipv4_dhcp') or new.get('ipv6_auto'):
+                verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
+
         verrors.check()
 
         await self.__save_datastores()
