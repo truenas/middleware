@@ -1,7 +1,7 @@
 import asyncio
-
 from datetime import datetime, timedelta
 
+from bsd import geom
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
 
@@ -16,21 +16,19 @@ class DiskService(Service, ServiceChangeMixin):
         """
         Syncs a disk `name` with the database cache.
         """
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP'
-        ):
-            return
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return
 
         # Do not sync geom classes like multipath/hast/etc
         if name.find('/') != -1:
             return
 
         disks = await self.middleware.call('device.get_disks')
-        # Abort if the disk is not recognized as an available disk
         if name not in disks:
+            # return early if the disk is not recognized as an available disk
             return
+
         ident = await self.middleware.call('disk.device_to_identifier', name, disks)
         qs = await self.middleware.call(
             'datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['disk_expiretime']}
@@ -83,30 +81,34 @@ class DiskService(Service, ServiceChangeMixin):
                 self.logger.warning('Starting disk.sync_all when devd is not connected yet')
 
         sys_disks = await self.middleware.call('device.get_disks')
+        geom_xml = geom.class_by_name('DISK').xml
 
-        # output logging information to middlewared.log in case we sync disks
-        # when not all the disks have been resolved
-        log_info = {
-            ok: {
-                ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
-            } for ok, ov in sys_disks.items()
-        }
-        self.logger.info('Found disks: %r', log_info)
+        number_of_disks = len(sys_disks)
+        if 0 > number_of_disks <= 25:
+            # output logging information to middlewared.log in case we sync disks
+            # when not all the disks have been resolved
+            log_info = {
+                ok: {
+                    ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
+                } for ok, ov in sys_disks.items()
+            }
+            self.logger.info('Found disks: %r', log_info)
+        else:
+            self.logger.info('Found %d disks', number_of_disks)
 
         seen_disks = {}
         serials = []
         changed = False
-        encs = await self.middleware.call('enclosure.query')
         for disk in (
             await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
         ):
             original_disk = disk.copy()
 
-            name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'], sys_disks)
+            name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'], False, geom_xml)
             if (
                     not name or
                     name in seen_disks or
-                    await self.middleware.call('disk.device_to_identifier', name) != disk['disk_identifier']
+                    await self.middleware.call('disk.device_to_identifier', name, sys_disks) != disk['disk_identifier']
             ):
                 # If we cant translate the identifier to a device, give up
                 # If name has already been seen once then we are probably
@@ -149,8 +151,6 @@ class DiskService(Service, ServiceChangeMixin):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 changed = True
 
-            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], encs)
-
             seen_disks[name] = disk
 
         for name in sys_disks:
@@ -186,7 +186,9 @@ class DiskService(Service, ServiceChangeMixin):
                     await self.middleware.call('datastore.insert', 'storage.disk', disk)
                     changed = True
 
-                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], encs)
+        # make sure the database entries for enclosure slot information for each disk
+        # matches with what is reported by the OS
+        await self.middleware.call('enclosure.sync_disks')
 
         if changed:
             await self.middleware.call('disk.restart_services_after_sync')

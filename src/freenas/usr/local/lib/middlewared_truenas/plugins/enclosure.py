@@ -142,6 +142,18 @@ class EnclosureService(CRUDService):
 
         return await self._get_instance(id)
 
+    async def _build_slot_for_disks_dict(self):
+        enclosure_info = await self.middleware.call('enclosure.query')
+
+        results = {}
+        for enc in enclosure_info:
+            slots = next(filter(lambda x: x["name"] == "Array Device Slot", enc["elements"]))["elements"]
+            results.update({
+                j["slot"] * 1000 + enc["number"]: j["data"]["Device"] or None for j in slots
+            })
+
+        return results
+
     def _get_slot(self, slot_filter, enclosure_query=None, enclosure_info=None):
         if enclosure_info is None:
             enclosure_info = self.middleware.call_sync("enclosure.query", enclosure_query or [])
@@ -201,6 +213,18 @@ class EnclosureService(CRUDService):
         ses_slot = self._get_ses_slot(enclosure, element)
         if not ses_slot.device_slot_set(status.lower()):
             raise CallError("Error setting slot status")
+
+    @private
+    async def sync_disks(self):
+        curr_slot_info = await self._build_slot_for_disks_dict()
+        for db_entry in await self.middleware.call('datastore.query', 'storage.disk'):
+            for curr_slot, curr_disk in curr_slot_info.items():
+                if db_entry['disk_name'] == curr_disk and db_entry['disk_enclosure_slot'] != curr_slot:
+                    await self.middleware.call(
+                        'datastore.update', 'storage.disk',
+                        db_entry['disk_identifier'],
+                        {'disk_enclosure_slot': curr_slot},
+                    )
 
     @private
     def sync_disk(self, id, enclosure_info=None):
