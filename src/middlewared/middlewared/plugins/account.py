@@ -800,7 +800,7 @@ class UserService(CRUDService):
         if home_old == '/nonexistent':
             return
 
-        command = f"/bin/cp -a {shlex.quote(home_old) + '/'} {shlex.quote(home_new + '/')}"
+        command = f"/bin/cp -a {shlex.quote(home_old) + '/' + '.'} {shlex.quote(home_new + '/')}"
         do_copy = await run(["/usr/bin/su", "-", username, "-c", command], check=False)
         if do_copy.returncode != 0:
             raise CallError(f"Failed to copy homedir [{home_old}] to [{home_new}]: {do_copy.stderr.decode()}")
