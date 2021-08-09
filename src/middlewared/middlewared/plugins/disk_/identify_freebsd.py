@@ -8,7 +8,10 @@ from .identify_base import DiskIdentifyBase
 class DiskService(Service, DiskIdentifyBase):
 
     async def device_to_identifier(self, name, disks=None):
-        disk_data = disks.get('name') or await self.middleware.call('device.get_disk', name)
+        disk_data = disks.get(name)
+        if not disk_data:
+            disk_data = await self.middleware.call('device.get_disk', name)
+
         if disk_data and disk_data['serial_lunid']:
             return f'{{serial_lunid}}{disk_data["serial_lunid"]}'
         elif disk_data and disk_data['serial']:
@@ -34,8 +37,7 @@ class DiskService(Service, DiskIdentifyBase):
 
         return ''
 
-    def identifier_to_device(self, ident, disks=None):
-
+    def identifier_to_device(self, ident, geom_scan=True, geom_xml=None):
         if not ident:
             return None
 
@@ -43,29 +45,42 @@ class DiskService(Service, DiskIdentifyBase):
         if not search:
             return None
 
-        geom.scan()
+        if geom_scan:
+            geom.scan()
 
         tp = search.group('type')
         # We need to escape single quotes to html entity
         value = search.group('value').replace("'", '%27')
 
         if tp == 'uuid':
-            search = geom.class_by_name('PART').xml.find(
-                f'.//config[rawuuid = "{value}"]/../../name'
-            )
+            _find = f'.//config[rawuuid = "{value}"]/../../name'
+            if geom_xml:
+                search = geom_xml.find(_find)
+            else:
+                search = geom.class_by_name('PART').xml.find(_find)
+
             if search is not None and not search.text.startswith('label'):
                 return search.text
 
         elif tp == 'label':
-            search = geom.class_by_name('LABEL').xml.find(
-                f'.//provider[name = "{value}"]/../name'
-            )
+            _find = f'.//provider[name = "{value}"]/../name'
+            if geom_xml:
+                search = geom_xml.find(_find)
+            else:
+                search = geom.class_by_name('LABEL').xml.find(_find)
+
             if search is not None:
                 return search.text
 
         elif tp == 'serial':
-            xml = geom.class_by_name('DISK').xml
-            search = xml.find(f'.//provider/config[ident = "{value}"]/../../name')
+            _find = f'.//provider/config[ident = "{value}"]/../../name'
+            if geom_xml:
+                xml = geom_xml
+                search = xml.find(_find)
+            else:
+                xml = geom.class_by_name('DISK').xml
+                search = xml.find(_find)
+
             if search is not None:
                 return search.text
 
@@ -76,18 +91,23 @@ class DiskService(Service, DiskIdentifyBase):
             _value = ' '.join(value.split())
             for i in xml.findall('.//provider/config/ident'):
                 raw = i.text
-                _ident = ' '.join(raw.split())
-                if _value == _ident:
-                    name = xml.find(f'.//provider/config[ident = "{raw}"]/../../name')
-                    if name is not None:
-                        return name.text
+                if raw:
+                    _ident = ' '.join(raw.split())
+                    if _value == _ident:
+                        name = xml.find(f'.//provider/config[ident = "{raw}"]/../../name')
+                        if name is not None:
+                            return name.text
 
             disks = self.middleware.call_sync('disk.query', [('serial', '=', value)])
             if disks:
                 return disks[0]['name']
 
         elif tp == 'serial_lunid':
-            xml = geom.class_by_name('DISK').xml
+            if geom_xml:
+                xml = geom_xml
+            else:
+                xml = geom.class_by_name('DISK').xml
+
             _ident, _lunid = value.split('_')
             found_ident = xml.find(f'.//provider/config[ident = "{_ident}"]/../../name')
             if found_ident is not None:
