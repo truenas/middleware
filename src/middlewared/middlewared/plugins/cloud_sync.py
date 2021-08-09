@@ -645,7 +645,7 @@ class CredentialsService(CRUDService):
         """
         Delete Cloud Sync Credentials of `id`.
         """
-        tasks = await self.middleware.call("cloudsync.query", [["credential", "=", id]])
+        tasks = await self.middleware.call("cloudsync.query", [["credentials.id", "=", id]])
         if tasks:
             raise CallError(f"This credential is used by cloud sync task {tasks[0]['description'] or tasks[0]['id']}")
 

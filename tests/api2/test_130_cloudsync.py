@@ -156,6 +156,13 @@ def test_07_restore_cloud_sync(request, env, task):
     assert result.status_code == 200, result.text
 
 
+def test_96_delete_cloud_credentials_error(request, env, task):
+    depends(request, ["pool_04"], scope="session")
+    result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
+    assert result.status_code == 422
+    assert "This credential is used by cloud sync task" in result.json()["message"]
+
+
 def test_97_delete_cloud_sync(request, env, task):
     depends(request, ["pool_04"], scope="session")
     result = DELETE(f"/cloudsync/id/{task['id']}/")
