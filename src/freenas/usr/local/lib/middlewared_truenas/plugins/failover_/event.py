@@ -637,13 +637,6 @@ class FailoverService(Service):
                 logger.warning('Configuring cron')
                 self.run_call('etc.generate', 'cron')
 
-                # sync disks is disabled on passive node
-                logger.warning('Syncing all disks')
-                self.run_call('disk.sync_all')
-
-                logger.warning('Syncing enclosure')
-                self.run_call('enclosure.sync_zpool')
-
                 logger.warning('Restarting collectd')
                 self.run_call('service.restart', 'collectd', {'ha_propagate': False})
                 logger.warning('Restarting syslogd')
@@ -658,6 +651,16 @@ class FailoverService(Service):
                 self.run_call('jail.start_on_boot')
                 self.run_call('vm.start_on_boot')
                 self.run_call('truecommand.start_truecommand_service')
+
+                # disk.sync_all and enclosure.sync_zpool takes awhile
+                # on large systems (100's of disks) so we start the
+                # job here after restarting all the services
+                logger.warning('Syncing all disks')
+                disk_job = self.middleware.call_sync('disk.sync_all')
+                disk_job.wait_sync()
+
+                logger.warning('Syncing enclosure')
+                self.run_call('enclosure.sync_zpool')
 
                 self.run_call('alert.block_failover_alerts')
                 self.run_call('alert.initialize', False)
