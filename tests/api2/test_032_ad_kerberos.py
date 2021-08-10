@@ -11,7 +11,7 @@ import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, hostname, password, user
+from auto_config import pool_name, ip, hostname, password, user
 from base64 import b64decode
 from pytest_dependency import depends
 
@@ -42,6 +42,9 @@ pam = {
     ticket_lifetime = 36000
 }
 """
+dataset = f"{pool_name}/ad-krb5"
+dataset_url = dataset.replace('/', '%2F')
+
 WORKGROUP = None
 nameserver1 = None
 nameserver2 = None
@@ -97,15 +100,8 @@ def test_04_verify_the_job_id_is_successful(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_05_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["AD_ENABLED", "ssh_password"], scope="session")
-    cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, str(results['output'])
-
-
 @pytest.mark.dependency(name="AD_IS_HEALTHY")
-def test_06_get_activedirectory_state(request):
+def test_05_get_activedirectory_state(request):
     """
     Issue no-effect operation on DC's netlogon share to
     verify that domain join is alive.
@@ -116,7 +112,7 @@ def test_06_get_activedirectory_state(request):
 
 
 @pytest.mark.dependency(name="AD_MACHINE_ACCOUNT_ADDED")
-def test_07_check_ad_machine_account_added(request):
+def test_06_check_ad_machine_account_added(request):
     """
     The keytab in this case is a b64encoded keytab file.
     AD_MACHINE_ACCOUNT is automatically generated during domain
@@ -140,6 +136,12 @@ def test_07_check_ad_machine_account_added(request):
         errstr = e.args[0]
 
     assert errstr == "", f"b64decode of keytab failed with: {errstr}"
+
+@pytest.mark.dependency(name="KRB_DATASET")
+def test_07_creating_ad_dataset_for_smb(request):
+    depends(request, ["pool_04", "AD_IS_HEALTHY"], scope="session")
+    results = POST("/pool/dataset/", {"name": dataset})
+    assert results.status_code == 200, results.text
 
 
 def test_08_system_keytab_verify(request):
@@ -449,7 +451,14 @@ def test_30_check_nfs_exports_sec(request):
     an NFS SPN entry. Expected security with v4 is:
     "V4: / -sec=sys"
     """
-    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
+    depends(request, ["KRB5_IS_HEALTHY", "ssh_password", "KRB_DATASET"], scope="session")
+    payload = {
+        "comment": "KRB Test Share",
+        "paths": [f'/mnt/{dataset}'],
+    }
+    results = POST("/sharing/nfs/", payload)
+    assert results.status_code == 200, results.text
+
     payload = {"v4": True}
     results = PUT("/nfs/", payload)
     assert results.status_code == 200, results.text
@@ -458,8 +467,8 @@ def test_30_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    expected_sec = "V4: / -sec=sys"
-    cmd = f'grep "{expected_sec}" /etc/exports'
+    expected_sec = 'SecType = sys;'
+    cmd = f'grep "{expected_sec}" /etc/ganesha/ganesha.conf'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == expected_sec, results['output']
@@ -485,6 +494,10 @@ def test_32_add_krb_spn(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
+    job_id = results['output'].strip()
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
 
 def test_33_verify_has_nfs_principals(request):
     depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
@@ -501,7 +514,7 @@ def test_34_verify_ad_nfs_parameters(request):
     assert results['result'] is True, results['output']
     if not results['result']:
         return
-    assert results['output'].strip() == "True"
+    assert results['output'].strip() == "true"
 
 
 def test_35_check_nfs_exports_sec(request):
@@ -515,8 +528,8 @@ def test_35_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    expected_sec = "V4: / -sec=krb5:krb5i:krb5p"
-    cmd = f'grep "{expected_sec}" /etc/exports'
+    expected_sec = "SecType = sys, krb5, krb5i, krb5p;"
+    cmd = f'grep "{expected_sec}" /etc/ganesha/ganesha.conf'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == expected_sec, results['output']
@@ -549,13 +562,17 @@ def test_37_check_nfs_exports_sec(request):
     assert results['result'] is True, results['output']
 
     expected_sec = "V4: / -sec=sys:krb5:krb5i:krb5p"
-    cmd = f'grep "{expected_sec}" /etc/exports'
+    cmd = f'grep "{expected_sec}" /etc/ganesha/ganesha.conf'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == expected_sec, results['output']
 
 
 def test_38_cleanup_nfs_settings(request):
+    nfsid = GET('/sharing/nfs?comment=KRB Test Share').json()[0]['id']
+    results = DELETE(f"/sharing/nfs/id/{nfsid}")
+    assert results.status_code == 200, results.text
+
     payload = {"v4": False}
     results = PUT("/nfs/", payload)
     assert results.status_code == 200, results.text

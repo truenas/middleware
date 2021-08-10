@@ -12,6 +12,7 @@ import subprocess
 import threading
 import tdb
 import time
+import contextlib
 
 from dns import resolver
 from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
@@ -717,16 +718,13 @@ class ActiveDirectoryService(TDBWrapConfigService):
             if smb_ha_mode != 'LEGACY':
                 """
                 Manipulating the SPN entries must be done with elevated privileges. Add NFS service
-                principals while we have these on-hand. Once added, force a refresh of the system
-                keytab so that the NFS principal will be available for gssd.
+                principals while we have these on-hand.
+                Since this may potentially take more than a minute to complete, run in background job.
                 """
                 job.set_progress(60, 'Adding NFS Principal entries.')
-
-                try:
-                    await self.add_nfs_spn(ad)
-                except Exception:
-                    self.logger.warning("Failed to add NFS spn to active directory "
-                                        "computer object.", exc_info=True)
+                # Skip health check for add_nfs_spn since by this point our AD join should be de-facto healthy.
+                spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad, False, False)
+                await spn_job.wait()
 
                 job.set_progress(70, 'Storing computer account keytab.')
                 kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
@@ -1134,7 +1132,15 @@ class ActiveDirectoryService(TDBWrapConfigService):
             )
 
     @private
-    async def add_nfs_spn(self, ad=None):
+    @job(lock="spn_manipulation")
+    async def add_nfs_spn(self, job, ad=None, check_health=True, update_keytab=False):
+        if check_health:
+            ad_state = await self.get_state()
+            if ad_state != DSStatus.HEALTHY.name:
+                raise CallError("Service Principal Names that are registered in Active Directory "
+                                "may only be manipulated when the Active Directory Service is Healthy. "
+                                f"Current state is: {ad_state}")
+
         if ad is None:
             ad = await self.config()
 
@@ -1146,6 +1152,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
             return False
 
         await self.change_trust_account_pw()
+        if update_keytab:
+            await self.middleware.call('kerberos.keytab.store_samba_keytab')
 
         return True
 
@@ -1365,6 +1373,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
         flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
         if flush.returncode != 0:
             self.logger.warning("Failed to flush samba's general cache after leaving Active Directory.")
+
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink('/etc/krb5.keytab')
 
         await self.middleware.call('kerberos.stop')
         await self.middleware.call('etc.generate', 'pam')

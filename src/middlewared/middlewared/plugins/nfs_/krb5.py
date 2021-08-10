@@ -49,7 +49,8 @@ class NFSService(Service):
         ad['kerberos_principal'] = ''
 
         await self.middleware.call('kerberos.do_kinit', ad)
-        return await self.middleware.call('activedirectory.add_nfs_spn', ad)
+        add_spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad)
+        return await add_spn_job.wait(raise_error=True)
 
     @private
     async def add_principal_ldap(self, data):
