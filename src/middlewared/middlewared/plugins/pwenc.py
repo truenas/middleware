@@ -1,8 +1,8 @@
 import base64
 import os
 
-from Crypto.Cipher import AES
-from Crypto.Util import Counter
+from Cryptodome.Cipher import AES
+from Cryptodome.Util import Counter
 
 from middlewared.service import Service
 
