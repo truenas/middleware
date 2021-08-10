@@ -18,9 +18,9 @@ import base64
 import codecs
 from collections import namedtuple
 import configparser
-from Crypto import Random
-from Crypto.Cipher import AES
-from Crypto.Util import Counter
+from Cryptodome import Random
+from Cryptodome.Cipher import AES
+from Cryptodome.Util import Counter
 from datetime import datetime
 import enum
 import json
