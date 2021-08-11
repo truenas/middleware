@@ -1376,7 +1376,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         await self.middleware.call('kerberos.stop')
         await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call('etc.generate', 'nss')
         await self.synchronize(new)
         await self.middleware.call('idmap.synchronize')
         await self.middleware.call('service.restart', 'cifs')
