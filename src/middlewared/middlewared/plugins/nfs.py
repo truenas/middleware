@@ -208,14 +208,11 @@ class NFSService(SystemServiceService):
                     'Enabling kerberos authentication on TrueNAS HA requires '
                     'the system dataset to be located on a data pool.'
                 )
-            ad = await self.middleware.call('activedirectory.config')
             await self.middleware.call(
-                'datastore.update',
-                'directoryservice.activedirectory',
-                ad['id'],
-                {'ad_use_default_domain': True}
+                'activedirectory.direct_update',
+                {'use_default_domain': True}
             )
-            await self.middleware.call('etc.generate', 'smb')
+            await self.middleware.call('activedirectory.synchronize')
             await self.middleware.call('service.reload', 'cifs')
 
         if not new["v4"] and new["v4_v3owner"]:

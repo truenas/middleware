@@ -7,7 +7,7 @@
     if not shares:
         raise FileShouldNotExist()
 
-    kerberos_keytabs = middleware.call_sync("kerberos.keytab.query")
+    has_nfs_principal = middleware.call_sync("kerberos.keytab.has_nfs_principal")
 
     gc = middleware.call_sync("network.configuration.config")
 
@@ -18,7 +18,7 @@
         peers = middleware.call_sync("gluster.peer.status")
 
     bindip = middleware.call_sync("nfs.bindip", config)
-    sec = middleware.call_sync("nfs.sec", config, kerberos_keytabs)
+    sec = middleware.call_sync("nfs.sec", config, has_nfs_principal)
 
     export_id = itertools.count(1)
 %>
