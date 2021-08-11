@@ -108,7 +108,20 @@ class DiskService(Service, DiskIdentifyBase):
             else:
                 xml = geom.class_by_name('DISK').xml
 
-            _ident, _lunid = value.split('_')
+            info = value.split('_')
+            info_len = len(info)
+            if info_len < 2:
+                # nothing to do return
+                return
+            elif info_len == 2:
+                _ident = info[0]
+                _lunid = info[1]
+            else:
+                # vmware nvme disks look like `VMware NVME_0000_a9d1a9a7feaf1d66000c296f092d9204`
+                # so we need to account for it
+                _lunid = info[-1]
+                _ident = info[:-info_len].rstrip('_')
+
             found_ident = xml.find(f'.//provider/config[ident = "{_ident}"]/../../name')
             if found_ident is not None:
                 found_lunid = xml.find(f'.//provider/config[lunid = "{_lunid}"]/../../name')
