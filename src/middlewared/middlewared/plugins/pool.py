@@ -3623,14 +3623,15 @@ class PoolDatasetService(CRUDService):
         ),
     )
     @returns(List('deleted_snapshots', items=[Str('deleted_snapshot')]))
-    async def destroy_snapshots(self, name, snapshots_spec):
+    @job(lock=lambda args: f'destroy_snapshots_{args[0]}')
+    async def destroy_snapshots(self, job, name, snapshots_spec):
         """
         Destroy specified snapshots of a given dataset.
         """
-        await self.get_instance(name, {
+        await self.get_instance(name, {'extra': {
             'properties': [],
             'retrieve_children': False,
-        })
+        }})
 
         verrors = ValidationErrors()
         schema_name = 'destroy_snapshots'
@@ -3644,6 +3645,8 @@ class PoolDatasetService(CRUDService):
                     verrors.add(f'{schema_name}.snapshots.{i}', 'Either "start" or "end" must be specified')
 
         verrors.check()
+
+        job.set_progress(20, 'Initial validation complete')
 
         return await self.middleware.call('zfs.dataset.destroy_snapshots', name, snapshots_spec)
 
