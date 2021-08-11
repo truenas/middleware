@@ -168,6 +168,8 @@ class FailoverService(Service):
                     # Only restart iscsitarget when it's not already
                     # started (ALUA/FC has it running on standby by default)
                     to_restart.remove('iscsitarget')
+        else:
+            to_restart = [i for i in to_restart if i not in crit_services]
 
         exceptions = await asyncio.gather(
             *[self.restart_service(svc, data['timeout']) for svc in to_restart],
