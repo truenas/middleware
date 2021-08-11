@@ -748,7 +748,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('idmap.synchronize')
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'])
             await self.middleware.call('admonitor.start')
@@ -792,7 +791,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('service.restart', 'cifs')
         job.set_progress(40, 'Reconfiguring pam and nss.')
         await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'])
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('service.stop', 'dscache')
@@ -821,7 +819,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         enabled = (await self.config())['enable']
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('service.restart', 'cifs')
         verb = "start" if enabled else "stop"
         await self.middleware.call(f'kerberos.{verb}')
