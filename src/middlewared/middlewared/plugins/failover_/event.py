@@ -139,6 +139,7 @@ class FailoverService(Service):
         if data['critical']:
             to_restart = [i for i in to_restart if i in self.CRITICAL_SERVICES]
         else:
+            to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
             # non-critical services are being requested to be restarted
             # so add these 2 services at the beginning of the `to_restart`
             # list since they're not in the db but are required to be restarted
