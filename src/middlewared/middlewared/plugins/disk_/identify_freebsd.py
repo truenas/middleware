@@ -120,7 +120,7 @@ class DiskService(Service, DiskIdentifyBase):
                 # vmware nvme disks look like `VMware NVME_0000_a9d1a9a7feaf1d66000c296f092d9204`
                 # so we need to account for it
                 _lunid = info[-1]
-                _ident = info[:-info_len].rstrip('_')
+                _ident = value[:-len(_lunid)].rstrip('_')
 
             found_ident = xml.find(f'.//provider/config[ident = "{_ident}"]/../../name')
             if found_ident is not None:
