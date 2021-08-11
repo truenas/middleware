@@ -57,6 +57,9 @@ class FilesystemService(Service, ACLBase):
         if is_cluster:
             return
 
+        if os.path.realpath(path).startswith("/root/.ssh"):
+            return
+
         if not os.path.realpath(path).startswith('/mnt/'):
             verrors.add(
                 f'{schema}.path',
