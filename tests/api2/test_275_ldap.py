@@ -108,7 +108,7 @@ def test_08_verify_ldap_enable_is_true(request):
 @pytest.mark.dependency(name="ldap_dataset")
 def test_09_creating_ldap_dataset_for_smb(request):
     depends(request, ["pool_04", "setup_ldap"], scope="session")
-    results = POST("/pool/dataset/", {"name": dataset})
+    results = POST("/pool/dataset/", {"name": dataset, "share_type": "SMB"})
     assert results.status_code == 200, results.text
 
 
@@ -119,22 +119,34 @@ def test_10_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
     assert LDAPUSER in results['output'], str(results['output'])
 
 
+@pytest.mark.dependency(name="LDAP_NSS_WORKING")
 def test_11_verify_that_the_ldap_user_id_exist_on_the_nas(request):
-    depends(request, ["setup_ldap", "ssh_password"], scope="session")
-    results = SSH_TEST(f'id {LDAPUSER}', user, password, ip)
-    assert results['result'] is True, str(results['output'])
-    assert LDAPUSER in results['output'], str(results['output'])
+    """
+    get_user_obj is a wrapper around the pwd module.
+    This check verifies that the user is _actually_ created.
+    """
+    payload = {
+        "username": LDAPUSER
+    }
+    global ldap_id
+    results = POST("/user/get_user_obj/", payload)
+    assert results.status_code == 200, results.text
+    if results.status_code == 200:
+        ldap_id = results.json()['pw_uid']
 
 
+@pytest.mark.dependency(name="LDAP_DATASET_PERMISSION")
 def test_12_changing_ldap_dataset_permission(request):
-    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
-    global job_id_09
-    results = POST(f'/pool/dataset/id/{dataset_url}/permission/', {
-        'acl': [],
-        'mode': '777',
-        'user': LDAPUSER,
-        'group': LDAPUSER
-    })
+    """
+    Make LDAP user owner of dataset. This is simplest way to
+    ensure has permissions.
+    """
+    depends(request, ["setup_ldap", "ldap_dataset", "LDAP_NSS_WORKING"], scope="session")
+    payload = {
+        'path': smb_path,
+        'uid': ldap_id,
+    }
+    results = POST('/filesystem/chown/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 180)
@@ -142,7 +154,7 @@ def test_12_changing_ldap_dataset_permission(request):
 
 
 def test_13_setting_up_for_testing(request):
-    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset", "LDAP_DATASET_PERMISSION"], scope="session")
     global payload, results
     payload = {
         "description": "Test FreeNAS Server",
@@ -153,7 +165,7 @@ def test_13_setting_up_for_testing(request):
 
 @pytest.mark.dependency(name="smb_share_ldap")
 def test_14_creating_a_smb_share_to_test_ldap(request):
-    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset", "LDAP_DATASET_PERMISSION"], scope="session")
     global smb_id
     payload = {
         "comment": "My Test SMB Share",
@@ -346,7 +358,7 @@ def test_39_delete_the_smb_share_for_ldap_testing(request):
 
 
 def test_40_disabling_ldap(request):
-    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
     payload = {
         "enable": False
     }
@@ -355,7 +367,7 @@ def test_40_disabling_ldap(request):
 
 
 def test_41_verify_ldap_state_after_is_enabled_after_disabling_ldap(request):
-    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), str), results.text
@@ -363,12 +375,12 @@ def test_41_verify_ldap_state_after_is_enabled_after_disabling_ldap(request):
 
 
 def test_42_verify_ldap_enable_is_false(request):
-    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
     results = GET("/ldap/")
     assert results.json()["enable"] is False, results.text
 
 
 def test_43_destroying_ad_dataset_for_smb(request):
-    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text

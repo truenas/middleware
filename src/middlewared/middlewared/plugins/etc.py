@@ -117,6 +117,8 @@ class EtcService(Service):
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
+            {'type': 'mako', 'path': 'local/nslcd.conf',
+                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
         'loader': [
             {'type': 'py', 'path': 'loader', 'platform': 'FreeBSD'},
@@ -131,8 +133,6 @@ class EtcService(Service):
         ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
-            {'type': 'mako', 'path': 'local/nslcd.conf',
-                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
         'pam': [
             {'type': 'mako', 'path': os.path.join('pam.d', f.name[:-5])}

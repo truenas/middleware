@@ -486,7 +486,7 @@ class LDAPService(TDBWrapConfigService):
             "passdb backend": {"parsed": passdb_backend},
             "ldap admin dn": {"parsed": data_in["binddn"]},
             "ldap suffix": {"parsed": data_in["basedn"]},
-            "ldap ssl": {"raw": "start tls" if data_in['ssl'] == "STARTTLS" else "off"},
+            "ldap ssl": {"raw": "start tls" if data_in['ssl'] == SSL.USESTARTTLS.value else "off"},
         })
 
         if data_in['kerberos_principal']:
@@ -1036,7 +1036,6 @@ class LDAPService(TDBWrapConfigService):
             await self.middleware.call('kerberos.start')
 
         await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
 
@@ -1045,10 +1044,11 @@ class LDAPService(TDBWrapConfigService):
         else:
             await self.nslcd_cmd('restart')
 
+        await self.middleware.call('smb.initialize_globals')
+        await self.synchronize()
+        await self.middleware.call('idmap.synchronize')
+
         if ldap['has_samba_schema']:
-            await self.middleware.call('smb.initialize_globals')
-            await self.synchronize()
-            await self.middleware.call('idmap.synchronize')
             await self.middleware.call('smb.store_ldap_admin_password')
             await self.middleware.call('idmap.synchronize')
             await self.middleware.call('service.restart', 'cifs')
@@ -1065,17 +1065,16 @@ class LDAPService(TDBWrapConfigService):
 
         await self.set_state(DSStatus['LEAVING'])
         await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
+        await self.synchronize()
+        await self.middleware.call('idmap.synchronize')
+
         if ldap['has_samba_schema']:
-            await self.synchronize()
-            await self.middleware.call('idmap.synchronize')
             await self.middleware.call('service.restart', 'cifs')
             await self.middleware.call('smb.synchronize_passdb')
             await self.middleware.call('smb.synchronize_group_mappings')
 
-        await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.middleware.call('service.stop', 'dscache')
         await self.nslcd_cmd('stop')
         await self.set_state(DSStatus['DISABLED'])
@@ -1087,7 +1086,6 @@ class LDAPService(TDBWrapConfigService):
     async def cluster_reload(self):
         enabled = (await self.config())['enable']
         await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
         cmd = 'start' if enabled else 'stop'
@@ -1144,7 +1142,7 @@ class LDAPService(TDBWrapConfigService):
                 'sshpubkey': None,
                 'local': False
             }
-            self.middleware.call_sync('dscache.insert', self._config.namespace, 'USER', entry)
+            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
             user_next_index += 1
 
         for g in grp_list:
@@ -1164,7 +1162,7 @@ class LDAPService(TDBWrapConfigService):
                 'users': [],
                 'local': False
             }
-            self.middleware.call_sync('dscache.insert', self._config.namespace, 'GROUP', entry)
+            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
             group_next_index += 1
 
     @private
