@@ -3607,6 +3607,46 @@ class PoolDatasetService(CRUDService):
         })
         return result
 
+    @accepts(
+        Str('name'),
+        Dict(
+            'snapshots',
+            Bool('all', default=True),
+            Bool('recursive', default=False),
+            List(
+                'snapshots', items=[Dict(
+                    'snapshot_spec',
+                    Str('start'),
+                    Str('end'),
+                )]
+            ),
+        ),
+    )
+    @returns(List('deleted_snapshots', items=[Str('deleted_snapshot')]))
+    async def destroy_snapshots(self, name, snapshots_spec):
+        """
+        Destroy specified snapshots of a given dataset.
+        """
+        await self.get_instance(name, {
+            'properties': [],
+            'retrieve_children': False,
+        })
+
+        verrors = ValidationErrors()
+        schema_name = 'destroy_snapshots'
+        if snapshots_spec['all'] and snapshots_spec['snapshots']:
+            verrors.add(
+                f'{schema_name}.snapshots', 'Must not be specified when all snapshots are specified for removal'
+            )
+        else:
+            for i, entry in enumerate(snapshots_spec['snapshots']):
+                if not entry:
+                    verrors.add(f'{schema_name}.snapshots.{i}', 'Either "start" or "end" must be specified')
+
+        verrors.check()
+
+        return await self.middleware.call('zfs.dataset.destroy_snapshots', name, snapshots_spec)
+
     @item_method
     @accepts(Str('id'))
     @returns()
