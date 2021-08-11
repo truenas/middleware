@@ -984,6 +984,14 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
+    def destroy_snapshots(self, name, snapshot_spec):
+        try:
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(name)
+                return dataset.delete_snapshots(snapshot_spec)
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
 
 class ZFSSnapshot(CRUDService):
 
