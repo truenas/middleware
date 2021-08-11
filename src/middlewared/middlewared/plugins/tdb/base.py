@@ -306,7 +306,7 @@ class TDBService(Service, TDBMixin, SchemaMixin):
     @private
     async def setup(self):
         for p in TDBPath:
-            if TDBPath.CUSTOM:
+            if p is TDBPath.CUSTOM:
                 continue
 
             os.makedirs(p.value, mode=0o700, exist_ok=True)
