@@ -528,11 +528,18 @@ def test_35_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    expected_sec = "SecType = sys, krb5, krb5i, krb5p;"
-    cmd = f'grep "{expected_sec}" /etc/ganesha/ganesha.conf'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST("cat /etc/ganesha/ganesha.conf", user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == expected_sec, results['output']
+    ganesha_config = results['output']
+
+    expected_sec = "krb5, krb5i, krb5p;"
+    sec = None
+    for entry in ganesha_config.splitlines():
+        if entry.strip().startswith("SecType"):
+            sec = entry.rsplit("=", 1)[1].strip()
+            break
+
+    assert sec == expected_sec, ganesha_config
 
 
 def test_36_disable_krb5_nfs4(request):
@@ -561,11 +568,18 @@ def test_37_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    expected_sec = "V4: / -sec=sys:krb5:krb5i:krb5p"
-    cmd = f'grep "{expected_sec}" /etc/ganesha/ganesha.conf'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST("cat /etc/ganesha/ganesha.conf", user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == expected_sec, results['output']
+    ganesha_config = results['output']
+
+    expected_sec = "sys, krb5, krb5i, krb5p;"
+    sec = None
+    for entry in ganesha_config.splitlines():
+        if entry.strip().startswith("SecType"):
+            sec = entry.rsplit("=", 1)[1].strip()
+            break
+
+    assert sec == expected_sec, ganesha_config
 
 
 def test_38_cleanup_nfs_settings(request):
@@ -575,6 +589,9 @@ def test_38_cleanup_nfs_settings(request):
 
     payload = {"v4": False}
     results = PUT("/nfs/", payload)
+    assert results.status_code == 200, results.text
+
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
