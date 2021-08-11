@@ -11,7 +11,7 @@ import os
 
 from croniter import croniter
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
 from middlewared.utils import filter_list
 
@@ -1146,6 +1146,8 @@ def accepts(*schema):
 
             # Iterate over positional args first, excluding self
             i = 0
+            if len(args[args_index:]) > len(nf.accepts):
+                raise CallError(f'Too many arguments (expected {len(nf.accepts)}, found {len(args[args_index:])})')
             for _ in args[args_index:]:
                 args[args_index + i] = clean_and_validate_arg(verrors, nf.accepts[i], args[args_index + i])
                 i += 1
