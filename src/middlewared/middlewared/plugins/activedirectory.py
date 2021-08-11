@@ -1207,7 +1207,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         if domain != workgroup:
             self.logger.debug(f'Updating SMB workgroup to match the short form of the AD domain [{domain}]')
-            await self.middleware.call('smb.update', {'workgroup': domain})
+            await self.middleware.call('smb.direct_update', {'workgroup': domain})
 
         return domain
 
