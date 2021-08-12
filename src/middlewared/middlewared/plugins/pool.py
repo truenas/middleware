@@ -3618,7 +3618,7 @@ class PoolDatasetService(CRUDService):
                     'snapshot_spec',
                     Str('start'),
                     Str('end'),
-                )]
+                ), Str('snapshot_name')]
             ),
         ),
     )
