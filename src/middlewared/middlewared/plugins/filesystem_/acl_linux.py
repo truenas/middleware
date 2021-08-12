@@ -79,6 +79,32 @@ class FilesystemService(Service, ACLBase):
                 'Path component for is currently encrypted and locked'
             )
 
+    @private
+    def path_get_acltype(self, path):
+        """
+        Failure with ENODATA in case acltype is supported, but
+        acl absent. EOPNOTSUPP means that acltype is not supported.
+        """
+        try:
+            os.getxattr(path, "system.posix_acl_access")
+            return ACLType.POSIX1E.name
+
+        except OSError as e:
+            if e.errno == errno.ENODATA:
+                return ACLType.POSIX1E.name
+
+            if e.errno != errno.EOPNOTSUPP:
+                raise
+
+        try:
+            os.getxattr(path, "system.nfs4_acl_xdr")
+            return ACLType.NFS4.name
+        except OSError as e:
+            if e.errno == errno.EOPNOTSUPP:
+                return ACLType.DISABLED.name
+
+            raise
+
     def chown(self, job, data):
         job.set_progress(0, 'Preparing to change owner.')
         verrors = ValidationErrors()
@@ -305,16 +331,31 @@ class FilesystemService(Service, ACLBase):
         ret['trivial'] = (len(ret['acl']) == 3)
         return ret
 
+    @private
+    def getacl_disabled(self, path):
+        st = os.stat(path)
+        return {
+            'uid': st.st_uid,
+            'gid': st.st_gid,
+            'acl': [],
+            'acltype': ACLType.DISABLED.name,
+            'trivial': True,
+        }
+
     def getacl(self, path, simplified, resolve_ids):
         path = self.middleware.call_sync('filesystem.resolve_cluster_path', path)
-
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
-        # Add explicit check for ACL type
-        try:
+
+        path_acltype = self.path_get_acltype(path)
+        acltype = ACLType[path_acltype]
+
+        if acltype == ACLType.NFS4:
             ret = self.getacl_nfs4(path, simplified, resolve_ids)
-        except CallError:
+        elif acltype == ACLType.POSIX1E:
             ret = self.getacl_posix1e(path, simplified, resolve_ids)
+        else:
+            ret = self.getacl_disabled(path)
 
         return ret
 
@@ -559,15 +600,17 @@ class FilesystemService(Service, ACLBase):
         self._common_perm_path_validate("filesystem.setacl", data, verrors)
         verrors.check()
 
+        data['path'] = data['path'].replace('CLUSTER:', '/cluster')
+
         if 'acltype' in data:
             acltype = ACLType[data['acltype']]
         else:
-            path_acltype = self.getacl(data['path'])['acltype']
+            path_acltype = self.path_get_acltype(data['path'])
             acltype = ACLType[path_acltype]
-
-        data['path'] = data['path'].replace('CLUSTER:', '/cluster')
 
         if acltype == ACLType.NFS4:
             return self.setacl_nfs4(job, data)
-        else:
+        elif acltype == ACLType.POSIX1E:
             return self.setacl_posix1e(job, data)
+        else:
+            raise CallError(f"{data['path']}: ACLs disabled on path.", errno.EOPNOTSUPP)

@@ -11,6 +11,7 @@ OS_FLAG = OS_TYPE_FREEBSD if osc.IS_FREEBSD else OS_TYPE_LINUX
 class ACLType(enum.Enum):
     NFS4 = (OS_TYPE_FREEBSD, ['tag', 'id', 'perms', 'flags', 'type'])
     POSIX1E = (OS_TYPE_FREEBSD | OS_TYPE_LINUX, ['default', 'tag', 'id', 'perms'])
+    DISABLED = (OS_TYPE_FREEBSD | OS_TYPE_LINUX, [])
 
     def validate(self, theacl):
         errors = []
