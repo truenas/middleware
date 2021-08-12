@@ -131,9 +131,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/nfs-common', 'platform': 'Linux'},
             {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'},
         ],
-        'nss': [
-            {'type': 'mako', 'path': 'nsswitch.conf'},
-        ],
         'pam': [
             {'type': 'mako', 'path': os.path.join('pam.d', f.name[:-5])}
             for f in PAM_FILES
