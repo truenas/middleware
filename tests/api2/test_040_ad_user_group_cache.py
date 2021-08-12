@@ -112,6 +112,10 @@ def test_06_wait_for_cache_fill(request):
 
 @pytest.mark.dependency(name="AD_USERS_CACHED")
 def test_07_check_for_ad_users(request):
+    """
+    This test validates that we can query AD users using
+    filter-option {"extra": {"search_dscache": True}}
+    """
     depends(request, ["pool_04", "INITIAL_CACHE_FILL"], scope="session")
     results = GET('/user', payload={
         'query-filters': [['local', '=', False]],
@@ -122,9 +126,10 @@ def test_07_check_for_ad_users(request):
 
 
 @pytest.mark.dependency(name="AD_GROUPS_CACHED")
-def test_08_check_for_ad_users(request):
+def test_08_check_for_ad_groups(request):
     """
-    This test validates that we can query AD users 
+    This test validates that we can query AD groups using
+    filter-option {"extra": {"search_dscache": True}}
     """
     depends(request, ["pool_04", "INITIAL_CACHE_FILL"], scope="session")
     results = GET('/group', payload={
@@ -140,6 +145,9 @@ def test_09_check_directoryservices_cache_refresh(request):
     """
     This test validates that middleware can successfully rebuild the
     directory services cache from scratch using the public API.
+
+    This currently happens once per 24 hours. Result of failure here will
+    be lack of users/groups visible in webui.
     """
     depends(request, ["pool_04", "AD_USERS_CACHED", "AD_GROUPS_CACHED"], scope="session")
     rebuild_ok = False
@@ -191,7 +199,8 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     result if the user / group is not in the cache. This special behavior
     only occurs when single filter of "name =" or "id =". So after the
     initial query that should result in insertion, we add a second filter
-    to only hit the cache.
+    to only hit the cache. Code paths are slightly different for lookups
+    by id or by name and so they are tested separately.
     """
     depends(request, ["pool_04", "REBUILD_AD_CACHE"], scope="session")
     global ad_user_id
@@ -251,8 +260,16 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
 
 @pytest.mark.dependency(name="LAZY_INITIALIZATION_BY_ID")
 def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
+    """
+    When users explicitly search for a directory service or other user
+    by name or id we should hit pwd and grp modules and synthesize a
+    result if the user / group is not in the cache. This special behavior
+    only occurs when single filter of "name =" or "id =". So after the
+    initial query that should result in insertion, we add a second filter
+    to only hit the cache. Code paths are slightly different for lookups
+    by id or by name and so they are tested separately.
+    """
     depends(request, ["pool_04", "LAZY_INITIALIZATION_BY_NAME"], scope="session")
-    domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
 
     cmd = 'rm -f /root/tdb/persistent/*'
     results = SSH_TEST(cmd, user, password, ip)
