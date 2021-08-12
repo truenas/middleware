@@ -419,7 +419,7 @@ class DSCache(Service):
             entry = await self.retrieve(enabled_ds.upper(), {
                 'idtype': objtype[:-1],
                 'who': filters[0][2],
-            }, {'synthensize': True})
+            }, {'synthesize': True})
             return [entry] if entry else []
 
         if is_id_check and filters[0][1] == '=':
