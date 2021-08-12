@@ -1560,6 +1560,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
                         break
 
+        os.unlink("/tmp/gencache.tdb")
+
     @private
     async def get_cache(self):
         users = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'USER')
