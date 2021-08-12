@@ -22,9 +22,6 @@ class SMBService(Service):
         local users in an AD environment. Immediately return in ldap enviornment.
         """
         pdbentries = []
-        private_dir = await self.middleware.call('smb.getparm', 'privatedir', 'global')
-        if not os.path.exists(f'{private_dir}/passdb.tdb'):
-            return pdbentries
 
         passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
         if not passdb_backend.startswith('tdbsam'):
