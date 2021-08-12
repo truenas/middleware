@@ -32,7 +32,7 @@ job_status = None
 
 # Create tests
 @pytest.mark.dependency(name="GOT_DNS")
-def test_01_get_nameserver1_and_nameserver2():
+def test_01_get_nameserver1():
     global nameserver1
     results = GET("/network/configuration/")
     assert results.status_code == 200, results.text
