@@ -397,6 +397,11 @@ class VMWareService(CRUDService):
         return self.middleware.call_sync("vmware.query", [f])
 
     @private
+    def snapshot_begin(self, dataset, recursive):
+        qs = self._dataset_get_vms(dataset, recursive)
+        return self.snapshot_proceed(dataset, qs)
+
+    @private
     def snapshot_proceed(self, dataset, qs):
         self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
 
