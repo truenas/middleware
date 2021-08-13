@@ -361,6 +361,7 @@ class OpenAPIResource(object):
         }
 
         resp = web.Response()
+        resp.headers['Content-type'] = 'application/json'
         resp.text = json.dumps(result, indent=True)
         return resp
 
@@ -577,6 +578,7 @@ class Resource(object):
                         else:
                             if not isinstance(data, dict):
                                 resp.set_status(400)
+                                resp.headers['Content-type'] = 'application/json'
                                 resp.body = json.dumps({
                                     'message': 'Endpoint accepts multiple params, object/dict expected.',
                                 })
@@ -585,6 +587,7 @@ class Resource(object):
                             for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
                                 if p not in data and options['required']:
                                     resp.set_status(400)
+                                    resp.headers['Content-type'] = 'application/json'
                                     resp.body = json.dumps({
                                         'message': f'{p} attribute expected.',
                                     })
@@ -593,12 +596,14 @@ class Resource(object):
                                     method_args.append(data.pop(p))
                             if data:
                                 resp.set_status(400)
+                                resp.headers['Content-type'] = 'application/json'
                                 resp.body = json.dumps({
                                     'message': f'The following attributes are not expected: {", ".join(data.keys())}',
                                 })
                                 return resp
                 except Exception as e:
                     resp.set_status(400)
+                    resp.headers['Content-type'] = 'application/json'
                     resp.body = json.dumps({
                         'message': str(e),
                     })
@@ -689,5 +694,6 @@ class Resource(object):
             result = [i async for i in result]
         elif isinstance(result, Job):
             result = result.id
+        resp.headers['Content-type'] = 'application/json'
         resp.text = json.dumps(result, indent=True)
         return resp
