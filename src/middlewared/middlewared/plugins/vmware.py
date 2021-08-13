@@ -393,6 +393,11 @@ class VMWareService(CRUDService):
         return self.middleware.call_sync("vmware.query", [f])
 
     @private
+    def snapshot_begin(self, dataset, recursive):
+        qs = self._dataset_get_vms(dataset, recursive)
+        return self.snapshot_proceed(dataset, qs)
+
+    @private
     def snapshot_proceed(self, dataset, qs):
         # Generate a unique snapshot name that won't collide with anything that exists on the VMWare side.
         vmsnapname = str(uuid.uuid4())
