@@ -130,6 +130,28 @@ class FilesystemService(Service, ACLBase):
         self.acltool(data['path'], 'chown', uid, gid, options)
         job.set_progress(100, 'Finished changing owner.')
 
+    @private
+    def _strip_acl_nfs4(self, path):
+        stripacl = subprocess.run(
+            ['nfs4xdr_setfacl', '-b', path],
+            capture_output=True,
+            check=False
+        )
+        if stripacl.returncode != 0:
+            raise CallError("Failed to strip ACL on path: %s",
+                            stripacl.stderr.decode())
+
+        return
+
+    @private
+    def _strip_acl_posix1e(self, path):
+        posix_xattrs = ['system.posix_acl_access', 'system.posix_acl_default']
+        for xat in os.listxattr(path):
+            if xat not in posix_xattrs:
+                continue
+
+            os.removexattr(path, xat)
+
     def setperm(self, job, data):
         job.set_progress(0, 'Preparing to set permissions.')
         options = data['options']
@@ -156,13 +178,11 @@ class FilesystemService(Service, ACLBase):
         if mode is not None:
             mode = int(mode, 8)
 
-        setfaclcmd = 'nfs4xdr_setfacl' if is_nfs4acl else 'setfacl'
 
-        stripacl = subprocess.run([setfaclcmd, '-b', data['path']],
-                                  check=False, capture_output=True)
-        if stripacl.returncode != 0:
-            raise CallError(f"Failed to remove POSIX1e ACL from [{data['path']}]: "
-                            f"{stripacl.stderr.decode()}")
+        if is_nfs4acl:
+            self._strip_acl_nfs4(data['path'])
+        else:
+            self.strip_acl_posix1e(data['path'])
 
         if mode:
             os.chmod(data['path'], mode)
@@ -389,14 +409,8 @@ class FilesystemService(Service, ACLBase):
         verrors.check()
 
         if do_strip:
-            stripacl = subprocess.run(
-                ['nfs4xdr_setfacl', '-b', path],
-                capture_output=True,
-                check=False
-            )
-            if stripacl.returncode != 0:
-                raise CallError("Failed to strip ACL on path: %s",
-                                stripacl.stderr.decode())
+            self._strip_acl_nfs4(path)
+
         else:
             payload = {
                 'acl': data['dacl'],
@@ -568,11 +582,7 @@ class FilesystemService(Service, ACLBase):
 
         verrors.check()
 
-        stripacl = subprocess.run(['setfacl', '-b', path],
-                                  check=False, capture_output=True)
-        if stripacl.returncode != 0:
-            raise CallError(f"Failed to remove POSIX1e ACL from [{path}]: "
-                            f"{stripacl.stderr.decode()}")
+        self._strip_acl_posix1e(path)
 
         job.set_progress(50, 'Setting POSIX1e ACL.')
 
