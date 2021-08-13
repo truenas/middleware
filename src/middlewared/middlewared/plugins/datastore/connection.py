@@ -42,6 +42,7 @@ class DatastoreService(Service):
         self.connection = self.engine.connect()
         self.connection.connection.create_function("REGEXP", 2, regexp)
         self.connection.connection.execute("PRAGMA foreign_keys=ON")
+        self.connection.connection.execute("VACUUM")
 
     @private
     async def execute(self, *args):
