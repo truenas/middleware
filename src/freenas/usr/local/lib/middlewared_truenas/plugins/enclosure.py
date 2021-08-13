@@ -548,6 +548,9 @@ class Enclosure(object):
                 element_number = None
 
     def _set_model(self, data):
+        if self.product is None:
+            return
+
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
             self.controller = True
