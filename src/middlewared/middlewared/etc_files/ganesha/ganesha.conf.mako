@@ -4,9 +4,6 @@
     config = middleware.call_sync("nfs.config")
 
     shares = middleware.call_sync("sharing.nfs.query", [["enabled", "=", True]])
-    if not shares:
-        raise FileShouldNotExist()
-
     has_nfs_principal = middleware.call_sync("kerberos.keytab.has_nfs_principal")
 
     gc = middleware.call_sync("network.configuration.config")
