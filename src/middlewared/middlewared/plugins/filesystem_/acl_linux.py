@@ -178,7 +178,6 @@ class FilesystemService(Service, ACLBase):
         if mode is not None:
             mode = int(mode, 8)
 
-
         if is_nfs4acl:
             self._strip_acl_nfs4(data['path'])
         else:
