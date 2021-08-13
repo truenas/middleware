@@ -257,8 +257,8 @@ class LDAPClient(Service):
         for server in data['uri_list']:
             try:
                 self._handle = pyldap.initialize(server)
-            except Exception as e:
-                self.logger.debug(f'Failed to initialize ldap connection to [{server}]: ({e}). Moving to next server.')
+            except Exception:
+                self.logger.debug(f'Failed to initialize ldap connection to [{server}]', exc_info=True)
                 self._handle = None
                 continue
 
@@ -272,8 +272,8 @@ class LDAPClient(Service):
                     self._handle.start_tls_s()
 
                 except pyldap.LDAPError as e:
-                    self.logger.warning('Encountered error initializing start_tls: %s', e)
-                    saved_simple_error = e
+                    self.logger.warning('Encountered error initializing start_tls', exc_info=True)
+                    saved_error = e
                     self._handle = None
                     continue
 
@@ -300,11 +300,11 @@ class LDAPClient(Service):
                     break
 
             except Exception as e:
-                    saved_error = e
-                    self.logger.warning('%s: bind to host %s failed: %s',
-                                        data['bind_type'], server, e)
-                    self._handle = None
-                    continue
+                saved_error = e
+                self.logger.warning('%s: bind to host %s failed',
+                                    data['bind_type'], server, exc_info=True)
+                self._handle = None
+                continue
 
         if not bound:
             self.handle = None
@@ -322,7 +322,7 @@ class LDAPClient(Service):
             self._handle = None
             self.ldap_parameters = None
 
-    def _search(self, ldap_config,  basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
+    def _search(self, ldap_config, basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
         self._open(ldap_config)
         result = []
         serverctrls = None
