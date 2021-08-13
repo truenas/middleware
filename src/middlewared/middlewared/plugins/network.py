@@ -23,6 +23,8 @@ import signal
 import socket
 import subprocess
 
+import psutil
+
 from .interface.netif import netif
 from .interface.type_base import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
@@ -315,6 +317,20 @@ class NetworkConfigurationService(ConfigService):
             new_config['nameserver3'] != config['nameserver3']
         ):
             await self.middleware.call('service.reload', 'resolvconf')
+
+        if (
+            new_hostname != config['hostname_local'] or
+            domainname_changed or
+            new_config['domains'] != config['domains']
+        ):
+            def reload_cli():
+                for process in psutil.process_iter(['pid', 'cmdline']):
+                    cmdline = process.cmdline()
+                    if len(cmdline) >= 2 and cmdline[1] == '/usr/bin/cli':
+                        with contextlib.suppress(Exception):
+                            process.send_signal(signal.SIGUSR1)
+
+            await self.middleware.run_in_thread(reload_cli)
 
         # default gateway has changed
         if (
