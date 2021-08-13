@@ -322,7 +322,7 @@ class LDAPClient(Service):
             self._handle = None
             self.ldap_parameters = None
 
-    def _search(self, ldap_config, basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
+    def _search(self, ldap_config, basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', sizelimit=0):
         self._open(ldap_config)
         result = []
         serverctrls = None
@@ -348,7 +348,7 @@ class LDAPClient(Service):
                     attrsonly=0,
                     serverctrls=serverctrls,
                     clientctrls=clientctrls,
-                    timeout=timeout,
+                    timeout=ldap_config['options']['timeout'],
                     sizelimit=sizelimit
                 )
 
