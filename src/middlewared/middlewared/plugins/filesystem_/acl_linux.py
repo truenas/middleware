@@ -374,9 +374,12 @@ class FilesystemService(Service, ACLBase):
         aclcheck = ACLType.NFS4.validate(data)
         if not aclcheck['is_valid']:
             for err in aclcheck['errors']:
-                verrors.add(
-                    'filesystem_acl.dacl.{err[0]}', err[1]
-                )
+                if err[2]:
+                    v = f'filesystem_acl.dacl.{err[0]}.{err[2]}'
+                else:
+                    v = f'filesystem_acl.dacl.{err[0]}'
+
+                verrors.add( v, err[1])
 
         path_acltype = self.getacl(path)['acltype']
         if path_acltype != ACLType.NFS4.name:
@@ -545,9 +548,12 @@ class FilesystemService(Service, ACLBase):
         aclcheck = ACLType.POSIX1E.validate(data)
         if not aclcheck['is_valid']:
             for err in aclcheck['errors']:
-                verrors.add(
-                    'filesystem_acl.dacl.{err[0]}', err[1]
-                )
+                if err[2]:
+                    v = f'filesystem_acl.dacl.{err[0]}.{err[2]}'
+                else:
+                    v = f'filesystem_acl.dacl.{err[0]}'
+
+                verrors.add(v, err[1])
 
         path_acltype = self.getacl(path)['acltype']
         if path_acltype != ACLType.POSIX1E.name:

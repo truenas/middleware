@@ -3,19 +3,22 @@ from middlewared.service import accepts, job, ServicePartBase
 from middlewared.schema import Bool, Dict, Int, List, Str, UnixPerm
 from middlewared.utils import osc
 
-OS_TYPE_FREEBSD = 0x01
-OS_TYPE_LINUX = 0x02
-OS_FLAG = OS_TYPE_FREEBSD if osc.IS_FREEBSD else OS_TYPE_LINUX
-
 
 class ACLType(enum.Enum):
-    NFS4 = (OS_TYPE_FREEBSD, ['tag', 'id', 'perms', 'flags', 'type'])
-    POSIX1E = (OS_TYPE_FREEBSD | OS_TYPE_LINUX, ['default', 'tag', 'id', 'perms'])
-    DISABLED = (OS_TYPE_FREEBSD | OS_TYPE_LINUX, [])
+    NFS4 = (['tag', 'id', 'perms', 'flags', 'type'], ["owner@", "group@", "everyone@"])
+    POSIX1E = (['default', 'tag', 'id', 'perms'], ["USER_OBJ", "GROUP_OBJ", "OTHER"])
+    DISABLED = ([], [])
+
+    def _validate_special_id(self, id):
+        if id is None or int(id) < 0:
+            return True
+
+        return False
 
     def validate(self, theacl):
         errors = []
-        ace_keys = self.value[1]
+        ace_keys = self.value[0]
+        special = self.value[1]
 
         if self != ACLType.NFS4 and theacl.get('nfs41flags'):
             errors.append(f"NFS41 ACL flags are not valid for ACLType [{self.name}]")
@@ -25,11 +28,19 @@ class ACLType(enum.Enum):
             missing = set(ace_keys) - set(entry.keys())
             if extra:
                 errors.append(
-                    (idx, f"ACL entry contains invalid extra key(s): {extra}")
+                    (idx, f"ACL entry contains invalid extra key(s): {extra}", None)
                 )
             if missing:
                 errors.append(
-                    (idx, f"ACL entry is missing required keys(s): {missing}")
+                    (idx, f"ACL entry is missing required keys(s): {missing}", None)
+                )
+
+            if extra or missing:
+                continue
+
+            if entry['tag'] in special and not self._validate_special_id(entry['id']):
+                errors.append(
+                    (idx, f"ACL entry has invalid id for tag type.", "id")
                 )
 
         return {"is_valid": len(errors) == 0, "errors": errors}
