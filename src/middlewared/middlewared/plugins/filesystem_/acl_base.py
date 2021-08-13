@@ -2,20 +2,24 @@ import enum
 from middlewared.service import accepts, job, ServicePartBase
 from middlewared.schema import Bool, Dict, Int, List, Str, UnixPerm
 from middlewared.utils import osc
-
-OS_TYPE_FREEBSD = 0x01
-OS_TYPE_LINUX = 0x02
-OS_FLAG = OS_TYPE_FREEBSD if osc.IS_FREEBSD else OS_TYPE_LINUX
+from middlewared.validators import Range
 
 
 class ACLType(enum.Enum):
-    NFS4 = (OS_TYPE_FREEBSD, ['tag', 'id', 'perms', 'flags', 'type'])
-    POSIX1E = (OS_TYPE_FREEBSD | OS_TYPE_LINUX, ['default', 'tag', 'id', 'perms'])
-    DISABLED = (OS_TYPE_FREEBSD | OS_TYPE_LINUX, [])
+    NFS4 = (['tag', 'id', 'perms', 'flags', 'type'], ["owner@", "group@", "everyone@"])
+    POSIX1E = (['default', 'tag', 'id', 'perms'], ["USER_OBJ", "GROUP_OBJ", "OTHER", "MASK"])
+    DISABLED = ([], [])
+
+    def _validate_id(self, id, special):
+        if id is None or id < 0:
+            return True if special else False
+
+        return False if special else True
 
     def validate(self, theacl):
         errors = []
-        ace_keys = self.value[1]
+        ace_keys = self.value[0]
+        special = self.value[1]
 
         if self != ACLType.NFS4 and theacl.get('nfs41flags'):
             errors.append(f"NFS41 ACL flags are not valid for ACLType [{self.name}]")
@@ -25,11 +29,20 @@ class ACLType(enum.Enum):
             missing = set(ace_keys) - set(entry.keys())
             if extra:
                 errors.append(
-                    (idx, f"ACL entry contains invalid extra key(s): {extra}")
+                    (idx, f"ACL entry contains invalid extra key(s): {extra}", None)
                 )
             if missing:
                 errors.append(
-                    (idx, f"ACL entry is missing required keys(s): {missing}")
+                    (idx, f"ACL entry is missing required keys(s): {missing}", None)
+                )
+
+            if extra or missing:
+                continue
+
+            is_special = entry['tag'] in special
+            if not self._validate_id(entry['id'], is_special):
+                errors.append(
+                    (idx, "ACL entry has invalid id for tag type.", "id")
                 )
 
         return {"is_valid": len(errors) == 0, "errors": errors}
@@ -191,15 +204,15 @@ class ACLBase(ServicePartBase):
         Dict(
             'filesystem_acl',
             Str('path', required=True),
-            Int('uid', null=True, default=None),
-            Int('gid', null=True, default=None),
+            Int('uid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
             List(
                 'dacl',
                 items=[
                     Dict(
                         'aclentry',
                         Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
-                        Int('id', null=True),
+                        Int('id', null=True, validators=[Range(min=-1, max=2147483647)]),
                         Str('type', enum=['ALLOW', 'DENY']),
                         Dict(
                             'perms',
@@ -233,7 +246,7 @@ class ACLBase(ServicePartBase):
                         'posix1e_ace',
                         Bool('default', default=False),
                         Str('tag', enum=['USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP', 'OTHER', 'MASK']),
-                        Int('id', default=-1),
+                        Int('id', default=-1, validators=[Range(min=-1, max=2147483647)]),
                         Dict(
                             'perms',
                             Bool('READ', default=False),
@@ -338,8 +351,8 @@ class ACLBase(ServicePartBase):
         Dict(
             'filesystem_ownership',
             Str('path', required=True),
-            Int('uid', null=True, default=None),
-            Int('gid', null=True, default=None),
+            Int('uid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
             Dict(
                 'options',
                 Bool('recursive', default=False),
@@ -368,8 +381,8 @@ class ACLBase(ServicePartBase):
             'filesystem_permission',
             Str('path', required=True),
             UnixPerm('mode', null=True),
-            Int('uid', null=True, default=None),
-            Int('gid', null=True, default=None),
+            Int('uid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
             Dict(
                 'options',
                 Bool('stripacl', default=False),
