@@ -379,7 +379,7 @@ class FilesystemService(Service, ACLBase):
                 else:
                     v = f'filesystem_acl.dacl.{err[0]}'
 
-                verrors.add( v, err[1])
+                verrors.add(v, err[1])
 
         path_acltype = self.getacl(path)['acltype']
         if path_acltype != ACLType.NFS4.name:

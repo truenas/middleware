@@ -40,7 +40,7 @@ class ACLType(enum.Enum):
 
             if entry['tag'] in special and not self._validate_special_id(entry['id']):
                 errors.append(
-                    (idx, f"ACL entry has invalid id for tag type.", "id")
+                    (idx, "ACL entry has invalid id for tag type.", "id")
                 )
 
         return {"is_valid": len(errors) == 0, "errors": errors}
