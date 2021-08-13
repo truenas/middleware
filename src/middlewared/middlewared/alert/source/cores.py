@@ -23,6 +23,7 @@ class CoreFilesArePresentAlertClass(AlertClass):
 
 class CoreFilesArePresentAlertSource(AlertSource):
     dumps = {}
+    dump_error_logged = []
     schedule = IntervalSchedule(timedelta(minutes=5))
 
     products = ("SCALE",)
@@ -30,7 +31,7 @@ class CoreFilesArePresentAlertSource(AlertSource):
     async def check(self):
         corefiles = []
         for coredump in filter(lambda c: c["corefile"] == "present", await self.middleware.call("system.coredumps")):
-            if coredump["exe"] == "/usr/sbin/syslog-ng":
+            if coredump["exe"] == "/usr/sbin/syslog-ng" or coredump["pid"] in self.dump_error_logged:
                 continue
 
             if coredump["pid"] not in self.dumps:
@@ -41,6 +42,7 @@ class CoreFilesArePresentAlertSource(AlertSource):
                     self.middleware.logger.debug(
                         "Unable to retrieve coredump information of %r process", coredump["pid"]
                     )
+                    self.dump_error_logged.append(coredump["pid"])
                     continue
 
                 self.dumps[coredump["pid"]] = {
