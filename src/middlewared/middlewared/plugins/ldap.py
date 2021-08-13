@@ -1,4 +1,3 @@
-import asyncio
 import enum
 import errno
 import fcntl
@@ -10,15 +9,17 @@ import pwd
 import socket
 import struct
 import sys
+import copy
 
 from ldap.controls import SimplePagedResultsControl
 from urllib.parse import urlparse
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, TDBWrapConfigService, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
+from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus, SSL
+from concurrent.futures import ThreadPoolExecutor
 
 LDAP_SMBCONF_PARAMS = {
     "server role": "member server",
@@ -127,33 +128,45 @@ class NslcdClient(object):
         self.close()
 
 
-class LDAPQuery(object):
-    def __init__(self, **kwargs):
-        super(LDAPQuery, self).__init__()
-        self.ldap = kwargs.get('conf')
-        self.logger = kwargs.get('logger')
-        self.hosts = kwargs.get('hosts')
-        self.pagesize = 1024
-        self._isopen = False
-        self._handle = None
-        self._rootDSE = None
+class LDAPClient(Service):
+    class Config:
+        private = True
 
-    def __enter__(self):
-        return self
+    thread_pool = ThreadPoolExecutor(1)
+    pagesize = 1024
+    _handle = None
+    ldap_parameters = None
 
-    def __exit__(self, typ, value, traceback):
-        if self._isopen:
-            self._close()
-
-    def validate_credentials(self):
+    @accepts(Dict(
+        'ldap-configuration',
+        List('uri_list', required=True),
+        Str('bind_type', enum=['ANONYMOUS', 'PLAIN', 'GSSAPI', 'EXTERNAL'], required=True),
+        Str('basedn', required=True),
+        Dict(
+            'credentials',
+            Str('binddn', default=''),
+            Str('bindpw', default='', private=True),
+        ),
+        Dict(
+            'security',
+            Str('ssl', enum=["OFF", "ON", "START_TLS"]),
+            Str('sasl', enum=['SIGN', 'SEAL'], default='SEAL'),
+            Str('client_certificate', null=True),
+            Bool('validate_certificates', default=True),
+        ),
+        Dict(
+            'options',
+            Int('timeout', default=30),
+            Int('dns_timeout', default=5),
+        ),
+        register=True,
+    ))
+    async def validate_credentials(self, data):
         """
-        :validate_credentials: simple check to determine whether we can establish
-        an ldap session with the credentials that are in the configuration.
+        Verify that credentials are working by closing any existing LDAP bind
+        and performing a fresh bind.
         """
-        ret = self._open()
-        if ret:
-            self._close()
-        return ret
+        await self.middleware.run_in_executor(self.thread_pool, self._open, data, True)
 
     def _name_to_errno(self, ldaperr):
         err = errno.EFAULT
@@ -176,7 +189,47 @@ class LDAPQuery(object):
         else:
             raise CallError(str(ex))
 
-    def _open(self):
+    @private
+    def _setup_ssl(self, data):
+        if SSL(data['security']['ssl']) == SSL.NOSSL:
+            return
+
+        cert = data['security']['client_certificate']
+        if cert:
+            pyldap.set_option(
+                pyldap.OPT_X_TLS_CERTFILE,
+                f"/etc/certificates/{cert}.crt"
+            )
+            pyldap.set_option(
+                pyldap.OPT_X_TLS_KEYFILE,
+                f"/etc/certificates/{cert}.key"
+            )
+
+        pyldap.set_option(
+            pyldap.OPT_X_TLS_CACERTFILE,
+            '/etc/ssl/truenas_cacerts.pem'
+        )
+
+        if data['security']['validate_certificates']:
+            pyldap.set_option(
+                pyldap.OPT_X_TLS_REQUIRE_CERT,
+                pyldap.OPT_X_TLS_DEMAND
+            )
+        else:
+            pyldap.set_option(
+                pyldap.OPT_X_TLS_REQUIRE_CERT,
+                pyldap.OPT_X_TLS_ALLOW
+            )
+
+        try:
+            pyldap.set_option(pyldap.OPT_X_TLS_NEWCTX, 0)
+        except Exception:
+            self.logger.warning('Failed to initialize new TLS context.', exc_info=True)
+
+        return
+
+    @private
+    def _open(self, data, force_new=False):
         """
         We can only intialize a single host. In this case,
         we iterate through a list of hosts until we get one that
@@ -186,122 +239,91 @@ class LDAPQuery(object):
         is correctly populated. Fall through to simple bind if this
         fails.
         """
-        res = None
-        if self._isopen:
-            return True
+        bound = False
+        if self._handle and self.ldap_parameters == data and not force_new:
+            return
 
-        if self.hosts:
-            saved_simple_error = None
-            saved_gssapi_error = None
-            for server in self.hosts:
+        elif self._handle:
+            try:
+                self._close()
+                self._handle = None
+            except Exception:
+                self.logger.warning("Failed to close stale LDAP connection")
+
+        if not data['uri_list']:
+            raise CallError("No URIs specified")
+
+        saved_error = None
+        for server in data['uri_list']:
+            try:
+                self._handle = pyldap.initialize(server)
+            except Exception as e:
+                self.logger.debug(f'Failed to initialize ldap connection to [{server}]: ({e}). Moving to next server.')
+                self._handle = None
+                continue
+
+            pyldap.protocol_version = pyldap.VERSION3
+            pyldap.set_option(pyldap.OPT_REFERRALS, 0)
+            pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, data['options']['dns_timeout'])
+
+            self._setup_ssl(data)
+            if data['security']['ssl'] == SSL.USESTARTTLS.name:
                 try:
-                    self._handle = pyldap.initialize(server)
-                except Exception as e:
-                    self.logger.debug(f'Failed to initialize ldap connection to [{server}]: ({e}). Moving to next server.')
-                    continue
+                    self._handle.start_tls_s()
 
-                res = None
-                pyldap.protocol_version = pyldap.VERSION3
-                pyldap.set_option(pyldap.OPT_REFERRALS, 0)
-                pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, self.ldap['dns_timeout'])
-
-                if SSL(self.ldap['ssl']) != SSL.NOSSL:
-                    if self.ldap['certificate']:
-                        pyldap.set_option(
-                            pyldap.OPT_X_TLS_CERTFILE,
-                            f"/etc/certificates/{self.ldap['cert_name']}.crt"
-                        )
-                        pyldap.set_option(
-                            pyldap.OPT_X_TLS_KEYFILE,
-                            f"/etc/certificates/{self.ldap['cert_name']}.key"
-                        )
-
-                    pyldap.set_option(
-                        pyldap.OPT_X_TLS_CACERTFILE,
-                        '/etc/ssl/truenas_cacerts.pem'
-                    )
-                    if self.ldap['validate_certificates']:
-                        pyldap.set_option(
-                            pyldap.OPT_X_TLS_REQUIRE_CERT,
-                            pyldap.OPT_X_TLS_DEMAND
-                        )
-                    else:
-                        pyldap.set_option(
-                            pyldap.OPT_X_TLS_REQUIRE_CERT,
-                            pyldap.OPT_X_TLS_ALLOW
-                        )
-
-                    try:
-                        pyldap.set_option(pyldap.OPT_X_TLS_NEWCTX, 0)
-                    except Exception:
-                        self.logger.warning('Failed to initialize new TLS context.', exc_info=True)
-
-                if SSL(self.ldap['ssl']) == SSL.USESTARTTLS:
-                    try:
-                        self._handle.start_tls_s()
-
-                    except pyldap.LDAPError as e:
-                        self.logger.debug('Encountered error initializing start_tls: %s', e)
-                        saved_simple_error = e
-                        continue
-
-                if self.ldap['anonbind']:
-                    try:
-                        res = self._handle.simple_bind_s()
-                        break
-                    except Exception as e:
-                        saved_simple_error = e
-                        self.logger.debug('Anonymous bind failed: %s' % e)
-                        continue
-
-                if self.ldap['certificate']:
-                    try:
-                        res = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
-                        break
-                    except Exception as e:
-                        saved_simple_error = e
-                        self.logger.debug('SASL EXTERNAL bind failed.', exc_info=True)
-                        continue
-
-                if self.ldap['kerberos_principal']:
-                    try:
-                        self._handle.set_option(pyldap.OPT_X_SASL_NOCANON, 1)
-                        self._handle.sasl_gssapi_bind_s()
-                        res = True
-                        break
-                    except Exception as e:
-                        saved_gssapi_error = e
-                        self.logger.debug(f'SASL GSSAPI bind failed: {e}. Attempting simple bind')
-
-                try:
-                    res = self._handle.simple_bind_s(self.ldap['binddn'], self.ldap['bindpw'])
-                    break
-                except Exception as e:
-                    self.logger.debug(f'Failed to bind to [{server}] using [{self.ldap["binddn"]}]: {e}')
+                except pyldap.LDAPError as e:
+                    self.logger.warning('Encountered error initializing start_tls: %s', e)
                     saved_simple_error = e
+                    self._handle = None
                     continue
 
-            if res:
-                self._isopen = True
+            try:
+                if data['bind_type'] == 'ANONYMOUS':
+                    bound = self._handle.simple_bind_s()
+                    break
 
-            elif saved_gssapi_error:
-                self._convert_exception(saved_gssapi_error)
+                elif data['bind_type'] == 'EXTERNAL':
+                    bound = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
+                    break
 
-            elif saved_simple_error:
-                self._convert_exception(saved_simple_error)
+                elif data['bind_type'] == 'GSSAPI':
+                    self._handle.set_option(pyldap.OPT_X_SASL_NOCANON, 1)
+                    self._handle.sasl_gssapi_bind_s()
+                    bound = True
+                    break
 
-        return (self._isopen is True)
+                else:
+                    bound = self._handle.simple_bind_s(
+                        data['credentials']['binddn'],
+                        data['credentials']['bindpw']
+                    )
+                    break
+
+            except Exception as e:
+                    saved_error = e
+                    self.logger.warning('%s: bind to host %s failed: %s',
+                                        data['bind_type'], server, e)
+                    self._handle = None
+                    continue
+
+        if not bound:
+            self.handle = None
+            if saved_error:
+                raise saved_error
+            else:
+                raise CallError(f"Failed to bind to URIs: {data['uri_list']}")
+
+        self.ldap_parameters = copy.deepcopy(data)
+        return
 
     def _close(self):
-        self._isopen = False
         if self._handle:
             self._handle.unbind()
             self._handle = None
+            self.ldap_parameters = None
 
-    def _search(self, basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
-        if not self._handle:
-            self._open()
-
+    def _search(self, ldap_config,  basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
+        self._open(ldap_config)
         result = []
         serverctrls = None
         clientctrls = None
@@ -311,26 +333,36 @@ class LDAPQuery(object):
             cookie=''
         )
         paged_ctrls = {SimplePagedResultsControl.controlType: SimplePagedResultsControl}
+        retry = True
 
         page = 0
         while True:
             serverctrls = [paged]
 
-            id = self._handle.search_ext(
-                basedn,
-                scope,
-                filterstr=filter,
-                attrlist=None,
-                attrsonly=0,
-                serverctrls=serverctrls,
-                clientctrls=clientctrls,
-                timeout=timeout,
-                sizelimit=sizelimit
-            )
+            try:
+                id = self._handle.search_ext(
+                    basedn,
+                    scope,
+                    filterstr=filter,
+                    attrlist=None,
+                    attrsonly=0,
+                    serverctrls=serverctrls,
+                    clientctrls=clientctrls,
+                    timeout=timeout,
+                    sizelimit=sizelimit
+                )
 
-            (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
-                id, resp_ctrl_classes=paged_ctrls
-            )
+                (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
+                    id, resp_ctrl_classes=paged_ctrls
+                )
+            except Exception:
+                # our session may have died, try to re-open one time before failing.
+                if not retry:
+                    raise
+
+                self._open(ldap_config, True)
+                retry = False
+                continue
 
             result.extend(rdata)
 
@@ -373,24 +405,38 @@ class LDAPQuery(object):
 
         return res
 
-    def get_samba_domains(self):
+    @accepts(Dict(
+        'get-samba-domain',
+        Ref('ldap-configuration'),
+    ))
+    async def get_samba_domains(self, data):
         """
         This returns a list of configured samba domains on the LDAP
         server. This is used to determine whether the LDAP server has
         The Samba LDAP schema. In this case, the SMB service can be
         configured to use Samba's ldapsam passdb backend.
         """
-        if not self._handle:
-            self._open()
         filter = '(objectclass=sambaDomain)'
+        results = []
         try:
-            results = self._search(self.ldap['basedn'], pyldap.SCOPE_SUBTREE, filter)
+            results = await self.middleware.run_in_executor(
+                self.thread_pool,
+                self._search,
+                data['ldap-configuration'],
+                data['ldap-configuration']['basedn'],
+                pyldap.SCOPE_SUBTREE,
+                filter
+            )
         except Exception as e:
             self._convert_exception(e)
 
         return self.parse_results(results)
 
-    def get_root_DSE(self):
+    @accepts(Dict(
+        'get-root-dse',
+        Ref('ldap-configuration'),
+    ))
+    async def get_root_dse(self, data):
         """
         root DSE query is defined in RFC4512 as a search operation
         with an empty baseObject, scope of baseObject, and a filter of
@@ -398,18 +444,38 @@ class LDAPQuery(object):
         In theory this should be accessible with an anonymous bind. In practice,
         it's better to use proper auth because configurations can vary wildly.
         """
-        if not self._handle:
-            self._open()
         filter = '(objectclass=*)'
-        results = self._search('', pyldap.SCOPE_BASE, filter)
+        results = await self.middleware.run_in_executor(
+            self.thread_pool,
+            self._search,
+            data['ldap-configuration'],
+            '',
+            pyldap.SCOPE_BASE,
+            filter
+        )
         return self.parse_results(results)
 
-    def get_dn(self, dn):
-        if not self._handle:
-            self._open()
+    @accepts(Dict(
+        'get-dn',
+        Str('dn', default='', null=True),
+        Ref('ldap-configuration'),
+    ))
+    async def get_dn(self, data):
+        dn = data['dn'] or data['ldap-configuration']['basedn']
         filter = '(objectclass=*)'
-        results = self._search(dn, pyldap.SCOPE_SUBTREE, filter)
+        results = await self.middleware.run_in_executor(
+            self.thread_pool,
+            self._search,
+            data['ldap-configuration'],
+            dn,
+            pyldap.SCOPE_SUBTREE,
+            filter
+        )
         return self.parse_results(results)
+
+    @accepts()
+    async def close_handle(self):
+        await self.middleware.run_in_executor(self.thread_pool, self._close)
 
 
 class LDAPModel(sa.Model):
@@ -493,6 +559,47 @@ class LDAPService(TDBWrapConfigService):
             data_out["kerberos method"] = "system keytab"
 
         return data_out
+
+    @private
+    async def ldap_conf_to_client_config(self, data=None):
+        if data is None:
+            data = await self.config()
+
+        if not data['enable']:
+            raise CallError("LDAP directory service is not enabled.")
+
+        client_config = {
+            "uri_list": data["uri_list"],
+            "basedn": data.get("basedn", ""),
+            "credentials": {
+                "binddn": "",
+                "bindpw": "",
+            },
+            "security": {
+                "ssl": data["ssl"],
+                "sasl": "SEAL",
+                "client_certificate": data["cert_name"],
+                "validate_certificates": data["validate_certificates"],
+            },
+            "options": {
+                "timeout": data["timeout"],
+                "dns_timeout": data["dns_timeout"],
+            }
+        }
+        if data['anonbind']:
+            client_config['bind_type'] = 'ANONYMOUS'
+        elif data['cert_name']:
+            client_config['bind_type'] = 'EXTERNAL'
+        elif data['kerberos_realm']:
+            client_config['bind_type'] = 'GSSAPI'
+        else:
+            client_config['bind_type'] = 'PLAIN'
+            client_config['credentials'] = {
+                'binddn': data['binddn'],
+                'bindpw': data['bindpw']
+            }
+
+        return client_config
 
     @private
     async def diff_conf_and_registry(self, data):
@@ -677,7 +784,6 @@ class LDAPService(TDBWrapConfigService):
     @private
     async def ldap_validate(self, data, verrors):
         ldap_has_samba_schema = False
-
         for idx, h in enumerate(data['uri_list']):
             host, port = urlparse(h).netloc.rsplit(':', 1)
             try:
@@ -837,50 +943,17 @@ class LDAPService(TDBWrapConfigService):
         return ret
 
     @private
-    @job(lock="ldapquery")
-    def do_ldap_query(self, job, ldap_conf, action, args):
-        supported_actions = [
-            'get_samba_domains',
-            'get_root_DSE',
-            'get_dn',
-            'validate_credentials',
-        ]
-        if action not in supported_actions:
-            raise CallError(f"Unsuported LDAP query: {action}")
-
-        if ldap_conf is None:
-            ldap_conf = self.middleware.call_sync('ldap.config')
-
-        with LDAPQuery(conf=ldap_conf, logger=self.logger, hosts=ldap_conf['uri_list']) as LDAP:
-            if action == "get_samba_domains":
-                ret = LDAP.get_samba_domains()
-
-            elif action == "get_root_DSE":
-                ret = LDAP.get_root_DSE()
-
-            elif action == "get_dn":
-                dn = ldap_conf['basedn'] if args is None else args
-                ret = LDAP.get_dn(dn)
-
-            elif action == "validate_credentials":
-                ret = LDAP.validate_credentials()
-
-        return ret
+    async def validate_credentials(self, ldap_config=None):
+        client_conf = await self.ldap_conf_to_client_config(ldap_config)
+        await self.middleware.call('ldapclient.validate_credentials', client_conf)
 
     @private
-    def validate_credentials(self, ldap_config=None):
-        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "validate_credentials", None)
-        ret = ldap_job.wait_sync(raise_error=True)
-        return ret
+    async def get_samba_domains(self, ldap_config=None):
+        client_conf = await self.ldap_conf_to_client_config(ldap_config)
+        return await self.middleware.call('ldapclient.get_samba_domains', {"ldap-configuration": client_conf})
 
     @private
-    def get_samba_domains(self, ldap_config=None):
-        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_samba_domains", None)
-        ret = ldap_job.wait_sync(raise_error=True)
-        return ret
-
-    @private
-    def get_root_DSE(self, ldap_config=None):
+    async def get_root_DSE(self, ldap_config=None):
         """
         root DSE is defined in RFC4512, and must include the following:
 
@@ -901,18 +974,16 @@ class LDAPService(TDBWrapConfigService):
 
         In practice, this full data is not returned from many LDAP servers
         """
-        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_root_DSE", None)
-        ret = ldap_job.wait_sync(raise_error=True)
-        return ret
+        client_conf = await self.ldap_conf_to_client_config(ldap_config)
+        return await self.middleware.call('ldapclient.get_root_dse', {"ldap-configuration": client_conf})
 
     @private
-    def get_dn(self, dn=None, ldap_config=None):
+    async def get_dn(self, dn=None, ldap_config=None):
         """
         Outputs contents of specified DN in JSON. By default will target the basedn.
         """
-        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_dn", dn)
-        ret = ldap_job.wait_sync(raise_error=True)
-        return ret
+        client_conf = await self.ldap_conf_to_client_config(ldap_config)
+        return await self.middleware.call('ldapclient.get_dn', {"dn": dn, "ldap-configuration": client_conf})
 
     @private
     async def started(self):
@@ -940,11 +1011,7 @@ class LDAPService(TDBWrapConfigService):
             return True
 
         try:
-            await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),
-                                   timeout=ldap['timeout'])
-        except asyncio.TimeoutError:
-            raise CallError(f'LDAP status check timed out after {ldap["timeout"]} seconds.', errno.ETIMEDOUT)
-
+            await self.get_root_DSE(ldap)
         except CallError:
             raise
         except Exception as e:
@@ -967,12 +1034,7 @@ class LDAPService(TDBWrapConfigService):
         if ldap is None:
             ldap = await self.config()
 
-        try:
-            ret = await asyncio.wait_for(self.middleware.call('ldap.get_samba_domains', ldap),
-                                         timeout=ldap['timeout'])
-        except asyncio.TimeoutError:
-            raise CallError(f'ldap.get_workgroup timed out after {ldap["timeout"]} seconds.', errno.ETIMEDOUT)
-
+        ret = await self.middleware.call('ldap.get_samba_domains', ldap)
         if len(ret) > 1:
             self.logger.warning('Multiple Samba Domains detected in LDAP environment '
                                 'auto-configuration of workgroup map have failed: %s', ret)
@@ -1031,7 +1093,7 @@ class LDAPService(TDBWrapConfigService):
         if ldap_state in ['LEAVING', 'JOINING']:
             raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
 
-        ldap = await super().do_update({"enable": True})
+        ldap = await self.direct_update({"enable": True})
         if ldap['kerberos_realm']:
             await self.middleware.call('kerberos.start')
 
@@ -1061,7 +1123,7 @@ class LDAPService(TDBWrapConfigService):
 
     @private
     async def stop(self):
-        ldap = await super().do_update({"enable": False})
+        ldap = await self.direct_update({"enable": False})
 
         await self.set_state(DSStatus['LEAVING'])
         await self.middleware.call('etc.generate', 'rc')
