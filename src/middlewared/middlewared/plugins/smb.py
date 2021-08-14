@@ -986,9 +986,10 @@ class SharingSMBService(SharingService):
 
         await self.strip_comments(data)
         await self.middleware.call('sharing.smb.reg_addshare', data)
-        enable_aapl = await self.check_aapl(data)
+        do_global_reload = await self.must_reload_globals(data)
 
-        if enable_aapl:
+        if do_global_reload:
+            await self.middleware.call('smb.initialize_globals')
             await self._service_change('cifs', 'restart')
         else:
             await self._service_change('cifs', 'reload')
@@ -1034,6 +1035,8 @@ class SharingSMBService(SharingService):
 
         verrors.check()
 
+        guest_changed = old['guestok'] != new['guestok']
+
         if not new['cluster_volname']:
             if path and not os.path.exists(path):
                 try:
@@ -1052,8 +1055,9 @@ class SharingSMBService(SharingService):
             await self.middleware.call('sharing.smb.apply_conf_diff',
                                        share_name, diff)
 
-            enable_aapl = await self.check_aapl(new)
-            if enable_aapl:
+            do_global_reload = guest_changed or await self.must_reload_globals(new)
+            if do_global_reload:
+                await self.middleware.call('smb.initialize_globals')
                 await self._service_change('cifs', 'restart')
             else:
                 await self._service_change('cifs', 'reload')
@@ -1079,9 +1083,9 @@ class SharingSMBService(SharingService):
             happens, the SMB service _must_ be restarted. Skip this step if dataset
             underlying the new path is encrypted.
             """
-            enable_aapl = await self.check_aapl(new)
+            do_global_reload = guest_changed or await self.must_reload_globals(new)
         else:
-            enable_aapl = False
+            do_global_reload = False
 
         """
         OLD    NEW   = dataset path is encrypted
@@ -1139,7 +1143,8 @@ class SharingSMBService(SharingService):
                 self.logger.warning('Failed to remove locked share [%s]',
                                     old['name'], exc_info=True)
 
-        if enable_aapl:
+        if do_global_reload:
+            await self.middleware.call('smb.initialize_globals')
             await self._service_change('cifs', 'restart')
         else:
             await self._service_change('cifs', 'reload')
@@ -1225,16 +1230,33 @@ class SharingSMBService(SharingService):
                 )
 
     @private
-    async def check_aapl(self, data):
+    async def must_reload_globals(self, data):
         """
-        Returns whether we changed the global aapl support settings.
+        Check whether the combination of payload and current SMB settings requires
+        that we reconfigure the SMB server globally. There are currently two situations
+        where this will happen:
+
+        1) guest access is enabled on a share for the first time. In this case, the SMB
+           server must be reconfigured to allow mapping of bad users to the guest account.
+
+        2) vfs_fruit (currently in the form of time machine) is enabled on an SMB share.
+           Support for SMB2/3 apple extensions is negotiated on client's first SMB tree
+           connection. This means that settings are de-facto global in scope and we must
+           reload.
         """
         aapl_extensions = (await self.middleware.call('smb.config'))['aapl_extensions']
 
         if not aapl_extensions and data['timemachine']:
-            await self.middleware.call('datastore.update', 'services_cifs', 1,
-                                       {'cifs_srv_aapl_extensions': True})
+            await self.middlewre.call('smb.direct_update', {'aapl_extensions': True})
             return True
+
+        if data['guestok']:
+            """
+            Verify that running configuration has required setting for guest access.
+            """
+            guest_mapping = await self.middleware.call('smb.getparm', 'map to guest', 'GLOBAL')
+            if guest_mapping != 'Bad User':
+                return True
 
         return False
 
