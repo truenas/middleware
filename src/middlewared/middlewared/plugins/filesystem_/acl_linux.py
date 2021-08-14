@@ -181,7 +181,7 @@ class FilesystemService(Service, ACLBase):
         if is_nfs4acl:
             self._strip_acl_nfs4(data['path'])
         else:
-            self.strip_acl_posix1e(data['path'])
+            self._strip_acl_posix1e(data['path'])
 
         if mode:
             os.chmod(data['path'], mode)
