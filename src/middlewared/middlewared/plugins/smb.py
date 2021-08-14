@@ -1247,7 +1247,7 @@ class SharingSMBService(SharingService):
         aapl_extensions = (await self.middleware.call('smb.config'))['aapl_extensions']
 
         if not aapl_extensions and data['timemachine']:
-            await self.middlewre.call('smb.direct_update', {'aapl_extensions': True})
+            await self.middleware.call('smb.direct_update', {'aapl_extensions': True})
             return True
 
         if data['guestok']:
