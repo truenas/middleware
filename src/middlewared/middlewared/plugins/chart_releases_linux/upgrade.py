@@ -326,6 +326,16 @@ class ChartReleaseService(Service):
     @periodic(interval=86400)
     @private
     async def periodic_chart_releases_update_checks(self):
+        # We only want to sync catalogs in the following cases:
+        # 1) User explicitly visits apps section
+        # 2) User requests it
+        # 3) Has configured Apps
+        # 4) Has catalogs configured
+        if not await self.middleware.call('catalog.query', [['builtin', '=', False]]) and not (
+            await self.middleware.call('kubernetes.config')
+        )['dataset']:
+            return
+
         sync_job = await self.middleware.call('catalog.sync_all')
         await sync_job.wait()
         if not await self.middleware.call('service.started', 'kubernetes'):
