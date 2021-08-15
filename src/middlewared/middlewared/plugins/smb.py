@@ -1285,6 +1285,7 @@ class SharingSMBService(SharingService):
             'state directory',
             'private directory',
             'lock directory',
+            'lock dir',
             'config backend',
             'private dir',
             'log level',
@@ -1292,6 +1293,7 @@ class SharingSMBService(SharingService):
             'clustering',
             'ctdb socket',
             'socket options',
+            'include',
         ]
         for entry in data.splitlines():
             if entry == '' or entry.startswith(('#', ';')):
