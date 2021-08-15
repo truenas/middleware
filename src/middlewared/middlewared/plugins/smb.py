@@ -1284,6 +1284,8 @@ class SharingSMBService(SharingService):
         aux_blacklist = [
             'state directory',
             'private directory',
+            'lock directory',
+            'config backend',
             'private dir',
             'log level',
             'cache directory',
