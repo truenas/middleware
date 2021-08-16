@@ -1284,12 +1284,16 @@ class SharingSMBService(SharingService):
         aux_blacklist = [
             'state directory',
             'private directory',
+            'lock directory',
+            'lock dir',
+            'config backend',
             'private dir',
             'log level',
             'cache directory',
             'clustering',
             'ctdb socket',
             'socket options',
+            'include',
         ]
         for entry in data.splitlines():
             if entry == '' or entry.startswith(('#', ';')):
