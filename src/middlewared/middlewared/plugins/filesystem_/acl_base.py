@@ -1,5 +1,4 @@
 import enum
-import copy
 from middlewared.service import accepts, job, ServicePartBase
 from middlewared.schema import Bool, Dict, Int, List, Str, UnixPerm
 from middlewared.utils import osc
@@ -48,187 +47,40 @@ class ACLType(enum.Enum):
 
         return {"is_valid": len(errors) == 0, "errors": errors}
 
+    def _is_inherited(self, ace):
+        if ace['flags'].get("BASIC"):
+            return False
 
-class ACLDefault(enum.Enum):
-    NFS4_OPEN = {'visible': True, 'acl': [
-        {
-            'tag': 'owner@',
-            'id': None,
-            'perms': {'BASIC': 'FULL_CONTROL'},
-            'flags': {'BASIC': 'INHERIT'},
-            'type': 'ALLOW'
-        },
-        {
-            'tag': 'group@',
-            'id': None,
-            'perms': {'BASIC': 'FULL_CONTROL'},
-            'flags': {'BASIC': 'INHERIT'},
-            'type': 'ALLOW'
-        },
-        {
-            'tag': 'everyone@',
-            'id': None,
-            'perms': {'BASIC': 'MODIFY'},
-            'flags': {'BASIC': 'INHERIT'},
-            'type': 'ALLOW'
-        }
-    ]}
-    NFS4_RESTRICTED = {'visible': True, 'acl': [
-        {
-            'tag': 'owner@',
-            'id': None,
-            'perms': {'BASIC': 'FULL_CONTROL'},
-            'flags': {'BASIC': 'INHERIT'},
-            'type': 'ALLOW'
-        },
-        {
-            'tag': 'group@',
-            'id': None,
-            'perms': {'BASIC': 'MODIFY'},
-            'flags': {'BASIC': 'INHERIT'},
-            'type': 'ALLOW'
-        },
-    ]}
-    NFS4_HOME = {'visible': True, 'acl': [
-        {
-            'tag': 'owner@',
-            'id': None,
-            'perms': {'BASIC': 'FULL_CONTROL'},
-            'flags': {'BASIC': 'INHERIT'},
-            'type': 'ALLOW'
-        },
-        {
-            'tag': 'group@',
-            'id': None,
-            'perms': {'BASIC': 'MODIFY'},
-            'flags': {'BASIC': 'NOINHERIT'},
-            'type': 'ALLOW'
-        },
-        {
-            'tag': 'everyone@',
-            'id': None,
-            'perms': {'BASIC': 'TRAVERSE'},
-            'flags': {'BASIC': 'NOINHERIT'},
-            'type': 'ALLOW'
-        },
-    ]}
-    NFS4_DOMAIN_HOME = {'visible': False, 'acl': [
-        {
-            'tag': 'owner@',
-            'id': None,
-            'perms': {'BASIC': 'FULL_CONTROL'},
-            'flags': {'BASIC': 'INHERIT'},
-            'type': 'ALLOW'
-        },
-        {
-            'tag': 'group@',
-            'id': None,
-            'perms': {'BASIC': 'MODIFY'},
-            'flags': {
-                'DIRECTORY_INHERIT': True,
-                'INHERIT_ONLY': True,
-                'NO_PROPAGATE_INHERIT': True
-            },
-            'type': 'ALLOW'
-        },
-        {
-            'tag': 'everyone@',
-            'id': None,
-            'perms': {'BASIC': 'TRAVERSE'},
-            'flags': {'BASIC': 'NOINHERIT'},
-            'type': 'ALLOW'
-        }
-    ]}
-    POSIX_OPEN = {'visible': True, 'acl': [
-        {
-            'default': True, 'tag': 'USER_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': True, 'tag': 'GROUP_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': True, 'tag': 'OTHER', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': False, 'tag': 'USER_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': False, 'tag': 'GROUP_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': False, 'tag': 'OTHER', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        }
-    ]}
-    POSIX_RESTRICTED = {'visible': True, 'acl': [
-        {
-            'default': True, 'tag': 'USER_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': True, 'tag': 'GROUP_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': True, 'tag': 'OTHER', 'id': -1,
-            'perms': {"READ": False, "WRITE": False, "EXECUTE": False},
-        },
-        {
-            'default': False, 'tag': 'USER_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': False, 'tag': 'GROUP_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': False, 'tag': 'OTHER', 'id': -1,
-            'perms': {"READ": False, "WRITE": False, "EXECUTE": False},
-        }
-    ]}
-    POSIX_HOME = {'visible': True, 'acl': [
-        {
-            'default': True, 'tag': 'USER_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': True, 'tag': 'GROUP_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': True, 'tag': 'OTHER', 'id': -1,
-            'perms': {"READ": False, "WRITE": False, "EXECUTE": False},
-        },
-        {
-            'default': False, 'tag': 'USER_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': False, 'tag': 'GROUP_OBJ', 'id': -1,
-            'perms': {"READ": True, "WRITE": True, "EXECUTE": True},
-        },
-        {
-            'default': False, 'tag': 'OTHER', 'id': -1,
-            'perms': {"READ": True, "WRITE": False, "EXECUTE": True},
-        }
-    ]}
+        return ace['flags']['INHERITED']
 
-    def options():
-        return list(ACLDefault.__members__.keys())
+    def canonicalize(self, theacl):
+        """
+        Order NFS4 ACEs according to MS guidelines:
+        1) Deny ACEs that apply to the object itself (NOINHERIT)
+        2) Allow ACEs that apply to the object itself (NOINHERIT)
+        3) Deny ACEs that apply to a subobject of the object (INHERIT)
+        4) Allow ACEs that apply to a subobject of the object (INHERIT)
 
-    def by_acltype(acltype):
-        out = {}
-        for i in ACLDefault:
-            if not i.name.startswith(acltype) or not i.value['visible']:
-                continue
+        See http://docs.microsoft.com/en-us/windows/desktop/secauthz/order-of-aces-in-a-dacl
+        Logic is simplified here because we do not determine depth from which ACLs are inherited.
+        """
+        if self == ACLType.POSIX1E:
+            return
 
-            acl = copy.deepcopy(i.value['acl'])
-            out.update({i.name: acl})
+        out = []
+        acl_groups = {
+            "deny_noinherit": [],
+            "deny_inherit": [],
+            "allow_noinherit": [],
+            "allow_inherit": [],
+        }
+
+        for ace in theacl:
+            key = f'{ace["tag"].lower()}_{"inherit" if self.is_inherited(ace) else "noinherit"}'
+            acl_groups[key].append(ace)
+
+        for g in acl_groups.values():
+            out.extend(g)
 
         return out
 
@@ -245,7 +97,7 @@ class ACLBase(ServicePartBase):
                 'dacl',
                 items=[
                     Dict(
-                        'aclentry',
+                        'nfs4_ace',
                         Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
                         Int('id', null=True, validators=[Range(min=-1, max=2147483647)]),
                         Str('type', enum=['ALLOW', 'DENY']),
@@ -276,6 +128,7 @@ class ACLBase(ServicePartBase):
                             Bool('INHERITED'),
                             Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
                         ),
+                        register=True
                     ),
                     Dict(
                         'posix1e_ace',
@@ -288,6 +141,7 @@ class ACLBase(ServicePartBase):
                             Bool('WRITE', default=False),
                             Bool('EXECUTE', default=False),
                         ),
+                        register=True
                     )
                 ],
             ),
@@ -462,15 +316,18 @@ class ACLBase(ServicePartBase):
     @accepts(Str('path', required=False, default=''))
     async def default_acl_choices(self, path):
         """
-        Get list of default ACL types.
+        `DEPRECATED`
+        Returns list of names of ACL templates. Wrapper around
+        filesystem.acltemplate.query.
         """
 
     @accepts(
-        Str('acl_type', default='POSIX_OPEN', enum=ACLDefault.options()),
+        Str('acl_type', default='POSIX_OPEN'),
         Str('share_type', default='NONE', enum=['NONE', 'SMB', 'NFS']),
     )
     async def get_default_acl(self, acl_type, share_type):
         """
+        `DEPRECATED`
         Returns a default ACL depending on the usage specified by `acl_type`.
         If an admin group is defined, then an entry granting it full control will
         be placed at the top of the ACL. Optionally may pass `share_type` to argument
