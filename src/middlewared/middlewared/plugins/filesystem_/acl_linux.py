@@ -199,33 +199,95 @@ class FilesystemService(Service, ACLBase):
         self.acltool(data['path'], action, uid, gid, options)
         job.set_progress(100, 'Finished setting permissions.')
 
-    async def default_acl_choices(self):
-        acl_choices = []
-        for x in ACLDefault:
-            if x.value['visible']:
-                acl_choices.append(x.name)
+    async def default_acl_choices(self, path):
+        if not path:
+            acl_choices = []
+            for x in ACLDefault:
+                if x.value['visible']:
+                    acl_choices.append(x.name)
 
-        return acl_choices
+            return acl_choices
+
+        try:
+            ds = await self.middleware.call('pool.dataset.from_path', path, False)
+            acltype = ds['acltype']['value']
+        except Exception as e:
+            raise CallError(f'{path}: failed to get acltype for path: {e}.')
+
+        prefix = "POSIX" if acltype == "POSIX" else "NFS4"
+        acl_choices = ACLDefault.by_acltype(prefix)
+        return list(acl_choices.keys())
 
     async def get_default_acl(self, acl_type, share_type):
+        prefix = acl_type.split("_")[0]
+        acl_choices = ACLDefault.by_acltype(prefix)
+        append_mask = False
+
         acl = []
         admin_group = (await self.middleware.call('smb.config'))['admin_group']
         if admin_group:
-            acl.append({
-                'default': True,
-                'tag': 'GROUP',
-                'id': (await self.middleware.call('dscache.get_uncached_group', admin_group))['gr_gid'],
-                'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-            })
-        if share_type == 'SMB':
-            acl.append({
-                'default': True,
-                'tag': 'GROUP',
-                'id': int(SMBBuiltin['USERS'].value[1][9:]),
-                'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-            })
-        acl.extend((ACLDefault[acl_type].value)['acl'])
+            id = (await self.middleware.call('dscache.get_uncached_group', admin_group))['gr_gid'],
+            if prefix == 'POSIX':
+                append_mask = True
+                acl.append({
+                    'default': True,
+                    'tag': 'GROUP',
+                    'id': id,
+                    'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
+                })
+                acl.append({
+                    'default': False,
+                    'tag': 'GROUP',
+                    'id': id,
+                    'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
+                })
+            else:
+                acl.append({
+                    'tag': 'GROUP',
+                    'id': id,
+                    'perms': {'BASIC': 'FULL_CONTROL'},
+                    'flags': {'BASIC': 'INHERIT'},
+                })
 
+        if share_type == 'SMB':
+            if prefix == 'POSIX':
+                append_mask = True
+
+                acl.append({
+                    'default': True,
+                    'tag': 'GROUP',
+                    'id': int(SMBBuiltin['USERS'].value[1][9:]),
+                    'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
+                })
+                acl.append({
+                    'default': False,
+                    'tag': 'GROUP',
+                    'id': int(SMBBuiltin['USERS'].value[1][9:]),
+                    'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
+                })
+            else:
+                acl.append({
+                    'tag': 'GROUP',
+                    'id': int(SMBBuiltin['USERS'].value[1][9:]),
+                    'perms': {'BASIC': 'MODIFY'},
+                    'flags': {'BASIC': 'INHERIT'},
+                })
+
+        if append_mask:
+            acl.append({
+                'default': True,
+                'tag': 'MASK',
+                'id': -1,
+                'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
+            })
+            acl.append({
+                'default': False,
+                'tag': 'MASK',
+                'id': -1,
+                'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
+            })
+
+        acl.extend(acl_choices[acl_type])
         return acl
 
     @private
