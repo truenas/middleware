@@ -964,8 +964,29 @@ def test_104_verify_smb_sharesec_change_for(request, ae):
 def test_105_verify_smbclient_127_0_0_1_connection(request):
     """
     Anonymous IPC$ access attempt should fail with NT_STATUS_ACCESS_DENIED
+    if guest access is not permitted to any shares on the server, and
+    should succeed if guest acccess is permitted. As a result there are three
+    items effectively being tested here:
+
+    1) Is access permitted when guest share is permitted?
+    2) Is access denied when guest share is not permitted?
+    3) Is share change causing global config change WRT guest settings?
     """
     depends(request, ["permissions_job", "service_cifs_running", "ssh_password"], scope="session")
+
+    cmd = 'smbclient -NL //127.0.0.1'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    assert 'TestCifsSMB' in results['output'], results['output']
+    assert 'My Test SMB Share' in results['output'], results['output']
+
+    payload = {
+        "enable_smb1": False,
+        "guest": "nobody"
+    }
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
@@ -1104,7 +1125,7 @@ def test_113_checking_to_see_if_clif_service_is_enabled_at_boot(request):
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_114_stoping_clif_service(request):
+def test_114_stopping_cifs_service(request):
     depends(request, ["permissions_job", "service_cifs_running"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
