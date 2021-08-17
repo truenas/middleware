@@ -298,7 +298,8 @@ class ShareSchema(RegistrySchema):
             acltype = entry.middleware.call_sync('filesystem.path_get_acltype', data_in['path'])
         except OSError:
             entry.middleware.logger.warning(
-                "%s: failed to determine acltype for path.", exc_info=True
+                "%s: failed to determine acltype for path.",
+                data_in['path'], exc_info=True
             )
             acltype = "DISABLED"
 
