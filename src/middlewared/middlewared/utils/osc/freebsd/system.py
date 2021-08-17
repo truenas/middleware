@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 __all__ = ['get_cpu_model']
 
 
-PORT_REGEX = re.compile(r'([0-9a-fA-Fx]+).*\((uart[0-9])+\)')
+RE_PORT = re.compile(r'([0-9a-fA-Fx]+).*\((uart[0-9])+\)')
 
 
 def get_cpu_model():
@@ -22,4 +22,4 @@ def serial_port_choices():
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
     stdout, stderr = cp.communicate()
-    return {e[1]: e[0] for e in PORT_REGEX.findall(stdout.decode(errors='ignore'))}
+    return {e[1]: e[0] for e in RE_PORT.findall(stdout.decode(errors='ignore'))}
