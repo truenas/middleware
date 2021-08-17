@@ -182,7 +182,7 @@ class mDNSService(object):
                         iindex.append(socket.if_nametoindex(intobj['name']))
                     except OSError:
                         self.logger.debug('Failed to determine interface index for [%s], service [%s]',
-                                          iface, service, exc_info=True)
+                                          intobj['name'], service, exc_info=True)
 
                     break
 
