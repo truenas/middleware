@@ -138,7 +138,15 @@ def test_010_checking_to_see_if_nfs_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_011_create_a_file_and_put_on_the_active_directory_share(request):
+def test_011_verify_smbclient_127_0_0_1_connection():
+    cmd = 'smbclient -NL //127.0.0.1'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    assert 'TestCifsSMB' in results['output'], results['output']
+    assert 'My Test SMB Share' in results['output'], results['output']
+
+
+def test_012_create_a_file_and_put_on_the_active_directory_share(request):
     cmd_test('touch testfile.txt')
     command = f'smbclient //{ip}/{smb_name} -U guest%none' \
         ' -m NT1 -c "put testfile.txt testfile.txt"'
@@ -148,12 +156,12 @@ def test_011_create_a_file_and_put_on_the_active_directory_share(request):
     assert results['result'] is True, results['output']
 
 
-def test_012_verify_testfile_is_on_the_active_directory_share():
+def test_013_verify_testfile_is_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
-def test_013_create_a_directory_on_the_active_directory_share(request):
+def test_014_create_a_directory_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{smb_name} -U guest%none' \
         ' -m NT1 -c "mkdir testdir"'
     print(command)
@@ -161,12 +169,12 @@ def test_013_create_a_directory_on_the_active_directory_share(request):
     assert results['result'] is True, results['output']
 
 
-def test_014_verify_testdir_exist_on_the_active_directory_share():
+def test_015_verify_testdir_exist_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testdir')
     assert results.status_code == 200, results.text
 
 
-def test_015_copy_testfile_in_testdir_on_the_active_directory_share(request):
+def test_016_copy_testfile_in_testdir_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{smb_name} -U guest%none' \
         ' -m NT1 -c "scopy testfile.txt testdir/testfile2.txt"'
     print(command)
@@ -174,12 +182,12 @@ def test_015_copy_testfile_in_testdir_on_the_active_directory_share(request):
     assert results['result'] is True, results['output']
 
 
-def test_016_verify_testfile2_exist_in_testdir_on_the_active_directory_share():
+def test_017_verify_testfile2_exist_in_testdir_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
 
 
-def test_017_setting_enable_smb1_to_false():
+def test_018_setting_enable_smb1_to_false():
     payload = {
         "enable_smb1": False
     }
@@ -187,101 +195,101 @@ def test_017_setting_enable_smb1_to_false():
     assert results.status_code == 200, results.text
 
 
-def test_018_change_sharing_smd_home_to_true():
+def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false():
     payload = {
         'home': True,
-        "guestok": True
+        "guestok": False
     }
     results = PUT(f"/sharing/smb/id/{smb_id}", payload)
     assert results.status_code == 200, results.text
 
 
-def test_019_verify_smb_getparm_path_homes():
+def test_020_verify_smb_getparm_path_homes():
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == f'{smb_path}/%U'
 
 
-def test_020_stoping_clif_service():
+def test_021_stoping_clif_service():
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_021_checking_if_cifs_is_stop():
+def test_022_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_022_update_smb():
+def test_023_update_smb():
     payload = {"syslog": False}
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_023_update_cifs_share():
+def test_024_update_cifs_share():
     results = PUT(f"/sharing/smb/id/{smb_id}/", {"home": False})
     assert results.status_code == 200, results.text
 
 
-def test_024_starting_cifs_service():
+def test_025_starting_cifs_service():
     payload = {"service": "cifs"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_025_checking_to_see_if_nfs_service_is_running():
+def test_026_checking_to_see_if_nfs_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_026_verify_all_files_are_kept_on_the_active_directory_share():
+def test_027_verify_all_files_are_kept_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
     results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
 
 
-def test_027_delete_testfile_on_the_active_directory_share(request):
+def test_028_delete_testfile_on_the_active_directory_share(request):
     command = fr'smbclient //{ip}/{smb_name} -U shareuser%testing' \
         r' -c "rm testfile.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
-def test_028_verify_testfile_is_deleted_on_the_active_directory_share():
+def test_029_verify_testfile_is_deleted_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 422, results.text
 
 
-def test_029_delele_testfile_on_the_active_directory_share(request):
+def test_030_delele_testfile_on_the_active_directory_share(request):
     command = fr'smbclient //{ip}/{smb_name} -U shareuser%testing' \
         r' -c "rm testdir/testfile2.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
-def test_030_verify_testfile2_is_deleted_on_the_active_directory_share():
+def test_031_verify_testfile2_is_deleted_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
     assert results.status_code == 422, results.text
 
 
-def test_031_delete_testdir_on_the_active_directory_share(request):
+def test_032_delete_testdir_on_the_active_directory_share(request):
     command = fr'smbclient //{ip}/{smb_name} -U shareuser%testing' \
         r' -c "rmdir testdir"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
-def test_031_verify_testdir_is_deleted_on_the_active_directory_share():
+def test_033_verify_testdir_is_deleted_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testdir')
     assert results.status_code == 422, results.text
 
 
-def test_032_change_timemachine_to_true():
+def test_034_change_timemachine_to_true():
     global vuid
     payload = {
         'timemachine': True,
@@ -291,28 +299,28 @@ def test_032_change_timemachine_to_true():
     vuid = results.json()['vuid']
 
 
-def test_033_verify_that_timemachine_is_true():
+def test_035_verify_that_timemachine_is_true():
     results = GET(f"/sharing/smb/id/{smb_id}/")
     assert results.status_code == 200, results.text
     assert results.json()['timemachine'] is True, results.text
 
 
 @pytest.mark.parametrize('vfs_object', ["ixnas", "fruit", "streams_xattr"])
-def test_034_verify_smb_getparm_vfs_objects_share(vfs_object):
+def test_036_verify_smb_getparm_vfs_objects_share(vfs_object):
     cmd = f'midclt call smb.getparm "vfs objects" {smb_name}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert vfs_object in results['output'], results['output']
 
 
-def test_035_verify_smb_getparm_fruit_time_machine_is_yes():
+def test_037_verify_smb_getparm_fruit_time_machine_is_yes():
     cmd = f'midclt call smb.getparm "fruit:time machine" {smb_name}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'yes', results['output']
 
 
-def test_036_change_recyclebin_to_true():
+def test_038_change_recyclebin_to_true():
     global vuid
     payload = {
         "recyclebin": True,
@@ -322,21 +330,21 @@ def test_036_change_recyclebin_to_true():
     vuid = results.json()['vuid']
 
 
-def test_037_verify_that_recyclebin_is_true():
+def test_039_verify_that_recyclebin_is_true():
     results = GET(f"/sharing/smb/id/{smb_id}/")
     assert results.status_code == 200, results.text
     assert results.json()['recyclebin'] is True, results.text
 
 
 @pytest.mark.parametrize('vfs_object', ["ixnas", "crossrename", "recycle"])
-def test_037_verify_smb_getparm_vfs_objects_share(vfs_object):
+def test_040_verify_smb_getparm_vfs_objects_share(vfs_object):
     cmd = f'midclt call smb.getparm "vfs objects" {smb_name}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert vfs_object in results['output'], results['output']
 
 
-def test_039_create_a_file_and_put_on_the_active_directory_share(request):
+def test_041_create_a_file_and_put_on_the_active_directory_share(request):
     cmd_test('touch testfile.txt')
     command = f'smbclient //{ip}/{smb_name} -U shareuser%testing' \
         ' -c "put testfile.txt testfile.txt"'
@@ -346,29 +354,29 @@ def test_039_create_a_file_and_put_on_the_active_directory_share(request):
     assert results['result'] is True, results['output']
 
 
-def test_040_verify_testfile_is_on_the_active_directory_share():
+def test_042_verify_testfile_is_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
-def test_041_delete_testfile_on_the_active_directory_share(request):
+def test_043_delete_testfile_on_the_active_directory_share(request):
     command = fr'smbclient //{ip}/{smb_name} -U shareuser%testing' \
         r' -c "rm testfile.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
-def test_042_verify_testfile_is_deleted_on_the_active_directory_share():
+def test_044_verify_testfile_is_deleted_on_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 422, results.text
 
 
-def test_043_verify_testfile_is_on_recycle_bin_in_the_active_directory_share():
+def test_045_verify_testfile_is_on_recycle_bin_in_the_active_directory_share():
     results = POST('/filesystem/stat/', f'{smb_path}/.recycle/shareuser/testfile.txt')
     assert results.status_code == 200, results.text
 
 
-def test_044_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
+def test_046_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
     global share_id, payload
     share_id = GET(f"/smb/sharesec/?share_name={smb_name}").json()[0]['id']
     payload = {
@@ -385,35 +393,27 @@ def test_044_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_045_verify_smb_sharesec_change_for(ae):
+def test_047_verify_smb_sharesec_change_for(ae):
     results = GET(f"/smb/sharesec/id/{share_id}/")
     assert results.status_code == 200, results.text
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-def test_046_verify_smbclient_127_0_0_1_connection():
-    cmd = 'smbclient -NL //127.0.0.1'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'TestCifsSMB' in results['output'], results['output']
-    assert 'My Test SMB Share' in results['output'], results['output']
-
-
-def test_047_verify_midclt_call_smb_getparm_access_based_share_enum_is_null():
+def test_048_verify_midclt_call_smb_getparm_access_based_share_enum_is_null():
     cmd = f'midclt call smb.getparm "access based share enum" {smb_name}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'null', results['output']
 
 
-def test_048_delete_cifs_share():
+def test_049_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.dependency(name="SID_CHANGED")
-def test_049_netbios_name_change_check_sid():
+def test_050_netbios_name_change_check_sid():
     """
     This test changes the netbios name of the server and then
     verifies that this results in the server's domain SID changing.
@@ -449,7 +449,7 @@ def test_049_netbios_name_change_check_sid():
 
 
 @pytest.mark.dependency(name="SID_TEST_GROUP")
-def test_050_create_new_smb_group_for_sid_test(request):
+def test_051_create_new_smb_group_for_sid_test(request):
     """
     Create testgroup and verify that groupmap entry generated
     with new SID.
@@ -474,7 +474,7 @@ def test_050_create_new_smb_group_for_sid_test(request):
     assert domain_sid == new_sid, groupmaps["testsidgroup"]
 
 
-def test_051_change_netbios_name_and_check_groupmap(request):
+def test_052_change_netbios_name_and_check_groupmap(request):
     """
     Verify that changes to netbios name result in groupmap sid
     changes.
@@ -496,36 +496,36 @@ def test_051_change_netbios_name_and_check_groupmap(request):
     assert domain_sid != new_sid, groupmaps["testsidgroup"]
 
 
-def test_052_delete_smb_group(request):
+def test_053_delete_smb_group(request):
     depends(request, ["SID_TEST_GROUP"])
     results = DELETE(f"/group/id/{group_id}/")
     assert results.status_code == 200, results.text
 
 
 # Now stop the service
-def test_053_disable_cifs_service_at_boot():
+def test_054_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_054_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_055_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_055_stoping_clif_service():
+def test_056_stoping_clif_service():
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_056_checking_if_cifs_is_stop():
+def test_057_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset
-def test_057_destroying_smb_dataset():
+def test_058_destroying_smb_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
