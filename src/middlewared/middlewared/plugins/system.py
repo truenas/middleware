@@ -53,7 +53,6 @@ FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
 RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=re.M)
-RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
 RE_ECC_MEMORY = re.compile(r'Error Correction Type:\s*(.*ECC.*)')
 
 DEBUG_MAX_SIZE = 30
@@ -140,27 +139,12 @@ class SystemAdvancedService(ConfigService):
 
     @accepts()
     @returns(Dict('serial_port_choices', additional_attrs=True))
-    async def serial_port_choices(self):
+    def serial_port_choices(self):
         """
         Get available choices for `serialport`.
         """
-        if osc.IS_FREEBSD and await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
-            ports = {'0x3f8': '0x3f8'}
-        else:
-            if osc.IS_LINUX:
-                proc = await Popen(
-                    'dmesg | grep ttyS',
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
-                )
-                output = (await proc.communicate())[0].decode()
-                ports = {i: i for i in RE_LINUX_DMESG_TTY.findall(output)}
-            else:
-                pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
-                                   "sed -En 's/ *([0-9a-fA-Fx]+).*\\(uart[0-9]+\\)/\\1/p'", stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, shell=True)
-                ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
-
-        if not ports or (await self.config())['serialport'] == '0x2f8':
+        ports = {v: v for k, v in osc.system.serial_port_choices().items()}
+        if not ports or self.middleware.call_sync('system.advanced.config')['serialport'] == '0x2f8':
             # We should always add 0x2f8 if ports is false or current value is the default one in db
             # i.e 0x2f8
             ports['0x2f8'] = '0x2f8'
