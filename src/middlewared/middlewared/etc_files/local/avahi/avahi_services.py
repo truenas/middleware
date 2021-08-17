@@ -26,18 +26,11 @@ class DevType(enum.Enum):
 class ServiceType(enum.Enum):
     ADISK = ('_adisk._tcp.', 9)
     DEV_INFO = ('_device-info._tcp.', 9)
-    FTP = ('_ftp._tcp.', 21)
     HTTP = ('_http._tcp.', 80)
     HTTPS = ('_https._tcp.', 443)
-    ISCSITARGET = ('_iscsi._tcp.', 3260)
     MIDDLEWARE = ('_middleware._tcp.', 6000)
     MIDDLEWARE_SSL = ('_middleware-ssl._tcp.', 443)
-    NFS = ('_nfs._tcp.', 2049)
-    SSH = ('_ssh._tcp.', 22)
-    SFTP_SSH = ('_sftp-ssh._tcp.', 22)
     SMB = ('_smb._tcp.', 445)
-    TFTP = ('_tftp._udp.', 69)
-    WEBDAV = ('_webdav._tcp.', 8080)
 
 
 class AvahiConst(enum.Enum):
@@ -76,9 +69,6 @@ class mDNSService(object):
 
         if self.service == 'SMB':
             return any(filter_list(self.service_info, [('service', '=', 'cifs'), GENERATE_SERVICE_FILTER]))
-
-        if self.service == 'SFTP_SSH':
-            return any(filter_list(self.service_info, [('service', '=', 'ssh'), GENERATE_SERVICE_FILTER]))
 
         return any(filter_list(self.service_info, [('service', '=', self.service.lower()), GENERATE_SERVICE_FILTER]))
 
@@ -153,20 +143,11 @@ class mDNSService(object):
             return (txtrecord, iindex)
 
     def _get_port(self):
-        if self.service in ['FTP', 'TFPT']:
-            return (self.middleware.call_sync(f'{self.service.lower()}.config'))['port']
-
-        if self.service in ['SSH', 'SFTP_SSH']:
-            return (self.middleware.call_sync('ssh.config'))['tcpport']
-
         if self.service == 'HTTP':
             return (self.middleware.call_sync('system.general.config'))['ui_port']
 
         if self.service in ['HTTPS', 'MIDDLEWARE_SSL']:
             return (self.middleware.call_sync('system.general.config'))['ui_httpsport']
-
-        if self.service == 'WEBDAV':
-            return (self.middleware.call_sync('webdav.config'))['tcpport']
 
         return self.port
 
@@ -182,23 +163,14 @@ class mDNSService(object):
         bind_ip = []
         if service is None:
             service = self.service
-        if service in ['NFS', 'SMB']:
+
+        if service == 'SMB':
             bind_ip = self.middleware.call_sync(f'{service.lower()}.config')['bindip']
 
         if service in ['HTTP', 'HTTPS']:
             ui_address = self.middleware.call_sync('system.general.config')['ui_address']
             if ui_address[0] != "0.0.0.0":
                 bind_ip = ui_address
-
-        if service in ['SSH', 'SFTP_SSH']:
-            for iface in self.middleware.call_sync('ssh.config')['bindiface']:
-                try:
-                    iindex.append(socket.if_nametoindex(iface))
-                except OSError:
-                    self.logger.debug('Failed to determine interface index for [%s], service [%s]',
-                                      iface, service, exc_info=True)
-
-            return iindex if iindex else [AvahiConst.AVAHI_IF_UNSPEC]
 
         if bind_ip is None:
             return [AvahiConst.AVAHI_IF_UNSPEC]

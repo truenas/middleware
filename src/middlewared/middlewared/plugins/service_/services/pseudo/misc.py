@@ -111,14 +111,12 @@ class HttpService(PseudoServiceBase):
     reloadable = True
 
     async def restart(self):
-        await self.middleware.call("service.reload", "mdns")
         if osc.IS_FREEBSD:
             await freebsd_service("nginx", "restart")
         if osc.IS_LINUX:
             await systemd_unit("nginx", "restart")
 
     async def reload(self):
-        await self.middleware.call("service.reload", "mdns")
         if osc.IS_FREEBSD:
             await freebsd_service("nginx", "reload")
         if osc.IS_LINUX:
