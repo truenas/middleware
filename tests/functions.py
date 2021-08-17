@@ -181,7 +181,7 @@ def cmd_test(command):
 
 def start_ssh_agent():
     process = run(['ssh-agent', '-s'], stdout=PIPE, universal_newlines=True)
-    to_recompile = 'SSH_AUTH_SOCK=(?P<socket>[^;]+).*SSH_AGENT_PID=(?P<pid>\d+)'
+    to_recompile = r'SSH_AUTH_SOCK=(?P<socket>[^;]+).*SSH_AGENT_PID=(?P<pid>\d+)'
     OUTPUT_PATTERN = re.compile(to_recompile, re.MULTILINE | re.DOTALL)
     match = OUTPUT_PATTERN.search(process.stdout)
     if match is None:
