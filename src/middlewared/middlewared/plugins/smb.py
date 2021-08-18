@@ -1295,6 +1295,12 @@ class SharingSMBService(SharingService):
             'socket options',
             'include',
         ]
+        freebsd_vfs_objects = [
+            'zfsacl',
+            'zfs_space',
+            'noacl',
+            'ixnas',
+        ]
         for entry in data.splitlines():
             if entry == '' or entry.startswith(('#', ';')):
                 continue
@@ -1317,6 +1323,14 @@ class SharingSMBService(SharingService):
                     f'{kv[0]} is a blacklisted auxiliary parameter. Changes to this parameter '
                     'are not permitted.'
                 )
+
+            if kv[0].strip() == "vfs objects":
+                for i in kv[1].split():
+                    if i in freebsd_vfs_objects:
+                        verrors.add(
+                            f'{schema_name}.auxsmbconf',
+                            f'[{i}] is not a permitted VFS object on SCALE.'
+                        )
 
             if schema_name == 'smb_update.smb_options' and ':' not in kv[0]:
                 """
@@ -1610,6 +1624,8 @@ class SharingSMBService(SharingService):
 
             try:
                 await self.middleware.call('sharing.smb.reg_addshare', share_conf[0])
+            except ValueError:
+                self.logger.warning("Share [%s] has invalid configuration.", share, exc_info=True)
             except Exception:
                 self.logger.warning("Failed to add SMB share [%s] while synchronizing registry config",
                                     share, exc_info=True)

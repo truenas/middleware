@@ -51,10 +51,11 @@ class ShareSchema(RegistrySchema):
         Convert middleware schema SMB shares to an SMB service definition
         """
         def order_vfs_objects(vfs_objects, is_clustered, fruit_enabled, purpose):
-            vfs_objects_special = ('catia', 'zfs_space', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
-                                   'noacl', 'ixnas', 'acl_xattr', 'zfsacl', 'nfs4acl_xattr',
-                                   'glusterfs', 'crossrename', 'winmsa', 'recycle', 'zfs_core', 'aio_fbsd', 'io_uring')
+            vfs_objects_special = ('catia', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
+                                   'acl_xattr', 'nfs4acl_xattr', 'glusterfs',
+                                   'crossrename', 'winmsa', 'recycle', 'zfs_core', 'aio_fbsd', 'io_uring')
 
+            invalid_vfs_objects = ['zfsacl', 'ixnas', 'noacl', 'zfs_space']
             cluster_safe_objects = ['catia', 'fruit', 'streams_xattr', 'acl_xattr', 'recycle', 'glusterfs', 'io_ring']
 
             vfs_objects_ordered = []
@@ -72,15 +73,15 @@ class ShareSchema(RegistrySchema):
                 if 'streams_xattr' not in vfs_objects:
                     vfs_objects.append('streams_xattr')
 
-            if 'noacl' in vfs_objects and 'ixnas' in vfs_objects:
-                vfs_objects.remove('ixnas')
-
             if purpose == 'ENHANCED_TIMEMACHINE':
                 vfs_objects.append('tmprotect')
             elif purpose == 'WORM_DROPBOX':
                 vfs_objects.append('worm')
 
             for obj in vfs_objects:
+                if obj in invalid_vfs_objects:
+                    raise ValueError(f'[{obj}] is an invalid VFS object')
+
                 if obj not in vfs_objects_special:
                     vfs_objects_ordered.append(obj)
 
@@ -136,6 +137,9 @@ class ShareSchema(RegistrySchema):
                     data_out['vfs objects'] = {"parsed": order_vfs_objects(vfsobjects, is_clustered, data_in['fruit_enabled'], None)}
                 else:
                     data_out[auxparam.strip()] = {"raw": val.strip()}
+
+            except ValueError:
+                raise
 
             except Exception:
                 self.middleware.logger.debug(
