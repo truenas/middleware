@@ -20,15 +20,9 @@ import uuid
 import shutil
 import struct
 
-try:
-    from samba.samba3 import param
-except ImportError:
-    param = None
-
+from samba import param
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
-
-LP_CTX = param.get_context()
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -229,6 +223,8 @@ class SMBService(TDBWrapConfigService):
         datastore_prefix = 'cifs_srv_'
         cli_namespace = 'service.smb'
 
+    LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.value[0])
+
     @private
     async def smb_extend(self, smb):
         """Extend smb for netbios."""
@@ -359,11 +355,56 @@ class SMBService(TDBWrapConfigService):
         return True
 
     @private
+    async def getparm_file(self, parm):
+        with open(SMBPath.GLOBALCONF.platform(), "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line[0] in ["[", "#", ";"]:
+                    continue
+
+                try:
+                    k, v = line.split("=", 1)
+                except ValueError:
+                    self.logger.warning("%s, SMB configuration file contains invalid line.", line)
+                    continue
+
+                k = k.strip()
+                v = v.strip()
+
+                if k.casefold() != parm.casefold():
+                    self.logger.debug("%s does not match %s", k, parm)
+                    continue
+
+                if v.lower() in ("off", "false", "no"):
+                    return False
+
+                if v.lower() in ("on", "true", "yes"):
+                    return True
+
+                if v.isnumeric():
+                    return int(v)
+
+                return v
+
+        raise MatchNotFound(parm)
+
+    @private
     async def getparm(self, parm, section):
         """
         Get a parameter from the smb4.conf file. This is more reliable than
         'testparm --parameter-name'. testparm will fail in a variety of
         conditions without returning the parameter's value.
+
+        First we try to retrieve the parameter from the registry. The registry will be populated
+        with parameters that are explicilty set. It will not return for a value for an implicit default.
+
+        Some basic global configuration parameters (such as "clustering") are not stored in the
+        registry. This means that we need to read them from the configuration file. This only
+        applies to global section.
+
+        Finally, we fall through to retrieving the default value in Samba's param table
+        through samba's param binding. This is initialized under a non-default loadparm context
+        based on empty smb4.conf file.
         """
         ret = None
         try:
@@ -376,11 +417,12 @@ class SMBService(TDBWrapConfigService):
             return ret
 
         try:
-            LP_CTX.load(SMBPath.GLOBALCONF.platform())
-        except Exception as e:
-            self.logger.warning("Failed to reload smb.conf: %s", e)
+            if section.upper() == 'GLOBAL':
+                return await self.getparm_file(parm)
+        except MatchNotFound:
+            pass
 
-        return LP_CTX.get(parm)
+        return self.LP_CTX.get(parm)
 
     @private
     async def get_next_rid(self):
@@ -1340,7 +1382,7 @@ class SharingSMBService(SharingService):
                 This should be a lightweight validation of GLOBAL params.
                 """
                 try:
-                    LP_CTX.dump_a_parameter(kv[0].strip())
+                    self.LP_CTX.dump_a_parameter(kv[0].strip())
                 except RuntimeError as e:
                     verrors.add(
                         f'{schema_name}.auxsmbconf',
