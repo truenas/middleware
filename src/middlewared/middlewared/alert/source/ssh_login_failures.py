@@ -65,7 +65,7 @@ def get_login_failures(now, messages):
 class SSHLoginFailuresAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "SSH Login Failures"
+    title = "Yesterday's SSH Login Failures"
     text = "%(count)d SSH login failures:\n%(failures)s"
 
 
