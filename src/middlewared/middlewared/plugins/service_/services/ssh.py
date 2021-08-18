@@ -13,14 +13,8 @@ class SSHService(SimpleService):
 
     systemd_unit = "ssh"
 
-    async def before_start(self):
-        await self.middleware.call("service.reload", "mdns")
-
     async def after_start(self):
         await self.middleware.call("ssh.save_keys")
-
-    async def before_reload(self):
-        await self.middleware.call("service.reload", "mdns")
 
     async def after_reload(self):
         await self.middleware.call("ssh.save_keys")

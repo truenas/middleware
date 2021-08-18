@@ -224,8 +224,8 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'motd'}
         ],
         'mdns': [
-            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': 'interface_sync'},
-            {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': 'interface_sync'}
+            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': None},
+            {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': None}
         ],
         'wsd': [
             {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'interface_sync'},
