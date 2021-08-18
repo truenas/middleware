@@ -17,8 +17,8 @@ from pytest_dependency import depends
 
 dataset = f"{pool_name}/smb-cifs"
 dataset_url = dataset.replace('/', '%2F')
-smb_name = "TestCifsSMB"
-smb_path = "/mnt/" + dataset
+SMB_NAME = "TestCifsSMB"
+SMB_PATH = "/mnt/" + dataset
 
 smb_acl = [
     {
@@ -97,7 +97,7 @@ def test_004_verify_the_job_id_is_successfull():
 
 
 def test_005_get_filesystem_stat_from_smb_path_and_verify_acl_is_true():
-    results = POST('/filesystem/stat/', smb_path)
+    results = POST('/filesystem/stat/', SMB_PATH)
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is True, results.text
 
@@ -116,9 +116,9 @@ def test_008_creating_a_smb_share_path():
     global payload, results, smb_id
     payload = {
         "comment": "My Test SMB Share",
-        "path": smb_path,
+        "path": SMB_PATH,
         "home": False,
-        "name": smb_name,
+        "name": SMB_NAME,
         "guestok": True,
     }
     results = POST("/sharing/smb/", payload)
@@ -148,7 +148,7 @@ def test_011_verify_smbclient_127_0_0_1_connection():
 
 def test_012_create_a_file_and_put_on_the_active_directory_share(request):
     cmd_test('touch testfile.txt')
-    command = f'smbclient //{ip}/{smb_name} -U guest%none' \
+    command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
         ' -m NT1 -c "put testfile.txt testfile.txt"'
     print(command)
     results = cmd_test(command)
@@ -157,12 +157,12 @@ def test_012_create_a_file_and_put_on_the_active_directory_share(request):
 
 
 def test_013_verify_testfile_is_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
 def test_014_create_a_directory_on_the_active_directory_share(request):
-    command = f'smbclient //{ip}/{smb_name} -U guest%none' \
+    command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
         ' -m NT1 -c "mkdir testdir"'
     print(command)
     results = cmd_test(command)
@@ -170,12 +170,12 @@ def test_014_create_a_directory_on_the_active_directory_share(request):
 
 
 def test_015_verify_testdir_exist_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
     assert results.status_code == 200, results.text
 
 
 def test_016_copy_testfile_in_testdir_on_the_active_directory_share(request):
-    command = f'smbclient //{ip}/{smb_name} -U guest%none' \
+    command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
         ' -m NT1 -c "scopy testfile.txt testdir/testfile2.txt"'
     print(command)
     results = cmd_test(command)
@@ -183,7 +183,7 @@ def test_016_copy_testfile_in_testdir_on_the_active_directory_share(request):
 
 
 def test_017_verify_testfile2_exist_in_testdir_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
 
 
@@ -208,7 +208,7 @@ def test_020_verify_smb_getparm_path_homes():
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == f'{smb_path}/%U'
+    assert results['output'].strip() == f'{SMB_PATH}/%U'
 
 
 def test_021_stoping_clif_service():
@@ -247,45 +247,45 @@ def test_026_checking_to_see_if_nfs_service_is_running():
 
 
 def test_027_verify_all_files_are_kept_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 200, results.text
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
 
 
 def test_028_delete_testfile_on_the_active_directory_share(request):
-    command = fr'smbclient //{ip}/{smb_name} -U shareuser%testing' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         r' -c "rm testfile.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_029_verify_testfile_is_deleted_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 422, results.text
 
 
 def test_030_delele_testfile_on_the_active_directory_share(request):
-    command = fr'smbclient //{ip}/{smb_name} -U shareuser%testing' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         r' -c "rm testdir/testfile2.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_031_verify_testfile2_is_deleted_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 422, results.text
 
 
 def test_032_delete_testdir_on_the_active_directory_share(request):
-    command = fr'smbclient //{ip}/{smb_name} -U shareuser%testing' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         r' -c "rmdir testdir"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_033_verify_testdir_is_deleted_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
     assert results.status_code == 422, results.text
 
 
@@ -307,14 +307,14 @@ def test_035_verify_that_timemachine_is_true():
 
 @pytest.mark.parametrize('vfs_object', ["ixnas", "fruit", "streams_xattr"])
 def test_036_verify_smb_getparm_vfs_objects_share(vfs_object):
-    cmd = f'midclt call smb.getparm "vfs objects" {smb_name}'
+    cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert vfs_object in results['output'], results['output']
 
 
 def test_037_verify_smb_getparm_fruit_time_machine_is_yes():
-    cmd = f'midclt call smb.getparm "fruit:time machine" {smb_name}'
+    cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'yes', results['output']
@@ -338,7 +338,7 @@ def test_039_verify_that_recyclebin_is_true():
 
 @pytest.mark.parametrize('vfs_object', ["ixnas", "crossrename", "recycle"])
 def test_040_verify_smb_getparm_vfs_objects_share(vfs_object):
-    cmd = f'midclt call smb.getparm "vfs objects" {smb_name}'
+    cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert vfs_object in results['output'], results['output']
@@ -346,7 +346,7 @@ def test_040_verify_smb_getparm_vfs_objects_share(vfs_object):
 
 def test_041_create_a_file_and_put_on_the_active_directory_share(request):
     cmd_test('touch testfile.txt')
-    command = f'smbclient //{ip}/{smb_name} -U shareuser%testing' \
+    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         ' -c "put testfile.txt testfile.txt"'
     print(command)
     results = cmd_test(command)
@@ -355,30 +355,30 @@ def test_041_create_a_file_and_put_on_the_active_directory_share(request):
 
 
 def test_042_verify_testfile_is_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
 def test_043_delete_testfile_on_the_active_directory_share(request):
-    command = fr'smbclient //{ip}/{smb_name} -U shareuser%testing' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         r' -c "rm testfile.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_044_verify_testfile_is_deleted_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 422, results.text
 
 
 def test_045_verify_testfile_is_on_recycle_bin_in_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/.recycle/shareuser/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/.recycle/shareuser/testfile.txt')
     assert results.status_code == 200, results.text
 
 
 def test_046_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
     global share_id, payload
-    share_id = GET(f"/smb/sharesec/?share_name={smb_name}").json()[0]['id']
+    share_id = GET(f"/smb/sharesec/?share_name={SMB_NAME}").json()[0]['id']
     payload = {
         'share_acl': [
             {
@@ -401,7 +401,7 @@ def test_047_verify_smb_sharesec_change_for(ae):
 
 
 def test_048_verify_midclt_call_smb_getparm_access_based_share_enum_is_null():
-    cmd = f'midclt call smb.getparm "access based share enum" {smb_name}'
+    cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'null', results['output']

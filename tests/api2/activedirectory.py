@@ -21,8 +21,8 @@ from functions import (
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
-    ad_user = fr"AD01\{ADUSERNAME.lower()}"
-    cmd_ad_user = fr"AD01\\{ADUSERNAME.lower()}"
+    AD_USER = fr"AD01\{ADUSERNAME.lower()}"
+    CMD_AD_USER = fr"AD01\\{ADUSERNAME.lower()}"
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
@@ -58,8 +58,8 @@ ad_object_list = [
 
 dataset = f"{pool_name}/ad-bsd"
 dataset_url = dataset.replace('/', '%2F')
-smb_name = "TestShare"
-smb_path = f"/mnt/{dataset}"
+SMB_NAME = "TestShare"
+SMB_PATH = f"/mnt/{dataset}"
 
 
 @pytest.mark.dependency(name="ad_01")
@@ -181,8 +181,8 @@ def test_13_verify_activedirectory_data_of_(request, data):
 def test_14_changing_user_permissions_on_dataset_for(request):
     depends(request, ["ad_01", "ad_02", "ad_07"])
     payload = {
-        'user': ad_user,
-        'group': ad_user,
+        'user': AD_USER,
+        'group': AD_USER,
     }
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', payload)
     assert results.status_code == 200, results.text
@@ -261,13 +261,13 @@ def test_20_verify_the_value_of_get_smb_object_(request, data):
     assert results.json()[data] == payload[data], results.text
 
 
-def test_21_creating_a_smb_share_on_smb_path(request):
+def test_21_creating_a_smb_share_on_SMB_PATH(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     global payload, results, smb_id
     payload = {
         "comment": "My Test SMB Share",
-        "path": smb_path,
-        "name": smb_name,
+        "path": SMB_PATH,
+        "name": SMB_NAME,
         "guestok": True,
         "streams": True
     }
@@ -325,7 +325,7 @@ def test_29_create_a_file_and_put_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     cmd_test('touch testfile.txt')
     print()
-    command = fr'smbclient //{ip}/{smb_name} -U {cmd_ad_user}%{ADPASSWORD}' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         r' -m NT1 -c "put testfile.txt testfile.txt"'
     print(command)
     results = cmd_test(command)
@@ -334,33 +334,33 @@ def test_29_create_a_file_and_put_on_the_active_directory_share(request):
 
 
 def test_30_verify_testfile_is_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
 def test_31_create_a_directory_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
-    command = fr'smbclient //{ip}/{smb_name} -U {cmd_ad_user}%{ADPASSWORD}' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         r' -m NT1 -c "mkdir testdir"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_32_verify_testdir_exist_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
     assert results.status_code == 200, results.text
 
 
 def test_33_copy_testfile_in_testdir_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
-    command = fr'smbclient //{ip}/{smb_name} -U {cmd_ad_user}%{ADPASSWORD}' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         r' -m NT1 -c "scopy testfile.txt testdir/testfile2.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_34_verify_testfile2_exist_in_testdir_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
 
 
@@ -451,48 +451,48 @@ def test_44_verify_activedirectory_data_of_(request, data):
 
 
 def test_45_verify_all_files_are_kept_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 200, results.text
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
 
 
 def test_46_delete_testfile_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
-    command = fr'smbclient //{ip}/{smb_name} -U {cmd_ad_user}%{ADPASSWORD}' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         r' -m NT1 -c "rm testfile.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_46_verify_testfile_is_deleted_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 422, results.text
 
 
 def test_47_delele_testfile_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
-    command = fr'smbclient //{ip}/{smb_name} -U {cmd_ad_user}%{ADPASSWORD}' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         r' -m NT1 -c "rm testdir/testfile2.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_48_verify_testfile2_is_deleted_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir/testfile2.txt')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 422, results.text
 
 
 def test_49_delete_testdir_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
-    command = fr'smbclient //{ip}/{smb_name} -U {cmd_ad_user}%{ADPASSWORD}' \
+    command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         r' -m NT1 -c "rmdir testdir"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
 
 def test_50_verify_testdir_is_deleted_on_the_active_directory_share():
-    results = POST('/filesystem/stat/', f'{smb_path}/testdir')
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
     assert results.status_code == 422, results.text
 
 
