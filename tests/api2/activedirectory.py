@@ -235,8 +235,7 @@ def test_17_setting_up_smb(request):
     global payload, results
     payload = {
         "description": "Test FreeNAS Server",
-        "guest": "nobody",
-        "enable_smb1": True
+        "guest": "nobody"
     }
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
@@ -323,10 +322,8 @@ def test_28_checking_to_see_if_cifs_service_is_running(request):
 def test_29_create_a_file_and_put_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     cmd_test('touch testfile.txt')
-    print()
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
-        ' -m NT1 -c "put testfile.txt testfile.txt"'
-    print(command)
+        ' -c "put testfile.txt testfile.txt"'
     results = cmd_test(command)
     cmd_test('rm testfile.txt')
     assert results['result'] is True, results['output']
@@ -340,7 +337,7 @@ def test_30_verify_testfile_is_on_the_active_directory_share():
 def test_31_create_a_directory_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
-        ' -m NT1 -c "mkdir testdir"'
+        ' -c "mkdir testdir"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
@@ -353,7 +350,7 @@ def test_32_verify_testdir_exist_on_the_active_directory_share():
 def test_33_copy_testfile_in_testdir_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
-        ' -m NT1 -c "scopy testfile.txt testdir/testfile2.txt"'
+        ' -c "scopy testfile.txt testdir/testfile2.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
@@ -459,7 +456,7 @@ def test_45_verify_all_files_are_kept_on_the_active_directory_share():
 def test_46_delete_testfile_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
-        ' -m NT1 -c "rm testfile.txt"'
+        ' -c "rm testfile.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
@@ -472,7 +469,7 @@ def test_46_verify_testfile_is_deleted_on_the_active_directory_share():
 def test_47_delele_testfile_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
-        ' -m NT1 -c "rm testdir/testfile2.txt"'
+        ' -c "rm testdir/testfile2.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
@@ -485,7 +482,7 @@ def test_48_verify_testfile2_is_deleted_on_the_active_directory_share():
 def test_49_delete_testdir_on_the_active_directory_share(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
-        ' -m NT1 -c "rmdir testdir"'
+        ' -c "rmdir testdir"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
