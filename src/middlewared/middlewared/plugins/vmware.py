@@ -469,7 +469,7 @@ class VMWareService(CRUDService):
                                              "datastore %s and filesystem %s. "
                                              "Possibly using PT devices. Skipping.",
                                              vm.name, vmsnapobj["datastore"], dataset)
-                            snapvmskips.append(vm.config.uuid)
+                            snapvmskips.append([vm.config.uuid, vm.name])
                     except Exception as e:
                         self.logger.warning("Snapshot of VM %s failed", vm.name, exc_info=True)
                         self.middleware.call_sync("alert.oneshot_create", "VMWareSnapshotCreateFailed", {
@@ -525,25 +525,20 @@ class VMWareService(CRUDService):
 
             # vm is an object, so we'll dereference that object anywhere it's user facing.
             for vm_uuid in elem["snapvms"]:
-                vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True)
-                if not vm:
-                    self.logger.debug("Could not find VM %s", vm_uuid)
-                    continue
-                if [vm_uuid, vm.name] not in elem["snapvmfails"] and vm_uuid not in elem["snapvmskips"]:
-                    # The test above is paranoia.  It shouldn't be possible for a vm to
-                    # be in more than one of the three dictionaries.
-                    snap = self._findVMSnapshotByName(vm, vmsnapname)
-                    try:
-                        if snap:
-                            VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
-                    except Exception as e:
-                        self.logger.debug("Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True)
-                        self.middleware.call_sync("alert.oneshot_create", "VMWareSnapshotDeleteFailed", {
-                            "hostname": vmsnapobj["hostname"],
-                            "vm": vm.name,
-                            "snapshot": vmsnapname,
-                            "error": self._vmware_exception_message(e),
-                        })
+                for vm in si.content.searchIndex.FindAllByUuid(None, vm_uuid, True):
+                    if [vm_uuid, vm.name] not in elem["snapvmfails"] and [vm_uuid, vm.name] not in elem["snapvmskips"]:
+                        snap = self._findVMSnapshotByName(vm, vmsnapname)
+                        try:
+                            if snap:
+                                VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
+                        except Exception as e:
+                            self.logger.debug("Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True)
+                            self.middleware.call_sync("alert.oneshot_create", "VMWareSnapshotDeleteFailed", {
+                                "hostname": vmsnapobj["hostname"],
+                                "vm": vm.name,
+                                "snapshot": vmsnapname,
+                                "error": self._vmware_exception_message(e),
+                            })
 
             connect.Disconnect(si)
 
