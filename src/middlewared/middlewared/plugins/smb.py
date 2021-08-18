@@ -1324,7 +1324,7 @@ class SharingSMBService(SharingService):
                     'are not permitted.'
                 )
 
-            if kv[0].strip() == "vfs objects":
+            if kv[0].strip() == 'vfs objects':
                 for i in kv[1].split():
                     if i in freebsd_vfs_objects:
                         verrors.add(
