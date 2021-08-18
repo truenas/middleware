@@ -30,6 +30,7 @@ from zettarepl.observer import (
     ReplicationTaskDataProgress, ReplicationTaskSuccess, ReplicationTaskError,
 )
 from zettarepl.replication.task.dataset import get_target_dataset
+from zettarepl.replication.task.name_pattern import compile_name_regex
 from zettarepl.snapshot.list import multilist_snapshots, group_snapshots_by_datasets
 from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
@@ -491,14 +492,27 @@ class ZettareplService(Service):
             async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
                 return await self.middleware.run_in_thread(create_dataset, shell, dataset)
 
-    async def count_eligible_manual_snapshots(self, datasets, naming_schemas, transport, ssh_credentials=None):
+    async def count_eligible_manual_snapshots(self, data):
+        if data["naming_schema"] and data["name_regex"]:
+            raise CallError("`naming_schema` and `name_regex` cannot be used simultaneously", errno.EINVAL)
+
         async with self._handle_ssh_exceptions():
-            async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
+            async with self._get_zettarepl_shell(data["transport"], data["ssh_credentials"]) as shell:
                 snapshots = await self.middleware.run_in_thread(
-                    multilist_snapshots, shell, [(dataset, False) for dataset in datasets]
+                    multilist_snapshots, shell, [(dataset, False) for dataset in data["datasets"]]
                 )
 
-        parsed = parse_snapshots_names_with_multiple_schemas([s.name for s in snapshots], naming_schemas)
+        if data["naming_schema"]:
+            parsed = parse_snapshots_names_with_multiple_schemas([s.name for s in snapshots], data["naming_schema"])
+        elif data["name_regex"]:
+            try:
+                name_pattern = compile_name_regex(data["name_regex"])
+            except Exception as e:
+                raise CallError(f"Invalid `name_regex`: {e}")
+
+            parsed = [s.name for s in snapshots if name_pattern.match(s.name)]
+        else:
+            raise CallError("Either `naming_schema` or `name_regex` must be specified", errno.EINVAL)
 
         return {
             "total": len(snapshots),
