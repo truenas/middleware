@@ -265,10 +265,9 @@ def test_21_creating_a_smb_share_on_SMB_PATH(request):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     global payload, results, smb_id
     payload = {
-        "comment": "My Test SMB Share",
+        "comment": "My AD SMB Share",
         "path": SMB_PATH,
         "name": SMB_NAME,
-        "guestok": True,
         "streams": True
     }
     results = POST("/sharing/smb/", payload)
@@ -276,7 +275,7 @@ def test_21_creating_a_smb_share_on_SMB_PATH(request):
     smb_id = results.json()['id']
 
 
-@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok"])
+@pytest.mark.parametrize('data', ["comment", "path", "name"])
 def test_22_verify_the_value_of_the_created_sharing_smb_object_(request, data):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     assert results.json()[data] == payload[data], results.text
@@ -289,7 +288,7 @@ def test_23_get_sharing_smb_from_id(request):
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok"])
+@pytest.mark.parametrize('data', ["comment", "path", "name"])
 def test_24_verify_the_value_of_get_sharing_smb_object_(request, data):
     depends(request, ["ad_01", "ad_02", "ad_07", "ad_10"])
     assert results.json()[data] == payload[data], results.text
