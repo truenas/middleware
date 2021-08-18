@@ -2,6 +2,7 @@ import asyncio
 import copy
 import json
 import textwrap
+import warnings
 from collections import defaultdict
 from datetime import datetime, time, timezone
 import errno
@@ -1110,7 +1111,37 @@ def returns(*schema):
     return returns_internal
 
 
-def accepts(*schema):
+def accepts(*schema, deprecated=None):
+    """
+    `deprecated` is a list of pairs of functions that will adapt legacy method call signatures.
+
+    First member of pair is a function that accepts a list of args and returns `True` if a legacy method call
+    matching a specific legacy signature was detected.
+    Second member of pair is a function that accepts detected legacy arguments and returns a list of arguments
+    for newer signature.
+    All pairs are executed sequentially so first pair can adapt from API 2.0 to API 2.1, second from API 2.1
+    to API 2.2 and so on.
+
+    Example:
+
+        @accepts(
+            Dict("options"),
+            deprecated=[
+                (
+                    lambda args: len(args) == 2,
+                    lambda option1, option2: [{
+                        "option1": option1,
+                        "option2": option2,
+                    }]
+                )
+            ],
+        )
+
+        Here an old-style method call `method("a", "b")` will be adapted to a new-style `method({"option1": "a",
+                                                                                                 "option2": "b"})`
+    """
+    deprecated = deprecated or []
+
     further_only_hidden = False
     for i in schema:
         if getattr(i, 'hidden', False):
@@ -1137,7 +1168,19 @@ def accepts(*schema):
 
         def clean_and_validate_args(args, kwargs):
             args = list(args)
-            args = args[:args_index] + copy.deepcopy(args[args_index:])
+
+            common_args = args[:args_index]
+            signature_args = args[args_index:]
+
+            had_warning = False
+            for check, adapt in deprecated:
+                if check(signature_args):
+                    if not had_warning:
+                        warnings.warn(f"Method {f!r} was called with a deprecated signature", DeprecationWarning)
+                        had_warning = True
+                    signature_args = adapt(*signature_args)
+
+            args = common_args + copy.deepcopy(signature_args)
             kwargs = copy.deepcopy(kwargs)
 
             verrors = ValidationErrors()

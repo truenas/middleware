@@ -746,17 +746,35 @@ class ReplicationService(CRUDService):
         return sorted(set(naming_schemas))
 
     @accepts(
-        List("datasets", empty=False, items=[
-            Dataset("dataset")
-        ]),
-        List("naming_schema", empty=False, items=[
-            Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])
-        ]),
-        Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
-        Int("ssh_credentials", null=True, default=None),
+        Dict(
+            "count_eligible_manual_snapshots",
+            List("datasets", empty=False, items=[
+                Dataset("dataset")
+            ]),
+            List("naming_schema", items=[
+                Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])
+            ]),
+            Str("name_regex", null=True, default=None, empty=False),
+            Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
+            Int("ssh_credentials", null=True, default=None),
+        ),
+        deprecated=[
+            (
+                lambda args: len(args) in [3, 4],
+                lambda datasets, naming_schema, transport, ssh_credentials=None: [{
+                    "datasets": datasets,
+                    "naming_schema": naming_schema,
+                    "transport": transport,
+                    "ssh_credentials": ssh_credentials,
+                }],
+            ),
+        ],
     )
-    @returns(Int())
-    async def count_eligible_manual_snapshots(self, datasets, naming_schema, transport, ssh_credentials):
+    @returns(Dict(
+        Int("total"),
+        Int("eligible"),
+    ))
+    async def count_eligible_manual_snapshots(self, data):
         """
         Count how many existing snapshots of `dataset` match `naming_schema`.
 
@@ -767,16 +785,15 @@ class ReplicationService(CRUDService):
                 "id": "6841f242-840a-11e6-a437-00e04d680384",
                 "msg": "method",
                 "method": "replication.count_eligible_manual_snapshots",
-                "params": [
-                    "repl/work",
-                    ["auto-%Y-%m-%d_%H-%M"],
-                    "SSH",
-                    4
-                ]
+                "params": [{
+                    "dataset": "repl/work",
+                    "naming_schema": ["auto-%Y-%m-%d_%H-%M"],
+                    "transport": "SSH",
+                    "ssh_credentials": 4,
+                }]
             }
         """
-        return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", datasets, naming_schema,
-                                          transport, ssh_credentials)
+        return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", data)
 
     @accepts(
         Str("direction", enum=["PUSH", "PULL"], required=True),
