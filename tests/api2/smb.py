@@ -254,8 +254,8 @@ def test_027_verify_all_files_are_kept_on_the_active_directory_share():
 
 
 def test_028_delete_testfile_on_the_active_directory_share(request):
-    command = fr'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        r' -c "rm testfile.txt"'
+    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
+        ' -c "rm testfile.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
@@ -266,8 +266,8 @@ def test_029_verify_testfile_is_deleted_on_the_active_directory_share():
 
 
 def test_030_delele_testfile_on_the_active_directory_share(request):
-    command = fr'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        r' -c "rm testdir/testfile2.txt"'
+    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
+        ' -c "rm testdir/testfile2.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
@@ -278,8 +278,8 @@ def test_031_verify_testfile2_is_deleted_on_the_active_directory_share():
 
 
 def test_032_delete_testdir_on_the_active_directory_share(request):
-    command = fr'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        r' -c "rmdir testdir"'
+    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
+        ' -c "rmdir testdir"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
@@ -360,8 +360,8 @@ def test_042_verify_testfile_is_on_the_active_directory_share():
 
 
 def test_043_delete_testfile_on_the_active_directory_share(request):
-    command = fr'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        r' -c "rm testfile.txt"'
+    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
+        ' -c "rm testfile.txt"'
     results = cmd_test(command)
     assert results['result'] is True, results['output']
 
