@@ -295,18 +295,15 @@ class ShareSchema(RegistrySchema):
             return
 
         try:
-            # Use path from data_in here because we don't want suffix
-            ds = entry.middleware.call_sync('pool.dataset.from_path', data_in['path'], False)
-            acltype = ds['acltype']['value']
-        except Exception:
+            acltype = entry.middleware.call_sync('filesystem.path_get_acltype', data_in['path'])
+        except OSError:
             entry.middleware.logger.warning(
-                "Failed to obtain ZFS dataset for path %s. "
-                "Unable to automatically configuration ACL settings.",
+                "%s: failed to determine acltype for path.",
                 data_in['path'], exc_info=True
             )
-            acltype = "UNKNOWN"
+            acltype = "DISABLED"
 
-        if acltype == "NFSV4":
+        if acltype == "NFS4":
             data_out['vfs objects']['parsed'].append("nfs4acl_xattr")
             data_out.update({
                 "nfs4acl_xattr:nfs4_id_numeric": {"parsed": True},
@@ -315,7 +312,7 @@ class ShareSchema(RegistrySchema):
                 "nfs4acl_xattr:encoding": {"parsed": "xdr"},
                 "nfs4:chown": {"parsed": True}
             })
-        elif acltype == 'POSIX':
+        elif acltype == 'POSIX1E':
             data_out['vfs objects']['parsed'].append("acl_xattr")
 
         else:
