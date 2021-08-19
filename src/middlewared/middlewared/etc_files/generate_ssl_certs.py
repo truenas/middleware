@@ -48,7 +48,7 @@ def write_certificates(certs, cacerts):
     shutil.rmtree(trusted_cas_path, ignore_errors=True)
     os.makedirs(trusted_cas_path)
     for ca in filter(lambda c: c['chain_list'] and c['add_to_trusted_store'], cacerts):
-        with open(os.path.join(trusted_cas_path, ca['name']), 'w') as f:
+        with open(os.path.join(trusted_cas_path, f'{ca["name"]}.crt'), 'w') as f:
             f.write('\n'.join(cert['chain_list']))
 
     cp = subprocess.Popen('update-ca-certificates', stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)

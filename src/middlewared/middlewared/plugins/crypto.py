@@ -2076,6 +2076,7 @@ class CertificateAuthorityModel(sa.Model):
 def get_ca_result_entry():
     entry = copy.deepcopy(CertificateService.ENTRY)
     entry.name = 'certificateauthority_entry'
+    entry.attrs['add_to_trusted_store'] = Bool('add_to_trusted_store')
     return entry
 
 
@@ -2701,7 +2702,7 @@ class CertificateAuthorityService(CRUDService):
 
         verrors = ValidationErrors()
 
-        if any(new[k] != old[k] for k in ('name', 'revoked')):
+        if any(new[k] != old[k] for k in ('name', 'revoked', 'add_to_trusted_store')):
             if new['name'] != old['name']:
                 await validate_cert_name(
                     self.middleware, new['name'], self._config.datastore,
