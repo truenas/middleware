@@ -24,7 +24,7 @@ class CoreFilesArePresentAlertClass(AlertClass):
 class CoreFilesArePresentAlertSource(AlertSource):
     dumps = {}
     dump_error_logged = []
-    schedule = IntervalSchedule(timedelta(minutes=5))
+    schedule = IntervalSchedule(timedelta(hours=6))
 
     products = ("SCALE",)
 
