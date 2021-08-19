@@ -2070,6 +2070,7 @@ class CertificateAuthorityModel(sa.Model):
     cert_CSR = sa.Column(sa.Text(), nullable=True)
     cert_revoked_date = sa.Column(sa.DateTime(), nullable=True)
     cert_signedby_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
+    cert_add_to_trusted_store = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
 def get_ca_result_entry():
@@ -2340,6 +2341,7 @@ class CertificateAuthorityService(CRUDService):
             ('edit', _set_enum('create_type')),
             ('edit', _set_cert_extensions_defaults('cert_extensions')),
             ('rm', {'name': 'dns_mapping'}),
+            ('add', Bool('add_to_trusted_store', default=False)),
             register=True
         )
     )
@@ -2649,6 +2651,7 @@ class CertificateAuthorityService(CRUDService):
         Dict(
             'ca_update',
             Bool('revoked'),
+            Bool('add_to_trusted_store'),
             Int('ca_id'),
             Int('csr_cert_id'),
             Str('create_type', enum=['CA_SIGN_CSR']),
@@ -2716,6 +2719,12 @@ class CertificateAuthorityService(CRUDService):
                     'Certificate Authority has already been revoked and this cannot be reversed'
                 )
 
+            if not verrors and new['revoked'] and new['add_to_trusted_store']:
+                verrors.add(
+                    'certificate_authority_update.add_to_trusted_store',
+                    'Revoked certificates cannot be added to system\'s trusted store'
+                )
+
             if verrors:
                 raise verrors
 
@@ -2723,7 +2732,7 @@ class CertificateAuthorityService(CRUDService):
                 'datastore.update',
                 self._config.datastore,
                 id,
-                {'name': new['name']},
+                {'name': new['name'], 'add_to_trusted_store': new['add_to_trusted_store']},
                 {'prefix': self._config.datastore_prefix}
             )
 
