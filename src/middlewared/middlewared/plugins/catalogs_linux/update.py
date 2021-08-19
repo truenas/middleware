@@ -6,6 +6,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Any, Bool, Dict, Float, List, Patch, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, job, private
+from middlewared.utils import filter_list
 from middlewared.validators import Match
 
 from .utils import convert_repository_to_path, get_cache_key
@@ -68,6 +69,7 @@ class CatalogService(CRUDService):
         }
         if extra.get('item_details'):
             item_sync_params = await self.middleware.call('catalog.sync_items_params')
+            item_jobs = await self.middleware.call('core.get_jobs', [['method', '=', 'catalog.items']])
             for row in rows:
                 label = row['label']
                 catalog_info = {
@@ -83,8 +85,13 @@ class CatalogService(CRUDService):
                     'normalized_progress': None,
                 }
                 if not catalog_info['cached']:
-                    caching_job_obj = await self.middleware.call('catalog.items', label, item_sync_params)
-                    caching_job = caching_job_obj.__encode__()
+                    caching_job = filter_list(item_jobs, [['arguments', '=', [row['label'], item_sync_params]]])
+                    if not caching_job:
+                        caching_job_obj = await self.middleware.call('catalog.items', label, item_sync_params)
+                        caching_job = caching_job_obj.__encode__()
+                    else:
+                        caching_job = caching_job[0]
+
                     catalog_info['normalized_progress'] = {
                         'caching_job': caching_job,
                         'caching_progress': caching_job['progress'],
