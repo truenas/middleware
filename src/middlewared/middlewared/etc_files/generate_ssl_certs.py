@@ -1,5 +1,8 @@
 import os
 import shutil
+import subprocess
+
+from middlewared.service import CallError
 from middlewared.utils import osc
 
 
@@ -24,6 +27,7 @@ def write_certificates(certs, cacerts):
     """
     Write unified CA certificate file for use with LDAP.
     """
+    # TODO: See if we can remove the truenas_cacerts reference completely
     if not cacerts:
         if osc.IS_FREEBSD:
             ca_root_path = '/usr/local/share/certs/ca-root-nss.crt'
@@ -39,6 +43,18 @@ def write_certificates(certs, cacerts):
                 if cert['chain_list']:
                     f.write('\n'.join(c['chain_list']))
                     f.write('\n\n')
+
+    trusted_cas_path = '/usr/local/share/ca-certificates'
+    shutil.rmtree(trusted_cas_path, ignore_errors=True)
+    os.makedirs(trusted_cas_path)
+    for ca in filter(lambda c: c['chain_list'] and c['add_to_trusted_store'], cacerts):
+        with open(os.path.join(trusted_cas_path, ca['name']), 'w') as f:
+            f.write('\n'.join(cert['chain_list']))
+
+    cp = subprocess.Popen('update-ca-certificates', stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    err = cp.communicate()[1]
+    if cp.returncode:
+        raise CallError(f'Failed to update system\'s trusted certificate store: {err.decode()}')
 
 
 def write_crls(cas, middleware):
