@@ -51,7 +51,7 @@ SAMPLE_AUX = [
     '### VFS OBJECTS (shadow_copy2 not included if no periodic snaps, so do it manually)', '',
     '# Include recycle, crossrename, and exclude readonly, as share=RW', '',
     '#vfs objects = zfs_space zfsacl winmsa streams_xattr recycle shadow_copy2 crossrename aio_pthread', '',
-    'vfs objects = aio_pthread zfs_space streams_xattr shadow_copy_zfs zfsacl crossrename winmsa recycle', '',
+    'vfs objects = aio_pthread streams_xattr shadow_copy_zfs acl_xattr crossrename winmsa recycle', '',
     '# testing without shadow_copy2', '',
     'valid users = MY_ACCOUNT @ALLOWED_USERS',
     'invalid users = root anonymous guest',
