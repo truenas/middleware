@@ -1401,6 +1401,10 @@ class iSCSITargetService(CRUDService):
         Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
         """
         target = await self._get_instance(id)
+        fcport_usages = await self.middleware.call('fcport.query', [['target', '=', id]])
+        if fcport_usages:
+            raise CallError(f'Target {id!r} is in use by {", ".join([e["name"] for e in fcport_usages])} fcport(s).')
+
         if await self.active_sessions_for_targets([target['id']]):
             if force:
                 self.middleware.logger.warning('Target %s is in use.', target['name'])
