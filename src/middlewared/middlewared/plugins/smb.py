@@ -833,12 +833,6 @@ class SMBService(TDBWrapConfigService):
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
             await self.middleware.call('smb.add_admin_group', new['admin_group'])
 
-        # TODO: consider using bidict
-        for k, v in LOGLEVEL_MAP.items():
-            if new['loglevel'] == v:
-                new['loglevel'] = k
-                break
-
         new['netbiosalias'] = ' '.join(new['netbiosalias'])
 
         await self.middleware.call('smb.reg_update', new)
@@ -867,6 +861,7 @@ class SMBService(TDBWrapConfigService):
     async def compress(self, data):
         data.pop('netbiosname_local', None)
         data.pop('next_rid')
+        data['loglevel'] = LOGLEVEL_MAP.inv.get(data['loglevel'], 1)
         return data
 
 
