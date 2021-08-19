@@ -27,6 +27,7 @@ from .keepalived import KeepalivedService
 from .glusterd import GlusterdService
 from .glustereventsd import GlusterEventsdService
 from .ctdb import CtdbService
+from .idmap import IdmapService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -84,6 +85,7 @@ all_services = [
     ActiveDirectoryService,
     LdapService,
     NisService,
+    IdmapService,
     CollectDService,
     RRDCacheDService,
     LibvirtdService,
