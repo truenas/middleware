@@ -200,7 +200,7 @@ class CatalogService(CRUDService):
         verrors.check()
 
         if not data['preferred_trains']:
-            data['preferred_trains'] = ['charts']
+            data['preferred_trains'] = ['stable']
 
         if not data.pop('force'):
             job.set_progress(40, f'Validating {data["label"]!r} catalog')
