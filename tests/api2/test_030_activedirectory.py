@@ -24,7 +24,7 @@ except ImportError:
 else:
     from auto_config import dev_test
     # comment pytestmark for development testing with --dev-test
-    #pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+    pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 ad_data_type = {
     'id': int,
@@ -145,7 +145,7 @@ def test_09_get_activedirectory_state(request):
 
 @pytest.mark.dependency(name="ad_dataset")
 def test_10_creating_ad_dataset_for_smb(request):
-    #depends(request, ["pool_04", "ad_setup"], scope="session")
+    depends(request, ["pool_04", "ad_setup"], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB"
@@ -239,7 +239,7 @@ def test_17_setting_up_smb(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global payload, results
     payload = {
-        "description": "Test TrueNAS Server"
+        "description": "Test TrueNAS Server",
     }
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
@@ -335,25 +335,23 @@ def test_29_verify_activedirectory_started_after_restarting_cifs(request):
 
 
 def test_30_create_a_file_and_put_on_the_active_directory_share(request):
-    # depends(request, ["ad_dataset_permission"])
+    depends(request, ["ad_dataset_permission"])
     cmd_test('touch testfile.txt')
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "put testfile.txt testfile.txt"'
-    print(command)
     results = cmd_test(command)
     cmd_test('rm testfile.txt')
     assert results['result'] is True, results['output']
 
 
 def test_31_verify_testfile_is_on_the_active_directory_share(request):
-    # depends(request, ["ad_dataset_permission"])
+    depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
 def test_32_create_a_directory_on_the_active_directory_share(request):
-    # depends(request, ["ad_dataset_permission"])
-    sleep(5)
+    depends(request, ["ad_dataset_permission"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "mkdir testdir"'
     results = cmd_test(command)
@@ -361,13 +359,13 @@ def test_32_create_a_directory_on_the_active_directory_share(request):
 
 
 def test_33_verify_testdir_exist_on_the_active_directory_share(request):
-    # depends(request, ["ad_dataset_permission"])
+    depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
     assert results.status_code == 200, results.text
 
 
 def test_34_copy_testfile_in_testdir_on_the_active_directory_share(request):
-    # depends(request, ["ad_dataset_permission"])
+    depends(request, ["ad_dataset_permission"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "scopy testfile.txt testdir/testfile2.txt"'
     results = cmd_test(command)
@@ -375,7 +373,7 @@ def test_34_copy_testfile_in_testdir_on_the_active_directory_share(request):
 
 
 def test_35_verify_testfile2_exist_in_testdir_on_the_active_directory_share(request):
-    # depends(request, ["ad_dataset_permission"])
+    depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
 
@@ -571,7 +569,7 @@ def test_58_get_activedirectory_started(request):
 
 
 def test_59_leave_activedirectory(request):
-    #depends(request, ["ad_dataset_permission"], scope="session")
+    depends(request, ["ad_dataset_permission"], scope="session")
     global payload, results
     payload = {
         "username": ADUSERNAME,
@@ -629,7 +627,7 @@ def test_66_checking_if_cifs_is_stop(request):
 
 
 def test_67_destroying_ad_dataset_for_smb(request):
-    #depends(request, ["ad_dataset"], scope="session")
+    depends(request, ["ad_dataset"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
