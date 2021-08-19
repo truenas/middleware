@@ -35,7 +35,6 @@ class CIFSService(SimpleService):
                     return
 
             await self._systemd_unit("smbd", "start")
-            await self._systemd_unit("winbind", "start")
         if announce["netbios"]:
             if osc.IS_FREEBSD:
                 await self._freebsd_service("nmbd", "start", force=True)
@@ -64,7 +63,6 @@ class CIFSService(SimpleService):
             await self._freebsd_service("wsdd", "stop", force=True)
         if osc.IS_LINUX:
             await self._systemd_unit("smbd", "stop")
-            await self._systemd_unit("winbind", "stop")
             await self._systemd_unit("nmbd", "stop")
             await self._systemd_unit("wsdd", "stop")
 
