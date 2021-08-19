@@ -940,7 +940,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         try:
             verrors.check()
         except Exception:
-            self.direct_update({"enable": False})
+            await self.direct_update({"enable": False})
             raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
                             errno.EINVAL)
 
