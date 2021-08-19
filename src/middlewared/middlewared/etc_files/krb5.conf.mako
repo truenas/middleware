@@ -77,7 +77,7 @@
             if not krb_default_realm:
                 # AD is enabled with a thoroughly invalid configuration. Disabled and refuse to generate
                 # kerberos config.
-                middleware.call_sync("activedirectory.direct_update", {"enabled": False})
+                middleware.call_sync("activedirectory.direct_update", {"enable": False})
                 raise FileShouldNotExist()
 
             if db_realms:
