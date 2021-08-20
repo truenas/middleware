@@ -77,6 +77,10 @@ class VMSupervisorBase(LibvirtConnectionMixin):
 
         return data
 
+    def memory_usage(self):
+        # We return this in bytes
+        return self.domain.memoryStats()['actual'] * 1024
+
     def __define_domain(self):
         if self.domain:
             raise CallError(f'{self.libvirt_domain_name} domain has already been defined')
