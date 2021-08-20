@@ -143,11 +143,11 @@ class SystemAdvancedService(ConfigService):
         """
         Get available choices for `serialport`.
         """
-        ports = {v: v for k, v in osc.system.serial_port_choices().items()}
-        if not ports or self.middleware.call_sync('system.advanced.config')['serialport'] == '0x2f8':
-            # We should always add 0x2f8 if ports is false or current value is the default one in db
-            # i.e 0x2f8
-            ports['0x2f8'] = '0x2f8'
+        ports = {k: k for k in osc.system.serial_port_choices()}
+        if not ports or self.middleware.call_sync('system.advanced.config')['serialport'] == 'ttyS0':
+            # We should always add ttyS0 if ports is false or current value is the default one in db
+            # i.e ttyS0
+            ports['ttyS0'] = 'ttyS0'
 
         return ports
 
@@ -183,18 +183,11 @@ class SystemAdvancedService(ConfigService):
                     f'{schema}.serialport',
                     'Please specify a serial port when serial console option is checked'
                 )
-            else:
-                data['serialport'] = serial_choice = hex(
-                    int(serial_choice)
-                ) if serial_choice.isdigit() else hex(int(serial_choice, 16))
-                # The else can happen when we have incoming value like 0x03f8 which is a valid
-                # hex value but the following validation would fail as we are not comparing with
-                # normalised hex strings
-                if serial_choice not in await self.serial_port_choices():
-                    verrors.add(
-                        f'{schema}.serialport',
-                        'Serial port specified has not been identified by the system'
-                    )
+            elif serial_choice not in await self.middleware.call('system.advanced.serial_port_choices'):
+                verrors.add(
+                    f'{schema}.serialport',
+                    'Serial port specified has not been identified by the system'
+                )
 
         syslog_server = data.get('syslogserver')
         if syslog_server:
