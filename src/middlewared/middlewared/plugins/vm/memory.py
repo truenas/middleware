@@ -60,7 +60,7 @@ class VMService(Service, VMSupervisorMixin):
     @accepts(Int('vm_id'))
     @returns(Int('memory_usage', description='Memory usage of a VM in bytes'))
     def get_memory_usage(self, vm_id):
-        return self.get_memory_usage_internal(self.middleware.call('vm.get_instance', vm_id))
+        return self.get_memory_usage_internal(self.middleware.call_sync('vm.get_instance', vm_id))
 
     @private
     def get_memory_usage_internal(self, vm):
