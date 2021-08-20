@@ -262,8 +262,6 @@ class AuthService(Service):
         """
         Verify username and password
         """
-        if username != 'root':
-            return False
         try:
             user = await self.middleware.call('datastore.query', 'account.bsdusers',
                                               [('bsdusr_username', '=', username)], {'get': True})
