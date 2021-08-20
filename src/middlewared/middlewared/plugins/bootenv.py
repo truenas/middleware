@@ -114,7 +114,7 @@ class BootEnvService(CRUDService):
                 for snap in ds['snapshots']:
                     if snap['name'] not in datasets_origins:
                         be['rawspace'] += self.middleware.call_sync(
-                            'zfs.snapshot.query', [['id', '=', snap['name']]], {'extra': {'properties': ['used']}}
+                            'zfs.snapshot.get_instance', snap['name'], {'extra': {'properties': ['used']}}
                         )['properties']['used']['parsed']
                     else:
                         children = True
