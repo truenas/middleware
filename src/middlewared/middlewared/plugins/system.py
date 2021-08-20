@@ -68,7 +68,7 @@ class SystemAdvancedModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     adv_consolemenu = sa.Column(sa.Boolean(), default=False)
     adv_serialconsole = sa.Column(sa.Boolean(), default=False)
-    adv_serialport = sa.Column(sa.String(120), default="0x2f8")
+    adv_serialport = sa.Column(sa.String(120), default="ttyS0")
     adv_serialspeed = sa.Column(sa.String(120), default="9600")
     adv_powerdaemon = sa.Column(sa.Boolean(), default=False)
     adv_swapondrive = sa.Column(sa.Integer(), default=2)
