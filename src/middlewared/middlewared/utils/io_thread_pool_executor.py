@@ -27,4 +27,4 @@ class IoThreadPoolExecutor(ThreadPoolExecutor):
         # out when this occurs :)
 
         # give ourselvs a single idle thread buffer
-        return self._idle_semaphore._value - 1 == 1
+        return self._idle_semaphore._value - 1 <= 1
