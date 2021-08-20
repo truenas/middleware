@@ -260,10 +260,16 @@ class AuthService(Service):
     @accepts(Str('username'), Str('password'))
     async def check_user(self, username, password):
         """
+        Verify username and password (this will only validate root user's password and
+        would return `false` for any other user)
+        """
+        return False if username != 'root' else await self.check_password(username, password)
+
+    @accepts(Str('username'), Str('password'))
+    async def check_password(self, username, password):
+        """
         Verify username and password
         """
-        if username != 'root':
-            return False
         try:
             user = await self.middleware.call('datastore.query', 'account.bsdusers',
                                               [('bsdusr_username', '=', username)], {'get': True})
