@@ -11,21 +11,19 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
-from auto_config import ip, pool_name, user, password, scale, hostname
-from config import *
+from auto_config import ip, pool_name, user, password, hostname
 
-group = 'root' if scale else 'wheel'
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"
 dataset_url = dataset.replace('/', '%2F')
 NFS_PATH = "/mnt/" + dataset
-Reason = "BRIDGEHOST is missing in ixautomation.conf"
-BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
-bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
-                                       "BSD_USERNAME" in locals(),
-                                       "BSD_PASSWORD" in locals()
-                                       ]) is False, reason=BSDReason)
+Reason = 'BSD_HOST is not setup for SSH_TEST in config.py'
+try:
+    from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
+    bsd_host_cfg = pytest.mark.skipif(False, reason=Reason)
+except ImportError:
+    bsd_host_cfg = pytest.mark.skipif(True, reason=Reason)
 
 
 # Enable NFS server
@@ -54,7 +52,7 @@ def test_03_changing_dataset_permissions_of_nfs_dataset():
         "acl": [],
         "mode": "777",
         "user": "root",
-        "group": group
+        "group": 'wheel'
     }
     results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
     assert results.status_code == 200, results.text
@@ -99,7 +97,6 @@ def test_09_checking_to_see_if_nfs_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-@pytest.mark.skipif(scale, reason='Skiping for Scale')
 def test_10_checking_if_sysctl_vfs_nfsd_server_max_nfsvers_is_4():
     cmd = 'sysctl -n vfs.nfsd.server_max_nfsvers'
     results = SSH_TEST(cmd, user, password, ip)

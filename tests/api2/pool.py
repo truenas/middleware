@@ -4,11 +4,10 @@ import pytest
 import sys
 import os
 import time
-import re
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, send_file
-from auto_config import ip, user, password, pool_name, ha, scale
+from auto_config import ip, user, password, pool_name, ha
 
 dataset = f"{pool_name}/test_pool"
 dataset_url = dataset.replace('/', '%2F')
@@ -94,10 +93,7 @@ def test_05_looking_pool_info_of_(pool_keys):
             info = results.json()[keys_list[0]][keys_list[1]]
             disk_list = payload[keys_list[0]][keys_list[1]][0][keys_list[2]]
             for props in info:
-                if scale is True:
-                    device = re.sub(r'[0-9]+', '', props['device'])
-                else:
-                    device = props['device'].partition('p')[0]
+                device = props['device'].partition('p')[0]
                 assert device in disk_list, results.text
                 assert props['disk'] in disk_list, results.text
         else:
@@ -121,16 +117,10 @@ def test_07_setup_function(image):
     cmd = f"gunzip -f /tmp/{image}.gz"
     gunzip_results = SSH_TEST(cmd, user, password, ip)
     assert gunzip_results['result'] is True, gunzip_results['output']
-    if scale is True:
-        cmd = f"losetup -P {loops[image]} /tmp/{image}"
-    else:
-        cmd = f"mdconfig -a -t vnode -f /tmp/{image}"
+    cmd = f"mdconfig -a -t vnode -f /tmp/{image}"
     mdconfig_results = SSH_TEST(cmd, user, password, ip)
     assert mdconfig_results['result'] is True, mdconfig_results['output']
-    if scale is True:
-        IMAGES[image] = f"{loops[image]}p1"
-    else:
-        IMAGES[image] = f"/dev/{mdconfig_results['output'].strip()}s1"
+    IMAGES[image] = f"/dev/{mdconfig_results['output'].strip()}s1"
 
 
 def test_08_import_msdosfs():
@@ -176,10 +166,7 @@ def test_11_look_if_Directory_slash_File():
 
 
 def test_12_import_nonascii_msdosfs():
-    if scale is True:
-        locale = 'utf8'
-    else:
-        locale = 'ru_RU.UTF-8'
+    locale = 'ru_RU.UTF-8'
     payload = {
         "device": IMAGES['msdosfs-nonascii'],
         "fs_type": "msdosfs",
@@ -221,10 +208,7 @@ def test_15_look_if_Каталог_slash_Файл():
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
 def test_16_stop_image_with_mdconfig(image):
-    if scale is True:
-        cmd = f"losetup -d {loops[image]}"
-    else:
-        cmd = f"mdconfig -d -u {IMAGES[image].replace('s1', '')}"
+    cmd = f"mdconfig -d -u {IMAGES[image].replace('s1', '')}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
