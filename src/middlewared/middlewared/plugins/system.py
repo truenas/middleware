@@ -139,12 +139,12 @@ class SystemAdvancedService(ConfigService):
 
     @accepts()
     @returns(Dict('serial_port_choices', additional_attrs=True))
-    def serial_port_choices(self):
+    async def serial_port_choices(self):
         """
         Get available choices for `serialport`.
         """
-        ports = {k: k for k in osc.system.serial_port_choices()}
-        if not ports or self.middleware.call_sync('system.advanced.config')['serialport'] == 'ttyS0':
+        ports = {e['name']: e['name'] for e in await self.middleware.call('device.get_info', 'SERIAL')}
+        if not ports or (await self.middleware.call('system.advanced.config'))['serialport'] == 'ttyS0':
             # We should always add ttyS0 if ports is false or current value is the default one in db
             # i.e ttyS0
             ports['ttyS0'] = 'ttyS0'
@@ -183,7 +183,7 @@ class SystemAdvancedService(ConfigService):
                     f'{schema}.serialport',
                     'Please specify a serial port when serial console option is checked'
                 )
-            elif serial_choice not in await self.middleware.call('system.advanced.serial_port_choices'):
+            elif serial_choice not in await self.serial_port_choices():
                 verrors.add(
                     f'{schema}.serialport',
                     'Serial port specified has not been identified by the system'
