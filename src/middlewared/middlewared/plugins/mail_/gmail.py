@@ -1,8 +1,11 @@
 import base64
 from threading import Lock
 
+import googleapiclient
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
+import google_auth_httplib2
+import httplib2
 
 from middlewared.service import private, Service
 
@@ -22,7 +25,18 @@ class GmailService:
         with self._lock:
             if self._service is None:
                 credentials = Credentials.from_authorized_user_info(self.config["oauth"])
-                self._service = build("gmail", "v1", credentials=credentials)
+
+                # `google-api-python-client` is not thread-safe which can lead to interpreter segfaults.
+                # We fix this by providing every thread its own `httplib2.Http()` object.
+                # See https://googleapis.github.io/google-api-python-client/docs/thread_safety.html
+                self._service = build(
+                    "gmail", "v1",
+                    credentials=credentials,
+                    requestBuilder=lambda http, *args, **kwargs: googleapiclient.http.HttpRequest(
+                        google_auth_httplib2.AuthorizedHttp(credentials, http=httplib2.Http()),
+                        *args, **kwargs,
+                    ),
+                )
 
             return self._service
 
@@ -37,14 +51,14 @@ class MailService(Service):
     gmail_service = None
 
     @private
-    async def gmail_initialize(self):
-        config = await self.middleware.call("mail.config")
+    def gmail_initialize(self):
+        config = self.middleware.call_sync("mail.config")
         if self.gmail_service is not None:
             self.gmail_service.close()
-        self.gmail_service = await self.middleware.call("mail.gmail_build_service", config)
+        self.gmail_service = self.middleware.call_sync("mail.gmail_build_service", config)
 
     @private
-    async def gmail_build_service(self, config):
+    def gmail_build_service(self, config):
         if config["oauth"]:
             return GmailService(config)
 
