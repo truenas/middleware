@@ -106,15 +106,12 @@ class VMService(Service):
             # the vm process is currently using and add the maximum memory its
             # supposed to have.
             for vm in await self.middleware.call('vm.query'):
-                status = await self.middleware.call('vm.status', vm['id'])
-                if status['pid']:
+                if vm['status']['state'] == 'RUNNING':
                     try:
-                        p = psutil.Process(status['pid'])
-                    except psutil.NoSuchProcess:
+                        vms_memory_used += await self.middleware.call('vm.get_memory_usage_internal', vm)
+                    except Exception:
+                        self.logger.error('Unable to retrieve %r vm memory usage', vm['name'], exc_info=True)
                         continue
-                    memory_info = p.memory_info()._asdict()
-                    memory_info.pop('vms')
-                    vms_memory_used += (vm['memory'] * 1024 * 1024) - sum(memory_info.values())
 
         return max(0, free + arc_shrink - vms_memory_used - swap_used)
 
