@@ -9,9 +9,10 @@ import libsgio
 
 from .device_info_base import DeviceInfoBase
 
-from middlewared.schema import Dict, returns, Str
+from middlewared.schema import Dict, returns
 from middlewared.service import accepts, private, Service
 from middlewared.utils.gpu import get_gpus
+from middlewared.utils import osc
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
 RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')
@@ -24,41 +25,7 @@ class DeviceService(Service, DeviceInfoBase):
     HOST_TYPE = None
 
     def get_serials(self):
-        devices = []
-        for tty in map(lambda t: os.path.basename(t), glob.glob('/dev/ttyS*')):
-            # We want to filter out platform based serial devices here
-            serial_dev = self.serial_port_default.copy()
-            tty_sys_path = os.path.join('/sys/class/tty', tty)
-            dev_path = os.path.join(tty_sys_path, 'device')
-            if (
-                os.path.exists(dev_path) and os.path.basename(
-                    os.path.realpath(os.path.join(dev_path, 'subsystem'))
-                ) == 'platform'
-            ) or not os.path.exists(dev_path):
-                continue
-
-            cp = subprocess.Popen(
-                ['setserial', '-b', os.path.join('/dev', tty)], stderr=subprocess.DEVNULL, stdout=subprocess.PIPE
-            )
-            stdout, stderr = cp.communicate()
-            if not cp.returncode and stdout:
-                reg = RE_UART_TYPE.search(stdout.decode())
-                if reg:
-                    serial_dev['description'] = reg.group(1)
-            if not serial_dev['description']:
-                continue
-            with open(os.path.join(tty_sys_path, 'device/resources'), 'r') as f:
-                reg = RE_SERIAL.search(f.read())
-                if reg:
-                    if reg.group(1).strip() != 'active':
-                        continue
-                    serial_dev['start'] = reg.group(2)
-                    serial_dev['size'] = (int(reg.group(3), 16) - int(reg.group(2), 16)) + 1
-            with open(os.path.join(tty_sys_path, 'device/firmware_node/path'), 'r') as f:
-                serial_dev['location'] = f'handle={f.read().strip()}'
-            serial_dev['name'] = tty
-            devices.append(serial_dev)
-        return devices
+        return osc.system.serial_port_choices()
 
     def get_disks(self):
         disks = {}
