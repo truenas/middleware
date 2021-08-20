@@ -7,9 +7,19 @@ from middlewared.utils.db import query_config_table
 
 
 def get_serial_ports():
-    return {
-        v: k.replace('uart', 'ttyS') if osc.IS_FREEBSD else k for k, v in osc.system.serial_port_choices().items()
-    }
+    choices = osc.system.serial_port_choices()
+    if osc.IS_FREEBSD:
+        return {v: k.replace('uart', 'ttyS') for k, v in choices.items()}
+    else:
+        options = {}
+        # We also add i/o address to the dict here because when users are upgrading and their db still references to
+        # i/o address instead of port name, we won't be generating a valid configuration which is not desired
+        for k, v in choices.items():
+            options.update({
+                k: k,
+                v: k,
+            })
+        return options
 
 
 if __name__ == "__main__":
