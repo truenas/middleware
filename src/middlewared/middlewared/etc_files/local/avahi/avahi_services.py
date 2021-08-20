@@ -27,9 +27,6 @@ class ServiceType(enum.Enum):
     ADISK = ('_adisk._tcp.', 9)
     DEV_INFO = ('_device-info._tcp.', 9)
     HTTP = ('_http._tcp.', 80)
-    HTTPS = ('_https._tcp.', 443)
-    MIDDLEWARE = ('_middleware._tcp.', 6000)
-    MIDDLEWARE_SSL = ('_middleware-ssl._tcp.', 443)
     SMB = ('_smb._tcp.', 445)
 
 
@@ -49,7 +46,7 @@ class mDNSService(object):
         self.port = None
 
     def _is_system_service(self):
-        if self.service in ['DEV_INFO', 'HTTP', 'HTTPS', 'MIDDLEWARE', 'MIDDLEWARE_SSL']:
+        if self.service in ['DEV_INFO', 'HTTP']:
             return True
         else:
             return False
@@ -146,9 +143,6 @@ class mDNSService(object):
         if self.service == 'HTTP':
             return (self.middleware.call_sync('system.general.config'))['ui_port']
 
-        if self.service in ['HTTPS', 'MIDDLEWARE_SSL']:
-            return (self.middleware.call_sync('system.general.config'))['ui_httpsport']
-
         return self.port
 
     def _get_interfaceindex(self, service=None):
@@ -167,7 +161,7 @@ class mDNSService(object):
         if service == 'SMB':
             bind_ip = self.middleware.call_sync(f'{service.lower()}.config')['bindip']
 
-        if service in ['HTTP', 'HTTPS']:
+        if service == 'HTTP':
             ui_address = self.middleware.call_sync('system.general.config')['ui_address']
             if ui_address[0] != "0.0.0.0":
                 bind_ip = ui_address
