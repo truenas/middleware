@@ -19,13 +19,13 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    io_choices = {v: k for k, v in osc.system.serial_port_choices().items()}
+    io_choices = {e['start']: e['name'] for e in osc.system.serial_port_choices()}
     sys_config = [dict(row) for row in conn.execute("SELECT * FROM system_advanced").fetchall()]
     if not sys_config:
         return
 
     sys_config = sys_config[0]
-    if sys_config['adv_serialport'] not in io_choices and not sys_config['adv_serialport'].startswith('ttyS'):
+    if sys_config['adv_serialport'] not in io_choices:
         new_val = 'ttyS0'
     else:
         new_val = io_choices[sys_config['adv_serialport']]

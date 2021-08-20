@@ -22,4 +22,9 @@ def serial_port_choices():
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
     stdout, stderr = cp.communicate()
-    return {e[1]: e[0] for e in RE_PORT.findall(stdout.decode(errors='ignore'))}
+    return [
+        {
+            'name': e[1],
+            'start': e[0],
+        } for e in RE_PORT.findall(stdout.decode(errors='ignore'))
+    ]
