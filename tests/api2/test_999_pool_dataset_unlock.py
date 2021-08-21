@@ -11,9 +11,11 @@ import urllib.parse
 
 import pytest
 from pytest_dependency import depends
+from samba import NTSTATUSError
 
-from functions import POST, GET, DELETE, wait_on_job
 from auto_config import ip, pool_name, password, user, hostname
+from functions import POST, GET, DELETE, wait_on_job
+from protocols import SMB
 
 
 def passphrase_encryption():
@@ -103,10 +105,21 @@ def run(command):
     return subprocess.run(command, shell=True, check=True, capture_output=True, encoding="utf-8")
 
 
+@contextlib.contextmanager
+def smb_connection(**kwargs):
+    c = SMB()
+    c.connect(**kwargs)
+
+    try:
+        yield c
+    finally:
+        c.disconnect()
+
+
 @pytest.mark.dependency(name="create_dataset")
 @pytest.mark.parametrize("attachments_list_mode", ["ALLOW", "DENY"])
 def test_pool_dataset_unlock_smb(request, attachments_list_mode):
-    depends(request, ["pool_04", "smb_001"], scope="session")
+    #depends(request, ["pool_04", "smb_001"], scope="session")
     # Prepare test SMB share
     with dataset("normal") as normal:
         os.chmod(f"/mnt/{normal}", 0o777)
@@ -118,62 +131,48 @@ def test_pool_dataset_unlock_smb(request, attachments_list_mode):
                     lock_dataset(encrypted)
 
                     # Mount test SMB share
-                    os.makedirs("/tmp/smb1", exist_ok=True)
-                    os.makedirs("/tmp/smb2", exist_ok=True)
-                    try:
-                        run(f"mount -t cifs -o guest //{ip}/normal /tmp/smb1")
-
+                    with smb_connection(host=ip, share="normal") as normal_connection:
                         # Locked share should not be mountable
-                        try:
-                            run(f"mount -t cifs -o guest //{ip}/encrypted /tmp/smb2")
-                        except subprocess.CalledProcessError as e:
-                            assert "No such file or directory" in e.stderr
-                        else:
-                            assert False
+                        with pytest.raises(NTSTATUSError) as e:
+                            with smb_connection(host=ip, share="encrypted"):
+                                pass
+                        assert "The specified share name cannot be found on the remote server" in e.value.args[1]
 
                         # While unlocking the dataset, infinitely perform writes to test SMB share
                         # and measure IO times
                         io_times = []
                         stop = threading.Event()
                         stopped = threading.Event()
-                        with open("/tmp/smb1/blob", "w") as f:
-                            def thread():
-                                while not stop.wait(0.1):
-                                    start = time.monotonic()
-                                    f.write("0" * 100000)
-                                    f.flush()
-                                    io_times.append(time.monotonic() - start)
+                        fd = normal_connection.create_file("blob", "w")
+                        def thread():
+                            while not stop.wait(0.1):
+                                start = time.monotonic()
+                                normal_connection.write(fd, b"0" * 100000)
+                                io_times.append(time.monotonic() - start)
 
-                                stopped.set()
+                            stopped.set()
 
-                            try:
-                                threading.Thread(target=thread, daemon=True).start()
+                        try:
+                            threading.Thread(target=thread, daemon=True).start()
 
-                                unlock_dataset(encrypted, {"attachments_list_mode": attachments_list_mode})
-                            finally:
-                                stop.set()
+                            unlock_dataset(encrypted, {"attachments_list_mode": attachments_list_mode})
+                        finally:
+                            stop.set()
 
                         assert stopped.wait(1)
 
                         # Ensure that no service interruption occurred
                         assert len(io_times) > 1
                         assert max(io_times) < 0.1
-                    finally:
-                        run("umount /tmp/smb1")
 
                     if attachments_list_mode == "ALLOW":
                         # We should still not be able to mount encrypted share as we did not reload attachments
-                        try:
-                            run(f"mount -t cifs -o guest //{ip}/encrypted /tmp/smb2")
-                        except subprocess.CalledProcessError as e:
-                            assert "No such file or directory" in e.stderr
-                        else:
-                            assert False
+                        with pytest.raises(NTSTATUSError) as e:
+                            with smb_connection(host=ip, share="encrypted"):
+                                pass
+                        assert "The specified share name cannot be found on the remote server" in e.value.args[1]
 
                     if attachments_list_mode == "DENY":
                         # We should be able to mount encrypted share
-                        try:
-                            run(f"mount -t cifs -o guest //{ip}/encrypted /tmp/smb2")
-                            assert os.path.exists("/tmp/smb2/secret")
-                        finally:
-                            run("umount /tmp/smb2")
+                        with smb_connection(host=ip, share="encrypted") as encrypted_connection:
+                            assert [x["name"] for x in encrypted_connection.ls("")] == ["secret"]
