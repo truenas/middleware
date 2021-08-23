@@ -20,9 +20,9 @@ dataset_path = os.path.join("/mnt", dataset)
 @pytest.fixture()
 def env():
     if (
-        "CLOUDSYNC_AWS_ACCESS_KEY_ID" not in os.environ or
-        "CLOUDSYNC_AWS_SECRET_ACCESS_KEY" not in os.environ or
-        "CLOUDSYNC_AWS_BUCKET" not in os.environ
+        "CLOUDSYNC_AWS_ACCESS_KEY_ID" not in os.environ
+        or "CLOUDSYNC_AWS_SECRET_ACCESS_KEY" not in os.environ
+        or "CLOUDSYNC_AWS_BUCKET" not in os.environ
     ):
         pytest.skip("No credentials")
 

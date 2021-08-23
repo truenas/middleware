@@ -9,15 +9,13 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
-from auto_config import scale, dev_test
+from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
-group = 'root' if scale else 'wheel'
-path = '/etc' if scale else '/boot'
-path_list = ['default', 'kernel', 'zfs', 'ssh'] if scale \
-    else ['kernel', 'mbr', 'zfs', 'modules']
-random_path = ['/boot/grub', '/root', '/bin', '/usr/bin'] if scale \
-    else ['/boot/kernel', '/root', '/bin', '/usr/bin']
+group = 'root'
+path = '/etc'
+path_list = ['default', 'kernel', 'zfs', 'ssh']
+random_path = ['/boot/grub', '/root', '/bin', '/usr/bin']
 
 
 def test_01_get_filesystem_listdir():

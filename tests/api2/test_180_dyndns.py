@@ -8,7 +8,7 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from config import *
+
 from auto_config import ip, user, password, dev_test
 from functions import GET, POST, PUT, SSH_TEST
 # comment pytestmark for development testing with --dev-test
@@ -16,13 +16,16 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 Reason = 'NOIPUSERNAME, NOIPPASSWORD and NOIPHOST' \
     ' are missing in ixautomation.conf'
+try:
+    from config import NOIPUSERNAME, NOIPPASSWORD, NOIPHOST
+    noip_test_cfg = pytest.mark.skipif(False, reason=Reason)
+except ImportError:
+    noip_test_cfg = pytest.mark.skipif(True, reason=Reason)
 
-noip_test_cfg = pytest.mark.skipif(all(['NOIPUSERNAME' in locals(),
-                                        'NOIPPASSWORD' in locals(),
-                                        'NOIPHOST' in locals()
-                                        ]) is False, reason=Reason)
-custom_test_cfg = pytest.mark.skipif(noip_test_cfg is True,
-                                     reason='no-ip test has ran instead')
+custom_test_cfg = pytest.mark.skipif(
+    noip_test_cfg is True,
+    reason='no-ip test has ran instead'
+)
 global test
 test = ''
 
