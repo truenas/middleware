@@ -566,7 +566,7 @@ class FailoverService(ConfigService):
     @returns(Bool())
     async def unlock(self, options):
         """
-        Unlock pools in HA, syncing passphrase between controllers and forcing this controller
+        Unlock datasets in HA, syncing passphrase between controllers and forcing this controller
         to be MASTER importing the pools.
         """
         if options['pools'] or options['datasets']:
