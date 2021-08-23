@@ -842,10 +842,6 @@ class PoolService(CRUDService):
     @private
     async def restart_services(self):
         await self.middleware.call('service.reload', 'disk')
-        if (
-            await self.middleware.call('systemdataset.config')
-        )['pool'] == await self.middleware.call('boot.pool_name'):
-            await self.middleware.call('service.restart', 'system_datasets')
         # regenerate crontab because of scrub
         await self.middleware.call('service.restart', 'cron')
 
@@ -2568,8 +2564,6 @@ class PoolDatasetService(CRUDService):
 
         if self.middleware.call_sync('system.ready'):
             services_to_restart.add('disk')
-            if '/' not in id:
-                services_to_restart.add('system_datasets')
 
         if unlocked:
             def dataset_data(unlocked_dataset):
