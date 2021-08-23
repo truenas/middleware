@@ -2452,7 +2452,7 @@ class PoolDatasetService(CRUDService):
         `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
 
         `attachments_list_mode` and `attachments_list` controls which attachments (shares, tasks)
-        should be put in action after unlocking pool. By default all attachments are handled, which might
+        should be put in action after unlocking dataset(s). By default all attachments are handled, which might
         theoretically lead to service interruption when daemons configurations are reloaded (this should not happen,
         and if this happens it should be considered a bug). As TrueNAS does not have a state for resources that
         should be unlocked but are still locked, using this option will put the system into an inconsistent state
