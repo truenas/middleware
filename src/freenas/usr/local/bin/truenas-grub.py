@@ -12,6 +12,10 @@ def dict_factory(cursor, row):
     return d
 
 
+def get_serial_ports():
+    return {e['start']: e['name'].replace('uart', 'ttyS') for e in osc.system.serial_port_choices()}
+
+
 if __name__ == "__main__":
     conn = sqlite3.connect(FREENAS_DATABASE)
     conn.row_factory = dict_factory
@@ -30,7 +34,8 @@ if __name__ == "__main__":
         config.append(f'GRUB_SERIAL_COMMAND="serial --speed={advanced["serialspeed"]} --word=8 --parity=no --stop=1"')
         terminal.append("serial")
 
-        cmdline.append(f"console={advanced['serialport']},{advanced['serialspeed']} console=tty1")
+        port = get_serial_ports().get(advanced['serialport'], advanced['serialport'])
+        cmdline.append(f"console={port},{advanced['serialspeed']} console=tty1")
 
     config.append(f'GRUB_TERMINAL="{" ".join(terminal)}"')
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
