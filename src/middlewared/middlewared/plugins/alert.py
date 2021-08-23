@@ -330,15 +330,15 @@ class AlertService(Service):
         Str('klass'),
         Any('args'),
         Str('node'),
-        Str('key'),
+        Str('key', max_length=None),
         Datetime('datetime'),
         Datetime('last_occurrence'),
         Bool('dismissed'),
         Any('mail', null=True),
-        Str('text'),
+        Str('text', max_length=None),
         Str('id'),
         Str('level'),
-        Str('formatted', null=True),
+        Str('formatted', null=True, max_length=None),
         Bool('one_shot'),
     )]))
     async def list(self):
