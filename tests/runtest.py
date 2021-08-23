@@ -43,7 +43,6 @@ Optional option
     --test <test name>         - Test name (Network, ALL)
     --vm-name <VM_NAME>        - Name the the Bhyve VM
     --ha                       - Run test for HA
-    --scale                    - Run test for Scale
     --update                   - Run update with the tests suite
     """ % argv[0]
 
@@ -59,7 +58,6 @@ option_list = [
     'test=',
     "vm-name=",
     "ha",
-    "scale",
     "update"
 ]
 
@@ -75,7 +73,6 @@ vm_name = None
 testName = None
 testexpr = None
 ha = False
-scale = False
 update = False
 
 for output, arg in myopts:
@@ -93,8 +90,6 @@ for output, arg in myopts:
         vm_name = f"'{arg}'"
     elif output == '--ha':
         ha = True
-    elif output == '--scale':
-        scale = True
     elif output == '--update':
         update = True
 
@@ -123,7 +118,6 @@ localHome = "{localHome}"
 keyPath = "{keyPath}"
 pool_name = "tank"
 ha = {ha}
-scale = {scale}
 update = {update}
 """
 
@@ -157,10 +151,6 @@ def get_tests():
 
     if ha is True:
         skip_tests += ['interfaces', 'network', 'delete_interfaces', 'jail', 'plugin', 'update', 'host_key']
-    if scale is True:
-        skip_tests += ['jail', 'plugin', 'pool_aclmode']
-    else:
-        skip_tests += ['pool_acltype']
     apidir = 'api2/'
     if ha is True:
         sv = ['ssh', 'pool', 'user']
