@@ -262,28 +262,6 @@ class SystemService(PseudoServiceBase):
         asyncio.ensure_future(self.middleware.call("system.reboot", {"delay": 3}))
 
 
-class SystemDatasetsService(PseudoServiceBase):
-    name = "system_datasets"
-
-    restartable = True
-
-    async def restart(self):
-        systemdataset = await self.middleware.call("systemdataset.setup")
-        if not systemdataset:
-            return None
-
-        if systemdataset["syslog"]:
-            await self.middleware.call("service.restart", "syslogd")
-
-        await self.middleware.call("service.restart", "cifs")
-
-        # Restarting rrdcached can take a long time. There is no
-        # benefit in waiting for it, since even if it fails it will not
-        # tell the user anything useful.
-        # Restarting rrdcached will make sure that we start/restart collectd as well
-        asyncio.ensure_future(self.middleware.call("service.restart", "rrdcached"))
-
-
 class TimeservicesService(PseudoServiceBase):
     name = "timeservices"
 

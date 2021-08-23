@@ -95,9 +95,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure', 'checkpoint_linux': 'post_init'}
         ],
-        'system_dataset': [
-            {'type': 'py', 'path': 'system_setup', 'checkpoint': 'pool_import'}
-        ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},

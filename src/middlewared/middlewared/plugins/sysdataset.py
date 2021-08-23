@@ -1,7 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, Popen, run
+from middlewared.utils import Popen, run
 
 try:
     from middlewared.plugins.cluster_linux.utils import CTDBConfig
@@ -43,7 +43,6 @@ class SystemDatasetService(ConfigService):
         Str('pool', required=True),
         Str('uuid', required=True),
         Str('uuid_b', required=True, null=True),
-        Bool('is_decrypted', required=True),
         Str('basename', required=True),
         Str('uuid_a', required=True),
         Bool('syslog', required=True),
@@ -57,20 +56,8 @@ class SystemDatasetService(ConfigService):
         boot_pool = await self.middleware.call('boot.pool_name')
         if not config['pool']:
             config['pool'] = boot_pool
-        # Add `is_decrypted` dynamic attribute
-        if config['pool'] == boot_pool:
-            config['is_decrypted'] = True
-        else:
-            pool = await self.middleware.call('pool.query', [('name', '=', config['pool'])])
-            if pool:
-                config['is_decrypted'] = pool[0]['is_decrypted']
-            else:
-                config['is_decrypted'] = False
 
-        if config['is_decrypted']:
-            config['basename'] = f'{config["pool"]}/.system'
-        else:
-            config['basename'] = None
+        config['basename'] = f'{config["pool"]}/.system'
 
         # Make `uuid` point to the uuid of current node
         config['uuid_a'] = config['uuid']
@@ -198,7 +185,7 @@ class SystemDatasetService(ConfigService):
         new['syslog_usedataset'] = new['syslog']
 
         update_dict = new.copy()
-        for key in ('is_decrypted', 'basename', 'uuid_a', 'syslog', 'path', 'pool_exclude'):
+        for key in ('basename', 'uuid_a', 'syslog', 'path', 'pool_exclude'):
             update_dict.pop(key, None)
 
         await self.middleware.call(
@@ -214,7 +201,7 @@ class SystemDatasetService(ConfigService):
         if config['pool'] != new['pool']:
             await self.migrate(config['pool'], new['pool'])
 
-        await self.setup(True, data.get('pool_exclude'))
+        await self.setup(data.get('pool_exclude'))
 
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
@@ -228,15 +215,9 @@ class SystemDatasetService(ConfigService):
 
         return await self.config()
 
-    @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
+    @accepts(Str('exclude_pool', default=None, null=True))
     @private
-    async def setup(self, mount, exclude_pool):
-
-        # FIXME: corefile for LINUX
-        if osc.IS_FREEBSD:
-            # We default kern.corefile value
-            await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
-
+    async def setup(self, exclude_pool):
         config = await self.config()
         dbconfig = await self.middleware.call(
             'datastore.config', self._config.datastore, {'prefix': self._config.datastore_prefix}
@@ -245,7 +226,7 @@ class SystemDatasetService(ConfigService):
         boot_pool = await self.middleware.call('boot.pool_name')
         if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'BACKUP':
-                if config.get('basename') and config['basename'] != f'{boot_pool}/.system':
+                if config['basename'] != f'{boot_pool}/.system':
                     try:
                         os.unlink(SYSDATASET_PATH)
                     except OSError:
@@ -269,18 +250,16 @@ class SystemDatasetService(ConfigService):
         # to put it on.
         if not dbconfig['pool']:
             pool = None
-            for p in await self.middleware.call(
-                'pool.query', [('encrypt', '!=', '2')], {'order_by': ['encrypt']}
-            ):
+            for p in await self.middleware.call('pool.query'):
                 if (exclude_pool and p['name'] == exclude_pool) or await self.middleware.call('pool.dataset.query', [
                     ['name', '=', p['name']], [
                         'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
                     ]
                 ]):
                     continue
-                if p['is_decrypted']:
-                    pool = p
-                    break
+
+                pool = p
+                break
             if pool:
                 job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
                 await job.wait()
@@ -288,21 +267,7 @@ class SystemDatasetService(ConfigService):
                     raise CallError(job.error)
                 return
 
-        if not config['basename']:
-            if os.path.exists(SYSDATASET_PATH):
-                try:
-                    os.rmdir(SYSDATASET_PATH)
-                except Exception:
-                    self.logger.debug('Failed to remove system dataset dir', exc_info=True)
-            return config
-
-        if not config['is_decrypted']:
-            return
-
-        if await self.__setup_datasets(config['pool'], config['uuid']):
-            # There is no need to wait this to finish
-            # Restarting rrdcached will ensure that we start/restart collectd as well
-            asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
+        await self.__setup_datasets(config['pool'], config['uuid'])
 
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
@@ -317,9 +282,8 @@ class SystemDatasetService(ConfigService):
                 {'properties': {'acltype': {'value': 'off'}}},
             )
 
-        if mount:
-
-            await self.__mount(config['pool'], config['uuid'])
+        if True:
+            mounted = await self.__mount(config['pool'], config['uuid'])
 
             corepath = f'{SYSDATASET_PATH}/cores'
             if os.path.exists(corepath):
@@ -339,13 +303,18 @@ class SystemDatasetService(ConfigService):
 
             await self.__nfsv4link(config)
 
-            if osc.IS_LINUX:
-                await self.middleware.call('etc.generate', 'glusterd')
+            await self.middleware.call('etc.generate', 'glusterd')
 
-            await self.middleware.call('smb.setup_directories')
-            # The following should be backgrounded since they may be quite
-            # long-running.
-            await self.middleware.call('smb.configure', False)
+            if mounted:
+                # There is no need to wait this to finish
+                # Restarting rrdcached will ensure that we start/restart collectd as well
+                asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
+                asyncio.ensure_future(self.middleware.call('service.restart', 'syslogd'))
+
+                await self.middleware.call('smb.setup_directories')
+                # The following should be backgrounded since they may be quite
+                # long-running.
+                await self.middleware.call('smb.configure', False)
 
         return config
 
@@ -353,7 +322,6 @@ class SystemDatasetService(ConfigService):
         """
         Make sure system datasets for `pool` exist and have the right mountpoint property
         """
-        createdds = False
         datasets = [i[0] for i in self.__get_datasets(pool, uuid)]
         datasets_prop = {
             i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
@@ -368,7 +336,6 @@ class SystemDatasetService(ConfigService):
                     'name': dataset,
                     'properties': props,
                 })
-                createdds = True
             elif is_cores_ds and datasets_prop[dataset]['used']['parsed'] >= 1024 ** 3:
                 try:
                     await self.middleware.call('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})
@@ -387,10 +354,9 @@ class SystemDatasetService(ConfigService):
                         dataset,
                         {'properties': update_props_dict},
                     )
-        return createdds
 
     async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
-
+        mounted = False
         for dataset, name in self.__get_datasets(pool, uuid):
             if name:
                 mountpoint = f'{path}/{name}'
@@ -401,19 +367,20 @@ class SystemDatasetService(ConfigService):
             if not os.path.isdir(mountpoint):
                 os.mkdir(mountpoint)
             await run('mount', '-t', 'zfs', dataset, mountpoint, check=True)
+            mounted = True
 
-        if osc.IS_LINUX:
+        # make sure the glustereventsd webhook dir and
+        # config file exist
+        init_job = await self.middleware.call('gluster.eventsd.init')
+        await init_job.wait()
+        if init_job.error:
+            self.logger.error(
+                'Failed to initialize %s directory with error: %s',
+                CTDBConfig.CTDB_VOL_NAME.value,
+                init_job.error
+            )
 
-            # make sure the glustereventsd webhook dir and
-            # config file exist
-            init_job = await self.middleware.call('gluster.eventsd.init')
-            await init_job.wait()
-            if init_job.error:
-                self.logger.error(
-                    'Failed to initialize %s directory with error: %s',
-                    CTDBConfig.CTDB_VOL_NAME.value,
-                    init_job.error
-                )
+        return mounted
 
     async def __umount(self, pool, uuid):
 
@@ -432,8 +399,9 @@ class SystemDatasetService(ConfigService):
             (f'{pool}/.system/{i}', i) for i in [
                 'cores', 'samba4', f'syslog-{uuid}',
                 f'rrd-{uuid}', f'configs-{uuid}',
-                'webui', 'services'
-            ] + ['glusterd', CTDBConfig.CTDB_VOL_NAME.value] if osc.IS_LINUX
+                'webui', 'services',
+                'glusterd', CTDBConfig.CTDB_VOL_NAME.value,
+            ]
         ]
 
     async def __nfsv4link(self, config):
@@ -518,11 +486,10 @@ class SystemDatasetService(ConfigService):
             restart.append('glusterd')
 
         try:
-            if osc.IS_LINUX:
-                await self.middleware.call('cache.put', 'use_syslog_dataset', False)
-                await self.middleware.call('service.restart', 'syslogd')
-                if await self.middleware.call('service.started', 'glusterd'):
-                    restart.insert(0, 'glusterd')
+            await self.middleware.call('cache.put', 'use_syslog_dataset', False)
+            await self.middleware.call('service.restart', 'syslogd')
+            if await self.middleware.call('service.started', 'glusterd'):
+                restart.insert(0, 'glusterd')
 
             # Middleware itself will log to syslog dataset.
             # This may be prone to a race condition since we dont wait the workers to stop
@@ -547,8 +514,7 @@ class SystemDatasetService(ConfigService):
                 else:
                     raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
         finally:
-            if osc.IS_LINUX:
-                await self.middleware.call('cache.pop', 'use_syslog_dataset')
+            await self.middleware.call('cache.pop', 'use_syslog_dataset')
 
             restart.reverse()
             for i in restart:
@@ -561,9 +527,6 @@ async def pool_post_import(middleware, pool):
     """
     On pool import we may need to reconfigure system dataset.
     """
-    if pool is None:
-        return
-
     await middleware.call('systemdataset.setup')
 
 
