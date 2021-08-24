@@ -118,8 +118,8 @@ smb_func()
 	section_header "net getdomainsid"
 	net getdomainsid
 	section_footer
-	section_header "net --json groupmap list"
-	net --json groupmap list | jq
+	section_header "middleware groupmap list"
+	midclt call smb.groupmap_list | jq
 	section_footer
 
 	section_header "net status sessions"
