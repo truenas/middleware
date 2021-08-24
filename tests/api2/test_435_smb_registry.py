@@ -11,18 +11,15 @@ import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user, scale
+from auto_config import ip, pool_name, password, user, dev_test
 from pytest_dependency import depends
-from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-dataset = f"{pool_name}/smb-reg"
-dataset_url = dataset.replace('/', '%2F')
+DATASET = f"{pool_name}/smb-reg"
+DATASET_URL = DATASET.replace('/', '%2F')
 SMB_NAME = "REGISTRYTEST"
-smb_path = "/mnt/" + dataset
-group = 'nogroup' if scale else 'nobody'
-
+SMB_PATH = "/mnt/" + DATASET
 SHARES = [f'{SMB_NAME}_{i}' for i in range(0, 25)]
 SHARE_DICT = {}
 PRESETS = [
@@ -32,7 +29,6 @@ PRESETS = [
     "PRIVATE_DATASETS",
     "WORM_DROPBOX"
 ]
-
 DETECTED_PRESETS = None
 
 """
@@ -60,19 +56,19 @@ SAMPLE_AUX = [
 
 
 @pytest.mark.dependency(name="SMB_DATASET_CREATED")
-def test_001_creating_smb_dataset(request):
+def test_001_creating_smb_DATASET(request):
     depends(request, ["pool_04"], scope="session")
     payload = {
-        "name": dataset,
+        "name": DATASET,
         "share_type": "SMB"
     }
-    results = POST("/pool/dataset/", payload)
+    results = POST("/pool/DATASET/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_002_changing_dataset_permissions_of_smb_dataset(request):
+def test_002_changing_DATASET_permissions_of_smb_DATASET(request):
     """
-    ACL must be stripped from our test dataset in order
+    ACL must be stripped from our test DATASET in order
     to successfully test all presets.
     """
     depends(request, ["SMB_DATASET_CREATED"])
@@ -80,11 +76,11 @@ def test_002_changing_dataset_permissions_of_smb_dataset(request):
     payload = {
         'acl': [],
         'mode': '777',
-        'group': group,
+        'group': 'nogroup',
         'user': 'nobody',
         'options': {'stripacl': True, 'recursive': True}
     }
-    results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
+    results = POST(f"/pool/DATASET/id/{DATASET_URL}/permission/", payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
 
@@ -106,7 +102,7 @@ def test_004_creating_a_smb_share_path(request, smb_share):
     global SHARE_DICT
     payload = {
         "comment": "My Test SMB Share",
-        "path": f"{smb_path}/{smb_share}",
+        "path": f"{SMB_PATH}/{smb_share}",
         "home": False,
         "name": smb_share,
     }
@@ -278,7 +274,7 @@ def test_011_test_aux_param_on_create(request):
     smb_share = "AUX_CREATE"
     payload = {
         "comment": "My Test SMB Share",
-        "path": f"{smb_path}/{smb_share}",
+        "path": f"{SMB_PATH}/{smb_share}",
         "home": False,
         "name": smb_share,
         "purpose": "ENHANCED_TIMEMACHINE",
@@ -384,7 +380,7 @@ def test_015_create_homes_share(request):
     global home_id
     payload = {
         "comment": "My Test SMB Share",
-        "path": f"{smb_path}/{smb_share}",
+        "path": f"{SMB_PATH}/{smb_share}",
         "home": True,
         "purpose": "NO_PRESET",
         "name": smb_share,
@@ -530,8 +526,7 @@ def test_023_delete_home_share(request):
     assert results.status_code == 200, results.text
 
 
-# Check destroying a SMB dataset
 def test_024_destroying_smb_dataset(request):
     depends(request, ["SMB_DATASET_CREATED"])
-    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
+    results = DELETE(f"/pool/DATASET/id/{DATASET_URL}/")
     assert results.status_code == 200, results.text
