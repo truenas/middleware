@@ -835,15 +835,7 @@ class UserService(CRUDService):
                     )
 
         password = data.get('password')
-        if password and '?' in password:
-            # See bug #4098
-            verrors.add(
-                f'{schema}.password',
-                'An SMB issue prevents creating passwords containing a '
-                'question mark (?).',
-                errno.EINVAL
-            )
-        elif not pk and not password and not data.get('password_disabled'):
+        if not pk and not password and not data.get('password_disabled'):
             verrors.add(f'{schema}.password', 'Password is required')
         elif data.get('password_disabled') and password:
             verrors.add(

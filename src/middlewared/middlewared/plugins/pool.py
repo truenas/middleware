@@ -3312,7 +3312,8 @@ class PoolDatasetService(CRUDService):
         created_ds = await self.get_instance(data['id'])
 
         if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and created_ds['acltype']['value'] == "NFSV4":
-            await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
+            acl_job = await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
+            await acl_job.wait()
 
         return created_ds
 
