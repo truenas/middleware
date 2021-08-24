@@ -24,14 +24,6 @@ async def mit_copy(temp_keytab):
         logger.debug(f"failed to generate [{keytabfile}]: {output[1].decode()}")
 
 
-async def heimdal_copy(temp_keytab):
-    ktutil = await run([ktutil_cmd, "copy", temp_keytab, keytabfile], check=False)
-    ktutil_errs = ktutil.stderr.decode()
-
-    if ktutil_errs:
-        logger.debug(f'Keytab generation failed with error: {ktutil_errs}')
-
-
 async def write_keytab(db_keytabname, db_keytabfile):
     temp_keytab = f'{kdir}/{db_keytabname}'
     if not os.path.exists(kdir):
@@ -41,12 +33,7 @@ async def write_keytab(db_keytabname, db_keytabfile):
     with open(temp_keytab, "wb") as f:
         f.write(db_keytabfile)
 
-    if osc.IS_FREEBSD:
-        await heimdal_copy(temp_keytab)
-
-    else:
-        await mit_copy(temp_keytab)
-
+    await mit_copy(temp_keytab)
     os.remove(temp_keytab)
 
 

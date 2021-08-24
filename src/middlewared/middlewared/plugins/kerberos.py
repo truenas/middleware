@@ -14,21 +14,12 @@ from middlewared.schema import accepts, Dict, Int, List, Patch, Str
 from middlewared.service import CallError, TDBWrapConfigService, TDBWrapCRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
-import middlewared.utils.osc as osc
 
 
 class keytab(enum.Enum):
     SYSTEM = '/etc/krb5.keytab'
     SAMBA = '/var/db/system/samba4/private/samba.keytab'
     TEST = '/var/db/system/test.keytab'
-
-
-class KRB5(enum.Enum):
-    MIT = 1
-    HEIMDAL = 2
-
-    def platform():
-        return KRB5.MIT if osc.IS_LINUX else KRB5.HEIMDAL
 
 
 class KRB_AppDefaults(enum.Enum):
@@ -156,13 +147,10 @@ class KerberosService(TDBWrapConfigService):
         """
         Returns false if there is not a TGT or if the TGT has expired.
         """
-        if KRB5.platform() == KRB5.MIT:
-            klist = await run(['klist', '-s'], check=False)
-        else:
-            klist = await run(['klist', '-t'], check=False)
-
+        klist = await run(['klist', '-s'], check=False)
         if klist.returncode != 0:
             return False
+
         return True
 
     @private
@@ -196,12 +184,7 @@ class KerberosService(TDBWrapConfigService):
                     raise CallError(f'[{e}] is not a supported encryption type')
 
         if data['ptype'] == 'cctype':
-            available_types = ['FILE', 'MEMORY']
-            if osc.IS_FREEBSD:
-                available_types.append('SCC')
-            else:
-                available_types.append('DIR')
-
+            available_types = ['FILE', 'MEMORY', 'DIR']
             if data['value'] not in available_types:
                 raise CallError(f'[{data["value"]}] is an unsupported cctype. '
                                 f'Available types are {", ".join(available_types)}. '
@@ -280,13 +263,8 @@ class KerberosService(TDBWrapConfigService):
     @private
     async def do_kinit(self, data):
         dstype = DSType(data['dstype'])
-        krb5 = KRB5.platform()
         if data['kerberos_principal']:
-            if krb5 == KRB5.MIT:
-                kinit = await run(['kinit', '-r', '7d', '-k', data['kerberos_principal']], check=False)
-            else:
-                kinit = await run(['kinit', '--renewable', '-k', data['kerberos_principal']], check=False)
-
+            kinit = await run(['kinit', '-r', '7d', '-k', data['kerberos_principal']], check=False)
             if kinit.returncode != 0:
                 if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY:
                     raise CallError(f"kinit for domain [{data['domainname']}] "
@@ -310,16 +288,10 @@ class KerberosService(TDBWrapConfigService):
             bind_cn = (data['binddn'].split(','))[0].split("=")
             principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
 
-        if krb5 == KRB5.MIT:
-            kinit = await Popen(
-                ['kinit', '-r', '7d', principal],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
-            )
-        else:
-            kinit = await Popen(
-                ['kinit', '--renewable', '--password-file=STDIN', principal],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
-            )
+        kinit = await Popen(
+            ['kinit', '-r', '7d', principal],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+        )
 
         output = await kinit.communicate(input=data['bindpw'].encode())
         if kinit.returncode != 0:
@@ -351,108 +323,65 @@ class KerberosService(TDBWrapConfigService):
         ad = data.get("ad")
         ldap = data.get("ldap")
         klistin = data.get("klistin")
-        krb5 = KRB5(data.get("krb5type"))
 
         if ldap.get('enable') and ldap['kerberos_realm']:
             ldap_realm = await self.middleware.call('kerberos.realm.query',
                                                     [('id', '=', ldap['kerberos_realm'])],
                                                     {'get': True})
 
-        if krb5 == KRB5.MIT:
-            tickets = klistin.splitlines()
-            default_principal = None
-            tlen = len(tickets)
+        tickets = klistin.splitlines()
+        default_principal = None
+        tlen = len(tickets)
 
-            if ad['enable']:
-                dstype = DSType.DS_TYPE_ACTIVEDIRECTORY
-            elif ldap['enable']:
-                dstype = DSType.DS_TYPE_LDAP
-            else:
-                return {"ad_TGT": [], "ldap_TGT": []}
+        if ad['enable']:
+            dstype = DSType.DS_TYPE_ACTIVEDIRECTORY
+        elif ldap['enable']:
+            dstype = DSType.DS_TYPE_LDAP
+        else:
+            return {"ad_TGT": [], "ldap_TGT": []}
 
-            parsed_klist = []
-            for idx, e in enumerate(tickets):
-                if e.startswith('Default'):
-                    default_principal = (e.split(':')[1]).strip()
-                if e and e[0].isdigit():
-                    d = e.split("  ")
-                    issued = time.strptime(d[0], "%m/%d/%y %H:%M:%S")
-                    expires = time.strptime(d[1], "%m/%d/%y %H:%M:%S")
-                    client = default_principal
-                    server = d[2]
-                    flags = None
-                    etype = None
-                    next_two = [idx + 1, idx + 2]
-                    for i in next_two:
-                        if i >= tlen:
-                            break
-                        if tickets[i][0].isdigit():
-                            break
-                        if tickets[i].startswith("\tEtype"):
-                            etype = tickets[i].strip()
-                            break
-                        if tickets[i].startswith("\trenew"):
-                            flags = tickets[i].split("Flags: ")[1]
-                            continue
+        parsed_klist = []
+        for idx, e in enumerate(tickets):
+            if e.startswith('Default'):
+                default_principal = (e.split(':')[1]).strip()
+            if e and e[0].isdigit():
+                d = e.split("  ")
+                issued = time.strptime(d[0], "%m/%d/%y %H:%M:%S")
+                expires = time.strptime(d[1], "%m/%d/%y %H:%M:%S")
+                client = default_principal
+                server = d[2]
+                flags = None
+                etype = None
+                next_two = [idx + 1, idx + 2]
+                for i in next_two:
+                    if i >= tlen:
+                        break
+                    if tickets[i][0].isdigit():
+                        break
+                    if tickets[i].startswith("\tEtype"):
+                        etype = tickets[i].strip()
+                        break
+                    if tickets[i].startswith("\trenew"):
+                        flags = tickets[i].split("Flags: ")[1]
+                        continue
 
-                        extra = tickets[i].split(", ", 1)
-                        flags = extra[0].strip()
-                        etype = extra[1].strip()
+                    extra = tickets[i].split(", ", 1)
+                    flags = extra[0].strip()
+                    etype = extra[1].strip()
 
-                    parsed_klist.append({
-                        'issued': issued,
-                        'expires': expires,
-                        'client': client,
-                        'server': server,
-                        'etype': etype,
-                        'flags': flags,
-                    })
+                parsed_klist.append({
+                    'issued': issued,
+                    'expires': expires,
+                    'client': client,
+                    'server': server,
+                    'etype': etype,
+                    'flags': flags,
+                })
 
-            return {
-                "ad_TGT": parsed_klist if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY else [],
-                "ldap_TGT": parsed_klist if dstype == DSType.DS_TYPE_LDAP else [],
-            }
-
-        tkts = klistin.split('\n\n')
-        for tkt in tkts:
-            s = tkt.splitlines()
-            if len(s) > 4:
-                for entry in s:
-                    if "Auth time" in entry:
-                        issued = time.strptime((entry.split('Auth time: '))[1].lstrip().replace('  ', ' '), '%b %d %H:%M:%S %Y')
-                    elif "End time" in entry:
-                        expires = time.strptime((entry.split('End time: '))[1].lstrip().replace('  ', ' '), '%b %d %H:%M:%S %Y')
-                    elif "Server" in entry:
-                        server = (entry.split('Server: '))[1]
-                    elif "Client" in entry:
-                        client = (entry.split('Client: '))[1]
-                    elif 'Ticket etype' in entry:
-                        etype = (entry.split('Ticket etype: '))[1]
-                    elif 'Ticket flags' in entry:
-                        flags = (entry.split('Ticket flags: '))[1].split(',')
-
-                if ad['enable'] and ad['kerberos_realm'] and ad['domainname'] in client:
-                    ad_TGT.append({
-                        'issued': issued,
-                        'expires': expires,
-                        'client': client,
-                        'server': server,
-                        'etype': etype,
-                        'flags': flags,
-                    })
-
-                elif ldap['enable'] and ldap['kerberos_realm']:
-                    if ldap_realm['realm'] in client:
-                        ldap_TGT.append({
-                            'issued': issued,
-                            'expires': expires,
-                            'client': client,
-                            'server': server,
-                            'etype': etype,
-                            'flags': flags,
-                        })
-
-        return {"ad_TGT": ad_TGT, "ldap_TGT": ldap_TGT}
+        return {
+            "ad_TGT": parsed_klist if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY else [],
+            "ldap_TGT": parsed_klist if dstype == DSType.DS_TYPE_LDAP else [],
+        }
 
     @private
     async def _get_cached_klist(self):
@@ -474,18 +403,11 @@ class KerberosService(TDBWrapConfigService):
 
         if not await self.status():
             await self.start()
-        krb5 = KRB5.platform()
         try:
-            if krb5 == KRB5.HEIMDAL:
-                klist = await asyncio.wait_for(
-                    run(['klist', '-v'], check=False, stdout=subprocess.PIPE),
-                    timeout=10.0
-                )
-            else:
-                klist = await asyncio.wait_for(
-                    run(['klist', '-ef'], check=False, stdout=subprocess.PIPE),
-                    timeout=10.0
-                )
+            klist = await asyncio.wait_for(
+                run(['klist', '-ef'], check=False, stdout=subprocess.PIPE),
+                timeout=10.0
+            )
         except Exception as e:
             await self.stop()
             raise CallError("Attempt to list kerberos tickets failed with error: %s", e)
@@ -497,7 +419,6 @@ class KerberosService(TDBWrapConfigService):
         klist_output = klist.stdout.decode()
 
         parsed_klist = await self.parse_klist({
-            "krb5type": krb5.value,
             "klistin": klist_output,
             "ad": ad,
             "ldap": ldap,
@@ -843,21 +764,14 @@ class KerberosKeytabService(TDBWrapCRUDService):
     @private
     async def do_ktutil_list(self, data):
         kt = data.get("kt_name", keytab.SYSTEM.value)
-        if KRB5.platform() == KRB5.MIT:
-            ktutil = await run(["klist", "-tek", kt], check=False)
-            if ktutil.returncode != 0:
-                raise CallError(ktutil.stderr.decode())
-            ret = ktutil.stdout.decode().splitlines()
-            if len(ret) < 4:
-                return []
-            ret = '\n'.join(ret[3:])
-        else:
-            ktutil = await run(["ktutil", "-k", kt, "-v", "list"], check=False)
-            if ktutil.returncode != 0:
-                raise CallError(ktutil.stderr.decode())
-            ret = ktutil.stdout.decode()
+        ktutil = await run(["klist", "-tek", kt], check=False)
+        if ktutil.returncode != 0:
+            raise CallError(ktutil.stderr.decode())
+        ret = ktutil.stdout.decode().splitlines()
+        if len(ret) < 4:
+            return []
 
-        return ret
+        return '\n'.join(ret[3:])
 
     @private
     async def _validate(self, data):
@@ -898,32 +812,16 @@ class KerberosKeytabService(TDBWrapCRUDService):
         if not kt_list_output:
             return keytab_entries
 
-        if KRB5.platform() == KRB5.HEIMDAL:
-            for line in kt_list_output.splitlines():
-                fields = line.split()
-                if len(fields) >= 4 and fields[0] != 'Vno':
-                    if fields[1] == 'unknown':
-                        self.logger.warning('excluding unknown encryption type %s from keytab choices', fields[2])
-                        continue
-
-                    keytab_entries.append({
-                        'kvno': fields[0],
-                        'type': fields[1],
-                        'principal': fields[2],
-                        'date': time.strptime(fields[3], '%Y-%m-%d'),
-                        'aliases': fields[4].split() if len(fields) == 5 else []
-                    })
-        else:
-            for idx, line in enumerate(kt_list_output.splitlines()):
-                fields = line.split()
-                keytab_entries.append({
-                    'slot': idx + 1,
-                    'kvno': fields[0],
-                    'principal': fields[3],
-                    'etype': fields[4][1:-1].strip('DEPRECATED:'),
-                    'etype_deprecated': fields[4][1:].startswith('DEPRECATED'),
-                    'date': time.strptime(fields[1], '%m/%d/%y'),
-                })
+        for idx, line in enumerate(kt_list_output.splitlines()):
+            fields = line.split()
+            keytab_entries.append({
+                'slot': idx + 1,
+                'kvno': fields[0],
+                'principal': fields[3],
+                'etype': fields[4][1:-1].strip('DEPRECATED:'),
+                'etype_deprecated': fields[4][1:].startswith('DEPRECATED'),
+                'date': time.strptime(fields[1], '%m/%d/%y'),
+            })
 
         return keytab_entries
 
@@ -962,69 +860,41 @@ class KerberosKeytabService(TDBWrapCRUDService):
         with contextlib.suppress(OSError):
             os.remove(keytab['SAMBA'].value)
 
-        if KRB5.platform() == KRB5.HEIMDAL:
-            kt_copy = await run([
-                'ktutil', 'copy',
-                keytab['SYSTEM'].value,
-                keytab['SAMBA'].value],
-                check=False
-            )
-            if kt_copy.stderr.decode():
-                raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
-        else:
-            kt_copy = await Popen(['ktutil'],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                  stdin=subprocess.PIPE)
-            output = await kt_copy.communicate(
-                f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}\nq\n'.encode()
-            )
-            if output[1]:
-                raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {output[1].decode()}")
+        kt_copy = await Popen(['ktutil'],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE,
+                              stdin=subprocess.PIPE)
+        output = await kt_copy.communicate(
+            f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}\nq\n'.encode()
+        )
+        if output[1]:
+            raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {output[1].decode()}")
 
     @private
     async def _prune_keytab_principals(self, to_delete=[]):
         """
         Delete all keytab entries from the tmp keytab that are not samba entries.
+        The pruned keytab must be written to a new file to avoid duplication of
+        entries.
         """
         seen_principals = []
-        if KRB5.platform() == KRB5.HEIMDAL:
-            for i in to_delete:
-                if i['principal'] in seen_principals:
-                    continue
-                ktutil_remove = await run([
-                    'ktutil',
-                    '-k', keytab['SAMBA'].value,
-                    'remove',
-                    '-p', i['principal']],
-                    check=False
-                )
-                if ktutil_remove.stderr.decode():
-                    raise CallError(f"ktutil_remove failed for [{i}]: {ktutil_remove.stderr.decode()}")
-                seen_principals.append(i['principal'])
+        rkt = f"rkt {keytab.SAMBA.value}"
+        wkt = "wkt /var/db/system/samba4/samba_mit.keytab"
+        delents = "\n".join(f"delent {x['slot']}" for x in reversed(to_delete))
+        ktutil_remove = await Popen(['ktutil'],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    stdin=subprocess.PIPE)
+        output = await ktutil_remove.communicate(
+            f'{rkt}\n{delents}\n{wkt}\nq\n'.encode()
+        )
+        if output[1]:
+            raise CallError(output[1].decode())
 
-        else:
-            """
-            The pruned keytab must be written to a new file to avoid duplication of
-            entries.
-            """
-            rkt = f"rkt {keytab.SAMBA.value}"
-            wkt = "wkt /var/db/system/samba4/samba_mit.keytab"
-            delents = "\n".join(f"delent {x['slot']}" for x in reversed(to_delete))
-            ktutil_remove = await Popen(['ktutil'],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        stdin=subprocess.PIPE)
-            output = await ktutil_remove.communicate(
-                f'{rkt}\n{delents}\n{wkt}\nq\n'.encode()
-            )
-            if output[1]:
-                raise CallError(output[1].decode())
+        with contextlib.suppress(OSError):
+            os.remove(keytab.SAMBA.value)
 
-            with contextlib.suppress(OSError):
-                os.remove(keytab.SAMBA.value)
-
-            os.rename("/var/db/system/samba4/samba_mit.keytab", keytab.SAMBA.value)
+        os.rename("/var/db/system/samba4/samba_mit.keytab", keytab.SAMBA.value)
 
     @private
     async def kerberos_principal_choices(self):
