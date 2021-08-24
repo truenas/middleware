@@ -4,7 +4,7 @@ import base64
 import subprocess
 import contextlib
 
-from middlewared.utils import run, osc, Popen
+from middlewared.utils import Popen
 
 logger = logging.getLogger(__name__)
 kdir = "/etc/kerberos"

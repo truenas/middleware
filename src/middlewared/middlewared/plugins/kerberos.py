@@ -317,18 +317,9 @@ class KerberosService(TDBWrapConfigService):
 
     @private
     async def parse_klist(self, data):
-        ad_TGT = []
-        ldap_TGT = []
-
         ad = data.get("ad")
         ldap = data.get("ldap")
         klistin = data.get("klistin")
-
-        if ldap.get('enable') and ldap['kerberos_realm']:
-            ldap_realm = await self.middleware.call('kerberos.realm.query',
-                                                    [('id', '=', ldap['kerberos_realm'])],
-                                                    {'get': True})
-
         tickets = klistin.splitlines()
         default_principal = None
         tlen = len(tickets)
@@ -877,7 +868,6 @@ class KerberosKeytabService(TDBWrapCRUDService):
         The pruned keytab must be written to a new file to avoid duplication of
         entries.
         """
-        seen_principals = []
         rkt = f"rkt {keytab.SAMBA.value}"
         wkt = "wkt /var/db/system/samba4/samba_mit.keytab"
         delents = "\n".join(f"delent {x['slot']}" for x in reversed(to_delete))
