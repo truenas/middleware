@@ -423,7 +423,6 @@ class SMBService(TDBWrapConfigService):
             pass
         except FileNotFoundError:
             self.logger.debug("%s: smb.conf file not generated. Returning default value.", parm)
-            pass
 
         return self.LP_CTX.get(parm)
 
