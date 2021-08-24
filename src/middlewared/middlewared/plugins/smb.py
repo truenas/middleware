@@ -421,6 +421,8 @@ class SMBService(TDBWrapConfigService):
                 return await self.getparm_file(parm)
         except MatchNotFound:
             pass
+        except FileNotFoundError:
+            self.logger.debug("%s: smb.conf file not generated. Returning default value.", parm)
 
         return self.LP_CTX.get(parm)
 
