@@ -228,7 +228,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': None}
         ],
         'wsd': [
-            {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'interface_sync'},
+            {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'post_init'},
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
