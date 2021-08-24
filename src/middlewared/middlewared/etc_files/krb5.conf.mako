@@ -71,6 +71,7 @@
             environment_is_kerberized = True
             c_realm = db['ad']['kerberos_realm']
             krb_default_realm = (filter_list(db_realms, [('id', '=', c_realm)]))[0]['realm']
+
         elif db['ad']['enable']:
             environment_is_kerberized = True
             krb_default_realm = db['ad']['domainname']
@@ -108,6 +109,7 @@
         elif db['ldap']['enable'] and db['ldap']['kerberos_realm']:
             environment_is_kerberized = True
             krb_default_realm = db['ldap']['kerberos_realm']['krb_realm']
+
         else:
             krb_default_realm = None
 
