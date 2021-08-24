@@ -62,13 +62,13 @@ def test_001_creating_smb_DATASET(request):
         "name": DATASET,
         "share_type": "SMB"
     }
-    results = POST("/pool/DATASET/", payload)
+    results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_002_changing_DATASET_permissions_of_smb_DATASET(request):
+def test_002_changing_dataset_permissions_of_smb_dataset(request):
     """
-    ACL must be stripped from our test DATASET in order
+    ACL must be stripped from our test dataset in order
     to successfully test all presets.
     """
     depends(request, ["SMB_DATASET_CREATED"])
@@ -80,7 +80,7 @@ def test_002_changing_DATASET_permissions_of_smb_DATASET(request):
         'user': 'nobody',
         'options': {'stripacl': True, 'recursive': True}
     }
-    results = POST(f"/pool/DATASET/id/{DATASET_URL}/permission/", payload)
+    results = POST(f"/pool/dataset/id/{DATASET_URL}/permission/", payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
 
@@ -528,5 +528,5 @@ def test_023_delete_home_share(request):
 
 def test_024_destroying_smb_dataset(request):
     depends(request, ["SMB_DATASET_CREATED"])
-    results = DELETE(f"/pool/DATASET/id/{DATASET_URL}/")
+    results = DELETE(f"/pool/dataset/id/{DATASET_URL}/")
     assert results.status_code == 200, results.text
