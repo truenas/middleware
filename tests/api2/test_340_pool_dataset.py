@@ -328,8 +328,8 @@ def test_28_delete_dataset_with_receive_resume_token(request, create_dst):
         'recursive': True,
     })
     assert result.status_code == 200, result.text
-
-    result = DELETE(f'/pool/dataset/id/{pool_name}%2Fdst/', {
-        'recursive': True,
-    })
-    assert result.status_code == 200, result.text
+    if create_dst:
+        result = DELETE(f'/pool/dataset/id/{pool_name}%2Fdst/', {
+            'recursive': True,
+        })
+        assert result.status_code == 200, result.text
