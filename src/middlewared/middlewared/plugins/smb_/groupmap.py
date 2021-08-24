@@ -255,8 +255,8 @@ class SMBService(Service):
 
     @private
     async def sync_builtins(self, groupmap):
-        idmap_backend = await self.middleware.call("smb.getparm", "idmap config *:backend", "GLOBAL")
-        idmap_range = await self.middleware.call("smb.getparm", "idmap config *:range", "GLOBAL")
+        idmap_backend = await self.middleware.call("smb.getparm", "idmap config * : backend", "GLOBAL")
+        idmap_range = await self.middleware.call("smb.getparm", "idmap config * : range", "GLOBAL")
         payload = {"ADD": [{"groupmap": []}], "MOD": [{"groupmap": []}], "DEL": [{"groupmap": []}]}
         must_reload = False
 
