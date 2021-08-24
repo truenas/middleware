@@ -79,30 +79,24 @@ smb_func()
 	sc "${SMBCONF}"
 	section_footer
 
-	section_header "${SMBSHARECONF}"
-	net conf list
+	section_header "GLOBAL configuration"
+	net conf showshare global
 	section_footer
-
-	local IFS="|"
 
 	#
 	#	Dump SMB shares
 	#
 	section_header "SMB Shares & Permissions"
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		cifs_path,
-		cifs_name
-	FROM
-		sharing_cifs_share
-	ORDER BY
-		-id
-	" | while read -r cifs_path cifs_name
-	do
+	SHARES=$(midclt call sharing.smb.query)
+	echo ${SHARES} | jq -c '.[]' | while read i; do
+		cifs_path=$(echo ${i} | jq -r '.path')
+		cifs_name=$(echo ${i} | jq -r '.name')
 		section_header "${cifs_name}:${cifs_path}"
+		net conf showshare ${cifs_name}
+		printf "\n"
 		ls -ld "${cifs_path}"
 		printf "\n"
-		getfacl "${cifs_path}"
+		midclt call filesystem.getacl "${cifs_path}" true | jq
 		printf "\n"
 	done
 	section_footer
@@ -124,8 +118,8 @@ smb_func()
 	section_header "net getdomainsid"
 	net getdomainsid
 	section_footer
-	section_header "net groupmap list"
-	net groupmap list | head -50
+	section_header "middleware groupmap list"
+	midclt call smb.groupmap_list | jq
 	section_footer
 
 	section_header "net status sessions"
