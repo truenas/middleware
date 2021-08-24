@@ -170,7 +170,7 @@ def test_13_strip_acl_from_dataset(request):
 
 
 def test_14_setting_dataset_quota(request):
-    depends(request, ["pool_04", "user_24"], scope="session")
+    depends(request, ["pool_04", "shareuser"], scope="session")
     gid = str(GET('/group/?group=shareuser').json()[0]['gid'])
     global results
     payload = [
