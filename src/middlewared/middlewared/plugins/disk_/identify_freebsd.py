@@ -54,14 +54,20 @@ class DiskService(Service, DiskIdentifyBase):
 
         if tp == 'uuid':
             _find = f'.//config[rawuuid = "{value}"]/../../name'
-            search = geom.class_by_name('PART').xml.find(_find)
+            if geom_xml:
+                search = geom_xml.find(_find)
+            else:
+                search = geom.class_by_name('PART').xml.find(_find)
 
             if search is not None and not search.text.startswith('label'):
                 return search.text
 
         elif tp == 'label':
             _find = f'.//provider[name = "{value}"]/../name'
-            search = geom.class_by_name('LABEL').xml.find(_find)
+            if geom_xml:
+                search = geom_xml.find(_find)
+            else:
+                search = geom.class_by_name('LABEL').xml.find(_find)
 
             if search is not None:
                 return search.text

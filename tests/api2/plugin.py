@@ -130,7 +130,11 @@ def test_10_add_asigra_plugin():
     }
     results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
-    job_status = wait_on_job(results.json(), 1200)
+    JOB_ID = results.json()
+
+
+def test_12_verify_plexmediaserver_plugin_job_is_successfull():
+    job_status = wait_on_job(JOB_ID, 1200)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
