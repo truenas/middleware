@@ -249,7 +249,7 @@ def test_08_test_backend_options(request, backend):
         for the current backend. Iterate through each option and verify
         that it was written to samba's running configuration.
         """
-        cmd = f'midclt call smb.getparm "{IDMAP_CFG} : {k}" GLOBAL'
+        cmd = f'midclt call smb.getparm "{IDMAP_CFG}: {k}" GLOBAL'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
         try:
