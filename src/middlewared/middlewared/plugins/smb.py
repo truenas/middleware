@@ -837,10 +837,11 @@ class SMBService(TDBWrapConfigService):
 
         new['netbiosalias'] = ' '.join(new['netbiosalias'])
 
-        await self.middleware.call('smb.reg_update', new)
         await self.compress(new)
         await self.direct_update(new)
-        await self._service_change(self._config.service, 'restart')
+
+        new_config = await self.config()
+        await self.middleware.call('smb.reg_update', new_config)
         await self.reset_smb_ha_mode()
 
         """
@@ -850,13 +851,13 @@ class SMBService(TDBWrapConfigService):
         if old['aapl_extensions'] != new['aapl_extensions']:
             await self.apply_aapl_changes()
 
-        new_config = await self.config()
         if old['netbiosname_local'] != new_config['netbiosname_local']:
             new_sid = await self.middleware.call("smb.get_system_sid")
             await self.middleware.call("smb.set_database_sid", new_sid)
             new_config["cifs_SID"] = new_sid
             await self.middleware.call("smb.synchronize_group_mappings")
 
+        await self._service_change(self._config.service, 'restart')
         return new_config
 
     @private
