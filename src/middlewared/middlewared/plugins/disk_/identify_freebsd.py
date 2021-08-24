@@ -1,18 +1,17 @@
 import os
 
 from bsd import geom
-from lxml import etree
-from xml.etree import ElementTree
-
 from middlewared.service import Service
-
 from .identify_base import DiskIdentifyBase
 
 
 class DiskService(Service, DiskIdentifyBase):
 
     async def device_to_identifier(self, name, disks=None):
-        disk_data = disks.get('name') or await self.middleware.call('device.get_disk', name)
+        disk_data = disks.get(name)
+        if not disk_data:
+            disk_data = await self.middleware.call('device.get_disk', name)
+
         if disk_data and disk_data['serial_lunid']:
             return f'{{serial_lunid}}{disk_data["serial_lunid"]}'
         elif disk_data and disk_data['serial']:
@@ -38,8 +37,7 @@ class DiskService(Service, DiskIdentifyBase):
 
         return ''
 
-    def identifier_to_device(self, ident, disks=None):
-
+    def identifier_to_device(self, ident, geom_scan=True, geom_xml=None):
         if not ident:
             return None
 
@@ -47,53 +45,91 @@ class DiskService(Service, DiskIdentifyBase):
         if not search:
             return None
 
-        geom.scan()
+        if geom_scan:
+            geom.scan()
 
         tp = search.group('type')
         # We need to escape single quotes to html entity
         value = search.group('value').replace("'", '%27')
 
         if tp == 'uuid':
-            search = geom.class_by_name('PART').xml.find(
-                f'.//config[rawuuid = "{value}"]/../../name'
-            )
+            _find = f'.//config[rawuuid = "{value}"]/../../name'
+            if geom_xml:
+                search = geom_xml.find(_find)
+            else:
+                search = geom.class_by_name('PART').xml.find(_find)
+
             if search is not None and not search.text.startswith('label'):
                 return search.text
 
         elif tp == 'label':
-            search = geom.class_by_name('LABEL').xml.find(
-                f'.//provider[name = "{value}"]/../name'
-            )
+            _find = f'.//provider[name = "{value}"]/../name'
+            if geom_xml:
+                search = geom_xml.find(_find)
+            else:
+                search = geom.class_by_name('LABEL').xml.find(_find)
+
             if search is not None:
                 return search.text
 
         elif tp == 'serial':
-            search = geom.class_by_name('DISK').xml.find(
-                f'.//provider/config[ident = "{value}"]/../../name'
-            )
+            _find = f'.//provider/config[ident = "{value}"]/../../name'
+            if geom_xml:
+                xml = geom_xml
+                search = xml.find(_find)
+            else:
+                xml = geom.class_by_name('DISK').xml
+                search = xml.find(_find)
+
             if search is not None:
                 return search.text
-            # Builtin xml xpath do not understand normalize-space
-            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
-            search = search.xpath(
-                './/provider/config['
-                f'normalize-space(ident) = normalize-space("{value}")'
-                ']/../../name'
-            )
-            if len(search) > 0:
-                return search[0].text
+
+            # normalize the passed in value by stripping leading/trailing and more
+            # than single-space char(s) on the passed in data to us as well as the
+            # xml data that's returned from the system. We'll check to see if we
+            # have a match on the normalized data and return the name accordingly
+            _value = ' '.join(value.split())
+            for i in xml.findall('.//provider/config/ident'):
+                raw = i.text
+                if raw:
+                    _ident = ' '.join(raw.split())
+                    if _value == _ident:
+                        name = xml.find(f'.//provider/config[ident = "{raw}"]/../../name')
+                        if name is not None:
+                            return name.text
+
             disks = self.middleware.call_sync('disk.query', [('serial', '=', value)])
             if disks:
                 return disks[0]['name']
 
         elif tp == 'serial_lunid':
-            # Builtin xml xpath do not understand concat
-            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
-            search = search.xpath(
-                f'.//provider/config[concat(ident,"_",lunid) = "{value}"]/../../name'
-            )
-            if len(search) > 0:
-                return search[0].text
+            if geom_xml:
+                xml = geom_xml
+            else:
+                xml = geom.class_by_name('DISK').xml
+
+            info = value.split('_')
+            info_len = len(info)
+            if info_len < 2:
+                # nothing to do return
+                return
+            elif info_len == 2:
+                _ident = info[0]
+                _lunid = info[1]
+            else:
+                # vmware nvme disks look like `VMware NVME_0000_a9d1a9a7feaf1d66000c296f092d9204`
+                # so we need to account for it
+                _lunid = info[-1]
+                _ident = value[:-len(_lunid)].rstrip('_')
+
+            found_ident = xml.find(f'.//provider/config[ident = "{_ident}"]/../../name')
+            if found_ident is not None:
+                found_lunid = xml.find(f'.//provider/config[lunid = "{_lunid}"]/../../name')
+                if found_lunid is not None:
+                    # means the identifier and lunid given to us
+                    # matches a disk on the system so just return
+                    # the found_ident name
+                    return found_ident.text
 
         elif tp == 'devicename':
             if os.path.exists(f'/dev/{value}'):

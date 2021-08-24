@@ -11,6 +11,7 @@ from middlewared.validators import Range
 
 import asyncio
 import bidict
+from collections import defaultdict
 import errno
 import hashlib
 import re
@@ -456,7 +457,7 @@ class iSCSITargetExtentModel(sa.Model):
     __tablename__ = 'services_iscsitargetextent'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_extent_name = sa.Column(sa.String(120))
+    iscsi_target_extent_name = sa.Column(sa.String(120), unique=True)
     iscsi_target_extent_serial = sa.Column(sa.String(16))
     iscsi_target_extent_type = sa.Column(sa.String(120))
     iscsi_target_extent_path = sa.Column(sa.String(120))
@@ -1151,16 +1152,20 @@ class iSCSITargetService(CRUDService):
         datastore = 'services.iscsitarget'
         datastore_prefix = 'iscsi_target_'
         datastore_extend = 'iscsi.target.extend'
+        datastore_extend_context = 'iscsi.target.extend_context'
 
     @private
-    async def extend(self, data):
+    async def extend(self, data, context):
         data['mode'] = data['mode'].upper()
-        data['groups'] = await self.middleware.call(
-            'datastore.query',
-            'services.iscsitargetgroups',
-            [('iscsi_target', '=', data['id'])],
-        )
-        for group in data['groups']:
+        data['groups'] = context['groups'][data['id']]
+        return data
+
+    @private
+    async def extend_context(self, extra):
+        groups = defaultdict(list)
+        for group in await self.middleware.call('datastore.query', 'services.iscsitargetgroups'):
+            groups[group['iscsi_target']['id']].append(group)
+
             group.pop('id')
             group.pop('iscsi_target')
             group.pop('iscsi_target_initialdigest')
@@ -1173,7 +1178,10 @@ class iSCSITargetService(CRUDService):
             group['authmethod'] = AUTHMETHOD_LEGACY_MAP.get(
                 group.pop('iscsi_target_authtype')
             )
-        return data
+
+        return {
+            'groups': groups,
+        }
 
     @accepts(Dict(
         'iscsi_target_create',
@@ -1393,6 +1401,10 @@ class iSCSITargetService(CRUDService):
         Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
         """
         target = await self._get_instance(id)
+        fcport_usages = await self.middleware.call('fcport.query', [['target', '=', id]])
+        if fcport_usages:
+            raise CallError(f'Target {id!r} is in use by {", ".join([e["name"] for e in fcport_usages])} fcport(s).')
+
         if await self.active_sessions_for_targets([target['id']]):
             if force:
                 self.middleware.logger.warning('Target %s is in use.', target['name'])

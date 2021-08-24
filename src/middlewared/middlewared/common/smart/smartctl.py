@@ -85,9 +85,10 @@ async def get_smartctl_args(middleware, devices, disk):
         return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"]
 
     args = [f"/dev/{disk}"]
-    p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
-    if "Unknown USB bridge" in p.stdout:
-        args = args + ["-d", "sat"]
+    if disk.startswith("da") and not await middleware.call("system.is_enterprise_ix_hardware"):
+        p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
+        if "Unknown USB bridge" in p.stdout:
+            args = args + ["-d", "sat"]
 
     return args
 

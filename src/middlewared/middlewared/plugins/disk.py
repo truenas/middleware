@@ -322,6 +322,13 @@ class DiskService(CRUDService):
 
     @private
     async def sed_unlock_all(self):
+        # on an HA system, if both controllers manage to send
+        # SED commands at the same time, then it can cause issues
+        # where, ultimately, the disks don't get unlocked
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return
+
         advconfig = await self.middleware.call('system.advanced.config')
         disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True}})
 
@@ -341,6 +348,13 @@ class DiskService(CRUDService):
 
     @private
     async def sed_unlock(self, disk_name, disk=None, _advconfig=None):
+        # on an HA system, if both controllers manage to send
+        # SED commands at the same time, then it can cause issues
+        # where, ultimately, the disks don't get unlocked
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return
+
         if _advconfig is None:
             _advconfig = await self.middleware.call('system.advanced.config')
 
@@ -416,6 +430,13 @@ class DiskService(CRUDService):
         SETUP_FAILED - Initial setup call failed
         SUCCESS - Setup successfully completed
         """
+        # on an HA system, if both controllers manage to send
+        # SED commands at the same time, then it can cause issues
+        # where, ultimately, the disks don't get unlocked
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return
+
         devname = await self.middleware.call('disk.sed_dev_name', disk_name)
 
         cp = await run('sedutil-cli', '--isValidSED', devname, check=False)
@@ -611,7 +632,9 @@ class DiskService(CRUDService):
                     await self.middleware.call('datastore.update', 'storage.disk', diskobj['disk_identifier'], diskobj)
 
         # Update all disks which were not identified as MULTIPATH, resetting attributes
-        for disk in (await self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', 'nin', mp_ids)])):
+        for disk in (
+            await self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', 'nin', mp_ids)])
+        ):
             if disk['disk_multipath_name'] or disk['disk_multipath_member']:
                 disk['disk_multipath_name'] = ''
                 disk['disk_multipath_member'] = ''

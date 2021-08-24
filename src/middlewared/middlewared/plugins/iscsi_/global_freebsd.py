@@ -1,10 +1,7 @@
-import subprocess
-
-from lxml import etree
+from xml.etree import ElementTree as ET
 
 from middlewared.service import Service
 from middlewared.utils import filter_list, run
-
 from .global_base import GlobalActionsBase
 
 
@@ -17,40 +14,52 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
         service_model = 'iscsitargetglobalconfiguration'
         namespace = 'iscsi.global'
 
-    def sessions(self, filters, options):
+    async def sessions(self, filters, options):
         """
         Get a list of currently running iSCSI sessions. This includes initiator and target names
         and the unique connection IDs.
         """
-        def transform(tag, text):
-            if tag in (
-                'target_portal_group_tag', 'max_data_segment_length', 'max_burst_length',
-                'first_burst_length',
-            ) and text.isdigit():
-                return int(text)
-            if tag in ('immediate_data', 'iser'):
-                return bool(int(text))
-            if tag in ('header_digest', 'data_digest', 'offload') and text == 'None':
-                return None
-            return text
-
-        cp = subprocess.run(['ctladm', 'islist', '-x'], capture_output=True, text=True)
-        connections = etree.fromstring(cp.stdout)
+        tags = {
+            'first': (
+                'target_portal_group_tag',
+                'max_data_segment_length',
+                'max_burst_length',
+                'first_burst_length'
+            ),
+            'second': (
+                'immediate_data',
+                'iser'
+            ),
+            'third': (
+                'header_digest',
+                'data_digest',
+                'offload',
+            ),
+        }
+        xml = (await run(['ctladm', 'islist', '-x'], check=False, encoding='utf8')).stdout
         sessions = []
-        for connection in connections.xpath("//connection"):
-            sessions.append({
-                i.tag: transform(i.tag, i.text) for i in connection.iterchildren()
-            })
+        for connection in ET.fromstring(xml).findall('.//connection'):
+            for j in connection:
+                if j.tag in tags['first'] and j.text.isdigit():
+                    sessions.append({j.tag: int(j.text)})
+                elif j.tag in tags['second']:
+                    sessions.append({j.tag: bool(int(j.text))})
+                elif j.tag in tags['third'] and j.text == 'None':
+                    sessions.append({j.tag: None})
+
         return filter_list(sessions, filters, options)
 
     async def terminate_luns_for_pool(self, pool_name):
-        cp = await run(['ctladm', 'devlist', '-b', 'block', '-x'], check=False, encoding='utf8')
-        for lun in etree.fromstring(cp.stdout).xpath('//lun'):
+        xml = (await run(
+            ['ctladm', 'devlist', '-b', 'block', '-x'],
+            check=False,
+            encoding='utf8'
+        )).stdout
+        for lun in ET.fromstring(xml).findall('.//lun'):
             lun_id = lun.attrib['id']
 
-            try:
-                path = lun.xpath('//file')[0].text
-            except IndexError:
+            path = lun.find('.//file').text
+            if path is None:
                 continue
 
             if path.startswith(f'/dev/zvol/{pool_name}/'):

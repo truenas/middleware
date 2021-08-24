@@ -8,7 +8,7 @@ import sys
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import DELETE, GET, POST, PUT, SSH_TEST
+from functions import DELETE, GET, POST, SSH_TEST
 from auto_config import user, password, ip
 
 DESTINATION = '127.1.1.1'

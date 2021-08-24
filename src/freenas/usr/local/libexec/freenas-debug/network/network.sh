@@ -30,93 +30,45 @@
 network_opt() { echo n; }
 network_help() { echo "Dump Network Configuration"; }
 network_directory() { echo "Network"; }
-get_gw_in_linux_for_ip()
-{
-	gw=""
-	output=$(ip route get "$1" from "$2" 2> /dev/null)
-	if [ $(echo "$output" | grep -c "via") -eq 1 ]; then
-		gw=$(echo "$output" | cut -d ' ' -f 5 | head -n 1)
-        fi
-	echo "$gw"
-}
 network_func()
 {
 	section_header "Hostname"
 	hostname
 	section_footer
 
-	#
-	#	Dump hosts configuration
-	#
 	section_header "Hosts File (/etc/hosts)"
 	sc "/etc/hosts"
 	section_footer
 
-	#
-	#	Dump resolver information
-	#
 	section_header "/etc/resolv.conf"
 	sc /etc/resolv.conf 2>/dev/null
 	section_footer
 
 	section_header "Interfaces"
-	if is_linux; then
-		interfaces=$(ls /sys/class/net)
-	else
-		interfaces=$(ifconfig -l)
-	fi
-	for i in $interfaces
-	do
+	for i in $(ifconfig -l); do
 		echo
-		if is_linux; then
-			ip address show dev "$i"
-			grep -iq 'up' /sys/class/net/"$i"/operstate
-			iface_up=$?
-		else
-			ifconfig -vvv ${i}
-			ifconfig ${i} | grep -q '\bUP\b'
-			iface_up=$?
-		fi
-
+		ifconfig -vvv ${i}
+		ifconfig ${i} | grep -q '\bUP\b'
+		iface_up=$?
 		echo
 
-		if [ "$iface_up" -eq 0 ];
-		then
-			if is_linux; then
-				ips=$(ip address show dev ${i} | grep '\binet\b' | awk '{ print $2 }' | cut -d'/' -f1 | xargs)
-				ips6=$(ip address show dev ${i} | grep '\binet6\b' | awk '{ print $2 }' | cut -d'/' -f1 | xargs)
-			else
-				ips=$(ifconfig ${i}|grep '\binet\b'|awk '{ print $2 }'|xargs)
-				ips6=$(ifconfig ${i}|grep '\binet6\b'|awk '{ print $2 }'|xargs)
-			fi
+		if [ "$iface_up" -eq 0 ]; then
+			ips=$(ifconfig ${i}|grep '\binet\b'|awk '{ print $2 }'|xargs)
+			ips6=$(ifconfig ${i}|grep '\binet6\b'|awk '{ print $2 }'|xargs)
 
-			if [ -n "${ips}" ]
-			then
-				for ip in ${ips}
-				do
-					if is_linux; then
-						gw=$(get_gw_in_linux_for_ip "8.8.8.8" "$ip")
-					else
-						gw=$(route -n show -inet ${ip}|grep gateway|xargs)
-					fi
-					if [ -n "${gw}" ]
-					then
+			if [ -n "${ips}" ]; then
+				for ip in ${ips}; do
+					gw=$(route -n show -inet ${ip}|grep gateway|xargs)
+					if [ -n "${gw}" ]; then
 						echo "${ip} gateway ${gw}"
 					fi
 				done
 			fi
 
-			if [ -n "${ips6}" ]
-			then
-				for ip6 in ${ips6}
-				do
-					if is_linux; then
-						gw=$(get_gw_in_linux_for_ip "2001:4860:4860::8888" "$ip6")
-					else
-						gw=$(route -n show -inet6 ${ip6}|grep gateway|xargs)
-					fi
-					if [ -n "${gw}" ]
-					then
+			if [ -n "${ips6}" ]; then
+				for ip6 in ${ips6}; do
+					gw=$(route -n show -inet6 ${ip6}|grep gateway|xargs)
+					if [ -n "${gw}" ]; then
 						echo "${ip6} gateway ${gw}"
 					fi
 				done
@@ -125,12 +77,37 @@ network_func()
 	done
 	section_footer
 
-	section_header "Default Route"
-	if is_linux; then
-		ip route show default | awk '/default/ {print $3}'
-	else
-		route -n show default|grep gateway|awk '{ print $2 }'
+	# grab the interfaces marked critical for failover
+	# if this is an HA system
+	is_ha=$(midclt call failover.licensed)
+	if [ "$is_ha" = "True" ]; then
+		section_header "Interfaces marked critical for failover"
+		ints=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
+		SELECT
+			int_interface as 'Interface',
+			int_ipv4address as 'Node A IP',
+			int_ipv4address_b as 'Node B IP',
+			int_v4netmaskbit as 'CIDR',
+			int_group as 'Group',
+			int_vhid as 'VHID',
+			int_vip as 'VIP',
+			int_link_address as 'MAC address',
+			int_options as 'Options'
+		FROM
+			network_interfaces
+		WHERE
+			int_critical = 1")
+
+		if [ -n "${ints}" ]; then
+			echo "$ints"
+		else
+			echo "No interfaces marked critical for failover"
+		fi
+		section_footer
 	fi
+
+	section_header "Default Route"
+	route -n show default|grep gateway|awk '{ print $2 }'
 	section_footer
 
 	section_header "Routing tables (netstat -nrW)"
@@ -141,25 +118,18 @@ network_func()
 	arp -an
 	section_footer
 
-	if is_freebsd; then
-		section_header "mbuf statistics (netstat -m)"
-		netstat -m
-		section_footer
-	fi
+	section_header "mbuf statistics (netstat -m)"
+	netstat -m
+	section_footer
 
-	if is_linux; then
-		section_header "Interface statistics (ip -s addr)"
-		ip -s addr
-	else
-		section_header "Interface statistics (netstat -in)"
-		netstat -in
-	fi
+	section_header "Interface statistics (netstat -in)"
+	netstat -in
 	section_footer
 
 	section_header "protocols - 'netstat -p protocol -s'"
-    for proto in ip arp udp tcp icmp ; do
-	netstat -p $proto -s
-    done
+	for proto in ip arp udp tcp icmp; do
+		netstat -p $proto -s
+	done
 	section_footer
 
 	section_header "Open connections and listening sockets (sockstat)"

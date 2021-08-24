@@ -142,6 +142,11 @@ class RESTfulAPI(object):
                     res_kwargs['post'] = methodname
                 else:
                     res_kwargs['get'] = methodname
+                for rest_method in map(str.lower, (method['extra_methods'] or [])):
+                    assert rest_method in ('get',)
+                    # Only allow get for now as that's the only use case we have for now NAS-110243
+                    res_kwargs[rest_method] = methodname
+
                 Resource(self, self.middleware, short_methodname, service['config'], parent=parent, **res_kwargs)
             await asyncio.sleep(0)  # Force context switch
 

@@ -9,17 +9,12 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
-from auto_config import scale
-group = 'root' if scale else 'wheel'
-path = '/etc' if scale else '/boot'
-path_list = ['default', 'kernel', 'zfs', 'ssh'] if scale \
-    else ['kernel', 'mbr', 'zfs', 'modules']
-random_path = ['/boot/grub', '/root', '/bin', '/usr/bin'] if scale \
-    else ['/boot/kernel', '/root', '/bin', '/usr/bin']
+path_list = ['kernel', 'mbr', 'zfs', 'modules']
+random_path = ['/boot/kernel', '/root', '/bin', '/usr/bin']
 
 
 def test_01_get_filesystem_listdir():
-    results = POST('/filesystem/listdir/', {'path': path})
+    results = POST('/filesystem/listdir/', {'path': '/boot'})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     assert len(results.json()) > 0, results.text
@@ -30,14 +25,14 @@ def test_01_get_filesystem_listdir():
 @pytest.mark.parametrize('name', path_list)
 def test_02_looking_at_listdir_path_(name):
     for dline in listdir.json():
-        if dline['path'] == f'{path}/{name}':
+        if dline['path'] == f'/boot/{name}':
             assert dline['type'] in ('DIRECTORY', 'FILE'), listdir.text
             assert dline['uid'] == 0, listdir.text
             assert dline['gid'] == 0, listdir.text
             assert dline['name'] == name, listdir.text
             break
     else:
-        raise AssertionError(f'/{path}/{name} not found')
+        raise AssertionError(f'/boot/{name} not found')
 
 
 @pytest.mark.parametrize('path', random_path)
@@ -56,5 +51,5 @@ def test_03_get_filesystem_stat_(path):
     assert isinstance(results.json()['inode'], int) is True, results.text
     assert results.json()['nlink'] in (1, 2, 3, 4, 5), results.text
     assert results.json()['user'] == 'root', results.text
-    assert results.json()['group'] == group, results.text
+    assert results.json()['group'] == 'wheel', results.text
     assert results.json()['acl'] is False, results.text

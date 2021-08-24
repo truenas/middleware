@@ -1,4 +1,5 @@
 from datetime import timedelta
+import socket
 import enum
 import json
 import logging
@@ -243,7 +244,7 @@ class AlertService:
 
     async def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = await self.middleware.call("system.product_name")
-        hostname = (await self.middleware.call("system.info"))["hostname"]
+        hostname = socket.gethostname()
         if not await self.middleware.call("system.is_freenas"):
             node_map = await self.middleware.call("alert.node_map")
         else:
@@ -260,7 +261,7 @@ class ThreadedAlertService(AlertService):
 
     def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = self.middleware.call_sync("system.product_name")
-        hostname = self.middleware.call_sync("system.info")["hostname"]
+        hostname = socket.gethostname()
         if not self.middleware.call_sync("system.is_freenas"):
             node_map = self.middleware.call_sync("alert.node_map")
         else:

@@ -127,8 +127,8 @@ def generate_ha_loader_config(middleware):
 
 
 def generate_xen_loader_config(middleware):
-    proc = subprocess.run(["/usr/local/sbin/dmidecode", "-s", "system-product-name"], stdout=subprocess.PIPE)
-    if proc.returncode == 0 and proc.stdout.strip() == b"HVM domU":
+    proc = middleware.call_sync('system.dmidecode_info')['system-product-name']
+    if proc == "HVM domU":
         return ['hint.hpet.0.clock="0"']
 
     return []

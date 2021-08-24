@@ -270,7 +270,7 @@ class KerberosService(ConfigService):
                                     f"with principal [{data['kerberos_principal']}] "
                                     f"failed: {kinit.stderr.decode()}")
 
-                elif dstype == DSType.LDAP:
+                elif dstype == DSType.DS_TYPE_LDAP:
                     raise CallError(f"kinit with principal [{data['kerberos_principal']}] "
                                     f"failed: {kinit.stderr.decode()}")
             return True
@@ -278,7 +278,7 @@ class KerberosService(ConfigService):
         if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY:
                 principal = f'{data["bindname"]}@{data["domainname"].upper()}'
 
-        elif dstype == DSType.LDAP:
+        elif dstype == DSType.DS_TYPE_LDAP:
                 krb_realm = await self.middleware.call(
                     'kerberos.realm.query',
                     [('id', '=', data['kerberos_realm'])],

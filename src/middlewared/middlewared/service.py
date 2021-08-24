@@ -175,6 +175,23 @@ def pass_app(rest=False):
     return wrapper
 
 
+def rest_api_metadata(extra_methods=None):
+    """
+    Allow having endpoints specify explicit rest methods.
+
+    Explicit methods should be a list which specifies what methods the function should be available
+    at other then the default one it is already going to be. This is useful when we want to maintain
+    backwards compatibility with endpoints which were not expecting payload before but are now and users
+    still would like to consume them with previous method which would be GET whereas it's POST now.
+    """
+    def wrapper(fn):
+        fn._rest_api_metadata = {
+            'extra_methods': extra_methods,
+        }
+        return fn
+    return wrapper
+
+
 def periodic(interval, run_on_start=True):
     def wrapper(fn):
         fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
@@ -969,6 +986,8 @@ class CoreService(Service):
                     'no_auth_required': hasattr(method, '_no_auth_required'),
                     'filterable': hasattr(method, '_filterable'),
                     'pass_application': hasattr(method, '_pass_app'),
+                    'extra_methods': method._rest_api_metadata['extra_methods'] if hasattr(
+                        method, '_rest_api_metadata') else None,
                     'require_websocket': hasattr(method, '_pass_app') and not method._pass_app['rest'],
                     'job': hasattr(method, '_job'),
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],

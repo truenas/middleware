@@ -140,7 +140,7 @@ def test_11_add_plexmediaserver_plugin():
 
 
 def test_12_verify_plexmediaserver_plugin_job_is_successfull():
-    job_status = wait_on_job(JOB_ID, 700)
+    job_status = wait_on_job(JOB_ID, 1200)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 

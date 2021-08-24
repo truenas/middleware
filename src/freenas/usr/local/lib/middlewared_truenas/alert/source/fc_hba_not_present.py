@@ -1,12 +1,5 @@
-# Copyright (c) 2018 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 import subprocess
-
-from lxml import etree
+from xml.etree import ElementTree as ET
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
@@ -25,14 +18,13 @@ class FCHBANotPresentAlertSource(ThreadedAlertSource):
 
     def check_sync(self):
         ports = set()
-        for e in (
-            etree.fromstring(subprocess.check_output(["ctladm", "portlist", "-x"], encoding="utf-8")).
-                xpath("//frontend_type[text()='camtgt']")
-        ):
-            port = e.getparent()
-            ports.add((port.xpath("./port_name")[0].text,
-                       port.xpath("./physical_port")[0].text,
-                       port.xpath("./virtual_port")[0].text))
+        xml = subprocess.check_output(["ctladm", "portlist", "-x"], encoding="utf-8")
+        for port in ET.fromstring(xml).findall(".//*[frontend_type='camtgt']"):
+            ports.add((
+                port.find("./port_name").text,
+                port.find("./physical_port").text,
+                port.find("./virtual_port").text
+            ))
 
         alerts = []
         for channeltotarget in self.middleware.call_sync("datastore.query", "services.fibrechanneltotarget"):

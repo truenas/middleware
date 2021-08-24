@@ -208,7 +208,7 @@ class CronJobService(CRUDService):
         Int('id'),
         Bool('skip_disabled', default=False),
     )
-    @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True)
+    @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True, lock_queue_size=1)
     def run(self, job, id, skip_disabled):
         """
         Job to run cronjob task of `id`.

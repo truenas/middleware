@@ -291,7 +291,7 @@ class PoolService(Service):
 
         await self.middleware.call('pool.sync_encrypted', oid)
 
-        to_restart = list(set(options['services_restart']) | {'system_datasets', 'disk'} - {'jails', 'vms'})
+        to_restart = [[i] for i in set(options['services_restart']) | {'system_datasets', 'disk'} - {'jails', 'vms'}]
         restart_job = await self.middleware.call('core.bulk', 'service.restart', to_restart)
         statuses = await restart_job.wait()
         for idx, srv_status in enumerate(statuses):

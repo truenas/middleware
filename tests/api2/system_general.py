@@ -6,7 +6,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, SSH_TEST
+from functions import PUT, GET, SSH_TEST
 from auto_config import user, password, ip
 
 TIMEZONE = "America/New_York"

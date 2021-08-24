@@ -64,10 +64,11 @@ class DiskTempPlugin(RRDBase):
         return 'Disk Temperature {identifier}'
 
     def get_identifiers(self):
+        disks_for_temperature_monitoring = self.middleware.call_sync('disk.disks_for_temperature_monitoring')
         ids = []
         for entry in glob.glob(f'{self._base_path}/disktemp-*'):
             ident = entry.rsplit('-', 1)[-1]
-            if os.path.exists(os.path.join(entry, 'temperature.rrd')):
+            if ident in disks_for_temperature_monitoring and os.path.exists(os.path.join(entry, 'temperature.rrd')):
                 ids.append(ident)
         ids.sort(key=RRDBase._sort_disks)
         return ids

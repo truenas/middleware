@@ -7,8 +7,8 @@ import enum
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user, scale, hostname
+from functions import PUT, POST, GET, DELETE, wait_on_job
+from auto_config import ip, pool_name
 from pytest_dependency import depends
 from protocols import SMB
 
@@ -16,7 +16,6 @@ dataset = f"{pool_name}/smb-proto"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "SMBPROTO"
 smb_path = "/mnt/" + dataset
-group = 'root' if scale else 'wheel'
 
 smb_acl = [
     {
@@ -44,14 +43,14 @@ smb_acl = [
 
 guest_path_verification = {
     "user": "shareuser",
-    "group": group,
+    "group": "wheel",
     "acl": True
 }
 
 
 root_path_verification = {
     "user": "root",
-    "group": group,
+    "group": "wheel",
     "acl": False
 }
 
@@ -103,11 +102,11 @@ def test_003_creating_shareuser_to_test_acls(request):
 def test_004_changing_dataset_permissions_of_smb_dataset(request):
     depends(request, ["SMB_USER_CREATED"])
     global job_id
-    smb_acl[0]['id']=next_uid
+    smb_acl[0]['id'] = next_uid
     payload = {
         "acl": smb_acl,
         "user": SMB_USER,
-        "group": group,
+        "group": "wheel",
     }
     results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
     assert results.status_code == 200, results.text
@@ -192,6 +191,7 @@ def test_010_check_dosmode_create(request, dm):
             continue
         # Archive is automatically set by kernel
         to_check = f['attrib'] & ~DOSmode.ARCHIVE.value
+        c.close(fd)
         c.disconnect()
         assert (to_check & dm.value) != 0, f
 
@@ -264,6 +264,7 @@ def test_052_check_dosmode_create_smb1(request, dm):
             continue
         # Archive is automatically set by kernel
         to_check = f['attrib'] & ~DOSmode.ARCHIVE.value
+        c.close(fd)
         c.disconnect()
         assert (to_check & dm.value) != 0, f
 
@@ -316,6 +317,7 @@ def test_062_write_stream_large_offset_smb2(request):
 
     fd2 = c.create_file("streamstestfile:smb2_stream", "w")
     contents = c.read(fd2, 131072, 5)
+    assert contents == b'test2', contents
     c.close(fd2)
     c.disconnect()
 
@@ -372,6 +374,7 @@ def test_066_write_stream_large_offset_smb1(request):
 
     fd2 = c.create_file("streamstestfile:smb1_stream", "w")
     contents = c.read(fd2, 131072, 5)
+    assert contents == b'test2', contents
     c.close(fd2)
     c.disconnect()
 

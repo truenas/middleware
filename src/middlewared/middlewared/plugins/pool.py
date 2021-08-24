@@ -42,6 +42,9 @@ GELI_KEYPATH = '/data/geli'
 
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
+ZFS_CHECKSUM_CHOICES = [
+    'ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN',
+]
 ZFS_ENCRYPTION_ALGORITHM_CHOICES = [
     'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
 ]
@@ -322,7 +325,7 @@ class PoolService(CRUDService):
                     ('pool', 'in', vol_names),
                     ('type', 'in', types),
                 ],
-                {'extra': {'retrieve_properties': False}},
+                {'extra': {'retrieve_properties': False}, 'order_by': ['name']},
             )
         ]
 
@@ -407,11 +410,13 @@ class PoolService(CRUDService):
         options = options or {}
         if isinstance(x, dict):
             if options.get('device_disk', True):
+                if 'label_to_dev_disk_cache' not in options:
+                    options['label_to_dev_disk_cache'] = self.middleware.call_sync('disk.label_to_dev_disk_cache')
                 path = x.get('path')
                 if path is not None:
                     device = disk = None
                     if path.startswith('/dev/'):
-                        args = [path[5:]] + ([] if osc.IS_LINUX else [options.get('geom_scan', True)])
+                        args = [path[5:], False, options['label_to_dev_disk_cache']]
                         device = self.middleware.call_sync('disk.label_to_dev', *args)
                         disk = self.middleware.call_sync('disk.label_to_disk', *args)
                     x['device'] = device
@@ -509,6 +514,7 @@ class PoolService(CRUDService):
         Str('name', required=True),
         Bool('encryption', default=False),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
+        Str('checksum', enum=[None] + ZFS_CHECKSUM_CHOICES, default=None, null=True),
         Dict(
             'encryption_options',
             Bool('generate_key', default=False),
@@ -690,6 +696,9 @@ class PoolService(CRUDService):
         if dedup:
             fsoptions['dedup'] = dedup.lower()
 
+        if data['checksum'] is not None:
+            fsoptions['checksum'] = data['checksum'].lower()
+
         cachefile_dir = os.path.dirname(ZPOOL_CACHE_FILE)
         if not os.path.isdir(cachefile_dir):
             os.makedirs(cachefile_dir)
@@ -791,6 +800,7 @@ class PoolService(CRUDService):
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'encryption'}),
         ('rm', {'name': 'deduplication'}),
+        ('rm', {'name': 'checksum'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
     @job(lock='pool_createupdate')
@@ -1947,6 +1957,13 @@ class PoolDatasetService(CRUDService):
         namespace = 'pool.dataset'
 
     @accepts()
+    async def checksum_choices(self):
+        """
+        Retrieve checksums supported for ZFS dataset.
+        """
+        return {v: v for v in ZFS_CHECKSUM_CHOICES if v != 'OFF'}
+
+    @accepts()
     async def compression_choices(self):
         """
         Retrieve compression algorithm supported by ZFS.
@@ -2776,6 +2793,7 @@ class PoolDatasetService(CRUDService):
                 ('xattr', None, str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
+                ('checksum', None, str.upper),
                 ('exec', None, str.upper),
                 ('sync', None, str.upper),
                 ('compression', None, str.upper),
@@ -2851,6 +2869,7 @@ class PoolDatasetService(CRUDService):
         Int('copies'),
         Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
         Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
+        Str('checksum', enum=ZFS_CHECKSUM_CHOICES),
         Str('readonly', enum=['ON', 'OFF']),
         Str('recordsize', enum=[
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
@@ -2907,10 +2926,11 @@ class PoolDatasetService(CRUDService):
         """
         verrors = ValidationErrors()
 
+        parent = None
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         else:
-            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
+            parent = await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
 
         mountpoint = os.path.join('/mnt', data['name'])
         if os.path.exists(mountpoint):
@@ -2927,11 +2947,12 @@ class PoolDatasetService(CRUDService):
             if osc.IS_FREEBSD:
                 data['aclmode'] = 'RESTRICTED'
 
-        if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
-            verrors.add(
-                'pool_dataset_create.name',
-                f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
-            )
+        if parent:
+            if parent['encrypted'] and not parent['key_loaded']:
+                verrors.add(
+                    'pool_dataset_create.name',
+                    f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
+                )
 
         encryption_dict = {}
         inherit_encryption_properties = data.pop('inherit_encryption')
@@ -2989,6 +3010,7 @@ class PoolDatasetService(CRUDService):
             ('acltype', None, str.lower),
             ('atime', None, str.lower),
             ('casesensitivity', None, str.lower),
+            ('checksum', None, str.lower),
             ('comments', 'org.freenas:description', None),
             ('compression', None, str.lower),
             ('copies', None, lambda x: str(x)),
@@ -3061,6 +3083,7 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('atime')),
         ('edit', _add_inherit('exec')),
         ('edit', _add_inherit('sync')),
+        ('edit', _add_inherit('checksum')),
         ('edit', _add_inherit('compression')),
         ('edit', _add_inherit('deduplication')),
         ('edit', _add_inherit('readonly')),
@@ -3112,6 +3135,7 @@ class PoolDatasetService(CRUDService):
         properties_definitions = (
             ('aclmode', None, str.lower, True),
             ('atime', None, str.lower, True),
+            ('checksum', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
             ('sync', None, str.lower, True),
             ('compression', None, str.lower, True),
@@ -3162,7 +3186,8 @@ class PoolDatasetService(CRUDService):
 
         parent = await self.middleware.call(
             'zfs.dataset.query',
-            [('id', '=', data['name'].rsplit('/')[0])]
+            [('id', '=', data['name'].rsplit('/')[0])],
+            {'extra': {'recursive': False}},
         )
 
         if not parent:
@@ -3233,6 +3258,8 @@ class PoolDatasetService(CRUDService):
                             f'{schema}.volsize',
                             'Volume size should be a multiple of volume block size'
                         )
+
+        return parent
 
     def __handle_zfs_set_property_error(self, e, properties_definitions):
         zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
@@ -3720,23 +3747,37 @@ class PoolDatasetService(CRUDService):
         """
         pool = await self.middleware.call('pool.query', [['name', '=', pool]])
         if not pool:
-            raise CallError('Pool not found.', errno.ENOENT)
-        pool = pool[0]
-        numdisks = 4
-        for vdev in pool['topology']['data']:
+            raise CallError(f'"{pool}" not found.', errno.ENOENT)
+
+        """
+        Cheatsheat for blocksizes is as follows:
+        2w/3w mirror = 16K
+        3wZ1, 4wZ2, 5wZ3 = 16K
+        4w/5wZ1, 5w/6wZ2, 6w/7wZ3 = 32K
+        6w/7w/8w/9wZ1, 7w/8w/9w/10wZ2, 8w/9w/10w/11wZ3 = 64K
+        10w+Z1, 11w+Z2, 12w+Z3 = 128K
+
+        If the zpool was forcefully created with mismatched
+        vdev geometry (i.e. 3wZ1 and a 5wZ1) then we calculate
+        the blocksize based on the largest vdev of the zpool.
+        """
+        maxdisks = 1
+        for vdev in pool[0]['topology']['data']:
             if vdev['type'] == 'RAIDZ1':
-                num = len(vdev['children']) - 1
+                disks = len(vdev['children']) - 1
             elif vdev['type'] == 'RAIDZ2':
-                num = len(vdev['children']) - 2
+                disks = len(vdev['children']) - 2
             elif vdev['type'] == 'RAIDZ3':
-                num = len(vdev['children']) - 3
+                disks = len(vdev['children']) - 3
             elif vdev['type'] == 'MIRROR':
-                num = 1
+                disks = maxdisks
             else:
-                num = len(vdev['children'])
-            if num > numdisks:
-                numdisks = num
-        return '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
+                disks = len(vdev['children'])
+
+            if disks > maxdisks:
+                maxdisks = disks
+
+        return f'{max(16, min(128, 2 ** ((maxdisks * 8) - 1).bit_length()))}K'
 
     @item_method
     @accepts(Str('id', required=True))
@@ -3888,7 +3929,10 @@ class PoolDatasetService(CRUDService):
                 else:
                     self.logger.info('Killing process %r (%r) that holds dataset %r', process['pid'],
                                      process['cmdline'], oid)
-                    await self.middleware.call('service.terminate_process', process['pid'])
+                    try:
+                        await self.middleware.call('service.terminate_process', process['pid'])
+                    except CallError as e:
+                        self.logger.warning('Error killing process: %r', e)
 
         processes = await self.middleware.call('pool.dataset.processes', oid)
         if not processes:

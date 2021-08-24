@@ -12,7 +12,12 @@ logger = logging.getLogger(__name__)
 async def annotate_disk_for_smart(middleware, devices, disk):
     args = await get_smartctl_args(middleware, devices, disk)
     if args:
-        if await ensure_smart_enabled(args):
+        if (
+            # On Enterprise hardware we only use S.M.A.R.T.-enabled disks, there is no need to check for this
+            # every time.
+            await middleware.call('system.is_enterprise_ix_hardware') or
+            await ensure_smart_enabled(args)
+        ):
             args.extend(["-a"])
             args.extend(["-d", "removable"])
             return disk, dict(smartctl_args=args)

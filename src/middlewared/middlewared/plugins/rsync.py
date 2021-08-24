@@ -296,7 +296,13 @@ class RsyncTaskService(TaskPathService):
 
     @private
     async def rsync_task_extend(self, data, context):
-        data['extra'] = shlex.split(data['extra'].replace('"', r'"\"').replace("'", r'"\"'))
+        try:
+            data['extra'] = shlex.split(data['extra'].replace('"', r'"\"').replace("'", r'"\"'))
+        except ValueError:
+            # This is to handle the case where the extra value is misconfigured for old cases
+            # Moving on, we are going to verify that it can be split successfully using shlex
+            data['extra'] = data['extra'].split()
+
         for field in ('mode', 'direction'):
             data[field] = data[field].upper()
         Cron.convert_db_format_to_schedule(data)
@@ -348,10 +354,11 @@ class RsyncTaskService(TaskPathService):
         if not remote_host:
             verrors.add(f'{schema}.remotehost', 'Please specify a remote host')
 
-        if data.get('extra'):
-            data['extra'] = ' '.join(data['extra'])
-        else:
-            data['extra'] = ''
+        data['extra'] = ' '.join(data['extra'])
+        try:
+            shlex.split(data['extra'].replace('"', r'"\"').replace("'", r'"\"'))
+        except ValueError as e:
+            verrors.add(f'{schema}.extra', f'Please specify valid value: {e}')
 
         mode = data.get('mode')
         if not mode:
@@ -499,7 +506,7 @@ class RsyncTaskService(TaskPathService):
         Bool('preserveperm'),
         Bool('preserveattr'),
         Bool('delayupdates'),
-        List('extra', items=[Str('extra')]),
+        List('extra', items=[Str('extra')], default=[]),
         Bool('enabled', default=True),
         register=True,
     ))

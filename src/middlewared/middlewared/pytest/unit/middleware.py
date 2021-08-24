@@ -11,11 +11,14 @@ class Middleware(dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self['failover.licensed'] = Mock(return_value=False)
         self['system.is_freenas'] = Mock(return_value=True)
         self.__schemas = Schemas()
 
         self.call_hook = CoroutineMock()
         self.call_hook_inline = Mock()
+        self.event_register = Mock()
+        self.send_event = Mock()
 
         self.logger = logging.getLogger("middlewared")
 

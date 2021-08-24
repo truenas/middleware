@@ -9,18 +9,13 @@ import sys
 import json
 import os
 import time
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
-from auto_config import pool_name, scale, password, user, ip
-if scale is True:
-    shell = '/bin/bash'
-else:
-    shell = '/bin/csh'
-from pytest_dependency import depends
-
-group = 'root' if scale else 'wheel'
-group_id = GET(f'/group/?group={group}').json()[0]['id']
+from auto_config import pool_name, password, user, ip
+shell = '/bin/csh'
+group_id = GET('/group/?group=wheel').json()[0]['id']
 
 dataset = f"{pool_name}/test_homes"
 dataset_url = dataset.replace('/', '%2F')

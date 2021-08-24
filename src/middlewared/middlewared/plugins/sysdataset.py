@@ -322,12 +322,14 @@ class SystemDatasetService(ConfigService):
             i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
         }
         for dataset in datasets:
+            props = {'mountpoint': 'legacy', 'readonly': 'off'}
             is_cores_ds = dataset.endswith('/cores')
-            dataset_quota = {'quota': '1G'} if is_cores_ds else {}
+            if is_cores_ds:
+                props['quota'] = '1G'
             if dataset not in datasets_prop:
                 await self.middleware.call('zfs.dataset.create', {
                     'name': dataset,
-                    'properties': {'mountpoint': 'legacy', **dataset_quota},
+                    'properties': props,
                 })
                 createdds = True
             elif is_cores_ds and datasets_prop[dataset]['used']['parsed'] >= 1024 ** 3:
@@ -335,16 +337,13 @@ class SystemDatasetService(ConfigService):
                     await self.middleware.call('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})
                     await self.middleware.call('zfs.dataset.create', {
                         'name': dataset,
-                        'properties': {'mountpoint': 'legacy', **dataset_quota},
+                        'properties': props,
                     })
                 except Exception:
                     self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
             else:
-                update_props_dict = {}
-                if datasets_prop[dataset]['mountpoint']['value'] != 'legacy':
-                    update_props_dict['mountpoint'] = {'value': 'legacy'}
-                if dataset_quota and datasets_prop[dataset]['quota']['value'] != '1G':
-                    update_props_dict['quota'] = {'value': '1G'}
+                update_props_dict = {k: {'value': v} for k, v in props.items()
+                                     if datasets_prop[dataset][k]['value'] != v}
                 if update_props_dict:
                     await self.middleware.call(
                         'zfs.dataset.update',

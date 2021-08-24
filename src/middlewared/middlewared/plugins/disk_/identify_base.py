@@ -1,6 +1,6 @@
 import re
 
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Dict, Str, Bool, Any
 from middlewared.service import private, ServicePartBase
 
 
@@ -29,6 +29,10 @@ class DiskIdentifyBase(ServicePartBase):
         """
 
     @private
-    @accepts(Str('identifier'), Dict('disks', additional_attrs=True))
-    def identifier_to_device(self, ident, disks=None):
+    @accepts(
+        Str('identifier'),
+        Bool('geom_scan'),
+        Any('geom_xml'),
+    )
+    def identifier_to_device(self, ident, geom_scan=True, geom_xml=None):
         raise NotImplementedError()

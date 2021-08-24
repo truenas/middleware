@@ -1,9 +1,3 @@
-# Copyright (c) 2019 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from collections import OrderedDict
 import logging
 import os
@@ -45,11 +39,13 @@ STATUS_DESC = [
 ]
 
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
-R_SERIES_REGEX = re.compile(r"ECStream (FS2|DSS212S[ps])")
+R_SERIES_REGEX = re.compile(r"(ECStream|iX) (FS1|FS2|DSS212S[ps])")
+R20_REGEX = re.compile(r"(iX (TrueNAS R20|2012S)p|SMC SC826-P)")
 R50_REGEX = re.compile(r"iX eDrawer4048S([12])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
 ES24F_REGEX = re.compile(r"(ECStream|iX) 2024J([ps])")
+MINI_REGEX = re.compile(r"(TRUE|FREE)NAS-MINI")
 
 
 class EnclosureLabelModel(sa.Model):
@@ -106,13 +102,14 @@ class EnclosureService(CRUDService):
                         "has_slot_status": has_slot_status
                     })
 
-            enclosures.append(enclosure)
+            # Ensure R50's first expander is first in the list independent of cabling
+            if "eDrawer4048S1" in enclosure["name"]:
+                enclosures.insert(0, enclosure)
+            else:
+                enclosures.append(enclosure)
 
         enclosures.extend(self.middleware.call_sync("enclosure.m50_plx_enclosures"))
         enclosures.extend(self.middleware.call_sync("enclosure.r50_nvme_enclosures"))
-
-        enclosures = self.middleware.call_sync("enclosure.concatenate_enclosures", enclosures)
-
         enclosures = self.middleware.call_sync("enclosure.map_enclosures", enclosures)
 
         for number, enclosure in enumerate(enclosures):
@@ -145,8 +142,23 @@ class EnclosureService(CRUDService):
 
         return await self._get_instance(id)
 
-    def _get_slot(self, slot_filter, enclosure_query=None):
-        for enclosure in self.middleware.call_sync("enclosure.query", enclosure_query or []):
+    async def _build_slot_for_disks_dict(self):
+        enclosure_info = await self.middleware.call('enclosure.query')
+
+        results = {}
+        for enc in enclosure_info:
+            slots = next(filter(lambda x: x["name"] == "Array Device Slot", enc["elements"]))["elements"]
+            results.update({
+                enc["number"] * 1000 + j["slot"]: j["data"]["Device"] or None for j in slots
+            })
+
+        return results
+
+    def _get_slot(self, slot_filter, enclosure_query=None, enclosure_info=None):
+        if enclosure_info is None:
+            enclosure_info = self.middleware.call_sync("enclosure.query", enclosure_query or [])
+
+        for enclosure in enclosure_info:
             try:
                 elements = next(filter(lambda element: element["name"] == "Array Device Slot",
                                        enclosure["elements"]))["elements"]
@@ -157,8 +169,8 @@ class EnclosureService(CRUDService):
 
         raise MatchNotFound()
 
-    def _get_slot_for_disk(self, disk):
-        return self._get_slot(lambda element: element["data"]["Device"] == disk)
+    def _get_slot_for_disk(self, disk, enclosure_info=None):
+        return self._get_slot(lambda element: element["data"]["Device"] == disk, enclosure_info=enclosure_info)
 
     def _get_ses_slot(self, enclosure, element):
         if "original" in element:
@@ -203,7 +215,19 @@ class EnclosureService(CRUDService):
             raise CallError("Error setting slot status")
 
     @private
-    def sync_disk(self, id):
+    async def sync_disks(self):
+        curr_slot_info = await self._build_slot_for_disks_dict()
+        for db_entry in await self.middleware.call('datastore.query', 'storage.disk'):
+            for curr_slot, curr_disk in curr_slot_info.items():
+                if db_entry['disk_name'] == curr_disk and db_entry['disk_enclosure_slot'] != curr_slot:
+                    await self.middleware.call(
+                        'datastore.update', 'storage.disk',
+                        db_entry['disk_identifier'],
+                        {'disk_enclosure_slot': curr_slot},
+                    )
+
+    @private
+    def sync_disk(self, id, enclosure_info=None):
         disk = self.middleware.call_sync(
             'disk.query',
             [['identifier', '=', id]],
@@ -211,7 +235,7 @@ class EnclosureService(CRUDService):
         )
 
         try:
-            enclosure, element = self._get_slot_for_disk(disk["name"])
+            enclosure, element = self._get_slot_for_disk(disk["name"], enclosure_info)
         except MatchNotFound:
             disk_enclosure = None
         else:
@@ -230,8 +254,6 @@ class EnclosureService(CRUDService):
         Sync enclosure of a given ZFS pool
         """
 
-        # As we are only interfacing with SES we can skip mapping enclosures or working with non-SES enclosures
-
         encs = self.__get_enclosures()
         if len(list(encs)) == 0:
             self.logger.debug("Enclosure not found, skipping enclosure sync")
@@ -244,6 +266,8 @@ class EnclosureService(CRUDService):
 
         seen_devs = []
         label2disk = {}
+        cache = self.middleware.call_sync("disk.label_to_dev_disk_cache")
+        hardware = self.middleware.call_sync("truenas.get_chassis_hardware")
         for pool in pools:
             try:
                 pool = self.middleware.call_sync("zfs.pool.query", [["name", "=", pool]], {"get": True})
@@ -251,7 +275,7 @@ class EnclosureService(CRUDService):
                 continue
 
             label2disk.update({
-                label: self.middleware.call_sync("disk.label_to_disk", label)
+                label: self.middleware.call_sync("disk.label_to_disk", label, False, cache)
                 for label in self.middleware.call_sync("zfs.pool.get_devices", pool["id"])
             })
 
@@ -266,41 +290,36 @@ class EnclosureService(CRUDService):
                 if disk is None:
                     continue
 
-                try:
-                    element = self._get_ses_slot_for_disk(disk)
-                except MatchNotFound:
-                    pass
-                else:
-                    element.device_slot_set("fault")
-
-            # We want spares to only identify slot for Z-series
-            # See #32706
-            if self.middleware.call_sync("truenas.get_chassis_hardware").startswith("TRUENAS-Z"):
+            if hardware.startswith("TRUENAS-Z"):
+                # We want spares to have identify set on the enclosure slot for
+                # Z-series systems only see #32706 for details. Gist is that
+                # the other hardware platforms "identify" light is red which
+                # causes customer confusion because they see red and think
+                # something is wrong.
                 spare_value = "identify"
             else:
                 spare_value = "clear"
 
             for node in pool["groups"]["spare"]:
-                for vdev in node["children"]:
-                    for dev in vdev["children"]:
-                        if dev["path"] is None:
-                            continue
+                if node["path"] is None:
+                    continue
 
-                        label = dev["path"].replace("/dev/", "")
-                        disk = label2disk.get(label)
+                label = node["path"].replace("/dev/", "")
+                disk = label2disk.get(label)
+                if disk is None:
+                    continue
 
-                        if disk is None:
-                            continue
+                if node["status"] != "AVAIL":
+                    # when a hot-spare gets automatically attached to a zpool
+                    # its status is reported as "UNAVAIL"
+                    continue
 
-                        if dev["status"] != "AVAIL":
-                            continue
+                seen_devs.append(node["path"])
 
-                        seen_devs.append(dev["path"])
-
-                        element = encs.find_device_slot(disk)
-                        if element:
-                            self.logger.debug(f"{spare_value}ing bay slot for %r", disk)
-                            element.device_slot_set(spare_value)
+                element = encs.find_device_slot(disk)
+                if element:
+                    self.logger.debug(f"{spare_value}ing bay slot for %r", disk)
+                    element.device_slot_set(spare_value)
 
             """
             Go through all devs in the pool
@@ -313,11 +332,14 @@ class EnclosureService(CRUDService):
                 seen_devs.append(label)
 
                 try:
-                    element = self._get_ses_slot_for_disk(disk)
-                except MatchNotFound:
-                    pass
-                else:
-                    element.device_slot_set("clear")
+                    element = encs.find_device_slot(disk)
+                    if element:
+                        element.device_slot_set("clear")
+                except AssertionError:
+                    # happens for pmem devices since those
+                    # are NVDIMM sticks internal to each
+                    # controller
+                    continue
 
         disks = []
         for label in seen_devs:
@@ -346,42 +368,29 @@ class EnclosureService(CRUDService):
                     element.device_slot_set("clear")
 
     def __get_enclosures(self):
-        return Enclosures(self.middleware.call_sync("enclosure.get_ses_enclosures"),
-                          self.middleware.call_sync("system.info"))
+        return Enclosures(
+            self.middleware.call_sync("enclosure.get_ses_enclosures"),
+            self.middleware.call_sync("system.dmidecode_info")["system-product-name"]
+        )
 
 
 class Enclosures(object):
 
-    def __init__(self, stat, system_info):
+    def __init__(self, stat, product):
         blacklist = [
             "VirtualSES",
         ]
-        if (
-            system_info["system_product"] and
-            system_info["system_product"].startswith("TRUENAS-") and
-            "-MINI-" not in system_info["system_product"] and
-            system_info["system_product"] != "TRUENAS-R20"
-        ):
-            blacklist.append("AHCI SGPIO Enclosure 2.00")
+        if product is not None and product.startswith("TRUENAS-"):
+            if "-MINI-" not in product and product not in ["TRUENAS-R20", "TRUENAS-R20A"]:
+                blacklist.append("AHCI SGPIO Enclosure 2.00")
 
         self.__enclosures = []
-        enclosures_tail = []
         for num, data in stat.items():
-            enclosure = Enclosure(num, data, stat, system_info)
+            enclosure = Enclosure(num, data, stat, product)
             if any(s in enclosure.encname for s in blacklist):
-                continue
-            if (
-                system_info["system_product"] == "TRUENAS-R20" and
-                enclosure.encname == "AHCI SGPIO Enclosure 2.00"
-            ):
-                if enclosure.model == "R20, Drawer #2":
-                    enclosures_tail.append(enclosure)
-
                 continue
 
             self.__enclosures.append(enclosure)
-
-        self.__enclosures.extend(enclosures_tail)
 
     def __iter__(self):
         for e in list(self.__enclosures):
@@ -412,14 +421,11 @@ class Enclosures(object):
 
 class Enclosure(object):
 
-    def __init__(self, num, data, stat, system_info):
+    def __init__(self, num, data, stat, product):
         self.num = num
         self.stat = stat
-        self.system_info = system_info
-        if IS_FREEBSD:
-            self.devname = f"ses{num}"
-        else:
-            self.devname, data = data
+        self.product = product
+        self.devname = f"ses{num}"
         self.encname = ""
         self.encid = ""
         self.model = ""
@@ -545,29 +551,20 @@ class Enclosure(object):
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
             self.controller = True
-        elif R_SERIES_REGEX.match(self.encname):
-            self.model = self.system_info["system_product"].replace("TRUENAS-", "")
+        elif R_SERIES_REGEX.match(self.encname) or R20_REGEX.match(self.encname) or R50_REGEX.match(self.encname):
+            self.model = self.product.replace("TRUENAS-", "")
             self.controller = True
-            if self.model == "R20":
-                self.model = f"{self.model}, Drawer #1"
-            if self.model == "R40":
-                index = [v for v in self.stat.values() if "ECStream FS2" in v].index(data)
-                self.model = f"{self.model}, Drawer #{index + 1}"
-        elif (
-            self.system_info["system_product"] == "TRUENAS-R20" and
-            self.encname == "AHCI SGPIO Enclosure 2.00" and
-            len(data.splitlines()) == 6
-        ):
-            self.model = "R20, Drawer #2"
-            self.controller = True
-        elif m := R50_REGEX.match(self.encname):
-            self.model = f"R50, Drawer #{m.group(1)}"
-            self.controller = True
+        elif self.encname == "AHCI SGPIO Enclosure 2.00":
+            if self.product in ["TRUENAS-R20", "TRUENAS-R20A"]:
+                self.model = self.product.replace("TRUENAS-", "")
+                self.controller = True
+            elif MINI_REGEX.match(self.product):
+                # TrueNAS Mini's do not have their product name stripped
+                self.model = self.product
+                self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
             self.controller = True
-        elif self.encname.startswith("iX TrueNAS R20p"):
-            self.model = "R20"
         elif self.encname.startswith("QUANTA JB9 SIM"):
             self.model = "E60"
         elif self.encname.startswith("Storage 1729"):

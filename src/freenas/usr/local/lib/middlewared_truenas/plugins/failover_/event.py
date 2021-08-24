@@ -76,6 +76,20 @@ WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
 logger = logging.getLogger('failover')
 
 
+# SED drives need to be unlocked only once at boot
+# time but we can't unlock them at the same time
+# on both controllers or it can prevent the disks
+# from unlocking. This is a global variable used to
+# track whether or not a CARP event has been processed
+# before. Rough idea is as follows:
+# 1. boot system first time
+# 2. FIRST_RUN = True
+# 3. on first carp event, check FIRST_RUN
+# 4. if FIRST_RUN: run sed_unlock_all, set FIRST_RUN = False
+# 5. else continue on with failover as normal
+FIRST_RUN = True
+
+
 def run(cmd, stderr=False):
     proc = subprocess.Popen(
         cmd,
@@ -154,6 +168,8 @@ class FailoverService(Service):
                     # Only restart iscsitarget when it's not already
                     # started (ALUA/FC has it running on standby by default)
                     to_restart.remove('iscsitarget')
+        else:
+            to_restart = [i for i in to_restart if i not in crit_services]
 
         exceptions = await asyncio.gather(
             *[self.restart_service(svc, data['timeout']) for svc in to_restart],
@@ -519,6 +535,17 @@ class FailoverService(Service):
                 if attach_all_job.error:
                     logger.error('Failed to attach geli providers: %s', attach_all_job.error)
 
+                global FIRST_RUN
+                if FIRST_RUN:
+                    try:
+                        self.middleware.call_sync('disk.sed_unlock_all')
+                        FIRST_RUN = False
+                    except Exception as e:
+                        # failing here doesn't mean the zpool won't mount
+                        # we could have only failed to unlock 1 disk
+                        # so log an error and move on
+                        logger.error('Failed to unlock SED disks with error: %r', e)
+
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
                 for volume in fobj['volumes']:
@@ -612,13 +639,6 @@ class FailoverService(Service):
                 logger.warning('Configuring cron')
                 self.run_call('etc.generate', 'cron')
 
-                # sync disks is disabled on passive node
-                logger.warning('Syncing all disks')
-                self.run_call('disk.sync_all')
-
-                logger.warning('Syncing enclosure')
-                self.run_call('enclosure.sync_zpool')
-
                 logger.warning('Restarting collectd')
                 self.run_call('service.restart', 'collectd', {'ha_propagate': False})
                 logger.warning('Restarting syslogd')
@@ -633,6 +653,16 @@ class FailoverService(Service):
                 self.run_call('jail.start_on_boot')
                 self.run_call('vm.start_on_boot')
                 self.run_call('truecommand.start_truecommand_service')
+
+                # disk.sync_all and enclosure.sync_zpool takes awhile
+                # on large systems (100's of disks) so we start the
+                # job here after restarting all the services
+                logger.warning('Syncing all disks')
+                disk_job = self.middleware.call_sync('disk.sync_all')
+                disk_job.wait_sync()
+
+                logger.warning('Syncing enclosure')
+                self.run_call('enclosure.sync_zpool')
 
                 self.run_call('alert.block_failover_alerts')
                 self.run_call('alert.initialize', False)
@@ -813,6 +843,7 @@ class FailoverService(Service):
                     run('/usr/sbin/service watchdogd quietstart')
                     self.run_call('service.stop', 'smartd', {'ha_propagate': False})
                     self.run_call('service.stop', 'collectd', {'ha_propagate': False})
+                    self.run_call('truecommand.stop_truecommand_service')
                     self.run_call('jail.stop_on_shutdown')
                     for vm in (self.run_call('vm.query', [['status.state', '=', 'RUNNING']]) or []):
                         self.run_call('vm.poweroff', vm['id'], True)
@@ -839,6 +870,13 @@ class FailoverService(Service):
                 # Sync GELI and/or ZFS encryption keys from MASTER node
                 self.middleware.call_sync('failover.sync_keys_from_remote_node')
 
+            # if we're the backup controller then it means
+            # the SED drives have already been unlocked so
+            # set this accordingly so we don't try to unlock
+            # the drives again if/when this controller becomes
+            # the MASTER controller
+            global FIRST_RUN
+            FIRST_RUN = False
         except AlreadyLocked:
             logger.warning('Failover event handler failed to acquire backup lockfile')
 

@@ -113,6 +113,10 @@ smb_func()
 	smbd -b
 	section_footer
 
+	section_header "testparm -s"
+	testparm -s
+	section_footer
+
 	section_header "net getlocalsid"
 	net getlocalsid
 	section_footer

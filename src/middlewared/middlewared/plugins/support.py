@@ -3,7 +3,6 @@ import json
 import requests
 import simplejson
 import socket
-import subprocess
 import time
 
 from middlewared.pipe import Pipes
@@ -11,7 +10,6 @@ from middlewared.plugins.system import DEBUG_MAX_SIZE
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.validators import Email
 
@@ -188,7 +186,7 @@ class SupportService(ConfigService):
             required_attrs = ('type', 'username', 'password')
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
-            data['serial'] = (await (await Popen(['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE)).communicate())[0].decode().split('\n')[0].upper()
+            data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
             license = (await self.middleware.call('system.info'))['license']
             if license:
                 data['company'] = license['customer_name']
@@ -280,6 +278,7 @@ class SupportService(ConfigService):
                             raise CallError('Debug too large to attach', errno.EFBIG)
                         tjob.pipes.input.w.write(r)
                 finally:
+                    debug_job.pipes.output.r.read()
                     tjob.pipes.input.w.close()
 
             await self.middleware.run_in_thread(copy)

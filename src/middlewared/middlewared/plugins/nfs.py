@@ -556,7 +556,7 @@ async def interface_post_sync(middleware):
         if not await middleware.call('cache.has_key', 'interfaces_are_set_up'):
             await middleware.call('cache.put', 'interfaces_are_set_up', True)
             if (await middleware.call('nfs.config'))['bindip']:
-                await middleware.call('service.restart', 'nfs')
+                asyncio.ensure_future(middleware.call('service.restart', 'nfs'))
 
 
 async def pool_post_import(middleware, pool):

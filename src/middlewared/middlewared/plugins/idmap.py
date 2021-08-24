@@ -282,7 +282,6 @@ class IdmapDomainService(CRUDService):
 
         while datalen >= 4:
             k = int.from_bytes(data_bytes[:4], byteorder='little') & 0xFFFFFFFF
-            self.logger.debug('%d', k)
             data_bytes = data_bytes[4:]
             datalen = datalen - 4
             k = (k * c1) & 0xFFFFFFFF
@@ -295,7 +294,7 @@ class IdmapDomainService(CRUDService):
         if datalen > 0:
             k = 0
             if datalen >= 3:
-                k = k | int.from_bytes(data_bytes[2], byteorder='little') << 16
+                k = k | data_bytes[2] << 16
             if datalen >= 2:
                 k = k | data_bytes[1] << 8
             if datalen >= 1:
@@ -435,8 +434,9 @@ class IdmapDomainService(CRUDService):
             existing_range = range(i['range_low'], i['range_high'])
             if range(max(existing_range[0], new_range[0]), min(existing_range[-1], new_range[-1]) + 1):
                 verrors.add(f'{schema_name}.range_low',
-                            'new idmap range conflicts with existing range for domain '
-                            f'[{i["name"]}].')
+                            f'new idmap range [{data["range_low"]}-{data["range_high"]}] '
+                            'conflicts with existing range for domain '
+                            f'[{i["name"]}], range: [{i["range_low"]}-{i["range_high"]}].')
 
     @private
     async def validate_options(self, schema_name, data, verrors, check=['MISSING', 'EXTRA']):

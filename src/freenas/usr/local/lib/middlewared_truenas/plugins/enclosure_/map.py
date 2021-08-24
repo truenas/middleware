@@ -9,7 +9,7 @@ MappingSlot = namedtuple("MappingSlot", ["num", "slot", "identify"])
 
 
 MAPPINGS = [
-    ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-E\+?$"), [
+    ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-E$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(0, 0, False),
             MappingSlot(0, 1, False),
@@ -17,6 +17,27 @@ MAPPINGS = [
             MappingSlot(0, 3, False),
             MappingSlot(0, 5, False),
             MappingSlot(0, 4, False),
+        ]),
+    ]),
+    ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-E\+$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+            MappingSlot(0, 2, False),
+            MappingSlot(0, 3, False),
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+        ]),
+    ]),
+    ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-X$"), [
+        VersionMapping(re.compile(r"1\.0"), [
+            MappingSlot(1, 0, False),
+            MappingSlot(1, 1, False),
+            MappingSlot(1, 3, False),
+            MappingSlot(1, 4, False),
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+            MappingSlot(0, 2, False),
         ]),
     ]),
     ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-X$"), [
@@ -43,7 +64,7 @@ MAPPINGS = [
     ]),
     ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-XL\+$"), [
         VersionMapping(re.compile(".*"), [
-            MappingSlot(1, 4, False),
+            MappingSlot(1, 5, False),
             MappingSlot(0, 0, False),
             MappingSlot(0, 1, False),
             MappingSlot(0, 2, False),
@@ -52,7 +73,170 @@ MAPPINGS = [
             MappingSlot(0, 5, False),
             MappingSlot(0, 6, False),
             MappingSlot(0, 7, False),
+            MappingSlot(1, 4, False),
+        ]),
+    ]),
+    ProductMapping(re.compile(r"TRUENAS-R10$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 4, False),
+            MappingSlot(0, 8, False),
+            MappingSlot(0, 12, False),
+            MappingSlot(0, 1, False),
+            MappingSlot(0, 5, False),
+            MappingSlot(0, 9, False),
+            MappingSlot(0, 13, False),
+            MappingSlot(0, 2, False),
+            MappingSlot(0, 6, False),
+            MappingSlot(0, 10, False),
+            MappingSlot(0, 14, False),
+            MappingSlot(0, 3, False),
+            MappingSlot(0, 7, False),
+            MappingSlot(0, 11, False),
+            MappingSlot(0, 15, False),
+        ]),
+    ]),
+    ProductMapping(re.compile(r"TRUENAS-R20$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(2, 0, False),
+            MappingSlot(2, 1, False),
+            MappingSlot(2, 2, False),
+            MappingSlot(2, 3, False),
+            MappingSlot(2, 4, False),
+            MappingSlot(2, 5, False),
+            MappingSlot(2, 6, False),
+            MappingSlot(2, 7, False),
+            MappingSlot(2, 8, False),
+            MappingSlot(2, 9, False),
+            MappingSlot(2, 10, False),
+            MappingSlot(2, 11, False),
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+        ]),
+    ]),
+    ProductMapping(re.compile(r"TRUENAS-R20A$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(2, 2, False),
+            MappingSlot(2, 5, False),
+            MappingSlot(2, 8, False),
+            MappingSlot(2, 11, False),
+            MappingSlot(2, 1, False),
+            MappingSlot(2, 4, False),
+            MappingSlot(2, 7, False),
+            MappingSlot(2, 10, False),
+            MappingSlot(2, 0, False),
+            MappingSlot(2, 3, False),
+            MappingSlot(2, 6, False),
+            MappingSlot(2, 9, False),
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+        ]),
+    ]),
+    ProductMapping(re.compile(r"TRUENAS-R40$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+            MappingSlot(0, 2, False),
+            MappingSlot(0, 3, False),
+            MappingSlot(0, 4, False),
+            MappingSlot(0, 5, False),
+            MappingSlot(0, 6, False),
+            MappingSlot(0, 7, False),
+            MappingSlot(0, 8, False),
+            MappingSlot(0, 9, False),
+            MappingSlot(0, 10, False),
+            MappingSlot(0, 11, False),
+            MappingSlot(0, 12, False),
+            MappingSlot(0, 13, False),
+            MappingSlot(0, 14, False),
+            MappingSlot(0, 15, False),
+            MappingSlot(0, 16, False),
+            MappingSlot(0, 17, False),
+            MappingSlot(0, 18, False),
+            MappingSlot(0, 19, False),
+            MappingSlot(0, 20, False),
+            MappingSlot(0, 21, False),
+            MappingSlot(0, 22, False),
+            MappingSlot(0, 23, False),
+            MappingSlot(1, 0, False),
+            MappingSlot(1, 1, False),
+            MappingSlot(1, 2, False),
             MappingSlot(1, 3, False),
+            MappingSlot(1, 4, False),
+            MappingSlot(1, 5, False),
+            MappingSlot(1, 6, False),
+            MappingSlot(1, 7, False),
+            MappingSlot(1, 8, False),
+            MappingSlot(1, 9, False),
+            MappingSlot(1, 10, False),
+            MappingSlot(1, 11, False),
+            MappingSlot(1, 12, False),
+            MappingSlot(1, 13, False),
+            MappingSlot(1, 14, False),
+            MappingSlot(1, 15, False),
+            MappingSlot(1, 16, False),
+            MappingSlot(1, 17, False),
+            MappingSlot(1, 18, False),
+            MappingSlot(1, 19, False),
+            MappingSlot(1, 20, False),
+            MappingSlot(1, 21, False),
+            MappingSlot(1, 22, False),
+            MappingSlot(1, 23, False),
+        ]),
+    ]),
+    ProductMapping(re.compile(r"TRUENAS-R50$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+            MappingSlot(0, 2, False),
+            MappingSlot(0, 3, False),
+            MappingSlot(0, 4, False),
+            MappingSlot(0, 5, False),
+            MappingSlot(0, 6, False),
+            MappingSlot(0, 7, False),
+            MappingSlot(0, 8, False),
+            MappingSlot(0, 9, False),
+            MappingSlot(0, 10, False),
+            MappingSlot(0, 11, False),
+            MappingSlot(0, 12, False),
+            MappingSlot(0, 13, False),
+            MappingSlot(0, 14, False),
+            MappingSlot(0, 15, False),
+            MappingSlot(0, 16, False),
+            MappingSlot(0, 17, False),
+            MappingSlot(0, 18, False),
+            MappingSlot(0, 19, False),
+            MappingSlot(0, 20, False),
+            MappingSlot(0, 21, False),
+            MappingSlot(0, 22, False),
+            MappingSlot(0, 23, False),
+            MappingSlot(1, 0, False),
+            MappingSlot(1, 1, False),
+            MappingSlot(1, 2, False),
+            MappingSlot(1, 3, False),
+            MappingSlot(1, 4, False),
+            MappingSlot(1, 5, False),
+            MappingSlot(1, 6, False),
+            MappingSlot(1, 7, False),
+            MappingSlot(1, 8, False),
+            MappingSlot(1, 9, False),
+            MappingSlot(1, 10, False),
+            MappingSlot(1, 11, False),
+            MappingSlot(1, 12, False),
+            MappingSlot(1, 13, False),
+            MappingSlot(1, 14, False),
+            MappingSlot(1, 15, False),
+            MappingSlot(1, 16, False),
+            MappingSlot(1, 17, False),
+            MappingSlot(1, 18, False),
+            MappingSlot(1, 19, False),
+            MappingSlot(1, 20, False),
+            MappingSlot(1, 21, False),
+            MappingSlot(1, 22, False),
+            MappingSlot(1, 23, False),
+            MappingSlot(2, 0, False),
+            MappingSlot(2, 1, False),
+            MappingSlot(2, 2, False),
         ]),
     ]),
 ]
@@ -72,11 +256,13 @@ class EnclosureService(Service):
         return enclosures
 
     async def _map_enclosures(self, enclosures, slots):
+        # Ensure JBODs don't effect ordering by filtering them out
+        controller_enclosures = list(filter(lambda x: x["controller"], enclosures))
         elements = []
         has_slot_status = False
         for slot, mapping in enumerate(slots, 1):
             try:
-                original_enclosure = enclosures[mapping.num]
+                original_enclosure = controller_enclosures[mapping.num]
             except IndexError:
                 self.logger.error("Mapping referenced enclosure %d but it is not present on this system",
                                   mapping.num)
@@ -119,12 +305,11 @@ class EnclosureService(Service):
 
             elements.append(element)
 
-        info = await self.middleware.call("system.info")
-        return [
+        mapped = [
             {
                 "id": "mapped_enclosure_0",
                 "name": "Drive Bays",
-                "model": info["system_product"],
+                "model": controller_enclosures[0]["model"],
                 "controller": True,
                 "elements": [
                     {
@@ -137,3 +322,12 @@ class EnclosureService(Service):
                 ],
             }
         ]
+
+        # if we have future products that need to be mapped and/or have the
+        # ability to support expansion shelves, then we need to add them
+        # back in here so drive identification works
+        for enclosure in enclosures:
+            if not enclosure["controller"]:
+                mapped.append(enclosure)
+
+        return mapped
