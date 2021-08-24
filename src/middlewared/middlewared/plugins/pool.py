@@ -1867,17 +1867,6 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
-        self.middleware.call_sync('etc.generate_checkpoint', 'pool_import')
-
-        self.middleware.call_sync('zettarepl.load_removal_dates')
-        self.middleware.call_sync('zettarepl.update_tasks')
-
-        # Configure swaps after importing pools. devd events are not yet ready at this
-        # stage of the boot process.
-        if osc.IS_FREEBSD:
-            # For now let's make this FreeBSD specific as we may very well be getting zfs events here in linux
-            self.middleware.call_sync('disk.swaps_configure')
-
         self.middleware.call_hook_sync('pool.post_import', None)
         job.set_progress(100, 'Pools import completed')
 
