@@ -1094,7 +1094,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
     def unregister_wsclient(self, client):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name, method, sync=True, inline=False):
+    def register_hook(self, name, method, sync=True, inline=False, order=0):
         """
         Register a hook under `name`.
 
@@ -1117,7 +1117,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             'method': method,
             'inline': inline,
             'sync': sync,
+            'order': order,
         })
+        self.__hooks[name] = sorted(self.__hooks[name], key=lambda hook: hook['order'])
 
     def _call_hook_base(self, name, *args, **kwargs):
         for hook in self.__hooks[name]:

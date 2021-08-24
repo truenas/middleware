@@ -531,7 +531,8 @@ async def pool_post_import(middleware, pool):
 
 
 async def setup(middleware):
-    middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    # Reconfigure system dataset first thing after we import a pool.
+    middleware.register_hook('pool.post_import', pool_post_import, order=-10000)
 
     try:
         if not os.path.exists('/var/cache/nscd') or not os.path.islink('/var/cache/nscd'):
