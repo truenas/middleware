@@ -228,6 +228,10 @@ class SMBService(Service):
         list of SIDS to be removed. SID is necessary and sufficient for groupmap removal.
         """
         rv = {"builtins": {}, "local": {}, "local_builtins": {}, "invalid": []}
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+        if not passdb_backend.startswith('tdbsam'):
+            return rv
+
         localsid = await self.middleware.call('smb.get_system_sid')
         if localsid is None:
             raise CallError("Unable to retrieve local system SID. Group mapping failure.")
