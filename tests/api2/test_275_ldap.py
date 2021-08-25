@@ -16,7 +16,7 @@ from functions import (
     cmd_test,
     wait_on_job
 )
-from auto_config import pool_name, ip, user, password, scale, dev_test
+from auto_config import pool_name, ip, user, password, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
@@ -37,7 +37,7 @@ dataset = f"{pool_name}/ldap-test"
 dataset_url = dataset.replace('/', '%2F')
 smb_name = "TestLDAPShare"
 smb_path = f"/mnt/{dataset}"
-VOL_GROUP = "root" if scale else "wheel"
+VOL_GROUP = "root"
 
 
 def test_01_get_ldap():

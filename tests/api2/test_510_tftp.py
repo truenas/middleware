@@ -9,18 +9,17 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job
-from auto_config import pool_name, scale, dev_test
+from auto_config import pool_name, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
-dataset = f"{pool_name}/tftproot"
-dataset_url = dataset.replace('/', '%2F')
-group = 'nogroup' if scale else 'nobody'
+DATASET = f"{pool_name}/tftproot"
+DATASET_URL = DATASET.replace('/', '%2F')
 
 
 @pytest.mark.dependency(name='tftp_dataset')
 def test_01_Creating_dataset_tftproot(request):
     depends(request, ["pool_04"], scope="session")
-    result = POST('/pool/dataset/', {'name': dataset})
+    result = POST('/pool/dataset/', {'name': DATASET})
     assert result.status_code == 200, result.text
 
 
@@ -29,10 +28,10 @@ def test_02_Setting_permissions_for_TFTP_on_mnt_pool_name_tftproot(request):
     payload = {
         'acl': [],
         'mode': '777',
-        'group': group,
+        'group': 'nogroup',
         'user': 'nobody'
     }
-    results = POST(f'/pool/dataset/id/{dataset_url}/permission/', payload)
+    results = POST(f'/pool/dataset/id/{DATASET_URL}/permission/', payload)
     assert results.status_code == 200, results.text
     global job_id
     job_id = results.json()
@@ -89,5 +88,5 @@ def test_09_verify_to_see_if_tftp_service_is_stopped(request):
 
 def test_10_delete_tftp_dataset(request):
     depends(request, ['tftp_dataset'])
-    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
+    results = DELETE(f"/pool/dataset/id/{DATASET_URL}/")
     assert results.status_code == 200, results.text

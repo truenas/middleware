@@ -9,7 +9,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT
-from auto_config import scale, ha, dev_test
+from auto_config import ha, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 RunTest = True
@@ -36,10 +36,7 @@ def test_02_looking_for_disk(disk):
 def test_03_looking_subsystem(disk):
     results = GET(f'/disk?name={disk}')
     assert results.status_code == 200, results.text
-    if scale is True:
-        assert results.json()[0]['subsystem'] == 'scsi'
-    else:
-        assert results.json()[0]['subsystem'] == disk[:-1]
+    assert results.json()[0]['subsystem'] == 'scsi'
 
 
 @pytest.mark.parametrize('disk', disk_list)

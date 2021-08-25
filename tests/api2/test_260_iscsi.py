@@ -11,7 +11,7 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip, user, password, pool_name, hostname, scale, dev_test
+from auto_config import ip, user, password, pool_name, hostname, dev_test
 from functions import PUT, POST, GET, SSH_TEST, DELETE, cmd_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
@@ -226,20 +226,6 @@ def test_17_Deleting_file(request):
 
 
 @bsd_host_cfg
-@pytest.mark.skipif(scale, reason='ctladm is not supported on SCALE')
-def test_18_verifiying_iscsi_session_on_truenas(request):
-    depends(request, ["iscsi_10", "ssh_password"], scope="session")
-    try:
-        results = SSH_TEST('ctladm islist', user, password, ip)
-        assert results['result'] is True, results['output']
-        hostname = SSH_TEST('hostname', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)['output'].strip()
-    except AssertionError as e:
-        raise AssertionError(f'Could not verify iscsi session on TrueNAS : {e}')
-    else:
-        assert hostname in results['output'], 'No active session on TrueNAS for iSCSI'
-
-
-@bsd_host_cfg
 def test_19_Unmounting_iSCSI_volume(request):
     depends(request, ["iscsi_10"])
     cmd = f'umount "{file_mountpoint}"'
@@ -438,20 +424,6 @@ def test_42_copying_file_to_new_dir_in_zvol_iscsi_share(request):
     cmd = f'cp "{zvol_mountpoint}/newfile.txt" "{zvol_mountpoint}/mydir/myfile.txt"'
     results = cmd_test(cmd)
     assert results['result'], results['output']
-
-
-@bsd_host_cfg
-@pytest.mark.skipif(scale, reason='ctladm is not supported on SCALE')
-def test_43_verifying_iscsi_session_on_truenas(request):
-    depends(request, ["iscsi_38", "ssh_password"], scope="session")
-    try:
-        results = SSH_TEST('ctladm islist', user, password, ip)
-        assert results['result'], results['output']
-        hostname = cmd_test('hostname')['output'].strip()
-    except AssertionError as e:
-        raise AssertionError(f'Could not verify iscsi session on TrueNAS : {e}')
-    else:
-        assert hostname in results['output'], 'No active session on TrueNAS for iSCSI'
 
 
 @bsd_host_cfg

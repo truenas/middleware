@@ -12,8 +12,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
-from auto_config import pool_name, user, password, scale, ha, hostname
-from config import *
+from auto_config import pool_name, ha, hostname
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
@@ -22,20 +21,17 @@ if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
 else:
     from auto_config import ip
-
-
-group = 'root' if scale else 'wheel'
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"
 dataset_url = dataset.replace('/', '%2F')
 NFS_PATH = "/mnt/" + dataset
-Reason = "BRIDGEHOST is missing in ixautomation.conf"
-BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 
-bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
-                                       "BSD_USERNAME" in locals(),
-                                       "BSD_PASSWORD" in locals()
-                                       ]) is False, reason=BSDReason)
+Reason = 'BSD host configuration is missing in ixautomation.conf'
+try:
+    from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
+    bsd_host_cfg = pytest.mark.skipif(False, reason=Reason)
+except ImportError:
+    bsd_host_cfg = pytest.mark.skipif(True, reason=Reason)
 
 
 # Enable NFS server
@@ -66,7 +62,7 @@ def test_03_changing_dataset_permissions_of_nfs_dataset(request):
         "acl": [],
         "mode": "777",
         "user": "root",
-        "group": group
+        "group": 'root'
     }
     results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
     assert results.status_code == 200, results.text
@@ -80,7 +76,6 @@ def test_04_verify_the_job_id_is_successfull(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-# creating a NFS share
 def test_05_creating_a_nfs_share_on_nfs_PATH(request):
     depends(request, ["pool_04"], scope="session")
     paylaod = {"comment": "My Test Share",
@@ -90,7 +85,6 @@ def test_05_creating_a_nfs_share_on_nfs_PATH(request):
     assert results.status_code == 200, results.text
 
 
-# Now start the service
 def test_06_starting_nfs_service_at_boot(request):
     depends(request, ["pool_04"], scope="session")
     results = PUT("/service/id/nfs/", {"enable": True})
@@ -117,17 +111,7 @@ def test_09_checking_to_see_if_nfs_service_is_running(request):
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-@pytest.mark.skipif(scale, reason='Skipping for Scale')
-def test_10_checking_if_sysctl_vfs_nfsd_server_max_nfsvers_is_4(request):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
-    cmd = 'sysctl -n vfs.nfsd.server_max_nfsvers'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == '4', results['output']
-
-
 @bsd_host_cfg
-# Now check if we can mount NFS / create / rename / copy / delete / umount
 def test_11_creating_nfs_mountpoint(request):
     depends(request, ["pool_04"], scope="session")
     results = SSH_TEST(f'mkdir -p "{MOUNTPOINT}"',
@@ -140,8 +124,6 @@ def test_11_creating_nfs_mountpoint(request):
 def test_12_mounting_nfs(request):
     depends(request, ["pool_04"], scope="session")
     cmd = f'mount_nfs {ip}:{NFS_PATH} {MOUNTPOINT}'
-    # command below does not make sence
-    # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
@@ -150,7 +132,6 @@ def test_12_mounting_nfs(request):
 def test_13_creating_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
-    # 'umount "${MOUNTPOINT}"; rmdir "${MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
@@ -195,7 +176,6 @@ def test_18_removing_nfs_mountpoint(request):
     assert results['result'] is True, results['output']
 
 
-# Update test
 def test_19_updating_the_nfs_service(request):
     depends(request, ["pool_04"], scope="session")
     results = PUT("/nfs/", {"servers": "50"})
@@ -230,8 +210,6 @@ def test_22_creating_nfs_mountpoint(request):
 def test_23_mounting_nfs(request):
     depends(request, ["pool_04"], scope="session")
     cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)
-    # command below does not make sence
-    # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
@@ -240,7 +218,6 @@ def test_23_mounting_nfs(request):
 def test_24_creating_nfs_file(request):
     depends(request, ["pool_04"], scope="session")
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
-    # 'umount "${MOUNTPOINT}"; rmdir "${MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
@@ -306,7 +283,6 @@ def test_32_checking_to_see_if_nfs_service_is_stop(request):
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
-# Test disable AFP
 def test_33_disable_nfs_service_at_boot(request):
     depends(request, ["pool_04"], scope="session")
     results = PUT("/service/id/nfs/", {"enable": False})
@@ -319,7 +295,6 @@ def test_34_checking_nfs_disable_at_boot(request):
     assert results.json()[0]['enable'] is False, results.text
 
 
-# Check destroying a SMB dataset
 def test_35_destroying_smb_dataset(request):
     depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")

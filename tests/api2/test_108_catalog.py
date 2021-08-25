@@ -5,14 +5,14 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE, PUT, wait_on_job
-from auto_config import ha, scale, dev_test
+from auto_config import ha, dev_test
 
 if dev_test:
     reason = 'Skip for testing'
 else:
     reason = 'Skipping test for HA' if ha else 'Skipping test for CORE'
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(ha or not scale or dev_test, reason=reason)
+pytestmark = pytest.mark.skipif(ha or dev_test, reason=reason)
 
 official_repository = 'https://github.com/truenas/charts.git'
 truechart_repository = 'https://github.com/ericbsd/charts.git'

@@ -16,7 +16,7 @@ source_list = []
 source_dict = {}
 sources = GET('/stats/get_sources/', controller_a=ha).json()
 for source, types in sources.items():
-    if 'interface-vnet0' not in source:
+    if 'df-var-lib-systemd-coredump' not in source:
         source_list.append(source)
 
 
