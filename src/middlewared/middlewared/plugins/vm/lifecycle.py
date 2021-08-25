@@ -4,7 +4,6 @@ import functools
 
 from middlewared.schema import accepts, Bool, Dict
 from middlewared.service import CallError, private, Service
-from middlewared.utils import osc, run
 from middlewared.utils.asyncio_ import asyncio_map
 
 from .vm_supervisor import VMSupervisorMixin
@@ -19,12 +18,6 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     async def get_initial_arc_max(self):
-        if osc.IS_FREEBSD:
-            tunable = await self.middleware.call('tunable.query', [
-                ['type', '=', 'SYSCTL'], ['var', '=', 'vfs.zfs.arc.max']
-            ])
-            if tunable and str(tunable[0]['value']).isdigit():
-                return int(tunable[0]['value'])
         return self.ZFS_ARC_MAX_INITIAL
 
     @private
@@ -45,7 +38,6 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     def setup_libvirt_connection(self, timeout=30):
-        self.middleware.call_sync(f'vm.initialize_{osc.SYSTEM.lower()}')
         self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
 
     @private
@@ -74,25 +66,6 @@ class VMService(Service, VMSupervisorMixin):
                     )
         else:
             self.middleware.logger.error('Failed to establish libvirt connection')
-
-    @private
-    async def initialize_linux(self):
-        pass
-
-    @private
-    async def initialize_freebsd(self):
-        cp = await run(['/sbin/kldstat'], check=False)
-        if cp.returncode:
-            self.middleware.logger.error('Failed to retrieve kernel modules: %s', cp.stderr.decode())
-            return
-        else:
-            kldstat = cp.stdout.decode()
-
-        for kmod in ('vmm.ko', 'nmdm.ko'):
-            if kmod not in kldstat:
-                cp = await run(['/sbin/kldload', kmod[:-3]], check=False)
-                if cp.returncode:
-                    self.middleware.logger.error('Failed to load %r : %s', kmod, cp.stderr.decode())
 
     @private
     async def start_on_boot(self):
