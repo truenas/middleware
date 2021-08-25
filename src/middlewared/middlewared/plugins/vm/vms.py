@@ -17,8 +17,6 @@ BOOT_LOADER_OPTIONS = {
     'UEFI': 'UEFI',
     'UEFI_CSM': 'Legacy BIOS',
 }
-if osc.IS_FREEBSD:
-    BOOT_LOADER_OPTIONS['GRUB'] = 'Grub bhyve (specify grub.cfg)'
 LIBVIRT_LOCK = asyncio.Lock()
 RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
 
@@ -284,20 +282,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
-        if osc.IS_FREEBSD:
-            if not await self.middleware.call('vm.validate_slots', data):
-                verrors.add(
-                    f'{schema_name}.devices',
-                    'Please adjust the number of devices attached to this VM. '
-                    f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
-                )
-            if data.get('cpu_mode', 'CUSTOM') != 'CUSTOM':
-                verrors.add(f'{schema_name}.cpu_mode', 'This attribute is not supported on this platform.')
-            if data.get('cpu_model'):
-                verrors.add(f'{schema_name}.cpu_model', 'This attribute is not supported on this platform')
-
-            data.pop('cpu_mode', None)
-            data.pop('cpu_model', None)
 
     async def __do_update_devices(self, id, devices):
         # There are 3 cases:
