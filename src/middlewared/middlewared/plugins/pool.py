@@ -832,6 +832,7 @@ class PoolService(CRUDService):
         asyncio.ensure_future(self.restart_services())
 
         pool = await self.get_instance(pool_id)
+        await self.middleware.call_hook('pool.post_create', pool=pool)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         await self.middleware.call_hook(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
