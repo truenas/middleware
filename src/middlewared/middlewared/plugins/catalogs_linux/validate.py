@@ -5,14 +5,15 @@ from catalog_validation.exceptions import ValidationErrors as CatalogValidationE
 from catalog_validation.validation import validate_catalog, validate_catalog_item, validate_catalog_item_version
 
 from middlewared.schema import returns, Str
-from middlewared.service import accepts, CallError, private, Service, ValidationErrors
+from middlewared.service import accepts, CallError, job, private, Service, ValidationErrors
 
 
 class CatalogService(Service):
 
     @accepts(Str('label'))
     @returns()
-    async def validate(self, label):
+    @job(lock=lambda args: f'catalog_validate_{args[0]}')
+    async def validate(self, job, label):
         """
         Validates `label` catalog format which includes validating trains and applications with their versions.
 
@@ -20,6 +21,12 @@ class CatalogService(Service):
         the correct format and files necessary for TrueNAS to use it.
         """
         catalog = await self.middleware.call('catalog.get_instance', label)
+        job.set_progress(10, f'Syncing {label} catalog')
+        sync_job = await self.middleware.call('catalog.sync', label)
+        if sync_job.error:
+            raise CallError(f'Failed to sync {label!r} catalog: {sync_job.error}')
+
+        job.set_progress(50, f'Validating {label!r} catalog')
         await self.middleware.call('catalog.validate_catalog_from_path', catalog['location'])
 
     @private
