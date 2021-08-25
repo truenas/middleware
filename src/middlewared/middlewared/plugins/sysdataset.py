@@ -271,39 +271,38 @@ class SystemDatasetService(ConfigService):
                 {'properties': {'acltype': {'value': 'off'}}},
             )
 
-        if True:
-            mounted = await self.__mount(config['pool'], config['uuid'])
+        mounted = await self.__mount(config['pool'], config['uuid'])
 
-            corepath = f'{SYSDATASET_PATH}/cores'
-            if os.path.exists(corepath):
-                os.chmod(corepath, 0o775)
+        corepath = f'{SYSDATASET_PATH}/cores'
+        if os.path.exists(corepath):
+            os.chmod(corepath, 0o775)
 
-                if await self.middleware.call('keyvalue.get', 'run_migration', False):
-                    try:
-                        cores = Path(corepath)
-                        for corefile in cores.iterdir():
-                            corefile.unlink()
-                    except Exception:
-                        self.logger.warning("Failed to clear old core files.", exc_info=True)
+            if await self.middleware.call('keyvalue.get', 'run_migration', False):
+                try:
+                    cores = Path(corepath)
+                    for corefile in cores.iterdir():
+                        corefile.unlink()
+                except Exception:
+                    self.logger.warning("Failed to clear old core files.", exc_info=True)
 
-                await run('umount', '/var/lib/systemd/coredump', check=False)
-                os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
-                await run('mount', '--bind', corepath, '/var/lib/systemd/coredump')
+            await run('umount', '/var/lib/systemd/coredump', check=False)
+            os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
+            await run('mount', '--bind', corepath, '/var/lib/systemd/coredump')
 
-            await self.__nfsv4link(config)
+        await self.__nfsv4link(config)
 
-            await self.middleware.call('etc.generate', 'glusterd')
+        await self.middleware.call('etc.generate', 'glusterd')
 
-            if mounted:
-                # There is no need to wait this to finish
-                # Restarting rrdcached will ensure that we start/restart collectd as well
-                asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
-                asyncio.ensure_future(self.middleware.call('service.restart', 'syslogd'))
+        if mounted:
+            # There is no need to wait this to finish
+            # Restarting rrdcached will ensure that we start/restart collectd as well
+            asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
+            asyncio.ensure_future(self.middleware.call('service.restart', 'syslogd'))
 
-                await self.middleware.call('smb.setup_directories')
-                # The following should be backgrounded since they may be quite
-                # long-running.
-                await self.middleware.call('smb.configure', False)
+            await self.middleware.call('smb.setup_directories')
+            # The following should be backgrounded since they may be quite
+            # long-running.
+            await self.middleware.call('smb.configure', False)
 
         return config
 
