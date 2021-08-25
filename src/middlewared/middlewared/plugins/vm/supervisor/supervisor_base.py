@@ -3,7 +3,6 @@ import enum
 import itertools
 import libvirt
 import os
-import shutil
 import sys
 import threading
 import time
@@ -95,13 +94,8 @@ class VMSupervisorBase(LibvirtConnectionMixin):
         if self.domain.isActive():
             raise CallError(f'Domain {self.libvirt_domain_name} is active. Please stop it first')
 
-        if self.vm_data['bootloader'] == 'GRUB':
-            shutil.rmtree(
-                os.path.join('/tmp/grub', self.libvirt_domain_name), ignore_errors=True
-            )
-        elif osc.IS_LINUX:
-            with contextlib.suppress(OSError):
-                os.unlink(f'/var/lib/libvirt/qemu/nvram/{self.libvirt_domain_name}_VARS.fd')
+        with contextlib.suppress(OSError):
+            os.unlink(f'/var/lib/libvirt/qemu/nvram/{self.libvirt_domain_name}_VARS.fd')
 
         self.domain.undefine()
         self.domain = None
@@ -145,8 +139,6 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             raise CallError(
                 f'VM will not start as {", ".join([str(d) for d in unavailable_devices])} device(s) are not available.'
             )
-
-        self.before_start_checks()
 
         successful = []
         errors = []
@@ -301,19 +293,6 @@ class VMSupervisorBase(LibvirtConnectionMixin):
                 ] + features,
             }
         )
-
-    def before_start_checks(self):
-        # Let's ensure that we are able to boot a GRUB based VM
-        if self.vm_data['bootloader'] == 'GRUB':
-            if not any(
-                isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
-            ):
-                raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name!r} domain')
-            grub_config = (self.vm_data['grubconfig'] or '').strip()
-            if grub_config.startswith('/mnt') and not os.path.exists(grub_config):
-                raise CallError(
-                    f'Unable to locate {grub_config!r} grubconfig path for {self.libvirt_domain_name!r} domain'
-                )
 
     def cpu_xml(self):
         return create_element(
