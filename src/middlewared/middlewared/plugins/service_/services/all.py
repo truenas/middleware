@@ -58,7 +58,6 @@ from .pseudo.misc import (
     TimeservicesService,
     TtysService,
     UserService,
-    WinbinddService,
 )
 
 all_services = [
@@ -113,7 +112,6 @@ all_services = [
     TruecommandService,
     TtysService,
     UserService,
-    WinbinddService,
 ]
 if osc.IS_LINUX:
     all_services.extend([
