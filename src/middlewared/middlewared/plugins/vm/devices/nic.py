@@ -58,33 +58,6 @@ class NIC(Device):
 
         self.nic_attach = nic.name
 
-    def pre_start_vm_freebsd(self, *args, **kwargs):
-        self.setup_nic_attach()
-        interfaces = netif.list_interfaces()
-        bridge = None
-        if self.nic_attach.startswith('bridge'):
-            bridge = interfaces[self.nic_attach]
-
-        if not bridge:
-            for iface in filter(lambda v: v.startswith('bridge'), interfaces):
-                if self.nic_attach in interfaces[iface].members:
-                    bridge = interfaces[iface]
-                    break
-            else:
-                bridge = netif.get_interface(netif.create_interface('bridge'))
-                bridge.add_member(self.nic_attach)
-                self.bridge_created = True
-
-        if netif.InterfaceFlags.UP not in bridge.flags:
-            bridge.up()
-
-        self.bridge = bridge.name
-
-    def pre_start_vm_rollback_freebsd(self, *args, **kwargs):
-        if self.bridge_created and self.bridge in netif.list_interfaces():
-            netif.destroy_interface(self.bridge)
-            self.bridge = self.bridge_created = None
-
     def xml_children(self):
         return [
             create_element('model', type='virtio' if self.data['attributes']['type'] == 'VIRTIO' else 'e1000'),
@@ -112,13 +85,3 @@ class NIC(Device):
                     ] + self.xml_children()
                 }
             )
-
-    def xml_freebsd(self, *args, **kwargs):
-        return create_element(
-            'interface', type='bridge', attribute_dict={
-                'children': [
-                    create_element('source', bridge=self.bridge or ''),
-                    create_element('address', type='pci', slot=str(kwargs['slot'])),
-                ] + self.xml_children()
-            }
-        )
