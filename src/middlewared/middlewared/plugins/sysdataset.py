@@ -477,19 +477,18 @@ class SystemDatasetService(ConfigService):
 
         if await self.middleware.call('service.started', 'cifs'):
             restart.insert(0, 'cifs')
+        if await self.middleware.call('service.started', 'glusterd'):
+            restart.insert(0, 'glusterd')
         if await self.middleware.call('service.started_or_enabled', 'webdav'):
             restart.append('webdav')
         for service in ['open-vm-tools']:
             restart.append(service)
-
-        if await self.middleware.call('service.started', 'glusterd'):
-            restart.append('glusterd')
+        if await self.middleware.call('service.started', 'cifs'):
+            restart.append('winbindd')
 
         try:
             await self.middleware.call('cache.put', 'use_syslog_dataset', False)
             await self.middleware.call('service.restart', 'syslogd')
-            if await self.middleware.call('service.started', 'glusterd'):
-                restart.insert(0, 'glusterd')
 
             # Middleware itself will log to syslog dataset.
             # This may be prone to a race condition since we dont wait the workers to stop

@@ -310,3 +310,9 @@ class UserService(PseudoServiceBase):
 
     async def reload(self):
         pass
+
+
+class WinbinddService(SimpleService):
+    name = "winbindd"
+
+    systemd_unit = "winbindd"
