@@ -523,6 +523,11 @@ class SystemDatasetService(ConfigService):
         await self.__nfsv4link(config)
 
 
+async def pool_post_create(middleware, pool):
+    if (await middleware.call('systemdataset.config'))['pool'] == await middleware.call('boot.pool_name'):
+        await middleware.call('systemdataset.setup')
+
+
 async def pool_post_import(middleware, pool):
     """
     On pool import we may need to reconfigure system dataset.
@@ -531,6 +536,7 @@ async def pool_post_import(middleware, pool):
 
 
 async def setup(middleware):
+    middleware.register_hook('pool.post_create', pool_post_create)
     # Reconfigure system dataset first thing after we import a pool.
     middleware.register_hook('pool.post_import', pool_post_import, order=-10000)
 
