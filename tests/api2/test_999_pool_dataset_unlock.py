@@ -13,9 +13,12 @@ import pytest
 from pytest_dependency import depends
 from samba import ntstatus, NTSTATUSError
 
-from auto_config import ip, pool_name, password, user, hostname
+from auto_config import ip, pool_name, password, user, hostname, dev_test
 from functions import POST, GET, DELETE, SSH_TEST, wait_on_job
 from protocols import SMB
+
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def passphrase_encryption():
