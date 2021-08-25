@@ -11,11 +11,14 @@ import urllib.parse
 
 import pytest
 from pytest_dependency import depends
-from samba import NTSTATUSError
+from samba import ntstatus, NTSTATUSError
 
-from auto_config import ip, pool_name, password, user, hostname
-from functions import POST, GET, DELETE, wait_on_job
+from auto_config import ip, pool_name, password, user, hostname, dev_test
+from functions import POST, GET, DELETE, SSH_TEST, wait_on_job
 from protocols import SMB
+
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def passphrase_encryption():
@@ -39,6 +42,11 @@ def dataset(name, options=None):
 
     result = POST("/pool/dataset/", {"name": dataset, **(options or {})})
     assert result.status_code == 200, result.text
+
+    result = POST("/filesystem/setperm/", {'path': f"/mnt/{dataset}", "mode": "777"})
+    assert result.status_code == 200, result.text
+    job_status = wait_on_job(result.json(), 180)
+    assert job_status["state"] == "SUCCESS", str(job_status["results"])
 
     try:
         yield dataset
@@ -122,16 +130,14 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
     depends(request, ["pool_04", "smb_001"], scope="session")
     # Prepare test SMB share
     with dataset("normal") as normal:
-        result = POST("/filesystem/setperm/", {'path': f"/mnt/{normal}", "mode": "777"})
-        assert result.status_code == 200, result.text
-        job_status = wait_on_job(result.json(), 180)
-        assert job_status["state"] == "SUCCESS", str(job_status["results"])
-
         with smb_share("normal", f"/mnt/{normal}"):
             # Create an encrypted SMB share, unlocking which might lead to SMB service interruption
             with dataset("encrypted", passphrase_encryption()) as encrypted:
                 with smb_share("encrypted", f"/mnt/{encrypted}"):
-                    run(f"touch /mnt/{encrypted}/secret")
+                    cmd = f"touch /mnt/{encrypted}/secret"
+                    results = SSH_TEST(cmd, user, password, ip)
+                    assert results['result'] is True, results['output']
+
                     lock_dataset(encrypted)
 
                     # Mount test SMB share
@@ -140,7 +146,8 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
                         with pytest.raises(NTSTATUSError) as e:
                             with smb_connection(host=ip, share="encrypted"):
                                 pass
-                        assert "The specified share name cannot be found on the remote server" in e.value.args[1]
+
+                        assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
 
                         # While unlocking the dataset, infinitely perform writes to test SMB share
                         # and measure IO times
@@ -163,7 +170,8 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
                         finally:
                             stop.set()
 
-                        assert stopped.wait(1)
+                        res = stopped.wait(1)
+                        assert res
 
                         # Ensure that no service interruption occurred
                         assert len(io_times) > 1
@@ -178,4 +186,5 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
                         with pytest.raises(NTSTATUSError) as e:
                             with smb_connection(host=ip, share="encrypted"):
                                 pass
-                        assert "The specified share name cannot be found on the remote server" in e.value.args[1]
+
+                        assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
