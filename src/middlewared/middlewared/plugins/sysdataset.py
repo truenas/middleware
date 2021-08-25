@@ -472,8 +472,8 @@ class SystemDatasetService(ConfigService):
             restart.append('webdav')
         for service in ['open-vm-tools']:
             restart.append(service)
-        if await self.middleware.call('service.started', 'cifs'):
-            restart.append('winbindd')
+        if await self.middleware.call('service.started', 'idmap'):
+            restart.append('idmap')
 
         try:
             await self.middleware.call('cache.put', 'use_syslog_dataset', False)
