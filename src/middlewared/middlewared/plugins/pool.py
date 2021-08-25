@@ -2413,8 +2413,7 @@ class PoolDatasetService(CRUDService):
             'unlock_options',
             Bool('key_file', default=False),
             Bool('recursive', default=False),
-            Str('attachments_list_mode', enum=['ALLOW', 'DENY'], default='DENY'),
-            List('attachments_list', default=[]),
+            Bool('toggle_attachments', default=True),
             List(
                 'datasets', items=[
                     Dict(
@@ -2451,12 +2450,11 @@ class PoolDatasetService(CRUDService):
         Uploading a json file which contains encrypted dataset keys can be specified with
         `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
 
-        `attachments_list_mode` and `attachments_list` controls which attachments (shares, tasks)
-        should be put in action after unlocking dataset(s). By default all attachments are handled, which might
-        theoretically lead to service interruption when daemons configurations are reloaded (this should not happen,
-        and if this happens it should be considered a bug). As TrueNAS does not have a state for resources that
-        should be unlocked but are still locked, using this option will put the system into an inconsistent state
-        so it should really never be used.
+        `toggle_attachments` controls whether attachments  should be put in action after unlocking dataset(s).
+        Toggling attachments can theoretically lead to service interruption when daemons configurations are reloaded
+        (this should not happen,  and if this happens it should be considered a bug). As TrueNAS does not have a state
+        for resources that should be unlocked but are still locked, disabling this option will put the system into an
+        inconsistent state so it should really never be disabled.
         """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset.get_instance', id)
@@ -2563,7 +2561,8 @@ class PoolDatasetService(CRUDService):
                 services_to_restart.add('system_datasets')
 
         if unlocked:
-            self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset, options)
+            if options['toggle_attachments']:
+                self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset, options)
 
             def dataset_data(unlocked_dataset):
                 return {
@@ -2587,13 +2586,6 @@ class PoolDatasetService(CRUDService):
     @private
     async def unlock_handle_attachments(self, dataset, options):
         for attachment_delegate in PoolDatasetService.attachment_delegates:
-            if options['attachments_list_mode'] == 'ALLOW':
-                if attachment_delegate.name not in options['attachments_list']:
-                    continue
-            if options['attachments_list_mode'] == 'DENY':
-                if attachment_delegate.name in options['attachments_list']:
-                    continue
-
             # FIXME: put this into `VMFSAttachmentDelegate`
             if attachment_delegate.name == 'vm':
                 await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)

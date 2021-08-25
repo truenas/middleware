@@ -117,8 +117,8 @@ def smb_connection(**kwargs):
 
 
 @pytest.mark.dependency(name="create_dataset")
-@pytest.mark.parametrize("attachments_list_mode", ["ALLOW", "DENY"])
-def test_pool_dataset_unlock_smb(request, attachments_list_mode):
+@pytest.mark.parametrize("toggle_attachments", [True, False])
+def test_pool_dataset_unlock_smb(request, toggle_attachments):
     depends(request, ["pool_04", "smb_001"], scope="session")
     # Prepare test SMB share
     with dataset("normal") as normal:
@@ -159,7 +159,7 @@ def test_pool_dataset_unlock_smb(request, attachments_list_mode):
                         try:
                             threading.Thread(target=thread, daemon=True).start()
 
-                            unlock_dataset(encrypted, {"attachments_list_mode": attachments_list_mode})
+                            unlock_dataset(encrypted, {"toggle_attachments": toggle_attachments})
                         finally:
                             stop.set()
 
@@ -169,14 +169,13 @@ def test_pool_dataset_unlock_smb(request, attachments_list_mode):
                         assert len(io_times) > 1
                         assert max(io_times) < 0.1
 
-                    if attachments_list_mode == "ALLOW":
+                    if toggle_attachments:
+                        # We should be able to mount encrypted share
+                        with smb_connection(host=ip, share="encrypted") as encrypted_connection:
+                            assert [x["name"] for x in encrypted_connection.ls("")] == ["secret"]
+                    else:
                         # We should still not be able to mount encrypted share as we did not reload attachments
                         with pytest.raises(NTSTATUSError) as e:
                             with smb_connection(host=ip, share="encrypted"):
                                 pass
                         assert "The specified share name cannot be found on the remote server" in e.value.args[1]
-
-                    if attachments_list_mode == "DENY":
-                        # We should be able to mount encrypted share
-                        with smb_connection(host=ip, share="encrypted") as encrypted_connection:
-                            assert [x["name"] for x in encrypted_connection.ls("")] == ["secret"]

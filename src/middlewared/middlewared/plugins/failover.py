@@ -603,7 +603,7 @@ class FailoverService(ConfigService):
                 'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()],
                 # Do not waste time handling attachments, failover process will restart services and regenerate configs
                 # for us
-                'attachments_list_mode': 'ALLOW',
+                'toggle_attachments': False,
             }
         )
         return await job.wrap(unlock_job)
