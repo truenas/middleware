@@ -8,7 +8,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range
-from middlewared.utils import osc
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -31,7 +30,6 @@ class VMModel(sa.Model):
     memory = sa.Column(sa.Integer())
     autostart = sa.Column(sa.Boolean(), default=False)
     time = sa.Column(sa.String(5), default='LOCAL')
-    grubconfig = sa.Column(sa.Text(), nullable=True)
     bootloader = sa.Column(sa.String(50), default='UEFI')
     cores = sa.Column(sa.Integer(), default=1)
     threads = sa.Column(sa.Integer(), default=1)
@@ -92,7 +90,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('threads', default=1),
         Int('memory', required=True),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
-        Str('grubconfig', null=True),
         List('devices', items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Bool('hide_from_msr', default=False),
@@ -106,9 +103,6 @@ class VMService(CRUDService, VMSupervisorMixin):
     async def do_create(self, data):
         """
         Create a Virtual Machine (VM).
-
-        `grubconfig` may either be a path for the grub.cfg file or the actual content
-        of the file to be used with GRUB bootloader.
 
         `devices` is a list of virtualized hardware to add to the newly created Virtual Machine.
         Failure to attach a device destroys the VM and any resources allocated by the VM devices.
@@ -236,9 +230,6 @@ class VMService(CRUDService, VMSupervisorMixin):
                         f'Specified machine type is not supported for {choices[data["arch_type"]]!r} architecture type'
                     )
 
-        # TODO: Let's please remove this attribute
-        if data.get('grubconfig'):
-            verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
         if data.get('cpu_mode') != 'CUSTOM' and data.get('cpu_model'):
             verrors.add(
                 f'{schema_name}.cpu_model',

@@ -2,7 +2,6 @@ import subprocess
 
 from middlewared.service import CallError
 from middlewared.schema import Dict, Str
-from middlewared.utils import osc
 
 from .device import Device
 from .utils import create_element, LIBVIRT_URI
