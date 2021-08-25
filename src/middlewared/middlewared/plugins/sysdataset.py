@@ -524,10 +524,10 @@ async def pool_post_import(middleware, pool):
 
 async def pool_pre_export(middleware, pool, options, job):
     sysds = await middleware.call('systemdataset.config')
-    if sysds['pool'] == pool['name']:
+    if sysds['pool'] == pool:
         job.set_progress(40, 'Reconfiguring system dataset')
         sysds_job = await middleware.call('systemdataset.update', {
-            'pool': None, 'pool_exclude': pool['name'],
+            'pool': None, 'pool_exclude': pool,
         })
         await sysds_job.wait()
         if sysds_job.error:
