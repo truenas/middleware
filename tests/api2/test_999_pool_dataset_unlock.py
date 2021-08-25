@@ -119,10 +119,14 @@ def smb_connection(**kwargs):
 @pytest.mark.dependency(name="create_dataset")
 @pytest.mark.parametrize("attachments_list_mode", ["ALLOW", "DENY"])
 def test_pool_dataset_unlock_smb(request, attachments_list_mode):
-    #depends(request, ["pool_04", "smb_001"], scope="session")
+    depends(request, ["pool_04", "smb_001"], scope="session")
     # Prepare test SMB share
     with dataset("normal") as normal:
-        os.chmod(f"/mnt/{normal}", 0o777)
+        result = POST("/filesystem/setperm/", {'path': f"/mnt/{normal}", "mode": "777"})
+        assert result.status_code == 200, result.text
+        job_status = wait_on_job(result.json(), 180)
+        assert job_status["state"] == "SUCCESS", str(job_status["results"])
+
         with smb_share("normal", f"/mnt/{normal}"):
             # Create an encrypted SMB share, unlocking which might lead to SMB service interruption
             with dataset("encrypted", passphrase_encryption()) as encrypted:
