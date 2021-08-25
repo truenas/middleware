@@ -76,7 +76,9 @@ def test_05_verify_official_catalog_repository_with_id():
 def test_06_validate_official_catalog():
     results = POST('/catalog/validate/', 'OFFICIAL')
     assert results.status_code == 200, results.text
-    assert results.json() is None, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_07_sync_official_catalog():
@@ -141,7 +143,9 @@ def test_11_verify_truechart_catalog_object(key):
 def test_12_validate_truechart_catalog():
     results = POST('/catalog/validate/', 'TRUECHARTS')
     assert results.status_code == 200, results.text
-    assert results.json() is None, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_13_sync_truechart_catalog():
