@@ -1,11 +1,4 @@
 <%
-    import os
-
-    if not middleware.call_sync('reporting.setup'):
-        # Let's exit this if setup related disk operations fail
-        middleware.logger.error('syslog-ng default file could not be generated')
-        raise FileShouldNotExist()
-
     systemdatasetconfig = middleware.call_sync('systemdataset.config')
     path = f'{systemdatasetconfig["path"]}/syslog-{systemdatasetconfig["uuid"]}'
 %>
