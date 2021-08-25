@@ -372,7 +372,6 @@ class SMBService(TDBWrapConfigService):
                 v = v.strip()
 
                 if k.casefold() != parm.casefold():
-                    self.logger.debug("%s does not match %s", k, parm)
                     continue
 
                 if v.lower() in ("off", "false", "no"):
