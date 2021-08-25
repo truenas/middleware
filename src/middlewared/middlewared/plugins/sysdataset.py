@@ -91,7 +91,7 @@ class SystemDatasetService(ConfigService):
         """
         boot_pool = await self.middleware.call('boot.pool_name')
         current_pool = (await self.config())['pool']
-        pools = [p['name'] for p in await self.middleware.call('pool.query', [['encrypt', '!=', 2]])]
+        pools = [p['name'] for p in await self.middleware.call('pool.query')]
         valid_root_ds = [
             ds['id'] for ds in await self.middleware.call(
                 'pool.dataset.query', [['key_format.value', '!=', 'PASSPHRASE'], ['locked', '!=', True]], {
@@ -144,13 +144,6 @@ class SystemDatasetService(ConfigService):
                     f'Pool "{new["pool"]}" not found',
                     errno.ENOENT
                 )
-            elif pool[0]['encrypt'] == 2:
-                # This will cover two cases - passphrase being set for a pool and that it might be locked as well
-                verrors.add(
-                    'sysdataset_update.pool',
-                    f'Pool "{new["pool"]}" has an encryption passphrase set. '
-                    'The system dataset cannot be placed on this pool.'
-                )
             elif await self.middleware.call(
                 'pool.dataset.query', [
                     ['name', '=', new['pool']], ['encrypted', '=', True],
@@ -163,11 +156,7 @@ class SystemDatasetService(ConfigService):
                     'which has the root dataset encrypted with a passphrase or is locked.'
                 )
         elif not new['pool']:
-            for pool in await self.middleware.call(
-                'pool.query', [
-                    ['encrypt', '!=', 2]
-                ]
-            ):
+            for pool in await self.middleware.call('pool.query'):
                 if data.get('pool_exclude') == pool['name'] or await self.middleware.call('pool.dataset.query', [
                     ['name', '=', pool['name']], [
                         'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
