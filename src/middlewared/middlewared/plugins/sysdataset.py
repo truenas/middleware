@@ -523,10 +523,23 @@ async def pool_post_import(middleware, pool):
     await middleware.call('systemdataset.setup')
 
 
+async def pool_pre_export(middleware, pool, options, job):
+    sysds = await middleware.call('systemdataset.config')
+    if sysds['pool'] == pool['name']:
+        job.set_progress(40, 'Reconfiguring system dataset')
+        sysds_job = await middleware.call('systemdataset.update', {
+            'pool': None, 'pool_exclude': pool['name'],
+        })
+        await sysds_job.wait()
+        if sysds_job.error:
+            raise CallError(sysds_job.error)
+
+
 async def setup(middleware):
     middleware.register_hook('pool.post_create', pool_post_create)
     # Reconfigure system dataset first thing after we import a pool.
     middleware.register_hook('pool.post_import', pool_post_import, order=-10000)
+    middleware.register_hook('pool.pre_export', pool_pre_export, order=40)
 
     try:
         if not os.path.exists('/var/cache/nscd') or not os.path.islink('/var/cache/nscd'):

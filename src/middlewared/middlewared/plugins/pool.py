@@ -1615,15 +1615,7 @@ class PoolService(CRUDService):
         # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
         await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
 
-        sysds = await self.middleware.call('systemdataset.config')
-        if sysds['pool'] == pool['name']:
-            job.set_progress(40, 'Reconfiguring system dataset')
-            sysds_job = await self.middleware.call('systemdataset.update', {
-                'pool': None, 'pool_exclude': pool['name'],
-            })
-            await sysds_job.wait()
-            if sysds_job.error:
-                raise CallError(sysds_job.error)
+        await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
 
         if pool['status'] == 'OFFLINE':
             # Pool exists only in database, its not imported
