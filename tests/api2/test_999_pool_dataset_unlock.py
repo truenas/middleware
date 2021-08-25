@@ -14,7 +14,7 @@ from pytest_dependency import depends
 from samba import NTSTATUSError
 
 from auto_config import ip, pool_name, password, user, hostname
-from functions import POST, GET, DELETE, wait_on_job
+from functions import POST, GET, DELETE, SSH_TEST, wait_on_job
 from protocols import SMB
 
 
@@ -131,7 +131,10 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
             # Create an encrypted SMB share, unlocking which might lead to SMB service interruption
             with dataset("encrypted", passphrase_encryption()) as encrypted:
                 with smb_share("encrypted", f"/mnt/{encrypted}"):
-                    run(f"touch /mnt/{encrypted}/secret")
+                    cmd = f"touch /mnt/{encrypted}/secret"
+                    results = SSH_TEST(cmd, user, password, ip)
+                    assert results['result'] is True, results['output']
+
                     lock_dataset(encrypted)
 
                     # Mount test SMB share
