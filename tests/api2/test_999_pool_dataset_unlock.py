@@ -4,7 +4,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 import contextlib
-import subprocess
 import threading
 import time
 import urllib.parse
@@ -13,8 +12,8 @@ import pytest
 from pytest_dependency import depends
 from samba import ntstatus, NTSTATUSError
 
-from auto_config import ip, pool_name, password, user, hostname, dev_test
-from functions import POST, GET, DELETE, SSH_TEST, wait_on_job
+from auto_config import ip, pool_name, password, user, dev_test
+from functions import POST, DELETE, SSH_TEST, wait_on_job
 from protocols import SMB
 
 # comment pytestmark for development testing with --dev-test
@@ -109,10 +108,6 @@ def unlock_dataset(name, options=None):
     assert job_status['results']['result']['unlocked'] == [name], str(job_status['results'])
 
 
-def run(command):
-    return subprocess.run(command, shell=True, check=True, capture_output=True, encoding="utf-8")
-
-
 @contextlib.contextmanager
 def smb_connection(**kwargs):
     c = SMB()
@@ -137,35 +132,32 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
                     cmd = f"touch /mnt/{encrypted}/secret"
                     results = SSH_TEST(cmd, user, password, ip)
                     assert results['result'] is True, results['output']
-
+                    results = POST("/service/start/", {"service": "cifs"})
+                    assert results.status_code == 200, results.text
                     lock_dataset(encrypted)
-
                     # Mount test SMB share
                     with smb_connection(host=ip, share="normal") as normal_connection:
                         # Locked share should not be mountable
                         with pytest.raises(NTSTATUSError) as e:
                             with smb_connection(host=ip, share="encrypted"):
                                 pass
-
                         assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
-
                         # While unlocking the dataset, infinitely perform writes to test SMB share
                         # and measure IO times
                         io_times = []
                         stop = threading.Event()
                         stopped = threading.Event()
                         fd = normal_connection.create_file("blob", "w")
+
                         def thread():
                             while not stop.wait(0.1):
                                 start = time.monotonic()
                                 normal_connection.write(fd, b"0" * 100000)
                                 io_times.append(time.monotonic() - start)
-
                             stopped.set()
 
                         try:
                             threading.Thread(target=thread, daemon=True).start()
-
                             unlock_dataset(encrypted, {"toggle_attachments": toggle_attachments})
                         finally:
                             stop.set()
@@ -188,3 +180,5 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
                                 pass
 
                         assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
+    results = POST("/service/stop/", {"service": "cifs"})
+    assert results.status_code == 200, results.text
