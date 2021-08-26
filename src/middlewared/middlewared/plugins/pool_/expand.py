@@ -137,7 +137,7 @@ class PoolService(Service):
             )
             rollback_cmd = (
                 'gpart', 'resize', '-a', '4k', '-i', str(partition_number),
-                '-s', str(part_data['size']), part_data['disk']
+                '-s', f'{part_data["size"]}B', part_data['disk']
             )
 
             logger.warning('It will be obligatory to notify GELI that the provider has been resized: %r',
