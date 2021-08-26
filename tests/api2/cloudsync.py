@@ -13,17 +13,15 @@ import urllib.parse
 dataset = f"{pool_name}/cloudsync"
 dataset_path = os.path.join("/mnt", dataset)
 
-
-@pytest.fixture(scope="module")
-def env():
-    if (
-        "CLOUDSYNC_AWS_ACCESS_KEY_ID" not in os.environ or
-        "CLOUDSYNC_AWS_SECRET_ACCESS_KEY" not in os.environ or
-        "CLOUDSYNC_AWS_BUCKET" not in os.environ
-    ):
-        pytest.skip("No credentials")
-
-    return os.environ
+try:
+    from config import (
+        AWS_ACCESS_KEY_ID,
+        AWS_SECRET_ACCESS_KEY,
+        AWS_BUCKET
+    )
+except ImportError:
+    Reason = 'AWS credential are missing in config.py'
+    pytestmark = pytest.mark.skip(reason=Reason)
 
 
 @pytest.fixture(scope="module")
@@ -41,12 +39,12 @@ def test_01_create_dataset():
     assert result.status_code == 200, result.text
 
 
-def test_02_create_cloud_credentials(env, credentials):
+def test_02_create_cloud_credentials(credentials):
     result = POST("/cloudsync/credentials/", {
         "name": "Test",
         "provider": "S3",
         "attributes": {
-            "access_key_id": env["CLOUDSYNC_AWS_ACCESS_KEY_ID"],
+            "access_key_id": AWS_ACCESS_KEY_ID,
             "secret_access_key": "garbage",
         },
     })
@@ -54,19 +52,19 @@ def test_02_create_cloud_credentials(env, credentials):
     credentials.update(result.json())
 
 
-def test_03_update_cloud_credentials(env, credentials):
+def test_03_update_cloud_credentials(credentials):
     result = PUT(f"/cloudsync/credentials/id/{credentials['id']}/", {
         "name": "Test",
         "provider": "S3",
         "attributes": {
-            "access_key_id": env["CLOUDSYNC_AWS_ACCESS_KEY_ID"],
-            "secret_access_key": env["CLOUDSYNC_AWS_SECRET_ACCESS_KEY"],
+            "access_key_id": AWS_ACCESS_KEY_ID,
+            "secret_access_key": AWS_SECRET_ACCESS_KEY,
         },
     })
     assert result.status_code == 200, result.text
 
 
-def test_04_create_cloud_sync(env, credentials, task):
+def test_04_create_cloud_sync(credentials, task):
     result = POST("/cloudsync/", {
         "description": "Test",
         "direction": "PULL",
@@ -81,7 +79,7 @@ def test_04_create_cloud_sync(env, credentials, task):
             "dow": "1",
         },
         "attributes": {
-            "bucket": env["CLOUDSYNC_AWS_BUCKET"],
+            "bucket": AWS_BUCKET,
             "folder": "",
         },
         "args": "",
@@ -90,7 +88,7 @@ def test_04_create_cloud_sync(env, credentials, task):
     task.update(result.json())
 
 
-def test_05_update_cloud_sync(env, credentials, task):
+def test_05_update_cloud_sync(credentials, task):
     result = PUT(f"/cloudsync/id/{task['id']}/", {
         "description": "Test",
         "direction": "PULL",
@@ -105,7 +103,7 @@ def test_05_update_cloud_sync(env, credentials, task):
             "dow": "1",
         },
         "attributes": {
-            "bucket": env["CLOUDSYNC_AWS_BUCKET"],
+            "bucket": AWS_BUCKET,
             "folder": "",
         },
         "args": "",
@@ -113,7 +111,7 @@ def test_05_update_cloud_sync(env, credentials, task):
     assert result.status_code == 200, result.text
 
 
-def test_06_run_cloud_sync(env, task):
+def test_06_run_cloud_sync(task):
     result = POST(f"/cloudsync/id/{task['id']}/sync/")
     assert result.status_code == 200, result.text
     for i in range(120):
@@ -135,7 +133,7 @@ def test_06_run_cloud_sync(env, task):
     assert False, state
 
 
-def test_07_restore_cloud_sync(env, task):
+def test_07_restore_cloud_sync(task):
     result = POST(f"/cloudsync/id/{task['id']}/restore/", {
         "transfer_mode": "COPY",
         "path": dataset_path,
@@ -145,17 +143,17 @@ def test_07_restore_cloud_sync(env, task):
     restore_id = result.json()['id']
 
 
-def test_08_delete_restore_cloudsync(env):
+def test_08_delete_restore_cloudsync():
     result = DELETE(f"/cloudsync/id/{restore_id}/")
     assert result.status_code == 200, result.text
 
 
-def test_97_delete_cloud_sync(env, task):
+def test_97_delete_cloud_sync(task):
     result = DELETE(f"/cloudsync/id/{task['id']}/")
     assert result.status_code == 200, result.text
 
 
-def test_98_delete_cloud_credentials(env, credentials):
+def test_98_delete_cloud_credentials(credentials):
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
     assert result.status_code == 200, result.text
 
