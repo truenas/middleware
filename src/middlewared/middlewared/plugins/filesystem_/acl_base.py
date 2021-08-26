@@ -76,7 +76,7 @@ class ACLType(enum.Enum):
         }
 
         for ace in theacl:
-            key = f'{ace["tag"].lower()}_{"inherit" if self.is_inherited(ace) else "noinherit"}'
+            key = f'{ace["type"].lower()}_{"inherit" if self._is_inherited(ace) else "noinherit"}'
             acl_groups[key].append(ace)
 
         for g in acl_groups.values():
