@@ -4,9 +4,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 import contextlib
-import subprocess
-import threading
-import time
 import urllib.parse
 
 import pytest
@@ -109,10 +106,6 @@ def unlock_dataset(name, options=None):
     assert job_status['results']['result']['unlocked'] == [name], str(job_status['results'])
 
 
-def run(command):
-    return subprocess.run(command, shell=True, check=True, capture_output=True, encoding="utf-8")
-
-
 @contextlib.contextmanager
 def smb_connection(**kwargs):
     c = SMB()
@@ -149,33 +142,12 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
 
                         assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
 
-                        # While unlocking the dataset, infinitely perform writes to test SMB share
-                        # and measure IO times
-                        io_times = []
-                        stop = threading.Event()
-                        stopped = threading.Event()
-                        fd = normal_connection.create_file("blob", "w")
-                        def thread():
-                            while not stop.wait(0.1):
-                                start = time.monotonic()
-                                normal_connection.write(fd, b"0" * 100000)
-                                io_times.append(time.monotonic() - start)
+                        conn = normal_connection.show_connection()
+                        assert conn['connected'], conn
+                        unlock_dataset(encrypted, {"toggle_attachments": toggle_attachments})
 
-                            stopped.set()
-
-                        try:
-                            threading.Thread(target=thread, daemon=True).start()
-
-                            unlock_dataset(encrypted, {"toggle_attachments": toggle_attachments})
-                        finally:
-                            stop.set()
-
-                        res = stopped.wait(1)
-                        assert res
-
-                        # Ensure that no service interruption occurred
-                        assert len(io_times) > 1
-                        assert max(io_times) < 0.1
+                        conn = normal_connection.show_connection()
+                        assert conn['connected'], conn
 
                     if toggle_attachments:
                         # We should be able to mount encrypted share
