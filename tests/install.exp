@@ -51,7 +51,7 @@ expect {
 
 # ┌─────────────────────────FreeNAS installation───────────────────────────┐
 # │ WARNING:                                                               │
-# │ - This will erase ALL paritions and data on ada0.                      │
+# │ - This will erase ALL partitions and data on ada0.                      │
 # │ - You can't use ada0 for sharing data.                                 │
 # │                                                                        │
 # │ NOTE:                                                                  │
