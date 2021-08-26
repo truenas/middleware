@@ -3,6 +3,7 @@ from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
+from bsd.enclosure import Enclosure as ENC
 from .enclosure_.enclosure_class import Enclosure
 
 
@@ -22,6 +23,10 @@ class EnclosureService(CRUDService):
         prod = dmi['system-product-name']
         prod_vers = dmi['system-version']
 
+        labels = {
+            label['encid']: label['label']
+            for label in self.middleware.call_sync('datastore.query', 'truenas.enclosurelabel')
+        }
         enclosures = []
         for enc in self.__get_enclosures(prod):
             enclosure = {
@@ -30,6 +35,7 @@ class EnclosureService(CRUDService):
                 'name': enc.encname,
                 'model': enc.model,
                 'controller': enc.controller,
+                'label': labels.get(enc.encid) or enc.encname,
                 'elements': enc.elements,
             }
             # Ensure R50's first expander is first in
@@ -46,14 +52,7 @@ class EnclosureService(CRUDService):
 
         enclosures = self.middleware.call_sync('enclosure.map_enclosures', enclosures, prod, prod_vers)
 
-        labels = {
-            label['encid']: label['label']
-            for label in self.middleware.call_sync('datastore.query', 'truenas.enclosurelabel')
-        }
-        for enclosure in enclosures:
-            enclosure["label"] = labels.get(enclosure["id"]) or enclosure["name"]
-
-        return filter_list(enclosures, filters=filters or [], options=options or {})
+        return filter_list(enclosures, filters, options)
 
     @accepts(
         Str("id"),
@@ -73,110 +72,89 @@ class EnclosureService(CRUDService):
 
         return await self._get_instance(id)
 
-    async def _build_slot_for_disks_dict(self):
-        enclosure_info = await self.middleware.call('enclosure.query')
+    @accepts(
+        Str("enclosure_id"),
+        Int("slot"),
+        Str("status", enum=["CLEAR", "FAULT", "IDENTIFY"])
+    )
+    def set_slot_status(self, enclosure_id, slot, status):
+        """
+        Set an enclosure's, with id of `enclosure_id`, disk array element `slot` to `status`.
+        """
+        try:
+            info = self.middleware.call_sync('enclosure.query', [['id', '=', enclosure_id]])[0]
+        except IndexError:
+            # the enclosure given to us doesn't match anything connected to the system
+            raise CallError(f'Enclosure with id: {enclosure_id} not found')
 
-        results = {}
-        for enc in enclosure_info:
-            slots = next(filter(lambda x: x["name"] == "Array Device Slot", enc["elements"]))["elements"]
-            results.update({
-                enc["number"] * 1000 + j["slot"]: j["data"]["Device"] or None for j in slots
-            })
+        # create enclosure object
+        enc = ENC(f'/dev/ses{info["number"]}')
 
-        return results
+        # gotta make sure the slot number given to us exists on the enclosure
+        if slot not in enc.status()['elements']:
+            raise CallError(f'Enclosure with id: {enclosure_id} does not have slot: {slot}')
 
-    def _get_slot(self, slot_filter, enclosure_query=None, enclosure_info=None):
+        # set the status of the enclosure slot
+        if status == 'CLEAR':
+            enc.clear(slot)
+        elif status == 'FAULT':
+            enc.fault(slot)
+        elif status == 'IDENTIFY':
+            enc.identify(slot)
+
+    @private
+    async def sync_disks(self, enclosure_info=None):
         if enclosure_info is None:
-            enclosure_info = self.middleware.call_sync("enclosure.query", enclosure_query or [])
+            enclosure_info = await self.middleware.call('enclosure.query')
 
-        for enclosure in enclosure_info:
-            try:
-                elements = next(filter(lambda element: element["name"] == "Array Device Slot",
-                                       enclosure["elements"]))["elements"]
-                slot = next(filter(slot_filter, elements))
-                return enclosure, slot
-            except StopIteration:
-                pass
+        # build a manageable dict that has enclosure slot info
+        # and the associated disk attached to that slot
+        curr_slot_info = {}
+        for enc in enclosure_info:
+            for slot, slot_data in enc['elements']['Array Device Slot'].items():
+                if slot_data['status'] != 'Unsupported' and slot_data['dev']:
+                    curr_slot_info.update({
+                        enc['number'] * 1000 + int(slot): slot_data['dev']
+                    })
+
+        # now build a manageable dict from the db with the same
+        # information as the `curr_slot_info` dict
+        db_info = {
+            i['disk_enclosure_slot']: (i['disk_name'], i['disk_identifier'])
+            for i in await self.middleware.call('datastore.query', 'storage.disk') if i['disk_enclosure_slot']
+        }
+
+        # now go through any disks that have changed slots and update the db
+        for slot, disk in dict(curr_slot_info.items() - {k: v[0] for k, v in db_info.items()}.items()).items():
+            await self.middleware.call(
+                'datastore.update', 'storage.disk', db_info[slot][1], {'disk_enclosure_slot': slot}
+            )
+
+    async def _get_enclosure_number_and_slot_for_disk(self, disk):
+        for enc in await self.middleware.call('enclosure.query'):
+            for slot, info in enc['elements']['Array Device Slot'].items():
+                if info['dev'] == disk:
+                    return enc['number'], slot
 
         raise MatchNotFound()
 
-    def _get_slot_for_disk(self, disk, enclosure_info=None):
-        return self._get_slot(lambda element: element["data"]["Device"] == disk, enclosure_info=enclosure_info)
-
-    def _get_ses_slot(self, enclosure, element):
-        if "original" in element:
-            enclosure_id = element["original"]["enclosure_id"]
-            slot = element["original"]["slot"]
-        else:
-            enclosure_id = enclosure["id"]
-            slot = element["slot"]
-
-        ses_enclosures = self.__get_enclosures()
-        ses_enclosure = ses_enclosures.get_by_encid(enclosure_id)
-        if ses_enclosure is None:
-            raise MatchNotFound()
-        ses_slot = ses_enclosure.get_by_slot(slot)
-        if ses_slot is None:
-            raise MatchNotFound()
-        return ses_slot
-
-    def _get_ses_slot_for_disk(self, disk):
-        # This can also return SES slot for disk that is not present in the system
-        try:
-            enclosure, element = self._get_slot_for_disk(disk)
-        except MatchNotFound:
-            disk = self.middleware.call_sync(
-                "disk.query",
-                [["devname", "=", disk]],
-                {"get": True, "extra": {"include_expired": True}, "order_by": ["expiretime"]},
-            )
-            if disk["enclosure"]:
-                enclosure, element = self._get_slot(lambda element: element["slot"] == disk["enclosure"]["slot"],
-                                                    [["number", "=", disk["enclosure"]["number"]]])
-            else:
-                raise MatchNotFound()
-
-        return self._get_ses_slot(enclosure, element)
-
-    @accepts(Str("enclosure_id"), Int("slot"), Str("status", enum=["CLEAR", "FAULT", "IDENTIFY"]))
-    def set_slot_status(self, enclosure_id, slot, status):
-        enclosure, element = self._get_slot(lambda element: element["slot"] == slot, [["id", "=", enclosure_id]])
-        ses_slot = self._get_ses_slot(enclosure, element)
-        if not ses_slot.device_slot_set(status.lower()):
-            raise CallError("Error setting slot status")
-
     @private
-    async def sync_disks(self):
-        curr_slot_info = await self._build_slot_for_disks_dict()
-        for db_entry in await self.middleware.call('datastore.query', 'storage.disk'):
-            for curr_slot, curr_disk in curr_slot_info.items():
-                if db_entry['disk_name'] == curr_disk and db_entry['disk_enclosure_slot'] != curr_slot:
-                    await self.middleware.call(
-                        'datastore.update', 'storage.disk',
-                        db_entry['disk_identifier'],
-                        {'disk_enclosure_slot': curr_slot},
-                    )
-
-    @private
-    def sync_disk(self, id, enclosure_info=None):
-        disk = self.middleware.call_sync(
-            'disk.query',
-            [['identifier', '=', id]],
-            {'get': True, "extra": {'include_expired': True}}
+    async def sync_disk(self, id):
+        disk = await self.middleware.call(
+            'disk.query', [['identifier', '=', id]], {'get': True, "extra": {'include_expired': True}}
         )
+        if not disk:
+            return
 
         try:
-            enclosure, element = self._get_slot_for_disk(disk["name"], enclosure_info)
+            encnum, slot = await self._get_enclosure_number_and_slot_for_disk(disk['name'])
         except MatchNotFound:
             disk_enclosure = None
         else:
-            disk_enclosure = {
-                "number": enclosure["number"],
-                "slot": element["slot"],
-            }
+            disk_enclosure = {"number": encnum, "slot": slot}
 
         if disk_enclosure != disk['enclosure']:
-            self.middleware.call_sync('disk.update', id, {'enclosure': disk_enclosure})
+            await self.middleware.call('disk.update', id, {'enclosure': disk_enclosure})
 
     @private
     @accepts(Str("pool", null=True, default=None))

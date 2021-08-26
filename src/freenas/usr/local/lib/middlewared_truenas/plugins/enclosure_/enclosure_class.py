@@ -106,12 +106,12 @@ class Enclosure(object):
                 'value': element_type[1](value_raw),
                 'value_raw': value_raw,
             }}
-            if element['descriptor'] == 'Array Device Slot':
+            if element_type[0] == 'Array Device Slot':
                 # we always have a 'dev' key that's been strip()'ed,
                 # we just need to pull out the da# (if there is one)
                 da = [y for y in element['dev'].split(',') if not y.startswith('pass')]
                 if da:
-                    parsed[slot].update({'dev': da})
+                    parsed[slot].update({'dev': da[0]})
                 else:
                     parsed[slot].update(element['dev'])
 
