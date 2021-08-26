@@ -831,9 +831,6 @@ class SMBService(TDBWrapConfigService):
         await self.validate_smb(new, verrors)
         verrors.check()
 
-        if new['admin_group'] and new['admin_group'] != old['admin_group']:
-            await self.middleware.call('smb.add_admin_group', new['admin_group'])
-
         new['netbiosalias'] = ' '.join(new['netbiosalias'])
 
         await self.compress(new)
@@ -855,6 +852,10 @@ class SMBService(TDBWrapConfigService):
             await self.middleware.call("smb.set_database_sid", new_sid)
             new_config["cifs_SID"] = new_sid
             await self.middleware.call("smb.synchronize_group_mappings")
+
+        if new['admin_group'] and new['admin_group'] != old['admin_group']:
+            job = await self.middleware.call('smb.synchronize_group_mapping')
+            await job.wait()
 
         await self._service_change(self._config.service, 'restart')
         return new_config

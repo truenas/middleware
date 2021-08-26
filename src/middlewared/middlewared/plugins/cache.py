@@ -397,6 +397,7 @@ class DSCache(Service):
         res = []
         ds_state = await self.middleware.call('directoryservices.get_state')
         enabled_ds = None
+        extra = options.get("extra", {})
 
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])
@@ -434,6 +435,18 @@ class DSCache(Service):
             return [entry] if entry else []
 
         entries = await self.entries(enabled_ds.upper(), objtype[:-1])
+        if 'SMB' in extra.get('additional_information', []):
+            for entry in entries:
+                sid = await self.middleware.call('idmap.unixid_to_sid', {
+                    'id_type': objtype[:-1],
+                    'id': entry[f'{objtype[0].lower()}id'],
+                })
+                name_key = "username" if objtype == 'USERS' else 'group'
+                entry.update({
+                    'nt_name': entry[name_key],
+                    'sid': sid,
+                })
+
         entries_by_id = sorted(entries, key=lambda i: i['id'])
         res.extend(filter_list(entries_by_id, filters, options))
         return res
