@@ -20,6 +20,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus, SSL
 from concurrent.futures import ThreadPoolExecutor
+from middlewared.validators import Range
 
 LDAP_SMBCONF_PARAMS = {
     "server role": "member server",
@@ -156,8 +157,8 @@ class LDAPClient(Service):
         ),
         Dict(
             'options',
-            Int('timeout', default=30),
-            Int('dns_timeout', default=5),
+            Int('timeout', default=30, validators=[Range(min=1, max=45)]),
+            Int('dns_timeout', default=5, validators=[Range(min=1, max=45)]),
         ),
         register=True,
     ))
