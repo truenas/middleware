@@ -138,12 +138,14 @@ class SMBService(Service):
             expected.append(f'{domain_sid}-512')
 
         if admin_group:
-            grp_obj = await self.middleware.call('group.get_group_obj',
-                                                 {'groupname': admin_group})
-            admin_sid = await self.middleware.call(
-                'idmap.unixid_to_sid',
-                {"id_type": "GROUP", "id": grp_obj["gr_gid"]}
+            admin_sid = None
+            grp_obj = await self.middleware.call('group.query',
+                [('group', '=', admin_group)],
+                {'extra': {'info_level': ['SMB', 'DS']}}
             )
+            if grp_obj:
+                admin_sid = grp_obj[0]['sid']
+
             if admin_sid:
                 expected.append(admin_sid)
 

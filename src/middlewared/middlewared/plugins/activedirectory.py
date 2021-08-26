@@ -1513,7 +1513,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
                                 'groups': [],
                                 'sshpubkey': None,
                                 'local': False,
-                                'id_type_both': d['id_type_both']
+                                'id_type_both': d['id_type_both'],
+                                'nt_name': None,
+                                'sid': None,
                             }
                             self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
                             break
@@ -1554,7 +1556,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
                             'sudo_commands': [],
                             'users': [],
                             'local': False,
-                            'id_type_both': d['id_type_both']
+                            'id_type_both': d['id_type_both'],
+                            'nt_name': None,
+                            'sid': None,
                         }
                         self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
                         break

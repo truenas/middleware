@@ -146,6 +146,8 @@ class UserService(CRUDService):
         ('add', Bool('local')),
         ('add', Str('unixhash')),
         ('add', Str('smbhash')),
+        ('add', Str('nt_name')),
+        ('add', Str('sid')),
     )
 
     @private
@@ -183,8 +185,14 @@ class UserService(CRUDService):
         Query users with `query-filters` and `query-options`. As a performance optimization, only local users
         will be queried by default.
 
-        Users from directory services such as NIS, LDAP, or Active Directory will be included in query results
-        if the option `{'extra': {'search_dscache': True}}` is specified.
+        Expanded information may be requested by specifying the extra option `"extra": {"info_level": []}`.
+
+        The following `info_level` options are supported:
+        `SMB` - include Windows SID and NT Name for user. If this option is not specified, then these
+            keys will have `null` value.
+        `DS` - include users from Directory Service (LDAP or Active Directory) in results
+
+        `"extra": {"search_dscache": true}` is a legacy method of querying for directory services users.
         """
         if not filters:
             filters = []
@@ -202,6 +210,18 @@ class UserService(CRUDService):
 
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
+        info_level = extra.get('info_level', [])
+        dssearch = dssearch or 'DS' in info_level
+        if 'DS' in info_level:
+            info_level.remove('DS')
+
+        username_sid = {}
+        if 'SMB' in info_level:
+            for u in await self.middleware.call("smb.passdb_list", True):
+                username_sid.update({u['Unix username']: {
+                    'nt_name': u['NT username'],
+                    'sid': u['User SID'],
+                }})
 
         if dssearch:
             return await self.middleware.call('dscache.query', 'USERS', filters, options)
@@ -209,8 +229,20 @@ class UserService(CRUDService):
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
         )
+
         for entry in result:
             entry.update({'local': True, 'id_type_both': False})
+            if username_sid:
+                smb_entry = username_sid.get(entry['username'], {
+                    'nt_name': '',
+                    'sid': '',
+                })
+                if smb_entry['sid']:
+                    smb_entry['nt_name'] = smb_entry['nt_name'] or entry['username']
+                entry.update(smb_entry)
+            else:
+                entry.update({'nt_name': None, 'sid': None})
+
         return await self.middleware.run_in_thread(
             filter_list, result, filters, options
         )
@@ -1057,6 +1089,8 @@ class GroupService(CRUDService):
         ('add', Bool('builtin')),
         ('add', Bool('id_type_both')),
         ('add', Bool('local')),
+        ('add', Str('nt_name')),
+        ('add', Str('sid')),
     )
 
     @private
@@ -1096,8 +1130,14 @@ class GroupService(CRUDService):
         Query groups with `query-filters` and `query-options`. As a performance optimization, only local groups
         will be queried by default.
 
-        Groups from directory services such as NIS, LDAP, or Active Directory will be included in query results
-        if the option `{'extra': {'search_dscache': True}}` is specified.
+        Expanded information may be requested by specifying the extra option `"extra": {"info_level": []}`.
+
+        The following `info_level` options are supported:
+        `SMB` - include Windows SID and NT Name for group. If this option is not specified, then these
+            keys will have `null` value.
+        `DS` - include groups from Directory Service (LDAP or Active Directory) in results
+
+        `"extra": {"search_dscache": true}` is a legacy method of querying for directory services groups.
         """
         if not filters:
             filters = []
@@ -1115,15 +1155,38 @@ class GroupService(CRUDService):
 
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
+        info_level = extra.get('info_level', [])
+        dssearch = dssearch or 'DS' in info_level
+        if 'DS' in info_level:
+            info_level.remove('DS')
 
         if dssearch:
             return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
 
+        if 'SMB' in info_level:
+            smb_groupmap = await self.middleware.call("smb.groupmap_list")
+
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
         )
+
         for entry in result:
             entry.update({'local': True, 'id_type_both': False})
+            if 'SMB' in info_level:
+                smb_data = smb_groupmap['local'].get(entry['gid'])
+                if not smb_data:
+                    smb_data = smb_groupmap['local_builtins'].get(entry['gid'],
+                        {'nt_name': '', 'sid': ''}
+                    )
+
+                entry.update({
+                    'nt_name': smb_data['nt_name'],
+                    'sid': smb_data['sid'],
+                })
+
+            else:
+                entry.update({'nt_name': None, 'sid': None})
+
         return await self.middleware.run_in_thread(
             filter_list, result, filters, options
         )
