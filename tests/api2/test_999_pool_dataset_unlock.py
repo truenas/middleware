@@ -4,7 +4,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 import contextlib
-import subprocess
 import urllib.parse
 
 import pytest
@@ -105,10 +104,6 @@ def unlock_dataset(name, options=None):
     job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     assert job_status['results']['result']['unlocked'] == [name], str(job_status['results'])
-
-
-def run(command):
-    return subprocess.run(command, shell=True, check=True, capture_output=True, encoding="utf-8")
 
 
 @contextlib.contextmanager
