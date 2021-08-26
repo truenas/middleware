@@ -13,7 +13,7 @@ class S3Model(sa.Model):
     __tablename__ = 'services_s3'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    s3_bindip = sa.Column(sa.String(128))
+    s3_bindip = sa.Column(sa.String(128), default='0.0.0.0')
     s3_bindport = sa.Column(sa.SmallInteger(), default=9000)
     s3_access_key = sa.Column(sa.String(128), default='')
     s3_secret_key = sa.Column(sa.EncryptedText(), default='')
