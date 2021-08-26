@@ -1,5 +1,6 @@
 import glob
 import os
+import re
 import subprocess
 
 from .rrd_utils import RRDBase
@@ -272,6 +273,8 @@ class DiskPlugin(RRDBase):
         ('disk_octets', 'write', None),
     )
 
+    RE_NVME_N = re.compile(r"(nvme[0-9]+)(n[0-9]+)$")
+
     def get_title(self):
         return 'Disk I/O ({identifier})'
 
@@ -288,6 +291,16 @@ class DiskPlugin(RRDBase):
 
         ids.sort(key=RRDBase._sort_disks)
         return ids
+
+    def encode(self, identifier):
+        if m := self.RE_NVME_N.match(identifier):
+            nvme_namespace = f'{m.group(1)}c0{m.group(2)}'
+            # If NVMe namespace exists then stats are reported there
+            if os.path.exists(f'{self._base_path}/disk-{nvme_namespace}/disk_octets.rrd'):
+                if os.path.exists(f'/dev/{nvme_namespace}'):
+                    return nvme_namespace
+
+        return identifier
 
 
 class ARCSizePlugin(RRDBase):
