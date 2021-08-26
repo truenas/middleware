@@ -6,9 +6,8 @@ import stat as pystat
 from pathlib import Path
 
 from middlewared.service import private, CallError, ValidationErrors, Service
-from middlewared.plugins.smb import SMBBuiltin
 from middlewared.plugins.cluster_linux.utils import FuseConfig
-from .acl_base import ACLBase, ACLDefault, ACLType
+from .acl_base import ACLBase, ACLType
 
 
 class FilesystemService(Service, ACLBase):
@@ -200,95 +199,16 @@ class FilesystemService(Service, ACLBase):
         job.set_progress(100, 'Finished setting permissions.')
 
     async def default_acl_choices(self, path):
-        if not path:
-            acl_choices = []
-            for x in ACLDefault:
-                if x.value['visible']:
-                    acl_choices.append(x.name)
-
-            return acl_choices
-
-        try:
-            ds = await self.middleware.call('pool.dataset.from_path', path, False)
-            acltype = ds['acltype']['value']
-        except Exception as e:
-            raise CallError(f'{path}: failed to get acltype for path: {e}.')
-
-        prefix = "POSIX" if acltype == "POSIX" else "NFS4"
-        acl_choices = ACLDefault.by_acltype(prefix)
-        return list(acl_choices.keys())
+        acl_templates = await self.middleware.call('filesystem.acltemplate.by_path', {"path": path})
+        return [x['name'] for x in acl_templates]
 
     async def get_default_acl(self, acl_type, share_type):
-        prefix = acl_type.split("_")[0]
-        acl_choices = ACLDefault.by_acltype(prefix)
-        append_mask = False
-
-        acl = []
-        admin_group = (await self.middleware.call('smb.config'))['admin_group']
-        if admin_group:
-            id = (await self.middleware.call('dscache.get_uncached_group', admin_group))['gr_gid'],
-            if prefix == 'POSIX':
-                append_mask = True
-                acl.append({
-                    'default': True,
-                    'tag': 'GROUP',
-                    'id': id,
-                    'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-                })
-                acl.append({
-                    'default': False,
-                    'tag': 'GROUP',
-                    'id': id,
-                    'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-                })
-            else:
-                acl.append({
-                    'tag': 'GROUP',
-                    'id': id,
-                    'perms': {'BASIC': 'FULL_CONTROL'},
-                    'flags': {'BASIC': 'INHERIT'},
-                })
-
-        if share_type == 'SMB':
-            if prefix == 'POSIX':
-                append_mask = True
-
-                acl.append({
-                    'default': True,
-                    'tag': 'GROUP',
-                    'id': int(SMBBuiltin['USERS'].value[1][9:]),
-                    'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-                })
-                acl.append({
-                    'default': False,
-                    'tag': 'GROUP',
-                    'id': int(SMBBuiltin['USERS'].value[1][9:]),
-                    'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-                })
-            else:
-                acl.append({
-                    'tag': 'GROUP',
-                    'id': int(SMBBuiltin['USERS'].value[1][9:]),
-                    'perms': {'BASIC': 'MODIFY'},
-                    'flags': {'BASIC': 'INHERIT'},
-                })
-
-        if append_mask:
-            acl.append({
-                'default': True,
-                'tag': 'MASK',
-                'id': -1,
-                'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-            })
-            acl.append({
-                'default': False,
-                'tag': 'MASK',
-                'id': -1,
-                'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
-            })
-
-        acl.extend(acl_choices[acl_type])
-        return acl
+        filters = [("name", "=", acl_type)]
+        options = {"ensure_builtins": share_type == "SMB"}
+        return (await self.middleware.call("filesystem.acltemplate.by_path", {
+            "query-filters": filters,
+            "format-options": options
+        }))[0]['acl']
 
     @private
     def getacl_nfs4(self, path, simplified, resolve_ids):
@@ -447,6 +367,7 @@ class FilesystemService(Service, ACLBase):
         options = data.get('options', {})
         recursive = options.get('recursive', False)
         do_strip = options.get('stripacl', False)
+        do_canon = options.get('canonicalize', False)
 
         path = data.get('path', '')
         uid = -1 if data['uid'] is None else data.get('uid', -1)
@@ -477,7 +398,7 @@ class FilesystemService(Service, ACLBase):
 
         else:
             payload = {
-                'acl': data['dacl'],
+                'acl': ACLType.NFS4.canonicalize(data['dacl']) if do_canon else data['dacl'],
             }
             json_payload = json.dumps(payload)
             setacl = subprocess.run(
