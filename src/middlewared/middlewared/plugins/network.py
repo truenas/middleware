@@ -156,6 +156,23 @@ class NetworkConfigurationService(ConfigService):
 
         return verrors
 
+    @private
+    async def toggle_announcement(self, data):
+        for srv, enabled in data.items():
+            service_name = ANNOUNCE_SRV[srv]
+            started = await self.middleware.call('service.started', service_name)
+            verb = None
+
+            if enabled:
+                verb = 'restart' if started else 'start'
+            else:
+                verb = 'stop' if started else None
+
+            if not verb:
+                continue
+
+            await self.middleware.call(f'service.{verb}', service_name)
+
     @accepts(
         Dict(
             'global_configuration_update',
@@ -209,6 +226,9 @@ class NetworkConfigurationService(ConfigService):
         new_config = config.copy()
         is_ha = True
         sync_group_mappings = False
+        srv = config['service_announcement'] | data.get('service_announcement', {})
+        new_config.update(data)
+        new_config['service_announcement'] = srv
 
         if not (
                 not await self.middleware.call('system.is_freenas') and
@@ -304,11 +324,9 @@ class NetworkConfigurationService(ConfigService):
                     {'data': {'httpproxy': new_config['httpproxy']}}
                 )
 
-        for srv, enabled in service_announcement.items():
-            if enabled != old_service_announcement[srv]:
-                await self.middleware.call(
-                    "service.start" if enabled else "service.stop", ANNOUNCE_SRV[srv]
-                )
+        if service_announcement != old_service_announcement:
+            await self.middleware.call('network.configuration.toggle_announcement',
+                                       service_announcement)
 
         if sync_group_mappings:
             await self.middleware.call("smb.synchronize_group_mappings")
@@ -1090,7 +1108,6 @@ class InterfaceService(CRUDService):
                         f'{schema_name}.mtu',
                         'VLAN MTU cannot be bigger than parent interface.',
                     )
-
 
         if not await self.middleware.call('failover.licensed'):
             data.pop('failover_critical', None)
@@ -2425,6 +2442,13 @@ async def udevd_ifnet_hook(middleware, data):
     await attach_interface(middleware, data.get('INTERFACE'))
 
 
+async def __activate_service_announcements(middleware, event_type, args):
+
+    if args['id'] == 'ready':
+        srv = (await middleware.call("network.configuration.config"))["service_announcement"]
+        await middleware.call("network.configuration.toggle_announcement", srv)
+
+
 async def setup(middleware):
     middleware.event_register('network.config', 'Sent on network configuration changes.')
 
@@ -2432,11 +2456,9 @@ async def setup(middleware):
     asyncio.ensure_future(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
 
-    if osc.IS_LINUX:
-        middleware.register_hook('udev.net', udevd_ifnet_hook)
-    else:
-        # Listen to IFNET events so we can sync on interface attach
-        middleware.register_hook('devd.ifnet', devd_ifnet_hook)
+    # Listen to IFNET events so we can sync on interface attach
+    middleware.register_hook('devd.ifnet', devd_ifnet_hook)
+    middleware.event_subscribe('system', __activate_service_announcements)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

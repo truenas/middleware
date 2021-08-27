@@ -1,5 +1,4 @@
 from middlewared.service_exception import CallError
-from middlewared.utils import osc
 
 from .base import SimpleService, ServiceState
 
@@ -23,23 +22,12 @@ class CIFSService(SimpleService):
 
     async def start(self):
         announce = (await self.middleware.call("network.configuration.config"))["service_announcement"]
-        if osc.IS_FREEBSD:
-            await self._freebsd_service("smbd", "start", force=True)
-            await self._freebsd_service("winbindd", "start", force=True)
-        if osc.IS_LINUX:
-            await self._systemd_unit("smbd", "start")
-            await self._systemd_unit("winbind", "start")
+        await self._freebsd_service("smbd", "start", force=True)
+        await self._freebsd_service("winbindd", "start", force=True)
         if announce["netbios"]:
-            if osc.IS_FREEBSD:
-                await self._freebsd_service("nmbd", "start", force=True)
-            if osc.IS_LINUX:
-                await self._systemd_unit("nmbd", "start")
+            await self._freebsd_service("nmbd", "start", force=True)
         if announce["wsd"]:
-            if osc.IS_FREEBSD:
-                await self._freebsd_service("wsdd", "start", force=True)
-            if osc.IS_LINUX:
-                await self._systemd_unit("wsdd", "start")
-                # FIXME: Need debian package
+            await self._freebsd_service("wsdd", "start", force=True)
 
     async def after_start(self):
         await self.middleware.call("service.reload", "mdns")
@@ -50,19 +38,16 @@ class CIFSService(SimpleService):
             raise CallError(e)
 
     async def stop(self):
-        if osc.IS_FREEBSD:
-            await self._freebsd_service("smbd", "stop", force=True)
-            await self._freebsd_service("winbindd", "stop", force=True)
-            await self._freebsd_service("nmbd", "stop", force=True)
-            await self._freebsd_service("wsdd", "stop", force=True)
-        if osc.IS_LINUX:
-            await self._systemd_unit("smbd", "stop")
-            await self._systemd_unit("winbind", "stop")
-            await self._systemd_unit("nmbd", "stop")
-            await self._systemd_unit("wsdd", "stop")
+        await self._freebsd_service("smbd", "stop", force=True)
+        await self._freebsd_service("winbindd", "stop", force=True)
+        await self._freebsd_service("nmbd", "stop", force=True)
+        await self._freebsd_service("wsdd", "stop", force=True)
 
     async def after_stop(self):
         await self.middleware.call("service.reload", "mdns")
 
     async def after_reload(self):
         await self.middleware.call("service.reload", "mdns")
+
+    async def before_reload(self):
+        await self.middleware.call("sharing.smb.sync_registry")
