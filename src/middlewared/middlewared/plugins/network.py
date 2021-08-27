@@ -383,8 +383,8 @@ class NetworkConfigurationService(ConfigService):
             await self.middleware.call('zettarepl.update_tasks')
 
         await self.middleware.call(
-             'network.configuration.toggle_announcement',
-             {'service_announcement': new_config['service_announcement']}
+            'network.configuration.toggle_announcement',
+            {'service_announcement': new_config['service_announcement']}
         )
 
         return await self.config()
@@ -2877,8 +2877,8 @@ async def __activate_service_announcements(middleware, event_type, args):
     if args['id'] == 'ready':
         srv = (await middleware.call("network.configuration.config"))["service_announcement"]
         await middleware.call(
-             "network.configuration.toggle_announcement",
-             {"service_announcement": srv}
+            "network.configuration.toggle_announcement",
+            {"service_announcement": srv}
         )
 
 

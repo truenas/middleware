@@ -1,7 +1,4 @@
-from middlewared.service_exception import CallError
-from middlewared.utils import osc
-
-from .base import SimpleService, ServiceState
+from .base import SimpleService
 
 
 class CIFSService(SimpleService):
