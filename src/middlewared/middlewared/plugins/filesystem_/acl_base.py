@@ -51,7 +51,7 @@ class ACLType(enum.Enum):
         if ace['flags'].get("BASIC"):
             return False
 
-        return ace['flags']['INHERITED']
+        return ace['flags'].get('INHERITED', False)
 
     def canonicalize(self, theacl):
         """
