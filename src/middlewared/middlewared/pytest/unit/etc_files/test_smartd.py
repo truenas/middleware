@@ -1,4 +1,3 @@
-import asyncio
 import subprocess
 import textwrap
 from unittest.mock import call, Mock, patch
@@ -8,13 +7,13 @@ import pytest
 from middlewared.etc_files.smartd import (
     ensure_smart_enabled, annotate_disk_for_smart, get_smartd_schedule, get_smartd_schedule_piece, get_smartd_config
 )
+from middlewared.pytest.unit.middleware import Middleware
 
 
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__smart_error():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = asyncio.Future()
-        run.return_value.set_result(Mock(stdout="S.M.A.R.T. Error"))
+        run.return_value = Mock(stdout="S.M.A.R.T. Error")
 
         assert await ensure_smart_enabled(["/dev/ada0"]) is False
 
@@ -24,8 +23,7 @@ async def test__ensure_smart_enabled__smart_error():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__smart_enabled():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = asyncio.Future()
-        run.return_value.set_result(Mock(stdout="SMART   Enabled"))
+        run.return_value = Mock(stdout="SMART   Enabled")
 
         assert await ensure_smart_enabled(["/dev/ada0"])
 
@@ -35,8 +33,7 @@ async def test__ensure_smart_enabled__smart_enabled():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__smart_was_disabled():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = asyncio.Future()
-        run.return_value.set_result(Mock(stdout="SMART   Disabled", returncode=0))
+        run.return_value = Mock(stdout="SMART   Disabled", returncode=0)
 
         assert await ensure_smart_enabled(["/dev/ada0"])
 
@@ -50,8 +47,7 @@ async def test__ensure_smart_enabled__smart_was_disabled():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__enabling_smart_failed():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = asyncio.Future()
-        run.return_value.set_result(Mock(stdout="SMART   Disabled", returncode=1))
+        run.return_value = Mock(stdout="SMART   Disabled", returncode=1)
 
         assert await ensure_smart_enabled(["/dev/ada0"]) is False
 
@@ -59,8 +55,7 @@ async def test__ensure_smart_enabled__enabling_smart_failed():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__handled_args_properly():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = asyncio.Future()
-        run.return_value.set_result(Mock(stdout="SMART   Enabled"))
+        run.return_value = Mock(stdout="SMART   Enabled")
 
         assert await ensure_smart_enabled(["/dev/ada0", "-d", "sat"])
 
@@ -72,42 +67,47 @@ async def test__ensure_smart_enabled__handled_args_properly():
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart__skips_nvd():
-    assert await annotate_disk_for_smart(None, {}, "nvd0") is None
+    m = Middleware()
+    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
+    assert await annotate_disk_for_smart(m, {}, "nvd0") is None
 
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart__skips_unknown_device():
-    assert await annotate_disk_for_smart(None, {"ada0": {}}, "ada1") is None
+    m = Middleware()
+    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
+    assert await annotate_disk_for_smart(m, {"ada0": {}}, "ada1") is None
 
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart__skips_device_without_args():
+    m = Middleware()
+    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
     with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = asyncio.Future()
-        get_smartctl_args.return_value.set_result(None)
-        assert await annotate_disk_for_smart(None, {"ada1": {"driver": "ata"}}, "ada1") is None
+        get_smartctl_args.return_value = None
+        assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") is None
 
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart__skips_device_with_unavailable_smart():
+    m = Middleware()
+    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
     with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = asyncio.Future()
-        get_smartctl_args.return_value.set_result(["/dev/ada1", "-d", "sat"])
+        get_smartctl_args.return_value = ["/dev/ada1", "-d", "sat"]
         with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
-            ensure_smart_enabled.return_value = asyncio.Future()
-            ensure_smart_enabled.return_value.set_result(False)
-            assert await annotate_disk_for_smart(None, {"ada1": {"driver": "ata"}}, "ada1") is None
+            ensure_smart_enabled.return_value = False
+            assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") is None
 
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart():
+    m = Middleware()
+    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
     with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = asyncio.Future()
-        get_smartctl_args.return_value.set_result(["/dev/ada1", "-d", "sat"])
+        get_smartctl_args.return_value = ["/dev/ada1", "-d", "sat"]
         with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
-            ensure_smart_enabled.return_value = asyncio.Future()
-            ensure_smart_enabled.return_value.set_result(True)
-            assert await annotate_disk_for_smart(None, {"ada1": {"driver": "ata"}}, "ada1") == (
+            ensure_smart_enabled.return_value = True
+            assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") == (
                 "ada1",
                 {"smartctl_args": ["/dev/ada1", "-d", "sat", "-a", "-d", "removable"]},
             )

@@ -13,7 +13,6 @@ except ImportError:
     geom = None
     get_nsid = None
 
-from middlewared.common.camcontrol import camcontrol_list
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
@@ -602,7 +601,7 @@ class DiskService(CRUDService):
 
         reserved = await self.get_reserved()
 
-        devlist = await camcontrol_list()
+        devlist = {}
         is_enterprise = await self.middleware.call('system.is_enterprise')
 
         serials = defaultdict(list)

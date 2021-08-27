@@ -5,6 +5,9 @@ from asynctest import CoroutineMock, Mock
 
 from middlewared.utils import filter_list
 from middlewared.schema import Schemas, resolve_methods
+from middlewared.settings import conf
+
+conf.debug_mode = False  # FIXME: Find a proper way to disable return value schema validation in tests
 
 
 class Middleware(dict):
