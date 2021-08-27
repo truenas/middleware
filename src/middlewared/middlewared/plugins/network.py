@@ -3,7 +3,7 @@ from middlewared.service import (
 )
 from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import (
-    accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
+    accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, Ref, ValidationErrors
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
@@ -92,6 +92,7 @@ class NetworkConfigurationService(ConfigService):
             Bool('netbios'),
             Bool('mdns'),
             Bool('wsd'),
+            register=True,
         ),
         Dict(
             'activity',
@@ -227,6 +228,24 @@ class NetworkConfigurationService(ConfigService):
 
         return verrors
 
+    @accepts(Ref('service_announcement'))
+    @private
+    async def toggle_announcement(self, data):
+        for srv, enabled in data.items():
+            service_name = ANNOUNCE_SRV[srv]
+            started = await self.middleware.call('service.started', service_name)
+            verb = None
+
+            if enabled:
+                verb = 'restart' if started else 'start'
+            else:
+                verb = 'stop' if started else None
+
+            if not verb:
+                continue
+
+            await self.middleware.call(f'service.{verb}', service_name)
+
     @accepts(
         Patch(
             'network_configuration_entry', 'global_configuration_update',
@@ -263,7 +282,9 @@ class NetworkConfigurationService(ConfigService):
         config.pop('state')
 
         new_config = config.copy()
+        srv = config['service_announcement'] | data['service_announcement']
         new_config.update(data)
+        new_config['service_announcement'] = srv
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
@@ -359,12 +380,8 @@ class NetworkConfigurationService(ConfigService):
         if new_config['activity'] != config['activity']:
             await self.middleware.call('zettarepl.update_tasks')
 
-        # handle the various service announcement daemons
-        for srv, enabled in new_config['service_announcement'].items():
-            if enabled != config['service_announcement'][srv]:
-                await self.middleware.call(
-                    "service.start" if enabled else "service.stop", ANNOUNCE_SRV[srv]
-                )
+        await self.middleware.call('network.configuration.toggle_announcement',
+                                   new_config['service_announcement'])
 
         return await self.config()
 
@@ -2851,12 +2868,20 @@ async def udevd_ifnet_hook(middleware, data):
     await attach_interface(middleware, iface)
 
 
+async def __activate_service_announcements(middleware, event_type, args):
+
+    if args['id'] == 'ready':
+        srv = (await middleware.call("network.configuration.config"))["service_announcement"]
+        await middleware.call("network.configuration.toggle_announcement", srv)
+
+
 async def setup(middleware):
     middleware.event_register('network.config', 'Sent on network configuration changes.')
 
     # Configure http proxy on startup and on network.config events
     asyncio.ensure_future(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
+    middleware.event_subscribe('system', __activate_service_announcements)
     middleware.register_hook('udev.net', udevd_ifnet_hook)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
