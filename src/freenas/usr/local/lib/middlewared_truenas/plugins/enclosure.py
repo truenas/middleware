@@ -107,28 +107,16 @@ class EnclosureService(CRUDService):
         if enclosure_info is None:
             enclosure_info = await self.middleware.call('enclosure.query')
 
-        # build a manageable dict that has enclosure slot info
-        # and the associated disk attached to that slot
-        curr_slot_info = {}
-        for enc in enclosure_info:
-            for slot, slot_data in enc['elements']['Array Device Slot'].items():
-                if slot_data['status'] != 'Unsupported' and slot_data['dev']:
-                    curr_slot_info.update({
-                        enc['number'] * 1000 + int(slot): slot_data['dev']
-                    })
+        for disk in await self.middleware.call('disk.query', [], {'extra': {'include_expired': True}}):
+            try:
+                encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk['name'], enclosure_info)
+            except MatchNotFound:
+                disk_enclosure = None
+            else:
+                disk_enclosure = {'number': encnum, 'slot': slot}
 
-        # now build a manageable dict from the db with the same
-        # information as the `curr_slot_info` dict
-        db_info = {
-            i['disk_enclosure_slot']: (i['disk_name'], i['disk_identifier'])
-            for i in await self.middleware.call('datastore.query', 'storage.disk') if i['disk_enclosure_slot']
-        }
-
-        # now go through any disks that have changed slots and update the db
-        for slot, disk in dict(curr_slot_info.items() - {k: v[0] for k, v in db_info.items()}.items()).items():
-            await self.middleware.call(
-                'datastore.update', 'storage.disk', db_info[slot][1], {'disk_enclosure_slot': slot}
-            )
+            if disk_enclosure != disk['enclosure']:
+                await self.middleware.call('disk.update', disk['identifier'], {'enclosure': disk_enclosure})
 
     @private
     async def get_enclosure_number_and_slot_for_disk(self, disk, enclosure_info=None):
@@ -144,21 +132,18 @@ class EnclosureService(CRUDService):
 
     @private
     async def sync_disk(self, id):
-        disk = await self.middleware.call(
-            'disk.query', [['identifier', '=', id]], {'get': True, 'extra': {'include_expired': True}}
-        )
-        if not disk:
-            return
+        filters = [['identifier', '=', id]]
+        options = {'extra': {'include_expired': True}}
+        for disk in await self.middleware.call('disk.query', filters, options):
+            try:
+                encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk['name'])
+            except MatchNotFound:
+                disk_enclosure = None
+            else:
+                disk_enclosure = {'number': encnum, 'slot': slot}
 
-        try:
-            encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk['name'])
-        except MatchNotFound:
-            disk_enclosure = None
-        else:
-            disk_enclosure = {'number': encnum, 'slot': slot}
-
-        if disk_enclosure != disk['enclosure']:
-            await self.middleware.call('disk.update', id, {'enclosure': disk_enclosure})
+            if disk_enclosure != disk['enclosure']:
+                await self.middleware.call('disk.update', id, {'enclosure': disk_enclosure})
 
     @private
     @accepts(Str("pool", null=True, default=None))
