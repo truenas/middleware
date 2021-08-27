@@ -79,7 +79,7 @@ class Enclosure(object):
                 # means the element type that's being
                 # reported to us is unknown so log it
                 # and continue on
-                logger.warning('Unknown element type: {element["type"]} for {self.devname}')
+                logger.warning('Unknown element type: %r for %r', element['type'][0], self.devname)
                 continue
 
             try:
@@ -87,6 +87,7 @@ class Enclosure(object):
             except KeyError:
                 # means the elements status reported by the enclosure
                 # is not mapped so just report unknown
+                logger.warning('Unknown element status: %r for %r', element['status'][0], self.devname)
                 element_status = 'UNKNOWN'
 
             if element_type[0] not in final:
