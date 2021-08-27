@@ -228,12 +228,10 @@ class NetworkConfigurationService(ConfigService):
 
         return verrors
 
-    @accepts(Dict(
-        'toggle_announcement',
-        Ref('service_announcement'),
-    ))
+    @accepts(Ref('service_announcement'))
+    @private
     async def toggle_announcement(self, data):
-        for srv, enabled in data['service_announcement'].items():
+        for srv, enabled in data.items():
             service_name = ANNOUNCE_SRV[srv]
             started = await self.middleware.call('service.started', service_name)
             verb = None
@@ -382,10 +380,8 @@ class NetworkConfigurationService(ConfigService):
         if new_config['activity'] != config['activity']:
             await self.middleware.call('zettarepl.update_tasks')
 
-        await self.middleware.call(
-            'network.configuration.toggle_announcement',
-            {'service_announcement': new_config['service_announcement']}
-        )
+        await self.middleware.call('network.configuration.toggle_announcement',
+                                   new_config['service_announcement'])
 
         return await self.config()
 
@@ -2876,10 +2872,7 @@ async def __activate_service_announcements(middleware, event_type, args):
 
     if args['id'] == 'ready':
         srv = (await middleware.call("network.configuration.config"))["service_announcement"]
-        await middleware.call(
-            "network.configuration.toggle_announcement",
-            {"service_announcement": srv}
-        )
+        await middleware.call("network.configuration.toggle_announcement", srv)
 
 
 async def setup(middleware):
