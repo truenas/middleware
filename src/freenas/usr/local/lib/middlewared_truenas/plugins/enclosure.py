@@ -73,9 +73,9 @@ class EnclosureService(CRUDService):
         return await self._get_instance(id)
 
     @accepts(
-        Str("enclosure_id"),
-        Int("slot"),
-        Str("status", enum=["CLEAR", "FAULT", "IDENTIFY"])
+        Str('enclosure_id'),
+        Int('slot'),
+        Str('status', enum=['CLEAR', 'FAULT', 'IDENTIFY']),
     )
     def set_slot_status(self, enclosure_id, slot, status):
         """
@@ -130,8 +130,12 @@ class EnclosureService(CRUDService):
                 'datastore.update', 'storage.disk', db_info[slot][1], {'disk_enclosure_slot': slot}
             )
 
-    async def _get_enclosure_number_and_slot_for_disk(self, disk):
-        for enc in await self.middleware.call('enclosure.query'):
+    @private
+    async def get_enclosure_number_and_slot_for_disk(self, disk, enclosure_info=None):
+        if enclosure_info is None:
+            enclosure_info = await self.middleware.call('enclosure.query')
+
+        for enc in enclosure_info:
             for slot, info in enc['elements']['Array Device Slot'].items():
                 if info['dev'] == disk:
                     return enc['number'], slot
@@ -141,140 +145,116 @@ class EnclosureService(CRUDService):
     @private
     async def sync_disk(self, id):
         disk = await self.middleware.call(
-            'disk.query', [['identifier', '=', id]], {'get': True, "extra": {'include_expired': True}}
+            'disk.query', [['identifier', '=', id]], {'get': True, 'extra': {'include_expired': True}}
         )
         if not disk:
             return
 
         try:
-            encnum, slot = await self._get_enclosure_number_and_slot_for_disk(disk['name'])
+            encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk['name'])
         except MatchNotFound:
             disk_enclosure = None
         else:
-            disk_enclosure = {"number": encnum, "slot": slot}
+            disk_enclosure = {'number': encnum, 'slot': slot}
 
         if disk_enclosure != disk['enclosure']:
             await self.middleware.call('disk.update', id, {'enclosure': disk_enclosure})
 
     @private
     @accepts(Str("pool", null=True, default=None))
-    def sync_zpool(self, pool):
-        """
-        Sync enclosure of a given ZFS pool
-        """
+    async def sync_zpool(self, pool):
+        encs = await self.middleware.call('enclosure.query')
+        if not encs:
+            self.logger.debug('Skipping enclosure slot to zpool sync because no enclosures found')
+            return
 
-        encs = self.__get_enclosures()
-        if len(list(encs)) == 0:
-            self.logger.debug("Enclosure not found, skipping enclosure sync")
-            return None
-
-        if pool is None:
-            pools = [pool["name"] for pool in self.middleware.call_sync("pool.query")]
-        else:
-            pools = [pool]
-
-        seen_devs = []
-        label2disk = {}
-        cache = self.middleware.call_sync("disk.label_to_dev_disk_cache")
-        hardware = self.middleware.call_sync("truenas.get_chassis_hardware")
-        for pool in pools:
-            try:
-                pool = self.middleware.call_sync("zfs.pool.query", [["name", "=", pool]], {"get": True})
-            except IndexError:
-                continue
-
-            label2disk.update({
-                label: self.middleware.call_sync("disk.label_to_disk", label, False, cache)
-                for label in self.middleware.call_sync("zfs.pool.get_devices", pool["id"])
-            })
-
-            for dev in self.middleware.call_sync("zfs.pool.find_not_online", pool["id"]):
-                if dev["path"] is None:
-                    continue
-
-                label = dev["path"].replace("/dev/", "")
-                seen_devs.append(label)
-
-                disk = label2disk.get(label)
-                if disk is None:
-                    continue
-
-            if hardware.startswith("TRUENAS-Z"):
-                # We want spares to have identify set on the enclosure slot for
-                # Z-series systems only see #32706 for details. Gist is that
-                # the other hardware platforms "identify" light is red which
-                # causes customer confusion because they see red and think
-                # something is wrong.
-                spare_value = "identify"
-            else:
-                spare_value = "clear"
-
-            for node in pool["groups"]["spare"]:
-                if node["path"] is None:
-                    continue
-
-                label = node["path"].replace("/dev/", "")
-                disk = label2disk.get(label)
-                if disk is None:
-                    continue
-
-                if node["status"] != "AVAIL":
-                    # when a hot-spare gets automatically attached to a zpool
-                    # its status is reported as "UNAVAIL"
-                    continue
-
-                seen_devs.append(node["path"])
-
-                element = encs.find_device_slot(disk)
-                if element:
-                    self.logger.debug(f"{spare_value}ing bay slot for %r", disk)
-                    element.device_slot_set(spare_value)
-
-            """
-            Go through all devs in the pool
-            Make sure the enclosure status is clear for everything else
-            """
-            for label, disk in label2disk.items():
-                if label in seen_devs:
-                    continue
-
-                seen_devs.append(label)
-
-                try:
-                    element = encs.find_device_slot(disk)
-                    if element:
-                        element.device_slot_set("clear")
-                except AssertionError:
-                    # happens for pmem devices since those
-                    # are NVDIMM sticks internal to each
-                    # controller
-                    continue
-
-        disks = []
-        for label in seen_devs:
-            disk = label2disk.get(label)
-            if disk is None:
-                continue
-
-            if disk.startswith("multipath/"):
-                try:
-                    disks.append(self.middleware.call_sync(
-                        "disk.query",
-                        [["devname", "=", disk]],
-                        {"get": True, "extra": {"include_expired": True}, "order_by": ["expiretime"]},
-                    )["name"])
-                except IndexError:
-                    pass
-            else:
-                disks.append(disk)
-
-        """
-        Clear all slots without an attached disk
-        """
+        batch_operations = {i['number']: {'clear': set(), 'identify': set()} for i in encs}
         for enc in encs:
-            for element in enc.iter_by_name().get("Array Device Slot", []):
-                if not element.devname or element.devname not in disks:
-                    element.device_slot_set("clear")
+            for disk_slot, disk_info in enc['elements']['Array Device Slot'].items():
+                if disk_info['status'] != 'Unsupported' and disk_info['value'] != 'None':
+                    # only clear the disk slots status that need it
+                    batch_operations[enc['number']]['clear'].add(disk_slot)
+
+        if (await self.middleware.call('truenas.get_chassis_hardware')).startswith('TRUENAS-Z'):
+            # we only turn on the "IDENTIFY" light on the zseries hardware and only on
+            # hot-spares in a zpool. We do not do this for other hardware platforms because
+            # the "IDENTIFY" light color is red. Customers see red and think something is wrong
+            pools = []
+            try:
+                pool = await self.middleware.call(
+                    'zfs.pool.query',
+                    [['name', '=', pool]] if pool else [['name', 'nin', ['freenas-boot', 'boot-pool']]],
+                    {'get': True} if pool else {},
+                )
+                pools.append(pool) if isinstance(pool, dict) else pools.extend(pool)
+            except IndexError:
+                # means a specific pool was given to us and it wasn't
+                # detected on the system
+                pools = []
+
+            if pools:
+                label2disk = {}
+                cache = await self.middleware.call('disk.label_to_dev_disk_cache')
+                for label, part in cache['label_to_dev'].items():
+                    disk = cache['dev_to_disk'].get(part)
+                    if disk:
+                        """
+                        final dict looks like
+                        {
+                            'gptid/2aa24f29-6e92-4501-b178-1d2e28097451': 'da50',
+                            'gptid/6532d307-9aba-4599-8751-d2565926f485': 'da51',
+                            ...
+                        }
+                        """
+                        if disk.startswith('multipath/'):
+                            try:
+                                disk = await self.middleware.call(
+                                    'disk.query',
+                                    [['devname', '=', disk]],
+                                    {'get': True, 'extra': {'include_expired': True, 'order_by': ['expiretime']}},
+                                )['name']
+                            except IndexError:
+                                continue
+
+                        label2disk.update({label: disk})
+
+                for pool in pools:
+                    spare_devs = (await self.middleware.call('zfs.pool.find_not_online', pool['id']))['groups']['spare']
+                    for spare_dev in spare_devs:
+                        if spare_dev['status'] != 'AVAIL':
+                            # when a hot-spare gets automatically attached to a zpool
+                            # its status is reported as "UNAVAIL"
+                            continue
+
+                        path = spare_dev['path']
+                        if not path:
+                            continue
+
+                        label = path[5:]
+                        if not label:
+                            continue
+
+                        disk = label2disk.get(label)
+                        if not disk:
+                            continue
+
+                        # getting here means we've found disks that are hot-spares in zpool(s)
+                        encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk)
+
+                        # now we need to make sure we mark this slot to be "IDENTIFYed"
+                        batch_operations[encnum]['clear'].discard(slot)
+                        batch_operations[encnum]['identify'].add(slot)
+
+        # finally we can set the disk slots
+        await self.middleware.run_in_thread(self.__bulk_disk_slot_op, batch_operations)
+
+    def __bulk_disk_slot_op(self, batch_operations):
+        for enc, action in batch_operations.items():
+            enc = ENC(f'/dev/ses{enc}')
+            for slot_to_be_cleared in action['clear']:
+                enc.clear(slot_to_be_cleared)
+            for slot_to_be_identified in action['identify']:
+                enc.identify(slot_to_be_identified)
 
     def __get_enclosures(self, product):
         blacklist = ['VirtualSES']

@@ -93,6 +93,12 @@ class Enclosure(object):
                 # first time seeing this element type so add it
                 final[element_type[0]] = {}
 
+            if self.model == 'Z Series' and slot > 16:
+                # zseries head-unit reports 20 disk slots but only
+                # 16 are available to the end-user so ignore the
+                # other 4 slots
+                continue
+
             # convert list of integers representing the elements
             # raw status to an integer so it can be converted
             # appropriately based on the element type
