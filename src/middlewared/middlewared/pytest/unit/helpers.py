@@ -15,6 +15,7 @@ if osc.IS_FREEBSD:
 def load_compound_service(name):
     lpm = LoadPluginsMixin()
     lpm.event_register = Mock()
+    lpm.get_events = Mock(return_value=[])
     lpm._load_plugins()
     service = lpm.get_service(name)
     return functools.partial(_compound_service_wrapper, service)

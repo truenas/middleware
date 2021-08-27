@@ -1,4 +1,3 @@
-import asyncio
 import subprocess
 
 from mock import Mock, patch
@@ -105,25 +104,14 @@ async def test__get_smartctl_args__hpt():
 
 
 @pytest.mark.asyncio
-async def test__get_smartctl_args__ciss():
-    with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", False):
-        assert await get_smartctl_args(None, {"ada0": {
-            "driver": "cissX",
-            "controller_id": 1,
-            "bus": 0,
-            "channel_no": 2,
-            "lun_id": 10,
-        }}, "ada0") == ["/dev/cissX1", "-d", "cciss,2"]
-
-
-@pytest.mark.asyncio
 async def test__get_smartctl_args__twa():
+    m = Middleware()
+    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
     with patch("middlewared.common.smart.smartctl.run") as run:
-        run.return_value = asyncio.Future()
-        run.return_value.set_result(Mock(stdout="p28 u1\np29 u2"))
+        run.return_value = Mock(stdout="p28 u1\np29 u2")
 
         with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", False):
-            assert await get_smartctl_args(None, {"ada0": {
+            assert await get_smartctl_args(m, {"ada0": {
                 "driver": "twaX",
                 "controller_id": 1,
                 "bus": 0,
@@ -132,20 +120,21 @@ async def test__get_smartctl_args__twa():
             }}, "ada0") == ["/dev/twaX1", "-d", "3ware,29"]
 
             run.assert_called_once_with(
-                ["/usr/local/sbin/tw_cli", f"/c1", "show"],
+                ["/usr/local/sbin/tw_cli", "/c1", "show"],
                 encoding="utf8",
             )
 
 
 @pytest.mark.asyncio
 async def test_get_disk__unknown_usb_bridge():
+    m = Middleware()
+    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
     with patch("middlewared.common.smart.smartctl.run") as run:
-        run.return_value = asyncio.Future()
-        run.return_value.set_result(Mock(stdout="/dev/da0: Unknown USB bridge [0x0930:0x6544 (0x100)]\n"
-                                                "Please specify device type with the -d option."))
+        run.return_value = Mock(stdout="/dev/da0: Unknown USB bridge [0x0930:0x6544 (0x100)]\n"
+                                       "Please specify device type with the -d option.")
 
         with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", False):
-            assert await get_smartctl_args(None, {"ada0": {
+            assert await get_smartctl_args(m, {"ada0": {
                 "driver": "ata",
                 "controller_id": 1,
                 "bus": 0,
@@ -159,12 +148,13 @@ async def test_get_disk__unknown_usb_bridge():
 
 @pytest.mark.asyncio
 async def test_get_disk__generic():
+    m = Middleware()
+    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
     with patch("middlewared.common.smart.smartctl.run") as run:
-        run.return_value = asyncio.Future()
-        run.return_value.set_result(Mock(stdout="Everything is OK"))
+        run.return_value = Mock(stdout="Everything is OK")
 
         with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", False):
-            assert await get_smartctl_args(None, {"ada0": {
+            assert await get_smartctl_args(m, {"ada0": {
                 "driver": "ata",
                 "controller_id": 1,
                 "bus": 0,

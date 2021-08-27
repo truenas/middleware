@@ -420,8 +420,6 @@ class SharingNFSService(SharingService):
                 verrors, self.middleware, f'{schema_name}.paths.{idx}', i, gluster_bypass=bypass
             )
 
-        await self.middleware.run_in_thread(self.validate_paths, data, schema_name, verrors)
-
         filters = []
         if old:
             filters.append(["id", "!=", old["id"]])
@@ -461,24 +459,6 @@ class SharingNFSService(SharingService):
             nfs_config = await self.middleware.call("nfs.config")
             if not nfs_config["v4"]:
                 verrors.add(f"{schema_name}.security", "This is not allowed when NFS v4 is disabled")
-
-    @private
-    def validate_paths(self, data, schema_name, verrors):
-        if osc.IS_LINUX:
-            # Ganesha does not have such a restriction, each path is a different share
-            return
-
-        dev = None
-        for i, path in enumerate(data["paths"]):
-            stat = os.stat(path)
-            if dev is None:
-                dev = stat.st_dev
-            else:
-                if dev != stat.st_dev:
-                    verrors.add(
-                        f'{schema_name}.paths.{i}',
-                        'Paths for a NFS share must reside within the same filesystem'
-                    )
 
     @private
     async def resolve_hostnames(self, hostnames):
@@ -584,14 +564,6 @@ class SharingNFSService(SharingService):
         return data
 
 
-async def interface_post_sync(middleware):
-    if osc.IS_FREEBSD:
-        if not await middleware.call('cache.has_key', 'interfaces_are_set_up'):
-            await middleware.call('cache.put', 'interfaces_are_set_up', True)
-            if (await middleware.call('nfs.config'))['bindip']:
-                await middleware.call('service.restart', 'nfs')
-
-
 async def pool_post_import(middleware, pool):
     """
     Makes sure to reload NFS if a pool is imported and there are shares configured for it.
@@ -630,5 +602,4 @@ async def setup(middleware):
     )
     await middleware.call('pool.dataset.register_attachment_delegate', NFSFSAttachmentDelegate(middleware))
 
-    middleware.register_hook('interface.post_sync', interface_post_sync)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
