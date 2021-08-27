@@ -23,6 +23,7 @@ class CatalogService(Service):
         catalog = await self.middleware.call('catalog.get_instance', label)
         job.set_progress(10, f'Syncing {label} catalog')
         sync_job = await self.middleware.call('catalog.sync', label)
+        await sync_job.wait()
         if sync_job.error:
             raise CallError(f'Failed to sync {label!r} catalog: {sync_job.error}')
 
