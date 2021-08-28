@@ -282,7 +282,7 @@ class NetworkConfigurationService(ConfigService):
         config.pop('state')
 
         new_config = config.copy()
-        srv = config['service_announcement'] | data['service_announcement']
+        srv = config['service_announcement'] | data.get('service_announcement', {})
         new_config.update(data)
         new_config['service_announcement'] = srv
 
