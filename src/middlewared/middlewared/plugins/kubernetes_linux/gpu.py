@@ -56,7 +56,7 @@ GPU_CONFIG = {
                         'env': [{'name': 'NODE_NAME', 'valueFrom': {'fieldRef': {'fieldPath': 'spec.nodeName'}}}],
                         'image': 'intel/intel-gpu-plugin:0.19.0',
                         'imagePullPolicy': 'IfNotPresent',
-                        'args':["-shared-dev-num","5"],
+                        'args': ["-shared-dev-num", "5"],
                         'securityContext': {'readOnlyRootFilesystem': True},
                         'volumeMounts': [
                             {'name': 'devfs', 'mountPath': '/dev/dri', 'readOnly': True},
