@@ -203,6 +203,10 @@ async def zfs_events(middleware, data):
                 'pool.dataset.query', 'ADDED' if event_type == 'create' else 'CHANGED', id=ds_id, fields=ds_data
             )
         elif event_type == 'destroy':
+            if ds_id.split('/')[-1].startswith('%'):
+                # Ignore deletion of hidden clones such as `%recv` dataset created by replication
+                return
+
             middleware.send_event('pool.dataset.query', 'CHANGED', id=ds_id, cleared=True)
             middleware.send_event('pool.dataset.query', 'REMOVED', id=ds_id)
 
