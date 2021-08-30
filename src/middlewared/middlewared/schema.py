@@ -825,6 +825,8 @@ class Patch(object):
             return Str(name, **spec)
         elif t in ('bool', 'boolean'):
             return Bool(name, **spec)
+        elif t == 'list':
+            return List(name, **spec)
         elif t == 'dict':
             return Dict(name, **spec)
         raise ValueError('Unknown type: {0}'.format(spec['type']))
