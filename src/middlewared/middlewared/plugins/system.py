@@ -199,7 +199,7 @@ class SystemAdvancedService(ConfigService):
             )
             if not ca_cert:
                 verrors.add(f'{schema}.syslog_tls_certificate_authority', 'Unable to locate specified CA')
-            elif ca_cert['revoked']:
+            elif ca_cert[0]['revoked']:
                 verrors.add(f'{schema}.syslog_tls_certificate_authority', 'Specified CA has been revoked')
 
             if data['syslog_tls_certificate']:
@@ -332,7 +332,8 @@ class SystemAdvancedService(ConfigService):
                 original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or
                 original_data['syslogserver'] != config_data['syslogserver'] or
                 original_data['syslog_transport'] != config_data['syslog_transport'] or
-                original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate']
+                original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate'] or
+                original_data['syslog_tls_certificate_authority'] != config_data['syslog_tls_certificate_authority']
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 
