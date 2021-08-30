@@ -231,6 +231,7 @@ class SystemDatasetService(ConfigService):
 
         available = new_dataset['properties']['available']['parsed']
 
+        # 1.1 is a safety margin because same files won't take exactly the same amount of space on a different pool
         used = int(used * 1.1)
         if available < used:
             return (
