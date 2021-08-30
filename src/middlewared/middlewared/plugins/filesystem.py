@@ -307,7 +307,7 @@ class FilesystemService(Service):
                 line = line.split()
                 _path = pathlib.Path(path)
                 _line_path = pathlib.Path(line[1])
-                if _path == _line_path or _path.parent == _line_path:
+                if _path == _line_path or _path.parent == _line_path or _line_path in list(_path.parents)[:-2]:
                     device = line[0]
                     mountpoint = line[1]
                     fstype = line[2]
