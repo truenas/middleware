@@ -16,7 +16,7 @@ class EnclosureService(Service):
     }
 
     @private
-    def rseries_nvme_enclosures(self):
+    def rseries_nvme_enclosures(self, product):
         nvme_to_nvd = self.middleware.call_sync('disk.nvme_to_nvd_map')
         slot_to_nvd = {}
         for nvme, nvd in nvme_to_nvd.items():
@@ -36,11 +36,12 @@ class EnclosureService(Service):
 
             slot_to_nvd[slot] = f"nvd{nvd}"
 
+        model = product.split('-')[-1]
         return self.middleware.call_sync(
             "enclosure.fake_nvme_enclosure",
-            "r50_nvme_enclosure",  # only relevant for r50 (for now)
-            "R50 NVMe enclosure",
-            "R50, Drawer #3",
+            f"{model.lower()}_nvme_enclosure",
+            f"{model} NVMe enclosure",
+            f"{model}, Drawer #3",
             3,
             slot_to_nvd
         )

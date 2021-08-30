@@ -10,7 +10,7 @@ class EnclosureService(Service):
     RE_SLOT = re.compile(r'slot=([0-9]+)')
 
     @private
-    def mseries_plx_enclosures(self):
+    def mseries_plx_enclosures(self, product):
         nvme_to_nvd = self.middleware.call_sync('disk.nvme_to_nvd_map')
 
         slot_to_nvd = {}

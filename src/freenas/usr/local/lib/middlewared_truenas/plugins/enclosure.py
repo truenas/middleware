@@ -46,9 +46,9 @@ class EnclosureService(CRUDService):
                 enclosures.append(enclosure)
 
         if prod in ('TRUENAS-M50', 'TRUENAS-M60'):
-            enclosures.extend(self.middleware.call_sync('enclosure.mseries_plx_enclosures'))
+            enclosures.extend(self.middleware.call_sync('enclosure.mseries_plx_enclosures', prod))
         elif prod == 'TRUENAS-R50':
-            enclosures.extend(self.middleware.call_sync('enclosure.rseries_nvme_enclosures'))
+            enclosures.extend(self.middleware.call_sync('enclosure.rseries_nvme_enclosures', prod))
 
         enclosures = self.middleware.call_sync('enclosure.map_enclosures', enclosures, prod, prod_vers)
 
