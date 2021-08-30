@@ -5,11 +5,10 @@
 import pytest
 import sys
 import os
-import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import pool_name, ip, hostname, password, user
+from functions import PUT, POST, GET, SSH_TEST, wait_on_job
+from auto_config import ip, hostname, password, user
 from pytest_dependency import depends
 
 try:

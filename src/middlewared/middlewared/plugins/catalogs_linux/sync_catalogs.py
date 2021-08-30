@@ -61,6 +61,7 @@ class CatalogService(Service):
 
     @private
     def update_git_repository(self, catalog, raise_exception=False):
+        self.middleware.call_sync('network.general.will_perform_activity', 'catalog')
         return pull_clone_repository(
             catalog['repository'], os.path.dirname(catalog['location']), catalog['branch'],
             raise_exception=raise_exception,

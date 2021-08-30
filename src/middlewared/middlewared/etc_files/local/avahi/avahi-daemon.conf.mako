@@ -19,6 +19,9 @@
     ipv6_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': False, 'ipv6': True}))
 
     failover_int = middleware.call_sync("failover.internal_interfaces")
+
+    deny_interfaces = ['lo']
+    deny_interfaces.extend(failover_int)
 %>
 
 [server]
@@ -28,12 +31,8 @@ use-ipv6=${"yes" if ipv6_enabled else "no"}
 %endif
 ratelimit-interval-usec=1000000
 ratelimit-burst=1000
-% if IS_FREEBSD:
-enable-dbus=no
-% endif
-%if failover_int:
-deny-interfaces=${", ".join(failover_int)}
-%endif
+deny-interfaces=${", ".join(deny_interfaces)}
+disallow-other-stacks=yes
 
 [wide-area]
 enable-wide-area=yes

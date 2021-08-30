@@ -1,9 +1,12 @@
 import errno
 
+from middlewared.schema import accepts, Int, returns
 from middlewared.service import CallError, private, Service
 
+from .vm_supervisor import VMSupervisorMixin
 
-class VMService(Service):
+
+class VMService(Service, VMSupervisorMixin):
 
     async def __set_guest_vmemory(self, memory, overcommit):
         memory_available = await self.middleware.call('vm.get_available_memory', overcommit)
@@ -53,3 +56,12 @@ class VMService(Service):
                 self.logger.warn(
                     f'Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
                 )
+
+    @accepts(Int('vm_id'))
+    @returns(Int('memory_usage', description='Memory usage of a VM in bytes'))
+    def get_memory_usage(self, vm_id):
+        return self.get_memory_usage_internal(self.middleware.call_sync('vm.get_instance', vm_id))
+
+    @private
+    def get_memory_usage_internal(self, vm):
+        return self._memory_info(vm['name'])

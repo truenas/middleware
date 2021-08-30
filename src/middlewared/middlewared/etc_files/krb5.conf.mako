@@ -71,9 +71,15 @@
             environment_is_kerberized = True
             c_realm = db['ad']['kerberos_realm']
             krb_default_realm = (filter_list(db_realms, [('id', '=', c_realm)]))[0]['realm']
+
         elif db['ad']['enable']:
             environment_is_kerberized = True
             krb_default_realm = db['ad']['domainname']
+            if not krb_default_realm:
+                # AD is enabled with a thoroughly invalid configuration. Disabled and refuse to generate
+                # kerberos config.
+                middleware.call_sync("activedirectory.direct_update", {"enable": False})
+                raise FileShouldNotExist()
 
             if db_realms:
                 db_realm_entry = next((item for item in db_realms if item['realm'] == krb_default_realm), None)
@@ -103,6 +109,7 @@
         elif db['ldap']['enable'] and db['ldap']['kerberos_realm']:
             environment_is_kerberized = True
             krb_default_realm = db['ldap']['kerberos_realm']['krb_realm']
+
         else:
             krb_default_realm = None
 
@@ -112,8 +119,9 @@
         parsed_appdefaults = parse_defaults("appdefault", appdefaults, db_def=db['krb_aux']['appdefaults_aux'])
         parsed_libdefaults = parse_defaults("libdefault", libdefaults, db_def=db['krb_aux']['libdefaults_aux'])
 
+        if not db_realms:
+            raise FileShouldNotExist()
 %>
-% if db_realms:
 [appdefaults]
 % for section_name, section in parsed_appdefaults.items():
             % if section_name == "krb5_main":
@@ -162,4 +170,3 @@
 
 [logging]
             default = SYSLOG:INFO:LOCAL7
-% endif

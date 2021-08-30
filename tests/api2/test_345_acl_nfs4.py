@@ -8,23 +8,23 @@ import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password, scale
+from auto_config import ip, pool_name, user, password
 from pytest_dependency import depends
 
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-shell = '/usr/bin/bash' if scale else '/bin/csh'
-group = 'nogroup' if scale else 'nobody'
+shell = '/usr/bin/bash'
+group = 'nogroup'
 ACLTEST_DATASET = f'{pool_name}/acltest'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
 
 ACLTEST_SUBDATASET = f'{pool_name}/acltest/sub1'
 subdataset_url = ACLTEST_SUBDATASET.replace('/', '%2F')
-getfaclcmd = "nfs4xdr_getfacl" if scale else "getfacl"
-setfaclcmd = "nfs4xdr_setfacl" if scale else "setfacl"
-group0 = "root" if scale else "wheel"
+getfaclcmd = "nfs4xdr_getfacl"
+setfaclcmd = "nfs4xdr_setfacl"
+group0 = "root"
 
 base_permset = {
     "READ_DATA": False,
@@ -141,7 +141,6 @@ ACL_PWD = "acl1234"
 DOSATTRIB_XATTR = "CTB4MTAAAAMAAwAAABEAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABimX3sSqfTAQAAAAAAAAAACg=="
 
 IMPLEMENTED_DENY = [
-    "READ_ATTRIBUTES",
     "WRITE_ATTRIBUTES",
     "DELETE",
     "DELETE_CHILD",
@@ -161,15 +160,9 @@ IMPLEMENTED_ALLOW = [
     "DELETE_CHILD",
     "EXECUTE",
     "WRITE_OWNER",
-    "READ_ATTRIBUTES",
-    "WRITE_ATTRIBUTES",
     "READ_ACL",
     "WRITE_ACL",
 ]
-
-if scale:
-    IMPLEMENTED_DENY.remove("READ_ATTRIBUTES")
-    IMPLEMENTED_ALLOW.remove("READ_ATTRIBUTES")
 
 JOB_ID = None
 
@@ -699,7 +692,7 @@ def test_23_test_acl_function_deny(perm, request):
     of DELETE on file takes precedence over allow of DELETE_CHILD.
     """
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_deny {to_deny}'
-    expected_delete = ["DELETE_CHILD"] if scale else ["DELETE"]
+    expected_delete = ["DELETE_CHILD"]
     if perm in expected_delete:
         assert results['result'] is True, errstr
 
@@ -707,14 +700,11 @@ def test_23_test_acl_function_deny(perm, request):
         cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
-
         cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
-
-    elif perm == "READ_ATTRIBUTES" and scale:
+    elif perm == "READ_ATTRIBUTES":
         assert results['result'] is True, errstr
-
     else:
         assert results['result'] is False, errstr
 
@@ -1176,4 +1166,3 @@ def test_30_delete_dataset(request):
         f'/pool/dataset/id/{dataset_url}/'
     )
     assert result.status_code == 200, result.text
-

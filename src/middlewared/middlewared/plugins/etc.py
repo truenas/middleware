@@ -95,9 +95,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure', 'checkpoint_linux': 'post_init'}
         ],
-        'system_dataset': [
-            {'type': 'py', 'path': 'system_setup', 'checkpoint': 'pool_import'}
-        ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
@@ -224,11 +221,11 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'motd'}
         ],
         'mdns': [
-            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': 'interface_sync'},
-            {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': 'interface_sync'}
+            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': None},
+            {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': None}
         ],
         'wsd': [
-            {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'interface_sync'},
+            {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'post_init'},
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
@@ -452,10 +449,18 @@ class EtcService(Service):
 
 
 async def __event_system_ready(middleware, event_type, args):
-
     if args['id'] == 'ready':
         asyncio.ensure_future(middleware.call('etc.generate_checkpoint', 'post_init'))
 
 
+async def pool_post_import(middleware, pool):
+    if pool is None:
+        await middleware.call('etc.generate_checkpoint', 'pool_import')
+
+
 async def setup(middleware):
     middleware.event_subscribe('system', __event_system_ready)
+    # Generate `etc` files before executing other post-boot-time-pool-import actions.
+    # There are no explicit requirements for that, we are just preserving execution order
+    # when moving checkpoint generation to pool.post_import hook.
+    middleware.register_hook('pool.post_import', pool_post_import, order=-1000)

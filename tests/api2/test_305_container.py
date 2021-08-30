@@ -9,7 +9,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT, POST, DELETE, wait_on_job
-from auto_config import ha, scale, dev_test, interface, ip, pool_name
+from auto_config import ha, dev_test, interface, ip, pool_name
 
 container_reason = "Can't import docker_username and docker_password"
 try:
@@ -29,7 +29,7 @@ if dev_test:
 else:
     reason = 'Skipping test for HA' if ha else 'Skipping test for CORE'
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(ha or not scale or dev_test, reason=reason)
+pytestmark = pytest.mark.skipif(ha or dev_test, reason=reason)
 
 
 def test_01_get_container():

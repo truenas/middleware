@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
 
-# Author: Eric Turgeon
-# License: BSD
-# Location for tests into REST API of FreeNAS
-
 import contextlib
 import io
 import json
 import os
+import pytest
 import sys
 
 import requests
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
-from auto_config import pool_name, scale, ha, password, user, ip
+from functions import POST, GET, DELETE, SSH_TEST
+from auto_config import password, user, ip, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 @contextlib.contextmanager

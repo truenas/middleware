@@ -832,6 +832,7 @@ class PoolService(CRUDService):
         asyncio.ensure_future(self.restart_services())
 
         pool = await self.get_instance(pool_id)
+        await self.middleware.call_hook('pool.post_create', pool=pool)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         await self.middleware.call_hook(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
@@ -842,10 +843,6 @@ class PoolService(CRUDService):
     @private
     async def restart_services(self):
         await self.middleware.call('service.reload', 'disk')
-        if (
-            await self.middleware.call('systemdataset.config')
-        )['pool'] == await self.middleware.call('boot.pool_name'):
-            await self.middleware.call('service.restart', 'system_datasets')
         # regenerate crontab because of scrub
         await self.middleware.call('service.restart', 'cron')
 
@@ -1620,15 +1617,7 @@ class PoolService(CRUDService):
         # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
         await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
 
-        sysds = await self.middleware.call('systemdataset.config')
-        if sysds['pool'] == pool['name']:
-            job.set_progress(40, 'Reconfiguring system dataset')
-            sysds_job = await self.middleware.call('systemdataset.update', {
-                'pool': None, 'pool_exclude': pool['name'],
-            })
-            await sysds_job.wait()
-            if sysds_job.error:
-                raise CallError(sysds_job.error)
+        await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
 
         if pool['status'] == 'OFFLINE':
             # Pool exists only in database, its not imported
@@ -1872,17 +1861,6 @@ class PoolService(CRUDService):
 
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
-
-        self.middleware.call_sync('etc.generate_checkpoint', 'pool_import')
-
-        self.middleware.call_sync('zettarepl.load_removal_dates')
-        self.middleware.call_sync('zettarepl.update_tasks')
-
-        # Configure swaps after importing pools. devd events are not yet ready at this
-        # stage of the boot process.
-        if osc.IS_FREEBSD:
-            # For now let's make this FreeBSD specific as we may very well be getting zfs events here in linux
-            self.middleware.call_sync('disk.swaps_configure')
 
         self.middleware.call_hook_sync('pool.post_import', None)
         job.set_progress(100, 'Pools import completed')
@@ -2389,7 +2367,7 @@ class PoolDatasetService(CRUDService):
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
         async def detach(delegate):
-            await delegate.stop((await delegate.query(self.__attachments_path(ds), True)))
+            await delegate.stop(await delegate.query(self.__attachments_path(ds), True))
 
         try:
             await self.middleware.call('cache.put', 'about_to_lock_dataset', id)
@@ -2415,8 +2393,7 @@ class PoolDatasetService(CRUDService):
             'unlock_options',
             Bool('key_file', default=False),
             Bool('recursive', default=False),
-            Bool('toggle_attachments'),
-            List('services_restart', default=[]),
+            Bool('toggle_attachments', default=True),
             List(
                 'datasets', items=[
                     Dict(
@@ -2452,6 +2429,12 @@ class PoolDatasetService(CRUDService):
 
         Uploading a json file which contains encrypted dataset keys can be specified with
         `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
+
+        `toggle_attachments` controls whether attachments  should be put in action after unlocking dataset(s).
+        Toggling attachments can theoretically lead to service interruption when daemons configurations are reloaded
+        (this should not happen,  and if this happens it should be considered a bug). As TrueNAS does not have a state
+        for resources that should be unlocked but are still locked, disabling this option will put the system into an
+        inconsistent state so it should really never be disabled.
         """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset.get_instance', id)
@@ -2481,6 +2464,7 @@ class PoolDatasetService(CRUDService):
             else:
                 if not bool(self.query_encrypted_roots_keys([['name', '=', id]])) and id not in keys_supplied:
                     verrors.add('unlock_options.datasets', f'Please specify key for {id}')
+
 
         services_to_restart = set(options['services_restart'])
         if 'toggle_attachments' in options and options['services_restart']:
@@ -2571,12 +2555,14 @@ class PoolDatasetService(CRUDService):
                 else:
                     unlocked.append(name)
 
+        services_to_restart = set()
         if self.middleware.call_sync('system.ready'):
             services_to_restart.add('disk')
-            if '/' not in id:
-                services_to_restart.add('system_datasets')
 
         if unlocked:
+            if options['toggle_attachments']:
+                self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset, options)
+
             def dataset_data(unlocked_dataset):
                 return {
                     'encryption_key': keys_supplied.get(unlocked_dataset), 'name': unlocked_dataset,
@@ -2595,6 +2581,18 @@ class PoolDatasetService(CRUDService):
             )
 
         return {'unlocked': unlocked, 'failed': failed}
+
+    @private
+    async def unlock_handle_attachments(self, dataset, options):
+        for attachment_delegate in PoolDatasetService.attachment_delegates:
+            # FIXME: put this into `VMFSAttachmentDelegate`
+            if attachment_delegate.name == 'vm':
+                await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)
+                continue
+
+            attachments = await attachment_delegate.query(self.__attachments_path(dataset), True, {'locked': False})
+            if attachments:
+                await attachment_delegate.start(attachments)
 
     @accepts(
         Str('id'),
@@ -3264,7 +3262,7 @@ class PoolDatasetService(CRUDService):
             ('checksum', None, str.lower, True),
             ('comments', 'org.freenas:description', None, True),
             ('compression', None, str.lower, True),
-            ('copies', None, lambda x: str(x), True),
+            ('copies', None, str, True),
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
             ('managedby', 'org.truenas:managedby', None, True),
@@ -3317,7 +3315,8 @@ class PoolDatasetService(CRUDService):
         created_ds = await self.get_instance(data['id'])
 
         if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and created_ds['acltype']['value'] == "NFSV4":
-            await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
+            acl_job = await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
+            await acl_job.wait()
 
         return created_ds
 
@@ -3411,7 +3410,7 @@ class PoolDatasetService(CRUDService):
             ('refquota_critical', 'org.freenas:refquota_critical', str, True),
             ('reservation', None, _none, False),
             ('refreservation', None, _none, False),
-            ('copies', None, None, True),
+            ('copies', None, str, True),
             ('snapdir', None, str.lower, True),
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),

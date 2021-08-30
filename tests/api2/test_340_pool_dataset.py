@@ -9,7 +9,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password, scale
+from auto_config import ip, pool_name, user, password
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
@@ -18,7 +18,6 @@ dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')
 zvol = f'{pool_name}/zvol1'
 zvol_url = zvol.replace('/', '%2F')
-group = 'nogroup' if scale else 'nobody'
 
 default_acl = [
     {
@@ -79,7 +78,7 @@ def test_05_set_permissions_for_dataset(request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': '777',
-            'group': group,
+            'group': 'nogroup',
             'user': 'nobody'
         }
     )
@@ -112,7 +111,7 @@ def test_08_set_acl_for_dataset(request):
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': group,
+            'group': 'nogroup',
             'user': 'nobody'
         }
     )
@@ -160,7 +159,7 @@ def test_13_strip_acl_from_dataset(request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': '777',
-            'group': group,
+            'group': 'nogroup',
             'user': 'nobody',
             'options': {'stripacl': True}
         }
@@ -171,7 +170,7 @@ def test_13_strip_acl_from_dataset(request):
 
 
 def test_14_setting_dataset_quota(request):
-    depends(request, ["pool_04", "user_24"], scope="session")
+    depends(request, ["pool_04", "shareuser"], scope="session")
     gid = str(GET('/group/?group=shareuser').json()[0]['gid'])
     global results
     payload = [
@@ -329,8 +328,8 @@ def test_28_delete_dataset_with_receive_resume_token(request, create_dst):
         'recursive': True,
     })
     assert result.status_code == 200, result.text
-
-    result = DELETE(f'/pool/dataset/id/{pool_name}%2Fdst/', {
-        'recursive': True,
-    })
-    assert result.status_code == 200, result.text
+    if create_dst:
+        result = DELETE(f'/pool/dataset/id/{pool_name}%2Fdst/', {
+            'recursive': True,
+        })
+        assert result.status_code == 200, result.text

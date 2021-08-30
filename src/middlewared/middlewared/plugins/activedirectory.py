@@ -579,7 +579,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             job = (await self.middleware.call('activedirectory.stop')).id
 
         elif new['enable'] and old['enable']:
-            await self.middleware.call('service.restart', 'cifs')
+            await self.middleware.call('service.restart', 'idmap')
 
         ret.update({'job_id': job})
         return ret
@@ -940,7 +940,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         try:
             verrors.check()
         except Exception:
-            self.direct_update({"enable": False})
+            await self.direct_update({"enable": False})
             raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
                             errno.EINVAL)
 

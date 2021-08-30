@@ -6,6 +6,10 @@ from middlewared.utils import osc
 from middlewared.utils.db import query_config_table
 
 
+def get_serial_ports():
+    return {e['start']: e['name'].replace('uart', 'ttyS') for e in osc.system.serial_port_choices()}
+
+
 if __name__ == "__main__":
     advanced = query_config_table("system_advanced", prefix="adv_")
     kernel_extra_args = advanced.get('kernel_extra_options') or ''
@@ -24,8 +28,8 @@ if __name__ == "__main__":
     if advanced["serialconsole"]:
         config.append(f'GRUB_SERIAL_COMMAND="serial --speed={advanced["serialspeed"]} --word=8 --parity=no --stop=1"')
         terminal.append("serial")
-
-        cmdline.append(f"console={advanced['serialport']},{advanced['serialspeed']} console=tty1")
+        port = get_serial_ports().get(advanced['serialport'], advanced['serialport'])
+        cmdline.append(f"console={port},{advanced['serialspeed']} console=tty1")
 
     if advanced.get("kdump_enabled"):
         # (memory in kb) / 16 / 1024 / 1024

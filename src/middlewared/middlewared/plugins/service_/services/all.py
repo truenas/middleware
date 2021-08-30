@@ -27,6 +27,7 @@ from .keepalived import KeepalivedService
 from .glusterd import GlusterdService
 from .glustereventsd import GlusterEventsdService
 from .ctdb import CtdbService
+from .idmap import IdmapService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -54,7 +55,6 @@ from .pseudo.misc import (
     SysctlService,
     SyslogdService,
     SystemService,
-    SystemDatasetsService,
     TimeservicesService,
     TtysService,
     UserService,
@@ -84,6 +84,7 @@ all_services = [
     ActiveDirectoryService,
     LdapService,
     NisService,
+    IdmapService,
     CollectDService,
     RRDCacheDService,
     LibvirtdService,
@@ -107,7 +108,6 @@ all_services = [
     SysctlService,
     SyslogdService,
     SystemService,
-    SystemDatasetsService,
     TimeservicesService,
     TruecommandService,
     TtysService,

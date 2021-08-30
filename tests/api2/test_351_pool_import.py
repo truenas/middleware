@@ -8,7 +8,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, send_file
-from auto_config import ip, user, password, pool_name, scale, ha
+from auto_config import ip, user, password, pool_name, ha
 from auto_config import dev_test
 reason = 'Skip for testing' if dev_test else 'Skipping test for HA'
 # comment pytestmark for development testing with --dev-test
@@ -56,16 +56,10 @@ def test_02_setup_function(request, image):
     cmd = f"gunzip -f /tmp/{image}.gz"
     gunzip_results = SSH_TEST(cmd, user, password, ip)
     assert gunzip_results['result'] is True, gunzip_results['output']
-    if scale is True:
-        cmd = f"losetup -P {loops[image]} /tmp/{image}"
-    else:
-        cmd = f"mdconfig -a -t vnode -f /tmp/{image}"
+    cmd = f"losetup -P {loops[image]} /tmp/{image}"
     mdconfig_results = SSH_TEST(cmd, user, password, ip)
     assert mdconfig_results['result'] is True, mdconfig_results['output']
-    if scale is True:
-        IMAGES[image] = f"{loops[image]}p1"
-    else:
-        IMAGES[image] = f"/dev/{mdconfig_results['output'].strip()}s1"
+    IMAGES[image] = f"{loops[image]}p1"
 
 
 def test_03_import_msdosfs(request):
@@ -89,25 +83,6 @@ def test_04_look_if_Directory_slash_File(request):
     assert results['result'] is True, results['output']
 
 
-@pytest.mark.skipif(scale, reason='Do not test for SCALE')
-def test_05_import_nonascii_msdosfs_fails(request):
-    depends(request, ["pool_04"], scope="session")
-    payload = {
-        "device": IMAGES['msdosfs-nonascii'],
-        "fs_type": "msdosfs",
-        "fs_options": {},
-        "dst_path": dataset_path,
-    }
-    results = POST("/pool/import_disk/", payload)
-    assert results.status_code == 200, results.text
-
-    job_id = results.json()
-
-    job = expect_state(job_id, "FAILED")
-
-    assert job["error"] == "rsync failed with exit code 23", job
-
-
 def test_06_look_if_Directory_slash_File(request):
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'test -f {dataset_path}/Directory/File'
@@ -117,10 +92,7 @@ def test_06_look_if_Directory_slash_File(request):
 
 def test_07_import_nonascii_msdosfs(request):
     depends(request, ["pool_04"], scope="session")
-    if scale is True:
-        locale = 'utf8'
-    else:
-        locale = 'ru_RU.UTF-8'
+    locale = 'utf8'
     payload = {
         "device": IMAGES['msdosfs-nonascii'],
         "fs_type": "msdosfs",
@@ -166,10 +138,7 @@ def test_10_look_if_Каталог_slash_Файл(request):
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
 def test_11_stop_image_with_mdconfig(request, image):
     depends(request, ["pool_04", "ssh_password"], scope="session")
-    if scale is True:
-        cmd = f"losetup -d {loops[image]}"
-    else:
-        cmd = f"mdconfig -d -u {IMAGES[image].replace('s1', '')}"
+    cmd = f"losetup -d {loops[image]}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 

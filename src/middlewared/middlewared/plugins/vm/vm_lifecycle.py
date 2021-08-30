@@ -1,6 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Int, returns
 from middlewared.service import CallError, item_method, job, Service
-from middlewared.utils import osc
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -28,16 +27,10 @@ class VMService(Service, VMSupervisorMixin):
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
 
-        if osc.IS_FREEBSD and not await self.middleware.call('vm.validate_slots', vm):
-            raise CallError(
-                'Please adjust the devices attached to this VM. '
-                f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
-            )
-
         if not await self.middleware.call('vm.supports_virtualization'):
             raise CallError('This system does not support virtualization.')
 
-        if osc.IS_LINUX and vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
+        if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
 
         # Perhaps we should have a default config option for VMs?

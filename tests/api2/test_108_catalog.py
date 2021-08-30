@@ -5,14 +5,14 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE, PUT, wait_on_job
-from auto_config import ha, scale, dev_test
+from auto_config import ha, dev_test
 
 if dev_test:
     reason = 'Skip for testing'
 else:
     reason = 'Skipping test for HA' if ha else 'Skipping test for CORE'
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(ha or not scale or dev_test, reason=reason)
+pytestmark = pytest.mark.skipif(ha or dev_test, reason=reason)
 
 official_repository = 'https://github.com/truenas/charts.git'
 truechart_repository = 'https://github.com/ericbsd/charts.git'
@@ -76,7 +76,9 @@ def test_05_verify_official_catalog_repository_with_id():
 def test_06_validate_official_catalog():
     results = POST('/catalog/validate/', 'OFFICIAL')
     assert results.status_code == 200, results.text
-    assert results.json() is None, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_07_sync_official_catalog():
@@ -141,7 +143,9 @@ def test_11_verify_truechart_catalog_object(key):
 def test_12_validate_truechart_catalog():
     results = POST('/catalog/validate/', 'TRUECHARTS')
     assert results.status_code == 200, results.text
-    assert results.json() is None, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 300)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_13_sync_truechart_catalog():

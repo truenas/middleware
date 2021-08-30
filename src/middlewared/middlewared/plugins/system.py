@@ -53,7 +53,6 @@ FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
 RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=re.M)
-RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
 RE_ECC_MEMORY = re.compile(r'Error Correction Type:\s*(.*ECC.*)')
 
 DEBUG_MAX_SIZE = 30
@@ -69,7 +68,7 @@ class SystemAdvancedModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     adv_consolemenu = sa.Column(sa.Boolean(), default=False)
     adv_serialconsole = sa.Column(sa.Boolean(), default=False)
-    adv_serialport = sa.Column(sa.String(120), default="0x2f8")
+    adv_serialport = sa.Column(sa.String(120), default="ttyS0")
     adv_serialspeed = sa.Column(sa.String(120), default="9600")
     adv_powerdaemon = sa.Column(sa.Boolean(), default=False)
     adv_swapondrive = sa.Column(sa.Integer(), default=2)
@@ -144,26 +143,11 @@ class SystemAdvancedService(ConfigService):
         """
         Get available choices for `serialport`.
         """
-        if osc.IS_FREEBSD and await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
-            ports = {'0x3f8': '0x3f8'}
-        else:
-            if osc.IS_LINUX:
-                proc = await Popen(
-                    'dmesg | grep ttyS',
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
-                )
-                output = (await proc.communicate())[0].decode()
-                ports = {i: i for i in RE_LINUX_DMESG_TTY.findall(output)}
-            else:
-                pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
-                                   "sed -En 's/ *([0-9a-fA-Fx]+).*\\(uart[0-9]+\\)/\\1/p'", stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, shell=True)
-                ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
-
-        if not ports or (await self.config())['serialport'] == '0x2f8':
-            # We should always add 0x2f8 if ports is false or current value is the default one in db
-            # i.e 0x2f8
-            ports['0x2f8'] = '0x2f8'
+        ports = {e['name']: e['name'] for e in await self.middleware.call('device.get_info', 'SERIAL')}
+        if not ports or (await self.middleware.call('system.advanced.config'))['serialport'] == 'ttyS0':
+            # We should always add ttyS0 if ports is false or current value is the default one in db
+            # i.e ttyS0
+            ports['ttyS0'] = 'ttyS0'
 
         return ports
 
@@ -199,18 +183,11 @@ class SystemAdvancedService(ConfigService):
                     f'{schema}.serialport',
                     'Please specify a serial port when serial console option is checked'
                 )
-            else:
-                data['serialport'] = serial_choice = hex(
-                    int(serial_choice)
-                ) if serial_choice.isdigit() else hex(int(serial_choice, 16))
-                # The else can happen when we have incoming value like 0x03f8 which is a valid
-                # hex value but the following validation would fail as we are not comparing with
-                # normalised hex strings
-                if serial_choice not in await self.serial_port_choices():
-                    verrors.add(
-                        f'{schema}.serialport',
-                        'Serial port specified has not been identified by the system'
-                    )
+            elif serial_choice not in await self.serial_port_choices():
+                verrors.add(
+                    f'{schema}.serialport',
+                    'Serial port specified has not been identified by the system'
+                )
 
         syslog_server = data.get('syslogserver')
         if syslog_server:

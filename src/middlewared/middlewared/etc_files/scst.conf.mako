@@ -20,7 +20,7 @@
         associated_targets[a_tgt['target']].append(a_tgt)
 
     # Let's map extents to respective ios
-    extents_io = {'vdisk_fileio': [], 'vdisk_blockio': [], 'dev_disk': []}
+    extents_io = {'vdisk_fileio': [], 'vdisk_blockio': []}
     for extent in extents.values():
         if extent['locked']:
             middleware.logger.debug(
@@ -54,7 +54,7 @@
     target_hosts = middleware.call_sync('iscsi.host.get_target_hosts')
     hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
 %>\
-% for handler in filter(lambda k: extents_io[k], extents_io):
+% for handler in extents_io:
 HANDLER ${handler} {
 %   for extent in extents_io[handler]:
     DEVICE ${extent['name']} {

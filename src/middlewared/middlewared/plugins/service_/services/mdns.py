@@ -13,15 +13,13 @@ class MDNSService(SimpleService):
     systemd_unit = "avahi-daemon"
 
     async def start(self):
-        announce = (await self.middleware.call("network.configuration.config"))["service_announcement"]
-        if not announce["mdns"]:
-            return
-
-        return await super().start()
+        return await self._systemd_unit("avahi-daemon", "start")
 
     async def reload(self):
         announce = (await self.middleware.call("network.configuration.config"))["service_announcement"]
         if not announce["mdns"]:
             return
 
-        return await super().reload()
+        state = await self.get_state()
+        cmd = "reload" if state.running else "start"
+        return await self._systemd_unit("avahi-daemon", cmd)

@@ -860,7 +860,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.startup_seq_path = startup_seq_path
         self.app = None
         self.loop = None
-        self.run_in_thread_executor = IoThreadPoolExecutor('IoThread', 20)
+        self.run_in_thread_executor = IoThreadPoolExecutor()
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
@@ -1094,7 +1094,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
     def unregister_wsclient(self, client):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name, method, sync=True, inline=False):
+    def register_hook(self, name, method, sync=True, inline=False, order=0):
         """
         Register a hook under `name`.
 
@@ -1117,7 +1117,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             'method': method,
             'inline': inline,
             'sync': sync,
+            'order': order,
         })
+        self.__hooks[name] = sorted(self.__hooks[name], key=lambda hook: hook['order'])
 
     def _call_hook_base(self, name, *args, **kwargs):
         for hook in self.__hooks[name]:
@@ -1166,6 +1168,14 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
+        if isinstance(pool, IoThreadPoolExecutor) and self.run_in_thread_executor.no_idle_threads:
+            # this means the IoThreadPool has no idle threads so instead of blocking the
+            # main event loop, we'll spin up single-use threads until the threadpool gets
+            # some more idle thread(s)
+            self.logger.trace('Calling %r in single-use thread', method)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as exc:
+                return await loop.run_in_executor(exc, functools.partial(method, *args, **kwargs))
+
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
     async def _run_in_conn_threadpool(self, method, *args, **kwargs):
@@ -1393,10 +1403,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         event_data = self.__events.get_event(name)
         # TODO: Temporarily skip events which are CHANGED but have cleared set for validation as CHANGED
-        #  will be removed in next release and this case wouldn't be applicable
+        # will be removed in next release and this case wouldn't be applicable
         if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED') and 'cleared' not in kwargs:
             verrors = ValidationErrors()
-            clean_and_validate_arg(verrors, event_data['returns'][0], kwargs['fields'])
+            clean_and_validate_arg(verrors, event_data['returns'][0], kwargs.get('fields'))
             verrors.check()
 
         self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')

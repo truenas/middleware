@@ -85,29 +85,6 @@ class DISPLAY(Device):
             ]
         })
 
-    def xml_freebsd(self, *args, **kwargs):
-        return create_element(
-            'controller', type='usb', model='nec-xhci', attribute_dict={
-                'children': [create_element('address', type='pci', slot='30')]
-            }
-        ), create_element('input', type='tablet', bus='usb')
-
-    def hypervisor_args_freebsd(self, *args, **kwargs):
-        attrs = self.data['attributes']
-        width, height = (attrs.get('resolution') or '1024x768').split('x')
-        return '-s ' + ','.join(filter(
-            bool, [
-                '29',
-                'fbuf',
-                'vncserver',
-                f'tcp={attrs["bind"]}:{attrs["port"]}',
-                f'w={width}',
-                f'h={height}',
-                f'password={attrs["password"]}' if attrs.get('password') else None,
-                'wait' if attrs.get('wait') else None,
-            ]
-        ))
-
     @staticmethod
     def get_web_port(port):
         split_port = int(str(port)[:2]) - 1
@@ -127,15 +104,6 @@ class DISPLAY(Device):
         self.web_process = subprocess.Popen(
             [
                 'websockify', '--web', f'/usr/share/{"spice-html5" if self.is_spice_type() else "novnc"}/',
-                '--wrap-mode=ignore', start_args['web_bind'], start_args['server_addr']
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-
-    def post_start_vm_freebsd(self, *args, **kwargs):
-        start_args = self.get_start_attrs()
-        self.web_process = subprocess.Popen(
-            [
-                '/usr/local/libexec/novnc/utils/websockify/run', '--web', '/usr/local/libexec/novnc/',
                 '--wrap-mode=ignore', start_args['web_bind'], start_args['server_addr']
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )

@@ -472,9 +472,7 @@ class FailoverService(Service):
 
             # try to unlock the zfs datasets (if any)
             unlock_job = self.run_call(
-                'failover.unlock_zfs_datasets', vol["name"], {
-                    'restart_services': False,
-                }
+                'failover.unlock_zfs_datasets', vol["name"]
             )
             unlock_job.wait_sync()
             if unlock_job.error:

@@ -8,11 +8,10 @@ from time import sleep
 from base64 import b64decode, b64encode
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
+from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import (
     ip,
     pool_name,
-    scale,
     dev_test,
     user,
     password,
@@ -29,20 +28,14 @@ dataset = f"{pool_name}/smb-proto"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "SMBPROTO"
 smb_path = "/mnt/" + dataset
-group = 'root' if scale else 'wheel'
-module_prefix = 'zfs_core' if scale else 'ixnas'
-
-
 guest_path_verification = {
     "user": "shareuser",
-    "group": group,
+    "group": 'root',
     "acl": True
 }
-
-
 root_path_verification = {
     "user": "root",
-    "group": group,
+    "group": 'root',
     "acl": False
 }
 
@@ -144,7 +137,7 @@ def test_006_creating_a_smb_share_path(request):
         "comment": "SMB Protocol Testing Share",
         "path": smb_path,
         "name": SMB_NAME,
-        "auxsmbconf": f"{module_prefix}:base_user_quota = 1G"
+        "auxsmbconf": "zfs_core:base_user_quota = 1G"
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text

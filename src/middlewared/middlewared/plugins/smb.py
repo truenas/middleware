@@ -20,15 +20,9 @@ import uuid
 import shutil
 import struct
 
-try:
-    from samba.samba3 import param
-except ImportError:
-    param = None
-
+from samba import param
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
-
-LP_CTX = param.get_context()
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -229,6 +223,8 @@ class SMBService(TDBWrapConfigService):
         datastore_prefix = 'cifs_srv_'
         cli_namespace = 'service.smb'
 
+    LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.value[0])
+
     @private
     async def smb_extend(self, smb):
         """Extend smb for netbios."""
@@ -359,11 +355,55 @@ class SMBService(TDBWrapConfigService):
         return True
 
     @private
+    async def getparm_file(self, parm):
+        with open(SMBPath.GLOBALCONF.platform(), "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line[0] in ["[", "#", ";"]:
+                    continue
+
+                try:
+                    k, v = line.split("=", 1)
+                except ValueError:
+                    self.logger.warning("%s, SMB configuration file contains invalid line.", line)
+                    continue
+
+                k = k.strip()
+                v = v.strip()
+
+                if k.casefold() != parm.casefold():
+                    continue
+
+                if v.lower() in ("off", "false", "no"):
+                    return False
+
+                if v.lower() in ("on", "true", "yes"):
+                    return True
+
+                if v.isnumeric():
+                    return int(v)
+
+                return v
+
+        raise MatchNotFound(parm)
+
+    @private
     async def getparm(self, parm, section):
         """
         Get a parameter from the smb4.conf file. This is more reliable than
         'testparm --parameter-name'. testparm will fail in a variety of
         conditions without returning the parameter's value.
+
+        First we try to retrieve the parameter from the registry. The registry will be populated
+        with parameters that are explicilty set. It will not return for a value for an implicit default.
+
+        Some basic global configuration parameters (such as "clustering") are not stored in the
+        registry. This means that we need to read them from the configuration file. This only
+        applies to global section.
+
+        Finally, we fall through to retrieving the default value in Samba's param table
+        through samba's param binding. This is initialized under a non-default loadparm context
+        based on empty smb4.conf file.
         """
         ret = None
         try:
@@ -376,11 +416,14 @@ class SMBService(TDBWrapConfigService):
             return ret
 
         try:
-            LP_CTX.load(SMBPath.GLOBALCONF.platform())
-        except Exception as e:
-            self.logger.warning("Failed to reload smb.conf: %s", e)
+            if section.upper() == 'GLOBAL':
+                return await self.getparm_file(parm)
+        except MatchNotFound:
+            pass
+        except FileNotFoundError:
+            self.logger.debug("%s: smb.conf file not generated. Returning default value.", parm)
 
-        return LP_CTX.get(parm)
+        return self.LP_CTX.get(parm)
 
     @private
     async def get_next_rid(self):
@@ -791,18 +834,13 @@ class SMBService(TDBWrapConfigService):
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
             await self.middleware.call('smb.add_admin_group', new['admin_group'])
 
-        # TODO: consider using bidict
-        for k, v in LOGLEVEL_MAP.items():
-            if new['loglevel'] == v:
-                new['loglevel'] = k
-                break
-
         new['netbiosalias'] = ' '.join(new['netbiosalias'])
 
-        await self.middleware.call('smb.reg_update', new)
         await self.compress(new)
         await self.direct_update(new)
-        await self._service_change(self._config.service, 'restart')
+
+        new_config = await self.config()
+        await self.middleware.call('smb.reg_update', new_config)
         await self.reset_smb_ha_mode()
 
         """
@@ -812,19 +850,20 @@ class SMBService(TDBWrapConfigService):
         if old['aapl_extensions'] != new['aapl_extensions']:
             await self.apply_aapl_changes()
 
-        new_config = await self.config()
         if old['netbiosname_local'] != new_config['netbiosname_local']:
             new_sid = await self.middleware.call("smb.get_system_sid")
             await self.middleware.call("smb.set_database_sid", new_sid)
             new_config["cifs_SID"] = new_sid
             await self.middleware.call("smb.synchronize_group_mappings")
 
+        await self._service_change(self._config.service, 'restart')
         return new_config
 
     @private
     async def compress(self, data):
         data.pop('netbiosname_local', None)
         data.pop('next_rid')
+        data['loglevel'] = LOGLEVEL_MAP.inv.get(data['loglevel'], 1)
         return data
 
 
@@ -1000,6 +1039,9 @@ class SharingSMBService(SharingService):
         else:
             ret = await self.get_instance(data['id'])
 
+        if data['timemachine']:
+            await self.middleware.call('service.restart', 'mdns')
+
         return ret
 
     @accepts(
@@ -1149,6 +1191,9 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
+        if old['timemachine'] != new['timemachine']:
+            await self.middleware.call('service.restart', 'mdns')
+
         return await self.get_instance(id)
 
     @accepts(Int('id'))
@@ -1295,6 +1340,12 @@ class SharingSMBService(SharingService):
             'socket options',
             'include',
         ]
+        freebsd_vfs_objects = [
+            'zfsacl',
+            'zfs_space',
+            'noacl',
+            'ixnas',
+        ]
         for entry in data.splitlines():
             if entry == '' or entry.startswith(('#', ';')):
                 continue
@@ -1318,6 +1369,14 @@ class SharingSMBService(SharingService):
                     'are not permitted.'
                 )
 
+            if kv[0].strip() == 'vfs objects':
+                for i in kv[1].split():
+                    if i in freebsd_vfs_objects:
+                        verrors.add(
+                            f'{schema_name}.auxsmbconf',
+                            f'[{i}] is not a permitted VFS object on SCALE.'
+                        )
+
             if schema_name == 'smb_update.smb_options' and ':' not in kv[0]:
                 """
                 lib/param doesn't validate params containing a colon.
@@ -1326,7 +1385,7 @@ class SharingSMBService(SharingService):
                 This should be a lightweight validation of GLOBAL params.
                 """
                 try:
-                    LP_CTX.dump_a_parameter(kv[0].strip())
+                    self.LP_CTX.dump_a_parameter(kv[0].strip())
                 except RuntimeError as e:
                     verrors.add(
                         f'{schema_name}.auxsmbconf',
@@ -1610,6 +1669,8 @@ class SharingSMBService(SharingService):
 
             try:
                 await self.middleware.call('sharing.smb.reg_addshare', share_conf[0])
+            except ValueError:
+                self.logger.warning("Share [%s] has invalid configuration.", share, exc_info=True)
             except Exception:
                 self.logger.warning("Failed to add SMB share [%s] while synchronizing registry config",
                                     share, exc_info=True)

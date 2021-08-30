@@ -62,37 +62,57 @@ class CatalogService(CRUDService):
     async def catalog_extend_context(self, rows, extra):
         k8s_dataset = (await self.middleware.call('kubernetes.config'))['dataset']
         catalogs_dir = os.path.join('/mnt', k8s_dataset, 'catalogs') if k8s_dataset else f'{TMP_IX_APPS_DIR}/catalogs'
-
-        return {
+        context = {
             'catalogs_dir': catalogs_dir,
             'extra': extra or {},
-            'item_jobs': {
-                row['label']: await self.middleware.call('catalog.items', row['label'], {
-                    'cache': True,
-                    'cache_only': await self.official_catalog_label() != row['label'],
-                    'retrieve_all_trains': extra.get('retrieve_all_trains', True),
-                    'trains': extra.get('trains', []),
-                })
-                for row in rows
-            } if extra.get('item_details') else {},
-            'item_sync_params': await self.middleware.call(
-                'catalog.sync_items_params'
-            ) if extra.get('item_details') else None,
-            'all_jobs': await self.middleware.call(
-                'core.get_jobs', [['method', '=', 'catalog.items']]
-            ) if extra.get('item_details') else [],
+            'catalogs_context': {},
         }
+        if extra.get('item_details'):
+            item_sync_params = await self.middleware.call('catalog.sync_items_params')
+            item_jobs = await self.middleware.call(
+                'core.get_jobs', [['method', '=', 'catalog.items'], ['state', '=', 'RUNNING']]
+            )
+            for row in rows:
+                label = row['label']
+                catalog_info = {
+                    'item_job': await self.middleware.call('catalog.items', label, {
+                        'cache': True,
+                        'cache_only': await self.official_catalog_label() != row['label'],
+                        'retrieve_all_trains': extra.get('retrieve_all_trains', True),
+                        'trains': extra.get('trains', []),
+                    }),
+                    'cached': label == OFFICIAL_LABEL or await self.middleware.call(
+                        'catalog.cached', label, False
+                    ) or await self.middleware.call('catalog.cached', label, True),
+                    'normalized_progress': None,
+                }
+                if not catalog_info['cached']:
+                    caching_job = filter_list(item_jobs, [['arguments', '=', [row['label'], item_sync_params]]])
+                    if not caching_job:
+                        caching_job_obj = await self.middleware.call('catalog.items', label, item_sync_params)
+                        caching_job = caching_job_obj.__encode__()
+                    else:
+                        caching_job = caching_job[0]
+
+                    catalog_info['normalized_progress'] = {
+                        'caching_job': caching_job,
+                        'caching_progress': caching_job['progress'],
+                    }
+                context['catalogs_context'][label] = catalog_info
+
+        return context
 
     @private
-    async def normalize_data_from_item_job(self, label, item_job):
+    async def normalize_data_from_item_job(self, label, catalog_context):
         normalized = {
             'trains': {},
-            'cached': False,
+            'cached': catalog_context['cached'],
             'healthy': False,
             'error': True,
             'caching_progress': None,
             'caching_job': None,
         }
+        item_job = catalog_context['item_job']
         await item_job.wait()
         if not item_job.error:
             normalized.update({
@@ -119,22 +139,12 @@ class CatalogService(CRUDService):
         })
         extra = context['extra']
         if extra.get('item_details'):
-            catalog.update(await self.normalize_data_from_item_job(catalog['id'], context['item_jobs'][catalog['id']]))
+            catalog_context = context['catalogs_context'][catalog['label']]
+            catalog.update(await self.normalize_data_from_item_job(catalog['id'], catalog_context))
             if catalog['cached']:
                 return catalog
-
-            # We would like to report progress here for catalogs which have not been cached and hence their
-            # data has not been retrieved as well due to this
-            caching_job = filter_list(
-                context['all_jobs'], [
-                    ['arguments', '=', [catalog['id'], context['item_sync_params']]]
-                ]
-            )
-            if caching_job:
-                catalog.update({
-                    'caching_job': caching_job[0],
-                    'caching_progress': caching_job[0]['progress'],
-                })
+            else:
+                catalog.update(catalog_context['normalized_progress'])
         return catalog
 
     @private
@@ -192,7 +202,7 @@ class CatalogService(CRUDService):
         verrors.check()
 
         if not data['preferred_trains']:
-            data['preferred_trains'] = ['charts']
+            data['preferred_trains'] = ['stable']
 
         if not data.pop('force'):
             job.set_progress(40, f'Validating {data["label"]!r} catalog')

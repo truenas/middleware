@@ -8,7 +8,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range
-from middlewared.utils import osc
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -17,8 +16,6 @@ BOOT_LOADER_OPTIONS = {
     'UEFI': 'UEFI',
     'UEFI_CSM': 'Legacy BIOS',
 }
-if osc.IS_FREEBSD:
-    BOOT_LOADER_OPTIONS['GRUB'] = 'Grub bhyve (specify grub.cfg)'
 LIBVIRT_LOCK = asyncio.Lock()
 RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
 
@@ -33,7 +30,6 @@ class VMModel(sa.Model):
     memory = sa.Column(sa.Integer())
     autostart = sa.Column(sa.Boolean(), default=False)
     time = sa.Column(sa.String(5), default='LOCAL')
-    grubconfig = sa.Column(sa.Text(), nullable=True)
     bootloader = sa.Column(sa.String(50), default='UEFI')
     cores = sa.Column(sa.Integer(), default=1)
     threads = sa.Column(sa.Integer(), default=1)
@@ -94,7 +90,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('threads', default=1),
         Int('memory', required=True),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
-        Str('grubconfig', null=True),
         List('devices', items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Bool('hide_from_msr', default=False),
@@ -108,9 +103,6 @@ class VMService(CRUDService, VMSupervisorMixin):
     async def do_create(self, data):
         """
         Create a Virtual Machine (VM).
-
-        `grubconfig` may either be a path for the grub.cfg file or the actual content
-        of the file to be used with GRUB bootloader.
 
         `devices` is a list of virtualized hardware to add to the newly created Virtual Machine.
         Failure to attach a device destroys the VM and any resources allocated by the VM devices.
@@ -238,9 +230,6 @@ class VMService(CRUDService, VMSupervisorMixin):
                         f'Specified machine type is not supported for {choices[data["arch_type"]]!r} architecture type'
                     )
 
-        # TODO: Let's please remove this attribute
-        if data.get('grubconfig'):
-            verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
         if data.get('cpu_mode') != 'CUSTOM' and data.get('cpu_model'):
             verrors.add(
                 f'{schema_name}.cpu_model',
@@ -284,20 +273,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
-        if osc.IS_FREEBSD:
-            if not await self.middleware.call('vm.validate_slots', data):
-                verrors.add(
-                    f'{schema_name}.devices',
-                    'Please adjust the number of devices attached to this VM. '
-                    f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
-                )
-            if data.get('cpu_mode', 'CUSTOM') != 'CUSTOM':
-                verrors.add(f'{schema_name}.cpu_mode', 'This attribute is not supported on this platform.')
-            if data.get('cpu_model'):
-                verrors.add(f'{schema_name}.cpu_model', 'This attribute is not supported on this platform')
-
-            data.pop('cpu_mode', None)
-            data.pop('cpu_model', None)
 
     async def __do_update_devices(self, id, devices):
         # There are 3 cases:

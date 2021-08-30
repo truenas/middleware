@@ -8,7 +8,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, wait_on_job
-from auto_config import pool_name, ha, scale
+from auto_config import pool_name, ha
 
 IMAGES = {}
 loops = {
@@ -113,10 +113,7 @@ def test_07_looking_pool_info_of_(request, pool_keys):
             info = results.json()[keys_list[0]][keys_list[1]]
             disk_list = payload[keys_list[0]][keys_list[1]][0][keys_list[2]]
             for props in info:
-                if scale is True:
-                    device = re.sub(r'[0-9]+', '', props['device'])
-                else:
-                    device = props['device'].partition('p')[0]
+                device = re.sub(r'[0-9]+', '', props['device'])
                 assert device in disk_list, results.text
                 assert props['disk'] in disk_list, results.text
         else:

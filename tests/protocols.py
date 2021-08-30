@@ -3,7 +3,7 @@ from samba.dcerpc import security
 from samba.samba3 import param as s3param
 from samba import credentials
 import subprocess
-# from samba import NTSTATUSError
+from samba import NTSTATUSError
 
 
 class SMB(object):
@@ -67,8 +67,11 @@ class SMB(object):
 
     def disconnect(self):
         open_files = list(self._open_files.keys())
-        for f in open_files:
-            self.close(f)
+        try:
+            for f in open_files:
+                self.close(f)
+        except NTSTATUSError:
+            pass
 
         del(self._connection)
         del(self._cred)
@@ -76,7 +79,7 @@ class SMB(object):
 
     def show_connection(self):
         return {
-            "connected": True if self._connection is not None else False,
+            "connected": self._connection.chkpath(''),
             "host": self._host,
             "share": self._share,
             "smb1": self._smb1,
