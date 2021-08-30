@@ -1,6 +1,6 @@
 import enum
-from middlewared.service import accepts, job, ServicePartBase
-from middlewared.schema import Bool, Dict, Int, List, Str, UnixPerm
+from middlewared.service import accepts, returns, job, ServicePartBase
+from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
 from middlewared.utils import osc
 from middlewared.validators import Range
 
@@ -76,7 +76,7 @@ class ACLType(enum.Enum):
         }
 
         for ace in theacl:
-            key = f'{ace["type"].lower()}_{"inherit" if self._is_inherited(ace) else "noinherit"}'
+            key = f'{ace.get("type", "ALLOW").lower()}_{"inherit" if self._is_inherited(ace) else "noinherit"}'
             acl_groups[key].append(ace)
 
         for g in acl_groups.values():
@@ -93,10 +93,10 @@ class ACLBase(ServicePartBase):
             Str('path', required=True),
             Int('uid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
             Int('gid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
-            List(
-                'dacl',
-                items=[
-                    Dict(
+            OROperator(
+                List(
+                    'nfs4_acl',
+                    items=[Dict(
                         'nfs4_ace',
                         Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
                         Int('id', null=True, validators=[Range(min=-1, max=2147483647)]),
@@ -129,8 +129,12 @@ class ACLBase(ServicePartBase):
                             Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
                         ),
                         register=True
-                    ),
-                    Dict(
+                    ),],
+                    register=True
+                ),
+                List(
+                    'posix1e_acl',
+                    items=[Dict(
                         'posix1e_ace',
                         Bool('default', default=False),
                         Str('tag', enum=['USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP', 'OTHER', 'MASK']),
@@ -142,8 +146,10 @@ class ACLBase(ServicePartBase):
                             Bool('EXECUTE', default=False),
                         ),
                         register=True
-                    )
-                ],
+                    )],
+                    register=True
+                ),
+                name='dacl',
             ),
             Dict(
                 'nfs41_flags',
@@ -160,6 +166,7 @@ class ACLBase(ServicePartBase):
             )
         )
     )
+    @returns()
     @job(lock="perm_change")
     def setacl(self, job, data):
         """
@@ -202,6 +209,17 @@ class ACLBase(ServicePartBase):
         Bool('simplified', default=True),
         Bool('resolve_ids', default=False),
     )
+    @returns(Dict(
+        'truenas_acl',
+        Str('path'),
+        Bool('trivial'),
+        Str('acltype', enum=[x.name for x in ACLType], null=True),
+        OROperator(
+            Ref('nfs4_acl'),
+            Ref('posix1e_acl'),
+            name='acl'
+        )
+    ))
     def getacl(self, path, simplified, resolve_ids):
         """
         Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The acl type is indicated
@@ -249,6 +267,7 @@ class ACLBase(ServicePartBase):
             )
         )
     )
+    @returns()
     @job(lock="perm_change")
     def chown(self, job, data):
         """
@@ -280,6 +299,7 @@ class ACLBase(ServicePartBase):
             )
         )
     )
+    @returns()
     @job(lock="perm_change")
     def setperm(self, job, data):
         """
@@ -314,6 +334,7 @@ class ACLBase(ServicePartBase):
         """
 
     @accepts(Str('path', required=False, default=''))
+    @returns(List('acl_choices', items=[Str("choice")]))
     async def default_acl_choices(self, path):
         """
         `DEPRECATED`
@@ -325,6 +346,7 @@ class ACLBase(ServicePartBase):
         Str('acl_type', default='POSIX_OPEN'),
         Str('share_type', default='NONE', enum=['NONE', 'SMB', 'NFS']),
     )
+    @returns(OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl'))
     async def get_default_acl(self, acl_type, share_type):
         """
         `DEPRECATED`

@@ -336,6 +336,7 @@ class FilesystemService(Service, ACLBase):
             ret['acl'].append(ace)
 
         ret['trivial'] = (len(ret['acl']) == 3)
+        ret['path'] = path
         return ret
 
     @private
