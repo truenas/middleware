@@ -12,7 +12,6 @@ from middlewared.event import EventSource
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
 from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list
-from middlewared.utils.path import is_child
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 
