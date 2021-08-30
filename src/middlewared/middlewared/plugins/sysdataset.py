@@ -1,7 +1,9 @@
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
+from middlewared.service_exception import InstanceNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
+from middlewared.utils.size import format_size
 
 try:
     from middlewared.plugins.cluster_linux.utils import CTDBConfig
@@ -136,6 +138,9 @@ class SystemDatasetService(ConfigService):
                     errno.EPERM
                 )
 
+            if error := await self.destination_pool_error(new['pool']):
+                verrors.add('sysdataset_update.pool', error)
+
         if new['pool'] and new['pool'] != await self.middleware.call('boot.pool_name'):
             pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
             if not pool:
@@ -163,6 +168,10 @@ class SystemDatasetService(ConfigService):
                     ]
                 ]):
                     continue
+
+                if self.destination_pool_error(pool['name']):
+                    continue
+
                 new['pool'] = pool['name']
                 break
             else:
@@ -203,6 +212,31 @@ class SystemDatasetService(ConfigService):
                     self.logger.debug('Failed to reboot standby storage controller after system dataset change: %s', e)
 
         return await self.config()
+
+    @private
+    async def destination_pool_error(self, new_pool):
+        config = await self.config()
+
+        try:
+            existing_dataset = await self.middleware.call('zfs.dataset.get_instance', config['basename'])
+        except InstanceNotFound:
+            return
+
+        used = existing_dataset['properties']['used']['parsed']
+
+        try:
+            new_dataset = await self.middleware.call('zfs.dataset.get_instance', new_pool)
+        except InstanceNotFound:
+            return f'Dataset {new_pool} does not exist'
+
+        available = new_dataset['properties']['available']['parsed']
+
+        used = int(used * 1.1)
+        if available < used:
+            return (
+                f'Insufficient disk space available on {new_pool} ({format_size(available)}). '
+                f'Need {format_size(used)}'
+            )
 
     @accepts(Str('exclude_pool', default=None, null=True))
     @private

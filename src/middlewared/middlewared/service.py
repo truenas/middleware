@@ -21,7 +21,9 @@ import psutil
 from middlewared.common.environ import environ_update
 import middlewared.main
 from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns, Str
-from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
+from middlewared.service_exception import (
+    CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors  # noqa
+)
 from middlewared.settings import conf
 from middlewared.utils import filter_list, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
@@ -883,7 +885,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             options
         )
         if not instance:
-            raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
+            raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')
         return instance[0]
 
     async def _ensure_unique(self, verrors, schema_name, field_name, value, id=None):
