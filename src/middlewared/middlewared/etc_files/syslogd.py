@@ -34,11 +34,9 @@ def generate_syslog_remote_destination(middleware, advanced_config):
 
         if advanced_config["syslog_transport"] == "TLS":
             try:
-                certificate = middleware.call_sync(
-                    "certificate.query",
-                    [
-                        ("id", "=", advanced_config["syslog_tls_certificate"]),
-                        ("revoked", "=", False),
+                certificate_authority = middleware.call_sync(
+                    "certificateauthority.query", [
+                        ("id", "=", advanced_config["syslog_tls_certificate_authority"]), ("revoked", "=", False),
                     ],
                     {"get": True}
                 )
@@ -46,18 +44,38 @@ def generate_syslog_remote_destination(middleware, advanced_config):
                 logger.warning("Syslog TLS certificate not available, skipping remote syslog destination")
                 return ""
 
+            result += f"syslog(\"{host}\" port({port}) transport(\"tls\") "
             try:
-                ca_dir = "/etc/certificates"
+                ca_dir = "/etc/certificates/CA"
                 for filename in os.listdir(ca_dir):
                     if filename.endswith(".0") and os.path.islink(os.path.join(ca_dir, filename)):
                         os.unlink(os.path.join(ca_dir, filename))
-                os.symlink(certificate["certificate_path"],
-                           os.path.join(ca_dir, "%x.0" % certificate["subject_name_hash"]))
+                os.symlink(
+                    certificate_authority["certificate_path"], os.path.join(
+                        ca_dir, "%x.0" % certificate_authority["subject_name_hash"]
+                    )
+                )
             except Exception:
-                logger.error("Error symlinking syslog certificate, skipping remote syslog destination", exc_info=True)
+                logger.error("Error symlinking syslog CA, skipping remote syslog destination", exc_info=True)
                 return ""
+            else:
+                result += f"tls(ca-dir(\"{ca_dir}\") "
 
-            result += f'syslog("{host}" port({port}) transport("tls") tls(ca-dir("{ca_dir}")));'
+            certificate = middleware.call_sync(
+                "certificate.query", [("id", "=", advanced_config["syslog_tls_certificate"])]
+            )
+            if certificate and not certificate[0]["revoked"]:
+                result += f"key-file(\"{certificate[0]['privatekey_path']}\") " \
+                          f"cert-file(\"{certificate[0]['certificate_path']}\")"
+            else:
+                msg = 'Skipping setting key-file/cert-file for remote syslog as '
+                if not certificate:
+                    msg += 'no certificate configured'
+                else:
+                    msg += 'specified certificate has been revoked'
+                logger.debug(msg)
+
+            result += "));"
         else:
             transport = advanced_config["syslog_transport"].lower()
             result += f'{transport}("{host}" port({port}) localport(514));'
