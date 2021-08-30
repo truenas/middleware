@@ -129,7 +129,7 @@ class ACLBase(ServicePartBase):
                             Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
                         ),
                         register=True
-                    ),],
+                    )],
                     register=True
                 ),
                 List(
