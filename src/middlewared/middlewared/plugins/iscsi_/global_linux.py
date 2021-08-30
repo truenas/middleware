@@ -97,6 +97,21 @@ class ISCSIGlobalService(Service):
         return filter_list(sessions, filters, options)
 
     @private
+    def resync_lun_size_for_zvol(self, id):
+        if not self.middleware.call_sync('service.started', 'iscsitarget'):
+            return
+
+        extent = self.middleware.call_sync('iscsi.extent.query', [['enabled', '=', True], ['path', '=', f'zvol/{id}']])
+        if not extent:
+            return
+
+        try:
+            with open(f'/sys/kernel/scst_tgt/devices/{extent[0]["name"]}/resync_size', 'w') as f:
+                f.write('1')
+        except Exception:
+            self.logger.warning('Failed to resync lun size for %r', extent[0]['name'], exc_info=True)
+
+    @private
     async def terminate_luns_for_pool(self, pool_name):
         if not await self.middleware.call('service.started', 'iscsitarget'):
             return
