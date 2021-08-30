@@ -29,7 +29,7 @@ from middlewared.schema import (
 from middlewared.service import (
     ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
 )
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import InstanceNotFound, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
@@ -330,7 +330,11 @@ class PoolService(CRUDService):
         """
         Returns pool with name `name`. If `name` is not found, Validation error is raised.
         """
-        return await self.query([['name', '=', name]], {'get': True})
+        pool = await self.query([['name', '=', name]])
+        if not pool:
+            raise InstanceNotFound(f'Pool {name} does not exist')
+
+        return pool[0]
 
     @item_method
     @accepts(
