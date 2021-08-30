@@ -15,7 +15,6 @@ import threading
 import time
 import types
 
-import humanfriendly
 import paramiko.ssh_exception
 
 from zettarepl.dataset.create import create_dataset
@@ -47,6 +46,7 @@ from middlewared.logger import reconfigure_logging, setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
 from middlewared.utils.cgroups import move_to_root_cgroups
+from middlewared.utils.size import format_size
 import middlewared.utils.osc as osc
 from middlewared.utils.string import make_sentence
 
@@ -461,8 +461,8 @@ class ZettareplService(Service):
             )
             text = (
                 f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
-                f"{message.dataset}@{message.snapshot} ({humanfriendly.format_size(message.bytes_sent, binary=True)} / "
-                f"{humanfriendly.format_size(message.bytes_total, binary=True)})"
+                f"{message.dataset}@{message.snapshot} ({format_size(message.bytes_sent)} / "
+                f"{format_size(message.bytes_total)})"
             )
 
         if data_progress_message is not None:
@@ -470,8 +470,8 @@ class ZettareplService(Service):
             # Do this to avoid displaying progress like "[total 11.11 TiB out of 11.04 TiB]"
             total = max(data_progress_message.dst_size, data_progress_message.src_size)
             text += (
-                f" [total {humanfriendly.format_size(data_progress_message.dst_size, binary=True)} of "
-                f"{humanfriendly.format_size(total, binary=True)}]"
+                f" [total {format_size(data_progress_message.dst_size)} of "
+                f"{format_size(total)}]"
             )
 
         job.set_progress(progress, text)

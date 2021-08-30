@@ -5,10 +5,9 @@ import os
 import subprocess
 import time
 
-import humanfriendly
-
 from middlewared.service import CallError, private, Service
 from middlewared.utils import osc
+from middlewared.utils.size import format_size
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +113,8 @@ class UpdateService(Service):
                 time.sleep(1)
 
         raise CallError(
-            f"Insufficient disk space available on {pool_name} ({humanfriendly.format_size(space_left)}). "
-            f"Need {humanfriendly.format_size(size)}",
+            f"Insufficient disk space available on {pool_name} ({format_size(space_left)}). "
+            f"Need {format_size(size)}",
             errno.ENOSPC,
         )
 

@@ -4,12 +4,12 @@ import os
 import subprocess
 import time
 
-import humanfriendly
 import requests
 import requests.exceptions
 
 from middlewared.service import CallError, private, Service
 from middlewared.utils import osc
+from middlewared.utils.size import format_size
 
 from .utils import scale_update_server
 
@@ -57,8 +57,8 @@ class UpdateService(Service):
 
                                 job.set_progress(
                                     progress / total * progress_proportion,
-                                    f'Downloading update: {humanfriendly.format_size(total)} at '
-                                    f'{humanfriendly.format_size(progress / (time.monotonic() - download_start))}/s'
+                                    f'Downloading update: {format_size(total)} at '
+                                    f'{format_size(progress / (time.monotonic() - download_start))}/s'
                                 )
 
                                 f.write(chunk)

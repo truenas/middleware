@@ -6,10 +6,10 @@ try:
     from bsd import getmntinfo
 except ImportError:
     getmntinfo = None
-import humanfriendly
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.utils.size import format_size
 
 logger = logging.getLogger(__name__)
 
@@ -95,8 +95,8 @@ class QuotaAlertSource(ThreadedAlertSource):
                     "name": quota_name,
                     "dataset": dataset["name"],
                     "used_fraction": used_fraction,
-                    "used": humanfriendly.format_size(used, binary=True),
-                    "quota_value": humanfriendly.format_size(quota_value, binary=True),
+                    "used": format_size(used),
+                    "quota_value": format_size(quota_value),
                 }
 
                 mail = None
