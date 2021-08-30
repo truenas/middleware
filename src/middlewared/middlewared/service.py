@@ -21,8 +21,8 @@ import psutil
 from middlewared.common.environ import environ_update
 import middlewared.main
 from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns, Str
-from middlewared.service_exception import (
-    CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors  # noqa
+from middlewared.service_exception import (  # noqa
+    CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors
 )
 from middlewared.settings import conf
 from middlewared.utils import filter_list, osc
