@@ -103,6 +103,12 @@ def adapt_exception(e):
         return CallError(f'Command {cmd} failed (code {e.returncode}):\n{output}')
 
 
+class InstanceNotFound(ValidationError):
+    """Raised when `get_instance` failed to locate specific object"""
+    def __init__(self, errmsg):
+        super().__init__(None, errmsg, errno.ENOENT)
+
+
 class MatchNotFound(IndexError):
     """Raised when there is no matching id eg: filter_utils/datastore.query"""
     pass

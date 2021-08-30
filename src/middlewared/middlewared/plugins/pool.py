@@ -324,6 +324,14 @@ class PoolService(CRUDService):
         )
     )
 
+    @accepts(Str('name'))
+    @returns(Ref('pool_entry'))
+    async def get_instance_by_name(self, name):
+        """
+        Returns pool with name `name`. If `name` is not found, Validation error is raised.
+        """
+        return await self.query([['name', '=', name]], {'get': True})
+
     @item_method
     @accepts(
         Int('id', required=True),
