@@ -97,6 +97,29 @@ class ISCSIGlobalService(Service):
         return filter_list(sessions, filters, options)
 
     @private
+    def resync_lun_size_for_zvol(self, id):
+        if not self.middleware.call_sync('service.started', 'iscsitarget'):
+            return
+
+        extent = self.middleware.call_sync('iscsi.extent.query', [['enabled', '=', True], ['path', '=', f'zvol/{id}']])
+        if not extent:
+            return
+
+        try:
+            with open(f'/sys/kernel/scst_tgt/devices/{extent[0]["name"]}/resync_size', 'w') as f:
+                f.write('1')
+        except Exception as e:
+            if isinstance(e, OSError) and e.errno == 124:
+                # 124 == Wrong medium type
+                # This is raised when all the iscsi targets are removed causing /etc/scst.conf to
+                # be written with a "blank" config. Once this occurs, any time a new iscsi target
+                # is added and the size gets changed, it will raise this error. In my testing,
+                # SCST sees the zvol size change and so does the initiator so it's safe to ignore.
+                pass
+            else:
+                self.logger.warning('Failed to resync lun size for %r', extent[0]['name'], exc_info=True)
+
+    @private
     async def terminate_luns_for_pool(self, pool_name):
         if not await self.middleware.call('service.started', 'iscsitarget'):
             return

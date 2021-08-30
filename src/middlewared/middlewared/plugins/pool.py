@@ -447,7 +447,7 @@ class PoolService(CRUDService):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
                 )
                 data = (await proc.communicate())[0].decode('utf8').strip('\n')
-                for line in [l for l in data.split('\n') if l.startswith('feature') and '\t' in l]:
+                for line in [i for i in data.split('\n') if i.startswith('feature') and '\t' in i]:
                     prop, value = line.split('\t', 1)
                     if value not in ('active', 'enabled'):
                         return False
@@ -901,7 +901,9 @@ class PoolService(CRUDService):
         disks = vdevs = None
         if 'topology' in data:
             disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-            disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
+            disks_cache = await self.middleware.call(
+                'disk.check_disks_availability', verrors, list(disks), 'pool_update'
+            )
 
         if verrors:
             raise verrors
@@ -3376,8 +3378,7 @@ class PoolDatasetService(CRUDService):
                 if data['volsize'] < dataset[0]['volsize']['parsed']:
                     verrors.add('pool_dataset_update.volsize',
                                 'You cannot shrink a zvol from GUI, this may lead to data loss.')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         properties_definitions = (
             ('aclinherit', None, str.lower, True),
@@ -3427,9 +3428,10 @@ class PoolDatasetService(CRUDService):
             verrors.add_child('pool_dataset_update', self.__handle_zfs_set_property_error(e, properties_definitions))
             raise verrors
 
-        if data['type'] == 'VOLUME' and 'volsize' in data:
-            if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
-                await self._service_change('iscsitarget', 'reload')
+        if data['type'] == 'VOLUME' and 'volsize' in data and data['volsize'] > dataset[0]['volsize']['parsed']:
+            # means the zvol size has increased so we need to check if this zvol is shared via SCST (iscs)
+            # and if it is, resync it so the connected initiators can see the new size of the zvol
+            await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id)
 
         return await self.get_instance(id)
 
@@ -3474,7 +3476,8 @@ class PoolDatasetService(CRUDService):
                 if data.get('acltype', 'INHERIT') == 'INHERIT':
                     to_check['acltype'] = check_ds['acltype']['value']
 
-                if to_check.get('acltype', 'POSIX') in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
+                acltype = to_check.get('acltype', 'POSIX')
+                if acltype in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
                     verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
 
             for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
