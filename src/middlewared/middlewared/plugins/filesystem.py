@@ -6,7 +6,7 @@ import os
 import pwd
 import shutil
 import pyinotify
-import psutil
+import pathlib
 
 from middlewared.event import EventSource
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
@@ -302,17 +302,25 @@ class FilesystemService(Service):
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
 
-        for partition in sorted(psutil.disk_partitions(), key=lambda p: len(p.mountpoint), reverse=True):
-            if is_child(os.path.realpath(path), partition.mountpoint):
-                break
-        else:
-            raise CallError('Unable to find mountpoint.')
+        fstype = device = mountpoint = ''
+        with open('/proc/mounts') as f:
+            for line in f:
+                line = line.split()
+                _path = pathlib.Path(path)
+                _line_path = pathlib.Path(line[1])
+                if _path == _line_path or _path.parent == _line_path:
+                    device = line[0]
+                    mountpoint = line[1]
+                    fstype = line[2]
+                    break
+            else:
+                raise CallError('Unable to find mountpoint.')
 
         return {
             'flags': [],
-            'fstype': partition.fstype,
-            'source': partition.device,
-            'dest': partition.mountpoint,
+            'fstype': fstype,
+            'source': device,
+            'dest': mountpoint,
             'blocksize': st.f_frsize,
             'total_blocks': st.f_blocks,
             'free_blocks': st.f_bfree,
