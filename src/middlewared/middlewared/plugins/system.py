@@ -138,8 +138,8 @@ class SystemAdvancedService(ConfigService):
         if data.get('sysloglevel'):
             data['sysloglevel'] = data['sysloglevel'].upper()
 
-        if data['syslog_tls_certificate']:
-            data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
+        for k in filter(lambda k: data[k], ['syslog_tls_certificate_authority', 'syslog_tls_certificate']):
+            data[k] = data[k]['id']
 
         if data['swapondrive'] and (await self.middleware.call('system.product_type')) == 'ENTERPRISE':
             data['swapondrive'] = 0
@@ -190,8 +190,23 @@ class SystemAdvancedService(ConfigService):
                     )
 
         if data['syslog_transport'] == 'TLS':
-            await self.middleware.call('certificate.cert_services_validation', data['syslog_tls_certificate'],
-                                       f'{schema}.syslog_tls_certificate')
+            if not data['syslog_tls_certificate_authority']:
+                verrors.add(
+                    f'{schema}.syslog_tls_certificate_authority', 'This is required when using TLS as syslog transport'
+                )
+            ca_cert = await self.middleware.call(
+                'certificateauthority.query', [['id', '=', data['syslog_tls_certificate_authority']]]
+            )
+            if not ca_cert:
+                verrors.add(f'{schema}.syslog_tls_certificate_authority', 'Unable to locate specified CA')
+            elif ca_cert['revoked']:
+                verrors.add(f'{schema}.syslog_tls_certificate_authority', 'Specified CA has been revoked')
+
+            if data['syslog_tls_certificate']:
+                verrors.extend(await self.middleware.call(
+                    'certificate.cert_services_validation', data['syslog_tls_certificate'],
+                    f'{schema}.syslog_tls_certificate', False
+                ))
 
         return verrors, data
 
@@ -223,6 +238,7 @@ class SystemAdvancedService(ConfigService):
             Str('syslogserver'),
             Str('syslog_transport', enum=['UDP', 'TCP', 'TLS']),
             Int('syslog_tls_certificate', null=True),
+            Int('syslog_tls_certificate_authority', null=True),
             update=True
         )
     )
