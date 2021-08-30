@@ -171,6 +171,12 @@ class FilesystemService(Service, ACLBase):
                 'Option "stripacl" required to change permission.',
             )
 
+        if mode is not None and int(mode, 8) == 0:
+            verrors.add(
+                'filesystem.setperm.mode',
+                'Empty permissions are not permitted.'
+            )
+
         verrors.check()
         is_nfs4acl = current_acl['acltype'] == 'NFS4'
 
