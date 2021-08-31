@@ -371,12 +371,13 @@ class VMService(CRUDService, VMSupervisorMixin):
             vm = await self.get_instance(id)
             await self.middleware.run_in_thread(self._check_setup_connection)
             status = await self.middleware.call('vm.status', id)
+            force_delete = data.get('force')
             if status.get('state') == 'RUNNING':
                 await self.middleware.call('vm.poweroff', id)
                 # We would like to wait at least 7 seconds to have the vm
                 # complete it's post vm actions which might require interaction with it's domain
                 await asyncio.sleep(7)
-            elif status.get('state') == 'ERROR' and not data.get('force'):
+            elif status.get('state') == 'ERROR' and not force_delete:
                 raise CallError('Unable to retrieve VM status. Failed to destroy VM')
 
             if data['zvols']:
@@ -389,7 +390,15 @@ class VMService(CRUDService, VMSupervisorMixin):
                         continue
 
                     disk_name = zvol['attributes']['path'].rsplit('/dev/zvol/')[-1]
-                    await self.middleware.call('zfs.dataset.delete', disk_name, {'recursive': True})
+                    try:
+                        await self.middleware.call('zfs.dataset.delete', disk_name, {'recursive': True})
+                    except Exception:
+                        if not force_delete:
+                            raise
+                        else:
+                            self.logger.error(
+                                'Failed to delete %r volume when removing %r VM', disk_name, vm['name'], exc_info=True
+                            )
 
             await self.middleware.run_in_thread(self._undefine_domain, vm['name'])
 
