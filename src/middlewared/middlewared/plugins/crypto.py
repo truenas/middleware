@@ -2773,7 +2773,9 @@ class CertificateAuthorityService(CRUDService):
         # Let's make sure we don't delete a ca which is being used by any service in the system
         for service_cert_id, text in [
             ((await self.middleware.call('openvpn.server.config'))['root_ca'], 'OpenVPN Server'),
-            ((await self.middleware.call('openvpn.client.config'))['root_ca'], 'OpenVPN Client')
+            ((await self.middleware.call('openvpn.client.config'))['root_ca'], 'OpenVPN Client'),
+            ((await self.middleware.call('system.advanced.config'))['syslog_tls_certificate_authority'],
+             'Syslog TLS CA'),
         ]:
             if service_cert_id == id:
                 verrors.add(
