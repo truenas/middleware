@@ -7,6 +7,7 @@ from .acl_base import ACLType
 import middlewared.sqlalchemy as sa
 import errno
 import os
+import copy
 
 
 class ACLTempateModel(sa.Model):
@@ -27,6 +28,12 @@ class ACLTemplateService(CRUDService):
         datastore_prefix = 'acltemplate_'
         namespace = 'filesystem.acltemplate'
 
+    ENTRY = Patch(
+        'acltemplate_create', 'acltemplate_entry',
+        ('add', Int('id')),
+        ('add', Bool('builtin')),
+    )
+
     @private
     async def validate_acl(self, data, schema, verrors):
         acltype = ACLType[data['acltype']]
@@ -43,7 +50,7 @@ class ACLTemplateService(CRUDService):
         if acltype is ACLType.POSIX1E:
             await self.middleware.call(
                 "filesystem.gen_aclstring_posix1e",
-                data["acl"], False, verrors
+                copy.deepcopy(data["acl"]), False, verrors
             )
 
         for idx, ace in enumerate(data['acl']):
@@ -58,7 +65,10 @@ class ACLTemplateService(CRUDService):
         register=True
     ))
     @returns(Ref('acltemplate_create'))
-    async def create(self, data):
+    async def do_create(self, data):
+        """
+        Create a new filesystem ACL template.
+        """
         verrors = ValidationErrors()
         if len(data['acl']) == 0:
             verrors.add(
@@ -67,6 +77,7 @@ class ACLTemplateService(CRUDService):
             )
         await self.validate_acl(data, "filesystem_acltemplate_create.acl", verrors)
         verrors.check()
+        data['builtin'] = False
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -86,7 +97,10 @@ class ACLTemplateService(CRUDService):
     )
     @returns(Ref('acltemplate_create'))
     async def do_update(self, id, data):
-        old = await self.get_instance(id)
+        """
+        update filesystem ACL template with `id`.
+        """
+        old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
@@ -95,17 +109,17 @@ class ACLTemplateService(CRUDService):
                         "built-in ACL templates may not be changed")
 
         if new['name'] != old['name']:
-            name_exists = bool(await self.query(['name', '=', new['name']]))
+            name_exists = bool(await self.query([('name', '=', new['name'])]))
             if name_exists:
                 verrors.add("filesystem_acltemplate_update.name",
                             f"{data['name']}: name is not unique")
 
-        if len(data['acl']) == 0:
+        if len(new['acl']) == 0:
             verrors.add(
                 "filesystem_acltemplate_update.acl",
                 "At least one ACL entry must be specified."
             )
-        await self.validate_acl(data, "filesystem_acltemplate_update.acl", verrors)
+        await self.validate_acl(new, "filesystem_acltemplate_update.acl", verrors)
         verrors.check()
 
         await self.middleware.call(
