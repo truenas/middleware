@@ -335,20 +335,19 @@ def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
 
 
 def test_33_smb_user_passb_entry_exists(request):
-    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
-    cmd = "midclt call smb.passdb_list true"
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    pdb_list = json.loads(results['output'])
-    my_entry = None
-    for entry in pdb_list:
-        if entry['Unix username'] == "testuser2":
-            my_entry = entry
-            break
-
-    assert my_entry is not None, results['output']
-    if my_entry is not None:
-        assert my_entry["Account Flags"] == "[U          ]", str(my_entry)
+    depends(request, ["USER_CREATED"], scope="session")
+    result = GET(
+        '/user', payload={
+            'query-filters': [['username', '=', 'testuser2']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['sid'], result.text
+    assert result.json()['nt_name'], result.text
 
 
 @pytest.mark.dependency(name="HOMEDIR_EXISTS")
@@ -462,18 +461,19 @@ def test_44_verify_absent_from_passdb(request):
     This test verifies that the user no longer appears
     in Samba's passdb after "smb" is set to False.
     """
-    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
-    cmd = "midclt call smb.passdb_list true"
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    pdb_list = json.loads(results['output'])
-    my_entry = None
-    for entry in pdb_list:
-        if entry['Unix username'] == "testuser2":
-            my_entry = entry
-            break
-
-    assert my_entry is None, results['output']
+    depends(request, ["USER_CREATED"], scope="session")
+    result = GET(
+        '/user', payload={
+            'query-filters': [['username', '=', 'testuser2']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['sid'] == "", result.text
+    assert result.json()['nt_name'] == "", result.text
 
 
 def test_45_deleting_homedir_user(request):
@@ -511,18 +511,19 @@ def test_48_verify_non_smb_user_absent_from_passdb(request):
     Creating new user with "smb" = False must not
     result in a passdb entry being generated.
     """
-    depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
-    cmd = "midclt call smb.passdb_list true"
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    pdb_list = json.loads(results['output'])
-    my_entry = None
-    for entry in pdb_list:
-        if entry['Unix username'] == "testuser3":
-            my_entry = entry
-            break
-
-    assert my_entry is None, results['output']
+    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
+    result = GET(
+        '/user', payload={
+            'query-filters': [['username', '=', 'testuser3']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['sid'] == "", result.text
+    assert result.json()['nt_name'] == "", result.text
 
 
 def test_49_convert_to_smb_knownfail(request):
@@ -563,20 +564,19 @@ def test_52_converted_smb_user_passb_entry_exists(request):
     At this point the non-SMB user has been converted to an SMB user. Verify
     that a passdb entry was appropriately generated.
     """
-    depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
-    cmd = "midclt call smb.passdb_list true"
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    pdb_list = json.loads(results['output'])
-    my_entry = None
-    for entry in pdb_list:
-        if entry['Unix username'] == "testuser3":
-            my_entry = entry
-            break
-
-    assert my_entry is not None, results['output']
-    if my_entry is not None:
-        assert my_entry["Account Flags"] == "[U          ]", str(my_entry)
+    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
+    result = GET(
+        '/user', payload={
+            'query-filters': [['username', '=', 'testuser3']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['sid'], result.text
+    assert result.json()['nt_name'], result.text
 
 
 def test_53_deleting_non_smb_user(request):
