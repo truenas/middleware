@@ -1140,7 +1140,10 @@ class LDAPService(TDBWrapConfigService):
                 'attributes': {},
                 'groups': [],
                 'sshpubkey': None,
-                'local': False
+                'local': False,
+                'id_type_both': False,
+                'nt_name': None,
+                'sid': None,
             }
             self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
             user_next_index += 1
@@ -1160,7 +1163,10 @@ class LDAPService(TDBWrapConfigService):
                 'sudo_nopasswd': False,
                 'sudo_commands': [],
                 'users': [],
-                'local': False
+                'local': False,
+                'id_type_both': False,
+                'nt_name': None,
+                'sid': None,
             }
             self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
             group_next_index += 1
