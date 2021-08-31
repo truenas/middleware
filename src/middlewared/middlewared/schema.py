@@ -960,6 +960,8 @@ class OROperator:
         self.schemas = list(schemas)
         self.description = kwargs.get('description')
         self.resolved = False
+        self.default = kwargs.get('default', None)
+        self.has_default = 'default' in kwargs and kwargs['default'] is not NOT_PROVIDED
 
     def clean(self, value):
         found = False
@@ -1017,6 +1019,20 @@ class OROperator:
         cp = copy.deepcopy(self)
         cp.register = False
         return cp
+
+    def dump(self, value):
+        value = copy.deepcopy(value)
+
+        for schema in self.schemas:
+            try:
+                schema.clean(copy.deepcopy(value))
+            except (Error, ValidationErrors):
+                pass
+            else:
+                value = schema.dump(value)
+                break
+
+        return value
 
 
 class ResolverError(Exception):
