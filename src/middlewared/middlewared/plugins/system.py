@@ -87,6 +87,9 @@ class SystemAdvancedModel(sa.Model):
     adv_syslogserver = sa.Column(sa.String(120), default='')
     adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
     adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    adv_syslog_tls_certificate_authority_id = sa.Column(
+        sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True
+    )
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
@@ -135,8 +138,8 @@ class SystemAdvancedService(ConfigService):
         if data.get('sysloglevel'):
             data['sysloglevel'] = data['sysloglevel'].upper()
 
-        if data['syslog_tls_certificate']:
-            data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
+        for k in filter(lambda k: data[k], ['syslog_tls_certificate_authority', 'syslog_tls_certificate']):
+            data[k] = data[k]['id']
 
         if data['swapondrive'] and (await self.middleware.call('system.product_type')) == 'ENTERPRISE':
             data['swapondrive'] = 0
@@ -187,8 +190,23 @@ class SystemAdvancedService(ConfigService):
                     )
 
         if data['syslog_transport'] == 'TLS':
-            await self.middleware.call('certificate.cert_services_validation', data['syslog_tls_certificate'],
-                                       f'{schema}.syslog_tls_certificate')
+            if not data['syslog_tls_certificate_authority']:
+                verrors.add(
+                    f'{schema}.syslog_tls_certificate_authority', 'This is required when using TLS as syslog transport'
+                )
+            ca_cert = await self.middleware.call(
+                'certificateauthority.query', [['id', '=', data['syslog_tls_certificate_authority']]]
+            )
+            if not ca_cert:
+                verrors.add(f'{schema}.syslog_tls_certificate_authority', 'Unable to locate specified CA')
+            elif ca_cert[0]['revoked']:
+                verrors.add(f'{schema}.syslog_tls_certificate_authority', 'Specified CA has been revoked')
+
+            if data['syslog_tls_certificate']:
+                verrors.extend(await self.middleware.call(
+                    'certificate.cert_services_validation', data['syslog_tls_certificate'],
+                    f'{schema}.syslog_tls_certificate', False
+                ))
 
         return verrors, data
 
@@ -220,6 +238,7 @@ class SystemAdvancedService(ConfigService):
             Str('syslogserver'),
             Str('syslog_transport', enum=['UDP', 'TCP', 'TLS']),
             Int('syslog_tls_certificate', null=True),
+            Int('syslog_tls_certificate_authority', null=True),
             update=True
         )
     )
@@ -313,7 +332,8 @@ class SystemAdvancedService(ConfigService):
                 original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or
                 original_data['syslogserver'] != config_data['syslogserver'] or
                 original_data['syslog_transport'] != config_data['syslog_transport'] or
-                original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate']
+                original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate'] or
+                original_data['syslog_tls_certificate_authority'] != config_data['syslog_tls_certificate_authority']
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 
