@@ -326,7 +326,7 @@ class FilesystemService(Service):
         # get the closest mountpoint to the path provided
         mountpoint = pathlib.Path(path)
         while not mountpoint.is_mount():
-            mountpoint = mountpoint.parent
+            mountpoint = mountpoint.parent.absolute()
 
         # strip the `/mnt/` or `/cluster/` prefix from the mountpoint
         me = mountpoint.parents[len(mountpoint.parents) - 2].as_posix() + '/'
