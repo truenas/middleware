@@ -3708,9 +3708,32 @@ class PoolDatasetService(CRUDService):
     async def permission(self, job, id, data):
         """
         Set permissions for a dataset `id`. Permissions may be specified as
-        either a posix `mode` or an nfsv4 `acl`. Setting mode will fail if the
-        dataset has an existing nfsv4 acl. In this case, the option `stripacl`
-        must be set to `True`.
+        either a posix `mode` or an `acl`. This method is a wrapper around
+        `filesystem.setperm`, `filesystem.setacl`, and `filesystem.chown`
+
+        `filesystem.setperm` is called if `mode` is specified.
+        `filesystem.setacl` is called if `acl` is specified or if the
+        option `set_default_acl` is selected.
+        `filesystem.chown` is called if neither `mode` nor `acl` is
+        specified.
+
+        The following `options` are supported:
+
+        `set_default_acl` - apply a default ACL appropriate for specified
+        dataset. Default ACL is `NFS4_RESTRICTED` or `POSIX_RESTRICTED`
+        ACL template builtin with additional entries builtin_users group
+        and builtin_administrators group. See documentation for
+        `filesystem.acltemplate` for more details.
+
+        `stripacl` - this option must be set in order to apply a POSIX
+        mode to a dataset that has a non-trivial ACL. The effect will
+        be to remove existing ACL and replace with specified mode.
+
+        `recursive` - apply permissions recursively to dataset (all files
+        and directories will be impacted.
+
+        `traverse` - permit recursive job to traverse filesystem boundaries
+        (child datasets).
 
         .. examples(websocket)::
 
@@ -3724,7 +3747,7 @@ class PoolDatasetService(CRUDService):
                 "params": ["tank/myuser", {
                     "user": "myuser",
                     "acl": [],
-                    "group": "wheel",
+                    "group": "builtin_users",
                     "mode": "755",
                     "options": {"recursive": true, "stripacl": true},
                 }]
