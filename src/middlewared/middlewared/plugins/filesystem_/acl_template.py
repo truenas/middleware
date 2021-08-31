@@ -1,6 +1,6 @@
 from middlewared.service import CallError, CRUDService, ValidationErrors
-from middlewared.service import accepts, private
-from middlewared.schema import Bool, Dict, Int, List, Str, Ref, Patch
+from middlewared.service import accepts, private, returns
+from middlewared.schema import Bool, Dict, Int, List, Str, Ref, Patch, OROperator
 from middlewared.plugins.smb import SMBBuiltin
 from .acl_base import ACLType
 
@@ -54,9 +54,10 @@ class ACLTemplateService(CRUDService):
         "acltemplate_create",
         Str("name", required=True),
         Str("acltype", required=True, enum=["NFS4", "POSIX1E"]),
-        List("acl", items=[Ref("posix1e_ace"), Ref("nfs4_ace")], required=True),
+        OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl', requried=True),
         register=True
     ))
+    @returns(Ref('acltemplate_create'))
     async def create(self, data):
         verrors = ValidationErrors()
         if len(data['acl']) == 0:
@@ -83,6 +84,7 @@ class ACLTemplateService(CRUDService):
             ('attr', {'update': True})
         )
     )
+    @returns(Ref('acltemplate_create'))
     async def do_update(self, id, data):
         old = await self.get_instance(id)
         new = old.copy()
@@ -116,6 +118,7 @@ class ACLTemplateService(CRUDService):
         return await self.get_instance(id)
 
     @accepts(Int('id'))
+    @returns()
     async def do_delete(self, id):
         entry = await self.get_instance(id)
         if entry['builtin']:
@@ -140,8 +143,8 @@ class ACLTemplateService(CRUDService):
 
         if data['acltype'] == ACLType.NFS4.name:
             data['acl'].extend([
-                {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}},
-                {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
+                {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
+                {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW},
             ])
             return
 
@@ -195,7 +198,23 @@ class ACLTemplateService(CRUDService):
             Bool("resolve_names", default=False),
         )
     ))
+    @returns(List(
+        'templates',
+        items=[Patch('acltemplate_create', 'acltemplate', ('add', {'name': 'id', 'type': 'int'}))]
+    ))
     async def by_path(self, data):
+        """
+        Retrieve list of available ACL templates for a given `path`.
+
+        Supports `query-filters` and `query-options`.
+        `format-options` gives additional options to alter the results of
+        the template query:
+
+        `canonicalize` - place ACL entries for NFSv4 ACLs in Microsoft canonical order.
+        `ensure_builtins` - ensure all results contain entries for `builtin_users` and `builtin_administrators`
+        groups.
+        `resolve_names` - convert ids in ACL entries into names.
+        """
         verrors = ValidationErrors()
         filters = data.get('query-filters')
         if data['path']:
