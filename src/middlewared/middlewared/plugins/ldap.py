@@ -13,7 +13,7 @@ import sys
 
 from ldap.controls import SimplePagedResultsControl
 from urllib.parse import urlparse
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Patch
 from middlewared.service import job, private, ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
@@ -628,6 +628,7 @@ class LDAPService(ConfigService):
         Str('auxiliary_parameters', default=False, max_length=None),
         Str('schema', default='RFC2307', enum=['RFC2307', 'RFC2307BIS']),
         Bool('enable'),
+        register=True,
         update=True
     ))
     async def do_update(self, data):
@@ -747,47 +748,66 @@ class LDAPService(ConfigService):
         return ret
 
     @private
+    @accepts(Dict(
+        'ldap_query_parameters',
+        Patch(
+            'ldap_update',
+            'ldap_conf',
+            ('add', {'name': 'id', 'type': 'int', 'required': False}),
+            ('add', {'name': 'cert_name', 'type': 'str', 'default': '', 'null': True}),
+            ('add', {'name': 'uri_list', 'type': 'list', 'required': True}),
+            ('attr', {'required': False})
+        ),
+        Str('action', required=True),
+        Str('args', required=False),
+    ))
     @job(lock="ldapquery")
-    def do_ldap_query(self, job, ldap_conf, action, args):
-        supported_actions = [
-            'get_samba_domains',
-            'get_root_DSE',
-            'get_dn',
-            'validate_credentials',
-        ]
-        if action not in supported_actions:
-            raise CallError(f"Unsuported LDAP query: {action}")
-
-        if ldap_conf is None:
+    def do_ldap_query(self, job, data):
+        ldap_conf = data.get('ldap_conf', {})
+        if not ldap_conf:
             ldap_conf = self.middleware.call_sync('ldap.config')
 
+        action = data['action']
+        args = data.get('args', '')
+        ret = None
+
         with LDAPQuery(conf=ldap_conf, logger=self.logger, hosts=ldap_conf['uri_list']) as LDAP:
-            if action == "get_samba_domains":
+            if action == "GET_SAMBA_DOMAINS":
                 ret = LDAP.get_samba_domains()
 
-            elif action == "get_root_DSE":
+            elif action == "GET_ROOT_DSE":
                 ret = LDAP.get_root_DSE()
 
-            elif action == "get_dn":
+            elif action == "GET_DN":
                 dn = ldap_conf['basedn'] if args is None else args
                 ret = LDAP.get_dn(dn)
 
-            elif action == "validate_credentials":
+            elif action == "VALIDATE_CREDENTIALS":
                 ret = LDAP.validate_credentials()
 
         return ret
 
     @private
     def validate_credentials(self, ldap_config=None):
-        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "validate_credentials", None)
-        ret = ldap_job.wait_sync(raise_error=True)
-        return ret
+        payload = {
+            "action": "VALIDATE_CREDENTIALS"
+        }
+        if ldap_config:
+            payload.update({'ldap_conf': ldap_config})
+
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", payload)
+        return ldap_job.wait_sync(raise_error=True)
 
     @private
     def get_samba_domains(self, ldap_config=None):
-        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_samba_domains", None)
-        ret = ldap_job.wait_sync(raise_error=True)
-        return ret
+        payload = {
+            "action": "GET_SAMBA_DOMAINS"
+        }
+        if ldap_config:
+            payload.update({'ldap_conf': ldap_config})
+
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", payload)
+        return ldap_job.wait_sync(raise_error=True)
 
     @private
     def get_root_DSE(self, ldap_config=None):
@@ -811,18 +831,29 @@ class LDAPService(ConfigService):
 
         In practice, this full data is not returned from many LDAP servers
         """
-        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_root_DSE", None)
-        ret = ldap_job.wait_sync(raise_error=True)
-        return ret
+        payload = {
+            "action": "GET_ROOT_DSE"
+        }
+        if ldap_config:
+            payload.update({'ldap_conf': ldap_config})
+
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", payload)
+        return ldap_job.wait_sync(raise_error=True)
 
     @private
     def get_dn(self, dn=None, ldap_config=None):
         """
         Outputs contents of specified DN in JSON. By default will target the basedn.
         """
-        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", ldap_config, "get_dn", dn)
-        ret = ldap_job.wait_sync(raise_error=True)
-        return ret
+        payload = {
+            "action": "GET_DN",
+            "args": dn,
+        }
+        if ldap_config:
+            payload.update({'ldap_conf': ldap_config})
+
+        ldap_job = self.middleware.call_sync("ldap.do_ldap_query", payload)
+        return ldap_job.wait_sync(raise_error=True)
 
     @private
     async def started(self):
