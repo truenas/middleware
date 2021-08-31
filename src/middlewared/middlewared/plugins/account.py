@@ -173,10 +173,16 @@ class UserService(CRUDService):
 
     @private
     async def user_compress(self, user):
-        if 'local' in user:
-            user.pop('local')
-        if 'id_type_both' in user:
-            user.pop('id_type_both')
+        to_remove = [
+            'local',
+            'id_type_both',
+            'nt_name',
+            'sid',
+        ]
+
+        for i in to_remove:
+            user.pop(i, None)
+
         return user
 
     @filterable
@@ -1120,9 +1126,17 @@ class GroupService(CRUDService):
 
     @private
     async def group_compress(self, group):
-        group.pop('name', None)
-        group.pop('local', None)
-        group.pop('id_type_both', None)
+        to_remove = [
+            'name',
+            'local',
+            'id_type_both',
+            'nt_name',
+            'sid',
+        ]
+
+        for i in to_remove:
+            group.pop(i, None)
+
         return group
 
     @filterable
