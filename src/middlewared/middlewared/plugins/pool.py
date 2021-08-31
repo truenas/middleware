@@ -24,7 +24,7 @@ from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, Simple
 from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
-    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref, returns, NOT_PROVIDED,
+    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref, returns, OROperator, NOT_PROVIDED,
 )
 from middlewared.service import (
     ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
@@ -3690,76 +3690,14 @@ class PoolDatasetService(CRUDService):
             Str('user'),
             Str('group'),
             UnixPerm('mode', null=True),
-            List(
-                'acl',
-                items=[
-                    Dict(
-                        'aclentry',
-                        Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
-                        Int('id', null=True),
-                        Str('type', enum=['ALLOW', 'DENY']),
-                        Dict(
-                            'perms',
-                            Bool('READ_DATA'),
-                            Bool('WRITE_DATA'),
-                            Bool('APPEND_DATA'),
-                            Bool('READ_NAMED_ATTRS'),
-                            Bool('WRITE_NAMED_ATTRS'),
-                            Bool('EXECUTE'),
-                            Bool('DELETE_CHILD'),
-                            Bool('READ_ATTRIBUTES'),
-                            Bool('WRITE_ATTRIBUTES'),
-                            Bool('DELETE'),
-                            Bool('READ_ACL'),
-                            Bool('WRITE_ACL'),
-                            Bool('WRITE_OWNER'),
-                            Bool('SYNCHRONIZE'),
-                            Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'TRAVERSE']),
-                        ),
-                        Dict(
-                            'flags',
-                            Bool('FILE_INHERIT'),
-                            Bool('DIRECTORY_INHERIT'),
-                            Bool('NO_PROPAGATE_INHERIT'),
-                            Bool('INHERIT_ONLY'),
-                            Bool('INHERITED'),
-                            Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
-                        ),
-                    )
-                ],
-                default=[
-                    {
-                        "tag": "owner@",
-                        "id": None,
-                        "type": "ALLOW",
-                        "perms": {"BASIC": "FULL_CONTROL"},
-                        "flags": {"BASIC": "INHERIT"}
-                    },
-                    {
-                        "tag": "group@",
-                        "id": None,
-                        "type": "ALLOW",
-                        "perms": {"BASIC": "FULL_CONTROL"},
-                        "flags": {"BASIC": "INHERIT"}
-                    },
-                    {
-                        "tag": "GROUP",
-                        "id": 545,
-                        "type": "ALLOW",
-                        "perms": {"BASIC": "MODIFY"},
-                        "flags": {"BASIC": "INHERIT"}
-                    },
-                    {
-                        "tag": "everyone@",
-                        "id": None,
-                        "type": "ALLOW",
-                        "perms": {"BASIC": "TRAVERSE"},
-                        "flags": {"BASIC": "NOINHERIT"}
-                    },
-                ],
+            OROperator(
+                Ref('nfs4_acl'),
+                Ref('posix1e_acl'),
+                name='acl'
             ),
             Dict(
                 'options',
+                Bool('set_default_acl', default=False),
                 Bool('stripacl', default=False),
                 Bool('recursive', default=False),
                 Bool('traverse', default=False),
@@ -3773,9 +3711,32 @@ class PoolDatasetService(CRUDService):
     async def permission(self, job, id, data):
         """
         Set permissions for a dataset `id`. Permissions may be specified as
-        either a posix `mode` or an nfsv4 `acl`. Setting mode will fail if the
-        dataset has an existing nfsv4 acl. In this case, the option `stripacl`
-        must be set to `True`.
+        either a posix `mode` or an `acl`. This method is a wrapper around
+        `filesystem.setperm`, `filesystem.setacl`, and `filesystem.chown`
+
+        `filesystem.setperm` is called if `mode` is specified.
+        `filesystem.setacl` is called if `acl` is specified or if the
+        option `set_default_acl` is selected.
+        `filesystem.chown` is called if neither `mode` nor `acl` is
+        specified.
+
+        The following `options` are supported:
+
+        `set_default_acl` - apply a default ACL appropriate for specified
+        dataset. Default ACL is `NFS4_RESTRICTED` or `POSIX_RESTRICTED`
+        ACL template builtin with additional entries builtin_users group
+        and builtin_administrators group. See documentation for
+        `filesystem.acltemplate` for more details.
+
+        `stripacl` - this option must be set in order to apply a POSIX
+        mode to a dataset that has a non-trivial ACL. The effect will
+        be to remove existing ACL and replace with specified mode.
+
+        `recursive` - apply permissions recursively to dataset (all files
+        and directories will be impacted.
+
+        `traverse` - permit recursive job to traverse filesystem boundaries
+        (child datasets).
 
         .. examples(websocket)::
 
@@ -3789,20 +3750,31 @@ class PoolDatasetService(CRUDService):
                 "params": ["tank/myuser", {
                     "user": "myuser",
                     "acl": [],
-                    "group": "wheel",
+                    "group": "builtin_users",
                     "mode": "755",
                     "options": {"recursive": true, "stripacl": true},
                 }]
             }
 
         """
-        path = (await self.get_instance(id))['mountpoint']
+        dataset_info = await self.get_instance(id)
+        path = dataset_info['mountpoint']
+        acltype = dataset_info['acltype']['value']
         user = data.get('user', None)
         group = data.get('group', None)
         uid = gid = -1
         mode = data.get('mode', None)
         options = data.get('options', {})
+        set_default_acl = options.pop('set_default_acl')
         acl = data.get('acl', [])
+
+        if mode is None and set_default_acl:
+            acl_template = 'POSIX_RESTRICTED' if acltype == 'POSIX' else 'NFS4_RESTRICTED'
+            acl = (await self.middleware.call('filesystem.acltemplate.by_path', {
+                'query-filters': [('name', '=', acl_template)],
+                'format-options': {'canonicalize': True, 'ensure_builtins': True},
+            }))[0]['acl']
+
         pjob = None
 
         verrors = ValidationErrors()
