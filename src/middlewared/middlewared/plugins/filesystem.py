@@ -1,27 +1,17 @@
 import binascii
-try:
-    from bsd import acl
-except ImportError:
-    acl = None
 import errno
 import functools
 import grp
 import os
 import pwd
-import select
 import shutil
-
-import psutil
-try:
-    import pyinotify
-except ImportError:
-    pyinotify = None
+import pyinotify
+import pathlib
 
 from middlewared.event import EventSource
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
 from middlewared.service import private, CallError, filterable_returns, Service, job
-from middlewared.utils import filter_list, osc
-from middlewared.utils.path import is_child
+from middlewared.utils import filter_list
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 
@@ -311,17 +301,25 @@ class FilesystemService(Service):
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
 
-        for partition in sorted(psutil.disk_partitions(), key=lambda p: len(p.mountpoint), reverse=True):
-            if is_child(os.path.realpath(path), partition.mountpoint):
-                break
-        else:
-            raise CallError('Unable to find mountpoint.')
+        fstype = device = mountpoint = ''
+        with open('/proc/mounts') as f:
+            for line in f:
+                line = line.split()
+                _path = pathlib.Path(path)
+                _line_path = pathlib.Path(line[1])
+                if _path == _line_path or _path.parent == _line_path or _line_path in list(_path.parents)[:-2]:
+                    device = line[0]
+                    mountpoint = line[1]
+                    fstype = line[2]
+                    break
+            else:
+                raise CallError('Unable to find mountpoint.')
 
         return {
             'flags': [],
-            'fstype': partition.fstype,
-            'source': partition.device,
-            'dest': partition.mountpoint,
+            'fstype': fstype,
+            'source': device,
+            'dest': mountpoint,
             'blocksize': st.f_frsize,
             'total_blocks': st.f_blocks,
             'free_blocks': st.f_bfree,
@@ -396,37 +394,14 @@ class FileFollowTailEventSource(EventSource):
             self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
             f.seek(fsize)
 
-            if osc.IS_FREEBSD:
-                gen = self._follow_freebsd(f)
-            else:
-                gen = self._follow_linux(path, f)
-
-            for data in gen:
+            for data in self._follow_path(path, f):
                 self.send_event('ADDED', fields={'data': data})
 
-    def _follow_freebsd(self, f):
-        kqueue = select.kqueue()
-
-        ev = [select.kevent(
-            f.fileno(),
-            filter=select.KQ_FILTER_VNODE,
-            flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
-            fflags=select.KQ_NOTE_DELETE | select.KQ_NOTE_EXTEND | select.KQ_NOTE_WRITE | select.KQ_NOTE_ATTRIB,
-        )]
-        kqueue.control(ev, 0, 0)
-
-        while not self._cancel_sync.is_set():
-            events = kqueue.control([], 1, 1)
-            if not events:
-                continue
-            # TODO: handle other file operations other than just extend/write
-            yield f.read()
-
-    def _follow_linux(self, path, f):
+    def _follow_path(self, path, f):
         queue = []
         watch_manager = pyinotify.WatchManager()
         notifier = pyinotify.Notifier(watch_manager)
-        watch_manager.add_watch(path, pyinotify.IN_MODIFY, functools.partial(self._follow_linux_callback, queue, f))
+        watch_manager.add_watch(path, pyinotify.IN_MODIFY, functools.partial(self._follow_callback, queue, f))
 
         data = f.read()
         if data:
@@ -445,7 +420,7 @@ class FileFollowTailEventSource(EventSource):
 
         notifier.stop()
 
-    def _follow_linux_callback(self, queue, f, event):
+    def _follow_callback(self, queue, f, event):
         data = f.read()
         if data:
             queue.append(data)
