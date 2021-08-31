@@ -22,7 +22,7 @@ class FilesystemService(Service):
         cli_namespace = 'storage.filesystem'
 
     @private
-    def resolve_cluster_path(self, path):
+    def resolve_cluster_path(self, path, ignore_ctdb=False):
         """
         Convert a "CLUSTER:"-prefixed path to an absolute path
         on the server.
@@ -31,8 +31,10 @@ class FilesystemService(Service):
             return path
 
         gluster_volume = path[8:].split("/")[0]
-        if gluster_volume == CTDBConfig.CTDB_VOL_NAME.value:
+        if gluster_volume == CTDBConfig.CTDB_VOL_NAME.value and not ignore_ctdb:
             raise CallError('access to ctdb volume is not permitted.', errno.EPERM)
+        elif not gluster_volume:
+            raise CallError(f'More than the prefix "{FuseConfig.FUSE_PATH_SUBST.value}" must be provided')
 
         is_mounted = self.middleware.call_sync('gluster.fuse.is_mounted', {'name': gluster_volume})
         if not is_mounted:
@@ -293,33 +295,53 @@ class FilesystemService(Service):
         """
         Return stats from the filesystem of a given path.
 
+        Paths on clustered volumes may be specifed with the path prefix
+        `CLUSTER:<volume name>`. For example, to list directories
+        in the directory 'data' in the clustered volume `smb01`, the
+        path should be specified as `CLUSTER:smb01/data`.
+
         Raises:
             CallError(ENOENT) - Path not found
         """
+        # check to see if this is a clustered path and if it is
+        # resolve it to an absolute path
+        # NOTE: this converts path prefixed with 'CLUSTER:' to '/cluster/...'
+        path = self.resolve_cluster_path(path, ignore_ctdb=True)
+
+        allowed_prefixes = ('/mnt/', FuseConfig.FUSE_PATH_BASE.value)
+        if not path.startswith(allowed_prefixes):
+            # if path doesn't start with '/mnt/' bail early
+            raise CallError(f'Path must start with {" or ".join(allowed_prefixes)}')
+        elif path == '/mnt/':
+            # means the path given to us was a literal '/mnt/' which is incorrect.
+            # NOTE: if the user provided 'CLUSTER:' as the literal path then
+            # self.resolve_cluster_path() will raise a similar error
+            raise CallError('Path must include more than "/mnt/"')
+
         try:
             st = os.statvfs(path)
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
 
-        fstype = device = mountpoint = ''
-        with open('/proc/mounts') as f:
-            for line in f:
-                line = line.split()
-                _path = pathlib.Path(path)
-                _line_path = pathlib.Path(line[1])
-                if _path == _line_path or _path.parent == _line_path or _line_path in list(_path.parents)[:-2]:
-                    device = line[0]
-                    mountpoint = line[1]
-                    fstype = line[2]
-                    break
-            else:
-                raise CallError('Unable to find mountpoint.')
+        # get the closest mountpoint to the path provided
+        mountpoint = pathlib.Path(path)
+        while not mountpoint.is_mount():
+            mountpoint = mountpoint.parent.absolute()
+
+        # strip the `/mnt/` or `/cluster/` prefix from the mountpoint
+        me = mountpoint.parents[len(mountpoint.parents) - 2].as_posix() + '/'
+        with_me = ''
+        device = path.replace(me, with_me).strip('/')
+
+        # we only look for /mnt/ or /cluster/ paths and, currently,
+        # those 2 paths are limited to zfs and/or fuse.glusterfs
+        fstype = 'zfs' if path.startswith('/mnt/') else 'fuse.glusterfs'
 
         return {
             'flags': [],
             'fstype': fstype,
             'source': device,
-            'dest': mountpoint,
+            'dest': mountpoint.as_posix(),
             'blocksize': st.f_frsize,
             'total_blocks': st.f_blocks,
             'free_blocks': st.f_bfree,
