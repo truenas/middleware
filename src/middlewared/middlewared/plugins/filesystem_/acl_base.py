@@ -1,7 +1,6 @@
 import enum
 from middlewared.service import accepts, returns, job, ServicePartBase
 from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
-from middlewared.utils import osc
 from middlewared.validators import Range
 
 

@@ -144,7 +144,7 @@ class ACLTemplateService(CRUDService):
         if data['acltype'] == ACLType.NFS4.name:
             data['acl'].extend([
                 {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
-                {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW},
+                {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
             ])
             return
 
