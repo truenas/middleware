@@ -763,7 +763,7 @@ class LDAPService(ConfigService):
     ))
     @job(lock="ldapquery")
     def do_ldap_query(self, job, data):
-        ldap_conf = data.get('ldap_conf', {})
+        ldap_conf = data.get('ldap_update', {})
         if not ldap_conf:
             ldap_conf = self.middleware.call_sync('ldap.config')
 
@@ -793,7 +793,7 @@ class LDAPService(ConfigService):
             "action": "VALIDATE_CREDENTIALS"
         }
         if ldap_config:
-            payload.update({'ldap_conf': ldap_config})
+            payload.update({'ldap_update': ldap_config})
 
         ldap_job = self.middleware.call_sync("ldap.do_ldap_query", payload)
         return ldap_job.wait_sync(raise_error=True)
@@ -804,7 +804,7 @@ class LDAPService(ConfigService):
             "action": "GET_SAMBA_DOMAINS"
         }
         if ldap_config:
-            payload.update({'ldap_conf': ldap_config})
+            payload.update({'ldap_update': ldap_config})
 
         ldap_job = self.middleware.call_sync("ldap.do_ldap_query", payload)
         return ldap_job.wait_sync(raise_error=True)
@@ -835,7 +835,7 @@ class LDAPService(ConfigService):
             "action": "GET_ROOT_DSE"
         }
         if ldap_config:
-            payload.update({'ldap_conf': ldap_config})
+            payload.update({'ldap_update': ldap_config})
 
         ldap_job = self.middleware.call_sync("ldap.do_ldap_query", payload)
         return ldap_job.wait_sync(raise_error=True)
@@ -850,7 +850,7 @@ class LDAPService(ConfigService):
             "args": dn,
         }
         if ldap_config:
-            payload.update({'ldap_conf': ldap_config})
+            payload.update({'ldap_update': ldap_config})
 
         ldap_job = self.middleware.call_sync("ldap.do_ldap_query", payload)
         return ldap_job.wait_sync(raise_error=True)
