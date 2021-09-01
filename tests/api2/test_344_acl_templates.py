@@ -104,7 +104,7 @@ def test_04_legacy_check_default_acl_choices(request):
     acl_choices = results.json()
 
     for name in names:
-         assert name in acl_choices, results.text
+        assert name in acl_choices, results.text
 
 
 @pytest.mark.parametrize('acltype', ['NFS4', 'POSIX'])
@@ -176,7 +176,7 @@ def test_40_knownfail_builtin_delete(request):
     assert results.status_code == 200, results.text
     id = results.json()['id']
 
-    results = DELETE(f'/filesystem/acltemplate/id/{results.json()["id"]}')
+    results = DELETE(f'/filesystem/acltemplate/id/{id}')
     assert results.status_code == 422, results.text
 
 
