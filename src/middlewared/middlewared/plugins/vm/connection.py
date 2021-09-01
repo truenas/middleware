@@ -1,5 +1,6 @@
 import contextlib
 import libvirt
+import os
 
 from middlewared.service import CallError
 
@@ -31,7 +32,13 @@ class LibvirtConnectionMixin:
             # We see isAlive call failed for a user in NAS-109072, it would be better
             # if we handle this to ensure that system recognises libvirt  connection
             # is no longer active and a new one should be initiated.
-            return self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive()
+            #
+            # We check if /dev/kvm exists to ensure that kvm can be consumed on this machine.
+            # Libvirt will still start even if kvm cannot be used on the machine which would falsely
+            # give the impression that virtualization can be used. We have checks in place to check if system
+            # supports virtualization but if we incorporate that check in all of the vm exposed methods which
+            # consume libvirt, it would be an expensive call as we figure that out by making a subprocess call
+            return self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive() and os.path.exists('/dev/kvm')
         return False
 
     def _check_connection_alive(self):
