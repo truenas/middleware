@@ -29,6 +29,21 @@ class VMService(Service):
         return cp.returncode == 0
 
     @accepts()
+    @returns(Dict(
+        Bool('supported', required=True),
+        Str('error', null=True, required=True),
+    ))
+    async def virtualization_details(self):
+        """
+        Retrieve details if virtualization is supported on the system and in case why it's not supported if it isn't.
+        """
+        cp = await run(['kvm-ok'], check=False)
+        return {
+            'supported': cp.returncode == 0,
+            'error': None if cp.returncode == 0 else cp.stdout.decode(),
+        }
+
+    @accepts()
     @returns(Int())
     async def maximum_supported_vcpus(self):
         """
