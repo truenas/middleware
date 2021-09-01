@@ -138,8 +138,9 @@ class SystemDatasetService(ConfigService):
                     errno.EPERM
                 )
 
-            if error := await self.destination_pool_error(new['pool']):
-                verrors.add('sysdataset_update.pool', error)
+            if new['pool']:
+                if error := await self.destination_pool_error(new['pool']):
+                    verrors.add('sysdataset_update.pool', error)
 
         if new['pool'] and new['pool'] != await self.middleware.call('boot.pool_name'):
             pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
