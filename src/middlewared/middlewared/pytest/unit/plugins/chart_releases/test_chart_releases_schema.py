@@ -3,7 +3,7 @@ import yaml
 from middlewared.plugins.chart_releases_linux.schema import get_schema
 
 
-questions = yaml.load("""
+questions = yaml.safe_load("""
 variable: config
 schema:
   type: dict
@@ -32,7 +32,9 @@ schema:
 
 
 def test__get_schema__handles_immutable():
-    schema = get_schema(questions, True, {"host": "0.0.0.0", "port": "8081", "advanced": {"mtu": "9000"}})
+    schema = get_schema(questions, True, {
+        "config": {"host": "0.0.0.0", "port": "8081", "advanced": {"mtu": "9000"}}
+    })
 
     assert schema[0].attrs["host"].default == "127.0.0.1"
     assert schema[0].attrs["host"].editable is True
