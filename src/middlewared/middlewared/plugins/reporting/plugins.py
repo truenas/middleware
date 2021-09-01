@@ -16,7 +16,7 @@ class CPUPlugin(RRDBase):
 
     def get_rrd_files(self, identifier):
         if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
-            type = 'gauge' if osc.IS_FREEBSD else 'percent'  # FIXME: backport our patches to SCALE
+            type = 'gauge'
             cpu_idle = os.path.join(self.base_path, f'{type}-idle.rrd')
             cpu_nice = os.path.join(self.base_path, f'{type}-nice.rrd')
             cpu_user = os.path.join(self.base_path, f'{type}-user.rrd')
@@ -33,7 +33,7 @@ class CPUPlugin(RRDBase):
 
     def get_defs(self, identifier):
         if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
-            type = 'gauge' if osc.IS_FREEBSD else 'percent'  # FIXME: backport our patches to SCALE
+            type = 'gauge'
             cpu_idle = os.path.join(self.base_path, f'{type}-idle.rrd')
             cpu_nice = os.path.join(self.base_path, f'{type}-nice.rrd')
             cpu_user = os.path.join(self.base_path, f'{type}-user.rrd')
