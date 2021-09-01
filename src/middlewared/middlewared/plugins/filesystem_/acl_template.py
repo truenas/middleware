@@ -1,12 +1,13 @@
 from middlewared.service import CallError, CRUDService, ValidationErrors
-from middlewared.service import accepts, private
-from middlewared.schema import Bool, Dict, Int, List, Str, Ref, Patch
+from middlewared.service import accepts, private, returns
+from middlewared.schema import Bool, Dict, Int, List, Str, Ref, Patch, OROperator
 from middlewared.plugins.smb import SMBBuiltin
 from .acl_base import ACLType
 
 import middlewared.sqlalchemy as sa
 import errno
 import os
+import copy
 
 
 class ACLTempateModel(sa.Model):
@@ -27,10 +28,16 @@ class ACLTemplateService(CRUDService):
         datastore_prefix = 'acltemplate_'
         namespace = 'filesystem.acltemplate'
 
+    ENTRY = Patch(
+        'acltemplate_create', 'acltemplate_entry',
+        ('add', Int('id')),
+        ('add', Bool('builtin')),
+    )
+
     @private
     async def validate_acl(self, data, schema, verrors):
         acltype = ACLType[data['acltype']]
-        aclcheck = acltype.validate(data['acl'])
+        aclcheck = acltype.validate({'dacl': data['acl']})
         if not aclcheck['is_valid']:
             for err in aclcheck['errors']:
                 if err[2]:
@@ -43,7 +50,7 @@ class ACLTemplateService(CRUDService):
         if acltype is ACLType.POSIX1E:
             await self.middleware.call(
                 "filesystem.gen_aclstring_posix1e",
-                data["acl"], False, verrors
+                copy.deepcopy(data["acl"]), False, verrors
             )
 
         for idx, ace in enumerate(data['acl']):
@@ -54,10 +61,13 @@ class ACLTemplateService(CRUDService):
         "acltemplate_create",
         Str("name", required=True),
         Str("acltype", required=True, enum=["NFS4", "POSIX1E"]),
-        List("acl", items=[Ref("posix1e_ace"), Ref("nfs4_ace")], required=True),
+        OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl', requried=True),
         register=True
     ))
-    async def create(self, data):
+    async def do_create(self, data):
+        """
+        Create a new filesystem ACL template.
+        """
         verrors = ValidationErrors()
         if len(data['acl']) == 0:
             verrors.add(
@@ -66,6 +76,7 @@ class ACLTemplateService(CRUDService):
             )
         await self.validate_acl(data, "filesystem_acltemplate_create.acl", verrors)
         verrors.check()
+        data['builtin'] = False
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -84,7 +95,10 @@ class ACLTemplateService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        old = await self.get_instance(id)
+        """
+        update filesystem ACL template with `id`.
+        """
+        old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
@@ -93,17 +107,17 @@ class ACLTemplateService(CRUDService):
                         "built-in ACL templates may not be changed")
 
         if new['name'] != old['name']:
-            name_exists = bool(await self.query(['name', '=', new['name']]))
+            name_exists = bool(await self.query([('name', '=', new['name'])]))
             if name_exists:
                 verrors.add("filesystem_acltemplate_update.name",
                             f"{data['name']}: name is not unique")
 
-        if len(data['acl']) == 0:
+        if len(new['acl']) == 0:
             verrors.add(
                 "filesystem_acltemplate_update.acl",
                 "At least one ACL entry must be specified."
             )
-        await self.validate_acl(data, "filesystem_acltemplate_update.acl", verrors)
+        await self.validate_acl(new, "filesystem_acltemplate_update.acl", verrors)
         verrors.check()
 
         await self.middleware.call(
@@ -140,8 +154,8 @@ class ACLTemplateService(CRUDService):
 
         if data['acltype'] == ACLType.NFS4.name:
             data['acl'].extend([
-                {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}},
-                {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
+                {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
+                {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
             ])
             return
 
@@ -195,7 +209,23 @@ class ACLTemplateService(CRUDService):
             Bool("resolve_names", default=False),
         )
     ))
+    @returns(List(
+        'templates',
+        items=[Ref('acltemplate_entry')]
+    ))
     async def by_path(self, data):
+        """
+        Retrieve list of available ACL templates for a given `path`.
+
+        Supports `query-filters` and `query-options`.
+        `format-options` gives additional options to alter the results of
+        the template query:
+
+        `canonicalize` - place ACL entries for NFSv4 ACLs in Microsoft canonical order.
+        `ensure_builtins` - ensure all results contain entries for `builtin_users` and `builtin_administrators`
+        groups.
+        `resolve_names` - convert ids in ACL entries into names.
+        """
         verrors = ValidationErrors()
         filters = data.get('query-filters')
         if data['path']:
