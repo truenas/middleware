@@ -64,7 +64,6 @@ class ACLTemplateService(CRUDService):
         OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl', requried=True),
         register=True
     ))
-    @returns(Ref('acltemplate_create'))
     async def do_create(self, data):
         """
         Create a new filesystem ACL template.
@@ -95,7 +94,6 @@ class ACLTemplateService(CRUDService):
             ('attr', {'update': True})
         )
     )
-    @returns(Ref('acltemplate_create'))
     async def do_update(self, id, data):
         """
         update filesystem ACL template with `id`.
@@ -132,7 +130,6 @@ class ACLTemplateService(CRUDService):
         return await self.get_instance(id)
 
     @accepts(Int('id'))
-    @returns()
     async def do_delete(self, id):
         entry = await self.get_instance(id)
         if entry['builtin']:
@@ -214,7 +211,7 @@ class ACLTemplateService(CRUDService):
     ))
     @returns(List(
         'templates',
-        items=[Patch('acltemplate_create', 'acltemplate', ('add', {'name': 'id', 'type': 'int'}))]
+        items=[Ref('acltemplate_entry')]
     ))
     async def by_path(self, data):
         """
