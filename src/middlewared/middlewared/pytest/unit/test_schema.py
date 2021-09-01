@@ -276,7 +276,7 @@ def test__schema_dict_not_null_args(value, expected):
     ({'foo': 'foo', 'bar': False, 'list': []}, {'foo': 'foo', 'bar': False, 'list': []}),
     ({'foo': 'foo'}, ValidationErrors),
     ({'bar': False}, ValidationErrors),
-    ({'foo': 'foo', 'bar': False}, ValidationErrors),
+    ({'foo': 'foo', 'bar': False}, {'foo': 'foo', 'bar': False, 'list': []}),
 ])
 def test__schema_dict_required_args(value, expected):
 
@@ -300,9 +300,9 @@ def test__schema_dict_required_args(value, expected):
 
 
 @pytest.mark.parametrize("value,expected,msg", [
-    ({'foo': 'foo', 'bar': False}, {'foo': 'foo', 'bar': False}, None),
-    ({'foo': 'foo', 'bar': False, 'num': 5}, {'foo': 'foo', 'bar': False, 'num': 5}, None),
-    ({'foo': 'foo'}, {'foo': 'foo'}, None),
+    ({'foo': 'foo', 'bar': False}, {'foo': 'foo', 'bar': False, 'list': []}, None),
+    ({'foo': 'foo', 'bar': False, 'num': 5}, {'foo': 'foo', 'bar': False, 'num': 5, 'list': []}, None),
+    ({'foo': 'foo'}, {'foo': 'foo', 'list': []}, None),
     ({'foo': 'foo', 'list': ['listitem']}, {'foo': 'foo', 'list': ['listitem']}, None),
     ({'foo': 'foo', 'list': 5}, ValidationErrors, 'Not a list'),
     ({'foo': 'foo', 'bar': False, 'num': None}, ValidationErrors, 'null not allowed'),
@@ -364,7 +364,7 @@ def test__schema_list_non_empty():
 
 def test__schema_list_null():
 
-    @accepts(List('data', null=True))
+    @accepts(List('data', null=True, default=None))
     def listnull(self, data):
         return data
 
@@ -394,8 +394,8 @@ def test__schema_list_noarg_not_null():
     self = Mock()
 
     with pytest.raises(ValidationErrors) as ei:
-        listnotnull(self)
-    assert ei.value.errors[0].errmsg == 'attribute required'
+        listnotnull(self, None)
+    assert ei.value.errors[0].errmsg == 'null not allowed'
 
 
 @pytest.mark.parametrize("value,expected", [
