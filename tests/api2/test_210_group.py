@@ -71,10 +71,18 @@ def test_07_look_group_full_name():
 
 
 def test_08_look_for_testgroup_is_in_freenas_group(request):
-    depends(request, ["ssh_password"], scope="session")
-    cmd = 'getent group | grep -q testgroup'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    result = GET(
+        '/group', payload={
+            'query-filters': [['name', '=', 'testgroup']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['sid'] == "", result.text
+    assert result.json()['nt_name'] == "", result.text
 
 
 def test_09_get_new_next_gid():
@@ -112,17 +120,19 @@ def test_14_look_user_new_uid():
 
 
 def test_15_look_for_testgroup_is_not_in_freenas_group(request):
-    depends(request, ["ssh_password"], scope="session")
-    cmd = 'getent group | grep -q testgroup'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, results['output']
+    payload = {
+        "groupname": "testgroup"
+    }
+    results = POST("/group/get_group_obj/", payload)
+    assert results.status_code == 500, results.text
 
 
 def test_16_look_for_newgroup_is_in_freenas_group(request):
-    depends(request, ["ssh_password"], scope="session")
-    cmd = 'getent group | grep -q newgroup'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    payload = {
+        "groupname": "newgroup"
+    }
+    results = POST("/group/get_group_obj/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_17_convert_to_smb_group():
@@ -138,14 +148,18 @@ def test_18_check_groupmap_added(request):
     Changing "smb" from False to True should result in
     insertion into group_mapping.tdb.
     """
-    depends(request, ["ssh_password"], scope="session")
-    cmd = 'midclt call smb.groupmap_list'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is True:
-        groupmap = json.loads(results['output'])
-        local_maps = groupmap['local'].values()
-        assert len(local_maps) != 0, results['output']
+    result = GET(
+        '/group', payload={
+            'query-filters': [['name', '=', 'newgroup']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['sid'], result.text
+    assert result.json()['nt_name'], result.text
 
 
 # Delete the group
@@ -159,10 +173,11 @@ def test_20_look_group_is_delete():
 
 
 def test_21_look_for_newgroup_is_not_in_freenas_group(request):
-    depends(request, ["ssh_password"], scope="session")
-    cmd = 'getent group | grep -q newgroup'
-    results = SSH_TEST(cmd, 'root', 'testing', ip)
-    assert results['result'] is False, results['output']
+    payload = {
+        "groupname": "newgroup"
+    }
+    results = POST("/group/get_group_obj/", payload)
+    assert results.status_code == 500, results.text
 
 
 # Test new SMB groupmap
@@ -192,15 +207,20 @@ def test_24_check_groupmap_added(request):
     Creating new group with "smb" = True should result in insertion into
     group_mapping.tdb.
     """
-    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
-    cmd = 'midclt call smb.groupmap_list'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    global groupmap
-    if results['result'] is True:
-        groupmap = json.loads(results['output'])
-        local_maps = groupmap['local'].values()
-        assert len(local_maps) != 0, results['output']
+    global old_groupmap_sid
+    result = GET(
+        '/group', payload={
+            'query-filters': [['name', '=', 'smbgroup']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['sid'], result.text
+    assert result.json()['nt_name'], result.text
+    old_groupmap_sid = result.json()['sid']
 
 
 def test_25_test_name_change_smb_group(request):
@@ -216,38 +236,18 @@ def test_26_groupmap_entry_nt_name_change(request):
     """
     """
     depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
-    cmd = 'midclt call smb.groupmap_list'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    gm = None
-
-    for groupmap_entry in groupmap['local'].values():
-        if groupmap_entry['nt_name'] == 'smbgroup':
-            gm = groupmap_entry
-            break
-
-    if results['result'] is True:
-        new = json.loads(results['output'])
-        old_sid = gm['sid']
-        new_entry = new['local'].get(str(gm['gid']))
-        assert new_entry, results['output']
-        assert old_sid == new_entry['sid'], results['output']
-        assert gm['nt_name'] != new_entry['nt_name'], results['output']
-
-
-def test_27_new_groupmap_added_after_name_change(request):
-    """
-    Verify that new groupmap entry was inserted with correct
-    group name.
-    """
-    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
-    cmd = 'midclt call smb.groupmap_list'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is True:
-        groupmap = json.loads(results['output'])
-        local_maps = groupmap['local'].values()
-        assert len(local_maps) != 0, results['output']
+    result = GET(
+        '/group', payload={
+            'query-filters': [['name', '=', 'newsmbgroup']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['nt_name'] == 'newsmbgroup', result.text
+    assert result.json()['sid'] == old_groupmap_sid, result.text
 
 
 def test_28_convert_smb_group_to_non_smb(request):
@@ -257,19 +257,18 @@ def test_28_convert_smb_group_to_non_smb(request):
     }
     results = PUT("/group/id/%s" % groupid, payload)
     assert results.status_code == 200, results.text
-
-
-def test_29_groupmap_deleted_after_smb_change(request):
-    """
-    Verify that new groupmap entry was deleted after change to "smb" = False.
-    """
-    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
-    cmd = 'midclt call smb.groupmap_list'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is True:
-        groupmap = (json.loads(results['output'])).get('newsmbgroup')
-        assert groupmap is None, results['output']
+    result = GET(
+        '/group', payload={
+            'query-filters': [['name', '=', 'newsmbgroup']],
+            'query-options': {
+                'get': True,
+                'extra': {'additional_information': ['SMB']}
+            }
+        }
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()['sid'] == "", result.text
+    assert result.json()['nt_name'] == "", result.text
 
 
 def test_30_delete_group_smb_newgroup(request):
