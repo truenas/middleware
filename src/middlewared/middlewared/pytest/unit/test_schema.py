@@ -23,7 +23,7 @@ def test__schema_str_empty():
 
     self = Mock()
 
-    with pytest.raises(Error):
+    with pytest.raises(ValidationErrors):
         strempty(self, '')
 
 
@@ -57,16 +57,16 @@ def test__schema_str_not_null():
 
     self = Mock()
 
-    with pytest.raises(Error):
+    with pytest.raises(ValidationErrors):
         assert strnotnull(self, None) is not None
 
 
 @pytest.mark.parametrize("value,expected", [
     ('foo', 'foo'),
     (3, '3'),
-    (False, Error),
-    (3.3, Error),
-    (["foo"], Error),
+    (False, ValidationErrors),
+    (3.3, ValidationErrors),
+    (["foo"], ValidationErrors),
 ])
 def test__schema_str_values(value, expected):
 
@@ -76,10 +76,10 @@ def test__schema_str_values(value, expected):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error) as ei:
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors) as ei:
             strv(self, value)
-        assert ei.value.errmsg == 'Not a string'
+        assert ei.value.errors[0].errmsg == 'Not a string'
     else:
         assert strv(self, value) == expected
 
@@ -87,7 +87,7 @@ def test__schema_str_values(value, expected):
 @pytest.mark.parametrize("value,expected", [
     ('FOO', 'FOO'),
     ('BAR', 'BAR'),
-    ('FOOBAR', Error),
+    ('FOOBAR', ValidationErrors),
 ])
 def test__schema_str_num(value, expected):
 
@@ -97,10 +97,10 @@ def test__schema_str_num(value, expected):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error) as ei:
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors) as ei:
             strv(self, value)
-        assert ei.value.errmsg.startswith('Invalid choice')
+        assert ei.value.errors[0].errmsg.startswith('Invalid choice')
     else:
         assert strv(self, value) == expected
 
@@ -124,7 +124,7 @@ def test__schema_bool_not_null():
 
     self = Mock()
 
-    with pytest.raises(Error):
+    with pytest.raises(ValidationErrors):
         assert boolnotnull(self, None) is not None
 
 
@@ -147,7 +147,7 @@ def test__schema_float_not_null():
 
     self = Mock()
 
-    with pytest.raises(Error):
+    with pytest.raises(ValidationErrors):
         assert floatnotnull(self, None) is not None
 
 
@@ -156,9 +156,9 @@ def test__schema_float_not_null():
     ('5', 5.0),
     ('5.0', 5.0),
     (5.0, 5.0),
-    ('FOO', Error),
-    (False, Error),
-    ([4], Error),
+    ('FOO', ValidationErrors),
+    (False, ValidationErrors),
+    ([4], ValidationErrors),
 ])
 def test__schema_float_values(value, expected):
 
@@ -168,10 +168,10 @@ def test__schema_float_values(value, expected):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error) as ei:
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors) as ei:
             floatv(self, value)
-        assert ei.value.errmsg == 'Not a floating point number'
+        assert ei.value.errors[0].errmsg == 'Not a floating point number'
     else:
         assert floatv(self, value) == expected
 
@@ -195,17 +195,17 @@ def test__schema_int_not_null():
 
     self = Mock()
 
-    with pytest.raises(Error):
+    with pytest.raises(ValidationErrors):
         assert intnotnull(self, None) is not None
 
 
 @pytest.mark.parametrize("value,expected", [
     (3, 3),
     ('3', 3),
-    (3.0, Error),
-    ('FOO', Error),
-    (False, Error),
-    ([4], Error),
+    (3.0, ValidationErrors),
+    ('FOO', ValidationErrors),
+    (False, ValidationErrors),
+    ([4], ValidationErrors),
 ])
 def test__schema_int_values(value, expected):
 
@@ -215,10 +215,10 @@ def test__schema_int_values(value, expected):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error) as ei:
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors) as ei:
             intv(self, False)
-        assert ei.value.errmsg == 'Not an integer'
+        assert ei.value.errors[0].errmsg == 'Not an integer'
     else:
         assert intv(self, value) == expected
 
@@ -231,7 +231,7 @@ def test__schema_dict_null():
 
     self = Mock()
 
-    assert dictnull(self, None) == None
+    assert dictnull(self, None) is None
 
 
 def test__schema_dict_not_null():
@@ -242,15 +242,15 @@ def test__schema_dict_not_null():
 
     self = Mock()
 
-    with pytest.raises(Error):
+    with pytest.raises(ValidationErrors):
         assert dictnotnull(self, None) != {}
 
 
 @pytest.mark.parametrize("value,expected", [
     ({'foo': 'foo'}, {'foo': 'foo'}),
     ({}, {}),
-    ({'foo': None}, Error),
-    ({'bar': None}, Error),
+    ({'foo': None}, ValidationErrors),
+    ({'bar': None}, ValidationErrors),
 ])
 def test__schema_dict_not_null_args(value, expected):
 
@@ -264,19 +264,19 @@ def test__schema_dict_not_null_args(value, expected):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error) as ei:
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors) as ei:
             dictargs(self, value)
-        assert ei.value.errmsg == 'null not allowed'
+        assert ei.value.errors[0].errmsg == 'null not allowed'
     else:
         assert dictargs(self, value) == expected
 
 
 @pytest.mark.parametrize("value,expected", [
     ({'foo': 'foo', 'bar': False, 'list': []}, {'foo': 'foo', 'bar': False, 'list': []}),
-    ({'foo': 'foo'}, Error),
-    ({'bar': False}, Error),
-    ({'foo': 'foo', 'bar': False}, Error),
+    ({'foo': 'foo'}, ValidationErrors),
+    ({'bar': False}, ValidationErrors),
+    ({'foo': 'foo', 'bar': False}, ValidationErrors),
 ])
 def test__schema_dict_required_args(value, expected):
 
@@ -291,10 +291,10 @@ def test__schema_dict_required_args(value, expected):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error) as ei:
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors) as ei:
             dictargs(self, value)
-        assert ei.value.errmsg == 'attribute required'
+        assert ei.value.errors[0].errmsg == 'attribute required'
     else:
         assert dictargs(self, value) == expected
 
@@ -304,10 +304,10 @@ def test__schema_dict_required_args(value, expected):
     ({'foo': 'foo', 'bar': False, 'num': 5}, {'foo': 'foo', 'bar': False, 'num': 5}, None),
     ({'foo': 'foo'}, {'foo': 'foo'}, None),
     ({'foo': 'foo', 'list': ['listitem']}, {'foo': 'foo', 'list': ['listitem']}, None),
-    ({'foo': 'foo', 'list': 5}, Error, 'Not a list'),
-    ({'foo': 'foo', 'bar': False, 'num': None}, Error, 'null not allowed'),
-    ({'foo': None}, Error, 'null not allowed'),
-    ({'bar': None}, Error, 'attribute required'),
+    ({'foo': 'foo', 'list': 5}, ValidationErrors, 'Not a list'),
+    ({'foo': 'foo', 'bar': False, 'num': None}, ValidationErrors, 'null not allowed'),
+    ({'foo': None}, ValidationErrors, 'null not allowed'),
+    ({'bar': None}, ValidationErrors, 'attribute required'),
 ])
 def test__schema_dict_mixed_args(value, expected, msg):
 
@@ -323,10 +323,10 @@ def test__schema_dict_mixed_args(value, expected, msg):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error) as ei:
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors) as ei:
             dictargs(self, value)
-        assert ei.value.errmsg == msg
+        assert ei.value.errors[0].errmsg == msg
     else:
         assert dictargs(self, value) == expected
 
@@ -347,7 +347,7 @@ def test__schema_list_empty():
 
     self = Mock()
 
-    with pytest.raises(Error):
+    with pytest.raises(ValidationErrors):
         listempty(self, [])
 
 
@@ -370,7 +370,7 @@ def test__schema_list_null():
 
     self = Mock()
 
-    assert listnull(self, None) == None
+    assert listnull(self, None) is None
 
 
 def test__schema_list_not_null():
@@ -381,7 +381,7 @@ def test__schema_list_not_null():
 
     self = Mock()
 
-    with pytest.raises(Error):
+    with pytest.raises(ValidationErrors):
         assert listnotnull(self, None) != []
 
 
@@ -393,18 +393,18 @@ def test__schema_list_noarg_not_null():
 
     self = Mock()
 
-    with pytest.raises(Error) as ei:
+    with pytest.raises(ValidationErrors) as ei:
         listnotnull(self)
-    assert ei.value.errmsg == 'attribute required'
+    assert ei.value.errors[0].errmsg == 'attribute required'
 
 
 @pytest.mark.parametrize("value,expected", [
     (["foo"], ["foo"]),
     ([2], ["2"]),
     ([2, "foo"], ["2", "foo"]),
-    ([False], Error),
-    ("foo", Error),
-    ({"foo": "bar"}, Error),
+    ([False], ValidationErrors),
+    ("foo", ValidationErrors),
+    ({"foo": "bar"}, ValidationErrors),
 ])
 def test__schema_list_items(value, expected):
 
@@ -414,8 +414,8 @@ def test__schema_list_items(value, expected):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error):
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors):
             listnotnull(self, value)
     else:
         assert listnotnull(self, value) == expected
@@ -425,11 +425,11 @@ def test__schema_list_items(value, expected):
     (['foo'], ['foo']),
     ([True, True, 'foo'], [True, True, 'foo']),
     ([2, {'bool': True}], ['2', {'bool': True}]),
-    ([2, {'bool': True, 'str': False}], Error),
-    ({'foo': False}, Error),
-    ({'unexpected': False}, Error),
-    ('foo', Error),
-    ({'foo': 'foo'}, Error),
+    ([2, {'bool': True, 'str': False}], ValidationErrors),
+    ({'foo': False}, ValidationErrors),
+    ({'unexpected': False}, ValidationErrors),
+    ('foo', ValidationErrors),
+    ({'foo': 'foo'}, ValidationErrors),
 ])
 def test__schema_list_multiple_items(value, expected):
 
@@ -439,8 +439,8 @@ def test__schema_list_multiple_items(value, expected):
 
     self = Mock()
 
-    if expected is Error:
-        with pytest.raises(Error):
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors):
             listnotnull(self, value)
     else:
         assert listnotnull(self, value) == expected
@@ -483,9 +483,9 @@ def test__schema_file_null():
     ({'minute': '55'}, {'minute': '55'}),
     ({'dow': '2'}, {'dow': '2'}),
     ({'hour': '*'}, {'hour': '*'}),
-    ({'minute': '66'}, Error),
-    ({'hour': '-25'}, Error),
-    ({'dom': '33'}, Error),
+    ({'minute': '66'}, ValidationErrors),
+    ({'hour': '-25'}, ValidationErrors),
+    ({'dom': '33'}, ValidationErrors),
 ])
 def test__schema_cron_values(value, expected):
 
@@ -495,7 +495,7 @@ def test__schema_cron_values(value, expected):
 
     self = Mock()
 
-    if expected is Error:
+    if expected is ValidationErrors:
         with pytest.raises(ValidationErrors):
             cronv(self, value)
     else:
