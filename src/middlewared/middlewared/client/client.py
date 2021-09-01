@@ -235,6 +235,7 @@ class ErrnoMixin:
     EALERTCHECKERUNAVAILABLE = 203
     EREMOTENODEERROR = 204
     EDATASETISLOCKED = 205
+    EINVALIDRRDTIMESTAMP = 206
 
     @classmethod
     def _get_errname(cls, code):

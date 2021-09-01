@@ -14,6 +14,23 @@ class CPUPlugin(RRDBase):
     vertical_label = '%CPU'
     stacked = True
 
+    def get_rrd_files(self, identifier):
+        if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
+            type = 'gauge' if osc.IS_FREEBSD else 'percent'  # FIXME: backport our patches to SCALE
+            cpu_idle = os.path.join(self.base_path, f'{type}-idle.rrd')
+            cpu_nice = os.path.join(self.base_path, f'{type}-nice.rrd')
+            cpu_user = os.path.join(self.base_path, f'{type}-user.rrd')
+            cpu_system = os.path.join(self.base_path, f'{type}-system.rrd')
+            cpu_interrupt = os.path.join(self.base_path, f'{type}-interrupt.rrd')
+        else:
+            cpu_idle = os.path.join(self.base_path, 'cpu-idle.rrd')
+            cpu_nice = os.path.join(self.base_path, 'cpu-nice.rrd')
+            cpu_user = os.path.join(self.base_path, 'cpu-user.rrd')
+            cpu_system = os.path.join(self.base_path, 'cpu-system.rrd')
+            cpu_interrupt = os.path.join(self.base_path, 'cpu-interrupt.rrd')
+
+        return [cpu_idle, cpu_nice, cpu_user, cpu_system, cpu_interrupt]
+
     def get_defs(self, identifier):
         if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
             type = 'gauge' if osc.IS_FREEBSD else 'percent'  # FIXME: backport our patches to SCALE
