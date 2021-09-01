@@ -140,12 +140,6 @@ class FailoverService(Service):
             to_restart = [i for i in to_restart if i in self.CRITICAL_SERVICES]
         else:
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
-            # non-critical services are being requested to be restarted
-            # so add these 2 services at the beginning of the `to_restart`
-            # list since they're not in the db but are required to be restarted
-            pre_services = ['rrdcached', 'collectd', 'syslogd']
-            to_restart[0:0] = pre_services
-
             # restart any kubernetes applications
             if (await self.middleware.call('kubernetes.config'))['dataset']:
                 to_restart.append('kubernetes')
@@ -515,7 +509,7 @@ class FailoverService(Service):
         self.run_call('etc.generate', 'rc')
 
         logger.info('Configuring system dataset')
-        self.run_call('etc.generate', 'system_dataset')
+        self.run_call('systemdataset.setup')
 
         # Write the certs to disk based on what is written in db.
         logger.info('Configuring SSL')
@@ -685,9 +679,6 @@ class FailoverService(Service):
 
         logger.info('Stopping smartd')
         self.run_call('service.stop', 'smartd', self.HA_PROPAGATE)
-
-        logger.info('Stopping collectd')
-        self.run_call('service.stop', 'collectd', self.HA_PROPAGATE)
 
         logger.info('Stopping rrdcached')
         self.run_call('service.stop', 'rrdcached', self.HA_PROPAGATE)
