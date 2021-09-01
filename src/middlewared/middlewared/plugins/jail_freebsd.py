@@ -479,11 +479,31 @@ class PluginService(CRUDService):
         Bool('update_jail', default=True)
     )
     @job(lock=lambda args: f'jail_update:{args[0]}')
-    async def update_plugin(self, job, jail, update_jail=True):
+    def update_plugin(self, job, jail, update_jail=True):
         """
         Updates specified plugin to latest available plugin version and optionally update plugin to latest patch level.
         """
-        return await self.middleware.call('jail.update_to_latest_patch_internal', job, jail, False, update_jail)
+        job.set_progress(0, f'Updating {jail}')
+        msg_queue = deque(maxlen=10)
+
+        def progress_callback(content, exception):
+            msg = content['message'].strip('\n')
+            if 'No updates needed to update system' in msg:
+                raise CallError(f'No updates available for {jail}')
+
+            if content['level'] == 'EXCEPTION':
+                raise exception(msg)
+
+            msg_queue.append(msg)
+            final_msg = '\n'.join(msg_queue)
+
+            job.set_progress(None, description=final_msg)
+
+        _, _, iocage = self.middleware.call_sync('jail.check_jail_existence', jail, True, progress_callback)
+        iocage.update_plugin(update_jail)
+        job.set_progress(100, f'Successfully updated {jail!r} plugin')
+
+        return True
 
     @periodic(interval=86400)
     @private
