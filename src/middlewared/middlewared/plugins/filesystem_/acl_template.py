@@ -37,7 +37,7 @@ class ACLTemplateService(CRUDService):
     @private
     async def validate_acl(self, data, schema, verrors):
         acltype = ACLType[data['acltype']]
-        aclcheck = acltype.validate(data['acl'])
+        aclcheck = acltype.validate({'dacl': data['acl']})
         if not aclcheck['is_valid']:
             for err in aclcheck['errors']:
                 if err[2]:
