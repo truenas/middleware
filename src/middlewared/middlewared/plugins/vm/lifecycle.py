@@ -47,7 +47,7 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     def initialize_vms(self, timeout=30):
-        if self.middleware.call_sync('vm.query'):
+        if self.middleware.call_sync('vm.query') and self.middleware.call_sync('vm.supports_virtualization'):
             self.setup_libvirt_connection(timeout)
         else:
             return
