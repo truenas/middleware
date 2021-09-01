@@ -209,6 +209,7 @@ class ErrnoMixin:
     ESERVICESTARTFAILURE = 202
     EALERTCHECKERUNAVAILABLE = 203
     EREMOTENODEERROR = 204
+    EINVALIDRRDTIMESTAMP = 206
 
     @classmethod
     def _get_errname(cls, code):
