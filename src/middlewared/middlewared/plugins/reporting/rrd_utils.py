@@ -4,10 +4,16 @@ import re
 import statistics
 import subprocess
 import textwrap
+import time
+
+import humanfriendly
+
+from middlewared.service_exception import CallError, ErrnoMixin
 
 
 RRD_BASE_PATH = '/var/db/collectd/rrd/localhost'
 RE_COLON = re.compile('(.+):(.+)$')
+RE_LAST_UPDATE = re.compile(r'last_update = (\d+)')
 RE_NAME = re.compile(r'(%name_(\d+)%)')
 RE_NAME_NUMBER = re.compile(r'(.+?)(\d+)$')
 RE_RRDPLUGIN = re.compile(r'^(?P<name>.+)Plugin$')
@@ -117,8 +123,23 @@ class RRDBase(object, metaclass=RRDMeta):
                 return True
         return False
 
-    def get_defs(self, identifier):
+    def get_rrd_file(self, rrd_type, identifier):
+        _type, dsname, transform = rrd_type
+        direc = self.plugin
+        if self.identifier_plugin and identifier:
+            identifier = self.encode(identifier)
+            direc += f'-{identifier}'
 
+        return os.path.join(self._base_path, direc, f'{_type}.rrd')
+
+    def get_rrd_files(self, identifier):
+        result = []
+        for rrd_type in self.get_rrd_types(identifier):
+            result.append(self.get_rrd_file(rrd_type, identifier))
+
+        return result
+
+    def get_defs(self, identifier):
         rrd_types = self.get_rrd_types(identifier)
         if not rrd_types:
             raise RuntimeError(f'rrd_types not defined for {self.name!r}')
@@ -127,11 +148,7 @@ class RRDBase(object, metaclass=RRDMeta):
         defs = {}
         for i, rrd_type in enumerate(rrd_types):
             _type, dsname, transform = rrd_type
-            direc = self.plugin
-            if self.identifier_plugin and identifier:
-                identifier = self.encode(identifier)
-                direc += f'-{identifier}'
-            path = os.path.join(self._base_path, direc, f'{_type}.rrd')
+            path = self.get_rrd_file(rrd_type, identifier)
             path = path.replace(':', r'\:')
             name = f'{_type}_{dsname}'
             defs[i] = {
@@ -169,6 +186,24 @@ class RRDBase(object, metaclass=RRDMeta):
         return args
 
     def export(self, identifier, starttime, endtime, aggregate=True):
+        for rrd_file in self.get_rrd_files(identifier):
+            cp = subprocess.run([
+                'rrdtool',
+                'info',
+                '--daemon', 'unix:/var/run/rrdcached.sock',
+                rrd_file,
+            ], capture_output=True, encoding='utf-8')
+
+            if m := RE_LAST_UPDATE.search(cp.stdout):
+                last_update = int(m.group(1))
+                now = time.time()
+                if last_update > now + 1800:  # Tolerance for small system time adjustments
+                    raise CallError(
+                        f"RRD file {os.path.relpath(rrd_file, self._base_path)} has update time in the future. "
+                        f"Data collection will be paused for {humanfriendly.format_timespan(last_update - now)}.",
+                        ErrnoMixin.EINVALIDRRDTIMESTAMP,
+                    )
+
         args = [
             'rrdtool',
             'xport',

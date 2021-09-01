@@ -122,15 +122,24 @@ class ReportingService(ConfigService):
         )
 
         if destroy_database:
-            await self.middleware.call('service.stop', 'collectd')
-            await self.middleware.call('service.stop', 'rrdcached')
-            await run('sh', '-c', 'rm -rfx /var/db/collectd/rrd/*', check=False)
-            await self.middleware.call('reporting.setup')
-            await self.middleware.call('service.start', 'rrdcached')
+            await self.clear(False)
 
         await self.middleware.call('service.restart', 'collectd')
 
         return await self.config()
+
+    @accepts(Bool('start_collectd', default=True, hidden=True))
+    async def clear(self, start_collectd):
+        """
+        Clear reporting database.
+        """
+        await self.middleware.call('service.stop', 'rrdcached')
+        await run('sh', '-c', 'rm -rfx /var/db/collectd/rrd/*', check=False)
+        await self.middleware.call('reporting.setup')
+        await self.middleware.call('service.start', 'rrdcached')
+
+        if start_collectd:
+            await self.middleware.call('service.start', 'collectd')
 
     @filterable
     def graphs(self, filters, options):
