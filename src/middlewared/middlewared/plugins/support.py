@@ -141,13 +141,10 @@ class SupportService(ConfigService):
             ("secondary_phone", "Secondary Contact Phone"),
         )
 
-    @accepts(
-        Str('username'),
-        Str('password'),
-    )
-    async def fetch_categories(self, username, password):
+    @accepts(Str('token'))
+    async def fetch_categories(self, token):
         """
-        Fetch all the categories available for `username` using `password`.
+        Fetch issue categories using access token `token`.
         Returns a dict with the category name as a key and id as value.
         """
 
@@ -155,8 +152,7 @@ class SupportService(ConfigService):
         data = await post(
             f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
             data=json.dumps({
-                'user': username,
-                'password': password,
+                'token': token,
             }),
         )
 
@@ -171,8 +167,7 @@ class SupportService(ConfigService):
         Str('body', required=True, max_length=None),
         Str('category', required=True),
         Bool('attach_debug', default=False),
-        Str('username', private=True),
-        Str('password', private=True),
+        Str('token', private=True),
         Str('type', enum=['BUG', 'FEATURE']),
         Str('criticality'),
         Str('environment', max_length=None),
@@ -197,7 +192,7 @@ class SupportService(ConfigService):
         sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
 
         if sw_name == 'freenas':
-            required_attrs = ('type', 'username', 'password')
+            required_attrs = ('type', 'token')
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
@@ -212,8 +207,6 @@ class SupportService(ConfigService):
                 raise CallError(f'{i} is required', errno.EINVAL)
 
         data['version'] = (await self.middleware.call('system.version')).split('-', 1)[-1]
-        if 'username' in data:
-            data['user'] = data.pop('username')
         debug = data.pop('attach_debug')
 
         type_ = data.get('type')
@@ -256,10 +249,8 @@ class SupportService(ConfigService):
                 'ticket': ticket,
                 'filename': debug_name,
             }
-            if 'user' in data:
-                t['username'] = data['user']
-            if 'password' in data:
-                t['password'] = data['password']
+            if 'token' in data:
+                t['token'] = data['token']
             tjob = await self.middleware.call(
                 'support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()),
             )
@@ -295,8 +286,7 @@ class SupportService(ConfigService):
         'attach_ticket',
         Int('ticket', required=True),
         Str('filename', required=True, max_length=None),
-        Str('username', private=True),
-        Str('password', private=True),
+        Str('token', private=True),
     ))
     @job(pipes=["input"])
     def attach_ticket(self, job, data):
@@ -305,8 +295,6 @@ class SupportService(ConfigService):
         """
         sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
 
-        if 'username' in data:
-            data['user'] = data.pop('username')
         data['ticketnum'] = data.pop('ticket')
         filename = data.pop('filename')
 
