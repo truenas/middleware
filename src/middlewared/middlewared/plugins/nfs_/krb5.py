@@ -3,7 +3,7 @@ from middlewared.service import private, Service
 from middlewared.service_exception import CallError
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.directoryservices import DSStatus
-from middlewared.schema import accepts, Bool, Dict, returns, Str, Ref
+from middlewared.schema import accepts, Bool, returns, Ref
 
 
 class NFSService(Service):

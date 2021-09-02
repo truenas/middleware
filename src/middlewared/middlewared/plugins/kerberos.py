@@ -10,7 +10,7 @@ import subprocess
 import contextlib
 import time
 from middlewared.plugins.idmap import DSType
-from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Ref, Patch, Datetime, Bool
+from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Ref, Datetime, Bool
 from middlewared.service import CallError, TDBWrapConfigService, TDBWrapCRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
