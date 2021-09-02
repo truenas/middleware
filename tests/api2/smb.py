@@ -442,13 +442,13 @@ def test_047_mount_the_smb_share_robocopy_testdir_to_the_share_windows_mount():
 
 
 @windows_host_cred
-def test_048_delete_the_test_dir_and_a_file_in_windows():
+def test_048_verify_the_created_time_is_the_same_on_the_mounted_share():
     assert created_date == mounted_date
     assert created_time == mounted_time
 
 
 @windows_host_cred
-def test_049_verify_testfile_is_on_recycle_bin_in_the_active_directory_share():
+def test_049_verify_the_time_of_the_file_on_dataset_is_the_same_time_then_created_file():
     """
     The server running this test, then Windows VM and TrueNAS VM should run
     on same timezone. If not this test will failed.
