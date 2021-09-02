@@ -10,7 +10,7 @@ import subprocess
 import contextlib
 import time
 from middlewared.plugins.idmap import DSType
-from middlewared.schema import accepts, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Ref, Patch, Datetime, Bool
 from middlewared.service import CallError, TDBWrapConfigService, TDBWrapCRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
@@ -20,6 +20,11 @@ class keytab(enum.Enum):
     SYSTEM = '/etc/krb5.keytab'
     SAMBA = '/var/db/system/samba4/private/samba.keytab'
     TEST = '/var/db/system/test.keytab'
+
+
+class krb5ccache(enum.Enum):
+    SYSTEM = '/tmp/krb5cc_0'
+    TEMP = '/tmp/krb5cc_middleware'
 
 
 class KRB_AppDefaults(enum.Enum):
@@ -143,11 +148,17 @@ class KerberosService(TDBWrapConfigService):
         return await self.config()
 
     @private
-    async def _klist_test(self):
+    @accepts(Dict(
+        'kerberos-options',
+        Str('ccache', enum=[x.name for x in krb5ccache], default=krb5ccache.SYSTEM.name),
+        register=True
+    ))
+    async def _klist_test(self, data):
         """
         Returns false if there is not a TGT or if the TGT has expired.
         """
-        klist = await run(['klist', '-s'], check=False)
+        krb_ccache = krb5ccache[data['ccache']]
+        klist = await run(['klist', '-s', '-c', krb_ccache.value], check=False)
         if klist.returncode != 0:
             return False
 
@@ -261,39 +272,95 @@ class KerberosService(TDBWrapConfigService):
         return verrors
 
     @private
+    @accepts(Dict(
+        "get-kerberos-creds",
+        Str("dstype", required=True, enum=[x.name for x in DSType]),
+        OROperator(
+            Dict(
+                'ad_parameters',
+                Str('bindname'),
+                Str('bindpw'),
+                Str('domainname'),
+                Str('kerberos_principal')
+            ),
+            Dict(
+                'ldap_parameters',
+                Str('binddn'),
+                Str('bindpw'),
+                Int('kerberos_realm'),
+            ),
+            name='conf',
+            required=True
+        )
+    ))
+    async def get_cred(self, data):
+        '''
+        Get kerberos cred from directory services config to use for `do_kinit`.
+        '''
+        conf = data['conf']
+        if conf['kerberos_principal']:
+            return {'kerberos_principal': conf['kerberos_principal']}
+
+        dstype = DSType[data['dstype']]
+        if dstype is DSType.DS_TYPE_ACTIVEDIRECTORY:
+            return {
+                'username': f'{conf["bindname"]}@{conf["domainname"].upper()}',
+                'password': conf['bindpw']
+            }
+
+        krb_realm = await self.middleware.call(
+            'kerberos.realm.query',
+            [('id', '=', conf['kerberos_realm'])],
+            {'get': True}
+        )
+        bind_cn = (conf['binddn'].split(','))[0].split("=")
+        return {
+            'username': f'{bind_cn[1]}@{krb_realm["realm"]}',
+            'password': conf['bindpw']
+        }
+
+    @private
+    @accepts(Dict(
+        OROperator(
+            Dict(
+                'kerberos_username_password',
+                Str('username', required=True),
+                Str('password', required=True, private=True),
+                register=True
+            ),
+            Dict(
+                'kerberos_keytab',
+                Str('kerberos_principal', required=True),
+            ),
+            name='krb5_cred',
+            required=True,
+        ),
+        Patch(
+            'kerberos-options',
+            'kinit-options',
+            ('add', {'name': 'renewal_period', 'type': 'int', 'default': 7}),
+        )
+    ))
     async def do_kinit(self, data):
-        dstype = DSType(data['dstype'])
-        if data['kerberos_principal']:
-            kinit = await run(['kinit', '-r', '7d', '-k', data['kerberos_principal']], check=False)
+        ccache = krb5ccache[data['kinit-options']['ccache']]
+        cmd = ['kinit', '-r', str(data['kinit-options']['renewal_period']), '-c', ccache.value]
+        creds = data['krb5_cred']
+        has_principal = 'kerberos_principal' in creds
+
+        if has_principal:
+            cmd.extend(['-k', creds['kerberos_principal']])
+            kinit = await run(cmd, check=False)
             if kinit.returncode != 0:
-                if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY:
-                    raise CallError(f"kinit for domain [{data['domainname']}] "
-                                    f"with principal [{data['kerberos_principal']}] "
-                                    f"failed: {kinit.stderr.decode()}")
+                raise CallError(f"kinit with principal [{creds['kerberos_principal']}] "
+                                f"failed: {kinit.stderr.decode()}")
+            return
 
-                elif dstype == DSType.DS_TYPE_LDAP:
-                    raise CallError(f"kinit with principal [{data['kerberos_principal']}] "
-                                    f"failed: {kinit.stderr.decode()}")
-            return True
-
-        if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY:
-            principal = f'{data["bindname"]}@{data["domainname"].upper()}'
-
-        elif dstype == DSType.DS_TYPE_LDAP:
-            krb_realm = await self.middleware.call(
-                'kerberos.realm.query',
-                [('id', '=', data['kerberos_realm'])],
-                {'get': True}
-            )
-            bind_cn = (data['binddn'].split(','))[0].split("=")
-            principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
-
+        cmd.append(creds['username'])
         kinit = await Popen(
-            ['kinit', '-r', '7d', principal],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
         )
 
-        output = await kinit.communicate(input=data['bindpw'].encode())
+        output = await kinit.communicate(input=creds['password'].encode())
         if kinit.returncode != 0:
             raise CallError(f"kinit with password failed: {output[1].decode()}")
 
@@ -307,13 +374,34 @@ class KerberosService(TDBWrapConfigService):
         ad = await self.middleware.call('activedirectory.config')
         ldap = await self.middleware.call('ldap.config')
         await self.middleware.call('etc.generate', 'kerberos')
+        payload = {}
+
         if ad['enable']:
-            ad['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
-            await self.do_kinit(ad)
+            payload = {
+                'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+                'conf': {
+                    'bindname': ad['bindname'],
+                    'bindpw': ad['bindpw'],
+                    'domainname': ad['domainname'],
+                    'kerberos_principal': ad['kerberos_principal'],
+                }
+            }
 
         if ldap['enable'] and ldap['kerberos_realm']:
-            ldap['dstype'] = DSType.DS_TYPE_LDAP.value
-            await self.do_kinit(ldap)
+            payload = {
+                'dstype': DSType.DS_TYPE_LDAP.name,
+                'conf': {
+                    'binddn': ldap['binddn'],
+                    'bindpw': ldap['bindpw'],
+                    'kerberos_realm': ldap['kerberos_realm'],
+                }
+            }
+
+        if not payload:
+            return
+
+        cred = await self.get_cred(payload)
+        await self.do_kinit({'krb5_cred': cred})
 
     @private
     async def parse_klist(self, data):
@@ -492,12 +580,18 @@ class KerberosService(TDBWrapConfigService):
             return False
 
     @private
-    async def stop(self):
-        await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
-        kdestroy = await run(['kdestroy'], check=False)
+    @accepts(Ref('kerberos-options'))
+    async def kdestroy(self, data):
+        kdestroy = await run(['kdestroy', '-c', krb5ccache[data['ccache']].value], check=False)
         if kdestroy.returncode != 0:
             raise CallError(f'kdestroy failed with error: {kdestroy.stderr.decode()}')
 
+        return
+
+    @private
+    async def stop(self):
+        await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
+        await self.kdestroy()
         return True
 
     @private
@@ -672,11 +766,10 @@ class KerberosKeytabService(TDBWrapCRUDService):
 
     @accepts(
         Int('id', required=True),
-        Dict(
+        Patch(
+            'kerberos_keytab_create',
             'kerberos_keytab_update',
-            Str('file'),
-            Str('name'),
-            register=True
+            ('attr', {'update': True})
         )
     )
     async def do_update(self, id, data):
@@ -722,6 +815,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
         'keytab_data',
         Str('name', required=True),
     ))
+    @returns(Ref('kerberos_keytab_create'))
     @job(lock='upload_keytab', pipes=['input'], check_pipes=True)
     async def upload_keytab(self, job, data):
         """
@@ -807,7 +901,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
             fields = line.split()
             keytab_entries.append({
                 'slot': idx + 1,
-                'kvno': fields[0],
+                'kvno': int(fields[0]),
                 'principal': fields[3],
                 'etype': fields[4][1:-1].strip('DEPRECATED:'),
                 'etype_deprecated': fields[4][1:].startswith('DEPRECATED'),
@@ -817,6 +911,20 @@ class KerberosKeytabService(TDBWrapCRUDService):
         return keytab_entries
 
     @accepts()
+    @returns(List(
+        'system-keytab',
+        items=[
+            Dict(
+                'keytab-entry',
+                Int('slot'),
+                Int('kvno'),
+                Str('principal'),
+                Str('etype'),
+                Bool('etype_deprecated'),
+                Datetime('date')
+            )
+        ]
+    ))
     async def system_keytab_list(self):
         """
         Returns content of system keytab (/etc/krb5.keytab).

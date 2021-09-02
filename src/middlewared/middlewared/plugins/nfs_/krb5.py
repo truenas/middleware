@@ -3,7 +3,7 @@ from middlewared.service import private, Service
 from middlewared.service_exception import CallError
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.directoryservices import DSStatus
-from middlewared.schema import accepts, Bool, Dict, returns, Str
+from middlewared.schema import accepts, Bool, Dict, returns, Str, Ref
 
 
 class NFSService(Service):
@@ -36,6 +36,7 @@ class NFSService(Service):
                             'in order to successfully add a kerberos SPN entry.')
 
     @private
+    @accepts(Ref('kerberos_username_password'))
     async def add_principal_ad(self, data):
         """
         Typically elevated permissions are required to make SPN changes.
@@ -43,16 +44,27 @@ class NFSService(Service):
         relying on the existing kerberos ticket / principal.
         """
         ad = await self.middleware.call('activedirectory.config')
-        ad['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
         ad['bindname'] = data.get("username", "")
         ad['bindpw'] = data.get("password", "")
         ad['kerberos_principal'] = ''
 
-        await self.middleware.call('kerberos.do_kinit', ad)
+        payload = {
+            'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+            'conf': {
+                'bindname': ad['bindname'],
+                'bindpw': ad['bindpw'],
+                'domainname': ad['domainname'],
+                'kerberos_principal': ad['kerberos_principal'],
+            }
+        }
+
+        cred = await self.middleware.call('kerberos.get_cred', payload)
+        await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
         add_spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad)
         return await add_spn_job.wait(raise_error=True)
 
     @private
+    @accepts(Ref('kerberos_username_password'))
     async def add_principal_ldap(self, data):
         """
         This is a stub that will be replaced when support for adding SPN entries
@@ -63,13 +75,7 @@ class NFSService(Service):
         raise CallError('This feature has not yet been implemented for '
                         'the LDAP directory service.', errno=errno.ENOSYS)
 
-    @accepts(
-        Dict(
-            'add_nfs_principal_creds',
-            Str('username', required=True),
-            Str('password', required=True, private=True)
-        )
-    )
+    @accepts(Ref('kerberos_username_password'))
     @returns(Bool('principal_add_status'))
     async def add_principal(self, data):
         """

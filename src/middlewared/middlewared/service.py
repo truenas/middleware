@@ -532,6 +532,7 @@ class TDBWrapConfigService(ConfigService):
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         return ha_mode == "CLUSTERED"
 
+    @private
     async def is_clustered(self):
         if self.is_clustered_fn is NotImplemented:
             return await self._default_cluster_check()

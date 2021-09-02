@@ -16,7 +16,7 @@ import contextlib
 
 from dns import resolver
 from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
 from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -835,10 +835,17 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if ad is None:
             ad = await self.middleware.call('activedirectory.config')
 
-        data = ad.copy()
-        data['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
-
-        await self.middleware.call('kerberos.do_kinit', data)
+        payload = {
+            'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+            'conf': {
+                'bindname': ad['bindname'],
+                'bindpw': ad['bindpw'],
+                'domainname': ad['domainname'],
+                'kerberos_principal': ad['kerberos_principal'],
+            }
+        }
+        cred = await self.middleware.call('kerberos.get_cred', payload)
+        await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
         return
 
     @private
@@ -1300,13 +1307,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         return lookup["Client Site Name"]
 
-    @accepts(
-        Dict(
-            'leave_ad',
-            Str('username', required=True),
-            Str('password', required=True, private=True)
-        )
-    )
+    @accepts(Ref('kerberos_username_password'))
     async def leave(self, data):
         """
         Leave Active Directory domain. This will remove computer
@@ -1319,12 +1320,22 @@ class ActiveDirectoryService(TDBWrapConfigService):
         ad = await self.config()
         smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
 
-        ad['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
         ad['bindname'] = data.get("username", "")
         ad['bindpw'] = data.get("password", "")
         ad['kerberos_principal'] = ''
 
-        await self.middleware.call('kerberos.do_kinit', ad)
+        payload = {
+            'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+            'conf': {
+                'bindname': data.get('username', ''),
+                'bindpw': data.get('password', ''),
+                'domainname': ad['domainname'],
+                'kerberos_principal': '',
+            }
+        }
+
+        cred = await self.middleware.call('kerberos.get_cred', payload)
+        await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
         netads = await run([SMBCmd.NET.value, '-U', data['username'], '-k', 'ads', 'leave'], check=False)
         if netads.returncode != 0:
