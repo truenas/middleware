@@ -963,6 +963,13 @@ class OROperator:
         self.default = kwargs.get('default', None)
         self.has_default = 'default' in kwargs and kwargs['default'] is not NOT_PROVIDED
 
+    @property
+    def required(self):
+        for schema in filter(lambda s: hasattr(s, 'required'), self.schemas):
+            if schema.required:
+                return True
+        return False
+
     def clean(self, value):
         found = False
         final_value = value
@@ -1006,6 +1013,7 @@ class OROperator:
             'nullable': False,
             '_name_': self.name,
             'description': self.description,
+            '_required_': self.required,
         }
 
     def resolve(self, schemas):
