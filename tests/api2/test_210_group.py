@@ -208,6 +208,7 @@ def test_24_check_groupmap_added(request):
     group_mapping.tdb.
     """
     global old_groupmap_sid
+    global gid_to_check
     result = GET(
         '/group', payload={
             'query-filters': [['name', '=', 'smbgroup']],
@@ -221,6 +222,7 @@ def test_24_check_groupmap_added(request):
     assert result.json()['sid'], result.text
     assert result.json()['nt_name'], result.text
     old_groupmap_sid = result.json()['sid']
+    gid_to_check = result.json()['gid']
 
 
 def test_25_test_name_change_smb_group(request):
@@ -234,8 +236,10 @@ def test_25_test_name_change_smb_group(request):
 
 def test_26_groupmap_entry_nt_name_change(request):
     """
+    Changing the name of an SMB group should not result in
+    a SID change.
     """
-    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
+    depends(request, ["SMB_GROUP_CREATED"], scope="session")
     result = GET(
         '/group', payload={
             'query-filters': [['name', '=', 'newsmbgroup']],
@@ -248,6 +252,61 @@ def test_26_groupmap_entry_nt_name_change(request):
     assert result.status_code == 200, result.text
     assert result.json()['nt_name'] == 'newsmbgroup', result.text
     assert result.json()['sid'] == old_groupmap_sid, result.text
+
+
+def test_27_full_groupmap_check(request):
+    """
+    Full check of groupmap contents
+    """
+    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
+    cmd = f"midclt call smb.groupmap_list"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'], str(results['output'])
+
+    gm = json.loads(results['output'].strip())
+    assert gm['localsid'], str(gm)
+
+    for k, entry in gm['local_builtins'].items():
+        assert entry['sid'].startswith(gm['localsid']), str(entry)
+        assert int(k) == entry['gid'], str(entry)
+        nt_name_suffix = entry['nt_name'].split('_')[1]
+        unix_name_suffix = entry['unix_group'].split('_')[1]
+        assert nt_name_suffix == unix_name_suffix, str(entry)
+
+    for k in ['544', '545', '546']:
+        assert k in gm['local_builtins'], str(gm['local_builtins'])
+
+    for i in [
+        ('90000001', 'S-1-5-32-544'),
+        ('90000002', 'S-1-5-32-545'),
+        ('90000003', 'S-1-5-32-546'),
+    ]:
+        gid, sid = i
+        entry = gm['builtins'][gid]
+        assert entry['sid'] == sid, str(entry)
+        assert entry['unix_group'] == f'BUILTIN\\{entry["nt_name"].lower()}', str(entry)
+        assert entry['group_type_int'] == 4, str(entry)
+        assert int(gid) == entry['gid'], str(entry)
+
+    assert str(gid_to_check) in gm['local'], str(gm)
+
+    cmd = f"midclt call smb.groupmap_listmem S-1-5-32-544"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'], str(results['output'])
+    ba = json.loads(results['output'].strip())
+    assert gm['local_builtins']['544']['sid'] in ba, str(ba)
+
+    cmd = f"midclt call smb.groupmap_listmem S-1-5-32-545"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'], str(results['output'])
+    bu = json.loads(results['output'].strip())
+    assert gm['local_builtins']['545']['sid'] in bu, str(bu)
+
+    cmd = f"midclt call smb.groupmap_listmem S-1-5-32-546"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'], str(results['output'])
+    bg = json.loads(results['output'].strip())
+    assert gm['local_builtins']['546']['sid'] in bg, str(bg)
 
 
 def test_28_convert_smb_group_to_non_smb(request):
