@@ -14,6 +14,7 @@ class GlobalSchema(RegistrySchema):
     def convert_schema_to_registry(self, data_in, data_out):
         super().convert_schema_to_registry(data_in, data_out)
         shares = data_in.pop('shares')
+        ms_accounts = data_in.pop('ms_accounts')
 
         """
         When guest access permitted on any share:
@@ -36,6 +37,9 @@ class GlobalSchema(RegistrySchema):
             data_out['map to guest'] = {'parsed': 'Bad User'}
 
         ds_state = data_in.pop('ds_state')
+        if ms_accounts and ds_state['activedirectory'] == 'DISABLED':
+            data_out['username map'] = {'parsed': '/etc/smbusername.map'}
+
         if ds_state['ldap'] in ['LEAVING', 'DISABLED']:
             data_out.update({
                 'passdb backend': {'parsed': 'tdbsam:/root/samba/private/passdb.tdb'},

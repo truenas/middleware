@@ -416,6 +416,10 @@ class UserService(CRUDService):
         if data['smb']:
             gm_job = await self.middleware.call('smb.synchronize_passdb')
             await gm_job.wait()
+            if data.get('microsoft_account'):
+                has_username_map = await self.middleware.call('smb.getparm', 'username map', 'GLOBAL')
+                if not has_username_map:
+                    await self.middleware.call('smb.initialize_globals')
 
         if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -608,6 +612,11 @@ class UserService(CRUDService):
         if user['smb'] and must_change_pdb_entry:
             gm_job = await self.middleware.call('smb.synchronize_passdb')
             await gm_job.wait()
+
+        if user.get('microsoft_account'):
+            has_username_map = await self.middleware.call('smb.getparm', 'username map', 'GLOBAL')
+            if not has_username_map:
+                await self.middleware.call('smb.initialize_globals')
 
         return pk
 
