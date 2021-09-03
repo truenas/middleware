@@ -1389,6 +1389,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
         finally:
             gencache.close()
 
+        if tdb_val is None:
+            return None
+
         decoded_sid = tdb_val[8:-5].decode()
         if decoded_sid == '-':
             return None
@@ -1396,174 +1399,152 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return decoded_sid
 
     @private
+    def get_gencache_names(self, idmap_domain):
+        out = []
+        known_doms = [x['domain_info']['name'] for x in idmap_domain]
+
+        gencache = tdb.Tdb('/tmp/gencache.tdb', 0, tdb.DEFAULT, os.O_RDONLY)
+        try:
+            for k in gencache.keys():
+                if k[:8] != b'NAME2SID':
+                    continue
+                key = k[:-1].decode()
+                name = key.split('/', 1)[1]
+                dom = name.split('\\')[0]
+                if dom not in known_doms:
+                    continue
+
+                out.append(name)
+        finally:
+            gencache.close()
+
+        return out
+
+    @private
+    def get_entries(self, data):
+        ret = []
+        entry_type = data.get('entry_type')
+        do_wbinfo = data.get('cache_enabled', True)
+
+        shutil.copyfile(f'{SMBPath.LOCKDIR.platform()}/gencache.tdb', '/tmp/gencache.tdb')
+
+        domain_info = self.middleware.call_sync(
+            'idmap.query', [], {'extra': {'additional_information': ['DOMAIN_INFO']}}
+        )
+        for dom in domain_info.copy():
+            if not dom['domain_info']:
+                domain_info.remove(dom)
+
+        dom_by_sid = {x['domain_info']['sid']: x for x in domain_info}
+
+        if do_wbinfo:
+            wb = subprocess.run(
+                [SMBCmd.WBINFO.value, f'-{entry_type[0].lower()}'], capture_output=True
+            )
+            if wb.returncode != 0:
+                raise CallError(f'Failed to retrieve {entry_type} from active directory: '
+                                f'{wb.stderr.decode().strip()}')
+            entries = wb.stdout.decode().splitlines()
+
+        else:
+            entries = self.get_gencache_names(domain_info)
+
+        for i in entries:
+            entry = {"id": -1, "sid": None, "nss": None}
+            if entry_type == 'USER':
+                try:
+                    entry["nss"] = pwd.getpwnam(i)
+                except KeyError:
+                    continue
+                entry["id"] = entry["nss"].pw_uid
+                tdb_key = f'IDMAP/UID2SID/{entry["id"]}'
+
+            else:
+                try:
+                    entry["nss"] = grp.getgrnam(i)
+                except KeyError:
+                    continue
+                entry["id"] = entry["nss"].gr_gid
+                tdb_key = f'IDMAP/GID2SID/{entry["id"]}'
+
+            """
+            Try to look up in gencache before subprocess to wbinfo.
+            """
+            entry['sid'] = self.get_gencache_sid((tdb_key.encode() + b"\x00"))
+            if not entry['sid']:
+                entry['sid'] = self.middleware.call_sync('idmap.unixid_to_sid', {
+                    'id_type': entry_type,
+                    'id': entry['id'],
+                })
+
+            entry['domain_info'] = dom_by_sid[entry['sid'].rsplit('-', 1)[0]]
+            ret.append(entry)
+
+        return ret
+
+    @private
     @job(lock='fill_ad_cache')
     def fill_cache(self, job, force=False):
-        """
-        Use UID2SID and GID2SID entries in Samba's gencache.tdb to populate the AD_cache.
-        Since this can include IDs outside of our configured idmap domains (Local accounts
-        will also appear here), there is a check to see if the ID is inside the idmap ranges
-        configured for domains that are known to us. Some samba idmap backends support
-        id_type_both, in which case the will be GID2SID entries for AD users. getent group
-        succeeds in this case (even though the group doesn't exist in AD). Since these
-        we don't want to populate the UI cache with these entries, try to getpwnam for
-        GID2SID entries. If it's an actual group, getpwnam will fail. This heuristic
-        may be revised in the future, but we want to keep things as simple as possible
-        here since the list of entries numbers perhaps in the tens of thousands.
-        """
         ad = self.middleware.call_sync('activedirectory.config')
-        smb = self.middleware.call_sync('smb.config')
         id_type_both_backends = [
             'RID',
             'AUTORID'
         ]
-        if not ad['disable_freenas_cache']:
-            """
-            These calls populate the winbindd cache
-            """
-            pwd.getpwall()
-            grp.getgrall()
-        elif ad['bindname']:
-            id = subprocess.run(['/usr/bin/id', f"{smb['workgroup']}\\{ad['bindname']}"], capture_output=True)
-            if id.returncode != 0:
-                self.logger.debug('failed to id AD bind account [%s]: %s', ad['bindname'], id.stderr.decode())
 
-        shutil.copyfile(f'{SMBPath.LOCKDIR.platform()}/gencache.tdb', '/tmp/gencache.tdb')
+        users = self.get_entries({'entry_type': 'USER', 'cache_enabled': not ad['disable_freenas_cache']})
+        for u in users:
+            user_data = u['nss']
+            rid = int(u['sid'].rsplit('-', 1)[1])
 
-        gencache = tdb.Tdb('/tmp/gencache.tdb', 0, tdb.DEFAULT, os.O_RDONLY)
-        gencache_keys = [x for x in gencache.keys()]
-        gencache.close()
+            entry = {
+                'id': 100000 + u['domain_info']['range_low'] + rid,
+                'uid': user_data.pw_uid,
+                'username': user_data.pw_name,
+                'unixhash': None,
+                'smbhash': None,
+                'group': {},
+                'home': '',
+                'shell': '',
+                'full_name': user_data.pw_gecos,
+                'builtin': False,
+                'email': '',
+                'password_disabled': False,
+                'locked': False,
+                'sudo': False,
+                'sudo_nopasswd': False,
+                'sudo_commands': [],
+                'microsoft_account': False,
+                'attributes': {},
+                'groups': [],
+                'sshpubkey': None,
+                'local': False,
+                'id_type_both': u['domain_info']['idmap_backend'] in id_type_both_backends,
+                'nt_name': None,
+                'sid': None,
+            }
+            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
 
-        known_domains = []
-        local_users = {}
-        local_groups = {}
-        local_users.update({x['uid']: x for x in self.middleware.call_sync('user.query')})
-        local_users.update({x['gid']: x for x in self.middleware.call_sync('group.query')})
-        configured_domains = self.middleware.call_sync('idmap.query')
-        builtin_slice = range(1000)
-        for d in configured_domains:
-            if d['idmap_backend'] == 'AUTORID' and not d['options']['ignore_builtin']:
-                builtin_slice = range(d['range_low'], (d['range_low'] + d['options']['rangesize']))
+        groups = self.get_entries({'entry_type': 'GROUP', 'cache_enabled': not ad['disable_freenas_cache']})
+        for g in groups:
+            group_data = g['nss']
+            rid = int(g['sid'].rsplit('-', 1)[1])
 
-            if d['name'] == 'DS_TYPE_ACTIVEDIRECTORY':
-                known_domains.append({
-                    'domain': smb['workgroup'],
-                    'low_id': d['range_low'],
-                    'high_id': d['range_high'],
-                    'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
-                })
-            elif d['name'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
-                known_domains.append({
-                    'domain': d['name'],
-                    'low_id': d['range_low'],
-                    'high_id': d['range_high'],
-                    'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
-                })
-
-        for key in gencache_keys:
-            prefix = key[0:13]
-            if prefix != b'IDMAP/UID2SID' and prefix != b'IDMAP/GID2SID':
-                continue
-
-            sid = self.get_gencache_sid(key)
-            if sid is None:
-                return
-
-            rid = int(sid.rsplit("-", 1)[1])
-            line = key.decode()
-            if line.startswith('IDMAP/UID2SID'):
-                # tdb keys are terminated with \x00, this must be sliced off before converting to int
-                cached_uid = int(line[14:-1])
-                """
-                Do not cache local users. This is to avoid problems where a local user
-                may enter into the id range allotted to AD users.
-                """
-                if local_users.get(cached_uid, None):
-                    continue
-
-                if cached_uid in builtin_slice:
-                    continue
-
-                for d in known_domains:
-                    if cached_uid in range(d['low_id'], d['high_id']):
-                        """
-                        Samba will generate UID and GID cache entries when idmap backend
-                        supports id_type_both.
-                        """
-                        try:
-                            user_data = pwd.getpwuid(cached_uid)
-                            entry = {
-                                'id': 100000 + d['low_id'] + rid,
-                                'uid': user_data.pw_uid,
-                                'username': user_data.pw_name,
-                                'unixhash': None,
-                                'smbhash': None,
-                                'group': {},
-                                'home': '',
-                                'shell': '',
-                                'full_name': user_data.pw_gecos,
-                                'builtin': False,
-                                'email': '',
-                                'password_disabled': False,
-                                'locked': False,
-                                'sudo': False,
-                                'sudo_nopasswd': False,
-                                'sudo_commands': [],
-                                'microsoft_account': False,
-                                'attributes': {},
-                                'groups': [],
-                                'sshpubkey': None,
-                                'local': False,
-                                'id_type_both': d['id_type_both'],
-                                'nt_name': None,
-                                'sid': None,
-                            }
-                            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
-                            break
-                        except KeyError:
-                            break
-
-            if line.startswith('IDMAP/GID2SID'):
-                # tdb keys are terminated with \x00, this must be sliced off before converting to int
-                cached_gid = int(line[14:-1])
-                if local_groups.get(cached_gid, None):
-                    continue
-
-                if cached_gid in builtin_slice:
-                    continue
-
-                for d in known_domains:
-                    if cached_gid in range(d['low_id'], d['high_id']):
-                        """
-                        Samba will generate UID and GID cache entries when idmap backend
-                        supports id_type_both. Actual groups will return key error on
-                        attempt to generate passwd struct. It is also possible that the
-                        winbindd cache will have stale or expired entries. Failure on getgrgid
-                        should not be fatal here.
-                        """
-                        try:
-                            group_data = grp.getgrgid(cached_gid)
-                        except KeyError:
-                            break
-
-                        entry = {
-                            'id': 100000 + d['low_id'] + rid,
-                            'gid': group_data.gr_gid,
-                            'name': group_data.gr_name,
-                            'group': group_data.gr_name,
-                            'builtin': False,
-                            'sudo': False,
-                            'sudo_nopasswd': False,
-                            'sudo_commands': [],
-                            'users': [],
-                            'local': False,
-                            'id_type_both': d['id_type_both'],
-                            'nt_name': None,
-                            'sid': None,
-                        }
-                        self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
-                        break
-
-        os.unlink("/tmp/gencache.tdb")
+            entry = {
+                'id': 100000 + g['domain_info']['range_low'] + rid,
+                'gid': group_data.gr_gid,
+                'name': group_data.gr_name,
+                'group': group_data.gr_name,
+                'builtin': False,
+                'sudo': False,
+                'sudo_nopasswd': False,
+                'sudo_commands': [],
+                'users': [],
+                'local': False,
+                'id_type_both': g['domain_info']['idmap_backend'] in id_type_both_backends,
+                'nt_name': None,
+                'sid': None,
+            }
+            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
 
     @private
     async def get_cache(self):
