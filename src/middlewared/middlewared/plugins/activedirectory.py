@@ -1411,7 +1411,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 key = k[:-1].decode()
                 name = key.split('/', 1)[1]
                 dom = name.split('\\')[0]
-                if not dom in known_doms:
+                if dom not in known_doms:
                     continue
 
                 out.append(name)
@@ -1429,7 +1429,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         shutil.copyfile(f'{SMBPath.LOCKDIR.platform()}/gencache.tdb', '/tmp/gencache.tdb')
 
         domain_info = self.middleware.call_sync(
-           'idmap.query', [], {'extra': {'additional_information': ['DOMAIN_INFO']}}
+            'idmap.query', [], {'extra': {'additional_information': ['DOMAIN_INFO']}}
         )
         for dom in domain_info.copy():
             if not dom['domain_info']:
