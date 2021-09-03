@@ -4,7 +4,7 @@ import errno
 import os
 import datetime
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
-from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
 from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
@@ -290,12 +290,18 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         wbinfo = await run(['wbinfo', '-D', domain], check=False)
         if wbinfo.returncode != 0:
+            if 'WBC_ERR_DOMAIN_NOT_FOUND' in wbinfo.stderr.decode():
+                err = errno.ENOENT
+            else:
+                err = errno.EFAULT
+
             raise CallError(f'Failed to get domain info for {domain}: '
-                            f'{wbinfo.stderr.decode().strip()}')
+                            f'{wbinfo.stderr.decode().strip()}', err)
 
         for entry in wbinfo.stdout.splitlines():
             kv = entry.decode().split(':')
-            ret.update({kv[0].strip(): kv[1].strip()})
+            val = kv[1].strip()
+            ret.update({kv[0].strip().lower(): val if val not in ('Yes', 'No') else bool(val)})
 
         return ret
 
@@ -312,7 +318,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         RID 0. With the default settings in SSSD this will be deterministic as long as
         the domain has less than 200,000 RIDs.
         """
-        sid = (await self.domain_info(domain))['SID']
+        sid = (await self.domain_info(domain))['sid']
         sssd_config = {} if not sssd_config else sssd_config
         range_size = sssd_config.get('range_size', 200000)
         range_low = sssd_config.get('range_low', 10001)
@@ -525,6 +531,24 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         for k in (provided_keys - supported_keys):
             data['options'].pop(k)
+
+    @filterable
+    async def query(self, filters, options):
+        extra = options.get("extra", {})
+        more_info = extra.get("additional_information", [])
+        ret = await super().query(filters, options)
+        if 'DOMAIN_INFO' in more_info:
+            for entry in ret:
+                try:
+                    domain_info = await self.middleware.call('idmap.domain_info', entry['name'])
+                except CallError as e:
+                    if e.errno != errno.ENOENT:
+                        self.logger.debug("Failed to retrieve domain info: %s", e)
+                    domain_info = None
+
+                entry.update({'domain_info': domain_info})
+
+        return ret
 
     @accepts(
         Dict(
