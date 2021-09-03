@@ -942,6 +942,10 @@ class UserService(CRUDService):
                     'Please provide a valid value for home_mode attribute'
                 )
 
+        if data.get('microsoft_account') and not data.get('email'):
+            verrors.add(f'{schema}.microsoft_account',
+                        'The Microsoft Account feature requires an email address.')
+
         if 'groups' in data:
             groups = data.get('groups') or []
             if groups and len(groups) > 64:

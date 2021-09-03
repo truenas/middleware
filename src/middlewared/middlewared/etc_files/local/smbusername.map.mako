@@ -11,10 +11,10 @@
         ('email', '!=', None),
         ('email', '!=', ''),
     ])
+    if not users:
+        raise FileShouldNotExist()
 
 %>
-% if users:
 % for user in users:
 ${user['username']} = ${user['email']}
 % endfor
-% endif
