@@ -318,6 +318,10 @@ class UserService(CRUDService):
                 'The home directory is not writable. Leave this field blank.'
             )
 
+        if data.get('microsoft_account') and not data.get('email'):
+            verrors.add(f'user_create.microsoft_account',
+                        'The Microsoft Account feature requires an email address.')
+
         verrors.check()
 
         groups = data.pop('groups')
@@ -475,6 +479,10 @@ class UserService(CRUDService):
             user['group'] = group['id']
 
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
+        updated = data | user
+        if updated['microsoft_account'] and not updated['email']:
+            verrors.add(f'user_create.microsoft_account',
+                        'The Microsoft Account feature requires an email address.')
 
         try:
             st = os.stat(user.get("home", "/nonexistent")).st_mode
@@ -950,10 +958,6 @@ class UserService(CRUDService):
                     f'{schema}.home_mode',
                     'Please provide a valid value for home_mode attribute'
                 )
-
-        if data.get('microsoft_account') and not data.get('email'):
-            verrors.add(f'{schema}.microsoft_account',
-                        'The Microsoft Account feature requires an email address.')
 
         if 'groups' in data:
             groups = data.get('groups') or []
