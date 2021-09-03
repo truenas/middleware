@@ -319,7 +319,7 @@ class UserService(CRUDService):
             )
 
         if data.get('microsoft_account') and not data.get('email'):
-            verrors.add(f'user_create.microsoft_account',
+            verrors.add('user_create.microsoft_account',
                         'The Microsoft Account feature requires an email address.')
 
         verrors.check()
@@ -481,7 +481,7 @@ class UserService(CRUDService):
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
         updated = data | user
         if updated['microsoft_account'] and not updated['email']:
-            verrors.add(f'user_create.microsoft_account',
+            verrors.add('user_update.microsoft_account',
                         'The Microsoft Account feature requires an email address.')
 
         try:
