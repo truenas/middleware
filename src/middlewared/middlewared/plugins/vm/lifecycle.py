@@ -28,13 +28,15 @@ class VMService(Service, VMSupervisorMixin):
                 await asyncio.sleep(2)
 
         try:
+            self._system_supports_virtualization()
             if not await self.middleware.call('service.started', 'libvirtd'):
                 await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
             # We want to do this before initializing libvirt connection
             self._open()
+            self._check_connection_alive()
             await self.middleware.call('vm.setup_libvirt_events')
         except (asyncio.TimeoutError, CallError):
-            self.middleware.logger.error('Failed to connect to libvirtd')
+            self.middleware.logger.error('Failed to setup libvirt', exc_info=True)
 
     @private
     def setup_libvirt_connection(self, timeout=30):
