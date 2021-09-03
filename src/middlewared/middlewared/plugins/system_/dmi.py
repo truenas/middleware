@@ -25,14 +25,8 @@ class SystemService(Service):
 
     @private
     def _parse_dmi(self, lines):
+        SystemService.CACHE = {i: '' for i in SystemService.CACHE}
         for line in lines:
-            if '# No SMBIOS nor DMI entry point found' in line:
-                # means no DMI information available so fill out cache
-                # with empty values so we don't continually try to fill it
-                # (which defeats the entire purpose of having a cache)
-                SystemService.CACHE = {i: '' for i in SystemService.CACHE}
-                break
-
             if 'DMI type 1,' in line:
                 _type = 'SYSINFO'
             if 'DMI type 2,' in line:
