@@ -115,13 +115,22 @@ def test_07_check_for_ad_users(request):
     This test validates that we can query AD users using
     filter-option {"extra": {"search_dscache": True}}
     """
-    depends(request, ["pool_04", "INITIAL_CACHE_FILL"], scope="session")
+    depends(request, ["INITIAL_CACHE_FILL", "ssh_password"], scope="session")
+    cmd = "wbinfo -u"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'], str(results['output'])
+    wbinfo_entries = results['output'].splitlines()
+
     results = GET('/user', payload={
         'query-filters': [['local', '=', False]],
         'query-options': {'extra': {"search_dscache": True}},
     })
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
+    cache_names = [x['username'] for x in results.json()]
+
+    for entry in wbinfo_entries:
+        assert entry in cache_names, str(cache_names)
 
 
 @pytest.mark.dependency(name="AD_GROUPS_CACHED")
@@ -130,13 +139,22 @@ def test_08_check_for_ad_groups(request):
     This test validates that we can query AD groups using
     filter-option {"extra": {"search_dscache": True}}
     """
-    depends(request, ["pool_04", "INITIAL_CACHE_FILL"], scope="session")
+    depends(request, ["INITIAL_CACHE_FILL", "ssh_password"], scope="session")
+    cmd = "wbinfo -g"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'], str(results['output'])
+    wbinfo_entries = results['output'].splitlines()
+
     results = GET('/group', payload={
         'query-filters': [['local', '=', False]],
         'query-options': {'extra': {"search_dscache": True}},
     })
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
+    cache_names = [x['name'] for x in results.json()]
+
+    for entry in wbinfo_entries:
+        assert entry in cache_names, str(cache_names)
 
 
 @pytest.mark.dependency(name="REBUILD_AD_CACHE")
@@ -148,7 +166,7 @@ def test_09_check_directoryservices_cache_refresh(request):
     This currently happens once per 24 hours. Result of failure here will
     be lack of users/groups visible in webui.
     """
-    depends(request, ["pool_04", "AD_USERS_CACHED", "AD_GROUPS_CACHED"], scope="session")
+    depends(request, ["AD_USERS_CACHED", "AD_GROUPS_CACHED", "ssh_password"], scope="session")
     rebuild_ok = False
 
     """
@@ -201,7 +219,7 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     to only hit the cache. Code paths are slightly different for lookups
     by id or by name and so they are tested separately.
     """
-    depends(request, ["pool_04", "REBUILD_AD_CACHE"], scope="session")
+    depends(request, ["REBUILD_AD_CACHE", "ssh_password"], scope="session")
     global ad_user_id
     global ad_domain_users_id
     domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
@@ -268,7 +286,7 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     to only hit the cache. Code paths are slightly different for lookups
     by id or by name and so they are tested separately.
     """
-    depends(request, ["pool_04", "LAZY_INITIALIZATION_BY_NAME"], scope="session")
+    depends(request, ["LAZY_INITIALIZATION_BY_NAME", "ssh_password"], scope="session")
 
     cmd = 'rm -f /root/tdb/persistent/*'
     results = SSH_TEST(cmd, user, password, ip)
