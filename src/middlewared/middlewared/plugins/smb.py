@@ -1212,20 +1212,21 @@ class SharingSMBService(SharingService):
             share = await self.query([('id', '=', id)], {'get': True})
             result = id
 
-        await self.close_share(share['name'])
-        try:
-            await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
-        except Exception:
-            self.logger.debug('Failed to delete share ACL for [%s].', share['name'], exc_info=True)
+        share_list = await self.middleware.call('sharing.smb.reg_listshares')
+        if share['name'] in share_list:
+            await self.close_share(share['name'])
+            try:
+                await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
+            except Exception:
+                self.logger.debug('Failed to delete share ACL for [%s].', share['name'], exc_info=True)
 
-        try:
-            await self.middleware.call('sharing.smb.reg_delshare',
-                                       share['name'] if not share['home'] else 'homes')
-        except MatchNotFound:
-            pass
-
-        except Exception:
-            self.logger.warn('Failed to remove registry entry for [%s].', share['name'], exc_info=True)
+            try:
+                await self.middleware.call('sharing.smb.reg_delshare',
+                                           share['name'] if not share['home'] else 'homes')
+            except MatchNotFound:
+                pass
+            except Exception:
+                self.logger.warn('Failed to remove registry entry for [%s].', share['name'], exc_info=True)
 
         if share['timemachine']:
             await self.middleware.call('service.restart', 'mdns')
