@@ -3,7 +3,7 @@ import os
 import re
 import sysctl
 
-from .rrd_utils import RRDBase
+from .rrd_utils import RRDBase, RRD_BASE_DIR_PATH
 
 
 RE_DISK = re.compile(r'^[a-z]+[0-9]+$')
@@ -213,7 +213,10 @@ class UPSBase(object):
     plugin = 'nut'
 
     def get_identifiers(self):
-        ups_identifier = self.middleware.call_sync('ups.config')['identifier']
+        ups_config = self.middleware.call_sync('ups.config')
+        ups_identifier = ups_config['identifier']
+        if ups_config['mode'] == 'SLAVE':
+            self._base_path = os.path.join(RRD_BASE_DIR_PATH, ups_config['remotehost'])
 
         if all(os.path.exists(os.path.join(self._base_path, f'{self.plugin}-{ups_identifier}', f'{_type}.rrd'))
                for _type, dsname, transform, in self.rrd_types):
