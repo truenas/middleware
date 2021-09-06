@@ -60,7 +60,9 @@ class VMService(Service, LibvirtConnectionMixin):
             if vm_id.isdigit() and emit_type != 'REMOVED' and dom.name() in vms:
                 vm = vms[dom.name()]
                 vm['status']['state'] = state
-                self.middleware.send_event('vm.query', emit_type, id=int(vm_id), fields=vm)
+                self.middleware.send_event(
+                    'vm.query', emit_type, id=int(vm_id), fields=vm, state=vm_state_mapping.get(event, 'UNKNOWN')
+                )
             else:
                 self.middleware.logger.debug('Received libvirtd event with unknown domain name %s', dom.name())
 
