@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.schema import accepts, Bool, Dict, Int, returns
 from middlewared.service import CallError, item_method, job, Service
 
@@ -102,3 +104,15 @@ class VMService(Service, VMSupervisorMixin):
         self._check_setup_connection()
         vm = self.middleware.call_sync('vm.get_instance', id)
         self._restart(vm['name'])
+
+
+async def _event_vms(middleware, event_type, args):
+    vm = await middleware.call('vm.query', [['id', '=', args['id']]])
+    if not vm or vm[0]['status']['state'] != 'STOPPED' or args['state'] != 'SHUTOFF':
+        return
+
+    asyncio.ensure_future(middleware.call('vm.teardown_guest_vmemory', args['id']))
+
+
+async def setup(middleware):
+    middleware.event_subscribe('vm.query', _event_vms)
