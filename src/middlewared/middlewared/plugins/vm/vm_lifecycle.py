@@ -78,8 +78,6 @@ class VMService(Service, VMSupervisorMixin):
         if options['force_after_timeout'] and self.middleware.call_sync('vm.status', id)['state'] == 'RUNNING':
             self._poweroff(vm_data['name'])
 
-        self.middleware.call_sync('vm.teardown_guest_vmemory', id)
-
     @item_method
     @accepts(Int('id'))
     @returns()
@@ -91,7 +89,6 @@ class VMService(Service, VMSupervisorMixin):
 
         vm_data = self.middleware.call_sync('vm.get_instance', id)
         self._poweroff(vm_data['name'])
-        self.middleware.call_sync('vm.teardown_guest_vmemory', id)
 
     @item_method
     @accepts(Int('id'))
@@ -103,7 +100,12 @@ class VMService(Service, VMSupervisorMixin):
         """
         self._check_setup_connection()
         vm = self.middleware.call_sync('vm.get_instance', id)
-        self._restart(vm['name'])
+        stop_job = self.middleware.call_sync('vm.stop', id, {'force_after_timeout': True})
+        stop_job.wait_sync()
+        if stop_job.error:
+            raise CallError(f'Failed to stop {vm["name"]!r} vm: {stop_job.error}')
+
+        self.start(id, {'overcommit': True})
 
 
 async def _event_vms(middleware, event_type, args):

@@ -102,7 +102,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
 
     def __getattribute__(self, item):
         retrieved_item = object.__getattribute__(self, item)
-        if callable(retrieved_item) and item in ('start', 'stop', 'restart', 'poweroff', 'undefine_domain', 'status'):
+        if callable(retrieved_item) and item in ('start', 'stop', 'poweroff', 'undefine_domain', 'status'):
             if not getattr(self, 'domain', None):
                 raise RuntimeError('Domain attribute not defined, please re-instantiate the VM class')
 
@@ -219,17 +219,6 @@ class VMSupervisorBase(LibvirtConnectionMixin):
         while shutdown_timeout > 0 and self.status()['state'] == 'RUNNING':
             shutdown_timeout -= 5
             time.sleep(5)
-
-    def restart(self, vm_data=None, shutdown_timeout=None):
-        self.stop(shutdown_timeout)
-
-        # We don't wait anymore because during stop we have already waited for the VM to shutdown cleanly
-        if self.status()['state'] == 'RUNNING':
-            # In case domain stopped between this time
-            with contextlib.suppress(libvirt.libvirtError):
-                self.poweroff()
-
-        self.start(vm_data)
 
     def poweroff(self):
         self._before_stopping_checks()
