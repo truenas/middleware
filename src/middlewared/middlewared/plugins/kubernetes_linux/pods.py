@@ -20,10 +20,15 @@ class KubernetesPodService(CRUDService):
     @filterable
     async def query(self, filters, options):
         options = options or {}
-        label_selector = options.get('extra', {}).get('label_selector')
+        extra = options.get('extra', {})
+        label_selector = extra.get('label_selector')
         kwargs = {k: v for k, v in [('label_selector', label_selector)] if v}
+        force_all_pods = extra.get('retrieve_all_pods')
         async with api_client() as (api, context):
-            pods = [d.to_dict() for d in (await context['core_api'].list_pod_for_all_namespaces(**kwargs)).items]
+            pods = [
+                d.to_dict() for d in (await context['core_api'].list_pod_for_all_namespaces(**kwargs)).items
+                if force_all_pods or not any(o.kind == 'DaemonSet' for o in d.metadata.owner_references)
+            ]
             if options['extra'].get('events'):
                 events = await self.middleware.call(
                     'kubernetes.get_events_of_resource_type', 'Pod', [p['metadata']['uid'] for p in pods]
