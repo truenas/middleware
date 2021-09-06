@@ -94,7 +94,7 @@ class KubernetesGPUService(Service):
             return {}
 
         return {
-            k: v for k, v in node_config['status']['capacity'].items()
+            k: v for k, v in node_config['status']['allocatable'].items()
             if k.endswith('/gpu') or k.startswith('gpu.intel')
         }
 
