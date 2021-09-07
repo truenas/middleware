@@ -144,9 +144,12 @@ class KubernetesService(Service):
         required_datasets = set(config['dataset']) | set(
             os.path.join(config['dataset'], ds) for ds in ('k3s', 'docker', 'releases')
         )
-        diff = {
-            d['id'] for d in await self.middleware.call('zfs.dataset.query', [['id', 'in', list(k8s_datasets)]])
-        } ^ k8s_datasets
+        existing_datasets = {
+            d['id']: d for d in await self.middleware.call(
+                'zfs.dataset.query', [['id', 'in', list(k8s_datasets)]], {'extra': {'properties': []}}
+            )
+        }
+        diff = set(existing_datasets) ^ k8s_datasets
         fatal_diff = diff.intersection(required_datasets)
         if fatal_diff:
             raise CallError(f'Missing "{", ".join(fatal_diff)}" dataset(s) required for starting kubernetes.')
