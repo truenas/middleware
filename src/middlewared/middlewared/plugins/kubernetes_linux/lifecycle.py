@@ -135,6 +135,15 @@ class KubernetesService(Service):
         await self.middleware.call('k8s.cni.add_routes_to_kube_router_table')
 
     @private
+    def k8s_props_default(self):
+        return {
+            'exec': 'on',
+            'setuid': 'on',
+            'casesensitivity': 'sensitive',
+            'acltype': 'posix',
+        }
+
+    @private
     async def validate_k8s_fs_setup(self):
         config = await self.middleware.call('kubernetes.config')
         if not await self.middleware.call('pool.query', [['name', '=', config['pool']]]):
@@ -154,8 +163,7 @@ class KubernetesService(Service):
         if fatal_diff:
             raise CallError(f'Missing "{", ".join(fatal_diff)}" dataset(s) required for starting kubernetes.')
 
-        if diff:
-            await self.create_update_k8s_datasets(config['dataset'])
+        await self.create_update_k8s_datasets(config['dataset'])
 
         locked_datasets = [
             d['id'] for d in filter(
@@ -229,15 +237,19 @@ class KubernetesService(Service):
 
     @private
     async def create_update_k8s_datasets(self, k8s_ds):
-        for dataset in await self.kubernetes_datasets(k8s_ds):
-            if not await self.middleware.call('zfs.dataset.query', [['id', '=', dataset]]):
-                test_path = os.path.join('/mnt', dataset)
+        for dataset_name in await self.kubernetes_datasets(k8s_ds):
+            if not await self.middleware.call('zfs.dataset.query', [['id', '=', dataset_name]]):
+                test_path = os.path.join('/mnt', dataset_name)
                 if os.path.exists(test_path):
                     await self.middleware.run_in_thread(
                         shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}',
                     )
-                await self.middleware.call('zfs.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
-                await self.middleware.call('zfs.dataset.mount', dataset)
+                await self.middleware.call(
+                    'zfs.dataset.create', {
+                        'name': dataset_name, 'type': 'FILESYSTEM', 'properties': self.k8s_props_default()
+                    }
+                )
+                await self.middleware.call('zfs.dataset.mount', dataset_name)
 
     @private
     async def kubernetes_datasets(self, k8s_ds):
