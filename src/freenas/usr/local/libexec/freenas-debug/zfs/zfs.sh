@@ -30,6 +30,36 @@
 zfs_opt() { echo z; }
 zfs_help() { echo "Dump ZFS Configuration"; }
 zfs_directory() { echo "ZFS"; }
+zfs_getacl()
+{
+	local ds="${1}"
+	local mp
+	local mounted
+
+	mounted=$(zfs get -H -o value mounted "${ds}")
+	if [ "${mounted}" == "-" ] || [ "${mounted}" == "no" ]; then
+		return 0
+	fi
+
+	mp=$(zfs get -H -o value mountpoint "${ds}")
+	echo "Mountpoint ACL: ${ds}"
+	if [ "${mp}" = "legacy" ] || [ "${mp}" = "-" ]; then
+		return 0
+	fi
+
+	if is_linux; then
+		acltype=$(midclt call filesystem.path_get_acltype "${mp}" | tr -d '\n')
+		if [ ${acltype} = "NFS4" ]; then
+			nfs4xdr_getfacl "${mp}"
+		else
+			getfacl -n "${mp}"
+		fi
+	else
+		getfacl "${mp}"
+	fi
+	return 0
+}
+
 zfs_func()
 {
 	section_header "zfs periodic snapshot"
@@ -95,20 +125,7 @@ zfs_func()
 	do
 		section_header "${s}"
 		zfs get all "${s}"
-		echo "Mountpoint ACL:"
-		mp=$(zfs get -H -o value mountpoint "${s}")
-		if [ "${mp}" != "legacy" ]; then
-			if is_linux; then
-				acltype=$(midclt call filesystem.getacl "${mp}" true | jq -r '.acltype')
-				if [ ${acltype} = "NFS4" ]; then
-					nfs4xdr_getfacl "${mp}"
-				else
-					getfacl -n "${mp}"
-				fi
-			else
-				getfacl "${mp}"
-			fi
-		fi
+		zfs_getacl "${s}"
 		section_footer
 	done
 	section_footer
