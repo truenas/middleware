@@ -156,7 +156,7 @@ class KubernetesService(Service):
         existing_datasets = {
             d['id']: d for d in await self.middleware.call(
                 'zfs.dataset.query', [['id', 'in', list(k8s_datasets)]], {
-                    'extra': {'properties': [], 'retrieve_children': False}
+                    'extra': {'retrieve_properties': False, 'retrieve_children': False}
                 }
             )
         }
@@ -207,7 +207,11 @@ class KubernetesService(Service):
                 config[k] == on_disk_config.get(k) for k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
             )
 
-        if clean_start and self.middleware.call_sync('zfs.dataset.query', [['id', '=', config['dataset']]]):
+        if clean_start and self.middleware.call_sync(
+            'zfs.dataset.query', [['id', '=', config['dataset']]], {
+                'extra': {'retrieve_children': False, 'retrieve_properties': False}
+            }
+        ):
             self.middleware.call_sync('zfs.dataset.delete', config['dataset'], {'force': True, 'recursive': True})
 
         self.middleware.call_sync('kubernetes.setup_pool')
