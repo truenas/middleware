@@ -137,10 +137,10 @@ class KubernetesService(Service):
     @private
     def k8s_props_default(self):
         return {
+            'acltype': 'posix',
             'exec': 'on',
             'setuid': 'on',
             'casesensitivity': 'sensitive',
-            'acltype': 'posix',
         }
 
     @private
@@ -155,7 +155,9 @@ class KubernetesService(Service):
         )
         existing_datasets = {
             d['id']: d for d in await self.middleware.call(
-                'zfs.dataset.query', [['id', 'in', list(k8s_datasets)]], {'extra': {'properties': []}}
+                'zfs.dataset.query', [['id', 'in', list(k8s_datasets)]], {
+                    'extra': {'properties': [], 'retrieve_children': False}
+                }
             )
         }
         diff = set(existing_datasets) ^ k8s_datasets
@@ -237,8 +239,18 @@ class KubernetesService(Service):
 
     @private
     async def create_update_k8s_datasets(self, k8s_ds):
+        create_props = self.k8s_props_default()
+        update_props = {k: v for k, v in create_props.items() if k not in ('casesensitivity',)}
         for dataset_name in await self.kubernetes_datasets(k8s_ds):
-            if not await self.middleware.call('zfs.dataset.query', [['id', '=', dataset_name]]):
+            dataset = await self.middleware.call(
+                'zfs.dataset.query', [['id', '=', dataset_name]], {
+                    'extra': {
+                        'properties': list(update_props),
+                        'retrieve_children': False,
+                    }
+                }
+            )
+            if not dataset:
                 test_path = os.path.join('/mnt', dataset_name)
                 if os.path.exists(test_path):
                     await self.middleware.run_in_thread(
@@ -246,10 +258,16 @@ class KubernetesService(Service):
                     )
                 await self.middleware.call(
                     'zfs.dataset.create', {
-                        'name': dataset_name, 'type': 'FILESYSTEM', 'properties': self.k8s_props_default()
+                        'name': dataset_name, 'type': 'FILESYSTEM', 'properties': create_props,
                     }
                 )
                 await self.middleware.call('zfs.dataset.mount', dataset_name)
+            elif any(val['value'] != update_props[name] for name, val in dataset[0]['properties'].items()):
+                await self.middleware.call(
+                    'zfs.dataset.update', dataset_name, {
+                        'properties': {k: {'value': v} for k, v in update_props.items()}
+                    }
+                )
 
     @private
     async def kubernetes_datasets(self, k8s_ds):
