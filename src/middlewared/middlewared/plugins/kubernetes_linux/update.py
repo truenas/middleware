@@ -88,7 +88,11 @@ class KubernetesService(ConfigService):
                     'A pool must have been configured previously for ix-application dataset migration.'
                 )
             else:
-                if await self.middleware.call('zfs.dataset.query', [['id', '=', applications_ds_name(data['pool'])]]):
+                if await self.middleware.call(
+                    'zfs.dataset.query', [['id', '=', applications_ds_name(data['pool'])]], {
+                        'extra': {'retrieve_children': False, 'retrieve_properties': False}
+                    }
+                ):
                     verrors.add(
                         f'{schema}.migrate_applications',
                         f'Migration of {applications_ds_name(old_data["pool"])!r} to {data["pool"]!r} not '
@@ -96,7 +100,9 @@ class KubernetesService(ConfigService):
                     )
 
                 if not await self.middleware.call(
-                    'zfs.dataset.query', [['id', '=', applications_ds_name(old_data['pool'])]]
+                    'zfs.dataset.query', [['id', '=', applications_ds_name(old_data['pool'])]], {
+                        'extra': {'retrieve_children': False, 'retrieve_properties': False}
+                    }
                 ):
                     # Edge case but handled just to be sure
                     verrors.add(
