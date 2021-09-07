@@ -321,6 +321,7 @@ class KerberosService(TDBWrapConfigService):
 
     @private
     @accepts(Dict(
+        'do_kinit',
         OROperator(
             Dict(
                 'kerberos_username_password',
@@ -643,6 +644,11 @@ class KerberosRealmService(TDBWrapCRUDService):
 
         return data
 
+    ENTRY = Patch(
+        'kerberos_realm_create', 'kerberos_realm_entry',
+        ('add', Int('id')),
+    )
+
     @accepts(
         Dict(
             'kerberos_realm_create',
@@ -735,6 +741,11 @@ class KerberosKeytabService(TDBWrapCRUDService):
         datastore_prefix = 'keytab_'
         namespace = 'kerberos.keytab'
         cli_namespace = 'directory_service.kerberos.keytab'
+
+    ENTRY = Patch(
+        'kerberos_keytab_create', 'kerberos_keytab_entry',
+        ('add', Int('id')),
+    )
 
     @accepts(
         Dict(
