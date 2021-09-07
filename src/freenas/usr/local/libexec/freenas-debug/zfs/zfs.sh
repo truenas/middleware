@@ -30,6 +30,25 @@
 zfs_opt() { echo z; }
 zfs_help() { echo "Dump ZFS Configuration"; }
 zfs_directory() { echo "ZFS"; }
+zfs_getacl()
+{
+	local ds="${1}"
+	local mp
+	local mounted
+
+	mounted=$(zfs get -H -o value mounted "${ds}")
+	if [ "${mounted}" == "-" ] || [ "${mounted}" == "no" ]; then
+		return 0
+	fi
+
+	mp=$(zfs get -H -o value mountpoint "${ds}")
+	echo "Mountpoint ACL: ${ds}"
+	if [ "${mp}" != "legacy" ] && [ "${mp}" != "-" ]; then
+		getfacl "${mp}" 2>/dev/null
+	fi
+	return 0
+}
+
 zfs_func()
 {
 	section_header "zfs periodic snapshot"
@@ -95,13 +114,7 @@ zfs_func()
 	do
 		section_header "${s}"
 		zfs get all "${s}"
-		if is_freebsd; then
-			echo "Mountpoint ACL:"
-			mp=$(zfs get -H -o value mountpoint "${s}")
-			if [ "${mp}" != "legacy" ]; then
-				getfacl "${mp}"
-			fi
-		fi
+		zfs_getacl "${s}"
 		section_footer
 	done
 	section_footer
