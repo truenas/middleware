@@ -483,7 +483,7 @@ class FilesystemService(Service, ACLBase):
             elif duplicate_who is False:
                 has_tag[who] = True
 
-            if ace['tag'] in ["USER", "GROUP"]:
+            if ace['tag'] == "GROUP":
                 if ace['default']:
                     has_def_named = True
                 else:
@@ -503,14 +503,14 @@ class FilesystemService(Service, ACLBase):
         if has_named and not has_tag['MASK']:
             verrors.add(
                 'filesystem_acl.dacl',
-                'Named (user or group) POSIX ACL entries '
+                'Named group POSIX ACL entries '
                 'require a mask entry to be present in the ACL.'
             )
 
         elif has_def_named and not has_tag['DEF_MASK']:
             verrors.add(
                 'filesystem_acl.dacl',
-                'Named default (user or group) POSIX ACL entries '
+                'Named default group POSIX ACL entries '
                 'require a default mask entry to be present in the ACL.'
             )
 
