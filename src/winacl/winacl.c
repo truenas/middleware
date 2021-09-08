@@ -606,6 +606,11 @@ set_acls(struct windows_acl_info *w)
 				else {
 					rval = set_acl(w, entry);
 				}
+				if ((rval == -1) && (errno == EOPNOTSUPP) &&
+				    (strcmp(entry->fts_accpath, ".zfs") == 0)) {
+					fts_set(tree, entry, FTS_SKIP);
+					rval = 0;
+				}
 				break;
 
 			case FTS_ERR:
