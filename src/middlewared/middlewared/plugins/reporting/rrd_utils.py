@@ -59,8 +59,14 @@ class RRDBase(object, metaclass=RRDMeta):
 
     def __init__(self, middleware):
         self.middleware = middleware
-        self._base_path = RRD_BASE_PATH
-        self.base_path = os.path.join(self._base_path, self.plugin)
+
+    @property
+    def _base_path(self):
+        return RRD_BASE_PATH
+
+    @property
+    def base_path(self):
+        return os.path.join(self._base_path, self.plugin)
 
     def __repr__(self):
         return f'<RRD:{self.plugin}>'

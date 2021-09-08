@@ -212,11 +212,16 @@ class UPSBase(object):
 
     plugin = 'nut'
 
-    def get_identifiers(self):
+    @property
+    def _base_path(self):
         ups_config = self.middleware.call_sync('ups.config')
-        ups_identifier = ups_config['identifier']
         if ups_config['mode'] == 'SLAVE':
-            self._base_path = os.path.join(RRD_BASE_DIR_PATH, ups_config['remotehost'])
+            return os.path.join(RRD_BASE_DIR_PATH, ups_config['remotehost'])
+        else:
+            return super()._base_path
+
+    def get_identifiers(self):
+        ups_identifier = self.middleware.call_sync('ups.config')['identifier']
 
         if all(os.path.exists(os.path.join(self._base_path, f'{self.plugin}-{ups_identifier}', f'{_type}.rrd'))
                for _type, dsname, transform, in self.rrd_types):
