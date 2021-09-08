@@ -565,8 +565,14 @@ class SMBService(SystemServiceService):
                         f'NetBIOS name [{new[i]}] conflicts with workgroup name.'
                     )
 
-        if new['guest'] == 'root':
-            verrors.add('smb_update.guest', '"root" is not a permitted guest account')
+        if new['guest']:
+            if new['guest'] == 'root':
+                verrors.add('smb_update.guest', '"root" is not a permitted guest account')
+
+            try:
+                await self.middleware.call("user.get_user_obj", {"username": new["guest"]})
+            except KeyError:
+                verrors.add('smb_update.guest', f'{new["guest"]}: user does not exist')
 
         if new.get('bindip'):
             bindip_choices = list((await self.bindip_choices()).keys())
