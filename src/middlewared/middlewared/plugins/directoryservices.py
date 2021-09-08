@@ -429,6 +429,8 @@ class DirectoryServices(Service):
         if not ldap_enabled and not ad_enabled:
             return
 
+        health_check = 'activedirectory.started' if ad_enabled else 'ldap.started'
+
         has_secrets = await self.middleware.call("directoryservices.secrets_has_domain", workgroup)
 
         if ad_enabled and not has_secrets:
@@ -469,6 +471,10 @@ class DirectoryServices(Service):
                 self.logger.warning("Failed to start kerberos after directory service "
                                     "initialization. Services dependent on kerberos may"
                                     "not work correctly.", exc_info=True)
+
+        await self.middleware.call(health_check)
+        refresh = await self.middleware.call('dscache.refresh')
+        await refresh.wait()
 
 
 def setup(middleware):
