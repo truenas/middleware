@@ -137,6 +137,7 @@ class KubernetesService(Service):
     @private
     def k8s_props_default(self):
         return {
+            'aclmode': 'discard',
             'acltype': 'posix',
             'exec': 'on',
             'setuid': 'on',
