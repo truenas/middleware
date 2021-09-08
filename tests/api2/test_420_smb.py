@@ -9,13 +9,22 @@ import sys
 import os
 from pytest_dependency import depends
 import json
+import re
+from datetime import datetime
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, cmd_test
+from functions import PUT, POST, GET, DELETE, SSH_TEST, cmd_test, send_file
 from auto_config import ip, pool_name, password, user, hostname, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+
+try:
+    Reason = 'Windows host credential is missing in config.py'
+    from config import WIN_HOST, WIN_USERNAME, WIN_PASSWORD
+    windows_host_cred = pytest.mark.skipif(False, reason=Reason)
+except ImportError:
+    windows_host_cred = pytest.mark.skipif(True, reason=Reason)
 
 MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
 dataset = f"{pool_name}/smb-cifs"
@@ -36,7 +45,6 @@ root_path_verification = {
 }
 
 
-# Create tests
 @pytest.mark.dependency(name="smb_001")
 def test_001_setting_auxilary_parameters_for_mount_smbfs(request):
     depends(request, ["shareuser"], scope="session")
@@ -400,7 +408,94 @@ def test_046_verify_testfile_is_on_recycle_bin_in_the_active_directory_share(req
     assert results.status_code == 200, results.text
 
 
-def test_047_get_smb_sharesec_id_and_set_smb_sharesec_share_acl(request):
+@windows_host_cred
+def test_047_create_a_dir_and_a_file_in_windows(request):
+    depends(request, ["service_cifs_running"], scope="session")
+    cmd1 = 'mkdir testdir'
+    results = SSH_TEST(cmd1, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
+    assert results['result'] is True, results['output']
+    cmd2 = r'echo some-text  > testdir\testfile.txt'
+    results = SSH_TEST(cmd2, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
+    assert results['result'] is True, results['output']
+    cmd3 = r'dir testdir\testfile.txt'
+    results3 = SSH_TEST(cmd3, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
+    assert results3['result'] is True, results3['output']
+    regex = re.compile(r"^.*testfile.*", re.MULTILINE)
+    data_list = regex.findall(results3['output'])[0].split()
+    global created_time, created_date
+    created_time = data_list[1]
+    created_date = data_list[0]
+
+
+@windows_host_cred
+def test_048_mount_the_smb_share_robocopy_testdir_to_the_share_windows_mount(request):
+    depends(request, ["service_cifs_running"], scope="session")
+    # sleep 61 second to make sure that
+    sleep(61)
+    script = '@echo on\n'
+    script += fr'net use X: \\{ip}\{SMB_NAME} /user:shareuser testing'
+    script += '\n'
+    script += r'robocopy testdir X:\testdir /COPY:DAT'
+    script += '\n'
+    script += r'dir X:\testdir'
+    script += '\nnet use X: /delete\n'
+    cmd_file = open('runtest.cmd', 'w')
+    cmd_file.writelines(script)
+    cmd_file.close()
+    results = send_file(
+        'runtest.cmd',
+        'runtest.cmd',
+        WIN_USERNAME,
+        WIN_PASSWORD,
+        WIN_HOST
+    )
+    assert results['result'] is True, results['output']
+    cmd_results = SSH_TEST('runtest.cmd', WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
+    assert cmd_results['result'] is True, cmd_results['output']
+    os.remove("runtest.cmd")
+    cmd = 'del runtest.cmd'
+    results = SSH_TEST(cmd, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
+    assert results['result'] is True, results['output']
+    regex = re.compile(r"^(?=.*testfile)(?!.*New).*", re.MULTILINE)
+    data_list = regex.findall(cmd_results['output'])[0].split()
+    global mounted_time, mounted_date
+    mounted_time = data_list[1]
+    mounted_date = data_list[0]
+
+
+@windows_host_cred
+def test_049_delete_the_test_dir_and_a_file_in_windows(request):
+    depends(request, ["service_cifs_running"], scope="session")
+    assert created_date == mounted_date
+    assert created_time == mounted_time
+
+
+@windows_host_cred
+def test_050_verify_testfile_is_on_recycle_bin_in_the_active_directory_share(request):
+    depends(request, ["service_cifs_running"], scope="session")
+    """
+    The server running this test, then Windows VM and TrueNAS VM should run
+    on same timezone. If not this test will failed.
+    """
+    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile.txt')
+    assert results.status_code == 200, results.text
+    atime = datetime.fromtimestamp(results.json()['atime'])
+    mtime = datetime.fromtimestamp(results.json()['mtime'])
+    assert created_date == atime.strftime('%m/%d/%Y')
+    assert created_time == atime.strftime('%H:%M')
+    assert created_date == mtime.strftime('%m/%d/%Y')
+    assert created_time == mtime.strftime('%H:%M')
+
+
+@windows_host_cred
+def test_051_delete_the_test_dir_and_a_file_in_windows(request):
+    depends(request, ["service_cifs_running"], scope="session")
+    cmd = 'rmdir /S /Q testdir'
+    results = SSH_TEST(cmd, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
+    assert results['result'] is True, results['output']
+
+
+def test_052_get_smb_sharesec_id_and_set_smb_sharesec_share_acl(request):
     depends(request, ["service_cifs_running"], scope="session")
     global share_id, payload
     share_id = GET(f"/smb/sharesec/?share_name={SMB_NAME}").json()[0]['id']
@@ -418,7 +513,7 @@ def test_047_get_smb_sharesec_id_and_set_smb_sharesec_share_acl(request):
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_048_verify_smb_sharesec_change_for(request, ae):
+def test_053_verify_smb_sharesec_change_for(request, ae):
     depends(request, ["service_cifs_running"], scope="session")
     results = GET(f"/smb/sharesec/id/{share_id}/")
     assert results.status_code == 200, results.text
@@ -426,7 +521,7 @@ def test_048_verify_smb_sharesec_change_for(request, ae):
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-def test_049_verify_midclt_call_smb_getparm_access_based_share_enum_is_false(request):
+def test_054_verify_midclt_call_smb_getparm_access_based_share_enum_is_false(request):
     depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
@@ -434,14 +529,14 @@ def test_049_verify_midclt_call_smb_getparm_access_based_share_enum_is_false(req
     assert results['output'].strip() == "False", results['output']
 
 
-def test_050_delete_cifs_share(request):
+def test_055_delete_cifs_share(request):
     depends(request, ["service_cifs_running"], scope="session")
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.dependency(name="SID_CHANGED")
-def test_051_netbios_name_change_check_sid(request):
+def test_056_netbios_name_change_check_sid(request):
     """
     This test changes the netbios name of the server and then
     verifies that this results in the server's domain SID changing.
@@ -478,7 +573,7 @@ def test_051_netbios_name_change_check_sid(request):
 
 
 @pytest.mark.dependency(name="SID_TEST_GROUP")
-def test_052_create_new_smb_group_for_sid_test(request):
+def test_057_create_new_smb_group_for_sid_test(request):
     """
     Create testgroup and verify that groupmap entry generated
     with new SID.
@@ -510,7 +605,7 @@ def test_052_create_new_smb_group_for_sid_test(request):
     assert domain_sid == new_sid, groupmaps['local'].values()
 
 
-def test_053_change_netbios_name_and_check_groupmap(request):
+def test_058_change_netbios_name_and_check_groupmap(request):
     """
     Verify that changes to netbios name result in groupmap sid
     changes.
@@ -539,26 +634,26 @@ def test_053_change_netbios_name_and_check_groupmap(request):
     assert domain_sid != new_sid, groupmaps['local'].values()
 
 
-def test_054_delete_smb_group(request):
+def test_059_delete_smb_group(request):
     depends(request, ["SID_TEST_GROUP"])
     results = DELETE(f"/group/id/{group_id}/")
     assert results.status_code == 200, results.text
 
 
 # Now stop the service
-def test_055_disable_cifs_service_at_boot(request):
+def test_060_disable_cifs_service_at_boot(request):
     depends(request, ["service_cifs_running"], scope="session")
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_056_checking_to_see_if_clif_service_is_enabled_at_boot(request):
+def test_061_checking_to_see_if_clif_service_is_enabled_at_boot(request):
     depends(request, ["service_cifs_running"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_057_stopping_cifs_service(request):
+def test_062_stopping_cifs_service(request):
     depends(request, ["service_cifs_running"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
@@ -566,14 +661,14 @@ def test_057_stopping_cifs_service(request):
     sleep(1)
 
 
-def test_058_checking_if_cifs_is_stop(request):
+def test_063_checking_if_cifs_is_stop(request):
     depends(request, ["service_cifs_running"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset
-def test_059_destroying_smb_dataset(request):
+def test_064_destroying_smb_dataset(request):
     depends(request, ["create_dataset"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
