@@ -111,7 +111,7 @@ def send_file(file, destination, username, passwrd, host):
         "-o",
         "VerifyHostKeyDNS=no",
         file,
-        f"{user}@{host}:{destination}"
+        f"{username}@{host}:{destination}"
     ]
     process = run(cmd, stdout=PIPE, universal_newlines=True)
     output = process.stdout
@@ -131,7 +131,7 @@ def get_file(file, destination, username, passwrd, host):
         "UserKnownHostsFile=/dev/null",
         "-o",
         "VerifyHostKeyDNS=no",
-        f"{user}@{host}:{file}",
+        f"{username}@{host}:{file}",
         destination
     ]
     process = run(cmd, stdout=PIPE, universal_newlines=True)
