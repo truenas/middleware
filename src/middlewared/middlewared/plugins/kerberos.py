@@ -780,7 +780,6 @@ class KerberosKeytabService(TDBWrapCRUDService):
         Patch(
             'kerberos_keytab_create',
             'kerberos_keytab_update',
-            ('attr', {'update': True})
         )
     )
     async def do_update(self, id, data):
@@ -826,7 +825,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
         'keytab_data',
         Str('name', required=True),
     ))
-    @returns(Ref('kerberos_keytab_create'))
+    @returns(Ref('kerberos_keytab_entry'))
     @job(lock='upload_keytab', pipes=['input'], check_pipes=True)
     async def upload_keytab(self, job, data):
         """
