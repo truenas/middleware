@@ -912,6 +912,8 @@ class SharingSMBService(SharingService):
         datastore_extend = 'sharing.smb.extend'
         cli_namespace = 'sharing.smb'
 
+    LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.value[0])
+
     @private
     async def sharing_task_datasets(self, data):
         if data[self.path_field]:
