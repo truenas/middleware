@@ -181,7 +181,7 @@ def get_os_version(ip):
     return result
 
 
-def init_cluster():
+def init():
     with ThreadPoolExecutor() as exc:
         ips = [v for k, v in CLUSTER_INFO.items() if k.startswith('NODE_')]
         errors = []
