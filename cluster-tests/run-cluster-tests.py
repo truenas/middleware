@@ -49,18 +49,16 @@ def setup_api_results_dir():
 
 def setup_pytest_command(args, results_path):
     cmd = [f'pytest-{sys.version_info.major}', '-v', '-rfesp', f'--junit-xml={results_path}']
-    if not args.test_file and not args.test_dir:
-        cmd.append('tests')
-    elif args.test_file:
-        if not args.test_file.startswith('tests'):
-            args.test_file = pathlib.Path('tests').joinpath(args.test_file).as_posix()
+
+    # pytest is clever enough to search the "tests" subdirectory
+    # and look at the argument that is passed and figure out if
+    # it's a file or a directory so we don't need to do anything
+    # fancy other than pass it on
+    if args.test_file:
         cmd.append(args.test_file)
     elif args.test_dir:
-        if not args.test_dir.startswith('tests'):
-            args.test_dir = pathlib.Path('tests').joinpath(args.test_dir).as_posix()
         cmd.append(args.test_dir)
 
-    print(cmd)
     return cmd
 
 
