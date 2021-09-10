@@ -363,7 +363,7 @@ class Enclosures(object):
             if (
                 product_name.startswith("TRUENAS-") and
                 "-MINI-" not in product_name and
-                product_name not in ["TRUENAS-R20", "TRUENAS-R20A"]
+                product_name not in ["TRUENAS-R20", "TRUENAS-R20A", "TRUENAS-R20B"]
             ):
                 blacklist.append("AHCI SGPIO Enclosure 2.00")
 
@@ -491,7 +491,7 @@ class Enclosure(object):
             self.model = self.product_name.replace("TRUENAS-", "")
             self.controller = True
         elif self.encname == "AHCI SGPIO Enclosure 2.00":
-            if self.product_name in ["TRUENAS-R20", "TRUENAS-R20A"]:
+            if self.product_name in ["TRUENAS-R20", "TRUENAS-R20A", "TRUENAS-R20B"]:
                 self.model = self.product_name.replace("TRUENAS-", "")
                 self.controller = True
             elif MINI_REGEX.match(self.product_name):
