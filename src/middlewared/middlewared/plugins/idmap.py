@@ -217,11 +217,15 @@ class IdmapDomainService(CRUDService):
         return (low_range, high_range)
 
     @private
-    async def remove_winbind_idmap_tdb(self):
+    async def snapshot_samba4_dataset(self):
         sysdataset = (await self.middleware.call('systemdataset.config'))['basename']
         ts = str(datetime.datetime.now(datetime.timezone.utc).timestamp())[:10]
         await self.middleware.call('zfs.snapshot.create', {'dataset': f'{sysdataset}/samba4',
                                                            'name': f'wbc-{ts}'})
+
+    @private
+    async def remove_winbind_idmap_tdb(self):
+        await self.snapshot_samba4_dataset()
         try:
             os.remove('/var/db/system/samba4/winbindd_idmap.tdb')
 

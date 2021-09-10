@@ -353,7 +353,8 @@ class UserService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
-            await self.middleware.call('smb.synchronize_passdb')
+            gm_job = await self.middleware.call('smb.synchronize_passdb')
+            await gm_job.wait()
 
         if os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -543,7 +544,8 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
         if user['smb'] and must_change_pdb_entry:
-            await self.middleware.call('smb.synchronize_passdb')
+            gm_job = await self.middleware.call('smb.synchronize_passdb')
+            await gm_job.wait()
 
         return pk
 
@@ -1080,7 +1082,6 @@ class GroupService(CRUDService):
     @private
     async def create_internal(self, data, reload_users=True):
 
-        allow_duplicate_gid = data['allow_duplicate_gid']
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_create')
         verrors.check()
@@ -1103,18 +1104,8 @@ class GroupService(CRUDService):
             await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
-            try:
-                await self.middleware.call('smb.groupmap_add', data['name'])
-            except Exception:
-                """
-                Samba's group mapping database does not allow duplicate gids.
-                Unfortunately, we don't get a useful error message at -d 0.
-                """
-                if not allow_duplicate_gid:
-                    raise
-                else:
-                    self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
-                                      data['name'], data['gid'])
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
 
         return pk
 
@@ -1132,7 +1123,7 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        add_groupmap = False
+        groupmap_changed = False
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
@@ -1144,21 +1135,15 @@ class GroupService(CRUDService):
         new_smb = group['smb']
 
         if 'name' in data and data['name'] != group['group']:
-            if g := (await self.middleware.call('smb.groupmap_list')).get(group['group']):
-                await self.middleware.call(
-                    'smb.groupmap_delete',
-                    {"sid": g['SID']}
-                )
-
             group['group'] = group.pop('name')
             if new_smb:
-                add_groupmap = True
+                groupmap_changed = True
         else:
             group.pop('name', None)
             if new_smb and not old_smb:
-                add_groupmap = True
+                groupmap_changed = True
             elif old_smb and not new_smb:
-                await self.middleware.call('smb.groupmap_delete', {"ntgroup": group['group']})
+                groupmap_changed = True
 
         group = await self.group_compress(group)
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
@@ -1175,12 +1160,9 @@ class GroupService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        """
-        "net groupmap" checks for existence of group prior to creating new groupmaps. This section
-        must occur after user reload.
-        """
-        if add_groupmap:
-            await self.middleware.call('smb.groupmap_add', group['group'])
+        if groupmap_changed:
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
 
         return pk
 
@@ -1193,14 +1175,12 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        if group['smb'] and (g := (await self.middleware.call('smb.groupmap_list')).get(group['group'])):
-            await self.middleware.call('smb.groupmap_delete', {"sid": g['SID']})
-
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 
         nogroup = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', 'nogroup')],
                                              {'prefix': 'bsdgrp_', 'get': True})
+
         for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])],
                                             {'prefix': 'bsdusr_'}):
             if options['delete_users']:
@@ -1210,6 +1190,10 @@ class GroupService(CRUDService):
                                            {'prefix': 'bsdusr_'})
 
         await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
+
+        if group['smb']:
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
 
         await self.middleware.call('service.reload', 'user')
 

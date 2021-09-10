@@ -66,6 +66,13 @@ class SMBBuiltin(enum.Enum):
     def sids():
         return [x.value[1] for x in SMBBuiltin]
 
+    def by_rid(rid):
+        for x in SMBBuiltin:
+            if x.value[1].endswith(str(rid)):
+                return x
+
+        return None
+
 
 class SMBPath(enum.Enum):
     GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb4.conf', 0o755, False)
