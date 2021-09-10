@@ -155,7 +155,6 @@ class SMBService(Service):
 
         # Users should only have local users and domain users
         users = await self.groupmap_listmem("S-1-5-32-545")
-        expected = [groupmap['local_builtins'][545]['sid']]
         if domain_sid:
             expected.append(f'{domain_sid}-513')
 
@@ -254,7 +253,7 @@ class SMBService(Service):
 
             if g['sid'].startswith("S-1-5-32"):
                 rv['builtins'][gid] = g
-            elif g['sid'].startswith(localsid) and g['gid'] in range(544, 547):
+            elif g['sid'].startswith(localsid) and g['gid'] in (544, 546):
                 rv['local_builtins'][gid] = g
             elif g['sid'].startswith(localsid):
                 rv['local'][gid] = g
@@ -281,7 +280,7 @@ class SMBService(Service):
         low_range = int(idmap_range.split("-")[0].strip())
         sid_lookup = {x["sid"]: x for x in groupmap.values()}
 
-        for b in SMBBuiltin:
+        for b in (SMBBuiltin.ADMINISTRATORS, SMBBuiltin.GUESTS):
             sid = b.value[1]
             rid = int(sid.split('-')[-1])
             gid = low_range + (rid - 544)
@@ -360,6 +359,8 @@ class SMBService(Service):
 
         groups = await self.middleware.call('group.query', [('builtin', '=', False), ('smb', '=', True)])
         g_dict = {x["gid"]: x for x in groups}
+        g_dict[545] = await self.middleware.call('group.query', [('gid', '=', 545)], {'get': True})
+
         intersect = set(g_dict.keys()).intersection(set(groupmap["local"].keys()))
 
         set_to_add = set(g_dict.keys()) - set(groupmap["local"].keys())
@@ -386,7 +387,7 @@ class SMBService(Service):
         for sid in groupmap['invalid']:
             to_del.append({"sid": sid})
 
-        for gid in range(544, 547):
+        for gid in (544, 546):
             if not groupmap["local_builtins"].get(gid):
                 builtin = SMBBuiltin.by_rid(gid)
                 rid = 512 + (gid - 544)
