@@ -46,6 +46,7 @@ X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
 ES24F_REGEX = re.compile(r"(ECStream|iX) 2024J([ps])")
 MINI_REGEX = re.compile(r"(TRUE|FREE)NAS-MINI")
+R20_VARIANT = ["TRUENAS-R20", "TRUENAS-R20A", "TRUENAS-R20B"]
 
 
 class EnclosureLabelModel(sa.Model):
@@ -381,7 +382,7 @@ class Enclosures(object):
             "VirtualSES",
         ]
         if product is not None and product.startswith("TRUENAS-"):
-            if "-MINI-" not in product and product not in ["TRUENAS-R20", "TRUENAS-R20A"]:
+            if "-MINI-" not in product and product not in R20_VARIANT:
                 blacklist.append("AHCI SGPIO Enclosure 2.00")
 
         self.__enclosures = []
@@ -555,7 +556,7 @@ class Enclosure(object):
             self.model = self.product.replace("TRUENAS-", "")
             self.controller = True
         elif self.encname == "AHCI SGPIO Enclosure 2.00":
-            if self.product in ["TRUENAS-R20", "TRUENAS-R20A"]:
+            if self.product in R20_VARIANT:
                 self.model = self.product.replace("TRUENAS-", "")
                 self.controller = True
             elif MINI_REGEX.match(self.product):
