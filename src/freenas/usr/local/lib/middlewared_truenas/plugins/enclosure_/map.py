@@ -268,7 +268,8 @@ MAPPINGS = [
             MappingSlot(0, 15, False),
         ]),
     ]),
-    ProductMapping(re.compile(r"TRUENAS-R20$"), [
+    # R20 and R20B share chassis and mapping
+    ProductMapping(re.compile(r"TRUENAS-R20B?$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(2, 0, False),
             MappingSlot(2, 1, False),
