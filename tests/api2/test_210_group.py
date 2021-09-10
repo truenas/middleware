@@ -278,7 +278,6 @@ def test_27_full_groupmap_check(request):
 
     for i in [
         ('90000001', 'S-1-5-32-544'),
-        ('90000002', 'S-1-5-32-545'),
         ('90000003', 'S-1-5-32-546'),
     ]:
         gid, sid = i
@@ -295,12 +294,6 @@ def test_27_full_groupmap_check(request):
     assert results['result'], str(results['output'])
     ba = json.loads(results['output'].strip())
     assert gm['local_builtins']['544']['sid'] in ba, str(ba)
-
-    cmd = f"midclt call smb.groupmap_listmem S-1-5-32-545"
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'], str(results['output'])
-    bu = json.loads(results['output'].strip())
-    assert gm['local_builtins']['545']['sid'] in bu, str(bu)
 
     cmd = f"midclt call smb.groupmap_listmem S-1-5-32-546"
     results = SSH_TEST(cmd, user, password, ip)
