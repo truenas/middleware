@@ -12,6 +12,14 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
+HW_MODELS = (
+    'X10', 'X20',
+    'M30', 'M40', 'M50', 'M60',
+    'R10', 'R20', 'R20A', 'R20B', 'R40', 'R50',
+    'Z20', 'Z30', 'Z35', 'Z50',
+)
+
+
 class LicenseAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
@@ -101,8 +109,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         ) % license['model']
                     ))
             else:
-                if hardware[0] in ('M40', 'M50', 'M60', 'R10', 'R20', 'R40', 'R50', 'X10', 'X20', 'Z20', 'Z30', 'Z35',
-                                   'Z50'):
+                if hardware[0] in HW_MODELS:
                     if hardware[0] != license['model']:
                         alerts.append(Alert(
                             LicenseAlertClass,
