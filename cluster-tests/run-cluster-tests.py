@@ -4,6 +4,7 @@ import pathlib
 import subprocess
 
 import init_cluster
+import init_gluster
 
 
 def setup_args():
@@ -13,6 +14,12 @@ def setup_args():
         action='store_true',
         default=False,
         help='Setup the cluster for API testing.'
+    )
+    parser.add_argument(
+        '--initialize-gluster',
+        action='store_true',
+        default=False,
+        help='Setup the gluster cluster'
     )
 
     group = parser.add_mutually_exclusive_group()
@@ -67,6 +74,10 @@ def main():
     if args.initialize_cluster:
         print('Initializing cluster')
         init_cluster.init()
+
+    if args.initialize_gluster:
+        print('Setting up gluster')
+        init_gluster.init()
 
     print('Setting up API results directory')
     results_path = setup_api_results_dir()
