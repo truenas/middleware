@@ -452,11 +452,14 @@ class LDAP_DN(Str):
         if value is None:
             return
 
+        verrors = ValidationErrors()
+
         try:
             dn.str2dn(value)
-        except DECODING_ERROR:
-            raise ValueError('Invalid LDAP DN specified')
+        except (TypeError, DECODING_ERROR):
+            verrors.add(self.name, "Invalid LDAP DN specified.")
 
+        verrors.check()
         return super().validate(value)
 
 

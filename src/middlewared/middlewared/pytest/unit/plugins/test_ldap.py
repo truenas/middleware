@@ -1,6 +1,7 @@
 import pytest
 from mock import Mock
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
     accepts, LDAP_DN
 )
@@ -8,7 +9,8 @@ from middlewared.schema import (
 
 @pytest.mark.parametrize('value,expected', [
     ('o=5def63d2b12d4332c706a57f,dc=jumpcloud,dc=com', 'o=5def63d2b12d4332c706a57f,dc=jumpcloud,dc=com'),
-    ('canary', ValueError),
+    ('canary', ValidationErrors),
+    (420, ValidationErrors),
 ])
 def test__schema_ldapdn(value, expected):
     @accepts(LDAP_DN('data', null=True))
@@ -17,7 +19,7 @@ def test__schema_ldapdn(value, expected):
 
     self = Mock()
 
-    if expected is ValueError:
+    if expected is ValidationErrors:
         with pytest.raises(expected):
             ldapdnnotnull(self, value)
     else:
