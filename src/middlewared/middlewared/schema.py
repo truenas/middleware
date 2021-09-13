@@ -5,7 +5,7 @@ import textwrap
 import warnings
 from collections import defaultdict
 from datetime import datetime, time, timezone
-from ldap import dn, DECODING_ERROR
+from ldap import dn
 import errno
 import inspect
 import ipaddress
@@ -454,9 +454,7 @@ class LDAP_DN(Str):
 
         verrors = ValidationErrors()
 
-        try:
-            dn.str2dn(value)
-        except (TypeError, DECODING_ERROR):
+        if not dn.is_dn(value):
             verrors.add(self.name, "Invalid LDAP DN specified.")
 
         verrors.check()
