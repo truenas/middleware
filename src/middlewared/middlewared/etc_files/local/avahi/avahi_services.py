@@ -112,7 +112,10 @@ class mDNSService(object):
             ))
 
             if smb_is_running:
-                smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
+                smb_shares = self.middleware.call_sync(
+                    'sharing.smb.query',
+                    [('timemachine', '=', True), ('enabled', '=', True), ('locked', '=', False)]
+                )
             else:
                 smb_shares = []
 
