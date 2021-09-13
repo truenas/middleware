@@ -1077,6 +1077,7 @@ class SharingSMBService(SharingService):
         await self.clean(new, 'sharingsmb_update', verrors, id=id)
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
+        check_mdns = False
 
         verrors.check()
 
@@ -1179,14 +1180,19 @@ class SharingSMBService(SharingService):
             Since the old share was not in our running configuration, we need
             to add it.
             """
+            check_mdns = True
             await self.middleware.call('sharing.smb.reg_addshare', new)
 
         elif not old_is_locked and new_is_locked:
             try:
                 await self.middleware.call('sharing.smb.reg_delshare', oldname)
+                check_mdns = True
             except Exception:
                 self.logger.warning('Failed to remove locked share [%s]',
                                     old['name'], exc_info=True)
+
+        if new['enabled'] != old['enabled']:
+            check_mdns = True
 
         if do_global_reload:
             await self.middleware.call('smb.initialize_globals')
@@ -1194,7 +1200,7 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
-        if old['timemachine'] != new['timemachine']:
+        if check_mdns or old['timemachine'] != new['timemachine']:
             await self.middleware.call('service.restart', 'mdns')
 
         return await self.get_instance(id)
