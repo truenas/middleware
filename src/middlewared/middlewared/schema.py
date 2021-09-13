@@ -5,6 +5,7 @@ import textwrap
 import warnings
 from collections import defaultdict
 from datetime import datetime, time, timezone
+from ldap import dn
 import errno
 import inspect
 import ipaddress
@@ -442,6 +443,21 @@ class UnixPerm(Str):
         if mode & 0o777 != mode:
             raise ValueError('Please supply a value between 000 and 777')
 
+        return super().validate(value)
+
+
+class LDAP_DN(Str):
+
+    def validate(self, value):
+        if value is None:
+            return
+
+        verrors = ValidationErrors()
+
+        if not dn.is_dn(value):
+            verrors.add(self.name, "Invalid LDAP DN specified.")
+
+        verrors.check()
         return super().validate(value)
 
 

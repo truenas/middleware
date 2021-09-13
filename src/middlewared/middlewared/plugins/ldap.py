@@ -13,7 +13,7 @@ import copy
 
 from ldap.controls import SimplePagedResultsControl
 from urllib.parse import urlparse
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref, LDAP_DN
 from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
@@ -142,10 +142,10 @@ class LDAPClient(Service):
         'ldap-configuration',
         List('uri_list', required=True),
         Str('bind_type', enum=['ANONYMOUS', 'PLAIN', 'GSSAPI', 'EXTERNAL'], required=True),
-        Str('basedn', required=True),
+        LDAP_DN('basedn', required=True),
         Dict(
             'credentials',
-            Str('binddn', default=''),
+            LDAP_DN('binddn', default=''),
             Str('bindpw', default='', private=True),
         ),
         Dict(
@@ -814,8 +814,8 @@ class LDAPService(TDBWrapConfigService):
     @accepts(Dict(
         'ldap_update',
         List('hostname', required=True),
-        Str('basedn', required=True),
-        Str('binddn'),
+        LDAP_DN('basedn', required=True),
+        LDAP_DN('binddn'),
         Str('bindpw', private=True),
         Bool('anonbind', default=False),
         Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
