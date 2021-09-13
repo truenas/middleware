@@ -1,7 +1,6 @@
 import pytest
 from mock import Mock
 
-from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
     accepts, LDAP_DN
 )
@@ -20,7 +19,7 @@ def test__schema_ldapdn(value, expected):
 
     if expected is ValueError:
         with pytest.raises(expected):
-            ldapdnnotnull(self,value)
+            ldapdnnotnull(self, value)
     else:
         assert ldapdnnotnull(self, value) == expected
 
