@@ -117,7 +117,7 @@ def setup_zpool_and_datasets(ip):
 
 def setup_network(ip):
     # the cluster nodes are assigned an IP
-    # address ipa DHCP reservations, however,
+    # address via DHCP reservations, however,
     # it's a prerequisite that the peers in
     # the cluster have static IP addresses
     result = {'ERROR': ''}
@@ -182,7 +182,8 @@ def get_os_version(ip):
 
 def init():
     with ThreadPoolExecutor() as exc:
-        ips = [v for k, v in CLUSTER_INFO.items() if k.startswith('NODE_')]
+        nodes_ip_keys = ('NODE_A_IP', 'NODE_B_IP', 'NODE_C_IP')
+        ips = [v for k, v in CLUSTER_INFO.items() if k in nodes_ip_keys]
         errors = []
 
         # First, setup the network
