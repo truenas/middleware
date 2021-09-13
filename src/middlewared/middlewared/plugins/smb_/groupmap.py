@@ -126,7 +126,7 @@ class SMBService(Service):
         if ad_state == 'HEALTHY':
             domain_info = await self.middleware.call('idmap.domain_info',
                                                      'DS_TYPE_ACTIVEDIRECTORY')
-            domain_sid = domain_info['sid']
+            domain_sid = domain_info['SID']
 
         """
         Administrators should only have local and domain admins, and a user-
@@ -269,7 +269,7 @@ class SMBService(Service):
         low_range = int(idmap_range.split("-")[0].strip())
         sid_lookup = {x["sid"]: x for x in groupmap.values()}
 
-        for b in (SMBBuiltin.ADMINISTRATORS, SMBBuiltin.GUESTS):
+        for b in (SMBBuiltin.ADMINISTRATORS, SMBBuiltin.USERS, SMBBuiltin.GUESTS):
             sid = b.value[1]
             rid = int(sid.split('-')[-1])
             gid = low_range + (rid - 544)
@@ -368,6 +368,9 @@ class SMBService(Service):
         to_del = [{
             "sid": groupmap["local"][x]["sid"]
         } for x in set_to_del]
+
+        if 545 in groupmap["builtins"]:
+            to_del.append({"sid": "S-1-5-32-545"})
 
         for sid in groupmap['invalid']:
             to_del.append({"sid": sid})
