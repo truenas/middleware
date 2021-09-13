@@ -2,7 +2,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from utils import make_request, make_ws_request, wait_on_job
-from config import CLUSTER_INFO
+from config import CLUSTER_INFO, DATASET_HIERARCHY
 from exceptions import JobTimeOut
 
 
@@ -83,13 +83,12 @@ def setup_zpool_and_datasets(ip):
     # because we're creating "internal" datasets that we prevent any
     # normal API user from creating using the public API so use websocket
     # API to side-step the public API validation
-    ds = f'{CLUSTER_INFO["ZPOOL"]}/.glusterfs/{CLUSTER_INFO["GLUSTER_VOLUME"]}/brick0'
-    print(f'Creating dataset heirarchy "{ds}" on {ip}')
+    print(f'Creating dataset hierarchy "{DATASET_HIERARCHY}" on {ip}')
     payload = {
         'msg': 'method',
         'method': 'zfs.dataset.create',
         'params': [{
-            'name': ds,
+            'name': DATASET_HIERARCHY,
             'type': 'FILESYSTEM',
             'create_ancestors': True,
             'properties': {'acltype': 'posix'}
@@ -103,11 +102,11 @@ def setup_zpool_and_datasets(ip):
     # path of ancestors to be created all at once. This means we have
     # mount the youngest ancestor
     # i.e. cargo/.glusterfs/gvol01/brick0 (brick0 needs to be mounted)
-    print(f'Mounting dataset heirarchy "{ds}" on {ip}')
+    print(f'Mounting dataset hierarchy "{DATASET_HIERARCHY}" on {ip}')
     payload = {
         'msg': 'method',
         'method': 'zfs.dataset.mount',
-        'params': [ds],
+        'params': [DATASET_HIERARCHY],
     }
     res = make_ws_request(ip, payload)
     if res.get('error', {}):
