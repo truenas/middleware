@@ -1,10 +1,11 @@
-from middlewared.client.utils import Struct
 import contextlib
 import logging
 import os
 import subprocess
 import sysctl
 
+from bsd import geom
+from middlewared.client.utils import Struct
 logger = logging.getLogger(__name__)
 
 
@@ -212,7 +213,7 @@ def main(middleware):
     poolthreshold = {}
     zpoollist = {i['name']: i for i in middleware.call_sync('zfs.pool.query')}
 
-    system_disks = middleware.call_sync('device.get_disks')
+    geom_xml = geom.class_by_name('DISK').xml
     locked_extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['locked', '=', True]])}
     # Generate the LUN section
     for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
@@ -241,7 +242,7 @@ def main(middleware):
                 path = '/dev/multipath/%s' % disk.disk_multipath_name
             else:
                 path = '/dev/%s' % middleware.call_sync(
-                    'disk.identifier_to_device', disk.disk_identifier, system_disks
+                    'disk.identifier_to_device', disk.disk_identifier, False, geom_xml
                 )
         else:
             if not path.startswith('/mnt'):
