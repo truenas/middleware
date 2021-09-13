@@ -1,9 +1,7 @@
 from glustercli.cli import volume, quota
 
 from middlewared.utils import filter_list
-from middlewared.service import (CRUDService, accepts, job,
-                                 item_method, filterable,
-                                 private, ValidationErrors)
+from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors
 from middlewared.schema import Dict, Str, Int, Bool, List
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from .utils import GlusterConfig
@@ -114,7 +112,6 @@ class GlusterVolumeService(CRUDService):
 
         return await self.middleware.call('gluster.volume.query', [('id', '=', name)])
 
-    @item_method
     @accepts(Dict(
         'volume_start',
         Str('name', required=True),
@@ -138,7 +135,6 @@ class GlusterVolumeService(CRUDService):
 
         return result
 
-    @item_method
     @accepts(Dict(
         'volume_restart',
         Str('name', required=True),
@@ -155,7 +151,6 @@ class GlusterVolumeService(CRUDService):
         options = {'args': (data.pop('name'),), 'kwargs': data}
         return await self.middleware.call('gluster.method.run', volume.restart, options)
 
-    @item_method
     @accepts(Dict(
         'volume_stop',
         Str('name', required=True),
@@ -204,7 +199,6 @@ class GlusterVolumeService(CRUDService):
             await self.middleware.call('gluster.localevents.send', data)
             await self.middleware.call('gluster.method.run', volume.delete, args)
 
-    @item_method
     @accepts(Dict(
         'volume_info',
         Str('name', required=True),
@@ -219,7 +213,6 @@ class GlusterVolumeService(CRUDService):
         options = {'kwargs': {'volname': data['name']}}
         return await self.middleware.call('gluster.method.run', volume.info, options)
 
-    @item_method
     @accepts(Dict(
         'volume_status',
         Str('name', required=True),
@@ -244,7 +237,6 @@ class GlusterVolumeService(CRUDService):
 
         return await self.middleware.call('gluster.method.run', volume.vollist, {})
 
-    @item_method
     @accepts(Dict(
         'volume_optreset',
         Str('name', required=True),
@@ -265,7 +257,6 @@ class GlusterVolumeService(CRUDService):
         options = {'args': (data.pop('name'),), 'kwargs': data}
         return await self.middleware.call('gluster.method.run', volume.optreset, options)
 
-    @item_method
     @accepts(Dict(
         'volume_optset',
         Str('name', required=True),
@@ -284,7 +275,6 @@ class GlusterVolumeService(CRUDService):
         options = {'args': (data['name'],), 'kwargs': data['opts']}
         return await self.middleware.call('gluster.method.run', volume.optset, options)
 
-    @item_method
     @accepts(Dict(
         'volume_addbrick',
         Str('name', required=True),
@@ -319,7 +309,6 @@ class GlusterVolumeService(CRUDService):
         options = {'args': (data.pop('name'), bricks,), 'kwargs': data}
         return await self.middleware.call('gluster.method.run', volume.bricks.add, options)
 
-    @item_method
     @accepts(Dict(
         'volume_removebrick',
         Str('name', required=True),
@@ -374,7 +363,6 @@ class GlusterVolumeService(CRUDService):
 
         return await self.middleware.call('gluster.method.run', method, options)
 
-    @item_method
     @accepts(Dict(
         'volume_replacebrick',
         Str('name', required=True),
@@ -413,7 +401,6 @@ class GlusterVolumeService(CRUDService):
         options = {'args': (data.pop('name'), src_brick, new_brick)}
         return await self.middleware.call('gluster.method.run', method, options)
 
-    @item_method
     @accepts(Dict(
         'volume_quota',
         Str('name', required=True),
