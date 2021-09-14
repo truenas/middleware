@@ -40,13 +40,19 @@ class InterfaceService(Service):
         if iface.protocol != protocol:
             info['protocol'] = protocol
 
-        xmit_hash = lagg['lagg_xmit_hash_policy']
-        if iface.xmit_hash_policy != xmit_hash:
-            info['xmit_hash_policy'] = xmit_hash
+        if lagg['lagg_xmit_hash_policy']:
+            # passing the xmit_hash_policy value needs to be lower-case
+            # or `ip-link` will error with invalid argument
+            xmit_hash = lagg['lagg_xmit_hash_policy'].lower()
+            if iface.xmit_hash_policy != xmit_hash:
+                info['xmit_hash_policy'] = xmit_hash
 
-        lacpdu_rate = lagg['lagg_lacpdu_rate']
-        if iface.lacpdu_rate != lacpdu_rate:
-            info['lacpdu_rate'] = lacpdu_rate
+        # passing the lacp_rate value needs to be lower-case
+        # or `ip-link` will error with invalid argument
+        if lagg['lagg_lacpdu_rate']:
+            lacpdu_rate = lagg['lagg_lacpdu_rate'].lower()
+            if iface.lacpdu_rate != lacpdu_rate:
+                info['lacpdu_rate'] = lacpdu_rate
 
         if any(i is not None for i in info.values()):
             # means one of the lagg options changed or is being
