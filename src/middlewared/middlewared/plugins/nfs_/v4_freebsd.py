@@ -45,6 +45,7 @@ class NFSService(Service):
                         {"prefix": self._config.datastore_prefix},
                     )
 
+                # setting these to the same value works for our implementation
                 sysctl.filter("vfs.nfsd.scope")[0].value = owner_major
                 sysctl.filter("vfs.nfsd.owner_major")[0].value = owner_major
 
