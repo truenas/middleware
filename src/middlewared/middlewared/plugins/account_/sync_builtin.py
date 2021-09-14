@@ -1,4 +1,5 @@
 from collections import defaultdict
+import itertools
 import os
 import pkg_resources
 
@@ -34,9 +35,25 @@ class UserService(Service):
             for user in self.middleware.call_sync(
                 "datastore.query",
                 "account.bsdusers",
-                [
-                    ("builtin", "=", True)
-                ],
+                [("builtin", "=", True)],
+                {"prefix": "bsdusr_"},
+            )
+        }
+        non_builtin_groups = {
+            group["group"]: group
+            for group in self.middleware.call_sync(
+                "datastore.query",
+                "account.bsdgroups",
+                [("builtin", "=", False)],
+                {"prefix": "bsdgrp_"},
+            )
+        }
+        non_builtin_users = {
+            user["username"]: user
+            for user in self.middleware.call_sync(
+                "datastore.query",
+                "account.bsdusers",
+                [("builtin", "=", False)],
                 {"prefix": "bsdusr_"},
             )
         }
@@ -55,6 +72,26 @@ class UserService(Service):
         groups_members = defaultdict(set)
         for name, _, gid, members in map(lambda s: s.split(":", 3), group_file):
             gid = int(gid)
+
+            if name in non_builtin_groups:
+                for i in itertools.count(1):
+                    new_name = f"{name}_{i}"
+                    if new_name not in non_builtin_groups:
+                        break
+
+                self.logger.info(
+                    "Renaming non-builtin group %r to %r as builtin group with that name should exist",
+                    name, new_name,
+                )
+                self.middleware.call_sync(
+                    "datastore.update",
+                    "account.bsdgroups",
+                    non_builtin_groups[name]["id"],
+                    {
+                        "group": new_name,
+                    },
+                    {"prefix": "bsdgrp_"},
+                )
 
             existing_group = remove_groups.pop(name, None)
             if existing_group is not None:
@@ -138,6 +175,26 @@ class UserService(Service):
         for name, _, uid, gid, gecos, home, shell in map(lambda s: s.split(":", 6), passwd_file):
             uid = int(uid)
             gid = int(gid)
+
+            if name in non_builtin_users:
+                for i in itertools.count(1):
+                    new_name = f"{name}_{i}"
+                    if new_name not in non_builtin_users:
+                        break
+
+                self.logger.info(
+                    "Renaming non-builtin user %r to %r as builtin user with that name should exist",
+                    name, new_name,
+                )
+                self.middleware.call_sync(
+                    "datastore.update",
+                    "account.bsdusers",
+                    non_builtin_users[name]["id"],
+                    {
+                        "username": new_name,
+                    },
+                    {"prefix": "bsdusr_"},
+                )
 
             group = self.middleware.call_sync(
                 "datastore.query",
