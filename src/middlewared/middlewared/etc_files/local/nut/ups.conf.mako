@@ -9,5 +9,5 @@
 [${ups_config['identifier']}]
 	driver = ${driver}
 	port = ${ups_config['port']}
-	desc = ${ups_config['description']}
+	desc = "${ups_config['description']}"
 	${ups_config['options']}
