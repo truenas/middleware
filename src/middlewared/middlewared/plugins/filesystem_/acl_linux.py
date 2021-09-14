@@ -78,6 +78,13 @@ class FilesystemService(Service, ACLBase):
                 'Path component for is currently encrypted and locked'
             )
 
+        apps_dataset = self.middleware.call_sync('kubernetes.config')['dataset']
+        if apps_dataset and os.path.realpath(path).startswith(f'/mnt/{apps_dataset}'):
+            verrors.add(
+                f'{schema}.path',
+                f'Changes to permissions of ix-applications dataset are not permitted: {path}.'
+            )
+
     @private
     def path_get_acltype(self, path):
         """
