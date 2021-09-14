@@ -505,6 +505,31 @@ def test_054_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
+def set_netbios_name(netbios_name):
+    """
+    Set NetbiosName in an HA-aware manner and return
+    new config
+    """
+    cmd = "midclt call smb.get_smb_ha_mode"
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    ha_mode = results['output'].strip()
+
+    assert ha_mode != 'LEGACY', 'LEGACY HA mode - possible error with sysdataset'
+
+    if ha_mode == 'UNIFIED':
+        payload = {"hostname_virtual": netbios_name}
+        results = PUT("/network/configuration/", payload)
+        assert results.status_code == 200, results.text
+
+        results =  GET("/smb")
+        assert results.status_code == 200, results.text
+        return results.json()
+
+    payload = {"netbiosname": netbios_name}
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+    return results.json()
 
 @pytest.mark.dependency(name="SID_CHANGED")
 def test_055_netbios_name_change_check_sid():
@@ -524,16 +549,11 @@ def test_055_netbios_name_change_check_sid():
 
     results = GET("/smb/")
     assert results.status_code == 200, results.text
-    old_netbiosname = results.json()["netbiosname"]
+    old_netbiosname = results.json()["netbiosname_local"]
     old_sid = results.json()["cifs_SID"]
 
-    payload = {
-        "netbiosname": "nb_new",
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
-    new_sid_resp = results.json()["cifs_SID"]
-    assert old_sid != new_sid_resp, results.text
+    new = set_netbios_name("nbnew")
+    new_sid_resp = new["cifs_SID"]
     sleep(5)
 
     results = GET("/smb/")
@@ -574,11 +594,7 @@ def test_057_change_netbios_name_and_check_groupmap(request):
     changes.
     """
     depends(request, ["SID_CHANGED"])
-    payload = {
-        "netbiosname": old_netbiosname,
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
+    set_netbios_name(old_netbiosname)
     sleep(5)
 
     cmd = "midclt call smb.groupmap_list"

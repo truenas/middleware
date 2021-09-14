@@ -208,6 +208,7 @@ class NetworkConfigurationService(ConfigService):
         config = await self.config()
         new_config = config.copy()
         is_ha = True
+        sync_group_mappings = False
 
         if not (
                 not await self.middleware.call('system.is_freenas') and
@@ -240,6 +241,12 @@ class NetworkConfigurationService(ConfigService):
             new_config,
             {'prefix': 'gc_'}
         )
+        if new_config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']:
+            await self.middleware.call('etc.generate', 'smb')
+            new_sid = await self.middleware.call("smb.get_system_sid")
+            await self.middleware.call("smb.set_database_sid", new_sid)
+            sync_group_mappings = True
+
         service_announcement = new_config.pop('service_announcement')
         new_config['domains'] = new_config['domains'].split()
         new_config['netwait_ip'] = new_config['netwait_ip'].split()
@@ -302,6 +309,9 @@ class NetworkConfigurationService(ConfigService):
                 await self.middleware.call(
                     "service.start" if enabled else "service.stop", ANNOUNCE_SRV[srv]
                 )
+
+        if sync_group_mappings:
+            await self.middleware.call("smb.synchronize_group_mappings")
 
         return await self.config()
 
