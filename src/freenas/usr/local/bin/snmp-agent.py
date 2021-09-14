@@ -425,6 +425,16 @@ class ZpoolIoThread(threading.Thread):
             return copy.deepcopy(self.values_overall), copy.deepcopy(self.values_1s)
 
 
+def readZilOpsCount() -> int:
+    total = 0
+    with open("/proc/spl/kstat/zfs/zil") as f:
+        for line in f:
+            var, _size, val, *_ = line.split()
+            if var in ("zil_itx_metaslab_normal_count", "zil_itx_metaslab_slog_count"):
+                total += int(val)
+    return total
+
+
 class ZilstatThread(threading.Thread):
     def __init__(self, interval):
         super().__init__()
@@ -432,42 +442,15 @@ class ZilstatThread(threading.Thread):
         self.daemon = True
 
         self.interval = interval
-        self.value = {
-            "NBytes": 0,
-            "NBytespersec": 0,
-            "NMaxRate": 0,
-            "BBytes": 0,
-            "BBytespersec": 0,
-            "BMaxRate": 0,
-            "ops": 0,
-            "lteq4kb": 0,
-            "4to32kb": 0,
-            "gteq4kb": 0,
-        }
+        self.value = 0
 
     def run(self):
-        zilstatproc = subprocess.Popen(
-            ["/usr/local/bin/zilstat", str(self.interval)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            preexec_fn=os.setsid,
-        )
-        zilstatproc.stdout.readline().strip()
-        while zilstatproc.poll() is None:
-            output = zilstatproc.stdout.readline().strip().split()
-            value = {
-                "NBytes": output[0],
-                "NBytespersec": output[1],
-                "NMaxRate": output[2],
-                "BBytes": output[3],
-                "BBytespersec": output[4],
-                "BMaxRate": output[5],
-                "ops": int(output[6]),
-                "lteq4kb": output[7],
-                "4to32kb": output[8],
-                "gteq4kb": output[9],
-            }
-            self.value = value
+        previous = readZilOpsCount()
+        while True:
+            time.sleep(self.interval)
+            current = readZilOpsCount()
+            self.value = current - previous
+            previous = current
 
 
 class CpuTempThread(threading.Thread):
@@ -683,15 +666,14 @@ if __name__ == "__main__":
     zilstat_5_thread = None
     zilstat_10_thread = None
 
-    if osc.IS_FREEBSD:
-        if config["zilstat"]:
-            zilstat_1_thread = ZilstatThread(1)
-            zilstat_5_thread = ZilstatThread(5)
-            zilstat_10_thread = ZilstatThread(10)
+    if config["zilstat"]:
+        zilstat_1_thread = ZilstatThread(1)
+        zilstat_5_thread = ZilstatThread(5)
+        zilstat_10_thread = ZilstatThread(10)
 
-            zilstat_1_thread.start()
-            zilstat_5_thread.start()
-            zilstat_10_thread.start()
+        zilstat_1_thread.start()
+        zilstat_5_thread.start()
+        zilstat_10_thread.start()
 
     cpu_temp_thread = None
     if osc.IS_FREEBSD:
@@ -857,10 +839,10 @@ if __name__ == "__main__":
             zfs_l2arc_size.update(int(kstat["kstat.zfs.misc.arcstats.l2_asize"] / 1024))
 
             if zilstat_1_thread:
-                zfs_zilstat_ops1.update(zilstat_1_thread.value["ops"])
+                zfs_zilstat_ops1.update(zilstat_1_thread.value)
             if zilstat_5_thread:
-                zfs_zilstat_ops5.update(zilstat_5_thread.value["ops"])
+                zfs_zilstat_ops5.update(zilstat_5_thread.value)
             if zilstat_10_thread:
-                zfs_zilstat_ops10.update(zilstat_10_thread.value["ops"])
+                zfs_zilstat_ops10.update(zilstat_10_thread.value)
 
             last_update_at = datetime.utcnow()
