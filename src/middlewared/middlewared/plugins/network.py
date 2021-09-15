@@ -6,7 +6,6 @@ from middlewared.schema import (
     accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, Ref, ValidationErrors
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc
 from middlewared.utils.generate import random_string
 from middlewared.validators import Hostname, Match, Range
 
@@ -588,7 +587,7 @@ class InterfaceService(CRUDService):
                 'active_media_subtype': '',
                 'supported_media': [],
                 'media_options': [],
-                'carp_config' if osc.IS_FREEBSD else 'vrrp_config': [],
+                'vrrp_config': [],
             }, configs, ha_hardware, fake=True)
         return filter_list(list(data.values()), filters, options)
 
@@ -1376,34 +1375,6 @@ class InterfaceService(CRUDService):
                             f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
                         )
 
-            if osc.IS_FREEBSD:
-                # can't remove VHID and not GROUP
-                if not data.get('failover_vhid') and data.get('failover_group'):
-                    verrors.add(
-                        f'{schema_name}.failover_vhid',
-                        'Removing only the VHID is not allowed.'
-                    )
-
-                # can't remove GROUP and not VHID
-                if not data.get('failover_group') and data.get('failover_vhid'):
-                    verrors.add(
-                        f'{schema_name}.failover_group',
-                        'Removing only the failover group is not allowed.'
-                    )
-
-                if update and update.get('failover_vhid') != data['failover_vhid']:
-                    used_vhids = set()
-                    for v in (await self.middleware.call(
-                        'interface.scan_vrrp', data['name'], None, 5,
-                    )).values():
-                        used_vhids.update(set(v))
-                    if data['failover_vhid'] in used_vhids:
-                        used_vhids = ', '.join([str(i) for i in used_vhids])
-                        verrors.add(
-                            f'{schema_name}.failover_vhid',
-                            f'The following VHIDs are already in use: {used_vhids}.'
-                        )
-
             # creating a "failover" lagg interface on HA systems and trying
             # to mark it "critical for failover" isn't allowed as it can cause
             # delays in the failover process. (Sometimes failure entirely.)
@@ -1445,24 +1416,17 @@ class InterfaceService(CRUDService):
     async def __convert_interface_datastore(self, data):
 
         """
-        If there is no password for VRRP/CARP, then we generate
-        a random string to be used as the password.
-
-        If FreeBSD, then generate a CARP password of length 16 chars.
-
-        If Linux, then generate a VRRP password of length 8 chars.
-        VRRP only supports 8 char length passwords.
+        Generate a VRRP password of length 8 chars.
+        (VRRP only supports 8 char length passwords.)
 
         NOTE: we do not use the password on Linux as it doesn't
-        provide any benefit and is not recommended to be used.
+        provide any benefit and is not recommended to be used but
+        is created for API compatibility reasons.
         """
 
         passwd = ''
         if not data.get('failover_pass') and data.get('failover_vhid'):
-            if osc.IS_FREEBSD:
-                passwd = random_string(string_size=16)
-            else:
-                passwd = random_string()
+            passwd = random_string()
         else:
             passwd = data.get('failover_pass', '')
 
@@ -1834,10 +1798,9 @@ class InterfaceService(CRUDService):
             if vlans:
                 raise CallError(f'The following VLANs depend on this interface: {vlans}')
 
-        if osc.IS_LINUX:
-            config = await self.middleware.call('kubernetes.config')
-            if any(config[k] == oid for k in ('route_v4_interface', 'route_v6_interface')):
-                raise CallError('Interface is in use by kubernetes')
+        config = await self.middleware.call('kubernetes.config')
+        if any(config[k] == oid for k in ('route_v4_interface', 'route_v6_interface')):
+            raise CallError('Interface is in use by kubernetes')
 
         await self.delete_network_interface(oid)
 
