@@ -3,10 +3,8 @@
 import pytest
 import sys
 import os
-import enum
 from subprocess import run
 from time import sleep
-from base64 import b64decode, b64encode
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
@@ -77,6 +75,7 @@ def check_previous_version_exists(path, home=False):
         cli_output[0]
     )
 
+
 """
 def check_previous_version_contents(path, contents, offset):
     cmd = [
@@ -121,7 +120,7 @@ def test_001_creating_smb_dataset(request, ds):
     }
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
-    result = POST(f"/zfs/snapshot/", {
+    result = POST("/zfs/snapshot/", {
         "dataset": ds,
         "name": "init",
     })
@@ -227,7 +226,7 @@ def test_007_set_up_testfiles(request, payload):
         c.close(fd)
 
     sleep(5)
-    result = POST(f"/zfs/snapshot/", {
+    result = POST("/zfs/snapshot/", {
         "dataset": dataset,
         "name": payload,
         "recursive": True,
