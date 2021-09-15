@@ -1,9 +1,10 @@
 from asyncio import Lock
 import logging
 import re
+import shlex
 import subprocess
 
-from middlewared.utils import osc, run
+from middlewared.utils import run
 
 from .areca import annotate_devices_with_areca_dev_id
 
@@ -13,24 +14,16 @@ SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
 
 areca_lock = Lock()
 
-if osc.IS_FREEBSD:
-    from nvme import get_nsid
-else:
-    get_nsid = None
 
+async def get_smartctl_args(middleware, devices, disk, smartoptions):
+    try:
+        smartoptions = shlex.split(smartoptions)
+    except Exception as e:
+        logger.warning("Error parsing S.M.A.R.T. options %r for disk %r: %r", smartoptions, disk, e)
+        smartoptions = []
 
-async def get_smartctl_args(middleware, devices, disk):
-    if disk.startswith(('nvd', 'nvme')):
-        if osc.IS_LINUX:
-            return [f'/dev/{disk}', '-d', 'nvme']
-        else:
-            try:
-                nvme = await middleware.run_in_thread(get_nsid, f'/dev/{disk}')
-            except Exception as e:
-                logger.warning('Unable to run nvme.get_nsid for %r: %r', disk, e)
-                return
-            else:
-                return [f'/dev/{nvme}']
+    if disk.startswith("nvme"):
+        return [f"/dev/{disk}", "-d", "nvme"] + smartoptions
 
     device = devices.get(disk)
     if device is None:
@@ -48,7 +41,7 @@ async def get_smartctl_args(middleware, devices, disk):
             if "enclosure" not in device:
                 await annotate_devices_with_areca_dev_id(devices)
 
-        return [f"/dev/arcmsr{controller_id}", "-d", f"areca,{device['areca_dev_id']}"]
+        return [f"/dev/arcmsr{controller_id}", "-d", f"areca,{device['areca_dev_id']}"] + smartoptions
 
     # Highpoint Rocket Raid 27xx controller
     if driver == "rr274x_3x":
@@ -58,17 +51,17 @@ async def get_smartctl_args(middleware, devices, disk):
             channel_no = channel_no - 16
         elif channel_no > 8:
             channel_no = channel_no - 8
-        return [f"/dev/{driver}", "-d", f"hpt,{controller_id}/{channel_no}"]
+        return [f"/dev/{driver}", "-d", f"hpt,{controller_id}/{channel_no}"] + smartoptions
 
     # Highpoint Rocket Raid controller
     if driver.startswith("hpt"):
         controller_id = controller_id + 1
         channel_no = channel_no + 1
-        return [f"/dev/{driver}", "-d", f"hpt,{controller_id}/{channel_no}"]
+        return [f"/dev/{driver}", "-d", f"hpt,{controller_id}/{channel_no}"] + smartoptions
 
     # HP Smart Array Controller
     if driver.startswith("ciss"):
-        args = [f"/dev/{driver}{controller_id}", "-d", f"cciss,{channel_no}"]
+        args = [f"/dev/{driver}{controller_id}", "-d", f"cciss,{channel_no}"] + smartoptions
         p = await smartctl(args + ["-i"], check=False)
         if (p.returncode & 0b11) == 0:
             return args
@@ -82,9 +75,9 @@ async def get_smartctl_args(middleware, devices, disk):
             units[int(unit)] = int(port)
 
         port = units.get(channel_no, -1)
-        return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"]
+        return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"] + smartoptions
 
-    args = [f"/dev/{disk}"]
+    args = [f"/dev/{disk}"] + smartoptions
     if not await middleware.call("system.is_enterprise_ix_hardware"):
         p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
         if "Unknown USB bridge" in p.stdout:
