@@ -24,7 +24,7 @@ async def annotate_disk_smart_tests(middleware, devices, disk):
     if disk["disk"] is None:
         return
 
-    args = await get_smartctl_args(middleware, devices, disk["disk"])
+    args = await get_smartctl_args(middleware, devices, disk["disk"], disk["smartoptions"])
     if args:
         p = await smartctl(args + ["-l", "selftest"], check=False, encoding="utf8")
         tests = parse_smart_selftest_results(p.stdout)
@@ -565,7 +565,7 @@ class SMARTTestService(CRUDService):
         get = (options or {}).pop("get", False)
 
         disks = filter_list(
-            [{"disk": disk} for disk in (await self.disk_choices()).values()],
+            [dict(disk, disk=disk["name"]) for disk in (await self.disk_choices(True)).values()],
             filters,
             options,
         )
