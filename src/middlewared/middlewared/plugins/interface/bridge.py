@@ -1,5 +1,4 @@
 from middlewared.service import private, Service
-
 from .netif import netif
 
 
@@ -9,59 +8,47 @@ class InterfaceService(Service):
         namespace_alias = 'interfaces'
 
     @private
-    def pre_bridge_setup(self, bridge, sync_interface_opts):
-        name = bridge['interface']['int_interface']
-        members_database = set(bridge['members'])
-        for member in members_database:
-            sync_interface_opts[member]['skip_mtu'] = True
-
-        try:
-            iface = netif.get_interface(name)
-        except KeyError:
-            return
-
-        members = set(iface.members)
-        for member in members - members_database:
-            # These interfaces may be added dynamically for VMs
-            if member.startswith(('vnet', 'epair', 'tap')):
-                continue
-            iface.delete_member(member)
-
-    @private
     def bridge_setup(self, bridge, parent_interfaces):
         name = bridge['interface']['int_interface']
-        self.logger.info(f'Setting up {name}')
+        bridge_mtu = bridge['interface']['int_mtu'] or 1500
         try:
             iface = netif.get_interface(name)
         except KeyError:
             netif.create_interface(name)
             iface = netif.get_interface(name)
 
-        mtu = bridge['interface']['int_mtu'] or 1500
+        self.logger.info('Setting up %r', name)
 
-        members = set(iface.members)
-        members_database = set(bridge['members'])
+        if iface.mtu != bridge_mtu:
+            self.logger.info('Setting %r MTU to %d', name, bridge_mtu)
+            iface.mtu = bridge_mtu
 
-        for member in members_database:
+        db_members = set(bridge['members'])
+        os_members = set(iface.members)
+        for member in os_members - db_members:
+            # remove members from the bridge that aren't in the db
+            self.logger.info('Removing member interface %r from %r', member, name)
+            iface.delete_member(member)
+
+        for member in db_members - os_members:
+            # now add members that are written in db but do not exist in
+            # the bridge on OS side
             try:
-                member_iface = netif.get_interface(member)
-            except KeyError:
-                self.logger.error('Bridge member %s not found', member)
+                self.logger.info('Adding member interface %r to %r', member, name)
+                iface.add_member(member)
+            except FileNotFoundError:
+                self.logger.error('Bridge member %r not found', member)
                 continue
 
-            if member_iface.mtu != mtu:
-                member_iface.mtu = mtu
-
+            # now make sure the bridge member is up
+            member_iface = netif.get_interface(member)
             if netif.InterfaceFlags.UP not in member_iface.flags:
+                self.logger.info('Bringing up member interface %r in %r', member_iface.name, name)
                 member_iface.up()
 
             parent_interfaces.append(member)
 
-        for member in members_database - members:
-            try:
-                iface.add_member(member)
-            except FileNotFoundError:
-                self.logger.error('Bridge member %s not found', member)
-
-        if iface.mtu != mtu:
-            iface.mtu = mtu
+        # finally we need to up the main bridge if it's not already up
+        if netif.InterfaceFlags.UP not in iface.flags:
+            self.logger.info('Bringing up %r', name)
+            iface.up()
