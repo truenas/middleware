@@ -171,6 +171,32 @@ class SMB(object):
 
         return ret
 
+    def get_shadow_copies(self, **kwargs):
+        snaps = []
+        host = kwargs.get("host")
+        share = kwargs.get("share")
+        path = kwargs.get("path", "/")
+        username = kwargs.get("username")
+        password = kwargs.get("password")
+        smb1 = kwargs.get("smb1", False)
+
+        cmd = [
+            "smbclient", f"//{host}/{share}",
+            "-U", f"{username}%{password}",
+        ]
+
+        if smb1:
+            cmd.extend(["-m", "NT1"])
+
+        cmd.extend(["-c", f'allinfo {path}'])
+        cl = subprocess.run(cmd, capture_output=True)
+        client_out = cl.stdout.decode().splitlines()
+        for i in client_out:
+            if i.startswith("@GMT"):
+                snaps.append(i)
+
+        return snaps
+
     def get_quota(self, **kwargs):
         host = kwargs.get("host")
         share = kwargs.get("share")
