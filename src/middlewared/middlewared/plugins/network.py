@@ -1006,7 +1006,7 @@ class InterfaceService(CRUDService):
         Str('vlan_parent_interface'),
         Int('vlan_tag', validators=[Range(min=1, max=4094)]),
         Int('vlan_pcp', validators=[Range(min=0, max=7)], null=True),
-        Int('mtu', validators=[Range(min=1492, max=9216)], default=None, null=True),
+        Int('mtu', validators=[Range(min=68, max=9216)], default=None, null=True),
         Str('options'),
         register=True
     ))
@@ -1336,6 +1336,20 @@ class InterfaceService(CRUDService):
                         f'{schema_name}.mtu',
                         'VLAN MTU cannot be bigger than parent interface.',
                     )
+
+        aliases = data.get('aliases', [])
+        aliases.extend(data.get('failover_aliases', []))
+        aliases.extend(data.get('failover_virtual_aliases', []))
+        mtu = data.get('mtu')
+        if mtu and mtu < 1280 and any(i['type'] == 'INET6' for i in aliases):
+            # we set the minimum MTU to 68 for IPv4 (per https://tools.ietf.org/html/rfc791)
+            # however, the minimum MTU for IPv6 is 1280 (per https://tools.ietf.org/html/rfc2460)
+            # so we need to make sure that if a IPv6 address is provided the minimum isn't
+            # smaller than 1280.
+            verrors.add(
+                f'{schema_name}.mtu',
+                'When specifying an IPv6 address, the MTU cannot be smaller than 1280'
+            )
 
         if not await self.middleware.call('failover.licensed'):
             data.pop('failover_critical', None)
