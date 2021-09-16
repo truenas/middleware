@@ -2045,7 +2045,6 @@ class InterfaceService(CRUDService):
         """
         Sync interfaces configured in database to the OS.
         """
-
         await self.middleware.call_hook('interface.pre_sync')
 
         disable_capabilities_ifaces = {
@@ -2090,20 +2089,6 @@ class InterfaceService(CRUDService):
             except Exception:
                 self.middleware.logger.error('Error setting up VLAN %s', vlan['vlan_vint'], exc_info=True)
 
-        bridges = await self.middleware.call('datastore.query', 'network.bridge')
-        # Considering a scenario where we have the network configuration
-        # physical iface -> vlan -> bridge
-        # If all these interfaces are set to have 9000 MTU, we won't be able to set that up on boot
-        # unless physical iface has a 9000 MTU when the bridge is being setup.
-        # To address such scenarios, we divide the approach in 4 steps:
-        # 1) Remove orphaned members from bridge
-        # 2) Sync all non-bridge interfaces ( in this order physical ifaces -> laggs -> vlans )
-        # 3) Setup bridge with MTU
-        # 4) Sync bridge interfaces
-
-        for bridge in bridges:
-            await self.middleware.call('interface.pre_bridge_setup', bridge, sync_interface_opts)
-
         run_dhcp = []
         # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
         for interface in sorted(
@@ -2115,6 +2100,7 @@ class InterfaceService(CRUDService):
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
+        bridges = await self.middleware.call('datastore.query', 'network.bridge')
         for bridge in bridges:
             name = bridge['interface']['int_interface']
 
@@ -2144,10 +2130,6 @@ class InterfaceService(CRUDService):
         for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interfaces().items())):
             # Skip internal interfaces
             if name.startswith(internal_interfaces):
-                continue
-
-            # bridge0/bridge1 are special, may be used by VM
-            if name in ('bridge0', 'bridge1'):
                 continue
 
             # If there are no interfaces configured we start DHCP on all
