@@ -42,7 +42,7 @@ class AddressMixin:
             # when adding an IPv4 address to an interface
             # (doesn't apply to IPv6)
             cmd.extend(["brd", "+"]) if ':' not in f'{address.address}' else None
-        cmd.exnted(["dev", self.name])
+        cmd.extend(["dev", self.name])
 
         run(cmd)
 
