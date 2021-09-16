@@ -36,7 +36,15 @@ class AddressMixin:
         if isinstance(address.address, ipaddress.IPv6Address):
             netmask = ipv6_netmask_to_prefixlen(netmask)
 
-        run(["ip", "addr", op, f"{address.address}/{netmask}", "dev", self.name])
+        cmd = ["ip", "addr", op, f"{address.address}/{netmask}"]
+        if op == 'add':
+            # make sure we tell linux to assign proper broadcast address
+            # when adding an IPv4 address to an interface
+            # (doesn't apply to IPv6)
+            cmd.extend(["brd", "+"]) if ':' not in f'{address.address}' else None
+        cmd.exnted(["dev", self.name])
+
+        run(cmd)
 
     @property
     def addresses(self):
