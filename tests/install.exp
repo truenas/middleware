@@ -3,7 +3,7 @@
 set vm [lindex $argv 0];
 set logfilepath [lindex $argv 1];
 log_file -noappend "$logfilepath"
-set timeout 1800
+set timeout 1200
 set PID [spawn vm console "$vm"]
 send_user "Spawned PID: $PID \n"
 
@@ -25,6 +25,11 @@ expect {
     sleep .5
     send "1"
     send "\r"
+  }
+
+  timeout {
+    send_user "Boot timeout\n"
+    exit 1
   }
 }
 
@@ -113,20 +118,25 @@ expect {
   }
 
   "installation on sda succeeded!" {
-    send_user "Bhyve installation finished."
+    send_user "Bhyve installation finished\n"
     sleep 5
     exit 0
   }
 
   "installation on sda failed." {
-    send_user "Bhyve installation failed."
+    send_user "Bhyve installation failed\n"
     sleep 5
     exit 1
   }
 
   "has failed. Press enter to continue" {
-    send_user "Bhyve installation failed."
+    send_user "Bhyve installation failed\n"
     sleep 5
+    exit 1
+  }
+
+  timeout {
+    send_user "Installation timeout\n"
     exit 1
   }
 }
@@ -150,20 +160,25 @@ expect {
 # Installation complete!
 expect {
   "installation on ada0 succeeded!" {
-    send_user "Bhyve installation finished."
+    send_user "Bhyve installation finished\n"
     sleep 5
     exit 0
   }
 
   "installation on ada0 failed." {
-    send_user "Bhyve installation failed."
+    send_user "Bhyve installation failed\n"
     sleep 5
     exit 1
   }
 
   "has failed. Press enter to continue" {
-    send_user "Bhyve installation failed."
+    send_user "Bhyve installation failed\n"
     sleep 5
+    exit 1
+  }
+
+  timeout {
+    send_user "Installation timeout\n"
     exit 1
   }
 }
