@@ -158,7 +158,7 @@ def test_003_creating_a_smb_share_path(request):
     assert results.status_code == 200, results.text
     smb_id = results.json()['id']
 
-    cmd = f'mkdir {smb_path}/{SMB_USER}'
+    cmd = f'mkdir {smb_path}/{SMB_USER}; zpool sync'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, {"cmd": cmd, "res": results['output']}
 
