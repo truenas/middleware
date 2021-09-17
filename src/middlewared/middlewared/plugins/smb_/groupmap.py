@@ -236,18 +236,23 @@ class SMBService(Service):
 
         for g in gm['groupmap']:
             gid = g['gid']
+            key = 'invalid'
             if gid == -1:
-                rv['invalid'].append(g['sid'])
+                rv[key].append(g['sid'])
                 continue
 
             if g['sid'].startswith("S-1-5-32"):
-                rv['builtins'][gid] = g
+                key = 'builtins'
             elif g['sid'].startswith(localsid) and g['gid'] in (544, 546):
-                rv['local_builtins'][gid] = g
+                key = 'local_builtins'
             elif g['sid'].startswith(localsid):
-                rv['local'][gid] = g
-            else:
+                key = 'local'
+
+            if key == 'invalid' or rv[key].get(gid):
                 rv['invalid'].append(g['sid'])
+                continue
+
+            rv[key][gid] = g
 
         rv["localsid"] = localsid
         return rv
