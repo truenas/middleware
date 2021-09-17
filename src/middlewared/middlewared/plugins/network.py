@@ -1230,7 +1230,7 @@ class InterfaceService(CRUDService):
             for k, v in filter(lambda x: x[0].startswith('vlan'), ifaces.items())
         }
         lag_used = {}
-        for k, v in filter(lambda x: x[0].startswith('lagg'), ifaces.items()):
+        for k, v in filter(lambda x: x[0].startswith('bond'), ifaces.items()):
             for port in (v.get('lag_ports') or []):
                 lag_used[port] = k
 
