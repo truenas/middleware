@@ -100,7 +100,6 @@ network_func()
 			int_vhid as 'VHID',
 			int_vip as 'VIP',
 			int_link_address as 'MAC address',
-			int_options as 'Options'
 		FROM
 			network_interfaces
 		WHERE
