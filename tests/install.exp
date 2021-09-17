@@ -162,4 +162,10 @@ expect {
     sleep 5
     exit 1
   }
+
+  "has failed. Press enter to continue" {
+    send_user "Bhyve installation failed."
+    sleep 5
+    exit 1
+  }
 }
