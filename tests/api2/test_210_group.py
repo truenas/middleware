@@ -273,11 +273,12 @@ def test_27_full_groupmap_check(request):
         unix_name_suffix = entry['unix_group'].split('_')[1]
         assert nt_name_suffix == unix_name_suffix, str(entry)
 
-    for k in ['544', '545', '546']:
+    for k in ['544', '546']:
         assert k in gm['local_builtins'], str(gm['local_builtins'])
 
     for i in [
         ('90000001', 'S-1-5-32-544'),
+        ('90000002', 'S-1-5-32-545'),
         ('90000003', 'S-1-5-32-546'),
     ]:
         gid, sid = i
