@@ -160,10 +160,11 @@ def return_output(command):
 
 
 def cmd_test(command):
-    process = run(command, shell=True, stdout=PIPE, universal_newlines=True)
+    process = run(command, shell=True, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     output = process.stdout
+    err = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output}
+        return {'result': False, 'output': output, 'stderr': err}
     else:
         return {'result': True, 'output': output}
 

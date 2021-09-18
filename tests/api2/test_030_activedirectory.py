@@ -341,7 +341,7 @@ def test_30_create_a_file_and_put_on_the_active_directory_share(request):
         ' -c "put testfile.txt testfile.txt"'
     results = cmd_test(command)
     cmd_test('rm testfile.txt')
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_31_verify_testfile_is_on_the_active_directory_share(request):
@@ -355,7 +355,7 @@ def test_32_create_a_directory_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "mkdir testdir"'
     results = cmd_test(command)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_33_verify_testdir_exist_on_the_active_directory_share(request):
@@ -369,7 +369,7 @@ def test_34_copy_testfile_in_testdir_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "scopy testfile.txt testdir/testfile2.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_35_verify_testfile2_exist_in_testdir_on_the_active_directory_share(request):
@@ -477,7 +477,7 @@ def test_47_delete_testfile_on_the_active_directory_share(request):
     command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rm testfile.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_48_verify_testfile_is_deleted_on_the_active_directory_share(request):
@@ -491,7 +491,7 @@ def test_49_delele_testfile_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rm testdir/testfile2.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_50_verify_testfile2_is_deleted_on_the_active_directory_share(request):
@@ -505,7 +505,7 @@ def test_51_delete_testdir_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rmdir testdir"'
     results = cmd_test(command)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_52_verify_testdir_is_deleted_on_the_active_directory_share(request):
