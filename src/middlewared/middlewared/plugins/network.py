@@ -1989,39 +1989,6 @@ class InterfaceService(CRUDService):
         })
 
     @private
-    def scan_vrrp(self, ifname, count=10, timeout=10):
-        # This runs tcpdump looking for VRRP packets.  If
-        # none are seen we have a gun in the glovebox that times the
-        # tcpdump out after `timeout` seconds. If we do see VRRP packets we stop
-        # after seeing `count` of them. If there were more than `count` VRRP
-        # devices on the broadcast domain we wouldn't get them all.
-        proc = subprocess.Popen(
-            ['tcpdump', '-l', '-n'] + (
-                ['-c', str(count)] if count else []
-            ) + ['-i', ifname, 'vrrp'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding='utf8',
-        )
-        try:
-            output = proc.communicate(timeout=timeout)[0].strip().split('\n')
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            output = proc.communicate()[0].strip().split('\n')
-
-        data = defaultdict(list)
-        for i in output:
-            parts = i.split()
-            if len(parts) < 9:
-                continue
-            ip, vhid = parts[2], parts[8]
-            try:
-                vhid = int(vhid.replace(',', ''))
-            except ValueError:
-                continue
-            if vhid not in data[ip]:
-                data[ip].append(vhid)
-        return data
-
-    @private
     async def sync(self, wait_dhcp=False):
         """
         Sync interfaces configured in database to the OS.
