@@ -357,22 +357,7 @@ class DiskService(CRUDService):
 
     @private
     async def get_reserved(self):
-        reserved = list(await self.middleware.call('boot.get_disks'))
-        reserved += await self.middleware.call('pool.get_disks')
-        if osc.IS_FREEBSD:
-            # FIXME: Make this freebsd specific for now
-            reserved += [i async for i in self.__get_iscsi_targets()]
-        return reserved
-
-    async def __get_iscsi_targets(self):
-        iscsi_target_extent_paths = [
-            extent["iscsi_target_extent_path"]
-            for extent in await self.middleware.call('datastore.query', 'services.iscsitargetextent',
-                                                     [('iscsi_target_extent_type', '=', 'Disk')])
-        ]
-        for disk in await self.middleware.call('datastore.query', 'storage.disk',
-                                               [('disk_identifier', 'in', iscsi_target_extent_paths)]):
-            yield disk["disk_name"]
+        return await self.middleware.call('boot.get_disks') + await self.middleware.call('pool.get_disks')
 
     @private
     async def check_clean(self, disk):
