@@ -1165,14 +1165,11 @@ def create_vlan():
                     int_name=vlan_interface_name,
                     int_dhcp=False,
                     int_ipv6auto=False,
-                    int_options='up',
                 )
                 vlan_interface.save()
             else:
                 vlan_interface = qs[0]
-                if 'up' not in vlan_interface.int_options:
-                    vlan_interface.int_options += ' up'
-                    vlan_interface.save()
+                vlan_interface.save()
     except Exception:
         print(_("Failed"))
         return False

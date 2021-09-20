@@ -10,27 +10,13 @@ from middlewared.pytest.unit.middleware import Middleware
 @pytest.mark.asyncio
 async def test__get_smartctl_args__disk_nonexistent():
     with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", False):
-        assert await get_smartctl_args(None, {}, "ada0") is None
-
-
-@pytest.mark.asyncio
-async def test__get_smartctl_args__nvd():
-    with patch("middlewared.common.smart.smartctl.get_nsid", Mock(return_value="nvme1")):
-        with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", False):
-            assert await get_smartctl_args(Middleware(), {}, "nvd0") == ["/dev/nvme1"]
+        assert await get_smartctl_args(None, {}, "ada0", "") is None
 
 
 @pytest.mark.asyncio
 async def test__get_smartctl_args__nvme():
     with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", True):
-        assert await get_smartctl_args(Middleware(), {}, "nvme0n1") == ["/dev/nvme0n1", "-d", "nvme"]
-
-
-@pytest.mark.asyncio
-async def test__get_smartctl_args__nvd_ioctl_failed():
-    with patch("middlewared.common.smart.smartctl.get_nsid", Mock(side_effect=IOError())):
-        with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", False):
-            assert await get_smartctl_args(Middleware(), {}, "nvd0") is None
+        assert await get_smartctl_args(Middleware(), {}, "nvme0n1", "") == ["/dev/nvme0n1", "-d", "nvme"]
 
 
 @pytest.mark.parametrize("enclosure,dev", [
@@ -52,7 +38,7 @@ async def test__get_smartctl_args__arcmsr(enclosure, dev):
                 "bus": 0,
                 "channel_no": 100,
                 "lun_id": 10,
-            }}, "ada0") == ["/dev/arcmsr1000", "-d", dev]
+            }}, "ada0", "") == ["/dev/arcmsr1000", "-d", dev]
 
 
 @pytest.mark.asyncio
@@ -64,7 +50,7 @@ async def test__get_smartctl_args__rr274x_3x():
             "bus": 0,
             "channel_no": 2,
             "lun_id": 10,
-        }}, "ada0") == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
+        }}, "ada0", "") == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
 
 
 @pytest.mark.asyncio
@@ -76,7 +62,7 @@ async def test__get_smartctl_args__rr274x_3x__1():
             "bus": 0,
             "channel_no": 18,
             "lun_id": 10,
-        }}, "ada0") == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
+        }}, "ada0", "") == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
 
 
 @pytest.mark.asyncio
@@ -88,7 +74,7 @@ async def test__get_smartctl_args__rr274x_3x__2():
             "bus": 0,
             "channel_no": 10,
             "lun_id": 10,
-        }}, "ada0") == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
+        }}, "ada0", "") == ["/dev/rr274x_3x", "-d", "hpt,2/3"]
 
 
 @pytest.mark.asyncio
@@ -100,7 +86,7 @@ async def test__get_smartctl_args__hpt():
             "bus": 0,
             "channel_no": 2,
             "lun_id": 10,
-        }}, "ada0") == ["/dev/hptX", "-d", "hpt,2/3"]
+        }}, "ada0", "") == ["/dev/hptX", "-d", "hpt,2/3"]
 
 
 @pytest.mark.asyncio
@@ -117,7 +103,7 @@ async def test__get_smartctl_args__twa():
                 "bus": 0,
                 "channel_no": 2,
                 "lun_id": 10,
-            }}, "ada0") == ["/dev/twaX1", "-d", "3ware,29"]
+            }}, "ada0", "") == ["/dev/twaX1", "-d", "3ware,29"]
 
             run.assert_called_once_with(
                 ["/usr/local/sbin/tw_cli", "/c1", "show"],
@@ -140,7 +126,7 @@ async def test_get_disk__unknown_usb_bridge():
                 "bus": 0,
                 "channel_no": 2,
                 "lun_id": 10,
-            }}, "ada0") == ["/dev/ada0", "-d", "sat"]
+            }}, "ada0", "") == ["/dev/ada0", "-d", "sat"]
 
         run.assert_called_once_with(["smartctl", "/dev/ada0", "-i"], stderr=subprocess.STDOUT, check=False,
                                     encoding="utf8", errors="ignore")
@@ -160,4 +146,4 @@ async def test_get_disk__generic():
                 "bus": 0,
                 "channel_no": 2,
                 "lun_id": 10,
-            }}, "ada0") == ["/dev/ada0"]
+            }}, "ada0", "") == ["/dev/ada0"]

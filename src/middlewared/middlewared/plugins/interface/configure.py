@@ -1,8 +1,6 @@
 import ipaddress
 import os
-import shlex
 import signal
-import subprocess
 import re
 import textwrap
 
@@ -214,16 +212,6 @@ class InterfaceService(Service):
             self.logger.debug('{}: adding {}'.format(name, addr))
             iface.add_address(addr)
 
-        # Apply interface options specified in GUI
-        if data['int_options']:
-            self.logger.info('{}: applying {}'.format(name, data['int_options']))
-            proc = subprocess.Popen(['/sbin/ifconfig', name] + shlex.split(data['int_options']),
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                    close_fds=True)
-            err = proc.communicate()[1].decode()
-            if err:
-                self.logger.info('{}: error applying: {}'.format(name, err))
-
         # In case there is no MTU in interface and it is currently
         # different than the default of 1500, revert it
         if not options.get('skip_mtu'):
@@ -239,7 +227,7 @@ class InterfaceService(Service):
             except Exception:
                 self.logger.warn(f'Failed to set interface {name} description', exc_info=True)
 
-        if netif.InterfaceFlags.UP not in iface.flags and 'down' not in data['int_options'].split():
+        if netif.InterfaceFlags.UP not in iface.flags:
             iface.up()
 
         # If dhclient is not running and dhcp is configured, lets start it

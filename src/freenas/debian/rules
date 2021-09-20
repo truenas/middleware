@@ -25,6 +25,7 @@ override_dh_auto_install:
 		cp etc/nsswitch.conf debian/truenas-files/etc/; \
 		cp -a etc/syslog-ng debian/truenas-files/etc/; \
 		cp -a etc/systemd debian/truenas-files/etc/; \
+		cp -a root debian/truenas-files/; \
 		cp -a usr/lib/systemd debian/truenas-files/usr/lib/; \
 		mkdir -p debian/truenas-files/conf/base/etc; \
 	"

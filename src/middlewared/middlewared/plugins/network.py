@@ -21,7 +21,6 @@ import re
 import signal
 import socket
 import subprocess
-
 import psutil
 
 from .interface.netif import netif
@@ -30,7 +29,6 @@ from .interface.lag_options import XmitHashChoices, LacpduRateChoices
 
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
-RE_MTU = re.compile(r'\bmtu\s+(\d+)')
 ANNOUNCE_SRV = {
     'mdns': 'mdns',
     'netbios': 'nmbd',
@@ -428,7 +426,6 @@ class NetworkInterfaceModel(sa.Model):
     int_pass = sa.Column(sa.String(100))
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
-    int_options = sa.Column(sa.String(120))
     int_mtu = sa.Column(sa.Integer(), nullable=True)
     int_disable_offload_capabilities = sa.Column(sa.Boolean(), default=False)
     int_link_address = sa.Column(sa.String(17), nullable=True)
@@ -532,7 +529,6 @@ class InterfaceService(CRUDService):
         Bool('ipv4_dhcp', required=True),
         Bool('ipv6_auto', required=True),
         Str('description', required=True, null=True),
-        Str('options', required=True),
         Int('mtu', null=True, required=True),
         Bool('disable_offload_capabilities'),
         Str('vlan_parent_interface', null=True),
@@ -606,7 +602,6 @@ class InterfaceService(CRUDService):
             'ipv4_dhcp': False if configs else True,
             'ipv6_auto': False,
             'description': None,
-            'options': '',
             'mtu': None,
         }
 
@@ -627,7 +622,6 @@ class InterfaceService(CRUDService):
             'ipv4_dhcp': config['int_dhcp'],
             'ipv6_auto': config['int_ipv6auto'],
             'description': config['int_name'],
-            'options': config['int_options'],
             'mtu': config['int_mtu'],
             'disable_offload_capabilities': config['int_disable_offload_capabilities'],
         })
@@ -1007,7 +1001,6 @@ class InterfaceService(CRUDService):
         Int('vlan_tag', validators=[Range(min=1, max=4094)]),
         Int('vlan_pcp', validators=[Range(min=0, max=7)], null=True),
         Int('mtu', validators=[Range(min=68, max=9216)], default=None, null=True),
-        Str('options'),
         register=True
     ))
     async def do_create(self, data):
@@ -1214,12 +1207,7 @@ class InterfaceService(CRUDService):
                 'Only one interface can have IPv6 autoconfiguration enabled.'
             )
 
-        if data.get('options') and RE_MTU.match(data.get('options')):
-            verrors.add(f'{schema_name}.options', 'MTU should be placed in its own field.')
-
-        await self.middleware.run_in_thread(
-            self.__validate_aliases, verrors, schema_name, data, ifaces
-        )
+        await self.middleware.run_in_thread(self.__validate_aliases, verrors, schema_name, data, ifaces)
 
         bridge_used = {}
         for k, v in filter(lambda x: x[0].startswith('br'), ifaces.items()):
@@ -1230,7 +1218,7 @@ class InterfaceService(CRUDService):
             for k, v in filter(lambda x: x[0].startswith('vlan'), ifaces.items())
         }
         lag_used = {}
-        for k, v in filter(lambda x: x[0].startswith('lagg'), ifaces.items()):
+        for k, v in filter(lambda x: x[0].startswith('bond'), ifaces.items()):
             for port in (v.get('lag_ports') or []):
                 lag_used[port] = k
 
@@ -1243,7 +1231,6 @@ class InterfaceService(CRUDService):
                             f'{schema_name}.{k}',
                             f'Interface in use by {lag_name}. {str(v[0]) + str(v[1])}'
                         )
-
         elif itype == 'BRIDGE':
             if 'name' in data:
                 try:
@@ -1268,11 +1255,6 @@ class InterfaceService(CRUDService):
                     verrors.add(
                         f'{schema_name}.bridge_members.{i}',
                         f'Interface {member} is currently in use by {lag_used[member]}.',
-                    )
-                elif member in vlan_used:
-                    verrors.add(
-                        f'{schema_name}.bridge_members.{i}',
-                        f'Interface {member} is currently in use by {vlan_used[member]}.',
                     )
         elif itype == 'LINK_AGGREGATION':
             if 'name' in data:
@@ -1452,7 +1434,6 @@ class InterfaceService(CRUDService):
             'pass': passwd,
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
-            'options': data.get('options', ''),
             'mtu': data.get('mtu') or None,
             'disable_offload_capabilities': data.get('disable_offload_capabilities') or False,
         }
@@ -2059,7 +2040,6 @@ class InterfaceService(CRUDService):
         """
         Sync interfaces configured in database to the OS.
         """
-
         await self.middleware.call_hook('interface.pre_sync')
 
         disable_capabilities_ifaces = {
@@ -2104,20 +2084,6 @@ class InterfaceService(CRUDService):
             except Exception:
                 self.middleware.logger.error('Error setting up VLAN %s', vlan['vlan_vint'], exc_info=True)
 
-        bridges = await self.middleware.call('datastore.query', 'network.bridge')
-        # Considering a scenario where we have the network configuration
-        # physical iface -> vlan -> bridge
-        # If all these interfaces are set to have 9000 MTU, we won't be able to set that up on boot
-        # unless physical iface has a 9000 MTU when the bridge is being setup.
-        # To address such scenarios, we divide the approach in 4 steps:
-        # 1) Remove orphaned members from bridge
-        # 2) Sync all non-bridge interfaces ( in this order physical ifaces -> laggs -> vlans )
-        # 3) Setup bridge with MTU
-        # 4) Sync bridge interfaces
-
-        for bridge in bridges:
-            await self.middleware.call('interface.pre_bridge_setup', bridge, sync_interface_opts)
-
         run_dhcp = []
         # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
         for interface in sorted(
@@ -2129,6 +2095,7 @@ class InterfaceService(CRUDService):
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
+        bridges = await self.middleware.call('datastore.query', 'network.bridge')
         for bridge in bridges:
             name = bridge['interface']['int_interface']
 
@@ -2158,10 +2125,6 @@ class InterfaceService(CRUDService):
         for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interfaces().items())):
             # Skip internal interfaces
             if name.startswith(internal_interfaces):
-                continue
-
-            # bridge0/bridge1 are special, may be used by VM
-            if name in ('bridge0', 'bridge1'):
                 continue
 
             # If there are no interfaces configured we start DHCP on all
