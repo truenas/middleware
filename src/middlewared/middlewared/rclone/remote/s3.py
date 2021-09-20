@@ -33,8 +33,8 @@ class S3RcloneRemote(BaseRcloneRemote):
     task_schema = [
         Str("encryption", title="Server-Side Encryption", enum=[None, "AES256"], default=None, null=True),
         Str("storage_class", title="The storage class to use", enum=["", "STANDARD", "REDUCED_REDUNDANCY",
-                                                                     "STANDARD_IA", "ONEZONE_IA", "GLACIER",
-                                                                     "DEEP_ARCHIVE"]),
+                                                                     "STANDARD_IA", "ONEZONE_IA", "INTELLIGENT_TIERING",
+                                                                     "GLACIER", "DEEP_ARCHIVE"]),
     ]
 
     def _get_client(self, credentials):
