@@ -1231,7 +1231,6 @@ class InterfaceService(CRUDService):
                             f'{schema_name}.{k}',
                             f'Interface in use by {lag_name}. {str(v[0]) + str(v[1])}'
                         )
-
         elif itype == 'BRIDGE':
             if 'name' in data:
                 try:
@@ -1256,11 +1255,6 @@ class InterfaceService(CRUDService):
                     verrors.add(
                         f'{schema_name}.bridge_members.{i}',
                         f'Interface {member} is currently in use by {lag_used[member]}.',
-                    )
-                elif member in vlan_used:
-                    verrors.add(
-                        f'{schema_name}.bridge_members.{i}',
-                        f'Interface {member} is currently in use by {vlan_used[member]}.',
                     )
         elif itype == 'LINK_AGGREGATION':
             if 'name' in data:
