@@ -425,7 +425,7 @@ class Enclosure(object):
     def __init__(self, num, data, stat, product):
         self.num = num
         self.stat = stat
-        self.product = product
+        self.product = product if product else ''
         self.devname = f"ses{num}"
         self.encname = ""
         self.encid = ""
