@@ -34,6 +34,7 @@ def test_03_get_alert_list_policies():
     assert results.json(), results.json()
 
 
+@pytest.mark.dependency(name='degrade_pool')
 def test_04_degrading_a_pool_to_create_an_alert(request):
     depends(request, ["pool_04", "ssh_password"], scope="session")
     global gptid
@@ -46,7 +47,7 @@ def test_04_degrading_a_pool_to_create_an_alert(request):
 
 
 def test_05_verify_the_pool_is_degraded(request):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, ['degrade_pool'], scope="session")
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -54,27 +55,28 @@ def test_05_verify_the_pool_is_degraded(request):
 
 
 @pytest.mark.timeout(80)
-def test_06_wait_for_the_alert(request):
-    depends(request, ["pool_04"], scope="session")
-    stop = False
-    while stop is False:
+def test_06_wait_for_the_alert_and_get_the_id(request):
+    depends(request, ["degrade_pool"], scope="session")
+    global alert_id
+    while True:
         for line in GET("/alert/list/").json():
             if line['source'] == 'VolumeStatus':
-                stop = True
+                alert_id = line['id']
                 assert True
                 break
+        else:
+            continue
+        break
         sleep(1)
 
 
-def test_07_verify_degraded_pool_alert_list_exist_and_get_id(request):
-    depends(request, ["pool_04"], scope="session")
-    global alert_id
+def test_07_verify_degraded_pool_alert_list_exist(request):
+    depends(request, ["degrade_pool"], scope="session")
     results = GET("/alert/list/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
     for line in results.json():
-        if line['source'] == 'VolumeStatus':
-            alert_id = line['id']
+        if alert_id == line['id']:
             assert line['args']['volume'] == pool_name, results.text
             assert line['args']['state'] == 'DEGRADED', results.text
             assert line['level'] == 'CRITICAL', results.text
@@ -82,14 +84,14 @@ def test_07_verify_degraded_pool_alert_list_exist_and_get_id(request):
 
 
 def test_08_dimiss_the_alert(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["degrade_pool"], scope="session")
     results = POST("/alert/dismiss/", alert_id)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), type(None)), results.text
 
 
 def test_09_verify_the_alert_is_dismissed(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["degrade_pool"], scope="session")
     results = GET("/alert/list/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
@@ -100,14 +102,14 @@ def test_09_verify_the_alert_is_dismissed(request):
 
 
 def test_10_restore_the_alert(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["degrade_pool"], scope="session")
     results = POST("/alert/restore/", alert_id)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), type(None)), results.text
 
 
 def test_11_verify_the_alert_is_restored(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["degrade_pool"], scope="session")
     results = GET(f"/alert/list/?id={alert_id}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
@@ -118,14 +120,14 @@ def test_11_verify_the_alert_is_restored(request):
 
 
 def test_12_clear_the_pool_degradation(request):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, ["degrade_pool"], scope="session")
     cmd = f'zpool clear {pool_name}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 def test_13_verify_the_pool_is_not_degraded(request):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, ["degrade_pool"], scope="session")
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -134,15 +136,11 @@ def test_13_verify_the_pool_is_not_degraded(request):
 
 @pytest.mark.timeout(80)
 def test_14_wait_for_the_alert_to_dissapear(request):
-    depends(request, ["pool_04"], scope="session")
-    stop = False
-    while stop is False:
-        for line in GET("/alert/list/").json():
-            if line['source'] == 'VolumeStatus':
-                break
-        else:
-            stop = True
+    depends(request, ["degrade_pool"], scope="session")
+    while True:
+        if alert_id not in GET("/alert/list/").json():
             assert True
+            break
         sleep(1)
 
 
@@ -156,7 +154,7 @@ def test_15_start_smb_service():
 
 @pytest.mark.dependency(name='corefiles_allert')
 def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
-    # depends(request, ['ssh_password', 'smb_service'], scope='session')
+    depends(request, ['ssh_password', 'smb_service'], scope='session')
     cmd = 'killall -6 smbd'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -181,12 +179,15 @@ def test_17_wait_for_the_alert_and_get_the_id(request):
 
 def test_18_verify_the_smbd_corefiles_alert_warning(request):
     depends(request, ['wait_alert'])
-    results = GET(f'/alert/list/?id={alert_id}')
+    global alert_id
+    results = GET("/alert/list/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
-    assert isinstance(results.json()[0], dict), results.text
-    assert 'smbd' in results.json()[0]['args']['corefiles'], results.text
-    assert results.json()[0]['level'] == 'WARNING', results.text
+    for line in results.json():
+        if alert_id == line['id']:
+            assert 'smbd' in results.json()[0]['args']['corefiles'], results.text
+            assert results.json()[0]['level'] == 'WARNING', results.text
+            break
 
 
 def test_19_dimiss_the_corefiles_alert(request):
@@ -194,11 +195,14 @@ def test_19_dimiss_the_corefiles_alert(request):
     results = POST('/alert/dismiss/', alert_id)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), type(None)), results.text
-    sleep(1)
 
 
 def test_20_verify_the_corefiles_alert_warning_is_dismissed(request):
     depends(request, ['wait_alert'])
-    results = GET(f'/alert/list/?id={alert_id}')
+    results = GET("/alert/list/")
     assert results.status_code == 200, results.text
-    assert results.json()[0]['dismissed'] is True, results.text
+    assert isinstance(results.json(), list), results.text
+    for line in results.json():
+        if line['id'] == alert_id:
+            assert line['dismissed'] is True, results.text
+            break
