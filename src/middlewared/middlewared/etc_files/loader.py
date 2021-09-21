@@ -172,7 +172,7 @@ def generate_dual_nvdimm_config(middleware):
     # system that doesn't support the dual-nvdimm configs leads to "no carrier"
     # on the ntb0 interface, we play it safe. The `minimum_vers` will need to be
     # changed as time goes on if we start tagging hardware with 4.0,5.0 etc etc
-    if product.startswith('TRUENAS-M') and current_vers.major == minimum_vers.major:
+    if product and product.startswith('TRUENAS-M') and current_vers.major == minimum_vers.major:
         return [
             'hint.ntb_hw.0.split=1',
             'hint.ntb_hw.0.config="ntb_pmem:1:4:0,ntb_pmem:1:4:0,ntb_transport"'
