@@ -152,7 +152,7 @@ def test_15_start_smb_service():
     assert results.json()[0]['state'] == 'RUNNING', results.text
 
 
-@pytest.mark.dependency(name='corefiles_allert')
+@pytest.mark.dependency(name='corefiles_alert')
 def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
     depends(request, ['ssh_password', 'smb_service'], scope='session')
     cmd = 'killall -6 smbd'
