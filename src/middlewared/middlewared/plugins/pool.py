@@ -3186,7 +3186,7 @@ class PoolDatasetService(CRUDService):
 
         parent = await self.middleware.call(
             'zfs.dataset.query',
-            [('id', '=', data['name'].rsplit('/')[0])],
+            [('id', '=', data['name'].rsplit('/', 1)[0])],
             {'extra': {'recursive': False}},
         )
 
