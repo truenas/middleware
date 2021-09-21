@@ -16,6 +16,7 @@ import contextlib
 
 from dns import resolver
 from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
+from middlewared.plugins.kerberos import krb5ccache
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
 from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
@@ -267,7 +268,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         try:
             home_share = await self.middleware.call('sharing.smb.reg_showshare', 'homes')
-            home_path = home_share['path']['raw']
+            home_path = home_share['parameters']['path']['raw']
         except MatchNotFound:
             home_path = 'home'
 
@@ -1003,7 +1004,12 @@ class ActiveDirectoryService(TDBWrapConfigService):
         smb_bind_ips = smb['bindip'] if smb['bindip'] else vips
         to_register = set(vips) & set(smb_bind_ips)
         hostname = f'{vhost}.{ad["domainname"]}'
-        cmd = [SMBCmd.NET.value, '-k', 'ads', 'dns', 'register', hostname]
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'dns', 'register', hostname
+        ]
         cmd.extend(to_register)
         netdns = await run(cmd, check=False)
         if netdns.returncode != 0:
@@ -1034,16 +1040,20 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if ad is None:
             ad = await self.config()
 
-        if ad['createcomputer']:
-            netads = await run([
-                SMBCmd.NET.value, '-k', '-U', ad['bindname'], '-d', '5',
-                'ads', 'join', f'createcomputer={ad["createcomputer"]}',
-                ad['domainname']], check=False)
-        else:
-            netads = await run([
-                SMBCmd.NET.value, '-k', '-U', ad['bindname'], '-d', '5',
-                'ads', 'join', ad['domainname']], check=False)
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-U', ad['bindname'],
+            '-d', '5',
+            'ads', 'join'
+        ]
 
+        if ad['createcomputer']:
+            cmd.append(f'createcomputer={ad["createcomputer"]}')
+
+        cmd.append(ad['domainname'])
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             await self.set_state(DSStatus['FAULTED'])
             await self._parse_join_err(netads.stdout.decode().split(':', 1))
@@ -1064,11 +1074,16 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if ad is None:
             ad = await self.config()
 
-        netads = await run([
-            SMBCmd.NET.value, '-k', '-w', workgroup,
-            '-d', '5', 'ads', 'testjoin', ad['domainname']],
-            check=False
-        )
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-w', workgroup,
+            '-d', '5',
+            'ads', 'testjoin'
+        ]
+
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             errout = netads.stderr.decode()
             with open(f"{SMBPath.LOGDIR.platform()}/domain_testjoin_{int(datetime.datetime.now().timestamp())}.log", "w") as f:
@@ -1088,10 +1103,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
             return False
 
         for spn in spn_list:
-            netads = await run([
-                SMBCmd.NET.value, '-k', 'ads', 'setspn',
-                'add', spn
-            ], check=False)
+            cmd = [
+                SMBCmd.NET.value,
+                '--use-kerberos', 'required',
+                '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+                'ads', 'setspn',
+                'add', spn,
+            ]
+            netads = await run(cmd, check=False)
             if netads.returncode != 0:
                 raise CallError('failed to set spn entry '
                                 f'[{spn}]: {netads.stdout.decode().strip()}')
@@ -1107,7 +1126,13 @@ class ActiveDirectoryService(TDBWrapConfigService):
         """
         await self.middleware.call("kerberos.check_ticket")
         spnlist = []
-        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'setspn', 'list'], check=False)
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'setspn', 'list'
+        ]
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             raise CallError(
                 f"Failed to generate SPN list: [{netads.stderr.decode().strip()}]"
@@ -1128,7 +1153,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
         """
         await self.middleware.call("kerberos.check_ticket")
         workgroup = (await self.middleware.call('smb.config'))['workgroup']
-        netads = await run([SMBCmd.NET.value, '-k', 'ads', '-w', workgroup, 'changetrustpw'], check=False)
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-w', workgroup,
+            'ads', 'changetrustpw',
+        ]
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             raise CallError(
                 f"Failed to update trust password: [{netads.stderr.decode().strip()}] "
@@ -1183,7 +1215,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
         `Last machine account password change`. timestamp
         """
         await self.middleware.call("kerberos.check_ticket")
-        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'info', '--json'], check=False)
+        cmd = [
+            SMBCmd.NET.value,
+            '--json',
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'info',
+        ]
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             raise CallError(netads.stderr.decode())
 
@@ -1337,7 +1376,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
         cred = await self.middleware.call('kerberos.get_cred', payload)
         await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
-        netads = await run([SMBCmd.NET.value, '-U', data['username'], '-k', 'ads', 'leave'], check=False)
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-U', data['username'],
+            'ads', 'leave',
+        ]
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
 
