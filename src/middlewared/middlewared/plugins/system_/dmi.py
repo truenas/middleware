@@ -5,21 +5,23 @@ from middlewared.service import private, Service
 
 class SystemService(Service):
     # DMI information is mostly static so cache it
+    HAS_CACHE = False
     CACHE = {
         'ecc-memory': None,
-        'baseboard-manufacturer': None,
-        'baseboard-product-name': None,
-        'system-manufacturer': None,
-        'system-product-name': None,
-        'system-serial-number': None,
-        'system-version': None,
+        'baseboard-manufacturer': '',
+        'baseboard-product-name': '',
+        'system-manufacturer': '',
+        'system-product-name': '',
+        'system-serial-number': '',
+        'system-version': '',
     }
 
     @private
     def dmidecode_info(self):
-        if all(v is None for k, v in SystemService.CACHE.items()):
+        if not SystemService.HAS_CACHE:
             cp = subprocess.run(['dmidecode', '-t', '1,2,16'], encoding='utf8', capture_output=True)
             self._parse_dmi(cp.stdout.splitlines())
+            SystemService.HAS_CACHE = True
 
         return SystemService.CACHE
 
