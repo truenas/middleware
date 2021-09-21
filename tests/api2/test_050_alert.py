@@ -144,3 +144,61 @@ def test_14_wait_for_the_alert_to_dissapear(request):
             stop = True
             assert True
         sleep(1)
+
+
+@pytest.mark.dependency(name='smb_service')
+def test_15_start_smb_service():
+    results = POST('/service/start/', {'service': 'cifs'})
+    assert results.status_code == 200, results.text
+    results = GET('/service?service=cifs')
+    assert results.json()[0]['state'] == 'RUNNING', results.text
+
+
+@pytest.mark.dependency(name='corefiles_allert')
+def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
+    # depends(request, ['ssh_password', 'smb_service'], scope='session')
+    cmd = 'killall -6 smbd'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@pytest.mark.timeout(80)
+@pytest.mark.dependency(name='wait_alert')
+def test_17_wait_for_the_alert_and_get_the_id(request):
+    depends(request, ['corefiles_allert'])
+    global alert_id
+    while True:
+        for line in GET('/alert/list/').json():
+            if line['source'] == 'CoreFilesArePresent':
+                alert_id = line['id']
+                assert True
+                break
+        else:
+            sleep(1)
+            continue
+        break
+
+
+def test_18_verify_the_smbd_corefiles_alert_warning(request):
+    depends(request, ['wait_alert'])
+    results = GET(f'/alert/list/?id={alert_id}')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+    assert isinstance(results.json()[0], dict), results.text
+    assert 'smbd' in results.json()[0]['args']['corefiles'], results.text
+    assert results.json()[0]['level'] == 'WARNING', results.text
+
+
+def test_19_dimiss_the_corefiles_alert(request):
+    depends(request, ['wait_alert'])
+    results = POST('/alert/dismiss/', alert_id)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), type(None)), results.text
+    sleep(1)
+
+
+def test_20_verify_the_corefiles_alert_warning_is_dismissed(request):
+    depends(request, ['wait_alert'])
+    results = GET(f'/alert/list/?id={alert_id}')
+    assert results.status_code == 200, results.text
+    assert results.json()[0]['dismissed'] is True, results.text
