@@ -131,6 +131,7 @@ class GlobalSchema(RegistrySchema):
         RegObj("unixcharset", "unix charset", "UTF8"),
         RegObj("syslog", "syslog only", False),
         RegObj("localmaster", "local master", False),
+        RegObj("multichannel", "server multi channel support", True),
         RegObj("loglevel", "log level", "MINIMUM",
                smbconf_parser=log_level_transform, schema_parser=set_log_level),
         RegObj("guest", "guest account", "nobody"),

@@ -352,7 +352,7 @@ class ShareSchema(RegistrySchema):
 
         data_out['vfs objects']['parsed'].append("streams_xattr")
         if not data_in.get("cluster_volname"):
-            data_out['smbd:max_xattr_size'] = {"parsed": 2097152}
+            data_out['smbd max xattr size'] = {"parsed": 2097152}
 
         if data_in['fruit_enabled']:
             data_out["fruit:metadata"] = {"parsed": "stream"}
