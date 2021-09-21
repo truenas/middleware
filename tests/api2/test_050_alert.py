@@ -163,7 +163,7 @@ def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
 @pytest.mark.timeout(80)
 @pytest.mark.dependency(name='wait_alert')
 def test_17_wait_for_the_alert_and_get_the_id(request):
-    depends(request, ['corefiles_allert'])
+    depends(request, ['corefiles_alert'])
     global alert_id
     while True:
         for line in GET('/alert/list/').json():
