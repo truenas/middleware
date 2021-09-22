@@ -17,7 +17,7 @@ class InternalInterfaceDetectionService(Service):
 
         if hardware == 'ECHOSTREAM':
             proc = subprocess.check_output(
-                '/usr/sbin/pciconf -lv | grep "card=0xa01f8086 chip=0x10d38086"',
+                '/usr/sbin/pciconf -lv | grep "device=0x10d3 subvendor=0x8086 subdevice=0xa01f"',
                 shell=True,
                 encoding='utf8',
             )
