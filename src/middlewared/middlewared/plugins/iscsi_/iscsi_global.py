@@ -80,6 +80,7 @@ class ISCSIGlobalService(SystemServiceService):
 
         return await self.config()
 
+    @accepts()
     async def alua_enabled(self):
         """
         Returns whether iSCSI ALUA is enabled or not.

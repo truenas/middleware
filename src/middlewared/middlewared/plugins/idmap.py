@@ -995,6 +995,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             'id_type_both': idmap_info[1],
         }
 
+    @private
     async def idmap_to_smbconf(self, data=None):
         rv = {}
         if data is None:

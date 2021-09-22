@@ -253,6 +253,7 @@ class SMBService(TDBWrapConfigService):
     async def __validate_netbios_name(self, name):
         return RE_NETBIOSNAME.match(name)
 
+    @accepts()
     async def unixcharset_choices(self):
         return await self.generate_choices(
             ['UTF-8', 'ISO-8859-1', 'ISO-8859-15', 'GB2312', 'EUC-JP', 'ASCII']

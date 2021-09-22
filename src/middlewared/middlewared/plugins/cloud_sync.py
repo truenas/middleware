@@ -1249,6 +1249,7 @@ class CloudSyncService(TaskPathService):
             key=lambda provider: provider["title"].lower()
         )
 
+    @private
     def common_task_schema(self, provider):
         schema = []
 
