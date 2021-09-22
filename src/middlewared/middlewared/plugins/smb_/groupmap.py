@@ -20,6 +20,7 @@ class SMBService(Service):
         service = 'cifs'
         service_verb = 'restart'
 
+    @private
     async def json_check_version(self, version):
         if version == GROUPMAP_JSON_VERSION:
             return
@@ -32,6 +33,7 @@ class SMBService(Service):
             "jira.ixsystems.com with this traceback."
         )
 
+    @private
     async def groupmap_listmem(self, sid):
         payload = json.dumps({"alias": sid})
         lm = await run([
@@ -50,6 +52,7 @@ class SMBService(Service):
 
         return [x["sid"] for x in output['members']]
 
+    @private
     async def groupmap_addmem(self, alias, member):
         payload = f'data={json.dumps({"alias": alias, "member": member})}'
         am = await run([
@@ -81,6 +84,7 @@ class SMBService(Service):
 
         return out
 
+    @private
     async def update_payload_with_diff(self, payload, alias, diff, ad):
         async def add_to_payload(payload, alias, key, members):
             idx = next((i for i, x in enumerate(payload[key]) if x["alias"] == alias), None)

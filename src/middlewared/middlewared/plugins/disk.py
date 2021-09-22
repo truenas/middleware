@@ -503,6 +503,7 @@ class DiskService(CRUDService):
 
         return 'SUCCESS'
 
+    @private
     def sed_dev_name(self, disk_name):
         if disk_name.startswith("nvd"):
             nvme = get_nsid(f"/dev/{disk_name}")

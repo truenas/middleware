@@ -1,4 +1,4 @@
-from middlewared.service import Service
+from middlewared.service import accepts, Service
 
 
 class ISCSIGlobalService(Service):
@@ -7,6 +7,7 @@ class ISCSIGlobalService(Service):
         namespace = 'iscsi.global'
         cli_namespace = 'sharing.iscsi.global'
 
+    @accepts()
     async def client_count(self):
         """
         Return currently connected clients count.

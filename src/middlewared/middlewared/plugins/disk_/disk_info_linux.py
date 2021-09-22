@@ -2,7 +2,7 @@ import glob
 import os
 import pyudev
 
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, private, Service
 
 from .disk_info_base import DiskInfoBase
 
@@ -112,6 +112,7 @@ class DiskService(Service, DiskInfoBase):
             devices.append(dev_line.split()[0])
         return devices
 
+    @private
     def label_to_dev(self, label, *args):
         dev = os.path.realpath(os.path.join('/dev', label)).split('/')[-1]
         if dev == label and os.path.exists(os.path.join('/sys/block', label)):
@@ -138,6 +139,7 @@ class DiskService(Service, DiskInfoBase):
             part_num = f'p{part_num}'
         return part_name.rsplit(part_num, 1)[0].strip()
 
+    @private
     def get_partition_for_disk(self, disk, partition):
         if disk.startswith('nvme'):
             # This is a hack for nvme disks, however let's please come up with a better way

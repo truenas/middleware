@@ -3,7 +3,7 @@ import aiohttp.client_exceptions
 import async_timeout
 import asyncio
 
-from middlewared.service import CallError
+from middlewared.service import CallError, private
 
 from .utils import DEFAULT_DOCKER_REGISTRY, DOCKER_CONTENT_DIGEST_HEADER
 
@@ -62,6 +62,7 @@ class DockerClientMixin:
 
         return response
 
+    @private
     async def get_manifest_call_headers(self, registry, image, headers):
         if registry == DEFAULT_DOCKER_REGISTRY:
             headers['Authorization'] = f'Bearer {await self._get_token(image)}'

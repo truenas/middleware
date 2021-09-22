@@ -114,6 +114,7 @@ class SMBService(Service):
 
         return filter_list(output, filters, options)
 
+    @accepts()
     async def client_count(self):
         """
         Return currently connected clients count.
