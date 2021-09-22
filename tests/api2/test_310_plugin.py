@@ -21,17 +21,18 @@ default_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 community_repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
 custom_community_repos_url = 'https://github.com/ericbsd/iocage-plugin-index.git'
 
-if not scale and not ha:
+if not ha:
     PUT("/ssh/", {"rootlogin": True}, controller_a=ha)
     POST("/service/start/", {"service": "ssh"}, controller_a=ha)
     ssh_cmd = "uname -r | cut -d '-' -f1"
+    version = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
+    # release_version = f'{version}-RELEASE'
     # # Use master until the 13.0 branch is created
-    # release_version = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
     release_version = 'master'
-    community_index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{release_version}-RELEASE/INDEX'
+    community_index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{release_version}/INDEX'
     community_plugin_index = GET(community_index_url).json()
     community_plugin_list = list(community_plugin_index.keys())
-    custom_community_index_url = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{release_version}-RELEASE/INDEX'
+    custom_community_index_url = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{release_version}/INDEX'
     custom_community_plugin_index = GET(custom_community_index_url).json()
     custom_community_plugin_list = list(custom_community_plugin_index.keys())
     PUT("/ssh/", {"rootlogin": False}, controller_a=ha)
