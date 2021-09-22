@@ -5,6 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from bsd.enclosure import Enclosure as ENC
 from .enclosure_.enclosure_class import Enclosure
+from .regex import RE
 
 
 class EnclosureLabelModel(sa.Model):
@@ -244,7 +245,7 @@ class EnclosureService(CRUDService):
     def __get_enclosures(self, product):
         blacklist = ['VirtualSES']
         if product.startswith('TRUENAS-'):
-            if '-MINI-' not in product and product not in ('TRUENAS-R20', 'TRUENAS-R20A'):
+            if '-MINI-' not in product and product not in RE.R20_VARIANTS.value:
                 blacklist.append('AHCI SGPIO Enclosure 2.00')
 
         result = []

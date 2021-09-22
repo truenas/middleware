@@ -43,7 +43,7 @@ class Enclosure(object):
             model = self.product.replace('TRUENAS-', '')
             controller = True
         elif self.encname == 'AHCI SGPIO Enclosure 2.00':
-            if self.product in ['TRUENAS-R20', 'TRUENAS-R20A']:
+            if self.product in RE.R20_VARIANTS.value:
                 model = self.product.replace('TRUENAS-', '')
                 controller = True
             elif RE.MINI.value.match(self.product):

@@ -11,3 +11,4 @@ class RE(enum.Enum):
     ES24 = re.compile(r"(ECStream|iX) 4024J")
     ES24F = re.compile(r"(ECStream|iX) 2024J([ps])")
     MINI = re.compile(r"(TRUE|FREE)NAS-MINI")
+    R20_VARIANTS = ["TRUENAS-R20", "TRUENAS-R20A", "TRUENAS-R20B"]
