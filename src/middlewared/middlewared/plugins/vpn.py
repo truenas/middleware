@@ -245,7 +245,7 @@ class OpenVPNServerService(SystemServiceService):
         Int('server_certificate', null=True, required=True),
         Int('port', validators=[Port()], required=True),
         Int('root_ca', null=True, required=True),
-        IPAddr('server', required=True),
+        IPAddr('server', empty=False, required=True),
         Str('additional_parameters', required=True),
         Str('authentication_algorithm', null=True, required=True),
         Str('cipher', null=True, required=True),
