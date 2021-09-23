@@ -477,6 +477,7 @@ class Job(object):
                 etype = etype.__name__
                 extra = None
             exc_info = {
+                'repr': repr(evalue),
                 'type': etype,
                 'extra': extra,
             }
