@@ -5,7 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from bsd.enclosure import Enclosure as ENC
 from .enclosure_.enclosure_class import Enclosure
-from .regex import RE
+from .enclosure_.regex import RE
 
 
 class EnclosureLabelModel(sa.Model):
