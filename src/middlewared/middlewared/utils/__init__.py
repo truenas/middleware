@@ -202,7 +202,7 @@ def filter_list(_list, filters=None, options=None):
         try:
             return rv[0]
         except IndexError:
-            raise MatchNotFound()
+            raise MatchNotFound() from None
 
     if options.get('offset'):
         rv = rv[options['offset']:]

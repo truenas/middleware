@@ -171,7 +171,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             try:
                 return result[0]
             except IndexError:
-                raise MatchNotFound()
+                raise MatchNotFound() from None
 
         return result
 

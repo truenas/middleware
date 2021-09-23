@@ -288,7 +288,10 @@ class ServiceService(CRUDService):
 
     @private
     async def object(self, name):
-        return self.SERVICES[name]
+        try:
+            return self.SERVICES[name]
+        except KeyError:
+            raise MatchNotFound(name) from None
 
     @private
     async def generate_etc(self, object):
