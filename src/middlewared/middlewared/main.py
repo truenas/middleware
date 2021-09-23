@@ -1079,8 +1079,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             systemd_notify(f'EXTEND_TIMEOUT_USEC={int(240 * 1e6)}')
 
     def __notify_startup_complete(self):
-        if osc.IS_LINUX:
-            systemd_notify('READY=1')
+        with open(middlewared.service.MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
+            pass
+
+        systemd_notify('READY=1')
 
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)

@@ -35,6 +35,7 @@ from middlewared.validators import Range, IpAddress
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 get_or_insert_lock = asyncio.Lock()
 LOCKS = defaultdict(asyncio.Lock)
+MIDDLEWARE_STARTED_SENTINEL_PATH = "/var/run/middlewared-started"
 
 
 def lock(lock_str):
@@ -1462,6 +1463,11 @@ class CoreService(Service):
                 description=progress.get('description'),
                 extra=progress.get('extra'),
             )
+
+    @private
+    def is_starting_during_boot(self):
+        # Returns True if middleware is being currently started during boot
+        return not os.path.exists(MIDDLEWARE_STARTED_SENTINEL_PATH)
 
     @private
     def notify_postinit(self):
