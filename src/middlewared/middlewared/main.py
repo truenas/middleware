@@ -121,6 +121,7 @@ class Application(object):
             'class': klass.__name__,
             'frames': frames,
             'formatted': ''.join(traceback.format_exception(*exc_info)),
+            'repr': repr(exc_info[1]),
         }
 
     def get_error_dict(self, errno, reason=None, exc_info=None, etype=None, extra=None):
