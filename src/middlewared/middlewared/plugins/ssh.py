@@ -1,13 +1,13 @@
 import base64
 import hashlib
 import os
+import subprocess
 import syslog
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
 from middlewared.validators import Range
 from middlewared.service import private, SystemServiceService
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc
 
 
 class SSHModel(sa.Model):
@@ -172,9 +172,11 @@ class SSHService(SystemServiceService):
 
         return await self.config()
 
-    @private
-    def save_keys(self):
-        update = {}
+    keys = [
+        (
+            os.path.join("/etc/ssh", i),
+            i.replace(".", "_",).replace("-", "_")
+        )
         for i in [
             "ssh_host_key",
             "ssh_host_key.pub",
@@ -190,18 +192,40 @@ class SSHService(SystemServiceService):
             "ssh_host_ed25519_key",
             "ssh_host_ed25519_key.pub",
             "ssh_host_ed25519_key-cert.pub",
-        ]:
-            if osc.IS_FREEBSD:
-                path = os.path.join("/usr/local/etc/ssh", i)
-            else:
-                path = os.path.join("/etc/ssh", i)
+        ]
+    ]
+
+    @private
+    def cleanup_keys(self):
+        config = self.middleware.call_sync("datastore.config", "services.ssh")
+        for path, column in self.keys:
+            if not config[column] and os.path.exists(path):
+                self.middleware.logger.warning("Removing irrelevant SSH host key %r", path)
+                os.unlink(path)
+
+    @private
+    def generate_keys(self):
+        self.middleware.logger.debug("Generating SSH host keys")
+        p = subprocess.run(["dpkg-reconfigure", "openssh-server"], stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
+        if p.returncode != 0:
+            self.middleware.logger.error("Error generating SSH host keys: %s", p.stdout)
+
+    @private
+    def save_keys(self):
+        update = {}
+        for path, column in self.keys:
             if os.path.exists(path):
                 with open(path, "rb") as f:
                     data = base64.b64encode(f.read()).decode("ascii")
-
-                column = i.replace(".", "_",).replace("-", "_")
 
                 update[column] = data
 
         old = self.middleware.call_sync('ssh.config')
         self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update)
+
+
+async def setup(middleware):
+    if await middleware.call('core.is_starting_during_boot'):
+        await middleware.call('ssh.cleanup_keys')
+        await middleware.call('ssh.generate_keys')

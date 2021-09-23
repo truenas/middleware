@@ -7,7 +7,6 @@ from middlewared.alert.base import AlertCategory, AlertClass, SimpleOneShotAlert
 from middlewared.service import Service
 
 SENTINEL_PATH = "/data/sentinels/unscheduled-reboot"
-MIDDLEWARE_STARTED_SENTINEL_PATH = "/tmp/.middleware-started"
 
 # This file is managed in TrueNAS HA code (carp-state-change-hook.py)
 # Ticket 39114
@@ -40,7 +39,7 @@ class UnscheduledRebootAlertService(Service):
 async def setup(middleware):
     if os.path.exists(SENTINEL_PATH):
         # We want to emit the mail only if the machine truly rebooted
-        if os.path.exists(MIDDLEWARE_STARTED_SENTINEL_PATH):
+        if not await middleware.call('core.is_starting_during_boot'):
             return
 
         gc = await middleware.call('datastore.config', 'network.globalconfiguration')
@@ -107,7 +106,4 @@ async def setup(middleware):
         os.mkdir(sentinel_dir)
 
     with open(SENTINEL_PATH, "wb"):
-        pass
-
-    with open(MIDDLEWARE_STARTED_SENTINEL_PATH, "wb"):
         pass
