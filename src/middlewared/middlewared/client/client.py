@@ -225,7 +225,15 @@ class Job(object):
         if job['state'] != 'SUCCESS':
             if job['exc_info'] and job['exc_info']['type'] == 'VALIDATION':
                 raise ValidationErrors(job['exc_info']['extra'])
-            raise ClientException(job['error'], trace={'formatted': job['exception']}, extra=job['exc_info']['extra'])
+            raise ClientException(
+                job['error'],
+                trace={
+                    'class': job['exc_info']['type'],
+                    'formatted': job['exception'],
+                    'repr': job['exc_info']['repr'],
+                },
+                extra=job['exc_info']['extra']
+            )
         return job['result']
 
 
