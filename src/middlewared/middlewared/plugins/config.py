@@ -5,7 +5,6 @@ import os
 import re
 import shutil
 import sqlite3
-import subprocess
 import tarfile
 import tempfile
 
@@ -238,40 +237,14 @@ class ConfigService(Service):
         If `reboot` is true this job will reboot the system after its completed with a delay of 10
         seconds.
         """
-        factorydb = f'{FREENAS_DATABASE}.factory'
-        with contextlib.suppress(OSError):
-            os.unlink(factorydb)
+        job.set_progress(0, 'Replacing database file')
+        shutil.copy('/data/factory-v1.db', FREENAS_DATABASE)
 
-        cp = subprocess.run(
-            ['migrate93', '-f', factorydb],
-            capture_output=True,
-        )
-        if cp.returncode != 0:
-            job.logs_fd.write(cp.stderr)
-            raise CallError('Factory reset has failed.')
-
-        cp = subprocess.run(
-            ['migrate113', '-f', factorydb],
-            capture_output=True,
-        )
-        if cp.returncode != 0:
-            job.logs_fd.write(cp.stderr)
-            raise CallError('Factory reset has failed.')
-
-        cp = subprocess.run(
-            ['migrate'],
-            env=dict(os.environ, FREENAS_DATABASE=factorydb),
-            capture_output=True,
-        )
-        if cp.returncode != 0:
-            job.logs_fd.write(cp.stderr)
-            raise CallError('Factory reset has failed.')
-
-        shutil.move(factorydb, FREENAS_DATABASE)
-
+        job.set_progress(10, 'Running database upload hooks')
         self.middleware.call_hook_sync('config.on_upload', FREENAS_DATABASE)
 
         if self.middleware.call_sync('failover.licensed'):
+            job.set_progress(30, 'Sending database to the other node')
             try:
                 self.middleware.call_sync('failover.send_small_file', FREENAS_DATABASE)
 
@@ -291,9 +264,11 @@ class ConfigService(Service):
                     CallError.EREMOTENODEERROR,
                 )
 
+        job.set_progress(50, 'Updating initramfs')
         self.middleware.call_sync('boot.update_initramfs')
 
         if options['reboot']:
+            job.set_progress(95, 'Will reboot in 10 seconds')
             self.middleware.run_coroutine(
                 self.middleware.call('system.reboot', {'delay': 10}), wait=False,
             )
