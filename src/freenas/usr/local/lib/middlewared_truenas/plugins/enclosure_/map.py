@@ -1,5 +1,5 @@
-from collections import namedtuple
 import re
+from collections import namedtuple
 
 from middlewared.service import Service, private
 
@@ -256,78 +256,65 @@ class EnclosureService(Service):
         return enclosures
 
     async def _map_enclosures(self, enclosures, slots):
-        # Ensure JBODs don't effect ordering by filtering them out
-        controller_enclosures = list(filter(lambda x: x["controller"], enclosures))
-        elements = []
-        has_slot_status = False
+        mapped = [{
+            "id": "mapped_enclosure_0",
+            "name": "Drive Bays",
+            "model": "",
+            "controller": True,
+            "elements": {"Array Device Slot": {}},
+            "has_slot_status": False,
+        }]
+
+        orig_slots = {}
+        orig_id = this_num = None
         for slot, mapping in enumerate(slots, 1):
+            if mapping.num != this_num:
+                # this means we haven't pulled out the original enclosure
+                # information for /dev/ses{mapping.num}.
+                orig = [i for i in enclosures if i["number"] == mapping.num]
+                if not orig:
+                    self.logger.error("Failed to detect /dev/ses%d. Mapping enclosure failed.", mapping.num)
+                    return []
+                else:
+                    this_num = mapping.num
+                    orig_id = orig[0]["id"]
+                    # pull out the original slots
+                    orig_slots = orig[0]["elements"]["Array Device Slot"]
+                    # set the model of the mapped enclosure
+                    mapped[0]["model"] = orig[0]["model"]
+
+            # now we need to map the original enclosures disk slots to the new mapping
             try:
-                original_enclosure = controller_enclosures[mapping.num]
+                orig_slot = orig_slots[str(mapping.slot)]
             except IndexError:
-                self.logger.error("Mapping referenced enclosure %d but it is not present on this system",
-                                  mapping.num)
+                self.logger.error(
+                    "Failed to detect slot %d in enclosure /dev/ses%d. Mapping slot failed.", mapping.slot, mapping.num
+                )
                 return []
 
-            original_slots = list(filter(lambda element: element["name"] == "Array Device Slot",
-                                         original_enclosure["elements"]))[0]["elements"]
-
-            try:
-                original_slot = original_slots[mapping.slot]
-            except IndexError:
-                self.logger.error("Mapping referenced slot %d in enclosure %d but it is not present on this system",
-                                  mapping.slot, mapping.num)
-                return []
-
-            element = {
-                "slot": slot,
-                "data": dict(original_slot["data"], **{
-                    "Descriptor": f"Disk #{slot}",
-                }),
-                "name": "Array Device Slot",
-                "descriptor": f"Disk #{slot}",
-                "status": original_slot["status"],
-                "value": original_slot["value"],
-                "value_raw": original_slot["value_raw"],
-                "original": {
-                    "enclosure_id": original_enclosure["id"],
-                    "slot": original_slot["slot"],
-                },
-            }
-            if mapping.identify:
-                has_slot_status = True
-                for k in ["fault", "identify"]:
-                    if k in original_slot:
-                        element[k] = original_slot[k]
-                    else:
-                        self.logger.warning("Mapping referenced slot %d in enclosure %d as identifiable but key %r "
-                                            "is not present on this system", mapping.slot, mapping.num, k)
-                        has_slot_status = False
-
-            elements.append(element)
-
-        mapped = [
-            {
-                "id": "mapped_enclosure_0",
-                "name": "Drive Bays",
-                "model": controller_enclosures[0]["model"],
-                "controller": True,
-                "elements": [
-                    {
-                        "name": "Array Device Slot",
-                        "descriptor": "Drive Slots",
-                        "header": ["Descriptor", "Status", "Value", "Device"],
-                        "elements": elements,
-                        "has_slot_status": has_slot_status,
+            # disk has been mapped so update `mapped` variable appropriately
+            mapped[0]["elements"]["Array Device Slot"].update({
+                str(slot): {
+                    "descriptor": f"Disk #{slot}",
+                    "status": orig_slot["status"],
+                    "value": orig_slot["value"],
+                    "value_raw": orig_slot["value_raw"],
+                    "dev": orig_slot["dev"],
+                    "original": {
+                        "enclosure_id": orig_id,
+                        "slot": mapping.slot,
                     },
-                ],
-            }
-        ]
+                }
+            })
 
-        # if we have future products that need to be mapped and/or have the
-        # ability to support expansion shelves, then we need to add them
-        # back in here so drive identification works
-        for enclosure in enclosures:
-            if not enclosure["controller"]:
-                mapped.append(enclosure)
+            # set this if the disk that is being mapped is flagged
+            # as being able to be faulted/identified/cleared etc
+            mapped[0]["has_slot_status"] = True if mapping.identify else False
+
+        # getting here means we've mapped the enclosures for the given product
+        # but if we have future products that need to be mapped and/or have the
+        # ability to support expansion shelves, then we need to add them back
+        # in here so drive identification works
+        mapped.extend([enc for enc in enclosures if not enc["controller"]])
 
         return mapped
