@@ -97,9 +97,8 @@ MAPPINGS = [
         ]),
     ]),
     # R20 and R20B share chassis and mapping
-    ProductMapping(re.compile(r"TRUENAS-R20B$"), [
+    ProductMapping(re.compile(r"TRUENAS-R20B?$"), [
         VersionMapping(re.compile(".*"), [
-            MappingSlot(2, 0, False),
             MappingSlot(2, 1, False),
             MappingSlot(2, 2, False),
             MappingSlot(2, 3, False),
@@ -111,8 +110,9 @@ MAPPINGS = [
             MappingSlot(2, 9, False),
             MappingSlot(2, 10, False),
             MappingSlot(2, 11, False),
-            MappingSlot(0, 0, False),
+            MappingSlot(2, 12, False),
             MappingSlot(0, 1, False),
+            MappingSlot(0, 2, False),
         ]),
     ]),
     ProductMapping(re.compile(r"TRUENAS-R20A$"), [
@@ -285,7 +285,7 @@ class EnclosureService(Service):
 
             # now we need to map the original enclosures disk slots to the new mapping
             try:
-                orig_slot = orig_slots[str(mapping.slot)]
+                orig_slot = orig_slots[mapping.slot]
             except IndexError:
                 self.logger.error(
                     "Failed to detect slot %d in enclosure /dev/ses%d. Mapping slot failed.", mapping.slot, mapping.num
@@ -294,7 +294,7 @@ class EnclosureService(Service):
 
             # disk has been mapped so update `mapped` variable appropriately
             mapped[0]["elements"]["Array Device Slot"].update({
-                str(slot): {
+                slot: {
                     "descriptor": f"Disk #{slot}",
                     "status": orig_slot["status"],
                     "value": orig_slot["value"],
