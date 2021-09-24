@@ -9,9 +9,6 @@
     ad = middleware.call_sync('activedirectory.config')
 %>
 [global]
-%if ad['restrict_pam']:
-require_membership_of = S-1-5-32-544
-%endif
 %if ad['verbose_logging']:
 debug = yes
 %else:

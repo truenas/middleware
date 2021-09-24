@@ -41,7 +41,11 @@
             return 'ActiveDirectory'
 
         def enabled(self):
-            return self.safe_call('activedirectory.config')['enable']
+            config = self.safe_call('activedirectory.config')
+            if config['restrict_pam']:
+                return False
+
+            return config['enable']
 
         def pam_auth(self):
             module = self.pam_winbind
