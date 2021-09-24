@@ -67,6 +67,11 @@ PermitRootLogin yes
 % else:
 PermitRootLogin without-password
 % endif
+% if ssh_config['usepam']:
+UsePAM yes
+% else:
+UsePam no
+% endif
 % if ssh_config['tcpfwd']:
 AllowTcpForwarding yes
 % else:
@@ -85,7 +90,6 @@ PubkeyAuthentication yes
 ${ssh_config['options']}
 % if twofactor_enabled:
 # These are forced to be enabled with 2FA
-UsePAM yes
 ChallengeResponseAuthentication yes
     % if IS_LINUX:
 ## We want to set this to no because in linux we have pam_motd being used as well when we use pam_oath.so resulting in duplicate motd's

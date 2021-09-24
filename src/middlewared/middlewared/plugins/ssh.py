@@ -19,6 +19,7 @@ class SSHModel(sa.Model):
     ssh_rootlogin = sa.Column(sa.Boolean(), default=False)
     ssh_passwordauth = sa.Column(sa.Boolean(), default=False)
     ssh_kerberosauth = sa.Column(sa.Boolean(), default=False)
+    ssh_usepam = sa.Column(sa.Boolean(), default=True)
     ssh_tcpfwd = sa.Column(sa.Boolean(), default=False)
     ssh_compression = sa.Column(sa.Boolean(), default=False)
     ssh_privatekey = sa.Column(sa.EncryptedText())
@@ -57,6 +58,7 @@ class SSHService(SystemServiceService):
         Bool('rootlogin', required=True),
         Bool('passwordauth', required=True),
         Bool('kerberosauth', required=True),
+        Bool('usepam', required=True),
         Bool('tcpfwd', required=True),
         Bool('compression', required=True),
         Str(
