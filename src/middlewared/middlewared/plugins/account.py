@@ -1113,8 +1113,8 @@ class GroupService(CRUDService):
         ('add', Bool('builtin')),
         ('add', Bool('id_type_both')),
         ('add', Bool('local')),
-        ('add', Str('nt_name')),
-        ('add', Str('sid')),
+        ('add', Str('nt_name', null=True)),
+        ('add', Str('sid', null=True)),
     )
 
     @private
