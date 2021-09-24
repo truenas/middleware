@@ -44,6 +44,7 @@ Optional option
     --ha                       - Run test for HA
     --dev-test                 - Run only the test that are not mark with
                                  pytestmark skipif dev_test is true.
+    --debug-mode               - Start API tests with middleware debug mode
     """ % argv[0]
 
 # if have no argument stop
@@ -59,7 +60,8 @@ option_list = [
     "vm-name=",
     "ha",
     "update",
-    "dev-test"
+    "dev-test",
+    "debug-mode"
 ]
 
 # look if all the argument are there.
@@ -76,6 +78,7 @@ testexpr = None
 ha = False
 update = False
 dev_test = False
+debug_mode = False
 for output, arg in myopts:
     if output in ('-i', '--ip'):
         ip = arg
@@ -95,6 +98,8 @@ for output, arg in myopts:
         update = True
     elif output == '--dev-test':
         dev_test = True
+    elif output == '--debug-mode':
+        debug_mode = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -123,6 +128,7 @@ pool_name = "tank"
 ha = {ha}
 update = {update}
 dev_test = {dev_test}
+debug_mode = {debug_mode}
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -145,7 +151,6 @@ Key = f.readlines()[0].rstrip()
 cfg_file = open("auto_config.py", 'a')
 cfg_file.writelines(f'sshKey = "{Key}"\n')
 cfg_file.close()
-
 
 call([
     f"pytest-{version}",
