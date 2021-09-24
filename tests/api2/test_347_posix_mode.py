@@ -9,13 +9,12 @@ import stat
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password, scale
+from auto_config import ip, pool_name, user, password
 from pytest_dependency import depends
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-group = 'nogroup' if scale else 'nobody'
 MODE_DATASET = f'{pool_name}/modetest'
 dataset_url = MODE_DATASET.replace('/', '%2F')
 
@@ -82,7 +81,7 @@ def test_04_verify_setting_mode_bits_nonrecursive(request, mode_bit):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': new_mode,
-            'group': group,
+            'group': 'nobody',
             'user': 'nobody'
         }
     )
@@ -134,7 +133,7 @@ def test_06_verify_setting_mode_bits_recursive_no_traverse(request, mode_bit):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': new_mode,
-            'group': group,
+            'group': 'nobody',
             'user': 'nobody',
             'options': {'recursive': True}
         }
@@ -176,7 +175,7 @@ def test_08_verify_traverse_to_child_dataset(request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': 777,
-            'group': group,
+            'group': 'nobody',
             'user': 'nobody',
             'options': {'recursive': True, 'traverse': True}
         }
@@ -223,7 +222,7 @@ def test_10_creating_shareuser_to_test_acls(request):
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
     next_uid = results.json()
-    shell = '/usr/bin/bash' if scale else '/bin/csh'
+    shell = '/bin/csh'
     payload = {
         "username": MODE_USER,
         "full_name": "Mode User",
@@ -371,7 +370,7 @@ def test_11_test_directory_owner_bits_function_allow(mode_bit, request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': f'{new_mode:03o}',
-            'group': group,
+            'group': 'nobody',
             'user': MODE_USER
         }
     )
@@ -433,7 +432,7 @@ def test_13_test_directory_other_bits_function_allow(mode_bit, request):
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': f'{new_mode:03o}',
-            'group': 'root' if scale else 'wheel',
+            'group': 'wheel',
             'user': 'root'
         }
     )

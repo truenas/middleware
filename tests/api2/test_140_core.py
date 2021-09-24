@@ -10,16 +10,13 @@ from urllib.request import urlretrieve
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST
-from auto_config import ip, dev_test, scale
+from auto_config import ip, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_get_core_services():
-    if scale:
-        results = POST('/core/get_services/')
-    else:
-        results = GET('/core/get_services/')
+    results = GET('/core/get_services/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True
     global services

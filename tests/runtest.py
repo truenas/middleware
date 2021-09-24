@@ -42,7 +42,6 @@ Optional option
     --test <test name>         - Test name (Network, ALL)
     --vm-name <VM_NAME>        - Name the the Bhyve VM
     --ha                       - Run test for HA
-    --scale                    - Run test for Scale
     --dev-test                 - Run only the test that are not mark with
                                  pytestmark skipif dev_test is true.
     """ % argv[0]
@@ -59,7 +58,6 @@ option_list = [
     'test=',
     "vm-name=",
     "ha",
-    "scale",
     "update",
     "dev-test"
 ]
@@ -76,7 +74,6 @@ vm_name = None
 testName = ''
 testexpr = None
 ha = False
-scale = False
 update = False
 dev_test = False
 for output, arg in myopts:
@@ -94,8 +91,6 @@ for output, arg in myopts:
         vm_name = f"'{arg}'"
     elif output == '--ha':
         ha = True
-    elif output == '--scale':
-        scale = True
     elif output == '--update':
         update = True
     elif output == '--dev-test':
@@ -126,7 +121,6 @@ localHome = "{localHome}"
 keyPath = "{keyPath}"
 pool_name = "tank"
 ha = {ha}
-scale = {scale}
 update = {update}
 dev_test = {dev_test}
 """
@@ -179,8 +173,7 @@ for log in logs_list:
     get_file(log, artifacts, 'root', 'testing', ip)
 
 # get dmesg and put it in artifacts
-dmesg_option = '' if scale else ' -a'
-results = SSH_TEST(f'dmesg{dmesg_option}', 'root', 'testing', ip)
+results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/dmesg', 'w')
 dmsg.writelines(results['output'])
 dmsg.close()

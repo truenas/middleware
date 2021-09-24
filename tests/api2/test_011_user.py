@@ -13,15 +13,10 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
-from auto_config import pool_name, scale, ha, password, user, ip
-if scale is True:
-    shell = '/usr/bin/bash'
-else:
-    shell = '/bin/csh'
+from auto_config import pool_name, ha, password, user, ip
 
-group = 'root' if scale else 'wheel'
-group_id = GET(f'/group/?group={group}', controller_a=ha).json()[0]['id']
-
+# shell = '/bin/csh'
+group_id = GET('/group/?group=wheel', controller_a=ha).json()[0]['id']
 dataset = f"{pool_name}/test_homes"
 dataset_url = dataset.replace('/', '%2F')
 
@@ -82,7 +77,7 @@ def test_02_creating_user_testuser(request):
         "password": "test1234",
         "uid": next_uid,
         "smb": False,
-        "shell": shell
+        "shell": '/bin/csh'
     }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
@@ -114,7 +109,7 @@ def test_05_check_user_exists(request):
     if results.status_code == 200:
         pw = results.json()
         assert pw['pw_uid'] == next_uid, results.text
-        assert pw['pw_shell'] == shell, results.text
+        assert pw['pw_shell'] == '/bin/csh', results.text
 
 
 def test_06_get_user_info(request):
@@ -140,7 +135,7 @@ def test_09_look_user_uid(request):
 
 def test_10_look_user_shell(request):
     depends(request, ["user_02", "user_01"])
-    assert userinfo["shell"] == shell
+    assert userinfo["shell"] == '/bin/csh'
 
 
 def test_11_add_employee_id_and_team_special_attributes(request):
@@ -264,7 +259,7 @@ def test_27_creating_shareuser_to_test_sharing(request):
         "groups": [group_id],
         "password": "testing",
         "uid": next_uid,
-        "shell": shell
+        "shell": '/bin/csh'
     }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
@@ -321,7 +316,7 @@ def test_31_creating_user_with_homedir(request):
         "group_create": True,
         "password": "test1234",
         "uid": next_uid,
-        "shell": shell,
+        "shell": '/bin/csh',
         "sshpubkey": "canary",
         "home": f'/mnt/{dataset}/testuser2',
         "home_mode": '750'
