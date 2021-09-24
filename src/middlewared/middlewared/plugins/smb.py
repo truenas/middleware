@@ -1626,6 +1626,9 @@ class SharingSMBService(SharingService):
         case user-defined takes precedence.
         """
         params = (SMBSharePreset[data["purpose"]].value)["params"].copy()
+        if data.get('home') and not params['path_suffix']:
+            params.pop('path_suffix')
+
         aux = params.pop("auxsmbconf")
         data.update(params)
         if data["auxsmbconf"]:

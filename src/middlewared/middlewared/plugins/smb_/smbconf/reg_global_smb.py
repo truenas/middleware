@@ -23,6 +23,9 @@ class GlobalSchema(RegistrySchema):
         2) map to guest on bad user.
         """
         guest_enabled = any(filter(lambda x: x['guestok'], shares))
+        has_home = any(filter(lambda x: x['home'], shares))
+        if has_home:
+            data_out['obey pam restrictions'] = {'parsed': True}
 
         data_out.update({
             'disable spoolss': {'parsed': True},
