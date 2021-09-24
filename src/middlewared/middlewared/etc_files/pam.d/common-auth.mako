@@ -13,7 +13,7 @@
 %>\
 
 # here are the per-package modules (the "Primary" block)
-${dsp.pam_account()}
+${dsp.pam_auth()}
 
 auth	[success=1 default=ignore]      pam_unix.so obscure sha512
 # here's the fallback if no module succeeds
