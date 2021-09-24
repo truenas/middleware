@@ -23,10 +23,10 @@ class SystemService(Service):
                         'sig': core['COREDUMP_SIGNAL'],
                         'exe': core['COREDUMP_EXE'],
                     }
-                    if isinstance(core['COREDUMP_FILENAME'], str):
-                        coredump['corefile'] = 'present' if exists(core['COREDUMP_FILENAME']) else 'missing'
-                    else:
+                    if 'COREDUMP_FILENAME' not in core or not isinstance(core['COREDUMP_FILENAME'], str):
                         coredump['corefile'] = 'none'
+                    else:
+                        coredump['corefile'] = 'present' if exists(core['COREDUMP_FILENAME']) else 'missing'
                     coredumps.append(coredump)
         except Exception:
             self.logger.warning('Failed to obtain coredump information', exc_info=True)
