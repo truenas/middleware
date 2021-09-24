@@ -272,7 +272,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         except MatchNotFound:
             home_path = 'home'
 
-        data_out['template homedir'] = {"parsed": f'{home_path}/%D/%U'}
+        data_out['template homedir'] = {"parsed": f'{home_path}'}
 
         return
 

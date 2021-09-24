@@ -132,7 +132,10 @@ class SMBService(Service):
         """
         to_set = {}
         data['ds_state'] = await self.middleware.call('directoryservices.get_state')
-        data['shares'] = await self.middleware.call('sharing.smb.query')
+        data['shares'] = await self.middleware.call(
+            'sharing.smb.query',
+            [('enabled', '=', True), ('locked', '=', False)]
+        )
         data['ms_accounts'] = await self.middleware.call(
             'user.query',
             [('microsoft_account', '=', True), ('locked', '=', False)],
