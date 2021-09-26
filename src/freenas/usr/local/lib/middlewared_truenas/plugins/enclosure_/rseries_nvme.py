@@ -1,47 +1,41 @@
-import re
-
+import sysctl
 from middlewared.service import Service, private
-from middlewared.utils.osc import IS_FREEBSD
-
-if IS_FREEBSD:
-    import sysctl
 
 
 class EnclosureService(Service):
-    RE_HANDLE = re.compile(r"handle=(\S+)")
-    HANDLES = {
-        r"\_SB_.PC01.BR1A.OCL0": 1,
-        r"\_SB_.PC01.BR1B.OCL1": 2,
-        r"\_SB_.PC00.RP01.PXSX": 3,
-    }
-
     @private
     def rseries_nvme_enclosures(self, product):
-        nvme_to_nvd = self.middleware.call_sync('disk.nvme_to_nvd_map')
         slot_to_nvd = {}
-        for nvme, nvd in nvme_to_nvd.items():
+        for nvme, nvd in self.middleware.call_sync('disk.nvme_to_nvd_map', True).items():
             try:
-                location = sysctl.filter(f"dev.nvme.{nvme}.%location")[0].value
-                m = re.search(self.RE_HANDLE, location)
-                if not m:
+                location = sysctl.filter(f'dev.nvme.{nvme}.%location')[0].value
+                if 'PC01.BR1A.OCL' in location:
+                    slot = 1
+                elif 'PC01.BR1B.OCL' in location:
+                    slot = 2
+                elif 'PC00.RP01.PXSX' in location:
+                    slot = 3
+                else:
                     continue
-
-                handle = m.group(1)
-                if handle not in self.HANDLES:
-                    continue
-
-                slot = self.HANDLES[handle]
-            except IndexError:
+                slot_to_nvd[slot] = f'nvd{nvd}'
+            except Exception:
+                self.logger.error('Failed to map /dev/nvme%s device', nvme, exc_info=True)
                 continue
 
-            slot_to_nvd[slot] = f"nvd{nvd}"
+        try:
+            model = product.split('-')[1]
+        except IndexError:
+            # SMBIOS is mistagged so default to 'R50'
+            # since (at the time of writing this) is
+            # the only r-series hardware that has an
+            # nvme enclosure
+            model = 'R50'
 
-        model = product.split('-')[-1]
         return self.middleware.call_sync(
-            "enclosure.fake_nvme_enclosure",
-            f"{model.lower()}_nvme_enclosure",
-            f"{model} NVMe enclosure",
-            f"{model}, Drawer #3",
+            'enclosure.fake_nvme_enclosure',
+            f'{model.lower()}_nvme_enclosure',
+            f'{model} NVMe enclosure',
+            f'{model}',
             3,
             slot_to_nvd
         )

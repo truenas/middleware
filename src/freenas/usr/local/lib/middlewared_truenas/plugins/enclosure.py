@@ -39,19 +39,22 @@ class EnclosureService(CRUDService):
                 'label': labels.get(enc.encid) or enc.encname,
                 'elements': enc.elements,
             }
-            # Ensure R50's first expander is first in
-            # the list independent of how it was cabled
             if 'eDrawer4048S1' in enclosure['name']:
+                # Ensure R50's first expander is first in
+                # the list independent of how it was cabled
                 enclosures.insert(0, enclosure)
             else:
                 enclosures.append(enclosure)
 
-        if prod in ('TRUENAS-M50', 'TRUENAS-M60'):
-            enclosures.extend(self.middleware.call_sync('enclosure.mseries_plx_enclosures', prod))
-        elif prod == 'TRUENAS-R50':
-            enclosures.extend(self.middleware.call_sync('enclosure.rseries_nvme_enclosures', prod))
-
+        # map the enclosures (if needed)
         enclosures = self.middleware.call_sync('enclosure.map_enclosures', enclosures, prod, prod_vers)
+
+        # need to map the nvme disks
+        if prod:
+            if prod in ('TRUENAS-M50', 'TRUENAS-M60'):
+                enclosures.extend(self.middleware.call_sync('enclosure.mseries_plx_enclosures', prod))
+            elif prod == 'TRUENAS-R50':
+                enclosures.extend(self.middleware.call_sync('enclosure.rseries_nvme_enclosures', prod))
 
         return filter_list(enclosures, filters, options)
 
