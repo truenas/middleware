@@ -1615,8 +1615,8 @@ class SystemGeneralService(ConfigService):
 
                 elif i['type'] == 'INET6' and all_ip6:
                     http_url = f'{http_proto}[{i["address"]}]'
-                    if not https_default_port:
-                        http_url += f':{https_port}'
+                    if not http_default_port:
+                        http_url += f':{http_port}'
                     urls.append(http_url)
                     if https_proto is not None:
                         https_url = f'{https_proto}[{i["address"]}]'
