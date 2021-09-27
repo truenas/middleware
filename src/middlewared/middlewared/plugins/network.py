@@ -1952,7 +1952,7 @@ class InterfaceService(CRUDService):
         include = {}
         for interface in await self.middleware.call('interface.query'):
             if interface['type'] == 'BRIDGE':
-                if id and id.startswith('br') and interface['id'] == id:
+                if id and id == interface['id']:
                     # means this is an existing br interface that is being updated so we need to
                     # make sure and return the interfaces members
                     include.update({i: i for i in interface['bridge_members']})
