@@ -8,7 +8,7 @@ from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, ip, hostname, scale, user, password
+from auto_config import pool_name, ip, hostname, user, password
 from functions import GET, POST, PUT, DELETE, SSH_TEST, wait_on_job
 
 try:
@@ -70,7 +70,6 @@ dataset = f"{pool_name}/ad-bsd"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestShare"
 SMB_PATH = f"/mnt/{dataset}"
-group = 'root' if scale else 'wheel'
 
 
 @pytest.mark.dependency(name="ad_01")
@@ -134,7 +133,7 @@ def test_08_Changing_permissions_on_dataset(request):
         'acl': [],
         'mode': '777',
         'user': 'root',
-        'group': group
+        'group': 'wheel'
     })
     assert results.status_code == 200, results.text
     job_id = results.json()

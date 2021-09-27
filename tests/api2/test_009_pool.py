@@ -3,7 +3,6 @@
 import pytest
 import sys
 import os
-import re
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)

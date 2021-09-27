@@ -11,7 +11,7 @@ import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user, scale
+from auto_config import ip, pool_name, password, user
 from pytest_dependency import depends
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
@@ -21,7 +21,6 @@ dataset = f"{pool_name}/smb-reg"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "REGISTRYTEST"
 smb_path = "/mnt/" + dataset
-group = 'nogroup' if scale else 'nobody'
 
 SHARES = [f'{SMB_NAME}_{i}' for i in range(0, 25)]
 SHARE_DICT = {}
@@ -80,7 +79,7 @@ def test_002_changing_dataset_permissions_of_smb_dataset(request):
     payload = {
         'acl': [],
         'mode': '777',
-        'group': group,
+        'group': 'nobody',
         'user': 'nobody',
         'options': {'stripacl': True, 'recursive': True}
     }

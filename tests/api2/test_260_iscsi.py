@@ -11,7 +11,7 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip, user, password, pool_name, hostname, scale, dev_test
+from auto_config import ip, user, password, pool_name, hostname, dev_test
 from functions import PUT, POST, GET, SSH_TEST, DELETE, cmd_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
@@ -226,7 +226,6 @@ def test_17_Deleting_file(request):
 
 
 @bsd_host_cfg
-@pytest.mark.skipif(scale, reason='ctladm is not supported on SCALE')
 def test_18_verifiying_iscsi_session_on_truenas(request):
     depends(request, ["iscsi_10", "ssh_password"], scope="session")
     try:
@@ -441,7 +440,6 @@ def test_42_copying_file_to_new_dir_in_zvol_iscsi_share(request):
 
 
 @bsd_host_cfg
-@pytest.mark.skipif(scale, reason='ctladm is not supported on SCALE')
 def test_43_verifying_iscsi_session_on_truenas(request):
     depends(request, ["iscsi_38", "ssh_password"], scope="session")
     try:

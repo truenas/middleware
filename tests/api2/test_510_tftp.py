@@ -9,12 +9,11 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job
-from auto_config import pool_name, scale, dev_test
+from auto_config import pool_name, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 dataset = f"{pool_name}/tftproot"
 dataset_url = dataset.replace('/', '%2F')
-group = 'nogroup' if scale else 'nobody'
 
 
 @pytest.mark.dependency(name='tftp_dataset')
@@ -29,7 +28,7 @@ def test_02_Setting_permissions_for_TFTP_on_mnt_pool_name_tftproot(request):
     payload = {
         'acl': [],
         'mode': '777',
-        'group': group,
+        'group': 'nobody',
         'user': 'nobody'
     }
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', payload)

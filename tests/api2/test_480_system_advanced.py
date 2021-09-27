@@ -8,7 +8,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, SSH_TEST
-from auto_config import user, password, ip, scale, dev_test
+from auto_config import user, password, ip, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 MOTD = 'FREENAS_MOTD'
@@ -54,10 +54,7 @@ def test_04_system_advanced_check_serial_port_using_api(sysadv_dict):
 
 def test_05_system_advanced_check_serial_port_using_ssh(sysadv_dict, request):
     depends(request, ["ssh_password"], scope="session")
-    if scale is True:
-        cmd = f'dmesg | grep "{sysadv_dict["serial_choices"][0]}"'
-    else:
-        cmd = f'cat /boot/loader.conf.local | grep "{sysadv_dict["serial_choices"][0]}"'
+    cmd = f'cat /boot/loader.conf.local | grep "{sysadv_dict["serial_choices"][0]}"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results
 

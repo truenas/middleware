@@ -5,26 +5,20 @@
 import sys
 import os
 import enum
-import copy
 import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password, scale
+from auto_config import ip, pool_name, user, password, dev_test
 from pytest_dependency import depends
-
-from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-shell = '/usr/bin/bash' if scale else '/bin/csh'
-group = 'nogroup' if scale else 'nobody'
 ACLTEST_DATASET = f'{pool_name}/posixacltest'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
 
 ACLTEST_SUBDATASET = f'{pool_name}/posixacltest/sub1'
 subdataset_url = ACLTEST_SUBDATASET.replace('/', '%2F')
-group0 = "root" if scale else "wheel"
 
 permset_empty = {"READ": False, "WRITE": False, "EXECUTE": False}
 permset_full = {"READ": True, "WRITE": True, "EXECUTE": True}
@@ -120,7 +114,7 @@ def test_04_basic_set_acl_for_dataset(request):
         'path': f'/mnt/{ACLTEST_DATASET}',
         'dacl': ACLBrand.ACCESS.getacl(),
         'gid': 65534,
-        'uid':65534,
+        'uid': 65534,
         'acltype': 'POSIX1E'
     }
 
@@ -247,9 +241,9 @@ def test_09_set_tags(request, tag):
         }
         payload['dacl'].insert(3, new_entry)
 
-    result = POST('/filesystem/setacl/', payload)
-    assert result.status_code == 200, results.text
-    JOB_ID = result.json()
+    results = POST('/filesystem/setacl/', payload)
+    assert results.status_code == 200, results.text
+    JOB_ID = results.json()
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     results = POST('/filesystem/getacl/',
@@ -312,9 +306,9 @@ def test_10_set_tags_default(request, tag):
         default.insert(3, new_entry)
 
     payload['dacl'].extend(default)
-    result = POST('/filesystem/setacl/', payload)
-    assert result.status_code == 200, results.text
-    JOB_ID = result.json()
+    results = POST('/filesystem/setacl/', payload)
+    assert results.status_code == 200, results.text
+    JOB_ID = results.json()
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     results = POST('/filesystem/getacl/',
@@ -322,7 +316,7 @@ def test_10_set_tags_default(request, tag):
     assert results.status_code == 200, results.text
     new_acl = results.json()
     assert payload['dacl'] == new_acl['acl'], results.text
-    assert new_acl['trivial'] == False, results.text
+    assert new_acl['trivial'] is False, results.text
 
 
 def test_11_non_recursive_acl_strip(request):
@@ -359,7 +353,7 @@ We first create a child dataset to verify that ACLs do not change unless
 
 
 def test_12_prepare_recursive_tests(request):
-    #depends(request, ["HAS_POSIX_ACLS", "ssh_password"], scope="session")
+    depends(request, ["HAS_POSIX_ACLS", "ssh_password"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_SUBDATASET,
@@ -396,7 +390,7 @@ def test_13_recursive_no_traverse(request):
     payload = {
         'path': f'/mnt/{ACLTEST_DATASET}',
         'gid': 65534,
-        'uid':65534,
+        'uid': 65534,
         'dacl': ACLBrand.ACCESS.getacl(),
         'acltype': 'POSIX1E',
         'options': {'recursive': True},
@@ -428,7 +422,7 @@ def test_13_recursive_no_traverse(request):
 
     assert results2.status_code == 200, results.text
     theacl = results2.json()
-    assert theacl['trivial'] == False, results.text
+    assert theacl['trivial'] is False, results.text
     for entry in theacl['acl']:
         assert entry['perms'] == new_perms, results.text
 
@@ -442,7 +436,7 @@ def test_14_recursive_with_traverse(request):
 
     payload = {
         'gid': 65534,
-        'uid':65534,
+        'uid': 65534,
         'path': f'/mnt/{ACLTEST_DATASET}',
         'dacl': ACLBrand.ACCESS.getacl(),
         'acltype': 'POSIX1E',
@@ -463,7 +457,7 @@ def test_14_recursive_with_traverse(request):
     assert results.status_code == 200, results.text
 
     new_acl = results.json()
-    assert new_acl['trivial'] == False, results.text
+    assert new_acl['trivial'] is False, results.text
 
     # Verify that user was changed
     assert results.json()['uid'] == 65534, results.text

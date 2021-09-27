@@ -8,11 +8,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT
-from auto_config import scale, dev_test
+from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 variable = 'aa.22'
-type1 = 'SYSCTL' if scale else 'RC'
 
 
 def test_01_creating_test_tunable():
@@ -65,7 +64,7 @@ def test_07_updating_variable_name_value_comment_type():
         'var': variable + '1',
         'value': 'temp',
         'comment': 'testing variable',
-        'type': type1,
+        'type': 'RC',
         'enabled': True
     }
 

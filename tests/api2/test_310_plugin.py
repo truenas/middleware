@@ -6,14 +6,14 @@ import time
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, ha, scale, ip, user, password, dev_test
+from auto_config import pool_name, ha, ip, user, password, dev_test
 from functions import GET, POST, PUT, DELETE, wait_on_job, SSH_TEST
 
 if dev_test:
     reason = 'Skip for testing'
 else:
     reason = 'Skipping test for HA' if ha else 'Skipping test for SCALE'
-pytestmark = pytest.mark.skipif(ha or scale or dev_test, reason=reason)
+pytestmark = pytest.mark.skipif(ha or dev_test, reason=reason)
 
 JOB_ID = None
 job_results = None
