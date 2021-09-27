@@ -582,10 +582,14 @@ def test_056_create_new_smb_group_for_sid_test(request):
     cmd = "midclt call smb.groupmap_list"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    groupmaps = json.loads(results['output'].strip())
-    assert groupmaps.get("testsidgroup") is not None, groupmaps.keys()
-    domain_sid = groupmaps["testsidgroup"]["SID"].rsplit("-", 1)[0]
-    assert domain_sid == new_sid, groupmaps["testsidgroup"]
+    groupinfo = GET('/group?group=testsidgroup').json()[0]
+    groupmaps = json.loads(results['output'].strip())['local']
+
+    entry = groupmaps.get(str(groupinfo['gid']))
+    assert entry, f'gm: {groupmaps}, group_info: {groupinfo}'
+
+    domain_sid = entry["sid"].rsplit("-", 1)[0]
+    assert domain_sid == new_sid, str(entry)
 
 
 def test_057_change_netbios_name_and_check_groupmap(request):
@@ -600,10 +604,13 @@ def test_057_change_netbios_name_and_check_groupmap(request):
     cmd = "midclt call smb.groupmap_list"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    groupmaps = json.loads(results['output'].strip())
-    assert groupmaps.get("testsidgroup") is not None, groupmaps.keys()
-    domain_sid = groupmaps["testsidgroup"]["SID"].rsplit("-", 1)[0]
-    assert domain_sid != new_sid, groupmaps["testsidgroup"]
+    groupinfo = GET('/group?group=testsidgroup').json()[0]
+    groupmaps = json.loads(results['output'].strip())['local']
+    entry = groupmaps.get(str(groupinfo['gid']))
+    assert entry, f'gm: {groupmaps}, group_info: {groupinfo}'
+
+    domain_sid = entry["sid"].rsplit("-", 1)[0]
+    assert domain_sid != new_sid, str(entry)
 
 
 def test_058_delete_smb_group(request):
