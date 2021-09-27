@@ -87,7 +87,6 @@ class Enclosure(object):
             except KeyError:
                 # means the elements status reported by the enclosure
                 # is not mapped so just report unknown
-                logger.warning('Unknown element status: %r for %r', element['status'][0], self.devname)
                 element_status = 'UNKNOWN'
 
             if element_type[0] not in final:

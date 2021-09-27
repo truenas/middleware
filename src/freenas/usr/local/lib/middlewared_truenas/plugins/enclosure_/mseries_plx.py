@@ -11,10 +11,8 @@ class EnclosureService(Service):
 
     @private
     def mseries_plx_enclosures(self, product):
-        nvme_to_nvd = self.middleware.call_sync('disk.nvme_to_nvd_map')
-
         slot_to_nvd = {}
-        for nvme, nvd in nvme_to_nvd.items():
+        for nvme, nvd in self.middleware.call_sync('disk.nvme_to_nvd_map', True).items():
             pci = sysctl.filter(f'dev.nvme.{nvme}.%parent')[0].value
             m = re.match(self.RE_PCI, pci)
             if not m:
@@ -44,9 +42,9 @@ class EnclosureService(Service):
         model = product.split('-')[-1]
         return self.middleware.call_sync(
             'enclosure.fake_nvme_enclosure',
-            f'{model}_plx_enclosure',
+            f'{model.lower()}_plx_enclosure',
             'Rear NVME U.2 Hotswap Bays',
-            f'{model} Series',
+            f'{model}',
             4,
             slot_to_nvd
         )
