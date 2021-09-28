@@ -1319,9 +1319,9 @@ class InterfaceService(CRUDService):
                         'VLAN MTU cannot be bigger than parent interface.',
                     )
 
-        aliases = data.get('aliases', [])
-        aliases.extend(data.get('failover_aliases', []))
-        aliases.extend(data.get('failover_virtual_aliases', []))
+        aliases = data.get('aliases', []).copy()
+        aliases.extend(data.get('failover_aliases', []).copy())
+        aliases.extend(data.get('failover_virtual_aliases', []).copy())
         mtu = data.get('mtu')
         if mtu and mtu < 1280 and any(i['type'] == 'INET6' for i in aliases):
             # we set the minimum MTU to 68 for IPv4 (per https://tools.ietf.org/html/rfc791)
