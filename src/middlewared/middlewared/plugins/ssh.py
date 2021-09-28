@@ -206,8 +206,16 @@ class SSHService(SystemServiceService):
     @private
     def generate_keys(self):
         self.middleware.logger.debug("Generating SSH host keys")
-        p = subprocess.run(["dpkg-reconfigure", "openssh-server"], stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
+        p = subprocess.run(
+            # For each of the key types (rsa, dsa, ecdsa and ed25519) for which host keys do not exist,
+            # generate the host keys with the default key file path, an empty passphrase, default bits
+            # for the key type, and default comment.
+            ["ssh-keygen", "-A"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            encoding="utf-8",
+            errors="ignore"
+        )
         if p.returncode != 0:
             self.middleware.logger.error("Error generating SSH host keys: %s", p.stdout)
 
