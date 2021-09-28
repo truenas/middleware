@@ -1943,51 +1943,73 @@ class InterfaceService(CRUDService):
     @returns(Dict(additional_attrs=True))
     async def bridge_members_choices(self, id):
         """
-        Return available interface choices for `bridge_members` attribute.
+        Return available interface choices that can be added to a `br` (bridge) interface.
 
-        `id` is the name of the bridge interface to update or null for a new
-        bridge interface.
+        `id` is name of existing bridge interface on the system that will have its member
+                interfaces included.
         """
-        include = []
-        bridge = await self.middleware.call('interface.query', [
-            ('type', '=', 'BRIDGE'), ('id', '=', id)
-        ])
-        if bridge:
-            include += bridge[0]['bridge_members']
-        choices = await self.middleware.call('interface.choices', {
-            'bridge_members': False,
-            'lag_ports': False,
-            'exclude_types': [InterfaceType.BRIDGE.value],
-            'include': include,
-        })
-        return choices
+        exclude = {}
+        include = {}
+        for interface in await self.middleware.call('interface.query'):
+            if interface['type'] == 'BRIDGE':
+                if id and id == interface['id']:
+                    # means this is an existing br interface that is being updated so we need to
+                    # make sure and return the interfaces members
+                    include.update({i: i for i in interface['bridge_members']})
+                    exclude.update({interface['id']: interface['id']})
+                else:
+                    # exclude interfaces that are already part of another bridge
+                    exclude.update({i: i for i in interface['bridge_members']})
+                    # adding a bridge as a member to another bridge is not allowed
+                    exclude.update({interface['id']: interface['id']})
+            elif interface['type'] == 'LINK_AGGREGATION':
+                # exclude interfaces that are already part of a bond interface
+                exclude.update({i: i for i in interface['lag_ports']})
+
+            # add the interface to inclusion list and it will be discarded
+            # if it was also added to the exclusion list
+            include.update({interface['id']: interface['id']})
+
+        return {k: v for k, v in include.items() if k not in exclude}
 
     @accepts(Str('id', null=True, default=None))
     @returns(Dict(additional_attrs=True))
     async def lag_ports_choices(self, id):
         """
-        Return available interface choices for `lag_ports` attribute.
+        Return available interface choices that can be added to a `bond` (lag) interface.
 
-        `id` is the name of the LAG interface to update or null for a new
-        LAG interface.
+        `id` is name of existing bond interface on the system that will have its member
+                interfaces included.
         """
-        include = []
-        lag = await self.middleware.call('interface.query', [
-            ('type', '=', 'LINK_AGGREGATION'), ('id', '=', id)
-        ])
-        if lag:
-            include += lag[0]['lag_ports']
-        choices = await self.middleware.call('interface.choices', {
-            'bridge_members': False,
-            'lag_ports': False,
-            'exclude_types': [
-                InterfaceType.VLAN.value,
-                InterfaceType.BRIDGE.value,
-                InterfaceType.LINK_AGGREGATION.value,
-            ],
-            'include': include,
-        })
-        return choices
+        exclude = {}
+        include = {}
+        for interface in await self.middleware.call('interface.query'):
+            if interface['type'] == 'LINK_AGGREGATION':
+                if id and id == interface['id']:
+                    # means this is an existing bond interface that is being updated so we need to
+                    # make sure and return the interfaces members
+                    include.update({i: i for i in interface['lag_ports']})
+                    exclude.update({interface['id']: interface['id']})
+                else:
+                    # exclude interfaces that are already part of another bond
+                    exclude.update({i: i for i in interface['lag_ports']})
+                    # it's perfectly normal to add a bond as a member interface to another bond
+                    include.update({interface['id']: interface['id']})
+            elif interface['type'] == 'VLAN':
+                # adding a vlan or the vlan's parent interface to a bond is not allowed
+                exclude.update({interface['id']: interface['id']})
+                exclude.update({interface['vlan_parent_interface']: interface['vlan_parent_interface']})
+            elif interface['type'] == 'BRIDGE':
+                # adding a br interface to a bond is not allowed
+                exclude.update({interface['id']: interface['id']})
+                # exclude interfaces that are already part of a bridge interface
+                exclude.update({i: i for i in interface['bridge_members']})
+
+            # add the interface to inclusion list and it will be discarded
+            # if it was also added to the exclusion list
+            include.update({interface['id']: interface['id']})
+
+        return {k: v for k, v in include.items() if k not in exclude}
 
     @accepts()
     @returns(Dict(additional_attrs=True))
