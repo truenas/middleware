@@ -24,7 +24,10 @@ from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, Simple
 from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
-    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref, returns, OROperator, NOT_PROVIDED,
+    accepts, Attribute, Bool, Cron,
+    Dict, EnumMixin, Int, List,
+    Patch, Str, UnixPerm, Any,
+    Ref, returns, OROperator, NOT_PROVIDED,
 )
 from middlewared.service import (
     ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
@@ -3306,7 +3309,9 @@ class PoolDatasetService(CRUDService):
         created_ds = await self.get_instance(data['id'])
 
         if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB' and created_ds['acltype']['value'] == "NFSV4":
-            acl_job = await self.middleware.call('pool.dataset.permission', data['id'], {'options': {'set_default_acl': True}})
+            acl_job = await self.middleware.call(
+                'pool.dataset.permission', data['id'], {'options': {'set_default_acl': True}}
+            )
             await acl_job.wait()
 
         return created_ds
@@ -3462,6 +3467,18 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.name', 'Parent dataset does not exist for specified name')
         else:
             parent = parent[0]
+            if mode == 'CREATE' and parent['properties']['readonly']['rawvalue'] == 'on':
+                # creating a zvol/dataset when the parent object is set to readonly=on
+                # is allowed via ZFS. However, if it's a dataset an error will be raised
+                # stating that it was unable to be mounted. If it's a zvol, then the service
+                # that tries to open the zvol device will get read only related errors.
+                # Currently, there is no way to mount a dataset in the webUI so we will
+                # prevent this scenario from occuring by preventing creation if the parent
+                # is set to readonly=on.
+                verrors.add(
+                    f'{schema}.readonly',
+                    f'Turn off readonly mode on {parent["id"]} to create {data["name"].rsplit("/")[0]}'
+                )
 
         # We raise validation errors here as parent could be used down to validate other aspects of the dataset
         verrors.check()
