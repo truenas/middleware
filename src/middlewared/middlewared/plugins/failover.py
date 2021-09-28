@@ -1429,7 +1429,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     if not await middleware.call('failover.licensed'):
         return
 
-    if not await middleware.call('interface.query', [('failover_virtual_aliases', '!=', None)]):
+    if not await middleware.call('interface.query', [('failover_virtual_aliases', '!=', [])]):
         return
 
     if not await middleware.call('pool.query'):
