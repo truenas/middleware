@@ -3467,7 +3467,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.name', 'Parent dataset does not exist for specified name')
         else:
             parent = parent[0]
-            if mode == 'CREATE' and parent['properties']['readonly']['rawvalue'] == 'on':
+            if mode == 'CREATE' and parent['readonly']['rawvalue'] == 'on':
                 # creating a zvol/dataset when the parent object is set to readonly=on
                 # is allowed via ZFS. However, if it's a dataset an error will be raised
                 # stating that it was unable to be mounted. If it's a zvol, then the service
