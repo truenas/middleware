@@ -8,7 +8,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
-from auto_config import ip, password, user, pool_name
+from auto_config import ip, password, user, pool_name, ha
 
 
 def test_01_get_alert_list():
@@ -139,6 +139,7 @@ def test_14_wait_for_the_alert_to_dissapear(request):
         sleep(1)
 
 
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
 @pytest.mark.dependency(name='smb_service')
 def test_15_start_smb_service():
     results = POST('/service/start/', {'service': 'cifs'})
@@ -147,6 +148,7 @@ def test_15_start_smb_service():
     assert results.json()[0]['state'] == 'RUNNING', results.text
 
 
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
 @pytest.mark.dependency(name='corefiles_allert')
 def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
     depends(request, ['smb_service'], scope='session')
@@ -155,6 +157,7 @@ def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
     assert results['result'] is True, results['output']
 
 
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
 @pytest.mark.timeout(80)
 @pytest.mark.dependency(name='wait_alert')
 def test_17_wait_for_the_alert_and_get_the_id(request):
@@ -172,6 +175,7 @@ def test_17_wait_for_the_alert_and_get_the_id(request):
         break
 
 
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
 def test_18_verify_the_smbd_corefiles_alert_warning(request):
     depends(request, ['wait_alert'])
     global alert_id
@@ -185,6 +189,7 @@ def test_18_verify_the_smbd_corefiles_alert_warning(request):
             break
 
 
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
 def test_19_dimiss_the_corefiles_alert(request):
     depends(request, ['wait_alert'])
     results = POST('/alert/dismiss/', alert_id)
@@ -192,6 +197,7 @@ def test_19_dimiss_the_corefiles_alert(request):
     assert isinstance(results.json(), type(None)), results.text
 
 
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
 def test_20_verify_the_corefiles_alert_warning_is_dismissed(request):
     depends(request, ['wait_alert'])
     results = GET("/alert/list/")
