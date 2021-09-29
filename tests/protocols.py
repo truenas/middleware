@@ -190,6 +190,9 @@ class SMB(object):
 
         cmd.extend(["-c", f'allinfo {path}'])
         cl = subprocess.run(cmd, capture_output=True)
+        if cl.returncode != 0:
+            raise RuntimeError(cl.stderr.decode())
+
         client_out = cl.stdout.decode().splitlines()
         for i in client_out:
             if i.startswith("@GMT"):
