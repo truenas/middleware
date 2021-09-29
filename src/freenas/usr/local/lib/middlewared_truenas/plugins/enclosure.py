@@ -130,7 +130,14 @@ class EnclosureService(CRUDService):
         for enc in enclosure_info:
             for slot, info in enc['elements']['Array Device Slot'].items():
                 if info['dev'] == disk:
-                    return enc['number'], slot
+                    try:
+                        return enc['number'], slot
+                    except KeyError:
+                        # some of the m and r series hardware have rear nvme
+                        # drive bays. Our nvme doesn't have SES so these
+                        # drives are not attached to any SES device. Just
+                        # skip these enclosure devices
+                        continue
 
         raise MatchNotFound()
 
@@ -157,8 +164,15 @@ class EnclosureService(CRUDService):
             self.logger.debug('Skipping enclosure slot to zpool sync because no enclosures found')
             return
 
-        batch_operations = {i['number']: {'clear': set(), 'identify': set()} for i in encs}
+        batch_operations = {}
         for enc in encs:
+            if enc['id'].endswith(('plx_enclosure', 'nvme_enclosure')):
+                # our nvme doesn't have ses so these will never return
+                # a /dev/ses device so skip them
+                continue
+            elif enc['number'] not in batch_operations:
+                batch_operations[enc['number']] = {'clear': set(), 'identify': set()}
+
             for disk_slot, disk_info in enc['elements']['Array Device Slot'].items():
                 if disk_info['status'] != 'Unsupported' and disk_info['value'] != 'None':
                     # only clear the disk slots status that need it

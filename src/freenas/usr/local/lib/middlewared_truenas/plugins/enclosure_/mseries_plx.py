@@ -39,7 +39,14 @@ class EnclosureService(Service):
 
             slot_to_nvd[slot] = f'nvd{nvd}'
 
-        model = product.split('-')[-1]
+        try:
+            model = product.split('-')[1]
+        except IndexError:
+            # SMBIOS is mistagged so default to 'M50'
+            # since the rear NVMe drive bays are the
+            # same as the M60 (at time of writing this)
+            model = 'M50'
+
         return self.middleware.call_sync(
             'enclosure.fake_nvme_enclosure',
             f'{model.lower()}_plx_enclosure',
