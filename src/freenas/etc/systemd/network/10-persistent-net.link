@@ -1,0 +1,5 @@
+[Match]
+Driver=ntb_netdev
+
+[Link]
+Name=ntb0
