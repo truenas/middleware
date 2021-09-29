@@ -21,6 +21,7 @@ override_dh_auto_install:
 		cp -a etc/grub.d debian/truenas-files/etc/; \
 		cp etc/iso_3166_2_countries.csv debian/truenas-files/etc/; \
 		cp -a etc/logrotate.d debian/truenas-files/etc/; \
+		cp -a etc/modules debian/truenas-files/etc/; \
 		cp etc/netcli debian/truenas-files/etc/; \
 		cp etc/nsswitch.conf debian/truenas-files/etc/; \
 		cp -a etc/syslog-ng debian/truenas-files/etc/; \
