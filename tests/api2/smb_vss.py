@@ -7,7 +7,7 @@ from subprocess import run
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST
+from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import (
     ip,
     pool_name,
@@ -126,7 +126,8 @@ def test_001_creating_smb_dataset(request, ds):
 def test_002_creating_shareuser_to_test_acls(request):
     depends(request, ['VSS_DATASET_CREATED'])
 
-    global smbvssuser_id
+    global vssuser_id
+    global next_uid
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
     next_uid = results.json()
@@ -140,12 +141,25 @@ def test_002_creating_shareuser_to_test_acls(request):
     }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
-    global vssuser_id
     vssuser_id = results.json()
 
 
+def test_003_changing_dataset_owner(request):
+    depends(request, ["VSS_USER_CREATED"])
+    payload = {
+        'path': smb_path,
+        'uid': next_uid,
+        'options': {'recursive': True, 'traverse': True},
+    }
+    results = POST('/filesystem/chown/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
 @pytest.mark.dependency(name="VSS_SHARE_CREATED")
-def test_003_creating_a_smb_share_path(request):
+def test_004_creating_a_smb_share_path(request):
     depends(request, ["VSS_DATASET_CREATED"])
     global payload, results, smb_id
     payload = {
@@ -158,13 +172,13 @@ def test_003_creating_a_smb_share_path(request):
     assert results.status_code == 200, results.text
     smb_id = results.json()['id']
 
-    cmd = f'mkdir {smb_path}/{SMB_USER}; zpool sync'
+    cmd = f'mkdir {smb_path}/{SMB_USER}; zpool sync; net cache flush'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, {"cmd": cmd, "res": results['output']}
 
 
 @pytest.mark.dependency(name="VSS_SMB_SERVICE_STARTED")
-def test_004_starting_cifs_service(request):
+def test_005_starting_cifs_service(request):
     depends(request, ["VSS_SHARE_CREATED"])
     payload = {"service": "cifs"}
     results = POST("/service/start/", payload)
@@ -172,7 +186,7 @@ def test_004_starting_cifs_service(request):
 
 
 @pytest.mark.dependency(name="VSS_SMB1_ENABLED")
-def test_005_enable_smb1(request):
+def test_006_enable_smb1(request):
     depends(request, ["VSS_SHARE_CREATED"])
     payload = {
         "enable_smb1": True,
@@ -183,7 +197,7 @@ def test_005_enable_smb1(request):
 
 @pytest.mark.dependency(name="SHARE_HAS_SHADOW_COPIES")
 @pytest.mark.parametrize('proto', ["SMB1", "SMB2"])
-def test_006_check_shadow_copies(request, proto):
+def test_007_check_shadow_copies(request, proto):
     """
     This is very basic validation of presence of snapshot
     over SMB1 and SMB2/3.
@@ -204,7 +218,7 @@ def test_006_check_shadow_copies(request, proto):
 @pytest.mark.parametrize('payload', [
     'snapshot1', 'snapshot2', 'snapshot3'
 ])
-def test_007_set_up_testfiles(request, payload):
+def test_008_set_up_testfiles(request, payload):
     depends(request, ["SHARE_HAS_SHADOW_COPIES"])
     i = int(payload[-1])
     offset = i * 2 * len(payload)
@@ -230,7 +244,7 @@ def test_007_set_up_testfiles(request, payload):
 
 
 @pytest.mark.parametrize('proto', ["SMB1", "SMB2"])
-def test_008_check_shadow_copies_count_after_setup(request, proto):
+def test_009_check_shadow_copies_count_after_setup(request, proto):
     """
     This is very basic validation of presence of snapshot
     over SMB1 and SMB2/3.
@@ -252,7 +266,7 @@ def test_008_check_shadow_copies_count_after_setup(request, proto):
 
 @pytest.mark.dependency(name="VSS_TESTFILES_VALIDATED")
 @pytest.mark.parametrize('zfs, gmt_data', snapshots.items())
-def test_009_check_previous_versions_of_testfiles(request, zfs, gmt_data):
+def test_010_check_previous_versions_of_testfiles(request, zfs, gmt_data):
     """
     This test verifies that previous versions of files can be opened successfully
     in the following situations:
@@ -281,7 +295,7 @@ def test_009_check_previous_versions_of_testfiles(request, zfs, gmt_data):
         assert err == 0, f'{the_file}:smb2_stream: {errstr} - {msg}'
 
 
-def test_010_convert_to_home_share(request):
+def test_011_convert_to_home_share(request):
     depends(request, ["VSS_TESTFILES_VALIDATED"])
     payload = {
         "home": True,
@@ -291,7 +305,7 @@ def test_010_convert_to_home_share(request):
 
 
 @pytest.mark.parametrize('zfs, gmt_data', snapshots.items())
-def test_011_check_previous_versions_of_testfiles_home_share(request, zfs, gmt_data):
+def test_012_check_previous_versions_of_testfiles_home_share(request, zfs, gmt_data):
     """
     This test verifies that previous versions of files can be opened successfully
     in the following situations:
