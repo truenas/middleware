@@ -16,11 +16,7 @@ class InternalInterfaceService(Service):
         namespace = 'failover.internal_interface'
 
     def detect(self):
-
-        hardware = self.middleware.call_sync(
-            'failover.hardware'
-        )
-
+        hardware = self.middleware.call_sync('failover.hardware')
         # Return BHYVE heartbeat interface
         if hardware == 'BHYVE':
             return ['enp0s6f1']
@@ -34,10 +30,8 @@ class InternalInterfaceService(Service):
                     if ZSERIES_PCI_ID and ZSERIES_PCI_SUBSYS_ID in data:
                         return [i.split('/')[4].strip()]
 
-        # Detect X-series and M-series heartbeat interface
-        # TODO: Fix this
         if hardware in ('PUMA', 'ECHOWARP'):
-            pass
+            return ['ntb0']
 
         return []
 
