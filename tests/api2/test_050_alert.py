@@ -54,7 +54,7 @@ def test_05_verify_the_pool_is_degraded(request):
     assert 'DEGRADED' in results['output'], results['output']
 
 
-@pytest.mark.timeout(80)
+@pytest.mark.timeout(120)
 def test_06_wait_for_the_alert_and_get_the_id(request):
     depends(request, ["degrade_pool"], scope="session")
     global alert_id
@@ -134,38 +134,30 @@ def test_13_verify_the_pool_is_not_degraded(request):
     assert 'DEGRADED' not in results['output'], results['output']
 
 
-@pytest.mark.timeout(80)
+@pytest.mark.timeout(120)
 def test_14_wait_for_the_alert_to_dissapear(request):
     depends(request, ["degrade_pool"], scope="session")
     while True:
-        if alert_id not in GET("/alert/list/").json():
+        if alert_id not in GET("/alert/list/").text:
             assert True
             break
         sleep(1)
 
 
 @pytest.mark.skipif(ha, reason='Skipping test for SCALE')
-@pytest.mark.dependency(name='smb_service')
-def test_15_start_smb_service():
-    results = POST('/service/start/', {'service': 'cifs'})
-    assert results.status_code == 200, results.text
-    results = GET('/service?service=cifs')
-    assert results.json()[0]['state'] == 'RUNNING', results.text
-
-
-@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
 @pytest.mark.dependency(name='corefiles_alert')
-def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
-    depends(request, ['ssh_password', 'smb_service'], scope='session')
-    cmd = 'killall -6 smbd'
+def test_15_kill_python_with_6_to_triger_a_corefile_allert(request):
+    depends(request, ['ssh_password'], scope='session')
+    cmd = 'python3 -c "import os; os.abort()"'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    # The command will failed since kills a process
+    assert results['result'] is False, results['output']
 
 
 @pytest.mark.skipif(ha, reason='Skipping test for SCALE')
-@pytest.mark.timeout(80)
+@pytest.mark.timeout(120)
 @pytest.mark.dependency(name='wait_alert')
-def test_17_wait_for_the_alert_and_get_the_id(request):
+def test_16_wait_for_the_alert_and_get_the_id(request):
     depends(request, ['corefiles_alert'])
     global alert_id
     while True:
@@ -181,21 +173,20 @@ def test_17_wait_for_the_alert_and_get_the_id(request):
 
 
 @pytest.mark.skipif(ha, reason='Skipping test for SCALE')
-def test_18_verify_the_smbd_corefiles_alert_warning(request):
+def test_17_verify_the_smbd_corefiles_alert_warning(request):
     depends(request, ['wait_alert'])
-    global alert_id
     results = GET("/alert/list/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
     for line in results.json():
         if alert_id == line['id']:
-            assert 'smbd' in results.json()[0]['args']['corefiles'], results.text
+            assert 'python' in results.json()[0]['args']['corefiles'], results.text
             assert results.json()[0]['level'] == 'WARNING', results.text
             break
 
 
 @pytest.mark.skipif(ha, reason='Skipping test for SCALE')
-def test_19_dimiss_the_corefiles_alert(request):
+def test_18_dimiss_the_corefiles_alert(request):
     depends(request, ['wait_alert'])
     results = POST('/alert/dismiss/', alert_id)
     assert results.status_code == 200, results.text
@@ -203,7 +194,7 @@ def test_19_dimiss_the_corefiles_alert(request):
 
 
 @pytest.mark.skipif(ha, reason='Skipping test for SCALE')
-def test_20_verify_the_corefiles_alert_warning_is_dismissed(request):
+def test_19_verify_the_corefiles_alert_warning_is_dismissed(request):
     depends(request, ['wait_alert'])
     results = GET("/alert/list/")
     assert results.status_code == 200, results.text
@@ -212,3 +203,38 @@ def test_20_verify_the_corefiles_alert_warning_is_dismissed(request):
         if line['id'] == alert_id:
             assert line['dismissed'] is True, results.text
             break
+
+
+def test_20_restore_corefiles_the_alert(request):
+    depends(request, ['wait_alert'])
+    results = POST("/alert/restore/", alert_id)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), type(None)), results.text
+
+
+def test_21_verify_the_corefiles_alert_is_restored(request):
+    depends(request, ['wait_alert'])
+    results = GET(f"/alert/list/?id={alert_id}")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+    for line in results.json():
+        if line['id'] == alert_id:
+            assert line['dismissed'] is False, results.text
+            break
+
+
+def test_22_remove_the_core_files_in_var_db_system_cores(request):
+    depends(request, ['wait_alert'])
+    cmd = 'rm -f /var/db/system/cores/*'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@pytest.mark.timeout(120)
+def test_22_wait_for_the_corefiles_alert_to_dissapear(request):
+    depends(request, ['wait_alert'])
+    while True:
+        if alert_id not in GET("/alert/list/").text:
+            assert True
+            break
+        sleep(1)
