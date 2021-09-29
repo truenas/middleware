@@ -225,11 +225,16 @@ def cli_private(fn):
 
 def filterable(fn):
     fn._filterable = True
+    if hasattr(fn, 'wraps'):
+        fn.wraps._filterable = True
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
 
 
 def filterable_returns(schema):
     def filterable_internal(fn):
+        fn._filterable_schema = schema
+        if hasattr(fn, 'wraps'):
+            fn.wraps._filterable_schema = schema
         return returns(OROperator(
             Int('count'),
             schema,
@@ -1634,6 +1639,33 @@ class CoreService(Service):
                         getattr(method, schema_type, None), args_descriptions_doc
                     )
 
+                if filterable_schema := getattr(method, '_filterable_schema', None):
+                    filterable_schema = self.get_json_schema([filterable_schema], None)[0]
+                elif attr == 'query':
+                    if isinstance(svc, CompoundService):
+                        for part in svc.parts:
+                            if hasattr(part, 'do_create'):
+                                d = inspect.getdoc(part.do_create)
+                                break
+                        else:
+                            d = None
+
+                        for part in svc.parts:
+                            if hasattr(part, 'ENTRY'):
+                                filterable_schema = self.get_json_schema(
+                                    [self.middleware._schemas[part.ENTRY.name]],
+                                    d,
+                                )[0]
+                                break
+                    elif hasattr(svc, 'ENTRY'):
+                        d = None
+                        if hasattr(svc, 'do_create'):
+                            d = inspect.getdoc(svc.do_create)
+                        filterable_schema = self.get_json_schema(
+                            [self.middleware._schemas[svc.ENTRY.name]],
+                            d,
+                        )[0]
+
                 data['{0}.{1}'.format(name, attr)] = {
                     'description': doc,
                     'cli_description': (doc or '').split('\n\n')[0].split('.')[0].replace('\n', ' '),
@@ -1641,7 +1673,7 @@ class CoreService(Service):
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': hasattr(method, '_no_auth_required'),
                     'filterable': hasattr(method, '_filterable'),
-                    'filterable_schema': None,
+                    'filterable_schema': filterable_schema,
                     'pass_application': hasattr(method, '_pass_app'),
                     'extra_methods': method._rest_api_metadata['extra_methods'] if hasattr(
                         method, '_rest_api_metadata') else None,
@@ -1654,13 +1686,6 @@ class CoreService(Service):
                     ),
                     **method_schemas,
                 }
-
-            if is_service_class(svc, CRUDService):
-                # FIXME: Find a better solution
-                if f'{name}.create' in data:
-                    data[f'{name}.query']['filterable_schema'] = data[f'{name}.create']['accepts'][0]
-                else:
-                    data[f'{name}.query']['filterable_schema'] = None
 
         return data
 
