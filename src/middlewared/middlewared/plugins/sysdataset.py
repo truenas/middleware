@@ -11,12 +11,14 @@ except ImportError:
     CTDBConfig = None
 
 import asyncio
+from contextlib import asynccontextmanager
 import errno
 import os
+from pathlib import Path
+import psutil
 import shutil
 import subprocess
 import uuid
-from pathlib import Path
 
 SYSDATASET_PATH = '/var/db/system'
 
@@ -43,6 +45,7 @@ class SystemDatasetService(ConfigService):
         'systemdataset_entry',
         Int('id', required=True),
         Str('pool', required=True),
+        Bool('pool_set', required=True),
         Str('uuid', required=True),
         Str('uuid_b', required=True, null=True),
         Str('basename', required=True),
@@ -51,13 +54,14 @@ class SystemDatasetService(ConfigService):
         Str('path', required=True, null=True),
     )
 
+    force_pool = None
+
     @private
     async def config_extend(self, config):
 
         # Treat empty system dataset pool as boot pool
-        boot_pool = await self.middleware.call('boot.pool_name')
-        if not config['pool']:
-            config['pool'] = boot_pool
+        config['pool_set'] = bool(config['pool'])
+        config['pool'] = self.force_pool or config['pool'] or await self.middleware.call('boot.pool_name')
 
         config['basename'] = f'{config["pool"]}/.system'
 
@@ -184,7 +188,7 @@ class SystemDatasetService(ConfigService):
         new['syslog_usedataset'] = new['syslog']
 
         update_dict = new.copy()
-        for key in ('basename', 'uuid_a', 'syslog', 'path', 'pool_exclude'):
+        for key in ('basename', 'uuid_a', 'syslog', 'path', 'pool_exclude', 'pool_set'):
             update_dict.pop(key, None)
 
         await self.middleware.call(
@@ -243,26 +247,18 @@ class SystemDatasetService(ConfigService):
     @accepts(Str('exclude_pool', default=None, null=True))
     @private
     async def setup(self, exclude_pool):
+        self.force_pool = None
         config = await self.config()
-        dbconfig = await self.middleware.call(
-            'datastore.config', self._config.datastore, {'prefix': self._config.datastore_prefix}
-        )
 
         boot_pool = await self.middleware.call('boot.pool_name')
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'BACKUP':
-                if config['basename'] != f'{boot_pool}/.system':
-                    try:
-                        os.unlink(SYSDATASET_PATH)
-                    except OSError:
-                        pass
-                    return
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
         if config['pool'] != boot_pool and not await self.middleware.call(
             'pool.query', [('name', '=', config['pool'])]
         ):
+            self.middleware.logger.debug('Pool %r does not exist, moving system dataset to another pool',
+                                         config['pool'])
             job = await self.middleware.call('systemdataset.update', {
                 'pool': None, 'pool_exclude': exclude_pool,
             })
@@ -271,28 +267,40 @@ class SystemDatasetService(ConfigService):
                 raise CallError(job.error)
             return
 
-        # If we dont have a pool configure in the database try to find the first data pool
+        # If we dont have a pool configured in the database try to find the first data pool
         # to put it on.
-        if not dbconfig['pool']:
-            pool = None
-            for p in await self.middleware.call('pool.query'):
-                if (exclude_pool and p['name'] == exclude_pool) or await self.middleware.call('pool.dataset.query', [
-                    ['name', '=', p['name']], [
-                        'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
-                    ]
-                ]):
-                    continue
-
-                pool = p
-                break
-            if pool:
+        if not config['pool_set']:
+            if pool := await self._query_pool_for_system_dataset(exclude_pool):
+                self.middleware.logger.debug('System dataset pool was not set, moving it to first available pool %r',
+                                             pool['name'])
                 job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
                 await job.wait()
                 if job.error:
                     raise CallError(job.error)
                 return
 
-        await self.__setup_datasets(config['pool'], config['uuid'])
+        dataset = await self.middleware.call('pool.dataset.query', [['name', '=', config['pool']]],
+                                             {'extra': {'retrieve_children': False}})
+        if not dataset or dataset[0]['locked']:
+            # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
+            self.middleware.logger.debug(
+                'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
+                config['pool'],
+            )
+            self.force_pool = boot_pool
+            config = await self.config()
+
+        mounted_pool = None
+        for p in psutil.disk_partitions():
+            if p.mountpoint == SYSDATASET_PATH:
+                mounted_pool = p.device.split('/')[0]
+        if mounted_pool and mounted_pool != config['pool']:
+            self.middleware.logger.debug('Abandoning dataset on %r in favor of %r', mounted_pool, config['pool'])
+            async with self._release_system_dataset():
+                await self.__umount(mounted_pool, config['uuid'])
+                await self.__setup_datasets(config['pool'], config['uuid'])
+        else:
+            await self.__setup_datasets(config['pool'], config['uuid'])
 
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
@@ -340,7 +348,18 @@ class SystemDatasetService(ConfigService):
             # long-running.
             await self.middleware.call('smb.configure', False)
 
-        return config
+        return await self.config()
+
+    async def _query_pool_for_system_dataset(self, exclude_pool):
+        for p in await self.middleware.call('pool.query'):
+            if (exclude_pool and p['name'] == exclude_pool) or await self.middleware.call('pool.dataset.query', [
+                ['name', '=', p['name']], [
+                    'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
+                ]
+            ]):
+                continue
+
+            return p
 
     async def __setup_datasets(self, pool, uuid):
         """
@@ -407,6 +426,7 @@ class SystemDatasetService(ConfigService):
         return mounted
 
     async def __umount(self, pool, uuid):
+        await run('umount', '/var/lib/systemd/coredump', check=False)
 
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
@@ -497,6 +517,26 @@ class SystemDatasetService(ConfigService):
             path = SYSDATASET_PATH
         await self.__mount(_to, config['uuid'], path=path)
 
+        async with self._release_system_dataset():
+            if _from:
+                cp = await run('rsync', '-az', f'{SYSDATASET_PATH}/', '/tmp/system.new', check=False)
+                if cp.returncode == 0:
+                    # Let's make sure that we don't have coredump directory mounted
+                    await run('umount', '/var/lib/systemd/coredump', check=False)
+                    await self.__umount(_from, config['uuid'])
+                    await self.__umount(_to, config['uuid'])
+                    await self.__mount(_to, config['uuid'], SYSDATASET_PATH)
+                    proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
+                    await proc.communicate()
+
+                    os.rmdir('/tmp/system.new')
+                else:
+                    raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
+
+        await self.__nfsv4link(config)
+
+    @asynccontextmanager
+    async def _release_system_dataset(self):
         restart = ['collectd', 'rrdcached', 'syslogd']
 
         if await self.middleware.call('service.started', 'cifs'):
@@ -522,28 +562,13 @@ class SystemDatasetService(ConfigService):
             for i in restart:
                 await self.middleware.call('service.stop', i)
 
-            if _from:
-                cp = await run('rsync', '-az', f'{SYSDATASET_PATH}/', '/tmp/system.new', check=False)
-                if cp.returncode == 0:
-                    # Let's make sure that we don't have coredump directory mounted
-                    await run('umount', '/var/lib/systemd/coredump', check=False)
-                    await self.__umount(_from, config['uuid'])
-                    await self.__umount(_to, config['uuid'])
-                    await self.__mount(_to, config['uuid'], SYSDATASET_PATH)
-                    proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
-                    await proc.communicate()
-
-                    os.rmdir('/tmp/system.new')
-                else:
-                    raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
+            yield
         finally:
             await self.middleware.call('cache.pop', 'use_syslog_dataset')
 
             restart.reverse()
             for i in restart:
                 await self.middleware.call('service.start', i)
-
-        await self.__nfsv4link(config)
 
 
 async def pool_post_create(middleware, pool):
