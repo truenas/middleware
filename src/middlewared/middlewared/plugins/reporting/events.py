@@ -166,7 +166,7 @@ class RealtimeEventSource(EventSource):
             'time': time.monotonic(),
             'speeds': self.get_interface_speeds(),
         }
-        self.disk_stats = DiskStats(2)
+        self.disk_stats = DiskStats()
 
         while not self._cancel.is_set():
             data = {}
