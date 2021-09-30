@@ -171,8 +171,8 @@ class FailoverService(Service):
         except IgnoreFailoverEvent:
             # `self.validate()` calls this method
             raise
-        except Exception as e:
-            logger.error('Failed to run %s:%r:%s', method, args, e)
+        except Exception:
+            logger.error('Failed to run %s%r', method, args, exc_info=True)
 
     def event(self, ifname, event):
 
@@ -670,6 +670,9 @@ class FailoverService(Service):
 
         logger.info('Refreshing failover status')
         self.run_call('failover.status_refresh')
+
+        logger.info('Setting up system dataset')
+        self.run_call('systemdataset.setup')
 
         logger.info('Restarting syslog-ng')
         self.run_call('service.restart', 'syslogd', self.HA_PROPAGATE)
