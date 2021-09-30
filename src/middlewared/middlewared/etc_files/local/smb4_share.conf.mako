@@ -64,6 +64,9 @@
                     base_homedir = f"{share['path']}/{db['cifs']['workgroup']}"
                     if not pc[share["name"]].get('ixnas:zfs_auto_home_dir'):
                         make_homedir(base_homedir)
+                        st = os.stat(share['path'])
+                        os.chown(base_homedir, -1, st.st_gid)
+
                 elif is_home_share:
                     pc[share["name"]].update({"path": f'{share["path"]}/%U'})
 
