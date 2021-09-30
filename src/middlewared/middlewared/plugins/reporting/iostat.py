@@ -1,29 +1,25 @@
 from psutil import disk_io_counters
-from statistics import mean
 
 
 class DiskStats:
-    def __init__(self):
+    def __init__(self, interval):
+        self.interval = interval
         self.disks = ('ada', 'da', 'nvd')
 
     def read(self):
-        read_ops = []
-        read_bytes = []
-        write_ops = []
-        write_bytes = []
-        busy = []
-        cur_values = disk_io_counters(perdisk=True, nowrap=True)
+        read_ops = read_bytes = write_ops = write_bytes = busy = total_disks = 0
+        cur_values = disk_io_counters(perdisk=True, nowrap=False)
         for disk, current in filter(lambda x: x[0].startswith(self.disks), cur_values.items()):
-            read_ops.append(current.read_count)
-            read_bytes.append(current.read_bytes)
-            write_ops.append(current.write_count)
-            write_bytes.append(current.write_bytes)
-            busy.append(current.busy_time)
+            read_ops += current.read_count
+            read_bytes += current.read_bytes
+            write_ops += current.write_count
+            write_bytes += current.write_bytes
+            busy += float(current.busy_time) / self.interval
 
         return {
-            "read_ops": mean(read_ops),
-            "read_bytes": mean(read_bytes),
-            "write_ops": mean(write_ops),
-            "write_bytes": mean(write_bytes),
-            "busy": mean(busy)
+            "read_ops": read_ops,
+            "read_bytes": read_bytes,
+            "write_ops": write_ops,
+            "write_bytes": write_bytes,
+            "busy": busy / total_disks if total_disks else 0
         }
