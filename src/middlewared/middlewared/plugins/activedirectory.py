@@ -1278,11 +1278,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             if len(servers) == 1:
                 return None
 
-        return {
-            'kdc': ' '.join(kdc),
-            'admin_server': ' '.join(admin_server),
-            'kpasswd_server': ' '.join(kpasswd)
-        }
+        return {'kdc': kdc, 'admin_server': admin_server, 'kpasswd_server': kpasswd}
 
     @private
     def set_kerberos_servers(self, ad=None):
@@ -1295,7 +1291,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 ad['kerberos_realm'],
                 site_indexed_kerberos_servers
             )
-            self.middleware.call_sync('etc.generate', 'kerberos')
 
     @private
     async def set_ntp_servers(self):
