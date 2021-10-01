@@ -110,6 +110,7 @@ class RealtimeEventSource(EventSource):
         cp_times_last = None
         last_interface_stats = {}
         last_interface_speeds = {'time': time.monotonic(), 'speeds': self.get_interface_speeds()}
+        last_disk_stats = {}
 
         while not self._cancel.is_set():
             data = {}
@@ -188,7 +189,13 @@ class RealtimeEventSource(EventSource):
                     last_interface_stats[iface.name] = {**data['interfaces'][iface.name], 'stats_time': stats_time}
 
             # Disk IO stats
-            data['disks'] = DiskStats(self.INTERVAL).read()
+            if not last_disk_stats:
+                # means this is the first time disk stats are being gathered so
+                # get the results but don't set anything yet since we need to
+                # calculate the difference between the iterations
+                last_disk_stats, new = DiskStats(self.INTERVAL, last_disk_stats).read()
+            else:
+                last_disk_stats, data['disks'] = DiskStats(self.INTERVAL, last_disk_stats).read()
 
             self.send_event('ADDED', fields=data)
             time.sleep(self.INTERVAL)
