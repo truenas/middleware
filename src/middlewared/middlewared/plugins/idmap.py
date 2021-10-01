@@ -381,7 +381,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             self.logger.warning("clear_idmap_cache is unsafe on clustered smb servers.")
             return
 
-        await self.middleware.call('service.stop', 'cifs')
+        await self.middleware.call('service.stop', 'idmap')
 
         try:
             os.remove('/var/db/system/samba4/winbindd_cache.tdb')
@@ -392,11 +392,11 @@ class IdmapDomainService(TDBWrapCRUDService):
         except Exception:
             self.logger.debug("Failed to remove winbindd_cache.tdb.", exc_info=True)
 
-        await self.middleware.call('etc.generate', 'smb')
-        await self.middleware.call('service.start', 'cifs')
         gencache_flush = await run(['net', 'cache', 'flush'], check=False)
         if gencache_flush.returncode != 0:
             raise CallError(f'Attempt to flush gencache failed with error: {gencache_flush.stderr.decode().strip()}')
+
+        await self.middleware.call('service.start', 'idmap')
 
     @private
     async def autodiscover_trusted_domains(self):
