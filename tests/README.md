@@ -56,7 +56,7 @@ Command to run a specific REST API v1.0 or v2.0 test:
 
 `./runtests.py --ip 192.168.2.45 --interface em0 --password testing --api 1.0 --test network`
 
-## Running manual REST API test with IPython
+## Running manual REST API test with iPython
 Once runtest.py is run, it did generate all configuration, and running IPython can be run to debug REST API or just to run manual REST API.
 
 ### Example
