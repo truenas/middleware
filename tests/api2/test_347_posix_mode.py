@@ -360,7 +360,7 @@ def test_11_test_directory_owner_bits_function_allow(mode_bit, request):
     In case of directory, Execute must be set concurrently with write
     in order to verify correct write behavior.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
     if new_mode == stat.S_IWUSR:
         new_mode |= stat.S_IXUSR
@@ -391,7 +391,7 @@ def test_12_test_directory_group_bits_function_allow(mode_bit, request):
     In case of directory, Execute must be set concurrently with write
     in order to verify correct write behavior.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
     if new_mode == stat.S_IWGRP:
         new_mode |= stat.S_IXGRP
@@ -422,7 +422,7 @@ def test_13_test_directory_other_bits_function_allow(mode_bit, request):
     In case of directory, Execute must be set concurrently with write
     in order to verify correct write behavior.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = MODE[mode_bit]
     if new_mode == stat.S_IWOTH:
         new_mode |= stat.S_IXOTH
@@ -552,7 +552,7 @@ def test_18_test_file_owner_bits_xor(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
     new_mode = new_mode ^ MODE[mode_bit]
 
@@ -580,7 +580,7 @@ def test_19_test_file_group_bits_xor(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
     new_mode = new_mode ^ MODE[mode_bit]
 
@@ -608,7 +608,7 @@ def test_20_test_file_other_bits_xor(mode_bit, request):
     """
     Verify mode behavior correct when it's the only bit set.
     """
-    depends(request, ["USER_CREATED"])
+    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     new_mode = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
     new_mode = new_mode ^ MODE[mode_bit]
 

@@ -11,7 +11,7 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip, user, password, pool_name, hostname, dev_test
+from auto_config import ip, pool_name, hostname, dev_test
 from functions import PUT, POST, GET, SSH_TEST, DELETE, cmd_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
@@ -141,7 +141,7 @@ def test_08_Verify_the_iSCSI_service_is_enabled(request):
 @bsd_host_cfg
 @pytest.mark.dependency(name="iscsi_09")
 def test_09_Connecting_to_iSCSI_target(request):
-    depends(request, ["iscsi_05"])
+    depends(request, ["iscsi_05", "ssh_password"], scope='session')
     cmd = f'iscsictl -A -p {ip}:3260 -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -151,7 +151,7 @@ def test_09_Connecting_to_iSCSI_target(request):
 @pytest.mark.timeout(15)
 @pytest.mark.dependency(name="iscsi_10")
 def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
-    depends(request, ["iscsi_09"])
+    depends(request, ["iscsi_09", "ssh_password"], scope='session')
     global file_device_name
     file_device_name = ""
     while True:
@@ -168,7 +168,7 @@ def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
 
 @bsd_host_cfg
 def test_11_Format_the_target_volume(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = f'umount "/media/{file_device_name}"'
     SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     cmd2 = f'newfs "/dev/{file_device_name}"'
@@ -178,7 +178,7 @@ def test_11_Format_the_target_volume(request):
 
 @bsd_host_cfg
 def test_12_Creating_iSCSI_mountpoint(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = f'mkdir -p {file_mountpoint}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -187,7 +187,7 @@ def test_12_Creating_iSCSI_mountpoint(request):
 @bsd_host_cfg
 @pytest.mark.timeout(10)
 def test_13_Mount_the_target_volume(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = f'mount "/dev/{file_device_name}" "{file_mountpoint}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -195,7 +195,7 @@ def test_13_Mount_the_target_volume(request):
 
 @bsd_host_cfg
 def test_14_Creating_file(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = 'touch "%s/testfile"' % file_mountpoint
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -203,7 +203,7 @@ def test_14_Creating_file(request):
 
 @bsd_host_cfg
 def test_15_Moving_file(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (file_mountpoint, file_mountpoint)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -211,7 +211,7 @@ def test_15_Moving_file(request):
 
 @bsd_host_cfg
 def test_16_Copying_file(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (file_mountpoint, file_mountpoint)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -219,7 +219,7 @@ def test_16_Copying_file(request):
 
 @bsd_host_cfg
 def test_17_Deleting_file(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     results = SSH_TEST('rm "%s/testfile2"' % file_mountpoint,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -227,7 +227,7 @@ def test_17_Deleting_file(request):
 
 @bsd_host_cfg
 def test_19_Unmounting_iSCSI_volume(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = f'umount "{file_mountpoint}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -235,7 +235,7 @@ def test_19_Unmounting_iSCSI_volume(request):
 
 @bsd_host_cfg
 def test_20_Removing_iSCSI_volume_mountpoint(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = f'rm -rf "{file_mountpoint}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -243,7 +243,7 @@ def test_20_Removing_iSCSI_volume_mountpoint(request):
 
 @bsd_host_cfg
 def test_21_Disconnect_iSCSI_target(request):
-    depends(request, ["iscsi_10"])
+    depends(request, ["iscsi_10", "ssh_password"], scope='session')
     cmd = f'iscsictl -R -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']

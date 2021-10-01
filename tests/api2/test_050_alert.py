@@ -144,7 +144,7 @@ def test_14_wait_for_the_alert_to_dissapear(request):
         sleep(1)
 
 
-@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE HA')
 @pytest.mark.dependency(name='corefiles_alert')
 def test_15_kill_python_with_6_to_triger_a_corefile_allert(request):
     depends(request, ['ssh_password'], scope='session')
@@ -154,7 +154,7 @@ def test_15_kill_python_with_6_to_triger_a_corefile_allert(request):
     assert results['result'] is False, results['output']
 
 
-@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE HA')
 @pytest.mark.timeout(120)
 @pytest.mark.dependency(name='wait_alert')
 def test_16_wait_for_the_alert_and_get_the_id(request):
@@ -172,7 +172,7 @@ def test_16_wait_for_the_alert_and_get_the_id(request):
         break
 
 
-@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE HA')
 def test_17_verify_the_smbd_corefiles_alert_warning(request):
     depends(request, ['wait_alert'])
     results = GET("/alert/list/")
@@ -185,7 +185,7 @@ def test_17_verify_the_smbd_corefiles_alert_warning(request):
             break
 
 
-@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE HA')
 def test_18_dimiss_the_corefiles_alert(request):
     depends(request, ['wait_alert'])
     results = POST('/alert/dismiss/', alert_id)
@@ -193,7 +193,7 @@ def test_18_dimiss_the_corefiles_alert(request):
     assert isinstance(results.json(), type(None)), results.text
 
 
-@pytest.mark.skipif(ha, reason='Skipping test for SCALE')
+@pytest.mark.skipif(ha, reason='Skipping test for SCALE HA')
 def test_19_verify_the_corefiles_alert_warning_is_dismissed(request):
     depends(request, ['wait_alert'])
     results = GET("/alert/list/")

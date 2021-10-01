@@ -355,7 +355,7 @@ We first create a child dataset to verify that ACLs do not change unless
 
 
 def test_12_prepare_recursive_tests(request):
-    # depends(request, ["HAS_POSIX_ACLS", "ssh_password"], scope="session")
+    depends(request, ["HAS_POSIX_ACLS", "ssh_password"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_SUBDATASET,

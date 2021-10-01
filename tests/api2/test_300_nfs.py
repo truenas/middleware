@@ -113,7 +113,7 @@ def test_09_checking_to_see_if_nfs_service_is_running(request):
 
 @bsd_host_cfg
 def test_11_creating_nfs_mountpoint(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = SSH_TEST(f'mkdir -p "{MOUNTPOINT}"',
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -122,7 +122,7 @@ def test_11_creating_nfs_mountpoint(request):
 @bsd_host_cfg
 @pytest.mark.timeout(10)
 def test_12_mounting_nfs(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f'mount_nfs {ip}:{NFS_PATH} {MOUNTPOINT}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -130,7 +130,7 @@ def test_12_mounting_nfs(request):
 
 @bsd_host_cfg
 def test_13_creating_nfs_file(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -138,7 +138,7 @@ def test_13_creating_nfs_file(request):
 
 @bsd_host_cfg
 def test_14_moving_nfs_file(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -146,7 +146,7 @@ def test_14_moving_nfs_file(request):
 
 @bsd_host_cfg
 def test_15_copying_nfs_file(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -154,7 +154,7 @@ def test_15_copying_nfs_file(request):
 
 @bsd_host_cfg
 def test_16_deleting_nfs_file(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -162,7 +162,7 @@ def test_16_deleting_nfs_file(request):
 
 @bsd_host_cfg
 def test_17_unmounting_nfs(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = SSH_TEST('umount "%s"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -170,7 +170,7 @@ def test_17_unmounting_nfs(request):
 
 @bsd_host_cfg
 def test_18_removing_nfs_mountpoint(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -199,7 +199,7 @@ def test_21_checking_to_see_if_nfs_service_is_enabled(request):
 @bsd_host_cfg
 # Now check if we can mount NFS / create / rename / copy / delete / umount
 def test_22_creating_nfs_mountpoint(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -208,7 +208,7 @@ def test_22_creating_nfs_mountpoint(request):
 @bsd_host_cfg
 @pytest.mark.timeout(10)
 def test_23_mounting_nfs(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'mount_nfs %s:%s %s' % (ip, NFS_PATH, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -216,7 +216,7 @@ def test_23_mounting_nfs(request):
 
 @bsd_host_cfg
 def test_24_creating_nfs_file(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -224,7 +224,7 @@ def test_24_creating_nfs_file(request):
 
 @bsd_host_cfg
 def test_25_moving_nfs_file(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -232,7 +232,7 @@ def test_25_moving_nfs_file(request):
 
 @bsd_host_cfg
 def test_26_copying_nfs_file(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -240,7 +240,7 @@ def test_26_copying_nfs_file(request):
 
 @bsd_host_cfg
 def test_27_deleting_nfs_file(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -248,7 +248,7 @@ def test_27_deleting_nfs_file(request):
 
 @bsd_host_cfg
 def test_28_unmounting_nfs(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = SSH_TEST('umount "%s"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -256,7 +256,7 @@ def test_28_unmounting_nfs(request):
 
 @bsd_host_cfg
 def test_29_removing_nfs_mountpoint(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
