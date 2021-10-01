@@ -180,7 +180,9 @@ class SMBService(Service):
         conflict. Winbindd will regenerate the removed ones as-needed.
         """
         must_reload = False
-        tdb_handle = tdb.open(f"{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb")
+        idmap_file = f"{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb"
+        tdb_flags = os.O_CREAT | os.O_RDWR
+        tdb_handle = tdb.Tdb(idmap_file, 0, tdb.DEFAULT, tdb_flags, 0o755)
 
         try:
             group_hwm_bytes = tdb_handle.get(b'GROUP HWM\00')
@@ -360,6 +362,7 @@ class SMBService(Service):
         to_add = [{
             "gid": g_dict[x]["gid"],
             "nt_name": g_dict[x]["group"],
+            "rid": await self.middleware.call('smb.get_next_rid'),
             "group_type_str": "local"
         } for x in set_to_add]
 
