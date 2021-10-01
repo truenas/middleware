@@ -843,7 +843,7 @@ class AlertService(Service):
         await self.middleware.call("alert.send_alerts")
 
     @private
-    @accepts(Str("klass"), Any("query", null=True))
+    @accepts(Str("klass"), Any("query", null=True, default=None))
     @job(lock="process_alerts", transient=True)
     async def oneshot_delete(self, job, klass, query):
         try:

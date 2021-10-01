@@ -77,12 +77,20 @@ class OneShotAlertClass:
 
 
 class SimpleOneShotAlertClass(OneShotAlertClass):
+    # keys = ["id", "name"] When deleting an alert, only this keys will be compared
+    # keys = []             When deleting an alert, all alerts of this class will be deleted
+    # keys = None           All present alert keys must be equal to the delete query (default)
+    keys = None
+
     async def create(self, args):
         return Alert(self.__class__, args)
 
     async def delete(self, alerts, query):
         return list(filter(
-            lambda alert: alert.args != query,
+            lambda alert: (
+                any(alert.args[k] != query[k] for k in self.keys) if self.keys is not None
+                else alert.args != query
+            ),
             alerts
         ))
 
