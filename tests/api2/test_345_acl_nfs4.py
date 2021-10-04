@@ -812,7 +812,7 @@ def test_25_test_acl_function_omit(perm, request):
     on presence of the particular permissions bit. Then we omit
     it. This should result in a failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09", "ssh_password"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests

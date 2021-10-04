@@ -165,7 +165,7 @@ def test_003_changing_dataset_owner(request):
 
 @pytest.mark.dependency(name="VSS_SHARE_CREATED")
 def test_004_creating_a_smb_share_path(request):
-    depends(request, ["VSS_DATASET_CREATED"])
+    depends(request, ["VSS_DATASET_CREATED", "ssh_password"], scope="session")
     global payload, results, smb_id
     payload = {
         "comment": "SMB VSS Testing Share",

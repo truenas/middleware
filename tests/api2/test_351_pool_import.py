@@ -47,7 +47,7 @@ def test_01_create_dataset(request):
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
 def test_02_setup_function(request, image):
-    depends(request, ["pool_04", "ssh_key"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     zf = os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz")
     destination = f"/tmp/{image}.gz"
     send_results = send_file(zf, destination, user, None, ip)

@@ -6,11 +6,9 @@ import json
 import os
 import pytest
 import sys
-
 import requests
-
-apifolder = os.getcwd()
-sys.path.append(apifolder)
+from pytest_dependency import depends
+sys.path.append(os.getcwd())
 from functions import POST, GET, DELETE, SSH_TEST
 from auto_config import password, user, ip, dev_test
 # comment pytestmark for development testing with --dev-test
@@ -30,7 +28,8 @@ def api_key(allowlist):
         assert results.status_code == 200, results.text
 
 
-def test_root_api_key_websocket():
+def test_root_api_key_websocket(request):
+    depends(request, ["ssh_password"], scope="session")
     """We should be able to call a method with root API key using Websocket."""
     with api_key([]) as key:
         cmd = f"midclt -u ws://{ip}/websocket --api-key {key} call system.info"
@@ -39,7 +38,8 @@ def test_root_api_key_websocket():
         assert 'uptime' in str(results['output'])
 
 
-def test_allowed_api_key_websocket():
+def test_allowed_api_key_websocket(request):
+    depends(request, ["ssh_password"], scope="session")
     """We should be able to call a method with API key that allows that call using Websocket."""
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
         cmd = f"midclt -u ws://{ip}/websocket --api-key {key} call system.info"
@@ -48,7 +48,8 @@ def test_allowed_api_key_websocket():
         assert 'uptime' in str(results['output'])
 
 
-def test_denied_api_key_websocket():
+def test_denied_api_key_websocket(request):
+    depends(request, ["ssh_password"], scope="session")
     """We should not be able to call a method with API key that does not allow that call using Websocket."""
     with api_key([{"method": "CALL", "resource": "system.info_"}]) as key:
         cmd = f"midclt -u ws://{ip}/websocket --api-key {key} call system.info"

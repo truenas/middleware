@@ -55,15 +55,19 @@ def test_06_test_ssh():
     assert results['result'] is True, results['output']
 
 
-def test_07_Ensure_ssh_agent_is_setup():
+def test_07_Ensure_ssh_agent_is_setup(request):
+    depends(request, ["ssh_password"])
     assert is_agent_setup() is True
 
 
-def test_08_Ensure_ssh_key_is_up():
+def test_08_Ensure_ssh_key_is_up(request):
+    depends(request, ["ssh_password"])
     assert if_key_listed() is True
 
 
-def test_09_Add_ssh_ky_to_root():
+@pytest.mark.dependency(name="set_ssh_key")
+def test_09_Add_ssh_ky_to_root(request):
+    depends(request, ["ssh_password"])
     payload = {"sshpubkey": sshKey}
     results = PUT("/user/id/1/", payload, controller_a=ha)
     assert results.status_code == 200, results.text
@@ -71,7 +75,7 @@ def test_09_Add_ssh_ky_to_root():
 
 @pytest.mark.dependency(name="ssh_key")
 def test_10_test_ssh_key(request):
-    depends(request, ["ssh_password"])
+    depends(request, ["set_ssh_key"])
     cmd = 'ls -la'
     results = SSH_TEST(cmd, user, None, ip)
     assert results['result'] is True, results['output']
