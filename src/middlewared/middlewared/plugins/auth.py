@@ -1,11 +1,14 @@
 import crypt
 from datetime import datetime, timedelta
-import pyotp
 import random
 import re
 import socket
 import string
 import time
+
+import psutil
+from psutil._common import addr
+import pyotp
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, returns, Str
 from middlewared.service import (
@@ -13,8 +16,45 @@ from middlewared.service import (
     pass_app, private, cli_private, CallError,
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 from middlewared.validators import Range
+
+
+def get_peer_process(remote_addr, remote_port):
+    for connection in psutil.net_connections(kind='tcp'):
+        if connection.laddr == addr(remote_addr, remote_port):
+            try:
+                return psutil.Process(connection.pid)
+            except psutil.ProcessNotFound:
+                return None
+
+
+def get_remote_addr_port(app):
+    remote_addr, remote_port = app.request.transport.get_extra_info("peername")
+    if remote_addr in ["127.0.0.1", "::1"]:
+        try:
+            x_real_remote_addr = app.request.headers["X-Real-Remote-Addr"]
+            x_real_remote_port = int(app.request.headers["X-Real-Remote-Port"])
+        except (KeyError, ValueError):
+            pass
+        else:
+            if process := get_peer_process(remote_addr, remote_port):
+                if process.name() == "nginx":
+                    try:
+                        with open("/var/run/nginx.pid") as f:
+                            nginx_pid = int(f.read().strip())
+                    except Exception:
+                        pass
+                    else:
+                        try:
+                            ppid = process.ppid()
+                        except psutil.ProcessNotFound:
+                            pass
+                        else:
+                            if ppid == nginx_pid:
+                                remote_addr = x_real_remote_addr
+                                remote_port = x_real_remote_port
+
+    return remote_addr, remote_port
 
 
 class TokenManager:
@@ -100,13 +140,7 @@ class SessionManager:
         if sock.family == socket.AF_UNIX:
             return "UNIX_SOCKET"
 
-        remote_addr, remote_port = app.request.transport.get_extra_info("peername")
-        if remote_addr in ["127.0.0.1", "::1"]:
-            try:
-                remote_addr, remote_port = (app.request.headers["X-Real-Remote-Addr"],
-                                            int(app.request.headers["X-Real-Remote-Port"]))
-            except (KeyError, ValueError):
-                pass
+        remote_addr, remote_port = get_remote_addr_port(app)
 
         if ":" in remote_addr:
             return f"[{remote_addr}]:{remote_port}"
@@ -557,24 +591,19 @@ async def check_permission(middleware, app):
         AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials())
         return
 
-    remote_addr, remote_port = app.request.transport.get_extra_info('peername')
+    remote_addr, remote_port = get_remote_addr_port(app)
     if not (remote_addr.startswith('127.') or remote_addr == '::1'):
         return
 
-    remote = f'{remote_addr}:{remote_port}'
-    data = (await run(['lsof', f'-i@{remote}', '-n', '-Fnu'], encoding='utf-8')).stdout
-    for line in iter(data.splitlines()):
-        key = line[0]
-        value = line[1:]
-        authenticated = True
-        if key == 'u':
-            authenticated &= (key == '0')
-        if key == 'n':
-            authenticated &= (value in remote)
-
-        if authenticated:
-            AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
-            return
+    if process := get_peer_process(remote_addr, remote_port):
+        try:
+            euid = process.uids().effective
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            if euid == 0:
+                AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
+                return
 
 
 def setup(middleware):
