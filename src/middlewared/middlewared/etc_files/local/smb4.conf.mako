@@ -12,9 +12,11 @@
     clustering = Yes
     ctdb:registry.tdb = Yes
     kernel share modes = No
-    % endif
+    include = registry
+    % else:
     clustering = No
     include = registry
+    % endif
     % else:
     clustering = No
     netbiosname = TN_STANDBY
