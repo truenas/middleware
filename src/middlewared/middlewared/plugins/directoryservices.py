@@ -318,7 +318,7 @@ class DirectoryServices(Service):
 
         server_secrets = db_secrets.get(f"{netbios_name.upper()}$")
         if server_secrets is None:
-            self.logger.warning("Unable to find stored secrets for [%]. "
+            self.logger.warning("Unable to find stored secrets for [%s]. "
                                 "Directory service functionality may be impacted.",
                                 netbios_name)
             return False
