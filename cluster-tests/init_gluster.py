@@ -77,7 +77,10 @@ def add_peers():
     # query a node for the peers (it returns all peer information)
     ans = make_request('get', '/gluster/peer')
     assert ans.status_code == 200, ans.text
-    assert set([i['hostname'] for i in ans.json()]) == set(HOSTNAMES), ans.json()
+    # use casefold() for purpose of hostname validation sense case does not matter
+    # but the resolvable names on the network might not match _exactly_ with what
+    # was given to us in the config (i.e. DNS1.HOSTNAME.BLAH == DNS1.hostname.BLAH)
+    assert set([i['hostname'].casefold() for i in ans.json()]) == set([i.casefold() for i HOSTNAMES]), ans.json()
 
 
 def add_jwt_secret():
