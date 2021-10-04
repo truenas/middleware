@@ -194,6 +194,7 @@ class SMARTTestService(CRUDService):
         return {
             disk['identifier']: disk if full_disk else disk['name']
             for disk in await self.middleware.call('disk.query', [['devname', '!^', 'nv']])
+            if await self.middleware.call('disk.smartctl_args', disk['name']) is not None
         }
 
     @accepts(
