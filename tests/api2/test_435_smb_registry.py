@@ -136,7 +136,7 @@ def test_007_renamed_shares_in_registry(request):
     it will actually result in share being removed from
     registry and re-added with different name.
     """
-    depends(request, ["SHARES_CREATED"])
+    depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

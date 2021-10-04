@@ -121,7 +121,7 @@ def test_010_checking_to_see_if_nfs_service_is_running(request):
 
 
 def test_011_verify_smbclient_127_0_0_1_connection(request):
-    depends(request, ["service_cifs_running"], scope="session")
+    depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -192,6 +192,7 @@ def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
 
 
 def test_020_verify_smbclient_127_0_0_1_nt_status_access_is_denied(request):
+    depends(request, ["ssh_password"], scope="session")
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
@@ -410,7 +411,7 @@ def test_046_verify_testfile_is_on_recycle_bin_in_the_active_directory_share(req
 
 @windows_host_cred
 def test_047_create_a_dir_and_a_file_in_windows(request):
-    depends(request, ["service_cifs_running"], scope="session")
+    depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd1 = 'mkdir testdir'
     results = SSH_TEST(cmd1, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
     assert results['result'] is True, results['output']
@@ -429,7 +430,7 @@ def test_047_create_a_dir_and_a_file_in_windows(request):
 
 @windows_host_cred
 def test_048_mount_the_smb_share_robocopy_testdir_to_the_share_windows_mount(request):
-    depends(request, ["service_cifs_running"], scope="session")
+    depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     # sleep 61 second to make sure that
     sleep(61)
     script = '@echo on\n'
@@ -489,7 +490,7 @@ def test_050_verify_testfile_is_on_recycle_bin_in_the_active_directory_share(req
 
 @windows_host_cred
 def test_051_delete_the_test_dir_and_a_file_in_windows(request):
-    depends(request, ["service_cifs_running"], scope="session")
+    depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = 'rmdir /S /Q testdir'
     results = SSH_TEST(cmd, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
     assert results['result'] is True, results['output']
@@ -548,7 +549,7 @@ def test_056_netbios_name_change_check_sid(request):
     Test failure here shows that we failed to write our new SID
     to the configuration database.
     """
-    depends(request, ["service_cifs_running", "ssh_password"], scope="session")
+    depends(request, ["service_cifs_running"], scope="session")
     global new_sid
     global old_netbiosname
 
@@ -578,7 +579,7 @@ def test_057_create_new_smb_group_for_sid_test(request):
     Create testgroup and verify that groupmap entry generated
     with new SID.
     """
-    depends(request, ["SID_CHANGED"])
+    depends(request, ["SID_CHANGED", "ssh_password"], scope="session")
     global group_id
     payload = {
         "name": "testsidgroup",
@@ -610,7 +611,7 @@ def test_058_change_netbios_name_and_check_groupmap(request):
     Verify that changes to netbios name result in groupmap sid
     changes.
     """
-    depends(request, ["SID_CHANGED"])
+    depends(request, ["SID_CHANGED", "ssh_password"], scope="session")
     payload = {
         "netbiosname": old_netbiosname,
     }

@@ -120,7 +120,7 @@ def smb_connection(**kwargs):
 @pytest.mark.dependency(name="create_dataset")
 @pytest.mark.parametrize("toggle_attachments", [True, False])
 def test_pool_dataset_unlock_smb(request, toggle_attachments):
-    depends(request, ["pool_04", "smb_001"], scope="session")
+    depends(request, ["pool_04", "smb_001", "ssh_password"], scope="session")
     # Prepare test SMB share
     with dataset("normal") as normal:
         with smb_share("normal", f"/mnt/{normal}"):

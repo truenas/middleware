@@ -564,7 +564,7 @@ def test_151_set_xattr_via_ssh(request, xat):
     Iterate through AFP xattrs and set them on testfile
     via SSH.
     """
-    # depends(request, ["AFP_ENABLED"])
+    depends(request, ["AFP_ENABLED", "ssh_password"], scope="session")
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'touch {afptestfile} && chown {SMB_USER} {afptestfile} && '
     cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
@@ -638,7 +638,7 @@ def test_155_ssh_read_afp_xattr(request, xat):
     Read xattr that was set via SMB protocol directly via
     SSH and verify that data is the same.
     """
-    depends(request, ["XATTR_CHECK_SMB_WRITE"])
+    depends(request, ["XATTR_CHECK_SMB_WRITE", "ssh_password"], scope="session")
     # Netatalk-compatible xattr gets additional
     # metadata written to it, which makes comparison
     # of all bytes problematic.
@@ -679,7 +679,7 @@ def test_176_validate_microsoft_account_behavior(request, proto):
     """
     depends(request, ["SMB_SHARE_CREATED"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=sample_email, password=SMB_PWD, smb1=(proto=='SMB1'))
+    c.connect(host=ip, share=SMB_NAME, username=sample_email, password=SMB_PWD, smb1=(proto == 'SMB1'))
     fd = c.create_file("testfile", "w")
     c.close(fd, True)
     c.disconnect()
