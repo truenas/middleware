@@ -34,7 +34,7 @@ def api_key(allowlist):
 def test_root_api_key_websocket():
     """We should be able to call a method with root API key using Websocket."""
     with api_key([]) as key:
-        cmd = f"midclt -u ws://{ip}/websocket --api-key {key} call system.info"
+        cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, str(results['output'])
         assert 'uptime' in str(results['output'])
@@ -43,7 +43,7 @@ def test_root_api_key_websocket():
 def test_allowed_api_key_websocket():
     """We should be able to call a method with API key that allows that call using Websocket."""
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
-        cmd = f"midclt -u ws://{ip}/websocket --api-key {key} call system.info"
+        cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, str(results['output'])
         assert 'uptime' in str(results['output'])
@@ -52,7 +52,7 @@ def test_allowed_api_key_websocket():
 def test_denied_api_key_websocket():
     """We should not be able to call a method with API key that does not allow that call using Websocket."""
     with api_key([{"method": "CALL", "resource": "system.info_"}]) as key:
-        cmd = f"midclt -u ws://{ip}/websocket --api-key {key} call system.info"
+        cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is False
 
