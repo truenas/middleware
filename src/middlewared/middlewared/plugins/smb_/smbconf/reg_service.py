@@ -228,7 +228,7 @@ class ShareSchema(RegistrySchema):
         they deviate from our defaults).
         """
         vfs_objects = conf.get("vfs objects", [])
-        if "recycle" not in vfs_objects:
+        if "recycle" not in vfs_objects['parsed']:
             return False
 
         conf.pop("recycle:repository", "")
@@ -237,10 +237,10 @@ class ShareSchema(RegistrySchema):
             if conf[to_check]["parsed"]:
                 conf.pop(to_check)
 
-        if conf["recycle:directory_mode"] == "0777":
+        if conf["recycle:directory_mode"]['raw'] == "0777":
             conf.pop("recycle:directory_mode")
 
-        if conf["recycle:subdir_mode"] == "0700":
+        if conf["recycle:subdir_mode"]['raw'] == "0700":
             conf.pop("recycle:subdir_mode")
 
         return True
