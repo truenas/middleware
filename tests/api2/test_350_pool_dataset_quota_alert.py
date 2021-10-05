@@ -43,6 +43,17 @@ G = 1024 * 1024 * 1024
             # {"formatted": r"Quota exceeded on dataset tank/quota_test. Used 91.[0-9]+% \(9.[0-9]+ GiB of 10 GiB\)."},
         ]
     ),
+    (
+        {
+            "": {
+                "used": 100,
+                "quota": 1000000000 * G,
+            }
+        },
+        [
+            # There should be no quota alerts if quota is set to a larger value than dataset size
+        ]
+    ),
 ])
 def test_dataset_quota_alert(request, datasets, expected_alerts):
     depends(request, ["pool_04", "ssh_password"], scope="session")
