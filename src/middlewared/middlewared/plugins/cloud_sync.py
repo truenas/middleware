@@ -230,10 +230,12 @@ async def rclone(middleware, job, cloud_sync, dry_run=False):
         if cancelled_error is not None:
             raise cancelled_error
         if proc.returncode != 0:
-            message = f"rclone failed with exit code {proc.returncode}"
-            if "dropbox__restricted_content" in job.internal_data:
-                message = "DropBox restricted content"
-            raise ValueError(message)
+            message = "".join(job.internal_data.get("messages", []))
+            if message and proc.returncode != 1:
+                if message and not message.endswith("\n"):
+                    message += "\n"
+                message += f"rclone failed with exit code {proc.returncode}"
+            raise CallError(message)
 
         await run_script(job, env, cloud_sync["post_script"], "Post-script")
 
@@ -281,7 +283,7 @@ async def run_script(job, env, hook, script_name):
         await proc.wait()
         await asyncio.wait_for(future, None)
         if proc.returncode != 0:
-            raise ValueError(f"{script_name} failed with exit code {proc.returncode}")
+            raise CallError(f"{script_name} failed with exit code {proc.returncode}")
     finally:
         os.unlink(name)
 
@@ -385,6 +387,9 @@ async def rclone_check_progress(job, proc):
             if read == "":
                 break
 
+            job.internal_data.setdefault("messages", [])
+            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
+
             if "failed to open source object: path/restricted_content/" in read:
                 job.internal_data["dropbox__restricted_content"] = True
                 dropbox__restricted_content = True
@@ -412,15 +417,16 @@ async def rclone_check_progress(job, proc):
             job.logs_fd.write(result.encode("utf-8", "ignore"))
 
     if dropbox__restricted_content:
-        message = "\n" + (
+        message = (
             "Dropbox sync failed due to restricted content being present in one of the folders. This may include\n"
             "copyrighted content or the DropBox manual PDF that appears in the home directory after signing up.\n"
             "All other files were synchronized, but no deletions were performed as synchronization is considered\n"
             "unsuccessful. Please inspect logs to determine which files are considered restricted and exclude them\n"
             "from your synchronization. If you think that files are restricted erroneously, contact\n"
-            "Dropbox Support: https://www.dropbox.com/support"
+            "Dropbox Support: https://www.dropbox.com/support\n"
         )
-        job.logs_fd.write(message.encode("utf-8", "ignore"))
+        job.internal_data["messages"] = [message]
+        job.logs_fd.write(("\n" + message).encode("utf-8", "ignore"))
 
 
 def rclone_encrypt_password(password):
