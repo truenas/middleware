@@ -119,7 +119,7 @@ def _run_ssh_cmd(host, action, **kwargs):
 
 
 def ssh_test(host, cmd):
-    return _run_ssh_cmd(host, 'test', {'cmd': cmd})
+    return _run_ssh_cmd(host, 'test', cmd=cmd})
 
 
 def ssh_get(host, _file, _dst):
