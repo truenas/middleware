@@ -36,8 +36,12 @@ class QuotaAlertSource(ThreadedAlertSource):
 
         datasets = self.middleware.call_sync("zfs.dataset.query_for_quota_alert")
 
+        pool_sizes = {}
         for d in datasets:
             d["name"] = d["name"]["rawvalue"]
+
+            if "/" not in d["name"]:
+                pool_sizes[d["name"]] = int(d["available"]["rawvalue"]) + int(d["used"]["rawvalue"])
 
             for k, default in [("org.freenas:quota_warning", 80), ("org.freenas:quota_critical", 95),
                                ("org.freenas:refquota_warning", 80), ("org.freenas:refquota_critical", 95)]:
@@ -72,6 +76,11 @@ class QuotaAlertSource(ThreadedAlertSource):
                     else:
                         if refquota_value and refquota_value < quota_value:
                             continue
+
+                    # Quota larger than dataset available size will never be exceeded,
+                    # but will break out logic
+                    if quota_value > pool_sizes[dataset["name"].split("/")[0]]:
+                        continue
 
                     used = quota_value - int(dataset["available"]["rawvalue"])
                 elif quota_property == "refquota":
