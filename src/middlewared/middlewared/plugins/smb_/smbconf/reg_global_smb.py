@@ -44,8 +44,13 @@ class GlobalSchema(RegistrySchema):
             data_out['username map'] = {'parsed': '/etc/smbusername.map'}
 
         if ds_state['ldap'] in ['LEAVING', 'DISABLED']:
+            if data_in['clustered']:
+                passdb_backend = 'tdbsam'
+            else:
+                passdb_backend = 'tdbsam:/root/samba/private/passdb.tdb'
+
             data_out.update({
-                'passdb backend': {'parsed': 'tdbsam:/root/samba/private/passdb.tdb'},
+                'passdb backend': {'parsed': passdb_backend},
             })
         return
 

@@ -754,8 +754,8 @@ class SMBService(TDBWrapConfigService):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
         if not new['aapl_extensions']:
-            if await self.middleware.call('sharing.smb.query', [['afp', '=', True]], {'count': True}):
-                verrors.add('smb_update.aapl_extensions', 'This option must be enabled when AFP shares are present')
+            if await self.middleware.call('sharing.smb.query', [['OR', [['afp', '=', True], ['timemachine', '=', True]]]], {'count': True}):
+                verrors.add('smb_update.aapl_extensions', 'This option must be enabled when AFP  or time machine shares are present')
 
     @accepts(Dict(
         'smb_update',

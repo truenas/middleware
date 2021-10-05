@@ -281,7 +281,7 @@ class SharingSMBService(Service):
         # TO_DO - need to validate whether VFS objects have been manually overridden by
         # auxiliary parameters or CLI changes (e.g. "net conf setparm").
         try:
-            conf_in['vfs_objects']["parsed"] = data["vfs objects"]["parsed"].split()
+            conf_in['vfs objects']["parsed"] = data["vfs objects"]["parsed"].split()
         except KeyError:
             conf_in["vfs objects"] = {"raw": "", "parsed": []}
 

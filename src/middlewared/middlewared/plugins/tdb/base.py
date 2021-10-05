@@ -49,7 +49,7 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         if dbmap:
             return dbmap[0]['dbid']
 
-        cmd = ["ctdb", "attach", name, "persistent"]
+        cmd = ["ctdb", "attach", f"{name}.tdb", "persistent"]
         attach = run(cmd, check=False)
         if attach.returncode != 0:
             raise CallError("Failed to attach backend: %s", attach.stderr.decode())
