@@ -3186,7 +3186,7 @@ class PoolDatasetService(CRUDService):
 
         parent = await self.middleware.call(
             'zfs.dataset.query',
-            [('id', '=', data['name'].rsplit('/')[0])],
+            [('id', '=', data['name'].rsplit('/', 1)[0])],
             {'extra': {'recursive': False}},
         )
 
@@ -3197,6 +3197,18 @@ class PoolDatasetService(CRUDService):
             )
         else:
             parent = parent[0]
+            if mode == 'CREATE' and parent['properties']['readonly']['rawvalue'] == 'on':
+                # creating a zvol/dataset when the parent object is set to readonly=on
+                # is allowed via ZFS. However, if it's a dataset an error will be raised
+                # stating that it was unable to be mounted. If it's a zvol, then the service
+                # that tries to open the zvol device will get read only related errors.
+                # Currently, there is no way to mount a dataset in the webUI so we will
+                # prevent this scenario from occuring by preventing creation if the parent
+                # is set to readonly=on.
+                verrors.add(
+                    f'{schema}.readonly',
+                    f'Turn off readonly mode on {parent["id"]} to create {data["name"].rsplit("/")[0]}'
+                )
 
         if data['type'] == 'FILESYSTEM':
             if data.get("aclmode") and osc.IS_LINUX:
