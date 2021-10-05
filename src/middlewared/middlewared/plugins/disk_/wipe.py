@@ -1,47 +1,66 @@
-import asyncio
 import os
-import re
-import signal
-import subprocess
 
+from bsd.disk import get_size_with_file
 from middlewared.schema import accepts, Bool, Ref, Str
 from middlewared.service import job, private, Service
-from middlewared.utils import osc, Popen, run
 
 
-if osc.IS_LINUX:
-    RE_DD = re.compile(r'^(\d+).*bytes.*copied.*, ([\d\.]+)\s*(GB|MB|KB|B)/s')
-else:
-    RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
+CHUNK = 1048576  # 1MB binary
 
 
 class DiskService(Service):
 
     @private
-    async def destroy_partitions(self, disk):
-        if osc.IS_LINUX:
-            await run(['sgdisk', '-Z', os.path.join('/dev', disk)])
-        else:
-            await run('gpart', 'destroy', '-F', f'/dev/{disk}', check=False)
-            # Wipe out the partition table by doing an additional iterate of create/destroy
-            await run('gpart', 'create', '-s', 'gpt', f'/dev/{disk}')
-            await run('gpart', 'destroy', '-F', f'/dev/{disk}')
+    def _wipe(self, data):
+        with open(f'/dev/{data["dev"]}', 'wb') as f:
+            try:
+                size = get_size_with_file(f)
+                if size == 0:
+                    # make sure to log something
+                    self.logger.error('Reported size of %r is 0', f.name)
+            except Exception:
+                self.logger.error('Failed to determine size of %r', f.name, exc_info=True)
+                size = None
 
-    @private
-    async def wipe_quick(self, dev, size=None):
-        # If the size is too small, lets just skip it for now.
-        # In the future we can adjust dd size
-        if size and size < 33554432:
-            return
-        await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1M', 'count=32')
-        size = await self.middleware.call('disk.get_dev_size', dev)
-        if not size:
-            self.logger.error(f'Unable to determine size of {dev}')
-        else:
-            # This will fail when EOL is reached
-            await run(
-                'dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1M', f'oseek={int(size / (1024*1024)) - 32}', check=False
-            )
+            if not size or (size < 33554432 and data['mode'] == 'QUICK'):
+                # no size means nothing else will work or we wipe
+                # the first and last 33554432 bytes (32MB) of the
+                # device when it's the "QUICK" mode so if the
+                # device is smaller than that, ignore it.
+                return
+
+            # seek to the beginning of the disk to be safe
+            os.lseek(f.fileno(), os.SEEK_SET, os.SEEK_SET)
+
+            # freeBSD 12+ changed maxphys to 1MB so if we try
+            # to write more than that at any given time then
+            # it gets chunked behind the scenes. This also allows
+            # us to save ram usage by only allocating a 1MB buffer
+            if data['mode'] in ('QUICK', 'FULL'):
+                to_write = bytearray(CHUNK).zfill(0)
+            else:
+                to_write = bytearray(os.urandom(CHUNK))
+
+            if data['mode'] == 'QUICK':
+                _32 = 32
+                for i in range(_32):
+                    # wipe first 32MB
+                    os.write(f.fileno(), to_write)
+                    os.fsync(f.filno())
+
+                # seek to 32MB before end of drive
+                os.lseek(f.fileno(), (size - (CHUNK * _32)), os.SEEK_SET)
+                for i in range(_32):
+                    # wipe last 32MB
+                    os.write(f.fileno(), to_write)
+                    os.fsync(f.fileno())
+            else:
+                iterations = (size // CHUNK)
+                length = len(str(iterations))
+                for i in range(iterations):
+                    os.write(f.fileno(), to_write)
+                    os.fsync(f.fileno())
+                    data['job'].set_progress(float(f'{i / iterations:.{length}f}') * 100)
 
     @accepts(
         Str('dev'),
@@ -59,58 +78,6 @@ class DiskService(Service):
           - FULL_RANDOM: write whole disk with random bytes
         """
         await self.middleware.call('disk.swaps_remove_disks', [dev], options)
-
-        if osc.IS_FREEBSD:
-            await self.middleware.call('disk.remove_disk_from_graid', dev)
-
-        # First do a quick wipe of every partition to clean things like zfs labels
-        if mode == 'QUICK':
-            for part in await self.middleware.call('disk.list_partitions', dev):
-                await self.wipe_quick(part['name'], part['size'])
-
-        # we have to force GEOM to retaste the disks since if this is a QUICK
-        # format and the disks had previous partition tables on them, we run
-        # like 4 instances of `dd`. Using regular GEOM utilities, they will
-        # actually wait for the related thread to become idle before returning
-        # from the syscall. `dd` doesn't do this so we force GEOM to retaste
-        # all the disks here before calling "gpart destroy"
-        await run(['sysctl', 'kern.geom.conftxt'], check=False)
-
-        await self.middleware.call('disk.destroy_partitions', dev)
-
-        if mode == 'QUICK':
-            await self.wipe_quick(dev)
-        else:
-            size = await self.middleware.call('disk.get_dev_size', dev) or 1
-
-            proc = await Popen([
-                'dd',
-                'if=/dev/{}'.format('zero' if mode == 'FULL' else 'random'),
-                f'of=/dev/{dev}',
-                'bs=1M',
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-
-            async def dd_wait():
-                while True:
-                    if proc.returncode is not None:
-                        break
-                    os.kill(proc.pid, signal.SIGUSR1 if osc.IS_LINUX else signal.SIGINFO)
-                    await asyncio.sleep(1)
-
-            asyncio.ensure_future(dd_wait())
-
-            while True:
-                line = await proc.stderr.readline()
-                if line == b'':
-                    break
-                line = line.decode()
-                reg = RE_DD.search(line)
-                if reg:
-                    speed = float(reg.group(2)) if osc.IS_LINUX else int(reg.group(2))
-                    if osc.IS_LINUX:
-                        mapping = {'gb': 1024 * 1024 * 1024, 'mb': 1024 * 1024, 'kb': 1024, 'b': 1}
-                        speed = int(speed * mapping[reg.group(3).lower()])
-                    job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': speed})
-
-        if sync:
-            await self.middleware.call('disk.sync', dev)
+        await self.middleware.call('disk.remove_disk_from_graid', dev)
+        await self.middleware.run_in_thread(self._wipe, {'job': job, 'dev': dev, 'mode': mode})
+        await self.middleware.call('disk.sync', dev) if sync else None
