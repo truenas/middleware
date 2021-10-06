@@ -232,7 +232,9 @@ class ChartReleaseService(CRUDService):
             release_resources = {
                 'storage_class': storage_classes[get_storage_class_name(name)],
                 'persistent_volumes': persistent_volumes[name],
-                'host_path_volumes': await self.host_path_volumes(resources[Resources.POD.value][name]),
+                'host_path_volumes': await self.host_path_volumes(itertools.chain(
+                    *[resources[getattr(Resources, k).value][name] for k in ('DEPLOYMENT', 'STATEFULSET')]
+                )),
                 **{r.value: resources[r.value][name] for r in Resources},
             }
             release_resources = {
@@ -393,10 +395,10 @@ class ChartReleaseService(CRUDService):
         return str(value)
 
     @private
-    async def host_path_volumes(self, pods):
+    async def host_path_volumes(self, resources):
         host_path_volumes = []
-        for pod in pods:
-            for volume in filter(lambda v: v.get('host_path'), pod['spec']['volumes'] or []):
+        for resource in resources:
+            for volume in filter(lambda v: v.get('host_path'), resource['spec']['template']['spec']['volumes'] or []):
                 host_path_volumes.append(copy.deepcopy(volume))
         return host_path_volumes
 
