@@ -2,7 +2,6 @@ import copy
 import datetime
 import dateutil
 import dateutil.parser
-import functools
 import inspect
 import ipaddress
 import itertools
@@ -13,6 +12,7 @@ import re
 import subprocess
 
 from middlewared.async_validators import validate_country
+from middlewared.plugins.crypto_.utils import NOT_VALID_AFTER_DEFAULT
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, OROperator, Patch, Ref, returns, Str
 from middlewared.service import CallError, CRUDService, job, periodic, private, Service, skip_arg, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -41,7 +41,6 @@ CERT_TYPE_CSR = 0x20
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
 EKU_OIDS = [i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')]
-NOT_VALID_AFTER_DEFAULT = 825
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 
@@ -51,14 +50,6 @@ def get_cert_info_from_data(data):
         'san', 'serial', 'email', 'lifetime', 'digest_algorithm', 'organizational_unit'
     ]
     return {key: data.get(key) for key in cert_info_keys if data.get(key)}
-
-
-@functools.cache
-def get_csr_profiles():
-    profiles = copy.deepcopy(CertificateService.PROFILES)
-    for key, schema in filter(lambda k, s: 'cert_extensions' in s, profiles.items()):
-        schema['cert_extensions'].pop('AuthorityKeyIdentifier', None)
-    return profiles
 
 
 def check_dependencies(middleware, cert_type, id):
@@ -1049,71 +1040,6 @@ class CertificateService(CRUDService):
         Int('signed_certificates'),
     )
 
-    PROFILES = {
-        'Openvpn Server Certificate': {
-            'cert_extensions': {
-                'BasicConstraints': {
-                    'enabled': True,
-                    'ca': False,
-                    'extension_critical': True
-                },
-                'AuthorityKeyIdentifier': {
-                    'enabled': True,
-                    'authority_cert_issuer': True,
-                    'extension_critical': False
-                },
-                'ExtendedKeyUsage': {
-                    'enabled': True,
-                    'extension_critical': True,
-                    'usages': [
-                        'SERVER_AUTH',
-                    ]
-                },
-                'KeyUsage': {
-                    'enabled': True,
-                    'extension_critical': True,
-                    'digital_signature': True,
-                    'key_encipherment': True
-                }
-            },
-            'key_length': 2048,
-            'key_type': 'RSA',
-            'lifetime': NOT_VALID_AFTER_DEFAULT,
-            'digest_algorithm': 'SHA256'
-        },
-        'Openvpn Client Certificate': {
-            'cert_extensions': {
-                'BasicConstraints': {
-                    'enabled': True,
-                    'ca': False,
-                    'extension_critical': True
-                },
-                'AuthorityKeyIdentifier': {
-                    'enabled': True,
-                    'authority_cert_issuer': True,
-                    'extension_critical': False
-                },
-                'ExtendedKeyUsage': {
-                    'enabled': True,
-                    'extension_critical': True,
-                    'usages': [
-                        'CLIENT_AUTH',
-                    ]
-                },
-                'KeyUsage': {
-                    'enabled': True,
-                    'extension_critical': True,
-                    'digital_signature': True,
-                    'key_agreement': True,
-                }
-            },
-            'key_length': 2048,
-            'key_type': 'RSA',
-            'lifetime': NOT_VALID_AFTER_DEFAULT,
-            'digest_algorithm': 'SHA256'
-        }
-    }
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_functions = {
@@ -1123,29 +1049,6 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_CSR': self.create_csr,
             'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
         }
-
-    @accepts()
-    @returns(Dict(
-        'certificate_profiles',
-        *[Dict(profile, additional_attrs=True) for profile in PROFILES]
-    ))
-    async def profiles(self):
-        """
-        Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
-        configurations which can be used for creating certificates.
-        """
-        return self.PROFILES
-
-    @accepts()
-    @returns(Dict(
-        *[Dict(profile, additional_attrs=True) for profile in get_csr_profiles()]
-    ))
-    async def certificate_signing_requests_profiles(self):
-        """
-        Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
-        configurations which can be used for creating certificate signing requests.
-        """
-        return get_csr_profiles()
 
     @accepts()
     @returns(Ref('country_choices'))
