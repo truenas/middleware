@@ -53,16 +53,19 @@ class ChartReleaseService(Service):
         """
         await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call(
-            'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
+            'chart.release.query', [['id', '=', release_name]], {
+                'get': True,
+                'extra': {'retrieve_resources': True, 'retrieve_locked_paths': True},
+            }
         )
         if options['replica_count']:
             # This means we have a number higher then 0 - we would like to make sure in this case that we
             # are not going to start an app which might be consuming a locked path
-            resources = await self.middleware.call(
-                'k8s.storage.get_resources_consuming_host_path', release['namespace']
-            )
-            if any(r['consumes_locked_paths'] for k in resources for r in resources[k]):
-                raise CallError(f'{release_name!r} cannot be started as it is consuming host path(s) which are locked')
+            if release['resources']['locked_host_paths']:
+                raise CallError(
+                    f'{release_name!r} cannot be started as it is consuming following host path(s) '
+                    f'which are locked: {", ".join(release["resources"]["locked_host_paths"])}'
+                )
 
         resources = release['resources']
         replica_counts = await self.get_replica_count_for_resources(resources)
@@ -245,12 +248,16 @@ class ChartReleaseService(Service):
 
     @private
     async def scale_down_resources_consuming_locked_paths(self):
-        chart_releases = {c['namespace']: c['id'] for c in await self.middleware.call('chart.release.query')}
-        resources = await self.middleware.call('k8s.storage.get_resources_consuming_host_path')
         args = [
-            [chart_releases[r['metadata']['namespace']], {'replica_count': 0}]
-            for r_type in resources for r in resources[r_type]
-            if r['consumes_locked_paths'] and r['metadata']['namespace'] in chart_releases and r['spec']['replicas']
+            [r['id'], {'replica_count': 0}]
+            for r in await self.middleware.call(
+                'chart.release.query', [['status', '!=', 'STOPPED']], {
+                    'extra': {
+                        'retrieve_resources': True,
+                        'retrieve_locked_paths': True,
+                    }
+                }
+            ) if r['resources']['locked_host_paths']
         ]
         if args:
             await self.middleware.call('core.bulk', 'chart.release.scale', args)
