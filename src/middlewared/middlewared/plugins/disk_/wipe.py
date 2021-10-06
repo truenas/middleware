@@ -1,42 +1,32 @@
 import os
-import array
-import struct
-import fcntl
 
+from bsd.disk import get_size_with_file
 from middlewared.schema import accepts, Bool, Ref, Str
 from middlewared.service import job, private, Service
 
 
-DIOCGMEDIASIZE = 0x40086481  # sys/sys/disk.h _IOR('d', 129, uint64_t)
 CHUNK = 1048576  # 1MB binary
 
 
 class DiskService(Service):
 
     @private
-    def _get_size(self, handle):
-        size = None
-        try:
-            _buffer = array.array('B', range(0, 8))
-            fcntl.ioctl(handle.fileno(), DIOCGMEDIASIZE, _buffer, 1)
-            size = struct.unpack('q', _buffer)[0]
-        except Exception:
-            self.logger.error('Failed to determine size of "%s"', handle.name, exc_info=True)
-
-        return size
-
-    @private
     def _wipe(self, data):
         with open(f'/dev/{data["dev"]}', 'wb') as f:
-            size = self._get_size(f)
-            if size is None or size == 0:
-                # no size means nothing else will work
-                self.logger.error('Unable to determine size of "%s"', data['dev'])
-                return
-            elif size < 33554432 and data['mode'] == 'QUICK':
-                # we wipe the first and last 33554432 bytes (32MB) of the
-                # device when it's the "QUICK" mode so if the device is smaller
-                # than that, ignore it.
+            try:
+                size = get_size_with_file(f)
+                if size == 0:
+                    # make sure to log something
+                    self.logger.error('Reported size of %r is 0', f.name)
+            except Exception:
+                self.logger.error('Failed to determine size of %r', f.name, exc_info=True)
+                size = None
+
+            if not size or (size < 33554432 and data['mode'] == 'QUICK'):
+                # no size means nothing else will work or we wipe
+                # the first and last 33554432 bytes (32MB) of the
+                # device when it's the "QUICK" mode so if the
+                # device is smaller than that, ignore it.
                 return
 
             # seek to the beginning of the disk to be safe
