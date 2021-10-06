@@ -1,9 +1,9 @@
 import re
+from xml.etree import ElementTree as etree
 
-from bsd import geom, devinfo
-
+import sysctl
+import bsd
 from .device_info_base import DeviceInfoBase
-
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.service import private, Service
 
@@ -14,95 +14,100 @@ RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
 class DeviceService(Service, DeviceInfoBase):
 
     async def get_disks(self):
-        disks = {}
-        klass = await self.middleware.call('device.retrieve_geom_class', 'DISK')
-        if not klass:
-            return disks
-        for g in klass.geoms:
-            # Skip cd*
-            if g.name.startswith('cd'):
-                continue
-            disks[g.name] = await self.get_disk_details(self.disk_default.copy(), g)
-        return disks
-
-    @private
-    def retrieve_geom_class(self, class_name):
-        geom.scan()
-        return geom.class_by_name(class_name)
+        return await self.middleware.call('device.get_disk_details', 'DISK')
 
     async def get_disk(self, name):
-        disk = self.disk_default.copy()
-        if name.startswith('multipath/'):
-            disk_klass = await self.middleware.call('device.retrieve_geom_class', 'MULTIPATH')
-        else:
-            disk_klass = await self.middleware.call('device.retrieve_geom_class', 'DISK')
-        if not disk_klass:
-            return None
-        disk_geom = next((g for g in disk_klass.geoms if g.name == (
-            name if disk_klass.name == 'DISK' else name.split('/')[-1]
-        )), None)
-        if not disk_geom:
-            return None
-        return await self.get_disk_details({**disk, 'name': name}, disk_geom)
+        class_name = 'MULTIPATH' if name.startswith('multipath/') else 'DISK'
+        disk = await self.middleware.call('device.get_disk_details', class_name, name)
+        return None if not disk else disk
 
     @private
-    async def get_disk_details(self, disk, disk_geom):
-        disk.update({
-            'name': disk_geom.name if not disk['name'] else disk['name'],
-            'mediasize': disk_geom.provider.mediasize,
-            'sectorsize': disk_geom.provider.sectorsize,
-            'stripesize': disk_geom.provider.stripesize,
-        })
-        if disk_geom.provider.config:
-            disk.update({k: v for k, v in disk_geom.provider.config.items() if k not in ('fwheads', 'fwsectors')})
-            if disk['rotationrate'] is not None:
-                disk['rotationrate'] = int(disk['rotationrate']) if disk['rotationrate'].isdigit() else None
-            if not disk['descr']:
-                disk['descr'] = None
-            disk['model'] = disk['descr']
+    def get_disk_details(self, class_name, disk_name=None):
+        xml = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value).find(f'.//class/[name="{class_name}"]')
 
-            if disk['rotationrate'] is not None:
-                if disk['rotationrate'] == 0:
-                    disk['rotationrate'] = None
-                    disk['type'] = 'SSD'
-                else:
-                    disk['type'] = 'HDD'
-            elif disk_geom.provider.config.get('rotationrate') != 'unknown':
-                self.middleware.logger.debug(
-                    'Unable to retrieve rotation rate for %s. Rotation rate reported by DISK geom is "%s"',
-                    disk['name'], disk_geom.provider.config.get('rotationrate')
-                )
+        result = {}
+        for g in xml.findall('geom'):
+            name = g.find('provider/name').text
+            if name.startswith('cd'):
+                # ignore cd devices
+                continue
 
-        if not disk['ident']:
-            output = await self.middleware.call(
-                'disk.smartctl', disk_geom.name, ['-i'], {'cache': False, 'silent': True}
-            )
-            if output:
-                search = self.RE_SERIAL_NUMBER.search(output)
-                if search:
-                    disk['ident'] = search.group('serial')
+            # means a singular disk was given to us so we need
+            # to skip the disks until we hit the one that we want
+            if disk_name is not None and disk_name != name:
+                continue
 
-        if not disk['ident']:
-            disk['ident'] = ''
+            # make a copy of disk template
+            disk = self.disk_default.copy()
 
-        reg = RE_DISK_NAME.search(disk_geom.name)
-        if reg:
-            disk['subsystem'] = reg.group(1)
-            disk['number'] = int(reg.group(2))
+            # sizes
+            disk.update({
+                'name': name,
+                'mediasize': int(g.find('provider/mediasize').text),
+                'sectorsize': int(g.find('provider/sectorsize').text),
+                'stripesize': int(g.find('provider/stripesize').text),
+            })
 
-        # We still keep ident/mediasize to not break previous api users
-        disk['serial'] = disk['ident']
-        disk['size'] = disk['mediasize']
-        if disk['serial'] and disk['lunid']:
-            disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
-        if disk['size'] and disk['sectorsize']:
-            disk['blocks'] = int(disk['size'] / disk['sectorsize'])
+            config = g.find('provider/config')
+            if config:
+                # unique identifiers
+                disk.update({i.tag: i.text for i in config if i.tag not in ('fwheads', 'fwsectors')})
+                if disk['rotationrate'] is not None:
+                    # rotation rate
+                    disk['rotationrate'] = int(disk['rotationrate']) if disk['rotationrate'].isdigit() else None
+                    if disk['rotationrate'] is not None:
+                        if disk['rotationrate'] == 0:
+                            disk['type'] = 'SSD'
+                            disk['rotationrate'] = None
+                        else:
+                            disk['type'] = 'HDD'
 
-        return disk
+                # description and model (they're the same)
+                disk['descr'] = None if not disk['descr'] else disk['descr']
+                disk['model'] = disk['descr']
+
+                # if geom doesn't give us a serial then try again
+                # (even though this is 100% guaranteed to return
+                #   what geom sees)
+                if not disk['ident']:
+                    try:
+                        disk['ident'] = bsd.disk.get_ident_with_name(name)
+                    except Exception:
+                        disk['ident'] = ''
+
+            # sprinkle our own information here
+            reg = RE_DISK_NAME.search(name)
+            if reg:
+                disk['subsystem'] = reg.group(1)
+                disk['number'] = int(reg.group(2))
+
+            # API backwards compatibility dictates that we keep the
+            # serial and size keys in the output
+            disk['serial'] = disk['ident']
+            disk['size'] = disk['mediasize']
+
+            # some more sprinkling of our own information
+            if disk['serial'] and disk['lunid']:
+                disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
+            if disk['size'] and disk['sectorsize']:
+                disk['blocks'] = int(disk['size'] / disk['sectorsize'])
+
+            if disk_name is not None:
+                # this means that a singular disk was requested so
+                # return here since we're iterating over all disks
+                # on the system
+                return disk
+            else:
+                # this means we're building the object for all the
+                # disks on the system so update our result dict
+                result[name] = disk
+                continue
+
+        return result
 
     async def get_serials(self):
         ports = []
-        for devices in devinfo.DevInfo().resource_managers['I/O ports'].values():
+        for devices in bsd.devinfo.DevInfo().resource_managers['I/O ports'].values():
             for dev in devices:
                 if not dev.name.startswith('uart'):
                     continue
