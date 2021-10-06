@@ -122,6 +122,10 @@ class KubernetesService(Service):
         except Exception as e:
             raise CallError(f'Failed to configure PV/PVCs support: {e}')
 
+        # Now that k8s is configured, we would want to scale down any deployment/statefulset which might
+        # be consuming a locked host path volume
+        await self.middleware.call('chart.release.scale_down_resources_consuming_locked_paths')
+
         await self.middleware.call(
             'k8s.node.remove_taints', [
                 k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
