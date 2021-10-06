@@ -80,6 +80,7 @@ class ChartReleaseService(CRUDService):
             Dict('storage_class', additional_attrs=True),
             List('persistent_volumes'),
             List('host_path_volumes'),
+            List('locked_host_paths'),
             Dict('container_images', additional_attrs=True),
             List('truenas_certificates', items=[Int('certificate_id')]),
             List('truenas_certificate_authorities', items=[Int('certificate_authority_id')]),
