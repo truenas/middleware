@@ -284,7 +284,7 @@ class SMBService(TDBWrapConfigService):
         ha_mode = await self.get_smb_ha_mode()
 
         if ha_mode == 'CLUSTERED':
-            for i in await self.middleware.call('ctdb.public.ips.query'):
+            for i in await self.middleware.call('ctdb.general.ips'):
                 choices[i['public_ip']] = i['public_ip']
 
             return choices

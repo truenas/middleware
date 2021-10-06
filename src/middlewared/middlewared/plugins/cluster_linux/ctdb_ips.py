@@ -34,7 +34,16 @@ class CtdbIpService(Service):
         verrors.check()
 
         if schema_name in ('private_create', 'public_create'):
-            if data['ip'] in [i['public_ip'] for i in (await self.middleware.call('ctdb.public.ips.query'))]:
+            existing_public_ips = {}
+
+            if schema_name == 'public_create':
+                public_ips_for_node = await self.middleware.call(
+                    'ctdb.public.ips.query', [('pnn', '=', data['pnn'])]
+                )
+                if public_ips_for_node:
+                    existing_public_ips = public_ips_for_node[0]['configured_ips']
+
+            if data['ip'] in existing_public_ips:
                 verrors.add(
                     f'{schema_name}.{data["ip"]}',
                     f'"{data["ip"]}" is already added as a public IP address.'
@@ -81,7 +90,7 @@ class CtdbIpService(Service):
             ctdb_file = pathlib.Path(CTDBConfig.GM_PRI_IP_FILE.value)
             etc_file = pathlib.Path(CTDBConfig.ETC_PRI_IP_FILE.value)
         else:
-            ctdb_file = pathlib.Path(CTDBConfig.GM_PUB_IP_FILE.value)
+            ctdb_file = pathlib.Path(f'{CTDBConfig.GM_PUB_IP_FILE.value}_{data["pnn"]}')
             etc_file = pathlib.Path(CTDBConfig.ETC_PUB_IP_FILE.value)
 
         if is_private:
