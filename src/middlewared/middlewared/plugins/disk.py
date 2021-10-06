@@ -1,22 +1,19 @@
 import asyncio
-from collections import defaultdict
 import errno
 import re
 import subprocess
+from collections import defaultdict
+from xml.etree import ElementTree as etree
 
-try:
-    from bsd import geom
-    from nvme import get_nsid
-except ImportError:
-    geom = None
-    get_nsid = None
-
+import sysctl
+import middlewared.sqlalchemy as sa
+from bsd import geom
+from nvme import get_nsid
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
-import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, run
+from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -283,6 +280,10 @@ class DiskService(CRUDService):
         else:
             return disk["name"]
 
+    @private
+    def get_part_xml(self):
+        return etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value).find('.//class[name="PART"]')
+
     @accepts(Bool("join_partitions", default=False))
     async def get_unused(self, join_partitions):
         """
@@ -290,10 +291,13 @@ class DiskService(CRUDService):
         pool or the user pools.
         """
         disks = await self.query([('devname', 'nin', await self.get_reserved())])
+        if join_partitions and disks:
+            part_xml = await self.middleware.run_in_thread(self.get_part_xml)
+            if not part_xml:
+                return disks
 
-        if join_partitions:
             for disk in disks:
-                disk['partitions'] = await self.middleware.call('disk.list_partitions', disk['devname'])
+                disk['partitions'] = await self.middleware.call('disk.list_partitions', disk['devname'], part_xml)
 
         return disks
 
@@ -301,9 +305,7 @@ class DiskService(CRUDService):
     async def get_reserved(self):
         reserved = list(await self.middleware.call('boot.get_disks'))
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
-        if osc.IS_FREEBSD:
-            # FIXME: Make this freebsd specific for now
-            reserved += [i async for i in self.__get_iscsi_targets()]
+        reserved += [i async for i in self.__get_iscsi_targets()]
         return reserved
 
     async def __get_iscsi_targets(self):
