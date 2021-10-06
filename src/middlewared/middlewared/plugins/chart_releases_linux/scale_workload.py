@@ -233,3 +233,15 @@ class ChartReleaseService(Service):
                 ])
 
         return pod_mapping
+
+    @private
+    async def scale_down_resources_consuming_locked_paths(self):
+        chart_releases = {c['namespace']: c['id'] for c in await self.middleware.call('chart.release.query')}
+        resources = await self.middleware.call('k8s.storage.get_resources_consuming_host_path')
+        args = [
+            [chart_releases[r['metadata']['namespace']], {'replica_count': 0}]
+            for r_type in resources for r in resources[r_type]
+            if r['consumes_locked_paths'] and r['metadata']['namespace'] in chart_releases and r['spec']['replicas']
+        ]
+        if args:
+            await self.middleware.call('core.bulk', 'chart.release.scale', args)
