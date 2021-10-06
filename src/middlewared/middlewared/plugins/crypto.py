@@ -2,6 +2,7 @@ import copy
 import datetime
 import dateutil
 import dateutil.parser
+import functools
 import inspect
 import ipaddress
 import itertools
@@ -50,6 +51,14 @@ def get_cert_info_from_data(data):
         'san', 'serial', 'email', 'lifetime', 'digest_algorithm', 'organizational_unit'
     ]
     return {key: data.get(key) for key in cert_info_keys if data.get(key)}
+
+
+@functools.cache
+def get_csr_profiles():
+    profiles = copy.deepcopy(CertificateService.PROFILES)
+    for key, schema in filter(lambda k, s: 'cert_extensions' in s, profiles.items()):
+        schema['cert_extensions'].pop('AuthorityKeyIdentifier', None)
+    return profiles
 
 
 def check_dependencies(middleware, cert_type, id):
@@ -1126,6 +1135,17 @@ class CertificateService(CRUDService):
         configurations which can be used for creating certificates.
         """
         return self.PROFILES
+
+    @accepts()
+    @returns(Dict(
+        *[Dict(profile, additional_attrs=True) for profile in get_csr_profiles()]
+    ))
+    async def certificate_signing_requests_profiles(self):
+        """
+        Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
+        configurations which can be used for creating certificate signing requests.
+        """
+        return get_csr_profiles()
 
     @accepts()
     @returns(Ref('country_choices'))
