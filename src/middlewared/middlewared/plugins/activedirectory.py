@@ -541,6 +541,17 @@ class ActiveDirectoryService(TDBWrapConfigService):
                time offset will prevent libads from using the ticket for the domain
                join.
             """
+            try:
+                domain_info = await self.domain_info(new['domainname'])
+            except CallError as e:
+                raise ValidationError('activedirectory.domainname', e.errmsg)
+
+            if abs(domain_info['Server time offset']) > 180:
+                raise ValidationError(
+                    'activedirectory.domainname',
+                    'Time offset from Active Directory domain exceeds maximum '
+                    'permitted value. This may indicate an NTP misconfiguration.'
+                )
 
             try:
                 await self.validate_credentials(new)
@@ -552,18 +563,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
                 raise ValidationError(
                     method, f'Failed to validate bind credentials: {e.errmsg.split(":")[-1:][0]}'
-                )
-
-            try:
-                await self.middleware.run_in_thread(self.check_clockskew, new)
-            except ntplib.NTPException:
-                self.logger.warning("NTP request to Domain Controller failed.",
-                                    exc_info=True)
-            except Exception as e:
-                await self.middleware.call("kerberos.stop")
-                raise ValidationError(
-                    "activedirectory_update",
-                    f"Failed to validate domain configuration: {e}"
                 )
 
         new = await self.ad_compress(new)
@@ -1193,8 +1192,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         return True
 
-    @accepts()
-    async def domain_info(self):
+    @accepts(Str('domain', default=''))
+    async def domain_info(self, domain):
         """
         Returns the following information about the currently joined domain:
 
@@ -1214,16 +1213,20 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         `Last machine account password change`. timestamp
         """
-        await self.middleware.call("kerberos.check_ticket")
-        cmd = [
-            SMBCmd.NET.value,
-            '--json',
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            'ads', 'info',
-        ]
+        cmd = [SMBCmd.NET.value, '--json', 'ads', 'info']
+        if domain:
+            cmd.extend(['-S', domain])
+
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
+            err_msg = netads.stderr.decode().strip()
+            if err_msg == "Didn't find the ldap server!":
+                raise CallError(
+                    'Failed to discover Active Directory Domain Controller '
+                    'for domain. This may indicate a DNS misconfiguration.',
+                    errno.ENOENT
+                )
+
             raise CallError(netads.stderr.decode())
 
         return json.loads(netads.stdout.decode())
