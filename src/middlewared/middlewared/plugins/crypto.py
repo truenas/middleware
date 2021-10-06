@@ -1740,8 +1740,14 @@ class CertificateService(CRUDService):
     @skip_arg(count=1)
     async def create_csr(self, job, data):
         # no signedby, lifetime attributes required
+        verrors = ValidationErrors()
         cert_info = get_cert_info_from_data(data)
         cert_info['cert_extensions'] = data['cert_extensions']
+
+        if cert_info['cert_extensions']['AuthorityKeyIdentifier']['enabled']:
+            verrors.add('cert_extensions.AuthorityKeyIdentifier.enabled', 'This extension is not valid for CSR')
+
+        verrors.check()
 
         data['type'] = CERT_TYPE_CSR
 
