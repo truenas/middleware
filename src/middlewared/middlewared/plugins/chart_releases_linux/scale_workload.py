@@ -55,6 +55,15 @@ class ChartReleaseService(Service):
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
         )
+        if options['replica_count']:
+            # This means we have a number higher then 0 - we would like to make sure in this case that we
+            # are not going to start an app which might be consuming a locked path
+            resources = await self.middleware.call(
+                'k8s.storage.get_resources_consuming_host_path', release['namespace']
+            )
+            if any(r['consumes_locked_paths'] for k in resources for r in resources[k]):
+                raise CallError(f'{release_name!r} cannot be started as it is consuming host path(s) which are locked')
+
         resources = release['resources']
         replica_counts = await self.get_replica_count_for_resources(resources)
         job.set_progress(20, f'Scaling workload(s) to {options["replica_count"]!r} replica(s)')
