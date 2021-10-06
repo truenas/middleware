@@ -10,13 +10,13 @@ class DiskInfoBase(ServicePartBase):
         """
 
     @private
-    async def list_partitions(self, disk):
+    async def list_partitions(self, disk, part_xml=None):
         """
         Returns list of partitions of disk if any
         """
 
     @private
-    async def gptid_from_part_type(self, disk, part_type):
+    async def gptid_from_part_type(self, disk, part_type, part_xml=None):
         """
         Returns GPT raw UUID for partitioned disk
         """
