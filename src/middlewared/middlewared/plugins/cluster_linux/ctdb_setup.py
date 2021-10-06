@@ -52,8 +52,6 @@ class CtdbInitService(Service):
 
         pri_e_file = Path(CTDBConfig.ETC_PRI_IP_FILE.value)
         pri_c_file = Path(CTDBConfig.GM_PRI_IP_FILE.value)
-        pub_e_file = Path(CTDBConfig.ETC_PUB_IP_FILE.value)
-        pub_c_file = Path(CTDBConfig.GM_PUB_IP_FILE.value)
 
         # the private ip file is the only ip file
         # that is needed for ctdb to be started
@@ -84,32 +82,34 @@ class CtdbInitService(Service):
                 self.logger.error('Failed to symlink %s to %s', str(pri_e_file), str(pri_c_file), exc_info=True)
                 return result
 
-        # now handle the public IP file
-        # the ctdb daemon can be started without a public ip
-        # file so long as the private ip file exist
-        # If we get here and it doesn't exist, then return
-        # True
-        if not pub_c_file.exists():
-            result['logit'] = False
-            return result
-        else:
-            try:
-                # we symlink this file which means
-                # it has to be removed first. If we
-                # fail doing that for whatever reason
-                # then play it safe and return result
-                pub_e_file.unlink(missing_ok=True)
-            except Exception:
-                self.logger.error('Failed to remove %s', str(pub_e_file), exc_info=True)
-                return result
-
-            try:
-                pub_e_file.symlink_to(pub_c_file)
-            except Exception:
-                self.logger.error('Failed to symlink %s to %s', str(pub_e_file), str(pub_c_file), exc_info=True)
-                return result
-
         result['logit'] = False
         result['success'] = True
 
+        return result
+
+    def public_ip_file(self, result):
+        this_node = self.middleware.call_sync('ctdb.general.pnn')
+        result = {'logit': True, 'success': False}
+
+        pub_e_file = Path(CTDBConfig.ETC_PUB_IP_FILE.value)
+        pub_c_file = Path(f'{CTDBConfig.GM_PUB_IP_FILE.value}_{this_node}')
+        pub_c_file.touch()
+
+        try:
+            # we symlink this file which means
+            # it has to be removed first. If we
+            # fail doing that for whatever reason
+            # then play it safe and return result
+            pub_e_file.unlink(missing_ok=True)
+        except Exception:
+            self.logger.error('Failed to remove %s', str(pub_e_file), exc_info=True)
+            return result
+
+        try:
+            pub_e_file.symlink_to(pub_c_file)
+        except Exception:
+            self.logger.error('Failed to symlink %s to %s', str(pub_e_file), str(pub_c_file), exc_info=True)
+
+        result['logit'] = False
+        result['success'] = True
         return result
