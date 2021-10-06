@@ -136,6 +136,8 @@ class ChartReleaseService(CRUDService):
         extra = copy.deepcopy(options.get('extra', {}))
         retrieve_schema = extra.get('include_chart_schema')
         get_resources = extra.get('retrieve_resources')
+        get_locked_paths = extra.get('retrieve_locked_paths')
+        locked_datasets = await self.middleware.call('zfs.dataset.locked_datasets') if get_locked_paths else []
         get_history = extra.get('history')
         if retrieve_schema:
             questions_context = await self.middleware.call('catalog.get_normalised_questions_context')
@@ -259,6 +261,14 @@ class ChartReleaseService(CRUDService):
                 ],
             }
             if get_resources:
+                if get_locked_paths:
+                    release_resources['locked_host_paths'] = [
+                        v['host_path']['path'] for v in release_resources['host_path_volumes']
+                        if await self.middleware.call(
+                            'pool.dataset.path_in_locked_datasets', v['host_path']['path'], locked_datasets
+                        )
+                    ]
+
                 release_data['resources'] = release_resources
 
             if get_history:
@@ -398,7 +408,9 @@ class ChartReleaseService(CRUDService):
     async def host_path_volumes(self, resources):
         host_path_volumes = []
         for resource in resources:
-            for volume in filter(lambda v: v.get('host_path'), resource['spec']['template']['spec']['volumes'] or []):
+            for volume in filter(
+                lambda v: (v.get('host_path') or {}).get('path'), resource['spec']['template']['spec']['volumes'] or []
+            ):
                 host_path_volumes.append(copy.deepcopy(volume))
         return host_path_volumes
 
