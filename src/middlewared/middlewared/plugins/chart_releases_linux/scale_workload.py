@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from middlewared.schema import Dict, Int, List, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
+from middlewared.validators import Range
 
 from .utils import SCALEABLE_RESOURCES
 
@@ -28,7 +29,7 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'scale_options',
-            Int('replica_count', required=True),
+            Int('replica_count', required=True, validators=[Range(min=0)]),
         )
     )
     @returns(Dict(
