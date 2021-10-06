@@ -8,13 +8,12 @@ class KubernetesStorageService(Service):
         namespace = 'k8s.storage'
         private = True
 
-    async def get_resources_consuming_host_path(self):
+    async def get_resources_consuming_host_path(self, namespace=None):
         resources = {'deployment': [], 'statefulset': []}
         locked_datasets = await self.middleware.call('zfs.dataset.locked_datasets')
+        filters = ['metadata.namespace', '=', namespace] if namespace else []
         for r_type in resources:
-            for resource in await self.middleware.call(
-                f'k8s.{r_type}.query', [['spec.template.spec.volumes', '!=', []]]
-            ):
+            for resource in await self.middleware.call(f'k8s.{r_type}.query', [filters]):
                 host_paths = [
                     v['host_path']['path'] for v in resource['spec']['template']['spec']['volumes']
                     if (v.get('host_path') or {}).get('path')
