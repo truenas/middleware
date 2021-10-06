@@ -1,5 +1,4 @@
 import re
-import subprocess
 from xml.etree import ElementTree as etree
 
 import sysctl
