@@ -195,7 +195,7 @@ class SMBService(Service):
         Other nodes will block waiting for this to be released. Trying once per
         minute to synchronize passdb.
         """
-        pnn = (await self.middleware.call('ctdb.general.status'))[0]['pnn']
+        pnn = await self.middleware.call('ctdb.general.pnn')
 
         while True:
             try:

@@ -672,8 +672,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
             if realms:
                 realm_id = realms[0]['id']
             else:
-                realm_id = await self.middleware.call('kerberos.realm.direct_create',
-                                                      {'realm': ad['domainname'].upper()})
+                realm_id = await self.middleware.call(
+                    'kerberos.realm.direct_create',
+                    {'realm': ad['domainname'].upper(), 'kdc': [], 'admin_server': [], 'kpasswd_server': []}
+                )
 
             await self.direct_update({"kerberos_realm": realm_id})
             ad = await self.config()
@@ -764,7 +766,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
             self.logger.warning('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
 
         if smb_ha_mode == 'CLUSTERED':
-            cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload')
+            job.set_progress(95, 'Propagating activedirectory service reload to cluster members')
+            cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'START')
             await cl_reload.wait()
 
         job.set_progress(100, f'Active Directory start completed with status [{ret.name}]')
@@ -807,20 +810,24 @@ class ActiveDirectoryService(TDBWrapConfigService):
         smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if smb_ha_mode == 'CLUSTERED':
             job.set_progress(70, 'Propagating changes to cluster.')
-            await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload')
+            cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'STOP')
+            await cl_reload.wait()
 
         await self.set_state(DSStatus['DISABLED'])
         job.set_progress(100, 'Active Directory stop completed.')
 
     @private
-    async def cluster_reload(self):
-        enabled = (await self.config())['enable']
+    async def cluster_reload(self, action):
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('service.restart', 'idmap')
         await self.middleware.call('service.restart', 'cifs')
-        verb = "start" if enabled else "stop"
+        verb = "start" if action == 'START' else "stop"
         await self.middleware.call(f'kerberos.{verb}')
         await self.middleware.call(f'service.{verb}', 'dscache')
+        if action == 'LEAVE':
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink('/etc/krb5.keytab')
 
     @private
     async def validate_credentials(self, ad=None):
@@ -1345,7 +1352,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return lookup["Client Site Name"]
 
     @accepts(Ref('kerberos_username_password'))
-    async def leave(self, data):
+    @job(lock="AD_start_stop")
+    async def leave(self, job, data):
         """
         Leave Active Directory domain. This will remove computer
         object from AD and clear relevant configuration data from
@@ -1434,6 +1442,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.synchronize(new)
         await self.middleware.call('idmap.synchronize')
         await self.middleware.call('service.restart', 'cifs')
+        if smb_ha_mode == 'CLUSTERED':
+            cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'LEAVE')
+            await cl_reload.wait()
+
         return
 
     @private
