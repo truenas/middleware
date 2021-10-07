@@ -43,6 +43,42 @@ class FilesystemService(Service):
         cluster_path = path.replace(FuseConfig.FUSE_PATH_SUBST.value, f'{FuseConfig.FUSE_PATH_BASE.value}/')
         return cluster_path
 
+    @accepts(Str('path'))
+    @returns(Ref('path_entry'))
+    def mkdir(self, path):
+        """
+        Create a directory at the specified path.
+        """
+        path = self.resolve_cluster_path(path)
+        is_clustered = path.startswith("/cluster")
+
+        p = pathlib.Path(path)
+        if not p.is_absolute():
+            raise CallError(f'{path}: not an absolute path.', errno.EINVAL)
+
+        if p.exists():
+            raise CallError(f'{path}: path already exists.', errno.EEXIST)
+
+        realpath = os.path.realpath(path)
+        if not is_clustered and not realpath.startswith('/mnt/'):
+            raise CallError(f'{path}: path not permitted', errno.EPERM)
+
+        os.mkdir(path)
+        stat = p.stat()
+        data = {
+            'name': p.parts[-1],
+            'path': path,
+            'realpath': realpath,
+            'type': 'DIRECTORY',
+            'size': stat.st_size,
+            'mode': stat.st_mode,
+            'acl': False if self.acl_is_trivial(path) else True,
+            'uid': stat.st_uid,
+            'gid': stat.st_gid,
+        }
+
+        return data
+
     @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
     @filterable_returns(Dict(
         'path_entry',
@@ -55,6 +91,7 @@ class FilesystemService(Service):
         Bool('acl', required=True, null=True),
         Int('uid', required=True, null=True),
         Int('gid', required=True, null=True),
+        register=True
     ))
     def listdir(self, path, filters, options):
         """
