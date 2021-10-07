@@ -97,7 +97,8 @@ class CertificateService(Service):
 
     @accepts()
     @returns(Dict(
-        *[Dict(profile, additional_attrs=True) for profile in get_csr_profiles()]
+        *[Dict(profile, additional_attrs=True) for profile in get_csr_profiles()],
+        example=get_csr_profiles(),
     ))
     async def certificate_signing_requests_profiles(self):
         """
