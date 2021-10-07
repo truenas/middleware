@@ -230,7 +230,8 @@ class SupportService(ConfigService):
                 headers={'Content-Type': 'application/json'},
                 timeout=INTERNET_TIMEOUT,
             ))
-            result = r.json()
+            r.raise_for_status()
+            result = await self.middleware.run_in_thread(r.json)
         except simplejson.JSONDecodeError:
             self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
             raise CallError('Invalid proxy server response', errno.EBADMSG)
@@ -338,7 +339,8 @@ class SupportService(ConfigService):
                 timeout=300,
                 files={'file': (filename, job.pipes.input.r)},
             ))
-            data = r.json()
+            r.raise_for_status()
+            data = await self.middleware.run_in_thread(r.json)
         except simplejson.JSONDecodeError:
             self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
             raise CallError('Invalid proxy server response', errno.EBADMSG)
