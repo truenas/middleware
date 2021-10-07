@@ -15,6 +15,8 @@ class CtdbGeneralService(Service):
         namespace = 'ctdb.general'
         cli_private = True
 
+    this_node = None
+
     @private
     async def wrapper(self, command):
 
@@ -123,3 +125,21 @@ class CtdbGeneralService(Service):
         # or something...
         status = await self.middleware.call('ctdb.general.status', {'all_nodes': True})
         return not any(map(lambda x: x['flags_str'] != 'OK', status)) if status else False
+
+    @accepts()
+    async def pnn(self):
+        """
+        Return node number for this node. This value should be static for life of cluster.
+        """
+        if self.this_node is not None:
+            return self.this_node
+
+        if not await self.healthy():
+            raise CallError("Failed to get pnn. Cluster not healthy.")
+
+        get_pnn = await run(['ctdb', 'pnn'], check=False)
+        if get_pnn.returncode != 0:
+            raise CallError("Failed to get pnn: %s", get_pnn.stderr.decode())
+
+        self.this_node = int(get_pnn.stdout.decode().strip())
+        return self.this_node
