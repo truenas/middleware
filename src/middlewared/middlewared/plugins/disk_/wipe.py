@@ -46,7 +46,7 @@ class DiskService(Service):
                 for i in range(_32):
                     # wipe first 32MB
                     os.write(f.fileno(), to_write)
-                    os.fsync(f.filno())
+                    os.fsync(f.fileno())
 
                 # seek to 32MB before end of drive
                 os.lseek(f.fileno(), (size - (CHUNK * _32)), os.SEEK_SET)
