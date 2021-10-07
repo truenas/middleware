@@ -70,11 +70,11 @@ class FilesystemService(Service):
             'path': path,
             'realpath': realpath,
             'type': 'DIRECTORY',
-                'size': stat.st_size,
-                'mode': stat.st_mode,
-                'acl': False if self.acl_is_trivial(path) else True,
-                'uid': stat.st_uid,
-                'gid': stat.st_gid,
+            'size': stat.st_size,
+            'mode': stat.st_mode,
+            'acl': False if self.acl_is_trivial(path) else True,
+            'uid': stat.st_uid,
+            'gid': stat.st_gid,
         }
 
         return data
