@@ -31,7 +31,9 @@ class ChartReleaseFSAttachmentDelegate(FSAttachmentDelegate):
                 self.middleware.logger.error('Unable to scale down %r chart release', attachment['id'], exc_info=True)
 
     async def toggle(self, attachments, enabled):
-        for attachment in attachments:
+        # if enabled is true - we are going to ignore that as we don't want to scale up releases
+        # automatically when a path becomes available
+        for attachment in ([] if enabled else attachments):
             replica_count = 1 if enabled else 0
             await self.middleware.call('chart.release.scale', attachment['id'], {'replica_count': replica_count})
             try:
@@ -51,7 +53,7 @@ class ChartReleaseFSAttachmentDelegate(FSAttachmentDelegate):
         await self.toggle(attachments, True)
 
 
-async def setups(middleware):
+async def setup(middleware):
     asyncio.ensure_future(
         middleware.call('pool.dataset.register_attachment_delegate', ChartReleaseFSAttachmentDelegate(middleware))
     )
