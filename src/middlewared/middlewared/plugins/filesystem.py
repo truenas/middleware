@@ -44,18 +44,7 @@ class FilesystemService(Service):
         return cluster_path
 
     @accepts(Str('path'))
-    @returns(Dict(
-        'path_entry',
-        Str('name', required=True),
-        Path('path', required=True),
-        Path('realpath', required=True),
-        Str('type', required=True, enum=['DIRECTORY', 'FILESYSTEM', 'SYMLINK', 'OTHER']),
-        Int('size', required=True, null=True),
-        Int('mode', required=True, null=True),
-        Bool('acl', required=True, null=True),
-        Int('uid', required=True, null=True),
-        Int('gid', required=True, null=True),
-    ))
+    @returns(Ref('path_entry'))
     def mkdir(self, path):
         """
         Create a directory at the specified path.
@@ -75,21 +64,18 @@ class FilesystemService(Service):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
         os.mkdir(path)
+        stat = p.stat()
         data = {
             'name': p.parts[-1],
             'path': path,
             'realpath': realpath,
             'type': 'DIRECTORY',
+                'size': stat.st_size,
+                'mode': stat.st_mode,
+                'acl': False if self.acl_is_trivial(path) else True,
+                'uid': stat.st_uid,
+                'gid': stat.st_gid,
         }
-
-        stat = p.stat()
-        data.update({
-            'size': stat.st_size,
-            'mode': stat.st_mode,
-            'acl': False if self.acl_is_trivial(data["path"]) else True,
-            'uid': stat.st_uid,
-            'gid': stat.st_gid,
-        })
 
         return data
 
@@ -105,6 +91,7 @@ class FilesystemService(Service):
         Bool('acl', required=True, null=True),
         Int('uid', required=True, null=True),
         Int('gid', required=True, null=True),
+        register=True
     ))
     def listdir(self, path, filters, options):
         """
