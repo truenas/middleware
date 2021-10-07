@@ -12,7 +12,7 @@ import re
 import subprocess
 
 from middlewared.async_validators import validate_country
-from middlewared.plugins.crypto_.utils import NOT_VALID_AFTER_DEFAULT
+from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, OROperator, Patch, Ref, returns, Str
 from middlewared.service import CallError, CRUDService, job, periodic, private, Service, skip_arg, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -501,7 +501,7 @@ class CryptoKeyService(Service):
                 'state_or_province_name': 'Tennessee',
                 'locality_name': 'Maryville',
             },
-            'lifetime': NOT_VALID_AFTER_DEFAULT,
+            'lifetime': DEFAULT_LIFETIME_DAYS,
             'san': self.normalize_san(['localhost'])
         })
         key = self.generate_private_key({
@@ -801,7 +801,7 @@ class CryptoKeyService(Service):
         # Let's normalize lifetime value
         not_valid_before = datetime.datetime.utcnow()
         not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(
-            days=options.get('lifetime') or NOT_VALID_AFTER_DEFAULT
+            days=options.get('lifetime') or DEFAULT_LIFETIME_DAYS
         )
 
         # Let's normalize `san`
@@ -2048,13 +2048,13 @@ class CertificateAuthorityService(CRUDService):
             },
             'key_length': 2048,
             'key_type': 'RSA',
-            'lifetime': NOT_VALID_AFTER_DEFAULT,
+            'lifetime': DEFAULT_LIFETIME_DAYS,
             'digest_algorithm': 'SHA256'
         },
         'CA': {
             'key_length': 2048,
             'key_type': 'RSA',
-            'lifetime': NOT_VALID_AFTER_DEFAULT,
+            'lifetime': DEFAULT_LIFETIME_DAYS,
             'digest_algorithm': 'SHA256',
             'cert_extensions': {
                 'KeyUsage': {

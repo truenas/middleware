@@ -3,7 +3,7 @@ import copy
 from middlewared.schema import accepts, Dict, returns
 from middlewared.service import Service
 
-from .utils import NOT_VALID_AFTER_DEFAULT
+from .utils import DEFAULT_LIFETIME_DAYS
 
 
 CERTIFICATE_PROFILES = {
@@ -35,7 +35,7 @@ CERTIFICATE_PROFILES = {
         },
         'key_length': 2048,
         'key_type': 'RSA',
-        'lifetime': NOT_VALID_AFTER_DEFAULT,
+        'lifetime': DEFAULT_LIFETIME_DAYS,
         'digest_algorithm': 'SHA256'
     },
     'Openvpn Client Certificate': {
@@ -66,7 +66,7 @@ CERTIFICATE_PROFILES = {
         },
         'key_length': 2048,
         'key_type': 'RSA',
-        'lifetime': NOT_VALID_AFTER_DEFAULT,
+        'lifetime': DEFAULT_LIFETIME_DAYS,
         'digest_algorithm': 'SHA256'
     }
 }
