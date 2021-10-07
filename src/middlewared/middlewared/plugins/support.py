@@ -137,6 +137,7 @@ class SupportService(ConfigService):
                 headers={'Content-Type': 'application/json'},
                 timeout=INTERNET_TIMEOUT,
             )
+            r.raise_for_status()
             data = r.json()
         except simplejson.JSONDecodeError:
             self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
