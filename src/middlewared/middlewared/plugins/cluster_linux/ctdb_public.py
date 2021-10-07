@@ -1,4 +1,3 @@
-import os
 import errno
 import contextlib
 from pathlib import Path
@@ -48,7 +47,6 @@ class CtdbPublicIpService(CRUDService):
             # can happen when mounted but glusterd service
             # is stopped/crashed etc
             mounted = False
-
 
         if not mounted:
             raise CallError("CTDB shared volume is in unhealthy state.", errno.ENXIO)
