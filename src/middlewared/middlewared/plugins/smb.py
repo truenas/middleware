@@ -988,6 +988,14 @@ class SharingSMBService(SharingService):
                 self.logger.warning('Failed to remove locked share [%s]',
                                     old['name'], exc_info=True)
 
+        if not new['enabled']:
+            name = new['name'] if not new['home'] else 'homes'
+            await self.close_share(name)
+            try:
+                await self.middleware.call('sharing.smb.reg_delshare', name)
+            except Exception:
+                self.logger.warning('Failed to remove registry entry for [%s].', name, exc_info=True)
+
         if enable_aapl:
             await self._service_change('cifs', 'restart')
         else:
