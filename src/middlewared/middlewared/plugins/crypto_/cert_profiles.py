@@ -1,5 +1,4 @@
 import copy
-import functools
 
 from middlewared.schema import accepts, Dict, returns
 from middlewared.service import Service
@@ -71,14 +70,9 @@ CERTIFICATE_PROFILES = {
         'digest_algorithm': 'SHA256'
     }
 }
-
-
-@functools.cache
-def get_csr_profiles():
-    profiles = copy.deepcopy(CERTIFICATE_PROFILES)
-    for key, schema in filter(lambda v: 'cert_extensions' in v[1], profiles.items()):
-        schema['cert_extensions'].pop('AuthorityKeyIdentifier', None)
-    return profiles
+CSR_PROFILES = copy.deepcopy(CERTIFICATE_PROFILES)
+for key, schema in filter(lambda v: 'cert_extensions' in v[1], CSR_PROFILES.items()):
+    schema['cert_extensions'].pop('AuthorityKeyIdentifier', None)
 
 
 class CertificateService(Service):
@@ -97,12 +91,12 @@ class CertificateService(Service):
 
     @accepts()
     @returns(Dict(
-        *[Dict(profile, additional_attrs=True) for profile in get_csr_profiles()],
-        example=get_csr_profiles(),
+        *[Dict(profile, additional_attrs=True) for profile in CSR_PROFILES],
+        example=CSR_PROFILES,
     ))
     async def certificate_signing_requests_profiles(self):
         """
         Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
         configurations which can be used for creating certificate signing requests.
         """
-        return get_csr_profiles()
+        return CSR_PROFILES
