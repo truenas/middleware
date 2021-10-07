@@ -82,17 +82,14 @@ class FilesystemService(Service):
             'type': 'DIRECTORY',
         }
 
-        try:
-            stat = p.stat()
-            data.update({
-                'size': stat.st_size,
-                'mode': stat.st_mode,
-                'acl': False if self.acl_is_trivial(data["path"]) else True,
-                'uid': stat.st_uid,
-                'gid': stat.st_gid,
-            })
-        except FileNotFoundError:
-            data.update({'size': None, 'mode': None, 'acl': None, 'uid': None, 'gid': None})
+        stat = p.stat()
+        data.update({
+            'size': stat.st_size,
+            'mode': stat.st_mode,
+            'acl': False if self.acl_is_trivial(data["path"]) else True,
+            'uid': stat.st_uid,
+            'gid': stat.st_gid,
+        })
 
         return data
 
