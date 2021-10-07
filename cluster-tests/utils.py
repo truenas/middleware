@@ -86,7 +86,7 @@ def make_request(_type, url, **kwargs):
     elif _type == 'delete':
         req = requests.delete
     else:
-        print(f'Invalid request type: {_type}')
+        raise ValueError(f'Invalid request type: {_type}')
 
     if not url.startswith('http://'):
         url = f'http://{CLUSTER_INFO["NODE_A_IP"]}/api/v2.0{url}'
