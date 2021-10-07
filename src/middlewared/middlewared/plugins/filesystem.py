@@ -43,6 +43,59 @@ class FilesystemService(Service):
         cluster_path = path.replace(FuseConfig.FUSE_PATH_SUBST.value, f'{FuseConfig.FUSE_PATH_BASE.value}/')
         return cluster_path
 
+    @accepts(Str('path'))
+    @returns(Dict(
+        'path_entry',
+        Str('name', required=True),
+        Path('path', required=True),
+        Path('realpath', required=True),
+        Str('type', required=True, enum=['DIRECTORY', 'FILESYSTEM', 'SYMLINK', 'OTHER']),
+        Int('size', required=True, null=True),
+        Int('mode', required=True, null=True),
+        Bool('acl', required=True, null=True),
+        Int('uid', required=True, null=True),
+        Int('gid', required=True, null=True),
+    ))
+    def mkdir(self, path):
+        """
+        Create a directory at the specified path.
+        """
+        path = self.resolve_cluster_path(path)
+        is_clustered = path.startswith("/cluster")
+
+        p = pathlib.Path(path)
+        if not p.is_absolute():
+            raise CallError(f'{path}: not an absolute path.', errno.EINVAL)
+
+        if p.exists():
+            raise CallError(f'{path}: path already exists.', errno.EEXIST)
+
+        realpath = os.path.realpath(path)
+        if not is_clustered and not realpath.startswith('/mnt/'):
+            raise CallError(f'{path}: path not permitted', errno.EPERM)
+
+        os.mkdir(path)
+        data = {
+            'name': p.parts[-1],
+            'path': path,
+            'realpath': realpath,
+            'type': 'DIRECTORY',
+        }
+
+        try:
+            stat = p.stat()
+            data.update({
+                'size': stat.st_size,
+                'mode': stat.st_mode,
+                'acl': False if self.acl_is_trivial(data["path"]) else True,
+                'uid': stat.st_uid,
+                'gid': stat.st_gid,
+            })
+        except FileNotFoundError:
+            data.update({'size': None, 'mode': None, 'acl': None, 'uid': None, 'gid': None})
+
+        return data
+
     @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
     @filterable_returns(Dict(
         'path_entry',
