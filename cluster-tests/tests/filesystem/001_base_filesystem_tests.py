@@ -8,6 +8,7 @@ from pytest_dependency import depends
 from time import sleep
 
 local_path = f'/cluster/{CLUSTER_INFO["GLUSTER_VOLUME"]}/filesystem_01'
+cluster_path = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/filesystem_01'
 testfiles = [
     ('file01', False),
     ('dir01', True),
@@ -47,7 +48,7 @@ def test_003_create_test_files(request):
     depends(request, ['FS_BASIC_GLUSTER_VOLUME_MOUNTED'])
 
     url = f'http://{CLUSTER_IPS[0]}/api/v2.0/filesystem/mkdir/'
-    res = make_request('post', url, data=local_path)
+    res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
 
     cmd = f'touch {local_path}/file01;'
@@ -62,7 +63,7 @@ def test_004_filesystem_stat(ip, request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
     
     for f, isdir in testfiles:
-        payload = f'{local_path}/{f}'
+        payload = f'{cluster_path}/{f}'
         url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/stat/'
         res = make_request('post', url, data=payload)
         assert res.status_code == 200, res.text
@@ -74,7 +75,7 @@ def test_004_filesystem_stat(ip, request):
 def test_005_filesystem_listdir(ip, request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
 
-    payload = {'path': f'{local_path}/'}
+    payload = {'path': f'{cluster_path}/'}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -84,7 +85,7 @@ def test_005_filesystem_listdir(ip, request):
     assert 'dir01' in names, data
     assert 'file01' in names, data
     
-    payload = {'path': f'{local_path}/dir01'}
+    payload = {'path': f'{cluster_path}/dir01'}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -98,7 +99,7 @@ def test_006_filesystem_chown_non_recursive(request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
 
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "uid": 1000,
         "options": {"recursive": False}
     }
@@ -113,15 +114,14 @@ def test_006_filesystem_chown_non_recursive(request):
     else:
         assert status['state'] == 'SUCCESS', status
 
-    payload = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/stat/'
-    res = make_request('post', url, data=payload)
+    res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
     assert data['uid'] == 1000
     assert data['gid'] == 0 
 
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'}
+    payload = {'path': cluster_path}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -135,7 +135,7 @@ def test_007_filesystem_chown_recursive(request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
 
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "uid": 2000,
         "options": {"recursive": True}
     }
@@ -150,15 +150,14 @@ def test_007_filesystem_chown_recursive(request):
     else:
         assert status['state'] == 'SUCCESS', status
 
-    payload = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/stat/'
-    res = make_request('post', url, data=payload)
+    res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
     assert data['uid'] == 2000
     assert data['gid'] == 0
 
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'}
+    payload = {'path': cluster_path}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -172,7 +171,7 @@ def test_008_filesystem_reset_owner(request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
 
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "uid": 0,
         "options": {"recursive": True}
     }
@@ -186,21 +185,18 @@ def test_008_filesystem_reset_owner(request):
     else:
         assert status['state'] == 'SUCCESS', status
 
-    payload = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/stat/'
-    res = make_request('post', url, data=payload)
+    res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
     assert data['uid'] == 0
     assert data['gid'] == 0
 
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'}
-
 
 def test_009_filesystem_setperm_nonrecursive(request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "mode": "777",
         "options": {"recursive": False}
     }
@@ -217,16 +213,15 @@ def test_009_filesystem_setperm_nonrecursive(request):
 
     sleep(5)
 
-    payload = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/stat/'
-    res = make_request('post', url, data=payload)
+    res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
     mode = stat.S_IMODE(data['mode']) & ~stat.S_IFDIR
     assert data['acl'] is False
     assert f'{mode:03o}' == '777'
 
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'}
+    payload = {'path': cluster_path}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -240,7 +235,7 @@ def test_009_filesystem_setperm_nonrecursive(request):
 def test_010_filesystem_setperm_recursive(request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "mode": "777",
         "options": {"recursive": True}
     }
@@ -255,7 +250,7 @@ def test_010_filesystem_setperm_recursive(request):
     else:
         assert status['state'] == 'SUCCESS', status
 
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'}
+    payload = {'path': cluster_path}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -270,7 +265,7 @@ def test_011_filesystem_reset_mode(request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
 
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "mode": "755",
         "options": {"recursive": True}
     }
@@ -297,7 +292,7 @@ def test_012_filesystem_setacl_nonrecursive(request):
     to_set = res.json()
 
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "dacl": to_set,
         "acltype": "POSIX1E",
         "options": {"recursive": False}
@@ -314,15 +309,14 @@ def test_012_filesystem_setacl_nonrecursive(request):
     else:
         assert status['state'] == 'SUCCESS', status
 
-    payload = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/stat/'
-    res = make_request('post', url, data=payload)
+    res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
     mode = stat.S_IMODE(data['mode']) & ~stat.S_IFDIR
     assert data['acl'] is True
 
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'}
+    payload = {'path': cluster_path}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -356,7 +350,7 @@ def test_013_filesystem_setacl_recursive(request):
     ])
 
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "dacl": to_set,
         "acltype": "POSIX1E",
         "options": {"recursive": True}
@@ -373,15 +367,14 @@ def test_013_filesystem_setacl_recursive(request):
     else:
         assert status['state'] == 'SUCCESS', status
 
-    payload = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'
     url = f'http://{CLUSTER_IPS[0]}/api/v2.0/filesystem/stat/'
-    res = make_request('post', url, data=payload)
+    res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
     mode = stat.S_IMODE(data['mode']) & ~stat.S_IFDIR
     assert data['acl'] is True
 
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'}
+    payload = {'path': cluster_path}
     url = f'http://{CLUSTER_IPS[0]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -394,7 +387,7 @@ def test_014_filesystem_reset_acl(request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
 
     payload = {
-        "path": f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/',
+        "path": cluster_path,
         "mode": "755",
         "options": {"recursive": True, "stripacl": True}
     }
@@ -414,9 +407,8 @@ def test_014_filesystem_reset_acl(request):
 def test_015_filesystem_statfs(ip, request):
     depends(request, ['FS_BASIC_GLUSTER_VOLUME_MOUNTED'])
 
-    payload = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'
     url = f'http://{ip}/api/v2.0/filesystem/statfs/'
-    res = make_request('post', url, data=payload)
+    res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
 
