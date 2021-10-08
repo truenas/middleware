@@ -26,6 +26,7 @@ class RealtimeEventSource(EventSource):
     """
 
     INTERFACE_SPEEDS_CACHE_INTERLVAL = 300
+    INTERVAL = 2
 
     @staticmethod
     def get_cpu_usages(cp_diff):
@@ -129,7 +130,7 @@ class RealtimeEventSource(EventSource):
         cp_times_last = None
         last_interface_stats = {}
         last_interface_speeds = {'time': time.monotonic(), 'speeds': self.get_interface_speeds()}
-        disk_stats = DiskStats()
+        last_disk_stats = {}
 
         while not self._cancel_sync.is_set():
             data = {}
@@ -230,10 +231,17 @@ class RealtimeEventSource(EventSource):
                     'stats_time': stats_time,
                 }
 
-            data['disks'] = disk_stats.get()
+            # Disk IO Stats
+            if not last_disk_stats:
+                # means this is the first time disk stats are being gathered so
+                # get the results but don't set anything yet since we need to
+                # calculate the difference between the iterations
+                last_disk_stats, new = DiskStats(self.INTERVAL, last_disk_stats).read()
+            else:
+                last_disk_stats, data['disks'] = DiskStats(self.INTERVAL, last_disk_stats).read()
 
             self.send_event('ADDED', fields=data)
-            time.sleep(2)
+            time.sleep(self.INTERVAL)
 
     def _cpu_temperature(self):
         temperature = {}
