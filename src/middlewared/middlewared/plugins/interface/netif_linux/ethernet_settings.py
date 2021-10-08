@@ -90,15 +90,22 @@ class EthernetHardwareSettings:
             'supported_media': [],
         }
 
+        # We use the undocumented `with_netlink=False` kwargs because
+        # it was noticed that we were getting log spam on machines in
+        # the lab.
+        # Log message looks like:
+        # "pyroute2.ethtool.ethtool.from_netlink():224 - Bit name is not the same as the target: FEC_NONE <> None"
+        # This looks like a bug upstream but the keyword arg works around
+        # the problem.
         try:
-            attrs = self._eth.get_link_mode(self._name)
+            attrs = self._eth.get_link_mode(self._name, with_netlink=False)
             mst = 'Unknown'
             if attrs.speed is not None:
                 # looks like 1000Mb/s, 10000Mb/s, etc
                 mst = f'{attrs.speed}Mb/s'
 
             # looks like ("Unknown Twisted Pair" OR "1000Mb/s Twisted Pair" etc
-            mst = f'{mst} {self._eth.get_link_info(self._name).port}'
+            mst = f'{mst} {self._eth.get_link_info(self._name, with_netlink=False).port}'
 
             # fill out the results
             result['media_type'] = 'Ethernet'
