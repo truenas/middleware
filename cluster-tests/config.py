@@ -2,7 +2,7 @@ from os import environ
 
 
 CLUSTER_INFO = {
-    'CLUSTER_IP': environ.get('CLUSTER_IP'),
+    'PUBLIC_IPS': environ.get('PUBLIC_IPS', '').split(),
     'NODE_A_IP': environ.get('NODE_A_IP'),
     'NODE_A_DNS': environ.get('NODEA'),
     'NODE_B_IP': environ.get('NODE_B_IP'),
@@ -18,6 +18,12 @@ CLUSTER_INFO = {
     'ZPOOL_DISK': environ.get('ZPOOL_DISK'),
     'ZPOOL': environ.get('ZPOOL'),
     'GLUSTER_VOLUME': environ.get('GLUSTER_VOLUME'),
+}
+
+CLUSTER_ADS = {
+    'DOMAIN': environ.get('AD_DOMAIN'),
+    'USERNAME': environ.get('AD_USERNAME'),
+    'PASSWORD': enviorn.get('AD_PASSWORD')
 }
 
 INTERNAL_DS = '.glusterfs'
