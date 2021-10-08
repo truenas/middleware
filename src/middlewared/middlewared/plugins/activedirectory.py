@@ -1401,10 +1401,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
             if krb_princ:
                 await self.middleware.call('kerberos.keytab.direct_delete', krb_princ[0]['id'])
 
-        try:
-            await self.middleware.call('kerberos.realm.direct_delete', ad['kerberos_realm'])
-        except MatchNotFound:
-            pass
+        if ad['kerberos_realm']:
+            try:
+                await self.middleware.call('kerberos.realm.direct_delete', ad['kerberos_realm'])
+            except MatchNotFound:
+                pass
 
         if netads.returncode == 0 and smb_ha_mode != 'CLUSTERED':
             try:
