@@ -97,7 +97,10 @@
                 })
             else:
                 logger.debug(f'Generating kerberos realm entry for {krb_default_realm}')
-                id = middleware.call_sync('kerberos.realm.direct_create', {'realm': krb_default_realm})
+                id = middleware.call_sync(
+                    'kerberos.realm.direct_create',
+                    {'realm': ad['domainname'].upper(), 'kdc': [], 'admin_server': [], 'kpasswd_server': []}
+                )
                 middleware.call_sync('activedirectory.direct_update', {'kerberos_realm': id})
                 db_realms.append({
                     'realm': krb_default_realm,

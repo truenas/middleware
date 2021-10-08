@@ -15,7 +15,7 @@ class CtdbService(SimpleService):
             self.middleware.logger.error('ctdb config setup failed, check logs')
 
     async def after_start(self):
-        await self.middleware.call('ctdb.setup.public_ip_file')
+        await self.middleware.call('ctdb.setup.public_ip_file', {})
         await self.middleware.call('smb.reset_smb_ha_mode')
         await self.middleware.call('etc.generate', 'smb')
 
