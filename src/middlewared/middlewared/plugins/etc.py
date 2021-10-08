@@ -150,6 +150,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/minio/configure', 'checkpoint': 'pool_import'},
         ],
         'smartd': [
+            {'type': 'mako', 'path': 'default/smartmontools'},
             {'type': 'py', 'path': 'smartd'},
         ],
         'ssl': [
