@@ -110,7 +110,7 @@ class VMService(Service, VMSupervisorMixin):
 
 async def _event_vms(middleware, event_type, args):
     vm = await middleware.call('vm.query', [['id', '=', args['id']]])
-    if not vm or vm[0]['status']['state'] != 'STOPPED' or args['state'] != 'SHUTOFF':
+    if not vm or vm[0]['status']['state'] != 'STOPPED' or args.get('state') != 'SHUTOFF':
         return
 
     asyncio.ensure_future(middleware.call('vm.teardown_guest_vmemory', args['id']))
