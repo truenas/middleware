@@ -3,20 +3,14 @@ import glob
 import json
 import psutil
 import re
-import struct
 import subprocess
 import time
 
 import humanfriendly
 
 from middlewared.event import EventSource
-from middlewared.utils import osc
 
 from .iostat import DiskStats
-
-if osc.IS_FREEBSD:
-    import sysctl
-    import netif
 
 
 MEGABIT = 131072
@@ -32,6 +26,7 @@ class RealtimeEventSource(EventSource):
     """
 
     INTERFACE_SPEEDS_CACHE_INTERLVAL = 300
+    INTERVAL = 2
 
     @staticmethod
     def get_cpu_usages(cp_diff):
@@ -40,80 +35,53 @@ class RealtimeEventSource(EventSource):
         data['user'] = cp_diff[0] / cp_total * 100
         data['nice'] = cp_diff[1] / cp_total * 100
         data['system'] = cp_diff[2] / cp_total * 100
-        if osc.IS_FREEBSD:
-            idle = 4
-            data['interrupt'] = cp_diff[3] / cp_total * 100
-            data['idle'] = cp_diff[4] / cp_total * 100
-        elif osc.IS_LINUX:
-            idle = 3
-            data['idle'] = cp_diff[3] / cp_total * 100
-            data['iowait'] = cp_diff[4] / cp_total * 100
-            data['irq'] = cp_diff[5] / cp_total * 100
-            data['softirq'] = cp_diff[6] / cp_total * 100
-            data['steal'] = cp_diff[7] / cp_total * 100
-            data['guest'] = cp_diff[8] / cp_total * 100
-            data['guest_nice'] = cp_diff[9] / cp_total * 100
-        # Usage is the sum of all but idle
+        data['idle'] = cp_diff[3] / cp_total * 100
+        data['iowait'] = cp_diff[4] / cp_total * 100
+        data['irq'] = cp_diff[5] / cp_total * 100
+        data['softirq'] = cp_diff[6] / cp_total * 100
+        data['steal'] = cp_diff[7] / cp_total * 100
+        data['guest'] = cp_diff[8] / cp_total * 100
+        data['guest_nice'] = cp_diff[9] / cp_total * 100
         if sum(cp_diff):
+            # Usage is the sum of all but idle
+            idle = 3
             data['usage'] = ((cp_total - cp_diff[idle]) / cp_total) * 100
         else:
             data['usage'] = 0
         return data
 
     def get_memory_info(self, arc_size):
-        if osc.IS_FREEBSD:
-            page_size = int(sysctl.filter("hw.pagesize")[0].value)
-            classes = {
-                k: v if isinstance(v, int) else struct.unpack("I", v)[0] * page_size
-                for k, v in [
-                    (k, sysctl.filter(f"vm.stats.vm.v_{k}_count")[0].value)
-                    for k in ["cache", "laundry", "inactive", "active", "wire", "free"]
+        with open("/proc/meminfo") as f:
+            meminfo = {
+                s[0]: humanfriendly.parse_size(s[1], binary=True)
+                for s in [
+                    line.split(":", 1)
+                    for line in f.readlines()
                 ]
             }
-            classes["os_reserved"] = int(sysctl.filter("hw.physmem")[0].value) - sum(classes.values())
 
-            classes["wire"] -= arc_size
-            classes["arc"] = arc_size
+        classes = {}
+        classes["page_tables"] = meminfo["PageTables"]
+        classes["swap_cache"] = meminfo["SwapCached"]
+        classes["slab_cache"] = meminfo["Slab"]
+        classes["cache"] = meminfo["Cached"]
+        classes["buffers"] = meminfo["Buffers"]
+        classes["unused"] = meminfo["MemFree"]
+        classes["arc"] = arc_size
+        classes["apps"] = meminfo["MemTotal"] - sum(classes.values())
 
-            extra = {}
+        extra = {
+            "inactive": meminfo["Inactive"],
+            "committed": meminfo["Committed_AS"],
+            "active": meminfo["Active"],
+            "vmalloc_used": meminfo["VmallocUsed"],
+            "mapped": meminfo["Mapped"],
+        }
 
-            sswap = psutil.swap_memory()
-            swap = {
-                "used": sswap.used,
-                "total": sswap.total,
-            }
-        else:
-            with open("/proc/meminfo") as f:
-                meminfo = {
-                    s[0]: humanfriendly.parse_size(s[1], binary=True)
-                    for s in [
-                        line.split(":", 1)
-                        for line in f.readlines()
-                    ]
-                }
-
-            classes = {}
-            classes["page_tables"] = meminfo["PageTables"]
-            classes["swap_cache"] = meminfo["SwapCached"]
-            classes["slab_cache"] = meminfo["Slab"]
-            classes["cache"] = meminfo["Cached"]
-            classes["buffers"] = meminfo["Buffers"]
-            classes["unused"] = meminfo["MemFree"]
-            classes["arc"] = arc_size
-            classes["apps"] = meminfo["MemTotal"] - sum(classes.values())
-
-            extra = {
-                "inactive": meminfo["Inactive"],
-                "committed": meminfo["Committed_AS"],
-                "active": meminfo["Active"],
-                "vmalloc_used": meminfo["VmallocUsed"],
-                "mapped": meminfo["Mapped"],
-            }
-
-            swap = {
-                "used": meminfo["SwapTotal"] - meminfo["SwapFree"],
-                "total": meminfo["SwapTotal"],
-            }
+        swap = {
+            "used": meminfo["SwapTotal"] - meminfo["SwapFree"],
+            "total": meminfo["SwapTotal"],
+        }
 
         return {
             "classes": classes,
@@ -161,11 +129,8 @@ class RealtimeEventSource(EventSource):
         cp_time_last = None
         cp_times_last = None
         last_interface_stats = {}
-        last_interface_speeds = {
-            'time': time.monotonic(),
-            'speeds': self.get_interface_speeds(),
-        }
-        disk_stats = DiskStats()
+        last_interface_speeds = {'time': time.monotonic(), 'speeds': self.get_interface_speeds()}
+        last_disk_stats = {}
 
         while not self._cancel_sync.is_set():
             data = {}
@@ -174,24 +139,18 @@ class RealtimeEventSource(EventSource):
             hits = 0
             misses = 0
             data['zfs'] = {}
-            if osc.IS_FREEBSD:
-                hits = sysctl.filter('kstat.zfs.misc.arcstats.hits')[0].value
-                misses = sysctl.filter('kstat.zfs.misc.arcstats.misses')[0].value
-                data['zfs']['arc_max_size'] = sysctl.filter('kstat.zfs.misc.arcstats.c_max')[0].value
-                data['zfs']['arc_size'] = sysctl.filter('kstat.zfs.misc.arcstats.size')[0].value
-            elif osc.IS_LINUX:
-                with open('/proc/spl/kstat/zfs/arcstats') as f:
-                    for line in f.readlines()[2:]:
-                        if line.strip():
-                            name, type, value = line.strip().split()
-                            if name == 'hits':
-                                hits = int(value)
-                            if name == 'misses':
-                                misses = int(value)
-                            if name == 'c_max':
-                                data['zfs']['arc_max_size'] = int(value)
-                            if name == 'size':
-                                data['zfs']['arc_size'] = int(value)
+            with open('/proc/spl/kstat/zfs/arcstats') as f:
+                for line in f.readlines()[2:]:
+                    if line.strip():
+                        name, type, value = line.strip().split()
+                        if name == 'hits':
+                            hits = int(value)
+                        if name == 'misses':
+                            misses = int(value)
+                        if name == 'c_max':
+                            data['zfs']['arc_max_size'] = int(value)
+                        if name == 'size':
+                            data['zfs']['arc_size'] = int(value)
             total = hits + misses
             if total > 0:
                 data['zfs']['cache_hit_ratio'] = hits / total
@@ -202,33 +161,24 @@ class RealtimeEventSource(EventSource):
             data['memory'] = self.get_memory_info(data['zfs']['arc_size'])
             data['virtual_memory'] = psutil.virtual_memory()._asdict()
 
-            data['cpu'] = {}
             # Get CPU usage %
-            if osc.IS_FREEBSD:
-                num_times = 5
-                # cp_times has values for all cores
-                cp_times = sysctl.filter('kern.cp_times')[0].value
-                # cp_time is the sum of all cores
-                cp_time = sysctl.filter('kern.cp_time')[0].value
-            elif osc.IS_LINUX:
-                num_times = 10
-                with open('/proc/stat') as f:
-                    stat = f.read()
-                cp_times = []
-                cp_time = []
-                for line in stat.split('\n'):
-                    if line.startswith('cpu'):
-                        line_ints = [int(i) for i in line[5:].strip().split()]
-                        # cpu has a sum of all cpus
-                        if line[3] == ' ':
-                            cp_time = line_ints
-                        # cpuX is for each core
-                        else:
-                            cp_times += line_ints
+            data['cpu'] = {}
+            num_times = 10
+            with open('/proc/stat') as f:
+                stat = f.read()
+            cp_times = []
+            cp_time = []
+            for line in stat.split('\n'):
+                if line.startswith('cpu'):
+                    line_ints = [int(i) for i in line[5:].strip().split()]
+                    # cpu has a sum of all cpus
+                    if line[3] == ' ':
+                        cp_time = line_ints
+                    # cpuX is for each core
                     else:
-                        break
-            else:
-                cp_time = cp_times = None
+                        cp_times += line_ints
+                else:
+                    break
 
             if cp_time and cp_times and cp_times_last:
                 # Get the difference of times between the last check and the current one
@@ -256,55 +206,42 @@ class RealtimeEventSource(EventSource):
                 })
             data['interfaces'] = defaultdict(dict)
             retrieve_stat = {'rx_bytes': 'received_bytes', 'tx_bytes': 'sent_bytes'}
-            if osc.IS_FREEBSD:
-                for iface in netif.list_interfaces().values():
-                    data['interfaces'][iface.name]['speed'] = last_interface_speeds['speeds'].get(iface.name)
-                    for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
-                        addr_data = addr.__getstate__(stats=True)
-                        stats_time = time.time()
-                        for k in retrieve_stat.values():
-                            traffic_stats = 0
-                            if last_interface_stats.get(iface.name):
-                                traffic_stats = addr_data['stats'][k] - last_interface_stats[iface.name][k]
-                                traffic_stats = int(
-                                    traffic_stats / (time.time() - last_interface_stats[iface.name]['stats_time'])
-                                )
-                            details_dict = {
-                                k: addr_data['stats'][k],
-                                f'{k}_rate': traffic_stats,
-                            }
-                            data['interfaces'][iface.name].update(details_dict)
-                        last_interface_stats[iface.name] = {**data['interfaces'][iface.name], 'stats_time': stats_time}
-            else:
-                stats_time = time.time()
-                for i in glob.glob('/sys/class/net/*/statistics'):
-                    iface_name = i.replace('/sys/class/net/', '').split('/')[0]
-                    data['interfaces'][iface_name]['speed'] = last_interface_speeds['speeds'].get(iface_name)
-                    for stat, name in retrieve_stat.items():
-                        with open(f'{i}/{stat}', 'r') as f:
-                            value = int(f.read())
-                        data['interfaces'][iface_name][name] = value
-                        traffic_stats = None
-                        if (
-                            last_interface_stats.get(iface_name) and
-                            name in last_interface_stats[iface_name]
-                        ):
-                            traffic_stats = value - last_interface_stats[iface_name][name]
-                            traffic_stats = int(
-                                traffic_stats / (
-                                    stats_time - last_interface_stats[iface_name]['stats_time']
-                                )
+            stats_time = time.time()
+            for i in glob.glob('/sys/class/net/*/statistics'):
+                iface_name = i.replace('/sys/class/net/', '').split('/')[0]
+                data['interfaces'][iface_name]['speed'] = last_interface_speeds['speeds'].get(iface_name)
+                for stat, name in retrieve_stat.items():
+                    with open(f'{i}/{stat}', 'r') as f:
+                        value = int(f.read())
+                    data['interfaces'][iface_name][name] = value
+                    traffic_stats = None
+                    if (
+                        last_interface_stats.get(iface_name) and
+                        name in last_interface_stats[iface_name]
+                    ):
+                        traffic_stats = value - last_interface_stats[iface_name][name]
+                        traffic_stats = int(
+                            traffic_stats / (
+                                stats_time - last_interface_stats[iface_name]['stats_time']
                             )
-                        data['interfaces'][iface_name][f'{retrieve_stat[stat]}_rate'] = traffic_stats
-                    last_interface_stats[iface_name] = {
-                        **data['interfaces'][iface_name],
-                        'stats_time': stats_time,
-                    }
+                        )
+                    data['interfaces'][iface_name][f'{retrieve_stat[stat]}_rate'] = traffic_stats
+                last_interface_stats[iface_name] = {
+                    **data['interfaces'][iface_name],
+                    'stats_time': stats_time,
+                }
 
-            data['disks'] = disk_stats.get()
+            # Disk IO Stats
+            if not last_disk_stats:
+                # means this is the first time disk stats are being gathered so
+                # get the results but don't set anything yet since we need to
+                # calculate the difference between the iterations
+                last_disk_stats, new = DiskStats(self.INTERVAL, last_disk_stats).read()
+            else:
+                last_disk_stats, data['disks'] = DiskStats(self.INTERVAL, last_disk_stats).read()
 
             self.send_event('ADDED', fields=data)
-            time.sleep(2)
+            time.sleep(self.INTERVAL)
 
     def _cpu_temperature(self):
         temperature = {}
