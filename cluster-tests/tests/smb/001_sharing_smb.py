@@ -1,8 +1,7 @@
 import pytest
 
 from config import CLUSTER_INFO, CLUSTER_IPS
-from utils import make_request, make_ws_request, wait_on_job
-from exceptions import JobTimeOut
+from utils import make_request, make_ws_request
 from pytest_dependency import depends
 from helpers import get_bool
 
@@ -268,6 +267,7 @@ def test_019_disable_smb_aapl(request):
     }
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/smb/'
     res = make_request('put', url, data=payload)
+    assert res.status_code == 200, res.text
 
 
 def test_020_disable_streams(request):
