@@ -1,18 +1,13 @@
 import pytest
-import os
-import sys
 import stat
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-
 from config import CLUSTER_INFO, CLUSTER_IPS
-from utils import make_request, make_ws_request, ssh_test, wait_on_job
+from utils import make_request, ssh_test, wait_on_job
 from exceptions import JobTimeOut
 from pytest_dependency import depends
 from time import sleep
 
-local_path = f'/cluster/{CLUSTER_INFO["GLUSTER_VOLUME"]}'
+local_path = f'/cluster/{CLUSTER_INFO["GLUSTER_VOLUME"]}/filesystem_01'
 testfiles = [
     ('file01', False),
     ('dir01', True),
@@ -51,6 +46,10 @@ def test_002_enable_and_start_ssh(ip, request):
 def test_003_create_test_files(request):
     depends(request, ['FS_BASIC_GLUSTER_VOLUME_MOUNTED'])
 
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/filesystem/mkdir/'
+    res = make_request('post', url, data=local_path)
+    assert res.status_code == 200, res.text
+
     cmd = f'touch {local_path}/file01;'
     cmd += f'mkdir {local_path}/dir01;'
     cmd += f'touch {local_path}/dir01/file02'
@@ -63,7 +62,7 @@ def test_004_filesystem_stat(ip, request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
     
     for f, isdir in testfiles:
-        payload = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/{f}'
+        payload = f'{local_path}/{f}'
         url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/stat/'
         res = make_request('post', url, data=payload)
         assert res.status_code == 200, res.text
@@ -75,7 +74,7 @@ def test_004_filesystem_stat(ip, request):
 def test_005_filesystem_listdir(ip, request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
 
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/'}
+    payload = {'path': f'{local_path}/'}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -85,7 +84,7 @@ def test_005_filesystem_listdir(ip, request):
     assert 'dir01' in names, data
     assert 'file01' in names, data
     
-    payload = {'path': f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/dir01'}
+    payload = {'path': f'{local_path}/dir01'}
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/filesystem/listdir/'
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
@@ -428,7 +427,6 @@ def test_015_filesystem_statfs(ip, request):
 def test_050_remove_test_files(request):
     depends(request, ['FS_BASIC_TEST_FILES_CREATED'])
 
-    cmd = f'rm -f {local_path}/file01;'
-    cmd += f'rm -rf {local_path}/dir01'
+    cmd = f'rm -rf {local_path}'
     res = ssh_test(CLUSTER_IPS[0], cmd)
     assert res['result'], res['output']
