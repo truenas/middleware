@@ -1,15 +1,10 @@
 import pytest
-import os
-import sys
-
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 
 from config import CLUSTER_INFO, CLUSTER_IPS
 from utils import make_request, make_ws_request, wait_on_job
 from exceptions import JobTimeOut
 from pytest_dependency import depends
-from time import sleep
+from helpers import get_bool
 
 
 bool_smb_params = {
@@ -18,6 +13,7 @@ bool_smb_params = {
     'abe': {'smbconf': 'access based share enum', 'default': False},
 }
 
+SHARE_FUSE_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/smb_share_01'
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name="CTDB_IS_HEALTHY")
@@ -52,10 +48,14 @@ def test_003_create_clustered_smb_share(request):
     depends(request, ['CTDB_IS_HEALTHY', 'CLUSTER_INITIAL_CONFIG'])
     global smb_share_id
 
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/filesystem/mkdir/'
+    res = make_request('post', url, data=SHARE_FUSE_PATH)
+    assert res.status_code == 200, res.text
+
     url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/'
     payload = {
         "comment": "SMB VSS Testing Share",
-        "path": '/',
+        "path": '/smb_share_01',
         "name": "CL_SMB",
         "purpose": "NO_PRESET",
         "shadowcopy": False,
@@ -77,12 +77,12 @@ def test_004_verify_smb_share_exists(ip, request):
     share = res.json()[0]
     assert share['cluster_volname'] == CLUSTER_INFO["GLUSTER_VOLUME"], str(share)
     assert share['name'] == 'CL_SMB', str(share)
-    assert share['path_local'] == f'CLUSTER:{share["cluster_volname"]}/', str(share)
+    assert share['path_local'] == SHARE_FUSE_PATH, res.text
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 def test_005_start_smb_service(ip, request):
-    depends(request, ['CTDB_IS_HEALTHY'])
+    depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
     url = f'http://{ip}/api/v2.0/service/start'
     payload = {"service": "cifs"}
@@ -352,19 +352,6 @@ def test_024_share_comment(request):
         assert res.get('error') is None, res
         assert res['result'] == ''
 
-
-def get_bool(parm):
-    if isinstance(parm, bool):
-        return parm
-
-    if isinstance(parm, str):
-        if parm.lower() == 'false':
-            return False
-        if parm.lower() == 'true':
-            return True
-        raise ValueError(parm)
-
-    return bool(parm)
 
 @pytest.mark.parametrize('to_check', bool_smb_params.keys())
 def test_025_share_param_check_bool(to_check, request):
