@@ -60,7 +60,7 @@ class NFSService(Service):
 
         cred = await self.middleware.call('kerberos.get_cred', payload)
         await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
-        add_spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad)
+        add_spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad['netbiosname'], ad['domainname'])
         return await add_spn_job.wait(raise_error=True)
 
     @private
