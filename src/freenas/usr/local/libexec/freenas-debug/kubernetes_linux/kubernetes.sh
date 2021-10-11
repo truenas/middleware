@@ -56,4 +56,8 @@ kubernetes_func()
 		docker images -a
 		section_footer
 	fi
+
+	section_header "K3s Logs (last 1000 lines)"
+	journalctl -u k3s | tail -n 1000
+	section_footer
 }
