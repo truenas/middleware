@@ -3,7 +3,7 @@ import os
 import threading
 import middlewared.utils.osc as osc
 
-from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
+from middlewared.plugins.smb import SMBPath
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.service import Service
 

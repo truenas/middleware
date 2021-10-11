@@ -9,7 +9,7 @@ import contextlib
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.plugins.kerberos import krb5ccache
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
-from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationError, ValidationErrors
+from middlewared.service import job, private, TDBWrapConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -524,7 +524,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if state in [DSStatus['JOINING'], DSStatus['LEAVING']]:
             raise CallError(f'Active Directory Service has status of [{state}]. Wait until operation completes.', errno.EBUSY)
 
-        domain_info = await self.domain_info(ad['domainname'])
         dc_info = await self.lookup_dc(ad['domainname'])
 
         await self.set_state(DSStatus['JOINING'].name)
