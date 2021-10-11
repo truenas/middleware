@@ -317,7 +317,7 @@ class SharingNFSService(SharingService):
 
         `paths` is a list of valid paths which are configured to be shared on this share.
 
-        `aliases` is a list of aliases for each path (or an empty list if aliases are not used).
+        `aliases` IGNORED, for now.
 
         `networks` is a list of authorized networks that are allowed to access the share having format
         "network/mask" CIDR notation. If empty, all networks are allowed.
@@ -394,17 +394,29 @@ class SharingNFSService(SharingService):
     @private
     async def validate(self, data, schema_name, verrors, old=None):
         if len(data["aliases"]):
-            if not osc.IS_LINUX:
-                verrors.add(
-                    f"{schema_name}.aliases",
-                    "This field is only supported on SCALE",
-                )
-
+            data['aliases'] = []
+            # FIXME: At the time of writing this nfs-ganesha is at version 3.4-1.
+            # Changing the Pseudo option in the ganesha.conf (`aliases`) requires
+            # that the nfs-ganesha service be restarted. It does not allow graceful
+            # reload of the service. The ability to reload the service when this
+            # config param has been changed was added to nfs-ganesha v4.0 but it
+            # is still in development. When v4.0 of nfs-ganesha has been released
+            # as stable, we need to update to that release. The webUI has hidden
+            # the associated `Alias` box for now.
+            #
+            # To keep long-story short, if you have NFSv4 enabled it requires a
+            # Pseudo parameter in the config so we fill it in by default if one
+            # isn't provided. Yet if you try to change this, it will break client
+            # mounts and then require a restart of the service. So for now, we just
+            # default it to the `Path` parameter which is the absolute path to the
+            # directory being shared. This is done in ganesha.conf.mako.
+            """
             if len(data["aliases"]) != len(data["paths"]):
                 verrors.add(
                     f"{schema_name}.aliases",
                     "This field should be either empty of have the same number of elements as paths",
                 )
+            """
 
         if data["alldirs"] and len(data["paths"]) > 1:
             verrors.add(f"{schema_name}.alldirs", "This option can only be used for shares that contain single path")

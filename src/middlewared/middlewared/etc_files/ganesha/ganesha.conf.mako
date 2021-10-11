@@ -100,12 +100,8 @@ EXPORT {
     % else:
     Protocols = 3, 4;
     % endif;
-    % if config["v4"] and share["aliases"]:
-    Pseudo = ${alias};
-    % elif not config["v4"] and share["aliases"]:
-    Tag = ${alias.lstrip('/')};
-    % elif config["v4"] and not share["aliases"]:
-    Pseudo = /${path.split('/')[-1]};
+    % if config["v4"]:
+    Pseudo = ${path};
     % endif;
     % if config["udp"]:
     Transports = TCP, UDP;
