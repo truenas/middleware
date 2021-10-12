@@ -1,6 +1,10 @@
 import enum
 import socket
+
 from middlewared.service import private, Service
+from middlewared.plugins.kerberos import krb5ccache
+from middlewared.plugins.smb import SMBCmd
+from middlewared.utils import run
 
 
 class SRV(enum.Enum):
@@ -18,6 +22,33 @@ class ActiveDirectoryService(Service):
 
     class Config:
         service = "activedirectory"
+
+    @private
+    async def register_dns(self, ad, smb, smb_ha_mode):
+        await self.middleware.call('kerberos.check_ticket')
+        if not ad['allow_dns_updates'] or smb_ha_mode == 'STANDALONE':
+            return
+
+        hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
+        if smb_ha_mode == 'CLUSTERED':
+            vips = (await self.middleware.call('smb.bindip_choices')).values()
+        else:
+            vips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use', {'static': True}))]
+
+        smb_bind_ips = smb['bindip'] if smb['bindip'] else vips
+        to_register = set(vips) & set(smb_bind_ips)
+        hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'dns', 'register', hostname
+        ]
+        cmd.extend(to_register)
+        netdns = await run(cmd, check=False)
+        if netdns.returncode != 0:
+            self.logger.debug("hostname: %s, ips: %s, text: %s",
+                              hostname, to_register, netdns.stderr.decode())
 
     @private
     def port_is_listening(self, host, port, timeout=1):
