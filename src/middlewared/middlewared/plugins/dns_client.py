@@ -1,3 +1,4 @@
+import asyncio
 from dns.asyncresolver import Resolver
 from io import StringIO
 
@@ -30,15 +31,14 @@ class DNSClient(Service):
     async def resolve_name(self, name, rdtype, options):
         r = await self.get_resolver(options)
 
-        if rdtype = 'PTR':
+        if rdtype == 'PTR':
             ans = await r.resolve_address(
-                data['address'],
+                name,
                 lifetime=options['lifetime']
             )
         else:
             ans = await r.resolve(
-                data['name'],
-                rdtype=data['record_type'],
+                name, rdtype,
                 lifetime=options['lifetime']
             )
 
@@ -98,9 +98,11 @@ class DNSClient(Service):
 
         for ans in results:
             ttl = ans.response.answer[0].ttl
+            name = ans.response.answer[0].name.to_text()
 
             if rtype == 'SRV':
                 entries = [{
+                    "name": name,
                     "priority": i.priority,
                     "weight": i.weight,
                     "port": i.port,
@@ -110,7 +112,6 @@ class DNSClient(Service):
                     "target": i.target.to_text()
                 } for i in ans.response.answer[0].items]
             else:
-                name = ans.response.answer[0].name.to_text()
                 entries = [{
                     "name": name,
                     "class": i.rdclass.name,
@@ -125,7 +126,7 @@ class DNSClient(Service):
 
     @accepts(Dict(
         'lookup_data',
-        List("addresses", items=[IPAddr("address"], required=True),
+        List("addresses", items=[IPAddr("address")], required=True),
         Ref('dns_client_options'),
         Ref('query-filters'),
         Ref('query-options'),
@@ -147,7 +148,7 @@ class DNSClient(Service):
         options = data['dns_client_options']
 
         results = await asyncio.gather(*[
-            self.resolve_name(i, 'PTR', options) for h in data['addresses']
+            self.resolve_name(i, 'PTR', options) for i in data['addresses']
         ])
 
         for ans in results:

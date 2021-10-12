@@ -56,7 +56,7 @@ class ActiveDirectoryService(Service):
             host = f"{srv_prefix.value}{domain}."
 
         servers = self.middleware.call_sync('dnsclient.forward_lookup', {
-            'name': host, 'record_type': 'SRV', 'query-options': {'order_by': ['priority', 'weight']}
+            'names': [host], 'record_type': 'SRV', 'query-options': {'order_by': ['priority', 'weight']}
         })
 
         output = []
