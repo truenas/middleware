@@ -26,9 +26,27 @@ class DNSClient(Service):
 
         return r
 
+    @private
+    async def resolve_name(self, name, rdtype, options):
+        r = await self.get_resolver(options)
+
+        if rdtype = 'PTR':
+            ans = await r.resolve_address(
+                data['address'],
+                lifetime=options['lifetime']
+            )
+        else:
+            ans = await r.resolve(
+                data['name'],
+                rdtype=data['record_type'],
+                lifetime=options['lifetime']
+            )
+
+        return ans
+
     @accepts(Dict(
         'lookup_data',
-        Str('name', required=True),
+        List('names', items=[Str('name')], required=True),
         Str('record_type', default='A', enum=['A', 'AAAA', 'SRV']),
         Dict(
             'dns_client_options',
@@ -70,42 +88,44 @@ class DNSClient(Service):
         name='record_list',
     ))
     async def forward_lookup(self, data):
+        output = []
         options = data['dns_client_options']
+        rtype = data['record_type']
 
-        r = await self.get_resolver(options)
+        results = await asyncio.gather(*[
+            self.resolve_name(h, rtype, options) for h in data['names']
+        ])
 
-        ans = await r.resolve(
-            data['name'],
-            rdtype=data['record_type'],
-            lifetime=options['lifetime']
-        )
-        ttl = ans.response.answer[0].ttl
+        for ans in results:
+            ttl = ans.response.answer[0].ttl
 
-        if data['record_type'] == 'SRV':
-            output = [{
-                "priority": i.priority,
-                "weight": i.weight,
-                "port": i.port,
-                "class": i.rdclass.name,
-                "type": i.rdtype.name,
-                "ttl": ttl,
-                "target": i.target.to_text()
-            } for i in ans.response.answer[0].items]
-        else:
-            name = ans.response.answer[0].name.to_text()
-            output = [{
-                "name": name,
-                "class": i.rdclass.name,
-                "type": i.rdtype.name,
-                "ttl": ttl,
-                "address": i.address,
-            } for i in ans.response.answer[0].items]
+            if rtype == 'SRV':
+                entries = [{
+                    "priority": i.priority,
+                    "weight": i.weight,
+                    "port": i.port,
+                    "class": i.rdclass.name,
+                    "type": i.rdtype.name,
+                    "ttl": ttl,
+                    "target": i.target.to_text()
+                } for i in ans.response.answer[0].items]
+            else:
+                name = ans.response.answer[0].name.to_text()
+                entries = [{
+                    "name": name,
+                    "class": i.rdclass.name,
+                    "type": i.rdtype.name,
+                    "ttl": ttl,
+                    "address": i.address,
+                } for i in ans.response.answer[0].items]
+
+            output.extend(entries)
 
         return filter_list(output, data['query-filters'], data['query-options'])
 
     @accepts(Dict(
         'lookup_data',
-        IPAddr("address", required=True),
+        List("addresses", items=[IPAddr("address"], required=True),
         Ref('dns_client_options'),
         Ref('query-filters'),
         Ref('query-options'),
@@ -123,23 +143,25 @@ class DNSClient(Service):
         ]
     ))
     async def reverse_lookup(self, data):
+        output = []
         options = data['dns_client_options']
 
-        r = await self.get_resolver(options)
+        results = await asyncio.gather(*[
+            self.resolve_name(i, 'PTR', options) for h in data['addresses']
+        ])
 
-        ans = await r.resolve_address(
-            data['address'],
-            lifetime=options['lifetime']
-        )
-        ttl = ans.response.answer[0].ttl
-        name = ans.response.answer[0].name.to_text()
+        for ans in results:
+            ttl = ans.response.answer[0].ttl
+            name = ans.response.answer[0].name.to_text()
 
-        output = [{
-            "name": name,
-            "class": i.rdclass.name,
-            "type": i.rdtype.name,
-            "ttl": ttl,
-            "target": i.target.to_text(),
-        } for i in ans.response.answer[0].items]
+            entries = [{
+                "name": name,
+                "class": i.rdclass.name,
+                "type": i.rdtype.name,
+                "ttl": ttl,
+                "target": i.target.to_text(),
+            } for i in ans.response.answer[0].items]
+
+            output.extend(entries)
 
         return filter_list(output, data['query-filters'], data['query-options'])
