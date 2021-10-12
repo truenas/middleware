@@ -8,7 +8,6 @@ from .netif import netif
 from .type_base import InterfaceType
 
 from middlewared.service import private, Service
-from middlewared.utils import osc
 
 
 class InterfaceService(Service):
@@ -94,20 +93,6 @@ class InterfaceService(Service):
             }
 
         if has_vip or has_vipv6:
-            # linux doesn't use `carp_vhid` or `carp_pass` attributes
-            if osc.IS_FREEBSD:
-                carp_vhid = data.get('int_vhid', None)
-                carp_pass = data.get('int_pass', None)
-
-                vip_data['vhid'] = carp_vhid
-
-                if carp_vhid:
-                    advskew = None
-                    for cc in iface.carp_config:
-                        if cc.vhid == carp_vhid:
-                            advskew = cc.advskew
-                        break
-
             addrs_database.add(self.alias_to_addr(vip_data))
 
         for alias in aliases:
@@ -135,30 +120,19 @@ class InterfaceService(Service):
                 }
 
             if alias['alias_vip'] or alias['alias_vipv6address']:
-                if osc.IS_FREEBSD:
-                    alias_vip_data['vhid'] = data['int_vhid']
-
                 addrs_database.add(self.alias_to_addr(alias_vip_data))
 
-        if osc.IS_FREEBSD:
-            if has_ipv6:
-                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
-                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
-            else:
-                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
-                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
-        else:
-            if has_ipv6 and not [i for i in map(str, iface.addresses) if i.startswith('fe80::')]:
-                # https://tools.ietf.org/html/rfc4291#section-2.5.1
-                # add an EUI64 link-local ipv6 address if one doesn't already exist
-                mac = iface.link_address.address.address.replace(':', '')
-                mac = mac[0:6] + 'fffe' + mac[6:]
-                mac = hex(int(mac[0:2], 16) ^ 2)[2:].zfill(2) + mac[2:]
-                link_local = {
-                    'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)),
-                    'netmask': '64',
-                }
-                addrs_database.add(self.alias_to_addr(link_local))
+        if has_ipv6 and not [i for i in map(str, iface.addresses) if i.startswith('fe80::')]:
+            # https://tools.ietf.org/html/rfc4291#section-2.5.1
+            # add an EUI64 link-local ipv6 address if one doesn't already exist
+            mac = iface.link_address.address.address.replace(':', '')
+            mac = mac[0:6] + 'fffe' + mac[6:]
+            mac = hex(int(mac[0:2], 16) ^ 2)[2:].zfill(2) + mac[2:]
+            link_local = {
+                'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)),
+                'netmask': '64',
+            }
+            addrs_database.add(self.alias_to_addr(link_local))
 
         if dhclient_running and not data['int_dhcp']:
             self.logger.debug('Killing dhclient for {}'.format(name))
@@ -174,35 +148,16 @@ class InterfaceService(Service):
             if addr not in addrs_database:
                 self.logger.debug('{}: removing {}'.format(name, addr))
                 iface.remove_address(addr)
+            elif not data['int_dhcp']:
+                self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
+                iface.replace_address(addr)
+
+        if has_vip or has_vipv6:
+            if not self.middleware.call_sync('service.started', 'keepalived'):
+                self.middleware.call_sync('service.start', 'keepalived')
             else:
-                if osc.IS_LINUX and not data['int_dhcp']:
-                    self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
-                    iface.replace_address(addr)
-
-        if osc.IS_FREEBSD:
-            # carp must be configured after removing addresses
-            # in case removing the address removes the carp
-            if carp_vhid:
-                if self.middleware.call_sync('failover.licensed') and not advskew:
-                    if 'NO_FAILOVER' in self.middleware.call_sync('failover.disabled_reasons'):
-                        if self.middleware.call_sync('failover.vip.get_states')[0]:
-                            advskew = 20
-                        else:
-                            advskew = 80
-                    elif self.middleware.call_sync('failover.node') == 'A':
-                        advskew = 20
-                    else:
-                        advskew = 80
-
-                # FIXME: change py-netif to accept str() key
-                iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
-        else:
-            if has_vip or has_vipv6:
-                if not self.middleware.call_sync('service.started', 'keepalived'):
-                    self.middleware.call_sync('service.start', 'keepalived')
-                else:
-                    self.middleware.call_sync('service.reload', 'keepalived')
-                iface.vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
+                self.middleware.call_sync('service.reload', 'keepalived')
+            iface.vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
