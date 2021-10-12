@@ -1,6 +1,6 @@
 from middlewared.plugins.smb import SMBCmd
 from middlewared.plugins.kerberos import krb5ccache
-from middlewared.plugins.activedirectory_.dns import SRV, ActiveDirectory_DNS
+from middlewared.plugins.activedirectory_.dns import SRV
 from middlewared.schema import accepts
 from middlewared.service import private, job, Service
 from middlewared.service_exception import CallError
@@ -134,7 +134,7 @@ class ActiveDirectoryService(Service):
         return True
 
     @private
-    def get_kerberos_servers(self, ad=None):
+    async def get_kerberos_servers(self, ad=None):
         """
         This returns at most 3 kerberos servers located in our AD site. This is to optimize
         kerberos configuration for locations where kerberos servers may span the globe and
@@ -142,28 +142,37 @@ class ActiveDirectoryService(Service):
         single point of failure, fall back to relying on normal DNS queries in this case.
         """
         if ad is None:
-            ad = self.middleware.call_sync('activedirectory.config')
+            ad = await self.middleware.call('activedirectory.config')
 
-        AD_DNS = ActiveDirectory_DNS(conf=ad, logger=self.logger)
-        krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3)
-        krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3)
-        krb_kpasswd_server = AD_DNS.get_n_working_servers(SRV['KPASSWD'], 3)
-        kdc = [i['host'] for i in krb_kdc]
-        admin_server = [i['host'] for i in krb_admin_server]
-        kpasswd = [i['host'] for i in krb_kpasswd_server]
-        for servers in [kdc, admin_server, kpasswd]:
-            if len(servers) == 1:
+        output = {'kdc': [], 'admin_server': [], 'kpasswd_server': []}
+
+        for key, srv in [
+            ('kdc', SRV.KERBEROSDOMAINCONTROLLER),
+            ('admin_server', SRV.KERBEROS),
+            ('kpasswd_server', SRV.KPASSWD)
+        ]:
+            res = await self.middleware.call(
+                'activedirectory.get_n_working_servers',
+                ad['domainname'],
+                srv.name,
+                ad['site'],
+                3,
+                ad['verbose_logging'],
+            )
+            if len(res) != 3:
                 return None
 
-        return {'kdc': kdc, 'admin_server': admin_server, 'kpasswd_server': kpasswd}
+            output[key] = [i['host'] for i in res]
+
+        return output
 
     @private
-    def set_kerberos_servers(self, ad=None):
+    async def set_kerberos_servers(self, ad=None):
         if not ad:
-            ad = self.middleware.call_sync('activedirectory.config')
-        site_indexed_kerberos_servers = self.get_kerberos_servers(ad)
+            ad = await self.middleware.call_sync('activedirectory.config')
+        site_indexed_kerberos_servers = await self.get_kerberos_servers(ad)
         if site_indexed_kerberos_servers:
-            self.middleware.call_sync(
+            await self.middleware.call(
                 'kerberos.realm.update',
                 ad['kerberos_realm'],
                 site_indexed_kerberos_servers

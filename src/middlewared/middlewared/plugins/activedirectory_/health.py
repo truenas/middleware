@@ -2,7 +2,7 @@ import errno
 import subprocess
 
 from middlewared.plugins.smb import SMBCmd, WBCErr
-from middlewared.plugins.activedirectory_.dns import SRV, ActiveDirectory_DNS
+from middlewared.plugins.activedirectory_.dns import SRV
 from middlewared.schema import accepts
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.service_exception import CallError
@@ -45,8 +45,10 @@ class ActiveDirectoryService(Service):
         if data is None:
             data = self.middleware.call_sync("activedirectory.config")
         if dc is None:
-            AD_DNS = ActiveDirectory_DNS(conf=data, logger=self.logger)
-            res = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 2)
+            res = self.middleware.call_sync('activedirectory.get_n_working_srvers',
+                data['domainname'], SRV.DOMAINCONTROLLER.name, data['site'],
+                2, data['timeout'], data['verbose_logging']
+            )
             if len(res) != 2:
                 self.logger.warning("Less than two Domain Controllers are in our "
                                     "Active Directory Site. This may result in production "
