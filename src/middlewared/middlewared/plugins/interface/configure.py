@@ -9,7 +9,6 @@ from .netif import netif
 from .type_base import InterfaceType
 
 from middlewared.service import private, Service
-from middlewared.utils import osc
 
 
 class InterfaceService(Service):
@@ -132,10 +131,6 @@ class InterfaceService(Service):
             if addr not in addrs_database:
                 self.logger.debug('{}: removing {}'.format(name, addr))
                 iface.remove_address(addr)
-            else:
-                if osc.IS_LINUX and not data['int_dhcp']:
-                    self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
-                    iface.replace_address(addr)
 
         # carp must be configured after removing addresses
         # in case removing the address removes the carp
@@ -192,13 +187,12 @@ class InterfaceService(Service):
             self.logger.debug('Starting dhclient for {}'.format(name))
             self.middleware.call_sync('interface.dhclient_start', data['int_interface'], wait_dhcp)
 
-        if osc.IS_FREEBSD:
-            if data['int_ipv6auto']:
-                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
-                subprocess.call(['/etc/rc.d/rtsold', 'onerestart'], stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL, close_fds=True)
-            else:
-                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
+        if data['int_ipv6auto']:
+            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
+            subprocess.call(['/etc/rc.d/rtsold', 'onerestart'], stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, close_fds=True)
+        else:
+            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
     @private
     def autoconfigure(self, iface, wait_dhcp):
