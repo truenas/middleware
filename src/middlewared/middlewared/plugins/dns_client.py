@@ -63,6 +63,7 @@ class DNSClient(Service):
             'rdata_list_srv',
             items=[
                 Dict(
+                    Str('name'),
                     Int('priority'),
                     Int('weight'),
                     Int('port'),
