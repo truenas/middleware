@@ -117,9 +117,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nslcd.conf',
                 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
-        'loader': [
-            {'type': 'py', 'path': 'loader', 'platform': 'FreeBSD'},
-        ],
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf', 'platform': 'FreeBSD'},
         ],

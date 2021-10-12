@@ -137,8 +137,6 @@ class FailoverService(ConfigService):
 
         await self.middleware.call('datastore.update', 'system.failover', new['id'], new)
 
-        await self.middleware.call('service.restart', 'failover')
-
         if new['disabled']:
             if new['master_node'] == await self.middleware.call('failover.node'):
                 await self.middleware.call('failover.force_master')
@@ -723,7 +721,6 @@ class FailoverService(ConfigService):
             }
 
         await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
-        await self.middleware.call('service.restart', 'failover')
 
     @private
     def upgrade_version(self):
@@ -1354,27 +1351,12 @@ async def interface_pre_sync_hook(middleware):
     await middleware.call('failover.internal_interface.pre_sync')
 
 
-async def hook_restart_devd(middleware, *args, **kwargs):
-    """
-    We need to restart devd when SSH or UI settings are updated because of pf.conf.block rules
-    might change.
-    """
-    if not await middleware.call('failover.licensed'):
-        return
-    await middleware.call('service.restart', 'failover')
-
-
 async def hook_license_update(middleware, *args, **kwargs):
     FailoverService.HA_MODE = None
     FailoverService.HA_LICENSED = None
 
     if not await middleware.call('failover.licensed'):
         return
-
-    etc_generate = ['rc']
-    if await middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
-        await middleware.call('etc.generate', 'loader')
-        etc_generate += ['loader']
 
     # setup the local heartbeat interface
     heartbeat = True
@@ -1397,12 +1379,10 @@ async def hook_license_update(middleware, *args, **kwargs):
             middleware.logger.warning('Failed to ensure remote client on standby')
 
         try:
-            for etc in etc_generate:
-                await middleware.call('failover.call_remote', 'etc.generate', [etc])
+            await middleware.call('failover.call_remote', 'etc.generate', ['rc'])
         except Exception:
             middleware.logger.warning('etc.generate failed on standby')
 
-    await middleware.call('service.restart', 'failover')
     await middleware.call('failover.status_refresh')
 
 
@@ -1503,12 +1483,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     if ssh_enabled and not remote_ssh_started:
         middleware.logger.debug('[HA] Starting SSH on standby node')
         await middleware.call('failover.call_remote', 'service.start', ['ssh'])
-
-    middleware.logger.debug('[HA] Restarting failover service on this node')
-    await middleware.call('service.restart', 'failover')
-
-    middleware.logger.debug('[HA] Restarting failover service on remote node')
-    await middleware.call('failover.call_remote', 'service.restart', ['failover'])
 
     middleware.logger.debug('[HA] Resfreshing failover status')
     await middleware.call('failover.status_refresh')
@@ -1664,8 +1638,6 @@ async def setup(middleware):
     )
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
-    middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
-    middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
 
