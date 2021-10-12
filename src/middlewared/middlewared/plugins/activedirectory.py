@@ -590,7 +590,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             job.set_progress(50, 'Joining Active Directory Domain')
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join(ad)
-            await self._register_virthostname(ad, smb, smb_ha_mode)
+            await self.middleware.call('activedirectory.register_dns', ad, smb, smb_ha_mode)
             if smb_ha_mode != 'LEGACY':
                 """
                 Manipulating the SPN entries must be done with elevated privileges. Add NFS service
@@ -728,33 +728,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         cred = await self.middleware.call('kerberos.get_cred', payload)
         await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
         return
-
-    @private
-    async def _register_virthostname(self, ad, smb, smb_ha_mode):
-        """
-        This co-routine performs virtual hostname aware
-        dynamic DNS updates after joining AD to register
-        VIP addresses.
-        """
-        if not ad['allow_dns_updates'] or smb_ha_mode in ['STANDALONE', 'CLUSTERED']:
-            return
-
-        vhost = (await self.middleware.call('network.configuration.config'))['hostname_virtual']
-        vips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use', {'static': True}))]
-        smb_bind_ips = smb['bindip'] if smb['bindip'] else vips
-        to_register = set(vips) & set(smb_bind_ips)
-        hostname = f'{vhost}.{ad["domainname"]}'
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            'ads', 'dns', 'register', hostname
-        ]
-        cmd.extend(to_register)
-        netdns = await run(cmd, check=False)
-        if netdns.returncode != 0:
-            self.logger.debug("hostname: %s, ips: %s, text: %s",
-                              hostname, to_register, netdns.stderr.decode())
 
     @private
     async def _parse_join_err(self, msg):

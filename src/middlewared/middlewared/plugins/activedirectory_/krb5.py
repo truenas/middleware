@@ -14,30 +14,7 @@ class ActiveDirectoryService(Service):
         service = "activedirectory"
 
     @private
-    async def _register_dns(self, ad, smb, smb_ha_mode):
-        await self.middleware.call('kerberos.check_ticket')
-        if not ad['allow_dns_updates'] or smb_ha_mode in ['STANDALONE', 'CLUSTERED']:
-            return
-
-        vhost = (await self.middleware.call('network.configuration.config'))['hostname_virtual']
-        vips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use', {'static': True}))]
-        smb_bind_ips = smb['bindip'] if smb['bindip'] else vips
-        to_register = set(vips) & set(smb_bind_ips)
-        hostname = f'{vhost}.{ad["domainname"]}'
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            'ads', 'dns', 'register', hostname
-        ]
-        cmd.extend(to_register)
-        netdns = await run(cmd, check=False)
-        if netdns.returncode != 0:
-            self.logger.debug("hostname: %s, ips: %s, text: %s",
-                              hostname, to_register, netdns.stderr.decode())
-
-    @private
-    async def _net_ads_setspn(self, spn_list):
+    async def net_ads_setspn(self, spn_list):
         """
         Only automatically add NFS SPN entries on domain join
         if kerberized nfsv4 is enabled.
@@ -120,7 +97,7 @@ class ActiveDirectoryService(Service):
                                 "may only be manipulated when the Active Directory Service is Healthy. "
                                 f"Current state is: {ad_state}")
 
-        ok = await self._net_ads_setspn([
+        ok = await self.net_ads_setspn([
             f'nfs/{netbiosname.upper()}.{domain}',
             f'nfs/{netbiosname.upper()}'
         ])
