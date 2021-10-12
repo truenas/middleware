@@ -29,7 +29,7 @@ class DNSClient(Service):
     @accepts(Dict(
         'lookup_data',
         Str('name', required=True),
-        Str('record_type', required=True, enum=['A', 'AAAA', 'SRV']),
+        Str('record_type', default='A', enum=['A', 'AAAA', 'SRV']),
         Dict(
             'dns_client_options',
             List('nameservers', items=[IPAddr("ip")], default=[]),
