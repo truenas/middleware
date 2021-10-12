@@ -1,30 +1,20 @@
 import datetime
 import enum
 import errno
-import grp
 import json
-import ntplib
 import os
-import pwd
-import shutil
-import socket
-import subprocess
-import threading
-import tdb
 import time
 import contextlib
 
-from dns import resolver
-from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
+from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.plugins.kerberos import krb5ccache
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
-from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationError, ValidationErrors
+from middlewared.service import job, private, TDBWrapConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
-import middlewared.utils.osc as osc
 
 AD_SMBCONF_PARAMS = {
     "server role": "member server",
@@ -64,125 +54,6 @@ class neterr(enum.Enum):
                 return neterr.NOTJOINED
 
         return neterr.FAULT
-
-
-class SRV(enum.Enum):
-    DOMAINCONTROLLER = '_ldap._tcp.dc._msdcs.'
-    FORESTGLOBALCATALOG = '_ldap._tcp.gc._msdcs.'
-    GLOBALCATALOG = '_gc._tcp.'
-    KERBEROS = '_kerberos._tcp.'
-    KERBEROSDOMAINCONTROLLER = '_kerberos._tcp.dc._msdcs.'
-    KPASSWD = '_kpasswd._tcp.'
-    LDAP = '_ldap._tcp.'
-    PDC = '_ldap._tcp.pdc._msdcs.'
-
-
-class ActiveDirectory_DNS(object):
-    def __init__(self, **kwargs):
-        super(ActiveDirectory_DNS, self).__init__()
-        self.ad = kwargs.get('conf')
-        self.logger = kwargs.get('logger')
-        return
-
-    def _get_SRV_records(self, host, dns_timeout):
-        """
-        Set resolver timeout to 1/3 of the lifetime. The timeout defines
-        how long to wait before moving on to the next nameserver in resolv.conf
-        """
-        srv_records = []
-
-        if not host:
-            return srv_records
-
-        r = resolver.Resolver()
-        r.lifetime = dns_timeout
-        r.timeout = r.lifetime / 3
-
-        try:
-
-            answers = r.query(host, 'SRV')
-            srv_records = sorted(
-                answers,
-                key=lambda a: (int(a.priority), int(a.weight))
-            )
-
-        except Exception:
-            srv_records = []
-
-        return srv_records
-
-    def port_is_listening(self, host, port, timeout=1):
-        ret = False
-
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if timeout:
-            s.settimeout(timeout)
-
-        try:
-            s.connect((host, port))
-            ret = True
-
-        except Exception as e:
-            self.logger.debug("connection to %s failed with error: %s",
-                              host, e)
-            ret = False
-
-        finally:
-            s.close()
-
-        return ret
-
-    def _get_servers(self, srv_prefix):
-        """
-        We will first try fo find servers based on our AD site. If we don't find
-        a server in our site, then we populate list for whole domain. Ticket #27584
-        Domain Controllers, Forest Global Catalog Servers, and Kerberos Domain Controllers
-        need the site information placed before the 'msdcs' component of the host entry.t
-        """
-        servers = []
-        if not self.ad['domainname']:
-            return servers
-
-        if self.ad['site'] and self.ad['site'] != 'Default-First-Site-Name':
-            if 'msdcs' in srv_prefix.value:
-                parts = srv_prefix.value.split('.')
-                srv = '.'.join([parts[0], parts[1]])
-                msdcs = '.'.join([parts[2], parts[3]])
-                host = f"{srv}.{self.ad['site']}._sites.{msdcs}.{self.ad['domainname']}"
-            else:
-                host = f"{srv_prefix.value}{self.ad['site']}._sites.{self.ad['domainname']}"
-        else:
-            host = f"{srv_prefix.value}{self.ad['domainname']}"
-
-        servers = self._get_SRV_records(host, self.ad['dns_timeout'])
-
-        if not servers and self.ad['site']:
-            host = f"{srv_prefix.value}{self.ad['domainname']}"
-            servers = self._get_SRV_records(host, self.ad['dns_timeout'])
-
-        return servers
-
-    def get_n_working_servers(self, srv=SRV['DOMAINCONTROLLER'], number=1):
-        """
-        :get_n_working_servers: often only a few working servers are needed and not the whole
-        list available on the domain. This takes the SRV record type and number of servers to get
-        as arguments.
-        """
-        servers = self._get_servers(srv)
-        found_servers = []
-        for server in servers:
-            if len(found_servers) == number:
-                break
-
-            host = server.target.to_text(True)
-            port = int(server.port)
-            if self.port_is_listening(host, port, timeout=self.ad['timeout']):
-                server_info = {'host': host, 'port': port}
-                found_servers.append(server_info)
-
-        if self.ad['verbose_logging']:
-            self.logger.debug(f'Request for [{number}] of server type [{srv.name}] returned: {found_servers}')
-        return found_servers
 
 
 class ActiveDirectoryModel(sa.Model):
@@ -610,7 +481,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
     @private
     async def set_state(self, state):
-        return await self.middleware.call('directoryservices.set_state', {'activedirectory': state.name})
+        return await self.middleware.call('directoryservices.set_state', {'activedirectory': state})
 
     @accepts()
     async def get_state(self):
@@ -653,10 +524,13 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if state in [DSStatus['JOINING'], DSStatus['LEAVING']]:
             raise CallError(f'Active Directory Service has status of [{state}]. Wait until operation completes.', errno.EBUSY)
 
-        await self.set_state(DSStatus['JOINING'])
+        dc_info = await self.lookup_dc(ad['domainname'])
+
+        await self.set_state(DSStatus['JOINING'].name)
         job.set_progress(0, 'Preparing to join Active Directory')
         if ad['verbose_logging']:
             self.logger.debug('Starting Active Directory service for [%s]', ad['domainname'])
+
         await super().do_update({'enable': True})
         await self.synchronize()
         await self.middleware.call('etc.generate', 'hostname')
@@ -692,14 +566,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         job.set_progress(20, 'Detecting Active Directory Site.')
         if not ad['site']:
-            new_site = await self.get_site()
-            if new_site and new_site != 'Default-First-Site-Name':
-                ad['site'] = new_site
+            ad['site'] = dc_info['Client Site Name']
+            if dc_info['Client Site Name'] != 'Default-First-Site-Name':
                 await self.middleware.call('activedirectory.set_kerberos_servers', ad)
 
         job.set_progress(30, 'Detecting Active Directory NetBIOS Domain Name.')
-        if not workgroup or workgroup == 'WORKGROUP':
-            workgroup = await self.middleware.call('activedirectory.get_netbios_domain_name', smb['workgroup'])
+        if workgroup != dc_info['Pre-Win2k Domain']:
+            self.logger.debug('Updating SMB workgroup to %s', dc_info['Pre-Win2k Domain'])
+            await self.middleware.call('smb.direct_update', {'workgroup': dc_info['Pre-Win2k Domain']})
 
         await self.middleware.call('smb.initialize_globals')
 
@@ -725,7 +599,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 """
                 job.set_progress(60, 'Adding NFS Principal entries.')
                 # Skip health check for add_nfs_spn since by this point our AD join should be de-facto healthy.
-                spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad, False, False)
+                spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad['netbiosname'], ad['domainname'], False, False)
                 await spn_job.wait()
 
                 job.set_progress(70, 'Storing computer account keytab.')
@@ -749,7 +623,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         if ret == neterr.JOINED:
-            await self.set_state(DSStatus['HEALTHY'])
+            await self.set_state(DSStatus['HEALTHY'].name)
             await self.middleware.call('admonitor.start')
             await self.middleware.call('service.start', 'dscache')
             if ad['verbose_logging']:
@@ -762,7 +636,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 except Exception:
                     self.logger.warning('Failed to start active directory service on standby controller', exc_info=True)
         else:
-            await self.set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'].name)
             self.logger.warning('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
 
         if smb_ha_mode == 'CLUSTERED':
@@ -780,7 +654,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call("smb.cluster_check")
         await self.direct_update({"enable": False})
 
-        await self.set_state(DSStatus['LEAVING'])
+        await self.set_state(DSStatus['LEAVING'].name)
         job.set_progress(5, 'Stopping Active Directory monitor')
         await self.middleware.call('admonitor.stop')
         await self.middleware.call('etc.generate', 'hostname')
@@ -792,7 +666,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('service.restart', 'cifs')
         job.set_progress(40, 'Reconfiguring pam and nss.')
         await self.middleware.call('etc.generate', 'pam')
-        await self.set_state(DSStatus['DISABLED'])
+        await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('service.stop', 'dscache')
         flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
@@ -813,7 +687,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'STOP')
             await cl_reload.wait()
 
-        await self.set_state(DSStatus['DISABLED'])
+        await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')
 
     @private
@@ -854,146 +728,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         cred = await self.middleware.call('kerberos.get_cred', payload)
         await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
         return
-
-    @private
-    def check_clockskew(self, ad=None):
-        """
-        Uses DNS srv records to determine server with PDC emulator FSMO role and
-        perform NTP query to determine current clockskew. Raises exception if
-        clockskew exceeds 3 minutes, otherwise returns dict with hostname of
-        PDC emulator, time as reported from PDC emulator, and time difference
-        between the PDC emulator and the NAS.
-        """
-        permitted_clockskew = datetime.timedelta(minutes=3)
-        nas_time = datetime.datetime.now()
-
-        try:
-            lookup = self.middleware.call_sync('activedirectory.lookup_dc')
-        except CallError as e:
-            self.logger.warning(e.errmsg)
-            return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
-
-        pdc = lookup["Information for Domain Controller"]
-
-        c = ntplib.NTPClient()
-        response = c.request(pdc)
-        ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
-        clockskew = abs(ntp_time - nas_time)
-        if clockskew > permitted_clockskew:
-            raise CallError(f'Clockskew between {pdc} and NAS exceeds 3 minutes: {clockskew}')
-        return {'pdc': pdc, 'timestamp': str(ntp_time), 'clockskew': str(clockskew)}
-
-    @private
-    def validate_domain(self, data=None):
-        """
-        Methods used to determine AD domain health.
-        First we check whether our clock offset has grown to potentially production-impacting
-        levels, then we change whether another DC in our AD site is able to take over if the
-        DC winbind is currently connected to becomes inaccessible.
-        """
-        self.middleware.call_sync('activedirectory.check_clockskew', data)
-        self.conn_check(data)
-
-    @private
-    def conn_check(self, data=None, dc=None):
-        """
-        Temporarily connect to netlogon share of a DC that isn't the one that
-        winbind is currently communicating with in order to validate our credentials
-        and ability to failover in case of outage on winbind's current DC.
-
-        We only check a single DC because domains can have a significantly large number
-        of domain controllers in a given site.
-        """
-        if data is None:
-            data = self.middleware.call_sync("activedirectory.config")
-        if dc is None:
-            AD_DNS = ActiveDirectory_DNS(conf=data, logger=self.logger)
-            res = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 2)
-            if len(res) != 2:
-                self.logger.warning("Less than two Domain Controllers are in our "
-                                    "Active Directory Site. This may result in production "
-                                    "outage if the currently connected DC is unreachable.")
-                return False
-
-            """
-            In some pathologically bad cases attempts to get the DC that winbind is currently
-            communicating with can time out. For this particular health check, the winbind
-            error should not be considered fatal.
-            """
-            wb_dcinfo = subprocess.run([SMBCmd.WBINFO.value, "--dc-info", data["domainname"]],
-                                       capture_output=True, check=False)
-            if wb_dcinfo.returncode == 0:
-                # output "FQDN (ip address)"
-                our_dc = wb_dcinfo.stdout.decode().split()[0]
-                for dc_to_check in res:
-                    thehost = dc_to_check['host']
-                    if thehost.casefold() != our_dc.casefold():
-                        dc = thehost
-            else:
-                self.logger.warning("Failed to get DC info from winbindd: %s", wb_dcinfo.stderr.decode())
-                dc = res[0]['host']
-
-        return True
-
-    @accepts()
-    async def started(self):
-        """
-        Issue a no-effect command to our DC. This checks if our secure channel connection to our
-        domain controller is still alive. It has much less impact than wbinfo -t.
-        Default winbind request timeout is 60 seconds, and can be adjusted by the smb4.conf parameter
-        'winbind request timeout ='
-        """
-        verrors = ValidationErrors()
-        config = await self.config()
-        if not config['enable']:
-            await self.set_state(DSStatus['DISABLED'])
-            return False
-
-        await self.common_validate(config, config, verrors)
-
-        try:
-            verrors.check()
-        except Exception:
-            await self.direct_update({"enable": False})
-            raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
-                            errno.EINVAL)
-
-        """
-        Initialize state to "JOINING" until after booted.
-        """
-        if not await self.middleware.call('system.ready'):
-            await self.set_state(DSStatus['JOINING'])
-            return True
-
-        """
-        Verify winbindd netlogon connection.
-        """
-        netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
-        if netlogon_ping.returncode != 0:
-            wberr = netlogon_ping.stderr.decode().strip('\n')
-            err = errno.EFAULT
-            for wb in WBCErr:
-                if wb.err() in wberr:
-                    wberr = wberr.replace(wb.err(), wb.value[0])
-                    err = wb.value[1] if wb.value[1] else errno.EFAULT
-                    break
-
-            raise CallError(wberr, err)
-
-        if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
-            state_method = 'clustercache.get'
-        else:
-            state_method = 'cache.get'
-
-        try:
-            cached_state = await self.middleware.call(state_method, 'DS_STATE')
-
-            if cached_state['activedirectory'] != 'HEALTHY':
-                await self.set_state(DSStatus['HEALTHY'])
-        except KeyError:
-            await self.set_state(DSStatus['HEALTHY'])
-
-        return True
 
     @private
     async def _register_virthostname(self, ad, smb, smb_ha_mode):
@@ -1061,7 +795,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         cmd.append(ad['domainname'])
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
-            await self.set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'].name)
             await self._parse_join_err(netads.stdout.decode().split(':', 1))
 
     @private
@@ -1098,106 +832,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             return neterr.to_status(errout)
 
         return neterr.JOINED
-
-    @private
-    async def _net_ads_setspn(self, spn_list):
-        """
-        Only automatically add NFS SPN entries on domain join
-        if kerberized nfsv4 is enabled.
-        """
-        if not (await self.middleware.call('nfs.config'))['v4_krb']:
-            return False
-
-        for spn in spn_list:
-            cmd = [
-                SMBCmd.NET.value,
-                '--use-kerberos', 'required',
-                '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-                'ads', 'setspn',
-                'add', spn,
-            ]
-            netads = await run(cmd, check=False)
-            if netads.returncode != 0:
-                raise CallError('failed to set spn entry '
-                                f'[{spn}]: {netads.stdout.decode().strip()}')
-
-        return True
-
-    @accepts()
-    async def get_spn_list(self):
-        """
-        Return list of kerberos SPN entries registered for the server's Active
-        Directory computer account. This may not reflect the state of the
-        server's current kerberos keytab.
-        """
-        await self.middleware.call("kerberos.check_ticket")
-        spnlist = []
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            'ads', 'setspn', 'list'
-        ]
-        netads = await run(cmd, check=False)
-        if netads.returncode != 0:
-            raise CallError(
-                f"Failed to generate SPN list: [{netads.stderr.decode().strip()}]"
-            )
-
-        for spn in netads.stdout.decode().splitlines():
-            if len(spn.split('/')) != 2:
-                continue
-            spnlist.append(spn.strip())
-
-        return spnlist
-
-    @accepts()
-    async def change_trust_account_pw(self):
-        """
-        Force an update of the AD machine account password. This can be used to
-        refresh the Kerberos principals in the server's system keytab.
-        """
-        await self.middleware.call("kerberos.check_ticket")
-        workgroup = (await self.middleware.call('smb.config'))['workgroup']
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            '-w', workgroup,
-            'ads', 'changetrustpw',
-        ]
-        netads = await run(cmd, check=False)
-        if netads.returncode != 0:
-            raise CallError(
-                f"Failed to update trust password: [{netads.stderr.decode().strip()}] "
-                f"stdout: [{netads.stdout.decode().strip()}] "
-            )
-
-    @private
-    @job(lock="spn_manipulation")
-    async def add_nfs_spn(self, job, ad=None, check_health=True, update_keytab=False):
-        if check_health:
-            ad_state = await self.get_state()
-            if ad_state != DSStatus.HEALTHY.name:
-                raise CallError("Service Principal Names that are registered in Active Directory "
-                                "may only be manipulated when the Active Directory Service is Healthy. "
-                                f"Current state is: {ad_state}")
-
-        if ad is None:
-            ad = await self.config()
-
-        ok = await self._net_ads_setspn([
-            f'nfs/{ad["netbiosname"].upper()}.{ad["domainname"]}',
-            f'nfs/{ad["netbiosname"].upper()}'
-        ])
-        if not ok:
-            return False
-
-        await self.change_trust_account_pw()
-        if update_keytab:
-            await self.middleware.call('kerberos.keytab.store_samba_keytab')
-
-        return True
 
     @accepts(Str('domain', default=''))
     async def domain_info(self, domain):
@@ -1239,70 +873,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return json.loads(netads.stdout.decode())
 
     @private
-    async def get_netbios_domain_name(self, workgroup=None):
-        """
-        The 'workgroup' parameter must be set correctly in order for AD join to
-        succeed. This is based on the short form of the domain name, which was defined
-        by the AD administrator who deployed originally deployed the AD enviornment.
-        The only way to reliably get this is to query the LDAP server. This method
-        queries and sets it.
-        """
-
-        if workgroup is None:
-            workgroup = (await self.middleware.call_sync('smb.config'))['workgroup']
-
-        netcmd = await run([SMBCmd.NET.value, 'ads', 'workgroup'], check=False)
-        if netcmd.returncode != 0:
-            raise CallError(
-                "Failed to retrieve netbios domain name from Active Directory: "
-                f"{netcmd.stderr.decode().strip}"
-            )
-
-        output = netcmd.stdout.decode()
-        domain = output.split()[1].strip()
-
-        if domain != workgroup:
-            self.logger.debug(f'Updating SMB workgroup to match the short form of the AD domain [{domain}]')
-            await self.middleware.call('smb.direct_update', {'workgroup': domain})
-
-        return domain
-
-    @private
-    def get_kerberos_servers(self, ad=None):
-        """
-        This returns at most 3 kerberos servers located in our AD site. This is to optimize
-        kerberos configuration for locations where kerberos servers may span the globe and
-        have equal DNS weighting. Since a single kerberos server may represent an unacceptable
-        single point of failure, fall back to relying on normal DNS queries in this case.
-        """
-        if ad is None:
-            ad = self.middleware.call_sync('activedirectory.config')
-        AD_DNS = ActiveDirectory_DNS(conf=ad, logger=self.logger)
-        krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3)
-        krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3)
-        krb_kpasswd_server = AD_DNS.get_n_working_servers(SRV['KPASSWD'], 3)
-        kdc = [i['host'] for i in krb_kdc]
-        admin_server = [i['host'] for i in krb_admin_server]
-        kpasswd = [i['host'] for i in krb_kpasswd_server]
-        for servers in [kdc, admin_server, kpasswd]:
-            if len(servers) == 1:
-                return None
-
-        return {'kdc': kdc, 'admin_server': admin_server, 'kpasswd_server': kpasswd}
-
-    @private
-    def set_kerberos_servers(self, ad=None):
-        if not ad:
-            ad = self.middleware.call_sync('activedirectory.config')
-        site_indexed_kerberos_servers = self.get_kerberos_servers(ad)
-        if site_indexed_kerberos_servers:
-            self.middleware.call_sync(
-                'kerberos.realm.update',
-                ad['kerberos_realm'],
-                site_indexed_kerberos_servers
-            )
-
-    @private
     async def set_ntp_servers(self):
         """
         Appropriate time sources are a requirement for an AD environment. By default kerberos authentication
@@ -1315,13 +885,18 @@ class ActiveDirectoryService(TDBWrapConfigService):
             return
 
         try:
-            dc = (await self.lookup_dc())["Information for Domain Controller"]
+            dc_info = await self.lookup_dc()
         except CallError:
             self.logger.warning("Failed to automatically set time source.", exc_info=True)
             return
 
+        if not dc_info['flags']['Is running time services']:
+            return
+
+        dc_name = dc_info["Information for Domain Controller"]
+
         try:
-            await self.middleware.call('system.ntpserver.create', {'address': dc, 'prefer': True})
+            await self.middleware.call('system.ntpserver.create', {'address': dc_name, 'prefer': True})
         except Exception:
             self.logger.warning('Failed to configure NTP for the Active Directory domain. Additional '
                                 'manual configuration may be required to ensure consistent time offset, '
@@ -1329,27 +904,17 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return
 
     @private
-    async def lookup_dc(self, ad=None):
-        if ad is None:
-            ad = await self.config()
+    async def lookup_dc(self, domain=None):
+        if domain is None:
+            domain = (await self.config())['domainname']
 
-        lookup = await run([SMBCmd.NET.value, '--json', '-S', ad['domainname'], 'ads', 'lookup'], check=False)
+        lookup = await run([SMBCmd.NET.value, '--json', '-S', domain, 'ads', 'lookup'], check=False)
         if lookup.returncode != 0:
             raise CallError("Failed to look up Domain Controller information: "
                             f"{lookup.stderr.decode().strip()}")
 
         out = json.loads(lookup.stdout.decode())
         return out
-
-    @private
-    async def get_site(self):
-        try:
-            lookup = await self.lookup_dc()
-        except CallError as e:
-            self.logger.warning("Failed to get AD site: %s", e)
-            return None
-
-        return lookup["Client Site Name"]
 
     @accepts(Ref('kerberos_username_password'))
     @job(lock="AD_start_stop")
@@ -1424,7 +989,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             'domainname': '',
         }
         new = await self.middleware.call('activedirectory.direct_update', payload)
-        await self.set_state(DSStatus['DISABLED'])
+        await self.set_state(DSStatus['DISABLED'].name)
         if smb_ha_mode == 'LEGACY' and (await self.middleware.call('failover.status')) == 'MASTER':
             try:
                 await self.middleware.call('failover.call_remote', 'activedirectory.leave', [data])
@@ -1448,316 +1013,3 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await cl_reload.wait()
 
         return
-
-    @private
-    def get_gencache_sid(self, tdb_key):
-        gencache = tdb.Tdb('/tmp/gencache.tdb', 0, tdb.DEFAULT, os.O_RDONLY)
-        try:
-            tdb_val = gencache.get(tdb_key)
-        finally:
-            gencache.close()
-
-        if tdb_val is None:
-            return None
-
-        decoded_sid = tdb_val[8:-5].decode()
-        if decoded_sid == '-':
-            return None
-
-        return decoded_sid
-
-    @private
-    def get_gencache_names(self, idmap_domain):
-        out = []
-        known_doms = [x['domain_info']['name'] for x in idmap_domain]
-
-        gencache = tdb.Tdb('/tmp/gencache.tdb', 0, tdb.DEFAULT, os.O_RDONLY)
-        try:
-            for k in gencache.keys():
-                if k[:8] != b'NAME2SID':
-                    continue
-                key = k[:-1].decode()
-                name = key.split('/', 1)[1]
-                dom = name.split('\\')[0]
-                if dom not in known_doms:
-                    continue
-
-                out.append(name)
-        finally:
-            gencache.close()
-
-        return out
-
-    @private
-    def get_entries(self, data):
-        ret = []
-        entry_type = data.get('entry_type')
-        do_wbinfo = data.get('cache_enabled', True)
-
-        shutil.copyfile(f'{SMBPath.LOCKDIR.platform()}/gencache.tdb', '/tmp/gencache.tdb')
-
-        domain_info = self.middleware.call_sync(
-            'idmap.query', [], {'extra': {'additional_information': ['DOMAIN_INFO']}}
-        )
-        for dom in domain_info.copy():
-            if not dom['domain_info']:
-                domain_info.remove(dom)
-
-        dom_by_sid = {x['domain_info']['sid']: x for x in domain_info}
-
-        if do_wbinfo:
-            wb = subprocess.run(
-                [SMBCmd.WBINFO.value, f'-{entry_type[0].lower()}'], capture_output=True
-            )
-            if wb.returncode != 0:
-                raise CallError(f'Failed to retrieve {entry_type} from active directory: '
-                                f'{wb.stderr.decode().strip()}')
-            entries = wb.stdout.decode().splitlines()
-
-        else:
-            entries = self.get_gencache_names(domain_info)
-
-        for i in entries:
-            entry = {"id": -1, "sid": None, "nss": None}
-            if entry_type == 'USER':
-                try:
-                    entry["nss"] = pwd.getpwnam(i)
-                except KeyError:
-                    continue
-                entry["id"] = entry["nss"].pw_uid
-                tdb_key = f'IDMAP/UID2SID/{entry["id"]}'
-
-            else:
-                try:
-                    entry["nss"] = grp.getgrnam(i)
-                except KeyError:
-                    continue
-                entry["id"] = entry["nss"].gr_gid
-                tdb_key = f'IDMAP/GID2SID/{entry["id"]}'
-
-            """
-            Try to look up in gencache before subprocess to wbinfo.
-            """
-            entry['sid'] = self.get_gencache_sid((tdb_key.encode() + b"\x00"))
-            if not entry['sid']:
-                entry['sid'] = self.middleware.call_sync('idmap.unixid_to_sid', {
-                    'id_type': entry_type,
-                    'id': entry['id'],
-                })
-
-            entry['domain_info'] = dom_by_sid[entry['sid'].rsplit('-', 1)[0]]
-            ret.append(entry)
-
-        return ret
-
-    @private
-    @job(lock='fill_ad_cache')
-    def fill_cache(self, job, force=False):
-        ad = self.middleware.call_sync('activedirectory.config')
-        id_type_both_backends = [
-            'RID',
-            'AUTORID'
-        ]
-
-        users = self.get_entries({'entry_type': 'USER', 'cache_enabled': not ad['disable_freenas_cache']})
-        for u in users:
-            user_data = u['nss']
-            rid = int(u['sid'].rsplit('-', 1)[1])
-
-            entry = {
-                'id': 100000 + u['domain_info']['range_low'] + rid,
-                'uid': user_data.pw_uid,
-                'username': user_data.pw_name,
-                'unixhash': None,
-                'smbhash': None,
-                'group': {},
-                'home': '',
-                'shell': '',
-                'full_name': user_data.pw_gecos,
-                'builtin': False,
-                'email': '',
-                'password_disabled': False,
-                'locked': False,
-                'sudo': False,
-                'sudo_nopasswd': False,
-                'sudo_commands': [],
-                'microsoft_account': False,
-                'attributes': {},
-                'groups': [],
-                'sshpubkey': None,
-                'local': False,
-                'id_type_both': u['domain_info']['idmap_backend'] in id_type_both_backends,
-                'nt_name': None,
-                'sid': None,
-            }
-            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
-
-        groups = self.get_entries({'entry_type': 'GROUP', 'cache_enabled': not ad['disable_freenas_cache']})
-        for g in groups:
-            group_data = g['nss']
-            rid = int(g['sid'].rsplit('-', 1)[1])
-
-            entry = {
-                'id': 100000 + g['domain_info']['range_low'] + rid,
-                'gid': group_data.gr_gid,
-                'name': group_data.gr_name,
-                'group': group_data.gr_name,
-                'builtin': False,
-                'sudo': False,
-                'sudo_nopasswd': False,
-                'sudo_commands': [],
-                'users': [],
-                'local': False,
-                'id_type_both': g['domain_info']['idmap_backend'] in id_type_both_backends,
-                'nt_name': None,
-                'sid': None,
-            }
-            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
-
-    @private
-    async def get_cache(self):
-        users = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'USER')
-        groups = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'GROUP')
-        return {"USERS": users, "GROUPS": groups}
-
-
-class WBStatusThread(threading.Thread):
-    def __init__(self, **kwargs):
-        super(WBStatusThread, self).__init__()
-        self.setDaemon(True)
-        self.middleware = kwargs.get('middleware')
-        self.logger = self.middleware.logger
-        self.finished = threading.Event()
-        self.state = DSStatus.FAULTED.value
-
-    def parse_msg(self, data):
-        if data == str(DSStatus.LEAVING.value):
-            return
-
-        try:
-            m = json.loads(data)
-        except json.decoder.JSONDecodeError:
-            self.logger.debug("Unable to decode winbind status message: "
-                              "%s", data)
-            return
-
-        new_state = self.state
-
-        if not self.middleware.call_sync('activedirectory.config')['enable']:
-            self.logger.debug('Ignoring winbind message for disabled AD service: [%s]', m)
-            return
-
-        try:
-            new_state = DSStatus(m['winbind_message']).value
-        except Exception as e:
-            self.logger.debug('Received invalid winbind status message [%s]: %s', m, e)
-            return
-
-        if m['domain_name_netbios'] != self.middleware.call_sync('smb.config')['workgroup']:
-            self.logger.debug(
-                'Domain [%s] changed state to %s',
-                m['domain_name_netbios'],
-                DSStatus(m['winbind_message']).name
-            )
-            return
-
-        if self.state != new_state:
-            self.logger.debug(
-                'State of domain [%s] transistioned to [%s]',
-                m['forest_name'], DSStatus(m['winbind_message'])
-            )
-            self.middleware.call_sync('activedirectory.set_state', DSStatus(m['winbind_message']))
-            if new_state == DSStatus.FAULTED.value:
-                self.middleware.call_sync(
-                    "alert.oneshot_create",
-                    "ActiveDirectoryDomainOffline",
-                    {"domain": m["domain_name_netbios"]}
-                )
-            else:
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "ActiveDirectoryDomainOffline",
-                    {"domain": m["domain_name_netbios"]}
-                )
-
-        self.state = new_state
-
-    def read_messages(self):
-        while not self.finished.is_set():
-            with open(f'{SMBPath.RUNDIR.platform()}/.wb_fifo') as f:
-                data = f.read()
-                for msg in data.splitlines():
-                    self.parse_msg(msg)
-
-        self.logger.debug('exiting winbind messaging thread')
-
-    def run(self):
-        osc.set_thread_name('ad_monitor_thread')
-        try:
-            self.read_messages()
-        except Exception as e:
-            self.logger.debug('Failed to run monitor thread %s', e, exc_info=True)
-
-    def setup(self):
-        if not os.path.exists(f'{SMBPath.RUNDIR.platform()}/.wb_fifo'):
-            os.mkfifo(f'{SMBPath.RUNDIR.platform()}/.wb_fifo')
-
-    def cancel(self):
-        """
-        Write to named pipe to unblock open() in thread and exit cleanly.
-        """
-        self.finished.set()
-        with open(f'{SMBPath.RUNDIR.platform()}/.wb_fifo', 'w') as f:
-            f.write(str(DSStatus.LEAVING.value))
-
-
-class ADMonitorService(Service):
-    class Config:
-        private = True
-
-    def __init__(self, *args, **kwargs):
-        super(ADMonitorService, self).__init__(*args, **kwargs)
-        self.thread = None
-        self.initialized = False
-        self.lock = threading.Lock()
-
-    def start(self):
-        if not self.middleware.call_sync('activedirectory.config')['enable']:
-            self.logger.trace('Active directory is disabled. Exiting AD monitoring.')
-            return
-
-        with self.lock:
-            if self.initialized:
-                return
-
-            thread = WBStatusThread(
-                middleware=self.middleware,
-            )
-            thread.setup()
-            self.thread = thread
-            thread.start()
-            self.initialized = True
-
-    def stop(self):
-        thread = self.thread
-        if thread is None:
-            return
-
-        thread.cancel()
-        self.thread = None
-
-        with self.lock:
-            self.initialized = False
-
-    def restart(self):
-        self.stop()
-        self.start()
-
-
-async def setup(middleware):
-    """
-    During initial boot let smb_configure script start monitoring once samba's
-    rundir is created.
-    """
-    if await middleware.call('system.ready'):
-        await middleware.call('admonitor.start')
