@@ -1,8 +1,12 @@
+import asyncio
 import errno
 import json
+import time
+
+import aiohttp
+import async_timeout
 import requests
 import simplejson
-import time
 
 from middlewared.pipe import Pipes
 from middlewared.plugins.system import DEBUG_MAX_SIZE
@@ -13,6 +17,27 @@ from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.validators import Email
 
 ADDRESS = 'support-proxy.ixsystems.com'
+
+
+async def post(url, data, timeout=INTERNET_TIMEOUT):
+    try:
+        async with async_timeout.timeout(timeout):
+            async with aiohttp.ClientSession(
+                raise_for_status=True, trust_env=True,
+            ) as session:
+                req = await session.post(url, headers={"Content-Type": "application/json"}, data=data)
+    except asyncio.TimeoutError:
+        raise CallError('Connection timed out', errno.ETIMEDOUT)
+    except aiohttp.ClientResponseError as e:
+        raise CallError(f'Invalid proxy server response ({req.status}): {e}', errno.EBADMSG)
+
+    if req.status != 200:
+        raise CallError(f'Invalid proxy server response ({req.status})', errno.EBADMSG)
+
+    try:
+        return await req.json()
+    except aiohttp.client_exceptions.ContentTypeError:
+        raise CallError('Invalid proxy server response', errno.EBADMSG)
 
 
 class SupportModel(sa.Model):
@@ -124,34 +149,22 @@ class SupportService(ConfigService):
         Str('username'),
         Str('password'),
     )
-    def fetch_categories(self, username, password):
+    async def fetch_categories(self, username, password):
         """
         Fetch all the categories available for `username` using `password`.
         Returns a dict with the category name as a key and id as value.
         """
 
-        self.middleware.call_sync('network.general.will_perform_activity', 'support')
+        await self.middleware.call('network.general.will_perform_activity', 'support')
 
-        sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
-        try:
-            r = requests.post(
-                f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
-                data=json.dumps({
-                    'user': username,
-                    'password': password,
-                }),
-                headers={'Content-Type': 'application/json'},
-                timeout=INTERNET_TIMEOUT,
-            )
-            r.raise_for_status()
-            data = r.json()
-        except simplejson.JSONDecodeError:
-            self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
-            raise CallError('Invalid proxy server response', errno.EBADMSG)
-        except requests.ConnectionError as e:
-            raise CallError(f'Connection error {e}', errno.EBADF)
-        except requests.Timeout:
-            raise CallError('Connection time out', errno.ETIMEDOUT)
+        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
+        data = await post(
+            f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
+            data=json.dumps({
+                'user': username,
+                'password': password,
+            }),
+        )
 
         if 'error' in data:
             raise CallError(data['message'], errno.EINVAL)
@@ -223,27 +236,10 @@ class SupportService(ConfigService):
 
         job.set_progress(20, 'Submitting ticket')
 
-        try:
-            r = await self.middleware.run_in_thread(lambda: requests.post(
-                f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket',
-                data=json.dumps(data),
-                headers={'Content-Type': 'application/json'},
-                timeout=INTERNET_TIMEOUT,
-            ))
-            r.raise_for_status()
-            result = await self.middleware.run_in_thread(r.json)
-        except simplejson.JSONDecodeError:
-            self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
-            raise CallError('Invalid proxy server response', errno.EBADMSG)
-        except requests.ConnectionError as e:
-            raise CallError(f'Connection error {e}', errno.EBADF)
-        except requests.Timeout:
-            raise CallError('Connection time out', errno.ETIMEDOUT)
-
-        if r.status_code != 200:
-            self.logger.debug(f'Support Ticket failed ({r.status_code}): {r.text}', r.status_code, r.text)
-            raise CallError('Ticket creation failed, try again later.', errno.EINVAL)
-
+        result = await post(
+            f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket',
+            data=json.dumps(data),
+        )
         if result['error']:
             raise CallError(result['message'], errno.EINVAL)
 
@@ -318,14 +314,14 @@ class SupportService(ConfigService):
     ))
     @returns()
     @job(pipes=["input"])
-    async def attach_ticket(self, job, data):
+    def attach_ticket(self, job, data):
         """
         Method to attach a file to a existing ticket.
         """
 
-        await self.middleware.call('network.general.will_perform_activity', 'support')
+        self.middleware.call_sync('network.general.will_perform_activity', 'support')
 
-        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
+        sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
 
         if 'username' in data:
             data['user'] = data.pop('username')
@@ -333,21 +329,22 @@ class SupportService(ConfigService):
         filename = data.pop('filename')
 
         try:
-            r = await self.middleware.run_in_thread(lambda: requests.post(
+            r = requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment',
                 data=data,
                 timeout=300,
                 files={'file': (filename, job.pipes.input.r)},
-            ))
-            r.raise_for_status()
-            data = await self.middleware.run_in_thread(r.json)
-        except simplejson.JSONDecodeError:
-            self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
-            raise CallError('Invalid proxy server response', errno.EBADMSG)
+            )
         except requests.ConnectionError as e:
             raise CallError(f'Connection error {e}', errno.EBADF)
         except requests.Timeout:
             raise CallError('Connection time out', errno.ETIMEDOUT)
+
+        try:
+            data = r.json()
+        except simplejson.JSONDecodeError:
+            self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
+            raise CallError('Invalid proxy server response', errno.EBADMSG)
 
         if data['error']:
             raise CallError(data['message'], errno.EINVAL)
