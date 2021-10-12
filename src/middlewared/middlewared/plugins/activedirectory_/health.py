@@ -45,9 +45,14 @@ class ActiveDirectoryService(Service):
         if data is None:
             data = self.middleware.call_sync("activedirectory.config")
         if dc is None:
-            res = self.middleware.call_sync('activedirectory.get_n_working_srvers',
-                data['domainname'], SRV.DOMAINCONTROLLER.name, data['site'],
-                2, data['timeout'], data['verbose_logging']
+            res = self.middleware.call_sync(
+                'activedirectory.get_n_working_srvers',
+                data['domainname'],
+                SRV.DOMAINCONTROLLER.name,
+                data['site'],
+                2,
+                data['timeout'],
+                data['verbose_logging']
             )
             if len(res) != 2:
                 self.logger.warning("Less than two Domain Controllers are in our "

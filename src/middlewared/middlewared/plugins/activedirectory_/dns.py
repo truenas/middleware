@@ -19,7 +19,6 @@ class ActiveDirectoryService(Service):
     class Config:
         service = "activedirectory"
 
-
     @private
     def port_is_listening(self, host, port, timeout=1):
         ret = False

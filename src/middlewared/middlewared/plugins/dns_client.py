@@ -1,16 +1,14 @@
-import enum
 from dns.asyncresolver import Resolver
 from io import StringIO
 
 from middlewared.service import private, Service
-from middlewared.schema import accepts, returns, IPAddr, Dict, Int, List, Bool, Str, Ref, OROperator
+from middlewared.schema import accepts, returns, IPAddr, Dict, Int, List, Str, Ref, OROperator
 from middlewared.utils import filter_list
 
 
 class DNSClient(Service):
     class Config:
         private = True
-
 
     @private
     async def get_resolver(self, options):
@@ -24,7 +22,7 @@ class DNSClient(Service):
         else:
             r = Resolver()
 
-        r.timeout=options['timeout']
+        r.timeout = options['timeout']
 
         return r
 
@@ -75,7 +73,6 @@ class DNSClient(Service):
         options = data['dns_client_options']
 
         r = await self.get_resolver(options)
-        r.timeout=options['timeout']
 
         ans = await r.resolve(
             data['name'],
@@ -129,7 +126,6 @@ class DNSClient(Service):
         options = data['dns_client_options']
 
         r = await self.get_resolver(options)
-        r.timeout=options['timeout']
 
         ans = await r.resolve_address(
             data['address'],
