@@ -1,6 +1,8 @@
 import os
 import asyncio
 import enum
+from ipaddress import ip_address
+from dns import asyncresolver
 
 from middlewared.service import Service, ValidationErrors
 
@@ -10,39 +12,54 @@ class ClusterUtils(Service):
         namespace = 'cluster.utils'
         private = True
 
-    async def _resolve_hostname(self, loop, hostname, timeout):
+    async def _resolve_hostname(self, hostname):
         try:
-            ip = await asyncio.wait_for(loop.getaddrinfo(hostname, None), timeout=timeout)
-            return ip[0][4][0]
-        except asyncio.TimeoutError:
-            raise
+            ip = ip_address(hostname)
+            # we will return the IP address so long as it's not loopback address
+            # else we'll return an empty list so that the caller of this raises
+            # a validation error
+            return ip if not ip.is_loopback else []
+        except ValueError:
+            # means it's a hostname so we need to try and resolve
+            pass
+
+        lifetime = 6  # total amount of time to try and resolve `hostname`
+        timeout = lifetime // 3  # time to wait before moving on to next entry in resolv.conf
+
+        ar = asyncresolver.Resolver()
+        ar.lifetime = lifetime
+        ar.timeout = timeout
+
+        try:
+            ans = [i.to_text() for i in (await ar.resolve(hostname)).response.answer[0].items]
         except Exception:
-            return
+            ans = []
+
+        # check the resolved IP addresses to make sure they're not loopback addresses
+        # idk...shouldn't happen but be sure
+        for ip in ans[:]:
+            if ip_address(ip).is_loopback:
+                ans.remove(ip)
+
+        return ans
 
     async def resolve_hostnames(self, hostnames):
         """
         Takes a list of hostnames to be asynchronously resolved to their respective IP address.
-        If IP addresses are given, then it will simply return the IP address
         """
         hostnames = list(set(hostnames))
-        loop = asyncio.get_event_loop()
-        timeout = 5
         verrors = ValidationErrors()
 
-        results = await asyncio.gather(
-            *[self._resolve_hostname(loop, host, timeout) for host in hostnames],
-            return_exceptions=True
-        )
+        results = await asyncio.gather(*[self._resolve_hostname(host) for host in hostnames])
 
         ips = []
         for host, result in zip(hostnames, results):
-            if isinstance(result, (type(None), asyncio.TimeoutError)):
+            if not result:
                 verrors.add(f'resolve_hostname.{host}', 'Failed to resolve hostname')
             else:
-                ips.append(result)
+                ips.extend(result)
 
-        # if any hostnames failed to be resolved
-        # it will be raised here
+        # if any hostnames failed to be resolved it will be raised here
         verrors.check()
 
         return list(set(ips))
