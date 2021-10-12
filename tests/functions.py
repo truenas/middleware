@@ -92,12 +92,13 @@ def SSH_TEST(command, username, passwrd, host):
         f"{username}@{host}",
         command
     ]
-    process = run(cmd, stdout=PIPE, universal_newlines=True)
+    process = run(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     output = process.stdout
+    stderr = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output}
+        return {'result': False, 'output': output, 'stderr': stderr}
     else:
-        return {'result': True, 'output': output}
+        return {'result': True, 'output': output, 'stderr': stderr}
 
 
 def send_file(file, destination, username, passwrd, host):

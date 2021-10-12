@@ -34,7 +34,7 @@ def test_root_api_key_websocket(request):
     with api_key([]) as key:
         cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, str(results['output'])
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         assert 'uptime' in str(results['output'])
 
 
@@ -44,7 +44,7 @@ def test_allowed_api_key_websocket(request):
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
         cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, str(results['output'])
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         assert 'uptime' in str(results['output'])
 
 
