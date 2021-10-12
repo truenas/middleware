@@ -863,7 +863,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             self.logger.warning("Failed to automatically set time source.", exc_info=True)
             return
 
-        if not dc_info['flags']['Is running time services']:
+        if not dc_info['Flags']['Is running time services']:
             return
 
         dc_name = dc_info["Information for Domain Controller"]
