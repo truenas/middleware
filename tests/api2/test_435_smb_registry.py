@@ -193,12 +193,12 @@ def test_009_reset_smb():
     Remove all parameters that might turn us into
     a MacOS-style SMB server (fruit).
     """
-    payload = {"aapl_extensions": False}
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
-
     results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
                   {"purpose": "NO_PRESET", "timemachine": False})
+    assert results.status_code == 200, results.text
+
+    payload = {"aapl_extensions": False}
+    results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
 
