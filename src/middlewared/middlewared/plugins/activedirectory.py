@@ -548,7 +548,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             else:
                 realm_id = await self.middleware.call(
                     'kerberos.realm.direct_create',
-                    {'realm': ad['domainname'].upper(), 'kdc': [], 'admin_server': [], 'kpasswd_server': []}
+                    {'realm': ad['domainname'].upper(), 'kdc': '', 'admin_server': '', 'kpasswd_server': ''}
                 )
 
             await self.direct_update({"kerberos_realm": realm_id})
