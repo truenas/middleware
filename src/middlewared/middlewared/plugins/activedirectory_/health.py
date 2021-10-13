@@ -46,7 +46,7 @@ class ActiveDirectoryService(Service):
             data = self.middleware.call_sync("activedirectory.config")
         if dc is None:
             res = self.middleware.call_sync(
-                'activedirectory.get_n_working_srvers',
+                'activedirectory.get_n_working_servers',
                 data['domainname'],
                 SRV.DOMAINCONTROLLER.name,
                 data['site'],
