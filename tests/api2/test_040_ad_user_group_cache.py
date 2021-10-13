@@ -336,6 +336,8 @@ def test_39_leave_activedirectory(request):
     }
     results = POST("/activedirectory/leave/", payload)
     assert results.status_code == 200, results.text
+    job_status = wait_on_job(results.json(), 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_41_remove_site(request):
