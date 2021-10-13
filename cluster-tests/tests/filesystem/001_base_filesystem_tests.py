@@ -313,7 +313,6 @@ def test_012_filesystem_setacl_nonrecursive(request):
     res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
-    mode = stat.S_IMODE(data['mode']) & ~stat.S_IFDIR
     assert data['acl'] is True
 
     payload = {'path': cluster_path}
@@ -371,7 +370,6 @@ def test_013_filesystem_setacl_recursive(request):
     res = make_request('post', url, data=cluster_path)
     assert res.status_code == 200, res.text
     data = res.json()
-    mode = stat.S_IMODE(data['mode']) & ~stat.S_IFDIR
     assert data['acl'] is True
 
     payload = {'path': cluster_path}
