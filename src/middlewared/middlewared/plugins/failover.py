@@ -328,15 +328,29 @@ class FailoverService(ConfigService):
 
     @accepts()
     @returns(Bool())
+    async def become_passive(self):
+        """
+        Restart the keepavlived service which will cause any VIP addresses
+        on this controller to be migrated to the other controller. This will
+        cause a failover event if run on the master controller. If this is
+        run on the passive controller it will do 1 of 2 things:
+
+        1: if there are no VIP(s) on the passive controller, then this will
+            do nothing.
+        2: if there are VIP(s) on the passive controller, then the VIP(s)
+            will be migrated to the active controller. A failover event
+            will be triggered but it will do nothing since the active will
+            already have the zpool(s) imported.
+        """
+        return await self.middleware.call('service.restart', 'keepalived')
+
+    @accepts()
+    @returns(Bool())
     async def force_master(self):
         """
-        Force this controller to become MASTER.
+        Force this controller to become MASTER, if it's not already.
         """
-        # Skip if we are already MASTER
         if await self.middleware.call('failover.status') == 'MASTER':
-            return False
-
-        if not await self.middleware.call('failover.fenced.start', True):
             return False
 
         for i in await self.middleware.call('interface.query', [('failover_critical', '!=', None)]):
