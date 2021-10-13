@@ -1379,9 +1379,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
             }
         }
 
+        job.set_progress(5, 'Obtaining kerberos ticket for privileged user.')
         cred = await self.middleware.call('kerberos.get_cred', payload)
         await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
+        job.set_progress(10, 'Leaving Active Directory domain.')
         cmd = [
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
@@ -1393,6 +1395,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if netads.returncode != 0:
             self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
 
+        job.set_progress(20, 'Removing kerberos keytab and realm.')
         if smb_ha_mode != 'LEGACY':
             krb_princ = await self.middleware.call(
                 'kerberos.keytab.query',
@@ -1416,6 +1419,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             except Exception:
                 self.logger.debug("Failed to remove stale secrets file.", exc_info=True)
 
+        job.set_progress(30, 'Clearing local Active Directory settings.')
         payload = {
             'enable': False,
             'site': None,
@@ -1431,6 +1435,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             except Exception:
                 self.logger.warning("Failed to leave AD domain on passive storage controller.", exc_info=True)
 
+        job.set_progress(40, 'Flushing caches.')
         flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
         if flush.returncode != 0:
             self.logger.warning("Failed to flush samba's general cache after leaving Active Directory.")
@@ -1438,15 +1443,23 @@ class ActiveDirectoryService(TDBWrapConfigService):
         with contextlib.suppress(FileNotFoundError):
             os.unlink('/etc/krb5.keytab')
 
+        job.set_progress(50, 'Clearing kerberos configuration and ticket.')
         await self.middleware.call('kerberos.stop')
+
+        job.set_progress(60, 'Regenerating configuration.')
         await self.middleware.call('etc.generate', 'pam')
         await self.synchronize(new)
         await self.middleware.call('idmap.synchronize')
+
+        job.set_progress(60, 'Restarting services.')
         await self.middleware.call('service.restart', 'cifs')
+        await self.middleware.call('service.restart', 'idmap')
         if smb_ha_mode == 'CLUSTERED':
+            job.set_progress(80, 'Propagating changes to other cluster nodes.')
             cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'LEAVE')
             await cl_reload.wait()
 
+        job.set_progress(100, 'Successfully left activedirectory domain.')
         return
 
     @private
