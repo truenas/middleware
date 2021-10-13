@@ -417,6 +417,8 @@ def test_17_leave_activedirectory(request):
     }
     results = POST("/activedirectory/leave/", payload)
     assert results.status_code == 200, results.text
+    job_status = wait_on_job(results.json(), 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_18_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
