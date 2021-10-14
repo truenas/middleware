@@ -288,6 +288,7 @@ class KerberosService(TDBWrapConfigService):
                 Str('binddn'),
                 Str('bindpw'),
                 Int('kerberos_realm'),
+                Str('kerberos_principal')
             ),
             name='conf',
             required=True
@@ -297,17 +298,28 @@ class KerberosService(TDBWrapConfigService):
         '''
         Get kerberos cred from directory services config to use for `do_kinit`.
         '''
-        conf = data['conf']
-        if conf['kerberos_principal']:
+        conf = data.get('conf', {})
+        if conf.get('kerberos_principal'):
             return {'kerberos_principal': conf['kerberos_principal']}
 
+        verrors = ValidationErrors()
         dstype = DSType[data['dstype']]
         if dstype is DSType.DS_TYPE_ACTIVEDIRECTORY:
+            for k in ['bindname', 'bindpw', 'domainname']:
+                if not conf.get(k):
+                    verrors.add(f'conf.{k}', 'Parameter is required.')
+
+            verrors.check()
             return {
                 'username': f'{conf["bindname"]}@{conf["domainname"].upper()}',
                 'password': conf['bindpw']
             }
 
+        for k in ['binddn', 'bindpw', 'kerberos_realm']:
+            if not conf.get(k):
+                verrors.add(f'conf.{k}', 'Parameter is required.')
+
+        verrors.check()
         krb_realm = await self.middleware.call(
             'kerberos.realm.query',
             [('id', '=', conf['kerberos_realm'])],
