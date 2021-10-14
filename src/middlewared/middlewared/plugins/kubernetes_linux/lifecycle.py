@@ -256,6 +256,7 @@ class KubernetesService(Service):
                     'extra': {
                         'properties': list(update_props),
                         'retrieve_children': False,
+                        'user_properties': False,
                     }
                 }
             )
