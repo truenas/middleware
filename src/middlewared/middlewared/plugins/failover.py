@@ -1604,16 +1604,16 @@ async def ready_system_sync_keys(middleware):
     await middleware.call('failover.sync_keys_from_remote_node')
 
 
-async def _event_system_ready(middleware, event_type, args):
-    """
-    Method called when system is ready to issue an event in case
-    HA upgrade is pending.
-    """
-    if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
-        return
+async def _event_system(middleware, event_type, args):
+    if args['id'] == 'ready':
+        # called when system is ready to issue an event in case HA upgrade is pending.
+        if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+            return
 
-    if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
-        middleware.send_event('failover.upgrade_pending', 'ADDED', id='BACKUP', fields={'pending': True})
+        if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
+            middleware.send_event('failover.upgrade_pending', 'ADDED', id='BACKUP', fields={'pending': True})
+    elif args['id'] == 'shutdown':
+        await middleware.call('failover.fenced.stop', True)
 
 
 def remote_status_event(middleware, *args, **kwargs):
@@ -1632,7 +1632,7 @@ async def setup(middleware):
 
         It is expected the client will react by issuing `upgrade_finish` call
         at user will.'''))
-    middleware.event_subscribe('system', _event_system_ready)
+    middleware.event_subscribe('system', _event_system)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
