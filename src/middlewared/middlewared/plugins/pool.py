@@ -752,6 +752,7 @@ class PoolService(CRUDService):
         }
 
         fsoptions = {
+            'atime': 'off',
             'compression': 'lz4',
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
