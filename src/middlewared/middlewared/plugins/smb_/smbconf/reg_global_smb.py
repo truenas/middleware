@@ -47,7 +47,7 @@ class GlobalSchema(RegistrySchema):
             if data_in['clustered']:
                 passdb_backend = 'tdbsam'
             else:
-                passdb_backend = '/var/run/samba-cache/passdb.tdb'
+                passdb_backend = 'tdbsam:/var/run/samba-cache/passdb.tdb'
 
             data_out.update({
                 'passdb backend': {'parsed': passdb_backend},
