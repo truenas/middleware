@@ -12,7 +12,7 @@ sys.path.append(os.getcwd())
 from functions import POST, GET, DELETE, SSH_TEST
 from auto_config import password, user as user_, ip, dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
 
 
 @contextlib.contextmanager

@@ -28,6 +28,7 @@ dataset_url = dataset.replace('/', '%2F')
 child_dataset = f'{dataset}/child'
 child_dataset_url = child_dataset.replace('/', '%2F')
 
+# Only read all tests bellow if on non-NA
 if not ha:
     def test_001_create_a_normal_pool():
         global pool_id
