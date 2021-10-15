@@ -490,11 +490,7 @@ def test_32_add_krb_spn(request):
     privileges.
     """
     depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
-    results = GET("/smb/")
-    assert results.status_code == 200, results.text
-    netbios_name = results.json()['netbiosname_local']
-
-    cmd = f'midclt call activedirectory.add_nfs_spn {netbios_name} {AD_DOMAIN}'
+    cmd = 'midclt call activedirectory.add_nfs_spn'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
