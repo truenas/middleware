@@ -280,6 +280,17 @@ def test_08_test_backend_options(request, backend):
             decoded_sec = b64decode(stored_sec).rstrip(b'\x00').decode()
             assert secret == decoded_sec, stored_sec
 
+    # reset idmap backend to RID to ensure that winbindd is running
+    payload = {
+        "name": "DS_TYPE_ACTIVEDIRECTORY",
+        "range_low": "1000000000",
+        "range_high": "2000000000",
+        "idmap_backend": 'RID',
+        "options": {}
+    }
+    results = PUT("/idmap/id/1/", payload)
+    assert results.status_code == 200, results.text
+
 
 def test_09_clear_idmap_cache(request):
     depends(request, ["JOINED_AD"])
