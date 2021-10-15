@@ -34,7 +34,6 @@ def test_01_get_pool():
     assert isinstance(results.json(), list), results.text
 
 
-@pytest.mark.skipif(not ha, reason="Skip on single node")
 def test_02_wipe_all_pool_disk():
     for disk in disk_pool:
         payload = {
@@ -48,23 +47,24 @@ def test_02_wipe_all_pool_disk():
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-@pytest.mark.skipif(not ha, reason="Skip on single node")
-def test_03_creating_ha_pool():
-    global payload
-    payload = {
-        "name": "ha",
-        "encryption": False,
-        "topology": {
-            "data": [
-                {"type": "STRIPE", "disks": ha_disk_pool}
-            ],
+# Only read the test on HA
+if ha:
+    def test_03_creating_ha_pool():
+        global payload
+        payload = {
+            "name": "ha",
+            "encryption": False,
+            "topology": {
+                "data": [
+                    {"type": "STRIPE", "disks": ha_disk_pool}
+                ],
+            }
         }
-    }
-    results = POST("/pool/", payload)
-    assert results.status_code == 200, results.text
-    job_id = results.json()
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        results = POST("/pool/", payload)
+        assert results.status_code == 200, results.text
+        job_id = results.json()
+        job_status = wait_on_job(job_id, 180)
+        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @pytest.mark.dependency(name="pool_04")
