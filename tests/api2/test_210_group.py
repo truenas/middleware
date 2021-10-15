@@ -259,7 +259,7 @@ def test_27_full_groupmap_check(request):
     Full check of groupmap contents
     """
     depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
-    cmd = f"midclt call smb.groupmap_list"
+    cmd = "midclt call smb.groupmap_list"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
 
@@ -290,13 +290,13 @@ def test_27_full_groupmap_check(request):
 
     assert str(gid_to_check) in gm['local'], str(gm)
 
-    cmd = f"midclt call smb.groupmap_listmem S-1-5-32-544"
+    cmd = "midclt call smb.groupmap_listmem S-1-5-32-544"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
     ba = json.loads(results['output'].strip())
     assert gm['local_builtins']['544']['sid'] in ba, str(ba)
 
-    cmd = f"midclt call smb.groupmap_listmem S-1-5-32-546"
+    cmd = "midclt call smb.groupmap_listmem S-1-5-32-546"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
     bg = json.loads(results['output'].strip())
