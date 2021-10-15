@@ -1,9 +1,6 @@
-import logging
-import subprocess
+from socket import sethostname
 
 from middlewared.service import CallError
-
-logger = logging.getLogger(__name__)
 
 
 def render(service, middleware):
@@ -11,10 +8,13 @@ def render(service, middleware):
     hostname = config['hostname_local']
     if config['domain']:
         hostname += f'.{config["domain"]}'
+
+    # write the hostname to the file
     with open("/etc/hostname", "w") as f:
         f.write(hostname)
 
-    cp = subprocess.Popen(["hostname", hostname], stderr=subprocess.PIPE, stdout=subprocess.DEVNULL)
-    stderr = cp.communicate()[1]
-    if cp.returncode:
-        raise CallError(f'Failed to set hostname: {stderr.decode()}')
+    # set the new hostname in kernel
+    try:
+        sethostname(hostname)
+    except Exception as e:
+        raise CallError(f'Failed to set hostname: {e}')

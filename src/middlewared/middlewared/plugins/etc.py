@@ -269,8 +269,8 @@ class EtcService(Service):
             {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
         ],
         'hostname': [
-            {'type': 'mako', 'path': 'hosts'},
-            {'type': 'py', 'path': 'hostname', 'platform': 'Linux', 'checkpoint': 'pre_interface_sync'},
+            {'type': 'mako', 'path': 'hosts', 'mode': 0o644},
+            {'type': 'py', 'path': 'hostname', 'checkpoint': 'pre_interface_sync'},
         ],
         'ssh': [
             {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
