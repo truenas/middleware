@@ -1,7 +1,7 @@
 from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
-from middlewared.plugins.smb import SMBCmd
+from middlewared.plugins.smb import SMBCmd, SMBPath
 
 import os
 import subprocess
@@ -116,10 +116,14 @@ class SMBService(Service):
             pdbcreate = await Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
             )
-            await pdbcreate.communicate(input=" \n \n".encode())
+            out, err = await pdbcreate.communicate(input=" \n \n".encode())
+            if pdbcreate.returncode != 0:
+                raise CallError(f'{username}: failed to create passdb user: {err.decode()}')
+
             setntpass = await run([SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
             if setntpass.returncode != 0:
                 raise CallError(f'Failed to set NT password for {username}: {setntpass.stderr.decode()}')
+
             if bsduser[0]['locked']:
                 disableacct = await run([SMBCmd.SMBPASSWD.value, '-d', username], check=False)
                 if disableacct.returncode != 0:
@@ -172,9 +176,7 @@ class SMBService(Service):
         `conf_users` contains results of `user.query`. Since users will receive new
         SID values, we will need to flush samba's cache to ensure consistency.
         """
-        private_dir = await self.middleware.call('smb.getparm',
-                                                 'private dir',
-                                                 'global')
+        private_dir = SMBPath.PASSDB_DIR.platform()
         ts = int(time.time())
         old_path = f'{private_dir}/passdb.tdb'
         new_path = f'{private_dir}/passdb.{ts}.corrupted'
