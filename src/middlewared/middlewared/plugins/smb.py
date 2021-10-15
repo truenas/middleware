@@ -7,7 +7,6 @@ from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
 from pathlib import Path
-from base64 import b64decode
 
 import asyncio
 import codecs
@@ -17,8 +16,6 @@ import os
 import re
 import subprocess
 import uuid
-import shutil
-import struct
 
 from samba import param
 
@@ -74,6 +71,7 @@ class SMBPath(enum.Enum):
     PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4/private', 0o700, True)
     LEGACYSTATE = ('/root/samba', '/root/samba', 0o755, True)
     LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private', 0o700, True)
+    PASSDB_DIR = ('/var/run/samba4/private', '/var/run/samba-cache/private', 0o700, True)
     MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/private/msg.sock', 0o700, False)
     RUNDIR = ('/var/run/samba4', '/var/run/samba', 0o755, True)
     LOCKDIR = ('/var/run/samba4', '/var/run/samba-lock', 0o755, True)
@@ -428,24 +426,8 @@ class SMBService(TDBWrapConfigService):
     @private
     async def get_next_rid(self):
         next_rid = (await self.config())['next_rid']
-        if next_rid == 0:
-            try:
-                shutil.copyfile(
-                    f"{SMBPath.LEGACYPRIVATE.platform()}/passdb.tdb",
-                    f"{SMBPath.LEGACYPRIVATE.platform()}/tmppassdb.tdb"
-                )
-                tdb_rid = await self.middleware.call('tdb.fetch', {
-                    "name": f"{SMBPath.LEGACYPRIVATE.platform()}/tmppassdb.tdb",
-                    "key": "NEXT_RID",
-                    "tdb-options": {"backend": "CUSTOM", "data_type": "BYTES"},
-                })
-                decoded = b64decode(tdb_rid)
-                next_rid = struct.unpack("<L", decoded)[0]
-
-            except Exception:
-                self.logger.warning("Failed to initialize RID counter from passdb. "
-                                    "Using default value for initialization.", exc_info=True)
-                next_rid = 5000
+        if next_rid < 10000:
+            next_rid = 10000
 
         await self.middleware.call('datastore.update', 'services.cifs', 1,
                                    {'next_rid': next_rid + 1},
