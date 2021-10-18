@@ -13,10 +13,10 @@ class EnclosureService(Service):
     @private
     def list_ses_enclosures(self):
         try:
-            return [
+            return sorted([
                 os.path.join("/dev/bsg", enc)
                 for enc in os.listdir("/sys/class/enclosure")
-            ]
+            ])
         except FileNotFoundError:
             return []
 
