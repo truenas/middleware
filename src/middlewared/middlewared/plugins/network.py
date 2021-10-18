@@ -1,7 +1,7 @@
 from middlewared.service import (
     CallError, ConfigService, CRUDService, Service, filterable, filterable_returns, pass_app, private
 )
-from middlewared.utils import Popen, filter_list, run
+from middlewared.utils import filter_list, run
 from middlewared.schema import (
     accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, Ref, ValidationErrors
 )
@@ -20,7 +20,6 @@ import platform
 import re
 import signal
 import socket
-import subprocess
 import psutil
 
 from .interface.netif import netif
@@ -2100,7 +2099,7 @@ class InterfaceService(CRUDService):
             # first interface that is configured, we kill dhclient on _all_ interfaces
             # but dhclient could have added items to /etc/resolv.conf. To "fix" this
             # we run dns.sync which will wipe the contents of resolv.conf and it is
-            # expected that the end-user fills this out manually
+            # expected that the end-user fills this out via the network global webUI page
             await self.middleware.call('dns.sync')
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
