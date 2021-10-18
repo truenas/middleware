@@ -9,10 +9,11 @@ import syslog
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, run
+from middlewared.utils import run
 from middlewared.validators import Range, Port
 
 
+RE_DRIVER_CHOICE = re.compile(r'(\S+)\s+(?:\S+=\S+)?\s*(?:\((.+)\))?$')
 RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
 RE_UPS_STATUS = re.compile(r'ups.status: (.*)')
 
@@ -106,10 +107,7 @@ class UPSService(SystemServiceService):
         Returns choices of UPS drivers supported by the system.
         """
         ups_choices = {}
-        if osc.IS_LINUX:
-            driver_list = '/usr/share/nut/driver.list'
-        else:
-            driver_list = '/conf/base/etc/local/nut/driver.list'
+        driver_list = '/usr/share/nut/driver.list'
         if os.path.exists(driver_list):
             with open(driver_list, 'rb') as f:
                 d = f.read().decode('utf8', 'ignore')
@@ -127,9 +125,10 @@ class UPSService(SystemServiceService):
                     last = -1
                 driver_str = row[last]
                 driver_annotation = ''
-                m = re.match(r'(.+) \((.+)\)', driver_str)  # "blazer_usb (USB ID 0665:5161)"
+                m = RE_DRIVER_CHOICE.match(driver_str)
                 if m:
-                    driver_str, driver_annotation = m.group(1), m.group(2)
+                    driver_str = m.group(1)
+                    driver_annotation = m.group(2) if len(m.groups()) > 1 else ''
                 for driver in driver_str.split(' or '):  # can be "blazer_ser or blazer_usb"
                     driver = driver.strip()
                     if driver not in drivers_available():
