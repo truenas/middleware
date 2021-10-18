@@ -1485,6 +1485,14 @@ class SharingSMBService(SharingService):
             verrors.add(f'{schema_name}.name',
                         'Path suffix may not contain more than two components.')
 
+        if data['timemachine'] and data['enabled']:
+            ngc = await self.middleware.call('network.configuration.config')
+            if not ngc['service_announcement']['mdns']:
+                verrors.add(
+                    f'{schema_name}.timemachine',
+                    'mDNS must be enabled in order to use an SMB share as a time machine target.'
+                )
+
         for entry in ['afp', 'timemachine']:
             if not data[entry]:
                 continue
