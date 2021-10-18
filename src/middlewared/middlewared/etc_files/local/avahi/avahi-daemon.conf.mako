@@ -21,6 +21,10 @@
     deny_interfaces = middleware.call_sync("interface.internal_interfaces")
     failover_int = middleware.call_sync("failover.internal_interfaces")
     deny_interfaces.extend(failover_int)
+
+    failover_status = middleware.call_sync('failover.status')
+    if failover_status not in ['SINGLE', 'MASTER']:
+        raise FileShouldNotExist()
 %>
 
 [server]
