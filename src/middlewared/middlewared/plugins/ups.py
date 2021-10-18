@@ -125,6 +125,9 @@ class UPSService(SystemServiceService):
                     last = -1
                 driver_str = row[last]
                 driver_annotation = ''
+                # We want to match following strings
+                # genericups upstype=1
+                # powerman-pdu (experimental)
                 m = RE_DRIVER_CHOICE.match(driver_str)
                 if m:
                     driver_str = m.group(1)
@@ -135,7 +138,9 @@ class UPSService(SystemServiceService):
                         continue
                     for i, field in enumerate(list(row)):
                         row[i] = field
-                    ups_choices['$'.join([driver, row[3]])] = '%s (%s)' % (
+                    key = '$'.join([driver, row[3]])
+                    val = f'{ups_choices[key]} / ' if key in ups_choices else ''
+                    ups_choices[key] = val + '%s (%s)' % (
                         ' '.join(filter(None, row[0:last])),
                         ', '.join(filter(None, [driver, driver_annotation]))
                     )
