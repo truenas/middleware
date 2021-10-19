@@ -80,7 +80,7 @@ def add_peers():
     # use casefold() for purpose of hostname validation sense case does not matter
     # but the resolvable names on the network might not match _exactly_ with what
     # was given to us in the config (i.e. DNS1.HOSTNAME.BLAH == DNS1.hostname.BLAH)
-    assert set([i['hostname'].casefold() for i in ans.json()]) == set([i.casefold() for i HOSTNAMES]), ans.json()
+    assert set([i['hostname'].casefold() for i in ans.json()]) == set([i.casefold() for i in HOSTNAMES]), ans.json()
 
 
 def add_jwt_secret():
