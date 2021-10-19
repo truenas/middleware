@@ -1,7 +1,7 @@
 import pytest
 
 from config import CLUSTER_INFO, CLUSTER_IPS
-from utils import make_request, make_ws_request
+from utils import make_request, ssh_test, make_ws_request
 from pytest_dependency import depends
 from helpers import get_bool
 
@@ -449,6 +449,10 @@ def test_030_delete_smb_share(request):
     url = f'http://{CLUSTER_IPS[1]}/api/v2.0/sharing/smb/id/{smb_share_id}'
     res = make_request('delete', url)
     assert res.status_code == 200, res.text
+
+    cmd = f'rm -rf /cluster/{CLUSTER_INFO["GLUSTER_VOLUME"]}/smb_share_01'
+    res = ssh_test(CLUSTER_IPS[0], cmd)
+    assert res['result'], res['output']
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
