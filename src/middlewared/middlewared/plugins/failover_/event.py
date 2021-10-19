@@ -135,7 +135,7 @@ class FailoverService(Service):
         of time to wait for a given service to (re)start.
         """
         to_restart = await self.middleware.call('datastore.query', 'services_services')
-        to_restart = [i['srv_service'] for i in to_restart if ['srv_enable']]
+        to_restart = [i['srv_service'] for i in to_restart if i['srv_enable']]
         if data['critical']:
             to_restart = [i for i in to_restart if i in self.CRITICAL_SERVICES]
         else:
