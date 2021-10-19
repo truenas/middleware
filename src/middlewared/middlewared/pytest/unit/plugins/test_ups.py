@@ -37,3 +37,16 @@ from middlewared.plugins.ups import UPSService
 def test__services_ups_service__driver_choices(config_line, key, value):
     with patch('builtins.open', mock_open(read_data=config_line)):
         assert UPSService(Mock()).driver_choices() == {key: value}
+
+
+@pytest.mark.parametrize('driver_str,normalized', [
+    ('victronups$(various)', 'driver = victronups'),
+    ('genericups upstype=4$(various)', 'driver = genericups\n\tupstype=4'),
+    ('genericups upstype=21$(various)', 'driver = genericups\n\tupstype=21'),
+    ('genericups upstype=10$(various)', 'driver = genericups\n\tupstype=10'),
+    ('blazer_usb$Alpha 1200Sx', 'driver = blazer_usb'),
+    ('tripplite_usb$SMART500RT1U', 'driver = tripplite_usb'),
+])
+@patch('os.path.exists', lambda x: True)
+def test__services_ups_service__driver_string_normalization(driver_str, normalized):
+    assert UPSService(Mock()).normalize_driver_string(driver_str) == normalized

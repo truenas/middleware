@@ -105,7 +105,8 @@ class UPSService(SystemServiceService):
         driver = driver_str.split('$')[0]
         driver = driver.split('(')[0]  # "blazer_usb (USB ID 0665:5161)"
         driver = driver.split(' or ')[0]  # "blazer_ser or blazer_usb"
-        return driver.replace(' ', '\n')  # "genericups upstype=16"
+        driver = driver.replace(' ', '\n\t')  # "genericups upstype=16"
+        return f'driver = {driver}'
 
     @accepts()
     @returns(Dict(additional_attrs=True, example={'blazer_ser$CPM-800': 'WinPower ups 2 CPM-800 (blazer_ser)'}))
