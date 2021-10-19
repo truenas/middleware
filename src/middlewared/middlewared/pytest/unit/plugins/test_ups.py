@@ -1,5 +1,4 @@
 import pytest
-import textwrap
 
 from mock import Mock, patch, mock_open
 
