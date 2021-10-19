@@ -465,6 +465,11 @@ class SMBService(TDBWrapConfigService):
                     os.mkdir(path, p.mode())
             else:
                 os.chmod(path, p.mode())
+                owner = os.stat(path).st_uid
+                if owner != 0:
+                    self.logger.warning("%s: invalid owner [%s] for path. Correcting.",
+                                        path, owner)
+                    os.chown(path, 0, 0)
 
     @private
     async def import_conf_to_registry(self):
