@@ -313,7 +313,7 @@ class SystemAdvancedService(ConfigService):
             if original_data['boot_scrub'] != config_data['boot_scrub']:
                 await self.middleware.call('service.restart', 'cron')
 
-            loader_reloaded = False
+            generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
             if original_data['motd'] != config_data['motd']:
                 await self.middleware.call('service.start', 'motd')
 
@@ -325,31 +325,12 @@ class SystemAdvancedService(ConfigService):
 
             if original_data['serialconsole'] != config_data['serialconsole']:
                 await self.middleware.call('service.start', 'ttys')
-                if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader')
-                    loader_reloaded = True
-                if osc.IS_LINUX:
-                    await self.middleware.call('etc.generate', 'grub')
+                generate_grub = True
             elif (
                 original_data['serialspeed'] != config_data['serialspeed'] or
                 original_data['serialport'] != config_data['serialport']
             ):
-                if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader')
-                    loader_reloaded = True
-
-            if original_data['autotune'] != config_data['autotune']:
-                if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader')
-                    loader_reloaded = True
-                await self.middleware.call('system.advanced.autotune', 'loader')
-                await self.middleware.call('system.advanced.autotune', 'sysctl')
-
-            if (
-                original_data['debugkernel'] != config_data['debugkernel'] and
-                not loader_reloaded
-            ):
-                await self.middleware.call('service.reload', 'loader')
+                generate_grub = True
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd')
@@ -366,7 +347,6 @@ class SystemAdvancedService(ConfigService):
             if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
                 await self.middleware.call('kmip.sync_sed_keys')
 
-            generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
             if config_data['kdump_enabled'] != original_data['kdump_enabled']:
                 # kdump changes require a reboot to take effect. So just generating the kdump config
                 # should be enough
