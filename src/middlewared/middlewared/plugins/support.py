@@ -29,10 +29,7 @@ async def post(url, data, timeout=INTERNET_TIMEOUT):
     except asyncio.TimeoutError:
         raise CallError('Connection timed out', errno.ETIMEDOUT)
     except aiohttp.ClientResponseError as e:
-        raise CallError(f'Invalid proxy server response ({req.status}): {e}', errno.EBADMSG)
-
-    if req.status != 200:
-        raise CallError(f'Invalid proxy server response ({req.status})', errno.EBADMSG)
+        raise CallError(f'Invalid proxy server response: {e}', errno.EBADMSG)
 
     try:
         return await req.json()
@@ -158,7 +155,7 @@ class SupportService(ConfigService):
         data = await post(
             f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
             data=json.dumps({
-                    'token': token,
+                'token': token,
             }),
         )
 
