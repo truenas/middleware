@@ -100,6 +100,13 @@ class UPSService(SystemServiceService):
         ports.append('auto')
         return ports
 
+    @private
+    def normalize_driver_string(self, driver_str):
+        driver = driver_str.split('$')[0]
+        driver = driver.split('(')[0]  # "blazer_usb (USB ID 0665:5161)"
+        driver = driver.split(' or ')[0]  # "blazer_ser or blazer_usb"
+        return driver.replace(' ', '\n')  # "genericups upstype=16"
+
     @accepts()
     @returns(Dict(additional_attrs=True, example={'blazer_ser$CPM-800': 'WinPower ups 2 CPM-800 (blazer_ser)'}))
     def driver_choices(self):
