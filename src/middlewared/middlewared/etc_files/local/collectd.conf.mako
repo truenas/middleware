@@ -177,9 +177,12 @@ LoadPlugin zfs_arc_v2
 	ModulePath "/usr/local/lib/collectd_pyplugins"
 	LogTraces true
 	Interactive false
+	Import "cputemp"
 	Import "disktemp"
 	Import "nfsstat"
 
+	<Module "cputemp">
+	</Module>
 	<Module "disktemp">
 	</Module>
 	<Module "nfsstat">
