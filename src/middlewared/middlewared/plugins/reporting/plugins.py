@@ -1,4 +1,5 @@
 import glob
+import itertools
 import os
 import re
 import subprocess
@@ -83,6 +84,41 @@ class CPUPlugin(RRDBase):
             ]
 
             return args
+
+
+class CPUTempPlugin(RRDBase):
+
+    title = 'CPU Temperature'
+    vertical_label = '\u00b0C'
+
+    def get_rrd_files(self, identifier):
+        files = []
+        for n in itertools.count():
+            file = os.path.join(self._base_path, f'cputemp-{n}', 'temperature.rrd')
+            if os.path.exists(file):
+                files.append(file)
+            else:
+                break
+
+        return files
+
+    def get_identifiers(self):
+        if not self.get_defs(None):
+            return []
+
+        return None
+
+    def get_defs(self, identifier):
+        args = []
+        for n, cputemp_file in enumerate(self.get_rrd_files(identifier)):
+            a = [
+                f'DEF:s_avg{n}={cputemp_file}:value:AVERAGE',
+                f'CDEF:avg{n}=s_avg{n},10,/,273.15,-',
+                f'XPORT:avg{n}:cputemp{n}'
+            ]
+            args.extend(a)
+
+        return args
 
 
 class DiskTempPlugin(RRDBase):
