@@ -109,8 +109,8 @@ class UPSService(SystemServiceService):
         ups_choices = {}
         driver_list = '/usr/share/nut/driver.list'
         if os.path.exists(driver_list):
-            with open(driver_list, 'rb') as f:
-                d = f.read().decode('utf8', 'ignore')
+            with open(driver_list, 'r') as f:
+                d = f.read()
             r = io.StringIO()
             for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
                 r.write(line.strip() + '\n')
