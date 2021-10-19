@@ -13,7 +13,7 @@ from middlewared.utils import run
 from middlewared.validators import Range, Port
 
 
-RE_DRIVER_CHOICE = re.compile(r'(\S+)\s+(?:\S+=\S+)?\s*(?:\((.+)\))?$')
+RE_DRIVER_CHOICE = re.compile(r'(\S+)\s+(\S+=\S+)?\s*(?:\((.+)\))?$')
 RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
 RE_UPS_STATUS = re.compile(r'ups.status: (.*)')
 
@@ -124,6 +124,7 @@ class UPSService(SystemServiceService):
                 else:
                     last = -1
                 driver_str = row[last]
+                driver_options = ''
                 driver_annotation = ''
                 # We want to match following strings
                 # genericups upstype=1
@@ -131,14 +132,15 @@ class UPSService(SystemServiceService):
                 m = RE_DRIVER_CHOICE.match(driver_str)
                 if m:
                     driver_str = m.group(1)
-                    driver_annotation = m.group(2) if len(m.groups()) > 1 else ''
+                    driver_options = m.group(2) or ''
+                    driver_annotation = m.group(3) or ''
                 for driver in driver_str.split(' or '):  # can be "blazer_ser or blazer_usb"
                     driver = driver.strip()
                     if driver not in drivers_available():
                         continue
                     for i, field in enumerate(list(row)):
                         row[i] = field
-                    key = '$'.join([driver, row[3]])
+                    key = '$'.join([driver + (f' {driver_options}' if driver_options else ''), row[3]])
                     val = f'{ups_choices[key]} / ' if key in ups_choices else ''
                     ups_choices[key] = val + '%s (%s)' % (
                         ' '.join(filter(None, row[0:last])),
