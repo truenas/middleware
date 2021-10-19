@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_01_deleting_user_shareuser(request):
-    depends(request, ["shareuser"])
+    depends(request, ["shareuser"], scope="session")
     userid = GET('/user?username=shareuser').json()[0]['id']
     results = DELETE("/user/id/%s/" % userid, {"delete_group": True})
     assert results.status_code == 200, results.text
