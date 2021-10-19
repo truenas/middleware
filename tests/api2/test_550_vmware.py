@@ -14,16 +14,12 @@ from auto_config import ip, user, password, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-vmw_credentials = pytest.mark.skipif(all(['VMWARE_HOST' in os.environ,
-                                          'VMWARE_USERNAME' in os.environ,
-                                          'VMWARE_PASSWORD' in os.environ]
-                                         ) is False, reason="No credentials"
-                                     )
-
-
-@pytest.fixture(scope='module')
-def data():
-    return {}
+try:
+    Reason = 'VMWARE credentials credential is missing'
+    from config import VMWARE_HOST, VMWARE_USERNAME, VMWARE_PASSWORD
+    vmw_credentials = True
+except ImportError:
+    vmw_credentials = False
 
 
 def test_01_get_vmware_query():
@@ -32,21 +28,20 @@ def test_01_get_vmware_query():
     assert isinstance(results.json(), list) is True
 
 
-@vmw_credentials
-def test_02_create_vmware(data):
-    payload = {
-        'hostname': os.environ['VMWARE_HOST'],
-        'username': os.environ['VMWARE_USERNAME'],
-        'password': os.environ['VMWARE_PASSWORD']
-    }
-    results = POST('/vmware/get_datastores/', payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list) is True, results.text
+if vmw_credentials:
+    def test_02_create_vmware():
+        payload = {
+            'hostname': VMWARE_HOST,
+            'username': VMWARE_USERNAME,
+            'password': VMWARE_PASSWORD
+        }
+        results = POST('/vmware/get_datastores/', payload)
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), list) is True, results.text
 
-
-@vmw_credentials
-def test_03_verify_vmware_get_datastore_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
-    cmd = f"""grep -R "{os.environ['VMWARE_PASSWORD']}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, str(results['output'])
+    def test_03_verify_vmware_get_datastore_do_not_leak_password(request):
+        depends(request, ["ssh_password"], scope="session")
+        cmd = f"grep -R \"{os.environ['VMWARE_PASSWORD']}\" " \
+            "/var/log/middlewared.log"
+        results = SSH_TEST(cmd, user, password, ip)
+        assert results['result'] is False, str(results['output'])
