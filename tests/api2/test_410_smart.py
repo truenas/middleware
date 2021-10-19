@@ -17,7 +17,7 @@ Reason = "VM detected no real ATA disk"
 not_real = (
     interface == "vtnet0"
     or interface == "em0"
-    or interface == 'enp0s7'
+    or 'enp0s' in interface
 )
 
 
