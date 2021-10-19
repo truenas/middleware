@@ -69,6 +69,7 @@ if not ha:
         assert isinstance(results.json(), dict), results.text
         assert backup_name in results.json(), results.text
 
+    @pytest.mark.dependency(name='ix_app_backup_restored')
     def test_05_restore_ix_applications_kubernetes_backup(request):
         depends(request, ['ix_app_backup'])
         payload = {
@@ -83,7 +84,7 @@ if not ha:
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_06_verify_plex_chart_release_still_exist(request):
-        depends(request, ['release_plex'])
+        depends(request, ['release_plex', 'ix_app_backup_restored'])
         results = GET(f'/chart/release/id/{plex_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
@@ -186,7 +187,7 @@ if not ha:
         assert results.json() is None, results.text
 
     def test_17_delete_ix_applications_kubernetes_backup(request):
-        depends(request, ['ix_app_backup'])
+        depends(request, ['ix_app_backup', 'ix_app_backup_restored'])
         results = POST('/kubernetes/delete_backup/', backup_name)
         assert results.status_code == 200, results.text
         assert results.json() is None, results.text
