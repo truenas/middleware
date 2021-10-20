@@ -10,7 +10,17 @@
 		invoke-rc.d syslog-ng reload > /dev/null
 	endscript
 }
-
+"/var/log/multus.log" "/var/log/k3s_daemon.log" "/var/log/containerd.log" {
+	rotate 2
+	size 5M
+	missingok
+	notifempty
+	delaycompress
+	compress
+	postrotate
+		invoke-rc.d syslog-ng reload > /dev/null
+	endscript
+}
 /var/log/mail.info
 /var/log/mail.warn
 /var/log/mail.err
