@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -13,6 +14,8 @@ SYSLOG_NG_CONF_ORIG = "/conf/base/etc/syslog-ng/syslog-ng.conf"
 SYSLOG_NG_CONF = "/etc/syslog-ng/syslog-ng.conf"
 LOG_FILTER_PREFIX = "f_freebsd_"
 LOG_SOURCE = "s_src"
+RE_DESTINATION = re.compile(r'(#+\n# Destinations\n#+)')
+RE_K3S_FILTER = re.compile(r'(\s{\s)')
 
 
 def generate_syslog_remote_destination(middleware, advanced_config):
@@ -80,12 +83,40 @@ def generate_syslog_remote_destination(middleware, advanced_config):
     return result
 
 
+def generate_k3s_filters():
+    return textwrap.dedent("""
+        #####################
+        # filter k3s messages
+        #####################
+        filter f_k3s { program("k3s");; };
+        destination d_k3s { file("/var/log/k3s_daemon.log"); };
+        log { source(s_src); filter(f_k3s); destination(d_k3s); };
+
+        #####################
+        # filter docker/containerd messages
+        #####################
+        filter f_containerd { program("containerd") or program("dockerd"); };
+        destination d_containerd { file("/var/log/containerd.log"); };
+        log { source(s_src); filter(f_containerd); destination(d_containerd); };
+    """)
+
+
 def generate_syslog_conf(middleware):
     with open(SYSLOG_NG_CONF_ORIG) as f:
-        syslog_conf = f.read()
+        syslog_conf = RE_DESTINATION.sub(fr"{generate_k3s_filters()}\n\1", f.read())
+
+    for line in (
+        "filter f_daemon { facility(daemon) and not filter(f_debug); };",
+        "filter f_syslog3 { not facility(auth, authpriv, mail) and not filter(f_debug); };",
+        "filter f_messages { level(info,notice,warn) and"
+    ):
+        syslog_conf = syslog_conf.replace(
+            line, RE_K3S_FILTER.sub(
+                r'\1not filter(f_k3s) and not filter(f_containerd) and ', line
+            )
+        )
 
     advanced_config = middleware.call_sync("system.advanced.config")
-
     if advanced_config["fqdn_syslog"]:
         syslog_conf = syslog_conf.replace("use-fqdn(no)", "use-fqdn(yes)")
         syslog_conf = syslog_conf.replace("use_fqdn(no)", "use_fqdn(yes)")
