@@ -777,7 +777,7 @@ class LDAPService(TDBWrapConfigService):
                         'syntactically invalid.')
 
         elif e.extra:
-            verrors.add('ldap_update', f'[{e.extra.__name__}]: {e.errmsg}')
+            verrors.add('ldap_update', f'[{e.extra}]: {e.errmsg}')
 
         else:
             verrors.add('ldap_update', e.errmsg)
@@ -909,13 +909,15 @@ class LDAPService(TDBWrapConfigService):
 
         await self.ldap_compress(new)
         out = await super().do_update(new)
+        job = None
 
         if must_reload:
             if new['enable']:
-                await self.middleware.call('ldap.start')
+                job = (await self.middleware.call('ldap.start')).id
             else:
-                await self.middleware.call('ldap.stop')
+                job = (await self.middleware.call('ldap.stop')).id
 
+        out.update({"job_id": job})
         return out
 
     @private
@@ -1084,7 +1086,8 @@ class LDAPService(TDBWrapConfigService):
         return True if nslcd.returncode == 0 else False
 
     @private
-    async def start(self):
+    @job(lock="ldap_start_stop")
+    async def start(self, job):
         """
         Refuse to start service if the service is alreading in process of starting or stopping.
         If state is 'HEALTHY' or 'FAULTED', then stop the service first before restarting it to ensure
@@ -1094,66 +1097,91 @@ class LDAPService(TDBWrapConfigService):
         if ldap_state in ['LEAVING', 'JOINING']:
             raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
 
+        job.set_progress(0, 'Preparing to configure LDAP directory service.')
         ldap = await self.direct_update({"enable": True})
         if ldap['kerberos_realm']:
+            job.set_progress(5, 'Starting kerberos')
             await self.middleware.call('kerberos.start')
 
+        job.set_progress(15, 'Generating configuration files')
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
 
+        job.set_progress(30, 'Starting nslcd service')
         if not await self.nslcd_status():
             await self.nslcd_cmd('start')
         else:
             await self.nslcd_cmd('restart')
 
+        job.set_progress(50, 'Reconfiguring SMB service')
         await self.middleware.call('smb.initialize_globals')
         await self.synchronize()
+        job.set_progress(60, 'Reconfiguring idmap service')
         await self.middleware.call('idmap.synchronize')
 
         if ldap['has_samba_schema']:
+            job.set_progress(70, 'Restarting SMB service')
             await self.middleware.call('smb.store_ldap_admin_password')
-            await self.middleware.call('idmap.synchronize')
             await self.middleware.call('service.restart', 'cifs')
 
         await self.set_state(DSStatus['HEALTHY'])
+        job.set_progress(80, 'Reloading directory service cache.')
         await self.middleware.call('service.start', 'dscache')
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if ha_mode == 'CLUSTERED':
-            await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload')
+            job.set_progress(90, 'Reloading LDAP service on other cluster nodes')
+            cl_job = await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload', 'START')
+            await cl_job.wait()
+
+        job.set_progress(100, 'LDAP directory service started.')
 
     @private
-    async def stop(self):
+    @job(lock="ldap_start_stop")
+    async def stop(self, job):
+        ldap_state = await self.middleware.call('ldap.get_state')
+        if ldap_state in ['LEAVING', 'JOINING']:
+            raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
+
+        job.set_progress(0, 'Preparing to stop LDAP directory service.')
         ldap = await self.direct_update({"enable": False})
 
         await self.set_state(DSStatus['LEAVING'])
+        job.set_progress(10, 'Rewriting configuration files.')
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
         await self.synchronize()
+        job.set_progress(20, 'Reconfiguring idmap settings.')
         await self.middleware.call('idmap.synchronize')
 
         if ldap['has_samba_schema']:
+            job.set_progress(30, 'Restarting SMB service.')
             await self.middleware.call('service.restart', 'cifs')
             await self.middleware.call('smb.synchronize_passdb')
             await self.middleware.call('smb.synchronize_group_mappings')
 
+        job.set_progress(50, 'Clearing directory service cache.')
         await self.middleware.call('service.stop', 'dscache')
+
+        job.set_progress(80, 'Stopping nslcd service.')
         await self.nslcd_cmd('stop')
         await self.set_state(DSStatus['DISABLED'])
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if ha_mode == 'CLUSTERED':
-            await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload')
+            job.set_progress(90, 'Reloading LDAP service on other cluster nodes')
+            cl_job = await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload', 'STOP')
+            await cl_job.wait()
+
+        job.set_progress(100, 'LDAP directory service stopped.')
 
     @private
-    async def cluster_reload(self):
-        enabled = (await self.config())['enable']
+    async def cluster_reload(self, action):
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
-        cmd = 'start' if enabled else 'stop'
-        await self.nscld_cmd(cmd)
-        await self.middleware.call(f'service.{cmd}', 'dscache')
+        await self.nslcd_cmd(action.lower())
+        await self.middleware.call(f'service.{action.lower()}', 'dscache')
 
     @private
     @job(lock='fill_ldap_cache')
