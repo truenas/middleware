@@ -67,18 +67,23 @@ class SystemDatasetService(ConfigService):
 
         # Make `uuid` point to the uuid of current node
         config['uuid_a'] = config['uuid']
-        if await self.middleware.call('system.is_enterprise'):
+        is_enterprise = await self.middleware.call('system.is_enterprise')
+        is_node_b = False
+        if is_enterprise:
             if await self.middleware.call('failover.node') == 'B':
+                is_node_b = True
                 config['uuid'] = config['uuid_b']
 
         if not config['uuid']:
             config['uuid'] = uuid.uuid4().hex
-            if await self.middleware.call('system.is_enterprise') and await self.middleware.call('failover.node') == 'B':
+            if is_enterprise and is_node_b:
                 attr = 'uuid_b'
                 config[attr] = config['uuid']
             else:
                 attr = 'uuid'
-            await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], {f'sys_{attr}': config['uuid']})
+            await self.middleware.call(
+                'datastore.update', 'system.systemdataset', config['id'], {f'sys_{attr}': config['uuid']}
+            )
 
         config['syslog'] = config.pop('syslog_usedataset')
 
@@ -333,8 +338,6 @@ class SystemDatasetService(ConfigService):
             os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
             await run('mount', '--bind', corepath, '/var/lib/systemd/coredump')
 
-        await self.__nfsv4link(config)
-
         await self.middleware.call('etc.generate', 'glusterd')
 
         if mounted:
@@ -448,57 +451,6 @@ class SystemDatasetService(ConfigService):
             ]
         ]
 
-    async def __nfsv4link(self, config):
-        syspath = config['path']
-        if not syspath:
-            return None
-
-        restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'BACKUP':
-                return None
-
-        for item in restartfiles:
-            if os.path.exists(item):
-                if os.path.isfile(item) and not os.path.islink(item):
-                    # It's an honest to goodness file, this shouldn't ever happen...but
-                    path = os.path.join(syspath, os.path.basename(item))
-                    if not os.path.isfile(path):
-                        # there's no file in the system dataset, so copy over what we have
-                        # being careful to nuke anything that is there that happens to
-                        # have the same name.
-                        if os.path.exists(path):
-                            shutil.rmtree(path)
-                        shutil.copy(item, path)
-                    # Nuke the original file and create a symlink to it
-                    # We don't need to worry about creating the file on the system dataset
-                    # because it's either been copied over, or was already there.
-                    os.unlink(item)
-                    os.symlink(path, item)
-                elif os.path.isdir(item):
-                    # Pathological case that should never happen
-                    shutil.rmtree(item)
-                    self.__createlink(syspath, item)
-                else:
-                    if not os.path.exists(os.readlink(item)):
-                        # Dead symlink or some other nastiness.
-                        shutil.rmtree(item)
-                        self.__createlink(syspath, item)
-            else:
-                # We can get here if item is a dead symlink
-                if os.path.islink(item):
-                    os.unlink(item)
-                self.__createlink(syspath, item)
-
-    def __createlink(self, syspath, item):
-        path = os.path.join(syspath, os.path.basename(item))
-        if not os.path.isfile(path):
-            if os.path.exists(path):
-                # There's something here but it's not a file.
-                shutil.rmtree(path)
-            open(path, 'w').close()
-        os.symlink(path, item)
-
     @private
     async def migrate(self, _from, _to):
 
@@ -532,8 +484,6 @@ class SystemDatasetService(ConfigService):
                     os.rmdir('/tmp/system.new')
                 else:
                     raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
-
-        await self.__nfsv4link(config)
 
     @asynccontextmanager
     async def _release_system_dataset(self):
