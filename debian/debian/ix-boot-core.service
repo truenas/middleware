@@ -1,0 +1,16 @@
+[Unit]
+Description=Reboot to TrueNAS core
+DefaultDependencies=no
+
+Before=middlewared.service
+
+ConditionEnvironment=_BOOT_TRUENAS_CORE=1
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=ix-boot-core.py
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

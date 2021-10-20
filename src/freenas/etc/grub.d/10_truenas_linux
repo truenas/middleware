@@ -298,10 +298,19 @@ fi
 OS_BASE="$OS"
 boot_pool=`echo "$roots_dataset" | cut -d '/' -f1`
 activated_be=`zpool get -H -o value bootfs "$boot_pool"`
-datasets="$activated_be\n`zfs list -H -o name -r $roots_dataset | grep -vx $activated_be | sort -r`"
+datasets="$activated_be\n`zfs list -H -o name -r $roots_dataset | grep -vx $activated_be | sort -r`\nCORE"
 for dataset in `echo $datasets`; do
   if [ "x$dataset" = "x$roots_dataset" ] ; then
     continue
+  fi
+
+  is_core="0"
+  if [ "x$dataset" = "xCORE" ] ; then
+    if ! zfs list -H -o truenas:12 -r $roots_dataset | grep -v "-" > /dev/null ; then
+      continue
+    fi
+    dataset="$activated_be"
+    is_core="1"
   fi
 
   truenas_version=`echo "$dataset" | sed "s|$roots_dataset/||"`
@@ -399,6 +408,11 @@ while [ "x$list" != "x" ] ; do
     fi
   fi
 
+  if [ "$is_core" = "1" ]; then
+    linux_entry "TrueNAS CORE" "${version}" simple \
+    "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT} systemd.setenv=_BOOT_TRUENAS_CORE=1"
+  else
+
   if [ "x$is_top_level" = xtrue ] && [ "x${GRUB_DISABLE_SUBMENU}" != xy ]; then
     linux_entry "${OS}" "${version}" simple \
     "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}"
@@ -425,6 +439,8 @@ while [ "x$list" != "x" ] ; do
   if [ "x${GRUB_DISABLE_RECOVERY}" != "xtrue" ]; then
     linux_entry "${OS}" "${version}" recovery \
                 "${GRUB_CMDLINE_LINUX_RECOVERY} ${GRUB_CMDLINE_LINUX}"
+  fi
+
   fi
 
   list=`echo $list | tr ' ' '\n' | fgrep -vx "$linux" | tr '\n' ' '`

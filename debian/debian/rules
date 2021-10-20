@@ -9,6 +9,7 @@ override_dh_auto_install:
 	cp -aR data etc debian/truenas/
 
 override_dh_installsystemd:
+	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-boot-core
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-conf
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-etc
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-netif

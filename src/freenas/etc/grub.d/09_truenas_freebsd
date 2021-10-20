@@ -1,3 +1,71 @@
-#!/bin/sh
-midclt call update.freebsd_grub 2> /dev/null
-exit 0
+#!/usr/bin/env python3
+import os
+import subprocess
+import sys
+import textwrap
+
+import libzfs
+
+
+def get_partition(disk, partition):
+    paths = [f"/dev/{disk}{partition}", f"/dev/{disk}p{partition}"]
+    for path in paths:
+        if os.path.exists(path):
+            return path
+    raise Exception(f"Neither {' or '.join(paths)} exist")
+
+
+if __name__ == "__main__":
+    boot_pool = "boot-pool"
+    if subprocess.run(["zfs", "list", "boot-pool"], capture_output=True).returncode != 0:
+        boot_pool = "freenas-boot"
+
+    for line in subprocess.run(
+        ["zfs", "list", "-H", "-o", "name,truenas:12", "-r", f"{boot_pool}/ROOT"],
+        capture_output=True, text=True, check=True,
+    ).stdout.splitlines():
+        freebsd_root_dataset, truenas_12 = line.split("\t")
+        if truenas_12 == "1":
+            break
+    else:
+        sys.exit(0)
+
+    if subprocess.run(
+        ["zpool", "get", "-H", "-o", "value", "bootfs", boot_pool],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip() != freebsd_root_dataset:
+        # Grub can only boot FreeBSD if pool `bootfs` is set to FreeBSD dataset
+        sys.exit(0)
+
+    if not os.path.exists("/sys/firmware/efi"):
+        bsd_loader = f"""\
+            insmod zfs
+            search -s -l {boot_pool}
+            kfreebsd /{"/".join(freebsd_root_dataset.split("/")[1:])}@/boot/loader
+        """
+    else:
+        with libzfs.ZFS() as zfs:
+            disks = [i.replace("/dev/", "") for i in zfs.get(boot_pool).disks]
+
+        disk = os.readlink(f"/sys/class/block/{disks[0]}").split("/")[-2]
+
+        partition = get_partition(disk, 1)
+
+        efi_partition_uuid = subprocess.run(
+            ["grub-probe", "--device", partition, "--target=fs_uuid"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        bsd_loader = f"""\
+            insmod zfs
+            insmod search_fs_uuid
+            insmod chain
+            search --fs-uuid --no-floppy --set=root {efi_partition_uuid}
+            chainloader ($root)/efi/boot/FreeBSD.efi
+        """
+
+    print(textwrap.dedent(f"""\
+        menuentry "TrueNAS CORE" {{
+            insmod part_gpt
+            {bsd_loader}
+        }}
+    """))
