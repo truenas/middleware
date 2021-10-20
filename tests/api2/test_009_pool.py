@@ -34,6 +34,7 @@ def test_01_get_pool():
     assert isinstance(results.json(), list), results.text
 
 
+@pytest.mark.dependency(name="wipe_disk")
 def test_02_wipe_all_pool_disk():
     for disk in disk_pool:
         payload = {
@@ -49,7 +50,8 @@ def test_02_wipe_all_pool_disk():
 
 # Only read the test on HA
 if ha:
-    def test_03_creating_ha_pool():
+    def test_03_creating_ha_pool(request):
+        depends(request, ["wipe_disk"])
         global payload
         payload = {
             "name": "ha",
@@ -68,7 +70,8 @@ if ha:
 
 
 @pytest.mark.dependency(name="pool_04")
-def test_04_creating_a_pool():
+def test_04_creating_a_pool(request):
+    depends(request, ["wipe_disk"])
     global payload
     payload = {
         "name": pool_name,
