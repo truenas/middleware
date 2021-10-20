@@ -40,6 +40,13 @@ class CPUTempPlugin(RRDBase):
             return []
         return None
 
+    def get_rrd_files(self, identifier):
+        result = []
+        for n in range(0, self.__get_number_of_cores__()):
+            result.append(self.__get_cputemp_file__(n))
+
+        return result
+
     def get_defs(self, identifier):
         args = []
         for n in range(0, self.__get_number_of_cores__()):
