@@ -465,6 +465,11 @@ class SMBService(TDBWrapConfigService):
                     os.mkdir(path, p.mode())
             else:
                 os.chmod(path, p.mode())
+                owner = os.stat(path).st_uid
+                if owner != 0:
+                    self.logger.warning("%s: invalid owner [%s] for path. Correcting.",
+                                        path, owner)
+                    os.chown(path, 0, 0)
 
     @private
     async def import_conf_to_registry(self):
@@ -1484,6 +1489,14 @@ class SharingSMBService(SharingService):
         if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
             verrors.add(f'{schema_name}.name',
                         'Path suffix may not contain more than two components.')
+
+        if data['timemachine'] and data['enabled']:
+            ngc = await self.middleware.call('network.configuration.config')
+            if not ngc['service_announcement']['mdns']:
+                verrors.add(
+                    f'{schema_name}.timemachine',
+                    'mDNS must be enabled in order to use an SMB share as a time machine target.'
+                )
 
         for entry in ['afp', 'timemachine']:
             if not data[entry]:

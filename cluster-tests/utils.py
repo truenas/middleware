@@ -96,7 +96,7 @@ def make_request(_type, url, **kwargs):
 
 def _run_ssh_cmd(host, action, **kwargs):
     cmd = [
-        'sshpass' '-p', AUTH[1],
+        'sshpass', '-p', AUTH[1],
         'ssh' if action == 'test' else 'scp',
         '-o', 'StrictHostKeyChecking=no',
         '-o', 'UserKnownHostsFile=/dev/null',
@@ -119,7 +119,7 @@ def _run_ssh_cmd(host, action, **kwargs):
 
 
 def ssh_test(host, cmd):
-    return _run_ssh_cmd(host, 'test', {'cmd': cmd})
+    return _run_ssh_cmd(host, 'test', cmd=cmd)
 
 
 def ssh_get(host, _file, _dst):

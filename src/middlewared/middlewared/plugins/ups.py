@@ -9,10 +9,11 @@ import syslog
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, run
+from middlewared.utils import run
 from middlewared.validators import Range, Port
 
 
+RE_DRIVER_CHOICE = re.compile(r'(\S+)\s+(\S+=\S+)?\s*(?:\((.+)\))?$')
 RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
 RE_UPS_STATUS = re.compile(r'ups.status: (.*)')
 
@@ -99,6 +100,14 @@ class UPSService(SystemServiceService):
         ports.append('auto')
         return ports
 
+    @private
+    def normalize_driver_string(self, driver_str):
+        driver = driver_str.split('$')[0]
+        driver = driver.split('(')[0]  # "blazer_usb (USB ID 0665:5161)"
+        driver = driver.split(' or ')[0]  # "blazer_ser or blazer_usb"
+        driver = driver.replace(' ', '\n\t')  # "genericups upstype=16"
+        return f'driver = {driver}'
+
     @accepts()
     @returns(Dict(additional_attrs=True, example={'blazer_ser$CPM-800': 'WinPower ups 2 CPM-800 (blazer_ser)'}))
     def driver_choices(self):
@@ -106,13 +115,10 @@ class UPSService(SystemServiceService):
         Returns choices of UPS drivers supported by the system.
         """
         ups_choices = {}
-        if osc.IS_LINUX:
-            driver_list = '/usr/share/nut/driver.list'
-        else:
-            driver_list = '/conf/base/etc/local/nut/driver.list'
+        driver_list = '/usr/share/nut/driver.list'
         if os.path.exists(driver_list):
-            with open(driver_list, 'rb') as f:
-                d = f.read().decode('utf8', 'ignore')
+            with open(driver_list, 'r') as f:
+                d = f.read()
             r = io.StringIO()
             for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
                 r.write(line.strip() + '\n')
@@ -126,17 +132,25 @@ class UPSService(SystemServiceService):
                 else:
                     last = -1
                 driver_str = row[last]
+                driver_options = ''
                 driver_annotation = ''
-                m = re.match(r'(.+) \((.+)\)', driver_str)  # "blazer_usb (USB ID 0665:5161)"
+                # We want to match following strings
+                # genericups upstype=1
+                # powerman-pdu (experimental)
+                m = RE_DRIVER_CHOICE.match(driver_str)
                 if m:
-                    driver_str, driver_annotation = m.group(1), m.group(2)
+                    driver_str = m.group(1)
+                    driver_options = m.group(2) or ''
+                    driver_annotation = m.group(3) or ''
                 for driver in driver_str.split(' or '):  # can be "blazer_ser or blazer_usb"
                     driver = driver.strip()
                     if driver not in drivers_available():
                         continue
                     for i, field in enumerate(list(row)):
                         row[i] = field
-                    ups_choices['$'.join([driver, row[3]])] = '%s (%s)' % (
+                    key = '$'.join([driver + (f' {driver_options}' if driver_options else ''), row[3]])
+                    val = f'{ups_choices[key]} / ' if key in ups_choices else ''
+                    ups_choices[key] = val + '%s (%s)' % (
                         ' '.join(filter(None, row[0:last])),
                         ', '.join(filter(None, [driver, driver_annotation]))
                     )

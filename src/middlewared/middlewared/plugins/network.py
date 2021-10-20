@@ -285,6 +285,15 @@ class NetworkConfigurationService(ConfigService):
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
+        if not srv['mdns']:
+            tm_shares = await self.middleware.call(
+                'sharing.smb.query',
+                [('timemachine', '=', True), ('enabled', '=', True)]
+            )
+            if tm_shares:
+                verrors.add('global_configuration_update.service_announcement.mdns',
+                            'NAS is configured as a time machine target. mDNS is required.')
+
         # we need to check if the `hostname_virtual` parameter changed in a couple places
         # in this method, so go ahead and set it here
         virt_hostname_changed = False

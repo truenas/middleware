@@ -78,35 +78,35 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             alerts.append(Alert(LicenseAlertClass, 'You are not running TrueNAS on supported hardware.'))
         else:
             if hardware[0] == 'M':
-                if not license['model'].startswith('M'):
+                if not local_license['model'].startswith('M'):
                     alerts.append(Alert(
                         LicenseAlertClass,
                         (
                             'Your license was issued for model "%s" but it was '
                             ' detected as M series.'
-                        ) % license['model']
+                        ) % local_license['model']
                     ))
             elif hardware[0] == 'X':
-                if not license['model'].startswith('X'):
+                if not local_license['model'].startswith('X'):
                     alerts.append(Alert(
                         LicenseAlertClass,
                         (
                             'Your license was issued for model "%s" but it was '
                             ' detected as X series.'
-                        ) % license['model']
+                        ) % local_license['model']
                     ))
             elif hardware[0] == 'Z':
-                if not license['model'].startswith('Z'):
+                if not local_license['model'].startswith('Z'):
                     alerts.append(Alert(
                         LicenseAlertClass,
                         (
                             'Your license was issued for model "%s" but it was '
                             ' detected as Z series.'
-                        ) % license['model']
+                        ) % local_license['model']
                     ))
             else:
                 if hardware[0] in HW_MODELS:
-                    if hardware[0] != license['model']:
+                    if hardware[0] != local_license['model']:
                         alerts.append(Alert(
                             LicenseAlertClass,
                             (
@@ -114,7 +114,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                                 'but it was detected as "%(model)s".'
                             ) % {
                                 'model': hardware[0],
-                                'license': license['model'],
+                                'license': local_license['model'],
                             }
                         ))
 
@@ -130,8 +130,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
             enc_nums[enc['model']] += 1
 
-        if license['addhw']:
-            for quantity, code in license['addhw']:
+        if local_license['addhw']:
+            for quantity, code in local_license['addhw']:
                 if code not in LICENSE_ADDHW_MAPPING:
                     self.middleware.logger.warning('Unknown additional hardware code %d', code)
                     continue
@@ -162,12 +162,13 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             return alerts
 
         for days in [0, 14, 30, 90, 180]:
-            if license['contract_end'] <= date.today() + timedelta(days=days):
-                serial_numbers = ", ".join(list(filter(None, [license['system_serial'], license['system_serial_ha']])))
-                contract_start = license['contract_start'].strftime("%B %-d, %Y")
-                contract_expiration = license['contract_end'].strftime("%B %-d, %Y")
-                contract_type = license['contract_type'].lower()
-                customer_name = license['customer_name']
+            if local_license['contract_end'] <= date.today() + timedelta(days=days):
+                serial_numbers = ", ".join(list(filter(None, [local_license['system_serial'],
+                                                              local_license['system_serial_ha']])))
+                contract_start = local_license['contract_start'].strftime("%B %-d, %Y")
+                contract_expiration = local_license['contract_end'].strftime("%B %-d, %Y")
+                contract_type = local_license['contract_type'].lower()
+                customer_name = local_license['customer_name']
 
                 if days == 0:
                     alert_klass = LicenseHasExpiredAlertClass

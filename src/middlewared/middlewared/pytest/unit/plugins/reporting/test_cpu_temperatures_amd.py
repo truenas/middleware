@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from middlewared.plugins.reporting.events import RealtimeEventSource
+from middlewared.plugins.reporting.cpu_temperatures import ReportingService
 from middlewared.pytest.unit.middleware import Middleware
 
 
@@ -39,5 +39,5 @@ from middlewared.pytest.unit.middleware import Middleware
 def test_amd_cpu_temperature(model, core_count, reading, result):
     middleware = Middleware()
     middleware["system.cpu_info"] = Mock(return_value={"cpu_model": model, "physical_core_count": core_count})
-    es = RealtimeEventSource(middleware, Mock(), Mock(), Mock(), Mock())
+    es = ReportingService(middleware)
     assert es._amd_cpu_temperature(reading) == result
