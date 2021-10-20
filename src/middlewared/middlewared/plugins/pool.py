@@ -426,7 +426,7 @@ class PoolService(CRUDService):
                 guid = x.get('guid')
                 if guid is not None:
                     unavail_disk = None
-                    if x.get('status') == 'UNAVAIL':
+                    if x.get('status') != 'ONLINE':
                         unavail_disk = self.middleware.call_sync('disk.disk_by_zfs_guid', guid)
                     x['unavail_disk'] = unavail_disk
 
