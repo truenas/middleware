@@ -343,11 +343,11 @@ class SMBService(TDBWrapConfigService):
         This is required if the LDAP directory service is enabled. The ldap admin dn and
         password are stored in private/secrets.tdb file.
         """
-        ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
-        if not ldap['ldap_enable']:
+        ldap = await self.middleware.call('ldap.config')
+        if not ldap['enable']:
             return True
 
-        set_pass = await run([SMBCmd.SMBPASSWD.value, '-w', ldap['ldap_bindpw']], check=False)
+        set_pass = await run([SMBCmd.SMBPASSWD.value, '-w', ldap['bindpw']], check=False)
         if set_pass.returncode != 0:
             self.logger.debug(f"Failed to set set ldap bindpw in secrets.tdb: {set_pass.stdout.decode()}")
             return False
