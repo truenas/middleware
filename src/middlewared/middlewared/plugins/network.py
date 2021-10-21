@@ -1,7 +1,7 @@
 from middlewared.service import (
     CallError, ConfigService, CRUDService, Service, filterable, filterable_returns, pass_app, private
 )
-from middlewared.utils import Popen, filter_list, run
+from middlewared.utils import filter_list, run
 from middlewared.schema import (
     accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, Ref, ValidationErrors
 )
@@ -20,7 +20,6 @@ import platform
 import re
 import signal
 import socket
-import subprocess
 import psutil
 
 from .interface.netif import netif
@@ -329,27 +328,25 @@ class NetworkConfigurationService(ConfigService):
             {'prefix': 'gc_'}
         )
 
-        # set this here because we call it twice below
+        # check if hostname changed
+        hostname_changed = new_hostname != config['hostname_local']
+
+        # check if domain name changed
         domainname_changed = new_config['domain'] != config['domain']
 
-        # hostname, domain name, search domain(s) or dns server(s) have changed
-        # so we reload the `resolvconf` service which actually sets the
-        # `hostname` too
-        if (
-            new_hostname != config['hostname_local'] or
-            domainname_changed or
-            new_config['domains'] != config['domains'] or
-            new_config['nameserver1'] != config['nameserver1'] or
-            new_config['nameserver2'] != config['nameserver2'] or
-            new_config['nameserver3'] != config['nameserver3']
-        ):
+        # check if dns search realms changed
+        dnssearch_changed = new_config['domains'] != config['domains']
+
+        # check if any dns servers changed
+        dns1_changed = new_config['nameserver1'] != config['nameserver1']
+        dns2_changed = new_config['nameserver2'] != config['nameserver2']
+        dns3_changed = new_config['nameserver3'] != config['nameserver3']
+        dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
+
+        if hostname_changed or domainname_changed or dnssearch_changed or dnsservers_changed:
             await self.middleware.call('service.reload', 'resolvconf')
 
-        if (
-            new_hostname != config['hostname_local'] or
-            domainname_changed or
-            new_config['domains'] != config['domains']
-        ):
+            # need to tell the CLI program to reload so it shows the new info
             def reload_cli():
                 for process in psutil.process_iter(['pid', 'cmdline']):
                     cmdline = process.cmdline()
@@ -360,10 +357,7 @@ class NetworkConfigurationService(ConfigService):
             await self.middleware.run_in_thread(reload_cli)
 
         # default gateway has changed
-        if (
-            new_config['ipv4gateway'] != config['ipv4gateway'] or
-            new_config['ipv6gateway'] != config['ipv6gateway']
-        ):
+        if new_config['ipv4gateway'] != config['ipv4gateway'] or new_config['ipv6gateway'] != config['ipv6gateway']:
             await self.middleware.call('route.sync')
 
         # if virtual_hostname (only HA) or domain name changed
@@ -386,8 +380,7 @@ class NetworkConfigurationService(ConfigService):
         if new_config['activity'] != config['activity']:
             await self.middleware.call('zettarepl.update_tasks')
 
-        await self.middleware.call('network.configuration.toggle_announcement',
-                                   new_config['service_announcement'])
+        await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
 
         return await self.config()
 
@@ -2111,6 +2104,12 @@ class InterfaceService(CRUDService):
 
         if run_dhcp:
             await asyncio.wait([self.run_dhcp(interface, wait_dhcp) for interface in run_dhcp])
+        else:
+            # first interface that is configured, we kill dhclient on _all_ interfaces
+            # but dhclient could have added items to /etc/resolv.conf. To "fix" this
+            # we run dns.sync which will wipe the contents of resolv.conf and it is
+            # expected that the end-user fills this out via the network global webUI page
+            await self.middleware.call('dns.sync')
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
@@ -2650,27 +2649,36 @@ class DNSService(Service):
         cli_namespace = 'network.dns'
 
     @filterable
-    @filterable_returns(Dict('name_server', IPAddr('nameserver', required=True)))
-    async def query(self, filters, options):
+    @returns(List('nameservers', items=[Dict('nameserver', IPAddr('ip', required=True))]))
+    def query(self, filters, options):
         """
         Query Name Servers with `query-filters` and `query-options`.
         """
-        data = []
-        resolvconf = (await run('resolvconf', '-l')).stdout.decode()
-        for nameserver in RE_NAMESERVER.findall(resolvconf):
-            data.append({'nameserver': nameserver})
-        return filter_list(data, filters, options)
+        ips = set()
+        with contextlib.suppress(Exception):
+            with open('/etc/resolv.conf') as f:
+                for line in f:
+                    if line.startswith('nameserver'):
+                        ip = line[len('nameserver'):].strip()
+                        try:
+                            IPAddr().validate(ip)  # make sure it's a valid IP (better safe than sorry)
+                            ips.add(ip)
+                        except ValidationErrors:
+                            self.logger.warning('IP %r in resolv.conf does not seem to be valid', ip)
+                            continue
+
+        return filter_list([{'nameserver': i} for i in ips], filters, options)
 
     @private
-    async def sync(self):
+    def sync(self):
+        domain = ''
         domains = []
         nameservers = []
-
-        gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
+        gc = self.middleware.call_sync('datastore.query', 'network.globalconfiguration')[0]
         if gc['gc_domain']:
-            domains.append(gc['gc_domain'])
+            domain = gc['gc_domain']
         if gc['gc_domains']:
-            domains += gc['gc_domains'].split()
+            domains = gc['gc_domains'].split()
         if gc['gc_nameserver1']:
             nameservers.append(gc['gc_nameserver1'])
         if gc['gc_nameserver2']:
@@ -2679,19 +2687,18 @@ class DNSService(Service):
             nameservers.append(gc['gc_nameserver3'])
 
         resolvconf = ''
+        if domain:
+            resolvconf += 'domain {}\n'.format(domain)
         if domains:
             resolvconf += 'search {}\n'.format(' '.join(domains))
         for ns in nameservers:
             resolvconf += 'nameserver {}\n'.format(ns)
 
-        proc = await Popen([
-            '/sbin/resolvconf', '-a', 'lo0'
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        data = await proc.communicate(input=resolvconf.encode())
-        if proc.returncode != 0:
-            self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')
-
-        await self.middleware.call_hook('dns.post_sync')
+        try:
+            with open('/etc/resolv.conf', 'w') as f:
+                f.write(resolvconf)
+        except Exception:
+            self.logger.error('Failed to write /etc/resolv.conf', exc_info=True)
 
 
 class NetworkGeneralService(Service):
