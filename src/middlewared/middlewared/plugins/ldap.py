@@ -1144,7 +1144,7 @@ class LDAPService(TDBWrapConfigService):
             raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
 
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
-        ldap = await self.direct_update({"enable": False})
+        await self.direct_update({"enable": False})
 
         await self.set_state(DSStatus['LEAVING'])
         job.set_progress(10, 'Rewriting configuration files.')
