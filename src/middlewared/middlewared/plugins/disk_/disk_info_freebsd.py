@@ -1,12 +1,10 @@
 import os
 import re
 
-from bsd import geom, getswapinfo
-
+import bsd
 from middlewared.service import Service
-from middlewared.utils import run
-
 from .disk_info_base import DiskInfoBase
+
 
 RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 
@@ -14,15 +12,19 @@ RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 class DiskService(Service, DiskInfoBase):
 
     async def get_dev_size(self, dev):
-        cp = await run('diskinfo', dev)
-        if not cp.returncode:
-            return int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]))
+        try:
+            return await self.middleware.run_in_thread(bsd.disk.get_size_with_name, dev)
+        except Exception:
+            self.logger.error('Failed to get size of %r', dev, exc_info=True)
 
-    def list_partitions(self, disk):
-        geom.scan()
-        klass = geom.class_by_name('PART')
+    def list_partitions(self, disk, part_xml=None):
         parts = []
-        for g in klass.xml.findall(f'./geom[name=\'{disk}\']'):
+        if part_xml is None:
+            part_xml = self.middleware.call_sync('geom.get_class_xml', 'PART')
+            if not part_xml:
+                return parts
+
+        for g in part_xml.findall(f'./geom[name="{disk}"]'):
             for p in g.findall('./provider'):
                 size = p.find('./mediasize')
                 if size is not None:
@@ -57,10 +59,11 @@ class DiskService(Service, DiskInfoBase):
 
         return parts
 
-    def gptid_from_part_type(self, disk, part_type):
-        geom.scan()
-        g = geom.class_by_name('PART')
-        uuid = g.xml.find(f'.//geom[name="{disk}"]//config/[rawtype="{part_type}"]/rawuuid')
+    def gptid_from_part_type(self, disk, part_type, part_xml=None):
+        if part_xml is None:
+            part_xml = self.middleware.call_sync('geom.get_class_xml', 'PART')
+
+        uuid = part_xml.find(f'.//geom[name="{disk}"]//config/[rawtype="{part_type}"]/rawuuid')
         if uuid is None:
             raise ValueError(f'Partition type {part_type} not found on {disk}')
         return f'gptid/{uuid.text}'
@@ -72,17 +75,17 @@ class DiskService(Service, DiskInfoBase):
         return '516e7cb5-6ecf-11d6-8ff8-00022d09712b'
 
     def get_swap_devices(self):
-        return [os.path.join('/dev', i.devname) for i in getswapinfo()]
+        return [os.path.join('/dev', i.devname) for i in bsd.getswapinfo()]
 
     def label_to_dev_disk_cache(self):
         label_to_dev = {}
-        for label in geom.class_by_name('LABEL').xml:
+        for label in bsd.geom.class_by_name('LABEL').xml:
             if (name := label.find('name')) is not None:
                 if (provider := label.find('provider/name')) is not None:
                     label_to_dev[provider.text] = name.text
 
         dev_to_disk = {}
-        for label in geom.class_by_name('PART').xml:
+        for label in bsd.geom.class_by_name('PART').xml:
             if (name := label.find('name')) is not None:
                 if (provider := label.find('provider/name')) is not None:
                     dev_to_disk[provider.text] = name.text
@@ -102,8 +105,8 @@ class DiskService(Service, DiskInfoBase):
             return cache['label_to_dev'].get(label)
 
         if geom_scan:
-            geom.scan()
-        klass = geom.class_by_name('LABEL')
+            bsd.geom.scan()
+        klass = bsd.geom.class_by_name('LABEL')
         prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
         if prov is not None:
             return prov.text
@@ -111,11 +114,11 @@ class DiskService(Service, DiskInfoBase):
     def label_to_disk(self, label, geom_scan=True, cache=None):
         if cache is None:
             if geom_scan:
-                geom.scan()
+                bsd.geom.scan()
         dev = self.label_to_dev(label, geom_scan, cache) or label
         if cache is not None:
             return cache['dev_to_disk'].get(dev)
-        part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
+        part = bsd.geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
         if part is not None:
             return part.text
 

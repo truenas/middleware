@@ -69,13 +69,13 @@ class DiskService(Service, ServiceChangeMixin):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return
 
-        if not await self.middleware.call('device.devd_connected'):
+        if not await self.middleware.call('devd.connected'):
             # try for 10 seconds to wait on devd before we continue
             for i in range(10):
                 if i > 0:
                     await asyncio.sleep(1)
 
-                if await self.middleware.call('device.devd_connected'):
+                if await self.middleware.call('devd.connected'):
                     break
             else:
                 self.logger.warning('Starting disk.sync_all when devd is not connected yet')

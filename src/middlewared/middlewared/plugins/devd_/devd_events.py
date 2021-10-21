@@ -2,16 +2,14 @@ import asyncio
 import os
 import socket
 
-from middlewared.service import private, Service
 
 DEVD_CONNECTED = False
 DEVD_SOCKETFILE = '/var/run/devd.pipe'
 
 
-class DeviceService(Service):
-    @private
-    async def devd_connected(self):
-        return DEVD_CONNECTED
+async def devd_connected():
+    global DEVD_CONNECTED
+    return DEVD_CONNECTED
 
 
 async def devd_loop(middleware):
