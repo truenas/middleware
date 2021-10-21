@@ -549,6 +549,9 @@ class UserService(CRUDService):
         # After this point user dict has values from data
         user.update(data)
 
+        # squelch any potential problems when this occurs
+        await self.middleware.call('user.recreate_homedir_if_not_exists', has_home, user, group)
+
         if home_copy and not os.path.isdir(user['home']):
             try:
                 os.makedirs(user['home'])
@@ -627,6 +630,24 @@ class UserService(CRUDService):
                 await self.middleware.call('smb.initialize_globals')
 
         return pk
+
+    @private
+    def recreate_homedir_if_not_exists(self, has_home, user, group):
+        # sigh, nothing is stopping someone from removing the homedir
+        # from the CLI so recreate the original directory in this case
+        if has_home and not os.path.exists(user['home']):
+            self.logger.debug('Homedir %r for %r does not exist so recreating it', user['home'], user['username'])
+            try:
+                os.makedirs(user['home'])
+            except Exception:
+                raise CallError(f'Failed recreating "{user["home"]}"')
+            else:
+                self.middleware.call_sync('filesystem.setperm', {
+                    'path': user['home'],
+                    'uid': user['uid'],
+                    'gid': group['bsdgrp_gid'],
+                    'mode': user['home_mode'],
+                }).wait_sync(raise_error=True)
 
     @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
     @returns(Int('primary_key'))
