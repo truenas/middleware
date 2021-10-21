@@ -133,15 +133,15 @@ class NTPServerService(CRUDService):
             when_unit = value[-1]
 
             if when_unit == '-':
-               when = {"value": -1, "unit": "ERROR"}
+                when = {"value": -1, "unit": "ERROR"}
             elif when_unit == 'm':
-               when = {"value": int(value[:-1]), "unit": "MINUTE"}
+                when = {"value": int(value[:-1]), "unit": "MINUTE"}
             elif when_unit == 'h':
-               when = {"value": int(value[:-1]), "unit": "HOUR"}
+                when = {"value": int(value[:-1]), "unit": "HOUR"}
             elif when_unit == 'd':
-               when = {"value": int(value[:-1]), "unit": "DAY"}
+                when = {"value": int(value[:-1]), "unit": "DAY"}
             else:
-               when = {"value": int(value), "unit": "SECOND"}
+                when = {"value": int(value), "unit": "SECOND"}
 
             return when
 
