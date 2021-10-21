@@ -89,6 +89,9 @@ def test_06_setup_and_enabling_ldap():
     }
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
+    job_id = results.json()['job_id']
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_07_verify_ldap_state_after_is_enabled_after_enabling_ldap(request):
@@ -235,6 +238,10 @@ def test_22_set_has_samba_schema_to_false(request):
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
 
+    job_id = results.json()['job_id']
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
 
 def test_23_restarting_cifs_service_after_changing_has_samba_schema(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
@@ -265,6 +272,10 @@ def test_26_set_has_samba_schema_true_and_ssl_START_TLS(request):
     }
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
+
+    job_id = results.json()['job_id']
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_27_starting_cifs_service_after_changing_ssl_to_START_TLS(request):
@@ -317,6 +328,10 @@ def test_33_set_has_samba_schema_to_false(request):
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
 
+    job_id = results.json()['job_id']
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
 
 def test_34_restarting_cifs_service_after_changing_has_samba_schema(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
@@ -364,6 +379,10 @@ def test_40_disabling_ldap(request):
     }
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
+
+    job_id = results.json()['job_id']
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_41_verify_ldap_state_after_is_enabled_after_disabling_ldap(request):

@@ -1,25 +1,21 @@
 from datetime import datetime
 import logging
 import os
+import re
 import shlex
 import shutil
 import subprocess
 import textwrap
 
-from middlewared.utils import osc
 
 logger = logging.getLogger(__name__)
 
-if osc.IS_FREEBSD:
-    SYSLOG_NG_CONF_ORIG = "/conf/base/etc/local/syslog-ng.conf.freenas"
-    SYSLOG_NG_CONF = "/etc/local/syslog-ng.conf"
-    LOG_FILTER_PREFIX = ""
-    LOG_SOURCE = "src"
-else:
-    SYSLOG_NG_CONF_ORIG = "/conf/base/etc/syslog-ng/syslog-ng.conf"
-    SYSLOG_NG_CONF = "/etc/syslog-ng/syslog-ng.conf"
-    LOG_FILTER_PREFIX = "f_freebsd_"
-    LOG_SOURCE = "s_src"
+SYSLOG_NG_CONF_ORIG = "/conf/base/etc/syslog-ng/syslog-ng.conf"
+SYSLOG_NG_CONF = "/etc/syslog-ng/syslog-ng.conf"
+LOG_FILTER_PREFIX = "f_freebsd_"
+LOG_SOURCE = "s_src"
+RE_DESTINATION = re.compile(r'(#+\n# Destinations\n#+)')
+RE_K3S_FILTER = re.compile(r'(\s{\s)')
 
 
 def generate_syslog_remote_destination(middleware, advanced_config):
@@ -87,14 +83,40 @@ def generate_syslog_remote_destination(middleware, advanced_config):
     return result
 
 
-def generate_syslog_conf(middleware):
-    shutil.copy(SYSLOG_NG_CONF_ORIG, SYSLOG_NG_CONF)
+def generate_k3s_filters():
+    return textwrap.dedent("""
+        #####################
+        # filter k3s messages
+        #####################
+        filter f_k3s { program("k3s");; };
+        destination d_k3s { file("/var/log/k3s_daemon.log"); };
+        log { source(s_src); filter(f_k3s); destination(d_k3s); };
 
-    with open(SYSLOG_NG_CONF) as f:
-        syslog_conf = f.read()
+        #####################
+        # filter docker/containerd messages
+        #####################
+        filter f_containerd { program("containerd") or program("dockerd"); };
+        destination d_containerd { file("/var/log/containerd.log"); };
+        log { source(s_src); filter(f_containerd); destination(d_containerd); };
+    """)
+
+
+def generate_syslog_conf(middleware):
+    with open(SYSLOG_NG_CONF_ORIG) as f:
+        syslog_conf = RE_DESTINATION.sub(fr"{generate_k3s_filters()}\n\1", f.read())
+
+    for line in (
+        "filter f_daemon { facility(daemon) and not filter(f_debug); };",
+        "filter f_syslog3 { not facility(auth, authpriv, mail) and not filter(f_debug); };",
+        "filter f_messages { level(info,notice,warn) and"
+    ):
+        syslog_conf = syslog_conf.replace(
+            line, RE_K3S_FILTER.sub(
+                r'\1not filter(f_k3s) and not filter(f_containerd) and ', line
+            )
+        )
 
     advanced_config = middleware.call_sync("system.advanced.config")
-
     if advanced_config["fqdn_syslog"]:
         syslog_conf = syslog_conf.replace("use-fqdn(no)", "use-fqdn(yes)")
         syslog_conf = syslog_conf.replace("use_fqdn(no)", "use_fqdn(yes)")
@@ -182,28 +204,17 @@ def generate_ha_syslog(middleware):
     with open(SYSLOG_NG_CONF, "w") as f:
         f.write(syslog_conf)
 
-    if osc.IS_FREEBSD:
-        # Be sure and copy fresh file since we're appending
-        shutil.copy("/conf/base/etc/newsyslog.conf.template", "/etc/newsyslog.conf")
-
-        with open("/etc/newsyslog.conf") as f:
-            newsyslog_conf = f.read()
-
-        newsyslog_conf += f"{controller_file}               640  10   200 @0101T JC\n"
-        with open("/etc/newsyslog.conf", "w") as f:
-            f.write(newsyslog_conf)
-    else:
-        with open("/etc/logrotate.d/truenas-ha", "w") as f:
-            for file in [controller_file]:
-                f.write(textwrap.dedent(f"""\
-                    {file} {{
-                        daily
-                        missingok
-                        rotate 10
-                        notifempty
-                        create 640 root adm
-                    }}
-                """))
+    with open("/etc/logrotate.d/truenas-ha", "w") as f:
+        for file in [controller_file]:
+            f.write(textwrap.dedent(f"""\
+                {file} {{
+                    daily
+                    missingok
+                    rotate 10
+                    notifempty
+                    create 640 root adm
+                }}
+            """))
 
 
 def use_syslog_dataset(middleware):
@@ -288,11 +299,10 @@ def configure_syslog(middleware):
 
 
 def reconfigure_logging(middleware):
-    if osc.IS_LINUX:
-        p = subprocess.run(["systemctl", "restart", "systemd-journald"], stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
-        if p.returncode != 0:
-            logger.warning("Unable to restart systemd-journald: %s", p.stdout)
+    p = subprocess.run(["systemctl", "restart", "systemd-journald"], stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
+    if p.returncode != 0:
+        logger.warning("Unable to restart systemd-journald: %s", p.stdout)
 
     middleware.call_sync("core.reconfigure_logging")
 
