@@ -6,6 +6,7 @@ from ipaddress import ip_address
 from dns import asyncresolver
 
 from middlewared.service import Service, job, ValidationErrors
+from middlewared.service_exception import CallError
 
 
 class ClusterUtils(Service):
@@ -111,7 +112,6 @@ class ClusterUtils(Service):
             "ntp_peer": ntp_peer[0] if ntp_peer else None
         })
         return responses
-
 
 
 class FuseConfig(enum.Enum):
