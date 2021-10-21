@@ -1132,7 +1132,7 @@ class LDAPService(TDBWrapConfigService):
         if ha_mode == 'CLUSTERED':
             job.set_progress(90, 'Reloading LDAP service on other cluster nodes')
             cl_job = await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload', 'START')
-            await cl_job.wait()
+            await cl_job.wait(raise_error=True)
 
         job.set_progress(100, 'LDAP directory service started.')
 
@@ -1170,7 +1170,7 @@ class LDAPService(TDBWrapConfigService):
         if ha_mode == 'CLUSTERED':
             job.set_progress(90, 'Reloading LDAP service on other cluster nodes')
             cl_job = await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload', 'STOP')
-            await cl_job.wait()
+            await cl_job.wait(raise_error=True)
 
         job.set_progress(100, 'LDAP directory service stopped.')
 
