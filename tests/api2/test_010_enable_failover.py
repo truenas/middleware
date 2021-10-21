@@ -10,11 +10,12 @@ from auto_config import ha
 
 pytestmark = pytest.mark.skipif(not ha, reason="Skipping test for Core and Scale")
 
-
-def test_01_enable_failover():
-    payload = {
-        "disabled": False,
-        "master": True,
-    }
-    results = PUT('/failover/', payload)
-    assert results.status_code == 200, results.text
+# Only read the test on HA
+if ha:
+    def test_01_enable_failover():
+        payload = {
+            "disabled": False,
+            "master": True,
+        }
+        results = PUT('/failover/', payload)
+        assert results.status_code == 200, results.text

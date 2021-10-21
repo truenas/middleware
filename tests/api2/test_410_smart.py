@@ -14,8 +14,11 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 Reason = "VM detected no real ATA disk"
 
-interface_exist = (interface == "vtnet0" or interface == "em0" or interface == 'enp0s7')
-not_real_disk = pytest.mark.skipif(interface_exist, reason=Reason)
+not_real = (
+    interface == "vtnet0"
+    or interface == "em0"
+    or 'enp0s' in interface
+)
 
 
 @pytest.fixture(scope='module')
@@ -82,15 +85,14 @@ def test_06_look_smartd_service_at_boot():
     assert results.json()[0]["enable"] is True, results.text
 
 
-@not_real_disk
-def test_07_starting_smartd_service():
-    payload = {"service": "smartd"}
-    results = POST("/service/start/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
+# Read test below only on real hardware
+if not_real is False:
+    def test_07_starting_smartd_service():
+        payload = {"service": "smartd"}
+        results = POST("/service/start/", payload)
+        assert results.status_code == 200, results.text
+        sleep(1)
 
-
-@not_real_disk
-def test_08_checking_to_see_if_smartd_service_is_running():
-    results = GET('/service/?service=smartd')
-    assert results.json()[0]["state"] == "RUNNING", results.text
+    def test_08_checking_to_see_if_smartd_service_is_running():
+        results = GET('/service/?service=smartd')
+        assert results.json()[0]["state"] == "RUNNING", results.text
