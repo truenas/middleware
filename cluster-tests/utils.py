@@ -114,8 +114,8 @@ def _run_ssh_cmd(host, action, **kwargs):
         cmd.append(kwargs['file'])
         cmd.append(f'{uinfo}:{kwargs["dst"]}')
 
-    cp = subprocess.run(cmd, stdout=subprocess.PIPE, universal_newlines=True)
-    return {'result': not bool(cp.returncode), 'output': cp.stdout}
+    cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    return {'result': not bool(cp.returncode), 'output': cp.stdout, 'stderr': cp.stderr}
 
 
 def ssh_test(host, cmd):
