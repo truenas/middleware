@@ -1155,11 +1155,10 @@ class LDAPService(TDBWrapConfigService):
         job.set_progress(20, 'Reconfiguring idmap settings.')
         await self.middleware.call('idmap.synchronize')
 
-        if ldap['has_samba_schema']:
-            job.set_progress(30, 'Restarting SMB service.')
-            await self.middleware.call('service.restart', 'cifs')
-            await self.middleware.call('smb.synchronize_passdb')
-            await self.middleware.call('smb.synchronize_group_mappings')
+        job.set_progress(30, 'Reconfiguring SMB service.')
+        await self.middleware.call('smb.synchronize_passdb')
+        await self.middleware.call('smb.synchronize_group_mappings')
+        await self._service_change('cifs', 'restart')
 
         job.set_progress(50, 'Clearing directory service cache.')
         await self.middleware.call('service.stop', 'dscache')
@@ -1181,6 +1180,7 @@ class LDAPService(TDBWrapConfigService):
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
         await self.nslcd_cmd(action.lower())
+        await self._service_change('cifs', 'restart')
         await self.middleware.call(f'service.{action.lower()}', 'dscache')
 
     @private
