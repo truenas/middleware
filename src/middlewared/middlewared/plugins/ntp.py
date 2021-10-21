@@ -1,8 +1,11 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
-from middlewared.service import ValidationErrors, CRUDService, private
+from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch, IPAddr
+from middlewared.service import ValidationErrors, CRUDService, private, filterable
+from middlewared.utils import filter_list
+from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 
 import ntplib
+import subprocess
 
 
 class NTPModel(sa.Model):
@@ -122,6 +125,103 @@ class NTPServerService(CRUDService):
             pass
 
         return server_alive
+
+    @private
+    @filterable
+    def peers(self, filters, options):
+        def de_pretty_time(value):
+            when_unit = value[-1]
+
+            if when_unit == '-':
+               when = {"value": -1, "unit": "ERROR"}
+            elif when_unit == 'm':
+               when = {"value": int(value[:-1]), "unit": "MINUTE"}
+            elif when_unit == 'h':
+               when = {"value": int(value[:-1]), "unit": "HOUR"}
+            elif when_unit == 'd':
+               when = {"value": int(value[:-1]), "unit": "DAY"}
+            else:
+               when = {"value": int(value), "unit": "SECOND"}
+
+            return when
+
+        peers = []
+        resp = subprocess.run(['ntpq', '-np'], capture_output=True)
+        if resp.returncode != 0 or resp.stderr:
+            raise CallError(resp.stderr.decode().strip())
+
+        for entry in resp.stdout.decode().splitlines()[2:]:
+            c = None
+            values = entry.split()
+            if len(values) != 10:
+                self.logger.debug("Unexpected peer result: %s", entry)
+                continue
+
+            remote = values[0]
+
+            if remote[0] in ['X', '.', '-', '+', '#', '*', 'o']:
+                c = remote[0]
+                remote = remote[1:]
+
+            try:
+                IPAddr().validate(remote)
+            except ValidationErrors:
+                self.logger.debug("Invalid remote address: %s", remote)
+                continue
+
+            if c is None:
+                status = 'REJECT'
+            elif c == 'X':
+                status = 'FALSE_TICK'
+            elif c == '.':
+                status = 'EXCESS'
+            elif c == '-':
+                status = 'OUTLIER'
+            elif c == '+':
+                status = 'CANDIDATE'
+            elif c == '#':
+                status = 'BACKUP'
+            elif c == '*':
+                status = 'SYS_PEER'
+            elif c == 'o':
+                status = 'PPS_PEER'
+
+            if values[3] == 'u':
+                tcolumn = 'UNICAST'
+            elif values[3] == 'b':
+                tcolumn = 'BROADCAST_CLIENT'
+            elif values[3] == 'B':
+                tcolumn = 'BROADCAST_SERVER'
+            elif values[3] == 'M':
+                tcolumn = 'MULTICAST_SERVER'
+            elif values[3] == 's':
+                tcolumn = 'SYMMETRIC_ACTIVE'
+            elif values[3] == 'S':
+                tcolumn = 'SYMMETRIC_PASSIVE'
+            elif values[3] == 'a':
+                tcolumn = 'MANYCAST'
+            elif values[3] == 'l':
+                tcolumn = 'LOCAL'
+            elif values[3] == 'p':
+                tcolumn = 'POOL'
+            else:
+                tcolumn = f'UNKNOWN-{values[3]}'
+
+            peers.append({
+                "status": status,
+                "remote": remote,
+                "refid": values[1],
+                "stratum": int(values[2]),
+                "type": tcolumn,
+                "when": de_pretty_time(values[4]),
+                "poll_interval": de_pretty_time(values[5]),
+                "reach": int(values[6], 8),
+                "delay": float(values[7]),
+                "offset": float(values[8]),
+                "jitter": float(values[9])
+            })
+
+        return filter_list(peers, filters, options)
 
     @private
     async def clean(self, data, schema_name):
