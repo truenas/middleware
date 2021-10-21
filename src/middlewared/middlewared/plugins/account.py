@@ -654,6 +654,7 @@ class UserService(CRUDService):
                     'uid': user['uid'],
                     'gid': group['bsdgrp_gid'],
                     'mode': user['home_mode'],
+                    'options': {'stripacl': True},
                 }).wait_sync(raise_error=True)
 
     @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
