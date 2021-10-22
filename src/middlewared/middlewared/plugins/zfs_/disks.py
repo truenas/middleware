@@ -1,11 +1,7 @@
-from bsd import geom
-
 from middlewared.service import Service
 
-from .disks_base import PoolDiskServiceBase
 
-
-class ZFSPoolService(Service, PoolDiskServiceBase):
+class ZFSPoolService(Service):
 
     class Config:
         namespace = 'zfs.pool'
@@ -13,24 +9,24 @@ class ZFSPoolService(Service, PoolDiskServiceBase):
         process_pool = True
 
     def get_disks(self, name):
-        disks = self.middleware.call_sync('zfs.pool.get_devices', name)
         pool_disks = []
-
-        geom.scan()
-        labelclass = geom.class_by_name('LABEL')
-        for dev in disks:
+        label_xml = self.middleware.call_sync('geom.get_class_xml', 'LABEL')
+        dev_xml = self.middleware.call_sync('geom.get_class_xml', 'DEV')
+        disks = self.middleware.call_sync('geom.get_disks')
+        for dev in self.middleware.call_sync('zfs.pool.get_devices', name):
             dev = dev.replace('.eli', '')
-            find = labelclass.xml.findall(f".//provider[name='{dev}']/../consumer/provider")
+            found = label_xml.find(f'.//provider[name="{dev}"]/../consumer/provider')
             name = None
-            if find:
-                name = geom.provider_by_id(find[0].get('ref')).geom.name
+            if found:
+                name = dev
             else:
-                g = geom.geom_by_name('DEV', dev)
+                g = dev_xml.find(f'./geom[name="{dev}"]')
                 if g:
-                    name = g.consumer.provider.geom.name
+                    name = g.find('name').text
 
-            if name and (name.startswith('multipath/') or geom.geom_by_name('DISK', name)):
+            if name and (name.startswith('multipath/') or name in disks):
                 pool_disks.append(name)
             else:
-                self.logger.debug(f'Could not find disk for {dev}')
+                self.logger.debug('Disk %r not found in zpool %r', dev, name)
+
         return pool_disks
