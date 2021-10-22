@@ -38,5 +38,5 @@ class NTPHealthAlertSource(AlertSource):
 
         return Alert(
             NTPHealthAlertClass,
-            {'reason': f'{peer["remote"]}: offset exceeds permitted value: {peer["offset"]}'}
+            {'reason': f'{peer["remote"]} has an offset of {peer["offset"]}, which exceeds permitted value of 5 minutes.'}
         )
