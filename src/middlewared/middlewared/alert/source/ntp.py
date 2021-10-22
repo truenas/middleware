@@ -4,21 +4,14 @@ from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel,
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class NTPOffsetAlertClass(AlertClass):
+class NTPHealthAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "Excessive NTP server offset"
-    text = "%(remote)s : offset exceeds five minutes: %(offset)s."
+    text = "NTP health check failed: %(reason)"
 
 
-class NTPNoPeersAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "No NTP peers"
-    text = "There are no current NTP peers. Server clock may drift."
-
-
-class NTPOffsetAlertSource(AlertSource):
+class NTPHealthAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=12))
     run_on_backup_node = False
 
@@ -31,30 +24,18 @@ class NTPOffsetAlertSource(AlertSource):
         if not peers:
             return
 
-        offset = peers[0]['offset']
-        if offset < 300000:
+        active_peer = filter(lambda x: x['status'].endswith('PEER'), peers)
+        if not active_peer:
+            return Alert(
+                NTPHealthAlertClass,
+                {'reason': 'no NTP peers'}
+            )
+
+        peer = active_peer[0]
+        if peer['offset'] < 300000:
             return
 
         return Alert(
-            NTPOffsetAlertClass,
-            {'offset': str(offset), 'remote': peers[0]['remote']},
+            NTPHealthAlertClass,
+            {'reason': f'{peer["remote"]}: offset exceeds permitted value: {peer["offset"]}'}
         )
-
-
-class NTPNoPeersAlertSource(AlertSource):
-    schedule = IntervalSchedule(timedelta(hours=12))
-    run_on_backup_node = False
-
-    async def check(self):
-        try:
-            peers = await self.middleware.call("system.ntpserver.peers")
-        except Exception:
-            peers = []
-
-        if not peers:
-            return
-
-        if any(filter(lambda x: x['status'].endswith('PEER'), peers)):
-            return
-
-        return Alert(NTPNoPeersAlertClass)
