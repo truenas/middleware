@@ -37,6 +37,18 @@ def get_action_context(release_name):
     })
 
 
+def add_context_to_configuration(config, context_dict):
+    if 'global' in config:
+        config['global'].update(context_dict)
+        config.update(context_dict)
+    else:
+        config.update({
+            'global': context_dict,
+            **context_dict
+        })
+    return config
+
+
 def get_namespace(release_name):
     return f'{CHART_NAMESPACE_PREFIX}{release_name}'
 

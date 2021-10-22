@@ -13,7 +13,9 @@ from middlewared.schema import Bool, Dict, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, periodic, private, Service, ValidationErrors
 
 from .schema import clean_values_for_upgrade
-from .utils import CONTEXT_KEY_NAME, get_action_context, SCALEABLE_RESOURCES, SCALE_DOWN_ANNOTATION
+from .utils import (
+    add_context_to_configuration, CONTEXT_KEY_NAME, get_action_context, SCALEABLE_RESOURCES, SCALE_DOWN_ANNOTATION
+)
 
 
 class ChartReleaseService(Service):
@@ -279,7 +281,7 @@ class ChartReleaseService(Service):
         # version it's happening.
         # Helm considers simple config change as an upgrade as well, and we have no way of determining the old/new
         # chart versions during helm upgrade in the helm template, hence the requirement for a context object.
-        context_dict = {
+        config = add_context_to_configuration(config, {
             CONTEXT_KEY_NAME: {
                 **get_action_context(release_name),
                 'operation': 'UPGRADE',
@@ -290,15 +292,7 @@ class ChartReleaseService(Service):
                     'preUpgradeRevision': release['version'],
                 }
             }
-        }
-        if 'global' in config:
-            config['global'].update(context_dict)
-            config.update(context_dict)
-        else:
-            config.update({
-                'global': context_dict,
-                **context_dict
-            })
+        })
 
         job.set_progress(60, 'Upgrading chart release version')
 
