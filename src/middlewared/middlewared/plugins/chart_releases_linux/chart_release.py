@@ -537,11 +537,21 @@ class ChartReleaseService(CRUDService):
 
             job.set_progress(75, 'Installing Catalog Item')
 
-            new_values[CONTEXT_KEY_NAME].update({
-                **get_action_context(data['release_name']),
-                'operation': 'INSTALL',
-                'isInstall': True,
-            })
+            context_dict = {
+                CONTEXT_KEY_NAME: {
+                    **get_action_context(data['release_name']),
+                    'operation': 'INSTALL',
+                    'isInstall': True,
+                }
+            }
+            if 'global' in new_values:
+                new_values['global'].update(context_dict)
+                new_values.update(context_dict)
+            else:
+                new_values.update({
+                    'global': context_dict,
+                    **context_dict
+                })
 
             await self.middleware.call(
                 'chart.release.create_update_storage_class_for_chart_release',
@@ -608,11 +618,21 @@ class ChartReleaseService(CRUDService):
 
         await self.perform_actions(context)
 
-        config[CONTEXT_KEY_NAME].update({
-            **get_action_context(chart_release),
-            'operation': 'UPDATE',
-            'isUpdate': True,
-        })
+        context_dict = {
+            CONTEXT_KEY_NAME: {
+                **get_action_context(chart_release),
+                'operation': 'UPDATE',
+                'isUpdate': True,
+            }
+        }
+        if 'global' in config:
+            config['global'].update(context_dict)
+            config.update(context_dict)
+        else:
+            config.update({
+                'global': context_dict,
+                **context_dict
+            })
 
         await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 
