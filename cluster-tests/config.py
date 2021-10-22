@@ -26,6 +26,16 @@ CLUSTER_ADS = {
     'PASSWORD': enviorn.get('AD_PASSWORD')
 }
 
+CLUSTER_LDAP = {
+    'HOSTNAME': environ.get('LDAP_HOSTNAME'),
+    'BASEDN': environ.get('LDAP_BASEDN'),
+    'BINDDN': environ.get('LDAP_BINDDN'),
+    'BINDPW': environ.get('LDAP_BINDPW'),
+    'TEST_USERNAME': environ.get('LDAP_TEST_USERNAME'),
+    'TEST_PASSWORD': environ.get('LDAP_TEST_PASSWORD'),
+    'TEST_GROUPNAME': environ.get('LDAP_TEST_GROUPNAME'),
+}
+
 INTERNAL_DS = '.glusterfs'
 BRICK_NAME = 'brick0'
 DATASET_HIERARCHY = f'{CLUSTER_INFO["ZPOOL"]}/{INTERNAL_DS}/{CLUSTER_INFO["GLUSTER_VOLUME"]}/{BRICK_NAME}'
