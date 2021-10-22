@@ -4,14 +4,14 @@ from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel,
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class NTPHealthAlertClass(AlertClass):
+class NTPHealthCheckAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "Excessive NTP server offset"
     text = "NTP health check failed: %(reason)s"
 
 
-class NTPHealthAlertSource(AlertSource):
+class NTPHealthCheckAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=12))
     run_on_backup_node = False
 
@@ -28,7 +28,7 @@ class NTPHealthAlertSource(AlertSource):
         active_peer = [x for x in peers if x['status'].endswith('PEER')]
         if not active_peer:
             return Alert(
-                NTPHealthAlertClass,
+                NTPHealthCheckAlertClass,
                 {'reason': f'No NTP peers: {[{x["remote"]: x["status"]} for x in peers]}'}
             )
 
@@ -37,6 +37,6 @@ class NTPHealthAlertSource(AlertSource):
             return
 
         return Alert(
-            NTPHealthAlertClass,
+            NTPHealthCheckAlertClass,
             {'reason': f'{peer["remote"]} has an offset of {peer["offset"]}, which exceeds permitted value of 5 minutes.'}
         )
