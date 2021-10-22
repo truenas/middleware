@@ -27,7 +27,7 @@ class KubernetesPodService(CRUDService):
         async with api_client() as (api, context):
             pods = [
                 d.to_dict() for d in (await context['core_api'].list_pod_for_all_namespaces(**kwargs)).items
-                if force_all_pods or not any(o.kind == 'DaemonSet' for o in d.metadata.owner_references)
+                if force_all_pods or not any(o.kind == 'DaemonSet' for o in (d.metadata.owner_references or []))
             ]
             if options['extra'].get('events'):
                 events = await self.middleware.call(
