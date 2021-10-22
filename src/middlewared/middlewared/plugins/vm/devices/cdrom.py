@@ -11,7 +11,11 @@ class CDROM(Device):
 
     schema = Dict(
         'attributes',
-        Str('path', required=True, validators=[Match(r'^[^{}]*$')]),
+        Str(
+            'path', required=True, validators=[
+                Match(r'^[^{}]*$', explanation='Path should not contain "{", "}" characters')
+            ]
+        ),
     )
 
     def identity(self):

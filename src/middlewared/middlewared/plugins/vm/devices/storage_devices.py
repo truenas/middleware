@@ -45,7 +45,9 @@ class RAW(StorageDevice):
 
     schema = Dict(
         'attributes',
-        Str('path', required=True, validators=[Match(r'^[^{}]*$')]),
+        Str('path', required=True, validators=[Match(
+            r'^[^{}]*$', explanation='Path should not contain "{", "}" characters'
+        )]),
         Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
         Bool('exists'),
         Bool('boot', default=False),
