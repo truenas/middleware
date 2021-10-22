@@ -3,7 +3,7 @@ import asyncio
 import errno
 import os
 import datetime
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
 from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
@@ -216,6 +216,11 @@ class IdmapDomainService(TDBWrapCRUDService):
             "certificate": None
         }
     ]
+
+    ENTRY = Patch(
+        'idmap_domain_create', 'idmap_domain_entry',
+        ('add', Int('id')),
+    )
 
     class Config:
         datastore = 'directoryservice.idmap_domain'
@@ -550,42 +555,66 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         return ret
 
-    @accepts(
-        Dict(
-            'idmap_domain_create',
-            Str('name', required=True),
-            Str('dns_domain_name'),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Str('idmap_backend', required=True, enum=[x.name for x in IdmapBackend]),
-            Int('certificate', null=True),
+    @accepts(Dict(
+        'idmap_domain_create',
+        Str('name', required=True),
+        Str('dns_domain_name'),
+        Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+        Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
+        Str('idmap_backend', required=True, enum=[x.name for x in IdmapBackend]),
+        Int('certificate', null=True),
+        OROperator(
             Dict(
-                'options',
-                Str('schema_mode', enum=['RFC2307', 'SFU', 'SFU20']),
-                Bool('unix_primary_group'),
-                Bool('unix_nss_info'),
-                Int('rangesize', validators=[Range(min=10000, max=1000000000)]),
-                Bool('readonly'),
-                Bool('ignore_builtin'),
-                Str('ldap_base_dn'),
-                Str('ldap_user_dn'),
+                'idmap_ad_options',
+                Str('schema_mode', required=True, enum=['RFC2307', 'SFU', 'SFU20']),
+                Bool('unix_primary_group', default=False),
+                Bool('unix_nss_info', default=False),
+            ),
+            Dict(
+                'idmap_autorid_options',
+                Int('rangesize', default=100000, validators=[Range(min=10000, max=1000000000)]),
+                Bool('readonly', default=False),
+                Bool('ignore_builtin', default = False),
+            ),
+            Dict(
+                'idmap_ldap_options',
+                LDAP_DN('ldap_base_dn'),
+                LDAP_DN('ldap_user_dn'),
                 Str('ldap_user_dn_password', private=True),
                 Str('ldap_url'),
+                Bool('readonly', default=False),
                 Str('ssl', enum=[x.value for x in SSL]),
-                Str('linked_service', enum=['LOCAL_ACCOUNT', 'LDAP', 'NIS']),
-                Str('ldap_server'),
-                Bool('ldap_realm'),
-                Str('bind_path_user'),
-                Str('bind_path_group'),
-                Bool('user_cn'),
+            ),
+            Dict(
+                'idmap_nss_options',
+                Str('linked_service', default='LOCAL_ACCOUNT', enum=['LOCAL_ACCOUNT', 'LDAP']),
+            ),
+            Dict(
+                'idmap_rfc2307_options',
+                Str('ldap_server', required=True, enum=['AD', 'STANDALONE']),
+                Bool('ldap_realm', default=False),
+                LDAP_DN('bind_path_user'),
+                LDAP_DN('bind_path_group'),
+                Bool('user_cn', default=False),
                 Str('cn_realm'),
                 Str('ldap_domain'),
                 Str('ldap_url'),
-                Bool('sssd_compat'),
+                LDAP_DN('ldap_user_dn'),
+                Str('ldap_user_dn_password', private=True),
+                Str('ssl', enum=[x.value for x in SSL]),
             ),
-            register=True
-        )
-    )
+            Dict(
+                'idmap_rid_options',
+                Bool('sssd_compat', default=False),
+            ),
+            Dict(
+                'idmap_tdb_options',
+            ),
+            name='options',
+            title='idmap_options',
+        ),
+        register=True
+    ))
     async def do_create(self, data):
         """
         Create a new IDMAP domain. These domains must be unique. This table
@@ -678,6 +707,9 @@ class IdmapDomainService(TDBWrapCRUDService):
         """
         verrors = ValidationErrors()
 
+        if not 'options' in data:
+            data['options'] = {}
+
         old = await self.query()
         if data['name'] in [x['name'] for x in old]:
             verrors.add('idmap_domain_create.name', 'Domain names must be unique.')
@@ -722,14 +754,6 @@ class IdmapDomainService(TDBWrapCRUDService):
         await self.synchronize()
         return out
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_domain_create",
-            "idmap_domain_update",
-            ("attr", {"update": True})
-        )
-    )
     async def do_update(self, id, data):
         """
         Update a domain by id.
@@ -802,7 +826,6 @@ class IdmapDomainService(TDBWrapCRUDService):
         await cache_job.wait()
         return out
 
-    @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete a domain by id. Deletion of default system domains is not permitted.
@@ -1049,6 +1072,8 @@ class IdmapDomainService(TDBWrapCRUDService):
             })
             for k, v in i['options'].items():
                 backend_parameter = "realm" if k == "ldap_realm" else k
+                if k == 'ldap_server':
+                    v = v.lower()
 
                 rv.update({
                     f"{idmap_prefix} {backend_parameter}": {"parsed": v},
