@@ -1,10 +1,12 @@
 import os
 import asyncio
 import enum
+import time
 from ipaddress import ip_address
 from dns import asyncresolver
 
-from middlewared.service import Service, ValidationErrors
+from middlewared.service import Service, job, ValidationErrors
+from middlewared.service_exception import CallError
 
 
 class ClusterUtils(Service):
@@ -63,6 +65,53 @@ class ClusterUtils(Service):
         verrors.check()
 
         return list(set(ips))
+
+    async def time_callback(self, prefix):
+        my_time = time.clock_gettime(time.CLOCK_REALTIME)
+        my_node = await self.middleware.call('ctdb.general.pnn')
+        key = f'{prefix}_cluster_time_req_{my_node}'
+        tz = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
+        ntp_peer = await self.middleware.call('system.ntpserver.peers', [('status', '$', 'PEER')])
+        payload = {
+            "clock_realtime": my_time,
+            "tz": tz,
+            "node": my_node,
+            "ntp_peer": ntp_peer[0] if ntp_peer else None
+        }
+        await self.middleware.call('clustercache.put', key, payload)
+
+    @job("cluster_time_info")
+    async def time_info(self, job):
+        nodes = await self.middleware.call('ctdb.general.status')
+        for node in nodes:
+            if not node['flags_str'] == 'OK':
+                raise CallError(f'Cluster node {node["pnn"]} is unhealthy. Unable to retrieve time info.')
+            if node['this_node']:
+                my_node = node['pnn']
+
+        tz = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
+
+        cl_job = await self.middleware.call('clusterjob.submit', 'cluster.utils.time_callback', my_node)
+        ntp_peer = await self.middleware.call('system.ntpserver.peers', [('status', '$', 'PEER')])
+        my_time = time.clock_gettime(time.CLOCK_REALTIME)
+        await cl_job.wait(raise_error=True)
+
+        key_prefix = f'{my_node}_cluster_time_req_'
+        responses = []
+        for node in nodes:
+            if node['this_node']:
+                continue
+
+            node_resp = await self.middleware.call('clustercache.pop', f'{key_prefix}{node["pnn"]}')
+            responses.append(node_resp)
+
+        responses.append({
+            "clock_realtime": my_time,
+            "tz": tz,
+            "node": my_node,
+            "ntp_peer": ntp_peer[0] if ntp_peer else None
+        })
+        return responses
 
 
 class FuseConfig(enum.Enum):

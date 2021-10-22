@@ -55,7 +55,7 @@ class ClusterJob(Service):
 
     @private
     @periodic(3600)
-    @job(lock="queue_lock")
+    @job(lock="queue_lock", transient=True)
     async def process_queue(self, job):
         gl_enabled = (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']
         if not gl_enabled:
