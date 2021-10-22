@@ -405,39 +405,45 @@ class PoolService(CRUDService):
     @private
     def transform_topology(self, x, options=None):
         """
-        Transform topology output from libzfs to add `device` and make `type` uppercase.
+        Take the top-level `groups` key from zfs.pool.query output and do 3 things:
+        1.  take the `type` key and upper-case it
+        2.  add `device` key that maps the gptid label to a partition (i.e. /dev/da1p1)
+        3.  add `disk` key that maps the gptid label to a disk (i.e /dev/da1)
         """
-        options = options or {}
-        if isinstance(x, dict):
-            if options.get('device_disk', True):
-                if 'label_to_dev_disk_cache' not in options:
-                    options['label_to_dev_disk_cache'] = self.middleware.call_sync('disk.label_to_dev_disk_cache')
-                path = x.get('path')
-                if path is not None:
-                    device = disk = None
-                    if path.startswith('/dev/'):
-                        args = [path[5:], False, options['label_to_dev_disk_cache']]
-                        device = self.middleware.call_sync('disk.label_to_dev', *args)
-                        disk = self.middleware.call_sync('disk.label_to_disk', *args)
-                    x['device'] = device
-                    x['disk'] = disk
+        info = self.middleware.call_sync('disk.label_to_dev_disk_cache')
+        disks = self.middleware.call_sync('disk.query', [], {'extra': {'include_expired': True}})
+        if disks:
+            disks = disks[0]
 
-            if options.get('unavail_disk', True):
-                guid = x.get('guid')
-                if guid is not None:
-                    unavail_disk = None
-                    if x.get('status') == 'UNAVAIL':
-                        unavail_disk = self.middleware.call_sync('disk.disk_by_zfs_guid', guid)
-                    x['unavail_disk'] = unavail_disk
+        for vdev_type in x['groups']:
+            for idx, entry in enumerate(x['groups'][vdev_type]):
+                type_val = x['groups'][vdev_type][idx].get('type')
+                if type_val and isinstance(type_val, str):
+                    # uppercase the `type` key
+                    x['groups'][vdev_type][idx]['type'] = type_val.upper()
 
-            for key in x:
-                if key == 'type' and isinstance(x[key], str):
-                    x[key] = x[key].upper()
-                else:
-                    x[key] = self.transform_topology(x[key], dict(options, geom_scan=False))
-        elif isinstance(x, list):
-            for i, entry in enumerate(x):
-                x[i] = self.transform_topology(x[i], dict(options, geom_scan=False))
+                # map label to /dev/* devices (i.e. da1p1/da1, etc)
+                if options.get('device_disk', True):
+                    path_val = x['groups'][vdev_type][idx].get('path')
+                    if path_val is not None:
+                        if path_val.startswith('/dev/'):
+                            if path_val.endswith(('.nop', '.eli')):
+                                # strip nop and eli extensions
+                                path_val = path_val[:-4]
+
+                            # add `device` and `disk` keys
+                            x['groups'][vdev_type][idx]['path']['device'] = info['label_to_dev'].get(path_val)
+                            x['groups'][vdev_type][idx]['path']['disk'] = info['dev_to_disk'].get(path_val)
+
+                # identify if the disk is UNAVAIL to the zpool
+                if options.get('unavail_disk', True):
+                    guid_val = x['groups'][vdev_type][idx].get('guid')
+                    if guid_val is not None:
+                        unavail_disk = None
+                        if x['groups'][vdev_type][idx].get('status') == 'UNAVAIL':
+                            unavail_disk = next(filter(lambda j: j['zfs_guid'], disks), None)
+                        # add `unavail_disk` key
+                        x['groups'][vdev_type][idx]['unavail_disk'] = unavail_disk
         return x
 
     @private
