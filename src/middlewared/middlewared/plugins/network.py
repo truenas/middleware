@@ -2649,7 +2649,7 @@ class DNSService(Service):
         cli_namespace = 'network.dns'
 
     @filterable
-    @returns(List('nameservers', items=[Dict('nameserver', IPAddr('ip', required=True))]))
+    @filterable_returns(Dict('nameserver', IPAddr('ip', required=True)))
     def query(self, filters, options):
         """
         Query Name Servers with `query-filters` and `query-options`.
