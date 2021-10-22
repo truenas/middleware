@@ -407,6 +407,14 @@ class FailoverService(Service):
             job.set_progress(None, description='ERROR')
             raise FencedError()
 
+        if not fobj['volumes']:
+            # means we received a master event but there are no zpools to import
+            # (happens when the box is initially licensed for HA and being setup)
+            # there is nothing else to do so just log a warning and return early
+            logger.warning('No zpools to import, exiting failover event')
+            self.FAILOVER_RESULT = 'INFO'
+            return self.FAILOVER_RESULT
+
         # remove the zpool cache files if necessary
         if os.path.exists(self.ZPOOL_KILLCACHE):
             for i in (self.ZPOOL_CACHE_FILE, self.ZPOOL_CACHE_FILE_SAVED):
@@ -473,13 +481,6 @@ class FailoverService(Service):
                 logger.error(f'Error unlocking ZFS encrypted datasets: {unlock_job.error}')
             elif unlock_job.result['failed']:
                 logger.error('Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed']))
-        else:
-            # means we received a master event but there are no zpools to import
-            # (happens when the box is initially licensed for HA and being setup)
-            # there is nothing else to do so just log a warning and return early
-            logger.warning('No zpools to import, exiting failover event')
-            self.FAILOVER_RESULT = 'INFO'
-            return self.FAILOVER_RESULT
 
         # if we fail to import all zpools then alert the user because nothing
         # is going to work at this point

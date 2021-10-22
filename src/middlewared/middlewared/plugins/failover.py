@@ -357,8 +357,8 @@ class FailoverService(ConfigService):
             return False
 
         crit_ints = [i for i in await self.middleware.call('interface.query') if i.get('failover_critical', False)]
-        for i in crit_ints:
-            await self.middleware.call('failover.events.event', i['name'], 'forcetakeover')
+        if crit_ints:
+            await self.middleware.call('failover.events.event', crit_ints[0]['name'], 'forcetakeover')
             return True
         else:
             # if there are no interfaces marked critical for failover and this method was
