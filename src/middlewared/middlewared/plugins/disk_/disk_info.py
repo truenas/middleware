@@ -3,13 +3,12 @@ import re
 
 import bsd
 from middlewared.service import Service
-from .disk_info_base import DiskInfoBase
 
 
 RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 
 
-class DiskService(Service, DiskInfoBase):
+class DiskService(Service):
 
     async def get_dev_size(self, dev):
         try:
