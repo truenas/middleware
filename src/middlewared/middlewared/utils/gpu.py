@@ -15,16 +15,18 @@ def get_gpus():
         raise CallError(f'Unable to list available gpus: {stderr.decode()}')
 
     gpus = []
-    gpu_slots = [
-        line.strip()
-        for line in stdout.decode().splitlines() if any(
-            k in line for k in (
-                'VGA compatible controller',
-                'Display controller',
-            )
-        )
-    ]
-    for gpu_line in gpu_slots:
+    gpu_slots = []
+    for line in stdout.decode().splitlines():
+        for k in (
+            'VGA compatible controller',
+            'Display controller',
+            '3D controller',
+        ):
+            if k in line:
+                gpu_slots.append((line.strip(), k))
+                break
+
+    for gpu_line, key in gpu_slots:
         addr = gpu_line.split()[0]
         addr_re = RE_PCI_ADDR.match(addr)
 
@@ -42,7 +44,7 @@ def get_gpus():
                 'pci_slot': addr,
                 **{k: addr_re.group(k) for k in ('domain', 'bus', 'slot')},
             },
-            'description': gpu_line.split('VGA compatible controller:')[-1].split('(rev')[0].strip(),
+            'description': gpu_line.split(f'{key}:')[-1].split('(rev')[0].strip(),
             'devices': [
                 {
                     'pci_id': child['PCI_ID'],
