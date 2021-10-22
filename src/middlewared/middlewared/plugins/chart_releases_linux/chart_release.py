@@ -17,7 +17,8 @@ from middlewared.utils import filter_list, get
 from middlewared.validators import Match
 
 from .utils import (
-    CHART_NAMESPACE_PREFIX, CONTEXT_KEY_NAME, get_action_context, get_namespace, get_storage_class_name, Resources, run,
+    add_context_to_configuration, CHART_NAMESPACE_PREFIX, CONTEXT_KEY_NAME, get_action_context,
+    get_namespace, get_storage_class_name, Resources, run,
 )
 
 
@@ -537,21 +538,13 @@ class ChartReleaseService(CRUDService):
 
             job.set_progress(75, 'Installing Catalog Item')
 
-            context_dict = {
+            new_values = add_context_to_configuration(new_values, {
                 CONTEXT_KEY_NAME: {
                     **get_action_context(data['release_name']),
                     'operation': 'INSTALL',
                     'isInstall': True,
                 }
-            }
-            if 'global' in new_values:
-                new_values['global'].update(context_dict)
-                new_values.update(context_dict)
-            else:
-                new_values.update({
-                    'global': context_dict,
-                    **context_dict
-                })
+            })
 
             await self.middleware.call(
                 'chart.release.create_update_storage_class_for_chart_release',
@@ -618,21 +611,13 @@ class ChartReleaseService(CRUDService):
 
         await self.perform_actions(context)
 
-        context_dict = {
+        config = add_context_to_configuration(config, {
             CONTEXT_KEY_NAME: {
                 **get_action_context(chart_release),
                 'operation': 'UPDATE',
                 'isUpdate': True,
             }
-        }
-        if 'global' in config:
-            config['global'].update(context_dict)
-            config.update(context_dict)
-        else:
-            config.update({
-                'global': context_dict,
-                **context_dict
-            })
+        })
 
         await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 
