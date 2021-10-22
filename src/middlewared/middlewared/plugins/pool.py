@@ -432,8 +432,8 @@ class PoolService(CRUDService):
                                 path_val = path_val[:-4]
 
                             # add `device` and `disk` keys
-                            x['groups'][vdev_type][idx]['path']['device'] = info['label_to_dev'].get(path_val)
-                            x['groups'][vdev_type][idx]['path']['disk'] = info['dev_to_disk'].get(path_val)
+                            x['groups'][vdev_type][idx]['device'] = info['label_to_dev'].get(path_val)
+                            x['groups'][vdev_type][idx]['disk'] = info['dev_to_disk'].get(path_val)
 
                 # identify if the disk is UNAVAIL to the zpool
                 if options.get('unavail_disk', True):
