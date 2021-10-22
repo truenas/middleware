@@ -8,7 +8,7 @@ class NTPHealthAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "Excessive NTP server offset"
-    text = "NTP health check failed: %(reason)"
+    text = "NTP health check failed: %(reason)s"
 
 
 class NTPHealthAlertSource(AlertSource):
@@ -17,18 +17,19 @@ class NTPHealthAlertSource(AlertSource):
 
     async def check(self):
         try:
-            peers = await self.middleware.call("system.ntpserver.peers", [("status", "$", "PEER")])
+            peers = await self.middleware.call("system.ntpserver.peers")
         except Exception:
+            self.middleware.logger.warning("Failed to retrieve peers.", exc_info=True)
             peers = []
 
         if not peers:
             return
 
-        active_peer = filter(lambda x: x['status'].endswith('PEER'), peers)
+        active_peer = [x for x in peers if x['status'].endswith('PEER')]
         if not active_peer:
             return Alert(
                 NTPHealthAlertClass,
-                {'reason': 'no NTP peers'}
+                {'reason': f'No NTP peers: {[{x["remote"]: x["status"]} for x in peers]}'}
             )
 
         peer = active_peer[0]
