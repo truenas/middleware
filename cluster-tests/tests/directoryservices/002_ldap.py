@@ -74,7 +74,7 @@ def test_003_validate_smb_bind_ips(ip, request):
 
     smb_ip_set = set(res.json().values())
     cluster_ip_set = set(CLUSTER_INFO['PUBLIC_IPS'])
-    assert smb_ip_set == cluster_ip_set, smb_ips
+    assert smb_ip_set == cluster_ip_set, res.text
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
@@ -274,11 +274,8 @@ def test_012_bind_ldap(request):
 @pytest.mark.parametrize('ip', CLUSTER_INFO['PUBLIC_IPS'])
 def test_014_share_is_writable_via_public_ips(ip, request):
     """
-    This test creates creates an empty file, sets "delete on close" flag, then
-    closes it. NTStatusError should be raised containing failure details
-    if we are for some reason unable to access the share.
-
-    This test will fail if smb.conf / smb4.conf does not exist on client / server running test.
+    This test verifies that the SMB share is writable once
+    we enable a samba schema.
     """
     depends(request, ['DS_LDAP_SMB_SHARE_CREATED', 'BOUND_LDAP_SMB'])
 
@@ -335,7 +332,7 @@ def test_049_verify_clustered_share_removed(ip, request):
 
     cmd = f'rm -rf /cluster/{CLUSTER_INFO["GLUSTER_VOLUME"]}/ds_smb_share_02'
     res = ssh_test(CLUSTER_IPS[0], cmd)
-    assert res['result'], res['output']
+    assert res['result'], res['stderr']
 
 
 def test_050_unbind_ldap(request):
