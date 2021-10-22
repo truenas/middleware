@@ -357,9 +357,10 @@ class FailoverService(ConfigService):
             return False
 
         crit_ints = [i for i in await self.middleware.call('interface.query') if i.get('failover_critical', False)]
-        for i in crit_ints:
-            await self.middleware.call('failover.events.event', i['name'], 'forcetakeover')
-            return True
+        if crit_ints:
+            for i in crit_ints:
+                await self.middleware.call('failover.events.event', i['name'], 'forcetakeover')
+                return True
         else:
             # if there are no interfaces marked critical for failover and this method was
             # still called, then we can at least start fenced to reserve the disks
