@@ -553,7 +553,7 @@ class FailoverService(Service):
 
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
-        self.run_call('failover.events.restart_services')
+        self.run_call('failover.events.restart_services', {'critical': False, 'timeout': 60})
 
         # start any VMs (this will log errors if the vm(s) fail to start)
         self.run_call('vm.start_on_boot')
