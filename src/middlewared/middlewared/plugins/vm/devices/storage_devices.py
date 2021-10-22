@@ -1,6 +1,7 @@
 import os
 
 from middlewared.schema import Bool, Dict, Int, Str
+from middlewared.validators import Match
 
 from .device import Device
 from .utils import create_element, disk_from_number
@@ -44,7 +45,7 @@ class RAW(StorageDevice):
 
     schema = Dict(
         'attributes',
-        Str('path', required=True),
+        Str('path', required=True, validators=[Match(r'^[^{}]*$')]),
         Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
         Bool('exists'),
         Bool('boot', default=False),

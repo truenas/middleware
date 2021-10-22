@@ -1,6 +1,7 @@
 import os
 
 from middlewared.schema import Dict, Str
+from middlewared.validators import Match
 
 from .device import Device
 from .utils import create_element, disk_from_number
@@ -10,7 +11,7 @@ class CDROM(Device):
 
     schema = Dict(
         'attributes',
-        Str('path', required=True),
+        Str('path', required=True, validators=[Match(r'^[^{}]*$')]),
     )
 
     def identity(self):
