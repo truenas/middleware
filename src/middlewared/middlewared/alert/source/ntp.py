@@ -1,3 +1,4 @@
+import time
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
@@ -7,8 +8,8 @@ from middlewared.alert.schedule import IntervalSchedule
 class NTPHealthCheckAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "Excessive NTP server offset"
-    text = "NTP health check failed: %(reason)s"
+    title = "NTP Health Check Failed"
+    text = "NTP health check failed - %(reason)s"
 
 
 class NTPHealthCheckAlertSource(AlertSource):
@@ -16,6 +17,10 @@ class NTPHealthCheckAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
+        uptime_seconds = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
+        if uptime_seconds < 300:
+            return
+
         try:
             peers = await self.middleware.call("system.ntpserver.peers")
         except Exception:

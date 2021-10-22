@@ -146,6 +146,10 @@ class NTPServerService(CRUDService):
             return when
 
         peers = []
+
+        if not self.middleware.call_sync('system.ready'):
+            return peers
+
         resp = subprocess.run(['ntpq', '-np'], capture_output=True)
         if resp.returncode != 0 or resp.stderr:
             raise CallError(resp.stderr.decode().strip())
