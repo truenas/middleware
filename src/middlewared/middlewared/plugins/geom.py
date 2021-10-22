@@ -27,7 +27,7 @@ class Geom(Service):
             self.invalidate_cache()
 
         class_name = class_name.upper()
-        if class_name in ('PART', 'MULTIPATH', 'DISK'):
+        if class_name in ('PART', 'MULTIPATH', 'DISK', 'LABEL'):
             return GCT.xml.find(f'.//class[name="{class_name}"]') if GCT.xml else None
 
     def invalidate_cache(self):

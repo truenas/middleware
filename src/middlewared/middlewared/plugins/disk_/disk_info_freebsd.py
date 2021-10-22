@@ -79,16 +79,20 @@ class DiskService(Service, DiskInfoBase):
 
     def label_to_dev_disk_cache(self):
         label_to_dev = {}
-        for label in bsd.geom.class_by_name('LABEL').xml:
-            if (name := label.find('name')) is not None:
-                if (provider := label.find('provider/name')) is not None:
-                    label_to_dev[provider.text] = name.text
+        labels = self.middleware.call_sync('geom.get_class_xml', 'LABEL')
+        if labels:
+            for label in labels:
+                if (name := label.find('name')) is not None:
+                    if (provider := label.find('provider/name')) is not None:
+                        label_to_dev[provider.text] = name.text
 
         dev_to_disk = {}
-        for label in bsd.geom.class_by_name('PART').xml:
-            if (name := label.find('name')) is not None:
-                if (provider := label.find('provider/name')) is not None:
-                    dev_to_disk[provider.text] = name.text
+        labels = self.middleware.call_sync('geom.get_class_xml', 'PART')
+        if labels:
+            for label in labels:
+                if (name := label.find('name')) is not None:
+                    if (provider := label.find('provider/name')) is not None:
+                        dev_to_disk[provider.text] = name.text
 
         return {
             'label_to_dev': label_to_dev,
