@@ -158,8 +158,14 @@ def test_08_test_backend_options(request, backend):
         if v['required']:
             payload["options"].update({k: "canary"})
 
+    if backend == 'RFC2307':
+        payload['options'].update({"ldap_server": "STANDALONE"})
+
+    if not payload['options']:
+        payload.pop('options')
+
     results = PUT("/idmap/id/1/", payload)
-    assert results.status_code == 200, results.text
+    assert results.status_code == 200, f'payload: {payload}, results: {results.text}'
 
     if backend == "AUTORID":
         IDMAP_CFG = "idmap config * "
@@ -213,8 +219,8 @@ def test_08_test_backend_options(request, backend):
 
     elif backend == "LDAP":
         payload3["options"] = {
-            "ldap_base_dn": "canary",
-            "ldap_user_dn": "canary",
+            "ldap_base_dn": "o=8675309,dc=billy,dc=goat",
+            "ldap_user_dn": "uid=fakeuser,o=8675309,dc=billy,dc=goat",
             "ldap_url": "canary",
             "ldap_user_dn_password": "canary",
             "readonly": True,
@@ -226,13 +232,13 @@ def test_08_test_backend_options(request, backend):
 
     elif backend == "RFC2307":
         payload3["options"] = {
-            "ldap_server": "stand-alone",
-            "bind_path_user": "canary",
-            "bind_path_group": "canary",
+            "ldap_server": "STANDALONE",
+            "bind_path_user": "o=8675309,dc=billy,dc=goat",
+            "bind_path_group": "o=8675309,dc=billy,dc=goat",
             "user_cn": True,
             "ldap_domain": "canary",
             "ldap_url": "canary",
-            "ldap_user_dn": "canary",
+            "ldap_user_dn": "uid=fakeuser,o=8675309,dc=billy,dc=goat",
             "ldap_user_dn_password": "canary",
             "ldap_realm": True,
         }
@@ -254,13 +260,13 @@ def test_08_test_backend_options(request, backend):
         assert results['result'] is True, results['output']
         try:
             res = json.loads(results['output'].strip())
-            assert res == v, f"[{k}]: {res}"
+            assert res == v, f"{backend} - [{k}]: {res}"
         except json.decoder.JSONDecodeError:
             res = results['output'].strip()
             if isinstance(v, bool):
                 v = str(v)
 
-            assert v.casefold() == res.casefold(), f"[{k}]: {res}"
+            assert v.casefold() == res.casefold(), f"{backend} - [{k}]: {res}"
 
     if set_secret:
         """
@@ -335,7 +341,7 @@ def test_11_idmap_default_domain_name_change_fail(request):
     assert results.status_code == 422, results.text
 
 
-def test_13_idmap_low_high_range_inversion_fail(request):
+def test_12_idmap_low_high_range_inversion_fail(request):
     """
     It should not be possible to set an idmap low range
     that is greater than its high range.
@@ -346,7 +352,6 @@ def test_13_idmap_low_high_range_inversion_fail(request):
         "range_low": "2000000000",
         "range_high": "1900000000",
         "idmap_backend": "RID",
-        "options": {}
     }
     results = POST("/idmap/", payload)
     assert results.status_code == 422, results.text
@@ -366,7 +371,6 @@ def test_13_idmap_new_domain(request):
         "range_low": low,
         "range_high": high,
         "idmap_backend": "RID",
-        "options": {}
     }
     results = POST("/idmap/", payload)
     assert results.status_code == 200, results.text
@@ -389,7 +393,6 @@ def test_14_idmap_new_domain_duplicate_fail(request):
         "range_low": low,
         "range_high": high,
         "idmap_backend": "RID",
-        "options": {}
     }
     results = POST("/idmap/", payload)
     assert results.status_code == 422, results.text
@@ -403,7 +406,6 @@ def test_15_idmap_new_domain_autorid_fail(request):
     depends(request, ["CREATED_NEW_DOMAIN"])
     payload = {
         "idmap_backend": "AUTORID",
-        "options": {}
     }
     results = PUT(f"/idmap/id/{dom_id}", payload)
     assert results.status_code == 422, f"[update: {dom_id}]: {results.text}"
