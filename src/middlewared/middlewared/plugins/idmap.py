@@ -574,7 +574,7 @@ class IdmapDomainService(TDBWrapCRUDService):
                 'idmap_autorid_options',
                 Int('rangesize', default=100000, validators=[Range(min=10000, max=1000000000)]),
                 Bool('readonly', default=False),
-                Bool('ignore_builtin', default = False),
+                Bool('ignore_builtin', default=False),
             ),
             Dict(
                 'idmap_ldap_options',
@@ -707,7 +707,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         """
         verrors = ValidationErrors()
 
-        if not 'options' in data:
+        if 'options' not in data:
             data['options'] = {}
 
         old = await self.query()
