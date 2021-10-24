@@ -197,7 +197,7 @@ class EnclosureService(CRUDService):
 
             if pools:
                 label2disk = {}
-                cache = await self.middleware.call('disk.label_to_dev_disk_cache')
+                cache = await self.middleware.call('disk.label_to_dev_and_disk')
                 for label, part in cache['label_to_dev'].items():
                     disk = cache['dev_to_disk'].get(part)
                     if disk:

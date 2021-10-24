@@ -76,7 +76,7 @@ class DiskService(Service):
     def get_swap_devices(self):
         return [os.path.join('/dev', i.devname) for i in bsd.getswapinfo()]
 
-    def label_to_dev_disk_cache(self):
+    def label_to_dev_and_disk(self):
         label_to_dev = {}
         labels = self.middleware.call_sync('geom.get_class_xml', 'LABEL')
         if labels:
@@ -93,37 +93,4 @@ class DiskService(Service):
                     if (provider := label.find('provider/name')) is not None:
                         dev_to_disk[provider.text] = name.text
 
-        return {
-            'label_to_dev': label_to_dev,
-            'dev_to_disk': dev_to_disk,
-        }
-
-    def label_to_dev(self, label, geom_scan=True, cache=None):
-        if label.endswith('.nop'):
-            label = label[:-4]
-        elif label.endswith('.eli'):
-            label = label[:-4]
-
-        if cache is not None:
-            return cache['label_to_dev'].get(label)
-
-        if geom_scan:
-            bsd.geom.scan()
-        klass = bsd.geom.class_by_name('LABEL')
-        prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
-        if prov is not None:
-            return prov.text
-
-    def label_to_disk(self, label, geom_scan=True, cache=None):
-        if cache is None:
-            if geom_scan:
-                bsd.geom.scan()
-        dev = self.label_to_dev(label, geom_scan, cache) or label
-        if cache is not None:
-            return cache['dev_to_disk'].get(dev)
-        part = bsd.geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
-        if part is not None:
-            return part.text
-
-    def get_disk_from_partition(self, part_name):
-        return self.label_to_disk(part_name, True)
+        return {'label_to_dev': label_to_dev, 'dev_to_disk': dev_to_disk}

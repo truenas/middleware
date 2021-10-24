@@ -410,7 +410,7 @@ class PoolService(CRUDService):
         2.  add `device` key that maps the gptid label to a partition (i.e. /dev/da1p1)
         3.  add `disk` key that maps the gptid label to a disk (i.e /dev/da1)
         """
-        info = self.middleware.call_sync('disk.label_to_dev_disk_cache')
+        info = self.middleware.call_sync('disk.label_to_dev_and_disk')
         disks = self.middleware.call_sync('disk.query', [], {'extra': {'include_expired': True}})
         if disks:
             disks = disks[0]
