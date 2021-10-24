@@ -1,7 +1,6 @@
 import asyncio
 from datetime import datetime, timedelta
 
-from bsd import geom
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
 
@@ -81,8 +80,6 @@ class DiskService(Service, ServiceChangeMixin):
                 self.logger.warning('Starting disk.sync_all when devd is not connected yet')
 
         sys_disks = await self.middleware.call('device.get_disks')
-        geom_xml = geom.class_by_name('DISK').xml
-
         number_of_disks = len(sys_disks)
         if 0 > number_of_disks <= 25:
             # output logging information to middlewared.log in case we sync disks
@@ -99,6 +96,7 @@ class DiskService(Service, ServiceChangeMixin):
         seen_disks = {}
         serials = []
         changed = False
+        geom_xml = await self.middleware.call('geom.get_class_xml', 'DISK')
         for disk in (
             await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
         ):
