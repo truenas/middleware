@@ -1,5 +1,3 @@
-from bsd import geom
-
 from middlewared.service import private, Service
 from middlewared.utils import run
 
@@ -10,8 +8,8 @@ class DiskService(Service):
     async def remove_disk_from_graid(self, dev):
         # Its possible a disk was previously used by graid so we need to make sure to
         # remove the disk from it (#40560)
-        gdisk = geom.class_by_name('DISK')
-        graid = geom.class_by_name('RAID')
+        gdisk = await self.middleware.call('geom.get_class_xml', 'DISK')
+        graid = await self.middleware.call('geom.get_class_xml', 'RAID')
         if gdisk and graid:
             prov = gdisk.xml.find(f'.//provider[name = "{dev}"]')
             if prov is not None:
