@@ -1,9 +1,7 @@
 from middlewared.service import Service
 
-from .lag_base import InterfaceLagBase
 
-
-class InterfaceService(Service, InterfaceLagBase):
+class InterfaceService(Service):
 
     class Config:
         namespace_alias = 'interfaces'
