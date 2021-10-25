@@ -1,9 +1,7 @@
 from middlewared.service import Service
 
-from .info_base import InterfaceInfoBase
 
-
-class InterfaceService(Service, InterfaceInfoBase):
+class InterfaceService(Service):
 
     class Config:
         namespace_alias = 'interfaces'
