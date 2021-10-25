@@ -537,6 +537,41 @@ class IdmapDomainService(TDBWrapCRUDService):
         for k in (provided_keys - supported_keys):
             data['options'].pop(k)
 
+    @private
+    async def idmap_conf_to_client_config(self, data):
+        options = data['options'].copy()
+        if data['idmap_backend'] not in ['LDAP', 'RFC2307']:
+            raise CallError(f'{data["idmap_backend"]}: invalid idmap backend')
+
+        if data['idmap_backend'] == 'LDAP':
+            uri = options["ldap_url"]
+            basedn = options["ldap_base_dn"]
+        else:
+            if data['options']['ldap_server'] == 'AD':
+                uri = options["ldap_domain"]
+            else:
+                uri = options["ldap_url"]
+
+            basedn =  options["bind_path_user"]
+
+        credentials = {
+            "binddn": options["ldap_user_dn"],
+            "bindpw": options["ldap_user_dn_password"],
+        }
+
+        security = {
+            "ssl": options["ssl"],
+            "sasl": "SEAL",
+        }
+
+        return {
+            "uri_list": [f'{"ldaps://" if security["ssl"] else "ldap://"}{uri}'],
+            "basedn": basedn,
+            "bind_type": "PLAIN",
+            "credentials": credentials,
+            "security": security,
+        }
+
     @filterable
     async def query(self, filters, options):
         extra = options.get("extra", {})
@@ -739,6 +774,12 @@ class IdmapDomainService(TDBWrapCRUDService):
             except KeyError:
                 domain = data["name"]
 
+            client_conf = await self.idmap_conf_to_client_config(data)
+            await self.middleware.call(
+                'ldapclient.validate_credentials',
+                client_conf
+            )
+
             secret = data['options'].pop('ldap_user_dn_password')
 
             await self.middleware.call("directoryservices.set_ldap_secret",
@@ -812,6 +853,12 @@ class IdmapDomainService(TDBWrapCRUDService):
                 domain = (await self.middleware.call("smb.config"))['workgroup']
             except KeyError:
                 domain = new["name"]
+
+            client_conf = await self.idmap_conf_to_client_config(new)
+            await self.middleware.call(
+                'ldapclient.validate_credentials',
+                client_conf
+            )
 
             secret = new['options'].pop('ldap_user_dn_password')
             await self.middleware.call("directoryservices.set_ldap_secret",
