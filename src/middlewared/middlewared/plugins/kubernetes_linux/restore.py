@@ -66,12 +66,17 @@ class KubernetesService(Service):
 
         # FIXME: Remove this sleep, sometimes the k3s dataset fails to umount
         #  After discussion with mav, it sounds like a bug to him in zfs, so until that is fixed, we have this sleep
-        time.sleep(20)
+        # time.sleep(20)
 
-        k3s_ds = os.path.join(k8s_config['dataset'], 'k3s')
-        self.middleware.call_sync('zfs.dataset.delete', k3s_ds, {'force': True, 'recursive': True})
-        self.middleware.call_sync('zfs.dataset.create', {'name': k3s_ds, 'type': 'FILESYSTEM'})
-        self.middleware.call_sync('zfs.dataset.mount', k3s_ds)
+        k3s_ds_path = os.path.join('/mnt', k8s_config['dataset'], 'k3s')
+        # We are not deleting k3s ds simply because of upstream zfs bug (https://github.com/openzfs/zfs/issues/12460)
+        # self.middleware.call_sync('zfs.dataset.delete', k3s_ds, {'force': True, 'recursive': True})
+        # self.middleware.call_sync('zfs.dataset.create', {'name': k3s_ds, 'type': 'FILESYSTEM'})
+        # self.middleware.call_sync('zfs.dataset.mount', k3s_ds)
+        for name in os.listdir(k3s_ds_path):
+            d_name = os.path.join(k3s_ds_path, name)
+            if os.path.isdir(d_name):
+                shutil.rmtree(d_name)
 
         job.set_progress(25, 'Initializing new kubernetes cluster')
         self.middleware.call_sync('service.start', 'kubernetes')
