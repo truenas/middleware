@@ -1,9 +1,17 @@
+from enum import Enum
+
 from middlewared.service import Service
 
-from .type_base import InterfaceType, InterfaceTypeBase
+
+class InterfaceType(Enum):
+    BRIDGE = 'BRIDGE'
+    LINK_AGGREGATION = 'LINK_AGGREGATION'
+    PHYSICAL = 'PHYSICAL'
+    UNKNOWN = 'UNKNOWN'
+    VLAN = 'VLAN'
 
 
-class InterfaceService(Service, InterfaceTypeBase):
+class InterfaceService(Service):
 
     class Config:
         namespace_alias = 'interfaces'

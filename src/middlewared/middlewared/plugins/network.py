@@ -23,7 +23,7 @@ import socket
 import psutil
 
 from .interface.netif import netif
-from .interface.type_base import InterfaceType
+from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
 
 

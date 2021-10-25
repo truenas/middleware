@@ -5,8 +5,7 @@ import re
 import textwrap
 
 from .netif import netif
-from .type_base import InterfaceType
-
+from .interface_types import InterfaceType
 from middlewared.service import private, Service
 
 
