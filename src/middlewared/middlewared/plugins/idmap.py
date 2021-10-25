@@ -552,7 +552,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             else:
                 uri = options["ldap_url"]
 
-            basedn =  options["bind_path_user"]
+            basedn = options["bind_path_user"]
 
         credentials = {
             "binddn": options["ldap_user_dn"],
