@@ -1304,7 +1304,7 @@ class JournalSync:
                 self.journal.append(item)
             else:
                 query, params = item
-                logger.warning('Node status %s but executed SQL query: %s', self.failover_status, query)
+                logger.trace('Node status %s but executed SQL query: %s', self.failover_status, query)
 
     def _update_failover_status(self):
         self.failover_status = self.middleware.call_sync('failover.status')
