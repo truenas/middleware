@@ -152,7 +152,7 @@ class LDAPClient(Service):
             'security',
             Str('ssl', enum=["OFF", "ON", "START_TLS"]),
             Str('sasl', enum=['SIGN', 'SEAL'], default='SEAL'),
-            Str('client_certificate', null=True),
+            Str('client_certificate', null=True, default=''),
             Bool('validate_certificates', default=True),
         ),
         Dict(
