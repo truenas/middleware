@@ -548,7 +548,7 @@ async def interface_post_sync(middleware):
         filters = [['srv_service', '=', 'nfs']]
         options = {'get': True}
         nfs = await middleware.call('datastore.query', 'services_services', filters, options)
-        if nfs['srv_enable'] and all([i['enabled'] for i in await middleware.call('sharing.nfs.query')]):
+        if nfs['srv_enable'] and any([i['enabled'] for i in await middleware.call('sharing.nfs.query')]):
             if (await middleware.call('nfs.config'))['bindip']:
                 asyncio.ensure_future(middleware.call('service.restart', 'nfs'))
 
