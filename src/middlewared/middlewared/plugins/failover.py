@@ -3,8 +3,6 @@ import base64
 import errno
 import logging
 import os
-import pickle
-import queue
 import re
 import shutil
 import socket
@@ -12,6 +10,7 @@ import textwrap
 import time
 from functools import partial
 
+from middlewared.plugins.failover_.journal import SQL_QUEUE
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
@@ -28,25 +27,6 @@ logger = logging.getLogger('failover')
 
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
-    pass
-
-
-class UnableToDetermineOSVersion(Exception):
-
-    """
-    Raised in JournalSync thread when we're unable
-    to detect the remote node's OS version.
-    (i.e. if remote node goes down (upgrade/reboot, etc)
-    """
-    pass
-
-
-class OSVersionMismatch(Exception):
-
-    """
-    Raised in JournalSync thread when the remote nodes OS version
-    does not match the local nodes OS version.
-    """
     pass
 
 
@@ -418,11 +398,11 @@ class FailoverService(ConfigService):
         await self.middleware.run_in_executor(DatastoreService.thread_pool, self._send_database)
 
     def _send_database(self):
-        # We are in the `DatastoreService` thread so until the end of this method an item that we put into `sql_queue`
+        # We are in the `DatastoreService` thread so until the end of this method an item that we put into `SQL_QUEUE`
         # will be the last one and no one else is able to write neither to the database nor to the journal.
 
         # Journal thread will see that this is special value and will clear journal.
-        sql_queue.put(None)
+        SQL_QUEUE.put(None)
 
         token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
         self.middleware.call_sync('failover.sendfile', token, FREENAS_DATABASE, FREENAS_DATABASE + '.sync')
@@ -1146,230 +1126,7 @@ async def ha_permission(middleware, app):
         AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
 
 
-sql_queue = queue.Queue()
-
-
-class Journal:
-    path = '/data/ha-journal'
-
-    def __init__(self):
-        self.journal = []
-        if os.path.exists(self.path):
-            try:
-                with open(self.path, 'rb') as f:
-                    self.journal = pickle.load(f)
-            except EOFError:
-                # file is empty
-                pass
-            except Exception:
-                logger.warning('Failed to read journal', exc_info=True)
-
-        self.persisted_journal = self.journal.copy()
-
-    def __bool__(self):
-        return bool(self.journal)
-
-    def __iter__(self):
-        for query, params in self.journal:
-            yield query, params
-
-    def __len__(self):
-        return len(self.journal)
-
-    def peek(self):
-        return self.journal[0]
-
-    def shift(self):
-        self.journal = self.journal[1:]
-
-    def append(self, item):
-        self.journal.append(item)
-
-    def clear(self):
-        self.journal = []
-
-    def write(self):
-        if self.persisted_journal != self.journal:
-            self._write()
-            self.persisted_journal = self.journal.copy()
-
-    def _write(self):
-        tmp_file = f'{self.path}.tmp'
-
-        with open(tmp_file, 'wb') as f:
-            pickle.dump(self.journal, f)
-
-        os.rename(tmp_file, self.path)
-
-
-class JournalSync:
-    def __init__(self, middleware, sql_queue, journal):
-        self.middleware = middleware
-        self.sql_queue = sql_queue
-        self.journal = journal
-
-        self.failover_status = None
-        self._update_failover_status()
-
-        self.last_query_failed = False  # this only affects logging
-
-    def process(self):
-        if self.failover_status != 'MASTER':
-            if self.journal:
-                logger.warning('Node status %s but has %d queries in journal', self.failover_status, len(self.journal))
-
-            self.journal.clear()
-
-        if self.journal:
-            os_ver_match = self._os_versions_match()
-            if os_ver_match is None:
-                raise UnableToDetermineOSVersion()
-            elif not os_ver_match:
-                raise OSVersionMismatch()
-
-        had_journal_items = bool(self.journal)
-        flush_succeeded = self._flush_journal()
-
-        if had_journal_items:
-            # We've spent some flushing journal, failover status might have changed
-            self._update_failover_status()
-
-        self._consume_queue_nonblocking()
-        self.journal.write()
-
-        # Avoid busy loop
-        if flush_succeeded:
-            # The other node is synchronized, we can wait until new query arrives
-            timeout = None
-        else:
-            # Retry in N seconds,
-            timeout = 5
-
-        try:
-            item = sql_queue.get(True, timeout)
-        except queue.Empty:
-            pass
-        else:
-            # We've spent some time waiting, failover status might have changed
-            self._update_failover_status()
-
-            self._handle_sql_queue_item(item)
-
-            # Consume other pending queries
-            self._consume_queue_nonblocking()
-
-        self.journal.write()
-
-    def _flush_journal(self):
-        while self.journal:
-            query, params = self.journal.peek()
-
-            try:
-                self.middleware.call_sync('failover.call_remote', 'datastore.sql', [query, params])
-            except Exception as e:
-                if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.ECONNRESET]:
-                    logger.trace('Skipping journal sync, node down')
-                else:
-                    if not self.last_query_failed:
-                        logger.exception('Failed to run query %s: %r', query, e)
-                        self.last_query_failed = True
-
-                    self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
-
-                return False
-            else:
-                self.last_query_failed = False
-
-                self.middleware.call_sync('alert.oneshot_delete', 'FailoverSyncFailed', None)
-
-                self.journal.shift()
-
-        return True
-
-    def _consume_queue_nonblocking(self):
-        while True:
-            try:
-                self._handle_sql_queue_item(self.sql_queue.get_nowait())
-            except queue.Empty:
-                break
-
-    def _handle_sql_queue_item(self, item):
-        if item is None:
-            # This is sent by `failover.send_database`
-            self.journal.clear()
-        else:
-            if self.failover_status == 'SINGLE':
-                pass
-            elif self.failover_status == 'MASTER':
-                self.journal.append(item)
-            else:
-                query, params = item
-                logger.warning('Node status %s but executed SQL query: %s', self.failover_status, query)
-
-    def _update_failover_status(self):
-        self.failover_status = self.middleware.call_sync('failover.status')
-
-    def _os_versions_match(self):
-
-        try:
-            rem = self.middleware.call_sync('failover.get_remote_os_version')
-            loc = self.middleware.call_sync('system.version')
-        except Exception:
-            return False
-
-        if rem is None:
-            # happens when other node goes offline
-            # (reboot/upgrade etc, etc) the log message
-            # is a little misleading in this scenario
-            # so make it a little better
-            return
-        else:
-            return loc == rem
-
-
-def hook_datastore_execute_write(middleware, sql, params):
-    sql_queue.put((sql, params))
-
-
-async def journal_ha(middleware):
-    """
-    This is a green thread responsible for trying to sync the journal
-    file to the other node.
-    Every SQL query that could not be synced is stored in the journal.
-    """
-    await middleware.run_in_thread(journal_sync, middleware)
-
-
-def journal_sync(middleware):
-
-    alert = True
-    while True:
-        try:
-            journal = Journal()
-            journal_sync = JournalSync(middleware, sql_queue, journal)
-            while True:
-                journal_sync.process()
-                alert = True
-        except UnableToDetermineOSVersion:
-            if alert:
-                logger.warning(
-                    'Unable to determine remote node OS version. Not syncing journal'
-                )
-                alert = False
-        except OSVersionMismatch:
-            if alert:
-                logger.warning(
-                    'OS version does not match remote node. Not syncing journal'
-                )
-                alert = False
-        except Exception:
-            logger.warning('Failed to sync journal', exc_info=True)
-
-        time.sleep(5)
-
-
 async def interface_pre_sync_hook(middleware):
-
     await middleware.call('failover.internal_interface.pre_sync')
 
 
@@ -1642,7 +1399,6 @@ async def setup(middleware):
         at user will.'''))
     middleware.event_subscribe('system', _event_system)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
-    middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('interface.post_rollback', hook_post_rollback_setup_ha, sync=True)
@@ -1667,8 +1423,6 @@ async def setup(middleware):
     await middleware.call('failover.remote_subscribe', 'system', remote_status_event)
     await middleware.call('failover.remote_on_connect', remote_status_event)
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
-
-    asyncio.ensure_future(journal_ha(middleware))
 
     if await middleware.call('system.ready'):
         asyncio.ensure_future(ready_system_sync_keys(middleware))
