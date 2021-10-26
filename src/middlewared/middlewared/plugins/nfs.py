@@ -10,7 +10,6 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Range
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 
@@ -72,9 +71,6 @@ class NFSService(SystemServiceService):
     @private
     async def bindip(self, config):
         bindip = [addr for addr in config['bindip'] if addr not in ['0.0.0.0', '::']]
-        if osc.IS_LINUX:
-            bindip = bindip[:1]
-
         if bindip:
             found = False
             for iface in await self.middleware.call('interface.query'):
@@ -180,9 +176,6 @@ class NFSService(SystemServiceService):
                         "domain"
                     )
 
-        if osc.IS_LINUX:
-            if len(new['bindip']) > 1:
-                verrors.add('nfs_update.bindip', 'Listening on more than one address is not supported')
         bindip_choices = await self.bindip_choices()
         for i, bindip in enumerate(new['bindip']):
             if bindip not in bindip_choices:
@@ -427,10 +420,6 @@ class SharingNFSService(SharingService):
 
     @private
     def validate_paths(self, data, schema_name, verrors):
-        if osc.IS_LINUX:
-            # Ganesha does not have such a restriction, each path is a different share
-            return
-
         dev = None
         for i, path in enumerate(data["paths"]):
             if " " in path:
@@ -554,9 +543,12 @@ class SharingNFSService(SharingService):
 
 
 async def interface_post_sync(middleware):
-    if osc.IS_FREEBSD:
-        if not await middleware.call('cache.has_key', 'interfaces_are_set_up'):
-            await middleware.call('cache.put', 'interfaces_are_set_up', True)
+    if not await middleware.call('cache.has_key', 'interfaces_are_set_up'):
+        await middleware.call('cache.put', 'interfaces_are_set_up', True)
+        filters = [['srv_service', '=', 'nfs']]
+        options = {'get': True}
+        nfs = await middleware.call('datastore.query', 'services_services', filters, options)
+        if nfs['srv_enable'] and any([i['enabled'] for i in await middleware.call('sharing.nfs.query')]):
             if (await middleware.call('nfs.config'))['bindip']:
                 asyncio.ensure_future(middleware.call('service.restart', 'nfs'))
 
