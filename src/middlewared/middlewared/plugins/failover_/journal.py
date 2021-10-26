@@ -3,15 +3,18 @@ from pickle import dump, load
 from os import rename
 from errno import ECONNREFUSED, ECONNRESET
 from queue import Queue, Empty
+from threading import Thread
 from logging import getLogger
 from contextlib import suppress
 from time import sleep
+from prctl import set_name
 
 from middlewared.service import CallError
 from middlewared.plugins.failover_.journal_exceptions import UnableToDetermineOSVersion, OSVersionMismatch
 
 logger = getLogger(__name__)
 SQL_QUEUE = Queue()
+JOURNAL_THREAD = None
 
 
 class JournalSync:
@@ -190,41 +193,54 @@ class Journal:
         rename(tmp_file, self.path)
 
 
-def journal_sync(middleware):
+class JournalSyncThread(Thread):
     """
     A thread that is responsible for trying to sync the journal file to
     the other node. Every SQL query that could not be synced is stored
     in the journal.
     """
-    alert = True
-    retry_timeout = 5
-    while True:
-        try:
-            journal = Journal()
-            journal_sync = JournalSync(middleware, SQL_QUEUE, journal)
-            while True:
-                journal_sync.process()
-                alert = True
-        except UnableToDetermineOSVersion:
-            if alert:
-                logger.warning('Unable to determine remote node OS version. Not syncing journal')
-                alert = False
-        except OSVersionMismatch:
-            if alert:
-                logger.warning('OS version does not match remote node. Not syncing journal')
-                alert = False
-        except Exception:
-            logger.warning('Failed to sync journal. Retrying ever %d seconds', retry_timeout, exc_info=True)
+    def __init__(self, *args, **kwargs):
+        super(JournalSyncThread, self).__init__()
+        self.daemon = True
+        self.middleware = kwargs.get('middleware')
+        self.sql_queue = kwargs.get('sql_queue')
 
-        sleep(retry_timeout)
+    def run(self):
+        set_name('journal_sync_thread')
 
+        alert = True
+        retry_timeout = 5
+        while True:
+            try:
+                journal = Journal()
+                journal_sync = JournalSync(self.middleware, self.sql_queue, journal)
+                while True:
+                    journal_sync.process()
+                    alert = True
+            except UnableToDetermineOSVersion:
+                if alert:
+                    logger.warning('Unable to determine remote node OS version. Not syncing journal')
+                    alert = False
+            except OSVersionMismatch:
+                if alert:
+                    logger.warning('OS version does not match remote node. Not syncing journal')
+                    alert = False
+            except Exception:
+                logger.warning('Failed to sync journal. Retrying ever %d seconds', retry_timeout, exc_info=True)
 
-async def journal_ha(middleware):
-    await middleware.run_in_thread(journal_sync, middleware)
+            sleep(retry_timeout)
 
 
 def hook_datastore_execute_write(middleware, sql, params):
     SQL_QUEUE.put((sql, params))
+
+
+async def _event_system(middleware, *args, **kwargs):
+    global JOURNAL_THREAD
+    licensed = await middleware.call('failover.licensed')
+    if licensed and (JOURNAL_THREAD is None or not JOURNAL_THREAD.is_alive()):
+        JOURNAL_THREAD = JournalSyncThread(middleware=middleware, sql_queue=SQL_QUEUE)
+        JOURNAL_THREAD.start()
 
 
 async def setup(middleware):
@@ -232,4 +248,5 @@ async def setup(middleware):
         return
 
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
-    ensure_future(journal_ha(middleware))
+    middleware.register_hook('system.post_license_update', _event_system)  # catch license change
+    ensure_future(_event_system(middleware))  # start thread on middlewared service start/restart
