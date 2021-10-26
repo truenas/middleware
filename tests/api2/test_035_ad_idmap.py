@@ -17,6 +17,14 @@ from pytest_dependency import depends
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
+    from config import (
+        LDAPBASEDN,
+        LDAPBINDDN,
+        LDAPBINDPASSWORD,
+        LDAPHOSTNAME,
+        LDAPUSER,
+        LDAPPASSWORD
+    )
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
@@ -219,10 +227,11 @@ def test_08_test_backend_options(request, backend):
 
     elif backend == "LDAP":
         payload3["options"] = {
-            "ldap_base_dn": "o=8675309,dc=billy,dc=goat",
-            "ldap_user_dn": "uid=fakeuser,o=8675309,dc=billy,dc=goat",
-            "ldap_url": "canary",
-            "ldap_user_dn_password": "canary",
+            "ldap_base_dn": LDAPBASEDN,
+            "ldap_user_dn": LDAPBINDDN,
+            "ldap_url": LDAPHOSTNAME,
+            "ldap_user_dn_password": LDAPBINDPASSWORD,
+            "ssl": True,
             "readonly": True,
         }
         results = PUT("/idmap/id/1/", payload3)
@@ -233,13 +242,14 @@ def test_08_test_backend_options(request, backend):
     elif backend == "RFC2307":
         payload3["options"] = {
             "ldap_server": "STANDALONE",
-            "bind_path_user": "o=8675309,dc=billy,dc=goat",
-            "bind_path_group": "o=8675309,dc=billy,dc=goat",
+            "bind_path_user": LDAPBASEDN
+            "bind_path_group": LDAPBASEDN,
             "user_cn": True,
-            "ldap_domain": "canary",
-            "ldap_url": "canary",
-            "ldap_user_dn": "uid=fakeuser,o=8675309,dc=billy,dc=goat",
-            "ldap_user_dn_password": "canary",
+            "ldap_domain": "",
+            "ldap_url": LDAPHOSTNAME,
+            "ldap_user_dn": LDAPBINDDN,
+            "ldap_user_dn_password": LDAPBINDPASSWORD,
+            "ssl": True,
             "ldap_realm": True,
         }
         results = PUT("/idmap/id/1/", payload3)

@@ -815,7 +815,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             new['options'] = {}
 
         new.update(data)
-        new['options'] = old['options'] | data.get('options', {})
+        new['options'] = old['options'].copy() | data.get('options', {})
         tmp = data.copy()
         verrors = ValidationErrors()
         if old['name'] in [x.name for x in DSType] and old['name'] != new['name']:
@@ -849,8 +849,8 @@ class IdmapDomainService(TDBWrapCRUDService):
                         'generate LDAP traffic. Certificates do not apply.')
         verrors.check()
         await self.prune_keys(new)
-        final_options = IdmapBackend[new['idmap_backend']].defaults() | new['options']
-        new['options'] = final_options.copy()
+        final_options = IdmapBackend[new['idmap_backend']].defaults() | new['options'].copy()
+        new['options'] = final_options
 
         if new['options'].get('ldap_user_dn_password'):
             try:
