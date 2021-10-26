@@ -807,15 +807,16 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         old = await self.query([('id', '=', id)], {'get': True})
         new = old.copy()
+        new.update(data)
         if data.get('idmap_backend') and data['idmap_backend'] != old['idmap_backend']:
             """
             Remove options from previous backend because they are almost certainly
             not valid for the new backend.
             """
-            new['options'] = {}
+            new['options'] = data.get('options', {})
+        else:
+            new['options'] = old['options'].copy() | data.get('options', {})
 
-        new.update(data)
-        new['options'] = old['options'].copy() | data.get('options', {})
         tmp = data.copy()
         verrors = ValidationErrors()
         if old['name'] in [x.name for x in DSType] and old['name'] != new['name']:
