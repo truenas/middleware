@@ -893,6 +893,7 @@ class LDAPService(TDBWrapConfigService):
         new.update(data)
         new['uri_list'] = await self.hostnames_to_uris(new)
         await self.common_validate(new, old, verrors)
+        rootdse = None
         verrors.check()
 
         if data.get('certificate') and data['certificate'] != old['certificate']:
@@ -906,6 +907,24 @@ class LDAPService(TDBWrapConfigService):
             if new['enable']:
                 await self.middleware.call('ldap.ldap_validate', new, verrors)
                 verrors.check()
+                try:
+                    rootdse = await self.middleware.call('ldap.get_root_DSE', new)
+                except Exception:
+                    self.logger.warning("Failed to get root DSE", exc_info=True)
+
+        if not new['auxiliary_parameters'] and rootdse and 'vendorName' in rootdse[0]['data']:
+            if rootdse[0]['data']['vendorName'][0] == '389 Project':
+                # FreeIPA
+                default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
+                aux_params = [
+                    'map group member uniqueMember',
+                    f'base passwd cn=users,cn=accounts,{default_naming_context}',
+                    f'base group cn=groups,cn=accounts,{default_naming_context}',
+                ]
+                new.update({
+                    'schema': 'RFC2307BIS',
+                    'auxiliary_parameters': '\n'.join(aux_params)
+                })
 
         await self.ldap_compress(new)
         out = await super().do_update(new)
