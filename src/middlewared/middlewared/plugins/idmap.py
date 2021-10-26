@@ -72,6 +72,7 @@ class IdmapBackend(enum.Enum):
             'ldap_url': {"required": True, "default": None},
             'ldap_user_dn_password': {"required": False, "default": None},
             'ssl': {"required": False, "default": SSL.NOSSL.value},
+            'validate_certificates': {"required": False, "default": True},
             'readonly': {"required": False, "default": False},
         },
         'has_secrets': True,
@@ -103,6 +104,7 @@ class IdmapBackend(enum.Enum):
             'ldap_user_dn': {"required": True, "default": None},
             'ldap_user_dn_password': {"required": False, "default": None},
             'ldap_realm': {"required": False, "default": None},
+            'validate_certificates': {"required": False, "default": True},
             'ssl': {"required": False, "default": SSL.NOSSL.value},
         },
         'has_secrets': True,
@@ -562,10 +564,11 @@ class IdmapDomainService(TDBWrapCRUDService):
         security = {
             "ssl": options["ssl"],
             "sasl": "SEAL",
+            "validate_certificates": options["validate_certificates"],
         }
 
         return {
-            "uri_list": [f'{"ldaps://" if security["ssl"] else "ldap://"}{uri}'],
+            "uri_list": [f'{"ldaps://" if security["ssl"] == "ON" else "ldap://"}{uri}'],
             "basedn": basedn,
             "bind_type": "PLAIN",
             "credentials": credentials,
@@ -619,6 +622,7 @@ class IdmapDomainService(TDBWrapCRUDService):
                 Str('ldap_url'),
                 Bool('readonly', default=False),
                 Str('ssl', enum=[x.value for x in SSL]),
+                Bool('validate_certificates', default=True),
             ),
             Dict(
                 'idmap_nss_options',
@@ -637,6 +641,7 @@ class IdmapDomainService(TDBWrapCRUDService):
                 LDAP_DN('ldap_user_dn'),
                 Str('ldap_user_dn_password', private=True),
                 Str('ssl', enum=[x.value for x in SSL]),
+                Bool('validate_certificates', default=True),
             ),
             Dict(
                 'idmap_rid_options',
@@ -810,6 +815,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             new['options'] = {}
 
         new.update(data)
+        new['options'] = old['options'] | data.get('options', {})
         tmp = data.copy()
         verrors = ValidationErrors()
         if old['name'] in [x.name for x in DSType] and old['name'] != new['name']:
@@ -843,9 +849,8 @@ class IdmapDomainService(TDBWrapCRUDService):
                         'generate LDAP traffic. Certificates do not apply.')
         verrors.check()
         await self.prune_keys(new)
-        final_options = IdmapBackend[new['idmap_backend']].defaults()
-        final_options.update(new['options'])
-        new['options'] = final_options
+        final_options = IdmapBackend[new['idmap_backend']].defaults() | new['options']
+        new['options'] = final_options.copy()
 
         if new['options'].get('ldap_user_dn_password'):
             try:
@@ -1078,6 +1083,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         ad_enabled = ds_state['activedirectory'] in ['HEALTHY', 'JOINING', 'FAULTED']
         ldap_enabled = ds_state['ldap'] in ['HEALTHY', 'JOINING', 'FAULTED']
         ad_idmap = filter_list(idmap, [('name', '=', DSType.DS_TYPE_ACTIVEDIRECTORY.name)], {'get': True}) if ad_enabled else None
+        disable_ldap_starttls = False
 
         for i in idmap:
             if i['name'] == DSType.DS_TYPE_DEFAULT_DOMAIN.name:
@@ -1118,14 +1124,22 @@ class IdmapDomainService(TDBWrapCRUDService):
                 f"{idmap_prefix} range": {"raw": f"{i['range_low']} - {i['range_high']}"}
             })
             for k, v in i['options'].items():
-                backend_parameter = "realm" if k == "ldap_realm" else k
+                backend_parameter = "realm" if k == "cn_realm" else k
                 if k == 'ldap_server':
-                    v = v.lower()
+                    v = 'ad' if v == 'AD' else 'stand-alone'
+                elif k == 'ldap_url':
+                    v = f'{"ldaps://" if i["options"]["ssl"]  == "ON" else "ldap://"}{v}'
+                elif k == 'ssl':
+                    if v != 'STARTTLS':
+                        disable_ldap_starttls = True
+
+                    continue
 
                 rv.update({
                     f"{idmap_prefix} {backend_parameter}": {"parsed": v},
                 })
 
+        rv['ldap ssl'] = {'parsed': 'off' if disable_ldap_starttls else 'start tls'}
         return rv
 
     @private
