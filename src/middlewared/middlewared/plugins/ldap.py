@@ -19,6 +19,7 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus, SSL
+from middlewared.plugins.idmap import DSType
 from concurrent.futures import ThreadPoolExecutor
 from middlewared.validators import Range
 
@@ -127,6 +128,20 @@ class NslcdClient(object):
 
     def __del__(self):
         self.close()
+
+
+class SAMAccountType(enum.Enum):
+    SAM_DOMAIN_OBJECT = 0x0
+    SAM_GROUP_OBJECT = 0x10000000
+    SAM_NON_SECURITY_GROUP_OBJECT = 0x10000001
+    SAM_ALIAS_OBJECT = 0x20000000
+    SAM_NON_SECURITY_ALIAS_OBJECT = 0x20000001
+    SAM_USER_OBJECT = 0x30000000
+    SAM_NORMAL_USER_ACCOUNT = 0x30000000
+    SAM_MACHINE_ACCOUNT = 0x30000001
+    SAM_TRUST_ACCOUNT = 0x30000002
+    SAM_APP_BASIC_GROUP = 0x40000000
+    SAM_APP_QUERY_GROUP = 0x40000001
 
 
 class LDAPClient(Service):
@@ -459,6 +474,7 @@ class LDAPClient(Service):
     @accepts(Dict(
         'get-dn',
         Str('dn', default='', null=True),
+        Str('scope', default='SUBTREE', enum=['BASE', 'SUBTREE']),
         Ref('ldap-configuration'),
     ))
     async def get_dn(self, data):
@@ -469,7 +485,7 @@ class LDAPClient(Service):
             self._search,
             data['ldap-configuration'],
             dn,
-            pyldap.SCOPE_SUBTREE,
+            pyldap.SCOPE_SUBTREE if data['scope'] == 'SUBTREE' else pyldap.SCOPE_BASE,
             filter
         )
         return self.parse_results(results)
@@ -783,6 +799,25 @@ class LDAPService(TDBWrapConfigService):
             verrors.add('ldap_update', e.errmsg)
 
     @private
+    async def object_sid_to_string(self, objectsid):
+        version = struct.unpack('B', objectsid[0:1])[0]
+        if version != 1:
+            raise CallError(f"{version}: Invalid SID version")
+
+        sid_length = struct.unpack('B', objectsid[1:2])[0]
+        authority = struct.unpack(b'>Q', b'\x00\x00' + objectsid[2:8])[0]
+        objectsid = objectsid[8:]
+
+        if len(objectsid) != 4 * sid_length:
+            raise CallError("Invalid SID length")
+
+        output_sid = f'S-{version}-{authority}'
+        for v in struct.iter_unpack('<L', objectsid):
+            output_sid += f'-{v[0]}'
+
+        return output_sid
+
+    @private
     async def ldap_validate(self, data, verrors):
         ldap_has_samba_schema = False
         for idx, h in enumerate(data['uri_list']):
@@ -810,6 +845,73 @@ class LDAPService(TDBWrapConfigService):
         if data['has_samba_schema'] and not ldap_has_samba_schema:
             verrors.add('ldap_update.has_samba_schema',
                         'Remote LDAP server does not have Samba schema extensions.')
+
+    @private
+    async def autodetect_ldap_settings(self, data):
+        if data['auxiliary_parameters']:
+            """
+            Skip autodetection if auxiliary parameters are
+            already set. This may mean that we've already
+            detected this in the past (or user has set something
+            we shouldn't muck with).
+            """
+            return
+
+        try:
+            rootdse = await self.middleware.call('ldap.get_root_DSE', data)
+            if not rootdse:
+                return
+
+        except Exception:
+            self.logger.warning("Failed to get root DSE", exc_info=True)
+            return
+
+        if 'vendorName' in rootdse[0]['data']:
+            """
+            FreeIPA domain.
+            """
+            default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
+            aux_params = [
+                'map group member uniqueMember',
+                f'base passwd cn=users,cn=accounts,{default_naming_context}',
+                f'base group cn=groupss,cn=accounts,{default_naming_context}',
+            ]
+            data.update({
+                'schema': 'RFC2307BIS',
+                'auxiliary_parameters': '\n'.join(aux_params)
+            })
+            return
+
+        elif 'rootDomainNamingContext' in rootdse[0]['data']:
+            """
+            ActiveDirectory domain.
+            """
+            self.logger.warning(
+                "Active Directoy plugin should be used for Active Directory domains."
+            )
+
+            naming_ctx_dn = rootdse[0]['data']['rootDomainNamingContext'][0]
+            naming_ctx = await self.get_dn(naming_ctx_dn, 'BASE', data)
+            dom_sid_bytes = eval(naming_ctx[0]['data']['objectSid'][0])
+            dom_sid = await self.object_sid_to_string(dom_sid_bytes)
+            aux_params = [
+                'map passwd uid sAMAccountName',
+                'map passwd gidNumber primaryGroupID',
+                'map passwd gecos displayName',
+                'nss_uid_offset 20000',
+                'nss_gid_offset 20000',
+                f'map passwd uidNumber objectSid:{dom_sid}',
+                f'map group gidNumber objectSid:{dom_sid}',
+                f'filter passwd (sAMAccountType={SAMAccountType.SAM_USER_OBJECT.value})',
+                f'filter group (sAMAccountType={SAMAccountType.SAM_GROUP_OBJECT.value})',
+            ]
+            data.update({
+                'schema': 'RFC2307BIS',
+                'auxiliary_parameters': '\n'.join(aux_params)
+            })
+            return
+
+        return
 
     @accepts(Dict(
         'ldap_update',
@@ -893,7 +995,6 @@ class LDAPService(TDBWrapConfigService):
         new.update(data)
         new['uri_list'] = await self.hostnames_to_uris(new)
         await self.common_validate(new, old, verrors)
-        rootdse = None
         verrors.check()
 
         if data.get('certificate') and data['certificate'] != old['certificate']:
@@ -907,24 +1008,8 @@ class LDAPService(TDBWrapConfigService):
             if new['enable']:
                 await self.middleware.call('ldap.ldap_validate', new, verrors)
                 verrors.check()
-                try:
-                    rootdse = await self.middleware.call('ldap.get_root_DSE', new)
-                except Exception:
-                    self.logger.warning("Failed to get root DSE", exc_info=True)
 
-        if not new['auxiliary_parameters'] and rootdse and 'vendorName' in rootdse[0]['data']:
-            if rootdse[0]['data']['vendorName'][0] == '389 Project':
-                # FreeIPA
-                default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
-                aux_params = [
-                    'map group member uniqueMember',
-                    f'base passwd cn=users,cn=accounts,{default_naming_context}',
-                    f'base group cn=groups,cn=accounts,{default_naming_context}',
-                ]
-                new.update({
-                    'schema': 'RFC2307BIS',
-                    'auxiliary_parameters': '\n'.join(aux_params)
-                })
+                await self.middleware.call('ldap.autodetect_ldap_settings', new)
 
         await self.ldap_compress(new)
         out = await super().do_update(new)
@@ -967,6 +1052,19 @@ class LDAPService(TDBWrapConfigService):
     @private
     async def validate_credentials(self, ldap_config=None):
         client_conf = await self.ldap_conf_to_client_config(ldap_config)
+        if client_conf['bind_type'] == 'GSSAPI':
+            payload = {
+                'dstype': DSType.DS_TYPE_LDAP.name,
+                'conf': {
+                    'binddn': ldap_config.get('binddn', ''),
+                    'bindpw': ldap_config.get('bindpw', ''),
+                    'kerberos_realm': ldap_config.get('kerberos_realm', ''),
+                    'kerberos_principal': ldap_config.get('kerberos_principal', ''),
+                }
+            }
+            cred = await self.middleware.call('kerberos.get_cred', payload)
+            await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
+
         await self.middleware.call('ldapclient.validate_credentials', client_conf)
 
     @private
@@ -1000,12 +1098,19 @@ class LDAPService(TDBWrapConfigService):
         return await self.middleware.call('ldapclient.get_root_dse', {"ldap-configuration": client_conf})
 
     @private
-    async def get_dn(self, dn=None, ldap_config=None):
+    async def get_dn(self, dn=None, scope=None, ldap_config=None):
         """
         Outputs contents of specified DN in JSON. By default will target the basedn.
         """
         client_conf = await self.ldap_conf_to_client_config(ldap_config)
-        return await self.middleware.call('ldapclient.get_dn', {"dn": dn, "ldap-configuration": client_conf})
+        payload = {
+            "dn": dn,
+            "ldap-configuration": client_conf,
+        }
+        if scope:
+            payload['scope'] = scope
+
+        return await self.middleware.call('ldapclient.get_dn', payload)
 
     @private
     async def started(self):

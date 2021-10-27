@@ -45,6 +45,8 @@
 
         db['krb_aux'] = middleware.call_sync('kerberos.config')
         db_realms = middleware.call_sync('kerberos.realm.query')
+        krb_default_realm = None
+
         appdefaults = {'pam': {
             KRB_AppDefaults.FORWARDABLE.parm(): 'true',
             KRB_AppDefaults.TICKET_LIFETIME.parm(): '86400',
@@ -111,10 +113,9 @@
 
         elif db['ldap']['enable'] and db['ldap']['kerberos_realm']:
             environment_is_kerberized = True
-            krb_default_realm = db['ldap']['kerberos_realm']['krb_realm']
-
-        else:
-            krb_default_realm = None
+            ldap_realm = filter_list(db_realms, [('id', '=', db['ldap']['kerberos_realm'])])
+            if ldap_realm:
+                krb_default_realm = ldap_realm[0]['realm']
 
         if krb_default_realm:
             libdefaults['krb5_main'].update({KRB_LibDefaults.DEFAULT_REALM: krb_default_realm})
