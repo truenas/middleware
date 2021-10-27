@@ -111,7 +111,7 @@ class CPUTempPlugin(RRDBase):
         for n, cputemp_file in enumerate(self.get_rrd_files(identifier)):
             a = [
                 f'DEF:s_avg{n}={cputemp_file}:value:AVERAGE',
-                f'CDEF:avg{n}=s_avg{n},10,/,273.15,-',
+                f'CDEF:avg{n}=s_avg{n},10,/,273.2,-',
                 f'XPORT:avg{n}:cputemp{n}'
             ]
             args.extend(a)

@@ -880,6 +880,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
+        self.mocks = {}
         self.socket_messages_queue = deque(maxlen=1000)
 
     def __init_services(self):
@@ -1494,6 +1495,35 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 self.logger.debug(stats)
 
             time.sleep(interval)
+
+    def set_mock(self, name, mock):
+        if name in self.mocks:
+            raise ValueError(f'{name!r} is already mocked')
+
+        serviceobj, methodobj = self._method_lookup(name)
+
+        if inspect.iscoroutinefunction(mock):
+            async def f(*args, **kwargs):
+                return await mock(serviceobj, *args, **kwargs)
+        else:
+            def f(*args, **kwargs):
+                return mock(serviceobj, *args, **kwargs)
+
+        if hasattr(methodobj, '_job'):
+            f._job = methodobj._job
+
+        self.mocks[name] = f
+
+    def remove_mock(self, name):
+        self.mocks.pop(name)
+
+    def _method_lookup(self, name):
+        serviceobj, methodobj = super()._method_lookup(name)
+
+        if mock := self.mocks.get(name):
+            return serviceobj, mock
+
+        return serviceobj, methodobj
 
     async def ws_handler(self, request):
         ws = web.WebSocketResponse()

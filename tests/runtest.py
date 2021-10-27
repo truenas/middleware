@@ -66,7 +66,7 @@ option_list = [
 
 # look if all the argument are there.
 try:
-    myopts, args = getopt.getopt(argv[1:], 'aipItk:', option_list)
+    myopts, args = getopt.getopt(argv[1:], 'aipItkv:', option_list)
 except getopt.GetoptError as e:
     print(str(e))
     print(error_msg)
@@ -79,6 +79,7 @@ ha = False
 update = False
 dev_test = False
 debug_mode = False
+verbose = ''
 for output, arg in myopts:
     if output in ('-i', '--ip'):
         ip = arg
@@ -90,7 +91,7 @@ for output, arg in myopts:
         testName = arg
     elif output == '-k':
         testexpr = arg
-    elif output in ('--vm-name'):
+    elif output in ('--vm-name',):
         vm_name = f"'{arg}'"
     elif output == '--ha':
         ha = True
@@ -100,6 +101,8 @@ for output, arg in myopts:
         dev_test = True
     elif output == '--debug-mode':
         debug_mode = True
+    elif output == '-v':
+        verbose = arg
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -135,6 +138,9 @@ cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
 cfg_file.close()
 
+os.environ["MIDDLEWARE_TEST_IP"] = ip
+os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
+
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
 from functions import SSH_TEST
 # Setup ssh agent before starting test.
@@ -154,7 +160,7 @@ cfg_file.close()
 
 call([
     f"pytest-{version}",
-    "-v",
+    f"-v{verbose}",
     "-o", "junit_family=xunit2",
     "--junitxml",
     'results/api_v2_tests_result.xml',
