@@ -868,8 +868,12 @@ class LDAPService(TDBWrapConfigService):
 
         if 'vendorName' in rootdse[0]['data']:
             """
-            FreeIPA domain.
+            FreeIPA domain. For now assume in this case that vendorName will
+            be 389 project.
             """
+            if rootdse[0]['data']['vendorName'][0] != '389 Project':
+                return
+
             default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
             aux_params = [
                 'map group member uniqueMember',
@@ -882,7 +886,7 @@ class LDAPService(TDBWrapConfigService):
             })
             return
 
-        elif 'rootDomainNamingContext' in rootdse[0]['data']:
+        elif 'domainControllerFunctionality' in rootdse[0]['data']:
             """
             ActiveDirectory domain.
             """
