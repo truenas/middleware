@@ -1390,19 +1390,19 @@ class InterfaceService(CRUDService):
                         verrors.add(f'{schema_name}.failover_critical', msg)
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
+        used_networks_ipv4 = []
+        used_networks_ipv6 = []
+        for iface in ifaces.values():
+            for iface_alias in filter(lambda x: x['type'] in ('INET', 'INET6'), iface['aliases']):
+                network = ipaddress.ip_network(f'{iface_alias["address"]}/{iface_alias["netmask"]}', strict=False)
+                if iface_alias['type'] == 'INET':
+                    used_networks_ipv4.append(network)
+                else:
+                    used_networks_ipv6.append(network)
+
         for i, alias in enumerate(data.get('aliases') or []):
-            used_networks = []
-            alias_network = ipaddress.ip_network(
-                f'{alias["address"]}/{alias["netmask"]}', strict=False
-            )
-            for iface in ifaces.values():
-                for iface_alias in filter(
-                    lambda x: x['type'] == ('INET' if alias_network.version == 4 else 'INET6'),
-                    iface['aliases']
-                ):
-                    used_networks.append(ipaddress.ip_network(
-                        f'{iface_alias["address"]}/{iface_alias["netmask"]}', strict=False
-                    ))
+            alias_network = ipaddress.ip_network(f'{alias["address"]}/{alias["netmask"]}', strict=False)
+            used_networks = used_networks_ipv4 if alias_network.version == 4 else used_networks_ipv6
             for used_network in used_networks:
                 if used_network.overlaps(alias_network):
                     verrors.add(
