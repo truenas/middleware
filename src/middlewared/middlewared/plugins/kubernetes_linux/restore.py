@@ -35,25 +35,22 @@ class KubernetesService(Service):
 
         job.set_progress(5, 'Basic validation complete')
 
-        # Add taint to force stop pods
-        self.middleware.call_sync('k8s.node.add_taints', [{'key': 'ix-stop-cluster', 'effect': 'NoExecute'}])
-
-        job.set_progress(10, 'Removing old containers')
-        for container in self.middleware.call_sync('docker.container.query'):
-            try:
-                self.middleware.call_sync('docker.container.delete', container['id'])
-            except CallError:
-                # This is okay - we just want to make sure there are no leftover datasets and it's possible that
-                # because of the taint, we have containers being removed
-                pass
-
         self.middleware.call_sync('service.stop', 'kubernetes')
         job.set_progress(15, 'Stopped kubernetes')
+
         shutil.rmtree('/etc/rancher', True)
         db_config = self.middleware.call_sync('datastore.config', 'services.kubernetes')
         self.middleware.call_sync('datastore.update', 'services.kubernetes', db_config['id'], {'cni_config': {}})
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
+        # We will be nuking the docker dataset and re-creating it
+        # Motivation behind this action is that docker creates many datasets per image/container and
+        # when we re-initialize the k8s cluster, it's possible we are leftover with datasets which are not
+        # being used by any container. Images will be pulled again by k8s, so that shouldn't be a concern
+        # in this regard.
+        docker_ds = os.path.join(k8s_config['dataset'], 'docker')
+        self.middleware.call_sync('zfs.dataset.delete', docker_ds, {'force': True, 'recursive': True})
+
         job.set_progress(20, f'Rolling back {backup["snapshot_name"]}')
         self.middleware.call_sync(
             'zfs.snapshot.rollback', backup['snapshot_name'], {
@@ -63,6 +60,8 @@ class KubernetesService(Service):
                 'recursive_rollback': True,
             }
         )
+        self.middleware.call_sync('zfs.dataset.create', {'name': docker_ds, 'type': 'FILESYSTEM'})
+        self.middleware.call_sync('zfs.dataset.mount', docker_ds)
 
         # FIXME: Remove this sleep, sometimes the k3s dataset fails to umount
         #  After discussion with mav, it sounds like a bug to him in zfs, so until that is fixed, we have this sleep
