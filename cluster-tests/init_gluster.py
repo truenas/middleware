@@ -1,11 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config import CLUSTER_INFO, BRICK_PATH
+from config import CLUSTER_INFO, BRICK_PATH, GLUSTER_PEERS_DNS
 from utils import make_request, wait_on_job
 from exceptions import JobTimeOut
 
-HOSTNAMES = [v for k, v in CLUSTER_INFO.items() if k.endswith('_DNS')]
-URLS = [f'http://{hostname}/api/v2.0' for hostname in HOSTNAMES]
+GPD = GLUSTER_PEERS_DNS
+URLS = [f'http://{hostname}/api/v2.0' for hostname in GPD]
 
 
 def enable_and_start_service_on_all_nodes():
@@ -80,7 +80,7 @@ def add_peers():
     # use casefold() for purpose of hostname validation sense case does not matter
     # but the resolvable names on the network might not match _exactly_ with what
     # was given to us in the config (i.e. DNS1.HOSTNAME.BLAH == DNS1.hostname.BLAH)
-    assert set([i['hostname'].casefold() for i in ans.json()]) == set([i.casefold() for i in HOSTNAMES]), ans.json()
+    assert set([i['hostname'].casefold() for i in ans.json()]) == set([i.casefold() for i in GPD]), ans.json()
 
 
 def add_jwt_secret():
@@ -113,7 +113,7 @@ def create_volume():
     gvol = CLUSTER_INFO['GLUSTER_VOLUME']
     payload = {
         'name': gvol,
-        'bricks': [{'peer_name': hostname, 'peer_path': BRICK_PATH} for hostname in HOSTNAMES],
+        'bricks': [{'peer_name': hostname, 'peer_path': BRICK_PATH} for hostname in GPD],
         'force': True,
     }
     ans = make_request('post', '/gluster/volume', data=payload)
