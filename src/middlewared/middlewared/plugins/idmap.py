@@ -1141,7 +1141,7 @@ class IdmapDomainService(TDBWrapCRUDService):
                 })
 
         if ad_enabled:
-           rv['ldap ssl'] = {'parsed': 'off' if disable_ldap_starttls else 'start tls'}
+            rv['ldap ssl'] = {'parsed': 'off' if disable_ldap_starttls else 'start tls'}
 
         return rv
 
