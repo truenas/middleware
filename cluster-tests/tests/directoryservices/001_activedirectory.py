@@ -1,6 +1,6 @@
 import pytest
 
-from config import CLUSTER_INFO, CLUSTER_IPS, CLUSTER_ADS
+from config import CLUSTER_INFO, CLUSTER_IPS, CLUSTER_ADS, PUBLIC_IPS
 from utils import make_request, make_ws_request, ssh_test, wait_on_job
 from exceptions import JobTimeOut
 from pytest_dependency import depends
@@ -41,7 +41,7 @@ def test_002_ctdb_public_ip_check(ip, request):
     except (KeyError, IndexError):
         data = set()
 
-    to_add = set(CLUSTER_INFO['PUBLIC_IPS']) - data
+    to_add = set(PUBLIC_IPS) - data
 
     assert data or to_add, data
     for entry in to_add:
@@ -72,7 +72,7 @@ def test_003_validate_smb_bind_ips(ip, request):
     assert res.status_code == 200, res.text
 
     smb_ip_set = set(res.json().values())
-    cluster_ip_set = set(CLUSTER_INFO['PUBLIC_IPS'])
+    cluster_ip_set = set(PUBLIC_IPS)
     assert smb_ip_set == cluster_ip_set, smb_ips
 
 
@@ -232,7 +232,7 @@ def test_009_validate_dns_records_added(request):
     res = make_ws_request(CLUSTER_IPS[0], payload)
     assert res.get('error') is None, res
     answers = set([x['address'] for x in res['result']])
-    assert set(CLUSTER_INFO['PUBLIC_IPS']) == answers
+    assert set(PUBLIC_IPS) == answers
 
 
 @pytest.mark.dependency(name="DS_CLUSTER_SMB_SHARE_CREATED")
@@ -284,7 +284,7 @@ def test_010_create_clustered_smb_share(request):
 
 
 @pytest.mark.dependency(name="DS_SMB_SHARE_IS_WRITABLE")
-@pytest.mark.parametrize('ip', CLUSTER_INFO['PUBLIC_IPS'])
+@pytest.mark.parametrize('ip', PUBLIC_IPS)
 def test_011_share_is_writable_via_public_ips(ip, request):
     """
     This test creates creates an empty file, sets "delete on close" flag, then
@@ -311,7 +311,7 @@ def test_012_xattrs_writable_via_smb(request):
     depends(request, ['DS_SMB_SHARE_IS_WRITABLE'])
 
     with smb_connection(
-        host=CLUSTER_INFO['PUBLIC_IPS'][0],
+        host=PUBLIC_IPS[0],
         share="DS_CL_SMB",
         username=CLUSTER_ADS['USERNAME'],
         domain=ds_wrk,
