@@ -987,6 +987,9 @@ class OROperator:
         return False
 
     def clean(self, value):
+        if self.has_default and value == self.default:
+            return copy.deepcopy(self.default)
+
         found = False
         final_value = value
         verrors = ValidationErrors()
