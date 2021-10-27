@@ -71,6 +71,7 @@ class SMBPath(enum.Enum):
     PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4/private', 0o700, True)
     LEGACYSTATE = ('/root/samba', '/root/samba', 0o755, True)
     LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private', 0o700, True)
+    CACHE_DIR = ('/var/run/samba4', '/var/run/samba-cache', 0o755, True)
     PASSDB_DIR = ('/var/run/samba4/private', '/var/run/samba-cache/private', 0o700, True)
     MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/private/msg.sock', 0o700, False)
     RUNDIR = ('/var/run/samba4', '/var/run/samba', 0o755, True)
