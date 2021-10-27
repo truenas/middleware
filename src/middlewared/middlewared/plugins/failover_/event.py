@@ -242,17 +242,18 @@ class FailoverService(Service):
         When a failover event is generated we need to account for a few
         scenarios.
 
-            TODO: item #1 will be a new feature so need to come back to
-            it after initial implementation is done
+            1. if we are currently processing a failover event and then
+                receive another event and the new event is a _different_
+                event than the current one, we consider this an unsolvable
+                scenario. Any action we take would be assuming we know
+                which controller should become MASTER/BACKUP. When this
+                occurs, we play it safe and log a warning and raise an
+                `IgnoreFailoverEvent` exception.
 
-            1. if we have received a rapid succession of events for
-                for an interface, then we check the time delta from the
-                previous event. If it's the same interface bouncing back
-                and forth then we ignore the event and raise an alert.
-
-            2. if we receive an event for an interface but there is a
-                current event that is being processed for that interface
-                then we ignore the incoming event.
+            2. if we are currently processing a failover event and then
+                receive another event and the new event is the _same_
+                event as the current one, we log an informational message
+                and raise an `IgnoreFailoverEvent` exception.
         """
 
         # first check if there is an ongoing failover event
@@ -266,23 +267,17 @@ class FailoverService(Service):
             ]
         )
         for i in current_events:
-            if i['method'] == 'failover.events.vrrp_master':
-                # if the incoming event is also a MASTER event then log it and ignore
-                if event in ('MASTER', 'forcetakeover'):
-                    logger.info(
-                        'A failover MASTER event is already being processed, ignoring.'
-                    )
-                    raise IgnoreFailoverEvent()
+            cur_event = 'MASTER' if i['method'] == 'failover.events.vrrp_master' else 'BACKUP'
+            if event in ('MASTER', 'forcetakeover') and cur_event == 'MASTER':
+                logger.info('Received MASTER event for %r but a current MASTER event is already occuring, ignoring.')
+            elif event == 'BACKUP' and cur_event == 'BACKUP':
+                logger.info('Received BACKUP event for %r but a current BACKUP event is already occuring, ignoring.')
+            else:
+                errmsg = f'Received "{event}" event for "{ifname}" but a current event of "{cur_event}" is running.'
+                errmsg += ' Ignoring failover event.'
+                logger.warning(errmsg)
 
-            if i['method'] == 'failover.events.vrrp_backup':
-                # if the incoming event is also a BACKUP event then log it and ignore
-                if event == 'BACKUP':
-                    logger.info(
-                        'A failover BACKUP event is already being processed, ignoring.'
-                    )
-                    raise IgnoreFailoverEvent()
-
-            # TODO: timdelta flapping event
+            raise IgnoreFailoverEvent()
 
     def _event(self, ifname, event):
 
@@ -294,18 +289,14 @@ class FailoverService(Service):
                 # if forcetakeover is false, and failover is disabled
                 # and we're not set as the master controller, then
                 # there is nothing we need to do.
-                logger.warning(
-                    'Failover is disabled but this node is marked as the BACKUP node. Assuming BACKUP.'
-                )
+                logger.warning('Failover is disabled but this node is marked as the BACKUP node. Assuming BACKUP.')
                 raise IgnoreFailoverEvent()
 
             # If there is a state change on a non-critical interface then
             # ignore the event and return
             ignore = [i for i in fobj['non_crit_interfaces'] if i in ifname]
             if ignore:
-                logger.warning(
-                    'Ignoring state change on non-critical interface "%s".', ifname
-                )
+                logger.warning('Ignoring state change on non-critical interface "%s".', ifname)
                 raise IgnoreFailoverEvent()
 
             needs_imported = False
