@@ -37,7 +37,7 @@ class SystemService(Service):
                 # a newline so ignore those lines
                 continue
 
-            sect, val = [i.strip() for i in line.split(':')]
+            sect, val = [i.strip() for i in line.split(':', 1)]
             if sect == 'Manufacturer':
                 SystemService.CACHE['system-manufacturer' if _type == 'SYSINFO' else 'baseboard-manufacturer'] = val
             elif sect == 'Product Name':
