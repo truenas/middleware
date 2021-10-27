@@ -2,7 +2,12 @@ from os import environ
 
 
 CLUSTER_INFO = {
-    'PUBLIC_IPS': environ.get('PUBLIC_IPS', '').split(),
+    'PUBLIC_IP01': environ.get('PUBLIC_IP01'),
+    'PUBLIC_IP01_DNS': environ.get('PUBLIC_IP01_DNS'),
+    'PUBLIC_IP02': environ.get('PUBLIC_IP02'),
+    'PUBLIC_IP02_DNS': environ.get('PUBLIC_IP02_DNS'),
+    'PUBLIC_IP03': environ.get('PUBLIC_IP03'),
+    'PUBLIC_IP03_DNS': environ.get('PUBLIC_IP03_DNS'),
     'NODE_A_IP': environ.get('NODE_A_IP'),
     'NODE_A_DNS': environ.get('NODEA'),
     'NODE_B_IP': environ.get('NODE_B_IP'),
@@ -41,3 +46,4 @@ BRICK_NAME = 'brick0'
 DATASET_HIERARCHY = f'{CLUSTER_INFO["ZPOOL"]}/{INTERNAL_DS}/{CLUSTER_INFO["GLUSTER_VOLUME"]}/{BRICK_NAME}'
 BRICK_PATH = f'/mnt/{DATASET_HIERARCHY}'
 CLUSTER_IPS = [CLUSTER_INFO['NODE_A_IP'], CLUSTER_INFO['NODE_B_IP'], CLUSTER_INFO['NODE_C_IP']]
+PUBLIC_IPS = [CLUSTER_INFO['PUBLIC_IP01'], CLUSTER_INFO['PUBLIC_IP02'], CLUSTER_INFO['PUBLIC_IP03']]
