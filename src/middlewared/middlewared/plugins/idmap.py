@@ -1140,7 +1140,9 @@ class IdmapDomainService(TDBWrapCRUDService):
                     f"{idmap_prefix} {backend_parameter}": {"parsed": v},
                 })
 
-        rv['ldap ssl'] = {'parsed': 'off' if disable_ldap_starttls else 'start tls'}
+        if ad_enabled:
+            rv['ldap ssl'] = {'parsed': 'off' if disable_ldap_starttls else 'start tls'}
+
         return rv
 
     @private
