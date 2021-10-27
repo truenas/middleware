@@ -28,7 +28,7 @@ CLUSTER_INFO = {
 CLUSTER_ADS = {
     'DOMAIN': environ.get('AD_DOMAIN'),
     'USERNAME': environ.get('AD_USERNAME'),
-    'PASSWORD': enviorn.get('AD_PASSWORD')
+    'PASSWORD': environ.get('AD_PASSWORD')
 }
 
 CLUSTER_LDAP = {
