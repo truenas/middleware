@@ -1390,6 +1390,10 @@ class InterfaceService(CRUDService):
                         verrors.add(f'{schema_name}.failover_critical', msg)
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
+        k8s_config = self.middleware.call_sync('kubernetes.config')
+        k8s_networks = [
+            ipaddress.ip_network(k8s_config[k], strict=False) for k in ('cluster_cidr', 'service_cidr')
+        ] if k8s_config['dataset'] else []
         used_networks_ipv4 = []
         used_networks_ipv6 = []
         for iface in ifaces.values():
@@ -1402,14 +1406,19 @@ class InterfaceService(CRUDService):
 
         for i, alias in enumerate(data.get('aliases') or []):
             alias_network = ipaddress.ip_network(f'{alias["address"]}/{alias["netmask"]}', strict=False)
-            used_networks = used_networks_ipv4 if alias_network.version == 4 else used_networks_ipv6
-            for used_network in used_networks:
-                if used_network.overlaps(alias_network):
-                    verrors.add(
-                        f'{schema_name}.aliases.{i}',
-                        f'The network {alias_network} is already in use by another interface.'
-                    )
-                    break
+            if alias_network.version == 4:
+                used_networks = ((used_networks_ipv4, 'another interface'), (k8s_networks, 'Applications'))
+            else:
+                used_networks = ((used_networks_ipv6, 'another interface'),)
+
+            for network_cidrs, message in used_networks:
+                for used_network in network_cidrs:
+                    if used_network.overlaps(alias_network):
+                        verrors.add(
+                            f'{schema_name}.aliases.{i}',
+                            f'The network {alias_network} is already in use by {message}.'
+                        )
+                        break
 
     async def __convert_interface_datastore(self, data):
 
