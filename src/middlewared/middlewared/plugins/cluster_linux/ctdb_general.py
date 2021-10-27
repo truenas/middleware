@@ -134,9 +134,6 @@ class CtdbGeneralService(Service):
         if self.this_node is not None:
             return self.this_node
 
-        if not await self.healthy():
-            raise CallError("Failed to get pnn. Cluster not healthy.")
-
         get_pnn = await run(['ctdb', 'pnn'], check=False)
         if get_pnn.returncode != 0:
             raise CallError("Failed to get pnn: %s", get_pnn.stderr.decode())
