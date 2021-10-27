@@ -12,8 +12,7 @@ class CtdbInitService(Service):
 
     async def init(self):
         """
-        Initialize all the necessary components
-        for ctdb cluster.
+        Initialize all the prerequisite components for ctdb cluster.
         """
 
         result = {'logit': True, 'success': False}
@@ -38,7 +37,7 @@ class CtdbInitService(Service):
         if not await self.middleware.call('ctdb.setup.general'):
             return result
 
-        return await self.middleware.call('ctdb.setup.ip_files', result)
+        return await self.middleware.call('ctdb.setup.private_ip_file', result)
 
     async def general(self):
         """
@@ -48,7 +47,7 @@ class CtdbInitService(Service):
         await self.middleware.call('etc.generate', 'ctdb')
         return Path(CTDBConfig.ETC_GEN_FILE.value).exists()
 
-    def ip_files(self, result):
+    def private_ip_file(self, result):
 
         pri_e_file = Path(CTDBConfig.ETC_PRI_IP_FILE.value)
         pri_c_file = Path(CTDBConfig.GM_PRI_IP_FILE.value)
