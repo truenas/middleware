@@ -407,6 +407,7 @@ class KerberosService(TDBWrapConfigService):
                     'binddn': ldap['binddn'],
                     'bindpw': ldap['bindpw'],
                     'kerberos_realm': ldap['kerberos_realm'],
+                    'kerberos_principal': ldap['kerberos_principal'],
                 }
             }
 
