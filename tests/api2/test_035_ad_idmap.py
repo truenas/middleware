@@ -242,7 +242,7 @@ def test_08_test_backend_options(request, backend):
     elif backend == "RFC2307":
         payload3["options"] = {
             "ldap_server": "STANDALONE",
-            "bind_path_user": LDAPBASEDN
+            "bind_path_user": LDAPBASEDN,
             "bind_path_group": LDAPBASEDN,
             "user_cn": True,
             "ldap_domain": "",
