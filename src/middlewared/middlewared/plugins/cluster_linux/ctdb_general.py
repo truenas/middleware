@@ -134,6 +134,9 @@ class CtdbGeneralService(Service):
         if self.this_node is not None:
             return self.this_node
 
+        if not await self.middleware.call('gluster.fuse.is_mounted', {'name': CTDB_VOL}):
+            raise CallError('%s is not fuse mounted locally', CTDB_VOL)
+
         get_pnn = await run(['ctdb', 'pnn'], check=False)
         if get_pnn.returncode != 0:
             raise CallError("Failed to get pnn: %s", get_pnn.stderr.decode())
