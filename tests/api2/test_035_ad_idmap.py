@@ -231,7 +231,7 @@ def test_08_test_backend_options(request, backend):
             "ldap_user_dn": LDAPBINDDN,
             "ldap_url": LDAPHOSTNAME,
             "ldap_user_dn_password": LDAPBINDPASSWORD,
-            "ssl": True,
+            "ssl": "ON",
             "readonly": True,
         }
         results = PUT("/idmap/id/1/", payload3)
@@ -249,7 +249,7 @@ def test_08_test_backend_options(request, backend):
             "ldap_url": LDAPHOSTNAME,
             "ldap_user_dn": LDAPBINDDN,
             "ldap_user_dn_password": LDAPBINDPASSWORD,
-            "ssl": True,
+            "ssl": "ON",
             "ldap_realm": True,
         }
         results = PUT("/idmap/id/1/", payload3)
@@ -265,9 +265,20 @@ def test_08_test_backend_options(request, backend):
         for the current backend. Iterate through each option and verify
         that it was written to samba's running configuration.
         """
+        if k in ['realm', 'ssl']:
+            continue
+
         cmd = f'midclt call smb.getparm "{IDMAP_CFG}: {k}" GLOBAL'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
+        if k == 'ldap_url':
+            v = f'ldaps://{v}'
+        elif k == 'ldap_domain':
+            v = None
+
+        if v == 'STANDALONE':
+            v = 'stand-alone'
+
         try:
             res = json.loads(results['output'].strip())
             assert res == v, f"{backend} - [{k}]: {res}"
@@ -381,6 +392,7 @@ def test_13_idmap_new_domain(request):
         "range_low": low,
         "range_high": high,
         "idmap_backend": "RID",
+        "options": {},
     }
     results = POST("/idmap/", payload)
     assert results.status_code == 200, results.text
