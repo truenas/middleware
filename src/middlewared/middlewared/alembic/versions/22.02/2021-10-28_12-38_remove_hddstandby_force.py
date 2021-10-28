@@ -22,10 +22,4 @@ def upgrade():
 
 
 def downgrade():
-    with op.batch_alter_table('storage_disk', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('disk_hddstandby_force', sa.BOOLEAN(), nullable=False))
-
-    op.execute("UPDATE storage_disk SET disk_hddstandby_force = 0")
-
-    with op.batch_alter_table('storage_disk', schema=None) as batch_op:
-        batch_op.alter_column('disk_hddstandby_force', existing_type=sa.BOOLEAN(), nullable=False)
+    pass
