@@ -194,7 +194,6 @@ class DiskService(Service, ServiceChangeMixin):
 
     @private
     async def restart_services_after_sync(self):
-        await self.middleware.call('disk.update_hddstandby_force')
         await self.middleware.call('disk.update_smartctl_args_for_disks')
         if await self.middleware.call('service.started', 'collectd'):
             await self.middleware.call('service.restart', 'collectd')

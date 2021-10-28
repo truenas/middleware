@@ -15,7 +15,6 @@ except ImportError:
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str
 from middlewared.service import filterable, private, CallError, CRUDService
-from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -88,7 +87,6 @@ class DiskService(CRUDService):
                 'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
             ]
         ),
-        Bool('hddstandby_force', required=True),
         Bool('togglesmart', required=True),
         Str('advpowermgmt', required=True, enum=['DISABLED', '1', '64', '127', '128', '192', '254']),
         Str('smartoptions', required=True),
@@ -249,19 +247,6 @@ class DiskService(CRUDService):
         self._expand_enclosure(old)
         new = old.copy()
         new.update(data)
-
-        verrors = ValidationErrors()
-
-        if new['hddstandby_force']:
-            if new['hddstandby'] == 'ALWAYS ON':
-                verrors.add(
-                    'disk_update.hddstandby_force',
-                    'This option does not have sense when HDD Standby is not set'
-                )
-
-        if verrors:
-            raise verrors
-
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
             if new['kmip_uid']:
@@ -286,17 +271,13 @@ class DiskService(CRUDService):
 
         if any(
             new[key] != old[key]
-            for key in [
-                'togglesmart', 'smartoptions', 'hddstandby', 'hddstandby_force',
-                'critical', 'difference', 'informational',
-            ]
+            for key in ['togglesmart', 'smartoptions', 'hddstandby', 'critical', 'difference', 'informational']
         ):
             if new['togglesmart']:
                 await self.middleware.call('disk.toggle_smart_on', new['name'])
             else:
                 await self.middleware.call('disk.toggle_smart_off', new['name'])
 
-            await self.middleware.call('disk.update_hddstandby_force')
             await self.middleware.call('disk.update_smartctl_args_for_disks')
             await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
@@ -311,7 +292,7 @@ class DiskService(CRUDService):
     async def copy_settings(self, old, new):
         await self.middleware.call('disk.update', new['identifier'], {
             k: v for k, v in old.items() if k in [
-                'togglesmart', 'advpowermgmt', 'description', 'hddstandby', 'hddstandby_force',
+                'togglesmart', 'advpowermgmt', 'description', 'hddstandby',
                 'smartoptions', 'critical', 'difference', 'informational',
             ]
         })
