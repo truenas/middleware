@@ -650,6 +650,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             Dict(
                 'idmap_tdb_options',
             ),
+            default={},
             name='options',
             title='idmap_options',
         ),
