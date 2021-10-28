@@ -2,7 +2,8 @@ import re
 from xml.etree import ElementTree as etree
 
 import sysctl
-import bsd
+from bsd.devinfo import DevInfo
+from bsd.disk import get_ident_with_name
 from .device_info_base import DeviceInfoBase
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.service import private, Service
@@ -71,7 +72,7 @@ class DeviceService(Service, DeviceInfoBase):
                 #   what geom sees)
                 if not disk['ident']:
                     try:
-                        disk['ident'] = bsd.disk.get_ident_with_name(name)
+                        disk['ident'] = get_ident_with_name(name)
                     except Exception:
                         disk['ident'] = ''
 
@@ -107,7 +108,7 @@ class DeviceService(Service, DeviceInfoBase):
 
     async def get_serials(self):
         ports = []
-        for devices in bsd.devinfo.DevInfo().resource_managers['I/O ports'].values():
+        for devices in DevInfo().resource_managers['I/O ports'].values():
             for dev in devices:
                 if not dev.name.startswith('uart'):
                     continue
