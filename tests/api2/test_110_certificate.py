@@ -11,8 +11,20 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, DELETE, POST
 from auto_config import dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+
+try:
+    from config import (
+        LDAPBASEDN,
+        LDAPBINDDN,
+        LDAPBINDPASSWORD,
+        LDAPHOSTNAME,
+    )
+    # comment pytestmark for development testing with --dev-test
+    pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+except ImportError:
+    Reason = 'LDAP* variable are not setup in config.py'
+    # comment pytestmark for development testing with --dev-test
+    pytestmark = pytest.mark.skipif(True, reason=Reason)
 
 
 def test_01_get_certificate_query():
@@ -30,13 +42,14 @@ def test_create_idmap_certificate():
         'certificate': 1,
         "idmap_backend": "RFC2307",
         'options': {
-            'bind_path_user': '',
-            'bind_path_group': '',
-            'ldap_domain': '',
-            'ldap_url': '',
-            'ldap_user_dn': '',
-            'ldap_user_dn_password': '',
-            'ldap_realm': False,
+            "ldap_server": "STANDALONE",
+            "bind_path_user": LDAPBASEDN,
+            "bind_path_group": LDAPBASEDN,
+            "ldap_url": LDAPHOSTNAME,
+            "ldap_user_dn": LDAPBINDDN,
+            "ldap_user_dn_password": LDAPBINDPASSWORD,
+            "ssl": "ON",
+            "ldap_realm": False,
         }
     }
     results = POST('/idmap/', payload)

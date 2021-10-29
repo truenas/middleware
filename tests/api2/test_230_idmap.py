@@ -21,7 +21,7 @@ try:
 except ImportError:
     Reason = 'LDAP* variable are not setup in config.py'
     # comment pytestmark for development testing with --dev-test
-    pytestmark = pytest.mark.skipif(True, reason=Reason)`
+    pytestmark = pytest.mark.skipif(True, reason=Reason)
 
 
 def test_create_idmap_certificate():
