@@ -15,7 +15,7 @@ class ACLTempateModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     acltemplate_name = sa.Column(sa.String(120), unique=True)
-    acltemplate_acltype = sa.Column(sa.String(255), nullable=True)
+    acltemplate_acltype = sa.Column(sa.String(255))
     acltemplate_acl = sa.Column(sa.JSON(type=list))
     acltemplate_builtin = sa.Column(sa.Boolean())
 

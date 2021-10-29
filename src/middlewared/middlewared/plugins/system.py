@@ -129,7 +129,7 @@ class SystemAdvancedService(ConfigService):
         Bool('anonstats', required=True),
         Str('sed_user', enum=['USER', 'MASTER'], required=True),
         Str('sysloglevel', enum=[
-            'F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG', 'F_IS_DEBUG'
+            'F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG',
         ], required=True),
         Str('syslogserver'),
         Str('syslog_transport', enum=['UDP', 'TCP', 'TLS'], required=True),
@@ -188,9 +188,6 @@ class SystemAdvancedService(ConfigService):
 
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
-
-        if data.get('sysloglevel'):
-            data['sysloglevel'] = data['sysloglevel'].upper()
 
         for k in filter(lambda k: data[k], ['syslog_tls_certificate_authority', 'syslog_tls_certificate']):
             data[k] = data[k]['id']
@@ -1446,7 +1443,7 @@ class SystemGeneralService(ConfigService):
             'system_general_entry', 'general_settings',
             ('add', Str(
                 'sysloglevel', enum=[
-                    'F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG', 'F_IS_DEBUG'
+                    'F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG',
                 ]
             )),
             ('add', Str('syslogserver')),
