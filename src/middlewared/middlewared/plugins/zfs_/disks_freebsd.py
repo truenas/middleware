@@ -21,10 +21,15 @@ class ZFSPoolService(Service, PoolDiskServiceBase):
         pool_disks = []
         cache = self.middleware.call_sync('disk.label_to_dev_disk_cache')
         for disk in disks:
+            found_disk = None
             found_label = cache['label_to_dev'].get(disk)
             if found_label:
                 found_disk = cache['dev_to_disk'].get(found_label)
-                if found_disk:
-                    pool_disks.append(found_disk)
+            else:
+                # maybe the disk for this zpool doesn't have a label (freenas-boot/boot-pool)
+                # we still need to try and find the raw disk
+                found_disk = cache['dev_to_disk'].get(disk)
+
+            pool_disks.append(found_disk) if found_disk else None
 
         return pool_disks
