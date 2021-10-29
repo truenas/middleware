@@ -1852,7 +1852,9 @@ class PoolService(CRUDService):
                         'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
                     )
 
-                unlock_job = self.middleware.call_sync('pool.dataset.unlock', pool['name'], {'recursive': True})
+                unlock_job = self.middleware.call_sync(
+                    'pool.dataset.unlock', pool['name'], {'recursive': True, 'toggle_attachments': False}
+                )
                 unlock_job.wait_sync()
                 if unlock_job.error or unlock_job.result['failed']:
                     failed = ', '.join(unlock_job.result['failed']) if not unlock_job.error else ''
