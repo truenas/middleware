@@ -7,6 +7,7 @@
 from datetime import timedelta
 import logging
 import re
+import subprocess
 
 try:
     import sysctl
@@ -17,6 +18,9 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 from middlewared.alert.schedule import IntervalSchedule
 
 logger = logging.getLogger(__name__)
+
+PERSISTENCY_RESTORED = 0x4
+ARM_INFO = 0x40
 
 
 class NVDIMMAlertClass(AlertClass):
@@ -57,14 +61,15 @@ def parse_bit_set(s):
     return s
 
 
-def produce_nvdimm_alerts(i, critical_health, nvdimm_health, es_health):
+def produce_nvdimm_alerts(i, critical_health, nvdimm_health, es_health, specrev):
     alerts = []
 
     critical_health = parse_sysctl(critical_health)
     nvdimm_health = parse_sysctl(nvdimm_health)
     es_health = parse_sysctl(es_health)
 
-    if int(critical_health["Critical Health Info"].split(":")[0], 16) & ~0x4:
+    critical_health_info = int(critical_health["Critical Health Info"].split(":")[0], 16)
+    if critical_health_info & ~(PERSISTENCY_RESTORED | ARM_INFO):
         alerts.append(Alert(
             NVDIMMAlertClass, {
                 "i": i,
@@ -72,6 +77,16 @@ def produce_nvdimm_alerts(i, critical_health, nvdimm_health, es_health):
                 "value": critical_health["Critical Health Info"]
             }
         ))
+
+    if specrev >= "22":
+        if not (critical_health_info & ARM_INFO):
+            alerts.append(Alert(
+                NVDIMMAlertClass, {
+                    "i": i,
+                    "k": "ARM_INFO",
+                    "value": "not set",
+                }
+            ))
 
     for k in ["Module Health", "Error Threshold Status", "Warning Threshold Status"]:
         if nvdimm_health[k] != "0x0":
@@ -95,6 +110,8 @@ class NVDIMMAlertSource(ThreadedAlertSource):
 
     products = ("ENTERPRISE",)
 
+    specrev = {}
+
     def check_sync(self):
         alerts = []
 
@@ -107,5 +124,9 @@ class NVDIMMAlertSource(ThreadedAlertSource):
             except IndexError:
                 return alerts
             else:
-                alerts.extend(produce_nvdimm_alerts(i, critical_health, nvdimm_health, es_health))
+                if i not in self.specrev:
+                    self.specrev[i] = subprocess.check_output(["ixnvdimm", "-r", f"/dev/nvdimm{i}", "SPECREV"],
+                                                              encoding="utf-8", errors="ignore").rstrip()
+
+                alerts.extend(produce_nvdimm_alerts(i, critical_health, nvdimm_health, es_health, self.specrev[i]))
                 i += 1
