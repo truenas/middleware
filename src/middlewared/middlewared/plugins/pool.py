@@ -267,6 +267,7 @@ class PoolService(CRUDService):
     class Config:
         datastore = 'storage.volume'
         datastore_extend = 'pool.pool_extend'
+        datastore_extend_context = 'pool.pool_extend_context'
         datastore_prefix = 'vol_'
         event_send = False
         cli_namespace = 'storage.pool'
@@ -301,6 +302,7 @@ class PoolService(CRUDService):
                 'total_secs_left': None,
             }
         ),
+        Bool('is_upgraded'),
         Bool('healthy', required=True),
         Str('status_detail', required=True, null=True),
         Dict(
@@ -431,7 +433,10 @@ class PoolService(CRUDService):
                 "params": [1]
             }
         """
-        name = (await self.get_instance(oid))['name']
+        return await self.is_upgraded_by_name((await self.get_instance(oid))['name'])
+
+    @private
+    async def is_upgraded_by_name(self, name):
         proc = await Popen(
             f'zpool get -H -o value version {name}',
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
@@ -537,7 +542,13 @@ class PoolService(CRUDService):
         return result
 
     @private
-    def pool_extend(self, pool):
+    def pool_extend_context(self, rows, extra):
+        return {
+            "extra": extra,
+        }
+
+    @private
+    def pool_extend(self, pool, context):
 
         """
         If pool is encrypted we need to check if the pool is imported
@@ -572,6 +583,9 @@ class PoolService(CRUDService):
                     'value': 'off',
                 },
             })
+
+        if context['extra'].get('is_upgraded'):
+            pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
 
         # Let's keep below keys until api 2.1 to keep backwards compatibility
         pool.update({
