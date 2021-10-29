@@ -114,7 +114,7 @@ Out[8]: 200
 In [9]:
 ```
 
-## How REST API tests should be written?
+## How a REST API tests should be written?
 
 REST API test code should be written with flake8 standard. All code lines should be under 80 character per line.
 
