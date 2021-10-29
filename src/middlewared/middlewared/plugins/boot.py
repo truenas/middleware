@@ -241,7 +241,7 @@ class BootService(Service):
         """
         Scrub on boot pool.
         """
-        subjob = await self.middleware.call('zfs.pool.scrub', BOOT_POOL_NAME)
+        subjob = await self.middleware.call('pool.scrub.scrub', BOOT_POOL_NAME)
         return await job.wrap(subjob)
 
     @accepts(
