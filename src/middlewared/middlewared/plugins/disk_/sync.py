@@ -20,10 +20,6 @@ class DiskService(Service, ServiceChangeMixin):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return
 
-        # Do not sync geom classes like multipath/hast/etc
-        if name.find('/') != -1:
-            return
-
         disks = await self.middleware.call('device.get_disks')
         # Abort if the disk is not recognized as an available disk
         if name not in disks:
@@ -80,7 +76,6 @@ class DiskService(Service, ServiceChangeMixin):
         self.logger.info('Found disks: %r', log_info)
 
         seen_disks = {}
-        serials = []
         changed = False
         encs = await self.middleware.call('enclosure.query')
         for disk in (
@@ -95,8 +90,6 @@ class DiskService(Service, ServiceChangeMixin):
                     await self.middleware.call('disk.device_to_identifier', name) != disk['disk_identifier']
             ):
                 # If we cant translate the identifier to a device, give up
-                # If name has already been seen once then we are probably
-                # dealing with with multipath here
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
                     await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
@@ -116,10 +109,6 @@ class DiskService(Service, ServiceChangeMixin):
 
             if name in sys_disks:
                 await self._map_device_disk_to_db(disk, sys_disks[name])
-
-            serial = (disk['disk_serial'] or '') + (sys_disks.get(name, {}).get('lunid') or '')
-            if serial:
-                serials.append(serial)
 
             # If for some reason disk is not identified as a system disk
             # mark it to expire.
@@ -154,13 +143,6 @@ class DiskService(Service, ServiceChangeMixin):
                 original_disk = disk.copy()
                 disk['disk_name'] = name
                 await self._map_device_disk_to_db(disk, sys_disks[name])
-                serial = disk['disk_serial'] + (sys_disks[name]['lunid'] or '')
-                if serial:
-                    if serial in serials:
-                        # Probably dealing with multipath here, do not add another
-                        continue
-                    else:
-                        serials.append(serial)
 
                 if not new:
                     # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays

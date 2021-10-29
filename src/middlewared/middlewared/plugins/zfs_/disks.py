@@ -3,10 +3,8 @@ import pyudev
 
 from middlewared.service import Service
 
-from .disks_base import PoolDiskServiceBase
 
-
-class ZFSPoolService(Service, PoolDiskServiceBase):
+class ZFSPoolService(Service):
 
     class Config:
         namespace = 'zfs.pool'

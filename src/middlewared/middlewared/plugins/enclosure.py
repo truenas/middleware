@@ -324,19 +324,7 @@ class EnclosureService(CRUDService):
         disks = []
         for label in seen_devs:
             disk = label2disk.get(label)
-            if disk is None:
-                continue
-
-            if disk.startswith("multipath/"):
-                try:
-                    disks.append(self.middleware.call_sync(
-                        "disk.query",
-                        [["devname", "=", disk]],
-                        {"get": True, "extra": {"include_expired": True}, "order_by": ["expiretime"]},
-                    )["name"])
-                except IndexError:
-                    pass
-            else:
+            if disk is not None:
                 disks.append(disk)
 
         """

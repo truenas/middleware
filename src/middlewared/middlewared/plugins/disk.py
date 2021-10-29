@@ -1,27 +1,16 @@
 import asyncio
-from collections import defaultdict
 import errno
 import re
 import subprocess
-
 from sqlalchemy.exc import IntegrityError
-
-try:
-    from bsd import geom
-    from nvme import get_nsid
-except ImportError:
-    geom = None
-    get_nsid = None
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, run
+from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-RE_DA = re.compile('^da[0-9]+$')
-RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
@@ -35,8 +24,6 @@ class DiskModel(sa.Model):
     disk_number = sa.Column(sa.Integer(), default=1)
     disk_serial = sa.Column(sa.String(30))
     disk_size = sa.Column(sa.String(20))
-    disk_multipath_name = sa.Column(sa.String(30))
-    disk_multipath_member = sa.Column(sa.String(30))
     disk_description = sa.Column(sa.String(120))
     disk_transfermode = sa.Column(sa.String(120), default="Auto")
     disk_hddstandby = sa.Column(sa.String(120), default="Always On")
@@ -77,8 +64,6 @@ class DiskService(CRUDService):
         Int('number', required=True),
         Str('serial', required=True),
         Int('size', required=True),
-        Str('multipath_name', required=True),
-        Str('multipath_member', required=True),
         Str('description', required=True),
         Str('transfermode', required=True),
         Str(
@@ -136,10 +121,8 @@ class DiskService(CRUDService):
             disk['size'] = int(disk['size'])
         except ValueError:
             disk['size'] = None
-        if disk['multipath_name']:
-            disk['devname'] = f'multipath/{disk["multipath_name"]}'
-        else:
-            disk['devname'] = disk['name']
+
+        disk['devname'] = disk['name']
         self._expand_enclosure(disk)
         if context['passwords']:
             if not disk['passwd']:
@@ -207,8 +190,6 @@ class DiskService(CRUDService):
             ('rm', {'name': 'serial'}),
             ('rm', {'name': 'kmip_uid'}),
             ('rm', {'name': 'size'}),
-            ('rm', {'name': 'multipath_name'}),
-            ('rm', {'name': 'multipath_member'}),
             ('rm', {'name': 'transfermode'}),
             ('rm', {'name': 'expiretime'}),
             ('rm', {'name': 'model'}),
@@ -313,13 +294,6 @@ class DiskService(CRUDService):
         if changed:
             asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
-    @private
-    def get_name(self, disk):
-        if disk["multipath_name"]:
-            return f"multipath/{disk['multipath_name']}"
-        else:
-            return disk["name"]
-
     @accepts(Bool("join_partitions", default=False))
     @returns(List('unused_disks', items=[Ref('disk_entry')]))
     async def get_unused(self, join_partitions):
@@ -381,7 +355,7 @@ class DiskService(CRUDService):
         if _advconfig is None:
             _advconfig = await self.middleware.call('system.advanced.config')
 
-        devname = await self.middleware.call('disk.sed_dev_name', disk_name)
+        devname = f'/dev/{disk_name}'
         # We need two states to tell apart when disk was successfully unlocked
         locked = None
         unlocked = None
@@ -411,13 +385,12 @@ class DiskService(CRUDService):
                     locked = False
                     unlocked = True
                     # If we were able to unlock it, let's set mbrenable to off
-                    if osc.IS_LINUX:
-                        cp = await run('sedutil-cli', '--setMBREnable', 'off', password, devname, check=False)
-                        if cp.returncode:
-                            self.logger.error(
-                                'Failed to set MBREnable for %r to "off": %s', devname,
-                                cp.stderr.decode(), exc_info=True
-                            )
+                    cp = await run('sedutil-cli', '--setMBREnable', 'off', password, devname, check=False)
+                    if cp.returncode:
+                        self.logger.error(
+                            'Failed to set MBREnable for %r to "off": %s', devname,
+                            cp.stderr.decode(), exc_info=True
+                        )
 
             elif 'Locked = N' in output:
                 locked = False
@@ -426,15 +399,9 @@ class DiskService(CRUDService):
         if not unlocked and not locked:
             locked, unlocked = await self.middleware.call('disk.unlock_ata_security', devname, _advconfig, password)
 
-        if osc.IS_FREEBSD and unlocked:
-            try:
-                # Disk needs to be retasted after unlock
-                with open(f'/dev/{disk_name}', 'wb'):
-                    pass
-            except OSError:
-                pass
-        elif locked:
+        if locked:
             self.logger.error(f'Failed to unlock {disk_name}')
+
         rv['locked'] = locked
         return rv
 
@@ -454,8 +421,7 @@ class DiskService(CRUDService):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return
 
-        devname = await self.middleware.call('disk.sed_dev_name', disk_name)
-
+        devname = f'/dev/{disk_name}'
         cp = await run('sedutil-cli', '--isValidSED', devname, check=False)
         if b' SED ' not in cp.stdout:
             return 'NO_SED'
@@ -482,182 +448,6 @@ class DiskService(CRUDService):
             return 'SETUP_FAILED'
 
         return 'SUCCESS'
-
-    @private
-    def sed_dev_name(self, disk_name):
-        if disk_name.startswith("nvd"):
-            nvme = get_nsid(f"/dev/{disk_name}")
-            return f"/dev/{nvme}"
-
-        return f"/dev/{disk_name}"
-
-    @private
-    async def multipath_create(self, name, consumers, mode=None):
-        """
-        Create an Active/Passive GEOM_MULTIPATH provider
-        with name ``name`` using ``consumers`` as the consumers for it
-
-        Modes:
-            A - Active/Active
-            R - Active/Read
-            None - Active/Passive
-
-        Returns:
-            True in case the label succeeded and False otherwise
-        """
-        cmd = ["/sbin/gmultipath", "label", name] + consumers
-        if mode:
-            cmd.insert(2, f'-{mode}')
-        try:
-            await run(cmd, stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
-        except subprocess.CalledProcessError as e:
-            raise CallError(f"Error creating multipath: {e.stdout}")
-
-    async def __multipath_next(self):
-        """
-        Find out the next available name for a multipath named diskX
-        where X is a crescenting value starting from 1
-
-        Returns:
-            The string of the multipath name to be created
-        """
-        await self.middleware.run_in_thread(geom.scan)
-        numbers = sorted([
-            int(RE_MPATH_NAME.search(g.name).group(1))
-            for g in geom.class_by_name('MULTIPATH').geoms if RE_MPATH_NAME.match(g.name)
-        ])
-        if not numbers:
-            numbers = [0]
-        for number in range(1, numbers[-1] + 2):
-            if number not in numbers:
-                break
-        else:
-            raise ValueError('Could not find multipaths')
-        return f'disk{number}'
-
-    @private
-    @accepts()
-    async def multipath_sync(self):
-        """
-        Synchronize multipath disks
-
-        Every distinct GEOM_DISK that shares an ident (aka disk serial)
-        with conjunction of the lunid is considered a multipath and will be
-        handled by GEOM_MULTIPATH.
-
-        If the disk is not currently in use by some Volume or iSCSI Disk Extent
-        then a gmultipath is automatically created and will be available for use.
-        """
-
-        await self.middleware.run_in_thread(geom.scan)
-
-        mp_disks = []
-        for g in geom.class_by_name('MULTIPATH').geoms:
-            for c in g.consumers:
-                p_geom = c.provider.geom
-                # For now just DISK is allowed
-                if p_geom.clazz.name != 'DISK':
-                    self.logger.warn(
-                        "A consumer that is not a disk (%s) is part of a "
-                        "MULTIPATH, currently unsupported by middleware",
-                        p_geom.clazz.name
-                    )
-                    continue
-                mp_disks.append(p_geom.name)
-
-        reserved = await self.get_reserved()
-
-        devlist = {}
-        is_enterprise = await self.middleware.call('system.is_enterprise')
-
-        serials = defaultdict(list)
-        active_active = []
-        for g in geom.class_by_name('DISK').geoms:
-            if not RE_DA.match(g.name) or g.name in reserved or g.name in mp_disks:
-                continue
-            if is_enterprise:
-                descr = g.provider.config.get('descr') or ''
-                if (
-                    descr == 'STEC ZeusRAM' or
-                    descr.startswith('VIOLIN') or
-                    descr.startswith('3PAR')
-                ):
-                    active_active.append(g.name)
-            if devlist.get(g.name, {}).get('driver') == 'umass-sim':
-                continue
-            serial = ''
-            v = g.provider.config.get('ident')
-            if v:
-                # Exclude fake serial numbers e.g. `000000000000` reported by FreeBSD 12.2 USB stack
-                if not v.replace('0', ''):
-                    continue
-                serial = v
-            v = g.provider.config.get('lunid')
-            if v:
-                serial += v
-            if not serial:
-                continue
-            size = g.provider.mediasize
-            serials[(serial, size)].append(g.name)
-            serials[(serial, size)].sort(key=lambda x: int(x[2:]))
-
-        disks_pairs = [disks for disks in list(serials.values())]
-        disks_pairs.sort(key=lambda x: int(x[0][2:]))
-
-        # Mode is Active/Passive for TrueNAS HA
-        mode = None if not is_enterprise else 'R'
-        for disks in disks_pairs:
-            if not len(disks) > 1:
-                continue
-            name = await self.__multipath_next()
-            try:
-                await self.multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
-            except CallError as e:
-                self.logger.error("Error creating multipath: %s", e.errmsg)
-
-        # Scan again to take new multipaths into account
-        await self.middleware.run_in_thread(geom.scan)
-        mp_ids = []
-        for g in geom.class_by_name('MULTIPATH').geoms:
-            _disks = []
-            for c in g.consumers:
-                p_geom = c.provider.geom
-                # For now just DISK is allowed
-                if p_geom.clazz.name != 'DISK':
-                    continue
-                _disks.append(p_geom.name)
-
-            qs = await self.middleware.call('datastore.query', 'storage.disk', [
-                ['OR', [
-                    ['disk_name', 'in', _disks],
-                    ['disk_multipath_member', 'in', _disks],
-                ]],
-                ['disk_expiretime', '=', None],
-            ])
-            if qs:
-                diskobj = qs[0]
-                mp_ids.append(diskobj['disk_identifier'])
-                update = False  # Make sure to not update if nothing changed
-                if diskobj['disk_multipath_name'] != g.name:
-                    update = True
-                    diskobj['disk_multipath_name'] = g.name
-                if diskobj['disk_name'] in _disks:
-                    _disks.remove(diskobj['disk_name'])
-                if _disks and diskobj['disk_multipath_member'] != _disks[-1]:
-                    update = True
-                    diskobj['disk_multipath_member'] = _disks.pop()
-                if update:
-                    await self.middleware.call('datastore.update', 'storage.disk', diskobj['disk_identifier'], diskobj)
-
-        # Update all disks which were not identified as MULTIPATH, resetting attributes
-        disks = await self.middleware.call(
-            'datastore.query', 'storage.disk', [('disk_identifier', 'nin', mp_ids)]
-        )
-        for disk in disks:
-            if disk['disk_multipath_name'] or disk['disk_multipath_member']:
-                disk['disk_multipath_name'] = ''
-                disk['disk_multipath_member'] = ''
-                await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
     @private
     async def check_disks_availability(self, verrors, disks, schema):
