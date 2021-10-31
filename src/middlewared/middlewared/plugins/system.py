@@ -168,6 +168,20 @@ class SystemAdvancedService(ConfigService):
             for i in await self.middleware.call('certificate.query', [('cert_type_CSR', '=', False)])
         }
 
+    @accepts()
+    @returns(Dict(
+        additional_attrs=True,
+        title='Syslog Certificate Authority Choices',
+    ))
+    async def syslog_certificate_authority_choices(self):
+        """
+        Return choices of certificate authorities which can be used for `syslog_tls_certificate_authority`.
+        """
+        return {
+            i['id']: i['name']
+            for i in await self.middleware.call('certificateauthority.query', [['revoked', '=', False]])
+        }
+
     @private
     async def system_advanced_extend(self, data):
         data['consolemsg'] = (await self.middleware.call('system.general.config'))['ui_consolemsg']
