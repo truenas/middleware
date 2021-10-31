@@ -156,7 +156,6 @@ http {
         ssl_protocols ${' '.join(general_settings['ui_httpsprotocols'])};
         ssl_prefer_server_ciphers on;
         ssl_ciphers EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA${"" if disabled_ciphers else "+SHA256"}:EDH+aRSA:EECDH:!RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS${disabled_ciphers};
-        add_header Strict-Transport-Security max-age=${31536000 if general_settings['ui_httpsredirect'] else 0};
 
         ## If oscsp stapling is a must in cert extensions, we should make sure nginx respects that
         ## and handles clients accordingly.
@@ -175,8 +174,12 @@ http {
 % endif
 
         # Security Headers
-        add_header X-Content-Type-Options nosniff;
-        add_header X-XSS-Protection "1";
+        add_header Strict-Transport-Security "max-age=${63072000 if general_settings['ui_httpsredirect'] else 0}; includeSubDomains; preload" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
+        add_header Referrer-Policy "strict-origin" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
 
         location / {
             rewrite ^.* $scheme://$http_host/ui/ redirect;
@@ -216,6 +219,12 @@ http {
 % endif
             add_header Cache-Control "must-revalidate";
             add_header Etag "${system_version}";
+            add_header Strict-Transport-Security "max-age=${63072000 if general_settings['ui_httpsredirect'] else 0}; includeSubDomains; preload" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
+            add_header Referrer-Policy "strict-origin" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
         }
 
         location /websocket {
