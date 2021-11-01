@@ -11,63 +11,8 @@ SHARE_FUSE_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/ds_smb_share_02'
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-@pytest.mark.dependency(name="CTDB_IS_HEALTHY")
-def test_001_ctdb_is_healthy(ip):
-    url = f'http://{ip}/api/v2.0/ctdb/general/healthy'
-    res = make_request('get', url)
-    assert res.status_code == 200, res.text
-    assert res.json() is True, res.text
-
-
-@pytest.mark.parametrize('ip', CLUSTER_IPS)
-@pytest.mark.dependency(name="CTDB_HAS_PUBLIC_IPS")
-def test_002_ctdb_public_ip_check(ip, request):
-    depends(request, ['CTDB_IS_HEALTHY'])
-
-    payload = {'all_nodes': False}
-    url = f'http://{ip}/api/v2.0/ctdb/general/status/'
-    res = make_request('post', url, data=payload)
-    assert res.status_code == 200, res.text
-    this_node = res.json()[0]['pnn']
-
-    payload = {
-        'query-filters': [["id", "=", this_node]],
-    }
-    url = f'http://{ip}/api/v2.0/ctdb/public/ips'
-    res = make_request('get', url, data=payload)
-    assert res.status_code == 200, res.text
-
-    try:
-        data = set(res.json()[0]['configured_ips'].keys())
-    except (KeyError, IndexError):
-        data = set()
-
-    to_add = set(PUBLIC_IPS) - data
-
-    assert data or to_add, data
-    for entry in to_add:
-        payload = {
-            "pnn": this_node,
-            "ip": entry,
-            "netmask": CLUSTER_INFO['NETMASK'],
-            "interface": CLUSTER_INFO['INTERFACE'],
-        }
-        res = make_request('post', url, data=payload)
-        assert res.status_code == 200, res.text
-        try:
-            status = wait_on_job(res.json(), ip, 5)
-        except JobTimeOut:
-            assert False, JobTimeOut
-        else:
-            assert status['state'] == 'SUCCESS', status
-
-        assert status['result']
-
-
-@pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_003_validate_smb_bind_ips(ip, request):
-    depends(request, ['CTDB_HAS_PUBLIC_IPS'])
-
+@pytest.mark.dependency(name='VALID_SMB_BIND_IPS')
+def test_001_validate_smb_bind_ips(ip, request):
     url = f'http://{ip}/api/v2.0/smb/bindip_choices'
     res = make_request('get', url)
     assert res.status_code == 200, res.text
@@ -78,9 +23,9 @@ def test_003_validate_smb_bind_ips(ip, request):
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-@pytest.mark.dependency(name="DS_LDAP_NETWORK_CONFIGURED")
-def test_004_validate_network_configuration(ip, request):
-    depends(request, ['CTDB_HAS_PUBLIC_IPS'])
+@pytest.mark.dependency(name='DS_LDAP_NETWORK_CONFIGURED')
+def test_002_validate_network_configuration(ip, request):
+    depends(request, ['VALID_SMB_BIND_IPS'])
 
     url = f'http://{ip}/api/v2.0/network/configuration/'
     res = make_request('get', url)
@@ -92,7 +37,7 @@ def test_004_validate_network_configuration(ip, request):
 
 
 @pytest.mark.dependency(name="BOUND_LDAP")
-def test_005_bind_ldap(request):
+def test_003_bind_ldap(request):
     depends(request, ['DS_LDAP_NETWORK_CONFIGURED'])
 
     payload = {
@@ -130,7 +75,7 @@ def test_005_bind_ldap(request):
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name="LDAP_ACCOUNTS_CONFIGURED")
-def test_006_verify_ldap_accounts_present(ip, request):
+def test_004_verify_ldap_accounts_present(ip, request):
     depends(request, ['BOUND_LDAP'])
 
     passwd = ssh_test(ip, "getent passwd")
@@ -147,7 +92,7 @@ def test_006_verify_ldap_accounts_present(ip, request):
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_007_validate_cached_ldap_accounts(ip, request):
+def test_005_validate_cached_ldap_accounts(ip, request):
     depends(request, ['LDAP_ACCOUNTS_CONFIGURED'])
 
     payload = {
@@ -181,7 +126,7 @@ def test_007_validate_cached_ldap_accounts(ip, request):
 
 
 @pytest.mark.dependency(name="DS_LDAP_SMB_SHARE_CREATED")
-def test_010_create_clustered_smb_share(request):
+def test_006_create_clustered_smb_share(request):
     depends(request, ['BOUND_LDAP'])
     global ds_smb_share_id
     global ds_wrk
@@ -229,7 +174,7 @@ def test_010_create_clustered_smb_share(request):
 
 
 @pytest.mark.parametrize('ip', PUBLIC_IPS)
-def test_011_auth_known_failure_nosmb(ip, request):
+def test_007_auth_known_failure_nosmb(ip, request):
     """
     Samba schema is disable. SMB auth should fail
     with STATUS_LOGON_FAILURE.
@@ -252,7 +197,7 @@ def test_011_auth_known_failure_nosmb(ip, request):
 
 
 @pytest.mark.dependency(name="BOUND_LDAP_SMB")
-def test_012_bind_ldap(request):
+def test_008_bind_ldap(request):
     depends(request, ['DS_LDAP_SMB_SHARE_CREATED', 'BOUND_LDAP'])
 
     payload = {
@@ -272,7 +217,7 @@ def test_012_bind_ldap(request):
 
 @pytest.mark.dependency(name="DS_LDAP_SMB_SHARE_IS_WRITABLE")
 @pytest.mark.parametrize('ip', PUBLIC_IPS)
-def test_014_share_is_writable_via_public_ips(ip, request):
+def test_009_share_is_writable_via_public_ips(ip, request):
     """
     This test verifies that the SMB share is writable once
     we enable a samba schema.
@@ -291,7 +236,7 @@ def test_014_share_is_writable_via_public_ips(ip, request):
         tcon.close(fd, True)
 
 
-def test_015_xattrs_writable_via_smb(request):
+def test_010_xattrs_writable_via_smb(request):
     depends(request, ['DS_LDAP_SMB_SHARE_IS_WRITABLE'])
 
     with smb_connection(
@@ -352,7 +297,6 @@ def test_050_unbind_ldap(request):
         assert False, JobTimeOut
     else:
         assert status['state'] == 'SUCCESS', status
-
 
     for ip in CLUSTER_IPS:
         url = f'http://{ip}/api/v2.0/ldap/get_state'
