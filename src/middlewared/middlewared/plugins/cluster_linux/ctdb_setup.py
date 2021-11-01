@@ -34,17 +34,16 @@ class CtdbInitService(Service):
             self.logger.warning('%s is not mounted', str(shared_vol))
             return result
 
-        if not await self.middleware.call('ctdb.setup.general'):
+        if not await self.middleware.call('ctdb.setup.conf'):
             return result
 
         return await self.middleware.call('ctdb.setup.private_ip_file', result)
 
-    async def general(self):
+    def conf(self):
         """
         Write /etc/ctdb/ctdb.conf
         """
-
-        await self.middleware.call('etc.generate', 'ctdb')
+        self.middleware.call_sync('etc.generate', 'ctdb')
         return Path(CTDBConfig.ETC_GEN_FILE.value).exists()
 
     def private_ip_file(self, result):
@@ -86,7 +85,7 @@ class CtdbInitService(Service):
 
         return result
 
-    def public_ip_file(self, result):
+    def public_ip_file(self):
         this_node = self.middleware.call_sync('ctdb.general.pnn')
         result = {'logit': True, 'success': False}
 
