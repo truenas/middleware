@@ -1,7 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config import CLUSTER_INFO, BRICK_PATH, GLUSTER_PEERS_DNS
+from config import CLUSTER_INFO, BRICK_PATH, GLUSTER_PEERS_DNS, CLUSTER_IPS, PUBLIC_IPS
 from utils import make_request, wait_on_job
+from helpers import ctdb_healthy
 from exceptions import JobTimeOut
 
 GPD = GLUSTER_PEERS_DNS
@@ -134,6 +135,30 @@ def create_volume():
     assert len(ans.json()) > 0 and ans.json()[0]['id'] == gvol, ans.text
 
 
+def wait_on_ctdb():
+    assert ctdb_healthy(timeout=30), 'CTDB Not healthy after 30 seconds'
+
+
+def add_public_ips_to_ctdb():
+    for priv_ip, pub_ip in zip(CLUSTER_IPS, PUBLIC_IPS):
+        res = make_request('post', f'http://{priv_ip}/api/v2.0/ctdb/general/status', data={'all_nodes': False})
+        this_node = res.json()[0]['pnn']
+
+        payload = {
+            'pnn': this_node,
+            'ip': pub_ip,
+            'netmask': CLUSTER_INFO['NETMASK'],
+            'interface': CLUSTER_INFO['INTERFACE']
+        }
+        res = make_request('post', f'http://{priv_ip}/api/v2.0/ctdb/public/ips', data=payload)
+        try:
+            status = wait_on_job(res.json(), priv_ip, 5)
+        except JobTimeOut:
+            assert False, JobTimeOut
+        else:
+            assert status['state'] == 'SUCCESS', status
+
+
 def init():
     print('Enabling and starting "glusterd" service on all nodes.')
     enable_and_start_service_on_all_nodes()
@@ -143,3 +168,7 @@ def init():
     add_jwt_secret()
     print('Creating gluster volume')
     create_volume()
+    print('Waiting on CTDB to become healthy')
+    wait_on_ctdb()
+    print('Adding CTDB public IPs to cluster')
+    add_public_ips_to_ctdb()

@@ -6,25 +6,18 @@ from pytest_dependency import depends
 from helpers import get_bool
 
 
-bool_smb_params = {
+BOOL_SMB_PARAMS = {
     'ro': {'smbconf': 'read only', 'default': False},
     'browsable': {'smbconf': 'browseable', 'default': True},
     'abe': {'smbconf': 'access based share enum', 'default': False},
 }
 
 SHARE_FUSE_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/smb_share_01'
-
-@pytest.mark.parametrize('ip', CLUSTER_IPS)
-@pytest.mark.dependency(name="CTDB_IS_HEALTHY")
-def test_001_ctdb_is_healthy(ip):
-    url = f'http://{ip}/api/v2.0/ctdb/general/healthy'
-    res = make_request('get', url)
-    assert res.status_code == 200, res.text
-    assert res.json() is True, res.text
+SMB_SHARE_ID = None
 
 
 @pytest.mark.dependency(name="CLUSTER_INITIAL_CONFIG")
-def test_002_check_initial_smb_config(request):
+def test_001_check_initial_smb_config(request):
     depends(request, ['CTDB_IS_HEALTHY'])
 
     payload = {
@@ -37,15 +30,15 @@ def test_002_check_initial_smb_config(request):
     data = res['result']['parameters']
     assert not data['server multi channel support']['parsed']
     assert not data['ntlm auth']['parsed']
-    assert data['idmap config * : range']['raw'] ==  '90000001 - 100000000'
+    assert data['idmap config * : range']['raw'] == '90000001 - 100000000'
     assert data['server min protocol']['raw'] == 'SMB2_10'
     assert data['guest account']['raw'] == 'nobody'
 
 
 @pytest.mark.dependency(name="CLUSTER_SMB_SHARE_CREATED")
-def test_003_create_clustered_smb_share(request):
-    depends(request, ['CTDB_IS_HEALTHY', 'CLUSTER_INITIAL_CONFIG'])
-    global smb_share_id
+def test_002_create_clustered_smb_share(request):
+    depends(request, ['CLUSTER_INITIAL_CONFIG'])
+    global SMB_SHARE_ID
 
     url = f'http://{CLUSTER_IPS[0]}/api/v2.0/filesystem/mkdir/'
     res = make_request('post', url, data=SHARE_FUSE_PATH)
@@ -63,14 +56,14 @@ def test_003_create_clustered_smb_share(request):
 
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
-    smb_share_id = res.json()['id']
+    SMB_SHARE_ID = res.json()['id']
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_004_verify_smb_share_exists(ip, request):
+def test_003_verify_smb_share_exists(ip, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
-    url = f'http://{ip}/api/v2.0/sharing/smb?id={smb_share_id}'
+    url = f'http://{ip}/api/v2.0/sharing/smb?id={SMB_SHARE_ID}'
     res = make_request('get', url)
     assert res.status_code == 200, res.text
     share = res.json()[0]
@@ -80,7 +73,7 @@ def test_004_verify_smb_share_exists(ip, request):
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_005_start_smb_service(ip, request):
+def test_004_start_smb_service(ip, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
     url = f'http://{ip}/api/v2.0/service/start'
@@ -92,7 +85,7 @@ def test_005_start_smb_service(ip, request):
 
 @pytest.mark.dependency(name="SMB_SERVICE_STARTED")
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_006_check_smb_started(ip, request):
+def test_005_check_smb_started(ip, request):
     depends(request, ['CTDB_IS_HEALTHY'])
 
     url = f'http://{ip}/api/v2.0/service?service=cifs'
@@ -101,19 +94,19 @@ def test_006_check_smb_started(ip, request):
     assert res.json()[0]["state"] == "RUNNING", res.text
 
 
-def test_007_enable_recycle(request):
+def test_006_enable_recycle(request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
     payload = {
         "recyclebin": True,
     }
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_008_check_recycle_set(ip, request):
+def test_007_check_recycle_set(ip, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
     payload = {
@@ -133,17 +126,17 @@ def test_008_check_recycle_set(ip, request):
     assert data['recycle:repository']['raw'] == '.recycle/%U', data
 
 
-def test_009_disable_recycle(request):
+def test_008_disable_recycle(request):
     payload = {
         "recyclebin": False,
     }
-    url = f'http://{CLUSTER_IPS[1]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[1]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_010_check_recycle_unset(ip, request):
+def test_009_check_recycle_unset(ip, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
     payload = {
@@ -164,7 +157,7 @@ def test_010_check_recycle_unset(ip, request):
     assert data.get('recycle:repository') is None
 
 
-def test_011_enable_smb_aapl(request):
+def test_010_enable_smb_aapl(request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
     payload = {
@@ -176,7 +169,7 @@ def test_011_enable_smb_aapl(request):
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_012_check_aapl_extension_enabled(ip, request):
+def test_011_check_aapl_extension_enabled(ip, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
     payload = {
@@ -199,7 +192,7 @@ def test_014_enable_timemachine(request):
     payload = {
         "timemachine": True,
     }
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -238,7 +231,7 @@ def test_017_disable_timemachine(request):
     payload = {
         "timemachine": False,
     }
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -276,7 +269,7 @@ def test_020_disable_streams(request):
     payload = {
         "streams": False,
     }
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -301,7 +294,7 @@ def test_022_enable_streams(request):
     payload = {
         "streams": True,
     }
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -323,7 +316,7 @@ def test_023_check_streams_set(ip, request):
 def test_024_share_comment(request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
     payload = {"comment": "test comment"}
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -338,7 +331,7 @@ def test_024_share_comment(request):
         assert res['result'] == 'test comment'
 
     payload = {"comment": ""}
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -353,14 +346,14 @@ def test_024_share_comment(request):
         assert res['result'] == ''
 
 
-@pytest.mark.parametrize('to_check', bool_smb_params.keys())
+@pytest.mark.parametrize('to_check', BOOL_SMB_PARAMS.keys())
 def test_025_share_param_check_bool(to_check, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
-    default_val = bool_smb_params[to_check]['default']
-    smbconf_param =  bool_smb_params[to_check]['smbconf']
+    default_val = BOOL_SMB_PARAMS[to_check]['default']
+    smbconf_param = BOOL_SMB_PARAMS[to_check]['smbconf']
     payload = {to_check: not default_val}
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
 
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
@@ -378,7 +371,7 @@ def test_025_share_param_check_bool(to_check, request):
         assert val is not default_val, f'IP: {ip}, param: {smbconf_param}, value: {res["result"]}'
 
     payload = {to_check: default_val}
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -401,7 +394,7 @@ def test_026_share_param_hosts(to_check, request):
 
     rando_ips = ["192.168.0.240", "192.168.0.69"]
     payload = {to_check: rando_ips}
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -417,7 +410,7 @@ def test_026_share_param_hosts(to_check, request):
         assert res['result'] == rando_ips
 
     payload = {to_check: []}
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 
@@ -438,7 +431,7 @@ def test_027_knownfail_invalid_cluster_params(to_check, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
     payload = {to_check: True}
-    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[0]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 422, res.text
 
@@ -446,7 +439,7 @@ def test_027_knownfail_invalid_cluster_params(to_check, request):
 def test_030_delete_smb_share(request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
-    url = f'http://{CLUSTER_IPS[1]}/api/v2.0/sharing/smb/id/{smb_share_id}'
+    url = f'http://{CLUSTER_IPS[1]}/api/v2.0/sharing/smb/id/{SMB_SHARE_ID}'
     res = make_request('delete', url)
     assert res.status_code == 200, res.text
 
@@ -459,7 +452,7 @@ def test_030_delete_smb_share(request):
 def test_031_verify_share_removed(ip, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
 
-    url = f'http://{ip}/api/v2.0/sharing/smb?id={smb_share_id}'
+    url = f'http://{ip}/api/v2.0/sharing/smb?id={SMB_SHARE_ID}'
     res = make_request('get', url)
     assert res.status_code == 200, res.text
     assert res.json() == [], res.text

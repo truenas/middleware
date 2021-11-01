@@ -10,76 +10,21 @@ SHARE_FUSE_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/ds_smb_share_01'
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-@pytest.mark.dependency(name="CTDB_IS_HEALTHY")
-def test_001_ctdb_is_healthy(ip):
-    url = f'http://{ip}/api/v2.0/ctdb/general/healthy'
-    res = make_request('get', url)
-    assert res.status_code == 200, res.text
-    assert res.json() is True, res.text
-
-
-@pytest.mark.parametrize('ip', CLUSTER_IPS)
-@pytest.mark.dependency(name="CTDB_HAS_PUBLIC_IPS")
-def test_002_ctdb_public_ip_check(ip, request):
-    depends(request, ['CTDB_IS_HEALTHY'])
-
-    payload = {'all_nodes': False}
-    url = f'http://{ip}/api/v2.0/ctdb/general/status/'
-    res = make_request('post', url, data=payload)
-    assert res.status_code == 200, res.text
-    this_node = res.json()[0]['pnn']
-
-    payload = {
-        'query-filters': [["id", "=", this_node]],
-    }
-    url = f'http://{ip}/api/v2.0/ctdb/public/ips'
-    res = make_request('get', url, data=payload)
-    assert res.status_code == 200, res.text
-
-    try:
-        data = set(res.json()[0]['configured_ips'].keys())
-    except (KeyError, IndexError):
-        data = set()
-
-    to_add = set(PUBLIC_IPS) - data
-
-    assert data or to_add, data
-    for entry in to_add:
-        payload = {
-            "pnn": this_node,
-            "ip": entry,
-            "netmask": CLUSTER_INFO['NETMASK'],
-            "interface": CLUSTER_INFO['INTERFACE'],
-        }
-        res = make_request('post', url, data=payload)
-        assert res.status_code == 200, res.text
-        try:
-            status = wait_on_job(res.json(), ip, 5)
-        except JobTimeOut:
-            assert False, JobTimeOut
-        else:
-            assert status['state'] == 'SUCCESS', status
-
-        assert status['result']
-
-
-@pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_003_validate_smb_bind_ips(ip, request):
-    depends(request, ['CTDB_HAS_PUBLIC_IPS'])
-
+@pytest.mark.dependency(name='VALID_SMB_BIND_IPS')
+def test_001_validate_smb_bind_ips(ip, request):
     url = f'http://{ip}/api/v2.0/smb/bindip_choices'
     res = make_request('get', url)
     assert res.status_code == 200, res.text
 
     smb_ip_set = set(res.json().values())
     cluster_ip_set = set(PUBLIC_IPS)
-    assert smb_ip_set == cluster_ip_set, smb_ips
+    assert smb_ip_set == cluster_ip_set, smb_ip_set
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name="DS_NETWORK_CONFIGURED")
-def test_004_validate_network_configuration(ip, request):
-    depends(request, ['CTDB_HAS_PUBLIC_IPS'])
+def test_002_validate_network_configuration(ip, request):
+    depends(request, ['VALID_SMB_BIND_IPS'])
 
     url = f'http://{ip}/api/v2.0/network/configuration/'
     res = make_request('get', url)
@@ -99,7 +44,7 @@ def test_004_validate_network_configuration(ip, request):
 
 
 @pytest.mark.dependency(name="JOINED_AD")
-def test_005_join_activedirectory(request):
+def test_003_join_activedirectory(request):
     depends(request, ['DS_NETWORK_CONFIGURED'])
 
     payload = {
@@ -135,7 +80,7 @@ def test_005_join_activedirectory(request):
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name="DS_ACCOUNTS_CONFIGURED")
-def test_006_verify_ad_accounts_present(ip, request):
+def test_004_verify_ad_accounts_present(ip, request):
     depends(request, ['JOINED_AD'])
 
     payload = {"username": f'administrator@{CLUSTER_ADS["DOMAIN"]}'}
@@ -150,7 +95,7 @@ def test_006_verify_ad_accounts_present(ip, request):
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_007_validate_cached_ad_accounts(ip, request):
+def test_005_validate_cached_ad_accounts(ip, request):
     depends(request, ['DS_ACCOUNTS_CONFIGURED'])
 
     payload = {
@@ -184,7 +129,7 @@ def test_007_validate_cached_ad_accounts(ip, request):
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_008_validate_kerberos_settings(ip, request):
+def test_006_validate_kerberos_settings(ip, request):
     depends(request, ['JOINED_AD'])
 
     payload = {
@@ -221,7 +166,7 @@ def test_008_validate_kerberos_settings(ip, request):
     assert len(res['result']) != 0, res
 
 
-def test_009_validate_dns_records_added(request):
+def test_007_validate_dns_records_added(request):
     depends(request, ['JOINED_AD'])
 
     payload = {
@@ -236,7 +181,7 @@ def test_009_validate_dns_records_added(request):
 
 
 @pytest.mark.dependency(name="DS_CLUSTER_SMB_SHARE_CREATED")
-def test_010_create_clustered_smb_share(request):
+def test_008_create_clustered_smb_share(request):
     depends(request, ['JOINED_AD'])
     global ds_smb_share_id
     global ds_wrk
@@ -285,7 +230,7 @@ def test_010_create_clustered_smb_share(request):
 
 @pytest.mark.dependency(name="DS_SMB_SHARE_IS_WRITABLE")
 @pytest.mark.parametrize('ip', PUBLIC_IPS)
-def test_011_share_is_writable_via_public_ips(ip, request):
+def test_009_share_is_writable_via_public_ips(ip, request):
     """
     This test creates creates an empty file, sets "delete on close" flag, then
     closes it. NTStatusError should be raised containing failure details
@@ -307,7 +252,7 @@ def test_011_share_is_writable_via_public_ips(ip, request):
         tcon.close(fd, True)
 
 
-def test_012_xattrs_writable_via_smb(request):
+def test_010_xattrs_writable_via_smb(request):
     depends(request, ['DS_SMB_SHARE_IS_WRITABLE'])
 
     with smb_connection(
