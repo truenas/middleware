@@ -55,7 +55,7 @@ def test_003_create_test_files(request):
     cmd += f'mkdir {LOCAL_PATH}/dir01;'
     cmd += f'touch {LOCAL_PATH}/dir01/file02'
     res = ssh_test(CLUSTER_IPS[0], cmd)
-    assert res['result'], res['output']
+    assert res['result'], res['stderr']
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
@@ -419,4 +419,4 @@ def test_050_remove_test_files(request):
 
     cmd = f'rm -rf {LOCAL_PATH}'
     res = ssh_test(CLUSTER_IPS[0], cmd)
-    assert res['result'], res['output']
+    assert res['result'], res['stderr']
