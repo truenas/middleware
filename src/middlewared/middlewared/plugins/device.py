@@ -24,19 +24,15 @@ class DeviceService(Service):
     @private
     async def get_serials(self):
         ports = []
-        for devices in DevInfo().resource_managers['I/O ports'].values():
-            for dev in devices:
-                if not dev.name.startswith('uart'):
-                    continue
-                else:
-                    ports.append({
-                        'name': dev.name or None,
-                        'description': dev.desc or None,
-                        'drivername': dev.drivername or 'uart',
-                        'location': dev.location or None,
-                        'start': hex(dev.start) or None,
-                        'size': dev.size or None,
-                    })
+        for dev in [i for i in DevInfo().resource_managers['I/O ports'].values() if not i.name.startswith('uart')]:
+            ports.append({
+                'name': dev.name or None,
+                'description': dev.desc or None,
+                'drivername': dev.drivername or 'uart',
+                'location': dev.location or None,
+                'start': hex(dev.start) or None,
+                'size': dev.size or None,
+            })
 
         return ports
 
