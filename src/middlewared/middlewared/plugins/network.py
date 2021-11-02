@@ -1273,26 +1273,15 @@ class InterfaceService(CRUDService):
             if not lag_ports:
                 verrors.add(f'{schema_name}.lag_ports', 'This field cannot be empty.')
             for i, member in enumerate(lag_ports):
+                _schema = f'{schema_name}.lag_ports.{i}'
                 if member not in ifaces:
-                    verrors.add(f'{schema_name}.lag_ports.{i}', 'Not a valid interface.')
-                    continue
-                member_iface = ifaces[member]
-                if member_iface['state']['cloned']:
-                    verrors.add(
-                        f'{schema_name}.lag_ports.{i}',
-                        'Only physical interfaces are allowed to be a member of Link Aggregation.',
-                    )
+                    verrors.add(_schema, f'"{member}" is not a valid interface.')
                 elif member in lag_used:
-                    verrors.add(
-                        f'{schema_name}.lag_ports.{i}',
-                        f'Interface {member} is currently in use by {lag_used[member]}.',
-                    )
+                    verrors.add(_schema, f'Interface {member} is currently in use by {lag_used[member]}.')
+                elif member in bridge_used:
+                    verrors.add(_schema, f'Interface {member} is currently in use by {bridge_used[member]}.')
                 elif member in vlan_used:
-                    verrors.add(
-                        f'{schema_name}.lag_ports.{i}',
-                        f'Interface {member} is currently in use by {vlan_used[member]}.',
-                    )
-
+                    verrors.add(_schema, f'Interface {member} is currently in use by {vlan_used[member]}.')
         elif itype == 'VLAN':
             if 'name' in data:
                 try:
