@@ -366,9 +366,8 @@ class FilesystemService(Service):
             mountpoint = mountpoint.parent.absolute()
 
         # strip the `/mnt/` or `/cluster/` prefix from the mountpoint
-        me = mountpoint.parents[len(mountpoint.parents) - 2].as_posix() + '/'
-        with_me = ''
-        device = path.replace(me, with_me).strip('/')
+        device = mountpoint.as_posix().removeprefix('/mnt/')
+        device = device.removeprefix('/cluster/')
 
         # we only look for /mnt/ or /cluster/ paths and, currently,
         # those 2 paths are limited to zfs and/or fuse.glusterfs
