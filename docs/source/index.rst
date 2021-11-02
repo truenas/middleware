@@ -5,6 +5,10 @@ Welcome to TrueNAS developer documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   os/index.rst
+   database/index.rst
+   middleware/index.rst
+   services/index.rst
    testing/integration-tests/index.rst
 
 

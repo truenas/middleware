@@ -214,9 +214,13 @@ class JobsDeque(object):
             del self.__dict[job_id]
 
 
-class Job(object):
+class Job:
     """
-    Represents a long running call, methods marked with @job decorator
+    Represents a long running call, methods marked with @job decorator.
+
+    :ivar pipes: :class:`middlewared.pipe.Pipes` object containing job's opened pipes.
+
+    :ivar logs_fd: Unbuffered binary file descriptor for writing logs (if the job was defined with `@job(logs=True)`
     """
 
     def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb):
@@ -265,6 +269,11 @@ class Job(object):
                 logger.error("Error setting job description", exc_info=True)
 
     def check_pipe(self, pipe):
+        """
+        Check if pipe named `pipe` was opened by caller. Will raise a `ValueError` if it was not.
+
+        :param pipe: Pipe name.
+        """
         if getattr(self.pipes, pipe) is None:
             raise ValueError("Pipe %r is not open" % pipe)
 
@@ -303,10 +312,28 @@ class Job(object):
             self.time_finished = datetime.utcnow()
 
     def set_description(self, description):
+        """
+        Sets a human-readable job description for the task manager UI. Use this if you need to build a job description
+        with more advanced logic that a simple lambda function given to `@job` decorator can provide.
+
+        :param description: Human-readable description.
+        """
         self.description = description
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
-    def set_progress(self, percent, description=None, extra=None):
+    def set_progress(self, percent=None, description=None, extra=None):
+        """
+        Sets job completion progress. All arguments are optional and only passed arguments will be changed in the
+        whole job progress state.
+
+        Don't change this too often as every time an event is sent. Use :class:`middlewared.job.JobProgressBuffer` to
+        throttle progress reporting if you are receiving it from an external source (e.g. network response reading
+        progress).
+
+        :param percent: Job progress [0-100]
+        :param description: Human-readable description of what the job is currently doing.
+        :param extra: Extra data (any type) that can be used by specific job progress bar in the UI.
+        """
         if percent is not None:
             assert isinstance(percent, (int, float))
             self.progress['percent'] = percent
@@ -503,6 +530,8 @@ class Job(object):
         """
         Wrap a job in another job, proxying progress and result/error.
         This is useful when we want to run a job inside a job.
+
+        :param subjob: The job to wrap.
         """
         while not subjob.time_finished:
             try:
