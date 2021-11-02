@@ -1213,6 +1213,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 self.__init_procpool()
 
     def pipe(self, buffered=False):
+        """
+        :param buffered: Please see :class:`middlewared.pipe.Pipe` documentation for information on unbuffered and
+            buffered pipes.
+        """
         return Pipe(self, buffered)
 
     def _call_prepare(

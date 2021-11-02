@@ -40,7 +40,10 @@ release = '22.02'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.viewcode',
+    'sphinx-prompt',
+    'sphinx_substitution_extensions',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -69,6 +72,10 @@ exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
+
+rst_prolog = f'.. |version| replace:: {release}\n'
+
+default_role = 'code'
 
 
 # -- Options for HTML output -------------------------------------------------
