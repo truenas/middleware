@@ -133,7 +133,7 @@ def test_006_validate_kerberos_settings(ip, request):
     depends(request, ['JOINED_AD'])
 
     payload = {
-        'query-filters': [["realm", "=", CLUSTER_ADS['DOMAIN']]],
+        'query-filters': [["realm", "=", CLUSTER_ADS['DOMAIN'].upper()]],
         'query-options': {'get': True},
     }
     url = f'http://{ip}/api/v2.0/kerberos/realm'
