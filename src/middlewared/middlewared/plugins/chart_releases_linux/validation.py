@@ -6,7 +6,7 @@ from middlewared.utils import filter_list
 from middlewared.validators import validate_attributes
 
 from .schema import get_schema, get_list_item_from_value, update_conditional_defaults
-from .utils import RESERVED_NAMES
+from .utils import CONTEXT_KEY_NAME, RESERVED_NAMES
 
 
 validation_mapping = {
@@ -52,6 +52,12 @@ class ChartReleaseService(Service):
     async def validate_values(self, item_version_details, new_values, update, release_data=None):
         for k in RESERVED_NAMES:
             new_values.pop(k[0], None)
+
+        # global key is special as in that it is shared with dependencies/subcharts which means that
+        # it is entirely possible that it is already being specified by chart dev to specify some global
+        # values for the chart(s) and in this case we just want to remove what global chart context we added
+        if isinstance(new_values.get('global'), dict):
+            new_values['global'].pop(CONTEXT_KEY_NAME, None)
 
         verrors, new_values, dict_obj, schema_name = (
             await self.construct_schema_for_item_version(
