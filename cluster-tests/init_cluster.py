@@ -123,9 +123,10 @@ def setup_network(ip):
     result = {'ERROR': ''}
 
     # setup router/dns/defgw first
-    print(f'Setting up default gateway on {ip}')
+    print(f'Setting up default gateway and dns on {ip}')
     url = f'http://{ip}/api/v2.0/network/configuration'
-    ans = make_request('put', url, data={'ipv4gateway': CLUSTER_INFO['DEFGW']})
+    payload = {'ipv4gateway': CLUSTER_INFO['DEFGW'], 'nameserver1': CLUSTER_INFO['DNS1']}
+    ans = make_request('put', url, data=payload)
     if ans.status_code != 200:
         result['ERROR'] = f'Failed to configure gateway on {ip}:{ans.text}'
         return result

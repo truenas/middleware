@@ -127,6 +127,7 @@ def test_007_check_recycle_set(ip, request):
 
 
 def test_008_disable_recycle(request):
+    depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
     payload = {
         "recyclebin": False,
     }
