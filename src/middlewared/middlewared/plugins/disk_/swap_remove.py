@@ -1,7 +1,7 @@
-import asyncio
-import os
+from asyncio import ensure_future
+from os.path import realpath
+from os import unlink
 
-from middlewared.utils.osc import IS_LINUX
 from middlewared.schema import Bool, Dict, List, Str
 from middlewared.service import accepts, lock, private, Service
 from middlewared.utils import run
@@ -65,13 +65,13 @@ class DiskService(Service):
                 await run('swapoff', devname)
             if p['encrypted_provider']:
                 await self.middleware.call('disk.remove_encryption', p['encrypted_provider'])
-            if not IS_LINUX and os.path.realpath('/dev/dumpdev') == p['path']:
+            if realpath('/dev/dumpdev') == p['path']:
                 configure_swap = True
                 try:
-                    os.unlink('/dev/dumpdev')
+                    unlink('/dev/dumpdev')
                 except OSError:
                     pass
 
         # Let consumer explicitly deny swap configuration if desired
         if configure_swap and options.get('configure_swap', True):
-            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+            ensure_future(self.middleware.call('disk.swaps_configure'))
