@@ -2,7 +2,6 @@ import os
 import tempfile
 
 from middlewared.service import private, Service
-from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -16,23 +15,19 @@ class PoolService(Service):
         """
         # Make sure all SED disks are unlocked
         await self.middleware.call('disk.sed_unlock_all')
+
         disk_encryption_options = disk_encryption_options or {}
-
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
-
         enc_disks = []
         formatted = 0
+        zfs_part_type = await self.middleware.call('disk.get_zfs_part_type')
 
         async def format_disk(arg):
-            nonlocal enc_disks, formatted
+            nonlocal enc_disks, formatted, zfs_part_type
             disk, config = arg
-            await self.middleware.call(
-                'disk.format', disk, swapgb if config['create_swap'] else 0, False,
-            )
-            devname = await self.middleware.call(
-                'disk.gptid_from_part_type', disk, await self.middleware.call('disk.get_zfs_part_type')
-            )
-            if osc.IS_FREEBSD and disk_encryption_options.get('enc_keypath'):
+            await self.middleware.call('disk.format', disk, swapgb if config['create_swap'] else 0, False)
+            devname = await self.middleware.call('disk.gptid_from_part_type', disk, zfs_part_type)
+            if disk_encryption_options.get('enc_keypath'):
                 enc_disks.append({
                     'disk': disk,
                     'devname': devname,
@@ -48,7 +43,7 @@ class PoolService(Service):
         job.set_progress(15, f'Formatting disks (0/{len(disks)})')
 
         pass_file = None
-        if osc.IS_FREEBSD and disk_encryption_options.get('passphrase'):
+        if disk_encryption_options.get('passphrase'):
             pass_file = await self.middleware.call('pool.create_temp_pass_file', disk_encryption_options['passphrase'])
             disk_encryption_options['passphrase_path'] = pass_file
 
