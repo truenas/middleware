@@ -32,7 +32,7 @@ class GeomCacheThread(Thread):
     }
 
     def __init__(self, *args, **kwargs):
-        super(DiskCacheThread, self).__init__(*args, **kwargs)
+        super(GeomCacheThread, self).__init__(*args, **kwargs)
         self._invalidate = Event()
         self._stop = Event()
         self._lock = Lock()
@@ -47,6 +47,8 @@ class GeomCacheThread(Thread):
 
     def invalidate(self):
         self._invalidate.set()
+        while self._invalidate.is_set():
+            sleep(0.1)
 
     def stop(self):
         self._stop.set()
@@ -64,7 +66,7 @@ class GeomCacheThread(Thread):
         # which means we don't need to invalidate the entirety
         # of the cache just need to remove the disk from
         # `self.XML` and `self.DISKS`
-        with self.lock:
+        with self._lock:
             self.DISKS.pop(disk, None)
             if self.XML is not None:
                 ele = self.XML.find(f'.//class[name="DISK"]/geom[name="{disk}"]')
@@ -81,6 +83,7 @@ class GeomCacheThread(Thread):
                 # this is why we treat an addition of a drive the same as
                 # invalidating the cache.
                 self.fill(invalidate=True)
+                self._invalidate.clear()
             elif self._stop.is_set():
                 # middlewared or system is going down/rebooting etc
                 return
@@ -91,10 +94,10 @@ class GeomCacheThread(Thread):
                 sleep(0.1)
 
     def fill(self, invalidate=False):
-        with self.lock:
+        with self._lock:
             if invalidate or self.XML is None or not self.DISKS:
                 self.XML = etree.fromstring(sfilter('kern.geom.confxml')[0].value)
-                for i in self.XML.findall('geom'):
+                for i in self.XML.findall('.//class[name="DISK"]geom'):
                     name = i.find('provider/name').text
                     if name.startswith('cd'):
                         # ignore cd devices

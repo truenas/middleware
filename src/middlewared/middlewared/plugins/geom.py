@@ -12,23 +12,16 @@ class Geom(Service):
     class Config:
         private = True
 
-    def get_disks(self, from_cache=True):
-        if not from_cache:
-            self.invalidate_cache()
+    def get_disks(self):
         return GCT.disks
 
-    def get_xml(self, from_cache=True):
-        if not from_cache:
-            self.invalidate_cache()
+    def get_xml(self):
         return GCT.xml
 
-    def get_class_xml(self, class_name, from_cache=True):
-        if not from_cache:
-            self.invalidate_cache()
-
+    def get_class_xml(self, class_name):
         class_name = class_name.upper()
-        if class_name in ('PART', 'MULTIPATH', 'DISK', 'LABEL', 'DEV', 'RAID'):
-            return GCT.xml.find(f'.//class[name="{class_name}"]') if GCT.xml else None
+        if class_name in ('PART', 'MULTIPATH', 'DISK', 'LABEL', 'DEV', 'RAID') and GCT.xml:
+            return GCT.xml.find(f'.//class[name="{class_name}"]')
 
     def invalidate_cache(self):
         GCT.invalidate()

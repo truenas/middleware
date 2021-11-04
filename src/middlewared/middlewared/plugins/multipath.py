@@ -50,7 +50,7 @@ class MultipathService(CRUDService):
             ]
         """
         result = []
-        xml = await self.middleware.call('geom.get_xml')
+        xml = self.middleware.call_sync('geom.get_xml')
         if not xml:
             return result
 

@@ -1,6 +1,6 @@
 from bsd.devinfo import DevInfo
-from middlewared.schema import private, accepts, Str
-from middlewared.service import Service
+from middlewared.schema import Str
+from middlewared.service import Service, accepts, private
 from middlewared.common.camcontrol import camcontrol_list
 
 
@@ -14,7 +14,7 @@ class DeviceService(Service):
         return await self.middleware.call(f'device.get_{_type.lower()}s')
 
     @private
-    async def get_disks(self, from_cache):
+    async def get_disks(self):
         return await self.middleware.call('geom.get_disks')
 
     @private

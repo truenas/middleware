@@ -415,16 +415,16 @@ class PoolService(CRUDService):
         if disks:
             disks = disks[0]
 
-        for vdev_type in x['groups']:
-            for idx, entry in enumerate(x['groups'][vdev_type]):
-                type_val = x['groups'][vdev_type][idx].get('type')
+        for vdev_type in x:
+            for idx, entry in enumerate(x[vdev_type]):
+                type_val = x[vdev_type][idx].get('type')
                 if type_val and isinstance(type_val, str):
                     # uppercase the `type` key
-                    x['groups'][vdev_type][idx]['type'] = type_val.upper()
+                    x[vdev_type][idx]['type'] = type_val.upper()
 
                 # map label to /dev/* devices (i.e. da1p1/da1, etc)
-                if options.get('device_disk', True):
-                    path_val = x['groups'][vdev_type][idx].get('path')
+                if options and options.get('device_disk', True):
+                    path_val = x[vdev_type][idx].get('path')
                     if path_val is not None:
                         if path_val.startswith('/dev/'):
                             if path_val.endswith(('.nop', '.eli')):
@@ -432,18 +432,18 @@ class PoolService(CRUDService):
                                 path_val = path_val[:-4]
 
                             # add `device` and `disk` keys
-                            x['groups'][vdev_type][idx]['device'] = info['label_to_dev'].get(path_val)
-                            x['groups'][vdev_type][idx]['disk'] = info['dev_to_disk'].get(path_val)
+                            x[vdev_type][idx]['device'] = info['label_to_dev'].get(path_val)
+                            x[vdev_type][idx]['disk'] = info['dev_to_disk'].get(path_val)
 
                 # identify if the disk is UNAVAIL to the zpool
-                if options.get('unavail_disk', True):
-                    guid_val = x['groups'][vdev_type][idx].get('guid')
+                if options and options.get('unavail_disk', True):
+                    guid_val = x[vdev_type][idx].get('guid')
                     if guid_val is not None:
                         unavail_disk = None
-                        if x['groups'][vdev_type][idx].get('status') == 'UNAVAIL':
+                        if x[vdev_type][idx].get('status') == 'UNAVAIL':
                             unavail_disk = next(filter(lambda j: j['zfs_guid'], disks), None)
                         # add `unavail_disk` key
-                        x['groups'][vdev_type][idx]['unavail_disk'] = unavail_disk
+                        x[vdev_type][idx]['unavail_disk'] = unavail_disk
         return x
 
     @private

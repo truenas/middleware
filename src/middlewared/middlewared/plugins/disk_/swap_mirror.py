@@ -1,19 +1,18 @@
 from os.path import exists
 
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, private, filterable
 from middlewared.utils import filter_list, run
 
 
 class DiskService(Service):
 
-    class Config:
-        private = True
-
+    @private
     async def create_swap_mirror(self, name, options):
         cp = await run('gmirror', 'create', name, *options['paths'], check=False, encoding='utf8')
         if cp.returncode:
             raise CallError(f'Failed to create gmirror {name}: {cp.stderr}')
 
+    @private
     async def destroy_swap_mirror(self, name):
         mirror_data = await self.middleware.call('disk.get_swap_mirrors', [['name', '=', name]], {'get': True})
         mirror_name = f'mirror/{name}'
@@ -24,6 +23,8 @@ class DiskService(Service):
         if cp.returncode:
             raise CallError(f'Failed to destroy mirror {mirror_name}: {cp.stderr}')
 
+    @private
+    @filterable
     def get_swap_mirrors(self, filters, options):
         xml = self.middleware.call_sync('geom.get_xml')
         if not xml:
