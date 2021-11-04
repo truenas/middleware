@@ -4495,6 +4495,7 @@ class PoolScrubService(CRUDService):
         Str('name', required=True),
         Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
     )
+    @returns()
     @job(lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}')
     async def scrub(self, job, name, action):
         """
