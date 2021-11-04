@@ -1,11 +1,13 @@
-import os
+from re import compile
+from os.path import exists
 
-from bsd import geom
 from middlewared.service import Service
-from .identify_base import DiskIdentifyBase
 
 
-class DiskService(Service, DiskIdentifyBase):
+RE_IDENTIFIER = compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
+
+
+class DiskService(Service):
 
     async def device_to_identifier(self, name, disks=None):
         disk_data = disks.get(name)
@@ -17,68 +19,65 @@ class DiskService(Service, DiskIdentifyBase):
         elif disk_data and disk_data['serial']:
             return f'{{serial}}{disk_data["serial"]}'
 
-        await self.middleware.run_in_thread(geom.scan)
-        klass = geom.class_by_name('PART')
-        if klass:
-            for g in filter(lambda v: v.name == name, klass.geoms):
-                for p in g.providers:
-                    if p.config is None:
-                        continue
-                    if p.config['rawtype'] in await self.middleware.call('disk.get_valid_zfs_partition_type_uuids'):
-                        return f'{{uuid}}{p.config["rawuuid"]}'
+        xml = await self.middleware.call('geom.get_xml')
+        if not xml:
+            return ''
 
-        g = geom.geom_by_name('LABEL', name)
-        if g:
-            return f'{{label}}{g.provider.name}'
+        found = xml.find(f'.//class[name="PART"]/geom/provider[name="{name}"')
+        if found:
+            rawtype = found.find('./config/rawtype')
+            if rawtype and rawtype.text in await self.middleware.call('disk.get_valid_zfs_partition_type_uuids'):
+                return f'{{uuid}}{found.find("./config/rawuuid").text}'
 
-        g = geom.geom_by_name('DEV', name)
-        if g:
+        found = xml.find(f'.//class[name="LABEL"]/geom/provider[name="{name}"]')
+        if found:
+            return f'{{label}}{name}'
+
+        found = xml.find(f'.//class[name="DEV"]/geom/provider/[name="{name}"]')
+        if found:
             return f'{{devicename}}{name}'
 
         return ''
 
-    def identifier_to_device(self, ident, geom_scan=True, geom_xml=None):
+    def identifier_to_device(self, ident, geom_xml=None):
         if not ident:
-            return None
+            return
 
-        search = self.RE_IDENTIFIER.search(ident)
+        search = RE_IDENTIFIER.search(ident)
         if not search:
-            return None
+            return
 
-        if geom_scan:
-            geom.scan()
-
-        tp = search.group('type')
         # We need to escape single quotes to html entity
+        tp = search.group('type')
         value = search.group('value').replace("'", '%27')
 
         if tp == 'uuid':
-            _find = f'.//config[rawuuid = "{value}"]/../../name'
+            _find = f'.//config[rawuuid="{value}"]/../../name'
             if geom_xml:
                 search = geom_xml.find(_find)
             else:
-                search = geom.class_by_name('PART').xml.find(_find)
+                search = self.middleware.call_sync('geom.get_class_xml', 'PART').find(_find)
 
             if search is not None and not search.text.startswith('label'):
                 return search.text
 
         elif tp == 'label':
-            _find = f'.//provider[name = "{value}"]/../name'
+            _find = f'.//provider[name="{value}"]/../name'
             if geom_xml:
                 search = geom_xml.find(_find)
             else:
-                search = geom.class_by_name('LABEL').xml.find(_find)
+                search = self.middleware.call_sync('geom.get_class_xml', 'LABEL').find(_find)
 
             if search is not None:
                 return search.text
 
         elif tp == 'serial':
-            _find = f'.//provider/config[ident = "{value}"]/../../name'
+            _find = f'.//provider/config[ident="{value}"]/../../name'
             if geom_xml:
                 xml = geom_xml
                 search = xml.find(_find)
             else:
-                xml = geom.class_by_name('DISK').xml
+                xml = self.middleware.call_sync('geom.get_class_xml', 'DISK')
                 search = xml.find(_find)
 
             if search is not None:
@@ -94,10 +93,11 @@ class DiskService(Service, DiskIdentifyBase):
                 if raw:
                     _ident = ' '.join(raw.split())
                     if _value == _ident:
-                        name = xml.find(f'.//provider/config[ident = "{raw}"]/../../name')
+                        name = xml.find(f'.//provider/config[ident="{raw}"]/../../name')
                         if name is not None:
                             return name.text
 
+            # haven't found the disk by the time we get here just query the db
             disks = self.middleware.call_sync('disk.query', [('serial', '=', value)])
             if disks:
                 return disks[0]['name']
@@ -106,7 +106,7 @@ class DiskService(Service, DiskIdentifyBase):
             if geom_xml:
                 xml = geom_xml
             else:
-                xml = geom.class_by_name('DISK').xml
+                xml = self.middleware.call_sync('geom.get_class_xml', 'DISK')
 
             info = value.split('_')
             info_len = len(info)
@@ -122,9 +122,9 @@ class DiskService(Service, DiskIdentifyBase):
                 _lunid = info[-1]
                 _ident = value[:-len(_lunid)].rstrip('_')
 
-            found_ident = xml.find(f'.//provider/config[ident = "{_ident}"]/../../name')
+            found_ident = xml.find(f'.//provider/config[ident="{_ident}"]/../../name')
             if found_ident is not None:
-                found_lunid = xml.find(f'.//provider/config[lunid = "{_lunid}"]/../../name')
+                found_lunid = xml.find(f'.//provider/config[lunid="{_lunid}"]/../../name')
                 if found_lunid is not None:
                     # means the identifier and lunid given to us
                     # matches a disk on the system so just return
@@ -132,7 +132,7 @@ class DiskService(Service, DiskIdentifyBase):
                     return found_ident.text
 
         elif tp == 'devicename':
-            if os.path.exists(f'/dev/{value}'):
+            if exists(f'/dev/{value}'):
                 return value
         else:
             raise NotImplementedError(f'Unknown type {tp!r}')

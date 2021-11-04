@@ -102,7 +102,7 @@ class DiskService(Service, ServiceChangeMixin):
         ):
             original_disk = disk.copy()
 
-            name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'], False, geom_xml)
+            name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'], geom_xml)
             if (
                     not name or
                     name in seen_disks or
