@@ -53,7 +53,7 @@ class ShareSchema(RegistrySchema):
         def order_vfs_objects(vfs_objects, is_clustered, fruit_enabled, purpose):
             vfs_objects_special = ('catia', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
                                    'acl_xattr', 'nfs4acl_xattr', 'glusterfs',
-                                   'crossrename', 'winmsa', 'recycle', 'zfs_core', 'aio_fbsd', 'io_uring')
+                                   'winmsa', 'recycle', 'crossrename', 'zfs_core', 'aio_fbsd', 'io_uring')
 
             invalid_vfs_objects = ['zfsacl', 'ixnas', 'noacl', 'zfs_space']
             cluster_safe_objects = ['catia', 'fruit', 'streams_xattr', 'acl_xattr', 'recycle', 'glusterfs', 'io_ring']
