@@ -27,6 +27,9 @@ def parse_ipmitool_output(output):
 
 
 def parse_ipmi_sel_record(row):
+    if len(row) == 1:
+        return
+
     if row[1].strip() == "Pre-Init":
         return None
 
