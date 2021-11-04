@@ -552,16 +552,16 @@ class UserService(CRUDService):
         # After this point user dict has values from data
         user.update(data)
 
+        mode_to_set = user.get('home_mode')
+        if not mode_to_set:
+            mode_to_set = '700' if old_mode is None else old_mode
+
         # squelch any potential problems when this occurs
-        await self.middleware.call('user.recreate_homedir_if_not_exists', has_home, user, group)
+        await self.middleware.call('user.recreate_homedir_if_not_exists', has_home, user, group, mode_to_set)
 
         if home_copy and not os.path.isdir(user['home']):
             try:
                 os.makedirs(user['home'])
-                mode_to_set = user.get('home_mode')
-                if not mode_to_set:
-                    mode_to_set = '700' if old_mode is None else old_mode
-
                 perm_job = await self.middleware.call('filesystem.setperm', {
                     'path': user['home'],
                     'uid': user['uid'],
@@ -639,7 +639,7 @@ class UserService(CRUDService):
         return pk
 
     @private
-    def recreate_homedir_if_not_exists(self, has_home, user, group):
+    def recreate_homedir_if_not_exists(self, has_home, user, group, mode):
         # sigh, nothing is stopping someone from removing the homedir
         # from the CLI so recreate the original directory in this case
         if has_home and not os.path.exists(user['home']):
@@ -653,7 +653,7 @@ class UserService(CRUDService):
                     'path': user['home'],
                     'uid': user['uid'],
                     'gid': group['bsdgrp_gid'],
-                    'mode': user['home_mode'],
+                    'mode': mode,
                     'options': {'stripacl': True},
                 }).wait_sync(raise_error=True)
 
