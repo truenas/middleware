@@ -35,14 +35,11 @@ class DiskService(Service):
         """
         options = options or {}
         providers = {}
+        swap_uuid = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
         for disk in disks:
-            partitions = await self.middleware.call('disk.list_partitions', disk)
-            if not partitions:
-                continue
-            for p in partitions:
-                if p['partition_type'] in await self.middleware.call('disk.get_valid_swap_partition_type_uuids'):
+            for p in await self.middleware.call('disk.list_partitions', disk):
+                if p['partition_type'] in swap_uuid:
                     providers[p['id']] = p
-                    break
 
         if not providers:
             return

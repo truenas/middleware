@@ -41,6 +41,17 @@ class DiskService(Service):
                 # then move on
                 continue
 
+            # xml information is cached in a thread so if we
+            # get information about a mirror device that doesn't
+            # exist, then continue on (the xml cache will eventually
+            # be invalidated by the caller...hopefully)
+            path = real_path = f'/dev/mirror/{swap_name}'
+            if not exists(path):
+                continue
+            else:
+                eli_path = f'{path}.eli'
+                encrypted_provider = eli_path if exists(eli_path) else None
+
             try:
                 config_type = i.find('./config/Type').text
             except AttributeError:
