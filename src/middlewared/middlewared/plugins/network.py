@@ -944,6 +944,7 @@ class InterfaceService(CRUDService):
             'failover_aliases': ['Standby node IP address', ' cannot be changed.', ' is required when configuring HA'],
             'failover_virtual_aliases': ['Virtual IP address', ' cannot be changed.', ' is required when configuring HA'],
             'failover_group': ['Failover group number', ' cannot be changed.', ' is required when configuring HA'],
+            'failover_vhid': ['Failover VHID', ' cannot be changed.', ' is required when configuring HA'],
             'mtu': ['MTU', ' cannot be changed.'],
             'ipv4_dhcp': ['DHCP', ' cannot be changed.'],
             'ipv6_auto': ['Autconfig for IPv6', ' cannot be changed.'],
@@ -1119,7 +1120,7 @@ class InterfaceService(CRUDService):
                     'The number of active, standby and virtual IP addresses must be the same.'
                 )
 
-            if not update:
+            if not update or itype == 'PHYSICAL':
                 failover_attrs = set(
                     [k for k, v in validation_attrs.items() if k not in ('mtu', 'ipv4_dhcp', 'ipv6_auto')]
                 )
@@ -1131,6 +1132,7 @@ class InterfaceService(CRUDService):
                             f'{schema_name}.{i}',
                             f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
                         )
+                verrors.check()
 
             # can't remove VHID and not GROUP
             if not data.get('failover_vhid') and data.get('failover_group'):
