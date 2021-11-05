@@ -20,7 +20,7 @@ class ClusterUtils(Service):
             # we will return the IP address so long as it's not loopback address
             # else we'll return an empty list so that the caller of this raises
             # a validation error
-            return ip if not ip.is_loopback else []
+            return ip.compressed if not ip.is_loopback else []
         except ValueError:
             # means it's a hostname so we need to try and resolve
             pass
