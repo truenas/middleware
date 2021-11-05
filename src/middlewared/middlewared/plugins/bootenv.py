@@ -250,7 +250,7 @@ class BootEnvService(CRUDService):
         try:
             await run(self.BE_TOOL, 'rename', oid, data['name'], encoding='utf8', check=True)
         except subprocess.CalledProcessError as cpe:
-            raise CallError(f'Failed to update boot environment: {cpe.stdout}')
+            raise CallError(f'Failed to update boot environment: {cpe.stderr}')
         return data['name']
 
     async def _clean_be_name(self, verrors, schema, name):
