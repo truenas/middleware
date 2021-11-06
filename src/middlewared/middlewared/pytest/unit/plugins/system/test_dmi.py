@@ -53,6 +53,48 @@ Physical Memory Array
 
 """).splitlines()
 
+double_colon_dmi = ("""
+# dmidecode 3.3
+Getting SMBIOS data from sysfs.
+SMBIOS 2.7 present.Handle 0x0001, DMI type 1, 27 bytes
+System Information
+        Manufacturer: Supermicro
+        Product Name: X9DRi-LN4+/X9DR3-LN4+
+        Version: 0123456789
+        Serial Number: 0123456789
+        UUID: 00000000-0000-0000-0000-002590f3967a
+        Wake-up Type: Power Switch
+        SKU Number: To be filled by O.E.M.
+        Family: To be filled by O.E.M.Handle 0x0002, DMI type 2, 15 bytes
+Base Board Information
+        Manufacturer: Supermicro
+        Product Name: X9DRi-LN4+/X9DR3-LN4+
+        Version: REV:1.20A
+        Serial Number: FAKE
+        Asset Tag: To be filled by O.E.M.
+        Features:
+                Board is a hosting board
+                Board is replaceable
+        Location In Chassis: To be filled by O.E.M.
+        Chassis Handle: 0x0003
+        Type: Motherboard
+        Contained Object Handles: 0Handle 0x002F, DMI type 16, 23 bytes
+Physical Memory Array
+        Location: System Board Or Motherboard
+        Use: System Memory
+        Error Correction Type: Multi-bit ECC
+        Maximum Capacity: 768 GB
+        Error Information Handle: Not Provided
+        Number Of Devices: 12Handle 0x0049, DMI type 16, 23 bytes
+Physical Memory Array
+        Location: System Board Or Motherboard
+        Use: System Memory
+        Error Correction Type: Multi-bit ECC
+        Maximum Capacity: 768 GB
+        Error Information Handle: Not Provided
+        Number Of Devices: 12
+""").splitlines()
+
 missing_dmi = []
 
 missing_dmi_type1 = ("""
@@ -159,6 +201,21 @@ def test__full_dmi():
     }
     obj = SystemService(Service)
     obj._parse_dmi(full_dmi)
+    assert obj.CACHE == expected_result
+
+
+def test__double_colon_dmi():
+    expected_result = {
+        'ecc-memory': True,
+        'baseboard-manufacturer': 'Supermicro',
+        'baseboard-product-name': 'X9DRi-LN4+/X9DR3-LN4+',
+        'system-manufacturer': 'Supermicro',
+        'system-product-name': 'X9DRi-LN4+/X9DR3-LN4+',
+        'system-serial-number': '0123456789',
+        'system-version': '0123456789',
+    }
+    obj = SystemService(Service)
+    obj._parse_dmi(double_colon_dmi)
     assert obj.CACHE == expected_result
 
 
