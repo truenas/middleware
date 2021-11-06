@@ -60,8 +60,8 @@ hardware_linux()
 	lspci -vvvD
 	section_footer
 
-	section_header "usb-devices"
-	usb-devices
+	section_header "USB device information"
+	cat /sys/kernel/debug/usb/devices
 	section_footer
 
 	section_header "dmidecode"
