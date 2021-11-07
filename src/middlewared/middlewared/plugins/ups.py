@@ -168,6 +168,18 @@ class UPSService(SystemServiceService):
                     'Driver selected does not match local machine\'s driver list'
                 )
 
+        port = data['port']
+        if port:
+            serial_port = os.path.join(
+                '/dev', (await self.middleware.call('system.advanced.config'))['serialport']
+            )
+            if serial_port == port:
+                verrors.add(
+                    f'{schema}.port',
+                    'UPS port must be different then the port specified for '
+                    'serial port for console in system advanced settings'
+                )
+
         identifier = data['identifier']
         if identifier:
             if not re.search(r'^[a-z0-9\.\-_]+$', identifier, re.I):
@@ -202,7 +214,8 @@ class UPSService(SystemServiceService):
         data['mode'] = data['mode'].lower()
         data['shutdown'] = data['shutdown'].lower()
 
-        return verrors, data
+        verrors.check()
+        return data
 
     @accepts(
         Patch(
@@ -231,9 +244,7 @@ class UPSService(SystemServiceService):
         config.pop('complete_identifier')
         old_config = config.copy()
         config.update(data)
-        verros, config = await self.validate_data(config, 'ups_update')
-        if verros:
-            raise verros
+        config = await self.validate_data(config, 'ups_update')
 
         old_config['mode'] = old_config['mode'].lower()
         old_config['shutdown'] = old_config['shutdown'].lower()
