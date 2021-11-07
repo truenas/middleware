@@ -94,8 +94,7 @@ class UPSService(SystemServiceService):
     @accepts()
     @returns(List(items=[Str('port_choice')]))
     async def port_choices(self):
-        ports = [x for x in glob.glob('/dev/cua*') if x.find('.') == -1]
-        ports.extend(glob.glob('/dev/ugen*'))
+        ports = [os.path.join('/dev', port['name']) for port in await self.middleware.call('device.get_serials')]
         ports.extend(glob.glob('/dev/uhid*'))
         ports.append('auto')
         return ports
