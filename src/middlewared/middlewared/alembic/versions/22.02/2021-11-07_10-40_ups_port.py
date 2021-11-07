@@ -24,7 +24,7 @@ def upgrade():
     if not sys_config or not ups_config:
         return
 
-    serial_port = os.path.join('/dev', sys_config[0]['adv_serialport'])
+    serial_port = os.path.join('/dev', sys_config[0]['adv_serialport'] or '')
     ups_port = ups_config[0]['ups_port']
 
     if serial_port == ups_port:

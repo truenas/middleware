@@ -205,7 +205,6 @@ class SystemAdvancedService(ConfigService):
 
         serial_choice = data.get('serialport')
         if data.get('serialconsole'):
-
             if not serial_choice:
                 verrors.add(
                     f'{schema}.serialport',
@@ -216,6 +215,13 @@ class SystemAdvancedService(ConfigService):
                     f'{schema}.serialport',
                     'Serial port specified has not been identified by the system'
                 )
+
+        ups_port = (await self.middleware.call('ups.config'))['port']
+        if not verrors and os.path.join('/dev', serial_choice or '') == ups_port:
+            verrors.add(
+                f'{schema}.serialport',
+                'Serial port must be different then the port specified for UPS Service'
+            )
 
         syslog_server = data.get('syslogserver')
         if syslog_server:
