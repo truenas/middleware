@@ -25,6 +25,7 @@ class KubernetesModel(sa.Model):
     node_ip = sa.Column(sa.String(128), default='0.0.0.0')
     cni_config = sa.Column(sa.JSON(type=dict), default={})
     configure_gpus = sa.Column(sa.Boolean(), default=True, nullable=False)
+    servicelb = sa.Column(sa.Boolean(), default=True, nullable=False)
 
 
 class KubernetesService(ConfigService):
@@ -36,6 +37,7 @@ class KubernetesService(ConfigService):
 
     ENTRY = Dict(
         'kubernetes_entry',
+        Bool('servicelb', required=True),
         Bool('configure_gpus', required=True),
         Str('pool', required=True, null=True),
         IPAddr('cluster_cidr', required=True, cidr=True, empty=True),
@@ -223,6 +225,12 @@ class KubernetesService(ConfigService):
         """
         `pool` must be a valid ZFS pool configured in the system. Kubernetes service will initialise the pool by
         creating datasets under `pool_name/ix-applications`.
+
+        `configure_gpus` is a boolean to enable or disable to prevent automatically loading any GPU Support
+        into kubernetes. This includes not loading any daemonsets for Intel and NVIDIA support.
+
+        `servicelb` is a boolean to enable or disable the integrated k3s Service Loadbalancer called "Klipper".
+        This can be set to disabled to enable the user to run another LoadBalancer or no LoadBalancer at all.
 
         `cluster_cidr` is the CIDR to be used for default NAT network between workloads.
 
