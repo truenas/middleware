@@ -145,7 +145,7 @@ def test_14_wait_for_the_alert_to_dissapear(request):
 
 
 @pytest.mark.dependency(name='corefiles_alert')
-def test_15_kill_python_with_6_to_triger_a_corefile_allert(request):
+def test_15_kill_python_with_6_to_triger_a_corefile_alert(request):
     depends(request, ['ssh_password'], scope='session')
     cmd = 'python3 -c "import os; os.abort()"'
     results = SSH_TEST(cmd, user, password, ip)
@@ -178,8 +178,8 @@ if not ha:
         assert isinstance(results.json(), list), results.text
         for line in results.json():
             if alert_id == line['id']:
-                assert 'python' in results.json()[0]['args']['corefiles'], results.text
-                assert results.json()[0]['level'] == 'WARNING', results.text
+                assert 'python' in line['args']['corefiles'], results.text
+                assert line['level'] == 'WARNING', results.text
                 break
 
     def test_18_dimiss_the_corefiles_alert(request):
