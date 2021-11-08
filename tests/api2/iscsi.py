@@ -229,6 +229,7 @@ def test_19_Unmounting_iSCSI_volume():
     cmd = f'umount "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
+    sleep(1)
 
 
 @bsd_host_cfg
@@ -504,6 +505,7 @@ def test_48_waiting_for_iscsi_connection_before_grabbing_device_name(request):
 def test_49_unmount_media(request):
     depends(request, ["iscsi_48"])
     cmd_test(f'umount "/media/{zvol_device_name}"')
+    sleep(2)
 
 
 @bsd_host_cfg
@@ -528,6 +530,7 @@ def test_52_unmounting_the_zvol_iscsi_volume(request):
     depends(request, ["iscsi_50"])
     results = cmd_test(f'umount "{zvol_mountpoint}"')
     assert results['result'], results['output']
+    sleep(1)
 
 
 @bsd_host_cfg
