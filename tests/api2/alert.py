@@ -92,7 +92,7 @@ def test_09_verify_the_alert_is_dismissed(request):
     assert isinstance(results.json(), list), results.text
     for line in results.json():
         if line['id'] == alert_id:
-            assert results.json()[0]['dismissed'] is True, results.text
+            assert line['dismissed'] is True, results.text
             break
 
 
@@ -149,8 +149,8 @@ def test_15_start_smb_service():
 
 
 @pytest.mark.skipif(ha, reason='Skipping test for SCALE')
-@pytest.mark.dependency(name='corefiles_allert')
-def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
+@pytest.mark.dependency(name='corefiles_alert')
+def test_16_kill_smbd_with_6_to_triger_a_corefile_alert(request):
     depends(request, ['smb_service'], scope='session')
     cmd = 'killall -6 smbd'
     results = SSH_TEST(cmd, user, password, ip)
@@ -161,7 +161,7 @@ def test_16_kill_smbd_with_6_to_triger_a_corefile_allert(request):
 @pytest.mark.timeout(80)
 @pytest.mark.dependency(name='wait_alert')
 def test_17_wait_for_the_alert_and_get_the_id(request):
-    depends(request, ['corefiles_allert'])
+    depends(request, ['corefiles_alert'])
     global alert_id
     while True:
         for line in GET('/alert/list/').json():
@@ -184,8 +184,8 @@ def test_18_verify_the_smbd_corefiles_alert_warning(request):
     assert isinstance(results.json(), list), results.text
     for line in results.json():
         if alert_id == line['id']:
-            assert 'smbd' in results.json()[0]['args']['corefiles'], results.text
-            assert results.json()[0]['level'] == 'WARNING', results.text
+            assert 'smbd' in line['args']['corefiles'], results.text
+            assert line['level'] == 'WARNING', results.text
             break
 
 
