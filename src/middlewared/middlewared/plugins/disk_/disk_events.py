@@ -13,7 +13,6 @@ async def added_disk(middleware, disk_name):
 
 async def remove_disk(middleware, disk_name):
     await middleware.call('geom.remove_disk', disk_name)
-    await (await middleware.call('disk.sync_all')).wait()
     await middleware.call('disk.multipath_sync')
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
     # If a disk dies we need to reconfigure swaps so we are not left

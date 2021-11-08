@@ -76,21 +76,32 @@ class DiskService(Service):
     def get_swap_devices(self):
         return [os.path.join('/dev', i.devname) for i in bsd.getswapinfo()]
 
-    def label_to_dev_and_disk(self):
+    def label_to_dev_and_disk(self, to_dev=None, to_disk=None):
         label_to_dev = {}
-        labels = self.middleware.call_sync('geom.get_class_xml', 'LABEL')
-        if labels:
-            for label in labels:
-                if (name := label.find('name')) is not None:
-                    if (provider := label.find('provider/name')) is not None:
-                        label_to_dev[provider.text] = name.text
-
         dev_to_disk = {}
-        labels = self.middleware.call_sync('geom.get_class_xml', 'PART')
-        if labels:
-            for label in labels:
+        xml = self.middleware.call_sync('geom.get_xml')
+        if xml:
+            for label in xml.iterfind('.//class[name="LABEL"]/geom'):
                 if (name := label.find('name')) is not None:
-                    if (provider := label.find('provider/name')) is not None:
-                        dev_to_disk[provider.text] = name.text
+                    for provider in label.iterfind('provider'):
+                        if (prov := provider.find('name')) is not None:
+                            label_to_dev[prov.text] = name.text
+
+            for label in xml.iterfind('.//class[name="PART"]/geom'):
+                if (name := label.find('name')) is not None:
+                    for provider in label.iterfind('provider'):
+                        if (prov := provider.find('name')) is not None:
+                            dev_to_disk[prov.text] = name.text
 
         return {'label_to_dev': label_to_dev, 'dev_to_disk': dev_to_disk}
+
+    def label_to_dev(self, label):
+        label = label[:-4] if label.endswith(('.nop', '.eli')) else label
+        return self.label_to_dev_and_disk()['label_to_dev'].get(label)
+
+    def label_to_disk(self, label):
+        label = label[:-4] if label.endswith(('.nop', '.eli')) else label
+        info = self.label_to_dev_and_disk()
+        dev = info['label_to_dev'].get(label)
+        if dev:
+            return info['dev_to_disk'].get(dev)
