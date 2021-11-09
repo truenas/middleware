@@ -5,11 +5,10 @@
 import pytest
 import sys
 import os
-import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import pool_name, ip, hostname, password, user
+from functions import PUT, POST, GET, SSH_TEST, wait_on_job
+from auto_config import ip, hostname, password, user
 from pytest_dependency import depends
 
 try:
@@ -105,7 +104,7 @@ def test_06_wait_for_cache_fill(request):
     Wait for it to successfully complete.
     """
     depends(request, ["AD_IS_HEALTHY"])
-    results = GET(f'/core/get_jobs/?method=activedirectory.fill_cache')
+    results = GET('/core/get_jobs/?method=activedirectory.fill_cache')
     job_status = wait_on_job(results.json()[-1]['id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
@@ -151,13 +150,6 @@ def test_09_check_directoryservices_cache_refresh(request):
     """
     depends(request, ["pool_04", "AD_USERS_CACHED", "AD_GROUPS_CACHED"], scope="session")
     rebuild_ok = False
-
-    """
-    Cache resides in tdb files. Remove the files to clear cache.
-    """
-    cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
 
     """
     directoryservices.cache_refresh job causes us to rebuild / refresh
