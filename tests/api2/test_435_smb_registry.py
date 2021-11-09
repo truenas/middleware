@@ -233,7 +233,9 @@ def test_010_test_aux_param_on_update(request):
         assert results['result'] is True, f"[{entry}]: {results['output']}"
         out = results['output'].strip()
         inval = val.strip()
-        assert inval == out, f"[{entry}]: {out}"
+        # list cant be compared if item are not in the same place
+        # converting to set have a valid comparison.
+        assert set(inval) == set(out), f"[{entry}]: {out}"
 
     for entry in new_aux.splitlines():
         """
@@ -255,7 +257,9 @@ def test_010_test_aux_param_on_update(request):
         inval = val.strip()
         if aux.strip() == "vfs objects":
             new_obj = inval.split()
-            assert new_obj == json.loads(out), f"[{entry}]: {out}"
+            # list cant be compared if item are not in the same place
+            # converting to set have a valid comparison.
+            assert set(new_obj) == set(json.loads(out)), f"[{entry}]: {out}"
         else:
             assert inval == out, f"[{entry}]: {out}"
 
@@ -301,7 +305,9 @@ def test_011_test_aux_param_on_create(request):
         assert results['result'] is True, f"[{entry}]: {results['output']}"
         out = results['output'].strip()
         inval = val.strip()
-        assert inval == out, f"[{entry}]: {out}"
+        # list cant be compared if item are not in the same place
+        # converting to set have a valid comparison.
+        assert set(inval) == set(out), f"[{entry}]: {out}"
 
     for entry in new_aux.splitlines():
         """
@@ -323,7 +329,9 @@ def test_011_test_aux_param_on_create(request):
         inval = val.strip()
         if aux.strip() == "vfs objects":
             new_obj = inval.split()
-            assert new_obj == json.loads(out), f"[{entry}]: {out}"
+            # list cant be compared if item are not in the same place
+            # converting to set have a valid comparison.
+            assert set(new_obj) == set(json.loads(out)), f"[{entry}]: {out}"
         else:
             assert inval == out, f"[{entry}]: {out}"
 
