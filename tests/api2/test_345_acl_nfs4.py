@@ -171,8 +171,7 @@ def test_02_create_dataset(request):
     depends(request, ["pool_04"], scope="session")
     result = POST(
         '/pool/dataset/', {
-            'name': ACLTEST_DATASET,
-            'acltype': 'NFSV4'
+            'name': ACLTEST_DATASET
         }
     )
     assert result.status_code == 200, result.text
@@ -577,7 +576,8 @@ def test_21_creating_shareuser_to_test_acls():
 
 @pytest.mark.dependency(name="HAS_TESTFILE")
 def test_22_prep_testfile(request):
-    depends(request, ["ACL_USER_CREATED", "ssh_password"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "DATASET_CREATED", "ssh_password"],
+            scope="session")
     cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -614,7 +614,8 @@ def test_23_test_acl_function_deny(perm, request):
     acltest user, then attempt to perform an action that
     should result in failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE",
+                      "ssh_password", "acl_pool_perm_09"], scope="session")
 
     if perm == "FULL_DELETE":
         to_deny = {"DELETE_CHILD": True, "DELETE": True}
@@ -1154,7 +1155,7 @@ def test_29_deleting_homedir_user(request):
 
 
 def test_30_delete_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["DATASET_CREATED"], scope="session")
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )
