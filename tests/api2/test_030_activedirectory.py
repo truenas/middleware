@@ -128,7 +128,6 @@ def test_07_creating_ad_dataset_for_smb(request):
 
 def test_08_Changing_permissions_on_dataset(request):
     depends(request, ["pool_04", "ad_01", "ad_02"], scope="session")
-    global job_id
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', {
         'acl': [],
         'mode': '777',
@@ -136,19 +135,14 @@ def test_08_Changing_permissions_on_dataset(request):
         'group': 'wheel'
     })
     assert results.status_code == 200, results.text
-    job_id = results.json()
-
-
-def test_09_verify_the_job_id_is_successfull(request):
-    depends(request, ["pool_04", "ad_01", "ad_02"], scope="session")
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(results.json(), 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @pytest.mark.dependency(name="ad_10")
 def test_10_enabling_activedirectory(request):
     depends(request, ["pool_04", "ad_01", "ad_02"], scope="session")
-    global payload, results, job_id
+    global payload, results
     payload = {
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
@@ -160,12 +154,7 @@ def test_10_enabling_activedirectory(request):
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
-
-
-def test_11_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(results.json()['job_id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -457,7 +446,7 @@ def test_44_get_activedirectory_started_after_leaving_AD(request):
 
 def test_45_re_enable_activedirectory(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
-    global payload, results, job_id
+    global payload, results
     payload = {
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
@@ -467,12 +456,7 @@ def test_45_re_enable_activedirectory(request):
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
-
-
-def test_46_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(results.json()['job_id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -599,10 +583,6 @@ def test_60_disable_activedirectory(request):
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
 
-    disable_job = results.json()['job_id']
-    job_status = wait_on_job(disable_job, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
 
 def test_61_get_activedirectory_state(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
@@ -620,18 +600,13 @@ def test_62_get_activedirectory_started_after_disabling_AD(request):
 
 def test_63_re_enable_activedirectory(request):
     depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
-    global payload, results, job_id
+    global payload, results
     payload = {
         "enable": True
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
-
-
-def test_64_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04", "ad_01", "ad_02", "ad_10"], scope="session")
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(results.json()['job_id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
