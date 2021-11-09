@@ -56,11 +56,7 @@ iscsi_func()
     section_footer
 
     section_header "iSCSI Run Status"
-    if is_linux; then
-        systemctl status scst
-    else
-    	service ctld onestatus
-    fi
+    systemctl status scst
     section_footer
 	
     alua_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "

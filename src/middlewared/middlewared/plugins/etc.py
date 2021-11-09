@@ -103,9 +103,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
         ],
-        'ctld': [
-            {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
-        ],
         'grub': [
             {'type': 'py', 'path': 'grub', 'platform': 'Linux', 'checkpoint': 'post_init'},
         ],

@@ -1,4 +1,4 @@
-from middlewared.utils import osc, run
+from middlewared.utils import run
 
 from .base import SimpleService
 
@@ -7,10 +7,7 @@ class ISCSITargetService(SimpleService):
     name = "iscsitarget"
     reloadable = True
 
-    etc = ["ctld", "scst"]
-
-    freebsd_rc = "ctld"
-    freebsd_pidfile = "/var/run/ctld.pid"
+    etc = ["scst"]
 
     systemd_unit = "scst"
 
@@ -21,9 +18,6 @@ class ISCSITargetService(SimpleService):
         await self.middleware.call("iscsi.host.injection.stop")
 
     async def reload(self):
-        if osc.IS_LINUX:
-            return (await run(
-                ["scstadmin", "-noprompt", "-force", "-config", "/etc/scst.conf"], check=False
-            )).returncode == 0
-        else:
-            return await self._reload_freebsd()
+        return (await run(
+            ["scstadmin", "-noprompt", "-force", "-config", "/etc/scst.conf"], check=False
+        )).returncode == 0

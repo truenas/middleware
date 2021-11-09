@@ -43,7 +43,7 @@ class DiskService(Service, DiskIdentifyBase):
         value = search.group('value')
         mapping = {'uuid': 'uuid', 'devicename': 'name', 'serial_lunid': 'serial_lunid', 'serial': 'serial'}
         if tp not in mapping:
-            raise NotImplementedError(f'Unknown type {tp!r}')
+            return None
         elif tp == 'uuid':
             partition = await self.middleware.call('disk.list_all_partitions', [['partition_uuid', '=', value]])
             if partition:
