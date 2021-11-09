@@ -22,6 +22,7 @@ RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
 
 class DeviceService(Service, DeviceInfoBase):
 
+    DISK_ROTATION_ERROR_LOG_CACHE = set()
     HOST_TYPE = None
 
     def get_serials(self):
@@ -99,13 +100,16 @@ class DeviceService(Service, DeviceInfoBase):
 
     @private
     def get_rotational_rate(self, device_path):
-
         try:
             disk = libsgio.SCSIDevice(device_path)
             rotation_rate = disk.rotation_rate()
         except (OSError, RuntimeError):
-            self.logger.error('Ioctl failed while retrieving rotational rate for disk %s', device_path)
+            if device_path not in self.DISK_ROTATION_ERROR_LOG_CACHE:
+                self.DISK_ROTATION_ERROR_LOG_CACHE.add(device_path)
+                self.logger.error('Ioctl failed while retrieving rotational rate for disk %s', device_path)
             return
+        else:
+            self.DISK_ROTATION_ERROR_LOG_CACHE.discard(device_path)
 
         if rotation_rate in (0, 1):
             # 0 = not reported
