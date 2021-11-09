@@ -202,10 +202,6 @@ def test_009_reset_smb():
     assert results.status_code == 200, results.text
 
 
-set1 = ['aio_pthread', 'streams_xattr', 'shadow_copy_zfs', 'acl_xattr', 'crossrename', 'winmsa', 'recycle']
-set2 = ['aio_pthread', 'streams_xattr', 'shadow_copy_zfs', 'acl_xattr', 'winmsa', 'recycle', 'crossrename']
-
-
 def test_010_test_aux_param_on_update(request):
     depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     results = GET(
