@@ -289,8 +289,7 @@ def test_30_creating_home_dataset(request):
     depends(request, ["pool_04"], scope="session")
     payload = {
         "name": dataset,
-        "share_type": "SMB",
-        "acltype": "NFSV4"
+        "share_type": "SMB"
     }
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
