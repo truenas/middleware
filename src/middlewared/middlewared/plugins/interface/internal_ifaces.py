@@ -8,4 +8,6 @@ class InterfaceService(Service):
 
     @private
     async def internal_interfaces(self):
-        return ['wg', 'lo', 'tun', 'tap', 'docker', 'veth', 'kube-bridge', 'kube-dummy-if', 'vnet', 'openvpn']
+        return [
+            'wg', 'lo', 'tun', 'tap', 'docker', 'veth', 'kube-bridge', 'kube-dummy-if', 'vnet', 'openvpn', 'macvtap',
+        ]
