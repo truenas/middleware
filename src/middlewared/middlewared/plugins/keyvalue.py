@@ -1,5 +1,5 @@
 from middlewared.client import ejson as json
-from middlewared.schema import Any, Str, accepts
+from middlewared.schema import Any, Str, accepts, Dict
 from middlewared.service import Service
 import middlewared.sqlalchemy as sa
 
@@ -37,22 +37,28 @@ class KeyValueService(Service):
 
             raise KeyError(key)
 
-    @accepts(Str('key'), Any('value'))
-    async def set(self, key, value):
+    @accepts(
+        Str('key'),
+        Any('value'),
+        Dict('options', additional_attrs=True),
+    )
+    async def set(self, key, value, options):
         try:
             row = await self.middleware.call("datastore.query", "system.keyvalue", [["key", "=", key]], {"get": True})
         except IndexError:
-            await self.middleware.call("datastore.insert", "system.keyvalue", {
-                "key": key,
-                "value": json.dumps(value)
-            })
+            await self.middleware.call(
+                "datastore.insert", "system.keyvalue", {"key": key, "value": json.dumps(value)}, options
+            )
         else:
-            await self.middleware.call("datastore.update", "system.keyvalue", row["id"], {
-                "value": json.dumps(value)
-            })
+            await self.middleware.call(
+                "datastore.update", "system.keyvalue", row["id"], {"value": json.dumps(value)}, options
+            )
 
         return value
 
-    @accepts(Str('key'))
-    async def delete(self, key):
-        await self.middleware.call("datastore.delete", "system.keyvalue", [["key", "=", key]])
+    @accepts(
+        Str('key'),
+        Dict('options', addtional_attrs=True),
+    )
+    async def delete(self, key, options):
+        await self.middleware.call("datastore.delete", "system.keyvalue", [["key", "=", key]], options)
