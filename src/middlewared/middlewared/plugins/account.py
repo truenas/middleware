@@ -146,8 +146,8 @@ class UserService(CRUDService):
         ('add', Bool('local')),
         ('add', Str('unixhash')),
         ('add', Str('smbhash')),
-        ('add', Str('nt_name')),
-        ('add', Str('sid')),
+        ('add', Str('nt_name', null=True)),
+        ('add', Str('sid', null=True)),
     )
 
     @private
