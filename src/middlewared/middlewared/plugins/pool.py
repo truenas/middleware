@@ -286,7 +286,7 @@ class PoolService(CRUDService):
         """
         pool = await self.get_instance(oid)
         return await job.wrap(
-            await self.middleware.call('zfs.pool.scrub', pool['name'], action)
+            await self.middleware.call('pool.scrub.scrub', pool['name'], action)
         )
 
     @accepts(List('types', items=[Str('type', enum=['FILESYSTEM', 'VOLUME'])], default=['FILESYSTEM', 'VOLUME']))
@@ -4131,6 +4131,40 @@ class PoolScrubService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
         return response
 
+    @accepts(
+        Str('name', required=True),
+        Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
+    )
+    @job(lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}')
+    async def scrub(self, job, name, action):
+        """
+        Start/Stop/Pause a scrub on pool `name`.
+        """
+        await self.middleware.call('zfs.pool.scrub_action', name, action)
+
+        if action == 'START':
+            while True:
+                scrub = await self.middleware.call('zfs.pool.scrub_state', name)
+
+                if scrub['pause']:
+                    job.set_progress(100, 'Scrub paused')
+                    break
+
+                if scrub['function'] != 'SCRUB':
+                    break
+
+                if scrub['state'] == 'FINISHED':
+                    job.set_progress(100, 'Scrub finished')
+                    break
+
+                if scrub['state'] == 'CANCELED':
+                    break
+
+                if scrub['state'] == 'SCANNING':
+                    job.set_progress(scrub['percentage'], 'Scrubbing')
+
+                await asyncio.sleep(1)
+
     @accepts(Str('name'), Int('threshold', default=35))
     async def run(self, name, threshold):
         """
@@ -4184,7 +4218,7 @@ class PoolScrubService(CRUDService):
             logger.debug("Pool %r last scrub %r", name, last_scrub)
             return False
 
-        await self.middleware.call('zfs.pool.scrub', pool['name'])
+        await self.middleware.call('pool.scrub.scrub', pool['name'])
         return True
 
 
