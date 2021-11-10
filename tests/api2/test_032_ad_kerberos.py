@@ -555,22 +555,14 @@ def test_37_check_nfs_exports_sec(request):
     """
     depends(request, ["ssh_password"], scope="session")
     cmd = 'midclt call etc.generate nfsd'
-    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    results = SSH_TEST("cat /etc/ganesha/ganesha.conf", user, password, ip)
+    expected_sec = "V4: / -sec=sys:krb5:krb5i:krb5p"
+    cmd = f'grep "{expected_sec}" /etc/exports'
+    results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    ganesha_config = results['output']
-
-    expected_sec = "sys, krb5, krb5i, krb5p;"
-    sec = None
-    for entry in ganesha_config.splitlines():
-        if entry.strip().startswith("SecType"):
-            sec = entry.rsplit("=", 1)[1].strip()
-            break
-
-    assert sec == expected_sec, ganesha_config
+    assert results['output'].strip() == expected_sec, results['output']
 
 
 def test_38_cleanup_nfs_settings(request):
