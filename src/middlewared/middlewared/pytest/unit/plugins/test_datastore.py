@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 import datetime
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import pytest
 import sqlalchemy as sa
@@ -215,6 +215,7 @@ async def test__update_fk():
             "datastore.post_execute_write",
             "UPDATE account_bsdusers SET bsdusr_uid=?, bsdusr_group_id=? WHERE account_bsdusers.id = ?",
             [100, 30, 5],
+            ANY,
         )
 
 
@@ -453,7 +454,8 @@ async def test__encrypted_json_save():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedjson (object) VALUES (?)",
-            ['!{"key": "value"}']
+            ['!{"key": "value"}'],
+            ANY,
         )
 
 
@@ -481,7 +483,8 @@ async def test__encrypted_text_save():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
-            ['!Text']
+            ['!Text'],
+            ANY,
         )
 
 
@@ -505,7 +508,8 @@ async def test__encrypted_text_save_null():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
-            [None]
+            [None],
+            ANY,
         )
 
 

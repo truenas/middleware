@@ -1458,7 +1458,10 @@ class JournalSync:
             return loc == rem
 
 
-def hook_datastore_execute_write(middleware, sql, params):
+def hook_datastore_execute_write(middleware, sql, params, options):
+    if not options['ha_sync']:
+        return
+
     sql_queue.put((sql, params))
 
 
