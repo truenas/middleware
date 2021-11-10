@@ -327,6 +327,16 @@ class KubernetesService(ConfigService):
             )
         }
 
+    @accepts()
+    @returns(Dict(additional_attrs=True, ))
+    async def route_interface_choices(self):
+        """
+        Returns Interface choices for Kubernetes service to use for ipv4 connections.
+        """
+        return await self.middleware.call(
+            'interface.choices', {'bridge_members': False, 'lag_ports': False}
+        )
+
     @private
     async def validate_k8s_setup(self):
         k8s_config = await self.middleware.call('kubernetes.config')
