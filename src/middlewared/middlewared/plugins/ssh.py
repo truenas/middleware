@@ -222,15 +222,16 @@ class SSHService(SystemServiceService):
     @private
     def save_keys(self):
         update = {}
+        old = self.middleware.call_sync('datastore.query', 'services_ssh', [], {'get': True})
         for path, column in self.keys:
             if os.path.exists(path):
                 with open(path, "rb") as f:
                     data = base64.b64encode(f.read()).decode("ascii")
+                    if data != old[column]:
+                        update[column] = data
 
-                update[column] = data
-
-        old = self.middleware.call_sync('ssh.config')
-        self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update)
+        if update:
+            self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update, {'ha_sync': False})
 
 
 async def setup(middleware):
