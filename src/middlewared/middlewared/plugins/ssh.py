@@ -7,7 +7,6 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str, ValidationEr
 from middlewared.validators import Range
 from middlewared.service import private, SystemServiceService
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc
 
 
 class SSHModel(sa.Model):
@@ -128,7 +127,11 @@ class SSHService(SystemServiceService):
     @private
     def save_keys(self):
         update = {}
-        for i in [
+        old = self.middleware.call_sync("datastore.query", "services_ssh", [], {"get": True})
+        keys = [(
+            os.path.join("/usr/local/etc/ssh", i),
+            i.replace(".", "_").replace("-", "_")
+        ) for i in [
             "ssh_host_key",
             "ssh_host_key.pub",
             "ssh_host_dsa_key",
@@ -143,18 +146,13 @@ class SSHService(SystemServiceService):
             "ssh_host_ed25519_key",
             "ssh_host_ed25519_key.pub",
             "ssh_host_ed25519_key-cert.pub",
-        ]:
-            if osc.IS_FREEBSD:
-                path = os.path.join("/usr/local/etc/ssh", i)
-            else:
-                path = os.path.join("/etc/ssh", i)
+        ]]
+        for path, column in keys:
             if os.path.exists(path):
                 with open(path, "rb") as f:
                     data = base64.b64encode(f.read()).decode("ascii")
+                    if data != old[column]:
+                        update[column] = data
 
-                column = i.replace(".", "_",).replace("-", "_")
-
-                update[column] = data
-
-        old = self.middleware.call_sync('ssh.config')
-        self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update)
+        if update:
+            self.middleware.call_sync("datastore.update", "services.ssh", old["id"], update, {"ha_sync": False})
