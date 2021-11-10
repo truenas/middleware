@@ -61,7 +61,7 @@ class ACLTemplateService(CRUDService):
         "acltemplate_create",
         Str("name", required=True),
         Str("acltype", required=True, enum=["NFS4", "POSIX1E"]),
-        OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl', requried=True),
+        OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl', required=True),
         register=True
     ))
     async def do_create(self, data):

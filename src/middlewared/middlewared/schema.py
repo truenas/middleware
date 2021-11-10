@@ -107,6 +107,9 @@ class Attribute(object):
         if not self.editable and not self.has_default:
             raise Error(self.name, 'Default value must be specified when attribute is marked as non-editable.')
 
+        if kwargs:
+            raise TypeError(f"Unexpected keyword arguments: {', '.join(map(repr, kwargs.keys()))}")
+
     def clean(self, value):
         if value is None and self.null is False:
             raise Error(self.name, 'null not allowed')
