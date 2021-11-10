@@ -1253,7 +1253,7 @@ class VMService(CRUDService, LibvirtConnectionMixin):
         List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
-        Int('shutdown_timeout', default=90, valdiators=[Range(min=5, max=300)]),
+        Int('shutdown_timeout', default=90, validators=[Range(min=5, max=300)]),
         register=True,
     ))
     async def do_create(self, data):

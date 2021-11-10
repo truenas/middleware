@@ -428,7 +428,7 @@ class PluginService(CRUDService):
             Bool('refresh', default=False),
             Str('plugin', required=True),
             Str('branch', default=None, null=True),
-            Str('plugin_repository', emtpy=False)
+            Str('plugin_repository', empty=False)
         )
     )
     def defaults(self, options):
