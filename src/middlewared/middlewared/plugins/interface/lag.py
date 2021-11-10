@@ -35,10 +35,16 @@ class InterfaceService(Service):
             self.middleware.call_sync('interface.disable_capabilities', name)
         """
 
-        info = {'protocol': None, 'xmit_hash_policy': None, 'lacpdu_rate': None}
+        info = {'protocol': None, 'xmit_hash_policy': None, 'lacpdu_rate': None, 'primary_interface': None}
         protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
         if iface.protocol != protocol:
             info['protocol'] = protocol
+
+        if protocol.name == 'FAILOVER':
+            db_primary = [i['lagg_physnic'] for i in members if i['lagg_ordernum'] == 0][0]
+            curr_primary = iface.primary_interface
+            if curr_primary != db_primary:
+                info['primary_interface'] = db_primary
 
         if lagg['lagg_xmit_hash_policy']:
             # passing the xmit_hash_policy value needs to be lower-case
@@ -75,6 +81,10 @@ class InterfaceService(Service):
             if info['lacpdu_rate'] is not None:
                 self.logger.info('Changing lacpdu_rate on %r to %s', name, info['lacpdu_rate'])
                 iface.lacpdu_rate = info['lacpdu_rate']
+
+            if info['primary_interface'] is not None:
+                self.logger.info('Changing primary interface on %r to %s', name, info['primary_interface'])
+                iface.primary_interface = info['primary_interface']
 
             # be sure and bring the lagg back up after making changes
             iface.up()
