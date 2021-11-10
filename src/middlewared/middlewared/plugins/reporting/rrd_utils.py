@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 import json
 import re
@@ -5,6 +6,7 @@ import statistics
 import subprocess
 import textwrap
 import time
+from typing import Optional
 
 import humanfriendly
 
@@ -40,6 +42,14 @@ class RRDMeta(type):
         return klass
 
 
+@dataclass
+class RRDType:
+    type: str
+    dsname: str
+    transform: Optional[str] = None
+    name: Optional[str] = None
+
+
 class RRDBase(object, metaclass=RRDMeta):
 
     aggregations = ('min', 'mean', 'max')
@@ -72,7 +82,7 @@ class RRDBase(object, metaclass=RRDMeta):
     def get_vertical_label(self):
         return self.vertical_label
 
-    def get_rrd_types(self, identifier=None):
+    def get_rrd_types(self, identifier):
         return self.rrd_types
 
     def __getstate__(self):
@@ -120,21 +130,19 @@ class RRDBase(object, metaclass=RRDMeta):
     def has_data(self):
         if self.get_identifiers() is not None or not self.rrd_types:
             return True
-        for _type, dsname, transform, in self.rrd_types:
-            direc = self.plugin
-            path = os.path.join(self._base_path, direc, f'{_type}.rrd')
+        for rrd_type in self.rrd_types:
+            path = os.path.join(self._base_path, self.plugin, f'{rrd_type.type}.rrd')
             if os.path.exists(path):
                 return True
         return False
 
     def get_rrd_file(self, rrd_type, identifier):
-        _type, dsname, transform = rrd_type
         direc = self.plugin
         if self.identifier_plugin and identifier:
             identifier = self.encode(identifier)
             direc += f'-{identifier}'
 
-        return os.path.join(self._base_path, direc, f'{_type}.rrd')
+        return os.path.join(self._base_path, direc, f'{rrd_type.type}.rrd')
 
     def get_rrd_files(self, identifier):
         result = []
@@ -151,16 +159,15 @@ class RRDBase(object, metaclass=RRDMeta):
         args = []
         defs = {}
         for i, rrd_type in enumerate(rrd_types):
-            _type, dsname, transform = rrd_type
             path = self.get_rrd_file(rrd_type, identifier)
             path = path.replace(':', r'\:')
-            name = f'{_type}_{dsname}'
+            name = rrd_type.name or f'{rrd_type.type}_{rrd_type.dsname}'
             defs[i] = {
                 'name': name,
-                'transform': transform,
+                'transform': rrd_type.transform,
             }
             args += [
-                f'DEF:{name}={path}:{dsname}:AVERAGE',
+                f'DEF:{name}={path}:{rrd_type.dsname}:AVERAGE',
             ]
 
         for i, attrs in defs.items():
