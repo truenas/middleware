@@ -133,7 +133,6 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
 @pytest.mark.parametrize("req,error", [
     # Push + naming-schema
     (dict(naming_schema=["snap-%Y%m%d-%H%M-1m"]), "naming_schema"),
-
     # Auto with both periodic snapshot task and schedule
     (dict(periodic_snapshot_tasks=["data-recursive"], schedule={"minute": "*/2"}, auto=True), None),
     # Auto with periodic snapshot task
@@ -142,7 +141,6 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
     (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-2m"], schedule={"minute": "*/2"}, auto=True), None),
     # Auto without periodic snapshot task or schedule
     (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-2m"], auto=True), "auto"),
-
     # Pull + periodic snapshot tasks
     (dict(direction="PULL", periodic_snapshot_tasks=["data-recursive"]), "periodic_snapshot_tasks"),
     # Pull with naming schema
@@ -153,7 +151,6 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
     # Pull + hold_pending_snapshots
     (dict(direction="PULL", naming_schema=["snap-%Y%m%d-%H%M-1w"], hold_pending_snapshots=True),
      "hold_pending_snapshots"),
-
     # SSH+Netcat
     (dict(periodic_snapshot_tasks=["data-recursive"],
           transport="SSH+NETCAT", ssh_credentials=True, netcat_active_side="LOCAL", netcat_active_side_port_min=1024,
@@ -167,7 +164,6 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
     (dict(transport="SSH+NETCAT", compression="LZ4"), "compression"),
     # SSH+Netcat + speed limit
     (dict(transport="SSH+NETCAT", speed_limit=1024), "speed_limit"),
-
     # Does not exclude garbage
     (dict(source_datasets=["tank/exclude/work"], periodic_snapshot_tasks=["exclude"], recursive=True), "exclude"),
     # Does not exclude garbage
@@ -179,33 +175,22 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
     # Can't replicate excluded dataset
     (dict(source_datasets=["tank/exclude/work/garbage"], periodic_snapshot_tasks=["exclude"]),
      "source_datasets.0"),
-
     # Non-recursive exclude
     (dict(source_datasets=["tank/exclude/work"], periodic_snapshot_tasks=["exclude"], recursive=False,
           exclude=["tank/exclude/work/garbage"]),
      "exclude"),
-
     # Unrelated exclude
     (dict(source_datasets=["tank/exclude/work"], periodic_snapshot_tasks=["exclude"], recursive=True,
           exclude=["tank/data"]),
      "exclude.0"),
-
     # Does not require unrelated exclude
     (dict(source_datasets=["tank/exclude/work/important"], periodic_snapshot_tasks=["exclude"], recursive=True),
      None),
-
     # Custom retention policy
     (dict(periodic_snapshot_tasks=["data-recursive"],
           retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK"), None),
-
-    # Complex custom retention policy
-    (dict(periodic_snapshot_tasks=["data-recursive"],
-          retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK", lifetimes=[
-              dict(schedule={"hour": "0"}, lifetime_value=30, lifetime_unit="DAY"),
-              dict(schedule={"hour": "0", "dow": "1"}, lifetime_value=1, lifetime_unit="YEAR"),
-          ]), None),
 ])
-def test_create_replication(request, credentials, periodic_snapshot_tasks, req, error):
+def test_01_create_replication(request, credentials, periodic_snapshot_tasks, req, error):
     depends(request, ["pool_04"], scope="session")
     if "ssh_credentials" in req:
         req["ssh_credentials"] = credentials["id"]
