@@ -7,8 +7,8 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, SSH_TEST, wait_on_job
-from auto_config import ip, hostname, password, user
+from functions import PUT, POST, GET, wait_on_job
+from auto_config import hostname
 from pytest_dependency import depends
 
 try:
@@ -201,13 +201,6 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     ad_user = f'{domain_prefix}{ADUSERNAME.lower()}'
     ad_group = f'{domain_prefix}domain users'
 
-    cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    if not results['result']:
-        return
-
     results = GET('/user', payload={
         'query-filters': [['username', '=', ad_user]],
         'query-options': {'extra': {"search_dscache": True}},
@@ -262,13 +255,6 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     by id or by name and so they are tested separately.
     """
     depends(request, ["pool_04", "LAZY_INITIALIZATION_BY_NAME"], scope="session")
-
-    cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    if not results['result']:
-        return
 
     results = GET('/user', payload={
         'query-filters': [['uid', '=', ad_user_id]],
