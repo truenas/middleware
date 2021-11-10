@@ -95,7 +95,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Bool('hide_from_msr', default=False),
         Bool('ensure_display_device', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
-        Int('shutdown_timeout', default=90, valdiators=[Range(min=5, max=300)]),
+        Int('shutdown_timeout', default=90, validators=[Range(min=5, max=300)]),
         Str('arch_type', null=True, default=None),
         Str('machine_type', null=True, default=None),
         register=True,

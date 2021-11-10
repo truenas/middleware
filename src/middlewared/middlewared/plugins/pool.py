@@ -3115,7 +3115,7 @@ class PoolDatasetService(CRUDService):
             items=[Dict(
                 'user_property',
                 Str('key', required=True, validators=[Match(r'.*:.*')]),
-                Str('value', requried=True),
+                Str('value', required=True),
             )],
         ),
         Bool('create_ancestors', default=False),
