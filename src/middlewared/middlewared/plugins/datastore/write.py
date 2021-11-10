@@ -1,7 +1,7 @@
 from sqlalchemy import and_, types
 from sqlalchemy.sql import sqltypes
 
-from middlewared.schema import accepts, Any, Dict, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Str
 from middlewared.service import Service
 
 from .filter import FilterMixin
@@ -13,7 +13,15 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
     class Config:
         private = True
 
-    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
+    @accepts(
+        Str('name'),
+        Dict('data', additional_attrs=True),
+        Dict(
+            'options',
+            Bool('ha_sync', default=True),
+            Str('prefix', default=''),
+        ),
+    )
     async def insert(self, name, data, options):
         """
         Insert a new entry to `name`.
@@ -30,8 +38,14 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         pk_column = self._get_pk(table)
         return_last_insert_rowid = type(pk_column.type) == sqltypes.Integer
-        result = await self.middleware.call('datastore.execute_write', table.insert().values(**insert),
-                                            return_last_insert_rowid)
+        result = await self.middleware.call(
+            'datastore.execute_write',
+            table.insert().values(**insert),
+            {
+                'ha_sync': options['ha_sync'],
+                'return_last_insert_rowid': return_last_insert_rowid,
+            },
+        )
         if return_last_insert_rowid:
             pk = result
         else:
@@ -43,8 +57,16 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         return pk
 
-    @accepts(Str('name'), Any('id_or_filters'), Dict('data', additional_attrs=True),
-             Dict('options', Str('prefix', default='')))
+    @accepts(
+        Str('name'),
+        Any('id_or_filters'),
+        Dict('data', additional_attrs=True),
+        Dict(
+            'options',
+            Bool('ha_sync', default=True),
+            Str('prefix', default=''),
+        ),
+    )
     async def update(self, name, id_or_filters, data, options):
         """
         Update an entry `id` in `name`.
@@ -53,7 +75,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         data = data.copy()
 
         if isinstance(id_or_filters, list):
-            rows = await self.middleware.call('datastore.query', name, id_or_filters, options)
+            rows = await self.middleware.call('datastore.query', name, id_or_filters, {'prefix': options['prefix']})
             if len(rows) != 1:
                 raise RuntimeError(f'{len(rows)} found, expecting one')
 
@@ -71,7 +93,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         if update:
             result = await self.middleware.call(
                 'datastore.execute_write',
-                table.update().values(**update).where(self._where_clause(table, id, options)),
+                table.update().values(**update).where(self._where_clause(table, id, {'prefix': options['prefix']})),
+                {
+                    'ha_sync': options['ha_sync'],
+                },
             )
             if result.rowcount != 1:
                 raise RuntimeError('No rows were updated')
@@ -124,7 +149,15 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         else:
             return self._get_pk(table) == id_or_filters
 
-    @accepts(Str('name'), Any('id_or_filters'), Dict('options', Str('prefix', default='')))
+    @accepts(
+        Str('name'),
+        Any('id_or_filters'),
+        Dict(
+            'options',
+            Bool('ha_sync', default=True),
+            Str('prefix', default=''),
+        ),
+    )
     async def delete(self, name, id_or_filters, options):
         """
         Delete an entry `id` in `name`.
@@ -133,7 +166,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         await self.middleware.call(
             'datastore.execute_write',
-            table.delete().where(self._where_clause(table, id_or_filters, options)),
+            table.delete().where(self._where_clause(table, id_or_filters, {'prefix': options['prefix']})),
+            {
+                'ha_sync': options['ha_sync'],
+            },
         )
 
         # FIXME: Sending events for batch deletes not implemented yet
