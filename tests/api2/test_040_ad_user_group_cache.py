@@ -67,11 +67,6 @@ def test_03_enabling_activedirectory(request):
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
     job_id = results.json()['job_id']
-
-
-@pytest.mark.dependency(name="JOINED_AD")
-def test_04_verify_the_job_id_is_successful(request):
-    depends(request, ["AD_ENABLED"])
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
@@ -88,7 +83,7 @@ def test_05_get_activedirectory_state(request):
     """
     global WORKGROUP
 
-    depends(request, ["JOINED_AD"])
+    depends(request, ["AD_ENABLED"])
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
 
@@ -115,7 +110,7 @@ def test_07_check_for_ad_users(request):
     This test validates that we can query AD users using
     filter-option {"extra": {"search_dscache": True}}
     """
-    depends(request, ["pool_04", "INITIAL_CACHE_FILL"], scope="session")
+    depends(request, ["INITIAL_CACHE_FILL"], scope="session")
     results = GET('/user', payload={
         'query-filters': [['local', '=', False]],
         'query-options': {'extra': {"search_dscache": True}},
@@ -130,7 +125,7 @@ def test_08_check_for_ad_groups(request):
     This test validates that we can query AD groups using
     filter-option {"extra": {"search_dscache": True}}
     """
-    depends(request, ["pool_04", "INITIAL_CACHE_FILL"], scope="session")
+    depends(request, ["INITIAL_CACHE_FILL"], scope="session")
     results = GET('/group', payload={
         'query-filters': [['local', '=', False]],
         'query-options': {'extra': {"search_dscache": True}},
@@ -148,8 +143,7 @@ def test_09_check_directoryservices_cache_refresh(request):
     This currently happens once per 24 hours. Result of failure here will
     be lack of users/groups visible in webui.
     """
-    depends(request, ["pool_04", "AD_USERS_CACHED", "AD_GROUPS_CACHED"], scope="session")
-    rebuild_ok = False
+    depends(request, ["AD_USERS_CACHED", "AD_GROUPS_CACHED"], scope="session")
 
     """
     directoryservices.cache_refresh job causes us to rebuild / refresh
@@ -157,30 +151,27 @@ def test_09_check_directoryservices_cache_refresh(request):
     """
     results = GET('/directoryservices/cache_refresh/')
     assert results.status_code == 200, results.text
-    if results.status_code == 200:
-        refresh_job = results.json()
-        job_status = wait_on_job(refresh_job, 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        if job_status['state'] == 'SUCCESS':
-            rebuild_ok = True
+    refresh_job = results.json()
+    job_status = wait_on_job(refresh_job, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     """
     Verify that the AD user / group cache was rebuilt successfully.
     """
-    if rebuild_ok:
-        results = GET('/group', payload={
-            'query-filters': [['local', '=', False]],
-            'query-options': {'extra': {"search_dscache": True}},
-        })
-        assert results.status_code == 200, results.text
-        assert len(results.json()) > 0, results.text
 
-        results = GET('/user', payload={
-            'query-filters': [['local', '=', False]],
-            'query-options': {'extra': {"search_dscache": True}},
-        })
-        assert results.status_code == 200, results.text
-        assert len(results.json()) > 0, results.text
+    results = GET('/group', payload={
+        'query-filters': [['local', '=', False]],
+        'query-options': {'extra': {"search_dscache": True}},
+    })
+    assert results.status_code == 200, results.text
+    assert len(results.json()) > 0, results.text
+
+    results = GET('/user', payload={
+        'query-filters': [['local', '=', False]],
+        'query-options': {'extra': {"search_dscache": True}},
+    })
+    assert results.status_code == 200, results.text
+    assert len(results.json()) > 0, results.text
 
 
 @pytest.mark.dependency(name="LAZY_INITIALIZATION_BY_NAME")
@@ -194,7 +185,7 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     to only hit the cache. Code paths are slightly different for lookups
     by id or by name and so they are tested separately.
     """
-    depends(request, ["pool_04", "REBUILD_AD_CACHE"], scope="session")
+    depends(request, ["REBUILD_AD_CACHE"], scope="session")
     global ad_user_id
     global ad_domain_users_id
     domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
@@ -207,26 +198,22 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     })
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
-    if len(results.json()) == 0:
-        return
 
     ad_user_id = results.json()[0]['uid']
     assert results.json()[0]['username'] == ad_user, results.text 
 
     results = GET('/group', payload={
-        'query-filters': [['name', '=', ad_group]],
+        'query-filters': [['group', '=', ad_group]],
         'query-options': {'extra': {"search_dscache": True}},
     })
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
-    if len(results.json()) == 0:
-        return
 
     ad_domain_users_id = results.json()[0]['gid']
-    assert results.json()[0]['name'] == ad_group, results.text 
+    assert results.json()[0]['group'] == ad_group, results.text
 
     """
-    The following two tests validate that cache insertion occured.
+    The following two tests validate that cache insertion occurred.
     """
     results = GET('/user', payload={
         'query-filters': [['username', '=', ad_user], ['local', '=', False]],
@@ -236,7 +223,7 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     assert len(results.json()) == 1, results.text
 
     results = GET('/group', payload={
-        'query-filters': [['name', '=', ad_group], ['local', '=', False]],
+        'query-filters': [['group', '=', ad_group], ['local', '=', False]],
         'query-options': {'extra': {"search_dscache": True}},
     })
     assert results.status_code == 200, results.text
@@ -254,7 +241,7 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     to only hit the cache. Code paths are slightly different for lookups
     by id or by name and so they are tested separately.
     """
-    depends(request, ["pool_04", "LAZY_INITIALIZATION_BY_NAME"], scope="session")
+    depends(request, ["LAZY_INITIALIZATION_BY_NAME"], scope="session")
 
     results = GET('/user', payload={
         'query-filters': [['uid', '=', ad_user_id]],
@@ -271,7 +258,7 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     assert results.json()[0]['gid'] == ad_domain_users_id, results.text 
 
     """
-    The following two tests validate that cache insertion occured.
+    The following two tests validate that cache insertion occurred.
     """
     results = GET('/user', payload={
         'query-filters': [['uid', '=', ad_user_id], ['local', '=', False]],
@@ -289,7 +276,7 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
 
 
 def test_39_leave_activedirectory(request):
-    depends(request, ["JOINED_AD"])
+    depends(request, ["AD_ENABLED"])
     global payload, results
     payload = {
         "username": ADUSERNAME,
@@ -300,7 +287,7 @@ def test_39_leave_activedirectory(request):
 
 
 def test_41_remove_site(request):
-    depends(request, ["JOINED_AD"])
+    depends(request, ["AD_ENABLED"])
     payload = {"site": None, "use_default_domain": False}
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
