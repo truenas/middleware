@@ -231,7 +231,7 @@ class SSHService(SystemServiceService):
                         update[column] = data
 
         if update:
-            self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update)
+            self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update, {'ha_sync': False})
 
 
 async def setup(middleware):
