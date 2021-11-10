@@ -154,6 +154,8 @@ def test_13_strip_acl_from_dataset(request):
 
     assert result.status_code == 200, result.text
     JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_14_filesystem_acl_is_removed(request):
