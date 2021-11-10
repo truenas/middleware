@@ -11,8 +11,8 @@ class PoolService(Service):
         Int('oid'),
         Dict(
             'pool_attach',
-            Str('target_vdev', reuired=True),
-            Str('new_disk', reuired=True),
+            Str('target_vdev', required=True),
+            Str('new_disk', required=True),
             Str('passphrase'),
         )
     )
