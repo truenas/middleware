@@ -166,8 +166,9 @@ class KubernetesService(ConfigService):
                 'update Kubernetes settings. Currently, k3s cannot be used without a default route.'
             )
 
+        valid_choices = await self.route_interface_choices()
         for k, _ in await self.validate_interfaces(data):
-            verrors.add(f'{schema}.{k}', 'Please specify a valid interface.')
+            verrors.add(f'{schema}.{k}', f'Please specify a valid interface (i.e {", ".join(valid_choices)!r}).')
 
         for k in ('route_v4', 'route_v6'):
             gateway = data[f'{k}_gateway']
@@ -190,7 +191,7 @@ class KubernetesService(ConfigService):
     @private
     async def validate_interfaces(self, data):
         errors = []
-        interfaces = {i['name']: i for i in await self.middleware.call('interface.query')}
+        interfaces = await self.route_interface_choices()
         for k in filter(
             lambda k: data[k] and data[k] not in interfaces, ('route_v4_interface', 'route_v6_interface')
         ):
@@ -328,7 +329,7 @@ class KubernetesService(ConfigService):
         }
 
     @accepts()
-    @returns(Dict(additional_attrs=True, ))
+    @returns(Dict(additional_attrs=True))
     async def route_interface_choices(self):
         """
         Returns Interface choices for Kubernetes service to use for ipv4 connections.
