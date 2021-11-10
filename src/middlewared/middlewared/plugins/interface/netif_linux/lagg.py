@@ -57,6 +57,15 @@ class LaggMixin:
         run(["ip", "link", "set", self.name, "type", "bond", "lacp_rate", value])
 
     @property
+    def primary_interface(self):
+        if self.protocol == AggregationProtocol.FAILOVER:
+            return self._sysfs_read(self.get_options_path("primary")).strip() or None
+
+    @primary_interface.setter
+    def primary_interface(self, value):
+        run(["ip", "link", "set", self.name, "type", "bond", "primary", value])
+
+    @property
     def ports(self):
         ports = []
         for port in self._sysfs_read(f"/sys/devices/virtual/net/{self.name}/bonding/slaves").split():
