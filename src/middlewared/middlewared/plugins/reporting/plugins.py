@@ -4,9 +4,7 @@ import os
 import re
 import subprocess
 
-from .rrd_utils import RRDBase
-
-from middlewared.utils import osc
+from .rrd_utils import RRDBase, RRDType
 
 
 class CPUPlugin(RRDBase):
@@ -125,7 +123,7 @@ class DiskTempPlugin(RRDBase):
 
     vertical_label = '\u00b0C'
     rrd_types = (
-        ('temperature', 'value', None),
+        RRDType('temperature', 'value'),
     )
 
     def get_title(self):
@@ -146,8 +144,8 @@ class InterfacePlugin(RRDBase):
 
     vertical_label = 'Bits/s'
     rrd_types = (
-        ('if_octets', 'rx', '%name%,8,*'),
-        ('if_octets', 'tx', '%name%,8,*'),
+        RRDType('if_octets', 'rx', '%name%,8,*', 'rx'),
+        RRDType('if_octets', 'tx', '%name%,8,*', 'tx'),
     )
     rrd_data_extra = """
         CDEF:overlap=%name_0%,%name_1%,LT,%name_0%,%name_1%,IF
@@ -174,22 +172,12 @@ class MemoryPlugin(RRDBase):
 
     title = 'Physical memory utilization'
     vertical_label = 'Bytes'
-    if osc.IS_FREEBSD:
-        rrd_types = (
-            ('memory-wired', 'value', None),
-            ('memory-inactive', 'value', None),
-            ('memory-laundry', 'value', None),
-            ('memory-active', 'value', None),
-            ('memory-free', 'value', None),
-        )
-        stacked = True
-    else:
-        rrd_types = (
-            ('memory-used', 'value', None),
-            ('memory-free', 'value', None),
-            ('memory-cached', 'value', None),
-            ('memory-buffered', 'value', None),
-        )
+    rrd_types = (
+        RRDType('memory-used', 'value'),
+        RRDType('memory-free', 'value'),
+        RRDType('memory-cached', 'value'),
+        RRDType('memory-buffered', 'value'),
+    )
 
 
 class LoadPlugin(RRDBase):
@@ -197,9 +185,9 @@ class LoadPlugin(RRDBase):
     title = 'System Load'
     vertical_label = 'Processes'
     rrd_types = (
-        ('load', 'shortterm', None),
-        ('load', 'midterm', None),
-        ('load', 'longterm', None),
+        RRDType('load', 'shortterm'),
+        RRDType('load', 'midterm'),
+        RRDType('load', 'longterm'),
     )
 
 
@@ -209,8 +197,8 @@ class NFSStatPlugin(RRDBase):
     title = 'NFS Stats (Operations)'
     vertical_label = 'Operations/s'
     rrd_types = (
-        ('nfsstat-read', 'value', None),
-        ('nfsstat-write', 'value', None),
+        RRDType('nfsstat-read', 'value'),
+        RRDType('nfsstat-write', 'value'),
     )
 
 
@@ -220,8 +208,8 @@ class NFSStatBytesPlugin(RRDBase):
     title = 'NFS Stats (Bytes)'
     vertical_label = 'Bytes/s'
     rrd_types = (
-        ('nfsstat-read_bytes', 'value', None),
-        ('nfsstat-write_bytes', 'value', None),
+        RRDType('nfsstat-read_bytes', 'value'),
+        RRDType('nfsstat-write_bytes', 'value'),
     )
 
 
@@ -229,24 +217,13 @@ class ProcessesPlugin(RRDBase):
 
     title = 'Processes'
     vertical_label = 'Processes'
-    if osc.IS_FREEBSD:
-        rrd_types = (
-            ('ps_state-wait', 'value', None),
-            ('ps_state-idle', 'value', None),
-            ('ps_state-sleeping', 'value', None),
-            ('ps_state-running', 'value', None),
-            ('ps_state-stopped', 'value', None),
-            ('ps_state-zombies', 'value', None),
-            ('ps_state-blocked', 'value', None),
-        )
-    else:
-        rrd_types = (
-            ('ps_state-sleeping', 'value', None),
-            ('ps_state-running', 'value', None),
-            ('ps_state-stopped', 'value', None),
-            ('ps_state-zombies', 'value', None),
-            ('ps_state-blocked', 'value', None),
-        )
+    rrd_types = (
+        RRDType('ps_state-sleeping', 'value'),
+        RRDType('ps_state-running', 'value'),
+        RRDType('ps_state-stopped', 'value'),
+        RRDType('ps_state-zombies', 'value'),
+        RRDType('ps_state-blocked', 'value'),
+    )
     stacked = True
 
 
@@ -255,8 +232,8 @@ class SwapPlugin(RRDBase):
     title = 'Swap Utilization'
     vertical_label = 'Bytes'
     rrd_types = (
-        ('swap-used', 'value', None),
-        ('swap-free', 'value', None),
+        RRDType('swap-used', 'value'),
+        RRDType('swap-free', 'value'),
     )
     stacked = True
 
@@ -265,8 +242,8 @@ class DFPlugin(RRDBase):
 
     vertical_label = 'Bytes'
     rrd_types = (
-        ('df_complex-free', 'value', None),
-        ('df_complex-used', 'value', None),
+        RRDType('df_complex-free', 'value'),
+        RRDType('df_complex-used', 'value'),
     )
     stacked = True
     stacked_show_total = True
@@ -297,7 +274,7 @@ class UptimePlugin(RRDBase):
     title = 'Uptime'
     vertical_label = 'Days'
     rrd_types = (
-        ('uptime', 'value', '%name%,86400,/'),
+        RRDType('uptime', 'value', '%name%,86400,/'),
     )
 
 
@@ -305,8 +282,8 @@ class DiskPlugin(RRDBase):
 
     vertical_label = 'Bytes/s'
     rrd_types = (
-        ('disk_octets', 'read', None),
-        ('disk_octets', 'write', None),
+        RRDType('disk_octets', 'read'),
+        RRDType('disk_octets', 'write'),
     )
 
     RE_NVME_N = re.compile(r"(nvme[0-9]+)(n[0-9]+)$")
@@ -344,8 +321,8 @@ class ARCSizePlugin(RRDBase):
     plugin = 'zfs_arc'
     vertical_label = 'Bytes'
     rrd_types = (
-        ('cache_size-arc', 'value', None),
-        ('cache_size-L2', 'value', None),
+        RRDType('cache_size-arc', 'value'),
+        RRDType('cache_size-L2', 'value'),
     )
 
     def get_title(self):
@@ -357,8 +334,8 @@ class ARCRatioPlugin(RRDBase):
     plugin = 'zfs_arc'
     vertical_label = 'Hits (%)'
     rrd_types = (
-        ('cache_ratio-arc', 'value', '%name%,100,*'),
-        ('cache_ratio-L2', 'value', '%name%,100,*'),
+        RRDType('cache_ratio-arc', 'value', '%name%,100,*'),
+        RRDType('cache_ratio-L2', 'value', '%name%,100,*'),
     )
 
     def get_title(self):
@@ -375,8 +352,8 @@ class ARCResultPlugin(RRDBase):
 
     def get_rrd_types(self, identifier):
         return (
-            (f'cache_result-{identifier}-hit', 'value', '%name%,100,*'),
-            (f'cache_result-{identifier}-miss', 'value', '%name%,100,*'),
+            RRDType(f'cache_result-{identifier}-hit', 'value', '%name%,100,*'),
+            RRDType(f'cache_result-{identifier}-miss', 'value', '%name%,100,*'),
         )
 
     def get_title(self):
