@@ -49,6 +49,6 @@ class MigrationService(Service):
                     self.middleware.logger.error("Error running migration %s", name, exc_info=True)
                     continue
 
-                await self.middleware.call("datastore.insert", "system.migration", {"name": name})
+                await self.middleware.call("datastore.insert", "system.migration", {"name": name}, {"ha_sync": False})
 
-            await self.middleware.call("keyvalue.set", "run_migration", False)
+            await self.middleware.call("keyvalue.set", "run_migration", False, {"ha_sync": False})
