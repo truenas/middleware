@@ -1679,7 +1679,9 @@ async def _update_birthday(middleware):
             middleware.logger.debug('Updating birthday data')
             # update db with new birthday
             settings = await middleware.call('datastore.config', 'system.settings')
-            await middleware.call('datastore.update', 'system.settings', settings['id'], {'stg_birthday': birthday})
+            await middleware.call(
+                'datastore.update', 'system.settings', settings['id'], {'stg_birthday': birthday}, {'ha_sync': False}
+            )
             break
         else:
             await asyncio.sleep(300)
