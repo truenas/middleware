@@ -274,7 +274,7 @@ class NISService(ConfigService):
 
         for nis_group in nis_groups:
             if nis_group in local_groups:
-                self.logger.warning("%s: name is also a local a local group. Omitting from group cache", nis_group)
+                self.logger.warning("%s: name is also a local group. Omitting from group cache", nis_group)
                 continue
 
             g = grp.getgrnam(nis_group)
