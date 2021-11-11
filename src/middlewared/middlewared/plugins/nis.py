@@ -243,7 +243,7 @@ class NISService(ConfigService):
 
         for nis_user in nis_users:
             if nis_user in local_users:
-                self.logger.warning("%s: name is also a local a local user. Omitting from user cache", nis_user)
+                self.logger.warning("%s: name is also a local user. Omitting from user cache", nis_user)
                 continue
 
             u = pwd.getpwnam(nis_user)
