@@ -22,8 +22,10 @@ class NISBindAlertSource(AlertSource):
 
         try:
             await self.middleware.call("nis.started")
+            await self.middleware.call("etc.generate", "nsswitch")
         except Exception as e:
             await self.middleware.call('nis.set_state', DSStatus['FAULTED'])
+            await self.middleware.call("etc.generate", "nsswitch")
             return Alert(
                 NISBindAlertClass,
                 {'niserr': str(e)},
