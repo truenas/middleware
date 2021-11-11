@@ -299,6 +299,6 @@ class NISService(ConfigService):
         if not await self.middleware.call('cache.has_key', 'NIS_cache'):
             await self.middleware.call('nis.fill_cache')
             self.logger.debug('cache fill is in progress.')
-            return {'users': [], 'groups': []}
+            return {'users': {}, 'groups': {}}
 
         return await self.middleware.call('cache.get', 'NIS_cache')
