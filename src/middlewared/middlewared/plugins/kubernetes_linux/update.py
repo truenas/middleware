@@ -7,7 +7,7 @@ from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, returns, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
-from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
+from .utils import applications_ds_name
 
 
 class KubernetesModel(sa.Model):
@@ -265,7 +265,9 @@ class KubernetesService(ConfigService):
             job.set_progress(
                 25, f'Migrating {applications_ds_name(old_config["pool"])} to {applications_ds_name(config["pool"])}'
             )
-            await self.migrate_ix_applications_dataset(config['pool'], old_config['pool'])
+            await self.middleware.call(
+                'kubernetes.migrate_ix_applications_dataset', config['pool'], old_config['pool']
+            )
             job.set_progress(40, 'Migration complete for ix-applications dataset')
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
@@ -280,41 +282,6 @@ class KubernetesService(ConfigService):
                 await self.middleware.call('catalog.sync_all')
 
         return await self.config()
-
-    @private
-    async def migrate_ix_applications_dataset(self, new_pool, old_pool):
-        snap_details = await self.middleware.call(
-            'zfs.snapshot.create', {
-                'dataset': applications_ds_name(old_pool),
-                'naming_schema': MIGRATION_NAMING_SCHEMA,
-                'recursive': True,
-            }
-        )
-
-        try:
-            old_ds = applications_ds_name(old_pool)
-            new_ds = applications_ds_name(new_pool)
-            migrate_job = await self.middleware.call(
-                'replication.run_onetime', {
-                    'direction': 'PUSH',
-                    'transport': 'LOCAL',
-                    'source_datasets': [old_ds],
-                    'target_dataset': new_ds,
-                    'recursive': True,
-                    'also_include_naming_schema': [MIGRATION_NAMING_SCHEMA],
-                    'retention_policy': 'NONE',
-                    'replicate': True,
-                    'readonly': 'IGNORE',
-                }
-            )
-            await migrate_job.wait()
-            if migrate_job.error:
-                raise CallError(f'Failed to migrate {old_ds} to {new_ds}: {migrate_job.error}')
-        finally:
-            await self.middleware.call('zfs.snapshot.delete', snap_details['id'], {'recursive': True})
-            snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
-            if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
-                await self.middleware.call('zfs.snapshot.delete', snap_name, {'recursive': True})
 
     @accepts()
     @returns(Dict('kubernetes_bind_ip_choices', additional_attrs=True,))
