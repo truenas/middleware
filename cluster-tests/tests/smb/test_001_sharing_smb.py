@@ -18,8 +18,6 @@ SMB_SHARE_ID = None
 
 @pytest.mark.dependency(name="CLUSTER_INITIAL_CONFIG")
 def test_001_check_initial_smb_config(request):
-    depends(request, ['CTDB_IS_HEALTHY'])
-
     payload = {
         'msg': 'method',
         'method': 'sharing.smb.reg_showshare',
