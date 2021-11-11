@@ -1,4 +1,5 @@
 import asyncio
+import subprocess
 import errno
 import pwd
 import grp
@@ -137,6 +138,23 @@ class NISService(ConfigService):
         return True
 
     @private
+    def ypcat_names(self, mapname):
+        allowed_maps = ['GROUP', 'PASSWD']
+        if mapname not in allowed_maps:
+            raise CallError(f'{mapname}: not a supported map')
+
+        ypcat = subprocess.run(['ypcat', mapname.lower()], check=False, capture_output=True)
+        if ypcat.returncode != 0:
+            raise CallError(f'{mapname}: failed to look up map: {ypcat.stderr.decode()}')
+
+        entries = []
+        for i in ypcat.stdout.decode().splitlines():
+            entry_name, data = i.split(":", 1)
+            entries.append(entry_name)
+
+        return entries
+
+    @private
     async def __ypwhich(self):
         """
         The return code from ypwhich is not a reliable health indicator. For example, RPC failure will return 0.
@@ -216,18 +234,19 @@ class NISService(ConfigService):
             raise CallError('NIS cache already exists. Refusing to generate cache.')
 
         self.middleware.call_sync('cache.pop', 'NIS_cache')
-        pwd_list = pwd.getpwall()
-        grp_list = grp.getgrall()
+        nis_users = self.ypcat_names("PASSWD")
+        nis_groups = self.ypcat_names("GROUP")
 
-        local_uid_list = list(u['uid'] for u in self.middleware.call_sync('user.query'))
-        local_gid_list = list(g['gid'] for g in self.middleware.call_sync('group.query'))
+        local_users = list(u['username'] for u in self.middleware.call_sync('user.query'))
+        local_groups = list(g['group'] for g in self.middleware.call_sync('group.query'))
         cache_data = {'users': [], 'groups': []}
 
-        for u in pwd_list:
-            is_local_user = True if u.pw_uid in local_uid_list else False
-            if is_local_user:
+        for nis_user in nis_users:
+            if nis_user in local_users:
+                self.logger.warning("%s: name is also a local user. Omitting from user cache", nis_user)
                 continue
 
+            u = pwd.getpwnam(nis_user)
             cache_data['users'].append({u.pw_name: {
                 'id': user_next_index,
                 'uid': u.pw_uid,
@@ -253,11 +272,12 @@ class NISService(ConfigService):
             }})
             user_next_index += 1
 
-        for g in grp_list:
-            is_local_user = True if g.gr_gid in local_gid_list else False
-            if is_local_user:
+        for nis_group in nis_groups:
+            if nis_group in local_groups:
+                self.logger.warning("%s: name is also a local group. Omitting from group cache", nis_group)
                 continue
 
+            g = grp.getgrnam(nis_group)
             cache_data['groups'].append({g.gr_name: {
                 'id': group_next_index,
                 'gid': g.gr_gid,
@@ -279,6 +299,6 @@ class NISService(ConfigService):
         if not await self.middleware.call('cache.has_key', 'NIS_cache'):
             await self.middleware.call('nis.fill_cache')
             self.logger.debug('cache fill is in progress.')
-            return {'users': [], 'groups': []}
+            return {'users': {}, 'groups': {}}
 
         return await self.middleware.call('cache.get', 'NIS_cache')
