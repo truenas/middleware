@@ -204,7 +204,7 @@ def test_24_check_groupmap_added(request):
 
 
 def test_25_test_name_change_smb_group(request):
-    depends(request, ["SMB_GROUP_CREATED"])
+    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     payload = {
         "name": "newsmbgroup"
     }
