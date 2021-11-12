@@ -1,6 +1,6 @@
 import time
 
-from middlewared.utils.test import *
+from middlewared.test.integration.utils import *
 
 
 def test_cputemp():
