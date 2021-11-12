@@ -84,8 +84,6 @@ def test_004_start_smb_service(ip, request):
 @pytest.mark.dependency(name="SMB_SERVICE_STARTED")
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 def test_005_check_smb_started(ip, request):
-    depends(request, ['CTDB_IS_HEALTHY'])
-
     url = f'http://{ip}/api/v2.0/service?service=cifs'
     res = make_request('get', url)
     assert res.status_code == 200, res.text
