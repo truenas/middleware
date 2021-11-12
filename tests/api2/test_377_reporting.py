@@ -1,7 +1,12 @@
 import time
+import pytest
 
-from middlewared.test.integration.utils import *
-
+# Middleware client need to be installed for the test belo or it will skip
+try:
+    from middlewared.test.integration.utils import *
+except ImportError:
+    Reason = 'middleware client library not installed'
+    pytestmark = pytest.mark.skip(reason=Reason)
 
 def test_cputemp():
     with mock("reporting.cpu_temperatures", return_value={0: 55, 1: 50}):
