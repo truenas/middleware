@@ -318,13 +318,30 @@ def test_30_checking_to_see_if_nfs_service_is_running(request):
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_31_verify_testfile_is_on_the_active_directory_share(request):
+def test_31_verify_activedirectory_started_after_restarting_cifs(request):
+    depends(request, ["ad_dataset_permission"], scope="session")
+    results = GET('/activedirectory/started/')
+    assert results.status_code == 200, results.text
+    assert results.json() is True, results.text
+
+
+def test_32_create_a_file_and_put_on_the_active_directory_share(request):
+    depends(request, ["ad_dataset_permission"])
+    cmd_test('touch testfile.txt')
+    command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
+        ' -c "put testfile.txt testfile.txt"'
+    results = cmd_test(command)
+    cmd_test('rm testfile.txt')
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+
+
+def test_33_verify_testfile_is_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 200, results.text
 
 
-def test_32_create_a_directory_on_the_active_directory_share(request):
+def test_34_create_a_directory_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "mkdir testdir"'
@@ -332,13 +349,13 @@ def test_32_create_a_directory_on_the_active_directory_share(request):
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
-def test_33_verify_testdir_exist_on_the_active_directory_share(request):
+def test_35_verify_testdir_exist_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
     assert results.status_code == 200, results.text
 
 
-def test_34_copy_testfile_in_testdir_on_the_active_directory_share(request):
+def test_36_copy_testfile_in_testdir_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "scopy testfile.txt testdir/testfile2.txt"'
@@ -346,13 +363,13 @@ def test_34_copy_testfile_in_testdir_on_the_active_directory_share(request):
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
-def test_35_verify_testfile2_exist_in_testdir_on_the_active_directory_share(request):
+def test_37_verify_testfile2_exist_in_testdir_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
 
 
-def test_36_leave_activedirectory(request):
+def test_38_leave_activedirectory(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global payload, results
     payload = {
@@ -363,28 +380,28 @@ def test_36_leave_activedirectory(request):
     assert results.status_code == 200, results.text
 
 
-def test_37_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
+def test_39_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
     depends(request, ["ad_dataset_permission", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_38_get_activedirectory_state(request):
+def test_40_get_activedirectory_state(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-def test_39_get_activedirectory_started_after_leaving_AD(request):
+def test_41_get_activedirectory_started_after_leaving_AD(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
-def test_40_re_enable_activedirectory(request):
+def test_42_re_enable_activedirectory(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global payload, results
     payload = {
@@ -400,14 +417,14 @@ def test_40_re_enable_activedirectory(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_41_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
+def test_43_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
     depends(request, ["ad_dataset_permission", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_42_get_activedirectory_state(request):
+def test_44_get_activedirectory_state(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global results
     results = GET('/activedirectory/get_state/')
@@ -415,14 +432,14 @@ def test_42_get_activedirectory_state(request):
     assert results.json() == 'HEALTHY', results.text
 
 
-def test_43_get_activedirectory_started(request):
+def test_45_get_activedirectory_started(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-def test_44_get_activedirectory_data(request):
+def test_46_get_activedirectory_data(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global results
     results = GET('/activedirectory/')
@@ -430,7 +447,7 @@ def test_44_get_activedirectory_data(request):
 
 
 @pytest.mark.parametrize('data', ad_object_list)
-def test_45_verify_activedirectory_data_of_(request, data):
+def test_47_verify_activedirectory_data_of_(request, data):
     depends(request, ["ad_dataset_permission"], scope="session")
     if data == 'domainname':
         assert results.json()[data].lower() == payload[data], results.text
@@ -438,7 +455,7 @@ def test_45_verify_activedirectory_data_of_(request, data):
         assert results.json()[data] == payload[data], results.text
 
 
-def test_46_verify_all_files_are_kept_on_the_active_directory_share(request):
+def test_48_verify_all_files_are_kept_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 200, results.text
@@ -446,7 +463,7 @@ def test_46_verify_all_files_are_kept_on_the_active_directory_share(request):
     assert results.status_code == 200, results.text
 
 
-def test_47_delete_testfile_on_the_active_directory_share(request):
+def test_49_delete_testfile_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rm testfile.txt"'
@@ -454,13 +471,13 @@ def test_47_delete_testfile_on_the_active_directory_share(request):
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
-def test_48_verify_testfile_is_deleted_on_the_active_directory_share(request):
+def test_50_verify_testfile_is_deleted_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
     assert results.status_code == 422, results.text
 
 
-def test_49_delele_testfile_on_the_active_directory_share(request):
+def test_51_delele_testfile_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rm testdir/testfile2.txt"'
@@ -468,13 +485,13 @@ def test_49_delele_testfile_on_the_active_directory_share(request):
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
-def test_50_verify_testfile2_is_deleted_on_the_active_directory_share(request):
+def test_52_verify_testfile2_is_deleted_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 422, results.text
 
 
-def test_51_delete_testdir_on_the_active_directory_share(request):
+def test_53_delete_testdir_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rmdir testdir"'
@@ -482,14 +499,14 @@ def test_51_delete_testdir_on_the_active_directory_share(request):
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
-def test_52_verify_testdir_is_deleted_on_the_active_directory_share(request):
+def test_54_verify_testdir_is_deleted_on_the_active_directory_share(request):
     depends(request, ["ad_dataset_permission"])
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
     assert results.status_code == 422, results.text
 
 
 # put all code to disable and delete under here
-def test_53_disable_activedirectory(request):
+def test_55_disable_activedirectory(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global payload, results
     payload = {
@@ -499,21 +516,21 @@ def test_53_disable_activedirectory(request):
     assert results.status_code == 200, results.text
 
 
-def test_54_get_activedirectory_state(request):
+def test_56_get_activedirectory_state(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-def test_55_get_activedirectory_started_after_disabling_AD(request):
+def test_57_get_activedirectory_started_after_disabling_AD(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
-def test_56_re_enable_activedirectory(request):
+def test_58_re_enable_activedirectory(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global payload, results
     payload = {
@@ -525,7 +542,7 @@ def test_56_re_enable_activedirectory(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_57_get_activedirectory_state(request):
+def test_59_get_activedirectory_state(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global results
     results = GET('/activedirectory/get_state/')
@@ -533,14 +550,14 @@ def test_57_get_activedirectory_state(request):
     assert results.json() == 'HEALTHY', results.text
 
 
-def test_58_get_activedirectory_started(request):
+def test_60_get_activedirectory_started(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-def test_59_leave_activedirectory(request):
+def test_61_leave_activedirectory(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     global payload, results
     payload = {
@@ -551,40 +568,40 @@ def test_59_leave_activedirectory(request):
     assert results.status_code == 200, results.text
 
 
-def test_60_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
+def test_62_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
     depends(request, ["ad_dataset_permission", "ssh_password"], scope="session")
     cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_61_get_activedirectory_state(request):
+def test_63_get_activedirectory_state(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-def test_63_get_activedirectory_started_after_living(request):
+def test_65_get_activedirectory_started_after_living(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
-def test_64_disable_cifs_service_at_boot(request):
+def test_66_disable_cifs_service_at_boot(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_65_checking_to_see_if_clif_service_is_enabled_at_boot(request):
+def test_67_checking_to_see_if_clif_service_is_enabled_at_boot(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_66_stoping_clif_service(request):
+def test_68_stoping_clif_service(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
@@ -592,19 +609,19 @@ def test_66_stoping_clif_service(request):
     sleep(1)
 
 
-def test_67_checking_if_cifs_is_stop(request):
+def test_69_checking_if_cifs_is_stop(request):
     depends(request, ["ad_dataset_permission"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_68_destroying_ad_dataset_for_smb(request):
+def test_70_destroying_ad_dataset_for_smb(request):
     depends(request, ["ad_dataset"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
-def test_69_configure_setting_domain_hostname_and_dns(request):
+def test_71_configure_setting_domain_hostname_and_dns(request):
     depends(request, ["ad_02"], scope="session")
     global payload
     payload = {
