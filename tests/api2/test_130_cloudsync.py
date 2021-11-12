@@ -131,7 +131,7 @@ def test_06_run_cloud_sync(request, task):
         if state["job"] is None:
             time.sleep(1)
             continue
-        if state["job"]["state"] in ["PENDING", "RUNNING"]:
+        if state["job"]["state"] in ["WAITING", "RUNNING"]:
             time.sleep(1)
             continue
         assert state["job"]["state"] == "SUCCESS", state
