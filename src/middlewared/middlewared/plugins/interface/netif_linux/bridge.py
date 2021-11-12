@@ -10,7 +10,7 @@ __all__ = ["create_bridge", "BridgeMixin"]
 
 
 def create_bridge(name):
-    with NDB(log='off') as ndb:
+    with NDB(log="off") as ndb:
         ndb.interfaces.create(ifname=name, kind="bridge").set("br_stp_state", 1).set("state", "up").commit()
 
 
