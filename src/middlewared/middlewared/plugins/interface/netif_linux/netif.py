@@ -1,5 +1,4 @@
 import logging
-import os
 from pyroute2 import NDB
 
 from .bridge import create_bridge
