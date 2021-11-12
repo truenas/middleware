@@ -1,8 +1,6 @@
-# -*- coding=utf-8 -*-
 import json
 import logging
-
-import middlewared.plugins.interface.netif_linux.interface as interface
+from pyroute2 import NDB
 
 from .utils import run
 
@@ -12,12 +10,8 @@ __all__ = ["create_bridge", "BridgeMixin"]
 
 
 def create_bridge(name):
-    cmd = [
-        "ip", "link", "add", name, "type", "bridge",
-        "stp_state", "1"  # enable stp by default 1 == on 0 == off
-    ]
-    run(cmd)
-    interface.Interface(name).up()
+    with NDB(log="off") as ndb:
+        ndb.interfaces.create(ifname=name, kind="bridge").set("br_stp_state", 1).set("state", "up").commit()
 
 
 class BridgeMixin:

@@ -1,11 +1,8 @@
-# -*- coding=utf-8 -*-
 import glob
 import logging
 import os
 import re
-import subprocess
-
-import middlewared.plugins.interface.netif_linux.interface as interface
+from pyroute2 import NDB
 
 from .utils import run
 
@@ -15,15 +12,9 @@ __all__ = ["create_vlan", "VlanMixin"]
 
 
 def create_vlan(name, parent, tag):
-    try:
-        run(["ip", "link", "add", "link", parent, "name", name, "type", "vlan", "id", str(tag)])
-    except subprocess.CalledProcessError as e:
-        if e.stderr.startswith("Cannot find device "):
-            raise FileNotFoundError(e.stderr)
-
-        raise
-
-    interface.Interface(name).up()
+    with NDB(log="off") as ndb:
+        ndb.interfaces[parent].set("state", "up").commit()  # make sure parent is up
+        ndb.interfaces.create(ifname=name, link=parent, vlan_id=tag, kind="vlan").set("state", "up").commit()
 
 
 class VlanMixin:

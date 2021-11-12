@@ -1,6 +1,5 @@
-# -*- coding=utf-8 -*-
 import logging
-import os
+from pyroute2 import NDB
 
 from .bridge import create_bridge
 from .interface import Interface, CLONED_PREFIXES
@@ -38,6 +37,5 @@ def get_interface(name):
 
 
 def list_interfaces():
-    return {name: Interface(name)
-            for name in os.listdir("/sys/class/net")
-            if os.path.isdir(os.path.join("/sys/class/net", name))}
+    with NDB(log="off") as ndb:
+        return {i.ifname: Interface(i.ifname) for i in ndb.interfaces}

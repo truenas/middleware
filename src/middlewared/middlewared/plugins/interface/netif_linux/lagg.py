@@ -1,6 +1,7 @@
 import enum
 import logging
 import pathlib
+from pyroute2 import NDB
 
 import middlewared.plugins.interface.netif_linux.interface as interface
 from .utils import run
@@ -17,8 +18,8 @@ class AggregationProtocol(enum.Enum):
 
 
 def create_lagg(name):
-    run(["ip", "link", "add", name, "type", "bond"])
-    interface.Interface(name).up()
+    with NDB(log="off") as ndb:
+        ndb.interfaces.create(ifname=name, kind="bond").set("state", "up").commit()
 
 
 class LaggMixin:
