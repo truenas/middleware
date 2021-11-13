@@ -26,6 +26,10 @@ class InterfaceService(Service):
         db_members = set(bridge['members'])
         os_members = set(iface.members)
         for member in os_members - db_members:
+            # We do not remove vnetX interfaces from bridge as they would be consumed by libvirt
+            if member.startswith('vnet'):
+                continue
+
             # remove members from the bridge that aren't in the db
             self.logger.info('Removing member interface %r from %r', member, name)
             iface.delete_member(member)
