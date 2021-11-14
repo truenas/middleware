@@ -1,9 +1,10 @@
 from collections import defaultdict
+from typing import Dict, List
 
 from middlewared.service import CallError, private, Service
 
 from .client import DockerClientMixin
-from .utils import DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO, DEFAULT_DOCKER_TAG
+from .utils import normalize_reference, DEFAULT_DOCKER_REGISTRY
 
 
 class DockerImagesService(Service, DockerClientMixin):
@@ -19,6 +20,10 @@ class DockerImagesService(Service, DockerClientMixin):
         return self.IMAGE_CACHE
 
     @private
+    def normalize_reference(self, reference: str) -> Dict:
+        return normalize_reference(reference=reference)
+
+    @private
     async def check_update(self):
         images = await self.middleware.call('container.image.query')
         for image in filter(lambda i: not i['system_image'], images):
@@ -29,10 +34,10 @@ class DockerImagesService(Service, DockerClientMixin):
                     self.logger.error(str(e))
 
     @private
-    async def retrieve_image_digest(self, tag):
+    async def retrieve_image_digest(self, reference: str):
         repo_digest = None
-        parsed_tag = await self.parse_image_tag(tag)
-        registry, image_str, tag_str = parsed_tag['registry'], parsed_tag['image'], parsed_tag['tag']
+        parsed_reference = self.normalize_reference(reference=reference)
+        registry, image_str, tag_str = parsed_reference['registry'], parsed_reference['image'], parsed_reference['tag']
         if registry == DEFAULT_DOCKER_REGISTRY:
             repo_digest = await self._get_repo_digest(registry, image_str, tag_str)
 
@@ -45,40 +50,18 @@ class DockerImagesService(Service, DockerClientMixin):
         return repo_digest
 
     @private
-    async def parse_tags(self, tags):
-        return [await self.parse_image_tag(tag) for tag in tags]
-
-    @private
-    async def parse_image_tag(self, tag):
-        # Following logic has been used from docker engine to make sure we follow the same rules/practices
-        # for normalising the image name / tag
-        i = tag.find('/')
-        if i == -1 or (not any(c in tag[:i] for c in ('.', ':')) and tag[:i] != 'localhost'):
-            registry, image_tag = DEFAULT_DOCKER_REGISTRY, tag
-        else:
-            registry, image_tag = tag[:i], tag[i + 1:]
-
-        if '/' not in image_tag:
-            image_tag = f'{DEFAULT_DOCKER_REPO}/{image_tag}'
-
-        if ':' not in image_tag:
-            image_tag += f':{DEFAULT_DOCKER_TAG}'
-
-        image_str, tag_str = image_tag.rsplit(':', 1)
-        return {
-            'image': image_str,
-            'tag': tag_str,
-            'registry': registry,
-            'complete_tag': f'{registry}/{image_str}:{tag_str}',
-        }
+    async def parse_tags(self, references: List[str]) -> List[Dict[str, str]]:
+        return [self.normalize_reference(reference=reference) for reference in references]
 
     @private
     async def check_update_for_image(self, tag, image_details):
-        parsed_tag = await self.parse_image_tag(tag)
-        if await self.compare_id_digests(image_details, parsed_tag['registry'], parsed_tag['image'], parsed_tag['tag']):
-            self.IMAGE_CACHE[tag] = True
-        else:
-            await self.clear_update_flag_for_tag(tag)
+        parsed_reference = self.normalize_reference(tag)
+        self.IMAGE_CACHE[tag] = await self.compare_id_digests(
+            image_details,
+            parsed_reference['registry'],
+            parsed_reference['image'],
+            parsed_reference['tag']
+        )
 
     @private
     async def clear_update_flag_for_tag(self, tag):
@@ -86,7 +69,9 @@ class DockerImagesService(Service, DockerClientMixin):
 
     @private
     async def compare_id_digests(self, image_details, registry, image_str, tag_str):
-        # Returns true if an update is available otherwise returns false
+        """
+        Returns whether an update is available for an image.
+        """
         repo_digest = None
         if registry == DEFAULT_DOCKER_REGISTRY:
             repo_digest = await self._get_repo_digest(registry, image_str, tag_str)

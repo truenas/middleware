@@ -58,7 +58,8 @@ class DockerClientMixin:
             f'https://{registry}/v2/{image}/manifests/{tag}', headers=headers, mode=mode
         )
         if raise_error and response['error']:
-            raise CallError(f'Unable to retrieve latest image digest for {f"{image}:{tag}"!r}: {response["error"]}')
+            raise CallError(f"Unable to retrieve latest image digest for registry={registry} "
+                            f"image={image} tag={tag}: {response['error']}")
 
         return response
 
@@ -66,6 +67,8 @@ class DockerClientMixin:
     async def get_manifest_call_headers(self, registry, image, headers):
         if registry == DEFAULT_DOCKER_REGISTRY:
             headers['Authorization'] = f'Bearer {await self._get_token(image)}'
+        else:
+            headers['Authorization'] = f'Bearer {await self._get_token(f"{registry}/{image}")}'
         return headers
 
     async def _get_latest_digest(self, registry, image, tag):
