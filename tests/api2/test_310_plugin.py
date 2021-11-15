@@ -6,8 +6,8 @@ import time
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, ip, user, password, ha, dev_test
-from functions import GET, POST, PUT, DELETE, wait_on_job, SSH_TEST
+from auto_config import pool_name, ha, dev_test
+from functions import GET, POST, PUT, DELETE, wait_on_job
 reason = 'Skip for development testing testing'
 pytestmark = pytest.mark.skipif(ha or dev_test, reason=reason)
 
@@ -17,13 +17,14 @@ if not ha:
     JOB_ID = None
     job_results = None
     is_freenas = GET("/system/is_freenas/").json()
-    ssh_cmd = "uname -r | cut -d '-' -f1,2"
-    freebsd_release = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
-    # default URL
     test_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 
+    # ssh_cmd = "uname -r | cut -d '-' -f1,2"
+    # freebsd_release = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
+    freebsd_release = 'master'
     repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
     index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{freebsd_release}/INDEX'
+
     plugin_index = GET(index_url).json()
     plugin_list = list(plugin_index.keys())
 
