@@ -76,20 +76,6 @@ WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
 logger = logging.getLogger('failover')
 
 
-# SED drives need to be unlocked only once at boot
-# time but we can't unlock them at the same time
-# on both controllers or it can prevent the disks
-# from unlocking. This is a global variable used to
-# track whether or not a CARP event has been processed
-# before. Rough idea is as follows:
-# 1. boot system first time
-# 2. FIRST_RUN = True
-# 3. on first carp event, check FIRST_RUN
-# 4. if FIRST_RUN: run sed_unlock_all, set FIRST_RUN = False
-# 5. else continue on with failover as normal
-FIRST_RUN = True
-
-
 def run(cmd, stderr=False):
     proc = subprocess.Popen(
         cmd,
@@ -535,16 +521,13 @@ class FailoverService(Service):
                 if attach_all_job.error:
                     logger.error('Failed to attach geli providers: %s', attach_all_job.error)
 
-                global FIRST_RUN
-                if FIRST_RUN:
-                    try:
-                        self.middleware.call_sync('disk.sed_unlock_all')
-                        FIRST_RUN = False
-                    except Exception as e:
-                        # failing here doesn't mean the zpool won't mount
-                        # we could have only failed to unlock 1 disk
-                        # so log an error and move on
-                        logger.error('Failed to unlock SED disks with error: %r', e)
+                try:
+                    self.middleware.call_sync('disk.sed_unlock_all')
+                except Exception as e:
+                    # failing here doesn't mean the zpool won't mount
+                    # we could have only failed to unlock 1 disk
+                    # so log an error and move on
+                    logger.error('Failed to unlock SED disks with error: %r', e)
 
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
@@ -870,13 +853,6 @@ class FailoverService(Service):
                 # Sync GELI and/or ZFS encryption keys from MASTER node
                 self.middleware.call_sync('failover.sync_keys_from_remote_node')
 
-            # if we're the backup controller then it means
-            # the SED drives have already been unlocked so
-            # set this accordingly so we don't try to unlock
-            # the drives again if/when this controller becomes
-            # the MASTER controller
-            global FIRST_RUN
-            FIRST_RUN = False
         except AlreadyLocked:
             logger.warning('Failover event handler failed to acquire backup lockfile')
 
