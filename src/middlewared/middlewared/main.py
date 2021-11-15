@@ -35,6 +35,7 @@ import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
 import copy
+from dataclasses import dataclass
 import errno
 import fcntl
 import functools
@@ -54,6 +55,7 @@ import threading
 import time
 import traceback
 import types
+from typing import Pattern
 import urllib.parse
 import uuid
 import tracemalloc
@@ -61,6 +63,13 @@ import tracemalloc
 from systemd.daemon import notify as systemd_notify
 
 from . import logger
+
+
+@dataclass
+class LoopMonitorIgnoreFrame:
+    regex: Pattern
+    substitute: str = None
+    cut_below: bool = False
 
 
 class Application(object):
@@ -1562,11 +1571,15 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         return ws
 
     _loop_monitor_ignore_frames = (
-        (
+        LoopMonitorIgnoreFrame(
             re.compile(r'\s+File ".+/middlewared/main\.py", line [0-9]+, in run_in_thread\s+'
                        'return await self.loop.run_in_executor'),
-            'run_in_thread'
+            'run_in_thread',
         ),
+        LoopMonitorIgnoreFrame(
+            re.compile(r'\s+File ".+/asyncio/subprocess\.py", line [0-9]+, in create_subprocess_exec'),
+            cut_below=True,
+        )
     )
 
     def _loop_monitor_thread(self):
@@ -1588,12 +1601,25 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             if last == current:
                 frame = sys._current_frames()[self.__thread_id]
                 stack = traceback.format_stack(frame, limit=10)
-                for regex, name in self._loop_monitor_ignore_frames:
-                    if any(regex.match(s) for s in stack):
-                        self.logger.warn('%s seems to be blocking event loop', name)
-                        break
-                else:
+                skip = False
+                for ignore in self._loop_monitor_ignore_frames:
+                    for i, s in enumerate(stack):
+                        if ignore.regex.match(s):
+                            break
+                    else:
+                        continue
+
+                    if ignore.substitute:
+                        self.logger.warn('%s seems to be blocking event loop', ignore.substitute)
+                        skip = True
+                    elif ignore.cut_below:
+                        stack = stack[:i + 1] + [f'  ... + {len(stack)} lines below ...']
+
+                    break
+
+                if not skip:
                     self.logger.warn(''.join(['Task seems blocked:\n'] + stack))
+
             last = current
 
     def run(self):
