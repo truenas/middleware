@@ -9,6 +9,7 @@ setup(
     name='middlewared',
     description='TrueNAS Middleware Daemon Integration Test Facilities',
     packages=[
+        'middlewared',
         'middlewared.client',
         'middlewared.test.integration.utils',
     ],
