@@ -48,8 +48,6 @@ def normalize_reference(reference: str) -> Dict:
     elif ':' in tagged_image:
         image, tag = tagged_image.rsplit(':', 1)
         sep = ':'
-    else:
-        raise CallError(f'Unable to parse the reference: {reference}')
 
     return {
         'reference': reference,
