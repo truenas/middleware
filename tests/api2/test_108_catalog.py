@@ -146,7 +146,12 @@ if not ha:
     @pytest.mark.parametrize('chart', truechart_charts)
     def test_14_get_truechart_catalog_item(chart):
         payload = {
-            'label': 'TRUECHARTS'
+            'label': 'TRUECHARTS',
+            'options': {
+                'cache': True,
+                'retrieve_all_trains': True,
+                'retrieve_versions': False,
+            },
         }
         results = POST('/catalog/items/', payload)
         assert results.status_code == 200, results.text
@@ -173,7 +178,12 @@ if not ha:
 
     def test_17_get_truechart_catalog_item_test_trains():
         payload = {
-            'label': 'TRUECHARTS'
+            'label': 'TRUECHARTS',
+            'options': {
+                'cache': True,
+                'retrieve_all_trains': True,
+                'retrieve_versions': False,
+            },
         }
         results = POST('/catalog/items/', payload)
         assert results.status_code == 200, results.text
