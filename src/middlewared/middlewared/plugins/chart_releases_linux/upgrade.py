@@ -408,30 +408,32 @@ class ChartReleaseService(Service):
         the container images.
         """
         await self.middleware.call('kubernetes.validate_k8s_setup')
-        images = [
-            {'orig_tag': tag, 'from_image': tag.rsplit(':', 1)[0], 'tag': tag.rsplit(':', 1)[-1]}
-            for tag in (await self.middleware.call(
-                'chart.release.query', [['id', '=', release_name]],
-                {'extra': {'retrieve_resources': True}, 'get': True}
-            ))['resources']['container_images']
-        ]
-        results = {}
 
-        bulk_job = await self.middleware.call(
-            'core.bulk', 'container.image.pull', [
-                [{'from_image': image['from_image'], 'tag': image['tag']}]
-                for image in images
-            ]
+        bulk_pull_params = []
+        parsed_references = []
+        results = await self.middleware.call(
+            'chart.release.query', [['id', '=', release_name]],
+            {'extra': {'retrieve_resources': True}, 'get': True}
         )
+        for reference in results['resources']['container_images']:
+            parsed_reference = await self.middleware.call('container.image.normalize_reference', reference)
+            bulk_pull_params.append([{
+                'from_image': f"{parsed_reference['registry']}/{parsed_reference['image']}",
+                'tag': parsed_reference['tag']
+            }])
+            parsed_references.append(parsed_reference)
+
+        bulk_job = await self.middleware.call('core.bulk', 'container.image.pull', bulk_pull_params)
         await bulk_job.wait()
         if bulk_job.error:
             raise CallError(f'Failed to update container images for {release_name!r} chart release: {bulk_job.error}')
 
-        for tag, status in zip(images, bulk_job.result):
+        results = {}
+        for reference, status in zip(parsed_references, bulk_job.result):
             if status['error']:
-                results[tag['orig_tag']] = f'Failed to pull image: {status["error"]}'
+                results[reference['reference']] = f'Failed to pull image: {status["error"]}'
             else:
-                results[tag['orig_tag']] = 'Updated image'
+                results[reference['reference']] = 'Updated image'
 
         if options['redeploy']:
             await job.wrap(await self.middleware.call('chart.release.redeploy', release_name))

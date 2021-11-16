@@ -2,14 +2,58 @@ import aiohttp
 import aiohttp.client_exceptions
 import async_timeout
 import asyncio
+import urllib
 
 from middlewared.service import CallError, private
 
 from .utils import DEFAULT_DOCKER_REGISTRY, DOCKER_CONTENT_DIGEST_HEADER
 
 
-DOCKER_REGISTRY_AUTH_BASE = 'https://auth.docker.io'
+DOCKER_AUTH_HEADER = 'WWW-Authenticate'
+DOCKER_AUTH_URL = 'https://auth.docker.io/token'
 DOCKER_AUTH_SERVICE = 'registry.docker.io'
+DOCKER_MANIFEST_SCHEMA_V1 = 'application/vnd.docker.distribution.manifest.v1+json'
+DOCKER_MANIFEST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.v2+json'
+DOCKER_MANIFEST_LIST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.list.v2+json'
+
+
+def parse_digest_from_schema(response):
+    """
+    Parses out the digest according to schemas specs:
+    https://docs.docker.com/registry/spec/manifest-v2-1/
+    """
+    media_type = response['response']['mediaType']
+    if media_type == DOCKER_MANIFEST_SCHEMA_V2:
+        return response['response']['config']['digest']
+    elif media_type == DOCKER_MANIFEST_LIST_SCHEMA_V2:
+        if (manifests := response['response']['manifests']):
+            return manifests[0]['digest']
+
+
+def parse_auth_header(header: str):
+    """
+    Parses header in format below:
+    'Bearer realm="https://ghcr.io/token",service="ghcr.io",scope="redis:pull"'
+
+    Returns:
+        {
+            'auth_url': 'https://ghcr.io/token',
+            'service': 'ghcr.io',
+            'scope': 'redis:pull'
+        }
+    """
+    adapter = {
+        'realm': 'auth_url',
+        'service': 'service',
+        'scope': 'scope',
+    }
+    results = {}
+    parts = header.split()
+    if len(parts) > 1:
+        for part in parts[1].split(','):
+            key, value = part.split('=')
+            results[adapter[key]] = value.strip('"')
+    return results
 
 
 class DockerClientMixin:
@@ -28,7 +72,7 @@ class DockerClientMixin:
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with {url} in {timeout} seconds.'
         except aiohttp.ClientResponseError as e:
-            response['error'] = str(e)
+            response['error'] = e
         else:
             response['response_obj'] = req
             if req.status != 200:
@@ -44,45 +88,56 @@ class DockerClientMixin:
                     response['error'] = f'Unable to parse response: {e}'
         return response
 
-    async def _get_token(self, image):
-        response = await self._api_call(
-            f'{DOCKER_REGISTRY_AUTH_BASE}/token?service={DOCKER_AUTH_SERVICE}&scope=repository:{image}:pull'
-        )
+    async def _get_token(self, scope, auth_url=DOCKER_AUTH_URL, service=DOCKER_AUTH_SERVICE):
+        query_params = urllib.parse.urlencode({
+            'service': service,
+            'scope': scope,
+        })
+        response = await self._api_call(f'{auth_url}?{query_params}')
         if response['error']:
-            raise CallError(f'Unable to retrieve token for {image!r}: {response["error"]}')
+            raise CallError(f'Unable to retrieve token for {scope!r}: {response["error"]}')
 
         return response['response']['token']
 
     async def _get_manifest_response(self, registry, image, tag, headers, mode, raise_error):
-        response = await self._api_call(
-            f'https://{registry}/v2/{image}/manifests/{tag}', headers=headers, mode=mode
-        )
+        manifest_url = f'https://{registry}/v2/{image}/manifests/{tag}'
+        # 1) try getting manifest
+        response = await self._api_call(manifest_url, headers=headers, mode=mode)
+        if (error := response['error']) and isinstance(error, aiohttp.ClientResponseError):
+            if error.status == 401:
+                # 2) try to get token from manifest api call's response headers
+                auth_data = parse_auth_header(error.headers[DOCKER_AUTH_HEADER])
+                headers['Authorization'] = f'Bearer {await self._get_token(**auth_data)}'
+                # 3) Redo the manifest call with updated token
+                response = await self._api_call(manifest_url, headers=headers, mode=mode)
+
         if raise_error and response['error']:
-            raise CallError(f'Unable to retrieve latest image digest for {f"{image}:{tag}"!r}: {response["error"]}')
+            raise CallError(f"Unable to retrieve latest image digest for registry={registry} "
+                            f"image={image} tag={tag}: {response['error']}")
 
         return response
 
     @private
     async def get_manifest_call_headers(self, registry, image, headers):
         if registry == DEFAULT_DOCKER_REGISTRY:
-            headers['Authorization'] = f'Bearer {await self._get_token(image)}'
+            headers['Authorization'] = f'Bearer {await self._get_token(scope=f"repository:{image}:pull")}'
         return headers
 
     async def _get_latest_digest(self, registry, image, tag):
+        headers = await self.get_manifest_call_headers(registry, image, {
+            'Accept': DOCKER_MANIFEST_SCHEMA_V2,
+        })
         response = await self._get_manifest_response(
-            registry, image, tag, await self.get_manifest_call_headers(registry, image, {
-                'Accept': 'application/vnd.docker.distribution.manifest.v2+json',
-            }), 'get', True
+            registry, image, tag, headers, 'get', True
         )
-
-        return response['response']['config']['digest']
+        return parse_digest_from_schema(response)
 
     async def _get_repo_digest(self, registry, image, tag):
         response = await self._get_manifest_response(
             registry, image, tag, await self.get_manifest_call_headers(registry, image, {
-                'Accept': 'application/vnd.docker.distribution.manifest.v2+json, '
-                          'application/vnd.docker.distribution.manifest.list.v2+json, '
-                          'application/vnd.docker.distribution.manifest.v1+json',
+                'Accept': (f'{DOCKER_MANIFEST_SCHEMA_V2}, '
+                           f'{DOCKER_MANIFEST_LIST_SCHEMA_V2}, '
+                           f'{DOCKER_MANIFEST_SCHEMA_V1}')
             }), 'head', False
         )
         if not response['error']:
