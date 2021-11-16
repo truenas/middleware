@@ -12,7 +12,7 @@ import urllib.parse
 
 
 @contextlib.contextmanager
-def dataset(name, request):
+def dataset(name):
     assert "/" not in name
 
     dataset = f"{pool_name}/{name}"
