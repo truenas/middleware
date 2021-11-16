@@ -497,13 +497,14 @@ def test_48_waiting_for_iscsi_connection_before_grabbing_device_name(request):
             assert True
             break
         sleep(1)
+    sleep(3)
 
 
 @bsd_host_cfg
 def test_49_unmount_media(request):
     depends(request, ["iscsi_48"])
     cmd_test(f'umount "/media/{zvol_device_name}"')
-    sleep(2)
+    sleep(1)
 
 
 @bsd_host_cfg
