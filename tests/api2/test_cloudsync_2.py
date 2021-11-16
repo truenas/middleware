@@ -1,5 +1,7 @@
 import contextlib
 
+from middlewared.test.integration.assets.pool import dataset
+
 import sys
 import os
 apifolder = os.getcwd()
@@ -7,23 +9,6 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import pool_name, ip, user, password
 import time
-import urllib.parse
-
-
-@contextlib.contextmanager
-def dataset(name):
-    assert "/" not in name
-
-    dataset = f"{pool_name}/{name}"
-
-    result = POST("/pool/dataset/", {"name": dataset})
-    assert result.status_code == 200, result.text
-
-    try:
-        yield dataset
-    finally:
-        result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
-        assert result.status_code == 200, result.text
 
 
 @contextlib.contextmanager
