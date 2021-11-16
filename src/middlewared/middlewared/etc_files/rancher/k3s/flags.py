@@ -40,4 +40,5 @@ def render(service, middleware):
             'node-ip': config['node_ip'],
             'kube-apiserver-arg': kube_api_server_args,
             'protect-kernel-defaults': True,
+            'disable': [] if config['servicelb'] else ['servicelb'],
         }))
