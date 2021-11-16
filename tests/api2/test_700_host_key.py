@@ -31,6 +31,7 @@ def test_03_verify_if_ssh_is_running_before_reboot():
     assert results.json()[0]['state'] == "RUNNING"
 
 
+@pytest.mark.pytest_dependency(name="get_keyscan")
 def test_04_get_ssh_keyscan_before_reboot(request):
     depends(request, ["ssh_key"], scope="session")
     global output_before
@@ -40,7 +41,8 @@ def test_04_get_ssh_keyscan_before_reboot(request):
     output_before = results['output']
 
 
-def test_05_reboot_system():
+def test_05_reboot_system(request):
+    depends(request, ["get_keyscan"])
     payload = {
         "delay": 0
     }
@@ -48,8 +50,9 @@ def test_05_reboot_system():
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.timeout(600)
-def test_06_wait_for_middleware_to_be_online():
+@pytest.mark.timeout(480)
+def test_06_wait_for_middleware_to_be_online(request):
+    depends(request, ["get_keyscan"])
     while ping_host(ip, 1) is True:
         sleep(5)
     while ping_host(ip, 1) is not True:
@@ -64,24 +67,27 @@ def test_06_wait_for_middleware_to_be_online():
             continue
 
 
-def test_07_verify_ssh_settings_for_root_login_after_reboot():
+def test_07_verify_ssh_settings_for_root_login_after_reboot(request):
+    depends(request, ["get_keyscan"])
     results = GET("/ssh/")
     assert results.status_code == 200, results.text
     assert results.json()["rootlogin"] is True, results.text
 
 
-def test_08_verify_ssh_enable_at_boot_after_reboot():
+def test_08_verify_ssh_enable_at_boot_after_reboot(request):
+    depends(request, ["get_keyscan"])
     results = GET("/service?service=ssh")
     assert results.json()[0]['enable'] is True
 
 
-def test_09_verify_if_ssh_is_running_after_reboot():
+def test_09_verify_if_ssh_is_running_after_reboot(request):
+    depends(request, ["get_keyscan"])
     results = GET("/service?service=ssh")
     assert results.json()[0]['state'] == "RUNNING"
 
 
 def test_10_get_ssh_keyscan_after_reboot(request):
-    depends(request, ["ssh_key"], scope="session")
+    depends(request, ["ssh_key", "get_keyscan"], scope="session")
     global output_after
     cmd = 'ssh-keyscan 127.0.0.1'
     results = SSH_TEST(cmd, user, None, ip)
@@ -89,6 +95,7 @@ def test_10_get_ssh_keyscan_after_reboot(request):
     output_after = results['output']
 
 
-def test_11_compare_ssh_keyscan_output():
+def test_11_compare_ssh_keyscan_output(request):
+    depends(request, ["get_keyscan"])
     for line in output_after:
         assert line in output_before
