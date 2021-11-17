@@ -149,7 +149,7 @@ cfg_file.close()
 
 call([
     f"pytest-{version}",
-    "-v",
+    "-vs",
     "-o", "junit_family=xunit2",
     "--junitxml",
     'results/api_v2_tests_result.xml',

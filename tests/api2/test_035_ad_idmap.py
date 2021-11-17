@@ -136,7 +136,7 @@ def test_08_test_backend_options(request, backend):
     DS_TYPE_DEFAULT_DOMAIN have hard-coded ids and
     so we don't need to look them up.
     """
-    depends(request, ["GATHERED_BACKEND_OPTIONS", "ssh_password"], scope="session")
+    depends(request, ["GATHERED_BACKEND_OPTIONS"])
     opts = BACKEND_OPTIONS[backend]['parameters'].copy()
     set_secret = False
 
@@ -257,9 +257,10 @@ def test_08_test_backend_options(request, backend):
             assert res == v, f"[{k}]: {res}"
         except json.decoder.JSONDecodeError:
             res = results['output'].strip()
-            if isinstance(v, bool):
-                v = str(v)
-
+            if v is True:
+                v = "Yes"
+            elif v is False:
+                v = "No"
             assert v.casefold() == res.casefold(), f"[{k}]: {res}"
 
     if set_secret:

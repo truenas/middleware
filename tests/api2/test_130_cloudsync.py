@@ -10,23 +10,22 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import pool_name, ip, password, user, dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 dataset = f"{pool_name}/cloudsync"
 dataset_path = os.path.join("/mnt", dataset)
 
-
-@pytest.fixture()
-def env():
-    if (
-        "CLOUDSYNC_AWS_ACCESS_KEY_ID" not in os.environ or
-        "CLOUDSYNC_AWS_SECRET_ACCESS_KEY" not in os.environ or
-        "CLOUDSYNC_AWS_BUCKET" not in os.environ
-    ):
-        pytest.skip("No credentials")
-
-    return os.environ
+try:
+    from config import (
+        AWS_ACCESS_KEY_ID,
+        AWS_SECRET_ACCESS_KEY,
+        AWS_BUCKET
+    )
+except ImportError:
+    Reason = 'AWS credential are missing in config.py'
+    pytestmark = pytest.mark.skip(reason=Reason)
+else:
+    # comment pytestmark for development testing with --dev-test
+    pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 @pytest.fixture(scope='module')
@@ -45,13 +44,13 @@ def test_01_create_dataset(request):
     assert result.status_code == 200, result.text
 
 
-def test_02_create_cloud_credentials(request, env, credentials):
+def test_02_create_cloud_credentials(request, credentials):
     depends(request, ["pool_04"], scope="session")
     result = POST("/cloudsync/credentials/", {
         "name": "Test",
         "provider": "S3",
         "attributes": {
-            "access_key_id": env["CLOUDSYNC_AWS_ACCESS_KEY_ID"],
+            "access_key_id": AWS_ACCESS_KEY_ID,
             "secret_access_key": "garbage",
         },
     })
@@ -59,20 +58,20 @@ def test_02_create_cloud_credentials(request, env, credentials):
     credentials.update(result.json())
 
 
-def test_03_update_cloud_credentials(request, env, credentials):
+def test_03_update_cloud_credentials(request, credentials):
     depends(request, ["pool_04"], scope="session")
     result = PUT(f"/cloudsync/credentials/id/{credentials['id']}/", {
         "name": "Test",
         "provider": "S3",
         "attributes": {
-            "access_key_id": env["CLOUDSYNC_AWS_ACCESS_KEY_ID"],
-            "secret_access_key": env["CLOUDSYNC_AWS_SECRET_ACCESS_KEY"],
+            "access_key_id": AWS_ACCESS_KEY_ID,
+            "secret_access_key": AWS_SECRET_ACCESS_KEY,
         },
     })
     assert result.status_code == 200, result.text
 
 
-def test_04_create_cloud_sync(request, env, credentials, task):
+def test_04_create_cloud_sync(request, credentials, task):
     depends(request, ["pool_04"], scope="session")
     result = POST("/cloudsync/", {
         "description": "Test",
@@ -88,7 +87,7 @@ def test_04_create_cloud_sync(request, env, credentials, task):
             "dow": "1",
         },
         "attributes": {
-            "bucket": env["CLOUDSYNC_AWS_BUCKET"],
+            "bucket": AWS_BUCKET,
             "folder": "",
         },
         "args": "",
@@ -97,7 +96,7 @@ def test_04_create_cloud_sync(request, env, credentials, task):
     task.update(result.json())
 
 
-def test_05_update_cloud_sync(request, env, credentials, task):
+def test_05_update_cloud_sync(request, credentials, task):
     depends(request, ["pool_04"], scope="session")
     result = PUT(f"/cloudsync/id/{task['id']}/", {
         "description": "Test",
@@ -113,7 +112,7 @@ def test_05_update_cloud_sync(request, env, credentials, task):
             "dow": "1",
         },
         "attributes": {
-            "bucket": env["CLOUDSYNC_AWS_BUCKET"],
+            "bucket": AWS_BUCKET,
             "folder": "",
         },
         "args": "",
@@ -121,7 +120,7 @@ def test_05_update_cloud_sync(request, env, credentials, task):
     assert result.status_code == 200, result.text
 
 
-def test_06_run_cloud_sync(request, env, task):
+def test_06_run_cloud_sync(request, task):
     depends(request, ["pool_04", "ssh_password"], scope="session")
     result = POST(f"/cloudsync/id/{task['id']}/sync/")
     assert result.status_code == 200, result.text
@@ -144,32 +143,30 @@ def test_06_run_cloud_sync(request, env, task):
     assert False, state
 
 
-def test_07_restore_cloud_sync(request, env, task):
+def test_07_restore_cloud_sync(request, task):
     depends(request, ["pool_04"], scope="session")
     result = POST(f"/cloudsync/id/{task['id']}/restore/", {
         "transfer_mode": "COPY",
         "path": dataset_path,
     })
     assert result.status_code == 200, result.text
+    global restore_id
+    restore_id = result.json()['id']
 
-    result = DELETE(f"/cloudsync/id/{result.json()['id']}/")
+
+def test_08_delete_restore_cloudsync(request):
+    depends(request, ["pool_04"], scope="session")
+    result = DELETE(f"/cloudsync/id/{restore_id}/")
     assert result.status_code == 200, result.text
 
 
-def test_96_delete_cloud_credentials_error(request, env, task):
-    depends(request, ["pool_04"], scope="session")
-    result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
-    assert result.status_code == 422
-    assert "This credential is used by cloud sync task" in result.json()["message"]
-
-
-def test_97_delete_cloud_sync(request, env, task):
+def test_97_delete_cloud_sync(request, task):
     depends(request, ["pool_04"], scope="session")
     result = DELETE(f"/cloudsync/id/{task['id']}/")
     assert result.status_code == 200, result.text
 
 
-def test_98_delete_cloud_credentials(request, env, credentials):
+def test_98_delete_cloud_credentials(request, credentials):
     depends(request, ["pool_04"], scope="session")
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
     assert result.status_code == 200, result.text

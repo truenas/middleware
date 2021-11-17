@@ -42,26 +42,22 @@ def test_01_check_dataset_endpoint(request):
     assert isinstance(GET('/pool/dataset/').json(), list)
 
 
+@pytest.mark.dependency(name="create_dataset")
 def test_02_create_dataset(request):
     depends(request, ["pool_04"], scope="session")
-    result = POST(
-        '/pool/dataset/', {
-            'name': dataset,
-            "acltype": "NFSV4"
-        }
-    )
+    result = POST('/pool/dataset/', {'name': dataset})
     assert result.status_code == 200, result.text
 
 
 def test_03_query_dataset_by_name(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_dataset"])
     dataset = GET(f'/pool/dataset/?id={dataset_url}')
 
     assert isinstance(dataset.json()[0], dict)
 
 
 def test_04_update_dataset_description(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_dataset"])
     result = PUT(
         f'/pool/dataset/id/{dataset_url}/', {
             'comments': 'testing dataset'
@@ -72,7 +68,7 @@ def test_04_update_dataset_description(request):
 
 
 def test_05_set_permissions_for_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_dataset"])
     global JOB_ID
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
@@ -85,10 +81,6 @@ def test_05_set_permissions_for_dataset(request):
 
     assert result.status_code == 200, result.text
     JOB_ID = result.json()
-
-
-def test_06_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
@@ -104,9 +96,9 @@ def test_07_promoting_dataset(request):
 # and stat output confirms its absence.
 
 
-@pytest.mark.dependency(name="pool_dataset_08")
+@pytest.mark.dependency(name="acl_pool_perm_08")
 def test_08_set_acl_for_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_dataset"])
     global JOB_ID
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
@@ -118,17 +110,12 @@ def test_08_set_acl_for_dataset(request):
 
     assert result.status_code == 200, result.text
     JOB_ID = result.json()
-
-
-@pytest.mark.dependency(name="acl_pool_perm_09")
-def test_09_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04", "pool_dataset_08"], scope="session")
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_10_get_filesystem_getacl(request):
-    depends(request, ["pool_04", "acl_pool_perm_09"], scope="session")
+    depends(request, ["acl_pool_perm_08"])
     global results
     payload = {
         'path': f'/mnt/{dataset}',
@@ -140,20 +127,20 @@ def test_10_get_filesystem_getacl(request):
 
 @pytest.mark.parametrize('key', ['tag', 'type', 'perms', 'flags'])
 def test_11_verify_filesystem_getacl(request, key):
-    depends(request, ["pool_04", "acl_pool_perm_09"], scope="session")
+    depends(request, ["acl_pool_perm_08"])
     assert results.json()['acl'][0][key] == default_acl[0][key], results.text
     assert results.json()['acl'][1][key] == default_acl[1][key], results.text
 
 
 def test_12_filesystem_acl_is_present(request):
-    depends(request, ["pool_04", "acl_pool_perm_09"], scope="session")
+    depends(request, ["acl_pool_perm_08"], scope="session")
     results = POST('/filesystem/stat/', f'/mnt/{dataset}')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is True, results.text
 
 
 def test_13_strip_acl_from_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["acl_pool_perm_08"], scope="session")
     global JOB_ID
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
@@ -167,10 +154,20 @@ def test_13_strip_acl_from_dataset(request):
 
     assert result.status_code == 200, result.text
     JOB_ID = result.json()
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_14_setting_dataset_quota(request):
-    depends(request, ["pool_04", "user_24"], scope="session")
+def test_14_filesystem_acl_is_removed(request):
+    depends(request, ["acl_pool_perm_08"], scope="session")
+    results = POST('/filesystem/stat/', f'/mnt/{dataset}')
+    assert results.status_code == 200, results.text
+    assert results.json()['acl'] is False, results.text
+    assert oct(results.json()['mode']) == '0o40777', results.text
+
+
+def test_15_setting_dataset_quota(request):
+    depends(request, ["create_dataset", "user_24"], scope="session")
     gid = str(GET('/group/?group=shareuser').json()[0]['gid'])
     global results
     payload = [
@@ -182,8 +179,8 @@ def test_14_setting_dataset_quota(request):
     assert results.status_code == 200, results.text
 
 
-def test_15_getting_dataset_quota(request):
-    depends(request, ["pool_04"], scope="session")
+def test_16_getting_dataset_quota(request):
+    depends(request, ["create_dataset"], scope="session")
     global results
     payload = {
         'quota_type': 'USER',
@@ -191,24 +188,12 @@ def test_15_getting_dataset_quota(request):
     results = POST(f'/pool/dataset/id/{dataset_url}/get_quota', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results
-
-
-def test_16_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_17_filesystem_acl_is_removed(request):
-    depends(request, ["pool_04"], scope="session")
-    results = POST('/filesystem/stat/', f'/mnt/{dataset}')
-    assert results.status_code == 200, results.text
-    assert results.json()['acl'] is False, results.text
-    assert oct(results.json()['mode']) == '0o40777', results.text
-
-
 def test_18_delete_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_dataset"], scope="session")
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )
@@ -216,11 +201,12 @@ def test_18_delete_dataset(request):
 
 
 def test_19_verify_the_id_dataset_does_not_exist(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_dataset"], scope="session")
     result = GET(f'/pool/dataset/id/{dataset_url}/')
     assert result.status_code == 404, result.text
 
 
+@pytest.mark.dependency(name="create_zvol")
 def test_20_creating_zvol(request):
     depends(request, ["pool_04"], scope="session")
     global results, payload
@@ -236,7 +222,7 @@ def test_20_creating_zvol(request):
 
 @pytest.mark.parametrize('key', ['name', 'type', 'volsize', 'volblocksize'])
 def test_21_verify_output(request, key):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     if key == 'volsize':
         assert results.json()[key]['parsed'] == payload[key], results.text
     elif key == 'volblocksize':
@@ -246,7 +232,7 @@ def test_21_verify_output(request, key):
 
 
 def test_22_query_zvol_by_id(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     global results
     results = GET(f'/pool/dataset/id/{zvol_url}')
     assert isinstance(results.json(), dict)
@@ -254,7 +240,7 @@ def test_22_query_zvol_by_id(request):
 
 @pytest.mark.parametrize('key', ['name', 'type', 'volsize', 'volblocksize'])
 def test_23_verify_the_query_zvol_output(request, key):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     if key == 'volsize':
         assert results.json()[key]['parsed'] == payload[key], results.text
     elif key == 'volblocksize':
@@ -264,7 +250,7 @@ def test_23_verify_the_query_zvol_output(request, key):
 
 
 def test_24_update_zvol(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     global payload, results
     payload = {
         'volsize': 163840,
@@ -276,12 +262,12 @@ def test_24_update_zvol(request):
 
 @pytest.mark.parametrize('key', ['volsize'])
 def test_25_verify_update_zvol_output(request, key):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     assert results.json()[key]['parsed'] == payload[key], results.text
 
 
 def test_26_query_zvol_changes_by_id(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     global results
     results = GET(f'/pool/dataset/id/{zvol_url}')
     assert isinstance(results.json(), dict), results
@@ -289,25 +275,25 @@ def test_26_query_zvol_changes_by_id(request):
 
 @pytest.mark.parametrize('key', ['comments', 'volsize'])
 def test_27_verify_the_query_change_zvol_output(request, key):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     assert results.json()[key]['parsed'] == payload[key], results.text
 
 
 def test_28_delete_zvol(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     result = DELETE(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 200, result.text
 
 
 def test_29_verify_the_id_zvol_does_not_exist(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["create_zvol"])
     result = GET(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 404, result.text
 
 
 @pytest.mark.parametrize("create_dst", [True, False])
 def test_28_delete_dataset_with_receive_resume_token(request, create_dst):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, ["create_zvol", "ssh_password"], scope="session")
     result = POST('/pool/dataset/', {'name': f'{pool_name}/src'})
     assert result.status_code == 200, result.text
 

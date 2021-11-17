@@ -14,9 +14,9 @@ from pytest_dependency import depends
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 ACLTEST_DATASET = f'{pool_name}/acltest'
-dataset_url = ACLTEST_DATASET.replace('/', '%2F')
+DATASET_URL = ACLTEST_DATASET.replace('/', '%2F')
 ACLTEST_SUBDATASET = f'{pool_name}/acltest/sub1'
-subdataset_url = ACLTEST_SUBDATASET.replace('/', '%2F')
+SUBDATASET_URL = ACLTEST_SUBDATASET.replace('/', '%2F')
 
 base_permset = {
     "READ_DATA": False,
@@ -171,8 +171,7 @@ def test_02_create_dataset(request):
     depends(request, ["pool_04"], scope="session")
     result = POST(
         '/pool/dataset/', {
-            'name': ACLTEST_DATASET,
-            'acltype': 'NFSV4'
+            'name': ACLTEST_DATASET
         }
     )
     assert result.status_code == 200, result.text
@@ -195,7 +194,7 @@ def test_03_get_acltype(request):
 def test_04_basic_set_acl_for_dataset(request):
     depends(request, ["HAS_NFS4_ACLS"])
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': default_acl,
             'group': 'nobody',
             'user': 'nobody'
@@ -249,7 +248,7 @@ def test_08_set_basic_permsets(request, permset):
     }
     default_acl[0]['perms']['BASIC'] = permset
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': default_acl,
             'group': 'nobody',
             'user': 'nobody'
@@ -275,7 +274,7 @@ def test_09_set_basic_flagsets(request, flagset):
     }
     default_acl[0]['flags']['BASIC'] = flagset
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': default_acl,
             'group': 'nobody',
             'user': 'nobody'
@@ -307,7 +306,7 @@ def test_10_set_advanced_permset(request, perm):
     default_acl[0]['perms'] = base_permset.copy()
     default_acl[0]['perms'][perm] = True
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': default_acl,
             'group': 'nobody',
             'user': 'nobody'
@@ -337,7 +336,7 @@ def test_11_set_advanced_flagset(request, flag):
         default_acl[0]['flags']['DIRECTORY_INHERIT'] = True
 
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': default_acl,
             'group': 'nobody',
             'user': 'nobody'
@@ -361,12 +360,12 @@ We first create a child dataset to verify that ACLs do not change unless
 """
 
 
+@pytest.mark.dependency(name='ACLTEST_SUBDATASET')
 def test_12_prepare_recursive_tests(request):
     depends(request, ["HAS_NFS4_ACLS", "ssh_password"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_SUBDATASET,
-            'acltype': 'NFSV4',
         }
     )
     assert result.status_code == 200, result.text
@@ -385,7 +384,7 @@ def test_12_prepare_recursive_tests(request):
 
 
 def test_13_recursive_no_traverse(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ['ACLTEST_SUBDATASET'])
     default_acl[1]['perms'].pop('BASIC')
     default_acl[1]['flags'].pop('BASIC')
     default_acl[0]['flags'] = INHERIT_FLAGS_BASIC.copy()
@@ -403,7 +402,7 @@ def test_13_recursive_no_traverse(request):
     init_acl = results.json()['acl'][0]['perms']
 
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': default_acl,
             'group': 'nobody',
             'user': 'nobody',
@@ -456,7 +455,7 @@ def test_13_recursive_no_traverse(request):
 
 
 def test_14_recursive_with_traverse(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ['ACLTEST_SUBDATASET'])
     expected_flags_0 = INHERIT_FLAGS_BASIC.copy()
     expected_flags_0['INHERITED'] = True
     expected_flags_1 = base_flagset.copy()
@@ -466,7 +465,7 @@ def test_14_recursive_with_traverse(request):
         'simplified': False
     }
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': default_acl,
             'group': 'nobody',
             'user': 'nobody',
@@ -489,9 +488,9 @@ def test_14_recursive_with_traverse(request):
 
 
 def test_15_strip_acl_from_dataset(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ['ACLTEST_SUBDATASET'])
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': [],
             'mode': '777',
             'group': 'nobody',
@@ -514,14 +513,14 @@ different cases for where we can fail to strip an ACL.
 
 
 def test_16_filesystem_acl_is_not_removed_child_dataset(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ['ACLTEST_SUBDATASET'])
     results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_SUBDATASET}')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is True, results.text
 
 
 def test_17_filesystem_acl_is_removed_mountpoint(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ['ACLTEST_SUBDATASET'])
     results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_DATASET}')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is False, results.text
@@ -529,7 +528,7 @@ def test_17_filesystem_acl_is_removed_mountpoint(request):
 
 
 def test_18_filesystem_acl_is_removed_subdir(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ['ACLTEST_SUBDATASET'])
     results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_DATASET}/dir1')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is False, results.text
@@ -537,7 +536,7 @@ def test_18_filesystem_acl_is_removed_subdir(request):
 
 
 def test_19_filesystem_acl_is_removed_file(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ['ACLTEST_SUBDATASET'])
     results = POST('/filesystem/stat/',
                    f'/mnt/{ACLTEST_DATASET}/dir1/testfile')
     assert results.status_code == 200, results.text
@@ -546,9 +545,9 @@ def test_19_filesystem_acl_is_removed_file(request):
 
 
 def test_20_delete_child_dataset(request):
-    depends(request, ["HAS_NFS4_ACLS"])
+    depends(request, ['ACLTEST_SUBDATASET'])
     result = DELETE(
-        f'/pool/dataset/id/{subdataset_url}/'
+        f'/pool/dataset/id/{SUBDATASET_URL}/'
     )
     assert result.status_code == 200, result.text
 
@@ -577,7 +576,8 @@ def test_21_creating_shareuser_to_test_acls():
 
 @pytest.mark.dependency(name="HAS_TESTFILE")
 def test_22_prep_testfile(request):
-    depends(request, ["ACL_USER_CREATED", "ssh_password"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "DATASET_CREATED", "ssh_password"],
+            scope="session")
     cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -614,7 +614,8 @@ def test_23_test_acl_function_deny(perm, request):
     acltest user, then attempt to perform an action that
     should result in failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE",
+                      "ssh_password", "acl_pool_perm_09"], scope="session")
 
     if perm == "FULL_DELETE":
         to_deny = {"DELETE_CHILD": True, "DELETE": True}
@@ -630,7 +631,7 @@ def test_23_test_acl_function_deny(perm, request):
     }]
     payload_acl.extend(function_testing_acl_deny)
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': payload_acl,
             'group': 'wheel',
             'user': 'root',
@@ -737,7 +738,7 @@ def test_24_test_acl_function_allow(perm, request):
     }]
     payload_acl.extend(function_testing_acl_allow)
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': payload_acl,
             'group': 'nobody',
             'user': 'root',
@@ -833,7 +834,7 @@ def test_25_test_acl_function_omit(perm, request):
 
     payload_acl.extend(function_testing_acl_allow)
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': payload_acl,
             'group': 'nobody',
             'user': 'root',
@@ -922,7 +923,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
     }]
     payload_acl.extend(function_testing_acl_allow)
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': payload_acl,
             'group': 'nobody',
             'user': 'root',
@@ -1019,7 +1020,7 @@ def test_26_file_execute_deny(request):
     ]
     payload_acl.extend(function_testing_acl_deny)
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': payload_acl,
             'group': 'wheel',
             'user': 'root',
@@ -1072,7 +1073,7 @@ def test_27_file_execute_allow(request):
     ]
     payload_acl.extend(function_testing_acl_allow)
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': payload_acl,
             'group': 'wheel',
             'user': 'root',
@@ -1123,7 +1124,7 @@ def test_28_file_execute_omit(request):
     # remove execute.
     payload_acl[0]['perms']['EXECUTE'] = False
     result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
+        f'/pool/dataset/id/{DATASET_URL}/permission/', {
             'acl': payload_acl,
             'group': 'wheel',
             'user': 'root',
@@ -1154,8 +1155,8 @@ def test_29_deleting_homedir_user(request):
 
 
 def test_30_delete_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["DATASET_CREATED"], scope="session")
     result = DELETE(
-        f'/pool/dataset/id/{dataset_url}/'
+        f'/pool/dataset/id/{DATASET_URL}/'
     )
     assert result.status_code == 200, result.text

@@ -19,7 +19,7 @@ DATASET_PATH = f'/mnt/{DATASET}'
 TMP_FILE = '/tmp/testfile.txt'
 SHARE_NAME = 'webdavshare'
 MODEBITS = '777'
-USER_INFO = {'user': {'name': 'root', 'uid': 0}, 'group': {'name': 'root', 'gid': 0}}
+USER_INFO = {'user': {'name': 'root', 'uid': 0}, 'group': {'name': 'wheel', 'gid': 0}}
 
 
 @pytest.fixture(scope='module')

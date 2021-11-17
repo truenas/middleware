@@ -137,6 +137,7 @@ def test_06_check_ad_machine_account_added(request):
 
     assert errstr == "", f"b64decode of keytab failed with: {errstr}"
 
+
 @pytest.mark.dependency(name="KRB_DATASET")
 def test_07_creating_ad_dataset_for_smb(request):
     depends(request, ["pool_04", "AD_IS_HEALTHY"], scope="session")
@@ -467,8 +468,8 @@ def test_30_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    expected_sec = 'SecType = sys;'
-    cmd = f'grep "{expected_sec}" /etc/ganesha/ganesha.conf'
+    expected_sec = "V4: / -sec=sys"
+    cmd = f'grep "{expected_sec}" /etc/exports'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == expected_sec, results['output']
@@ -494,10 +495,6 @@ def test_32_add_krb_spn(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    job_id = results['output'].strip()
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
 
 def test_33_verify_has_nfs_principals(request):
     depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
@@ -514,7 +511,7 @@ def test_34_verify_ad_nfs_parameters(request):
     assert results['result'] is True, results['output']
     if not results['result']:
         return
-    assert results['output'].strip() == "true"
+    assert results['output'].strip() == "True"
 
 
 def test_35_check_nfs_exports_sec(request):
@@ -528,18 +525,11 @@ def test_35_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    results = SSH_TEST("cat /etc/ganesha/ganesha.conf", user, password, ip)
+    expected_sec = "V4: / -sec=krb5:krb5i:krb5p"
+    cmd = f'grep "{expected_sec}" /etc/exports'
+    results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    ganesha_config = results['output']
-
-    expected_sec = "krb5, krb5i, krb5p;"
-    sec = None
-    for entry in ganesha_config.splitlines():
-        if entry.strip().startswith("SecType"):
-            sec = entry.rsplit("=", 1)[1].strip()
-            break
-
-    assert sec == expected_sec, ganesha_config
+    assert results['output'].strip() == expected_sec, results['output']
 
 
 def test_36_disable_krb5_nfs4(request):
@@ -563,23 +553,16 @@ def test_37_check_nfs_exports_sec(request):
     Expected security with is:
     "V4: / -sec=sys:krb5:krb5i:krb5p"
     """
-    cmd = 'midclt call etc.generate nfsd'
     depends(request, ["ssh_password"], scope="session")
+    cmd = 'midclt call etc.generate nfsd'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    results = SSH_TEST("cat /etc/ganesha/ganesha.conf", user, password, ip)
+    expected_sec = "V4: / -sec=sys:krb5:krb5i:krb5p"
+    cmd = f'grep "{expected_sec}" /etc/exports'
+    results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    ganesha_config = results['output']
-
-    expected_sec = "sys, krb5, krb5i, krb5p;"
-    sec = None
-    for entry in ganesha_config.splitlines():
-        if entry.strip().startswith("SecType"):
-            sec = entry.rsplit("=", 1)[1].strip()
-            break
-
-    assert sec == expected_sec, ganesha_config
+    assert results['output'].strip() == expected_sec, results['output']
 
 
 def test_38_cleanup_nfs_settings(request):
