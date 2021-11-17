@@ -12,6 +12,7 @@ sys.path.append(apifolder)
 from auto_config import ha, interface, user, password
 from functions import GET, PUT, SSH_TEST
 
+# Only run HA test on HA and vice versa
 if ha and "domain" in os.environ:
     domain = os.environ["domain"]
     gateway = os.environ["gateway"]
