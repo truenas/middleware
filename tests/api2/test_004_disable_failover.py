@@ -8,6 +8,7 @@ from functions import PUT
 from auto_config import ha
 
 
+# Only run on HA
 if ha:
     def test_01_disable_failover():
         payload = {
