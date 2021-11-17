@@ -383,7 +383,7 @@ def test_35_waiting_for_iscsi_connection_before_grabbing_device_name(request):
             assert True
             break
         sleep(1)
-    sleep(3)
+    sleep(5)
 
 
 @bsd_host_cfg
@@ -497,7 +497,7 @@ def test_48_waiting_for_iscsi_connection_before_grabbing_device_name(request):
             assert True
             break
         sleep(1)
-    sleep(3)
+    sleep(5)
 
 
 @bsd_host_cfg
