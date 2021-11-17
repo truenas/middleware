@@ -615,7 +615,7 @@ def test_23_test_acl_function_deny(perm, request):
     should result in failure.
     """
     depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE",
-                      "ssh_password", "acl_pool_perm_09"], scope="session")
+                      "ssh_password"], scope="session")
 
     if perm == "FULL_DELETE":
         to_deny = {"DELETE_CHILD": True, "DELETE": True}
@@ -711,7 +711,7 @@ def test_24_test_acl_function_allow(perm, request):
     acltest user, then attempt to perform an action that
     should result in success.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password"])
 
     """
     Some extra permissions bits must be set for these tests
@@ -806,7 +806,7 @@ def test_25_test_acl_function_omit(perm, request):
     on presence of the particular permissions bit. Then we omit
     it. This should result in a failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE"])
 
     """
     Some extra permissions bits must be set for these tests
@@ -891,7 +891,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
     they grant no more permissions than intended. Some bits cannot
     be tested in isolation effectively using built in utilities.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -1001,7 +1001,7 @@ def test_26_file_execute_deny(request):
     Base permset with everyone@ FULL_CONTROL, but ace added on
     top explictly denying EXECUTE. Attempt to execute file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -1050,7 +1050,7 @@ def test_27_file_execute_allow(request):
     READ_ATTRIBUTES are also granted beecause we need to be able to
     stat and read our test script.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -1102,7 +1102,7 @@ def test_28_file_execute_omit(request):
     Grant user all permissions except EXECUTE. Attempt to execute
     file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
