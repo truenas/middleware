@@ -238,9 +238,13 @@ class FailoverService(ConfigService):
             return status
 
         try:
+            # timeout of 5 seconds is necessary here since this could be called
+            # when the other node has been forcefully rebooted so the websocket
+            # connection is "up" but the default TCP window hasn't elapsed so
+            # the connection remains alive. Without the timeout, this could take
+            # 20+ seconds to return which is unacceptable during a failover event.
             remote_imported = await self.middleware.call(
-                'failover.call_remote', 'pool.query',
-                [[['status', '!=', 'OFFLINE']]]
+                'failover.call_remote', 'pool.query', [[['status', '!=', 'OFFLINE']]], {'timeout': 5}
             )
 
             # Other node has the pool
