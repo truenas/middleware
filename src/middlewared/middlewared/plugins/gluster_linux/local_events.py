@@ -67,7 +67,7 @@ class GlusterLocalEventsService(Service):
         async with aiohttp.ClientSession() as sess:
             status = reason = None
             try:
-                res = await sess.post(LOCAL_WEBHOOK_URL, headers=headers, json=data, timeout=5)
+                res = await sess.post(LOCAL_WEBHOOK_URL, headers=headers, json=data, timeout=30)
             except asyncio.exceptions.TimeoutError:
                 status = 500
                 reason = 'Timed out waiting for a response'
