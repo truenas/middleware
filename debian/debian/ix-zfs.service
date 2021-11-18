@@ -11,6 +11,7 @@ RemainAfterExit=yes
 ExecStart=-midclt call disk.sed_unlock_all
 ExecStart=midclt call -job --job-print description pool.import_on_boot
 StandardOutput=null
+TimeoutStartSec=15min
 
 [Install]
 WantedBy=multi-user.target
