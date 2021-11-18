@@ -647,31 +647,22 @@ def test_23_test_acl_function_deny(perm, request):
 
     if perm == "EXECUTE":
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
-
     elif perm == "READ_ATTRIBUTES":
         cmd = f'stat /mnt/{ACLTEST_DATASET}/acltest.txt'
-
     elif perm in ["DELETE", "DELETE_CHILD", "FULL_DELETE"]:
-        cmd = f'rm -f /mnt/{ACLTEST_DATASET}/acltest.txt'
-
+        cmd = f'rm /mnt/{ACLTEST_DATASET}/acltest.txt'
     elif perm == "READ_DATA":
         cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
-
     elif perm == "WRITE_DATA":
         cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
-
     elif perm == "WRITE_ATTRIBUTES":
         cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
-
     elif perm == "READ_ACL":
         cmd = f'getfacl /mnt/{ACLTEST_DATASET}/acltest.txt'
-
     elif perm == "WRITE_ACL":
         cmd = f'setfacl -b /mnt/{ACLTEST_DATASET}/acltest.txt'
-
     elif perm == "WRITE_OWNER":
         cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
-
     else:
         # This should never happen.
         cmd = "touch /var/empty/ERROR"
@@ -682,24 +673,18 @@ def test_23_test_acl_function_deny(perm, request):
     DELETE_CHILD is permitted on parent, or DELETE is permitted on
     file. This means that it should succeed when tested in isolation,
     but fail when combined.
-
-    Unfortunately, this is implemented differenting in FreeBSD vs Linux.
-    Former follows above recommendation, latter does not in that denial
-    of DELETE on file takes precedence over allow of DELETE_CHILD.
     """
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_deny {to_deny}'
-    expected_delete = ["DELETE"]
-    if perm in expected_delete:
+    if perm in ["DELETE"]:
         assert results['result'] is True, errstr
-
         # unfortunately, we now need to recreate our testfile.
         cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
-
         cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
+    else:
         assert results['result'] is False, errstr
 
 
@@ -711,7 +696,7 @@ def test_24_test_acl_function_allow(perm, request):
     acltest user, then attempt to perform an action that
     should result in success.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password"])
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
