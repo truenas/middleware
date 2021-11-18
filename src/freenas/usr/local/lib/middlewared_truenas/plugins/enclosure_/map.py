@@ -357,7 +357,7 @@ MAPPINGS = [
             MappingSlot(1, 23, False),
         ]),
     ]),
-    ProductMapping(re.compile(r"TRUENAS-R50$"), [
+    ProductMapping(re.compile(r"TRUENAS-R50B?$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(0, 0, False),
             MappingSlot(0, 1, False),
