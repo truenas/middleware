@@ -10,8 +10,9 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, RC_TEST, DELETE, POST, SSH_TEST
 from auto_config import ip, user, dev_test
+reason = 'Skipping for test development'
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
 @pytest.fixture(scope='module')
