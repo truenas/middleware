@@ -1,5 +1,6 @@
 from lockfile import LockFile, AlreadyLocked
 from collections import defaultdict
+from shlex import quote
 import multiprocessing
 import os
 import subprocess
@@ -532,11 +533,9 @@ class FailoverService(Service):
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
                 for volume in fobj['volumes']:
-                    logger.warning('Importing %s', volume)
+                    logger.warning('Importing %r', volume)
                     # TODO: try to import using cachefile and then fallback without if it fails
-                    error, output = run('zpool import -o cachefile=none -m -R /mnt -f {}'.format(
-                        volume,
-                    ), stderr=True)
+                    error, output = run(f'zpool import -o cachefile=none -m -R /mnt -f {quote(volume)}', stderr=True)
                     if error:
                         logger.error('Failed to import %s: %s', volume, output)
                         open(FAILED_FILE, 'w').close()
