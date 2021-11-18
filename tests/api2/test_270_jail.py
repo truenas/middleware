@@ -17,7 +17,7 @@ reason = 'Skip for test development'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
-# Exclude from HA API
+# Exclude from HA testing
 if not ha:
     JOB_ID = None
     RELEASE = None
