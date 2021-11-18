@@ -96,7 +96,6 @@ def test_07_promoting_dataset(request):
 # and stat output confirms its absence.
 
 
-@pytest.mark.dependency(name="acl_pool_perm_08")
 def test_08_set_acl_for_dataset(request):
     depends(request, ["create_dataset"])
     global JOB_ID
@@ -167,7 +166,7 @@ def test_14_filesystem_acl_is_removed(request):
 
 
 def test_15_setting_dataset_quota(request):
-    depends(request, ["create_dataset", "user_24"], scope="session")
+    depends(request, ["create_dataset", "shareuser"], scope="session")
     gid = str(GET('/group/?group=shareuser').json()[0]['gid'])
     global results
     payload = [
