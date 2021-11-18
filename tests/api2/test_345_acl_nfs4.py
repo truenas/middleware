@@ -675,7 +675,7 @@ def test_23_test_acl_function_deny(perm, request):
     but fail when combined.
     """
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_deny {to_deny}'
-    if perm in ["DELETE"]:
+    if perm in ["DELETE", "DELETE_CHILD"]:
         assert results['result'] is True, errstr
         # unfortunately, we now need to recreate our testfile.
         cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
