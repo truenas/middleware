@@ -100,15 +100,13 @@ def test_09_Check_to_see_if_dyndns_service_is_enabled_at_boot():
     assert results.json()[0]['enable'] is True, results.text
 
 
-@noip_test_cfg
-def test_10_Starting_dyndns_service():
-    results = POST('/service/start/',
-                   {'service': 'dynamicdns'})
-    assert results.status_code == 200, results.text
-    sleep(1)
+if noip_test_cfg:
+    def test_10_Starting_dyndns_service():
+        results = POST('/service/start/',
+                       {'service': 'dynamicdns'})
+        assert results.status_code == 200, results.text
+        sleep(1)
 
-
-@noip_test_cfg
-def test_11_Checking_to_see_if_dyndns_service_is_running():
-    results = GET('/service?service=dynamicdns')
-    assert results.json()[0]['state'] == 'RUNNING', results.text
+    def test_11_Checking_to_see_if_dyndns_service_is_running():
+        results = GET('/service?service=dynamicdns')
+        assert results.json()[0]['state'] == 'RUNNING', results.text
