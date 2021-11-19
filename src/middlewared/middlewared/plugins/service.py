@@ -6,7 +6,7 @@ import psutil
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import filterable, CallError, CRUDService, private
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
