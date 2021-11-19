@@ -1340,35 +1340,6 @@ async def hook_kmip_sync(middleware, *args, **kwargs):
     await middleware.call('failover.sync_keys_to_remote_node')
 
 
-async def service_remote(middleware, service, verb, options):
-    """
-    Most of service actions need to be replicated to the standby node so we don't lose
-    too much time during failover regenerating things (e.g. users database)
-
-    This is the middleware side of what legacy UI did on service changes.
-    """
-    if not options['ha_propagate']:
-        return
-    # Skip if service is blacklisted or we are not MASTER
-    if service in (
-        'system',
-        'webshell',
-        'smartd',
-        'nfs',
-    ) or await middleware.call('failover.status') != 'MASTER':
-        return
-    # Nginx should never be stopped on standby node
-    if service == 'nginx' and verb == 'stop':
-        return
-    try:
-        await middleware.call('failover.call_remote', 'core.bulk', [
-            f'service.{verb}', [[service, options]]
-        ])
-    except Exception as e:
-        if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.ECONNRESET)):
-            middleware.logger.warning(f'Failed to run {verb}({service})', exc_info=True)
-
-
 async def ready_system_sync_keys(middleware):
     await middleware.call('failover.sync_keys_from_remote_node')
 
@@ -1421,7 +1392,6 @@ async def setup(middleware):
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
-    middleware.register_hook('service.pre_action', service_remote, sync=False)
 
     # Register callbacks to properly refresh HA status and send events on changes
     await middleware.call('failover.remote_subscribe', 'system', remote_status_event)

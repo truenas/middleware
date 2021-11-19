@@ -87,12 +87,6 @@ class FailoverService(Service):
     # before the other services during a failover event
     CRITICAL_SERVICES = ['iscsitarget', 'cifs', 'nfs']
 
-    # option to be given when changing the state of a service
-    # during a failover event, we do not want to replicate
-    # the state of a service to the other controller since
-    # that's being handled by us explicitly
-    HA_PROPAGATE = {'ha_propagate': False}
-
     # file created by the pool plugin during certain
     # scenarios when importing zpools on boot
     ZPOOL_KILLCACHE = '/data/zfs/killcache'
@@ -114,10 +108,7 @@ class FailoverService(Service):
 
     async def restart_service(self, service, timeout):
         logger.info('Restarting %s', service)
-        return await asyncio.wait_for(
-            self.middleware.call('service.restart', service, self.HA_PROPAGATE),
-            timeout=timeout,
-        )
+        return await asyncio.wait_for(self.middleware.call('service.restart', service), timeout=timeout)
 
     @accepts(Dict(
         'restart_services',
@@ -674,16 +665,16 @@ class FailoverService(Service):
         self.run_call('systemdataset.setup')
 
         logger.info('Restarting syslog-ng')
-        self.run_call('service.restart', 'syslogd', self.HA_PROPAGATE)
+        self.run_call('service.restart', 'syslogd')
 
         logger.info('Regenerating cron')
         self.run_call('etc.generate', 'cron')
 
         logger.info('Stopping smartd')
-        self.run_call('service.stop', 'smartd', self.HA_PROPAGATE)
+        self.run_call('service.stop', 'smartd')
 
         logger.info('Stopping rrdcached')
-        self.run_call('service.stop', 'rrdcached', self.HA_PROPAGATE)
+        self.run_call('service.stop', 'rrdcached')
 
         self.run_call('truecommand.stop_truecommand_service')
 
@@ -692,7 +683,7 @@ class FailoverService(Service):
             if i['srv_service'] == 'ssh':
                 if i['srv_enable']:
                     logger.info('Restarting SSH')
-                    self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
+                    self.run_call('service.restart', 'ssh')
                 break
 
         # TODO: ALUA on SCALE??

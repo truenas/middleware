@@ -113,22 +113,13 @@ class ServiceService(CRUDService):
         await self.middleware.call('etc.generate', 'rc')
         return rv
 
-    @accepts(
-        Str('service'),
-        Dict(
-            'service-control',
-            Bool('ha_propagate', default=True),
-            register=True,
-        ),
-    )
+    @accepts(Str('service'))
     @returns(Bool('started_service'))
-    async def start(self, service, options):
+    async def start(self, service):
         """
         Start the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
-
-        await self.middleware.call_hook('service.pre_action', service, 'start', options)
 
         await self.middleware.call('service.generate_etc', service_object)
 
@@ -165,18 +156,13 @@ class ServiceService(CRUDService):
         svc = await self.middleware.call('service.query', [['service', '=', service]], {'get': True})
         return svc['state'] == 'RUNNING' or svc['enable']
 
-    @accepts(
-        Str('service'),
-        Ref('service-control'),
-    )
+    @accepts(Str('service'))
     @returns(Bool('service_stopped', description='Will return `true` if service successfully stopped'))
-    async def stop(self, service, options):
+    async def stop(self, service):
         """
         Stop the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
-
-        await self.middleware.call_hook('service.pre_action', service, 'stop', options)
 
         try:
             await service_object.before_stop()
@@ -193,19 +179,13 @@ class ServiceService(CRUDService):
             await self.middleware.call('service.notify_running', service)
             return True
 
-    @accepts(
-        Str('service'),
-        Ref('service-control'),
-    )
+    @accepts(Str('service'))
     @returns(Bool('service_restarted'))
-    async def restart(self, service, options):
+    async def restart(self, service):
         """
         Restart the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
-
-        await self.middleware.call_hook('service.pre_action', service, 'restart', options)
-
         await self.middleware.call('service.generate_etc', service_object)
 
         return await self._restart(service, service_object)
@@ -248,18 +228,13 @@ class ServiceService(CRUDService):
                 self.logger.error("Service %r not running after restart-caused start", service)
                 return False
 
-    @accepts(
-        Str('service'),
-        Ref('service-control'),
-    )
+    @accepts(Str('service'))
     @returns(Bool('service_reloaded'))
-    async def reload(self, service, options):
+    async def reload(self, service):
         """
         Reload the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
-
-        await self.middleware.call_hook('service.pre_action', service, 'reload', options)
 
         await self.middleware.call('service.generate_etc', service_object)
 
