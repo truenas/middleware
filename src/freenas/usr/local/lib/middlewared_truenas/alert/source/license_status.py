@@ -1,9 +1,3 @@
-# Copyright (c) 2015 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from collections import defaultdict
 from datetime import date, timedelta
 import textwrap
@@ -15,7 +9,7 @@ from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 HW_MODELS = (
     'X10', 'X20',
     'M30', 'M40', 'M50', 'M60',
-    'R10', 'R20', 'R20A', 'R20B', 'R40', 'R50',
+    'R10', 'R20', 'R20A', 'R20B', 'R40', 'R50', 'R50B'
     'Z20', 'Z30', 'Z35', 'Z50',
 )
 
