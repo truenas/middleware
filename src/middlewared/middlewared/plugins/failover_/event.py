@@ -267,16 +267,11 @@ class FailoverService(Service):
             ]
         )
         for i in current_events:
-            cur_event = 'MASTER' if i['method'] == 'failover.events.vrrp_master' else 'BACKUP'
-            if event in ('MASTER', 'forcetakeover') and cur_event == 'MASTER':
-                logger.info('Received MASTER event for %r but a current MASTER event is already occuring, ignoring.')
-            elif event == 'BACKUP' and cur_event == 'BACKUP':
-                logger.info('Received BACKUP event for %r but a current BACKUP event is already occuring, ignoring.')
-            else:
-                errmsg = f'Received "{event}" event for "{ifname}" but a current event of "{cur_event}" is running.'
-                errmsg += ' Ignoring failover event.'
-                logger.warning(errmsg)
-
+            cur_iface = i['arguments'][1]
+            cur_event = i['arguments'][2]
+            msg = f'Received "{event}" event for "{ifname}" but a current event of "{cur_event}" is running'
+            msg += f' for "{cur_iface}". Ignoring failover event.'
+            logger.info(msg) if event == cur_event else logger.warning(msg)
             raise IgnoreFailoverEvent()
 
     def _event(self, ifname, event):
