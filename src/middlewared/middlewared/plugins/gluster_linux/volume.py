@@ -195,7 +195,7 @@ class GlusterVolumeService(CRUDService):
             # need to unmount the FUSE mountpoint (if it exists) and
             # send the request to do the same to all other peers in
             # the TSP before we delete the volume
-            data = {'event': 'VOLUME_START', 'name': id, 'forward': True}
+            data = {'event': 'VOLUME_STOP', 'name': id, 'forward': True}
             await self.middleware.call('gluster.localevents.send', data)
             await self.middleware.call('gluster.method.run', volume.delete, args)
 
