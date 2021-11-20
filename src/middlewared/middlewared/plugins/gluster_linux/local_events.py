@@ -47,7 +47,7 @@ class GlusterLocalEventsService(Service):
         if data['name'] not in vols:
             verrors.add(
                 f'localevent_send.{data["name"]}',
-                'gluster volume: "{data["name"]}" does not exist',
+                f'gluster volume: "{data["name"]}" does not exist',
             )
 
         verrors.check()
