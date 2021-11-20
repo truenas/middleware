@@ -48,8 +48,8 @@ class VrrpFifoThread(Thread):
                             return
                         else:
                             self.middleware.call_hook_sync('vrrp.fifo', data=line)
-            except Exception:
-                if log_it:
+            except Exception as e:
+                if log_it and not e.errno == 2:
                     self.logger.warning(
                         'vrrp fifo connection not established, retrying every %d seconds',
                         self._retry_timeout,
