@@ -11,7 +11,7 @@ from middlewared.service import (
     Service, throttle, ValidationErrors
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
+from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, sw_version_is_stable, osc
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 from middlewared.validators import Range
 
@@ -571,6 +571,14 @@ class SystemService(Service):
         Returns software version of the system.
         """
         return sw_version()
+
+    @accepts()
+    @returns(Str('is_stable'))
+    def is_stable(self):
+        """
+        Returns whether software version of the system is stable.
+        """
+        return sw_version_is_stable()
 
     @accepts()
     @returns(Str('system_boot_identifier'))
