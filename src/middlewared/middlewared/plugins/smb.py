@@ -1461,6 +1461,10 @@ class SharingSMBService(SharingService):
 
         if data['path']:
             await self.validate_path_field(data, schema_name, verrors, bypass=bypass)
+            if not data['cluster_volname']:
+                fstype = (await self.middleware.call('filesystem.statfs', data['path']))['fstype']
+                if fstype != 'zfs':
+                    verrors.add(f'{schema_name}.path', f'{fstype}: path is not a ZFS dataset')
         elif not data['home']:
             verrors.add(f'{schema_name}.path', 'This field is required.')
         else:
