@@ -18,9 +18,8 @@
 
     ipv6_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': False, 'ipv6': True}))
 
+    deny_interfaces = middleware.call_sync("interface.internal_interfaces")
     failover_int = middleware.call_sync("failover.internal_interfaces")
-
-    deny_interfaces = ['lo']
     deny_interfaces.extend(failover_int)
 %>
 
