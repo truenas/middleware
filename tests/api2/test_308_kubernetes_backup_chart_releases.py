@@ -202,7 +202,7 @@ if not ha:
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_19_delete_mybackup_kubernetes_backup(request):
-        depends(request, ['k8s_snapshot_regresion'])
+        depends(request, ['k8s_snapshot_regression'])
         results = POST('/kubernetes/delete_backup/', 'mybackup')
         assert results.status_code == 200, results.text
         assert results.json() is None, results.text
