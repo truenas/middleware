@@ -984,7 +984,6 @@ class LDAPService(ConfigService):
             await self.middleware.call('kerberos.start')
 
         await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
 
@@ -1000,6 +999,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.set_passdb_backend', 'ldapsam')
 
         await self.set_state(DSStatus['HEALTHY'])
+        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('ldap.fill_cache')
 
     @private
