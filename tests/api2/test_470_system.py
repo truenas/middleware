@@ -41,8 +41,3 @@ def test_04_check_system_is_freenas():
 def test_05_check_system_debug():
     results = GET("/system/debug/")
     assert results.status_code == 200, results.text
-
-
-# Reboot system to enable tunable
-# def test_06_Reboot_system_to_enable_tunable():
-#     assert POST("/system/reboot/") == 200
