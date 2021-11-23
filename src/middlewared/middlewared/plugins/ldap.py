@@ -715,10 +715,14 @@ class LDAPService(ConfigService):
         )
 
         if must_reload:
-            if new['enable']:
-                await self.middleware.call('ldap.start')
-            else:
-                await self.middleware.call('ldap.stop')
+            try:
+                if new['enable']:
+                    await self.middleware.call('ldap.start')
+                else:
+                    await self.middleware.call('ldap.stop')
+            except Exception:
+                await self.set_state(DSStatus['FAULTED'])
+                raise
 
         return await self.config()
 
@@ -983,9 +987,11 @@ class LDAPService(ConfigService):
         if ldap['kerberos_realm']:
             await self.middleware.call('kerberos.start')
 
+        await self.set_state(DSStatus['JOINING'])
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
 
         if not await self.nslcd_status():
             await self.nslcd_cmd('onestart')
@@ -999,7 +1005,6 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.set_passdb_backend', 'ldapsam')
 
         await self.set_state(DSStatus['HEALTHY'])
-        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('ldap.fill_cache')
 
     @private
