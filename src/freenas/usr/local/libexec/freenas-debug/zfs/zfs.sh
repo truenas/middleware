@@ -95,10 +95,17 @@ zfs_func()
 	do
 		section_header "${s}"
 		zfs get all "${s}"
-		if is_freebsd; then
-			echo "Mountpoint ACL:"
-			mp=$(zfs get -H -o value mountpoint "${s}")
-			if [ "${mp}" != "legacy" ]; then
+		echo "Mountpoint ACL:"
+		mp=$(zfs get -H -o value mountpoint "${s}")
+		if [ "${mp}" != "legacy" ]; then
+			if is_linux; then
+				acltype=$(midclt call filesystem.getacl "${mp}" true | jq -r '.acltype')
+				if [ ${acltype} = "NFS4" ]; then
+					nfs4xdr_getfacl "${mp}"
+				else
+					getfacl -n "${mp}"
+				fi
+			else
 				getfacl "${mp}"
 			fi
 		fi
