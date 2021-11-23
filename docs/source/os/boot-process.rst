@@ -74,3 +74,15 @@ installation, a new root filesystem is created and all the systemd units are dis
 would be running. To fix that, we also maintain a list of enabled/disabled systemd units in `/data/user-services.json`.
 That way, the installer will be able to enable/disable systemd units in a newly created filesystem without being aware
 how to read the configuration database file and map the list of enabled TrueNAS services to systemd units.
+
+By default all systemd services are enabled whenever their relevant debian packages are installed while making the
+root filesystem image for TrueNAS. However this is not desired behavior as this means that on first boot, all services
+would start because that's the default behavior of systemd and would potentially fail to start spamming logs because
+of missing/malformed configuration. This can also be considered a security risk where user might not want to start
+some services automatically and they start exposing the system to outside user access. To make sure that this does
+not happen, we use systemd preset to define the default behavior of installed systemd services which allows us to
+override the default behavior. We define a custom truenas specific systemd preset file which defines which services
+should be enabled/disabled by default. This declaration can be found at
+`/usr/lib/systemd/system-preset/10-truenas.preset` which specifies what the default behavior for systemd services
+should be. To be clear, this does not override any user specified explicit enabling/disabling of service but rather
+should a service start by default on first boot.
