@@ -271,8 +271,8 @@ class DSCacheService(PseudoServiceBase):
     name = "dscache"
 
     async def start(self):
-        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
-        if not ad_enabled:
+        ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
+        if ldap_enabled:
             await systemd_unit("nscd", "restart")
         else:
             await systemd_unit("nscd", "stop")
