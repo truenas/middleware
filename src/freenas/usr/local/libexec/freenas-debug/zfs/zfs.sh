@@ -36,27 +36,24 @@ zfs_getacl()
 	local mp
 	local mounted
 
-	mounted=$(zfs get -H -o value mounted "${ds}")
-	if [ "${mounted}" == "-" ] || [ "${mounted}" == "no" ]; then
+	mounted=$(zfs get -H -o value mounted "${ds}" | tr -d '\n')
+	if [ "${mounted}" = "-" ] || [ "${mounted}" = "no" ]; then
 		return 0
 	fi
 
-	mp=$(zfs get -H -o value mountpoint "${ds}")
+	mp=$(zfs get -H -o value mountpoint "${ds}" | tr -d '\n')
 	echo "Mountpoint ACL: ${ds}"
 	if [ "${mp}" = "legacy" ] || [ "${mp}" = "-" ]; then
 		return 0
 	fi
 
-	if is_linux; then
-		acltype=$(midclt call filesystem.path_get_acltype "${mp}" | tr -d '\n')
-		if [ ${acltype} = "NFS4" ]; then
-			nfs4xdr_getfacl "${mp}"
-		else
-			getfacl -n "${mp}"
-		fi
+	acltype=$(zfs get -H -o value acltype "${ds}" | tr -d '\n')
+	if [ ${acltype} = "nfsv4" ]; then
+		nfs4xdr_getfacl "${mp}"
 	else
-		getfacl "${mp}"
+		getfacl -n "${mp}"
 	fi
+
 	return 0
 }
 
