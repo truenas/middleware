@@ -113,10 +113,9 @@ def test_11_creating_nfs_mountpoint():
 
 
 @bsd_host_cfg
+@pytest.mark.timeout(60)
 def test_12_mounting_nfs():
     cmd = f'mount_nfs {ip}:{NFS_PATH} {MOUNTPOINT}'
-    # command below does not make sence
-    # "umount '${MOUNTPOINT}' ; rmdir '${MOUNTPOINT}'" "60"
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
