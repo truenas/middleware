@@ -33,26 +33,40 @@ zfs_directory() { echo "ZFS"; }
 zfs_getacl()
 {
 	local ds="${1}"
+	local parameter
+	local val
 	local mp
-	local mounted
 
-	mounted=$(zfs get -H -o value mounted "${ds}" | tr -d '\n')
-	if [ "${mounted}" = "-" ] || [ "${mounted}" = "no" ]; then
-		return 0
-	fi
-
-	mp=$(zfs get -H -o value mountpoint "${ds}" | tr -d '\n')
-	echo "Mountpoint ACL: ${ds}"
-	if [ "${mp}" = "legacy" ] || [ "${mp}" = "-" ]; then
-		return 0
-	fi
-
-	acltype=$(zfs get -H -o value acltype "${ds}" | tr -d '\n')
-	if [ ${acltype} = "nfsv4" ]; then
-		nfs4xdr_getfacl "${mp}"
-	else
-		getfacl -n "${mp}"
-	fi
+	zfs get -H -o property,value mounted,mountpoint,acltype "${ds}" | while read -r s
+	do
+		parameter=$(echo -n "$s" | awk '{print $1}' | tr -d '\n')
+		val=$(echo -n "$s" | awk '{print $2}' | tr -d '\n')
+		case "${parameter}" in
+		mountpoint)
+			if [ "${val}" = "legacy" ] || [ "${val}" = "-" ]; then
+				return 0
+			fi
+			mp=$(echo -n "${val}")
+			;;
+		mounted)
+			if [ "${val}" = "no" ] || [ "${val}" = "-" ]; then
+				return 0
+			fi
+			;;
+		acltype)
+			echo "Mountpoint ACL: ${ds}"
+			if [ ${val} = "nfsv4" ]; then
+				nfs4xdr_getfacl "${mp}"
+			else
+				getfacl "${mp}"
+			fi
+			;;
+		*)
+			echo "Unexpected parameter: ${parameter}"
+			return 0
+			;;
+		esac
+	done
 
 	return 0
 }
