@@ -21,6 +21,11 @@ class keytab(enum.Enum):
     TEST = '/var/db/system/test.keytab'
 
 
+class krb5ccache(enum.Enum):
+    SYSTEM = '/tmp/krb5cc_0'
+    TEMP = '/tmp/krb5cc_middleware'
+
+
 class KRB5(enum.Enum):
     MIT = 1
     HEIMDAL = 2
@@ -156,6 +161,14 @@ class KerberosService(ConfigService):
         if klist.returncode != 0:
             return False
         return True
+
+    @private
+    async def check_ticket(self):
+        valid_ticket = await self._klist_test()
+        if not valid_ticket:
+            raise CallError("Kerberos ticket is required.", errno.EAUTH)
+
+        return
 
     @private
     async def _validate_param_type(self, data):
