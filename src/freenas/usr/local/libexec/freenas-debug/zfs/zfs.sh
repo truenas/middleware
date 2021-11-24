@@ -30,6 +30,47 @@
 zfs_opt() { echo z; }
 zfs_help() { echo "Dump ZFS Configuration"; }
 zfs_directory() { echo "ZFS"; }
+zfs_getacl()
+{
+	local ds="${1}"
+	local parameter
+	local val
+	local mp
+
+	zfs get -H -o property,value mounted,mountpoint,acltype "${ds}" | while read -r s
+	do
+		parameter=$(echo -n "$s" | awk '{print $1}' | tr -d '\n')
+		val=$(echo -n "$s" | awk '{print $2}' | tr -d '\n')
+		case "${parameter}" in
+		mountpoint)
+			if [ "${val}" = "legacy" ] || [ "${val}" = "-" ]; then
+				return 0
+			fi
+			mp=$(echo -n "${val}")
+			;;
+		mounted)
+			if [ "${val}" = "no" ] || [ "${val}" = "-" ]; then
+				return 0
+			fi
+			;;
+		acltype)
+			echo "Mountpoint ACL: ${ds}"
+			if [ ${val} = "nfsv4" ]; then
+				nfs4xdr_getfacl "${mp}"
+			else
+				getfacl "${mp}"
+			fi
+			;;
+		*)
+			echo "Unexpected parameter: ${parameter}"
+			return 0
+			;;
+		esac
+	done
+
+	return 0
+}
+
 zfs_func()
 {
 	section_header "zfs periodic snapshot"
@@ -95,13 +136,7 @@ zfs_func()
 	do
 		section_header "${s}"
 		zfs get all "${s}"
-		if is_freebsd; then
-			echo "Mountpoint ACL:"
-			mp=$(zfs get -H -o value mountpoint "${s}")
-			if [ "${mp}" != "legacy" ]; then
-				getfacl "${mp}"
-			fi
-		fi
+		zfs_getacl "${s}"
 		section_footer
 	done
 	section_footer

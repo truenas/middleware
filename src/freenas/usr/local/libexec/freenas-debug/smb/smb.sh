@@ -96,7 +96,13 @@ smb_func()
 		printf "\n"
 		ls -ld "${cifs_path}"
 		printf "\n"
-		midclt call filesystem.getacl "${cifs_path}" true | jq
+		acltype=$(midclt call filesystem.getacl "${cifs_path}" true | jq -r '.acltype')
+		if [ ${acltype} = "NFS4" ]
+		then
+			nfs4xdr_getfacl "${cifs_path}"
+		else
+			getfacl -n "${cifs_path}"
+		fi
 		printf "\n"
 	done
 	section_footer
