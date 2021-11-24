@@ -2,6 +2,7 @@ import asyncio
 import base64
 import datetime
 import enum
+import errno
 import io
 import os
 import shutil
@@ -289,16 +290,16 @@ class KerberosService(ConfigService):
             return True
 
         if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY:
-                principal = f'{data["bindname"]}@{data["domainname"].upper()}'
+            principal = f'{data["bindname"]}@{data["domainname"].upper()}'
 
         elif dstype == DSType.DS_TYPE_LDAP:
-                krb_realm = await self.middleware.call(
-                    'kerberos.realm.query',
-                    [('id', '=', data['kerberos_realm'])],
-                    {'get': True}
-                )
-                bind_cn = (data['binddn'].split(','))[0].split("=")
-                principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
+            krb_realm = await self.middleware.call(
+                'kerberos.realm.query',
+                [('id', '=', data['kerberos_realm'])],
+                {'get': True}
+            )
+            bind_cn = (data['binddn'].split(','))[0].split("=")
+            principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
 
         if krb5 == KRB5.MIT:
             kinit = await Popen(
@@ -322,7 +323,6 @@ class KerberosService(ConfigService):
         """
         For now we only check for kerberos realms explicitly configured in AD and LDAP.
         """
-        data = {}
         ad = await self.middleware.call('activedirectory.config')
         ldap = await self.middleware.call('ldap.config')
         await self.middleware.call('etc.generate', 'kerberos')

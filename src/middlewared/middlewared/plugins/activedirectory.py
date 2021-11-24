@@ -1050,8 +1050,6 @@ class ActiveDirectoryService(ConfigService):
         the secrets.tdb file and the message is passed up from underlying KRB5 library.
         """
         await self.middleware.call("kerberos.check_ticket")
-        ad = await self.config()
-
         cmd = [
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
