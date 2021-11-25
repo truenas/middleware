@@ -42,18 +42,10 @@ def render_certificates(s3, middleware):
         os.chmod(minio_privatekey, 0o600)
 
 
-def configure_minio_sys_dir(s3):
-    storage_path = s3['storage_path']
-    # Create storage path if it does not exist
-    os.makedirs(storage_path, exist_ok=True)
-    minio_dir = os.path.join(storage_path, '.minio.sys')
-    shutil.rmtree(minio_dir, ignore_errors=True)
-
-
-def render(service, middleware):
+def render(__, middleware):
     s3 = middleware.call_sync('s3.config')
     if not s3['storage_path']:
         return
 
-    configure_minio_sys_dir(s3)
+    os.makedirs(s3['storage_path'], exist_ok=True)
     render_certificates(s3, middleware)
