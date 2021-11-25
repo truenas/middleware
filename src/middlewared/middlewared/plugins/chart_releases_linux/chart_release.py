@@ -275,6 +275,11 @@ class ChartReleaseService(CRUDService):
 
             if get_history:
                 release_data['history'] = release['history']
+                for k, v in release_data['history'].items():
+                    r_app_version = self.normalize_app_version_of_chart_release(v)
+                    release_data['history'][k].update({
+                        'human_version': f'{r_app_version}_{parse_version(v["chart_metadata"]["version"])}',
+                    })
 
             current_version = parse_version(release_data['chart_metadata']['version'])
             catalog_version_dict = update_catalog_config.get(release_data['catalog'], {}).get(
@@ -284,19 +289,10 @@ class ChartReleaseService(CRUDService):
             latest_app_version = catalog_version_dict.get('app_version')
             release_data['update_available'] = latest_version > current_version
 
-            app_version = None
+            app_version = self.normalize_app_version_of_chart_release(release_data)
             if release_data['chart_metadata']['name'] == 'ix-chart':
-                image_config = release_data['config'].get('image') or {}
-                if all(k in image_config for k in ('tag', 'repository')):
-                    # TODO: Let's see if we can find sane versioning for `latest` from upstream
-                    if image_config['tag'] == 'latest':
-                        app_version = f'{image_config["repository"]}:{image_config["tag"]}'
-                    else:
-                        app_version = image_config['tag']
                 # Latest app version for ix-chart remains same
                 latest_app_version = app_version
-            else:
-                app_version = release_data['chart_metadata'].get('appVersion')
 
             for key, app_v, c_v in (
                 ('human_version', app_version, current_version),
@@ -330,6 +326,21 @@ class ChartReleaseService(CRUDService):
             releases.append(release_data)
 
         return filter_list(releases, filters, options)
+
+    @private
+    def normalize_app_version_of_chart_release(self, release_data):
+        app_version = None
+        if release_data['chart_metadata']['name'] == 'ix-chart':
+            image_config = release_data['config'].get('image') or {}
+            if all(k in image_config for k in ('tag', 'repository')):
+                # TODO: Let's see if we can find sane versioning for `latest` from upstream
+                if image_config['tag'] == 'latest':
+                    app_version = f'{image_config["repository"]}:{image_config["tag"]}'
+                else:
+                    app_version = image_config['tag']
+        else:
+            app_version = release_data['chart_metadata'].get('appVersion')
+        return app_version
 
     @private
     def retrieve_portals_for_chart_release(self, release_data, node_ip=None):
