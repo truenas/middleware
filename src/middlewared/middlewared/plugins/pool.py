@@ -1512,17 +1512,26 @@ class PoolService(CRUDService):
                 },
             })
 
-            try:
-                # Reset all mountpoints
-                await self.middleware.call('zfs.dataset.inherit', pool_name, 'mountpoint', True)
-            except Exception as e:
-                # Let's not make this fatal
-                self.middleware.logger.debug(
-                    f'Failed to inherit mountpoints recursively for imported {pool_name} pool: {e}'
-                )
-
-            if osc.IS_FREEBSD:
-                await self.middleware.call('pool.sync_encrypted', pool_id)
+            # We would like to reset mountpoints of all the datasets under this pool to ensure that we don't
+            # have any misconfigured mountpoints but we would meanwhile like to ensure that we don't do this
+            # for datasets which are managed by us like ix-applications as that will cause PVC's to not mount
+            # because legacy mountpoint is expected
+            for child in (await self.middleware.call(
+                'zfs.dataset.query', [['id', '=', pool_name]], {
+                    'extra': {'retrieve_properties': False, 'flat': False},
+                    'get': True,
+                }
+            ))['children']:
+                if child['name'] == os.path.join(pool_name, 'ix-applications'):
+                    continue
+                try:
+                    # Reset all mountpoints
+                    await self.middleware.call('zfs.dataset.inherit', child['name'], 'mountpoint', True)
+                except Exception as e:
+                    # Let's not make this fatal
+                    self.middleware.logger.error(
+                        'Failed to inherit mountpoints recursively for %r dataset: %r', child['name'], e
+                    )
         except Exception:
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
