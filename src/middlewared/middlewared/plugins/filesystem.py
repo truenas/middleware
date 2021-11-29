@@ -14,6 +14,7 @@ from middlewared.service import private, CallError, filterable_returns, Service,
 from middlewared.utils import filter_list
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
+from middlewared.plugins.filesystem_ import stat_x
 
 
 class FilesystemService(Service):
@@ -369,9 +370,21 @@ class FilesystemService(Service):
         device = mountpoint.as_posix().removeprefix('/mnt/')
         device = device.removeprefix('/cluster/')
 
-        # we only look for /mnt/ or /cluster/ paths and, currently,
-        # those 2 paths are limited to zfs and/or fuse.glusterfs
-        fstype = 'zfs' if path.startswith('/mnt/') else 'fuse.glusterfs'
+        # get fstype for given path based on major:minor entry in mountinfo
+        stx = stat_x.statx(path)
+        maj_min = f'{stx.stx_dev_major}:{stx.stx_dev_minor}'
+        fstype = None
+        with open('/proc/self/mountinfo') as f:
+            # example lines look like this. We use `find()` to keep the `.split()` calls to only 2 (instead of 3)
+            # (minor optimization, but still one nonetheless)
+            # "26 1 0:23 / / rw,relatime shared:1 - zfs boot-pool/ROOT/22.02-MASTER-20211129-015838 rw,xattr,posixacl"
+            # OR
+            # "129 26 0:50 / /mnt/data rw,noatime shared:72 - zfs data rw,xattr,posixacl"
+            for line in f:
+                fline = line.split()
+                if len(fline) >= 3 and fline[2] == maj_min:
+                    fstype = line[line.find('-'):].split()[1]
+                    break
 
         return {
             'flags': [],
