@@ -424,6 +424,13 @@ class DirectoryServices(Service):
             self.logger.warning("Failed to clear the SMB gencache after re-initializing "
                                 "directory services: [%s]", gencache_flush.stderr.decode())
 
+        ds_state = {
+            'activedirectory': DSStatus.HEALTHY.name if ad_enabled else DSStatus.DISABLED.name,
+            'ldap': DSStatus.HEALTHY.name if ldap_enabled else DSStatus.DISABLED.name,
+            'nis': DSStatus.DISABLED.name
+        }
+        await self.set_state(ds_state)
+
         await self.middleware.call('etc.generate', 'nss')
         if is_kerberized:
             try:
