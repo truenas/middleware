@@ -381,9 +381,8 @@ class FilesystemService(Service):
             # OR
             # "129 26 0:50 / /mnt/data rw,noatime shared:72 - zfs data rw,xattr,posixacl"
             for line in f:
-                fline = line.split()
-                if len(fline) >= 3 and fline[2] == maj_min:
-                    fstype = line[line.find('-'):].split()[1]
+                if line.find(maj_min) != -1:
+                    fstype = line.rsplit(' - ')[1].split()[0]
                     break
 
         return {
