@@ -440,19 +440,16 @@ class FailoverService(Service):
         job.set_progress(None, description='IMPORTING')
 
         failed = []
+        options = {'altroot': '/mnt', 'missing_log': True}
+        any_host = True
+        cachefile = self.ZPOOL_CACHE_FILE
+        new_name = None
         for vol in fobj['volumes']:
             logger.info('Importing %s', vol['name'])
 
             # import the zpool(s)
             try:
-                self.run_call(
-                    'zfs.pool.import_pool',
-                    vol['guid'],
-                    {
-                        'altroot': '/mnt',
-                        'cachefile': self.ZPOOL_CACHE_FILE,
-                    }
-                )
+                self.run_call('zfs.pool.import_pool', vol['guid'], options, any_host, cachefile, new_name)
             except Exception as e:
                 vol['error'] = str(e)
                 failed.append(vol)
