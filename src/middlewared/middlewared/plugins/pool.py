@@ -2463,6 +2463,7 @@ class PoolDatasetService(CRUDService):
         Str('id'),
         Dict(
             'unlock_options',
+            Bool('force_unlock', default=False),
             Bool('key_file', default=False),
             Bool('recursive', default=False),
             Bool('toggle_attachments', default=True),
@@ -2470,6 +2471,7 @@ class PoolDatasetService(CRUDService):
                 'datasets', items=[
                     Dict(
                         'dataset',
+                        Bool('force', required=True, default=False),
                         Str('name', required=True, empty=False),
                         Str('key', validators=[Range(min=64, max=64)], private=True),
                         Str('passphrase', empty=False, private=True),
@@ -2526,6 +2528,11 @@ class PoolDatasetService(CRUDService):
                     f'unlock_options.datasets.{i}.dataset',
                     f'Passphrase or key must be specified for {ds["name"]}'
                 )
+
+            if not options['force_unlock'] and not ds['force']:
+                if err := self.dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name'])):
+                    verrors.add(f'unlock_options.datasets.{i}.force', err)
+
             keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
 
         if '/' in id or not options['recursive']:
