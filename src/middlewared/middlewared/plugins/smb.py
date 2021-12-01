@@ -1461,7 +1461,14 @@ class SharingSMBService(SharingService):
 
         if data['path']:
             await self.validate_path_field(data, schema_name, verrors, bypass=bypass)
-            if not data['cluster_volname']:
+
+            """
+            When path is not a clustervolname, legacy behavior is to make all path components
+            so skip this step here. This is a very rough check is to prevent users from sharing
+            unsupported filesystems over SMB as behavior with our default VFS options in such
+            a situation is undefined.
+            """
+            if not data['cluster_volname'] and os.path.exists(data['path']):
                 fstype = (await self.middleware.call('filesystem.statfs', data['path']))['fstype']
                 if fstype != 'zfs':
                     verrors.add(f'{schema_name}.path', f'{fstype}: path is not a ZFS dataset')
