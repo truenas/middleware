@@ -1606,9 +1606,7 @@ class PoolService(CRUDService):
         root_ds = await self.middleware.call('pool.dataset.get_instance', pool['name'])
         if root_ds['locked'] and os.path.exists(root_ds['mountpoint']):
             # We should be removing immutable flag in this case if the path exists
-            cp = await run(['chattr', '-i', '-RV', root_ds['mountpoint']], check=False)
-            if cp.returncode:
-                raise CallError(f'Unable to remove immutable flag on {pool["mountpoint"]!r} path: {cp.stderr.decode()}')
+            await self.middleware.call('filesystem.set_immutable', False, root_ds['mountpoint'])
 
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
         if pool_count == 1 and await self.middleware.call('failover.licensed'):
@@ -1901,14 +1899,10 @@ class PoolService(CRUDService):
                     pool_mount = os.path.join('/mnt', pool['name'])
                     if os.path.exists(pool_mount):
                         # We would like to ensure the path of root dataset has immutable flag set if it's not locked
-                        cp = subprocess.Popen(
-                            ['chattr', '+i', '-RV', pool_mount], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
-                        )
-                        stderr = cp.communicate()[1]
-                        if cp.returncode:
-                            self.logger.error(
-                                'Unable to set immutable flag at %r: %s', pool_mount, stderr.decode()
-                            )
+                        try:
+                            self.middleware.call_sync('filesystem.set_immutable', True, pool_mount)
+                        except CallError as e:
+                            self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
 
         finally:
             if osc.IS_FREEBSD:
@@ -2446,16 +2440,9 @@ class PoolDatasetService(CRUDService):
         finally:
             await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
-        job.set_progress(80, f'Setting immutable flag on unmounted {id!r} dataset path')
-        cp = await run(['chattr', '+i', '-RV', ds['mountpoint']], check=False)
-        if cp.returncode:
-            raise CallError(
-                f'Unable to set immutable flag on unmounted {id!r} dataset\'s path '
-                f'({ds["mountpoint"]!r}): {cp.stderr.decode()}'
-            )
+        await self.middleware.call('filesystem.set_immutable', True, ds['mountpoint'])
 
         await self.middleware.call_hook('dataset.post_lock', id)
-        job.set_progress(100, f'Successfully locked {id!r} dataset')
 
         return True
 
@@ -2608,13 +2595,11 @@ class PoolDatasetService(CRUDService):
 
                 mount_path = os.path.join('/mnt', name)
                 if os.path.exists(mount_path):
-                    cp = subprocess.Popen(
-                        ['chattr', '-i', '-RV', mount_path], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
-                    )
-                    stderr = cp.communicate()[1]
-                    if cp.returncode:
+                    try:
+                        self.middleware.call_sync('filesystem.set_immutable', False, mount_path)
+                    except CallError as e:
                         failed[name]['error'] = 'Dataset could not be mounted as unable to remove ' \
-                                                f'immutable flag at {mount_path!r}: {stderr.decode()}'
+                                                f'immutable flag at {mount_path!r}: {e}'
                         continue
 
                     if not os.path.isdir(mount_path) or os.listdir(mount_path):
@@ -2815,7 +2800,7 @@ class PoolDatasetService(CRUDService):
                     failed.add(ds['name'])
                     ds['unlock_error'] = f'Child cannot be unlocked when parent "{check}" is locked'
 
-            if not options['force'] and not keys_supplied.get(ds['name'], {}).get('force'):
+            if ds['locked'] and not options['force'] and not keys_supplied.get(ds['name'], {}).get('force'):
                 err = self.dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name']))
                 if ds['unlock_error'] and err:
                     ds['unlock_error'] += f' and {err}'
