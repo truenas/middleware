@@ -2393,6 +2393,10 @@ class PoolDatasetService(CRUDService):
     async def lock(self, job, id, options):
         """
         Locks `id` dataset. It will unmount the dataset and its children before locking.
+
+        After the dataset has been unmounted, system will set immutable flag on the dataset's mountpoint where
+        the dataset was mounted before it was locked making sure that the path cannot be modified. Once the dataset
+        is unlocked, it will not be affected by this change and consumers can continue consuming it.
         """
         ds = await self.get_instance(id)
 
@@ -2424,7 +2428,16 @@ class PoolDatasetService(CRUDService):
         finally:
             await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
+        job.set_progress(80, f'Setting immutable flag on unmounted {id!r} dataset path')
+        cp = await run(['chattr', '+i', '-RV', ds['mountpoint']], check=False)
+        if cp.returncode:
+            raise CallError(
+                f'Unable to set immutable flag on unmounted {id!r} dataset\'s path '
+                f'({ds["mountpoint"]!r}): {cp.stderr.decode()}'
+            )
+
         await self.middleware.call_hook('dataset.post_lock', id)
+        job.set_progress(100, f'Successfully locked {id!r} dataset')
 
         return True
 
