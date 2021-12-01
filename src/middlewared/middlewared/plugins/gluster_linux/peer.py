@@ -5,10 +5,12 @@ from glustercli.cli import peer
 from middlewared.utils import filter_list
 from middlewared.schema import Dict, Str, Bool
 from middlewared.service import (accepts, private, job, filterable,
-                                 CallError, CRUDService)
+                                 CallError, CRUDService, ValidationErrors)
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from .utils import GlusterConfig
 
 
+CTDB_VOL = CTDBConfig.CTDB_VOL_NAME.value
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
 
 
@@ -57,6 +59,17 @@ class GlusterPeerService(CRUDService):
 
         return peers
 
+    @private
+    async def common_validation(self, schema):
+        # TODO: adding or removing a peer to/from an existing TSP is not supported at
+        # this time since it requires expanding the ctdb_shared_vol. This is an
+        # involved process and will require proper design/implementation.
+        verrors = ValidationErrors()
+        if (await self.middleware.call('gluster.volume.exists_and_started', CTDB_VOL))['exists']:
+            verbiage = 'Adding to' if schema == 'gluster.peer.create' else 'Removing from'
+            verrors.add(schema, f'{verbiage} an existing trusted storage pool is not allowed at this time.')
+        verrors.check()
+
     @accepts(Dict(
         'peer_create',
         Str('hostname', required=True, max_length=253)
@@ -68,6 +81,8 @@ class GlusterPeerService(CRUDService):
 
         `hostname` String representing an IP(v4/v6) address or DNS name
         """
+        await self.middleware.call('gluster.peer.common_validation', 'gluster.peer.create')
+
         # we need to verify that we can resolve the hostname to an IP address
         # or clustering, in general, is going to fail in spectacular ways
         await self.middleware.call('cluster.utils.resolve_hostnames', [data['hostname']])
@@ -83,6 +98,7 @@ class GlusterPeerService(CRUDService):
 
         `id` String representing the uuid of the peer
         """
+        await self.middleware.call('gluster.peer.common_validation', 'gluster.peer.delete')
 
         await self.middleware.call(
             'gluster.method.run', peer.detach, {'args': ((await self.get_instance(id))['hostname'],)})
