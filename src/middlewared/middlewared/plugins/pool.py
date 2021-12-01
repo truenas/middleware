@@ -2650,10 +2650,12 @@ class PoolDatasetService(CRUDService):
         Dict(
             'encryption_root_summary_options',
             Bool('key_file', default=False),
+            Bool('force_unlock', default=False),
             List(
                 'datasets', items=[
                     Dict(
                         'dataset',
+                        Bool('force', required=True, default=False),
                         Str('name', required=True, empty=False),
                         Str('key', validators=[Range(min=64, max=64)], private=True),
                         Str('passphrase', empty=False, private=True),
@@ -2683,6 +2685,14 @@ class PoolDatasetService(CRUDService):
         done for `id`, which dataset will be unlocked and if not why it won't be unlocked. The keys
         namely are "unlock_successful" and "unlock_error". The former is a boolean value showing if unlock
         would succeed/fail. The latter is description why it failed if it failed.
+
+        In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is
+        supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation
+        would fail and `unlock_error` will reflect this error appropriately. This can be overridden by setting
+        `encryption_root_summary_options.datasets.X.force` boolean flag or by setting
+        `encryption_root_summary_options.force_unlock` flag. In practice, when the dataset is going to be unlocked
+        and these flags have been provided to `pool.dataset.unlock`, system will rename the directory/file path
+        where the dataset should be mounted resulting in successful unlock of the dataset.
 
         If a dataset is already unlocked, it will show up as true for "unlock_successful" regardless of what
         key user provided as the unlock keys in the output are to reflect what a real unlock operation would
@@ -2741,14 +2751,17 @@ class PoolDatasetService(CRUDService):
                     f'unlock_options.datasets.{i}.dataset.key',
                     f'Must not be specified when passphrase for {ds["name"]} is supplied'
                 )
-            keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
+            keys_supplied[ds['name']] = {
+                'key': ds.get('key') or ds.get('passphrase'),
+                'force': ds['force'],
+            }
 
         verrors.check()
         datasets = self.query_encrypted_datasets(id, {'all': True})
 
         to_check = []
         for name, ds in datasets.items():
-            ds_key = keys_supplied.get(name) or ds['encryption_key']
+            ds_key = keys_supplied.get(name, {}).get('key') or ds['encryption_key']
             if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
                 with contextlib.suppress(ValueError):
                     ds_key = bytes.fromhex(ds_key)
@@ -2780,6 +2793,13 @@ class PoolDatasetService(CRUDService):
                     failed.add(ds['name'])
                     ds['unlock_error'] = f'Child cannot be unlocked when parent "{check}" is locked'
 
+            if not options['force_unlock'] and not keys_supplied.get(ds['name'], {}).get('force'):
+                err = self.dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name']))
+                if ds['unlock_error'] and err:
+                    ds['unlock_error'] += f' and {err}'
+                elif err:
+                    ds['unlock_error'] = err
+
             if ds['valid_key']:
                 ds['unlock_successful'] = not bool(ds['unlock_error'])
             elif not ds['locked']:
@@ -2799,6 +2819,19 @@ class PoolDatasetService(CRUDService):
                 failed.add(ds['name'])
 
         return results
+
+    @private
+    def dataset_can_be_mounted(self, ds_name, ds_mountpoint):
+        mount_error_check = ''
+        if os.path.isfile(ds_mountpoint):
+            mount_error_check = f'A file exists at {ds_mountpoint!r} and {ds_name} cannot be mounted'
+        elif os.path.isdir(ds_mountpoint) and os.listdir(ds_mountpoint):
+            mount_error_check = f'{ds_mountpoint!r} directory is not empty'
+        mount_error_check += (
+            ' (please provide "force" flag to override this error and file/directory '
+            'will be renamed once the dataset is unlocked)' if mount_error_check else ''
+        )
+        return mount_error_check
 
     @accepts(
         Str('id'),
