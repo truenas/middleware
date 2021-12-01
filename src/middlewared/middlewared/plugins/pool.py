@@ -2509,6 +2509,12 @@ class PoolDatasetService(CRUDService):
         (this should not happen,  and if this happens it should be considered a bug). As TrueNAS does not have a state
         for resources that should be unlocked but are still locked, disabling this option will put the system into an
         inconsistent state so it should really never be disabled.
+
+        In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is
+        supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation
+        would fail. This can be overridden by setting `unlock_options.datasets.X.force` boolean flag or by setting
+        `unlock_options.force_unlock` flag. When any of these flags are set, system will rename the existing
+        directory/file path where the dataset should be mounted resulting in successful unlock of the dataset.
         """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset.get_instance', id)
@@ -2602,6 +2608,15 @@ class PoolDatasetService(CRUDService):
 
                 mount_path = os.path.join('/mnt', name)
                 if os.path.exists(mount_path):
+                    cp = subprocess.Popen(
+                        ['chattr', '-i', '-RV', mount_path], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
+                    )
+                    stderr = cp.communicate()[1]
+                    if cp.returncode:
+                        failed[name]['error'] = 'Dataset could not be mounted as unable to remove ' \
+                                                f'immutable flag at {mount_path!r}: {stderr.decode()}'
+                        continue
+
                     if not os.path.isdir(mount_path) or os.listdir(mount_path):
                         # rename please
                         shutil.move(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
