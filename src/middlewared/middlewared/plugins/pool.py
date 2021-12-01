@@ -1898,6 +1898,18 @@ class PoolService(CRUDService):
                     with contextlib.suppress(CallError):
                         self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
 
+                    pool_mount = os.path.join('/mnt', pool['name'])
+                    if os.path.exists(pool_mount):
+                        # We would like to ensure the path of root dataset has immutable flag set if it's not locked
+                        cp = subprocess.Popen(
+                            ['chattr', '+i', '-RV', pool_mount], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
+                        )
+                        stderr = cp.communicate()[1]
+                        if cp.returncode:
+                            self.logger.error(
+                                'Unable to set immutable flag at %r: %s', pool_mount, stderr.decode()
+                            )
+
         finally:
             if osc.IS_FREEBSD:
                 proc.kill()
