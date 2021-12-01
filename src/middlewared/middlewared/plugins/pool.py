@@ -2463,7 +2463,7 @@ class PoolDatasetService(CRUDService):
         Str('id'),
         Dict(
             'unlock_options',
-            Bool('force_unlock', default=False),
+            Bool('force', default=False),
             Bool('key_file', default=False),
             Bool('recursive', default=False),
             Bool('toggle_attachments', default=True),
@@ -2513,7 +2513,7 @@ class PoolDatasetService(CRUDService):
         In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is
         supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation
         would fail. This can be overridden by setting `unlock_options.datasets.X.force` boolean flag or by setting
-        `unlock_options.force_unlock` flag. When any of these flags are set, system will rename the existing
+        `unlock_options.force` flag. When any of these flags are set, system will rename the existing
         directory/file path where the dataset should be mounted resulting in successful unlock of the dataset.
         """
         verrors = ValidationErrors()
@@ -2535,7 +2535,7 @@ class PoolDatasetService(CRUDService):
                     f'Passphrase or key must be specified for {ds["name"]}'
                 )
 
-            if not options['force_unlock'] and not ds['force']:
+            if not options['force'] and not ds['force']:
                 if err := self.dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name'])):
                     verrors.add(f'unlock_options.datasets.{i}.force', err)
 
@@ -2672,7 +2672,7 @@ class PoolDatasetService(CRUDService):
         Dict(
             'encryption_root_summary_options',
             Bool('key_file', default=False),
-            Bool('force_unlock', default=False),
+            Bool('force', default=False),
             List(
                 'datasets', items=[
                     Dict(
@@ -2712,7 +2712,7 @@ class PoolDatasetService(CRUDService):
         supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation
         would fail and `unlock_error` will reflect this error appropriately. This can be overridden by setting
         `encryption_root_summary_options.datasets.X.force` boolean flag or by setting
-        `encryption_root_summary_options.force_unlock` flag. In practice, when the dataset is going to be unlocked
+        `encryption_root_summary_options.force` flag. In practice, when the dataset is going to be unlocked
         and these flags have been provided to `pool.dataset.unlock`, system will rename the directory/file path
         where the dataset should be mounted resulting in successful unlock of the dataset.
 
@@ -2815,7 +2815,7 @@ class PoolDatasetService(CRUDService):
                     failed.add(ds['name'])
                     ds['unlock_error'] = f'Child cannot be unlocked when parent "{check}" is locked'
 
-            if not options['force_unlock'] and not keys_supplied.get(ds['name'], {}).get('force'):
+            if not options['force'] and not keys_supplied.get(ds['name'], {}).get('force'):
                 err = self.dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name']))
                 if ds['unlock_error'] and err:
                     ds['unlock_error'] += f' and {err}'
