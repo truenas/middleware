@@ -356,6 +356,9 @@ class UserService(CRUDService):
                                                       [('group', '=', 'builtin_users')],
                                                       {'get': True}))['id'])
 
+        if not data.get('uid'):
+            data['uid'] = await self.get_next_uid()
+
         # Is this a new directory or not? Let's not nuke existing directories,
         # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
         new_homedir = False
@@ -395,9 +398,6 @@ class UserService(CRUDService):
                 if new_homedir:
                     shutil.rmtree(data['home'])
                 raise
-
-        if not data.get('uid'):
-            data['uid'] = await self.get_next_uid()
 
         pk = None  # Make sure pk exists to rollback in case of an error
         data = await self.user_compress(data)
