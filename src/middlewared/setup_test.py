@@ -11,6 +11,7 @@ setup(
     packages=[
         'middlewared',
         'middlewared.client',
+        'middlewared.test.integration.assets',
         'middlewared.test.integration.utils',
     ],
     package_data={},
