@@ -9,18 +9,26 @@ import pyinotify
 import pathlib
 
 from middlewared.event import EventSource
-from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
-from middlewared.service import private, CallError, filterable_returns, Service, job
-from middlewared.utils import filter_list
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from middlewared.plugins.filesystem_ import stat_x
+from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
+from middlewared.service import private, CallError, filterable_returns, Service, job
+from middlewared.utils import filter_list, run
 
 
 class FilesystemService(Service):
 
     class Config:
         cli_namespace = 'storage.filesystem'
+
+    @private
+    async def set_immutable(self, set_flag, path):
+        cp = await run(['chattr', f'{"+" if set_flag else "-"}i', '-V', path], check=False)
+        if cp.returncode:
+            raise CallError(
+                f'Unable to {"set" if set_flag else "remove"} immutable flag on at {path!r} path: {cp.stderr.decode()}'
+            )
 
     @private
     def resolve_cluster_path(self, path, ignore_ctdb=False):
