@@ -1,18 +1,26 @@
 import contextlib
+import time
 
+import pytest
+
+from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.utils import pool, ssh
 
 import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST
-from auto_config import pool_name, ip, user, password
-import time
+from functions import PUT, POST, GET, DELETE
 
 
 @contextlib.contextmanager
 def credential(data):
+    data = {
+        "name": "Test",
+        **data,
+    }
+
     result = POST("/cloudsync/credentials/", data)
     assert result.status_code == 200, result.text
     credential = result.json()
@@ -26,6 +34,18 @@ def credential(data):
 
 @contextlib.contextmanager
 def task(data):
+    data = {
+        "description": "Test",
+        "schedule": {
+            "minute": "00",
+            "hour": "00",
+            "dom": "1",
+            "month": "1",
+            "dow": "1",
+        },
+        **data
+    }
+
     result = POST("/cloudsync/", data)
     assert result.status_code == 200, result.text
     task = result.json()
@@ -65,7 +85,6 @@ def local_s3_task(params=None, credential_params=None):
             assert result.status_code == 200, result.text
 
             with credential({
-                "name": "Test",
                 "provider": "S3",
                 "attributes": {
                     "access_key_id": access_key,
@@ -76,23 +95,14 @@ def local_s3_task(params=None, credential_params=None):
                 },
             }) as c:
                 with task({
-                    "description": "Test",
                     "direction": "PUSH",
                     "transfer_mode": "COPY",
                     "path": f"/mnt/{local_dataset}",
                     "credentials": c["id"],
-                    "schedule": {
-                        "minute": "00",
-                        "hour": "00",
-                        "dom": "1",
-                        "month": "1",
-                        "dow": "1",
-                    },
                     "attributes": {
                         "bucket": "bucket",
                         "folder": "",
                     },
-                    "args": "",
                     **params,
                 }) as t:
                     yield t
@@ -117,21 +127,76 @@ def run_task(task):
     assert False, state
 
 
+def test_include():
+    with local_s3_task({
+        "include": ["/office/**", "/work/**"],
+    }) as task:
+        ssh(f'mkdir {task["path"]}/office')
+        ssh(f'touch {task["path"]}/office/paper')
+        ssh(f'mkdir {task["path"]}/work')
+        ssh(f'touch {task["path"]}/work/code')
+        ssh(f'mkdir {task["path"]}/games')
+        ssh(f'touch {task["path"]}/games/minecraft')
+        ssh(f'touch {task["path"]}/fun')
+
+        run_task(task)
+
+        assert ssh(f'ls /mnt/{pool}/cloudsync_remote/bucket') == 'office\nwork\n'
+
+
 def test_exclude_recycle_bin():
     with local_s3_task({
         "exclude": ["$RECYCLE.BIN/"],
     }) as task:
-        ssh_result = SSH_TEST(f'mkdir {task["path"]}/\'$RECYCLE.BIN\'', user, password, ip)
-        assert ssh_result['result'] is True, ssh_result['output']
-
-        ssh_result = SSH_TEST(f'touch {task["path"]}/\'$RECYCLE.BIN\'/garbage', user, password, ip)
-        assert ssh_result['result'] is True, ssh_result['output']
-
-        ssh_result = SSH_TEST(f'touch {task["path"]}/file', user, password, ip)
-        assert ssh_result['result'] is True, ssh_result['output']
+        ssh(f'mkdir {task["path"]}/\'$RECYCLE.BIN\'')
+        ssh(f'touch {task["path"]}/\'$RECYCLE.BIN\'/garbage')
+        ssh(f'touch {task["path"]}/file')
 
         run_task(task)
 
-        ssh_result = SSH_TEST(f'ls /mnt/{pool_name}/cloudsync_remote/bucket', user, password, ip)
-        assert ssh_result['result'] is True, ssh_result['output']
-        assert ssh_result['output'] == 'file\n', ssh_result['output']
+        assert ssh(f'ls /mnt/{pool}/cloudsync_remote/bucket') == 'file\n'
+
+
+@pytest.mark.parametrize("anonymous", [True, False])
+@pytest.mark.parametrize("defaultroot", [True, False])
+@pytest.mark.parametrize("has_leading_slash", [True, False])
+def test_ftp_subfolder(anonymous, defaultroot, has_leading_slash):
+    with dataset("cloudsync_local") as local_dataset:
+        config = {"defaultroot": defaultroot}
+        with (anonymous_ftp_server if anonymous else ftp_server_with_user_account)(config) as ftp:
+            remote_dataset = ftp.dataset
+            ssh(f"touch /mnt/{remote_dataset}/bad-file")
+            ssh(f"mkdir /mnt/{remote_dataset}/data")
+            ssh(f"touch /mnt/{remote_dataset}/data/another-bad-file")
+            ssh(f"mkdir /mnt/{remote_dataset}/data/child")
+            ssh(f"touch /mnt/{remote_dataset}/data/child/good-file")
+
+            with credential({
+                "name": "Test",
+                "provider": "FTP",
+                "attributes": {
+                    "host": "localhost",
+                    "port": 21,
+                    "user": ftp.username,
+                    "pass": ftp.password,
+                },
+            }) as c:
+                folder = f"{'/' if has_leading_slash else ''}data/child"
+                if not anonymous and not defaultroot:
+                    # We have access to the FTP server root directory
+                    if has_leading_slash:
+                        # A path with a leading slash should be complete path in this case
+                        folder = f"/mnt/{ftp.dataset}/data/child"
+
+                with task({
+                    "direction": "PULL",
+                    "transfer_mode": "MOVE",
+                    "path": f"/mnt/{local_dataset}",
+                    "credentials": c["id"],
+                    "attributes": {
+                        "folder": folder,
+                    },
+                }) as t:
+                    run_task(t)
+
+                    assert ssh(f'ls /mnt/{local_dataset}') == 'good-file\n'

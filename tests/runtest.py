@@ -66,7 +66,7 @@ option_list = [
 
 # look if all the argument are there.
 try:
-    myopts, args = getopt.getopt(argv[1:], 'aipItkv:', option_list)
+    myopts, args = getopt.getopt(argv[1:], 'aipItk:vx', option_list)
 except getopt.GetoptError as e:
     print(str(e))
     print(error_msg)
@@ -79,7 +79,8 @@ ha = False
 update = False
 dev_test = False
 debug_mode = False
-verbose = ''
+verbose = 0
+exitfirst = ''
 for output, arg in myopts:
     if output in ('-i', '--ip'):
         ip = arg
@@ -102,7 +103,9 @@ for output, arg in myopts:
     elif output == '--debug-mode':
         debug_mode = True
     elif output == '-v':
-        verbose = arg
+        verbose += 1
+    elif output == '-x':
+        exitfirst = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -158,9 +161,15 @@ cfg_file = open("auto_config.py", 'a')
 cfg_file.writelines(f'sshKey = "{Key}"\n')
 cfg_file.close()
 
+callargs = []
+if verbose:
+    callargs.append("-" + "v" * verbose)
+if exitfirst:
+    callargs.append("-x")
+
 call([
     f"pytest-{version}",
-    f"-v{verbose}",
+] + callargs + [
     "-o", "junit_family=xunit2",
     "--junitxml",
     'results/api_v2_tests_result.xml',
