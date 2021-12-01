@@ -216,6 +216,8 @@ class CatalogService(CRUDService):
                 await self.common_validation(
                     {'trains': await self.middleware.call('catalog.retrieve_train_names', path)}, 'catalog_create', data
                 )
+            except ValidationErrors as ve:
+                verrors.extend(ve)
             except CallError as e:
                 verrors.add('catalog_create.label', f'Failed to validate catalog: {e}')
             finally:
