@@ -211,7 +211,7 @@ class CatalogService(CRUDService):
                 TMP_IX_APPS_DIR, 'validate_catalogs', convert_repository_to_path(data['repository'], data['branch'])
             )
             try:
-                await self.middleware.call('catalog.update_git_repository', {**data, 'location': path}, True)
+                await self.middleware.call('catalog.update_git_repository', {**data, 'location': path})
                 await self.middleware.call('catalog.validate_catalog_from_path', path)
                 await self.common_validation(
                     {'trains': await self.middleware.call('catalog.retrieve_train_names', path)}, 'catalog_create', data

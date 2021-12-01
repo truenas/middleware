@@ -123,7 +123,7 @@ class CatalogService(Service):
             return cached_data
         elif not os.path.exists(catalog['location']):
             job.set_progress(5, f'Cloning {label!r} catalog repository')
-            self.middleware.call_sync('catalog.update_git_repository', catalog, True)
+            self.middleware.call_sync('catalog.update_git_repository', catalog)
 
         if all_trains:
             # We can only safely say that the catalog is healthy if we retrieve data for all trains

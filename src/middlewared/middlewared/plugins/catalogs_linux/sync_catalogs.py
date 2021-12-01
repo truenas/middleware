@@ -36,7 +36,7 @@ class CatalogService(Service):
         try:
             catalog = await self.middleware.call('catalog.get_instance', catalog_label)
             job.set_progress(5, 'Updating catalog repository')
-            await self.middleware.call('catalog.update_git_repository', catalog, True)
+            await self.middleware.call('catalog.update_git_repository', catalog)
             job.set_progress(15, 'Reading catalog information')
             item_job = await self.middleware.call('catalog.items', catalog_label, await self.sync_items_params())
             await item_job.wait(raise_error=True)
@@ -60,9 +60,8 @@ class CatalogService(Service):
         }
 
     @private
-    def update_git_repository(self, catalog, raise_exception=False):
+    def update_git_repository(self, catalog):
         self.middleware.call_sync('network.general.will_perform_activity', 'catalog')
         return pull_clone_repository(
             catalog['repository'], os.path.dirname(catalog['location']), catalog['branch'],
-            raise_exception=raise_exception,
         )

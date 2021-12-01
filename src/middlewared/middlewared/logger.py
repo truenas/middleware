@@ -20,7 +20,8 @@ logging.getLogger('botocore').setLevel(logging.WARN)
 # we dont need ws4py close debug messages
 logging.getLogger('ws4py').setLevel(logging.WARN)
 # we dont need GitPython debug messages (used in iocage)
-logging.getLogger('git.cmd').setLevel(logging.WARN)
+logging.getLogger('git.cmd').setLevel(logging.CRITICAL)
+logging.getLogger('git.repo').setLevel(logging.CRITICAL)
 # issues garbage warnings
 logging.getLogger('googleapiclient').setLevel(logging.ERROR)
 # registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
