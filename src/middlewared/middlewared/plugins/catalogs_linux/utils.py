@@ -29,7 +29,7 @@ def get_repo(destination):
         return git.Repo(destination)
 
 
-def pull_clone_repository(repository_uri, parent_dir, branch, depth=None, raise_exception=False):
+def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
     with GIT_LOCK[repository_uri]:
         os.makedirs(parent_dir, exist_ok=True)
         destination = os.path.join(parent_dir, convert_repository_to_path(repository_uri, branch))
@@ -41,30 +41,19 @@ def pull_clone_repository(repository_uri, parent_dir, branch, depth=None, raise_
             try:
                 repo.git.checkout(branch)
                 repo.git.pull()
-            except GitCommandError as e:
-                logger.error('Failed to checkout branch / pull %r repository: %s', repository_uri, e)
+            except GitCommandError:
                 clone_repo = True
 
         if clone_repo:
             try:
                 repo = clone_repository(repository_uri, destination, depth)
             except GitCommandError as e:
-                msg = f'Failed to clone {repository_uri!r} repository at {destination!r} destination: {e}'
-                logger.error(msg)
-                if raise_exception:
-                    raise CallError(msg)
-
-                return False
+                raise CallError(f'Failed to clone {repository_uri!r} repository at {destination!r} destination: {e}')
             else:
                 try:
                     repo.git.checkout(branch)
                 except GitCommandError as e:
-                    msg = f'Failed to checkout {branch!r} branch for {repository_uri!r} repository: {e}'
-                    logger.error(msg)
-                    if raise_exception:
-                        raise CallError(msg)
-
-                    return False
+                    raise CallError(f'Failed to checkout {branch!r} branch for {repository_uri!r} repository: {e}')
 
         return True
 
