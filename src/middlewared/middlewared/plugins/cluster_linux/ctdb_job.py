@@ -139,7 +139,7 @@ class ClusterJob(Service):
         await self.wait_for_method(job, method, 10)
         nodes = await self.middleware.call('ctdb.general.status')
 
-        job.set_progress(50, f'Setting job status indicator for nodes {node["pnn"] for node in nodes}')
+        job.set_progress(50, f'Setting job status indicator for nodes {", ".join([node["pnn"] for node in nodes])!r}')
         for node in nodes:
             if node['this_node'] or node['pnn'] == -1:
                 continue
