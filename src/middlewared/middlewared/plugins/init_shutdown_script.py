@@ -166,7 +166,8 @@ class InitShutdownScriptService(CRUDService):
         if task_type == 'COMMAND':
             cmd = task['command']
         elif task_type == 'SCRIPT' and task['script_text']:
-            _, tmp_script = tempfile.mkstemp(text=True)
+            fd, tmp_script = tempfile.mkstemp(text=True)
+            os.close(fd)
             os.chmod(tmp_script, stat.S_IRWXU)
             with open(tmp_script, 'w') as f:
                 f.write(task['script_text'])

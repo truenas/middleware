@@ -67,7 +67,8 @@ class ConfigService(Service):
             if not options['pool_keys'] or not os.path.exists(files['geli']) or not os.listdir(files['geli']):
                 files['geli'] = None
 
-            filename = tempfile.mkstemp()[1]
+            fd, filename = tempfile.mkstemp()
+            os.close(fd)
             os.chmod(filename, 0o600)
             with tarfile.open(filename, 'w') as tar:
                 tar.add(FREENAS_DATABASE, arcname='freenas-v1.db')
