@@ -807,7 +807,7 @@ class CloudSyncService(TaskPathService):
 
         schema.extend(self.common_task_schema(provider))
 
-        attributes_verrors = validate_attributes(schema, data, additional_attrs=True)
+        attributes_verrors = validate_attributes(schema, data)
 
         if not attributes_verrors:
             await provider.pre_save_task(data, credentials, verrors)
