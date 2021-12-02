@@ -57,23 +57,6 @@ class FencedError(Exception):
     pass
 
 
-# This variable is used wrt to SED drive unlocking.
-# Using SED drives on HA systems have 2 scenarios
-# that need to accounted for.
-# 1. only unlock the drives 1 time (at boot time)
-# 2. do not send SED commands to the drives from
-#    from both controllers at the same time.
-#
-# Rough idea is as follows:
-# 1. boot controller(s) first time
-# 2. FIRST_RUN = True
-# 3. on first vrrp event, check FIRST_RUN
-# 4. if FIRST_RUN: run sed_unlock_all,
-#    set FIRST_RUN = False
-# 5. else continue on with failover as normal
-FIRST_RUN = True
-
-
 class FailoverService(Service):
 
     class Config:
@@ -425,16 +408,13 @@ class FailoverService(Service):
                     shutil.copy2(self.ZPOOL_CACHE_FILE, self.ZPOOL_CACHE_FILE_SAVED)
 
         # unlock SED disks
-        global FIRST_RUN
-        if FIRST_RUN:
-            try:
-                self.run_call('disk.sed_unlock_all')
-                FIRST_RUN = False
-            except Exception as e:
-                # failing here doesn't mean the zpool won't import
-                # we could have failed on only 1 disk so log an
-                # error and move on
-                logger.error('Failed to unlock SED disk(s) with error: %r', e)
+        try:
+            self.run_call('disk.sed_unlock_all')
+        except Exception as e:
+            # failing here doesn't mean the zpool won't import
+            # we could have failed on only 1 disk so log an
+            # error and move on
+            logger.error('Failed to unlock SED disk(s) with error: %r', e)
 
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
@@ -692,13 +672,6 @@ class FailoverService(Service):
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
         self.run_call('failover.call_remote', 'failover.sync_keys_to_remote_node')
-
-        # if we're the backup controller then it means the SED
-        # drives have already been unlocked so set this accordingly
-        # so we don't try to unlock the drives again if/when this
-        # controller becomes the MASTER controller
-        global FIRST_RUN
-        FIRST_RUN = False
 
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'
