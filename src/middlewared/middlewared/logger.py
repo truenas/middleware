@@ -19,7 +19,7 @@ logging.getLogger('aiohttp.internal').setLevel(logging.WARN)
 logging.getLogger('botocore').setLevel(logging.WARN)
 # we dont need ws4py close debug messages
 logging.getLogger('ws4py').setLevel(logging.WARN)
-# we dont need GitPython debug messages (used in iocage)
+# we dont need GitPython debug messages (used in catalogs)
 logging.getLogger('git.cmd').setLevel(logging.CRITICAL)
 logging.getLogger('git.repo').setLevel(logging.CRITICAL)
 # issues garbage warnings
