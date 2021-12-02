@@ -41,7 +41,7 @@ def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
             try:
                 repo.git.checkout(branch)
                 repo.git.pull()
-            except GitCommandError as e:
+            except GitCommandError:
                 clone_repo = True
 
         if clone_repo:
