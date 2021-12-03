@@ -434,6 +434,7 @@ class FailoverService(Service):
                 self.run_call('zfs.pool.import_pool', vol['guid'], options, any_host, cachefile, new_name)
             except Exception as e:
                 if e.errno == errno.ENOENT:
+                    logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
                     try_again = True
                 else:
                     vol['error'] = str(e)
