@@ -17,7 +17,7 @@ def get_flags(path: str, fd: int) -> int:
     return fl[0]
 
 
-def set_immutable(path: str, set_flag: bool):
+def set_immutable(path: str, set_flag: bool) -> None:
     fd = os.open(path, os.O_RDONLY)
     try:
         set_immutable_impl(fd, path, set_flag)
@@ -25,7 +25,7 @@ def set_immutable(path: str, set_flag: bool):
         os.close(fd)
 
 
-def set_immutable_impl(fd: int, path: str, set_flag: bool):
+def set_immutable_impl(fd: int, path: str, set_flag: bool) -> None:
     existing_flags = get_flags(path, fd)
     new_flags = existing_flags | IMMUTABLE_FL if set_flag else existing_flags & ~IMMUTABLE_FL
     fcntl.ioctl(fd, F_IOC_SETFLAGS, struct.pack('i', new_flags))
