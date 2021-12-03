@@ -6,6 +6,7 @@ import contextlib
 import shutil
 import threading
 import logging
+import errno
 from collections import defaultdict
 
 from middlewared.utils import filter_list
@@ -155,7 +156,7 @@ class FailoverService(Service):
             # `self.validate()` calls this method
             raise
         except Exception:
-            logger.error('Failed to run %s%r', method, args, exc_info=True)
+            raise
 
     def event(self, ifname, event):
 
@@ -425,20 +426,33 @@ class FailoverService(Service):
         cachefile = self.ZPOOL_CACHE_FILE
         new_name = None
         for vol in fobj['volumes']:
-            logger.info('Importing %s', vol['name'])
+            logger.info('Importing %r', vol['name'])
 
             # import the zpool(s)
+            try_again = False
             try:
                 self.run_call('zfs.pool.import_pool', vol['guid'], options, any_host, cachefile, new_name)
             except Exception as e:
-                vol['error'] = str(e)
-                failed.append(vol)
-                continue
+                if e.errno == errno.ENOENT:
+                    logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
+                    try_again = True
+                else:
+                    vol['error'] = str(e)
+                    failed.append(vol)
+                    continue
+
+            if try_again:
+                # means the cachefile is "stale" or invalid which will prevent
+                # an import so let's try to import without it
+                try:
+                    self.run_call('zfs.pool.import_pool', vol['guid'], options, any_host, None, new_name)
+                except Exception as e:
+                    vol['error'] = str(e)
+                    failed.append(vol)
+                    continue
 
             # try to unlock the zfs datasets (if any)
-            unlock_job = self.run_call(
-                'failover.unlock_zfs_datasets', vol["name"]
-            )
+            unlock_job = self.run_call('failover.unlock_zfs_datasets', vol['name'])
             unlock_job.wait_sync()
             if unlock_job.error:
                 logger.error(f'Error unlocking ZFS encrypted datasets: {unlock_job.error}')
