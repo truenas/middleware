@@ -106,7 +106,7 @@ class SMBService(Service):
         if not entry:
             cmd = [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username]
 
-            next_rid = await self.middleware.call('smb.get_next_rid')
+            next_rid = await self.middleware.call('smb.get_next_rid', 'USER', bsduser[0]['id'])
             if next_rid != -1:
                 cmd.extend(['-U', str(next_rid)])
 

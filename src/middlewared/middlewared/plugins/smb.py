@@ -427,15 +427,9 @@ class SMBService(TDBWrapConfigService):
         return self.LP_CTX.get(parm)
 
     @private
-    async def get_next_rid(self):
-        next_rid = (await self.config())['next_rid']
-        if next_rid < 10000:
-            next_rid = 10000
-
-        await self.middleware.call('datastore.update', 'services.cifs', 1,
-                                   {'next_rid': next_rid + 1},
-                                   {'prefix': 'cifs_srv_'})
-        return next_rid
+    async def get_next_rid(self, objtype, id):
+        base_rid = 20000 if objtype == 'USER' else 200000
+        return base_rid + id
 
     @private
     async def setup_directories(self):

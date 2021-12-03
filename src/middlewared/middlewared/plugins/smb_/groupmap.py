@@ -377,6 +377,7 @@ class SMBService(Service):
         set_to_mod = set([x for x in intersect if groupmap['local'][x]['nt_name'] != g_dict[x]['group']])
 
         to_add = [{
+            "dbid": g_dict[x]["id"],
             "gid": g_dict[x]["gid"],
             "nt_name": g_dict[x]["group"],
             "group_type_str": "local"
@@ -384,7 +385,8 @@ class SMBService(Service):
 
         if ha_mode != 'CLUSTERED':
             for m in to_add:
-                m['rid'] = await self.middleware.call('smb.get_next_rid')
+                dbid = m.pop("dbid")
+                m['rid'] = await self.middleware.call('smb.get_next_rid', 'GROUP', dbid)
 
         to_mod = [{
             "gid": g_dict[x]["gid"],
