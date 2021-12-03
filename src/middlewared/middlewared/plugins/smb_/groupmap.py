@@ -198,7 +198,7 @@ class SMBService(Service):
             hwm = struct.unpack("<L", group_hwm_bytes)[0]
             if hwm < low_range + 2:
                 tdb_handle.transaction_start()
-                new_hwm_bytes = struct.pack("<L", group_hwm_bytes)
+                new_hwm_bytes = struct.pack("<L", low_range + 2)
                 tdb_handle.store(b'GROUP HWM\00', new_hwm_bytes)
                 tdb_handle.transaction_commit()
                 self.middleware.call_sync('idmap.snapshot_samba4_dataset')
