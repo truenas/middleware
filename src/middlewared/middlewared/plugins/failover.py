@@ -326,7 +326,7 @@ class FailoverService(ConfigService):
             will be triggered but it will do nothing since the active will
             already have the zpool(s) imported.
         """
-        return await self.middleware.call('service.restart', 'keepalived')
+        return await self.middleware.call('service.restart', 'keepalived', {'ha_propagate': False})
 
     @accepts()
     @returns(Bool())
