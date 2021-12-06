@@ -151,7 +151,7 @@ if not ha:
                     'repository': 'ixsystems/truecommand',
                     'tag': 'latest'
                 },
-                'hostNetwork': True
+                'hostNetwork': False
             }
         }
         results = POST('/chart/release/', payload)
@@ -189,12 +189,12 @@ if not ha:
         assert isinstance(results.json(), dict), results.text
         assert results.json()['config']['workloadType'] == 'Deployment', results.text
 
-    def test_18_verify_ix_chart_config_hostnetwork_is_True(request):
+    def test_18_verify_ix_chart_config_hostnetwork_is_False(request):
         depends(request, ['tc_chart_release'])
         results = GET(f'/chart/release/id/{tc_release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert results.json()['config']['hostNetwork'] is True, results.text
+        assert results.json()['config']['hostNetwork'] is False, results.text
 
     def test_19_verify_ix_chart_config_image(request):
         depends(request, ['tc_chart_release'])

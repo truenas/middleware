@@ -12,6 +12,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE
+from auto_config import dev_test
+reason = 'Skip for testing'
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
 @contextlib.contextmanager
