@@ -179,7 +179,7 @@ class SystemDatasetService(ConfigService):
                 ]):
                     continue
 
-                if self.destination_pool_error(pool['name']):
+                if await self.destination_pool_error(pool['name']):
                     continue
 
                 new['pool'] = pool['name']
