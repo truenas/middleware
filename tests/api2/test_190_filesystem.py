@@ -7,12 +7,13 @@ import pytest
 import sys
 import os
 
+apifolder = os.getcwd()
+sys.path.append(apifolder)
+
 from functions import POST, SSH_TEST
 from auto_config import dev_test, pool_name, ip, user, password
 from middlewared.test.integration.assets.filesystem import directory
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 group = 'root'
@@ -104,14 +105,20 @@ def test_04_test_filesystem_statfs_fstype(pool):
 
 @pytest.mark.parametrize('pool', pool_name)
 def test_05_set_immutable_flag_on_path(pool):
-    def ensure_result_is_sane(results, set):
-        assert results.status_code == 200, results.text
-        result = results.json()
-        assert isinstance(result, bool) is True, results.text
-        assert result == set, 'Immutable flag is still not set' if set else 'Immutable flag is still set'
-
     t_path = os.path.join('/mnt', pool, 'random_directory_immutable')
+    t_child_path = os.path.join(t_path, 'child')
+
     with directory(t_path) as d:
-        for v in (True, False):
-            POST('/filesystem/set_immutable/', {'set_flag': v, 'path': d})
-            ensure_result_is_sane(POST('/filesystem/is_immutable_set/', d), v)
+        for flag_set in (True, False):
+            POST('/filesystem/set_immutable/', {'set_flag': flag_set, 'path': d})
+            # We test 2 things
+            # 1) Writing content to the parent path fails/succeeds based on "set"
+            # 2) "is_immutable_set" returns sane response
+            results = POST('/filesystem/mkdir', f'{t_child_path}_{flag_set}')
+            assert results.status_code == (500 if flag_set else 200), results.text
+
+            results = POST('/filesystem/is_immutable_set/', t_path)
+            assert results.status_code == 200, results.text
+            result = results.json()
+            assert isinstance(result, bool) is True, results.text
+            assert result == flag_set, 'Immutable flag is still not set' if flag_set else 'Immutable flag is still set'

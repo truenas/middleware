@@ -8,6 +8,6 @@ def directory(path):
     call('filesystem.mkdir', path)
 
     try:
-        path
+        yield path
     finally:
         call('filesystem.remove_directory', path)
