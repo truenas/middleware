@@ -32,6 +32,7 @@ logging.getLogger('pyroute2.ndb').setLevel(logging.ERROR)
 logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
 logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
 
+FAILSAFE = '/tmp/failsafe_middlewared.log'
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 FAILOVER_LOGFILE = '/root/syslog/failover.log'
@@ -219,7 +220,7 @@ class Logger(object):
             'loggers': {
                 '': {
                     'level': 'NOTSET',
-                    'handlers': ['file'],
+                    'handlers': ['file', 'failsafe'],
                 },
                 'zettarepl': {
                     'level': 'NOTSET',
@@ -237,6 +238,16 @@ class Logger(object):
                     'level': 'DEBUG',
                     'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
                     'filename': LOGFILE,
+                    'mode': 'a',
+                    'maxBytes': 10485760,
+                    'backupCount': 5,
+                    'encoding': 'utf-8',
+                    'formatter': 'file',
+                },
+                'failsafe': {
+                    'level': 'DEBUG',
+                    'class': 'logging.handlers.RotatingFileHandler',
+                    'filename': FAILSAFE,
                     'mode': 'a',
                     'maxBytes': 10485760,
                     'backupCount': 5,
@@ -295,17 +306,15 @@ class Logger(object):
             # [Errno 2] No such file or directory: '/var/log/middlewared.log'"
             # crashing the middleware during startup
             pass
-        # Make sure log file is not readable by everybody.
+
+        # Make sure various log files are not readable by everybody.
         # umask could be another approach but chmod was chosen so
         # it affects existing installs.
-        try:
-            os.chmod(LOGFILE, 0o640)
-        except OSError:
-            pass
-        try:
-            os.chmod(ZETTAREPL_LOGFILE, 0o640)
-        except OSError:
-            pass
+        for i in (FAILSAFE, LOGFILE, ZETTAREPL_LOGFILE):
+            try:
+                os.chmod(i, 0o640)
+            except OSError:
+                pass
 
     def _set_output_console(self):
         """Set the output format for console."""
