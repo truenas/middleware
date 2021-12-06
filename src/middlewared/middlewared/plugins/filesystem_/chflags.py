@@ -10,6 +10,11 @@ F_IOC_SETFLAGS = 0x40086602
 IMMUTABLE_FL = 16
 
 
+def is_immutable_set(path: str) -> bool:
+    flags = get_flags(path)
+    return bool(flags & IMMUTABLE_FL)
+
+
 def get_flags(path: str) -> int:
     fd = os.open(path, os.O_RDONLY)
     try:
