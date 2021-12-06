@@ -22,12 +22,22 @@ class FilesystemService(Service):
     class Config:
         cli_namespace = 'storage.filesystem'
 
-    @private
-    def get_filesystem_flags(self, path):
-        return chflags.get_flags(path)
+    @accepts(Str('path'))
+    @returns(Bool())
+    def is_immutable_set(self, path):
+        """
+        Retrieves boolean which is set when immutable flag is set on `path`.
+        """
+        return chflags.is_immutable_set(path)
 
-    @private
+    @accepts(Bool('set_flag'), Str('path'))
+    @returns()
     def set_immutable(self, set_flag, path):
+        """
+        Set/Unset immutable flag at `path`.
+
+        `set_flag` when set will set immutable flag and when unset will unset immutable flag at `path`.
+        """
         chflags.set_immutable(path, set_flag)
 
     @private
