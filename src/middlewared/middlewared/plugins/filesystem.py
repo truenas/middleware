@@ -23,6 +23,10 @@ class FilesystemService(Service):
         cli_namespace = 'storage.filesystem'
 
     @private
+    def get_filesystem_flags(self, path):
+        return chflags.get_flags(path)
+
+    @private
     def set_immutable(self, set_flag, path):
         chflags.set_immutable(path, set_flag)
 
