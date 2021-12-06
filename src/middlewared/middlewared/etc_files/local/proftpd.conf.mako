@@ -22,7 +22,7 @@ DisplayLogin /var/run/proftpd/proftpd.motd
 DeferWelcome off
 TimeoutIdle ${ftp['timeout']}
 TimeoutLogin 300
-TimeoutNoTransfer 300
+TimeoutNoTransfer ${ftp['timeout']}
 TimeoutStalled 3600
 MaxInstances none
 % if ftp['clients']:
