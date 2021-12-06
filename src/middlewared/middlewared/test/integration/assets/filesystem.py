@@ -1,6 +1,6 @@
 import contextlib
 
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 
 @contextlib.contextmanager
@@ -10,4 +10,4 @@ def directory(path):
     try:
         yield path
     finally:
-        call('filesystem.remove_directory', path)
+        ssh(f'rm -rf {path}')

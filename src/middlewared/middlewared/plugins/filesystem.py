@@ -24,7 +24,7 @@ class FilesystemService(Service):
 
     @accepts(Str('path'))
     @returns(Bool())
-    def is_immutable_set(self, path):
+    def is_immutable(self, path):
         """
         Retrieves boolean which is set when immutable flag is set on `path`.
         """
@@ -61,24 +61,6 @@ class FilesystemService(Service):
 
         cluster_path = path.replace(FuseConfig.FUSE_PATH_SUBST.value, f'{FuseConfig.FUSE_PATH_BASE.value}/')
         return cluster_path
-
-    @accepts(Str('path'))
-    @returns()
-    def remove_directory(self, path):
-        """
-        Remove a directory at the specified path.
-        """
-        p = pathlib.Path(path)
-        if not p.is_absolute():
-            raise CallError(f'{path}: not an absolute path.', errno.EINVAL)
-
-        if not p.exists():
-            raise CallError(f'{path}: path does not exist.', errno.ENOENT)
-
-        if not os.path.realpath(path).startswith('/mnt/'):
-            raise CallError(f'{path}: path not permitted', errno.EPERM)
-
-        shutil.rmtree(path)
 
     @accepts(Str('path'))
     @returns(Ref('path_entry'))

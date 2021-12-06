@@ -117,7 +117,7 @@ def test_05_set_immutable_flag_on_path(pool):
             results = POST('/filesystem/mkdir', f'{t_child_path}_{flag_set}')
             assert results.status_code == (500 if flag_set else 200), results.text
 
-            results = POST('/filesystem/is_immutable_set/', t_path)
+            results = POST('/filesystem/is_immutable/', t_path)
             assert results.status_code == 200, results.text
             result = results.json()
             assert isinstance(result, bool) is True, results.text
