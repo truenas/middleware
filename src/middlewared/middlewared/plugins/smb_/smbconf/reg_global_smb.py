@@ -23,7 +23,9 @@ class GlobalSchema(RegistrySchema):
         2) map to guest on bad user.
         """
         guest_enabled = any(filter(lambda x: x['guestok'], shares))
+        fsrvp_enabled = any(filter(lambda x: x['fsrvp'], shares))
         has_home = any(filter(lambda x: x['home'], shares))
+
         if has_home:
             data_out['obey pam restrictions'] = {'parsed': True}
 
@@ -38,6 +40,12 @@ class GlobalSchema(RegistrySchema):
 
         if guest_enabled:
             data_out['map to guest'] = {'parsed': 'Bad User'}
+
+        if fsrvp_enabled:
+            data_out.update({
+                'rpc_daemon:fssd': {'parsed': 'fork'},
+                'fss:prune stale': {'parsed': True},
+            })
 
         ds_state = data_in.pop('ds_state')
         if ms_accounts and ds_state['activedirectory'] == 'DISABLED':
