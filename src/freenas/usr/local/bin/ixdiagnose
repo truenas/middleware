@@ -146,6 +146,10 @@ fi
 
 echo "** 96%: Compressing System Logs"
 tar -chf - -C /var --exclude=log/journal --exclude=log/faillog --exclude=log/lastlog --exclude=log/sysstat log | tar -C $dir -xf -
+if [ -f "/tmp/failsafe_middlewared.log" ]; then
+	cp "/tmp/failsafe_middlewared*" "$dir"
+fi
+
 echo "** 97%: Compressing Debug Files"
 tar -chf - -C /var/tmp fndebug | tar -C $dir -xf -
 if [ "${limit}" != "-1" ] ; then
