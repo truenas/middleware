@@ -26,14 +26,15 @@ Inside a job method, a `job` object is available:
 .. autoclass:: middlewared.job.Job
    :members: pipes, logs_fd, check_pipe, set_description, set_progress, wrap
 
-Using the pipes
-===============
+Using the pipes in the job object
+=================================
 
 .. automodule:: middlewared.pipe
     :members: Pipes
 
 .. automodule:: middlewared.pipe
     :members: Pipe
+    :noindex:
 
 Calling a job
 *************
@@ -77,8 +78,8 @@ Use :meth:`middlewared.job.Job.wrap` to wait for a job and copy its progress rep
     test_job = await self.middleware.call("core.job_test")
     result = await job.wrap(test_job)
 
-Using the pipes
----------------
+Using the pipes when calling a job
+----------------------------------
 
 It is the caller's responsibility to open all the job's pipes. Pipes are passed in the :class:`middlewared.pipe.Pipes`
 object. The typical syntax for starting a job with a pipe is:
@@ -92,8 +93,8 @@ object. The typical syntax for starting a job with a pipe is:
 From the REST API
 =================
 
-Using the pipes
----------------
+Using the pipes with the REST API
+---------------------------------
 
 Uploading a file to the job's `input` pipe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

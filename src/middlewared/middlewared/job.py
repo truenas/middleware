@@ -223,6 +223,9 @@ class Job:
     :ivar logs_fd: Unbuffered binary file descriptor for writing logs (if the job was defined with `@job(logs=True)`
     """
 
+    pipes: Pipes
+    logs_fd: None
+
     def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb):
         self._finished = asyncio.Event(loop=middleware.loop)
         self.middleware = middleware

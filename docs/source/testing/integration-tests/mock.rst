@@ -11,7 +11,7 @@ Using middleware method mock is similar to using standard `unittest.mock` packag
 
 .. code-block:: python
 
-    from middlewared.utils.test import mock
+    from middlewared.test.integration.utils import mock
 
     def test_cpu_temperatures():
         with mock("reporting.cpu_temperatures", return_value={"0": 55, "1": 50}):
@@ -61,5 +61,5 @@ Jobs can be mocked as well:
         """):
             assert call("catalog.sync_all", job=True) == [{"name": "main"}]
 
-.. automodule:: middlewared.utils.test.mock
+.. automodule:: middlewared.test.integration.utils.mock
    :members:
