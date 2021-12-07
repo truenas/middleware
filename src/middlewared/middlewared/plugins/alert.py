@@ -32,7 +32,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.validators import validate_attributes
+from middlewared.validators import validate_schema
 from middlewared.utils import bisect
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
@@ -946,7 +946,7 @@ class AlertServiceService(CRUDService):
             raise verrors
 
         verrors.add_child(f"{schema_name}.attributes",
-                          validate_attributes(list(factory.schema.attrs.values()), service))
+                          validate_schema(list(factory.schema.attrs.values()), service["attributes"]))
 
         if verrors:
             raise verrors

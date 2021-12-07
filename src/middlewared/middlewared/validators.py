@@ -197,7 +197,7 @@ class UUID:
             raise ValueError(f'Invalid UUID: {e}')
 
 
-def validate_attributes(schema, data, additional_attrs=False, attr_key="attributes", dict_kwargs=None):
+def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):
     from middlewared.schema import Dict, Error
     from middlewared.service import ValidationErrors
     verrors = ValidationErrors()
@@ -206,16 +206,22 @@ def validate_attributes(schema, data, additional_attrs=False, attr_key="attribut
     schema = Dict("attributes", *schema, additional_attrs=additional_attrs, **dict_kwargs)
 
     try:
-        data[attr_key] = schema.clean(data[attr_key])
+        schema.clean(data)
     except Error as e:
         verrors.add(e.attribute, e.errmsg, e.errno)
     except ValidationErrors as e:
         verrors.extend(e)
+    else:
+        try:
+            schema.validate(data)
+        except ValidationErrors as e:
+            verrors.extend(e)
 
-    try:
-        schema.validate(data[attr_key])
-    except ValidationErrors as e:
-        verrors.extend(e)
+    for verror in verrors.errors:
+        if not verror.attribute.startswith("attributes."):
+            raise ValueError(f"Got an invalid attribute name: {verror.attribute!r}")
+
+        verror.attribute = verror.attribute[len("attributes."):]
 
     return verrors
 

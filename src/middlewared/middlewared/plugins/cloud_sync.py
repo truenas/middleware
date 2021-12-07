@@ -10,7 +10,7 @@ from middlewared.utils import Popen, run
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 from middlewared.validators import Range, Time
-from middlewared.validators import validate_attributes
+from middlewared.validators import validate_schema
 
 import aiorwlock
 import asyncio
@@ -671,7 +671,7 @@ class CredentialsService(CRUDService):
         else:
             provider = REMOTES[data["provider"]]
 
-            attributes_verrors = validate_attributes(provider.credentials_schema, data)
+            attributes_verrors = validate_schema(provider.credentials_schema, data["attributes"])
             verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
         if verrors:
@@ -807,7 +807,7 @@ class CloudSyncService(TaskPathService):
 
         schema.extend(self.common_task_schema(provider))
 
-        attributes_verrors = validate_attributes(schema, data)
+        attributes_verrors = validate_schema(schema, data["attributes"])
 
         if not attributes_verrors:
             await provider.pre_save_task(data, credentials, verrors)
@@ -932,12 +932,12 @@ class CloudSyncService(TaskPathService):
 
         verrors = ValidationErrors()
 
-        await self._validate(verrors, "cloud_sync", cloud_sync)
+        await self._validate(verrors, "cloud_sync_create", cloud_sync)
 
         if verrors:
             raise verrors
 
-        await self._validate_folder(verrors, "cloud_sync", cloud_sync)
+        await self._validate_folder(verrors, "cloud_sync_create", cloud_sync)
 
         if verrors:
             raise verrors
