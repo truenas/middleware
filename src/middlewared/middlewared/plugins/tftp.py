@@ -1,5 +1,5 @@
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.schema import accepts, Bool, Dict, Dir, Int, Patch, Str
+from middlewared.schema import accepts, returns, Bool, Dict, Dir, Int, Patch, Str
 from middlewared.validators import IpAddress
 from middlewared.service import SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -38,6 +38,18 @@ class TFTPService(SystemServiceService):
         Int('id', required=True),
     )
 
+    @accepts()
+    @returns(Dict('tftp_host_choices', additional_attrs=True))
+    async def host_choices(self):
+        """
+        Return host choices for TFTP service to use.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'static': True, 'any': True}
+            )
+        }
+
     @accepts(Patch(
         'tftp_entry', 'tftp_update',
         ('rm', {'name': 'id'}),
@@ -62,6 +74,9 @@ class TFTPService(SystemServiceService):
 
         if new["directory"]:
             await check_path_resides_within_volume(verrors, self.middleware, "tftp_update.directory", new["directory"])
+
+        if new['host'] not in await self.host_choices():
+            verrors.add('tftp_update.host', 'Please provide a valid ip address')
 
         if verrors:
             raise verrors
