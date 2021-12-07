@@ -1,10 +1,9 @@
 import contextlib
-import os
 from types import SimpleNamespace
 
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 
 @contextlib.contextmanager
@@ -24,7 +23,7 @@ def anonymous_ftp_server(config=None):
 
     with dataset("anonftp") as ds:
         path = f"/mnt/{ds}"
-        os.chmod(path, 0o777)
+        ssh(f"chmod 777 {path}")
         with ftp_server({
             "onlyanonymous": True,
             "anonpath": path,
