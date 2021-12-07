@@ -215,8 +215,7 @@ class PoolResilverService(ConfigService):
         config.update(data)
 
         verrors, new_config = await self.validate_fields_and_update(config, 'pool_resilver_update')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         # before checking if any changes have been made, original_config needs to be mapped to new_config
         original_config['weekday'] = ','.join([str(day) for day in original_config['weekday']])
@@ -1069,8 +1068,7 @@ class PoolService(CRUDService):
         found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
@@ -1120,8 +1118,7 @@ class PoolService(CRUDService):
         found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
@@ -3226,9 +3223,7 @@ class PoolDatasetService(CRUDService):
             {'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False},
             'pool_dataset_create.encryption_options',
         ) or encryption_dict
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if app:
             uri = None
@@ -3814,9 +3809,7 @@ class PoolDatasetService(CRUDService):
             if not await self.middleware.call('filesystem.acl_is_trivial', path):
                 verrors.add('pool_dataset_permissions.options',
                             f'{path} has an extended ACL. The option "stripacl" must be selected.')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if not acl and mode is None and not options['stripacl']:
             """
@@ -4390,9 +4383,7 @@ class PoolScrubService(CRUDService):
             }
         """
         verrors, data = await self.validate_data(data, 'pool_scrub_create')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         data['volume'] = data.pop('pool')
         Cron.convert_schedule_to_db_format(data)
@@ -4417,9 +4408,7 @@ class PoolScrubService(CRUDService):
         task_data['original_pool_id'] = original_data['pool']
         task_data.update(data)
         verrors, task_data = await self.validate_data(task_data, 'pool_scrub_update')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         task_data.pop('original_pool_id')
         Cron.convert_schedule_to_db_format(task_data)
