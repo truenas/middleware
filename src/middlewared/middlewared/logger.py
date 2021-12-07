@@ -32,7 +32,7 @@ logging.getLogger('pyroute2.ndb').setLevel(logging.ERROR)
 logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
 logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
 
-FAILSAFE = '/tmp/failsafe_middlewared.log'
+FAILSAFE_LOGFILE = '/tmp/failsafe_middlewared.log'
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 FAILOVER_LOGFILE = '/root/syslog/failover.log'
@@ -247,7 +247,7 @@ class Logger(object):
                 'failsafe': {
                     'level': 'DEBUG',
                     'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': FAILSAFE,
+                    'filename': FAILSAFE_LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
                     'backupCount': 5,
@@ -310,7 +310,7 @@ class Logger(object):
         # Make sure various log files are not readable by everybody.
         # umask could be another approach but chmod was chosen so
         # it affects existing installs.
-        for i in (FAILSAFE, LOGFILE, ZETTAREPL_LOGFILE):
+        for i in (FAILSAFE_LOGFILE, LOGFILE, ZETTAREPL_LOGFILE):
             try:
                 os.chmod(i, 0o640)
             except OSError:
