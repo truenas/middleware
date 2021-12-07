@@ -15,7 +15,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, retur
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.validators import validate_attributes, URL
+from middlewared.validators import validate_schema, URL
 
 
 class KeychainCredentialType:
@@ -435,7 +435,7 @@ class KeychainCredentialService(CRUDService):
         else:
             type = TYPES[data["type"]]
 
-            attributes_verrors = validate_attributes(type.credentials_schema, data)
+            attributes_verrors = validate_schema(type.credentials_schema, data["attributes"])
             verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
         if verrors:

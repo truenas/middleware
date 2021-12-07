@@ -1,9 +1,9 @@
 import itertools
 
-from middlewared.schema import Dict, NOT_PROVIDED
+from middlewared.schema import Dict, NOT_PROVIDED, ValidationErrors
 from middlewared.service import CallError, private, Service
 from middlewared.utils import filter_list
-from middlewared.validators import validate_attributes
+from middlewared.validators import validate_schema
 
 from .schema import get_schema, get_list_item_from_value, update_conditional_defaults
 from .utils import CONTEXT_KEY_NAME, RESERVED_NAMES
@@ -36,11 +36,12 @@ class ChartReleaseService(Service):
             }
         )
 
-        verrors = validate_attributes(
-            attrs, {'values': new_values}, True, attr_key='values', dict_kwargs={
+        verrors = ValidationErrors()
+        verrors.add_child('values', validate_schema(
+            attrs, new_values, True, dict_kwargs={
                 'conditional_defaults': dict_obj.conditional_defaults, 'update': update,
             }
-        )
+        ))
         return {
             'verrors': verrors,
             'new_values': new_values,
