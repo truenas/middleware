@@ -31,6 +31,7 @@ class S3RcloneRemote(BaseRcloneRemote):
     ]
 
     task_schema = [
+        Str("region", title="Region", default=""),
         Str("encryption", title="Server-Side Encryption", enum=[None, "AES256"], default=None, null=True),
         Str("storage_class", title="The storage class to use", enum=["", "STANDARD", "REDUCED_REDUNDANCY",
                                                                      "STANDARD_IA", "ONEZONE_IA", "INTELLIGENT_TIERING",
