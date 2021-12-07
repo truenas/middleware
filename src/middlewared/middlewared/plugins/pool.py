@@ -21,7 +21,6 @@ import uuid
 from collections import defaultdict
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
-from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
     accepts, Attribute, Bool, Cron,
@@ -34,7 +33,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import InstanceNotFound, ValidationError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, Popen, filter_list, run, start_daemon_thread
+from middlewared.utils import Popen, filter_list, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 from middlewared.utils.shell import join_commandline
@@ -59,9 +58,6 @@ ZFS_COMPRESSION_ALGORITHM_CHOICES = [
 ]
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
-
-if osc.IS_FREEBSD:
-    import sysctl
 
 
 class ZfsDeadmanAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -219,8 +215,7 @@ class PoolResilverService(ConfigService):
         config.update(data)
 
         verrors, new_config = await self.validate_fields_and_update(config, 'pool_resilver_update')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         # before checking if any changes have been made, original_config needs to be mapped to new_config
         original_config['weekday'] = ','.join([str(day) for day in original_config['weekday']])
@@ -503,7 +498,7 @@ class PoolService(CRUDService):
                 if path is not None:
                     device = disk = None
                     if path.startswith('/dev/'):
-                        args = [path[5:]] + ([] if osc.IS_LINUX else [options.get('geom_scan', True)])
+                        args = [path[5:]]
                         device = self.middleware.call_sync('disk.label_to_dev', *args)
                         disk = self.middleware.call_sync('disk.label_to_disk', *args)
                     x['device'] = device
@@ -736,25 +731,16 @@ class PoolService(CRUDService):
 
         await self.__common_validation(verrors, data, 'pool_create')
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
-
-        if verrors:
-            raise verrors
+        await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
+        verrors.check()
 
         log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
         if log_disks:
             adv_config = await self.middleware.call('system.advanced.config')
             if adv_config['overprovision']:
-                if not osc.IS_FREEBSD:
-                    raise CallError('Overprovision not available in this platform')
-                for i, disk in enumerate(log_disks):
-                    try:
-                        job.set_progress(10, f'Overprovisioning disks ({i}/{len(log_disks)})')
-                        await self.middleware.call('disk.overprovision', disk, adv_config['overprovision'], i == 0)
-                    except CanNotBeOverprovisionedException:
-                        pass
+                raise CallError('Overprovision not available in this platform')
 
-        formatted_disks = await self.middleware.call('pool.format_disks', job, disks)
+        await self.middleware.call('pool.format_disks', job, disks)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -827,27 +813,15 @@ class PoolService(CRUDService):
             encrypted_dataset_pk = await self.middleware.call(
                 'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
             )
-
-            if osc.IS_FREEBSD:
-                await self.middleware.call('pool.save_encrypteddisks', pool_id, formatted_disks, disks_cache)
-
-            await self.middleware.call(
-                'datastore.insert',
-                'storage.scrub',
-                {'volume': pool_id},
-                {'prefix': 'scrub_'},
-            )
+            await self.middleware.call('datastore.insert', 'storage.scrub', {'volume': pool_id}, {'prefix': 'scrub_'})
         except Exception as e:
             # Something wrong happened, we need to rollback and destroy pool.
-            if osc.IS_LINUX:
-                self.middleware.logger.debug(
-                    'Pool %s failed to create with topology %s', data['name'], data['topology'],
-                )
+            self.logger.debug('Pool %s failed to create with topology %s', data['name'], data['topology'])
             if z_pool:
                 try:
                     await self.middleware.call('zfs.pool.delete', data['name'])
                 except Exception:
-                    self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
+                    self.logger.warning('Failed to delete pool on pool.create rollback', exc_info=True)
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
             if encrypted_dataset_pk:
@@ -919,38 +893,18 @@ class PoolService(CRUDService):
         disks = vdevs = None
         if 'topology' in data:
             disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-            disks_cache = await self.middleware.call(
-                'disk.check_disks_availability', verrors, list(disks), 'pool_update'
-            )
-
-        if verrors:
-            raise verrors
-
-        if osc.IS_FREEBSD and pool['encryptkey']:
-            enc_keypath = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
-        else:
-            enc_keypath = None
+            await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
+        verrors.check()
 
         if disks and vdevs:
-            enc_disks = await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': enc_keypath})
+            await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': None})
 
             job.set_progress(90, 'Extending ZFS Pool')
-
             extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
             await extend_job.wait()
 
             if extend_job.error:
                 raise CallError(extend_job.error)
-
-            if osc.IS_FREEBSD:
-                await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
-
-                if pool['encrypt'] >= 2:
-                    # FIXME: ask current passphrase and validate
-                    await self.middleware.call('disk.geli_passphrase', pool, None)
-                    await self.middleware.call(
-                        'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
-                    )
 
         if 'autotrim' in data:
             await self.middleware.call('zfs.pool.update', pool['name'], {'properties': {
@@ -1114,8 +1068,7 @@ class PoolService(CRUDService):
         found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
@@ -1124,9 +1077,6 @@ class PoolService(CRUDService):
             await self.middleware.call('disk.swaps_remove_disks', [disk])
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
-
-        if osc.IS_FREEBSD:
-            await self.middleware.call('pool.sync_encrypted', oid)
 
         if disk:
             wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
@@ -1168,8 +1118,7 @@ class PoolService(CRUDService):
         found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
@@ -1179,13 +1128,6 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
-        if osc.IS_FREEBSD and found[1]['path'].endswith('.eli'):
-            devname = found[1]['path'].replace('/dev/', '')[:-4]
-            await self.middleware.call('disk.geli_detach_single', devname)
-            await self.middleware.call(
-                'pool.remove_from_storage_encrypted_disk',
-                [('encrypted_volume', '=', oid), ('encrypted_provider', '=', devname)],
-            )
         return True
 
     @item_method
@@ -1221,12 +1163,7 @@ class PoolService(CRUDService):
         found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
-
-        if osc.IS_FREEBSD and pool['encrypt'] > 0:
-            verrors.add('id', 'Disk cannot be set to online in encrypted pool.')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
 
@@ -1294,14 +1231,6 @@ class PoolService(CRUDService):
         else:
             disk_paths = [found[1]['path']]
 
-        if osc.IS_FREEBSD:
-            await self.middleware.call('pool.sync_encrypted', oid)
-
-            for disk_path in disk_paths:
-                if disk_path.endswith('.eli'):
-                    devname = disk_path.replace('/dev/', '')[:-4]
-                    await self.middleware.call('disk.geli_detach_single', devname)
-
         wipe_jobs = []
         for disk_path in disk_paths:
             disk = await self.middleware.call(
@@ -1364,20 +1293,14 @@ class PoolService(CRUDService):
             nia_delay = 5
             scrub_max_active = 3
 
-        if osc.IS_LINUX:
-            with open('/sys/module/zfs/parameters/zfs_resilver_min_time_ms', 'w') as f:
-                f.write(str(resilver_min_time_ms))
-            with open('/sys/module/zfs/parameters/zfs_vdev_nia_credit', 'w') as f:
-                f.write(str(nia_credit))
-            with open('/sys/module/zfs/parameters/zfs_vdev_nia_delay', 'w') as f:
-                f.write(str(nia_delay))
-            with open('/sys/module/zfs/parameters/zfs_vdev_scrub_max_active', 'w') as f:
-                f.write(str(scrub_max_active))
-        else:
-            sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
-            sysctl.filter('vfs.zfs.vdev.nia_credit')[0].value = nia_credit
-            sysctl.filter('vfs.zfs.vdev.nia_delay')[0].value = nia_delay
-            sysctl.filter('vfs.zfs.vdev.scrub_max_active')[0].value = scrub_max_active
+        with open('/sys/module/zfs/parameters/zfs_resilver_min_time_ms', 'w') as f:
+            f.write(str(resilver_min_time_ms))
+        with open('/sys/module/zfs/parameters/zfs_vdev_nia_credit', 'w') as f:
+            f.write(str(nia_credit))
+        with open('/sys/module/zfs/parameters/zfs_vdev_nia_delay', 'w') as f:
+            f.write(str(nia_delay))
+        with open('/sys/module/zfs/parameters/zfs_vdev_scrub_max_active', 'w') as f:
+            f.write(str(scrub_max_active))
 
     @accepts()
     @returns(List(
@@ -1529,7 +1452,7 @@ class PoolService(CRUDService):
                     await self.middleware.call('zfs.dataset.inherit', child['name'], 'mountpoint', True)
                 except Exception as e:
                     # Let's not make this fatal
-                    self.middleware.logger.error(
+                    self.logger.error(
                         'Failed to inherit mountpoints recursively for %r dataset: %r', child['name'], e
                     )
         except Exception:
@@ -1677,18 +1600,16 @@ class PoolService(CRUDService):
                 )
                 await wipe_job.wait()
                 if wipe_job.error:
-                    self.logger.warn(f'Failed to wipe disk {disk}: {wipe_job.error}')
+                    self.logger.warning(f'Failed to wipe disk {disk}: {wipe_job.error}')
             await asyncio_map(unlabel, disks, limit=16)
 
             await self.middleware.call('disk.sync_all')
 
-            if osc.IS_FREEBSD:
-                await self.middleware.call('disk.geli_detach', pool, True)
             if pool['encrypt'] > 0:
                 try:
                     os.remove(pool['encryptkey_path'])
                 except OSError as e:
-                    self.logger.warn(
+                    self.logger.warning(
                         'Failed to remove encryption key %s: %s',
                         pool['encryptkey_path'],
                         e,
@@ -1697,8 +1618,6 @@ class PoolService(CRUDService):
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
-            if osc.IS_FREEBSD:
-                await self.middleware.call('disk.geli_detach', pool)
 
         job.set_progress(90, 'Cleaning up')
         if os.path.isdir(pool['path']):
@@ -1707,7 +1626,7 @@ class PoolService(CRUDService):
                 # potentially hidden by the mount
                 os.rmdir(pool['path'])
             except OSError as e:
-                self.logger.warn('Failed to remove mountpoint %s: %s', pool['path'], e)
+                self.logger.warning('Failed to remove mountpoint %s: %s', pool['path'], e)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
@@ -1770,14 +1689,6 @@ class PoolService(CRUDService):
 
         return processes
 
-    def __dtrace_read(self, job, proc):
-        while True:
-            read = proc.stdout.readline()
-            if read == b'':
-                break
-            read = read.decode(errors='ignore').strip()
-            job.set_progress(None, read)
-
     @private
     @job()
     def import_on_boot(self, job):
@@ -1815,99 +1726,84 @@ class PoolService(CRUDService):
 
         job.set_progress(0, 'Beginning pools import')
 
-        try:
-            if osc.IS_FREEBSD:
-                proc = subprocess.Popen(
-                    ['dtrace', '-qn', 'zfs-dbgmsg{printf("%s\\n", stringof(arg0))}'],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
+        pools = self.middleware.call_sync('pool.query', [
+            ('encrypt', '<', 2),
+            ('status', '=', 'OFFLINE')
+        ])
+        for i, pool in enumerate(pools):
+            # Importing pools is currently 80% of the job because we may still need
+            # to set ACL mode for windows
+            job.set_progress(int((i + 1) / len(pools) * 80), f'Importing {pool["name"]}')
+            imported = False
+            if pool['guid']:
+                try:
+                    self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
+                        'altroot': '/mnt',
+                        'cachefile': 'none',
+                    }, True, zpool_cache_saved if os.path.exists(zpool_cache_saved) else None)
+                except Exception:
+                    # Importing a pool may fail because of out of date guid database entry
+                    # or because bad cachefile. Try again using the pool name and wihout
+                    # the cachefile
+                    self.logger.error('Failed to import %s', pool['name'], exc_info=True)
+                else:
+                    imported = True
+            if not imported:
+                try:
+                    self.middleware.call_sync('zfs.pool.import_pool', pool['name'], {
+                        'altroot': '/mnt',
+                        'cachefile': 'none',
+                    })
+                except Exception:
+                    self.logger.error('Failed to import %s', pool['name'], exc_info=True)
+                    continue
+
+            try:
+                self.middleware.call_sync(
+                    'zfs.pool.update', pool['name'], {'properties': {
+                        'cachefile': {'value': ZPOOL_CACHE_FILE},
+                    }}
+                )
+            except Exception:
+                self.logger.warning(
+                    'Failed to set cache file for %s', pool['name'], exc_info=True,
                 )
 
-                start_daemon_thread(target=self.__dtrace_read, args=[job, proc])
-
-            pools = self.middleware.call_sync('pool.query', [
-                ('encrypt', '<', 2),
-                ('status', '=', 'OFFLINE')
-            ])
-            for i, pool in enumerate(pools):
-                # Importing pools is currently 80% of the job because we may still need
-                # to set ACL mode for windows
-                job.set_progress(int((i + 1) / len(pools) * 80), f'Importing {pool["name"]}')
-                imported = False
-                if pool['guid']:
-                    try:
-                        self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
-                            'altroot': '/mnt',
-                            'cachefile': 'none',
-                        }, True, zpool_cache_saved if os.path.exists(zpool_cache_saved) else None)
-                    except Exception:
-                        # Importing a pool may fail because of out of date guid database entry
-                        # or because bad cachefile. Try again using the pool name and wihout
-                        # the cachefile
-                        self.logger.error('Failed to import %s', pool['name'], exc_info=True)
-                    else:
-                        imported = True
-                if not imported:
-                    try:
-                        self.middleware.call_sync('zfs.pool.import_pool', pool['name'], {
-                            'altroot': '/mnt',
-                            'cachefile': 'none',
-                        })
-                    except Exception:
-                        self.logger.error('Failed to import %s', pool['name'], exc_info=True)
-                        continue
-
-                try:
+            try:
+                if os.path.isdir('/mnt/mnt'):
+                    # Reset all mountpoints
                     self.middleware.call_sync(
-                        'zfs.pool.update', pool['name'], {'properties': {
-                            'cachefile': {'value': ZPOOL_CACHE_FILE},
-                        }}
+                        'zfs.dataset.inherit', pool['name'], 'mountpoint', True
                     )
-                except Exception:
-                    self.logger.warn(
-                        'Failed to set cache file for %s', pool['name'], exc_info=True,
-                    )
-
-                try:
-                    if os.path.isdir('/mnt/mnt'):
-                        # Reset all mountpoints
-                        self.middleware.call_sync(
-                            'zfs.dataset.inherit', pool['name'], 'mountpoint', True
-                        )
-                except Exception:
-                    self.logger.warn(
-                        'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
-                    )
-
-                unlock_job = self.middleware.call_sync(
-                    'pool.dataset.unlock', pool['name'], {'recursive': True, 'toggle_attachments': False}
+            except Exception:
+                self.logger.warning(
+                    'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
                 )
-                unlock_job.wait_sync()
-                if unlock_job.error or unlock_job.result['failed']:
-                    failed = ', '.join(unlock_job.result['failed']) if not unlock_job.error else ''
-                    self.logger.error(
-                        f'Unlocking encrypted datasets failed for {pool["name"]} pool'
-                        f'{f": {unlock_job.error}" if unlock_job.error else f" with following datasets {failed}"}'
-                    )
 
-                # Child unencrypted datasets of root dataset would be mounted if root dataset is still locked,
-                # we don't want that
-                if self.middleware.call_sync('pool.dataset.get_instance', pool['name'])['locked']:
-                    with contextlib.suppress(CallError):
-                        self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
+            unlock_job = self.middleware.call_sync(
+                'pool.dataset.unlock', pool['name'], {'recursive': True, 'toggle_attachments': False}
+            )
+            unlock_job.wait_sync()
+            if unlock_job.error or unlock_job.result['failed']:
+                failed = ', '.join(unlock_job.result['failed']) if not unlock_job.error else ''
+                self.logger.error(
+                    f'Unlocking encrypted datasets failed for {pool["name"]} pool'
+                    f'{f": {unlock_job.error}" if unlock_job.error else f" with following datasets {failed}"}'
+                )
 
-                    pool_mount = os.path.join('/mnt', pool['name'])
-                    if os.path.exists(pool_mount):
-                        # We would like to ensure the path of root dataset has immutable flag set if it's not locked
-                        try:
-                            self.middleware.call_sync('filesystem.set_immutable', True, pool_mount)
-                        except CallError as e:
-                            self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
+            # Child unencrypted datasets of root dataset would be mounted if root dataset is still locked,
+            # we don't want that
+            if self.middleware.call_sync('pool.dataset.get_instance', pool['name'])['locked']:
+                with contextlib.suppress(CallError):
+                    self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
 
-        finally:
-            if osc.IS_FREEBSD:
-                proc.kill()
-                proc.wait()
+                pool_mount = os.path.join('/mnt', pool['name'])
+                if os.path.exists(pool_mount):
+                    # We would like to ensure the path of root dataset has immutable flag set if it's not locked
+                    try:
+                        self.middleware.call_sync('filesystem.set_immutable', True, pool_mount)
+                    except CallError as e:
+                        self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
 
         with contextlib.suppress(OSError):
             os.unlink(ZPOOL_KILLCACHE)
@@ -2314,7 +2210,7 @@ class PoolDatasetService(CRUDService):
         ])
         check_key_job.wait_sync()
         if check_key_job.error:
-            self.middleware.logger.error(f'Failed to sync database keys: {check_key_job.error}')
+            self.logger.error(f'Failed to sync database keys: {check_key_job.error}')
             return
 
         for dataset, status in zip(db_datasets, check_key_job.result):
@@ -2324,7 +2220,7 @@ class PoolDatasetService(CRUDService):
                 if dataset not in encrypted_roots:
                     to_remove.append(dataset)
                 else:
-                    self.middleware.logger.error(f'Failed to check encryption status for {dataset}: {status["error"]}')
+                    self.logger.error(f'Failed to check encryption status for {dataset}: {status["error"]}')
 
         self.middleware.call_sync('pool.dataset.delete_encrypted_datasets_from_db', [['name', 'in', to_remove]])
 
@@ -3020,10 +2916,9 @@ class PoolDatasetService(CRUDService):
             ['id', 'rnin', '.glusterfs'],
         ])
 
-        if osc.IS_LINUX:
-            k8s_config = await self.middleware.call('kubernetes.config')
-            if k8s_config['dataset']:
-                filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
+        k8s_config = await self.middleware.call('kubernetes.config')
+        if k8s_config['dataset']:
+            filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
 
         return filters
 
@@ -3328,9 +3223,7 @@ class PoolDatasetService(CRUDService):
             {'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False},
             'pool_dataset_create.encryption_options',
         ) or encryption_dict
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if app:
             uri = None
@@ -3916,9 +3809,7 @@ class PoolDatasetService(CRUDService):
             if not await self.middleware.call('filesystem.acl_is_trivial', path):
                 verrors.add('pool_dataset_permissions.options',
                             f'{path} has an extended ACL. The option "stripacl" must be selected.')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if not acl and mode is None and not options['stripacl']:
             """
@@ -4273,29 +4164,16 @@ class PoolDatasetService(CRUDService):
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
-            data = None
-            if osc.IS_FREEBSD:
-                fstat = await run(
-                    'fstat',
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.DEVNULL,
-                    check=False,
-                    encoding='utf8',
-                )
-                data = parse_fstat(fstat.stdout, [path, zvol_path])
-            else:
-                lsof = await run(
-                    'lsof',
-                    '-F', 'pcn',  # Output format parseable by `parse_lsof`
-                    '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.DEVNULL,
-                    check=False,
-                    encoding='utf8'
-                )
-                data = parse_lsof(lsof.stdout, [path, zvol_path])
-
-            for pid, name in data:
+            lsof = await run(
+                'lsof',
+                '-F', 'pcn',  # Output format parseable by `parse_lsof`
+                '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                check=False,
+                encoding='utf8'
+            )
+            for pid, name in parse_lsof(lsof.stdout, [path, zvol_path]):
                 service = await self.middleware.call('service.identify_process', name)
                 if service:
                     result.append({
@@ -4505,9 +4383,7 @@ class PoolScrubService(CRUDService):
             }
         """
         verrors, data = await self.validate_data(data, 'pool_scrub_create')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         data['volume'] = data.pop('pool')
         Cron.convert_schedule_to_db_format(data)
@@ -4532,9 +4408,7 @@ class PoolScrubService(CRUDService):
         task_data['original_pool_id'] = original_data['pool']
         task_data.update(data)
         verrors, task_data = await self.validate_data(task_data, 'pool_scrub_update')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         task_data.pop('original_pool_id')
         Cron.convert_schedule_to_db_format(task_data)
@@ -4635,10 +4509,7 @@ class PoolScrubService(CRUDService):
 
             pool = await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
             if pool['status'] == 'OFFLINE':
-                if osc.IS_FREEBSD and not pool['is_decrypted']:
-                    raise ScrubError(f'Pool {name} is not decrypted, skipping scrub')
-                else:
-                    raise ScrubError(f'Pool {name} is offline, not running scrub')
+                raise ScrubError(f'Pool {name} is offline, not running scrub')
 
         if pool['scan']['state'] == 'SCANNING':
             return False
@@ -4692,49 +4563,6 @@ def parse_lsof(lsof, dirs):
             if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
                 if pid is not None and command is not None:
                     pids[pid] = command
-
-    return list(pids.items())
-
-
-def parse_fstat(fstat, dirs):
-
-    # fstat output is separated by newlines
-    fstat = fstat.split('\n')
-
-    # first line is the column headers
-    fstat.pop(0)
-
-    def keep(fields):
-
-        # drop empty lines and/or lines without a 5th column
-        # because that's the path associated to the process
-        if len(fields) < 5:
-            return False
-
-        # drop the g_eli/g_mirror information since it's not needed
-        if fields[1].startswith(('g_eli', 'g_mirror')):
-            return False
-
-        # only return lines that have `/` in the path information since
-        # paths can be stream/socket/pipe types
-        return '/' in fields[4]
-
-    pids = {}
-    pid = command = None
-    for line in filter(keep, map(str.split, fstat)):
-        pid = command = None
-
-        try:
-            pid = int(line[2])
-        except ValueError:
-            # no reason to continue if we dont have
-            # a PID associated with the process
-            continue
-        command = line[1]
-        path = line[4]
-        if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
-            if pid is not None and command is not None:
-                pids[pid] = command
 
     return list(pids.items())
 
