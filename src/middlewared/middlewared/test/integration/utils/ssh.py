@@ -3,10 +3,13 @@ import logging
 import os
 import sys
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from auto_config import user, password, ip
-from functions import SSH_TEST
+try:
+    apifolder = os.getcwd()
+    sys.path.append(apifolder)
+    from auto_config import user, password, ip
+    from functions import SSH_TEST
+except ImportError:
+    pass
 
 logger = logging.getLogger(__name__)
 

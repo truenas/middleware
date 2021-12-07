@@ -3,9 +3,12 @@ import logging
 import os
 import sys
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from auto_config import pool_name
+try:
+    apifolder = os.getcwd()
+    sys.path.append(apifolder)
+    from auto_config import pool_name
+except ImportError:
+    pool_name = None
 
 logger = logging.getLogger(__name__)
 

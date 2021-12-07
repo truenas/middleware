@@ -1,5 +1,5 @@
 Middleware Plugins
-=================
+==================
 
 .. toctree::
     :maxdepth: 1
