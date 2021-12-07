@@ -6,7 +6,6 @@ from middlewared.service import job, private, Service
 
 
 CHUNK = 1048576  # 1MB binary
-DIOCGMEDIASIZE = 0x40086481  # sys/sys/disk.h _IOR('d', 129, uint64_t)
 
 
 class DiskService(Service):
