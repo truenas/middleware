@@ -144,33 +144,31 @@ def test_14_wait_for_the_alert_to_dissapear(request):
         sleep(1)
 
 
-@pytest.mark.dependency(name='corefiles_alert')
-def test_15_kill_python_with_6_to_triger_a_corefile_alert(request):
-    depends(request, ['ssh_password'], scope='session')
-    cmd = 'python3 -c "import os; os.abort()"'
-    results = SSH_TEST(cmd, user, password, ip)
-    # The command will failed since kills a process
-    assert results['result'] is False, results['output']
-
-
-@pytest.mark.timeout(120)
-@pytest.mark.dependency(name='wait_alert')
-def test_16_wait_for_the_alert_and_get_the_id(request):
-    depends(request, ['corefiles_alert'])
-    global alert_id
-    while True:
-        for line in GET('/alert/list/').json():
-            if line['source'] == 'CoreFilesArePresent':
-                alert_id = line['id']
-                assert True
-                break
-        else:
-            sleep(1)
-            continue
-        break
-
-
 if not ha:
+    @pytest.mark.dependency(name='corefiles_alert')
+    def test_15_kill_python_with_6_to_triger_a_corefile_alert(request):
+        depends(request, ['ssh_password'], scope='session')
+        cmd = 'python3 -c "import os; os.abort()"'
+        results = SSH_TEST(cmd, user, password, ip)
+        # The command will failed since kills a process
+        assert results['result'] is False, results['output']
+
+    @pytest.mark.timeout(120)
+    @pytest.mark.dependency(name='wait_alert')
+    def test_16_wait_for_the_alert_and_get_the_id(request):
+        depends(request, ['corefiles_alert'])
+        global alert_id
+        while True:
+            for line in GET('/alert/list/').json():
+                if line['source'] == 'CoreFilesArePresent':
+                    alert_id = line['id']
+                    assert True
+                    break
+            else:
+                sleep(1)
+                continue
+            break
+
     def test_17_verify_the_smbd_corefiles_alert_warning(request):
         depends(request, ['wait_alert'])
         results = GET("/alert/list/")
