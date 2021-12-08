@@ -88,6 +88,11 @@ class ZFSPoolService(CRUDService):
                 pools = [i.__getstate__(**state_kwargs) for i in zfs.pools]
         return filter_list(pools, filters, options)
 
+    def query_imported_fast(self):
+        # the equivalent of running `zpool list -H -o guid,name` from cli
+        with libzfs.ZFS() as zfs:
+            return {str(i.guid): i.name for i in zfs.pools}
+
     @accepts(
         Dict(
             'zfspool_create',

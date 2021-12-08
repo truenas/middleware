@@ -1376,23 +1376,20 @@ class PoolService(CRUDService):
                 }]
             }
         """
-        # import zpool
-        try:
-            guid = data['guid']
-            opts = {'altroot': '/mnt', 'cachefile': ZPOOL_CACHE_FILE}
-            any_host = True
-            use_cachefile = None
-            new_name = data.get('name')
-            await self.middleware.call('zfs.pool.import_pool', guid, opts, any_host, use_cachefile, new_name)
-        except Exception as e:
-            if e.errno == errno.ENOENT:
-                raise CallError(f'Pool with guid "{guid}" not found', errno.ENOENT)
-            else:
-                raise CallError(f'Failed to import pool with guid "{guid}"')
+        guid = data['guid']
+        new_name = data.get('name')
+
+        # validate
+        imported_pools = await self.middleware.call('zfs.pool.query_imported_fast')
+        if guid in imported_pools:
+            raise CallError(f'Pool with guid: "{guid}" already imported', errno.EEXIST)
+        elif new_name and new_name in imported_pools.values():
+            err = f'Cannot import pool using new name: "{new_name}" because a pool is already imported with that name'
+            raise CallError(err, errno.EEXIST)
 
         # get the zpool name
         if not new_name:
-            pool_name = (await self.middleware.call('zfs.pool.query', [['guid', '=', guid]], {'get': True}))['name']
+            pool_name = (await self.middleware.call('zfs.pool.query_imported_fast'))[guid]
         else:
             pool_name = new_name
 
@@ -1418,7 +1415,7 @@ class PoolService(CRUDService):
         pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
             'vol_name': pool_name,
             'vol_encrypt': 0,  # TODO: remove (geli not supported)
-            'vol_guid': data['guid'],
+            'vol_guid': guid,
             'vol_encryptkey': '',  # TODO: remove (geli not supported)
         })
         await self.middleware.call('pool.scrub.create', {'pool': pool_id})
