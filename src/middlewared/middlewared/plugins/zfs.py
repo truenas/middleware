@@ -554,11 +554,8 @@ class ZFSDatasetService(CRUDService):
 
     def child_dataset_names(self, path):
         # return child datasets given a dataset `path`.
-        try:
-            with libzfs.ZFS() as zfs:
-                return [child.name for child in zfs.get_dataset_by_path(path).children]
-        except libzfs.ZFSException:
-            return []
+        with libzfs.ZFS() as zfs:
+            return [child.name for child in zfs.get_dataset_by_path(path).children]
 
     def get_quota(self, ds, quota_type):
         if quota_type == 'dataset':
