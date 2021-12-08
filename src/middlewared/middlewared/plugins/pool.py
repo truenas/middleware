@@ -1387,6 +1387,15 @@ class PoolService(CRUDService):
             err = f'Cannot import pool using new name: "{new_name}" because a pool is already imported with that name'
             raise CallError(err, errno.EEXIST)
 
+        # import zpool
+        try:
+            opts = {'altroot': '/mnt', 'cachefile': ZPOOL_CACHE_FILE}
+            any_host = True
+            use_cachefile = None
+            await self.middleware.call('zfs.pool.import_pool', guid, opts, any_host, use_cachefile, new_name)
+        except Exception as e:
+            raise CallError(f'Failed importing pool with guid "{guid}" with error {e}')
+
         # get the zpool name
         if not new_name:
             pool_name = (await self.middleware.call('zfs.pool.query_imported_fast'))[guid]
@@ -1433,7 +1442,7 @@ class PoolService(CRUDService):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        asyncio.ensure_future(self.middleware.call('service.restart', 'collectd')
+        asyncio.ensure_future(self.middleware.call('service.restart', 'collectd'))
         await self.middleware.call_hook('pool.post_import', {'passphrase': data.get('passphrase'), **pool})
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
