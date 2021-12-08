@@ -8,7 +8,7 @@ import libzfs
 
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationError, ValidationErrors, filterable, job, private,
+    CallError, CRUDService, ValidationErrors, filterable, job, private,
 )
 from middlewared.utils import filter_list, filter_getattrs
 from middlewared.validators import Match, ReplicationSnapshotNamingSchema
@@ -546,6 +546,14 @@ class ZFSDatasetService(CRUDService):
                 ds_name = None
 
         return ds_name
+
+    def child_dataset_names(self, path):
+        # return child datasets given a dataset `path`.
+        try:
+            with libzfs.ZFS() as zfs:
+                return [child.name for child in zfs.get_dataset_by_path(path).children]
+        except libzfs.ZFSException:
+            return []
 
     def get_quota(self, ds, quota_type):
         if quota_type == 'dataset':

@@ -1347,15 +1347,14 @@ class PoolService(CRUDService):
         Bool('enable_attachments'),
     ))
     @returns(Bool('successful_import'))
-    @job(lock='import_pool', pipes=['input'], check_pipes=False)
+    @job(lock='import_pool')
     async def import_pool(self, job, data):
         """
         Import a pool found with `pool.import_find`.
 
         If a `name` is specified the pool will be imported using that new name.
 
-        `passphrase` is required while importing an encrypted pool. In that case this method needs to
-        be called using /_upload/ endpoint with the encryption key.
+        `passphrase` DEPRECATED. GELI not supported on SCALE.
 
         If `enable_attachments` is set to true, attachments that were disabled during pool export will be
         re-enabled.
@@ -1377,91 +1376,55 @@ class PoolService(CRUDService):
                 }]
             }
         """
-
-        pool = None
-        for p in await self.middleware.call('zfs.pool.find_import'):
-            if p['guid'] == data['guid']:
-                pool = p
-                break
-        if pool is None:
-            raise CallError(f'Pool with guid "{data["guid"]}" not found', errno.ENOENT)
-
+        # import zpool
         try:
-            job.check_pipe("input")
-            key = job.pipes.input.r
-        except ValueError:
-            key = None
+            guid = data['guid']
+            opts = {'altroot': '/mnt', 'cachefile': ZPOOL_CACHE_FILE}
+            any_host = True
+            use_cachefile = None
+            new_name = data.get('name')
+            await self.middleware.call('zfs.pool.import_pool', guid, opts, any_host, use_cachefile, new_name)
+        except Exception as e:
+            if e.errno == errno.ENOENT:
+                raise CallError(f'Pool with guid "{guid}" not found', errno.ENOENT)
+            else:
+                raise CallError(f'Failed to import pool with guid "{guid}"')
 
-        passfile = None
-        if key and data.get('passphrase'):
-            encrypt = 2
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 0o600)
-                f.write(data['passphrase'])
-        elif key:
-            encrypt = 1
+        # get the zpool name
+        if not new_name:
+            pool_name = (await self.middleware.call('zfs.pool.query', [['guid', '=', guid]], {'get': True}))['name']
         else:
-            encrypt = 0
+            pool_name = new_name
 
-        pool_name = data.get('name') or pool['name']
-        pool_id = None
-        try:
-            pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
-                'vol_name': pool_name,
-                'vol_encrypt': encrypt,
-                'vol_guid': data['guid'],
-                'vol_encryptkey': str(uuid.uuid4()) if encrypt else '',
-            })
-            pool = await self.middleware.call('pool.query', [('id', '=', pool_id)], {'get': True})
-            if encrypt > 0:
-                if not os.path.exists(GELI_KEYPATH):
-                    os.mkdir(GELI_KEYPATH)
-                with open(pool['encryptkey_path'], 'wb') as f:
-                    f.write(key.read())
+        # reset top-level zpool `aclinherit` property
+        opts = {'properties': {'aclinherit': {'value': 'passthrough'}}}
+        await self.middleware.call('zfs.dataset.update', pool_name, opts)
 
-            await self.middleware.call('pool.scrub.create', {
-                'pool': pool_id,
-            })
+        # Recursively reset dataset mountpoints for the zpool.
+        recursive = True
+        for child in await self.middleware.call('zfs.dataset.child_dataset_names', pool_name):
+            if child == os.path.join(pool_name, 'ix-applications'):
+                # We exclude `ix-applications` dataset since resetting it will
+                # cause PVC's to not mount because "mountpoint=legacy" is expected.
+                continue
+            try:
+                # Reset all mountpoints
+                await self.middleware.call('zfs.dataset.inherit', child, 'mountpoint', recursive)
+            except Exception as e:
+                # Let's not make this fatal
+                self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
 
-            await self.middleware.call('zfs.pool.import_pool', pool['guid'], {
-                'altroot': '/mnt',
-                'cachefile': ZPOOL_CACHE_FILE,
-            }, True, None, pool_name)
+        # update db
+        pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
+            'vol_name': pool_name,
+            'vol_encrypt': 0,  # TODO: remove (geli not supported)
+            'vol_guid': data['guid'],
+            'vol_encryptkey': '',  # TODO: remove (geli not supported)
+        })
+        await self.middleware.call('pool.scrub.create', {'pool': pool_id})
 
-            await self.middleware.call('zfs.dataset.update', pool_name, {
-                'properties': {
-                    'aclinherit': {'value': 'passthrough'},
-                },
-            })
-
-            # We would like to reset mountpoints of all the datasets under this pool to ensure that we don't
-            # have any misconfigured mountpoints but we would meanwhile like to ensure that we don't do this
-            # for datasets which are managed by us like ix-applications as that will cause PVC's to not mount
-            # because legacy mountpoint is expected
-            for child in (await self.middleware.call(
-                'zfs.dataset.query', [['id', '=', pool_name]], {
-                    'extra': {'retrieve_properties': False, 'flat': False},
-                    'get': True,
-                }
-            ))['children']:
-                if child['name'] == os.path.join(pool_name, 'ix-applications'):
-                    continue
-                try:
-                    # Reset all mountpoints
-                    await self.middleware.call('zfs.dataset.inherit', child['name'], 'mountpoint', True)
-                except Exception as e:
-                    # Let's not make this fatal
-                    self.logger.error(
-                        'Failed to inherit mountpoints recursively for %r dataset: %r', child['name'], e
-                    )
-        except Exception:
-            if pool_id:
-                await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
-            if passfile:
-                os.unlink(passfile)
-            raise
-
+        # reenable/restart any services dependent on this zpool
+        pool = await self.middleware.call('pool.query', [('id', '=', pool_id)], {'get': True})
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.middleware.call('keyvalue.has_key', key):
             for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
@@ -1473,14 +1436,7 @@ class PoolService(CRUDService):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        await self.middleware.call('service.reload', 'disk')
-        asyncio.ensure_future(self.restart_services())
-        await self.middleware.call_hook(
-            'pool.post_import', {
-                'passphrase': data.get('passphrase'),
-                **(await self.middleware.call('pool.query', [['name', '=', pool['name']]], {'get': True}))
-            }
-        )
+        await self.middleware.call_hook('pool.post_import', {'passphrase': data.get('passphrase'), **pool})
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
 
