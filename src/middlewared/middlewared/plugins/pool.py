@@ -1433,6 +1433,7 @@ class PoolService(CRUDService):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
+        asyncio.ensure_future(self.middleware.call('service.restart', 'collectd')
         await self.middleware.call_hook('pool.post_import', {'passphrase': data.get('passphrase'), **pool})
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)

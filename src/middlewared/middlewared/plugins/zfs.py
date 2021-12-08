@@ -90,8 +90,11 @@ class ZFSPoolService(CRUDService):
 
     def query_imported_fast(self):
         # the equivalent of running `zpool list -H -o guid,name` from cli
-        with libzfs.ZFS() as zfs:
-            return {str(i.guid): i.name for i in zfs.pools}
+        try:
+            with libzfs.ZFS() as zfs:
+                return {str(i.guid): i.name for i in zfs.pools}
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed listing imported pools with error: {e}')
 
     @accepts(
         Dict(
@@ -554,8 +557,11 @@ class ZFSDatasetService(CRUDService):
 
     def child_dataset_names(self, path):
         # return child datasets given a dataset `path`.
-        with libzfs.ZFS() as zfs:
-            return [child.name for child in zfs.get_dataset_by_path(path).children]
+        try:
+            with libzfs.ZFS() as zfs:
+                return [child.name for child in zfs.get_dataset_by_path(path).children]
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed retrieving child datsets for {path} with error {e}')
 
     def get_quota(self, ds, quota_type):
         if quota_type == 'dataset':
