@@ -8,8 +8,13 @@ from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, ip, hostname, user, password
+from auto_config import pool_name, ip, user, password, ha
 from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, wait_on_job
+
+if ha and "hostname_virtual" in os.environ:
+    hostname = os.environ["hostname_virtual"]
+else:
+    from auto_config import hostname
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
