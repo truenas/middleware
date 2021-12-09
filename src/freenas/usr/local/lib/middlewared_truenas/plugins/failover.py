@@ -1665,7 +1665,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     if not await middleware.call('failover.licensed'):
         return
 
-    if not await middleware.call('interface.query', [('failover_vhid', '!=', [])]):
+    if not await middleware.call('interface.query', [('failover_vhid', '!=', None)]):
         return
 
     if not await middleware.call('pool.query'):
