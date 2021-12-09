@@ -133,14 +133,26 @@ class FilesystemService(Service):
           acl(bool): extended ACL is present on file
         """
         path = self.resolve_cluster_path(path)
-        if not os.path.exists(path):
+        path = pathlib.Path(path)
+        if not path.exists():
             raise CallError(f'Directory {path} does not exist', errno.ENOENT)
 
-        if not os.path.isdir(path):
+        if not path.is_dir():
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
         rv = []
-        for entry in os.scandir(path):
+        only_top_level = path.absolute() == pathlib.Path('/mnt')
+        for entry in path.iterdir():
+            if only_top_level and not entry.is_mount():
+                # sometimes (on failures) the top-level directory
+                # where the zpool is mounted does not get removed
+                # after the zpool is exported. WebUI calls this
+                # specifying `/mnt` as the path. This is used when
+                # configuring shares in the "Path" drop-down. To
+                # prevent shares from being configured to point to
+                # a path that doesn't exist on a zpool, we'll
+                # filter these here.
+                continue
             if entry.is_symlink():
                 etype = 'SYMLINK'
             elif entry.is_dir():
@@ -152,8 +164,10 @@ class FilesystemService(Service):
 
             data = {
                 'name': entry.name,
-                'path': entry.path.replace(f'{FuseConfig.FUSE_PATH_BASE.value}/', FuseConfig.FUSE_PATH_SUBST.value),
-                'realpath': os.path.realpath(entry.path) if etype == 'SYMLINK' else entry.path,
+                'path': entry.as_posix().replace(
+                    f'{FuseConfig.FUSE_PATH_BASE.value}/', FuseConfig.FUSE_PATH_SUBST.value
+                ),
+                'realpath': entry.resolve().as_posix() if etype == 'SYMLINK' else entry.absolute().as_posix(),
                 'type': etype,
             }
             try:

@@ -122,3 +122,17 @@ def test_05_set_immutable_flag_on_path(pool):
             result = results.json()
             assert isinstance(result, bool) is True, results.text
             assert result == flag_set, 'Immutable flag is still not set' if flag_set else 'Immutable flag is still set'
+
+
+def test_06_test_filesystem_listdir_exclude_non_mounts():
+    # create a random directory at top-level of '/mnt'
+    mnt = '/mnt/'
+    randir = 'random_dir'
+    path = mnt + randir
+
+    with directory(path) as _:
+        # now call filesystem.listdir specifying '/mnt' as path
+        # and ensure `randir` is not in the output
+        results = POST('/filesystem/listdir/', {'path': mnt})
+        assert results.status_code == 200, results.text
+        assert not any(i['name'] == randir for i in results.json()), f'{randir} should not be listed'
