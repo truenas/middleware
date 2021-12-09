@@ -12,9 +12,7 @@ class SMB(object):
     This provides sufficient functionality to connect to remote SMB share,
     create and delete files, read, write, and list, make, and remove
     directories.
-
     Basic workflow can be something like this:
-
     c = SMB.connect(<ip address>, <share>, <username>, <password>)
     c.mkdir("testdir")
     fh = c.create_file("testdir/testfile")
