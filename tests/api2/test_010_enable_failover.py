@@ -14,5 +14,5 @@ if ha:
             "disabled": False,
             "master": True,
         }
-        results = PUT('/failover/', payload)
+        results = PUT('/failover/', payload, controller_a=ha)
         assert results.status_code == 200, results.text

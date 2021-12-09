@@ -13,7 +13,7 @@ from functions import DELETE, GET, POST, PUT, wait_on_job, SSH_TEST
 from auto_config import pool_name, ha, ip, password, user, dev_test
 
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping test for HA')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development')
 
 nas_disk = GET('/boot/get_disks/', controller_a=ha).json()
 disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
