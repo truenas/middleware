@@ -365,12 +365,13 @@ class ZFSPoolService(CRUDService):
                 raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
 
             missing_log = options.pop('missing_log', False)
+            pool_name = new_name or found.name
             try:
-                zfs.import_pool(found, new_name or found.name, options, missing_log=missing_log, any_host=any_host)
+                zfs.import_pool(found, pool_name, options, missing_log=missing_log, any_host=any_host)
             except libzfs.ZFSException as e:
                 # We only log if some datasets failed to mount after pool import
                 if e.code != libzfs.Error.MOUNTFAILED:
-                    raise
+                    raise CallError(f'Failed to import {pool_name!r} pool: {e}', e.code)
                 else:
                     self.logger.error(
                         'Failed to mount datasets after importing "%s" pool: %s', name_or_guid, str(e), exc_info=True

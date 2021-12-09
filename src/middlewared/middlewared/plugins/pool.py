@@ -1388,13 +1388,10 @@ class PoolService(CRUDService):
             raise CallError(err, errno.EEXIST)
 
         # import zpool
-        try:
-            opts = {'altroot': '/mnt', 'cachefile': ZPOOL_CACHE_FILE}
-            any_host = True
-            use_cachefile = None
-            await self.middleware.call('zfs.pool.import_pool', guid, opts, any_host, use_cachefile, new_name)
-        except Exception as e:
-            raise CallError(f'Failed importing pool with guid "{guid}" with error {e}')
+        opts = {'altroot': '/mnt', 'cachefile': ZPOOL_CACHE_FILE}
+        any_host = True
+        use_cachefile = None
+        await self.middleware.call('zfs.pool.import_pool', guid, opts, any_host, use_cachefile, new_name)
 
         # get the zpool name
         if not new_name:
