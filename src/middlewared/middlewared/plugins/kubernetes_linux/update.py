@@ -299,7 +299,7 @@ class KubernetesService(ConfigService):
         """
         return {
             d['address']: d['address'] for d in await self.middleware.call(
-                'interface.ip_in_use', {'static': True, 'any': True}
+                'interface.ip_in_use', {'static': True, 'any': True, 'ipv6': False}
             )
         }
 
