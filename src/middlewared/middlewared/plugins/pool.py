@@ -2750,7 +2750,7 @@ class PoolDatasetService(CRUDService):
         keys_supplied = {}
         verrors = ValidationErrors()
         if options['key_file']:
-            keys_supplied = self._retrieve_keys_from_file(job)
+            keys_supplied = {k: {'key': v, 'force': False} for k, v in self._retrieve_keys_from_file(job).items()}
 
         for i, ds in enumerate(options['datasets']):
             if all(ds.get(k) for k in ('key', 'passphrase')):
