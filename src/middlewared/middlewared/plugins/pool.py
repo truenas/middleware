@@ -2268,8 +2268,8 @@ class PoolDatasetService(CRUDService):
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
     def export_key(self, job, id, download):
         """
-        Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded as a text file,
-        otherwise it will be returned as string.
+        Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded in a json file
+        where the same file can be used to unlock the dataset, otherwise it will be returned as string.
 
         Please refer to websocket documentation for downloading the file.
         """
@@ -2285,7 +2285,7 @@ class PoolDatasetService(CRUDService):
         key = keys[id]
 
         if download:
-            job.pipes.output.w.write(key.encode())
+            job.pipes.output.w.write(json.dumps({id: key}).encode())
         else:
             return key
 
