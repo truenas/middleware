@@ -1078,7 +1078,7 @@ class AlertServiceService(CRUDService):
             node=master_node,
             datetime=datetime.utcnow(),
             last_occurrence=datetime.utcnow(),
-            _uuid="test",
+            _uuid=str(uuid.uuid4()),
         )
 
         try:
