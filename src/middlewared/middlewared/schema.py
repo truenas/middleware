@@ -724,7 +724,7 @@ class Dict(Attribute):
         except Error as e:
             verrors.add(f'{self.name}.{e.attribute}', e.errmsg, e.errno)
         except ValidationErrors as e:
-            verrors.extend(e)
+            verrors.add_child(self.name, e)
 
     def dump(self, value):
         if self.private:

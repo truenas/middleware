@@ -4,7 +4,7 @@ from mock import Mock
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
-    accepts, Bool, Cron, Dict, Dir, Error, File, Float, Int, IPAddr, List, Str, UnixPerm,
+    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, UnixPerm,
 )
 
 
@@ -331,6 +331,52 @@ def test__schema_dict_mixed_args(value, expected, msg):
         assert dictargs(self, value) == expected
 
 
+@pytest.mark.parametrize("schema,attribute", [
+    (
+        Dict(
+            'create',
+            Dict(
+                'image',
+                Str('repository', required=True),
+            ),
+        ),
+        'create.image.repository',
+    ),
+    (
+        Dict(
+            'create',
+            Str('repository', required=True),
+        ),
+        'create.repository',
+    ),
+])
+def test__schema_dict_error_handler_attribute_name(schema, attribute):
+
+    @accepts(schema)
+    def meth(self, data):
+        return data
+
+    with pytest.raises(ValidationErrors) as ei:
+        meth({})
+
+    assert ei.value.errors[0].attribute == attribute
+
+
+def test__schema_dict_error_handler():
+
+    @accepts(Dict(
+        'create',
+        Str('repository', required=True),
+    ))
+    def meth(self, data):
+        return data
+
+    with pytest.raises(ValidationErrors) as ei:
+        meth({})
+
+    assert ei.value.errors[0].attribute == 'create.repository'
+
+
 @pytest.mark.parametrize('items,value', [
     ([List('b', items=[List('c', private=True)])], [[['a']]]),
     ([Dict('b', Str('c', private=True))], [{'c': 'secret'}])
@@ -631,3 +677,34 @@ def test__schema_str_job_default():
     jobm = Mock()
 
     assert strdef(self, jobm, 'foo') == 'BAR'
+
+
+@pytest.mark.parametrize("schema,attribute", [
+    (
+        Dict(
+            'create',
+            Dict(
+                'image',
+                Str('repository', required=True),
+            ),
+        ),
+        'create.image.repository',
+    ),
+    (
+        Dict(
+            'create',
+            Str('repository', required=True),
+        ),
+        'create.repository',
+    ),
+])
+def test__schema_or_error_handler_attribute_name(schema, attribute):
+
+    @accepts(schema)
+    def meth(self, data):
+        return data
+
+    with pytest.raises(ValidationErrors) as ei:
+        meth({})
+
+    assert ei.value.errors[0].attribute == attribute

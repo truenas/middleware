@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.schema import Int, Str
+from middlewared.schema import Dict, Int, Str
 from middlewared.validators import validate_schema, Range
 
 
@@ -11,6 +11,7 @@ from middlewared.validators import validate_schema, Range
     ([Int("number")], {"number": "1"}, {"number": 1}),
     ([Int("number")], {"number": "XXX"}, {"number"}),
     ([Int("number", validators=[Range(min=2)])], {"number": 1}, {"number"}),
+    ([Dict("image", Str("repository", required=True))], {}, {"image.repository"}),
 ])
 def test__validate_schema(schema, data, result):
     verrors = validate_schema(schema, data)
