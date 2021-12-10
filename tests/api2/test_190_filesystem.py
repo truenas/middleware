@@ -64,8 +64,7 @@ def test_03_get_filesystem_stat_(path):
     assert results.json()['acl'] is False, results.text
 
 
-@pytest.mark.parametrize('pool', pool_name)
-def test_04_test_filesystem_statfs_fstype(pool):
+def test_04_test_filesystem_statfs_fstype():
     # test zfs fstype first
     parent_path = f'/mnt/{pool_name}'
     results = POST('/filesystem/statfs/', parent_path)
@@ -103,9 +102,8 @@ def test_04_test_filesystem_statfs_fstype(pool):
     assert results['result'] is True, results['output']
 
 
-@pytest.mark.parametrize('pool', pool_name)
-def test_05_set_immutable_flag_on_path(pool):
-    t_path = os.path.join('/mnt', pool, 'random_directory_immutable')
+def test_05_set_immutable_flag_on_path():
+    t_path = os.path.join('/mnt', pool_name, 'random_directory_immutable')
     t_child_path = os.path.join(t_path, 'child')
 
     with directory(t_path) as d:
