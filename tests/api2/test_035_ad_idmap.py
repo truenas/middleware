@@ -150,7 +150,7 @@ def test_08_test_backend_options(request, backend):
 
     payload = {
         "name": "DS_TYPE_ACTIVEDIRECTORY",
-        "range_low": "1000000000",
+        "range_low": "1000000001",
         "range_high": "2000000000",
         "idmap_backend": backend,
         "options": {}
