@@ -79,7 +79,6 @@ class UnableToDetermineOSVersion(Exception):
     pass
 
 
-
 class OSVersionMismatch(Exception):
 
     """
@@ -484,7 +483,9 @@ class FailoverService(ConfigService):
         reasons = set(self._disabled_reasons(app))
         if reasons != self.LAST_DISABLEDREASONS:
             self.LAST_DISABLEDREASONS = reasons
-            self.middleware.send_event('failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': list(reasons)})
+            self.middleware.send_event(
+                'failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': list(reasons)}
+            )
         return list(reasons)
 
     def _disabled_reasons(self, app):
@@ -938,7 +939,9 @@ class FailoverService(ConfigService):
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
 
                 for f in os.listdir(local_path):
-                    self.middleware.call_sync('failover.sendfile', token, os.path.join(local_path, f), os.path.join(remote_path, f))
+                    self.middleware.call_sync(
+                        'failover.sendfile', token, os.path.join(local_path, f), os.path.join(remote_path, f)
+                    )
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
