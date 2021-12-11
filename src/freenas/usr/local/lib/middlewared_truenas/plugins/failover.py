@@ -1,9 +1,3 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 import asyncio
 import base64
 import errno
@@ -374,18 +368,21 @@ class FailoverService(ConfigService):
         """
         Force this controller to become MASTER.
         """
+        if not await self.middleware.call('system.is_enterprise'):
+            return False
 
-        # Skip if we are already MASTER
         if await self.middleware.call('failover.status') == 'MASTER':
             return False
 
-        if not await self.middleware.call('failover.fenced.start', {'force': True}):
-            return False
-
-        for i in await self.middleware.call('interface.query', [('failover_critical', '!=', None)]):
-            if i['failover_vhid']:
-                await self.middleware.call('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
-                break
+        crit_ints = [i for i in await self.middleware.call('interface.query') if i.get('failover_critical', False)]
+        for i in crit_ints:
+            await self.middleware.call('failover.events.event', i['name'], 'forcetakeover')
+            return True
+        else:
+            # if there are no interfaces marked critical for failover and this method was
+            # still called, then we can at least start fenced to reserve the disks
+            rc = await self.middleware.call('failover.fenced.start', {'force': True})
+            return not rc if rc != 6 else bool(rc)  # 6 means already running
 
         return False
 
