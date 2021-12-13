@@ -5,8 +5,8 @@ import sys
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, DELETE, wait_on_job
-from auto_config import ha, dev_test
+from functions import GET, POST, DELETE, SSH_TEST, wait_on_job
+from auto_config import ha, dev_test, artifacts, password, ip
 
 
 reason = 'Skip for testing'
@@ -220,3 +220,9 @@ if not ha:
         assert isinstance(results.json(), int), results.text
         job_status = wait_on_job(results.json(), 300)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+    def test_22_get_k3s_logs():
+        results = SSH_TEST('journalctl --no-pager -u k3s', 'root', password, ip)
+        ks3_logs = open(f'{artifacts}/k3s-scale.log', 'w')
+        ks3_logs.writelines(results['output'])
+        ks3_logs.close()
