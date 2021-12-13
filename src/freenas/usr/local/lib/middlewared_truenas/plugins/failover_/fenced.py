@@ -1,10 +1,18 @@
+import psutil
+import contextlib
+import os
+
 from middlewared.service import Service, accepts
 from middlewared.utils import run
 from middlewared.schema import Dict, Bool
 from fenced.fence import ExitCode as FencedExitCodes
 
 
-class FencedForceService(Service):
+PID_FILE = '/var/run/.fenced-pid'
+IS_ALIVE_SIGNAL = 0
+
+
+class FencedService(Service):
 
     class Config:
         namespace = 'failover.fenced'
@@ -43,6 +51,32 @@ class FencedForceService(Service):
         """
         cp = await run(['pkill', '-9', '-f', 'fenced'], check=False)
         return not bool(cp.returncode)
+
+    def run_info(self):
+        res = {'running': False, 'pid': ''}
+        with contextlib.suppress(Exception):
+            with open(PID_FILE, 'r') as f:
+                res['pid'] = int(f.read())
+
+        check_running_procs = False
+        if res['pid']:
+            try:
+                os.kill(res['pid'], IS_ALIVE_SIGNAL)
+            except OSError:
+                check_running_procs = True
+            else:
+                res['running'] = True
+        else:
+            check_running_procs = True
+
+        if check_running_procs:
+            # either 1. no pid in file or 2. pid in file is wrong/stale
+            _iter = psutil.process_iter
+            proc = 'fenced'
+            res['pid'] = next((p.pid for p in _iter() if p.name() == proc), '')
+            res['running'] = bool(res['pid'])
+
+        return res
 
 
 async def _run_fenced_on_single_node(middleware, event_type, args):
