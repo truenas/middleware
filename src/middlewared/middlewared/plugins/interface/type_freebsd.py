@@ -21,15 +21,17 @@ class InterfaceService(Service, InterfaceTypeBase):
             return InterfaceType.UNKNOWN
 
     async def get_next_name(self, type):
-        # For bridge we want to start with 2 because bridge0/bridge1 may have been used
-        # for Jails/VM.
+        # For bridge we want to start with 2 because bridge0/bridge1 may have been used for Jails/VM.
         if type == InterfaceType.BRIDGE:
             return await self.middleware.call('interface.get_next', 'bridge', 2)
 
         if type == InterfaceType.LINK_AGGREGATION:
             return await self.middleware.call('interface.get_next', 'lagg')
 
-        raise ValueError(type)
+        if type == InterfaceType.VLAN:
+            return await self.middleware.call('interface.get_next', 'vlan')
+
+        raise ValueError(f'Invalid interface type {type!r}')
 
     async def validate_name(self, type, name):
         if type == InterfaceType.BRIDGE:

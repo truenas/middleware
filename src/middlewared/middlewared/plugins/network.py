@@ -837,8 +837,6 @@ class InterfaceService(CRUDService):
 
         interface_id = None
         if data['type'] == 'BRIDGE':
-            # For bridge we want to start with 2 because bridge0/bridge1 may have been used
-            # for Jails/VM.
             name = data.get('name') or await self.middleware.call('interface.get_next_name', InterfaceType.BRIDGE)
             try:
                 async for i in self.__create_interface_datastore(data, {
@@ -888,7 +886,7 @@ class InterfaceService(CRUDService):
                         )
                 raise
         elif data['type'] == 'VLAN':
-            name = data.get('name') or f'vlan{data["vlan_tag"]}'
+            name = data.get('name') or await self.middleware.call('interface.get_next_name', InterfaceType.VLAN)
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
