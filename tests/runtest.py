@@ -138,7 +138,7 @@ ha = {ha}
 update = {update}
 dev_test = {dev_test}
 debug_mode = {debug_mode}
-artifacts = {artifacts}
+artifacts = "{artifacts}"
 """
 
 cfg_file = open("auto_config.py", 'w')
