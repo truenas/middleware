@@ -23,7 +23,7 @@ async def get_service_account(api_client, service_account_name):
     accounts = await api_client.list_service_account_for_all_namespaces(
         field_selector=f'metadata.name={service_account_name}'
     )
-    if not accounts.items or not accounts.items[0]:
+    if not accounts.items or not accounts.items[0] or not accounts.items[0].secrets:
         # We check if the item is not null because in some race conditions
         # the data we get from the api returns null which is of course not the service account we desire
         raise CallError(f'Unable to find "{service_account_name}" service account', errno=errno.ENOENT)
