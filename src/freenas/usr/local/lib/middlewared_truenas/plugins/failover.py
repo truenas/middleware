@@ -1,9 +1,3 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 import asyncio
 import base64
 import errno
@@ -83,7 +77,6 @@ class UnableToDetermineOSVersion(Exception):
     (i.e. if remote node goes down (upgrade/reboot, etc)
     """
     pass
-
 
 
 class OSVersionMismatch(Exception):
@@ -374,18 +367,21 @@ class FailoverService(ConfigService):
         """
         Force this controller to become MASTER.
         """
+        if not await self.middleware.call('system.is_enterprise'):
+            return False
 
-        # Skip if we are already MASTER
         if await self.middleware.call('failover.status') == 'MASTER':
             return False
 
-        if not await self.middleware.call('failover.fenced.start', {'force': True}):
-            return False
-
-        for i in await self.middleware.call('interface.query', [('failover_critical', '!=', None)]):
-            if i['failover_vhid']:
-                await self.middleware.call('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
-                break
+        crit_ints = [i for i in await self.middleware.call('interface.query') if i.get('failover_critical', False)]
+        for i in crit_ints:
+            await self.middleware.call('failover.events.event', i['name'], 'forcetakeover')
+            return True
+        else:
+            # if there are no interfaces marked critical for failover and this method was
+            # still called, then we can at least start fenced to reserve the disks
+            rc = await self.middleware.call('failover.fenced.start', {'force': True})
+            return not rc if rc != 6 else bool(rc)  # 6 means already running
 
         return False
 
@@ -487,7 +483,9 @@ class FailoverService(ConfigService):
         reasons = set(self._disabled_reasons(app))
         if reasons != self.LAST_DISABLEDREASONS:
             self.LAST_DISABLEDREASONS = reasons
-            self.middleware.send_event('failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': list(reasons)})
+            self.middleware.send_event(
+                'failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': list(reasons)}
+            )
         return list(reasons)
 
     def _disabled_reasons(self, app):
@@ -941,7 +939,9 @@ class FailoverService(ConfigService):
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
 
                 for f in os.listdir(local_path):
-                    self.middleware.call_sync('failover.sendfile', token, os.path.join(local_path, f), os.path.join(remote_path, f))
+                    self.middleware.call_sync(
+                        'failover.sendfile', token, os.path.join(local_path, f), os.path.join(remote_path, f)
+                    )
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
@@ -1665,7 +1665,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     if not await middleware.call('failover.licensed'):
         return
 
-    if not await middleware.call('interface.query', [('failover_vhid', '!=', [])]):
+    if not await middleware.call('interface.query', [('failover_vhid', '!=', None)]):
         return
 
     if not await middleware.call('pool.query'):

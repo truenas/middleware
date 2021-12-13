@@ -4,12 +4,16 @@
 # License: BSD
 
 import requests
-from auto_config import api_url, user, password
 import json
 import os
+import re
+import websocket
+import uuid
 from subprocess import run, Popen, PIPE
 from time import sleep
-import re
+
+from auto_config import api_url, user, password
+
 
 if "controller1_ip" in os.environ:
     controller1_ip = os.environ["controller1_ip"]
@@ -254,3 +258,22 @@ def wait_on_job(job_id, max_timeout):
         if timeout >= max_timeout:
             return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
         timeout += 5
+
+
+def make_ws_request(ip, payload):
+    # create connection
+    ws = websocket.create_connection(f'ws://{ip}:80/websocket')
+
+    # setup features
+    ws.send(json.dumps({'msg': 'connect', 'version': '1', 'support': ['1'], 'features': []}))
+    ws.recv()
+
+    # login
+    id = str(uuid.uuid4())
+    ws.send(json.dumps({'id': id, 'msg': 'method', 'method': 'auth.login', 'params': list(authentication)}))
+    ws.recv()
+
+    # return the request
+    payload.update({'id': id})
+    ws.send(json.dumps(payload))
+    return json.loads(ws.recv())
