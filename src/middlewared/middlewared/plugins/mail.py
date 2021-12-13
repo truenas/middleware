@@ -111,7 +111,7 @@ class MailService(ConfigService):
 
     ENTRY = Dict(
         'mail_entry',
-        Str('fromemail', validators=[Email()], required=True),
+        Str('fromemail', validators=[Email(empty=True)], required=True),
         Str('fromname', required=True),
         Str('outgoingserver', required=True),
         Int('port', required=True),
@@ -187,6 +187,9 @@ class MailService(ConfigService):
                 verrors.add('mail_update.fromemail', 'This field cannot be used with GMail')
             if new['fromname']:
                 verrors.add('mail_update.fromname', 'This field cannot be used with GMail')
+        else:
+            if not new['fromemail']:
+                verrors.add('mail_update.fromemail', 'This field is required')
 
         self.__password_verify(new['pass'], 'mail_update.pass', verrors)
 

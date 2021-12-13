@@ -11,8 +11,13 @@ RE_MAC_ADDRESS = re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$")
 
 
 class Email:
+    def __init__(self, empty=False):
+        self.empty = empty
+
     def __call__(self, value):
         if value is None:
+            return
+        if self.empty and not value:
             return
         if not EMAIL_REGEX.match(value):
             raise ValueError("Not a valid E-Mail address")
