@@ -1059,8 +1059,7 @@ class InterfaceService(CRUDService):
 
         interface_id = None
         if data['type'] == 'BRIDGE':
-            # For bridge we want to start with 2 because bridge0/bridge1 may have been used for VM.
-            name = data.get('name') or await self.middleware.call('interface.get_next_name', InterfaceType.BRIDGE)
+            name = data.get('name') or await self.middleware.call('interface.get_next', 'br')
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
@@ -1080,8 +1079,7 @@ class InterfaceService(CRUDService):
                         )
                 raise
         elif data['type'] == 'LINK_AGGREGATION':
-            name = data.get('name') or await self.middleware.call('interface.get_next_name',
-                                                                  InterfaceType.LINK_AGGREGATION)
+            name = data.get('name') or await self.middleware.call('interface.get_next', 'bond')
             lag_id = None
             lagports_ids = []
             try:
@@ -1118,7 +1116,7 @@ class InterfaceService(CRUDService):
                         )
                 raise
         elif data['type'] == 'VLAN':
-            name = data.get('name') or f'vlan{data["vlan_tag"]}'
+            name = data.get('name') or await self.middleware.call('interface.get_next', 'vlan')
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
