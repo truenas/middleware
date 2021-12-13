@@ -30,17 +30,6 @@ class InterfaceService(Service):
             return InterfaceType.UNKNOWN
 
     @private
-    async def get_next_name(self, type):
-        prefix = {
-            InterfaceType.BRIDGE: 'br',
-            InterfaceType.LINK_AGGREGATION: 'bond',
-        }.get(type)
-        if prefix is None:
-            raise ValueError(type)
-
-        return await self.middleware.call('interface.get_next', prefix)
-
-    @private
     async def validate_name(self, type, name):
         if type == InterfaceType.BRIDGE:
             if not (name.startswith('br') and name[2:].isdigit()):
