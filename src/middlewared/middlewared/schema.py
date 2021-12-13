@@ -11,11 +11,10 @@ import inspect
 import ipaddress
 import os
 
-from croniter import croniter
-
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
 from middlewared.utils import filter_list
+from middlewared.utils.cron import CRON_FIELDS, croniter_for_schedule
 
 NOT_PROVIDED = object()
 
@@ -97,7 +96,7 @@ class Attribute(object):
         self.editable = editable
         self.resolved = False
         if example:
-            self.description = (description or '') + '\n' + textwrap.dedent(f'''
+            self.description = (description or '') + '\n' + textwrap.dedent('''
             Example(s):
             ```
             ''') + json.dumps(example, indent=4) + textwrap.dedent('''
@@ -788,7 +787,7 @@ class Dict(Attribute):
 
 class Cron(Dict):
 
-    FIELDS = ['minute', 'hour', 'dom', 'month', 'dow']
+    FIELDS = CRON_FIELDS
 
     def __init__(self, name='', **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
@@ -872,12 +871,8 @@ class Cron(Dict):
         if verrors:
             raise verrors
 
-        cron_expression = ''
-        for field in Cron.FIELDS:
-            cron_expression += value.get(field) + ' ' if value.get(field) else '* '
-
         try:
-            iter = croniter(cron_expression)
+            iter = croniter_for_schedule(value)
         except Exception as e:
             iter = None
             verrors.add(self.name, 'Please ensure fields match cron syntax - ' + str(e))
