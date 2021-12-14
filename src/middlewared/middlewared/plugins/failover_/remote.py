@@ -192,6 +192,9 @@ class RemoteClient(object):
         if self.client is not None and self._remote_os_version is None:
             try:
                 self._remote_os_version = self.client.call('system.version')
+            except CallError:
+                # ignore CallErrors since they're being caught in self.client.call
+                pass
             except Exception:
                 logger.error('Failed to determine OS version', exc_info=True)
 
