@@ -292,44 +292,41 @@ class IPAddr(Str):
             else:
                 self.factory = ipaddress.IPv6Address
         else:
-            raise ValueError("Either IPv4 or IPv6 should be allowed")
+            raise ValueError('Either IPv4 or IPv6 should be allowed')
 
         self.allow_zone_index = kwargs.pop('allow_zone_index', False)
 
         super(IPAddr, self).__init__(*args, **kwargs)
 
-    def validate(self, value):
-        if value is None:
-            return
-
-        verrors = ValidationErrors()
+    def clean(self, value):
+        value = super().clean(value)
 
         if value:
             try:
                 if self.network:
-                    self.factory(value, strict=self.network_strict)
+                    value = str(self.factory(value, strict=self.network_strict))
                 else:
                     if self.cidr and '/' not in value:
                         raise ValueError(
                             'Specified address should be in CIDR notation, e.g. 192.168.0.2/24'
                         )
 
-                    has_zone_index = False
-                    if self.allow_zone_index and "%" in value:
-                        has_zone_index = True
-                        value = value[:value.rindex("%")]
+                    zone_index = None
+                    if self.allow_zone_index and '%' in value:
+                        value, zone_index = value.rsplit('%', 1)
 
                     addr = self.factory(value)
 
-                    if has_zone_index and not isinstance(addr, ipaddress.IPv6Address):
-                        raise ValueError("Zone index is allowed only for IPv6 addresses")
+                    if zone_index is not None and not isinstance(addr, ipaddress.IPv6Address):
+                        raise ValueError('Zone index is allowed only for IPv6 addresses')
+
+                    value = str(addr)
+                    if zone_index is not None:
+                        value += f'%{zone_index}'
             except ValueError as e:
-                verrors.add(self.name, str(e), errno.EINVAL)
+                raise Error(self.name, str(e))
 
-        if verrors:
-            raise verrors
-
-        return super().validate(value)
+        return value
 
 
 class Time(Str):
