@@ -652,6 +652,45 @@ def test__schema_ipaddr_cidr(value, expected):
         assert ipaddrv(self, value) == expected
 
 
+@pytest.mark.parametrize("value,expected", [
+    ('192.168.0.0%enp0s3', ValidationErrors),
+    ('22::56%enp0s3', '22::56%enp0s3'),
+])
+def test__schema_ipaddr_cidr_allow_zone_index(value, expected):
+
+    @accepts(IPAddr('data', allow_zone_index=True))
+    def ipaddrv(self, data):
+        return data
+
+    self = Mock()
+
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors):
+            ipaddrv(self, value)
+    else:
+        assert ipaddrv(self, value) == expected
+
+
+@pytest.mark.parametrize("value,expected", [
+    ('192.168.0.0/24', '192.168.0.0/24'),
+    ('192.168.0.0/255.255.255.0', '192.168.0.0/24'),
+    ('192.168.0.1', '192.168.0.1/32'),
+])
+def test__schema_ipaddr_network(value, expected):
+
+    @accepts(IPAddr('data', network=True))
+    def ipaddrv(self, data):
+        return data
+
+    self = Mock()
+
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors):
+            ipaddrv(self, value)
+    else:
+        assert ipaddrv(self, value) == expected
+
+
 def test__schema_str_default():
 
     @accepts(Str('foo'), Str('bar', default='BAR'))
