@@ -116,6 +116,9 @@ if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in loca
 digit = ''.join(random.choices(string.digits, k=2))
 hostname = f'test{digit}'
 domain = f'test{digit}.nb.ixsystems.com'
+artifacts = f"{workdir}/artifacts/"
+if not os.path.exists(artifacts):
+    os.makedirs(artifacts)
 
 cfg_content = f"""#!/usr/bin/env python{version}
 
@@ -135,6 +138,7 @@ ha = {ha}
 update = {update}
 dev_test = {dev_test}
 debug_mode = {debug_mode}
+artifacts = "{artifacts}"
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -177,7 +181,6 @@ call([
 ])
 
 # get useful logs
-artifacts = f"{workdir}/artifacts/"
 logs_list = [
     "/var/log/daemon.log",
     "/var/log/debug",
@@ -185,9 +188,6 @@ logs_list = [
     "/var/log/messages",
     "/var/log/syslog",
 ]
-
-if not os.path.exists(artifacts):
-    os.makedirs(artifacts)
 
 for log in logs_list:
     get_file(log, artifacts, 'root', 'testing', ip)
@@ -200,6 +200,6 @@ dmsg.close()
 
 # get core.get_jobs and put it in artifacts
 results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
-dmsg = open(f'{artifacts}/core.get_jobs', 'w')
-dmsg.writelines(results['output'])
-dmsg.close()
+core_get_jobs = open(f'{artifacts}/core.get_jobs', 'w')
+core_get_jobs.writelines(results['output'])
+core_get_jobs.close()
