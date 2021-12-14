@@ -14,7 +14,6 @@ class FTPModel(sa.Model):
     ftp_ipconnections = sa.Column(sa.Integer(), default=0)
     ftp_loginattempt = sa.Column(sa.Integer(), default=3)
     ftp_timeout = sa.Column(sa.Integer(), default=120)
-    ftp_timeout_notransfer = sa.Column(sa.Integer(), default=300)
     ftp_rootlogin = sa.Column(sa.Boolean(), default=False)
     ftp_onlyanonymous = sa.Column(sa.Boolean(), default=False)
     ftp_anonpath = sa.Column(sa.String(255), nullable=True, default=False)
@@ -72,7 +71,6 @@ class FTPService(SystemServiceService):
         Int('ipconnections', validators=[Range(min=0, max=1000)]),
         Int('loginattempt', validators=[Range(min=0, max=1000)]),
         Int('timeout', validators=[Range(min=0, max=10000)]),
-        Int('timeout_notransfer', validators=[Range(min=0, max=10000)]),
         Bool('rootlogin'),
         Bool('onlyanonymous'),
         Dir('anonpath', null=True),
@@ -122,10 +120,6 @@ class FTPService(SystemServiceService):
 
         `timeout` is the maximum number of seconds that proftpd will allow clients to stay connected without receiving
         any data on either the control or data connection.
-
-        `timeout_notransfer` is the maximum number of seconds a client is allowed to spend connected, after
-        authentication, without issuing a command which results in creating an active or passive data connection
-        (i.e. sending/receiving a file, or receiving a directory listing).
 
         `rootlogin` is a boolean value which when configured to true enables login as root. This is generally
         discouraged because of the security risks.
