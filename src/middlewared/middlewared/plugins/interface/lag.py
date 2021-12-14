@@ -1,3 +1,5 @@
+import time
+
 from middlewared.service import Service
 
 from .netif import netif
@@ -61,3 +63,11 @@ class InterfaceService(Service):
                 continue
             parent_interfaces.append(port[0])
             port_iface.up()
+
+        interval = 10
+        while iface.link_state != netif.InterfaceLinkState.LINK_STATE_UP and interval > 0:
+            time.sleep(2)
+            interval -= 2
+
+        if iface.link_state != netif.InterfaceLinkState.LINK_STATE_UP:
+            self.logger.error('Timed out waiting for %r interface link state to become active', name)

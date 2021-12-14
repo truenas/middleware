@@ -4,89 +4,82 @@
 # License: BSD
 
 import requests
-from auto_config import api_url, user, password
 import json
 import os
+import re
+import websocket
+import uuid
 from subprocess import run, Popen, PIPE
 from time import sleep
-import re
+
+from auto_config import api_url, user, password
+
+
+if "controller1_ip" in os.environ:
+    controller1_ip = os.environ["controller1_ip"]
+    controller1_api_url = f'http://{controller1_ip}/api/v2.0'
+else:
+    controller1_api_url = api_url
 
 global header
 header = {'Content-Type': 'application/json', 'Vary': 'accept'}
-global authentification
-authentification = (user, password)
+global authentication
+authentication = (user, password)
 
 
-def GET(testpath, **optional):
+def GET(testpath, payload=None, controller_a=False, **optional):
+    data = {} if payload is None else payload
+    url = controller1_api_url if controller_a else api_url
     if testpath.startswith('http'):
         getit = requests.get(testpath)
     else:
         if optional.pop("anonymous", False):
             auth = None
         else:
-            auth = authentification
-        payload = optional.get('payload') or {}
-        getit = requests.get(api_url + testpath, headers=header,
-                             auth=auth, data=json.dumps(payload))
+            auth = authentication
+        getit = requests.get(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
+                             auth=auth, data=json.dumps(data))
     return getit
 
 
-def POST(testpath, payload=None, **optional):
+def POST(testpath, payload=None, controller_a=False, **optional):
+    data = {} if payload is None else payload
+    url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
     else:
-        auth = authentification
+        auth = authentication
     if payload is None:
-        postit = requests.post(api_url + testpath, headers=header,
+        postit = requests.post(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
                                auth=auth)
     else:
-        postit = requests.post(api_url + testpath, headers=header,
-                               auth=auth, data=json.dumps(payload))
+        postit = requests.post(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
+                               auth=auth, data=json.dumps(data))
     return postit
 
 
-def POST_TIMEOUT(testpath, payload, timeOut):
-    if payload is None:
-        postit = requests.post(api_url + testpath, headers=header,
-                               auth=authentification, timeout=timeOut)
-    else:
-        postit = requests.post(api_url + testpath, headers=header,
-                               auth=authentification, data=json.dumps(payload),
-                               timeout=timeOut)
-    return postit
-
-
-def POSTNOJSON(testpath, payload, **optional):
-    postit = requests.post(api_url + testpath, headers=header,
-                           auth=authentification, data=payload)
-    return postit
-
-
-def PUT(testpath, payload, **optional):
+def PUT(testpath, payload=None, controller_a=False, **optional):
+    data = {} if payload is None else payload
+    url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
     else:
-        auth = authentification
-    putit = requests.put(api_url + testpath, headers=header,
-                         auth=auth, data=json.dumps(payload))
+        auth = authentication
+    putit = requests.put(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
+                         auth=auth, data=json.dumps(data))
     return putit
 
 
-def PUT_TIMEOUT(testpath, payload, timeOut, **optional):
-    putit = requests.put(api_url + testpath, headers=header,
-                         auth=authentification, data=json.dumps(payload),
-                         timeout=timeOut)
-    return putit
-
-
-def DELETE(testpath, payload=None, **optional):
+def DELETE(testpath, payload=None, controller_a=False, **optional):
+    data = {} if payload is None else payload
+    url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
     else:
-        auth = authentification
-    deleteit = requests.delete(api_url + testpath, headers=header,
+        auth = authentication
+    deleteit = requests.delete(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
                                auth=auth,
-                               data=json.dumps(payload) if payload else None)
+                               data=json.dumps(data))
     return deleteit
 
 
@@ -122,7 +115,7 @@ def send_file(file, destination, username, passwrd, host):
         "-o",
         "VerifyHostKeyDNS=no",
         file,
-        f"{user}@{host}:{destination}"
+        f"{username}@{host}:{destination}"
     ]
     process = run(cmd, stdout=PIPE, universal_newlines=True)
     output = process.stdout
@@ -142,7 +135,7 @@ def get_file(file, destination, username, passwrd, host):
         "UserKnownHostsFile=/dev/null",
         "-o",
         "VerifyHostKeyDNS=no",
-        f"{user}@{host}:{file}",
+        f"{username}@{host}:{file}",
         destination
     ]
     process = run(cmd, stdout=PIPE, universal_newlines=True)
@@ -265,3 +258,22 @@ def wait_on_job(job_id, max_timeout):
         if timeout >= max_timeout:
             return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
         timeout += 5
+
+
+def make_ws_request(ip, payload):
+    # create connection
+    ws = websocket.create_connection(f'ws://{ip}:80/websocket')
+
+    # setup features
+    ws.send(json.dumps({'msg': 'connect', 'version': '1', 'support': ['1'], 'features': []}))
+    ws.recv()
+
+    # login
+    id = str(uuid.uuid4())
+    ws.send(json.dumps({'id': id, 'msg': 'method', 'method': 'auth.login', 'params': list(authentication)}))
+    ws.recv()
+
+    # return the request
+    payload.update({'id': id})
+    ws.send(json.dumps(payload))
+    return json.loads(ws.recv())

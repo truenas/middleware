@@ -66,6 +66,13 @@ class SMBBuiltin(enum.Enum):
     def sids():
         return [x.value[1] for x in SMBBuiltin]
 
+    def by_rid(rid):
+        for x in SMBBuiltin:
+            if x.value[1].endswith(str(rid)):
+                return x
+
+        return None
+
 
 class SMBPath(enum.Enum):
     GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb4.conf', 0o755, False)
@@ -566,8 +573,14 @@ class SMBService(SystemServiceService):
                         f'NetBIOS name [{new[i]}] conflicts with workgroup name.'
                     )
 
-        if new['guest'] == 'root':
-            verrors.add('smb_update.guest', '"root" is not a permitted guest account')
+        if new['guest']:
+            if new['guest'] == 'root':
+                verrors.add('smb_update.guest', '"root" is not a permitted guest account')
+
+            try:
+                await self.middleware.call("user.get_user_obj", {"username": new["guest"]})
+            except KeyError:
+                verrors.add('smb_update.guest', f'{new["guest"]}: user does not exist')
 
         if new.get('bindip'):
             bindip_choices = list((await self.bindip_choices()).keys())
@@ -974,6 +987,14 @@ class SharingSMBService(SharingService):
             except Exception:
                 self.logger.warning('Failed to remove locked share [%s]',
                                     old['name'], exc_info=True)
+
+        if not new['enabled']:
+            name = new['name'] if not new['home'] else 'homes'
+            await self.close_share(name)
+            try:
+                await self.middleware.call('sharing.smb.reg_delshare', name)
+            except Exception:
+                self.logger.warning('Failed to remove registry entry for [%s].', name, exc_info=True)
 
         if enable_aapl:
             await self._service_change('cifs', 'restart')

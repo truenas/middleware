@@ -118,7 +118,8 @@ class FTPService(SystemServiceService):
         `ipconnections` is an integer value which shows the maximum number of connections per IP address. It defaults
         to 0 which equals to unlimited.
 
-        `timeout` is the maximum client idle time in seconds before client is disconnected.
+        `timeout` is the maximum number of seconds that proftpd will allow clients to stay connected without receiving
+        any data on either the control or data connection.
 
         `rootlogin` is a boolean value which when configured to true enables login as root. This is generally
         discouraged because of the security risks.

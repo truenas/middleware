@@ -208,6 +208,7 @@ class NetworkConfigurationService(ConfigService):
         config = await self.config()
         new_config = config.copy()
         is_ha = True
+        sync_group_mappings = False
 
         if not (
                 not await self.middleware.call('system.is_freenas') and
@@ -240,6 +241,12 @@ class NetworkConfigurationService(ConfigService):
             new_config,
             {'prefix': 'gc_'}
         )
+        if new_config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']:
+            await self.middleware.call('etc.generate', 'smb')
+            new_sid = await self.middleware.call("smb.get_system_sid")
+            await self.middleware.call("smb.set_database_sid", new_sid)
+            sync_group_mappings = True
+
         service_announcement = new_config.pop('service_announcement')
         new_config['domains'] = new_config['domains'].split()
         new_config['netwait_ip'] = new_config['netwait_ip'].split()
@@ -302,6 +309,9 @@ class NetworkConfigurationService(ConfigService):
                 await self.middleware.call(
                     "service.start" if enabled else "service.stop", ANNOUNCE_SRV[srv]
                 )
+
+        if sync_group_mappings:
+            await self.middleware.call("smb.synchronize_group_mappings")
 
         return await self.config()
 
@@ -827,8 +837,6 @@ class InterfaceService(CRUDService):
 
         interface_id = None
         if data['type'] == 'BRIDGE':
-            # For bridge we want to start with 2 because bridge0/bridge1 may have been used
-            # for Jails/VM.
             name = data.get('name') or await self.middleware.call('interface.get_next_name', InterfaceType.BRIDGE)
             try:
                 async for i in self.__create_interface_datastore(data, {
@@ -878,7 +886,7 @@ class InterfaceService(CRUDService):
                         )
                 raise
         elif data['type'] == 'VLAN':
-            name = data.get('name') or f'vlan{data["vlan_tag"]}'
+            name = data.get('name') or await self.middleware.call('interface.get_next_name', InterfaceType.VLAN)
             try:
                 async for i in self.__create_interface_datastore(data, {
                     'interface': name,
@@ -1109,7 +1117,7 @@ class InterfaceService(CRUDService):
                     'The number of active, standby and virtual IP addresses must be the same.'
                 )
 
-            if not update:
+            if not update or itype == 'PHYSICAL':
                 failover_attrs = set(
                     [k for k, v in validation_attrs.items() if k not in ('mtu', 'ipv4_dhcp', 'ipv6_auto')]
                 )
@@ -1121,6 +1129,7 @@ class InterfaceService(CRUDService):
                             f'{schema_name}.{i}',
                             f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
                         )
+                verrors.check()
 
             # can't remove VHID and not GROUP
             if not data.get('failover_vhid') and data.get('failover_group'):
@@ -1839,7 +1848,7 @@ class InterfaceService(CRUDService):
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
-        internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair']
+        internal_interfaces = ['wg', 'lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair']
         if not await self.middleware.call('system.is_freenas'):
             internal_interfaces.extend(await self.middleware.call('failover.internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)

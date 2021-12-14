@@ -64,7 +64,7 @@ Event Response Example:
         "collection": "core.get_jobs",
         "id": 79,
         "fields": {
-            "id": 79, "method": "zfs.pool.scrub",
+            "id": 79, "method": "pool.scrub.scrub",
             "arguments": ["vol1", "START"], "logs_path": null,
             "logs_excerpt": null,
             "progress": {"percent": 0.001258680822502356, "description": "Scrubbing", "extra": null},

@@ -1,5 +1,6 @@
 from lockfile import LockFile, AlreadyLocked
 from collections import defaultdict
+from shlex import quote
 import multiprocessing
 import os
 import subprocess
@@ -535,25 +536,20 @@ class FailoverService(Service):
                 if attach_all_job.error:
                     logger.error('Failed to attach geli providers: %s', attach_all_job.error)
 
-                global FIRST_RUN
-                if FIRST_RUN:
-                    try:
-                        self.middleware.call_sync('disk.sed_unlock_all')
-                        FIRST_RUN = False
-                    except Exception as e:
-                        # failing here doesn't mean the zpool won't mount
-                        # we could have only failed to unlock 1 disk
-                        # so log an error and move on
-                        logger.error('Failed to unlock SED disks with error: %r', e)
+                try:
+                    self.middleware.call_sync('disk.sed_unlock_all')
+                except Exception as e:
+                    # failing here doesn't mean the zpool won't mount
+                    # we could have only failed to unlock 1 disk
+                    # so log an error and move on
+                    logger.error('Failed to unlock SED disks with error: %r', e)
 
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
                 for volume in fobj['volumes']:
-                    logger.warning('Importing %s', volume)
+                    logger.warning('Importing %r', volume)
                     # TODO: try to import using cachefile and then fallback without if it fails
-                    error, output = run('zpool import -o cachefile=none -m -R /mnt -f {}'.format(
-                        volume,
-                    ), stderr=True)
+                    error, output = run(f'zpool import -o cachefile=none -m -R /mnt -f {quote(volume)}', stderr=True)
                     if error:
                         logger.error('Failed to import %s: %s', volume, output)
                         open(FAILED_FILE, 'w').close()

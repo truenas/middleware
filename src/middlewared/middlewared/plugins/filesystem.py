@@ -442,6 +442,10 @@ class FilesystemService(Service):
             raise CallError(f"Changing permissions of root level dataset is not permitted: {path}",
                             errno.EPERM)
 
+        jail_root = self.middleware.call_sync('jail.get_activated_pool')
+        if jail_root and path.startswith(f'/mnt/{jail_root}/iocage'):
+            raise CallError(f"Changing permissions on jail dataset paths is not permitted: {path}", errno.EPERM)
+
     @accepts(Str('path'))
     def acl_is_trivial(self, path):
         """

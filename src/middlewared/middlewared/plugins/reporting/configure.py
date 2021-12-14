@@ -31,8 +31,12 @@ class ReportingService(Service):
         # Ensure that collectd working path is a symlink to system dataset
         base_collectd = '/var/db/collectd'
         pwd = os.path.join(base_collectd, 'rrd')
-        if os.path.exists(pwd) and (not os.path.isdir(pwd) or not os.path.islink(pwd)):
-            shutil.move(pwd, f'{pwd}.{time.strftime("%Y%m%d%H%M%S")}')
+        if os.path.islink(pwd):
+            if os.path.realpath(pwd) != rrd_mount:
+                os.unlink(pwd)
+        else:
+            if os.path.exists(pwd):
+                shutil.move(pwd, f'{pwd}.{time.strftime("%Y%m%d%H%M%S")}')
         if not os.path.exists(pwd):
             os.makedirs(base_collectd, exist_ok=True)
             os.symlink(rrd_mount, pwd)
@@ -67,22 +71,21 @@ class ReportingService(Service):
                     )
             shutil.move(os.path.join(pwd, hostname), os.path.join(pwd, 'localhost'))
 
-        # Remove all directories except "localhost" and its backups (that may be erroneously created by
-        # running collectd before this script)
-        to_remove_dirs = [
-            os.path.join(pwd, d) for d in os.listdir(pwd)
-            if not d.startswith('localhost') and os.path.isdir(os.path.join(pwd, d))
-        ]
-        for r_dir in to_remove_dirs:
-            subprocess.run(['rm', '-rfx', r_dir])
+        for item in os.listdir(pwd):
+            if item == 'localhost' or item.startswith('localhost.bak.'):
+                continue
 
-        # Remove all symlinks (that are stale if hostname was changed).
-        to_remove_symlinks = [
-            os.path.join(pwd, l) for l in os.listdir(pwd)
-            if os.path.islink(os.path.join(pwd, l))
-        ]
-        for r_symlink in to_remove_symlinks:
-            os.unlink(r_symlink)
+            path = os.path.join(pwd, item)
+
+            if os.path.islink(path):
+                # Remove all symlinks (that are stale if hostname was changed)
+                os.unlink(path)
+            elif os.path.isdir(path):
+                # Remove all directories except "localhost" and its backups (that may be erroneously created by
+                # running collectd before this script)
+                subprocess.run(['rm', '-rfx', path])
+            else:
+                os.unlink(path)
 
         # Create "localhost" directory if it does not exist
         if not os.path.exists(os.path.join(pwd, 'localhost')):

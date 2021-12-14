@@ -3,7 +3,7 @@ import os
 import re
 import sysctl
 
-from .rrd_utils import RRDBase
+from .rrd_utils import RRDBase, RRD_BASE_DIR_PATH
 
 
 RE_DISK = re.compile(r'^[a-z]+[0-9]+$')
@@ -39,6 +39,13 @@ class CPUTempPlugin(RRDBase):
         if not self.__check_cputemp_avail__():
             return []
         return None
+
+    def get_rrd_files(self, identifier):
+        result = []
+        for n in range(0, self.__get_number_of_cores__()):
+            result.append(self.__get_cputemp_file__(n))
+
+        return result
 
     def get_defs(self, identifier):
         args = []
@@ -211,6 +218,14 @@ class NFSStatBytesPlugin(RRDBase):
 class UPSBase(object):
 
     plugin = 'nut'
+
+    @property
+    def _base_path(self):
+        ups_config = self.middleware.call_sync('ups.config')
+        if ups_config['mode'] == 'SLAVE':
+            return os.path.join(RRD_BASE_DIR_PATH, ups_config['remotehost'])
+        else:
+            return super()._base_path
 
     def get_identifiers(self):
         ups_identifier = self.middleware.call_sync('ups.config')['identifier']

@@ -1,10 +1,11 @@
-from middlewared.client.utils import Struct
 import contextlib
 import logging
 import os
 import subprocess
 import sysctl
 
+from bsd import geom
+from middlewared.client.utils import Struct
 logger = logging.getLogger(__name__)
 
 

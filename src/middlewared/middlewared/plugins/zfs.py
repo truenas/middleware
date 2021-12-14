@@ -1,7 +1,5 @@
 import errno
 import subprocess
-import threading
-import time
 from collections import defaultdict
 from copy import deepcopy
 
@@ -282,8 +280,7 @@ class ZFSPoolService(CRUDService):
         Str('name', required=True),
         Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
     )
-    @job(lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}')
-    def scrub(self, job, name, action=None):
+    def scrub_action(self, name, action):
         """
         Start/Stop/Pause a scrub on pool `name`.
         """
@@ -308,33 +305,9 @@ class ZFSPoolService(CRUDService):
             if proc.returncode != 0:
                 raise CallError('Unable to pause scrubbing')
 
-        def watch():
-            while True:
-                with libzfs.ZFS() as zfs:
-                    scrub = zfs.get(name).scrub.__getstate__()
-
-                if scrub['pause']:
-                    job.set_progress(100, 'Scrub paused')
-                    break
-
-                if scrub['function'] != 'SCRUB':
-                    break
-
-                if scrub['state'] == 'FINISHED':
-                    job.set_progress(100, 'Scrub finished')
-                    break
-
-                if scrub['state'] == 'CANCELED':
-                    break
-
-                if scrub['state'] == 'SCANNING':
-                    job.set_progress(scrub['percentage'], 'Scrubbing')
-                time.sleep(1)
-
-        if action == 'START':
-            t = threading.Thread(target=watch, daemon=True)
-            t.start()
-            t.join()
+    def scrub_state(self, name):
+        with libzfs.ZFS() as zfs:
+            return zfs.get(name).scrub.__getstate__()
 
     @accepts()
     def find_import(self):

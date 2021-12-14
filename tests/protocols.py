@@ -3,7 +3,7 @@ from samba.dcerpc import security
 from samba.samba3 import param as s3param
 from samba import credentials
 import subprocess
-# from samba import NTSTATUSError
+from samba import NTSTATUSError
 
 
 class SMB(object):
@@ -12,9 +12,7 @@ class SMB(object):
     This provides sufficient functionality to connect to remote SMB share,
     create and delete files, read, write, and list, make, and remove
     directories.
-
     Basic workflow can be something like this:
-
     c = SMB.connect(<ip address>, <share>, <username>, <password>)
     c.mkdir("testdir")
     fh = c.create_file("testdir/testfile")
@@ -67,8 +65,11 @@ class SMB(object):
 
     def disconnect(self):
         open_files = list(self._open_files.keys())
-        for f in open_files:
-            self.close(f)
+        try:
+            for f in open_files:
+                self.close(f)
+        except NTSTATUSError:
+            pass
 
         del(self._connection)
         del(self._cred)
@@ -76,7 +77,7 @@ class SMB(object):
 
     def show_connection(self):
         return {
-            "connected": True if self._connection is not None else False,
+            "connected": self._connection.chkpath(''),
             "host": self._host,
             "share": self._share,
             "smb1": self._smb1,
@@ -167,6 +168,35 @@ class SMB(object):
             })
 
         return ret
+
+    def get_shadow_copies(self, **kwargs):
+        snaps = []
+        host = kwargs.get("host")
+        share = kwargs.get("share")
+        path = kwargs.get("path", "/")
+        username = kwargs.get("username")
+        password = kwargs.get("password")
+        smb1 = kwargs.get("smb1", False)
+
+        cmd = [
+            "smbclient", f"//{host}/{share}",
+            "-U", f"{username}%{password}",
+        ]
+
+        if smb1:
+            cmd.extend(["-m", "NT1"])
+
+        cmd.extend(["-c", f'allinfo {path}'])
+        cl = subprocess.run(cmd, capture_output=True)
+        if cl.returncode != 0:
+            raise RuntimeError(cl.stderr.decode())
+
+        client_out = cl.stdout.decode().splitlines()
+        for i in client_out:
+            if i.startswith("@GMT"):
+                snaps.append(i)
+
+        return snaps
 
     def get_quota(self, **kwargs):
         host = kwargs.get("host")

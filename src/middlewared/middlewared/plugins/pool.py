@@ -286,7 +286,7 @@ class PoolService(CRUDService):
         """
         pool = await self.get_instance(oid)
         return await job.wrap(
-            await self.middleware.call('zfs.pool.scrub', pool['name'], action)
+            await self.middleware.call('pool.scrub.scrub', pool['name'], action)
         )
 
     @accepts(List('types', items=[Str('type', enum=['FILESYSTEM', 'VOLUME'])], default=['FILESYSTEM', 'VOLUME']))
@@ -2215,8 +2215,8 @@ class PoolDatasetService(CRUDService):
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
     def export_key(self, job, id, download):
         """
-        Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded as a text file,
-        otherwise it will be returned as string.
+        Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded in a json file
+        where the same file can be used to unlock the dataset, otherwise it will be returned as string.
 
         Please refer to websocket documentation for downloading the file.
         """
@@ -2232,7 +2232,7 @@ class PoolDatasetService(CRUDService):
         key = keys[id]
 
         if download:
-            job.pipes.output.w.write(key.encode())
+            job.pipes.output.w.write(json.dumps({id: key}).encode())
         else:
             return key
 
@@ -3202,7 +3202,7 @@ class PoolDatasetService(CRUDService):
 
         parent = await self.middleware.call(
             'zfs.dataset.query',
-            [('id', '=', data['name'].rsplit('/')[0])],
+            [('id', '=', data['name'].rsplit('/', 1)[0])],
             {'extra': {'recursive': False}},
         )
 
@@ -3213,6 +3213,18 @@ class PoolDatasetService(CRUDService):
             )
         else:
             parent = parent[0]
+            if mode == 'CREATE' and parent['properties']['readonly']['rawvalue'] == 'on':
+                # creating a zvol/dataset when the parent object is set to readonly=on
+                # is allowed via ZFS. However, if it's a dataset an error will be raised
+                # stating that it was unable to be mounted. If it's a zvol, then the service
+                # that tries to open the zvol device will get read only related errors.
+                # Currently, there is no way to mount a dataset in the webUI so we will
+                # prevent this scenario from occuring by preventing creation if the parent
+                # is set to readonly=on.
+                verrors.add(
+                    f'{schema}.readonly',
+                    f'Turn off readonly mode on {parent["id"]} to create {data["name"].rsplit("/")[0]}'
+                )
 
         if data['type'] == 'FILESYSTEM':
             if data.get("aclmode") and osc.IS_LINUX:
@@ -4146,6 +4158,40 @@ class PoolScrubService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
         return response
 
+    @accepts(
+        Str('name', required=True),
+        Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
+    )
+    @job(lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}')
+    async def scrub(self, job, name, action):
+        """
+        Start/Stop/Pause a scrub on pool `name`.
+        """
+        await self.middleware.call('zfs.pool.scrub_action', name, action)
+
+        if action == 'START':
+            while True:
+                scrub = await self.middleware.call('zfs.pool.scrub_state', name)
+
+                if scrub['pause']:
+                    job.set_progress(100, 'Scrub paused')
+                    break
+
+                if scrub['function'] != 'SCRUB':
+                    break
+
+                if scrub['state'] == 'FINISHED':
+                    job.set_progress(100, 'Scrub finished')
+                    break
+
+                if scrub['state'] == 'CANCELED':
+                    break
+
+                if scrub['state'] == 'SCANNING':
+                    job.set_progress(scrub['percentage'], 'Scrubbing')
+
+                await asyncio.sleep(1)
+
     @accepts(Str('name'), Int('threshold', default=35))
     async def run(self, name, threshold):
         """
@@ -4199,7 +4245,7 @@ class PoolScrubService(CRUDService):
             logger.debug("Pool %r last scrub %r", name, last_scrub)
             return False
 
-        await self.middleware.call('zfs.pool.scrub', pool['name'])
+        await self.middleware.call('pool.scrub.scrub', pool['name'])
         return True
 
 

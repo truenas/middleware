@@ -175,6 +175,7 @@ async def test__interfaces_service__create_lagg():
     m['interface.query'] = Mock(return_value=INTERFACES)
     m['interface.lag_supported_protocols'] = Mock(return_value=['LACP'])
     m['interface.get_next_name'] = Mock()
+    m['interface.validate_name'] = Mock()
     m['datastore.query'] = Mock(return_value=[])
     m['datastore.insert'] = Mock(return_value=5)
 

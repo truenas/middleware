@@ -22,6 +22,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
+from middlewared.plugins.kerberos import krb5ccache
 import middlewared.utils.osc as osc
 
 from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
@@ -972,6 +973,7 @@ class ActiveDirectoryService(ConfigService):
         dynamic DNS updates after joining AD to register
         VIP addresses.
         """
+        await self.middleware.call("kerberos.check_ticket")
         if not ad['allow_dns_updates'] or smb_ha_mode == 'STANDALONE':
             return
 
@@ -980,7 +982,12 @@ class ActiveDirectoryService(ConfigService):
         smb_bind_ips = smb['bindip'] if smb['bindip'] else vips
         to_register = set(vips) & set(smb_bind_ips)
         hostname = f'{vhost}.{ad["domainname"]}'
-        cmd = [SMBCmd.NET.value, '-k', 'ads', 'dns', 'register', hostname]
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'dns', 'register', hostname
+        ]
         cmd.extend(to_register)
         netdns = await run(cmd, check=False)
         if netdns.returncode != 0:
@@ -1007,19 +1014,27 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def _net_ads_join(self):
+        await self.middleware.call("kerberos.check_ticket")
         ad = await self.config()
-        if ad['createcomputer']:
-            netads = await run([
-                SMBCmd.NET.value, '-k', '-U', ad['bindname'], '-d', '5',
-                'ads', 'join', f'createcomputer={ad["createcomputer"]}',
-                ad['domainname']], check=False)
-        else:
-            netads = await run([
-                SMBCmd.NET.value, '-k', '-U', ad['bindname'], '-d', '5',
-                'ads', 'join', ad['domainname']], check=False)
+        if ad is None:
+            ad = await self.config()
 
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-U', ad['bindname'],
+            '-d', '5',
+            'ads', 'join'
+        ]
+
+        if ad['createcomputer']:
+            cmd.append(f'createcomputer={ad["createcomputer"]}')
+
+        cmd.append(ad['domainname'])
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
-            await self.set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'].name)
             await self._parse_join_err(netads.stdout.decode().split(':', 1))
 
     @private
@@ -1034,15 +1049,20 @@ class ActiveDirectoryService(ConfigService):
         In this case, the error message presents oddly because stale credentials are stored in
         the secrets.tdb file and the message is passed up from underlying KRB5 library.
         """
-        ad = await self.config()
-        netads = await run([
-            SMBCmd.NET.value, '-k', '-w', workgroup,
-            '-d', '5', 'ads', 'testjoin', ad['domainname']],
-            check=False
-        )
+        await self.middleware.call("kerberos.check_ticket")
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-w', workgroup,
+            '-d', '5',
+            'ads', 'testjoin'
+        ]
+
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             errout = netads.stderr.decode()
-            with open(f"/var/log/samba4/domain_testjoin_{int(datetime.datetime.now().timestamp())}.log", "w") as f:
+            with open(f"{SMBPath.LOGDIR.platform()}/domain_testjoin_{int(datetime.datetime.now().timestamp())}.log", "w") as f:
                 f.write(errout)
 
             return neterr.to_status(errout)
@@ -1055,14 +1075,19 @@ class ActiveDirectoryService(ConfigService):
         Only automatically add NFS SPN entries on domain join
         if kerberized nfsv4 is enabled.
         """
+        await self.middleware.call("kerberos.check_ticket")
         if not (await self.middleware.call('nfs.config'))['v4_krb']:
             return False
 
         for spn in spn_list:
-            netads = await run([
-                SMBCmd.NET.value, '-k', 'ads', 'setspn',
-                'add', spn
-            ], check=False)
+            cmd = [
+                SMBCmd.NET.value,
+                '--use-kerberos', 'required',
+                '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+                'ads', 'setspn',
+                'add', spn,
+            ]
+            netads = await run(cmd, check=False)
             if netads.returncode != 0:
                 raise CallError('failed to set spn entry '
                                 f'[{spn}]: {netads.stdout.decode().strip()}')
@@ -1076,8 +1101,15 @@ class ActiveDirectoryService(ConfigService):
         Directory computer account. This may not reflect the state of the
         server's current kerberos keytab.
         """
+        await self.middleware.call("kerberos.check_ticket")
         spnlist = []
-        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'setspn', 'list'], check=False)
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'setspn', 'list'
+        ]
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             raise CallError(
                 f"Failed to generate SPN list: [{netads.stderr.decode().strip()}]"
@@ -1096,8 +1128,16 @@ class ActiveDirectoryService(ConfigService):
         Force an update of the AD machine account password. This can be used to
         refresh the Kerberos principals in the server's system keytab.
         """
+        await self.middleware.call("kerberos.check_ticket")
         workgroup = (await self.middleware.call('smb.config'))['workgroup']
-        netads = await run([SMBCmd.NET.value, '-k', 'ads', '-w', workgroup, 'changetrustpw'], check=False)
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-w', workgroup,
+            'ads', 'changetrustpw',
+        ]
+        netads = await run(cmd, check=False)
         if netads.returncode != 0:
             raise CallError(
                 f"Failed to update trust password: [{netads.stderr.decode().strip()}] "
@@ -1120,8 +1160,8 @@ class ActiveDirectoryService(ConfigService):
 
         return True
 
-    @accepts()
-    async def domain_info(self):
+    @accepts(Str('domain', default=''))
+    async def domain_info(self, domain):
         """
         Returns the following information about the currently joined domain:
 
@@ -1141,11 +1181,9 @@ class ActiveDirectoryService(ConfigService):
 
         `Last machine account password change`. timestamp
         """
-        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'info', '--json'], check=False)
-        if netads.returncode != 0:
-            raise CallError(netads.stderr.decode())
-
-        return json.loads(netads.stdout.decode())
+        cmd = [SMBCmd.NET.value, '--json', 'ads', 'info']
+        if domain:
+            cmd.extend(['-S', domain])
 
     @private
     def get_netbios_domain_name(self):

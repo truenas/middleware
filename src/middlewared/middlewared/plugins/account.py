@@ -136,7 +136,10 @@ class UserService(CRUDService):
             user['email'] = None
 
         # Get group membership
-        user['groups'] = [gm['group']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('user', '=', user['id'])], {'prefix': 'bsdgrpmember_'})]
+        user['groups'] = [gm['group']['id'] for gm in await self.middleware.call(
+            'datastore.query', 'account.bsdgroupmembership',
+            [('user', '=', user['id'])], {'prefix': 'bsdgrpmember_'}
+        )]
 
         # Get authorized keys
         keysfile = f'{user["home"]}/.ssh/authorized_keys'
@@ -353,7 +356,8 @@ class UserService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
-            await self.middleware.call('smb.synchronize_passdb')
+            gm_job = await self.middleware.call('smb.synchronize_passdb')
+            await gm_job.wait()
 
         if os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -474,13 +478,16 @@ class UserService(CRUDService):
         # After this point user dict has values from data
         user.update(data)
 
+        mode_to_set = user.get('home_mode')
+        if not mode_to_set:
+            mode_to_set = '700' if old_mode is None else old_mode
+
+        # squelch any potential problems when this occurs
+        await self.middleware.call('user.recreate_homedir_if_not_exists', has_home, user, group, mode_to_set)
+
         if home_copy and not os.path.isdir(user['home']):
             try:
                 os.makedirs(user['home'])
-                mode_to_set = user.get('home_mode')
-                if not mode_to_set:
-                    mode_to_set = '700' if old_mode is None else old_mode
-
                 perm_job = await self.middleware.call('filesystem.setperm', {
                     'path': user['home'],
                     'uid': user['uid'],
@@ -510,7 +517,9 @@ class UserService(CRUDService):
             if user['uid'] == 0:
                 if await self.middleware.call('failover.licensed'):
                     try:
-                        await self.middleware.call('failover.call_remote', 'user.update_sshpubkey', update_sshpubkey_args)
+                        await self.middleware.call(
+                            'failover.call_remote', 'user.update_sshpubkey', update_sshpubkey_args
+                        )
                     except Exception:
                         self.logger.error('Failed to sync root ssh pubkey to standby node', exc_info=True)
 
@@ -518,7 +527,9 @@ class UserService(CRUDService):
             """
             Background copy of user home directoy to new path as the user in question.
             """
-            await self.middleware.call('user.do_home_copy', home_old, user['home'], user['username'], home_mode, user['uid'])
+            await self.middleware.call(
+                'user.do_home_copy', home_old, user['home'], user['username'], home_mode, user['uid']
+            )
 
         elif has_home and home_mode is not None:
             """
@@ -543,9 +554,29 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
         if user['smb'] and must_change_pdb_entry:
-            await self.middleware.call('smb.synchronize_passdb')
+            gm_job = await self.middleware.call('smb.synchronize_passdb')
+            await gm_job.wait()
 
         return pk
+
+    @private
+    def recreate_homedir_if_not_exists(self, has_home, user, group, mode):
+        # sigh, nothing is stopping someone from removing the homedir
+        # from the CLI so recreate the original directory in this case
+        if has_home and not os.path.exists(user['home']):
+            self.logger.debug('Homedir %r for %r does not exist so recreating it', user['home'], user['username'])
+            try:
+                os.makedirs(user['home'])
+            except Exception:
+                raise CallError(f'Failed recreating "{user["home"]}"')
+            else:
+                self.middleware.call_sync('filesystem.setperm', {
+                    'path': user['home'],
+                    'uid': user['uid'],
+                    'gid': group['bsdgrp_gid'],
+                    'mode': mode,
+                    'options': {'stripacl': True},
+                }).wait_sync(raise_error=True)
 
     @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
     async def do_delete(self, pk, options=None):
@@ -562,8 +593,14 @@ class UserService(CRUDService):
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
 
         if options['delete_group'] and not user['group']['bsdgrp_builtin']:
-            count = await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('group', '=', user['group']['id'])], {'prefix': 'bsdgrpmember_', 'count': True})
-            count2 = await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', user['group']['id']), ('id', '!=', pk)], {'prefix': 'bsdusr_', 'count': True})
+            count = await self.middleware.call(
+                'datastore.query', 'account.bsdgroupmembership',
+                [('group', '=', user['group']['id'])], {'prefix': 'bsdgrpmember_', 'count': True}
+            )
+            count2 = await self.middleware.call(
+                'datastore.query', 'account.bsdusers',
+                [('group', '=', user['group']['id']), ('id', '!=', pk)], {'prefix': 'bsdusr_', 'count': True}
+            )
             if count == 0 and count2 == 0:
                 try:
                     await self.middleware.call('group.delete', user['group']['id'])
@@ -578,7 +615,9 @@ class UserService(CRUDService):
         if cifs:
             cifs = cifs[0]
             if cifs['guest'] == user['username']:
-                await self.middleware.call('datastore.update', 'services.cifs', cifs['id'], {'guest': 'nobody'}, {'prefix': 'cifs_srv_'})
+                await self.middleware.call(
+                    'datastore.update', 'services.cifs', cifs['id'], {'guest': 'nobody'}, {'prefix': 'cifs_srv_'}
+                )
 
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')
@@ -670,7 +709,11 @@ class UserService(CRUDService):
         Get the next available/free uid.
         """
         last_uid = 999
-        for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('builtin', '=', False)], {'order_by': ['uid'], 'prefix': 'bsdusr_'}):
+        builtins = await self.middleware.call(
+            'datastore.query', 'account.bsdusers',
+            [('builtin', '=', False)], {'order_by': ['uid'], 'prefix': 'bsdusr_'}
+        )
+        for i in builtins:
             # If the difference between the last uid and the current one is
             # bigger than 1, it means we have a gap and can use it.
             if i['uid'] - last_uid > 1:
@@ -886,7 +929,8 @@ class UserService(CRUDService):
         if password:
             data['unixhash'] = crypted_password(password)
             # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
-            data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U         ]:LCT-{int(time.time()):X}:'
+            data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}'
+            data['smbhash'] += f':{nt_password(password)}:[U         ]:LCT-{int(time.time()):X}:'
         else:
             data['unixhash'] = '*'
             data['smbhash'] = '*'
@@ -896,14 +940,20 @@ class UserService(CRUDService):
 
         groups = set(groups)
         existing_ids = set()
-        for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('user', '=', pk)], {'prefix': 'bsdgrpmember_'}):
+        gms = await self.middleware.call(
+            'datastore.query', 'account.bsdgroupmembership',
+            [('user', '=', pk)], {'prefix': 'bsdgrpmember_'}
+        )
+        for gm in gms:
             if gm['id'] not in groups:
                 await self.middleware.call('datastore.delete', 'account.bsdgroupmembership', gm['id'])
             else:
                 existing_ids.add(gm['id'])
 
         for _id in groups - existing_ids:
-            group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', _id)], {'prefix': 'bsdgrp_'})
+            group = await self.middleware.call(
+                'datastore.query', 'account.bsdgroups', [('id', '=', _id)], {'prefix': 'bsdgrp_'}
+            )
             if not group:
                 raise CallError(f'Group {_id} not found', errno.ENOENT)
             await self.middleware.call(
@@ -1080,7 +1130,6 @@ class GroupService(CRUDService):
     @private
     async def create_internal(self, data, reload_users=True):
 
-        allow_duplicate_gid = data['allow_duplicate_gid']
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_create')
         verrors.check()
@@ -1097,24 +1146,16 @@ class GroupService(CRUDService):
         pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
 
         for user in users:
-            await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': user})
+            await self.middleware.call(
+                'datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': user}
+            )
 
         if reload_users:
             await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
-            try:
-                await self.middleware.call('smb.groupmap_add', data['name'])
-            except Exception:
-                """
-                Samba's group mapping database does not allow duplicate gids.
-                Unfortunately, we don't get a useful error message at -d 0.
-                """
-                if not allow_duplicate_gid:
-                    raise
-                else:
-                    self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
-                                      data['name'], data['gid'])
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
 
         return pk
 
@@ -1132,7 +1173,7 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        add_groupmap = False
+        groupmap_changed = False
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
@@ -1144,21 +1185,15 @@ class GroupService(CRUDService):
         new_smb = group['smb']
 
         if 'name' in data and data['name'] != group['group']:
-            if g := (await self.middleware.call('smb.groupmap_list')).get(group['group']):
-                await self.middleware.call(
-                    'smb.groupmap_delete',
-                    {"sid": g['SID']}
-                )
-
             group['group'] = group.pop('name')
             if new_smb:
-                add_groupmap = True
+                groupmap_changed = True
         else:
             group.pop('name', None)
             if new_smb and not old_smb:
-                add_groupmap = True
+                groupmap_changed = True
             elif old_smb and not new_smb:
-                await self.middleware.call('smb.groupmap_delete', {"ntgroup": group['group']})
+                groupmap_changed = True
 
         group = await self.group_compress(group)
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
@@ -1175,12 +1210,9 @@ class GroupService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        """
-        "net groupmap" checks for existence of group prior to creating new groupmaps. This section
-        must occur after user reload.
-        """
-        if add_groupmap:
-            await self.middleware.call('smb.groupmap_add', group['group'])
+        if groupmap_changed:
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
 
         return pk
 
@@ -1193,14 +1225,12 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        if group['smb'] and (g := (await self.middleware.call('smb.groupmap_list')).get(group['group'])):
-            await self.middleware.call('smb.groupmap_delete', {"sid": g['SID']})
-
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 
         nogroup = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', 'nogroup')],
                                              {'prefix': 'bsdgrp_', 'get': True})
+
         for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])],
                                             {'prefix': 'bsdusr_'}):
             if options['delete_users']:
@@ -1211,6 +1241,10 @@ class GroupService(CRUDService):
 
         await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
 
+        if group['smb']:
+            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await gm_job.wait()
+
         await self.middleware.call('service.reload', 'user')
 
         return pk
@@ -1220,7 +1254,11 @@ class GroupService(CRUDService):
         Get the next available/free gid.
         """
         last_gid = 999
-        for i in await self.middleware.call('datastore.query', 'account.bsdgroups', [('builtin', '=', False)], {'order_by': ['gid'], 'prefix': 'bsdgrp_'}):
+        grps = await self.middleware.call(
+            'datastore.query', 'account.bsdgroups',
+            [('builtin', '=', False)], {'order_by': ['gid'], 'prefix': 'bsdgrp_'}
+        )
+        for i in grps:
             # If the difference between the last gid and the current one is
             # bigger than 1, it means we have a gap and can use it.
             if i['gid'] - last_gid > 1:
@@ -1271,7 +1309,10 @@ class GroupService(CRUDService):
                         errno.EEXIST,
                     )
 
-            existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name'])] + exclude_filter, {'prefix': 'bsdgrp_'})
+            existing = await self.middleware.call(
+                'datastore.query', 'account.bsdgroups',
+                [('group', '=', data['name'])] + exclude_filter, {'prefix': 'bsdgrp_'}
+            )
             if existing:
                 verrors.add(
                     f'{schema}.name',
@@ -1283,7 +1324,10 @@ class GroupService(CRUDService):
 
         allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
         if data.get('gid') and not allow_duplicate_gid:
-            existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid'])] + exclude_filter, {'prefix': 'bsdgrp_'})
+            existing = await self.middleware.call(
+                'datastore.query', 'account.bsdgroups',
+                [('gid', '=', data['gid'])] + exclude_filter, {'prefix': 'bsdgrp_'}
+            )
             if existing:
                 verrors.add(
                     f'{schema}.gid',

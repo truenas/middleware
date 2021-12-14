@@ -88,11 +88,9 @@ expect {
     send "testing"
     # Tab to next field
     send \011
-    sleep .3
     send "testing"
     # Tab to submit/OK button
     send \011
-    sleep .3
     # Submit/confirm password dialog
     send "O"
     send "\r"

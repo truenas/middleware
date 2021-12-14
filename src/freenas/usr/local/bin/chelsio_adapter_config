@@ -1,287 +1,421 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env python
 
-# This adapter config script is for the Chelsio T580 card to switch between 2x40G, 4x10G and QSA
-#
-#cat /usr/share/hwdata/pci.ids | grep T580- | grep 541
-#        5410  T580-LP-CR Unified Wire Ethernet Controller
-#        540d  T580-CR Unified Wire Ethernet Controller
-#        5414  T580-LP-SO-CR Unified Wire Ethernet Controller
+import subprocess
+import re
+import sys
+from optparse import OptionParser
+from platform import system
+from os import path
+import os
 
-echo
-vpd_dir=/usr/local/share/vpds
-bin_dir=/usr/local/bin
-
-# Test for lspci and pciconf - Not required anymore
-#which lspci > /dev/null 2>&1
-#if [ $? -ne 0 ]; then
-#    echo "Error: lspci command not found. Please install pciutils package  and retry the command"
-#    exit 1
-#fi
-
-which pciconf > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "Error: pciconf command not found. Please install libpci package and retry the command"
-    exit 1
-fi
+system = system()
 
 
-T580_LP_CR=`pciconf -l|grep "1425.*5410"|wc -l`
-T580_CR=`pciconf -l|grep "1425.*540d"|wc -l`
-T580_LP_SO_CR=`pciconf -l|grep "1425.*5414"|wc -l`
+if system == "FreeBSD":
+    BIN_DIR   = '/usr/local/bin'
+    VI_PATH   = '/usr/local/share/vpds'
+    VPD_PATH  = VI_PATH
+    
+else:
+    print("Error: Unsupported platform. Script is supported for FreeBSD platform.")
+    sys.exit(-1)
 
-if [ "$T580_LP_CR" -gt 0 ] || [ "$T580_CR" -gt 0 ] || [ "$T580_LP_SO_CR" -gt 0 ]; then
-	echo Chelsio T580 card detected
-else
-	echo Chelsio T580 card not detected
-	exit 1
-fi
+T5SEEPROM = "%s/t5seeprom" % BIN_DIR 
+default   = 1
+spider    = 2
+qsa       = 3
+bus_id    = ""
 
-#############################################################
-# List Chelsio T580 devices                                 #
-#############################################################
-i=0
-echo; 
-echo "Chelsio T580 PCI devices :"
-echo "|--------------------------------|"
-devicelist=`pciconf -l|awk '{gsub("chip=","", $0); gsub("1425","",$4);print $4}'`
+#T580-LP-CR VPD INIT BINARIES   VI -> VPD INIT
+T580_LP_CR_DFLT_VI_BIN     = "t580_lp_cr_init_gen3_500Mhz_variable_2133_vpd.bin"
+T580_LP_CR_SPD_VI_BIN      = "t580_lp_cr_init_gen3_500Mhz_spider_variable_2133_vpd.bin"
+T580_LP_CR_QSA_VI_BIN      = "t580_lp_cr_init_gen3_500Mhz_qsa_variable_2133_vpd.bin"
 
-IS_DONE_T580_5414=0
-IS_DONE_T580_540D=0
-IS_DONE_T580_5410=0
+#T580-LP-CR VPD BINARIES
+T580_LP_CR_DFLT_VPD_BIN    = "t580_lp_cr_variable_2133_vpd.bin"
+T580_LP_CR_SPD_VPD_BIN     = "t580_lp_cr_spider_variable_2133_vpd.bin"
+T580_LP_CR_QSA_VPD_BIN     = "t580_lp_cr_qsa_variable_2133_vpd.bin"
 
-for pci_dev in $devicelist
-do
-	device="$pci_dev"
-	if [ "$device" == 0x5410 ]; then
-		if [ "$IS_DONE_T580_5410" == 1 ]; then
-                        continue
-                fi
+#T580-CR VPD INIT BINARIES
+T580_CR_DFLT_VI_BIN        = "t580_cr_init_gen3_500Mhz_variable_2133_vpd.bin"
+T580_CR_SPD_VI_BIN         = "t580_cr_init_gen3_500Mhz_spider_variable_2133_vpd.bin"
+T580_CR_QSA_VI_BIN         = "t580_cr_init_gen3_500Mhz_qsa_variable_2133_vpd.bin"
 
-		t580_list=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -d : -f 2 -f 3`
-                num_devices=`echo $t580_list|wc -l`
+#T580-CR VPD BINARIES
+T580_CR_DFLT_VPD_BIN       = "t580_cr_variable_2133_vpd.bin"
+T580_CR_SPD_VPD_BIN        = "t580_cr_spider_variable_2133_vpd.bin"
+T580_CR_QSA_VPD_BIN        = "t580_cr_qsa_variable_2133_vpd.bin"
 
-		if [ "$num_devices" == 1 ]; then
-			i=`echo "$i + 1" | bc`
-			Devices[$i]=$pci_dev
-			# Convert Bus and Dev from Decimal to Hex Values
-			busd=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -d : -f 2`
-                        bush=`echo "obase=16; $busd" | bc`
-                        devd=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -d : -f 3`
-                        devh=`echo "obase=16; $devd" | bc`
-                        dev[$i]=$bush":"$devh".0"
-			devd[$i]=$busd":"$devd".0"
+#T580-SO-CR VPD INIT BINARIES
+T580_SO_CR_DFLT_VI_BIN  = "t580_lp_so_init_gen3_500Mhz_variable_vpd.bin"
+T580_SO_CR_SPD_VI_BIN   = "t580_lp_so_init_gen3_500Mhz_spider_variable_2133_vpd.bin"
+T580_SO_CR_QSA_VI_BIN   = "t580_lp_so_init_gen3_500Mhz_qsa_variable_vpd.bin"
 
-			echo -e "| $i T580-LP-CR     ${devd[$i]}\t |"
-		else
-			for t580_dev in $t580_list
-                        do
-                                i=`echo "$i + 1" | bc`
-				Devices[$i]=$pci_dev
-				# Convert Bus and Dev from Decimal to Hex Values
-				busd=`echo $t580_dev|cut -d : -f 1`
-				bush=`echo "obase=16; $busd" | bc`
-				devd=`echo $t580_dev|cut -d : -f 2`
-				devh=`echo "obase=16; $devd" | bc`
-				dev[$i]=$bush":"$devh".0"
-				devd[$i]=$busd":"$devd".0"
+#T580-SO-CR VPD BINARIES
+T580_SO_CR_DFLT_VPD_BIN = "t580_lp_so_variable_vpd.bin"
+T580_SO_CR_SPD_VPD_BIN  = "t580_so_spider_variable_2133_vpd.bin"
+T580_SO_CR_QSA_VPD_BIN  = "t580_lp_so_qsa_variable_vpd.bin"
 
-				echo -e "| $i T580-LP-CR     ${devd[$i]}\t |"
-                        done
-		fi
-		IS_DONE_T580_5410=1
-	elif [ "$device" == 0x540d ]; then
-		if [ "$IS_DONE_T580_540D" == 1 ]; then
-                        continue
-                fi
+#T580-OCP-SO VPD INIT BINARIES
+T580_OCP_SO_DFLT_VI_BIN  = "t580_ocp_so_init_gen3_500Mhz_2x40g_vpd.bin"
+T580_OCP_SO_SPD_VI_BIN   = "t580_ocp_so_init_gen3_500Mhz_4x10g_vpd.bin"
 
-                t580_list=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -d : -f 2 -f 3`
-                num_devices=`echo $t580_list|wc -l`
-		if [ "$num_devices" == 1 ]; then
+#T580-OCP-SO VPD BINARIES
+T580_OCP_SO_DFLT_VPD_BIN = "t580_ocp_so_2x40g_vpd.bin"
+T580_OCP_SO_SPD_VPD_BIN  = "t580_ocp_so_4x10g_vpd.bin"
 
-			i=`echo "$i + 1" | bc`
-			Devices[$i]=$pci_dev
-			# Convert Bus and Dev from Decimal to Hex Values
-			busd=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -d : -f 2`
-                        bush=`echo "obase=16; $busd" | bc`
-                        devd=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -d : -f 3`
-                        devh=`echo "obase=16; $devd" | bc`
-                        dev[$i]=$bush":"$devh".0"
-			devd[$i]=$busd":"$devd".0"
+#OTHER T5 ADAPTERS VPD INIT BINARIES
+T520_LL_CR_VI_BIN          = "t520_ll_init_gen3_650_1075_variable_2133_vpd.bin"
+T520_CR_VI_BIN             = "t520_cr_init_gen3_250_825_fixed_2133_vpd.bin"
+T520_SO_CR_VI_BIN          = "t520_so_init_gen3_250_825_fixed_vpd.bin"
+T520_OCP_SO_VI_BIN         = "t520_ocp_init_gen3_250_825_vpd.bin"
+T520_BT_VI_BIN             = "t520_bt_init_gen3_250_820_fixed_2133_vpd.bin"
+T522_CR_VI_BIN             = "t522_cr_init_gen3_500mhz_fixed_2133_vpd.bin"
+T540_CR_VI_BIN             = "t540_cr_init_gen3_500_825_variable_2133_vpd_2mc.bin"
+T502_BT_VI_BIN         = "t502_bt_init_gen3_150mhz_fixed_1600_vpd.bin"
+T540_BT_VI_BIN         = "t540_bt_init_gen3_500_820_variable_2133_vpd.bin"
+T540_LP_CR_VI_BIN          = "t540_lp_cr_init_gen3_500_825_variable_2133_vpd.bin"
+T540_SO_CR_VI_BIN          = "t540_so_cr_init_gen3_500_825_variable_vpd.bin"
 
-			echo -e "| $i T580-CR        ${devd[$i]}\t |"
-		else
-                        for t580_dev in $t580_list
-                        do
-                                i=`echo "$i + 1" | bc`
-				Devices[$i]=$pci_dev
-				# Convert Bus and Dev from Decimal to Hex Values
-				busd=`echo $t580_dev|cut -d : -f 1`
-                                bush=`echo "obase=16; $busd" | bc`
-                                devd=`echo $t580_dev|cut -d : -f 2`
-                                devh=`echo "obase=16; $devd" | bc`
-				dev[$i]=$bush":"$devh".0"
-			 	devd[$i]=$busd":"$devd".0"
+#vpd + init files for chelsio cards VI -> vpd init
+T580_LP_CR_VI     = {default:'%s/%s' % (VI_PATH, T580_LP_CR_DFLT_VI_BIN),
+             spider :'%s/%s' % (VI_PATH, T580_LP_CR_SPD_VI_BIN),
+             qsa    :'%s/%s' % (VI_PATH, T580_LP_CR_QSA_VI_BIN) 
+            }
 
-				echo -e "| $i T580-CR        ${devd[$i]}\t |"
-                        done
+T580_CR_VI        = {default:'%s/%s' % (VI_PATH, T580_CR_DFLT_VI_BIN),
+             spider :'%s/%s' % (VI_PATH, T580_CR_SPD_VI_BIN),
+             qsa    :'%s/%s' % (VI_PATH, T580_CR_QSA_VI_BIN)
+            }
 
-		fi
-		IS_DONE_T580_540D=1
+T580_SO_CR_VI  = {default:'%s/%s' % (VI_PATH, T580_SO_CR_DFLT_VI_BIN),
+          spider :'%s/%s' % (VI_PATH, T580_SO_CR_SPD_VI_BIN),
+          qsa    :'%s/%s' % (VI_PATH, T580_SO_CR_QSA_VI_BIN)
+         }
 
-	elif [ "$device" == 0x5414 ]; then
-		if [ "$IS_DONE_T580_5414" == 1 ]; then
-			continue
-		fi
+T580_OCP_SO_VI  = {default:'%s/%s' % (VI_PATH, T580_OCP_SO_DFLT_VI_BIN),
+           spider :'%s/%s' % (VI_PATH, T580_OCP_SO_SPD_VI_BIN)
+          }
 
-		t580_list=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -d : -f 2 -f 3`
-		num_devices=`echo $t580_list|wc -l`
-		if [ "$num_devices" == 1 ]; then
-			i=`echo "$i + 1" | bc`
-			Devices[$i]=$pci_dev
-			# Convert Bus and Dev from Decimal to Hex Values
-			busd=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -d : -f 2`
-			bush=`echo "obase=16; $busd" | bc`
-			devd=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -d : -f 3`
-			devh=`echo "obase=16; $devd" | bc`
-			dev[$i]=$bush":"$devh".0"
-			devd[$i]=$busd":"$devd".0"
+#vpd file for t580 cards
+T580_LP_CR_VPD    = {default:'%s/%s' % (VPD_PATH, T580_LP_CR_DFLT_VPD_BIN),
+             spider :'%s/%s' % (VPD_PATH, T580_LP_CR_SPD_VPD_BIN),
+             qsa    :'%s/%s' % (VPD_PATH, T580_LP_CR_QSA_VPD_BIN)
+            }
 
-			echo -e "| $i T580-SO-CR     ${devd[$i]}\t |"
-		else
-			for t580_dev in $t580_list
-			do
-				i=`echo "$i + 1" | bc`
-				Devices[$i]=$pci_dev
-				# Convert Bus and Dev from Decimal to Hex Values
-				busd=`echo $t580_dev|cut -d : -f 1`
-                                bush=`echo "obase=16; $busd" | bc`
-                                devd=`echo $t580_dev|cut -d : -f 2`
-                                devh=`echo "obase=16; $devd" | bc`
-				dev[$i]=$bush":"$devh".0"
-				devd[$i]=$busd":"$devd".0"
+T580_CR_VPD       = {default:'%s/%s' % (VPD_PATH, T580_CR_DFLT_VPD_BIN),
+             spider :'%s/%s' % (VPD_PATH, T580_CR_SPD_VPD_BIN),
+             qsa    :'%s/%s' % (VPD_PATH, T580_CR_QSA_VPD_BIN)
+            }
 
-				echo -e "| $i T580-SO-CR     ${devd[$i]}\t |"
-			done
-		fi
-		IS_DONE_T580_5414=1
-	fi
-done
-echo "|--------------------------------|"; echo
+T580_SO_CR_VPD = {default:'%s/%s' % (VPD_PATH, T580_SO_CR_DFLT_VPD_BIN),
+          spider :'%s/%s' % (VPD_PATH, T580_SO_CR_SPD_VPD_BIN),
+          qsa    :'%s/%s' % (VPD_PATH, T580_SO_CR_QSA_VPD_BIN)
+         }
 
-# echo "Before 'Please select device to modify'"
-# echo ${Devices[1]}
-# echo ${dev[1]}
+T580_OCP_SO_VPD  = {default:'%s/%s' % (VPD_PATH, T580_OCP_SO_DFLT_VPD_BIN),
+            spider :'%s/%s' % (VPD_PATH, T580_OCP_SO_SPD_VPD_BIN)
+           }
 
-#############################################################
-# Select device to modify                                   #
-#############################################################
-dev_in=1
-if [ $i -ne 1 ]; then
-	echo -n "Please select device to modify [$dev_in]: "
-	read dev_in
-	echo
-	if [ -z $dev_in ]; then dev_in=1; fi
 
-	printf "%s\n" $dev_in |grep -E "^[+-]?[0-9]+$" > /dev/null
-	if [ "$?" == 0 ]; then
-		if [ $dev_in -lt 1 ]; then
-			echo "Illegal index selected, quitting..."; echo
-			exit 1;
-		fi
+T580_LP_CR_FILES    = {'vpd_init':T580_LP_CR_VI, 'vpd':T580_LP_CR_VPD}
+T580_CR_FILES       = {'vpd_init':T580_CR_VI, 'vpd':T580_CR_VPD}
+T580_SO_CR_FILES    = {'vpd_init':T580_SO_CR_VI, 'vpd':T580_SO_CR_VPD}
+T580_OCP_SO_FILES   = {'vpd_init':T580_OCP_SO_VI, 'vpd':T580_OCP_SO_VPD}
 
-		device=`echo ${Devices[$dev_in]} 2> /dev/null`
-        	if [ "$device" == 0x5410 ]; then
-                        #dev=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -d : -f 2 -f 3`
-			dev=${dev[$dev_in]}
-        	elif [ "$device" == 0x540d ]; then
-			dev=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -d : -f 2 -f 3`
-                        dev=${dev[$dev_in]}
-        	elif [ "$device" == 0x5414 ]; then
-			dev=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -d : -f 2 -f 3`
-			dev=${dev[$dev_in]}
-		else
-			echo "Illegal value selected, quitting..."; echo
-			exit 1
-		fi
-	else
-		echo "Numeric value expected, quitting..."; echo
-		exit 1
-	fi
-else
-	device=`echo ${Devices[1]}`
-	#dev=`pciconf -l |awk {'print $0'}|grep $device|cut -d : -f 2 -f 3`
-	dev=${dev[1]}
+t5 = {0x5410:{'name':'T580_LP_CR',    'file':T580_LP_CR_FILES},
+      0x540d:{'name':'T580_CR',       'file':T580_CR_FILES},
+      0x5414:{'name':'T580_SO_CR',    'file':T580_SO_CR_FILES},
+      0x5416:{'name':'T580_OCP_SO',   'file':T580_OCP_SO_FILES},
+      0x5411:{'name':'T520_LL_CR',    'file':'%s/%s' % (VI_PATH, T520_LL_CR_VI_BIN)},
+      0x5401:{'name':'T520_CR',       'file':'%s/%s' % (VI_PATH, T520_CR_VI_BIN)},
+      0x5407:{'name':'T520_SO_CR',    'file':'%s/%s' % (VI_PATH, T520_SO_CR_VI_BIN)},
+      0x5417:{'name':'T520_OCP_SO',   'file':'%s/%s' % (VI_PATH, T520_OCP_SO_VI_BIN)},
+      0x5409:{'name':'T520_BT   ',    'file':'%s/%s' % (VI_PATH, T520_BT_VI_BIN)},
+      0x5402:{'name':'T522_CR',       'file':'%s/%s' % (VI_PATH, T522_CR_VI_BIN)},
+      0x5403:{'name':'T540_CR',       'file':'%s/%s' % (VI_PATH, T540_CR_VI_BIN)},
+      0x5415:{'name':'T502_BT',       'file':'%s/%s' % (VI_PATH, T502_BT_VI_BIN)},
+      0x5418:{'name':'T540_BT',       'file':'%s/%s' % (VI_PATH, T540_BT_VI_BIN)},
+      0x540E:{'name':'T540_LP_CR',       'file':'%s/%s' % (VI_PATH, T540_LP_CR_VI_BIN)},
+      0x541B:{'name':'T540_SO_CR',       'file':'%s/%s' % (VI_PATH, T540_SO_CR_VI_BIN)}
+     }
 
-fi
+def run_cmd(cmd, shell=False, stdout=False):
+    """
+    Run the given command on the machine and return the
+    return code, output, err.
+    """
+    cmd = cmd.split()
 
-# echo "Before 'Possible T580 adapter modes:'"
-# echo $device
-# echo $dev
+    stddata = ""
+    stderr = ""
+    try:
+        if not stdout:
+            p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+            stddata, stderr = p.communicate()
+            # Get rid of leading and trailing white spaces
+            stddata = stddata.strip()
+        else:
+            p = subprocess.Popen(cmd, shell=shell, stderr=subprocess.PIPE)
+            stderr = p.communicate()
 
-echo "Possible T580 adapter modes: "
-echo "|------------------------------|"
-echo "| 1: 2x40G                     |"
-echo "| 2: 4x10G                     |"
-echo "| 3: QSA                       |"
-echo "|------------------------------|"
-echo
-echo -n "Select mode for adapter (1,2,3): "
-read mode
-echo
+        stderr = [_f for _f in stderr if _f]
+    except Exception as e:
+        return (-1, "", str(e))
 
-	
-# dev=`echo ${dev[$dev_in]}|cut -c -6`
-# dev=$dev"0"
+    return (p.returncode, stddata, stderr)
 
-if [ "$mode" == 1 ]; then 
-	echo Programming mode 1: 2x40G 
-	echo
-	#echo $dev
-	if [ "$device" == 0x5410 ]; then #T580-LP-CR 2x40G
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_cr_variable_2133_vpd.bin
-		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_cr_variable_2133_vpd.bin
-	elif [ "$device" == 0x540d ]; then #T580-CR 2x40G
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_cr_variable_2133_vpd.bin
-		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_cr_variable_2133_vpd.bin
-	elif [ "$device" == 0x5414 ]; then #T580-LP-SO-CR 2x40G
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_so_variable_vpd.bin
-		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_so_variable_vpd.bin
-	fi
-	echo
-	echo "Please reboot the machine for the changes to take effect"
-elif [ "$mode" == 2 ]; then 
-	echo Programming mode 2: 4x10G 
-	echo
-	if [ "$device" == 0x5410 ]; then #T580-LP-CR 4x10G
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_cr_spider_variable_2133_vpd.bin
-		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_cr_spider_variable_2133_vpd.bin
-	elif [ "$device" == 0x540d ]; then #T580-CR 4x10G
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_cr_spider_variable_2133_vpd.bin
-		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_cr_spider_variable_2133_vpd.bin
-	elif [ "$device" == 0x5414 ]; then #T580-LP-SO-CR 4x10G
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_so_spider_variable_2133_vpd.bin
-		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_so_spider_variable_2133_vpd.bin
-	fi
-	echo
-	echo "Please reboot the machine for the changes to take effect"
+def detect_chelsio_card():
+    """
+    detect chelsio card
+    returns list of device id of chelsio cards
+    and list of bus id of chelsio cards 
+    """
 
-elif [ "$mode" == 3 ]; then 
-	echo Programming mode 3: QSA
-	echo
-	if [ "$device" == 0x5410 ]; then #T580-LP-CR QSA 
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_cr_qsa_variable_2133_vpd.bin
-		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_cr_qsa_variable_2133_vpd.bin
-	elif [ "$device" == 0x540d ]; then #T580-CR QSA 
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_cr_qsa_variable_2133_vpd.bin
- 		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_cr_qsa_variable_2133_vpd.bin
-	elif [ "$device" == 0x5414 ]; then #T580-LP-SO-CR QSA 
-		echo $bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_so_qsa_variable_vpd.bin
-		$bin_dir/t5seeprom -b $dev write -fvpd:$vpd_dir/t580_lp_so_qsa_variable_vpd.bin
-	fi
-	echo
-	echo "Please reboot the machine for the changes to take effect"
-else
-	echo Programming mode 1: 2x40G or mode 2: 4x10G or mode 3: QSA  not selected; 
-fi
+    dev_list =[]
+    bus_list =[]
+    cmd = "pciconf -l"
+    (ret, out, err) = run_cmd(cmd)
+    if ret or err:
+        print("Error: pciconf command not found.")
+        sys.exit(-1)
 
-echo
+    out = out.decode()
+    out = out.split("\n")
+    output = []
+    for line in out:
+        if re.search("pci.+:.+:.+:4.+0x00001425", line):
+            output.append(line)
+
+    for line in output:
+        line = line.split()
+        m = re.search(".+pci.:(.+:.+:4).*", line[0])
+        if not m:
+            return (None, None) 
+        bus_list.append(m.group(1)[0:-2]+'.0')
+        m = re.search("chip=(0x.+)1425",line[3])
+        if not m:
+            return (None, None)
+        dev_list.append(int(m.group(1), 16))
+
+    return (dev_list, bus_list)
+    
+def main():
+    """
+    """
+
+    is_t580 = 0
+    parser = OptionParser(version="%prog 3.0.0.1")
+    parser.add_option("-b", "--bus", dest="bus", help="bus id in <bus>:<device>.<function> format")
+
+    #helpmsg = "%-52s\n%-52s\n%-52s" % ("change configuration",
+    #     "'U' or '1' for Update Adapter config",
+    #     "'M' or '2' for change T580 mode")
+    #parser.add_option("-c", "--change_config", dest="config",
+    #         help = helpmsg)
+
+    helpmsg = "%-52s\n%-52s\n%-52s\n%-52s" % ("Options for changing T580 mode",
+          "'D' or '1' for Default mode (2x40G)",
+          "'S' or '2' for Spider mode (4x10G)",
+          "'Q' or '3' for QSA mode")
+    parser.add_option("-m", "--change_mode", dest="mode", 
+              help=helpmsg)
+
+    (ch_card_list, ch_bus_list) = detect_chelsio_card()
+    if not ch_card_list:
+        print("\n\tChelsio card not detected\n")
+        sys.exit(-1)
+
+    if not path.isfile(T5SEEPROM) :
+        print("\n\t\"%s\" not available\n" % T5SEEPROM)
+        sys.exit(-1)
+
+    (options, args) = parser.parse_args()
+
+    #making sure format 7:0.0 
+    bus_id = options.bus
+    card_no = -1
+    if bus_id:
+        try:
+            bus_id = bus_id[:-1]+'0'
+            bus_id = bus_id.split(":")
+            bus_id[1] = bus_id[1].split(".")
+            bus_id = "%x:%x.%01x" %\
+                 (int(bus_id[0], 16), int(bus_id[1][0],16), int(bus_id[1][1], 16))
+            card_no = ch_bus_list.index(bus_id)
+        except Exception as e:
+            print("\n\tError: bus '%s' not available\n" % options.bus)
+            sys.exit(-1)
+
+    #option = options.config
+    #if option:
+    #   option = option.lower()
+    #   if option == 'u' or option == '1':
+    #       option = 1
+    #   elif option == 'm' or option == '2':
+    #       option = 2
+    #   else:
+    #       option = 0
+
+    option = 1
+
+    mode = options.mode
+    if mode:
+        mode = mode.lower()
+        if mode =='d' or mode == '1':
+            mode = 1
+        elif mode == 's' or mode == '2':
+            mode = 2
+        elif mode == 'q' or mode == '3':
+            mode = 3
+        else:
+            mode = 0
+
+
+    no_of_cards = len(ch_bus_list)
+    if ch_card_list:
+        print("\nChelsio adapter detected\n")
+        if not bus_id:  
+            i = 0
+            print("|------------------------------------|")
+            print("| Choose Chelsio card:               |")
+            for dev in ch_card_list:
+                dev_name = "%-16s%s" % (t5[dev]['name'], ch_bus_list[i])
+                i += 1
+                print("| %d. %-32s|" % (i, dev_name))
+            print("|------------------------------------|")
+            try:
+                card_no = eval(input("Select card: "))
+            except:
+                card_no = -1
+
+            card_no -= 1
+
+        if card_no < 0 or card_no >= no_of_cards:
+            print("\n\tWrong Input\n")
+            sys.exit(-1)
+
+        dev_id = ch_card_list[card_no]
+        bus_id = ch_bus_list[card_no]
+        dev_name = t5[dev_id]['name']
+        print("\nCard %s(%s) selected" % (dev_name, bus_id))
+
+    if re.search("T580", t5[dev_id]['name']):
+        is_t580 = 1
+    
+    if is_t580:
+        if not option:
+            print("")
+            print("|------------------------------------|")
+            print("| Choose option                      |")
+            print("| 1. Update Adapter Config           |")
+            print("| 2. Change T580 mode                |")
+            print("|------------------------------------|")
+            try:
+                option = eval(input("Select option: "))
+            except:
+                option = -1
+
+        if option == 1:
+            print("\nUpdating Adapter Config")
+        elif option == 2:
+            print("\nchanging T580 mode")
+        else:
+            print("\n\tWrong input\n")
+            sys.exit(-1)
+
+
+        spider_enable = spider in t5[dev_id]['file']['vpd']
+        qsa_enable = qsa in t5[dev_id]['file']['vpd']
+        if not mode:
+            print("|------------------------------------|")
+            print("| Possible T580 adapter modes:       |")
+            print("| 1: Default(2x40G)                  |")
+            print("| 2: Spider(4x10G)                   |")
+            print("| 3: QSA                             |")
+            print("|------------------------------------|")
+            if not spider_enable:
+                print("\033[31mFor this card spider mode is not "\
+                      "supported\n\033[0m")
+            if not qsa_enable:
+                print("\033[31mFor this card qsa mode is not "\
+                      "supported\n\033[0m")
+            try:
+                mode = eval(input("Select mode: "))
+            except:
+                mode = -1
+
+        if mode == 1:
+            print("Default mode (2x40G) selected")
+        elif spider_enable and mode == 2:
+            print("Spider mode (4x10G) selected")
+        elif qsa_enable and mode == 3:
+            print("QSA mode selected")
+        else:
+            if mode ==2 or mode == 3:
+                print("\n\t Selected mode not supported\n")
+            else:
+                print("\n\tWrong mode\n")
+            sys.exit(-1)
+
+        if option == 2:
+            t5_file = t5[dev_id]['file']['vpd'][mode]
+            file_arg = "-fvpd:%s" % t5_file
+        else:
+            t5_file = t5[dev_id]['file']['vpd_init'][mode]
+            file_arg = "-f:%s" % t5_file
+    else:
+        print("")
+        #print "|------------------------------------|"
+        #print "| 1. Update Adapter Config           |"
+        #print "|------------------------------------|"
+        print("Updating Adapter Config")
+
+        t5_file = t5[dev_id]['file']
+        file_arg = "-f:%s" % t5_file
+
+    if not path.isfile(t5_file) :
+        print("\n\tFile not available\n")
+        sys.exit(-1)
+
+    try:
+        prompt = input("\nDo you want to update the chosen "\
+                   "configuration for %s (y/n): " %\
+                   dev_name)
+    except:
+        prompt = 'n'
+
+    if prompt != 'y' and prompt !='Y':
+        print("\n\tExiting\n")
+        sys.exit(-1)
+
+    cmd = "%s -b %s write %s" % (T5SEEPROM, bus_id, file_arg)
+    print("\nRunning command:")
+    print("%s\n" % cmd)
+    #Here stdout=True means output will be printed on console,
+    #"out" var will be empty in below command
+    (ret, out, err) = run_cmd(cmd, stdout=True)
+    if ret < 0 or err:
+        print("Error in running command: %s\n" % str(err))
+        sys.exit(-1)
+
+    print("\nverifying ...")
+    cmd = "%s -b %s verify %s" % (T5SEEPROM, bus_id, file_arg)
+    print("%s\n" % cmd)
+    (ret, out, err) = run_cmd(cmd)
+    out = out.decode()
+    if ret or err or re.search("FAILED", out):
+        print("\n\tError: Verification failed: %s\n" % err)
+        sys.exit(-1)
+
+    print(out)
+
+    #printing in green color
+    print("\033[32m\n\tFlashing is completed\n\033[0m")
+    #printing in red color
+    print("\033[31m\tPlease Reboot the system for the changes to take effect\n\033[0m")
+
+
+if __name__ == "__main__":
+    main()

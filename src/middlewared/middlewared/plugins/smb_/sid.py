@@ -2,7 +2,6 @@ from middlewared.service import Service, private
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd
 
-import os
 import re
 
 RE_SID = re.compile(r"S-\d-\d+-(\d+-){1,14}\d+$")
@@ -75,30 +74,9 @@ class SMBService(Service):
         synchronizing group mapping database. In case there entries that no longer match our local
         system sid, group_mapping.tdb will be removed and re-generated.
         """
-        if groupmap is None:
-            groupmap = (await self.middleware.call('smb.groupmap_list')).values()
-
-        conf = await self.middleware.call('smb.config')
-        well_known_SID_prefix = "S-1-5-32"
-        db_SID = conf['cifs_SID']
+        db_SID = (await self.middleware.call('smb.config'))['cifs_SID']
         system_sid = await self.get_system_sid()
-        sids_fixed = False
-        for group in groupmap:
-            domain_SID = str(group['SID']).rsplit("-", 1)[0]
-            if not domain_SID.startswith(well_known_SID_prefix) and domain_SID != system_sid:
-                self.logger.warning(
-                    "The SMB groupmap table contains entries that do not match the server's domain SID."
-                    "SMB group mappings are now being re-synchronized with the correct domain SID."
-                )
-                state_dir = await self.middleware.call('smb.getparm', 'state directory', "GLOBAL")
-                try:
-                    os.unlink(f"{state_dir}/group_mapping.tdb")
-                except FileNotFoundError:
-                    pass
-                sids_fixed = True
 
         if db_SID != system_sid:
             self.logger.warning(f"Domain SID in group_mapping.tdb ({system_sid}) is not SID in nas config ({db_SID}). Updating db")
             await self.set_database_sid(system_sid)
-
-        return sids_fixed
