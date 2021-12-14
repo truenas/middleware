@@ -21,10 +21,13 @@ async def remove_disk(middleware, disk_name):
 
 
 async def devd_devfs_hook(middleware, data):
-    if data.get('subsystem') != 'CDEV':
+    if data.get('subsystem') != 'CDEV' or not data.get('cdev'):
         return
 
-    if not data.get('cdev'):
+    # these events are spammed...
+    # !system=DEVFS subsystem=CDEV type=CREATE cdev=pts/11
+    # !system=DEVFS subsystem=CDEV type=CREATE cdev=pts/12
+    if data['cdev'][:3] == 'pts':
         return
 
     if data['type'] == 'CREATE':
