@@ -43,8 +43,15 @@ class DiskService(Service):
 
     @private
     async def get_valid_zfs_partition_type_uuids(self):
-        return ['516e7cba-6ecf-11d6-8ff8-00022d09712b']
+        # https://salsa.debian.org/debian/gdisk/blob/master/parttypes.cc for valid zfs types
+        return [
+            '516e7cba-6ecf-11d6-8ff8-00022d09712b',  # fbsd
+            '6a898cc3-1dd2-11b2-99a6-080020736631',  # linux
+        ]
 
     @private
     async def get_valid_swap_partition_type_uuids(self):
-        return ['516e7cb5-6ecf-11d6-8ff8-00022d09712b']
+        return [
+            '516e7cb5-6ecf-11d6-8ff8-00022d09712b',  # fbsd
+            '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f',  # linux
+        ]
