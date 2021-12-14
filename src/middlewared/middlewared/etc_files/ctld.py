@@ -4,7 +4,6 @@ import os
 import subprocess
 import sysctl
 
-from bsd import geom
 from middlewared.client.utils import Struct
 logger = logging.getLogger(__name__)
 

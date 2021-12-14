@@ -1,5 +1,3 @@
-import os
-
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
