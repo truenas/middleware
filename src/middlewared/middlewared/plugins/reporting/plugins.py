@@ -127,11 +127,12 @@ class MemoryPlugin(RRDBase):
     vertical_label = 'Bytes'
     if osc.IS_FREEBSD:
         rrd_types = (
+            ('memory-active', 'value', '%name%,UN,0,%name%,IF'),
+            ('memory-inactive', 'value', '%name%,UN,0,%name%,IF'),
             ('memory-wired', 'value', '%name%,UN,0,%name%,IF'),
-            ('memory-inactive', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
-            ('memory-laundry', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
-            ('memory-active', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
-            ('memory-free', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
+            ('memory-laundry', 'value', '%name%,UN,0,%name%,IF'),
+            ('memory-cache', 'value', '%name%,UN,0,%name%,IF'),
+            ('memory-free', 'value', '%name%,UN,0,%name%,IF'),
         )
     else:
         rrd_types = (
