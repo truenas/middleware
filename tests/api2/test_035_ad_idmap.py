@@ -14,6 +14,7 @@ from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import ip, hostname, password, user
 from base64 import b64decode
 from pytest_dependency import depends
+from time import sleep
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
@@ -21,9 +22,7 @@ try:
         LDAPBASEDN,
         LDAPBINDDN,
         LDAPBINDPASSWORD,
-        LDAPHOSTNAME,
-        LDAPUSER,
-        LDAPPASSWORD
+        LDAPHOSTNAME
     )
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
@@ -172,6 +171,7 @@ def test_08_test_backend_options(request, backend):
     if not payload['options']:
         payload.pop('options')
 
+    sleep(2.5)
     results = PUT("/idmap/id/1/", payload)
     assert results.status_code == 200, f'payload: {payload}, results: {results.text}'
 
@@ -307,6 +307,7 @@ def test_08_test_backend_options(request, backend):
             decoded_sec = b64decode(stored_sec).rstrip(b'\x00').decode()
             assert secret == decoded_sec, stored_sec
 
+    sleep(2.5)
     # reset idmap backend to RID to ensure that winbindd is running
     payload = {
         "name": "DS_TYPE_ACTIVEDIRECTORY",
