@@ -6,8 +6,6 @@
     shares = middleware.call_sync("sharing.nfs.query", [["enabled", "=", True]])
     has_nfs_principal = middleware.call_sync("kerberos.keytab.has_nfs_principal")
 
-    gc = middleware.call_sync("network.configuration.config")
-
     # call this here so that we don't have to call this
     # n times (n being the number of shares in db)
     peers = []
@@ -44,11 +42,7 @@ NFSV4 {
 % endif;
 % if config["v4_krb_enabled"]:
 NFS_KRB5 {
-    % if gc.get("hostname_virtual"):
-    PrincipalName = nfs@${f'{gc["hostname_virtual"]}.{gc["domain"]}'};
-    % else:
-    PrincipalName = nfs@${gc["domain"]};
-    % endif;
+    PrincipalName = "nfs";
     KeytabPath = /etc/krb5.keytab;
     Active_krb5 = YES;
 }
