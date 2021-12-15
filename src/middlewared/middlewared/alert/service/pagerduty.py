@@ -1,4 +1,6 @@
 import json
+
+import html2text
 import requests
 
 from middlewared.alert.base import ProThreadedAlertService, ellipsis
@@ -23,7 +25,7 @@ class PagerDutyAlertService(ProThreadedAlertService):
             data=json.dumps({
                 "service_key": self.attributes["service_key"],
                 "event_type": "trigger",
-                "description": ellipsis(alert.formatted, 1024),
+                "description": ellipsis(html2text.html2text(alert.formatted), 1024),
                 "incident_key": alert.uuid,
                 "client": self.attributes["client_name"],
             }),
