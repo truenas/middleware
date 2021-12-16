@@ -24,12 +24,16 @@ Model.metadata.naming_convention = {
 
 
 class Column(_Column):
+    inherit_cache = True
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("nullable", False)
         super().__init__(*args, **kwargs)
 
 
 class EncryptedText(UserDefinedType):
+    cache_ok = True
+
     def get_col_spec(self, **kw):
         return "TEXT"
 
@@ -53,6 +57,8 @@ class EncryptedText(UserDefinedType):
 
 
 class JSON(UserDefinedType):
+    cache_ok = True
+
     def __init__(self, type=dict, encrypted=False):
         self.type = type
         self.encrypted = encrypted
@@ -88,6 +94,8 @@ class JSON(UserDefinedType):
 
 
 class MultiSelectField(UserDefinedType):
+    cache_ok = True
+
     def get_col_spec(self, **kw):
         return "TEXT"
 
@@ -114,6 +122,8 @@ class MultiSelectField(UserDefinedType):
 
 
 class Time(UserDefinedType):
+    cache_ok = True
+
     def get_col_spec(self, **kw):
         return "TIME"
 

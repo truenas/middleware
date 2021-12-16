@@ -30,7 +30,7 @@ class SchemaMixin:
             return table.c[f'{name}_id']
 
     def _get_relationships(self, table):
-        for model in Model._decl_class_registry.values():
+        for model in Model.registry._class_registry.values():
             if hasattr(model, "__tablename__") and model.__tablename__ == table.name:
                 break
         else:
