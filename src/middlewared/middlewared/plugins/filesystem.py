@@ -3,10 +3,12 @@ import errno
 import functools
 import grp
 import os
+import pathlib
 import pwd
 import shutil
+import time
+
 import pyinotify
-import pathlib
 
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
@@ -509,15 +511,19 @@ class FileFollowTailEventSource(EventSource):
         if data:
             yield data
 
+        last_sent_at = time.monotonic()
+        interval = 0.5  # For performance reasons do not send websocket events more than twice a second
         while not self._cancel_sync.is_set():
             notifier.process_events()
 
-            data = "".join(queue)
-            if data:
-                yield data
-            queue[:] = []
+            if time.monotonic() - last_sent_at >= interval:
+                data = "".join(queue)
+                if data:
+                    yield data
+                queue[:] = []
+                last_sent_at = time.monotonic()
 
-            if notifier.check_events():
+            if notifier.check_events(timeout=int(interval * 1000)):
                 notifier.read_events()
 
         notifier.stop()
