@@ -321,8 +321,9 @@ class Job:
 
         :param description: Human-readable description.
         """
-        self.description = description
-        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+        if self.description != description:
+            self.description = description
+            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     def set_progress(self, percent=None, description=None, extra=None):
         """
@@ -337,20 +338,30 @@ class Job:
         :param description: Human-readable description of what the job is currently doing.
         :param extra: Extra data (any type) that can be used by specific job progress bar in the UI.
         """
+        changed = False
         if percent is not None:
             assert isinstance(percent, (int, float))
-            self.progress['percent'] = percent
+            if self.progress['percent'] != percent:
+                self.progress['percent'] = percent
+                changed = True
         if description:
-            self.progress['description'] = description
+            if self.progress['description'] != description:
+                self.progress['description'] = description
+                changed = True
         if extra:
-            self.progress['extra'] = extra
+            if self.progress['extra'] != extra:
+                self.progress['extra'] = extra
+                changed = True
+
         encoded = self.__encode__()
         if self.on_progress_cb:
             try:
                 self.on_progress_cb(encoded)
             except Exception:
-                logger.warn('Failed to run on progress callback', exc_info=True)
-        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=encoded)
+                logger.warning('Failed to run on progress callback', exc_info=True)
+
+        if changed:
+            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=encoded)
 
     async def wait(self, timeout=None, raise_error=False):
         if timeout is None:
