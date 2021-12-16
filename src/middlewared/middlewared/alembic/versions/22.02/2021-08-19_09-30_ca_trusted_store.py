@@ -17,7 +17,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('system_certificateauthority', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('cert_add_to_trusted_store', sa.Boolean(), default=False, nullable=False))
+        batch_op.add_column(sa.Column('cert_add_to_trusted_store', sa.Boolean(), server_default=False, nullable=False))
 
 
 def downgrade():
