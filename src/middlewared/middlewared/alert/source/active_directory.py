@@ -39,7 +39,7 @@ class ActiveDirectoryDomainHealthAlertSource(AlertSource):
         try:
             await self.middleware.call("activedirectory.validate_domain")
         except Exception as e:
-            await self.middleware.call("activedirectory.set_state", DSStatus['FAULTED'])
+            await self.middleware.call("activedirectory.set_state", DSStatus['FAULTED'].name)
             return Alert(
                 ActiveDirectoryDomainHealthAlertClass,
                 {'verrs': str(e)},
@@ -58,7 +58,7 @@ class ActiveDirectoryDomainBindAlertSource(AlertSource):
         try:
             await self.middleware.call("activedirectory.started")
         except Exception as e:
-            await self.middleware.call("activedirectory.set_state", DSStatus['FAULTED'])
+            await self.middleware.call("activedirectory.set_state", DSStatus['FAULTED'].name)
             return Alert(
                 ActiveDirectoryDomainBindAlertClass,
                 {'wberr': str(e)},
