@@ -1,20 +1,16 @@
-from middlewared.service import CallError, CRUDService, filterable, pass_app, private
-from middlewared.utils import filter_list, run
-from middlewared.schema import (
-    accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
-)
-import middlewared.sqlalchemy as sa
-from middlewared.utils.generate import random_string
-from middlewared.validators import Range
-
-from collections import defaultdict
 import asyncio
 import contextlib
 import ipaddress
 import itertools
-import platform
 import socket
+from collections import defaultdict
 
+import middlewared.sqlalchemy as sa
+from middlewared.service import CallError, CRUDService, filterable, pass_app, private
+from middlewared.utils import filter_list, run
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
+from middlewared.utils.generate import random_string
+from middlewared.validators import Range
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
@@ -900,7 +896,7 @@ class InterfaceService(CRUDService):
             if data['lag_protocol'] not in await self.middleware.call('interface.lag_supported_protocols'):
                 verrors.add(
                     f'{schema_name}.lag_protocol',
-                    f'{platform.system()} does not support LAG protocol {data["lag_protocol"]}',
+                    f'TrueNAS SCALE does not support LAG protocol {data["lag_protocol"]}',
                 )
             lag_ports = data.get('lag_ports')
             if not lag_ports:
