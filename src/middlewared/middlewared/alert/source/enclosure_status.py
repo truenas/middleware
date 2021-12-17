@@ -1,14 +1,4 @@
-# Copyright (c) 2015 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
-import logging
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
-
-logger = logging.getLogger(__name__)
 
 
 class EnclosureUnhealthyAlertClass(AlertClass):
@@ -16,8 +6,7 @@ class EnclosureUnhealthyAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Enclosure Status Is Not Healthy"
     text = "Enclosure %d (%s): %s is %s (%s)."
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class EnclosureHealthyAlertClass(AlertClass):
@@ -25,12 +14,11 @@ class EnclosureHealthyAlertClass(AlertClass):
     level = AlertLevel.INFO
     title = "Enclosure Status Is Healthy"
     text = "Enclosure %d (%s): is healthy."
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class EnclosureStatusAlertSource(AlertSource):
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
     failover_related = True
     run_on_backup_node = False
 
