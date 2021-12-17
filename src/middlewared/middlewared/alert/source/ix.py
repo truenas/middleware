@@ -1,9 +1,3 @@
-# Copyright (c) 2017 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
@@ -13,11 +7,11 @@ class IxAlertClass(AlertClass):
     title = "iXsystems alert"
     text = "%s"
 
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class IxAlertSource(AlertSource):
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
     run_on_backup_node = False
 
     async def check(self):

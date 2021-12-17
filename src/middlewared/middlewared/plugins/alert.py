@@ -602,7 +602,7 @@ class AlertService(Service):
         product_type = await self.middleware.call("alert.product_type")
         run_on_backup_node = False
         run_failover_related = False
-        if product_type == "ENTERPRISE":
+        if product_type == "SCALE_ENTERPRISE":
             if await self.middleware.call("failover.licensed"):
                 if await self.middleware.call("failover.node") == "B":
                     master_node = "B"

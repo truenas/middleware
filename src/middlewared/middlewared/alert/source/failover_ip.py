@@ -1,9 +1,3 @@
-# Copyright (c) 2018 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
@@ -13,12 +7,11 @@ class FailoverIpAlertClass(AlertClass):
     title = "Network Interface Is Marked Critical for Failover, but Is Missing Required IP Address"
     text = ("Network interface %(interface)s is marked critical for failover, but is missing following required "
             "IP addresses: %(addresses)s")
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class FailoverIpAlertSource(AlertSource):
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
     async def check(self):
         interfaces = await self.middleware.call("datastore.query", "network.interfaces")

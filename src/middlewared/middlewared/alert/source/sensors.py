@@ -1,15 +1,6 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
-import logging
 import re
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
-
-logger = logging.getLogger(__name__)
 
 RE_CPUTEMP = re.compile(r'^cpu.*temp$', re.I)
 RE_SYSFAN = re.compile(r'^sys_fan\d+$', re.I)
@@ -28,8 +19,7 @@ class SensorAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Sensor Value Is Outside of Working Range"
     text = "Sensor %(name)s is %(relative)s %(level)s value: %(value)d %(description)s"
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class PowerSupplyAlertClass(AlertClass):
@@ -37,8 +27,7 @@ class PowerSupplyAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Power Supply Failed"
     text = "Power supply %(number)s failed: %(errors)s."
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class SensorsAlertSource(AlertSource):
