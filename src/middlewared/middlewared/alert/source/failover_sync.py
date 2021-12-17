@@ -1,9 +1,3 @@
-# Copyright (c) 2015 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from middlewared.alert.base import (
     Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 )
@@ -18,8 +12,7 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "controller. Use Sync to Peer on the System/Failover page to "
         "perform a manual sync."
     )
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -32,8 +25,7 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "The automatic synchronization of encryption passphrases with the standby "
         "controller has failed. Please go to System > Failover and manually sync to peer."
     )
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
@@ -46,8 +38,7 @@ class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
         "The automatic synchronization of KMIP keys with the standby "
         "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
     )
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
     async def create(self, args):
         return Alert(FailoverKMIPKeysSyncFailedAlertClass, args)
