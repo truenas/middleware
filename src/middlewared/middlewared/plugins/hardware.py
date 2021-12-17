@@ -28,7 +28,7 @@ class HardwareEventsService(Service):
 
     @periodic(86400, run_on_start=False)
     @private
-    def retrieve_logs(self):
+    async def retrieve_logs(self):
         events = await self.middleware.call('hardare.events.report')
         if events['MCA_EVENTS'] or events['APEI_EVENTS']:
             # we need to keep a paper-trail of these since the msgbuf
