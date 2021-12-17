@@ -444,14 +444,10 @@ class SystemService(Service):
         'date': None,
     }
 
-    HOST_ID = None
+    HOST_ID = PRODUCT_TYPE = None
 
     class Config:
         cli_namespace = 'system'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__product_type = None
 
     @private
     async def birthday(self):
@@ -524,28 +520,27 @@ class SystemService(Service):
         """
         Returns the type of the product.
 
-        CORE - TrueNAS Core, community version
         SCALE - TrueNAS SCALE, community version
-        ENTERPRISE - TrueNAS Enterprise, appliance version
         SCALE_ENTERPRISE - TrueNAS SCALE Enterprise, appliance version
         """
-        linux = osc.IS_LINUX
-
-        if self.__product_type is None:
-
-            hardware = await self.middleware.call('failover.hardware')
-            if hardware != 'MANUAL':
-                if linux:
-                    self.__product_type = 'SCALE_ENTERPRISE'
-                else:
-                    self.__product_type = 'ENTERPRISE'
+        if SystemService.PRODUCT_TYPE is None:
+            if await self.middleware.call('failover.hardware') != 'MANUAL':
+                # HA capable hardware
+                SystemService.PRODUCT_TYPE = 'SCALE_ENTERPRISE'
             else:
-                if linux:
-                    self.__product_type = 'SCALE'
+                if (license := await self.middleware.call('system.license')):
+                    if license['model'].lower().startswith('freenas'):
+                        # legacy freenas certified
+                        SystemService.PRODUCT_TYPE = 'SCALE'
+                    else:
+                        # the license has been issued for a "certified" line
+                        # of hardware which is considered enterprise
+                        SystemService.PRODUCT_TYPE = 'SCALE_ENTERPRISE'
                 else:
-                    self.__product_type = 'CORE'
+                    # no license
+                    SystemService.PRODUCT_TYPE = 'SCALE'
 
-        return self.__product_type
+        return SystemService.PRODUCT_TYPE
 
     @private
     async def is_enterprise(self):
@@ -709,7 +704,7 @@ class SystemService(Service):
 
         self.middleware.call_sync('etc.generate', 'rc')
 
-        self.__product_type = None
+        SystemService.PRODUCT_TYPE = None
         if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
             Path('/data/truenas-eula-pending').touch(exist_ok=True)
         self.middleware.run_coroutine(
