@@ -544,7 +544,7 @@ class SystemService(Service):
 
     @private
     async def is_enterprise(self):
-        return await self.middleware.call('system.product_type') in ['ENTERPRISE', 'SCALE_ENTERPRISE']
+        return await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE'
 
     @private
     async def hostname(self):
@@ -705,7 +705,7 @@ class SystemService(Service):
         self.middleware.call_sync('etc.generate', 'rc')
 
         SystemService.PRODUCT_TYPE = None
-        if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
+        if self.middleware.call_sync('system.is_enterprise'):
             Path('/data/truenas-eula-pending').touch(exist_ok=True)
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
@@ -1801,7 +1801,7 @@ async def firstboot(middleware):
         # we do not want the clone to have the file in it.
         os.unlink(FIRST_INSTALL_SENTINEL)
 
-        if await middleware.call('system.product_type') == 'ENTERPRISE':
+        if await middleware.call('system.is_enterprise'):
             config = await middleware.call('datastore.config', 'system.advanced')
             await middleware.call('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
 
