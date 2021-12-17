@@ -96,7 +96,9 @@ def SSH_TEST(command, username, passwrd, host):
         f"{username}@{host}",
         command
     ]
-    process = run(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    # 60 second timeout, to make sure no SSH connection hang.
+    process = run(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True,
+                  timeout=60)
     output = process.stdout
     stderr = process.stderr
     if process.returncode != 0:
