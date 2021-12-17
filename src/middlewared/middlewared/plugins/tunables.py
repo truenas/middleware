@@ -78,11 +78,6 @@ class TunableService(CRUDService):
 
         `type` for SCALE should be one of the following:
         1) SYSCTL     -     Configure `var` for sysctl(8)
-
-        `type` for CORE/ENTERPRISE should be one of the following:
-        1) LOADER     -     Configure `var` for loader(8)
-        2) RC         -     Configure `var` for rc(8)
-        3) SYSCTL     -     Configure `var` for sysctl(8)
         """
         await self.clean(data, 'tunable_create')
         await self.validate(data, 'tunable_create')
