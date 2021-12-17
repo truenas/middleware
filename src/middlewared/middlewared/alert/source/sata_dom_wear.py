@@ -1,9 +1,3 @@
-# Copyright (c) 2019 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
@@ -14,8 +8,7 @@ class SATADOMWearWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "SATA DOM Lifetime: Less Than 20% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class SATADOMWearCriticalAlertClass(AlertClass):
@@ -23,8 +16,7 @@ class SATADOMWearCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "SATA DOM Lifetime: Less Than 10% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class SATADOMWearAlertSource(AlertSource):
