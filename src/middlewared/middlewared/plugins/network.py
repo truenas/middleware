@@ -183,7 +183,7 @@ class InterfaceService(CRUDService):
             i['int_interface']: i
             for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
         }
-        ha_hardware = self.middleware.call_sync('system.product_type') in ('ENTERPRISE', 'SCALE_ENTERPRISE')
+        ha_hardware = self.middleware.call_sync('system.product_type') == 'SCALE_ENTERPRISE'
         if ha_hardware:
             internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
         for name, iface in netif.list_interfaces().items():
