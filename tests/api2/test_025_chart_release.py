@@ -359,6 +359,7 @@ if not ha:
         assert isinstance(results, dict), str(job_status['results'])
         old_plex_version = sorted(list(results['charts']['plex']['versions'].keys()))[0]
         new_plex_version = sorted(list(results['charts']['plex']['versions'].keys()))[-1]
+        time.sleep(1)
 
     @pytest.mark.dependency(name='release_plex')
     def test_36_create_plex_chart_release_with_old_version(request):
@@ -377,6 +378,7 @@ if not ha:
         job_status = wait_on_job(results.json(), 600)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
         plex_id = job_status['results']['result']['id']
+        time.sleep(1)
 
     def test_37_get_plex_chart_release_upgrade_summary(request):
         depends(request, ['release_plex'])
@@ -401,6 +403,7 @@ if not ha:
         assert isinstance(results.json(), int), results.text
         job_status = wait_on_job(results.json(), 600)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        time.sleep(5)
 
     def test_39_verify_plex_new_version(request):
         depends(request, ['update_plex'])
@@ -424,6 +427,7 @@ if not ha:
         assert isinstance(results.json(), int), results.text
         job_status = wait_on_job(results.json(), 600)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        time.sleep(5)
 
     def test_41_verify_plex_is_at_the_old_version(request):
         depends(request, ['rollback_plex'])

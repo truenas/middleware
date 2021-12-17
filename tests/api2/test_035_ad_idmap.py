@@ -171,7 +171,7 @@ def test_08_test_backend_options(request, backend):
     if not payload['options']:
         payload.pop('options')
 
-    sleep(2.5)
+    sleep(5)
     results = PUT("/idmap/id/1/", payload)
     assert results.status_code == 200, f'payload: {payload}, results: {results.text}'
 
@@ -307,7 +307,6 @@ def test_08_test_backend_options(request, backend):
             decoded_sec = b64decode(stored_sec).rstrip(b'\x00').decode()
             assert secret == decoded_sec, stored_sec
 
-    sleep(2.5)
     # reset idmap backend to RID to ensure that winbindd is running
     payload = {
         "name": "DS_TYPE_ACTIVEDIRECTORY",
@@ -316,6 +315,7 @@ def test_08_test_backend_options(request, backend):
         "idmap_backend": 'RID',
         "options": {}
     }
+    sleep(5)
     results = PUT("/idmap/id/1/", payload)
     assert results.status_code == 200, results.text
 
