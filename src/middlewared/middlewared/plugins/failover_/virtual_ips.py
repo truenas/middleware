@@ -48,13 +48,6 @@ class DetectVirtualIpStates(Service):
         return masters, backups
 
     async def get_states(self, interfaces=None):
-
-        """
-        The `inits` list is not used on SCALE_ENTERPRISE but
-        is kept here to provide backwards compatibility with
-        ENTERPRISE API.
-        """
-
         masters, backups, inits = [], [], []
 
         if interfaces is None:
