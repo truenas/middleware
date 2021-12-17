@@ -14,7 +14,7 @@ class DisksAreNotPresentOnBackupNodeAlertClass(AlertClass):
         "Disks with serial %(serials)s present on active storage controller but missing on standby storage controller."
     )
 
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class DisksAreNotPresentOnMasterNodeAlertClass(AlertClass):
@@ -25,11 +25,11 @@ class DisksAreNotPresentOnMasterNodeAlertClass(AlertClass):
         "Disks with serial %(serials)s present on standby storage controller but missing on active storage controller."
     )
 
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class FailoverDisksAlertSource(AlertSource):
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
     failover_related = True
     run_on_backup_node = False
 
