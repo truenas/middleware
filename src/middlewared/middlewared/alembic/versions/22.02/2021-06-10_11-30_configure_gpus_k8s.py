@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('services_kubernetes', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('configure_gpus', sa.Boolean(), server_default=True, nullable=False))
+        batch_op.add_column(sa.Column('configure_gpus', sa.Boolean(), server_default='1', nullable=False))
 
 
 def downgrade():
