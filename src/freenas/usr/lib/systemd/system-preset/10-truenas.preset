@@ -43,6 +43,7 @@ disable k3s*
 disable cni*
 disable kube-router*
 disable containerd*
+disable walinuxagent
 
 # We want middlewared to import pools
 disable zfs-mount.service
