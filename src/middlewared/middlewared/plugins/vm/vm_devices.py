@@ -10,6 +10,7 @@ from middlewared.utils import osc, run
 from middlewared.async_validators import check_path_resides_within_volume
 
 from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY
+from .utils import LIBVIRT_USER
 
 
 RE_PPTDEV_NAME = re.compile(r'([0-9]+/){2}[0-9]+')
@@ -374,6 +375,36 @@ class VMDeviceService(CRUDService):
                 verrors.add('attributes.path', f'Unable to locate CDROM device at {path}')
             elif not await self.disk_uniqueness_integrity_check(device, vm_instance):
                 verrors.add('attributes.path', f'{vm_instance["name"]} has "{path}" already configured')
+            if not verrors:
+                # We would like to check now if libvirt will actually be able to read the iso file
+                # How this works is that if libvirt user is not able to read the file, libvirt automatically changes
+                # ownership of the iso file to the libvirt user so that it is able to read however there are cases where
+                # even this can fail with perms like 000 or maybe parent path(s) not allowing access.
+                # To mitigate this, we can do the following:
+                # 1) See if owner of the file is libvirt user
+                # 2) If it's not libvirt user:
+                # a) Check if libvirt user can access the file
+                # b) Change ownership of the file to libvirt user as libvirt would eventually do
+                # 3) Check if libvirt user can access the file
+                libvirt_user = await self.middleware.call(
+                    'user.query', [['username', '=', LIBVIRT_USER]], {'get': True}
+                )
+                libvirt_group = await self.middleware.call('group.query', [['group', '=', LIBVIRT_USER]], {'get': True})
+                current_owner = os.stat(path)
+                is_valid = False
+                if current_owner.st_uid != libvirt_user['uid']:
+                    if await self.middleware.call('filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}):
+                        is_valid = True
+                    else:
+                        os.chown(path, libvirt_user['uid'], libvirt_group['gid'])
+                if not is_valid and not await self.middleware.call(
+                    'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
+                ):
+                    verrors.add(
+                        'attributes.path',
+                        f'{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct '
+                        'permissions are specified.'
+                    )
         elif device.get('dtype') == 'NIC':
             nic = device['attributes'].get('nic_attach')
             if nic:
