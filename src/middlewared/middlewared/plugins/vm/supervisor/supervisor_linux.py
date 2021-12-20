@@ -46,10 +46,26 @@ class VMSupervisor(VMSupervisorBase):
                 device_xml = device.xml()
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
 
-        if self.vm_data['ensure_display_device'] and not any(isinstance(device, DISPLAY) for device in self.devices):
+        spice_server_available = display_device_available = False
+        for device in filter(lambda d: isinstance(d, DISPLAY), self.devices):
+            display_device_available = True
+            if device.is_spice_type:
+                spice_server_available = True
+                break
+
+        if self.vm_data['ensure_display_device'] and not display_device_available:
             # We should add a video device if there is no display device configured because most by
             # default if not all headless servers like ubuntu etc require it to boot
             devices.append(create_element('video'))
+
+        if spice_server_available:
+            # We always add spicevmc channel device when a spice display device is available to allow users
+            # to install guest agents for improved vm experience
+            devices.append(create_element(
+                'channel', type='spicevmc', attribute_dict={
+                    'children': [create_element('target', type='virtio', name='com.redhat.spice.0')]
+                }
+            ))
 
         devices.append(create_element('serial', type='pty'))
         return create_element('devices', attribute_dict={'children': devices})
