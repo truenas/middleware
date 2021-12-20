@@ -342,7 +342,7 @@ class DSCache(Service):
         })
         return [x['val'] for x in entries]
 
-    def get_uncached_user(self, username=None, uid=None):
+    def get_uncached_user(self, username=None, uid=None, getgroups=False):
         """
         Returns dictionary containing pwd_struct data for
         the specified user or uid. Will raise an exception
@@ -355,13 +355,15 @@ class DSCache(Service):
             u = pwd.getpwuid(uid)
         else:
             return {}
+
         return {
             'pw_name': u.pw_name,
             'pw_uid': u.pw_uid,
             'pw_gid': u.pw_gid,
             'pw_gecos': u.pw_gecos,
             'pw_dir': u.pw_dir,
-            'pw_shell': u.pw_shell
+            'pw_shell': u.pw_shell,
+            'grouplist': os.getgrouplist(u.pw_name, u.pw_gid) if getgroups else []
         }
 
     def get_uncached_group(self, groupname=None, gid=None):
