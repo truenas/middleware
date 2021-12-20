@@ -2,6 +2,7 @@ from xml.etree import ElementTree as etree
 
 
 LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
+LIBVIRT_USER = 'libvirt-qemu'
 
 
 def create_element(*args, **kwargs):
