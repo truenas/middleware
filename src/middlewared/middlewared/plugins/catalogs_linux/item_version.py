@@ -49,7 +49,18 @@ class CatalogService(Service):
             'cache.has_key', f'catalog_{options["catalog"]}_train_details'
         ):
             cached_data = self.middleware.call_sync('cache.get', f'catalog_{options["catalog"]}_train_details')
-            if cached_data.get(options['train'], {}).get(item_name):
-                return cached_data[options['train']][item_name]
+            if item := cached_data.get(options['train'], {}).get(item_name):
+                # We need to update enums for refs in schema, cannot rely on cache for the latest values. Those
+                # refer to fields in schema showing us the available interfaces GPUs, Certificates, CAs etc.
+                for version in item['versions']:
+                    versioned_item = item['versions'][version]
+                    needs_normalization = versioned_item['healthy'] and versioned_item['required_features'] and any(
+                        feature.startswith('definitions/')
+                        for feature in versioned_item['required_features']
+                    )
+                    if needs_normalization:
+                        questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
+                        self.middleware.call_sync('catalog.normalise_questions', versioned_item, questions_context)
+                return item
 
         return self.middleware.call_sync('catalog.retrieve_item_details', item_location)
