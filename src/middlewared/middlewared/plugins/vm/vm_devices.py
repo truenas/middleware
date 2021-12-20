@@ -405,6 +405,10 @@ class VMDeviceService(CRUDService):
                         f'{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct '
                         'permissions are specified.'
                     )
+                    # Now that we know libvirt user would not be able to read the file in any case,
+                    # let's rollback the chown change we did
+                    os.chown(path, current_owner.st_uid, current_owner.st_gid)
+
         elif device.get('dtype') == 'NIC':
             nic = device['attributes'].get('nic_attach')
             if nic:
