@@ -20,7 +20,12 @@ class FilesystemService(Service):
         )
     )
     @returns(Bool())
-    def check_access_as_user(self, username, path, perms):
+    def can_access_as_user(self, username, path, perms):
+        """
+        Check if `username` is able to access `path` with specific `permissions`. At least one of `read/write/execute`
+        permission must be specified for checking with each of these defaulting to `null`. `null` for
+        `read/write/execute` represents that the permission should not be checked.
+        """
         path_obj = pathlib.Path(path)
         if not path_obj.is_absolute():
             raise CallError('A valid absolute path must be provided', errno.EINVAL)
