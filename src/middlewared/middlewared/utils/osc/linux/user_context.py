@@ -19,6 +19,16 @@ def set_user_context(user: str) -> None:
     os.setresgid(user_details.pw_gid, user_details.pw_gid, user_details.pw_gid)
     os.setresuid(user_details.pw_uid, user_details.pw_uid, user_details.pw_uid)
 
+    if any(
+        c() != v for c, v in (
+            (os.getuid, user_details.pw_uid),
+            (os.geteuid, user_details.pw_uid),
+            (os.getgid, user_details.pw_gid),
+            (os.getegid, user_details.pw_gid),
+        )
+    ):
+        raise Exception(f'Unable to set user context to {user!r} user')
+
     try:
         os.chdir(user_details.pw_dir)
     except Exception:
