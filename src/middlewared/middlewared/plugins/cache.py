@@ -357,15 +357,18 @@ class DSCache(Service):
         else:
             return {}
 
-        return {
+        user_obj = {
             'pw_name': u.pw_name,
             'pw_uid': u.pw_uid,
             'pw_gid': u.pw_gid,
             'pw_gecos': u.pw_gecos,
             'pw_dir': u.pw_dir,
             'pw_shell': u.pw_shell,
-            'grouplist': os.getgrouplist(u.pw_name, u.pw_gid) if getgroups else []
         }
+        if getgroups:
+            user_obj['grouplist'] = os.getgrouplist(u.pw_name, u.pw_gid)
+
+        return user_obj
 
     def get_uncached_group(self, groupname=None, gid=None):
         """

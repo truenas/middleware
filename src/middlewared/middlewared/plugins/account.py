@@ -747,7 +747,7 @@ class UserService(CRUDService):
         Str('pw_shell'),
         Int('pw_uid'),
         Int('pw_gid'),
-        List('grouplist'),
+        List('grouplist', null=True),
     ))
     async def get_user_obj(self, data):
         """
