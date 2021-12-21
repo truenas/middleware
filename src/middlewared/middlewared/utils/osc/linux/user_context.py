@@ -10,7 +10,7 @@ from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['run_command_with_user_context']
+__all__ = ['run_command_with_user_context', 'run_function_with_user_context']
 
 
 def set_user_context(user: str) -> None:
@@ -63,7 +63,23 @@ def _run_command(user: str, commandline: list, q: Queue, rv: Value) -> None:
     q.put(None)
 
 
-def run_command_with_user_context(commandline: list, user: str, callback: Optional[Callable]):
+def _run_function(callable: Callable, user: str, callable_args: Optional[list]) -> None:
+    set_user_context(user)
+    callable(*(callable_args or []))
+
+
+def run_function_with_user_context(callable: Callable, user: str, callable_args: Optional[list] = None) -> None:
+    p = Process(
+        target=_run_function, args=(callable, user, callable_args),
+        daemon=True
+    )
+    p.start()
+    p.join()
+
+
+def run_command_with_user_context(
+    commandline: list, user: str, callback: Optional[Callable]
+) -> subprocess.CompletedProcess:
     q = Queue(maxsize=100)
     rv = Value('i')
     stdout = b''
