@@ -4,6 +4,7 @@ from middlewared.utils import filter_list
 from middlewared.service_exception import CallError, MatchNotFound
 
 from collections import namedtuple
+import os
 import time
 import pwd
 import grp
@@ -342,7 +343,7 @@ class DSCache(Service):
         })
         return [x['val'] for x in entries]
 
-    def get_uncached_user(self, username=None, uid=None):
+    def get_uncached_user(self, username=None, uid=None, getgroups=False):
         """
         Returns dictionary containing pwd_struct data for
         the specified user or uid. Will raise an exception
@@ -355,14 +356,19 @@ class DSCache(Service):
             u = pwd.getpwuid(uid)
         else:
             return {}
-        return {
+
+        user_obj = {
             'pw_name': u.pw_name,
             'pw_uid': u.pw_uid,
             'pw_gid': u.pw_gid,
             'pw_gecos': u.pw_gecos,
             'pw_dir': u.pw_dir,
-            'pw_shell': u.pw_shell
+            'pw_shell': u.pw_shell,
         }
+        if getgroups:
+            user_obj['grouplist'] = os.getgrouplist(u.pw_name, u.pw_gid)
+
+        return user_obj
 
     def get_uncached_group(self, groupname=None, gid=None):
         """

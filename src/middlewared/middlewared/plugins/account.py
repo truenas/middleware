@@ -736,7 +736,8 @@ class UserService(CRUDService):
     @accepts(Dict(
         'get_user_obj',
         Str('username', default=None),
-        Int('uid', default=None)
+        Int('uid', default=None),
+        Bool('get_groups', default=False)
     ))
     @returns(Dict(
         'user_information',
@@ -746,6 +747,7 @@ class UserService(CRUDService):
         Str('pw_shell'),
         Int('pw_uid'),
         Int('pw_gid'),
+        List('grouplist'),
     ))
     async def get_user_obj(self, data):
         """
@@ -756,7 +758,7 @@ class UserService(CRUDService):
         if not data['username'] and data['uid'] is None:
             verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
         verrors.check()
-        return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'])
+        return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'])
 
     @item_method
     @accepts(
