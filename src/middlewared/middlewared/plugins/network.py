@@ -1,9 +1,9 @@
 import asyncio
 import contextlib
 import ipaddress
-import itertools
 import socket
 from collections import defaultdict
+from itertools import zip_longest
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
@@ -21,14 +21,11 @@ class NetworkAliasModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     alias_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'), index=True)
-    alias_v4address = sa.Column(sa.String(42), default='')
-    alias_v4netmaskbit = sa.Column(sa.String(3), default='')
-    alias_v6address = sa.Column(sa.String(45), default='')
-    alias_v6netmaskbit = sa.Column(sa.String(3), default='')
+    alias_address = sa.Column(sa.String(42), default='')
+    alias_version = sa.Column(sa.Integer())
+    alias_netmask = sa.Column(sa.Integer())
+    alias_address_b = sa.Column(sa.String(42), default='')
     alias_vip = sa.Column(sa.String(42), default='')
-    alias_vipv6address = sa.Column(sa.String(45), default='')
-    alias_v4address_b = sa.Column(sa.String(42), default='')
-    alias_v6address_b = sa.Column(sa.String(45), default='')
 
 
 class NetworkBridgeModel(sa.Model):
@@ -361,46 +358,27 @@ class InterfaceService(CRUDService):
                     'netmask': int(config['int_v6netmaskbit']),
                 })
 
-        for alias in self.middleware.call_sync(
-            'datastore.query', 'network.alias', [('alias_interface', '=', config['id'])]
-        ):
-
-            if alias['alias_v4address']:
+        filters = [('alias_interface', '=', config['id'])]
+        for alias in self.middleware.call_sync('datastore.query', 'network.alias', filters):
+            _type = 'INET' if alias['alias_version'] == 4 else 'INET6'
+            if alias['alias_address']:
                 iface['aliases'].append({
-                    'type': 'INET',
-                    'address': alias['alias_v4address'],
-                    'netmask': int(alias['alias_v4netmaskbit']),
-                })
-            if alias['alias_v6address']:
-                iface['aliases'].append({
-                    'type': 'INET6',
-                    'address': alias['alias_v6address'],
-                    'netmask': int(alias['alias_v6netmaskbit']),
+                    'type': _type,
+                    'address': alias['alias_address'],
+                    'netmask': alias['alias_netmask'],
                 })
             if ha_hardware:
-                if alias['alias_v4address_b']:
+                if alias['alias_address_b']:
                     iface['failover_aliases'].append({
-                        'type': 'INET',
-                        'address': alias['alias_v4address_b'],
-                        'netmask': int(alias['alias_v4netmaskbit']),
-                    })
-                if alias['alias_v6address_b']:
-                    iface['failover_aliases'].append({
-                        'type': 'INET6',
-                        'address': alias['alias_v6address_b'],
-                        'netmask': int(alias['alias_v6netmaskbit']),
+                        'type': _type,
+                        'address': alias['alias_address_b'],
+                        'netmask': alias['alias_netmask'],
                     })
                 if alias['alias_vip']:
                     iface['failover_virtual_aliases'].append({
-                        'type': 'INET',
+                        'type': _type,
                         'address': alias['alias_vip'],
-                        'netmask': 32,
-                    })
-                if alias['alias_vipv6address']:
-                    iface['failover_virtual_aliases'].append({
-                        'type': 'INET6',
-                        'address': alias['alias_vipv6address'],
-                        'netmask': 128,
+                        'netmask': 32 if _type == 'INET' else 128,
                     })
 
         return iface
@@ -1079,15 +1057,18 @@ class InterfaceService(CRUDService):
         )
         yield interface_id
 
-        for alias in aliases.values():
+        for alias in aliases:
+            alias['interface'] = interface_id
             await self.middleware.call(
-                'datastore.insert',
-                'network.alias',
-                dict(interface=interface_id, **alias),
-                {'prefix': 'alias_'},
+                'datastore.insert', 'network.alias', dict(interface=interface_id, **alias), {'prefix': 'alias_'}
             )
 
     def __convert_aliases_to_datastore(self, data):
+        da = data['aliases']
+        dfa = data.get('failover_aliases', [])
+        dfva = data.get('failover_virtual_aliases', [])
+
+        aliases = []
         iface = {
             'ipv4address': '',
             'ipv4address_b': '',
@@ -1096,61 +1077,45 @@ class InterfaceService(CRUDService):
             'ipv6address_b': '',
             'v6netmaskbit': '',
             'vip': '',
-            'vipv6address': '',
+            'vipv6address': ''
         }
-        aliases = {}
-        for field, i in itertools.chain(
-            map(lambda x: ('A', x), data['aliases']),
-            map(lambda x: ('B', x), data.get('failover_aliases') or []),
-            map(lambda x: ('V', x), data.get('failover_virtual_aliases') or []),
-        ):
-            try:
-                ipaddr = ipaddress.ip_interface(f'{i["address"]}/{i["netmask"]}')
-            except KeyError:
-                # this is expected since the `netmask` key in `failover_aliases`
-                # or `failover_virtual_aliases` isn't required via the public API.
-                # The db doesn't have a netmask column for the standby IP or for
-                # the virtual IP so we hardcode those values behind the scene.
-                ipaddr = ipaddress.ip_interface(i["address"])
+        for idx, (a, fa, fva) in enumerate(zip_longest(da, dfa, dfva, fillvalue={})):
+            netmask = a['netmask']
+            ipa = a['address']
+            ipb = fa.get('address', '')
+            ipv = fva.get('address', '')
 
-            netfield = None
-            iface_ip = True
-            if ipaddr.version == 4:
-                if field == 'A':
-                    iface_addrfield = 'ipv4address'
-                    alias_addrfield = 'v4address'
-                    netfield = 'v4netmaskbit'
-                elif field == 'B':
-                    iface_addrfield = 'ipv4address_b'
-                    alias_addrfield = 'v4address_b'
+            version = ipaddress.ip_interface(ipa).version
+            if idx == 0:
+                # first IP address is always written to `network_interface` table
+                if version == 4:
+                    a_key = 'ipv4address'
+                    b_key = 'ipv4address_b'
+                    v_key = 'vip'
+                    net_key = 'v4netmaskbit'
                 else:
-                    alias_addrfield = iface_addrfield = 'vip'
-                if iface.get(iface_addrfield) or data.get('ipv4_dhcp'):
-                    iface_ip = False
-            else:
-                if field == 'A':
-                    iface_addrfield = 'ipv6address'
-                    alias_addrfield = 'v6address'
-                    netfield = 'v6netmaskbit'
-                elif field == 'B':
-                    iface_addrfield = 'ipv6address_b'
-                    alias_addrfield = 'v6address_b'
-                else:
-                    alias_addrfield = iface_addrfield = 'vipv6address'
-                if iface.get(iface_addrfield) or data.get('ipv6_auto'):
-                    iface_ip = False
+                    a_key = 'ipv6address'
+                    b_key = 'ipv6address_b'
+                    v_key = 'vipv6address'
+                    net_key = 'v6netmaskbit'
 
-            if iface_ip:
-                iface[iface_addrfield] = str(ipaddr.ip)
-                if netfield:
-                    iface[netfield] = ipaddr.network.prefixlen
+                # fill out info
+                iface[a_key] = ipa
+                iface[b_key] = ipb
+                iface[v_key] = ipv
+                iface[net_key] = netmask
             else:
-                cidr = f'{i["address"]}/{i["netmask"]}'
-                aliases[cidr] = {
-                    alias_addrfield: str(ipaddr.ip),
-                }
-                if netfield:
-                    aliases[cidr][netfield] = ipaddr.network.prefixlen
+                # this means it's the 2nd (or more) ip address
+                # on a singular interface so we need to write
+                # this entry to the alias table
+                aliases.append({
+                    'address': ipa,
+                    'address_b': ipb,
+                    'netmask': netmask,
+                    'version': version,
+                    'vip': ipv,
+                })
+
         return iface, aliases
 
     async def __set_lag_ports(self, lag_id, lag_ports):
