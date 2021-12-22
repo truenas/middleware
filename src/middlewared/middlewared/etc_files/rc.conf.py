@@ -308,11 +308,13 @@ def s3_config(middleware, context):
     yield f'minio_disks="{path}"'
     yield f'minio_address="{s3["bindip"]}:{s3["bindport"]}"'
     yield 'minio_certs="/usr/local/etc/minio/certs"'
+    minio_server_url = f'MINIO_SERVER_URL=https://{s3["tls_server_uri"]}:{s3["bindport"]} \\\n' if s3['certificate'] else ''
     browser = 'MINIO_BROWSER=off \\\n' if not s3['browser'] else ''
     yield (
         'minio_env="\\\n'
         f'MINIO_ACCESS_KEY={s3["access_key"]} \\\n'
         f'MINIO_SECRET_KEY={s3["secret_key"]} \\\n'
+        f'{minio_server_url}'
         f'{browser}'
         '"'
     )
