@@ -11,10 +11,10 @@ from middlewared.service import CallError, Service
 from middlewared.utils.osc import set_user_context
 
 
-def check_perms(user: str, path: str, check_perms: dict, pipe: Connection) -> None:
+def check_access(user: str, path: str, check_perms: dict, pipe: Connection) -> None:
     set_user_context(user)
 
-    flag = False
+    flag = True
     for perm, check_flag in filter(
         lambda v: v[0] is not None, (
             (check_perms['read'], os.R_OK),
@@ -23,10 +23,9 @@ def check_perms(user: str, path: str, check_perms: dict, pipe: Connection) -> No
         )
     ):
         perm_check = os.access(path, check_flag)
-        flag |= (perm_check if perm else not perm_check)
+        flag &= (perm_check if perm else not perm_check)
 
     pipe.send(flag)
-    pipe.close()
 
 
 class FilesystemService(Service):
@@ -58,9 +57,13 @@ class FilesystemService(Service):
             raise CallError('At least one of read/write/execute flags must be set', errno.EINVAL)
 
         parent_con, child_con = Pipe()
-        proc = Process(target=check_perms, args=(username, path, perms, child_con), daemon=True)
-        proc.start()
-        can_access = parent_con.recv()
-        parent_con.close()
-        proc.join()
+        try:
+            proc = Process(target=check_access, args=(username, path, perms, child_con), daemon=True)
+            proc.start()
+            can_access = parent_con.recv()
+            proc.join()
+        finally:
+            child_con.close()
+            parent_con.close()
+
         return can_access
