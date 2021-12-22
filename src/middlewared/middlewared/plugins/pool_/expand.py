@@ -40,10 +40,6 @@ class PoolService(Service):
         if osc.IS_LINUX:
             if options.get('passphrase'):
                 raise CallError('Passphrase should not be supplied for this platform.')
-            # FIXME: We have issues in ZoL where when pool is created with partition uuids, we are unable
-            #  to expand pool where all pool related options error out saying I/O error
-            #  https://github.com/zfsonlinux/zfs/issues/9830
-            raise CallError('Expand is not supported on this platform yet because of underlying ZFS issues.')
         else:
             if pool['encrypt']:
                 if not pool['is_decrypted']:
@@ -121,9 +117,9 @@ class PoolService(Service):
         partition_number = part_data['partition_number']
         if osc.IS_LINUX:
             await run(
-                'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0',
-                '-c', '2:', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
-                '-t', f'{partition_number}:BF01', part_data['path']
+                'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0', '-t',
+                f'{partition_number}:BF01', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
+                os.path.join('/dev', part_data['disk'])
             )
             await run('partprobe', os.path.join('/dev', part_data['disk']))
         else:
