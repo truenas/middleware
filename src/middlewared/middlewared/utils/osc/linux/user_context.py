@@ -32,7 +32,7 @@ def set_user_context(user: str) -> None:
     try:
         os.chdir(user_details.pw_dir)
     except Exception:
-        os.chdir('/')
+        os.chdir('/var/empty')
 
     os.environ['HOME'] = user_details.pw_dir
     os.environ.update({
