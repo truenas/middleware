@@ -17,7 +17,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('vm_vm', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('ensure_display_device', sa.Boolean(), server_default='1', nullable=False))
+        batch_op.add_column(sa.Column('ensure_display_device', sa.Boolean(), default=True, nullable=False))
 
 
 def downgrade():

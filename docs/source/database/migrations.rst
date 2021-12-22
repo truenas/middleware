@@ -40,8 +40,8 @@ to the `system_certificateauthority` table. Alembic will generate us the followi
             batch_op.add_column(sa.Column('cert_add_to_trusted_store', sa.Boolean(), nullable=False))
 
 This won't work if `system_certificateauthority` table has rows: SQLite will not have a default value for new column
-and will try to set it to `NULL` which will fail. We must specify a `server_default=` value when adding new columns
-that must have a non-null value:
+and will try to set it to `NULL` which will fail. We must specify a `default=` value when adding new columns that must have
+a non-null value:
 
   .. literalinclude:: /../../src/middlewared/middlewared/alembic/versions/22.02/2021-08-19_09-30_ca_trusted_store.py
       :pyobject: upgrade

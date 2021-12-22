@@ -28,7 +28,7 @@ def upgrade():
     readonly = "REQUIRE" if os.path.exists("/data/license") else "SET"
 
     with op.batch_alter_table('storage_replication', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('repl_readonly', sa.String(length=120), nullable=False, server_default=readonly))
+        batch_op.add_column(sa.Column('repl_readonly', sa.String(length=120), nullable=False, default=readonly))
         batch_op.alter_column('repl_readonly',
                existing_type=sa.TEXT(),
                server_default=None)
