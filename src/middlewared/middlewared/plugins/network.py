@@ -1300,11 +1300,29 @@ class InterfaceService(CRUDService):
                 )
 
                 filters = [('interface', '=', config['id'])]
-                options = {'prefix': 'alias_'}
-                for curr in await self.middleware.call('datastore.query', 'network.alias', filters, options):
+                prefix = {'prefix': 'alias_'}
+                for curr in await self.middleware.call('datastore.query', 'network.alias', filters, prefix):
                     if curr['address'] not in [i['address'] for i in new_aliases]:
+                        # being deleted
                         await self.middleware.call('datastore.delete', 'network.alias', curr['id'])
+                    else:
+                        for idx, new_alias in enumerate(new_aliases[:]):
+                            if curr['address'] == new_alias['address']:
+                                for i in new_alias.keys():
+                                    if curr[i] != new_alias[i]:
+                                        # it's being updated
+                                        await self.middleware.call(
+                                            'datastore.update', 'network.alias', curr['id'], new_alias, prefix
+                                        )
+                                        new_aliases.pop(idx)
+                                        break
+                                else:
+                                    # nothing has changed but was included in the response
+                                    # so ignore it and remove from list
+                                    new_aliases.pop(idx)
 
+                # getting here means the remainder of the entries in `new_aliases` are actually
+                # new aliases being added
                 for new_alias in new_aliases:
                     await self.middleware.call(
                         'datastore.insert',
