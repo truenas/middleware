@@ -1046,7 +1046,7 @@ class InterfaceService(CRUDService):
         }
 
     async def __create_interface_datastore(self, data, attrs):
-        interface_attrs, aliases = self.__convert_aliases_to_datastore(data)
+        interface_attrs, aliases = self.convert_aliases_to_datastore(data)
         interface_attrs.update(attrs)
 
         interface_id = await self.middleware.call(
@@ -1063,7 +1063,8 @@ class InterfaceService(CRUDService):
                 'datastore.insert', 'network.alias', dict(interface=interface_id, **alias), {'prefix': 'alias_'}
             )
 
-    def __convert_aliases_to_datastore(self, data):
+    @private
+    def convert_aliases_to_datastore(self, data):
         da = data['aliases']
         dfa = data.get('failover_aliases', [])
         dfva = data.get('failover_virtual_aliases', [])
@@ -1224,7 +1225,7 @@ class InterfaceService(CRUDService):
                     'datastore.query', 'network.interfaces', [('id', '=', interface_id)]
                 ))[0]
             else:
-                interface_attrs, aliases = self.__convert_aliases_to_datastore(new)
+                interface_attrs, aliases = self.convert_aliases_to_datastore(new)
                 config = config[0]
                 if config['int_interface'] != new['name']:
                     await self.middleware.call(
@@ -1291,7 +1292,7 @@ class InterfaceService(CRUDService):
                 if config['int_pass']:
                     new['failover_pass'] = config['int_pass']
 
-                interface_attrs, new_aliases = self.__convert_aliases_to_datastore(new)
+                interface_attrs, new_aliases = self.convert_aliases_to_datastore(new)
                 await self.middleware.call(
                     'datastore.update', 'network.interfaces', config['id'],
                     dict(**(await self.__convert_interface_datastore(new)), **interface_attrs),
