@@ -75,23 +75,21 @@ class InterfaceService(Service):
                 has_ipv6 = True
 
         # configure VRRP
-        has_vip = data.get('int_vip', '')
-        if has_vip:
-            vip_data = {
-                'address': data['int_vip'],
+        vip = data.get('int_vip', '')
+        if vip:
+            addrs_database.add(self.alias_to_addr({
+                'address': vip,
                 'netmask': '32',
-            }
+            }))
 
-        has_vipv6 = data.get('int_vipv6address', '')
-        if has_vipv6:
-            vip_data = {
-                'address': data['int_vipv6address'],
+        vipv6 = data.get('int_vipv6address', '')
+        if vipv6:
+            addrs_database.add(self.alias_to_addr({
+                'address': vipv6,
                 'netmask': '128',
-            }
+            }))
 
-        if has_vip or has_vipv6:
-            addrs_database.add(self.alias_to_addr(vip_data))
-
+        alias_vips = []
         for alias in aliases:
             if alias[alias_field]:
                 addrs_database.add(self.alias_to_addr({
@@ -100,8 +98,10 @@ class InterfaceService(Service):
                 }))
 
             if alias['alias_vip']:
+                alias_vip = alias['alias_vip']
+                alias_vips.append(alias_vip)
                 addrs_database.add(self.alias_to_addr({
-                    'address': alias['alias_vip'],
+                    'address': alias_vip,
                     'netmask': '32' if alias['alias_version'] == 4 else '128',
                 }))
 
@@ -123,10 +123,11 @@ class InterfaceService(Service):
 
         # Remove addresses configured and not in database
         for addr in addrs_configured:
-            # keepalived service is responsible for deleting the VIP
-            if str(addr.address) in (has_vip, has_vipv6):
+            address = str(addr.address)
+            # keepalived service is responsible for deleting the VIP(s)
+            if address in (vip, vipv6) or address in alias_vips:
                 continue
-            if has_ipv6 and str(addr.address).startswith('fe80::'):
+            if vipv6 and address.startswith('fe80::'):
                 continue
             if addr not in addrs_database:
                 self.logger.debug('{}: removing {}'.format(name, addr))
@@ -135,7 +136,7 @@ class InterfaceService(Service):
                 self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
                 iface.replace_address(addr)
 
-        if has_vip or has_vipv6:
+        if vip or vipv6 or alias_vips:
             if not self.middleware.call_sync('service.started', 'keepalived'):
                 self.middleware.call_sync('service.start', 'keepalived')
             else:
@@ -144,8 +145,9 @@ class InterfaceService(Service):
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
-            # keepalived service is responsible for adding the VIP
-            if str(addr.address) in (has_vip, has_vipv6):
+            address = str(addr.address)
+            # keepalived service is responsible for adding the VIP(s)
+            if address in (vip, vipv6) or address in alias_vips:
                 continue
             self.logger.debug('{}: adding {}'.format(name, addr))
             iface.add_address(addr)
