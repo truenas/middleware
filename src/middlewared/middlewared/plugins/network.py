@@ -1225,7 +1225,6 @@ class InterfaceService(CRUDService):
                     'datastore.query', 'network.interfaces', [('id', '=', interface_id)]
                 ))[0]
             else:
-                interface_attrs, aliases = self.convert_aliases_to_datastore(new)
                 config = config[0]
                 if config['int_interface'] != new['name']:
                     await self.middleware.call(
