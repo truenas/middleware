@@ -36,13 +36,11 @@ class InterfaceService(Service):
         ):
             ipv4_field = 'int_ipv4address_b'
             ipv6_field = 'int_ipv6address_b'
-            alias_ipv4_field = 'alias_v4address_b'
-            alias_ipv6_field = 'alias_v6address_b'
+            alias_field = 'alias_address_b'
         else:
             ipv4_field = 'int_ipv4address'
             ipv6_field = 'int_ipv6address'
-            alias_ipv4_field = 'alias_v4address'
-            alias_ipv6_field = 'alias_v6address'
+            alias_field = 'alias_address'
 
         dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
         if dhclient_running and data['int_dhcp']:
@@ -76,7 +74,7 @@ class InterfaceService(Service):
                 }))
                 has_ipv6 = True
 
-        # configure CARP/VRRP
+        # configure VRRP
         has_vip = data.get('int_vip', '')
         if has_vip:
             vip_data = {
@@ -95,31 +93,17 @@ class InterfaceService(Service):
             addrs_database.add(self.alias_to_addr(vip_data))
 
         for alias in aliases:
-            if alias[alias_ipv4_field]:
+            if alias[alias_field]:
                 addrs_database.add(self.alias_to_addr({
-                    'address': alias[alias_ipv4_field],
-                    'netmask': alias['alias_v4netmaskbit'],
-                }))
-            if alias[alias_ipv6_field]:
-                addrs_database.add(self.alias_to_addr({
-                    'address': alias[alias_ipv6_field],
-                    'netmask': alias['alias_v6netmaskbit'],
+                    'address': alias[alias_field],
+                    'netmask': alias['alias_netmask'],
                 }))
 
             if alias['alias_vip']:
-                alias_vip_data = {
+                addrs_database.add(self.alias_to_addr({
                     'address': alias['alias_vip'],
-                    'netmask': '32',
-                }
-
-            if alias['alias_vipv6address']:
-                alias_vip_data = {
-                    'address': alias['alias_vipv6address'],
-                    'netmask': '128',
-                }
-
-            if alias['alias_vip'] or alias['alias_vipv6address']:
-                addrs_database.add(self.alias_to_addr(alias_vip_data))
+                    'netmask': '32' if alias['alias_version'] == 4 else '128',
+                }))
 
         if has_ipv6 and not [i for i in map(str, iface.addresses) if i.startswith('fe80::')]:
             # https://tools.ietf.org/html/rfc4291#section-2.5.1
@@ -223,8 +207,8 @@ class InterfaceService(Service):
     @private
     def alias_to_addr(self, alias):
         addr = netif.InterfaceAddress()
-        ip = ipaddress.ip_interface('{}/{}'.format(alias['address'], alias['netmask']))
-        addr.af = getattr(netif.AddressFamily, 'INET6' if ':' in alias['address'] else 'INET')
+        ip = ipaddress.ip_interface(f'{alias["address"]}/{alias["netmask"]}')
+        addr.af = getattr(netif.AddressFamily, 'INET6' if ip.version == 6 else 'INET')
         addr.address = ip.ip
         addr.netmask = ip.netmask
         addr.broadcast = ip.network.broadcast_address
