@@ -72,11 +72,9 @@ class InterfaceService(Service):
                 addresses.add(interface[k])
                 addresses.add(interface[f"{k}_b"])
         for alias in datastores["alias"]:
-            for k in ["alias_v4address", "alias_v6address"]:
-                addresses.add(alias[k])
-                addresses.add(alias[f"{k}_b"])
+            addresses.add(alias["alias_address"])
+            addresses.add(alias["alias_address_b"])
             addresses.add(alias["alias_vip"])
-            addresses.add(alias["alias_vipv6address"])
         addresses.discard("")
         return addresses
 

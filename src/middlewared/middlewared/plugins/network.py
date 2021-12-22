@@ -1290,47 +1290,27 @@ class InterfaceService(CRUDService):
             if not interface_id:
                 if config['int_pass']:
                     new['failover_pass'] = config['int_pass']
+
+                interface_attrs, new_aliases = self.__convert_aliases_to_datastore(new)
                 await self.middleware.call(
-                    'datastore.update', 'network.interfaces', config['id'], dict(
-                        **(await self.__convert_interface_datastore(new)), **interface_attrs
-                    ), {'prefix': 'int_'}
+                    'datastore.update', 'network.interfaces', config['id'],
+                    dict(**(await self.__convert_interface_datastore(new)), **interface_attrs),
+                    {'prefix': 'int_'}
                 )
 
-                old_aliases = set()
-                alias_ids = {}
-                if config:
-                    for i in await self.middleware.call(
-                        'datastore.query',
-                        'network.alias',
-                        [('interface', '=', config['id'])],
-                        {'prefix': 'alias_'},
-                    ):
-                        for name, netmask in (
-                            ('v4address', 'v4netmaskbit'),
-                            ('v4address_b', 'v4netmaskbit'),
-                            ('v6address', 'v6netmaskbit'),
-                            ('vip', None),
-                        ):
-                            alias = None
-                            if i[name]:
-                                alias = f'{i[name]}/{i[netmask] if netmask else "32"}'
-                                alias_ids[alias] = i['id']
-                                old_aliases.add(alias)
-                new_aliases = set(aliases.keys())
-                for i in new_aliases - old_aliases:
-                    alias = aliases[i]
+                filters = [('interface', '=', config['id'])]
+                options = {'prefix': 'alias_'}
+                for curr in await self.middleware.call('datastore.query', 'network.alias', filters, options):
+                    if curr['address'] not in [i['address'] for i in new_aliases]:
+                        await self.middleware.call('datastore.delete', 'network.alias', curr['id'])
+
+                for new_alias in new_aliases:
                     await self.middleware.call(
                         'datastore.insert',
                         'network.alias',
-                        dict(interface=config['id'], **alias),
+                        dict(interface=config['id'], **new_alias),
                         {'prefix': 'alias_'}
                     )
-
-                for i in old_aliases - new_aliases:
-                    alias_id = alias_ids.get(i)
-                    if alias_id:
-                        await self.middleware.call('datastore.delete', 'network.alias', alias_id)
-
         except Exception:
             if interface_id:
                 with contextlib.suppress(Exception):
