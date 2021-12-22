@@ -21,11 +21,11 @@ class NetworkAliasModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     alias_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'), index=True)
-    alias_address = sa.Column(sa.String(42), default='')
+    alias_address = sa.Column(sa.String(45), default='')
     alias_version = sa.Column(sa.Integer())
     alias_netmask = sa.Column(sa.Integer())
-    alias_address_b = sa.Column(sa.String(42), default='')
-    alias_vip = sa.Column(sa.String(42), default='')
+    alias_address_b = sa.Column(sa.String(45), default='')
+    alias_vip = sa.Column(sa.String(45), default='')
 
 
 class NetworkBridgeModel(sa.Model):
