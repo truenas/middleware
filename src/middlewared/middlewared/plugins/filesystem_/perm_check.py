@@ -1,10 +1,32 @@
 import errno
+import os
 import pathlib
+
+from multiprocessing import Pipe, Process
+from multiprocessing.connection import Connection
 
 from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import CallError, Service
 
-from middlewared.utils.osc import run_command_with_user_context
+from middlewared.utils.osc import set_user_context
+
+
+def check_perms(user: str, path: str, check_perms: dict, pipe: Connection) -> None:
+    set_user_context(user)
+
+    flag = False
+    for perm, check_flag in filter(
+        lambda v: v[0] is not None, (
+            (check_perms['read'], os.R_OK),
+            (check_perms['write'], os.W_OK),
+            (check_perms['execute'], os.X_OK),
+        )
+    ):
+        perm_check = os.access(path, check_flag)
+        flag |= (perm_check if perm else not perm_check)
+
+    pipe.send(flag)
+    pipe.close()
 
 
 class FilesystemService(Service):
@@ -35,15 +57,10 @@ class FilesystemService(Service):
         if all(v is None for v in perms.values()):
             raise CallError('At least one of read/write/execute flags must be set', errno.EINVAL)
 
-        check = []
-        for flag, flag_set in filter(
-            lambda v: v[1] is not None, (
-                ('-r', perms['read']),
-                ('-w', perms['write']),
-                ('-x', perms['execute']),
-            )
-        ):
-            check.append(' '.join(filter(bool, ['[', '!' if flag_set is False else '', flag, path, ']'])))
-
-        cp = run_command_with_user_context(' && '.join(check), username, lambda x: x)
-        return True if cp.returncode == 0 else False
+        parent_con, child_con = Pipe()
+        proc = Process(target=check_perms, args=(username, path, perms, child_con), daemon=True)
+        proc.start()
+        can_access = parent_con.recv()
+        parent_con.close()
+        proc.join()
+        return can_access
