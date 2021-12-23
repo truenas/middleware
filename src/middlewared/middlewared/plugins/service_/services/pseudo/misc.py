@@ -19,7 +19,7 @@ class CronService(PseudoServiceBase):
     restartable = True
 
     async def restart(self):
-        pass
+        await freebsd_service("cron", "restart")
 
 
 class DiskService(PseudoServiceBase):
