@@ -3,6 +3,8 @@ import re
 from xml.etree import ElementTree as etree
 
 import bsd
+import bsd.geom
+import bsd.disk
 import sysctl
 from middlewared.service import Service
 from .disk_info_base import DiskInfoBase
