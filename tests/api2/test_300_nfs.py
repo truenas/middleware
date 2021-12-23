@@ -36,7 +36,6 @@ except ImportError:
 
 # Enable NFS server
 def test_01_creating_the_nfs_server():
-    print(ip)
     paylaod = {"servers": 10,
                "bindip": [ip],
                "mountd_port": 618,
