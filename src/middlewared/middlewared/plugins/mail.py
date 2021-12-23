@@ -309,21 +309,7 @@ class MailService(ConfigService):
     def send_raw(self, job, message, config):
         config = dict(self.middleware.call_sync('mail.config'), **config)
 
-        if config['fromname']:
-            from_addr = Header(config['fromname'], 'utf-8')
-            try:
-                config['fromemail'].encode('ascii')
-            except UnicodeEncodeError:
-                from_addr.append(f'<{config["fromemail"]}>', 'utf-8')
-            else:
-                from_addr.append(f'<{config["fromemail"]}>', 'ascii')
-        else:
-            try:
-                config['fromemail'].encode('ascii')
-            except UnicodeEncodeError:
-                from_addr = Header(config['fromemail'], 'utf-8')
-            else:
-                from_addr = Header(config['fromemail'], 'ascii')
+        from_addr = self._from_addr(config)
 
         interval = message.get('interval')
         if interval is None:
@@ -512,6 +498,9 @@ class MailService(ConfigService):
                         self.middleware.call_sync('mail.gmail_send', queue.message, config)
                     else:
                         server = self._get_smtp_server(config)
+                        # Update `From` address from currently used config because if the SMTP user changes,
+                        # already queued messages might not be sent due to (553, b'Relaying disallowed as xxx') error
+                        queue.message['From'] = self._from_addr(config)
                         server.sendmail(queue.message['From'].encode(),
                                         queue.message['To'].split(', '),
                                         queue.message.as_string())
@@ -523,6 +512,25 @@ class MailService(ConfigService):
                         mq.queue.remove(queue)
                 else:
                     mq.queue.remove(queue)
+
+    def _from_addr(self, config):
+        if config['fromname']:
+            from_addr = Header(config['fromname'], 'utf-8')
+            try:
+                config['fromemail'].encode('ascii')
+            except UnicodeEncodeError:
+                from_addr.append(f'<{config["fromemail"]}>', 'utf-8')
+            else:
+                from_addr.append(f'<{config["fromemail"]}>', 'ascii')
+        else:
+            try:
+                config['fromemail'].encode('ascii')
+            except UnicodeEncodeError:
+                from_addr = Header(config['fromemail'], 'utf-8')
+            else:
+                from_addr = Header(config['fromemail'], 'ascii')
+
+        return from_addr
 
 
 async def setup(middleware):
