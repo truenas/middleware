@@ -37,7 +37,7 @@ def test_02_check_staticroute_configured_using_api(sr_dict):
     data = results.json()
     assert isinstance(data, list), data
     assert len(data) == 1, data
-    assert data[0]['destination'] == DESTINATION, data
+    assert DESTINATION in data[0]['destination'], data
     assert data[0]['gateway'] == GATEWAY, data
 
 
