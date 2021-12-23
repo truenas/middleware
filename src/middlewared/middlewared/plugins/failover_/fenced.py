@@ -117,7 +117,7 @@ async def hook_pool_event(middleware, *args, **kwargs):
         except CallError as e:
             middleware.logger.error('Failed to reload fenced: %r', e)
     else:
-        force = True
+        force = False
         use_zpools = True
         rc = await middleware.call('failover.fenced.start', force, use_zpools)
         if rc:
