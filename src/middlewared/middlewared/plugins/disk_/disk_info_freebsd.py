@@ -3,6 +3,8 @@ import re
 from xml.etree import ElementTree as etree
 
 import bsd
+import bsd.geom
+import bsd.disk
 import sysctl
 from middlewared.service import Service
 from .disk_info_base import DiskInfoBase
@@ -83,14 +85,16 @@ class DiskService(Service, DiskInfoBase):
         label_to_dev = {}
         for label in bsd.geom.class_by_name('LABEL').xml:
             if (name := label.find('name')) is not None:
-                if (provider := label.find('provider/name')) is not None:
-                    label_to_dev[provider.text] = name.text
+                for provider in label.iterfind('provider'):
+                    if (prov := provider.find('name')) is not None:
+                        label_to_dev[prov.text] = name.text
 
         dev_to_disk = {}
         for label in bsd.geom.class_by_name('PART').xml:
             if (name := label.find('name')) is not None:
-                if (provider := label.find('provider/name')) is not None:
-                    dev_to_disk[provider.text] = name.text
+                for provider in label.iterfind('provider'):
+                    if (prov := provider.find('name')) is not None:
+                        dev_to_disk[prov.text] = name.text
 
         return {
             'label_to_dev': label_to_dev,
