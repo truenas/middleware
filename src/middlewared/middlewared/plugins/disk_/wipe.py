@@ -46,20 +46,17 @@ class DiskService(Service):
                 for i in range(_32):
                     # wipe first 32MB
                     os.write(f.fileno(), to_write)
-                    os.fsync(f.fileno())
 
                 # seek to 32MB before end of drive
                 os.lseek(f.fileno(), (size - (CHUNK * _32)), os.SEEK_SET)
                 for i in range(_32):
                     # wipe last 32MB
                     os.write(f.fileno(), to_write)
-                    os.fsync(f.fileno())
             else:
                 iterations = (size // CHUNK)
                 length = len(str(iterations))
                 for i in range(iterations):
                     os.write(f.fileno(), to_write)
-                    os.fsync(f.fileno())
                     data['job'].set_progress(float(f'{i / iterations:.{length}f}') * 100)
 
     @accepts(
