@@ -109,6 +109,7 @@ def drop_and_create_new_table():
 
 def upgrade():
     con = op.get_bind()
+    new_aliases = []
     for iface_id, in con.execute('SELECT id from network_interfaces').fetchall():
         rows = con.execute(f'SELECT * FROM network_alias WHERE alias_interface_id = {iface_id}').fetchall()
         a_addresses, b_addresses, vips = pull_out_entries(rows)
