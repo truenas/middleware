@@ -100,7 +100,7 @@ async def _run_fenced_on_single_node(middleware, event_type, args):
         # in the fenced program for this scenario, however, best to
         # play it safe
         await middleware.call('failover.fenced.stop')
-        rc = await middleware.call('failover.fenced.start', {'force': True})
+        rc = await middleware.call('failover.fenced.start')
         for i in FencedExitCodes:
             if rc == i.value:
                 middleware.logger.error(f'Fenced failed to start because: {i.name}')
