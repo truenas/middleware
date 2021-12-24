@@ -98,11 +98,9 @@ class ISCSIPortalService(CRUDService):
             ]):
                 choices[i['int_vip']] = f'{i["int_ipv4address"]}/{i["int_ipv4address_b"]}'
 
-            for i in await self.middleware.call('datastore.query', 'network.Alias', [
-                ('alias_vip', 'nin', [None, '']),
-            ]):
-                choices[i['alias_vip']] = f'{i["alias_v4address"]}/{i["alias_v4address_b"]}'
-
+            filters = [('alias_vip', 'nin', [None, ''])]
+            for i in await self.middleware.call('datastore.query', 'network.Alias', filters):
+                choices[i['alias_vip']] = f'{i["alias_address"]}/{i["alias_netmask"]}'
         else:
             for i in await self.middleware.call('interface.query'):
                 for alias in i.get('failover_virtual_aliases') or []:
