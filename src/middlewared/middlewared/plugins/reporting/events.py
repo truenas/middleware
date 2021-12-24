@@ -167,10 +167,11 @@ class RealtimeEventSource(EventSource):
             cp_times = []
             cp_time = []
             for line in stat.split('\n'):
-                if line.startswith('cpu'):
-                    line_ints = [int(i) for i in line[5:].strip().split()]
+                bits = line.split()
+                if bits[0].startswith('cpu'):
+                    line_ints = [int(i) for i in bits[1:]]
                     # cpu has a sum of all cpus
-                    if line[3] == ' ':
+                    if bits[0] == 'cpu':
                         cp_time = line_ints
                     # cpuX is for each core
                     else:
