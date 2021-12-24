@@ -2,18 +2,13 @@ import errno
 import os
 import pathlib
 
-from multiprocessing import Pipe, Process
-from multiprocessing.connection import Connection
-
 from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import CallError, Service
 
-from middlewared.utils.osc import set_user_context
+from middlewared.utils.osc import run_with_user_context
 
 
-def check_access(user: str, path: str, check_perms: dict, pipe: Connection) -> None:
-    set_user_context(user)
-
+def check_access(path: str, check_perms: dict) -> bool:
     flag = True
     for perm, check_flag in filter(
         lambda v: v[0] is not None, (
@@ -25,7 +20,7 @@ def check_access(user: str, path: str, check_perms: dict, pipe: Connection) -> N
         perm_check = os.access(path, check_flag)
         flag &= (perm_check if perm else not perm_check)
 
-    pipe.send(flag)
+    return flag
 
 
 class FilesystemService(Service):
@@ -56,14 +51,4 @@ class FilesystemService(Service):
         if all(v is None for v in perms.values()):
             raise CallError('At least one of read/write/execute flags must be set', errno.EINVAL)
 
-        parent_con, child_con = Pipe()
-        try:
-            proc = Process(target=check_access, args=(username, path, perms, child_con), daemon=True)
-            proc.start()
-            can_access = parent_con.recv()
-            proc.join()
-        finally:
-            child_con.close()
-            parent_con.close()
-
-        return can_access
+        return run_with_user_context(check_access, username, [path, perms])
