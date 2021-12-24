@@ -2,15 +2,13 @@
 import logging
 import os
 import pwd
-import queue
 import subprocess
 
-from multiprocessing import Process, Queue, Value
-from typing import Callable, Optional
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['run_command_with_user_context', 'set_user_context']
+__all__ = ["run_command_with_user_context", "set_user_context"]
 
 
 def set_user_context(user: str) -> None:
@@ -27,68 +25,33 @@ def set_user_context(user: str) -> None:
             (os.getegid, user_details.pw_gid),
         )
     ):
-        raise Exception(f'Unable to set user context to {user!r} user')
+        raise Exception(f"Unable to set user context to {user!r} user")
 
     try:
         os.chdir(user_details.pw_dir)
     except Exception:
-        os.chdir('/var/empty')
+        os.chdir("/var/empty")
 
-    os.environ['HOME'] = user_details.pw_dir
+    os.environ["HOME"] = user_details.pw_dir
     os.environ.update({
-        'HOME': user_details.pw_dir,
-        'PATH': '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin',
+        "HOME": user_details.pw_dir,
+        "PATH": "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin",
     })
 
 
-def _run_command(user: str, commandline: list, q: Queue, rv: Value) -> None:
-    set_user_context(user)
+def run_command_with_user_context(commandline: str, user: str, callback: Callable) -> subprocess.CompletedProcess:
+    p = subprocess.Popen(["sudo", "-H", "-u", user, "sh", "-c", commandline],
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    proc = subprocess.Popen(
-        commandline, shell=True, stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-    )
-
+    stdout = b""
     while True:
-        line = proc.stdout.readline()
-        if line == b'':
+        line = p.stdout.readline()
+        if not line:
             break
 
-        try:
-            q.put(line, False)
-        except queue.Full:
-            pass
-    proc.communicate()
-    rv.value = proc.returncode
-    q.put(None)
+        stdout += line
+        callback(line)
 
+    p.communicate()
 
-def run_command_with_user_context(
-    commandline: list, user: str, callback: Optional[Callable]
-) -> subprocess.CompletedProcess:
-    q = Queue(maxsize=100)
-    rv = Value('i')
-    stdout = b''
-    p = Process(
-        target=_run_command, args=(user, commandline, q, rv),
-        daemon=True
-    )
-    p.start()
-    while p.is_alive() or not q.empty():
-        try:
-            get = q.get(True, 2)
-            if get is None:
-                break
-            stdout += get
-            if callback:
-                callback(get)
-        except queue.Empty:
-            pass
-        except Exception:
-            logger.error('Unhandled exception', exc_info=True)
-            p.kill()
-            raise
-
-    p.join()
-
-    return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=rv.value)
+    return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=p.returncode)
