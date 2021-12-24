@@ -1,14 +1,15 @@
 # -*- coding=utf-8 -*-
+import concurrent.futures
 import logging
 import os
 import pwd
 import subprocess
 
-from typing import Callable
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["run_command_with_user_context", "set_user_context"]
+__all__ = ["run_command_with_user_context", "run_with_user_context", "set_user_context"]
 
 
 def set_user_context(user: str) -> None:
@@ -37,6 +38,12 @@ def set_user_context(user: str) -> None:
         "HOME": user_details.pw_dir,
         "PATH": "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin",
     })
+
+
+def run_with_user_context(func: Callable, user: str, func_args: Optional[list] = None) -> Any:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=1) as exc:
+        exc.submit(set_user_context, user).result()
+        return exc.submit(func, *(func_args or [])).result()
 
 
 def run_command_with_user_context(commandline: str, user: str, callback: Callable) -> subprocess.CompletedProcess:
