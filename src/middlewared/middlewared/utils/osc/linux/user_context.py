@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import concurrent.futures
+import functools
 import logging
 import os
 import pwd
@@ -33,7 +34,6 @@ def set_user_context(user: str) -> None:
     except Exception:
         os.chdir("/var/empty")
 
-    os.environ["HOME"] = user_details.pw_dir
     os.environ.update({
         "HOME": user_details.pw_dir,
         "PATH": "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin",
@@ -41,8 +41,9 @@ def set_user_context(user: str) -> None:
 
 
 def run_with_user_context(func: Callable, user: str, func_args: Optional[list] = None) -> Any:
-    with concurrent.futures.ProcessPoolExecutor(max_workers=1) as exc:
-        exc.submit(set_user_context, user).result()
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=1, initializer=functools.partial(set_user_context, user)
+    ) as exc:
         return exc.submit(func, *(func_args or [])).result()
 
 
