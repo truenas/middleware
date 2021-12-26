@@ -170,11 +170,12 @@ class VMService(Service):
                     elif not creds.get(device.data['id']):
                         uri_data['error'] = 'Password not specified'
 
+                custom_host = host
                 if device.data['attributes']['bind'] not in ['::', '0.0.0.0']:
                     # take the bind if its other than the wildcard addresses
-                    host = device.data['attributes']['bind']
+                    custom_host = device.data['attributes']['bind']
 
-                uri_data['uri'] = device.web_uri(host, creds.get(device.data['id']))
+                uri_data['uri'] = device.web_uri(custom_host, creds.get(device.data['id']))
             else:
                 uri_data['error'] = 'Web display is not configured'
             web_uris[device.data['id']] = uri_data
