@@ -47,7 +47,7 @@ def get_gpus():
                 'pci_slot': child['PCI_SLOT_NAME'],
                 'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
             })
-            critical = any(
+            critical |= any(
                 k in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower() for k in ('host bridge', 'memory')
             )
 

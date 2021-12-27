@@ -259,14 +259,29 @@ class SystemAdvancedService(ConfigService):
                 ))
 
         if data['isolated_gpu_pci_ids']:
-            available = set([gpu['addr']['pci_slot'] for gpu in await self.middleware.call('device.get_gpus')])
+            available = set()
+            critical_gpus = set()
+            for gpu in await self.middleware.call('device.get_gpus'):
+                available.add(gpu['addr']['pci_slot'])
+                if gpu['uses_system_critical_devices']:
+                    critical_gpus.add(gpu['addr']['pci_slot'])
+
             provided = set(data['isolated_gpu_pci_ids'])
             not_available = provided - available
+            cannot_isolate = provided & critical_gpus
             if not_available:
                 verrors.add(
                     f'{schema}.isolated_gpu_pci_ids',
-                    f'{", ".join(not_available)} GPU pci slots are not available or a GPU is not configured.'
+                    f'{", ".join(not_available)} GPU pci slot(s) are not available or a GPU is not configured.'
                 )
+
+            if cannot_isolate:
+                verrors.add(
+                    f'{schema}.isolated_gpu_pci_ids',
+                    f'{", ".join(cannot_isolate)} GPU pci slot(s) consists of devices '
+                    'which cannot be isolated from host.'
+                )
+
             if len(available - provided) < 1:
                 verrors.add(
                     f'{schema}.isolated_gpu_pci_ids',
