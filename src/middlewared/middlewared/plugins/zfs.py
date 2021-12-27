@@ -11,6 +11,7 @@ from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, job, private,
 )
 from middlewared.utils import filter_list, filter_getattrs
+from middlewared.utils.path import is_child
 from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
 
@@ -547,11 +548,17 @@ class ZFSDatasetService(CRUDService):
             raise CallError(f'{id} is not encrypted')
 
     def path_to_dataset(self, path):
+        boot_pool = self.middleware.call_sync("boot.pool_name")
+
         with libzfs.ZFS() as zfs:
             try:
                 zh = zfs.get_dataset_by_path(path)
                 ds_name = zh.name
             except libzfs.ZFSException:
+                ds_name = None
+
+        if ds_name is not None:
+            if is_child(ds_name, boot_pool):
                 ds_name = None
 
         return ds_name
