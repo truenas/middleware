@@ -2,6 +2,7 @@ import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
+from middlewared.utils.path import is_child
 
 
 class MinioFSAttachmentDelegate(FSAttachmentDelegate):
@@ -14,12 +15,13 @@ class MinioFSAttachmentDelegate(FSAttachmentDelegate):
 
         s3_config = await self.middleware.call('s3.config')
         if not s3_config['storage_path'] or not os.path.exists(s3_config['storage_path']):
-            return results
-        else:
-            s3_ds = await self.middleware.call('zfs.dataset.path_to_dataset', s3_config['storage_path'])
+            return []
 
-        query_dataset = os.path.relpath(path, '/mnt')
-        if query_dataset in (s3_ds, s3_ds.split('/')[0]) or query_dataset.startswith(f'{s3_ds}/'):
+        s3_ds = await self.middleware.call('zfs.dataset.path_to_dataset', s3_config['storage_path'])
+        if s3_ds is None:
+            return []
+
+        if is_child(os.path.join('/mnt', s3_ds), path):
             results.append({'id': s3_ds})
 
         return results
