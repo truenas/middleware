@@ -141,7 +141,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             home_share = await self.middleware.call('sharing.smb.reg_showshare', 'homes')
             home_path = home_share['parameters']['path']['raw']
         except MatchNotFound:
-            home_path = 'home'
+            home_path = '/var/empty'
 
         data_out['template homedir'] = {"parsed": f'{home_path}'}
 
