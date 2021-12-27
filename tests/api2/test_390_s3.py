@@ -70,7 +70,7 @@ def test_05_verify_s3_is_running(request):
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_06_stop_iSCSI_service(request):
+def test_06_stop_s3_service(request):
     depends(request, ["pool_04"], scope="session")
     result = POST(
         '/service/stop/', {

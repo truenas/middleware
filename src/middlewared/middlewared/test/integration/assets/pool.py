@@ -1,5 +1,6 @@
 import contextlib
 
+from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, pool
 
 
@@ -14,4 +15,7 @@ def dataset(name):
     try:
         yield dataset
     finally:
-        call("pool.dataset.delete", dataset)
+        try:
+            call("pool.dataset.delete", dataset)
+        except InstanceNotFound:
+            pass
