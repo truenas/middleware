@@ -7,6 +7,7 @@ import itertools
 import pathlib
 import json
 import sqlite3
+import urllib3
 import re
 
 import iocage_lib.iocage as ioc
@@ -293,14 +294,17 @@ class PluginService(CRUDService):
             else:
                 job.set_progress(None, msg)
 
-        ioc.IOCage(callback=progress_callback, silent=False).fetch(**{
-            'accept': True,
-            'name': jail_name,
-            'plugin_name': plugin_name,
-            'git_repository': plugin_repository,
-            'props': data['props'],
-            'branch': branch,
-        })
+        try:
+            ioc.IOCage(callback=progress_callback, silent=False).fetch(**{
+                'accept': True,
+                'name': jail_name,
+                'plugin_name': plugin_name,
+                'git_repository': plugin_repository,
+                'props': data['props'],
+                'branch': branch,
+            })
+        except urllib3.exceptions.ProtocolError as exc:
+            raise CallError(f'Please check your internet connection: {exc}')
 
         self.middleware.call_sync('service.restart', 'mdns')
 
