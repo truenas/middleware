@@ -1486,10 +1486,10 @@ class PoolService(CRUDService):
         be disabled before exporting the last zpool on the system.
         """
         pool = await self.get_instance(oid)
-        root_ds = await self.middleware.call('pool.dataset.get_instance', pool['name'])
-        if root_ds['locked'] and os.path.exists(root_ds['mountpoint']):
+        root_ds = await self.middleware.call('pool.dataset.query', [['id', '=', pool['name']]])
+        if root_ds and root_ds[0]['locked'] and os.path.exists(root_ds[0]['mountpoint']):
             # We should be removing immutable flag in this case if the path exists
-            await self.middleware.call('filesystem.set_immutable', False, root_ds['mountpoint'])
+            await self.middleware.call('filesystem.set_immutable', False, root_ds[0]['mountpoint'])
 
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
         if pool_count == 1 and await self.middleware.call('failover.licensed'):
