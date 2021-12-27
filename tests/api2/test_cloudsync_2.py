@@ -5,6 +5,7 @@ import pytest
 
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.s3 import s3_server
 from middlewared.test.integration.utils import pool, ssh
 
 import sys
@@ -68,48 +69,29 @@ def local_s3_task(params=None, credential_params=None):
 
     with dataset("cloudsync_local") as local_dataset:
         with dataset("cloudsync_remote") as remote_dataset:
-            access_key = "A" * 8
-            secret_key = "B" * 16
-            payload = {
-                "bindip": "0.0.0.0",
-                "bindport": 9000,
-                "access_key": access_key,
-                "secret_key": secret_key,
-                "browser": True,
-                "storage_path": f"/mnt/{remote_dataset}"
-            }
-            result = PUT("/s3/", payload)
-            assert result.status_code == 200, result.text
-
-            result = POST(
-                "/service/start/", {
-                    "service": "s3",
-                }
-            )
-            assert result.status_code == 200, result.text
-
-            with credential({
-                "provider": "S3",
-                "attributes": {
-                    "access_key_id": access_key,
-                    "secret_access_key": secret_key,
-                    "endpoint": "http://localhost:9000",
-                    "skip_region": True,
-                    **credential_params,
-                },
-            }) as c:
-                with task({
-                    "direction": "PUSH",
-                    "transfer_mode": "COPY",
-                    "path": f"/mnt/{local_dataset}",
-                    "credentials": c["id"],
+            with s3_server(remote_dataset) as s3:
+                with credential({
+                    "provider": "S3",
                     "attributes": {
-                        "bucket": "bucket",
-                        "folder": "",
+                        "access_key_id": s3.access_key,
+                        "secret_access_key": s3.secret_key,
+                        "endpoint": "http://localhost:9000",
+                        "skip_region": True,
+                        **credential_params,
                     },
-                    **params,
-                }) as t:
-                    yield t
+                }) as c:
+                    with task({
+                        "direction": "PUSH",
+                        "transfer_mode": "COPY",
+                        "path": f"/mnt/{local_dataset}",
+                        "credentials": c["id"],
+                        "attributes": {
+                            "bucket": "bucket",
+                            "folder": "",
+                        },
+                        **params,
+                    }) as t:
+                        yield t
 
 
 def run_task(task):
