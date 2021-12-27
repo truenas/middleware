@@ -36,6 +36,7 @@ class DeviceService(Service):
             )]),
             Str('vendor', required=True, null=True),
             Bool('available_to_host', required=True),
+            Bool('uses_system_critical_devices', required=True),
         ),
         ]),
         Dict('disk_info', additional_attrs=True),

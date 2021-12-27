@@ -39,21 +39,27 @@ def get_gpus():
         elif 'intel' in vendor_id_from_db:
             vendor = 'INTEL'
 
+        devices = []
+        critical = False
+        for child in filter(lambda c: all(k in c for k in ('PCI_SLOT_NAME', 'PCI_ID')), gpu_dev.parent.children):
+            devices.append({
+                'pci_id': child['PCI_ID'],
+                'pci_slot': child['PCI_SLOT_NAME'],
+                'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
+            })
+            critical = any(
+                k in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower() for k in ('host bridge', 'memory')
+            )
+
         gpus.append({
             'addr': {
                 'pci_slot': addr,
                 **{k: addr_re.group(k) for k in ('domain', 'bus', 'slot')},
             },
             'description': gpu_line.split(f'{key}:')[-1].split('(rev')[0].strip(),
-            'devices': [
-                {
-                    'pci_id': child['PCI_ID'],
-                    'pci_slot': child['PCI_SLOT_NAME'],
-                    'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
-                }
-                for child in gpu_dev.parent.children if 'PCI_SLOT_NAME' in child and 'PCI_ID' in child
-            ],
+            'devices': devices,
             'vendor': vendor,
+            'uses_system_critical_devices': critical,
         })
 
     return gpus
