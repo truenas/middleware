@@ -644,39 +644,6 @@ class DiskService(CRUDService):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
     @private
-    async def check_disks_availability(self, verrors, disks, schema):
-        """
-        Makes sure the disks are present in the system and not reserved
-        by anything else (boot, pool, iscsi, etc).
-
-        Returns:
-            dict - disk.query for all disks
-        """
-        disks_cache = dict(map(
-            lambda x: (x['devname'], x),
-            await self.middleware.call(
-                'disk.query', [('devname', 'in', disks)]
-            )
-        ))
-
-        disks_set = set(disks)
-        disks_not_in_cache = disks_set - set(disks_cache.keys())
-        if disks_not_in_cache:
-            verrors.add(
-                f'{schema}.topology',
-                f'The following disks were not found in system: {"," .join(disks_not_in_cache)}.'
-            )
-
-        disks_reserved = await self.middleware.call('disk.get_reserved')
-        disks_reserved = disks_set - (disks_set - set(disks_reserved))
-        if disks_reserved:
-            verrors.add(
-                f'{schema}.topology',
-                f'The following disks are already in use: {"," .join(disks_reserved)}.'
-            )
-        return disks_cache
-
-    @private
     async def configure_power_management(self):
         """
         This runs on boot to properly configure all power management options
