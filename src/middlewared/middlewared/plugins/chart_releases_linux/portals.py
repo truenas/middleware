@@ -1,9 +1,13 @@
 import base64
 import os
+import threading
 import yaml
 
 from middlewared.service import private, Service
 from middlewared.utils import get
+
+
+PORTAL_LOCK = threading.Lock()
 
 
 class ChartReleaseService(Service):
@@ -11,8 +15,33 @@ class ChartReleaseService(Service):
     class Config:
         namespace = 'chart.release'
 
+    PORTAL_CACHE = {}
+
+    @private
+    def clear_portal_cache(self):
+        with PORTAL_LOCK:
+            self.PORTAL_CACHE = {}
+
+    @private
+    def get_portal_cache(self):
+        return self.PORTAL_CACHE
+
+    @private
+    def clear_chart_release_portal_cache(self, release_name):
+        with PORTAL_LOCK:
+            self.PORTAL_CACHE.pop(release_name, None)
+
     @private
     def retrieve_portals_for_chart_release(self, release_data, node_ip=None):
+        with PORTAL_LOCK:
+            if release_data['name'] not in self.PORTAL_CACHE:
+                self.PORTAL_CACHE[release_data['name']] = self.retrieve_portals_for_chart_release_impl(
+                    release_data, node_ip
+                )
+            return self.PORTAL_CACHE[release_data['name']]
+
+    @private
+    def retrieve_portals_for_chart_release_impl(self, release_data, node_ip=None):
         questions_yaml_path = os.path.join(
             release_data['path'], 'charts', release_data['chart_metadata']['version'], 'questions.yaml'
         )

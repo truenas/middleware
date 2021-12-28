@@ -613,6 +613,8 @@ class ChartReleaseService(CRUDService):
             if cp.returncode:
                 raise CallError(f'Failed to {tn_action} chart release: {stderr.decode()}')
 
+        self.middleware.call_sync('chart.release.clear_chart_release_portal_cache', chart_release)
+
     @accepts(Str('release_name'))
     @returns(ENTRY)
     @job(lock=lambda args: f'chart_release_redeploy_{args[0]}')
