@@ -1,10 +1,60 @@
 from collections import defaultdict
 
-from middlewared.service import private, Service
+from middlewared.service import accepts, private, Service
 from middlewared.service_exception import ValidationErrors
+from middlewared.schema import Bool
 
 
 class DiskService(Service):
+    @accepts(Bool('join_partitions', default=False))
+    async def get_unused(self, join_partitions):
+        """
+        Helper method to get all disks that are not in use, either by the boot
+        pool or the user pools.
+        """
+        all_disks = await self.middleware.call('disk.query')
+
+        serial_to_disk = defaultdict(list)
+        for disk in all_disks:
+            serial_to_disk[disk['serial']].append(disk)
+
+        reserved = await self.middleware.call('disk.get_reserved')
+        disks = [disk for disk in all_disks if disk['devname'] not in reserved]
+
+        for disk in disks:
+            disk['duplicate_serial'] = [
+                d['devname']
+                for d in serial_to_disk[disk['serial']]
+                if d['devname'] != disk['devname']
+            ]
+
+        if join_partitions and disks:
+            part_xml = await self.middleware.call('disk.get_part_xml')
+            if not part_xml:
+                return disks
+
+            for disk in disks:
+                disk['partitions'] = await self.middleware.call('disk.list_partitions', disk['devname'], part_xml)
+
+        return disks
+
+    @private
+    async def get_reserved(self):
+        reserved = list(await self.middleware.call('boot.get_disks'))
+        reserved += [i async for i in await self.middleware.call('pool.get_disks')]
+        reserved += [i async for i in self.__get_iscsi_targets()]
+        return reserved
+
+    async def __get_iscsi_targets(self):
+        iscsi_target_extent_paths = [
+            extent['iscsi_target_extent_path']
+            for extent in await self.middleware.call('datastore.query', 'services.iscsitargetextent',
+                                                     [('iscsi_target_extent_type', '=', 'Disk')])
+        ]
+        for disk in await self.middleware.call('datastore.query', 'storage.disk',
+                                               [('disk_identifier', 'in', iscsi_target_extent_paths)]):
+            yield disk['disk_name']
+
     @private
     async def check_disks_availability(self, disks, allow_duplicate_serials):
         """

@@ -1,6 +1,6 @@
 import textwrap
 
-from asynctest import CoroutineMock, Mock
+from asynctest import Mock
 import pytest
 
 from middlewared.plugins.disk_.smart_attributes import DiskService

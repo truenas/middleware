@@ -285,40 +285,6 @@ class DiskService(CRUDService):
     def get_part_xml(self):
         return etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value).find('.//class[name="PART"]')
 
-    @accepts(Bool("join_partitions", default=False))
-    async def get_unused(self, join_partitions):
-        """
-        Helper method to get all disks that are not in use, either by the boot
-        pool or the user pools.
-        """
-        disks = await self.query([('devname', 'nin', await self.get_reserved())])
-        if join_partitions and disks:
-            part_xml = await self.middleware.run_in_thread(self.get_part_xml)
-            if not part_xml:
-                return disks
-
-            for disk in disks:
-                disk['partitions'] = await self.middleware.call('disk.list_partitions', disk['devname'], part_xml)
-
-        return disks
-
-    @private
-    async def get_reserved(self):
-        reserved = list(await self.middleware.call('boot.get_disks'))
-        reserved += [i async for i in await self.middleware.call('pool.get_disks')]
-        reserved += [i async for i in self.__get_iscsi_targets()]
-        return reserved
-
-    async def __get_iscsi_targets(self):
-        iscsi_target_extent_paths = [
-            extent["iscsi_target_extent_path"]
-            for extent in await self.middleware.call('datastore.query', 'services.iscsitargetextent',
-                                                     [('iscsi_target_extent_type', '=', 'Disk')])
-        ]
-        for disk in await self.middleware.call('datastore.query', 'storage.disk',
-                                               [('disk_identifier', 'in', iscsi_target_extent_paths)]):
-            yield disk["disk_name"]
-
     @private
     async def check_clean(self, disk):
         return not bool(await self.middleware.call('disk.list_partitions', disk))
@@ -550,7 +516,7 @@ class DiskService(CRUDService):
                     continue
                 mp_disks.append(p_geom.name)
 
-        reserved = await self.get_reserved()
+        reserved = await self.middleware.call('disk.get_reserved')
 
         devlist = await camcontrol_list()
         is_freenas = await self.middleware.call('system.is_freenas')
