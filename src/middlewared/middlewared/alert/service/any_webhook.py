@@ -9,7 +9,7 @@ class AnyWebhookAlerteService(ThreadedAlertService):
 
     schema = Dict(
         "AnyWebhook_attributes",
-        Str("url", required=True, empty=False),
+        Str("url", requierd=True, empty=False),
         Str("message_key", requierd=True, empty=False)
     )
 
@@ -18,7 +18,8 @@ class AnyWebhookAlerteService(ThreadedAlertService):
             url=self.attributes["url"],
             params={
                 self.attributes["message_key"]: self._format_alerts(alerts, gone_alerts, new_alerts)
-            }
+            },
+            timeout=INTERNET_TIMEOUT
         )
 
         r.raise_for_status()
