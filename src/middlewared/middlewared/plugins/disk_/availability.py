@@ -16,7 +16,7 @@ class DiskService(Service):
 
         serial_to_disk = defaultdict(list)
         for disk in all_disks:
-            serial_to_disk[disk['serial']].append(disk)
+            serial_to_disk[(disk['serial'], disk['lunid'])].append(disk)
 
         reserved = await self.middleware.call('disk.get_reserved')
         disks = [disk for disk in all_disks if disk['devname'] not in reserved]
@@ -24,7 +24,7 @@ class DiskService(Service):
         for disk in disks:
             disk['duplicate_serial'] = [
                 d['devname']
-                for d in serial_to_disk[disk['serial']]
+                for d in serial_to_disk[(disk['serial'], disk['lunid'])]
                 if d['devname'] != disk['devname']
             ]
 
@@ -86,17 +86,17 @@ class DiskService(Service):
         if not allow_duplicate_serials and not verrors:
             serial_to_disk = defaultdict(list)
             for disk in disks:
-                serial_to_disk[disks_cache[disk]['serial']].append(disk)
+                serial_to_disk[(disks_cache[disk]['serial'], disks_cache[disk]['lunid'])].append(disk)
             for reserved_disk in disks_reserved:
                 reserved_disk_cache = disks_cache.get(reserved_disk)
                 if not reserved_disk_cache:
                     continue
 
-                serial_to_disk[reserved_disk_cache['serial']].append(reserved_disk)
+                serial_to_disk[(reserved_disk_cache['serial'], reserved_disk_cache['lunid'])].append(reserved_disk)
 
             if duplicate_serials := {serial for serial, serial_disks in serial_to_disk.items()
                                      if len(serial_disks) > 1}:
-                error = ', '.join(map(lambda serial: f'{serial!r} ({", ".join(serial_to_disk[serial])})',
+                error = ', '.join(map(lambda serial: f'{serial[0]!r} ({", ".join(serial_to_disk[serial])})',
                                       duplicate_serials))
                 verrors.add('topology', f'Disks have duplicate serial numbers: {error}.')
 
