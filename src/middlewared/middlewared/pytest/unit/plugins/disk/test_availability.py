@@ -1,8 +1,31 @@
-from asynctest import CoroutineMock, Mock
+from asynctest import Mock
 import pytest
 
 from middlewared.plugins.disk_.availability import DiskService
 from middlewared.pytest.unit.middleware import Middleware
+
+
+@pytest.mark.asyncio
+async def test__get_unused():
+    m = Middleware()
+    m["disk.query"] = Mock(return_value=[
+        {"devname": "sda", "serial": "1"},
+        {"devname": "sdb", "serial": "2"},
+        {"devname": "sdc", "serial": "3"},
+        {"devname": "sdd", "serial": " BAD USB DRIVE "},
+        {"devname": "sde", "serial": " BAD USB DRIVE "},
+        {"devname": "sdf", "serial": " EVEN WORSE USB DRIVE "},
+        {"devname": "sdg", "serial": " EVEN WORSE USB DRIVE "},
+    ])
+    m["disk.get_reserved"] = Mock(return_value=["sdb", "sde"])
+
+    assert await DiskService(m).get_unused() == [
+        {"devname": "sda", "serial": "1", "duplicate_serial": []},
+        {"devname": "sdc", "serial": "3", "duplicate_serial": []},
+        {"devname": "sdd", "serial": " BAD USB DRIVE ", "duplicate_serial": ["sde"]},
+        {"devname": "sdf", "serial": " EVEN WORSE USB DRIVE ", "duplicate_serial": ["sdg"]},
+        {"devname": "sdg", "serial": " EVEN WORSE USB DRIVE ", "duplicate_serial": ["sdf"]},
+    ]
 
 
 @pytest.mark.parametrize("disks,allow_duplicate_serials,errors", [

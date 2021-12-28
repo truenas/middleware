@@ -295,25 +295,6 @@ class DiskService(CRUDService):
         if changed:
             asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
-    @accepts(Bool("join_partitions", default=False))
-    @returns(List('unused_disks', items=[Ref('disk_entry')]))
-    async def get_unused(self, join_partitions):
-        """
-        Helper method to get all disks that are not in use, either by the boot
-        pool or the user pools.
-        """
-        disks = await self.query([('devname', 'nin', await self.get_reserved())])
-
-        if join_partitions:
-            for disk in disks:
-                disk['partitions'] = await self.middleware.call('disk.list_partitions', disk['devname'])
-
-        return disks
-
-    @private
-    async def get_reserved(self):
-        return await self.middleware.call('boot.get_disks') + await self.middleware.call('pool.get_disks')
-
     @private
     async def check_clean(self, disk):
         return not bool(await self.middleware.call('disk.list_partitions', disk))
