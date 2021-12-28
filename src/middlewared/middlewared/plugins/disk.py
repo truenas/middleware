@@ -23,6 +23,7 @@ class DiskModel(sa.Model):
     disk_subsystem = sa.Column(sa.String(10), default='')
     disk_number = sa.Column(sa.Integer(), default=1)
     disk_serial = sa.Column(sa.String(30))
+    disk_lunid = sa.Column(sa.String(30), nullable=True)
     disk_size = sa.Column(sa.String(20))
     disk_description = sa.Column(sa.String(120))
     disk_transfermode = sa.Column(sa.String(120), default="Auto")
