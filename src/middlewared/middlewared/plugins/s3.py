@@ -39,6 +39,7 @@ class S3Service(SystemServiceService):
         Str('access_key', max_length=20, required=True),
         Str('secret_key', max_length=40, required=True),
         Bool('browser', required=True),
+        Str('tls_server_uri', null=True, required=True),
         Str('storage_path', required=True),
         Int('certificate', null=True, required=True),
         Int('id', required=True),
