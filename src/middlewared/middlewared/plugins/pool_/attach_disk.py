@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.schema import accepts, Dict, Int, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import CallError, job, Service, ValidationErrors
 from middlewared.utils import osc
 
@@ -14,6 +14,7 @@ class PoolService(Service):
             Str('target_vdev', required=True),
             Str('new_disk', required=True),
             Str('passphrase'),
+            Bool('allow_duplicate_serials', default=False),
         )
     )
     @returns()
@@ -65,7 +66,11 @@ class PoolService(Service):
             )
 
         # Let's validate new disk now
-        await self.middleware.call('disk.check_disks_availability', verrors, [options['new_disk']], 'pool_attach')
+        verrors.add_child(
+            'pool_attach',
+            await self.middleware.call('disk.check_disks_availability', [options['new_disk']],
+                                       options['allow_duplicate_serials']),
+        )
         verrors.check()
 
         guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
