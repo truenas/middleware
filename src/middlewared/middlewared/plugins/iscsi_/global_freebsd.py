@@ -22,7 +22,8 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
         tags = {
             'first': (
                 'target_portal_group_tag',
-                'max_data_segment_length',
+                'max_recv_data_segment_length',
+                'max_send_data_segment_length',
                 'max_burst_length',
                 'first_burst_length'
             ),
@@ -39,13 +40,17 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
         xml = (await run(['ctladm', 'islist', '-x'], check=False, encoding='utf8')).stdout
         sessions = []
         for connection in ET.fromstring(xml).findall('.//connection'):
+            session = {}
             for j in connection:
                 if j.tag in tags['first'] and j.text.isdigit():
-                    sessions.append({j.tag: int(j.text)})
+                    session[j.tag] = int(j.text)
                 elif j.tag in tags['second']:
-                    sessions.append({j.tag: bool(int(j.text))})
+                    session[j.tag] = bool(int(j.text))
                 elif j.tag in tags['third'] and j.text == 'None':
-                    sessions.append({j.tag: None})
+                    session[j.tag] = None
+                else:
+                    session[j.tag] = j.text
+            sessions.append(session)
 
         return filter_list(sessions, filters, options)
 
