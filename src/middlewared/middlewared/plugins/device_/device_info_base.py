@@ -27,6 +27,7 @@ class DeviceInfoBase(ServicePartBase):
         'number': 1,  # Database defaults
         'model': None,
         'type': 'UNKNOWN',
+        'bus': 'UNKNOWN',
         'serial': '',
         'size': None,
         'serial_lunid': None,

@@ -170,6 +170,8 @@ class DeviceService(Service, DeviceInfoBase):
                 else:
                     disk['lunid'] = disk_data['wwn'].lstrip('0x')
 
+            disk['bus'] = disk_data['tran'].upper()
+
         if not disk['size'] and os.path.exists(os.path.join(disk_sys_path, 'size')):
             with open(os.path.join(disk_sys_path, 'size'), 'r') as f:
                 disk['blocks'] = int(f.read().strip())
