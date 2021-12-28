@@ -25,6 +25,7 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     def get_disk_details(self, class_name, disk_name=None):
         xml = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value).find(f'.//class/[name="{class_name}"]')
+        devices = self.middleware.call_sync('device.get_storage_devices_topology')
 
         result = {}
         for g in xml.findall('geom'):
@@ -92,6 +93,12 @@ class DeviceService(Service, DeviceInfoBase):
                 disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
             if disk['size'] and disk['sectorsize']:
                 disk['blocks'] = int(disk['size'] / disk['sectorsize'])
+
+            driver = devices.get(name, {}).get('driver')
+            if driver == 'umass-sim':
+                disk['bus'] = 'USB'
+            else:
+                disk['bus'] = 'UNKNOWN'
 
             if disk_name is not None:
                 # this means that a singular disk was requested so

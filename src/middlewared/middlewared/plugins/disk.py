@@ -57,6 +57,7 @@ class DiskModel(sa.Model):
     disk_type = sa.Column(sa.String(20), default='UNKNOWN')
     disk_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
     disk_zfs_guid = sa.Column(sa.String(20), nullable=True)
+    disk_bus = sa.Column(sa.String(20))
 
 
 class DiskService(CRUDService):
