@@ -564,6 +564,7 @@ class PoolService(CRUDService):
             List('spares', items=[Str('disk')], default=[]),
             required=True,
         ),
+        Bool('allow_duplicate_serials', default=False),
         register=True,
     ))
     @job(lock='pool_createupdate')
@@ -651,7 +652,9 @@ class PoolService(CRUDService):
 
         await self.__common_validation(verrors, data, 'pool_create')
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
+        availability_verrors, disks_cache = await self.middleware.call('disk.check_disks_availability', list(disks),
+                                                                       data['allow_duplicate_serials'])
+        verrors.add_child('pool_create', availability_verrors)
 
         if verrors:
             raise verrors
@@ -836,7 +839,9 @@ class PoolService(CRUDService):
         disks = vdevs = None
         if 'topology' in data:
             disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-            disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
+            availability_verrors, disks_cache = await self.middleware.call('disk.check_disks_availability', list(disks),
+                                                                           data['allow_duplicate_serials'])
+            verrors.add_child('pool_update', availability_verrors)
 
         if verrors:
             raise verrors
