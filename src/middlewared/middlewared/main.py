@@ -911,7 +911,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 return
 
             mod_name = mod.__name__.split('.')
-            setup_plugin = mod_name[mod_name.index('plugins') + 1]
+            setup_plugin = '.'.join(mod_name[mod_name.index('plugins') + 1:])
 
             setup_funcs.append((setup_plugin, mod.setup))
 
