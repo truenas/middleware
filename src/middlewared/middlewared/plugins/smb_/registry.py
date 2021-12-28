@@ -353,6 +353,7 @@ class SharingSMBService(Service):
             data['vfsobjects'].append('worm')
 
         if data['streams']:
+            conf['smbd max xattr size'] = '2097152'
             data['vfsobjects'].append('streams_xattr')
 
         conf["vfs objects"] = await self.order_vfs_objects(data['vfsobjects'])
