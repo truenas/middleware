@@ -1237,7 +1237,7 @@ class PoolService(CRUDService):
                 'disk.label_to_disk', disk_path.replace('/dev/', '')
             )
             if disk:
-                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
+                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False)
                 wipe_jobs.append((disk, wipe_job))
 
         job.set_progress(70, 'Wiping disks')
