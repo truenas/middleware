@@ -10,6 +10,10 @@ class KubernetesService(SimpleService):
     etc = ['k3s']
     systemd_unit = 'k3s'
 
+    async def clear_chart_releases_cache(self):
+        await self.middleware.call('chart.release.clear_cached_chart_releases')
+        await self.middleware.call('chart.release.clear_portal_cache')
+
     async def before_start(self):
         try:
             await self.middleware.call('kubernetes.validate_k8s_fs_setup')
@@ -24,6 +28,8 @@ class KubernetesService(SimpleService):
                 await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
 
             raise
+
+        await self.clear_chart_releases_cache()
 
         for key, value in (
             ('vm.panic_on_oom', 0),
@@ -53,7 +59,7 @@ class KubernetesService(SimpleService):
     async def before_stop(self):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-stop', 'effect': 'NoExecute'}])
         await asyncio.sleep(10)
-        await self.middleware.call('chart.release.clear_cached_chart_releases')
+        await self.clear_chart_releases_cache()
         await self.middleware.call('kubernetes.remove_iptables_rules')
 
     async def after_stop(self):

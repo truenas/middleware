@@ -164,6 +164,7 @@ class ChartReleaseService(Service):
         await self.middleware.call(
             'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale'], True,
         )
+        await self.middleware.call('chart.release.clear_chart_release_portal_cache', release_name)
 
         job.set_progress(100, 'Rollback complete for chart release')
 
