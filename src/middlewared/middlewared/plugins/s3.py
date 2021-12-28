@@ -21,6 +21,7 @@ class S3Model(sa.Model):
     s3_disks = sa.Column(sa.String(255), default='')
     s3_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     s3_browser = sa.Column(sa.Boolean(), default=True)
+    s3_tls_server_uri = sa.Column(sa.String(128), nullable=True)
 
 
 class S3Service(SystemServiceService):
@@ -126,6 +127,12 @@ class S3Service(SystemServiceService):
             verrors.extend((await self.middleware.call(
                 'certificate.cert_services_validation', new['certificate'], 's3_update.certificate', False
             )))
+
+        if new['certificate'] and not new['tls_server_uri']:
+            verrors.add(
+                's3_update.tls_server_uri',
+                'Please provide a SAN or CN(i.e. Common Name) from the attached certificate.'
+            )
 
         if new['bindip'] not in await self.bindip_choices():
             verrors.add('s3_update.bindip', 'Please provide a valid ip address')
