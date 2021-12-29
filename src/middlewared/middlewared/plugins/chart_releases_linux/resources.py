@@ -1,3 +1,4 @@
+import collections
 import errno
 import os
 
@@ -219,3 +220,31 @@ class ChartReleaseService(Service):
             'status': r_status,
             **status,
         }
+
+    @private
+    async def get_workload_storage_details(self):
+        mapping = {
+            'storage_classes': collections.defaultdict(lambda: None),
+            'persistent_volumes': collections.defaultdict(list),
+        }
+        k8s_config = await self.middleware.call('kubernetes.config')
+        if not k8s_config['dataset']:
+            return mapping
+
+        for storage_class in await self.middleware.call('k8s.storage_class.query'):
+            mapping['storage_classes'][storage_class['metadata']['name']] = storage_class
+
+        # If the chart release was consuming any PV's, they would have to be manually removed from k8s database
+        # because of chart release reclaim policy being retain
+        for pv in await self.middleware.call(
+                'k8s.pv.query', [[
+                    'spec.csi.volume_attributes.openebs\\.io/poolname', '^',
+                    f'{os.path.join(k8s_config["dataset"], "releases")}/'
+                ]]
+        ):
+            dataset = pv['spec']['csi']['volume_attributes']['openebs.io/poolname']
+            rl = dataset.split('/', 4)
+            if len(rl) > 4:
+                mapping['persistent_volumes'][rl[3]].append(pv)
+
+        return mapping
