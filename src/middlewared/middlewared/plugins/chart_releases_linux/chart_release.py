@@ -160,24 +160,7 @@ class ChartReleaseService(CRUDService):
                 {'port': p['node_port'], 'protocol': p['protocol']} for p in node_port_svc['spec']['ports']
             ])
 
-        storage_classes = collections.defaultdict(lambda: None)
-        for storage_class in await self.middleware.call('k8s.storage_class.query'):
-            storage_classes[storage_class['metadata']['name']] = storage_class
-
-        persistent_volumes = collections.defaultdict(list)
-
-        # If the chart release was consuming any PV's, they would have to be manually removed from k8s database
-        # because of chart release reclaim policy being retain
-        for pv in await self.middleware.call(
-            'k8s.pv.query', [[
-                'spec.csi.volume_attributes.openebs\\.io/poolname', '^',
-                f'{os.path.join(k8s_config["dataset"], "releases")}/'
-            ]]
-        ):
-            dataset = pv['spec']['csi']['volume_attributes']['openebs.io/poolname']
-            rl = dataset.split('/', 4)
-            if len(rl) > 4:
-                persistent_volumes[rl[3]].append(pv)
+        storage_mapping = await self.middleware.call('chart.release.get_workload_storage_details')
 
         resources = {r.value: collections.defaultdict(list) for r in Resources}
         workload_status = collections.defaultdict(lambda: {'desired': 0, 'available': 0})
@@ -233,8 +216,8 @@ class ChartReleaseService(CRUDService):
             })
 
             release_resources = {
-                'storage_class': storage_classes[get_storage_class_name(name)],
-                'persistent_volumes': persistent_volumes[name],
+                'storage_class': storage_mapping['storage_classes'][get_storage_class_name(name)],
+                'persistent_volumes': storage_mapping['persistent_volumes'][name],
                 'host_path_volumes': await self.host_path_volumes(itertools.chain(
                     *[resources[getattr(Resources, k).value][name] for k in ('DEPLOYMENT', 'STATEFULSET')]
                 )),
