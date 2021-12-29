@@ -161,21 +161,12 @@ class ChartReleaseService(CRUDService):
             ])
 
         storage_mapping = await self.middleware.call('chart.release.get_workload_storage_details')
-
-        resources = {r.value: collections.defaultdict(list) for r in Resources}
-        workload_status = collections.defaultdict(lambda: {'desired': 0, 'available': 0})
-
-        for resource in Resources:
-            for r_data in await self.middleware.call(
-                f'k8s.{resource.name.lower()}.query', resources_filters, {
-                    'extra': {'events': extra.get('resource_events', False)}
-                }
-            ):
-                release_name = r_data['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
-                resources[resource.value][release_name].append(r_data)
-                if resource in (Resources.DEPLOYMENT, Resources.STATEFULSET):
-                    workload_status[release_name]['desired'] += (r_data['status']['replicas'] or 0)
-                    workload_status[release_name]['available'] += (r_data['status']['ready_replicas'] or 0)
+        resources_mapping = await self.middleware.call('chart.release.get_resources_with_workload_mapping', {
+            'resource_events': extra.get('resource_events', False),
+            'resource_filters': resources_filters,
+            'resources': [r.name for r in Resources],
+        })
+        resources = resources_mapping['resources']
 
         release_secrets = await self.middleware.call('chart.release.releases_secrets', extra)
         releases = []
@@ -190,7 +181,7 @@ class ChartReleaseService(CRUDService):
             ):
                 config.update(rel_data['config'])
 
-            pods_status = workload_status[name]
+            pods_status = resources_mapping['workload_status'][name]
             pod_diff = pods_status['available'] - pods_status['desired']
             status = 'ACTIVE'
             if pod_diff == 0 and pods_status['desired'] == 0:
