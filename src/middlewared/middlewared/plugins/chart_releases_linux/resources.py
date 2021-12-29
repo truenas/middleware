@@ -2,11 +2,11 @@ import collections
 import errno
 import os
 
-from middlewared.schema import Dict, Int, List, Ref, Str, returns
+from middlewared.schema import Bool, Dict, Int, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
 
-from .utils import get_namespace, get_storage_class_name, Resources
+from .utils import CHART_NAMESPACE_PREFIX, get_namespace, get_storage_class_name, Resources
 
 
 class ChartReleaseService(Service):
@@ -248,3 +248,30 @@ class ChartReleaseService(Service):
                 mapping['persistent_volumes'][rl[3]].append(pv)
 
         return mapping
+
+    @accepts(
+        Dict(
+            'options',
+            Bool('resource_events', default=False),
+            List('resources', enum=[r.name for r in Resources]),
+            List('resource_filters'),
+        )
+    )
+    @private
+    async def get_resources_with_workload_mapping(self, options):
+        resources_enum = [Resources[r] for r in options['resources']]
+        resources = {r.value: collections.defaultdict(list) for r in resources_enum}
+        workload_status = collections.defaultdict(lambda: {'desired': 0, 'available': 0})
+        for resource in resources_enum:
+            for r_data in await self.middleware.call(
+                f'k8s.{resource.name.lower()}.query', options['resource_filters'], {
+                    'extra': {'events': options['resource_events']}
+                }
+            ):
+                release_name = r_data['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
+                resources[resource.value][release_name].append(r_data)
+                if resource in (Resources.DEPLOYMENT, Resources.STATEFULSET):
+                    workload_status[release_name]['desired'] += (r_data['status']['replicas'] or 0)
+                    workload_status[release_name]['available'] += (r_data['status']['ready_replicas'] or 0)
+
+        return {'resources': resources, 'workload_status': workload_status}
