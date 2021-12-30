@@ -106,7 +106,7 @@ class PoolService(Service, ImportDiskBase):
         return KernelModuleContextManager({
             'ext2fs': 'ext2fs',
             'msdosfs': 'msdosfs_iconv',
-            'ntfs': 'fuse',
+            'ntfs': 'fusefs',
         }.get(fs_type))
 
     async def import_disk_mount_fs_context_manager(self, device, src, fs_type, fs_options):
