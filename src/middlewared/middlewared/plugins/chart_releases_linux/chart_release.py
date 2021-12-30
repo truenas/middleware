@@ -206,36 +206,35 @@ class ChartReleaseService(CRUDService):
                 'pod_status': pods_status,
             })
 
-            release_resources = {
-                'storage_class': storage_mapping['storage_classes'][get_storage_class_name(name)],
-                'persistent_volumes': storage_mapping['persistent_volumes'][name],
-                'host_path_volumes': await self.host_path_volumes(itertools.chain(
-                    *[resources[getattr(Resources, k).value][name] for k in ('DEPLOYMENT', 'STATEFULSET')]
-                )),
-                **{r.value: resources[r.value][name] for r in Resources},
-            }
-            release_resources = {
-                **release_resources,
-                'container_images': {
-                    i_name: {
-                        'id': image_details.get('id'),
-                        'update_available': image_details.get('update_available', False)
-                    } for i_name, image_details in map(
-                        lambda i: (i, container_images.get(i, {})),
-                        list(set(
-                            c['image']
-                            for workload_type in ('deployments', 'statefulsets')
-                            for workload in release_resources[workload_type]
-                            for c in workload['spec']['template']['spec']['containers']
-                        ))
-                    )
-                },
-                'truenas_certificates': [v['id'] for v in release_data['config'].get('ixCertificates', {}).values()],
-                'truenas_certificate_authorities': [
-                    v['id'] for v in release_data['config'].get('ixCertificateAuthorities', {}).values()
-                ],
+            container_images_normalized = {
+                i_name: {
+                    'id': image_details.get('id'),
+                    'update_available': image_details.get('update_available', False)
+                } for i_name, image_details in map(
+                    lambda i: (i, container_images.get(i, {})),
+                    list(set(
+                        c['image']
+                        for workload_type in ('deployments', 'statefulsets')
+                        for workload in resources[workload_type][name]
+                        for c in workload['spec']['template']['spec']['containers']
+                    ))
+                )
             }
             if get_resources:
+                release_resources = {
+                    'storage_class': storage_mapping['storage_classes'][get_storage_class_name(name)],
+                    'persistent_volumes': storage_mapping['persistent_volumes'][name],
+                    'host_path_volumes': await self.host_path_volumes(itertools.chain(
+                        *[resources[getattr(Resources, k).value][name] for k in ('DEPLOYMENT', 'STATEFULSET')]
+                    )),
+                    **{r.value: resources[r.value][name] for r in Resources},
+                    'container_images': container_images_normalized,
+                    'truenas_certificates': [v['id'] for v in
+                                             release_data['config'].get('ixCertificates', {}).values()],
+                    'truenas_certificate_authorities': [
+                        v['id'] for v in release_data['config'].get('ixCertificateAuthorities', {}).values()
+                    ],
+                }
                 if get_locked_paths:
                     release_resources['locked_host_paths'] = [
                         v['host_path']['path'] for v in release_resources['host_path_volumes']
@@ -286,7 +285,7 @@ class ChartReleaseService(CRUDService):
                     release_data['chart_schema'] = None
 
             release_data['container_images_update_available'] = any(
-                details['update_available'] for details in release_resources['container_images'].values()
+                details['update_available'] for details in container_images_normalized.values()
             )
             release_data['chart_metadata']['latest_chart_version'] = str(latest_version)
             release_data['portals'] = await self.middleware.call(
