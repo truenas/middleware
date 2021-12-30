@@ -387,10 +387,16 @@ class SMARTTestService(CRUDService):
                         **disk
                     })
                 else:
-                    verrors.add(
-                        f'disks.{index}.identifier',
-                        f'{disk["identifier"]} is not valid. Please provide a valid disk identifier.'
-                    )
+                    if await self.middleware.call('disk.query', [('identifier', '=', disk['identifier'])]):
+                        verrors.add(
+                            f'disks.{index}.identifier',
+                            f'{disk["identifier"]} does not support S.M.A.R.T test.'
+                        )
+                    else:
+                        verrors.add(
+                            f'disks.{index}.identifier',
+                            f'{disk["identifier"]} is not valid. Please provide a valid disk identifier.'
+                        )
                     continue
 
                 if current_disk['name'] is None:
