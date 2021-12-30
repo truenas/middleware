@@ -160,11 +160,17 @@ class ChartReleaseService(CRUDService):
                 {'port': p['node_port'], 'protocol': p['protocol']} for p in node_port_svc['spec']['ports']
             ])
 
-        storage_mapping = await self.middleware.call('chart.release.get_workload_storage_details')
+        if get_resources:
+            storage_mapping = await self.middleware.call('chart.release.get_workload_storage_details')
+
         resources_mapping = await self.middleware.call('chart.release.get_resources_with_workload_mapping', {
             'resource_events': extra.get('resource_events', False),
             'resource_filters': resources_filters,
-            'resources': [r.name for r in Resources],
+            'resources': [
+                r.name for r in (
+                    Resources if get_resources else [Resources.POD, Resources.DEPLOYMENT, Resources.STATEFULSET]
+                )
+            ],
         })
         resources = resources_mapping['resources']
 
