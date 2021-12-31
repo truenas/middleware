@@ -32,8 +32,8 @@ class AnyWebhookAlerteService(ThreadedAlertService):
             )
         else:
             r = requests.post(
-                url = self.attributes["url"],
-                data = body,
+                url = f"{url}",
+                data = f"{body}",
                 timeout = INTERNET_TIMEOUT
             )
         
