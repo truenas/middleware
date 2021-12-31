@@ -11,14 +11,15 @@ class FreeTelecomAlerteService(ThreadedAlertService):
 
     schema = Dict(
         "FreeTelecom_attributes",
+        Str("url", requierd=True, empty=False, default="https://smsapi.free-mobile.fr/sendmsg"),
         Str("user", requierd=True, empty=False),
-        Str("pass", requierd=True, empty=False),
+        Str("pass", requierd=True, empty=False)
     )
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
         
         r = requests.post(
-            url = "https://smsapi.free-mobile.fr/sendmsg",
+            url = self.attributes["url"],
             data = json.dumps({
                     "user": self.attributes["user"],
                     "pass": self.attributes["pass"],
