@@ -25,6 +25,7 @@ class FreeTelecomAlerteService(ThreadedAlertService):
                     "pass": self.attributes["pass"],
                     "msg": html2text.html2text(self._format_alerts(alerts, gone_alerts, new_alerts))
                 }),
+            headers={"Content-type": "application/json"},
             timeout = INTERNET_TIMEOUT
         )
         

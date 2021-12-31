@@ -34,6 +34,7 @@ class AnyWebhookAlerteService(ThreadedAlertService):
             r = requests.post(
                 url = f"{url}",
                 data = f"{body}",
+                headers={"Content-type": "application/json"},
                 timeout = INTERNET_TIMEOUT
             )
         
