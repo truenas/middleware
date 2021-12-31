@@ -156,7 +156,7 @@ class SharingSMBService(Service):
     @private
     async def order_vfs_objects(self, vfs_objects):
         vfs_objects_special = ('catia', 'zfs_space', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
-                               'noacl', 'ixnas', 'zfsacl', 'recycle', 'crossrename', 'aio_fbsd')
+                               'noacl', 'ixnas', 'zfsacl', 'recycle', 'crossrename', 'zfs_core', 'aio_fbsd')
 
         vfs_objects_ordered = []
 
@@ -278,7 +278,7 @@ class SharingSMBService(Service):
             conf['path'] = ''
 
         if osc.IS_FREEBSD:
-            data['vfsobjects'] = ['aio_fbsd']
+            data['vfsobjects'] = ['aio_fbsd', 'zfs_core']
         else:
             data['vfsobjects'] = []
 
