@@ -377,17 +377,22 @@ class SMARTTestService(CRUDService):
                 'Please specify at least one disk.'
             )
         else:
-            disks_choices = await self.disk_choices(True)
+            supported_disks = await self.disk_choices(True)
             devices = await self.middleware.call('device.get_storage_devices_topology')
-
+            valid_disks = [
+                disk['identifier']
+                for disk in await self.middleware.call('disk.query', [
+                    ('identifier', 'in', [disk['identifier'] for disk in disks])
+                ], {'force_sql_filters': True})
+            ]
             for index, disk in enumerate(disks):
-                if current_disk := disks_choices.get(disk['identifier']):
+                if current_disk := supported_disks.get(disk['identifier']):
                     test_disks_list.append({
                         'disk': current_disk['name'],
                         **disk
                     })
                 else:
-                    if await self.middleware.call('disk.query', [('identifier', '=', disk['identifier'])]):
+                    if disk['identifier'] in valid_disks:
                         verrors.add(
                             f'disks.{index}.identifier',
                             f'{disk["identifier"]} does not support S.M.A.R.T test.'
