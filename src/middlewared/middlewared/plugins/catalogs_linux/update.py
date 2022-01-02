@@ -61,7 +61,18 @@ class CatalogService(CRUDService):
     @private
     async def catalog_extend_context(self, rows, extra):
         k8s_dataset = (await self.middleware.call('kubernetes.config'))['dataset']
-        catalogs_dir = os.path.join('/mnt', k8s_dataset, 'catalogs') if k8s_dataset else f'{TMP_IX_APPS_DIR}/catalogs'
+        catalogs_ds = await self.middleware.call(
+            'zfs.dataset.query', [['id', '=', os.path.join(k8s_dataset, 'catalogs')]], {
+                'extra': {'properties': ['encryption', 'keystatus', 'mountpoint', 'mounted']}
+            }
+        )
+        if k8s_dataset and (
+            catalogs_ds and catalogs_ds[0]['key_loaded'] and catalogs_ds[0]['properties']['mounted']['parsed']
+        ):
+            catalogs_dir = catalogs_ds[0]['properties']['mountpoint']['parsed']
+        else:
+            catalogs_dir = os.path.join(TMP_IX_APPS_DIR, 'catalogs')
+
         context = {
             'catalogs_dir': catalogs_dir,
             'extra': extra or {},
