@@ -1839,6 +1839,16 @@ async def firstboot(middleware):
                     'Failed to set keep attribute for Initial-Install boot environment: %s', cp.stderr.decode()
                 )
 
+        if await middleware.call('system.running_in_azure'):
+            # We would like to enable walinuxagent and start it if we are in azure
+            cp = await run(['systemctl', 'enable', 'walinuxagent'], check=False)
+            if cp.returncode:
+                middleware.logger.error('Failed to enable walinuxagent: %r', cp.stderr.decode())
+
+            cp = await run(['systemctl', 'start', 'walinuxagent'], check=False)
+            if cp.returncode:
+                middleware.logger.error('Failed to start walinuxagent: %r', cp.stderr.decode())
+
 
 async def update_timeout_value(middleware, *args):
     if not await middleware.call(
