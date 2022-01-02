@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 class SystemService(Service):
     is_vm = None
+    is_running_in_azure = None
 
     @private
     async def vm(self):
@@ -17,3 +18,11 @@ class SystemService(Service):
             self.is_vm = p.stdout.strip() != "none"
 
         return self.is_vm
+
+    @private
+    async def running_in_azure(self):
+        if self.is_running_in_azure is None:
+            dmi_info = await self.middleware.call("system.dmidecode_info")
+            self.is_running_in_azure = dmi_info["system-manufacturer"] == "Microsoft Corporation" and await self.is_vm()
+
+        return self.is_running_in_azure
