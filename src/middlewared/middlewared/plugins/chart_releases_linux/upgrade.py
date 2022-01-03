@@ -418,7 +418,7 @@ class ChartReleaseService(Service):
         for reference in results['resources']['container_images']:
             parsed_reference = await self.middleware.call('container.image.normalize_reference', reference)
             bulk_pull_params.append([{
-                'from_image': f"{parsed_reference['registry']}/{parsed_reference['image']}",
+                'from_image': parsed_reference['reference'].rsplit(':', 1)[0],
                 'tag': parsed_reference['tag']
             }])
             parsed_references.append(parsed_reference)
