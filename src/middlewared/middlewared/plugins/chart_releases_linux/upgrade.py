@@ -417,6 +417,10 @@ class ChartReleaseService(Service):
         )
         for reference in results['resources']['container_images']:
             parsed_reference = await self.middleware.call('container.image.normalize_reference', reference)
+            if parsed_reference['reference_is_digest']:
+                # There is no point in trying to update an image when we have a digest as the tag
+                continue
+
             bulk_pull_params.append([{
                 'from_image': parsed_reference['reference'].rsplit(':', 1)[0],
                 'tag': parsed_reference['tag']
