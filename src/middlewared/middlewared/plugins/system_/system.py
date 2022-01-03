@@ -4,12 +4,14 @@ import logging
 from middlewared.service import private, Service
 from middlewared.utils import run
 
+from .utils import VMProvider
+
 logger = logging.getLogger(__name__)
 
 
 class SystemService(Service):
     is_vm = None
-    is_running_in_azure = None
+    vm_hypervisor = None
 
     @private
     async def vm(self):
@@ -20,9 +22,12 @@ class SystemService(Service):
         return self.is_vm
 
     @private
-    async def running_in_azure(self):
-        if self.is_running_in_azure is None:
-            dmi_info = await self.middleware.call("system.dmidecode_info")
-            self.is_running_in_azure = dmi_info["system-manufacturer"] == "Microsoft Corporation" and await self.is_vm()
+    async def vm_provider(self):
+        if self.vm_hypervisor is None:
+            self.vm_hypervisor = VMProvider.NONE
+            if await self.vm():
+                dmi_info = await self.middleware.call("system.dmidecode_info")
+                if dmi_info["system-manufacturer"] == "Microsoft Corporation":
+                    self.vm_hypervisor = VMProvider.AZURE
 
-        return self.is_running_in_azure
+        return self.vm_hypervisor.value
