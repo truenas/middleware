@@ -36,6 +36,7 @@ def normalize_reference(reference: str) -> Dict:
 
     # At this point, tag should be included already – we just need to see whether this
     # tag is named or digested and respond accordingly.
+    ref_is_digest = False
     if '@' in tagged_image:
         matches = re.findall(DIGEST_RE, tagged_image)
         if not matches:
@@ -45,6 +46,7 @@ def normalize_reference(reference: str) -> Dict:
         tag_pos = tagged_image.find(tag)
         image = tagged_image[:tag_pos - 1].rsplit(':', 1)[0]
         sep = '@'
+        ref_is_digest = True
     elif ':' in tagged_image:
         image, tag = tagged_image.rsplit(':', 1)
         sep = ':'
@@ -55,4 +57,5 @@ def normalize_reference(reference: str) -> Dict:
         'tag': tag,
         'registry': registry,
         'complete_tag': f'{registry}/{image}{sep}{tag}',
+        'reference_is_digest': ref_is_digest,
     }
