@@ -1,5 +1,7 @@
 from middlewared.service import private, Service
 
+from .netif import netif
+
 
 class InterfaceService(Service):
 
@@ -8,6 +10,4 @@ class InterfaceService(Service):
 
     @private
     async def internal_interfaces(self):
-        return [
-            'wg', 'lo', 'tun', 'tap', 'docker', 'veth', 'kube-bridge', 'kube-dummy-if', 'vnet', 'openvpn', 'macvtap',
-        ]
+        return netif.INTERNAL_INTERFACES

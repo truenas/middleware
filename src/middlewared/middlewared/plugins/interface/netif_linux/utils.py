@@ -4,7 +4,12 @@ import subprocess
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["bitmask_to_set", "run"]
+__all__ = ["bitmask_to_set", "INTERNAL_INTERFACES", "run"]
+
+
+INTERNAL_INTERFACES = [
+    "wg", "lo", "tun", "tap", "docker", "veth", "kube-bridge", "kube-dummy-if", "vnet", "openvpn", "macvtap",
+]
 
 
 def bitmask_to_set(n, enumeration):
