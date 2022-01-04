@@ -65,7 +65,7 @@ class CatalogService(CRUDService):
             'zfs.dataset.query', [['id', '=', os.path.join(k8s_dataset, 'catalogs')]], {
                 'extra': {'properties': ['encryption', 'keystatus', 'mountpoint', 'mounted']}
             }
-        )
+        ) if k8s_dataset else []
         if k8s_dataset and (
             catalogs_ds and catalogs_ds[0]['key_loaded'] and catalogs_ds[0]['properties']['mounted']['parsed']
         ):
