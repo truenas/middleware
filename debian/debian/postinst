@@ -50,6 +50,9 @@ update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 update-alternatives --set arptables /usr/sbin/arptables-legacy
 update-alternatives --set ebtables /usr/sbin/ebtables-legacy
 
+# Make apt related binaries non-executable
+find /usr/bin/ -name "apt*" -execdir chmod -x {} +
+
 # Add nut to dialout group - NAS-110578
 usermod -a -G dialout nut
 # Usbhid-ups driver does not start and needs nut as the group for it's executable to correctly execute NAS-113642
