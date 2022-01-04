@@ -94,9 +94,11 @@ class DeviceService(Service, DeviceInfoBase):
             if disk['size'] and disk['sectorsize']:
                 disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
-            driver = devices.get(name, {}).get('driver')
-            if driver == 'umass-sim':
-                disk['bus'] = 'USB'
+            if driver := devices.get(name, {}).get('driver'):
+                if driver == 'umass-sim':
+                    disk['bus'] = 'USB'
+                else:
+                    disk['bus'] = driver.upper()
             else:
                 disk['bus'] = 'UNKNOWN'
 
