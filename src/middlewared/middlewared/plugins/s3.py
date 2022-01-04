@@ -14,6 +14,7 @@ class S3Model(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     s3_bindip = sa.Column(sa.String(128), default='0.0.0.0')
     s3_bindport = sa.Column(sa.SmallInteger(), default=9000)
+    s3_console_bindport = sa.Column(sa.SmallInteger(), default=9001)
     s3_access_key = sa.Column(sa.String(128), default='')
     s3_secret_key = sa.Column(sa.EncryptedText(), default='')
     s3_mode = sa.Column(sa.String(120), default="local")
@@ -52,6 +53,7 @@ class S3Service(SystemServiceService):
         's3_update',
         Str('bindip'),
         Int('bindport', validators=[Range(min=1, max=65535)]),
+        Int('console_bindport', validators=[Range(min=1, max=65535)]),
         Str('access_key', validators=[Match("^\w+$", explanation="Should only contain alphanumeric characters")],
             max_length=20),
         Str('secret_key', validators=[Match("^\w+$", explanation="Should only contain alphanumeric characters")],
