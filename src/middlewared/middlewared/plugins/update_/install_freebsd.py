@@ -24,7 +24,10 @@ class UpdateService(Service):
         old_manifest = Configuration.Configuration().SystemManifest()
 
         new_manifest = Manifest.Manifest(require_signature=True)
-        new_manifest.LoadPath('{}/MANIFEST'.format(location))
+        try:
+            new_manifest.LoadPath('{}/MANIFEST'.format(location))
+        except FileNotFoundError:
+            raise CallError('Uploaded file is not a manual update file')
 
         old_version = old_manifest.Version()
         new_version = new_manifest.Version()
