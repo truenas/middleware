@@ -334,6 +334,14 @@ class SupportService(ConfigService):
         if data['error']:
             raise CallError(data['message'], errno.EINVAL)
 
+    @accepts()
+    @returns(Int())
+    async def attach_ticket_max_size(self):
+        """
+        Returns maximum uploaded file size for `support.attach_ticket`
+        """
+        return DEBUG_MAX_SIZE
+
 
 async def setup(middleware):
     await middleware.call('network.general.register_activity', 'support', 'Support')
