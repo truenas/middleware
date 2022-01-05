@@ -35,6 +35,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, filter_list, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
+from middlewared.utils.size import MB
 from middlewared.validators import Exact, Match, Or, Range, Time
 
 logger = logging.getLogger(__name__)
@@ -2425,13 +2426,14 @@ class PoolDatasetService(CRUDService):
 
         failed = defaultdict(lambda: dict({'error': None, 'skipped': []}))
         unlocked = []
-        for name in sorted(
+        names = sorted(
             filter(
                 lambda n: n and f'{n}/'.startswith(f'{id}/') and datasets[n]['locked'],
                 (datasets if options['recursive'] else [id])
             ),
             key=lambda v: v.count('/')
-        ):
+        )
+        for name_i, name in enumerate(names):
             skip = False
             for i in range(name.count('/') + 1):
                 check = name.rsplit('/', i)[0]
@@ -2447,6 +2449,7 @@ class PoolDatasetService(CRUDService):
                 failed[name]['error'] = 'Missing key'
                 continue
 
+            job.set_progress(int(name_i / len(names) * 90 + 0.5), f'Unlocking {name!r}')
             try:
                 self.middleware.call_sync(
                     'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': False}
@@ -2484,7 +2487,10 @@ class PoolDatasetService(CRUDService):
 
         if unlocked:
             if options['toggle_attachments']:
+                job.set_progress(91, 'Handling attachments')
                 self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset, options)
+
+            job.set_progress(92, 'Updating database')
 
             def dataset_data(unlocked_dataset):
                 return {
@@ -2497,8 +2503,10 @@ class PoolDatasetService(CRUDService):
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
 
+            job.set_progress(93, 'Restarting services')
             self.middleware.call_sync('pool.dataset.restart_services_after_unlock', id, services_to_restart)
 
+            job.set_progress(94, 'Running post-unlock tasks')
             self.middleware.call_hook_sync(
                 'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
             )
@@ -2857,7 +2865,7 @@ class PoolDatasetService(CRUDService):
     def _retrieve_keys_from_file(self, job):
         job.check_pipe('input')
         try:
-            data = json.loads(job.pipes.input.r.read(10240))
+            data = json.loads(job.pipes.input.r.read(10 * MB))
         except json.JSONDecodeError:
             raise CallError('Input file must be a valid JSON file')
 
