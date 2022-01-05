@@ -4,7 +4,7 @@ import re
 import subprocess
 from sqlalchemy.exc import IntegrityError
 
-from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run

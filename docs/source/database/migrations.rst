@@ -22,7 +22,8 @@ To generate a migration after schema changes run:
     alembic revision --autogenerate
 
 A new file will appear under :substitution-code:`alembic/versions/|version|`. Rename it to reflect migration contents.
-Inside this file you'll find `upgrade` and `downgrade` functions that are used to apply and revert the migration.
+Update the first comment (`"""empty message`) to add a short human-readable description for the migration. Next in
+this file you'll find `upgrade` and `downgrade` functions that are used to apply and revert the migration.
 Sometimes this automatically generated code will be correct out of the box, in other cases it might need to be
 corrected. `downgrade` function can be ignored, because we don't do downgrades.
 
@@ -80,6 +81,7 @@ more than one head (e.g. while you've worked on your branch, someone pushed anot
     alembic merge heads
 
 And a new migration file will appear that will merge all heads. Rename if to the `%Y-%m-%d_%H-%M_merge.py` format.
+Update update the first comment `"""empty message` to be `"""Merge`.
 Beware that corresponding migration branches can be executed in any order (which is usually not an issue).
 
 Backporting migrations
