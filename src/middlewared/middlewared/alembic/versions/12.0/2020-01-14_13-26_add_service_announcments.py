@@ -1,4 +1,4 @@
-"""empty message
+"""gc_service_announcement
 
 Revision ID: 39a133a04496
 Revises: 133f2d9049d2
