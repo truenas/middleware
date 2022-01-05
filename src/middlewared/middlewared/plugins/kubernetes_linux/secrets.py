@@ -19,8 +19,10 @@ class KubernetesSecretService(CRUDService):
     @filterable
     async def query(self, filters, options):
         options = options or {}
-        label_selector = options.get('extra', {}).get('label_selector')
-        kwargs = {k: v for k, v in [('label_selector', label_selector)] if v}
+        extra = options.get('extra', {})
+        label_selector = extra.get('label_selector')
+        field_selector = extra.get('field_selector')
+        kwargs = {k: v for k, v in [('label_selector', label_selector), ('field_selector', field_selector)] if v}
         async with api_client() as (api, context):
             if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0])[:2] == ['metadata.namespace', '=']:
                 func = functools.partial(context['core_api'].list_namespaced_secret, namespace=filters[0][2], **kwargs)
