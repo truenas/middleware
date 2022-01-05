@@ -31,6 +31,8 @@ logging.getLogger('pyroute2.ndb').setLevel(logging.ERROR)
 # It logs each call made to the k8s api server when in debug mode, so we set the level to warn
 logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
 logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
+
 
 FAILSAFE_LOGFILE = '/tmp/failsafe_middlewared.log'
 LOGFILE = '/var/log/middlewared.log'
