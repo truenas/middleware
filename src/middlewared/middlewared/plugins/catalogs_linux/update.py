@@ -66,8 +66,10 @@ class CatalogService(CRUDService):
                 'extra': {'properties': ['encryption', 'keystatus', 'mountpoint', 'mounted']}
             }
         ) if k8s_dataset else []
-        if k8s_dataset and (
-            catalogs_ds and catalogs_ds[0]['key_loaded'] and catalogs_ds[0]['properties']['mounted']['parsed']
+        if k8s_dataset and catalogs_ds and (
+            catalogs_ds[0]['properties']['mounted']['parsed'] and (
+                (catalogs_ds[0]['encrypted'] and catalogs_ds[0]['key_loaded']) or not catalogs_ds[0]['encrypted']
+            )
         ):
             catalogs_dir = catalogs_ds[0]['properties']['mountpoint']['parsed']
         else:
