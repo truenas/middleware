@@ -579,6 +579,14 @@ class ChartReleaseService(CRUDService):
             args.extend([os.path.join(chart_path, 'ix_values.yaml'), '-f'])
 
         action = tn_action if tn_action == 'install' else 'upgrade'
+        if action == 'upgrade':
+            # We only keep history of max 5 upgrades
+            # We input 6 here because helm considers app setting modifications as upgrades as well
+            # which means that if an app setting is even just modified and is not an upgrade in scale terms
+            # we will essentially only be keeping 4 major upgrades revision history. With 6, we temporarily have 6
+            # secrets for the app but that gets sorted out asap after the upgrade action when we sync secrets and
+            # we end up with 5 revision secrets max per app
+            args.insert(0, '--history-max=6')
 
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(config))
