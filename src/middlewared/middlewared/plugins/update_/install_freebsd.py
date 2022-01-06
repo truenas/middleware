@@ -31,6 +31,8 @@ class UpdateService(Service):
 
         old_version = old_manifest.Version()
         new_version = new_manifest.Version()
+        if old_version == new_version:
+            raise CallError(f'You already are using {new_version}')
         if not can_update(old_version, new_version):
             raise CallError(f'Unable to downgrade from {old_version} to {new_version}')
 
