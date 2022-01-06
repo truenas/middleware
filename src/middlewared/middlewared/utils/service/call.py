@@ -6,7 +6,12 @@ from middlewared.service_exception import CallError
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["ServiceCallMixin"]
+__all__ = ["MethodNotFoundError", "ServiceCallMixin"]
+
+
+class MethodNotFoundError(CallError):
+    def __init__(self, method_name, service):
+        super().__init__(f'Method {method_name!r} not found in {service!r}', CallError.ENOMETHOD)
 
 
 class ServiceCallMixin:
@@ -24,6 +29,6 @@ class ServiceCallMixin:
         try:
             methodobj = getattr(serviceobj, method_name)
         except AttributeError:
-            raise CallError(f'Method {method_name!r} not found in {service!r}', CallError.ENOMETHOD)
+            raise MethodNotFoundError(method_name, service)
 
         return serviceobj, methodobj

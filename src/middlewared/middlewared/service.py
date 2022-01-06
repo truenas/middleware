@@ -518,6 +518,20 @@ class CRUDService(ServiceChangeMixin, Service):
         """
         return await self._get_instance(id)
 
+    @private
+    def get_instance__sync(self, id):
+        """
+        Synchronous implementation of `get_instance`.
+        """
+        instance = self.middleware.call_sync(
+            f'{self._config.namespace}.query',
+            [('id', '=', id)],
+            {'force_sql_filters': True},
+        )
+        if not instance:
+            raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
+        return instance[0]
+
     async def _get_instance(self, id):
         """
         Helper method to get an instance from a collection given the `id`.
