@@ -62,7 +62,16 @@ class EnclosureService(CRUDService):
     @filterable
     def query(self, filters, options):
         enclosures = []
+        seen_enclosures = set()
         for enc in self.__get_enclosures():
+            if enc.encid in seen_enclosures:
+                # shelf is cabled for multipath so skip it
+                # so we don't return more than 1 of this expansion shelf
+                # when, in fact, there is only 1
+                continue
+            else:
+                seen_enclosures.add(enc.encid)
+
             enclosure = {
                 "id": enc.encid,
                 "name": enc.name,
