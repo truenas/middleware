@@ -696,7 +696,7 @@ class KerberosRealmService(TDBWrapCRUDService):
         id = await super().do_create(data)
         await self.middleware.call('etc.generate', 'kerberos')
         await self.middleware.call('service.restart', 'cron')
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(
         Int('id', required=True),
@@ -712,7 +712,7 @@ class KerberosRealmService(TDBWrapCRUDService):
         domain join process in an Active Directory environment. Kerberos realm names
         are case-sensitive, but convention is to only use upper-case.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -720,7 +720,7 @@ class KerberosRealmService(TDBWrapCRUDService):
         await super().do_update(id, new)
 
         await self.middleware.call('etc.generate', 'kerberos')
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -786,7 +786,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
         id = await super().do_create(data)
         await self.middleware.call('etc.generate', 'kerberos')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(
         Int('id', required=True),
@@ -799,7 +799,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
         """
         Update kerberos keytab by id.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -813,7 +813,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
         await super().do_update(id, new)
         await self.middleware.call('etc.generate', 'kerberos')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):

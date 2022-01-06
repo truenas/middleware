@@ -145,7 +145,7 @@ class EnclosureService(CRUDService):
                 "label": data["label"]
             })
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     def _get_slot(self, slot_filter, enclosure_query=None, enclosure_info=None):
         if enclosure_info is None:

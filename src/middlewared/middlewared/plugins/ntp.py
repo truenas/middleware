@@ -87,7 +87,7 @@ class NTPServerService(CRUDService):
         """
         Update NTP server of `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)

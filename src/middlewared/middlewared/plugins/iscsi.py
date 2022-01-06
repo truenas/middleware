@@ -192,7 +192,7 @@ class ISCSIPortalService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(pk)
+        return await self.get_instance(pk)
 
     async def __save_listen(self, pk, new, old=None):
         """
@@ -236,7 +236,7 @@ class ISCSIPortalService(CRUDService):
         Update iSCSI Portal `id`.
         """
 
-        old = await self._get_instance(pk)
+        old = await self.get_instance(pk)
 
         new = old.copy()
         new.update(data)
@@ -259,14 +259,14 @@ class ISCSIPortalService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(pk)
+        return await self.get_instance(pk)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete iSCSI Portal `id`.
         """
-        await self._get_instance(id)
+        await self.get_instance(id)
         await self.middleware.call(
             'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target_portalgroup', '=', id]]
         )
@@ -367,7 +367,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -381,7 +381,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         """
         Update iSCSI Authorized Access of `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -403,14 +403,14 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete iSCSI Authorized Access of `id`.
         """
-        config = await self._get_instance(id)
+        config = await self.get_instance(id)
         if not await self.query([['tag', '=', config['tag']], ['id', '!=', id]]):
             usages = await self.is_in_use_by_portals_targets(id)
             if usages['in_use']:
@@ -580,7 +580,7 @@ class iSCSITargetExtentService(SharingService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -633,7 +633,7 @@ class iSCSITargetExtentService(SharingService):
 
         If `id` iSCSI Extent's `type` was configured to FILE, `remove` can be set to remove the configured file.
         """
-        data = await self._get_instance(id)
+        data = await self.get_instance(id)
         target_to_extents = await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]])
         active_sessions = await self.middleware.call(
             'iscsi.target.active_sessions_for_targets', [t['target'] for t in target_to_extents]
@@ -955,7 +955,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -969,7 +969,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         """
         Update iSCSI initiator of `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -981,14 +981,14 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete iSCSI initiator of `id`.
         """
-        await self._get_instance(id)
+        await self.get_instance(id)
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -1127,7 +1127,7 @@ class iSCSITargetService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(pk)
+        return await self.get_instance(pk)
 
     async def __save_groups(self, pk, new, old=None):
         """
@@ -1268,7 +1268,7 @@ class iSCSITargetService(CRUDService):
         """
         Update iSCSI Target of `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -1293,7 +1293,7 @@ class iSCSITargetService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'), Bool('force', default=False))
     async def do_delete(self, id, force):
@@ -1302,7 +1302,7 @@ class iSCSITargetService(CRUDService):
 
         Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
         """
-        target = await self._get_instance(id)
+        target = await self.get_instance(id)
         if await self.active_sessions_for_targets([target['id']]):
             if force:
                 self.middleware.logger.warning('Target %s is in use.', target['name'])
@@ -1408,7 +1408,7 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     def _set_null_false(name):
         def set_null_false(attr):
@@ -1429,7 +1429,7 @@ class iSCSITargetToExtentService(CRUDService):
         Update Associated Target of `id`.
         """
         verrors = ValidationErrors()
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -1445,14 +1445,14 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'), Bool('force', default=False))
     async def do_delete(self, id, force):
         """
         Delete Associated Target of `id`.
         """
-        associated_target = await self._get_instance(id)
+        associated_target = await self.get_instance(id)
         active_sessions = await self.middleware.call(
             'iscsi.target.active_sessions_for_targets', [associated_target['target']]
         )

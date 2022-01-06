@@ -229,7 +229,7 @@ class RsyncModService(SharingService):
 
         await self._service_change('rsync', 'reload')
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(Int('id'), Patch('rsyncmod_create', 'rsyncmod_update', ('attr', {'update': True})))
     async def do_update(self, id, data):
@@ -646,7 +646,7 @@ class RsyncTaskService(TaskPathService):
         """
         Helper method to generate the rsync command avoiding code duplication.
         """
-        rsync = await self._get_instance(id)
+        rsync = await self.get_instance(id)
         path = shlex.quote(rsync['path'])
 
         line = ['rsync']

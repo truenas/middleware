@@ -887,7 +887,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         entries for the domain associated with the id.
         """
         if id <= 5:
-            entry = await self._get_instance(id)
+            entry = await self.get_instance(id)
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
 
         ret = await self.direct_delete(id)
