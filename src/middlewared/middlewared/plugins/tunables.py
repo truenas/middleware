@@ -92,7 +92,7 @@ class TunableService(CRUDService):
 
         await self.middleware.call('service.reload', data['type'])
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     async def do_update(self, id, data):
         """

@@ -154,7 +154,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         await self.middleware.call('zettarepl.update_tasks')
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id', required=True),
@@ -203,7 +203,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         fixate_removal_date = data.pop('fixate_removal_date', False)
 
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -249,7 +249,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         await self.middleware.call('zettarepl.update_tasks')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(
         Int('id'),
@@ -313,7 +313,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         """
         Execute a Periodic Snapshot Task of `id`.
         """
-        task = await self._get_instance(id)
+        task = await self.get_instance(id)
 
         if not task["enabled"]:
             raise CallError("Task is not enabled")

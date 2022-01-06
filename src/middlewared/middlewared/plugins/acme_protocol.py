@@ -282,7 +282,7 @@ class DNSAuthenticatorService(CRUDService):
             data,
         )
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(
         Int('id'),
@@ -319,7 +319,7 @@ class DNSAuthenticatorService(CRUDService):
                 ]
             }
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -332,7 +332,7 @@ class DNSAuthenticatorService(CRUDService):
             new
         )
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     async def do_delete(self, id):
         """

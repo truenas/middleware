@@ -466,7 +466,7 @@ class UserService(CRUDService):
         Update attributes of an existing user.
         """
 
-        user = await self._get_instance(pk)
+        user = await self.get_instance(pk)
 
         verrors = ValidationErrors()
 
@@ -667,7 +667,7 @@ class UserService(CRUDService):
         any other user.
         """
 
-        user = await self._get_instance(pk)
+        user = await self.get_instance(pk)
 
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
@@ -773,7 +773,7 @@ class UserService(CRUDService):
 
         e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
         """
-        user = await self._get_instance(pk)
+        user = await self.get_instance(pk)
 
         user['attributes'][key] = value
 
@@ -797,7 +797,7 @@ class UserService(CRUDService):
         """
         Remove user general purpose `attributes` dictionary `key`.
         """
-        user = await self._get_instance(pk)
+        user = await self.get_instance(pk)
 
         if key in user['attributes']:
             user['attributes'].pop(key)
@@ -1344,7 +1344,7 @@ class GroupService(CRUDService):
         Update attributes of an existing group.
         """
 
-        group = await self._get_instance(pk)
+        group = await self.get_instance(pk)
         groupmap_changed = False
 
         verrors = ValidationErrors()
@@ -1416,7 +1416,7 @@ class GroupService(CRUDService):
         The `delete_users` option deletes all users that have this group as their primary group.
         """
 
-        group = await self._get_instance(pk)
+        group = await self.get_instance(pk)
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 

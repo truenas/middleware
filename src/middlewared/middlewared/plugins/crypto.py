@@ -1296,7 +1296,7 @@ class CertificateService(CRUDService):
 
     @private
     async def get_domain_names(self, cert_id):
-        data = await self._get_instance(int(cert_id))
+        data = await self.get_instance(int(cert_id))
         names = [data['common']] if data['common'] else []
         names.extend(data['san'])
         return names
@@ -1555,7 +1555,7 @@ class CertificateService(CRUDService):
 
         job.set_progress(100, 'Certificate created successfully')
 
-        return await self._get_instance(pk)
+        return await self.get_instance(pk)
 
     @accepts(
         Dict(
@@ -1805,7 +1805,7 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
         if old.get('acme'):
@@ -1860,7 +1860,7 @@ class CertificateService(CRUDService):
 
         job.set_progress(90, 'Finalizing changes')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @private
     async def delete_domains_authenticator(self, auth_id):
@@ -2137,7 +2137,7 @@ class CertificateAuthorityService(CRUDService):
     @private
     async def get_serial_for_certificate(self, ca_id):
 
-        ca_data = await self._get_instance(ca_id)
+        ca_data = await self.get_instance(ca_id)
 
         if ca_data.get('signedby'):
             # Recursively call the same function for it's parent and let the function gather all serials in a chain
@@ -2176,7 +2176,7 @@ class CertificateAuthorityService(CRUDService):
                     serials.extend((await child_serials(child['id'])))
 
                 serials.extend((await cert_serials(ca_id)))
-                serials.append((await self._get_instance(ca_id))['serial'])
+                serials.append((await self.get_instance(ca_id))['serial'])
 
                 return serials
 
@@ -2187,7 +2187,7 @@ class CertificateAuthorityService(CRUDService):
 
             if not ca_signed_certs:
                 return int(
-                    (await self._get_instance(ca_id))['serial'] or 0
+                    (await self.get_instance(ca_id))['serial'] or 0
                 ) + 1
             else:
                 return max(ca_signed_certs) + 1
@@ -2320,7 +2320,7 @@ class CertificateAuthorityService(CRUDService):
 
         await self.middleware.call('service.start', 'ssl')
 
-        return await self._get_instance(pk)
+        return await self.get_instance(pk)
 
     @accepts(
         Dict(
@@ -2456,7 +2456,7 @@ class CertificateAuthorityService(CRUDService):
     )
     async def __create_intermediate_ca(self, data):
 
-        signing_cert = await self._get_instance(data['signedby'])
+        signing_cert = await self.get_instance(data['signedby'])
 
         serial = await self.get_serial_for_certificate(signing_cert['id'])
 
@@ -2575,7 +2575,7 @@ class CertificateAuthorityService(CRUDService):
             for key in ['ca_id', 'csr_cert_id']:
                 data.pop(key, None)
 
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
 
@@ -2624,7 +2624,7 @@ class CertificateAuthorityService(CRUDService):
 
             await self.middleware.call('service.start', 'ssl')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     async def do_delete(self, id):
         """
@@ -2644,7 +2644,7 @@ class CertificateAuthorityService(CRUDService):
                 ]
             }
         """
-        await self._get_instance(id)
+        await self.get_instance(id)
         await self.middleware.run_in_thread(check_dependencies, self.middleware, 'CA', id)
 
         response = await self.middleware.call(

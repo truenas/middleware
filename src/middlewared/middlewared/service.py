@@ -952,7 +952,14 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
         """
-        return await self._get_instance(id, options)
+        instance = await self.middleware.call(
+            f'{self._config.namespace}.query',
+            [[self._config.datastore_primary_key, '=', id]],
+            options
+        )
+        if not instance:
+            raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')
+        return instance[0]
 
     @private
     @accepts(
@@ -974,20 +981,6 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             f'{self._config.namespace}.query',
             [[self._config.datastore_primary_key, '=', id]],
             options,
-        )
-        if not instance:
-            raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')
-        return instance[0]
-
-    @accepts(Any('id'), Ref('query-options-get_instance'))
-    async def _get_instance(self, id, options):
-        """
-        Helper method to get an instance from a collection given the `id`.
-        """
-        instance = await self.middleware.call(
-            f'{self._config.namespace}.query',
-            [[self._config.datastore_primary_key, '=', id]],
-            options
         )
         if not instance:
             raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')

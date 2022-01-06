@@ -628,7 +628,7 @@ class CredentialsService(CRUDService):
         """
         Update Cloud Sync Credentials of `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -1165,7 +1165,7 @@ class CloudSyncService(TaskPathService):
         Aborts cloud sync task.
         """
 
-        cloud_sync = await self._get_instance(id)
+        cloud_sync = await self.get_instance(id)
 
         if cloud_sync["job"] is None:
             return False

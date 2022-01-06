@@ -1205,7 +1205,7 @@ class SharingSMBService(SharingService):
         await self.middleware.call("smb.cluster_check")
         ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
         if ha_mode != SMBHAMODE.CLUSTERED:
-            share = await self._get_instance(id)
+            share = await self.get_instance(id)
             result = await self.middleware.call('datastore.delete', self._config.datastore, id)
         else:
             share = await self.query([('id', '=', id)], {'get': True})

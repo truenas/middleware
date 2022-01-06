@@ -753,7 +753,7 @@ class InterfaceService(CRUDService):
         if data.get('disable_offload_capabilities'):
             await self.middleware.call('interface.disable_capabilities', name)
 
-        return await self._get_instance(name)
+        return await self.get_instance(name)
 
     @private
     async def get_next(self, prefix, start=0):
@@ -1192,7 +1192,7 @@ class InterfaceService(CRUDService):
         """
         await self.__check_failover_disabled()
 
-        iface = await self._get_instance(oid)
+        iface = await self.get_instance(oid)
 
         new = iface.copy()
         new.update(data)
@@ -1362,7 +1362,7 @@ class InterfaceService(CRUDService):
                             f'Failed to enable capabilities for {iface["name"]} on standby storage controller: {e}'
                         )
 
-        return await self._get_instance(new['name'])
+        return await self.get_instance(new['name'])
 
     @accepts(Str('id'))
     @returns(Str('interface_id'))
@@ -1372,7 +1372,7 @@ class InterfaceService(CRUDService):
         """
         await self.__check_failover_disabled()
 
-        iface = await self._get_instance(oid)
+        iface = await self.get_instance(oid)
 
         await self.__save_datastores()
 
