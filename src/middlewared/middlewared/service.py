@@ -962,17 +962,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         return instance[0]
 
     @private
-    @accepts(
-        Any('id'),
-        Patch(
-            'query-options', 'query-options-get_instance',
-            ('edit', {
-                'name': 'force_sql_filters',
-                'method': lambda x: setattr(x, 'default', True),
-            }),
-            register=True,
-        ),
-    )
+    @accepts(Any('id'), Ref('query-options-get_instance'))
     def get_instance__sync(self, id, options):
         """
         Synchronous implementation of `get_instance`.
