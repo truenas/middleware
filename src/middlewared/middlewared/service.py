@@ -954,6 +954,31 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         """
         return await self._get_instance(id, options)
 
+    @private
+    @accepts(
+        Any('id'),
+        Patch(
+            'query-options', 'query-options-get_instance',
+            ('edit', {
+                'name': 'force_sql_filters',
+                'method': lambda x: setattr(x, 'default', True),
+            }),
+            register=True,
+        ),
+    )
+    def get_instance__sync(self, id, options):
+        """
+        Synchronous implementation of `get_instance`.
+        """
+        instance = self.middleware.call_sync(
+            f'{self._config.namespace}.query',
+            [[self._config.datastore_primary_key, '=', id]],
+            options,
+        )
+        if not instance:
+            raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')
+        return instance[0]
+
     @accepts(Any('id'), Ref('query-options-get_instance'))
     async def _get_instance(self, id, options):
         """
