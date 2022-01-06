@@ -199,6 +199,8 @@ class InterfaceService(CRUDService):
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
             data[name] = self.iface_extend({
                 'name': config['int_interface'],
+                'orig_name': config['int_interface'],
+                'description': config['int_interface'],
                 'aliases': [],
                 'link_address': '',
                 'cloned': True,

@@ -655,7 +655,7 @@ class CredentialsService(CRUDService):
         if tasks:
             raise CallError(f"This credential is used by cloud sync task {tasks[0]['description'] or tasks[0]['id']}")
 
-        await self.middleware.call(
+        return await self.middleware.call(
             "datastore.delete",
             "system.cloudcredentials",
             id,
@@ -988,9 +988,10 @@ class CloudSyncService(TaskPathService):
         Deletes cloud_sync entry `id`.
         """
         await self.middleware.call("cloudsync.abort", id)
-        await self.middleware.call("datastore.delete", "tasks.cloudsync", id)
+        rv = await self.middleware.call("datastore.delete", "tasks.cloudsync", id)
         await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", id)
         await self.middleware.call("service.restart", "cron")
+        return rv
 
     @accepts(Int("credentials_id"))
     async def list_buckets(self, credentials_id):
