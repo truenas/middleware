@@ -69,7 +69,9 @@ class VMDeviceService(Service):
         Dict('iommu_group', additional_attrs=True, required=True),
         List('drivers', required=True),
         Bool('available', required=True),
+        Bool('reset_mechanism_defined', required=True),
         Str('error', null=True, required=True),
+        Str('device_path', null=True, required=True),
         register=True,
     ))
     async def passthrough_device(self, device):
@@ -91,7 +93,8 @@ class VMDeviceService(Service):
             'available': False,
             'drivers': [],
             'error': None,
-            'device_path': os.path.join('/sys/bus/pci/devices', RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device))
+            'device_path': os.path.join('/sys/bus/pci/devices', RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device)),
+            'reset_mechanism_defined': False,
         }
         cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', device], check=False)
         if cp.returncode:
@@ -115,9 +118,7 @@ class VMDeviceService(Service):
             'drivers': drivers,
             'available': not error_str and all(d == 'vfio-pci' for d in drivers),
             'error': f'Following errors were found with the device:\n{error_str}' if error_str else None,
-            'reset_mechanism_defined': await self.middleware.run_in_thread(
-                os.path.exists, os.path.join(data['device_path'], 'reset')
-            ),
+            'reset_mechanism_defined': os.path.exists(os.path.join(data['device_path'], 'reset')),
         }
 
     @accepts()
