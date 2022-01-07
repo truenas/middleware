@@ -13,9 +13,8 @@
     if not os.path.exists('/var/log/nginx'):
         os.makedirs('/var/log/nginx')
 
-    if osc.IS_LINUX:
-        with contextlib.suppress(OSError):
-            os.unlink('/var/log/nginx/error.log')
+    with contextlib.suppress(OSError):
+        os.unlink('/var/log/nginx/error.log')
 
         # nginx unconditionally opens this file and never closes, preventing us from unmounting system dataset
         os.symlink('/dev/null', '/var/log/nginx/error.log')
@@ -23,6 +22,7 @@
     general_settings = middleware.call_sync('system.general.config')
     cert = general_settings['ui_certificate']
     dhparams_file = middleware.call_sync('certificate.dhparam')
+    x_frame_options = '' if general_settings['ui_x_frame_options'] == 'ALLOW_ALL' else general_settings['ui_x_frame_options']
 
     # We can't afford nginx not running due to `bind(): Can't assign requested address` so we check that listen
     # addresses exist.
@@ -179,7 +179,9 @@ http {
         add_header X-XSS-Protection "1; mode=block" always;
         add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
         add_header Referrer-Policy "strict-origin" always;
-        add_header X-Frame-Options "SAMEORIGIN" always;
+% if x_frame_options:
+        add_header X-Frame-Options "${x_frame_options}" always;
+% endif
 
         location / {
             rewrite ^.* $scheme://$http_host/ui/ redirect;
@@ -224,7 +226,9 @@ http {
             add_header X-XSS-Protection "1; mode=block" always;
             add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
             add_header Referrer-Policy "strict-origin" always;
-            add_header X-Frame-Options "SAMEORIGIN" always;
+% if x_frame_options:
+            add_header X-Frame-Options "${x_frame_options}" always;
+% endif
         }
 
         location /websocket {
