@@ -1,3 +1,4 @@
+import os
 import re
 from xml.etree import ElementTree as etree
 
@@ -8,6 +9,7 @@ from middlewared.utils import run
 from .utils import get_virsh_command_args
 
 
+RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
 RE_IOMMU_ENABLED = re.compile(r'QEMU.*if IOMMU is enabled.*:\s*PASS.*')
 
 
@@ -89,6 +91,7 @@ class VMDeviceService(Service):
             'available': False,
             'drivers': [],
             'error': None,
+            'device_path': os.path.join('/sys/bus/pci/devices', RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device))
         }
         cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', device], check=False)
         if cp.returncode:
@@ -108,9 +111,13 @@ class VMDeviceService(Service):
 
         return {
             **node_info,
+            'device_path': data['device_path'],
             'drivers': drivers,
             'available': not error_str and all(d == 'vfio-pci' for d in drivers),
             'error': f'Following errors were found with the device:\n{error_str}' if error_str else None,
+            'reset_mechanism_defined': await self.middleware.run_in_thread(
+                os.path.exists, os.path.join(data['device_path'], 'reset')
+            ),
         }
 
     @accepts()
