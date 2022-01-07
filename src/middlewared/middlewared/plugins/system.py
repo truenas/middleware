@@ -1038,10 +1038,11 @@ class SystemGeneralModel(sa.Model):
     stg_guiport = sa.Column(sa.Integer(), default=80)
     stg_guihttpsport = sa.Column(sa.Integer(), default=443)
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
-    stg_language = sa.Column(sa.String(120), default="en")
+    stg_guix_frame_options = sa.Column(sa.String(120), default='SAMEORIGIN')
+    stg_language = sa.Column(sa.String(120), default='en')
     stg_kbdmap = sa.Column(sa.String(120))
     stg_birthday = sa.Column(sa.DateTime(), nullable=True)
-    stg_timezone = sa.Column(sa.String(120), default="America/Los_Angeles")
+    stg_timezone = sa.Column(sa.String(120), default='America/Los_Angeles')
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
     stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
@@ -1084,6 +1085,7 @@ class SystemGeneralService(ConfigService):
         List('ui_address', items=[IPAddr('addr')], empty=False, required=True),
         List('ui_v6address', items=[IPAddr('addr')], empty=False, required=True),
         Bool('ui_consolemsg', required=True),
+        Str('ui_x_frame_options', enum=['SAMEORIGIN', 'DENY', 'ALLOW_ALL'], required=True),
         Str('kbdmap', required=True),
         Str('language', empty=False, required=True),
         Str('timezone', empty=False, required=True),
