@@ -16,8 +16,8 @@
     with contextlib.suppress(OSError):
         os.unlink('/var/log/nginx/error.log')
 
-        # nginx unconditionally opens this file and never closes, preventing us from unmounting system dataset
-        os.symlink('/dev/null', '/var/log/nginx/error.log')
+    # nginx unconditionally opens this file and never closes, preventing us from unmounting system dataset
+    os.symlink('/dev/null', '/var/log/nginx/error.log')
 
     general_settings = middleware.call_sync('system.general.config')
     cert = general_settings['ui_certificate']
