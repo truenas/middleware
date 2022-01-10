@@ -79,9 +79,18 @@ class KubernetesService(Service):
 
         job.set_progress(95, 'Taking snapshot of ix-applications')
 
-        self.middleware.call_sync(
-            'zfs.snapshot.create', {'dataset': k8s_config['dataset'], 'name': snap_name, 'recursive': True}
+        k8s_ds = self.middleware.call_sync(
+            'zfs.snapshot.get_instance', k8s_config['dataset'], {'extra': {'retrieve_properties': False}}
         )
+        self.middleware.call_sync(
+            'zfs.snapshot.create', {'dataset': k8s_config['dataset'], 'name': snap_name, 'recursive': False}
+        )
+        for child_ds in k8s_ds['children']:
+            if os.path.join(k8s_config['dataset'], 'docker') == child_ds['id']:
+                continue
+            self.middleware.call_sync(
+                'zfs.snapshot.create', {'dataset': k8s_config['dataset'], 'name': snap_name, 'recursive': True}
+            )
 
         job.set_progress(100, f'Backup {name!r} complete')
 
