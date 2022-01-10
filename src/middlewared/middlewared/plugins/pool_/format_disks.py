@@ -2,7 +2,6 @@ import os
 import tempfile
 
 from middlewared.service import private, Service
-from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -30,7 +29,7 @@ class PoolService(Service):
                 'disk.format', disk, swapgb if config['create_swap'] else 0, False,
             )
             devname = await self.middleware.call('disk.gptid_from_part_type', disk, zfs_part_type)
-            if osc.IS_FREEBSD and disk_encryption_options.get('enc_keypath'):
+            if disk_encryption_options.get('enc_keypath'):
                 enc_disks.append({
                     'disk': disk,
                     'devname': devname,
@@ -46,7 +45,7 @@ class PoolService(Service):
         job.set_progress(15, f'Formatting disks (0/{len(disks)})')
 
         pass_file = None
-        if osc.IS_FREEBSD and disk_encryption_options.get('passphrase'):
+        if disk_encryption_options.get('passphrase'):
             pass_file = await self.middleware.call('pool.create_temp_pass_file', disk_encryption_options['passphrase'])
             disk_encryption_options['passphrase_path'] = pass_file
 
