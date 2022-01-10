@@ -22,7 +22,7 @@
     failover_int = middleware.call_sync("failover.internal_interfaces")
     deny_interfaces.extend(failover_int)
 
-    allow_interfaces = middleare.call_sync("interface.query", [["name", "!^", "macvtap"]])
+    allow_interfaces = middleware.call_sync("interface.query", [["name", "!^", "macvtap"]])
 
     failover_status = middleware.call_sync('failover.status')
     if failover_status not in ['SINGLE', 'MASTER']:
