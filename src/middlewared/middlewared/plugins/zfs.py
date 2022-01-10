@@ -1050,6 +1050,7 @@ class ZFSSnapshot(CRUDService):
         Str('name', empty=False),
         Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
         Bool('recursive', default=False),
+        List('exclude', items=[Str('dataset')]),
         Bool('vmware_sync', default=False),
         Dict('properties', additional_attrs=True),
     ))
@@ -1060,6 +1061,7 @@ class ZFSSnapshot(CRUDService):
 
         dataset = data['dataset']
         recursive = data['recursive']
+        exclude = data['exclude']
         properties = data['properties']
 
         verrors = ValidationErrors()
@@ -1075,6 +1077,13 @@ class ZFSSnapshot(CRUDService):
         else:
             verrors.add('snapshot_create.naming_schema', 'You must specify either name or naming schema')
 
+        if exclude:
+            if not recursive:
+                verrors.add('snapshot_create.exclude', 'This option has no sense for non-recursive snapshots')
+            for k in ['vmware_sync', 'properties']:
+                if data[k]:
+                    verrors.add(f'snapshot_create.{k}', 'This option is not supported when excluding datasets')
+
         if verrors:
             raise verrors
 
@@ -1083,12 +1092,15 @@ class ZFSSnapshot(CRUDService):
             vmware_context = self.middleware.call_sync('vmware.snapshot_begin', dataset, recursive)
 
         try:
-            with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(dataset)
-                ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
+            if not exclude:
+                with libzfs.ZFS() as zfs:
+                    ds = zfs.get_dataset(dataset)
+                    ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
 
-                if vmware_context and vmware_context['vmsynced']:
-                    ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+                    if vmware_context and vmware_context['vmsynced']:
+                        ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+            else:
+                self.middleware.call_sync('zettarepl.create_recursive_snapshot_with_exclude', dataset, name, exclude)
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
         except libzfs.ZFSException as err:
