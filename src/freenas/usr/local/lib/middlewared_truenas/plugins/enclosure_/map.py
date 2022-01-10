@@ -73,7 +73,7 @@ MAPPINGS = [
             MappingSlot(0, 5, False),
             MappingSlot(0, 6, False),
             MappingSlot(0, 7, False),
-            MappingSlot(1, 4, False),
+            MappingSlot(1, 6, False),
         ]),
     ]),
     ProductMapping(re.compile(r"TRUENAS-R10$"), [
