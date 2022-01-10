@@ -5,7 +5,6 @@ from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
-from middlewared.plugins.system_.utils import VMProvider
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, IPAddr, List, Patch, returns, Str
 from middlewared.service import (
     CallError, ConfigService, no_auth_required, job, pass_app, private, rest_api_metadata,
@@ -1841,16 +1840,6 @@ async def firstboot(middleware):
                 middleware.logger.error(
                     'Failed to set keep attribute for Initial-Install boot environment: %s', cp.stderr.decode()
                 )
-
-        if VMProvider((await middleware.call('system.vm_provider'))) == VMProvider.AZURE:
-            # We would like to enable walinuxagent and start it if we are in azure
-            cp = await run(['systemctl', 'enable', 'walinuxagent'], check=False)
-            if cp.returncode:
-                middleware.logger.error('Failed to enable walinuxagent: %r', cp.stderr.decode())
-
-            cp = await run(['systemctl', 'start', 'walinuxagent'], check=False)
-            if cp.returncode:
-                middleware.logger.error('Failed to start walinuxagent: %r', cp.stderr.decode())
 
 
 async def update_timeout_value(middleware, *args):
