@@ -1,5 +1,6 @@
 import subprocess
 
+from bsd.disk import get_size_with_name
 from middlewared.service import CallError, private, Service
 
 
@@ -10,13 +11,13 @@ class DiskService(Service):
         disk_details = self.middleware.call_sync('device.get_disk', disk)
         if not disk_details:
             raise CallError(f'Unable to retrieve disk details for {disk}')
-        size = disk_details['size']
+
+        size = get_size_with_name(disk)
         if not size:
-            self.logger.error(f'Unable to determine size of {disk}')
-        else:
+            raise CallError(f'Unable to determine size of {disk!r}')
+        elif size - 102400 <= swapgb * 1024 * 1024 * 1024:
             # The GPT header takes about 34KB + alignment, round it to 100
-            if size - 102400 <= swapgb * 1024 * 1024 * 1024:
-                raise CallError(f'Your disk size must be higher than {swapgb}GB')
+            raise CallError(f'Disk size for {disk!r} must be larger than {swapgb}GB')
 
         job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)
         job.wait_sync()
