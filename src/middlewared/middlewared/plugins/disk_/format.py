@@ -1,6 +1,6 @@
 import subprocess
 
-from bsd.disk import get_size_with_name
+from bsd.disk import get_size_with_name, get_sectorsize_with_name
 from middlewared.service import CallError, private, Service
 
 
@@ -8,10 +8,6 @@ class DiskService(Service):
 
     @private
     def format(self, disk, swapgb, sync=True):
-        disk_details = self.middleware.call_sync('device.get_disk', disk)
-        if not disk_details:
-            raise CallError(f'Unable to retrieve disk details for {disk}')
-
         size = get_size_with_name(disk)
         if not size:
             raise CallError(f'Unable to determine size of {disk!r}')
@@ -25,7 +21,7 @@ class DiskService(Service):
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
 
         # Calculate swap size.
-        swapsize = swapgb * 1024 * 1024 * 1024 / (disk_details["sectorsize"] or 512)
+        swapsize = swapgb * 1024 * 1024 * 1024 / (get_sectorsize_with_name(disk) or 512)
         # Round up to nearest whole integral multiple of 128
         # so next partition starts at mutiple of 128.
         swapsize = (int((swapsize + 127) / 128)) * 128
