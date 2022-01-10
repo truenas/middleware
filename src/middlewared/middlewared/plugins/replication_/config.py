@@ -8,7 +8,7 @@ class ReplicationConfigModel(sa.Model):
     __tablename__ = "storage_replication_config"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    max_parallel_replication_tasks = sa.Column(sa.Integer(), nullable=True, default=None)
+    max_parallel_replication_tasks = sa.Column(sa.Integer(), nullable=True, default=5)
 
 
 class ReplicationConfigService(ConfigService):
