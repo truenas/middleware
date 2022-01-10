@@ -19,7 +19,7 @@ class PoolService(Service):
         disk_encryption_options = disk_encryption_options or {}
 
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
-
+        zfs_part_type = await self.middleware.call('disk.get_zfs_part_type')
         enc_disks = []
         formatted = 0
 
@@ -29,9 +29,7 @@ class PoolService(Service):
             await self.middleware.call(
                 'disk.format', disk, swapgb if config['create_swap'] else 0, False,
             )
-            devname = await self.middleware.call(
-                'disk.gptid_from_part_type', disk, await self.middleware.call('disk.get_zfs_part_type')
-            )
+            devname = await self.middleware.call('disk.gptid_from_part_type', disk, zfs_part_type)
             if osc.IS_FREEBSD and disk_encryption_options.get('enc_keypath'):
                 enc_disks.append({
                     'disk': disk,
