@@ -353,8 +353,11 @@ class DirectoryServices(Service):
         if server_secrets is None:
             return {"dbconfig": None, "secrets": passwd_ts}
 
-        stored_ts_bytes = server_secrets[f'SECRETS/MACHINE_LAST_CHANGE_TIME/{domain.upper()}']
-        stored_ts = struct.unpack("<L", b64decode(stored_ts_bytes))[0]
+        try:
+            stored_ts_bytes = server_secrets[f'SECRETS/MACHINE_LAST_CHANGE_TIME/{domain.upper()}']
+            stored_ts = struct.unpack("<L", b64decode(stored_ts_bytes))[0]
+        except KeyError:
+            stored_ts = None
 
         return {"dbconfig": stored_ts, "secrets": passwd_ts}
 
