@@ -34,7 +34,6 @@ def render(service, middleware):
         f"root-dir={os.path.join(k3s_data_dir, 'kubelet')}",
     ]
     os.makedirs('/etc/rancher/k3s', exist_ok=True)
-    
     with open(FLAGS_PATH, 'w') as f:
         f.write(yaml.dump({
             'cluster-cidr': config['cluster_cidr'],
