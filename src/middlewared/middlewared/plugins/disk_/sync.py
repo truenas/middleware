@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime, timedelta
 
 from bsd import geom
@@ -9,6 +10,23 @@ from middlewared.service import job, private, Service, ServiceChangeMixin
 class DiskService(Service, ServiceChangeMixin):
 
     DISK_EXPIRECACHE_DAYS = 7
+
+    @private
+    def disks_are_multipath(self, disk1, disk2, all_disks):
+        disk1_path = os.path.join('/dev', disk1)
+        disk2_path = os.path.join('/dev', disk2)
+        result = False
+        if disk1 != disk2 and os.path.exists(disk1_path) and os.path.exists(disk2_path):
+            disk1_serial = all_disks.get(disk1, {}).get('serial', '')
+            disk1_lunid = all_disks.get(disk1, {}).get('lunid', '')
+            disk1_val = f'{disk1_serial}_{disk1_lunid}'
+
+            disk2_serial = all_disks.get(disk2, {}).get('serial', '')
+            disk2_lunid = all_disks.get(disk2, {}).get('lunid', '')
+            disk2_val = f'{disk2_serial}_{disk2_lunid}'
+            result = disk1_val == disk2_val
+
+        return result
 
     @private
     @accepts(Str('name'))
@@ -35,6 +53,16 @@ class DiskService(Service, ServiceChangeMixin):
         )
         if ident and qs:
             disk = qs[0]
+            if await self.middleware.run_in_thread(self.disks_are_multipath, disk['disk_name'], name, disks):
+                # this means we have 2 different disks with same serial and lunid and they both
+                # exist which implies multipath. However, it doesn't mean it was meant to be a
+                # multipath disk. It could be that an expansion shelf was plugged in, a zpool created
+                # using disks from that enclosure AND THEN the same expansion shelf be plugged in
+                # to cause it to be multipath. We do not want to overwrite the db information for
+                # the disks because they have zpool mapping information. Furthermore, multipath_sync
+                # won't do anything because the disks are "in use" and so multipath providers will
+                # not be created. In this instance, we just return here so we don't blow-up the db.
+                return
             new = False
         else:
             new = True
