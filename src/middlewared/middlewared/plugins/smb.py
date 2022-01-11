@@ -296,19 +296,13 @@ class SMBService(SystemServiceService):
     async def unix_extensions_alert(self):
         smb_running = await self.middleware.call('service.started', 'cifs')
         if not smb_running:
-            del_job = await self.middleware.call('alert.oneshot_delete', 'UnsupportedUnixExtensions', None)
-            await del_job.wait()
+            await self.middleware.call('alert.oneshot_delete', 'UnsupportedUnixExtensions', None)
             return
 
         smb1_enabled = (await self.middleware.call('smb.getparm', 'server min protocol', 'GLOBAL')).strip() == 'NT1'
         smb1_unix = await self.middleware.call('smb.getparm', 'unix extensions', 'GLOBAL')
-        if smb1_enabled and smb1_unix:
-            await self.middleware.call('alert.oneshot_create', 'UnsupportedUnixExtensions', None)
-        else:
-            del_job = await self.middleware.call('alert.oneshot_delete', 'UnsupportedUnixExtensions', None)
-            await del_job.wait()
-
-        return
+        action = 'alert.oneshot_create' if smb1_enabled and smb1_unix else 'alert.oneshot_delete'
+        await self.middleware.call(action, 'UnsupportedUnixExtensions', None)
 
     @accepts()
     async def bindip_choices(self):
