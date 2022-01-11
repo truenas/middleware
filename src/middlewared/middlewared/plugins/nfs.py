@@ -320,6 +320,7 @@ class SharingNFSService(SharingService):
 
         await self._service_change("nfs", "reload")
 
+        await self.middleware.call('sharing.smb.share_configuration_alert')
         return await self.get_instance(data["id"])
 
     @accepts(
@@ -355,6 +356,7 @@ class SharingNFSService(SharingService):
 
         await self._service_change("nfs", "reload")
 
+        await self.middleware.call('sharing.smb.share_configuration_alert')
         return await self.get_instance(id)
 
     @accepts(Int("id"))
@@ -364,6 +366,7 @@ class SharingNFSService(SharingService):
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self._service_change("nfs", "reload")
+        await self.middleware.call('sharing.smb.share_configuration_alert')
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
