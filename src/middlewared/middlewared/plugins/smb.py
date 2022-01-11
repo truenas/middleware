@@ -1,9 +1,10 @@
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
-from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors
+from middlewared.service import accepts, job, private, periodic, SharingService, SystemServiceService, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 
 import asyncio
 import codecs
@@ -31,6 +32,23 @@ LOGLEVEL_MAP = {
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 
 LP_CTX = param.get_context()
+
+
+class UnsupportedUnixExtensionsAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.WARNING
+    title = "Unsupported SMB1 Unix Extensions Enabled"
+    text = "SMB1 Unix Extensions are not supported in this release of TrueNAS and are susceptible to CVE 2021-20316."
+
+
+class UnsupportedMixedModeAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.WARNING
+    title = "Unsupported Mixed Mode (NFS / SMB) Path detected."
+    text = "[%(name)s]: SMB share of %(path)s is writable via NFS protocol and therefore susceptible to CVE 2021-20316."
+
+    async def delete(self, alerts, query):
+        return []
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -268,6 +286,24 @@ class SMBService(SystemServiceService):
             ] + initial
         }
 
+    @private
+    @periodic(interval=86400)
+    async def do_smb_alerts(self):
+        await self.unix_extensions_alert()
+        await self.middleware.call('sharing.smb.share_configuration_alert')
+
+    @private
+    async def unix_extensions_alert(self):
+        smb_running = await self.middleware.call('service.started', 'cifs')
+        if not smb_running:
+            await self.middleware.call('alert.oneshot_delete', 'UnsupportedUnixExtensions', None)
+            return
+
+        smb1_enabled = (await self.middleware.call('smb.getparm', 'server min protocol', 'GLOBAL')).strip() == 'NT1'
+        smb1_unix = await self.middleware.call('smb.getparm', 'unix extensions', 'GLOBAL')
+        action = 'alert.oneshot_create' if smb1_enabled and smb1_unix else 'alert.oneshot_delete'
+        await self.middleware.call(action, 'UnsupportedUnixExtensions', None)
+
     @accepts()
     async def bindip_choices(self):
         """
@@ -471,6 +507,7 @@ class SMBService(SystemServiceService):
         await self.middleware.call("smb.import_conf_to_registry")
         await self.middleware.call('cache.put', 'SMB_REG_INITIALIZED', True)
         os.unlink(SMBPath.SHARECONF.platform())
+        await self.unix_extensions_alert()
 
         """
         It is possible that system dataset was migrated or an upgrade
@@ -715,6 +752,7 @@ class SMBService(SystemServiceService):
             new_config["cifs_SID"] = new_sid
             await self.middleware.call("smb.synchronize_group_mappings")
 
+        await self.unix_extensions_alert()
         return new_config
 
     @private
@@ -770,6 +808,43 @@ class SharingSMBService(SharingService):
         return await self.middleware.call(
             'pool.dataset.path_in_locked_datasets', data[self.path_field], locked_datasets
         ) if data[self.path_field] else False
+
+    @private
+    async def share_configuration_alert(self):
+        async def wipe_alerts(middleware):
+            del_job = await middleware.call('alert.oneshot_delete', 'UnsupportedMixedMode', None)
+            await del_job.wait()
+            return
+
+        nfs_path_list = []
+        has_problem_share = False
+        shares = await self.middleware.call('sharing.smb.query', [['enabled', '=', True]])
+        if not shares:
+            return await wipe_alerts(self.middleware)
+
+        for svc in ('cifs', 'nfs'):
+            started = await self.middleware.call('service.started', svc)
+            if not started:
+                return await wipe_alerts(self.middleware)
+
+        nfs_shares = await self.middleware.call('sharing.nfs.query', [['enabled', '=', True], ['ro', '=', False]])
+        if not nfs_shares:
+            return await wipe_alerts(self.middleware)
+
+        for export in nfs_shares:
+            nfs_path_list.extend(export['paths'])
+
+        for share in shares:
+            if not any(filter(lambda x: f"{share['path']}/" in f"{x}/", nfs_path_list)):
+                continue
+
+            has_problem_share = True
+            await self.middleware.call('alert.oneshot_create', 'UnsupportedMixedMode', {'name': share['name'], 'path': share['path']})
+
+        if not has_problem_share:
+            return await wipe_alerts(self.middleware)
+
+        return
 
     @private
     async def strip_comments(self, data):
@@ -867,6 +942,7 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
+        await self.share_configuration_alert()
         return await self.get_instance(data['id'])
 
     @accepts(
@@ -1001,6 +1077,7 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
+        await self.share_configuration_alert()
         return await self.get_instance(id)
 
     @accepts(Int('id'))
@@ -1026,6 +1103,7 @@ class SharingSMBService(SharingService):
         if share['timemachine']:
             await self.middleware.call('service.restart', 'mdns')
 
+        await self.share_configuration_alert()
         return result
 
     @private
