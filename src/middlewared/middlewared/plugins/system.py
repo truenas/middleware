@@ -1931,33 +1931,10 @@ async def setup(middleware):
     middleware.event_subscribe('system', _event_system)
     middleware.register_event_source('system.health', SystemHealthEventSource)
 
-    # watchdog 38 = ~256 seconds or ~4 minutes, see sys/watchdog.h for explanation
-    for command in [
-        'ddb script "kdb.enter.break=watchdog 38; capture on"',
-        'ddb script "kdb.enter.sysctl=watchdog 38; capture on"',
-        'ddb script "kdb.enter.default=write cn_mute 1; watchdog 38; capture on; bt; '
-        'show allpcpu; ps; alltrace; write cn_mute 0; textdump dump; reset"',
-        'sysctl debug.ddb.textdump.pending=1',
-        'sysctl debug.debugger_on_panic=1',
-        'sysctl debug.ddb.capture.bufsize=4194304'
-    ] if osc.IS_FREEBSD else []:  # TODO: See reasonable linux alternative
-        ret = await Popen(
-            command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-
-        await ret.communicate()
-
-        if ret.returncode:
-            middleware.logger.debug(f'Failed to execute: {command}')
-
     CRASH_DIR = '/data/crash'
     os.makedirs(CRASH_DIR, exist_ok=True)
     os.chmod(CRASH_DIR, 0o775)
 
-    if osc.IS_LINUX:
-        await middleware.call('sysctl.set_zvol_volmode', 2)
+    await middleware.call('sysctl.set_zvol_volmode', 2)
 
     middleware.register_hook('system.post_license_update', hook_license_update)
