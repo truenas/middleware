@@ -84,6 +84,7 @@ PasswordAuthentication yes
 GSSAPIAuthentication yes
 % endif
 PubkeyAuthentication yes
+PubkeyAcceptedAlgorithms +ssh-rsa
 ${ssh_config['options']}
 % if twofactor_enabled:
 # These are forced to be enabled with 2FA
