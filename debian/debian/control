@@ -50,6 +50,7 @@ Depends: acl,
          truenas-binaries,
          truenas-webui,
          usrmerge,
+         waagent,
 # Wireguard needs to be fixed because it needs extra dependencies to build the module during install
 # We should likely build the modules into the package and not use dkms
 #        wireguard,
