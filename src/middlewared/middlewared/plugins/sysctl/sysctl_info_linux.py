@@ -3,13 +3,11 @@ import os
 from middlewared.service import CallError, Service
 from middlewared.utils import run
 
-from .sysctl_info_base import SysctlInfoBase
-
 
 ZFS_MODULE_PARAMS_PATH = '/sys/module/zfs/parameters'
 
 
-class SysctlService(Service, SysctlInfoBase):
+class SysctlService(Service):
 
     class Config:
         private = True
