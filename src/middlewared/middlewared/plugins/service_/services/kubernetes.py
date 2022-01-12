@@ -34,8 +34,6 @@ class KubernetesService(SimpleService):
         for key, value in (
             ('vm.panic_on_oom', 0),
             ('vm.overcommit_memory', 1),
-            ('kernel.panic', 10),
-            ('kernel.panic_on_oops', 1),
         ):
             await self.middleware.call('sysctl.set_value', key, value)
         await self.middleware.call('service.start', 'docker')
