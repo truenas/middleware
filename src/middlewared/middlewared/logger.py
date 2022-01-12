@@ -27,8 +27,8 @@ logging.getLogger('googleapiclient').setLevel(logging.ERROR)
 # registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
 logging.getLogger('passlib.registry').setLevel(logging.INFO)
 # pyroute2.ndb is chatty....only log errors
-logging.getLogger('pyroute2.ndb').setLevel(logging.ERROR)
-logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.ERROR)
+logging.getLogger('pyroute2.ndb').setLevel(logging.CRITICAL)
+logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.CRITICAL)
 # It logs each call made to the k8s api server when in debug mode, so we set the level to warn
 logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
 logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
