@@ -63,7 +63,7 @@ class ChartReleaseService(Service):
         cleaned_portals = {}
         for portal_type, schema in portals.items():
             t_portals = []
-            path = schema.get('path') or '/'
+            path = tag_func(schema.get('path')) or '/'
             for protocol in filter(bool, map(tag_func, schema['protocols'])):
                 for host in filter(bool, map(tag_func, schema['host'])):
                     for port in filter(bool, map(tag_func, schema['ports'])):
