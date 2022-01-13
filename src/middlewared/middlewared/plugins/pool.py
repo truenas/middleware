@@ -10,7 +10,6 @@ import logging
 from datetime import datetime, time, timedelta
 from pathlib import Path
 import os
-import psutil
 import re
 import secrets
 import shutil
@@ -36,7 +35,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, filter_list, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
-from middlewared.utils.shell import join_commandline
 from middlewared.validators import Exact, Match, Or, Range, Time
 
 logger = logging.getLogger(__name__)
@@ -4119,43 +4117,11 @@ class PoolDatasetService(CRUDService):
           }
         ]
         """
-        result = []
         dataset = await self.get_instance(oid)
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
-            lsof = await run(
-                'lsof',
-                '-F', 'pcn',  # Output format parseable by `parse_lsof`
-                '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                check=False,
-                encoding='utf8'
-            )
-            for pid, name in parse_lsof(lsof.stdout, [path, zvol_path]):
-                service = await self.middleware.call('service.identify_process', name)
-                if service:
-                    result.append({
-                        "pid": pid,
-                        "name": name,
-                        "service": service,
-                    })
-                else:
-                    try:
-                        cmdline = await self.middleware.run_in_thread(
-                            lambda: psutil.Process(pid).cmdline()
-                        )
-                    except psutil.NoSuchProcess:
-                        pass
-                    else:
-                        result.append({
-                            "pid": pid,
-                            "name": name,
-                            "cmdline": join_commandline(cmdline),
-                        })
-
-        return result
+            return await self.middleware.call('pool.dataset.processes_using_paths', [path, zvol_path])
 
     @private
     async def kill_processes(self, oid, control_services, max_tries=5):
@@ -4493,38 +4459,6 @@ class PoolScrubService(CRUDService):
 
         await self.middleware.call('pool.scrub.scrub', pool['name'])
         return True
-
-
-def parse_lsof(lsof, dirs):
-    pids = {}
-
-    pid = None
-    command = None
-    for line in lsof.split("\n"):
-        if line.startswith("p"):
-            pid = None
-            command = None
-
-            try:
-                pid = int(line[1:])
-            except ValueError:
-                # no reason to continue if we dont have
-                # a PID associated with the process
-                continue
-
-        if line.startswith("c"):
-            command = line[1:]
-
-        if line.startswith("f"):
-            pass
-
-        if line.startswith("n"):
-            path = line[1:].split(" (")[0]
-            if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
-                if pid is not None and command is not None:
-                    pids[pid] = command
-
-    return list(pids.items())
 
 
 def setup(middleware):
