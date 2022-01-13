@@ -430,10 +430,16 @@ class SharingNFSService(SharingService):
         bypass = any('.glusterfs' in i for i in data["paths"] + data["aliases"])
 
         # need to make sure that the nfs share is within the zpool mountpoint
+        apps_dataset = await self.middleware.call('kubernetes.config')['dataset']
         for idx, i in enumerate(data["paths"]):
             await check_path_resides_within_volume(
                 verrors, self.middleware, f'{schema_name}.paths.{idx}', i, gluster_bypass=bypass
             )
+            if apps_dataset and i.startswith(f'/mnt/{apps_dataset}'):
+                verrors.add(
+                    f'{schema_name}.paths.{idx}',
+                    f'{i}: paths within ix-applications dataset may not be exported by system sharing services.'
+                )
 
         filters = []
         if old:

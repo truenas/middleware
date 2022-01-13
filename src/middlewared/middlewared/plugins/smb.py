@@ -1463,6 +1463,13 @@ class SharingSMBService(SharingService):
         if data['path']:
             await self.validate_path_field(data, schema_name, verrors, bypass=bypass)
 
+            apps_dataset = await self.middleware.call('kubernetes.config')['dataset']
+            if apps_dataset and data['path'].startswith(f'/mnt/{apps_dataset}'):
+                verrors.add(
+                    f'{schema_name}.path',
+                    f'{data["path"]}: paths within ix-applications dataset may not be exported by system sharing services.'
+                )
+
             """
             When path is not a clustervolname, legacy behavior is to make all path components
             so skip this step here. This is a very rough check is to prevent users from sharing
