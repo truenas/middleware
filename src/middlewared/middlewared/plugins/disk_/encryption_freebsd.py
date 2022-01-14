@@ -318,13 +318,16 @@ class DiskService(Service, DiskEncryptionBase):
 
         cp = subprocess.run(['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
-            raise CallError(f'Unable to geli detach {dev}: {cp.stderr.decode()}')
+            raise CallError(f'Unable to geli detach {dev!r}: {cp.stderr.decode()}')
 
     @private
     def geli_clear(self, dev):
-        cp = subprocess.run(
-            ['geli', 'clear', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
+        dev = f'{dev.removeprefix("/dev/")}.removesuffix(".eli")'
+        if os.path.exists(f'{dev}.eli'):
+            # the .eli device should already be detached before clear can be run on it
+            raise CallError(f'Unable to geli clear {dev!r} because {dev}.eli exists')
+
+        cp = subprocess.run(['geli', 'clear', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
             raise CallError(f'Unable to geli clear {dev}: {cp.stderr.decode()}')
 
