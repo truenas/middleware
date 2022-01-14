@@ -651,7 +651,7 @@ class PoolService(CRUDService):
 
         await self.__common_validation(verrors, data, 'pool_create')
         disks = await self.middleware.call('pool.mark_disks_for_swap', data['topology'])
-        disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
+        await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
         verrors.check()
 
         log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
@@ -742,9 +742,6 @@ class PoolService(CRUDService):
             encrypted_dataset_pk = await self.middleware.call(
                 'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
             )
-
-            if osc.IS_FREEBSD:
-                await self.middleware.call('pool.save_encrypteddisks', pool_id, formatted_disks, disks_cache)
 
             await self.middleware.call(
                 'datastore.insert',
