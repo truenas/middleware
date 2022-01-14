@@ -709,7 +709,7 @@ class PoolService(CRUDService):
 
             z_pool = await self.middleware.call('zfs.pool.create', {
                 'name': data['name'],
-                'vdevs': vdevs,
+                'vdevs': (await self.middleware.call('pool.convert_topology_to_vdevs', data['topology']))[0],
                 'options': options,
                 'fsoptions': fsoptions,
             })
@@ -830,20 +830,26 @@ class PoolService(CRUDService):
         verrors = ValidationErrors()
 
         await self.__common_validation(verrors, data, 'pool_update', old=pool)
-        disks = vdevs = None
+        disks = None
         if 'topology' in data:
             disks = await self.middleware.call('pool.mark_disks_for_swap', data['topology'])
-            disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
+            disks_cache = await self.middleware.call(
+                'disk.check_disks_availability', verrors, list(disks), 'pool_update'
+            )
         verrors.check()
 
-        if osc.IS_FREEBSD and pool['encryptkey']:
+        if pool['encryptkey']:
             enc_keypath = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
         else:
             enc_keypath = None
+        enc_options = {'enc_keypath': enc_keypath}
 
-        if disks and vdevs:
-            enc_disks = await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': enc_keypath})
-
+        if disks:
+            await self.middleware.call('pool.format_disks', job, disks, enc_options)
+            await self.middleware.call('geom.invalidate.cache')
+            vdevs, enc_disks = await self.middleware.call(
+                'pool.convert_topology_to_vdevs', data['topology'], enc_options
+            )
             job.set_progress(90, 'Extending ZFS Pool')
 
             extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
@@ -950,6 +956,31 @@ class PoolService(CRUDService):
                 for disk in vdev_info.get('disks', []):
                     disks[disk] = {'create_swap': swap}
         return disks
+
+    @private
+    async def convert_topology_to_vdevs(self, topology, enc_options=None):
+        geli = enc_options and bool(enc_options.get('enc_keypath'))
+        vdevs = []
+        enc_disks = []
+        xml = await self.middleware.call('geom.get_xml')
+        zfs_part = await self.middleware.call('disk.get_zfs_part_type')
+        for vdev_type in topology:
+            for vdev_info in topology[vdev_type]:
+                if vdev_info.get('disks'):
+                    devices = []
+                    for disk in vdev_info['disks']:
+                        label = await self.middleware.call('disk.gptid_from_part_type', disk, zfs_part, xml)
+                        devname = f'/dev/{label}' if not geli else f'/dev/{label}.eli'
+                        devices.append(devname)
+                        if geli:
+                            enc_disks.append({'disk': disk, 'devname': devname})
+
+                    vdevs.append({
+                        'root': vdev_type.upper(),
+                        'type': vdev_info['type'],
+                        'devices': devices,
+                    })
+        return vdevs, enc_disks
 
     async def __convert_topology_to_vdevs(self, topology):
         # We do two things here:
