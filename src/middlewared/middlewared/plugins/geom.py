@@ -48,7 +48,7 @@ class GeomCache(Service):
             if class_name in self.CLASSES:
                 return self.XML.find(f'.//class[name="{class_name}"]')
 
-    def invalidate_cache(self):
+    def invalidate(self):
         self.middleware.call_sync('geom.cache.fill')
 
     def remove_disk(self, disk):

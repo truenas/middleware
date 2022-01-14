@@ -667,7 +667,12 @@ class PoolService(CRUDService):
                     except CanNotBeOverprovisionedException:
                         pass
 
-        formatted_disks = await self.middleware.call('pool.format_disks', job, disks)
+        # format the disks (GELI encryption is ignored on create requests since it was deprecated)
+        await self.middleware.call('pool.format_disks', job, disks)
+
+        # now we need to invalidate in-memory cache of disk info
+        # since we just formatted disks and wrote fresh gptid lables
+        await self.middleware.call('geom.cache.invalidate')
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -683,13 +688,9 @@ class PoolService(CRUDService):
             'compression': 'lz4',
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
+            'aclmode': 'passthrough',
             **encryption_dict
         }
-        if osc.IS_FREEBSD:
-            fsoptions['aclmode'] = 'passthrough'
-
-        if osc.IS_LINUX:
-            fsoptions['acltype'] = 'posixacl'
 
         dedup = data.get('deduplication')
         if dedup:
