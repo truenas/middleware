@@ -846,7 +846,7 @@ class PoolService(CRUDService):
 
         if disks:
             await self.middleware.call('pool.format_disks', job, disks, enc_options)
-            await self.middleware.call('geom.invalidate.cache')
+            await self.middleware.call('geom.cache.invalidate')
             vdevs, enc_disks = await self.middleware.call(
                 'pool.convert_topology_to_vdevs', data['topology'], enc_options
             )
@@ -962,7 +962,7 @@ class PoolService(CRUDService):
         geli = enc_options and bool(enc_options.get('enc_keypath'))
         vdevs = []
         enc_disks = []
-        xml = await self.middleware.call('geom.get_xml')
+        xml = await self.middleware.call('geom.cache.get_xml')
         zfs_part = await self.middleware.call('disk.get_zfs_part_type')
         for vdev_type in topology:
             for vdev_info in topology[vdev_type]:
