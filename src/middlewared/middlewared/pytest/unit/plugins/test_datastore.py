@@ -331,6 +331,20 @@ async def test__string_filters(filter, ids):
         assert [row["id"] for row in await ds.query("test.string", filter)] == ids
 
 
+@pytest.mark.asyncio
+async def test_delete_not_in():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_string VALUES (1, 'Lorem')")
+        await ds.execute("INSERT INTO test_string VALUES (2, 'Ipsum')")
+        await ds.execute("INSERT INTO test_string VALUES (3, 'dolor')")
+        await ds.execute("INSERT INTO test_string VALUES (4, 'sit')")
+        await ds.execute("INSERT INTO test_string VALUES (5, 'amer')")
+
+        await ds.delete("test_string", [["string", "nin", ["Lorem", "dolor"]]])
+
+        assert [row["id"] for row in await ds.query("test.string")] == [1, 3]
+
+
 class IntegerModel(Model):
     __tablename__ = 'test_integer'
 

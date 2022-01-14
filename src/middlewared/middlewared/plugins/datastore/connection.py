@@ -54,7 +54,7 @@ class DatastoreService(Service):
         options.setdefault('ha_sync', True)
         options.setdefault('return_last_insert_rowid', False)
 
-        compiled = stmt.compile(self.engine)
+        compiled = stmt.compile(self.engine, compile_kwargs={"render_postcompile": True})
 
         sql = compiled.string
         binds = []
