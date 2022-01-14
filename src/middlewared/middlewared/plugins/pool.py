@@ -1633,29 +1633,23 @@ class PoolService(CRUDService):
 
             job.set_progress(80, 'Cleaning disks')
 
+            # we can't "wipe" the disks unless the geli providers (if any)
+            # have been detached first
+            await self.middleware.call('disk.geli_detach', pool, True)
+            if pool['encrypt'] > 0:
+                try:
+                    os.remove(pool['encryptkey_path'])
+                except OSError:
+                    self.logger.warning('Failed to remove encryption key %r', pool['encryptkey_path'], exc_info=True)
+
             async def unlabel(disk):
-                wipe_job = await self.middleware.call(
-                    'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
-                )
+                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False, {'configure_swap': False})
                 await wipe_job.wait()
                 if wipe_job.error:
                     self.logger.warn(f'Failed to wipe disk {disk}: {wipe_job.error}')
             await asyncio_map(unlabel, disks, limit=16)
 
             await self.middleware.call('disk.sync_all')
-
-            if osc.IS_FREEBSD:
-                await self.middleware.call('disk.geli_detach', pool, True)
-            if pool['encrypt'] > 0:
-                try:
-                    os.remove(pool['encryptkey_path'])
-                except OSError as e:
-                    self.logger.warn(
-                        'Failed to remove encryption key %s: %s',
-                        pool['encryptkey_path'],
-                        e,
-                        exc_info=True,
-                    )
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
