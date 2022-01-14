@@ -4,6 +4,7 @@ from middlewared.plugins.smb import SMBCmd
 from middlewared.utils import run, filter_list
 import enum
 import json
+import time
 
 
 class InfoLevel(enum.Enum):
@@ -61,7 +62,21 @@ class SMBService(Service):
                 return ret
 
             for e in logfile_entries.splitlines():
-                ret.append(json.loads(e.strip()))
+                # sample timestamp entry:
+                # "2021-12-31T05:42:33.954029-0800"
+                entry = json.loads(e.strip())
+                ts, extra = entry['timestamp'].split('.', 1)
+                # add timezone info
+                ts += extra[6:]
+                usec = extra[:6]
+                tv_sec = time.mktime(time.strptime(ts, "%Y-%m-%dT%H:%M:%S%z"))
+                timestamp_tval = {
+                    "tv_sec": tv_sec,
+                    "tv_usec": int(usec)
+                }
+                entry['timestamp_tval'] = timestamp_tval
+
+                ret.append(entry)
 
             return filter_list(ret, filters, options)
 
