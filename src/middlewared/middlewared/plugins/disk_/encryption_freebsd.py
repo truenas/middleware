@@ -322,7 +322,7 @@ class DiskService(Service, DiskEncryptionBase):
 
     @private
     def geli_clear(self, dev):
-        dev = f'{dev.removeprefix("/dev/")}.removesuffix(".eli")'
+        dev = f'{dev.removeprefix("/dev/").removesuffix(".eli")}'
         if os.path.exists(f'{dev}.eli'):
             # the .eli device should already be detached before clear can be run on it
             raise CallError(f'Unable to geli clear {dev!r} because {dev}.eli exists')
