@@ -650,11 +650,9 @@ class PoolService(CRUDService):
         )
 
         await self.__common_validation(verrors, data, 'pool_create')
-        disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
+        disks = await self.middleware.call('pool.mark_disks_for_swap', data['topology'])
         disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
         if log_disks:
@@ -836,11 +834,9 @@ class PoolService(CRUDService):
         await self.__common_validation(verrors, data, 'pool_update', old=pool)
         disks = vdevs = None
         if 'topology' in data:
-            disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
+            disks = await self.middleware.call('pool.mark_disks_for_swap', data['topology'])
             disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if osc.IS_FREEBSD and pool['encryptkey']:
             enc_keypath = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
@@ -942,6 +938,20 @@ class PoolService(CRUDService):
                     f'{schema_name}.topology.{i}',
                     f'Only one row for the virtual device of type {i} is allowed.',
                 )
+
+    @private
+    async def mark_disks_for_swap(self, topology):
+        """
+        Iterate `topology` and mark the appropriate disks that will get
+        a swap partition written to it.
+        """
+        disks = {}
+        for vdev_type in topology:
+            swap = True if vdev_type in ('spares', 'data') else False
+            for vdev_info in topology[vdev_type]:
+                for disk in vdev_info.get('disks', []):
+                    disks[disk] = {'create_swap': swap}
+        return disks
 
     async def __convert_topology_to_vdevs(self, topology):
         # We do two things here:
