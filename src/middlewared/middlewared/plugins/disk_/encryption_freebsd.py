@@ -312,11 +312,11 @@ class DiskService(Service, DiskEncryptionBase):
 
     @private
     def geli_detach_single(self, dev):
-        if not os.path.exists(f'/dev/{dev.replace(".eli", "")}.eli'):
+        dev = f'{dev.removeprefix("/dev/").removesuffix(".eli")}.eli'
+        if not os.path.exists(dev):
             return
-        cp = subprocess.run(
-            ['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
+
+        cp = subprocess.run(['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
             raise CallError(f'Unable to geli detach {dev}: {cp.stderr.decode()}')
 
