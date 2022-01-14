@@ -68,12 +68,12 @@ class DiskService(Service, DiskEncryptionBase):
 
     @private
     def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
-        if skip_existing or not os.path.exists(f'/dev/{dev}.eli'):
+        if skip_existing or not os.path.exists(f'{dev}.eli'):
             cp = subprocess.run(
                 ['geli', 'attach'] + (['-j', passphrase] if passphrase else ['-p']) + ['-k', key, dev],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            if cp.stderr or not os.path.exists(f'/dev/{dev}.eli'):
+            if cp.stderr or not os.path.exists(f'{dev}.eli'):
                 raise CallError(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
         else:
             self.logger.debug(f'{dev} already attached')

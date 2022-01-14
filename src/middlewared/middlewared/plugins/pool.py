@@ -845,11 +845,14 @@ class PoolService(CRUDService):
         enc_options = {'enc_keypath': enc_keypath}
 
         if disks:
-            await self.middleware.call('pool.format_disks', job, disks, enc_options)
+            await self.middleware.call('pool.format_disks', job, disks)
             await self.middleware.call('geom.cache.invalidate')
             vdevs, enc_disks = await self.middleware.call(
                 'pool.convert_topology_to_vdevs', data['topology'], enc_options
             )
+            if enc_options['enc_keypath']:
+                # encrypt the disks
+                await self.middleware.call('pool.encrypt_disks', job, enc_disks, enc_options)
             job.set_progress(90, 'Extending ZFS Pool')
 
             extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)

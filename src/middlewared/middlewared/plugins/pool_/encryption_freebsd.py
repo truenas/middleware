@@ -27,7 +27,7 @@ class PoolService(Service):
                     {
                         'volume': pool_id,
                         'disk': disks_cache[enc_disk['disk']]['identifier'],
-                        'provider': enc_disk['devname'],
+                        'provider': enc_disk['devname'].removeprefix('/dev/'),
                     },
                     {'prefix': 'encrypted_'},
                 )
