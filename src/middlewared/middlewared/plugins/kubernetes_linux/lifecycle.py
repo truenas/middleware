@@ -6,6 +6,7 @@ import shutil
 import uuid
 
 from datetime import datetime
+from typing import Dict
 
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
@@ -247,10 +248,25 @@ class KubernetesService(Service):
         await self.middleware.call('catalog.sync_all')
 
     @private
+    def get_dataset_update_props(self, props: Dict) -> Dict:
+        return {
+            attr: value
+            for attr, value in props.items()
+            if attr not in ('casesensitivity', 'mountpoint')
+        }
+
+    @private
     async def create_update_k8s_datasets(self, k8s_ds):
         create_props = self.k8s_props_default()
-        update_props = {k: v for k, v in create_props.items() if k not in ('casesensitivity',)}
+        update_props = self.get_dataset_update_props(create_props)
         for dataset_name in await self.kubernetes_datasets(k8s_ds):
+            custom_props = self.kubernetes_datasets_custom_props(ds=dataset_name.rsplit(k8s_ds)[1])
+            if custom_props:
+                # got custom properties, need to re-calculate
+                # the update and create props.
+                create_props = dict(create_props, **custom_props)
+                update_props = self.get_dataset_update_props(create_props)
+
             dataset = await self.middleware.call(
                 'zfs.dataset.query', [['id', '=', dataset_name]], {
                     'extra': {
@@ -271,7 +287,9 @@ class KubernetesService(Service):
                         'name': dataset_name, 'type': 'FILESYSTEM', 'properties': create_props,
                     }
                 )
-                await self.middleware.call('zfs.dataset.mount', dataset_name)
+                if create_props.get('mountpoint') != 'legacy':
+                    # since, legacy mountpoints should not be zfs mounted.
+                    await self.middleware.call('zfs.dataset.mount', dataset_name)
             elif any(val['value'] != update_props[name] for name, val in dataset[0]['properties'].items()):
                 await self.middleware.call(
                     'zfs.dataset.update', dataset_name, {
@@ -282,8 +300,20 @@ class KubernetesService(Service):
     @private
     async def kubernetes_datasets(self, k8s_ds):
         return [k8s_ds] + [
-            os.path.join(k8s_ds, d) for d in ('docker', 'k3s', 'releases', 'default_volumes', 'catalogs')
+            os.path.join(k8s_ds, d) for d in (
+                'docker', 'k3s', 'k3s/kubelet', 'releases',
+                'default_volumes', 'catalogs'
+            )
         ]
+
+    @private
+    def kubernetes_datasets_custom_props(self, ds: str) -> Dict:
+        props = {
+            'k3s/kubelet': {
+                'mountpoint': 'legacy'
+            }
+        }
+        return props.get(ds, dict())
 
 
 async def _event_system(middleware, event_type, args):

@@ -163,6 +163,7 @@ LoadPlugin zfs_arc_v2
 	Mountpoint "/^\/boot/"
 	Mountpoint "/^\/mnt\/[^/]+\/ix-applications/"
 	Mountpoint "/^\/var\/db\/system/"
+	Mountpoint "/^\/var\/lib\/kubelet/"
 	FSType "tmpfs"
 	FSType "bindfs"
 	FSType "devtmpfs"
