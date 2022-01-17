@@ -17,7 +17,7 @@ async def remove_disk(middleware, disk_name):
 
 async def udev_block_devices_hook(middleware, data):
     if data.get('SUBSYSTEM') != 'block' or data.get('DEVTYPE') != 'disk' or data['SYS_NAME'].startswith((
-        'sr', 'md', 'dm-', 'loop'
+        'dm-', 'loop', 'md', 'sr', 'zd',
     )):
         return
 
