@@ -189,7 +189,9 @@ async def rclone(middleware, job, cloud_sync, dry_run=False):
         if cloud_sync["direction"] == "PUSH":
             if cloud_sync["snapshot"]:
                 dataset, recursive = get_dataset_recursive(
-                    await middleware.call("zfs.dataset.query"), cloud_sync["path"])
+                    await middleware.call("zfs.dataset.query", [["type", "=", "FILESYSTEM"]]),
+                    cloud_sync["path"],
+                )
                 snapshot_name = f"cloud_sync-{cloud_sync['id']}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
 
                 snapshot = {"dataset": dataset["name"], "name": snapshot_name}
@@ -241,7 +243,7 @@ async def rclone(middleware, job, cloud_sync, dry_run=False):
             await asyncio.wait_for(check_cloud_sync, None)
 
         if snapshot:
-            await middleware.call("zfs.snapshot.remove", snapshot)
+            await middleware.call("zfs.snapshot.delete", f"{snapshot['dataset']}@{snapshot['name']}")
 
         if cancelled_error is not None:
             raise cancelled_error

@@ -1,4 +1,5 @@
 import contextlib
+import re
 import time
 
 import pytest
@@ -6,7 +7,7 @@ import pytest
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.s3 import s3_server
-from middlewared.test.integration.utils import pool, ssh
+from middlewared.test.integration.utils import call, pool, ssh
 
 import sys
 import os
@@ -186,3 +187,36 @@ def test_ftp_subfolder(anonymous, defaultroot, has_leading_slash):
                     run_task(t)
 
                     assert ssh(f'ls /mnt/{local_dataset}') == 'good-file\n'
+
+
+@pytest.mark.parametrize("has_zvol_sibling", [True, False])
+def test_snapshot(has_zvol_sibling):
+    with dataset("test") as ds:
+        ssh(f"mkdir -p /mnt/{ds}/dir1/dir2")
+        ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1")
+
+        if has_zvol_sibling:
+            ssh(f"zfs create -V 1gb {pool}/zvol")
+
+        try:
+            with local_s3_task({
+                "path": f"/mnt/{ds}/dir1/dir2",
+                "bwlimit": [{"time": "00:00", "bandwidth": 1024 * 200}],  # So it'll take 5 seconds
+                "snapshot": True,
+            }) as task:
+                job_id = call("cloudsync.sync", task["id"])
+
+                time.sleep(2.5)
+
+                ps_ax = ssh("ps ax | grep rclone")
+
+                call("core.job_wait", job_id, job=True)
+
+                assert re.search(rf"rclone .+ /mnt/{ds}/.zfs/snapshot/cloud_sync-[0-9]+-[0-9]+/dir1/dir2", ps_ax)
+
+            time.sleep(1)
+
+            assert call("zfs.snapshot.query", [["dataset", "=", ds]]) == []
+        finally:
+            if has_zvol_sibling:
+                ssh(f"zfs destroy -r {pool}/zvol")

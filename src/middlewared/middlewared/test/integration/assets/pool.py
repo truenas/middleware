@@ -5,10 +5,12 @@ from middlewared.test.integration.utils import call, pool
 
 
 @contextlib.contextmanager
-def dataset(name):
+def dataset(name, data=None):
+    data = data or {}
+
     dataset = f"{pool}/{name}"
 
-    call("pool.dataset.create", {"name": dataset})
+    call("pool.dataset.create", {"name": dataset, **data})
 
     try:
         yield dataset
