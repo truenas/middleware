@@ -2,8 +2,10 @@ import asyncio
 import errno
 import os
 
+from bsd import geom
+
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import CallError, item_method, job, Service, ValidationErrors
+from middlewared.service import item_method, job, Service, ValidationErrors
 from middlewared.utils import osc
 
 
@@ -94,6 +96,7 @@ class PoolService(Service):
             'pool.format_disks', job, {disk['devname']: {'vdev': vdev, 'create_swap': create_swap}},
             {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')},
         )
+        await self.middleware.run_in_thread(geom.scan)
 
         new_devname = vdev[0].replace('/dev/', '')
 

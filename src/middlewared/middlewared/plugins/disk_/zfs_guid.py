@@ -4,7 +4,6 @@ import bidict
 
 from middlewared.service import private, Service
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import osc
 
 logger = logging.getLogger(__name__)
 
@@ -64,26 +63,11 @@ async def devd_zfs_hook(middleware, data):
             pass
 
 
-async def zfs_events_hook(middleware, data):
-    event_id = data["class"]
-
-    if event_id in [
-        "sysevent.fs.zfs.config_sync",
-    ]:
-        try:
-            await middleware.call("disk.sync_zfs_guid", data["pool"])
-        except MatchNotFound:
-            pass
-
-
 async def hook(middleware, pool):
     await middleware.call("disk.sync_zfs_guid", pool)
 
 
 async def setup(middleware):
-    if osc.IS_FREEBSD:
-        middleware.register_hook("devd.zfs", devd_zfs_hook)
-    else:
-        middleware.register_hook("zfs.pool.events", zfs_events_hook)
+    middleware.register_hook("devd.zfs", devd_zfs_hook)
 
     middleware.register_hook("pool.post_create_or_update", hook)
