@@ -25,18 +25,26 @@ class SATADOMWearAlertSource(AlertSource):
     products = ("ENTERPRISE",)
 
     async def check(self):
+        data = await self.middleware.call("system.info")
+        product = data["system_product"]
+        if not product.startswith(("TRUENAS-M", "TRUENAS-Z")):
+            return []
+
         alerts = []
-        for disk in await self.middleware.call("disk.query"):
-            lifetime = await self.middleware.call("disk.sata_dom_lifetime_left", disk["devname"])
+        for disk in await self.middleware.call("boot.get_disks"):
+            if not disk.startswith("sda"):
+                continue
+
+            lifetime = await self.middleware.call("disk.sata_dom_lifetime_left", disk)
             if lifetime is not None:
                 if lifetime <= 0.1:
                     alerts.append(Alert(SATADOMWearCriticalAlertClass, {
-                        "disk": disk["name"],
+                        "disk": disk,
                         "lifetime": int(lifetime * 100 + 0.5),
                     }))
                 elif lifetime <= 0.2:
                     alerts.append(Alert(SATADOMWearWarningAlertClass, {
-                        "disk": disk["name"],
+                        "disk": disk,
                         "lifetime": int(lifetime * 100 + 0.5),
                     }))
 
