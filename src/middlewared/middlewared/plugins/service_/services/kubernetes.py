@@ -19,7 +19,7 @@ class KubernetesService(SimpleService):
 
     async def unmount_kubelet_dataset(self):
         if os.path.ismount(self.kubelet_mountpoint):
-            await run('umount', '-f', self.kubelet_mountpoint, check=True)
+            await run('umount', '-f', '-R', self.kubelet_mountpoint, check=True)
 
     async def mount_kubelet_dataset(self):
         config = await self.middleware.call('kubernetes.config')
