@@ -15,17 +15,18 @@ RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
 class DeviceService(Service, DeviceInfoBase):
 
     async def get_disks(self):
-        return await self.middleware.call('device.get_disk_details', 'DISK')
+        devices = self.middleware.call_sync('device.get_storage_devices_topology')
+        return await self.middleware.call('device.get_disk_details', devices, 'DISK')
 
     async def get_disk(self, name):
+        devices = self.middleware.call_sync('device.get_storage_devices_topology')
         class_name = 'MULTIPATH' if name.startswith('multipath/') else 'DISK'
-        disk = await self.middleware.call('device.get_disk_details', class_name, name)
+        disk = await self.middleware.call('device.get_disk_details', devices, class_name, name)
         return None if not disk else disk
 
     @private
-    def get_disk_details(self, class_name, disk_name=None):
+    def get_disk_details(self, devices, class_name, disk_name=None):
         xml = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value).find(f'.//class/[name="{class_name}"]')
-        devices = self.middleware.call_sync('device.get_storage_devices_topology')
 
         result = {}
         for g in xml.findall('geom'):
