@@ -299,6 +299,7 @@ class PoolService(CRUDService):
         ),
         Bool('is_upgraded'),
         Bool('healthy', required=True),
+        Bool('warning', required=True),
         Str('status_detail', required=True, null=True),
         Dict(
             'autotrim',
@@ -561,6 +562,7 @@ class PoolService(CRUDService):
                 'scan': zpool['scan'],
                 'topology': self.transform_topology(zpool['groups']),
                 'healthy': zpool['healthy'],
+                'warning': zpool['warning'],
                 'status_detail': zpool['status_detail'],
                 'autotrim': zpool['properties']['autotrim'],
             })
@@ -570,6 +572,7 @@ class PoolService(CRUDService):
                 'scan': None,
                 'topology': None,
                 'healthy': False,
+                'warning': False,
                 'status_detail': None,
                 'autotrim': {
                     'parsed': 'off',
