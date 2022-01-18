@@ -1633,21 +1633,19 @@ class PoolService(CRUDService):
 
             job.set_progress(80, 'Cleaning disks')
 
-            # we can't "wipe" the disks unless the geli providers (if any)
-            # have been detached first
-            await self.middleware.call('disk.geli_detach', pool, True)
             if pool['encrypt'] > 0:
+                await self.middleware.call('disk.geli_detach', pool, True)
                 try:
                     os.remove(pool['encryptkey_path'])
                 except OSError:
                     self.logger.warning('Failed to remove encryption key %r', pool['encryptkey_path'], exc_info=True)
-
-            async def unlabel(disk):
-                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False, {'configure_swap': False})
-                await wipe_job.wait()
-                if wipe_job.error:
-                    self.logger.warn(f'Failed to wipe disk {disk}: {wipe_job.error}')
-            await asyncio_map(unlabel, disks, limit=16)
+            else:
+                async def unlabel(disk):
+                    wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False, {'configure_swap': False})
+                    await wipe_job.wait()
+                    if wipe_job.error:
+                        self.logger.warn(f'Failed to wipe disk {disk}: {wipe_job.error}')
+                await asyncio_map(unlabel, disks, limit=16)
 
             await self.middleware.call('disk.sync_all')
         else:

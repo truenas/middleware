@@ -32,13 +32,10 @@ class DiskService(Service, DiskEncryptionBase):
 
             failed = []
             for dev in devices:
+                normalized_dev = dev.removeprefix('/dev/').removesuffix('.eli')
+                normalized_dev = os.path.join('/dev/', normalized_dev)
                 try:
-                    self.middleware.call_sync(
-                        'disk.geli_attach_single',
-                        dev,
-                        f.name,
-                        passphrase,
-                    )
+                    self.middleware.call_sync('disk.geli_attach_single', normalized_dev, f.name, passphrase)
                 except Exception:
                     failed.append(dev)
 
@@ -312,8 +309,9 @@ class DiskService(Service, DiskEncryptionBase):
 
     @private
     def geli_detach_single(self, dev):
+        # normalize the encrypted provider
         dev = f'{dev.removeprefix("/dev/").removesuffix(".eli")}.eli'
-        if not os.path.exists(dev):
+        if not os.path.exists(os.path.join('/dev/', dev)):
             return
 
         cp = subprocess.run(['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -323,8 +321,9 @@ class DiskService(Service, DiskEncryptionBase):
     @private
     def geli_clear(self, dev):
         dev = f'{dev.removeprefix("/dev/").removesuffix(".eli")}'
-        if os.path.exists(f'{dev}.eli'):
-            # the .eli device should already be detached before clear can be run on it
+        enc_prov = os.path.join('/dev/', dev) + '.eli'
+        if os.path.exists(enc_prov):
+            # the /dev/gptid/*.eli device should already be detached before clear can be run on it
             raise CallError(f'Unable to geli clear {dev!r} because {dev}.eli exists')
 
         cp = subprocess.run(['geli', 'clear', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
