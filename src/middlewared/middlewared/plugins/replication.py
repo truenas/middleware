@@ -462,6 +462,7 @@ class ReplicationService(CRUDService):
             ("rm", {"name": "schedule"}),
             ("rm", {"name": "only_matching_schedule"}),
             ("rm", {"name": "enabled"}),
+            ("add", Bool("exclude_mountpoint_property", default=True)),
             ("add", Bool("only_from_scratch", default=False)),
         ),
     )

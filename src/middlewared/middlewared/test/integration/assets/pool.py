@@ -6,8 +6,6 @@ from middlewared.test.integration.utils import call, pool
 
 @contextlib.contextmanager
 def dataset(name):
-    assert "/" not in name
-
     dataset = f"{pool}/{name}"
 
     call("pool.dataset.create", {"name": dataset})
@@ -16,6 +14,6 @@ def dataset(name):
         yield dataset
     finally:
         try:
-            call("pool.dataset.delete", dataset)
+            call("pool.dataset.delete", dataset, {"recursive": True})
         except InstanceNotFound:
             pass
