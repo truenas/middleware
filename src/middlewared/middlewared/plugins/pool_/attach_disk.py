@@ -25,7 +25,7 @@ class PoolService(Service):
         is the STRIPED disk GUID which will be converted to mirror. If `target_vdev` is mirror, it will be converted
         into a n-way mirror.
         """
-        pool = await self.get_instance(oid)
+        pool = await self.middleware.call('pool.get_instance', oid)
         verrors = ValidationErrors()
         if not pool['is_decrypted']:
             verrors.add('oid', 'Pool must be unlocked for this action.')
@@ -63,26 +63,20 @@ class PoolService(Service):
         verrors.check()
 
         disks = {options['new_disk']: {'create_swap': topology_type == 'data'}}
-        await self.middleware.call(
-            'pool.format_disks', job, disks,
-            {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')}
-        )
-
-        # just formatted and encrypted the disk so have to invalidate
-        # the in-memory cache of disk info
+        await self.middleware.call('pool.format_disks', job, disks)
         await self.middleware.call('geom.cache.invalidate')
 
-        devname = await self.middleware.call(
-            'disk.gptid_from_part_type',
-            options['new_disk'],
-            await self.middleware.call('disk.get_zfs_part_type')
-        )
+        zfs_part = await self.middleware.call('disk.get_zfs_part_type')
+        new_devname = await self.middleware.call('disk.gptid_from_part_type', options['new_disk'], zfs_part)
         if pool['encrypt'] > 0:
-            devname = f'/dev/{devname}.eli'
+            new_devname = f'{new_devname}.eli'
+            enc_disks = [{'devname': new_devname}]
+            enc_options = {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')}
+            await self.middleware.call('pool.encrypt_disks', job, enc_disks, enc_options)
 
         guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
         extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], None, [
-            {'target': guid, 'type': 'DISK', 'path': devname}
+            {'target': guid, 'type': 'DISK', 'path': f'/dev/{new_devname}'}
         ])
         try:
             await job.wrap(extend_job)
@@ -90,12 +84,12 @@ class PoolService(Service):
             if pool['encrypt'] > 0:
                 try:
                     # If replace has failed lets detach geli to not keep disk busy
-                    await self.middleware.call('disk.geli_detach_single', devname)
+                    await self.middleware.call('disk.geli_detach_single', new_devname)
                 except Exception:
-                    self.logger.warning('Failed to geli detach %r', devname, exc_info=True)
+                    self.logger.warning('Failed to geli detach %r', new_devname, exc_info=True)
             raise
 
-        enc_disks = {'disk': options['new_disk'], 'devname': devname}
+        enc_disks = [{'disk': options['new_disk'], 'devname': f'{new_devname.removeprefix("/dev/")}'}]
         disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
         await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
         asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
