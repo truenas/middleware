@@ -40,7 +40,7 @@ class PoolService(Service):
                 }]
             }
         """
-        pool = await self.get_instance(oid)
+        pool = await self.middleware.call('pool.get_instance', oid)
 
         verrors = ValidationErrors()
 
@@ -75,16 +75,17 @@ class PoolService(Service):
                 swap_disks.append(from_disk)
 
         await self.middleware.call('disk.swaps_remove_disks', swap_disks)
-        await self.middleware.call(
-            'pool.format_disks', job, {disk['devname']: {'create_swap': found[0] in ('data', 'spare')}},
-            {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')},
-        )
+        disks = {disk['devname']: {'create_swap': found[0] in ('data', 'spare')}}
+        await self.middleware.call('pool.format_disks', job, disks)
         await self.middleware.call('geom.cache.invalidate')
 
         zfs_part = await self.middleware.call('disk.get_zfs_part_type')
         new_devname = await self.middleware.call('disk.gptid_from_part_type', disk['devname'], zfs_part)
         if pool['encrypt'] > 0:
             new_devname = f'{new_devname}.eli'
+            enc_disks = [{'disk': disk, 'devname': new_devname}]
+            enc_options = {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')}
+            await self.middleware.call('pool.encrypt_disks', job, enc_disks, enc_options)
 
         job.set_progress(30, 'Replacing disk')
         try:
@@ -113,7 +114,7 @@ class PoolService(Service):
             # removed from swap prior to replacement
             asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
-        enc_disks = {'disk': disk['devname'], 'devname': f'/dev/{new_devname}'}
+        enc_disks = [{'disk': disk['devname'], 'devname': f'{new_devname.removeprefix("/dev/")}'}]
         await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
 
         return True
