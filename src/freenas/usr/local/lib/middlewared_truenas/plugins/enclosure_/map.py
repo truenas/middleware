@@ -327,6 +327,7 @@ class EnclosureService(Service):
     async def _map_enclosures(self, enclosures, slots):
         mapped = [{
             "id": "mapped_enclosure_0",
+            "number": 0,
             "name": "Drive Bays",
             "model": "",
             "controller": True,
