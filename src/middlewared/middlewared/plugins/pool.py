@@ -1644,7 +1644,7 @@ class PoolService(CRUDService):
                     wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False, {'configure_swap': False})
                     await wipe_job.wait()
                     if wipe_job.error:
-                        self.logger.warn(f'Failed to wipe disk {disk}: {wipe_job.error}')
+                        self.logger.warning('Failed to wipe disk %r: %r', disk, wipe_job.error)
                 await asyncio_map(unlabel, disks, limit=16)
 
             await self.middleware.call('disk.sync_all')
