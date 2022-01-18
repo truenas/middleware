@@ -32,10 +32,8 @@ class DiskService(Service, DiskEncryptionBase):
 
             failed = []
             for dev in devices:
-                normalized_dev = dev.removeprefix('/dev/').removesuffix('.eli')
-                normalized_dev = os.path.join('/dev/', normalized_dev)
                 try:
-                    self.middleware.call_sync('disk.geli_attach_single', normalized_dev, f.name, passphrase)
+                    self.middleware.call_sync('disk.geli_attach_single', dev, f.name, passphrase)
                 except Exception:
                     failed.append(dev)
 
@@ -65,15 +63,17 @@ class DiskService(Service, DiskEncryptionBase):
 
     @private
     def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
-        if skip_existing or not os.path.exists(f'{dev}.eli'):
+        normalized_dev = dev.removeprefix('/dev/').removesuffix('.eli')
+        normalized_dev = os.path.join('/dev/', normalized_dev)
+        if skip_existing or not os.path.exists(f'{normalized_dev}.eli'):
             cp = subprocess.run(
-                ['geli', 'attach'] + (['-j', passphrase] if passphrase else ['-p']) + ['-k', key, dev],
+                ['geli', 'attach'] + (['-j', passphrase] if passphrase else ['-p']) + ['-k', key, normalized_dev],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            if cp.stderr or not os.path.exists(f'{dev}.eli'):
-                raise CallError(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
+            if cp.stderr or not os.path.exists(f'{normalized_dev}.eli'):
+                raise CallError(f'Unable to geli attach {normalized_dev}.eli: {cp.stderr.decode()}')
         else:
-            self.logger.debug(f'{dev} already attached')
+            self.logger.debug(f'{normalized_dev}.eli already attached')
 
     @private
     def create_keyfile(self, keyfile, size=64, force=False):
