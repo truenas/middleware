@@ -650,11 +650,9 @@ class PoolService(CRUDService):
         )
 
         await self.__common_validation(verrors, data, 'pool_create')
-        disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
-
-        if verrors:
-            raise verrors
+        disks = await self.middleware.call('pool.mark_disks_for_swap', data['topology'])
+        await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
+        verrors.check()
 
         log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
         if log_disks:
@@ -669,7 +667,8 @@ class PoolService(CRUDService):
                     except CanNotBeOverprovisionedException:
                         pass
 
-        formatted_disks = await self.middleware.call('pool.format_disks', job, disks)
+        # format the disks (GELI encryption is ignored on create requests since it was deprecated)
+        await self.middleware.call('pool.format_disks', job, disks)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -685,13 +684,9 @@ class PoolService(CRUDService):
             'compression': 'lz4',
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
+            'aclmode': 'passthrough',
             **encryption_dict
         }
-        if osc.IS_FREEBSD:
-            fsoptions['aclmode'] = 'passthrough'
-
-        if osc.IS_LINUX:
-            fsoptions['acltype'] = 'posixacl'
 
         dedup = data.get('deduplication')
         if dedup:
@@ -710,7 +705,7 @@ class PoolService(CRUDService):
 
             z_pool = await self.middleware.call('zfs.pool.create', {
                 'name': data['name'],
-                'vdevs': vdevs,
+                'vdevs': (await self.middleware.call('pool.convert_topology_to_vdevs', data['topology']))[0],
                 'options': options,
                 'fsoptions': fsoptions,
             })
@@ -744,9 +739,6 @@ class PoolService(CRUDService):
             encrypted_dataset_pk = await self.middleware.call(
                 'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
             )
-
-            if osc.IS_FREEBSD:
-                await self.middleware.call('pool.save_encrypteddisks', pool_id, formatted_disks, disks_cache)
 
             await self.middleware.call(
                 'datastore.insert',
@@ -834,22 +826,28 @@ class PoolService(CRUDService):
         verrors = ValidationErrors()
 
         await self.__common_validation(verrors, data, 'pool_update', old=pool)
-        disks = vdevs = None
+        disks = None
         if 'topology' in data:
-            disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-            disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
+            disks = await self.middleware.call('pool.mark_disks_for_swap', data['topology'])
+            disks_cache = await self.middleware.call(
+                'disk.check_disks_availability', verrors, list(disks), 'pool_update'
+            )
+        verrors.check()
 
-        if verrors:
-            raise verrors
-
-        if osc.IS_FREEBSD and pool['encryptkey']:
+        if pool['encryptkey']:
             enc_keypath = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
         else:
             enc_keypath = None
+        enc_options = {'enc_keypath': enc_keypath}
 
-        if disks and vdevs:
-            enc_disks = await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': enc_keypath})
-
+        if disks:
+            await self.middleware.call('pool.format_disks', job, disks)
+            vdevs, enc_disks = await self.middleware.call(
+                'pool.convert_topology_to_vdevs', data['topology'], enc_options
+            )
+            if enc_options['enc_keypath']:
+                # encrypt the disks
+                await self.middleware.call('pool.encrypt_disks', job, enc_disks, enc_options)
             job.set_progress(90, 'Extending ZFS Pool')
 
             extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
@@ -942,6 +940,45 @@ class PoolService(CRUDService):
                     f'{schema_name}.topology.{i}',
                     f'Only one row for the virtual device of type {i} is allowed.',
                 )
+
+    @private
+    async def mark_disks_for_swap(self, topology):
+        """
+        Iterate `topology` and mark the appropriate disks that will get
+        a swap partition written to it.
+        """
+        disks = {}
+        for vdev_type in topology:
+            swap = True if vdev_type in ('spares', 'data') else False
+            for vdev_info in topology[vdev_type]:
+                for disk in vdev_info.get('disks', []):
+                    disks[disk] = {'create_swap': swap}
+        return disks
+
+    @private
+    async def convert_topology_to_vdevs(self, topology, enc_options=None):
+        geli = enc_options and bool(enc_options.get('enc_keypath'))
+        vdevs = []
+        enc_disks = []
+        xml = await self.middleware.call('geom.cache.get_xml')
+        zfs_part = await self.middleware.call('disk.get_zfs_part_type')
+        for vdev_type in topology:
+            for vdev_info in topology[vdev_type]:
+                if vdev_info.get('disks'):
+                    devices = []
+                    for disk in vdev_info['disks']:
+                        label = await self.middleware.call('disk.gptid_from_part_type', disk, zfs_part, xml)
+                        devname = f'/dev/{label}' if not geli else f'/dev/{label}.eli'
+                        devices.append(devname)
+                        if geli:
+                            enc_disks.append({'disk': disk, 'devname': devname})
+
+                    vdevs.append({
+                        'root': vdev_type.upper(),
+                        'type': vdev_info['type'],
+                        'devices': devices,
+                    })
+        return vdevs, enc_disks
 
     async def __convert_topology_to_vdevs(self, topology):
         # We do two things here:
@@ -1591,29 +1628,21 @@ class PoolService(CRUDService):
 
             job.set_progress(80, 'Cleaning disks')
 
-            async def unlabel(disk):
-                wipe_job = await self.middleware.call(
-                    'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
-                )
-                await wipe_job.wait()
-                if wipe_job.error:
-                    self.logger.warn(f'Failed to wipe disk {disk}: {wipe_job.error}')
-            await asyncio_map(unlabel, disks, limit=16)
-
-            await self.middleware.call('disk.sync_all')
-
-            if osc.IS_FREEBSD:
-                await self.middleware.call('disk.geli_detach', pool, True)
             if pool['encrypt'] > 0:
+                await self.middleware.call('disk.geli_detach', pool, True)
                 try:
                     os.remove(pool['encryptkey_path'])
-                except OSError as e:
-                    self.logger.warn(
-                        'Failed to remove encryption key %s: %s',
-                        pool['encryptkey_path'],
-                        e,
-                        exc_info=True,
-                    )
+                except OSError:
+                    self.logger.warning('Failed to remove encryption key %r', pool['encryptkey_path'], exc_info=True)
+            else:
+                async def unlabel(disk):
+                    wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False, {'configure_swap': False})
+                    await wipe_job.wait()
+                    if wipe_job.error:
+                        self.logger.warning('Failed to wipe disk %r: %r', disk, wipe_job.error)
+                await asyncio_map(unlabel, disks, limit=16)
+
+            await self.middleware.call('disk.sync_all')
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])

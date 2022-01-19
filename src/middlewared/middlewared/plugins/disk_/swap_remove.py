@@ -24,10 +24,11 @@ class DiskService(Service):
         Remove a given disk (e.g. ["da0", "da1"]) from swap.
         It will offline if from swap, removing encryption and destroying the mirror ( if part of one ).
         """
-        return await self.swaps_remove_disks_unlocked(disks, options)
+        part_xml = await self.middleware.call('geom.cache.get_class_xml', 'PART')
+        return await self.swaps_remove_disks_unlocked(disks, options, part_xml)
 
     @private
-    async def swaps_remove_disks_unlocked(self, disks, options=None):
+    async def swaps_remove_disks_unlocked(self, disks, options=None, part_xml=None):
         """
         We have a separate endpoint for this to ensure that no other swap related operations not do swap devices
         removal while swap configuration is in progress - however we still need to allow swap configuration process
@@ -35,12 +36,13 @@ class DiskService(Service):
         """
         options = options or {}
         providers = {}
+        valid_partition_type_uuids = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
         for disk in disks:
-            partitions = await self.middleware.call('disk.list_partitions', disk)
+            partitions = await self.middleware.call('disk.list_partitions', disk, part_xml)
             if not partitions:
                 continue
             for p in partitions:
-                if p['partition_type'] in await self.middleware.call('disk.get_valid_swap_partition_type_uuids'):
+                if p['partition_type'] in valid_partition_type_uuids:
                     providers[p['id']] = p
                     break
 

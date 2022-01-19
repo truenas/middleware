@@ -2,7 +2,6 @@ import asyncio
 
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import CallError, job, Service, ValidationErrors
-from middlewared.utils import osc
 
 
 class PoolService(Service):
@@ -31,6 +30,7 @@ class PoolService(Service):
         if not pool['is_decrypted']:
             verrors.add('oid', 'Pool must be unlocked for this action.')
             verrors.check()
+
         topology = pool['topology']
         topology_type = vdev = None
         for i in topology:
@@ -44,6 +44,7 @@ class PoolService(Service):
         else:
             verrors.add('pool_attach.target_vdev', 'Unable to locate VDEV')
             verrors.check()
+
         if topology_type in ('cache', 'spares'):
             verrors.add('pool_attach.target_vdev', f'Attaching disks to {topology_type} not allowed.')
         elif topology_type == 'data':
@@ -51,45 +52,44 @@ class PoolService(Service):
             if vdev['type'] not in ('DISK', 'MIRROR'):
                 verrors.add('pool_attach.target_vdev', f'Attaching disk to {vdev["type"]} vdev is not allowed.')
 
-        if osc.IS_FREEBSD and pool['encrypt'] == 2:
+        if pool['encrypt'] == 2:
             if not options.get('passphrase'):
                 verrors.add('pool_attach.passphrase', 'Passphrase is required for encrypted pool.')
             elif not await self.middleware.call('disk.geli_testkey', pool, options['passphrase']):
                 verrors.add('pool_attach.passphrase', 'Passphrase is not valid.')
 
-        if osc.IS_LINUX and options.get('passphrase'):
-            verrors.add(
-                'pool_attach.passphrase',
-                'This field is not valid on this platform.'
-            )
-
         # Let's validate new disk now
         await self.middleware.call('disk.check_disks_availability', verrors, [options['new_disk']], 'pool_attach')
         verrors.check()
 
-        guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
-        disks = {options['new_disk']: {'create_swap': topology_type == 'data', 'vdev': []}}
-        enc_disks = await self.middleware.call(
-            'pool.format_disks', job, disks,
-            {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')}
-        )
+        disks = {options['new_disk']: {'create_swap': topology_type == 'data'}}
+        await self.middleware.call('pool.format_disks', job, disks)
+        await self.middleware.call('geom.cache.invalidate')
 
-        devname = disks[options['new_disk']]['vdev'][0]
+        zfs_part = await self.middleware.call('disk.get_zfs_part_type')
+        new_devname = await self.middleware.call('disk.gptid_from_part_type', options['new_disk'], zfs_part)
+        if pool['encrypt'] > 0:
+            new_devname = f'{new_devname}.eli'
+            enc_disks = [{'devname': new_devname}]
+            enc_options = {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')}
+            await self.middleware.call('pool.encrypt_disks', job, enc_disks, enc_options)
+
+        guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
         extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], None, [
-            {'target': guid, 'type': 'DISK', 'path': devname}
+            {'target': guid, 'type': 'DISK', 'path': f'/dev/{new_devname}'}
         ])
         try:
             await job.wrap(extend_job)
         except CallError:
-            if osc.IS_FREEBSD and pool['encrypt'] > 0:
+            if pool['encrypt'] > 0:
                 try:
                     # If replace has failed lets detach geli to not keep disk busy
-                    await self.middleware.call('disk.geli_detach_single', devname)
+                    await self.middleware.call('disk.geli_detach_single', new_devname)
                 except Exception:
-                    self.logger.warn(f'Failed to geli detach {devname}', exc_info=True)
+                    self.logger.warning('Failed to geli detach %r', new_devname, exc_info=True)
             raise
 
-        if osc.IS_FREEBSD:
-            disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
-            await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
+        enc_disks = [{'disk': options['new_disk'], 'devname': f'{new_devname.removeprefix("/dev/")}'}]
+        disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
+        await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
         asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
