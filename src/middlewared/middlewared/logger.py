@@ -33,6 +33,9 @@ logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.CRITICAL)
 logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
 logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
 logging.getLogger('urllib3').setLevel(logging.WARNING)
+# ACME is very verbose in logging the request it sends with headers etc, let's not pollute the logs
+# with that much information and raise the log level in this case
+logging.getLogger('acme.client').setLevel(logging.WARN)
 
 
 FAILSAFE_LOGFILE = '/tmp/failsafe_middlewared.log'
