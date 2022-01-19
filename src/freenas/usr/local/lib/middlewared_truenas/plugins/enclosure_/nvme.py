@@ -27,6 +27,7 @@ class EnclosureService(Service):
 
         return [{
             'id': id,
+            'number': 1,
             'name': name,
             'label': name,
             'model': model,
