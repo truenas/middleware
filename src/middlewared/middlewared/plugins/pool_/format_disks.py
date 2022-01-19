@@ -1,35 +1,29 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from middlewared.service import private, Service
+from middlewared.utils.asyncio_ import asyncio_map
 
 
 class PoolService(Service):
 
     @private
-    def format_disks(self, job, disks):
+    async def format_disks(self, job, disks):
         """
         This does a few things:
-            1. wipes the disks (max of 16 in parallel using native threads)
+            1. wipes the disks (max of 16 in parallel)
             2. formats the disks with a freebsd-zfs partition label
             3. formats the disks with a freebsd-swap partition lable (if necessary)
+            4. regenerates the geom xml cache (geom.cache.invalidate)
         """
-        self.middleware.call_sync('disk.sed_unlock_all')  # unlock any SED drives
-        swapgb = self.middleware.call_sync('system.advanced.config')['swapondrive']
+        await self.middleware.call('disk.sed_unlock_all')  # unlock any SED drives
+        swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
         total_disks = len(disks)
-        with ThreadPoolExecutor(max_workers=16) as exc:
-            # The called methods `subprocess` out many times for each disk
-            # so this is painful on systems with large amount of disks.
-            # This is, unfortunately, the best we can really do right now
-            # without implementing gpart code natively in python.
-            # (cython or ctypes wrapper maybe???)
-            futures = [exc.submit(
-                self.middleware.call_sync('disk.format', k, swapgb if v['create_swap'] else 0, False))
-                for k, v in disks.items()
-            ]
-            for idx, fut in enumerate(as_completed(futures), start=1):
-                try:
-                    fut.result()
-                except TypeError:
-                    # `disk.format` returns None which isn't callable
-                    # so this exception is expected and means it's complete
-                    job.set_progress(15, f'Formatted disk {idx} of {total_disks}')
+        formatted = 0
+
+        async def format_disk(args):
+            nonlocal formatted
+            disk, config = args
+            await self.middleware.call('disk.format', disk, swapgb if config['create_swap'] else 0, False)
+            formatted += 1
+            job.set_progress(15, f'Formatted disk ({formatted}/{total_disks})')
+
+        await asyncio_map(format_disk, disks.items(), limit=16)
+        await self.middleware.call('geom.cache.invalidate')
