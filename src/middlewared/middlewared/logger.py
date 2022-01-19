@@ -36,6 +36,7 @@ logging.getLogger('urllib3').setLevel(logging.WARNING)
 # ACME is very verbose in logging the request it sends with headers etc, let's not pollute the logs
 # with that much information and raise the log level in this case
 logging.getLogger('acme.client').setLevel(logging.WARN)
+logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARN)
 
 
 FAILSAFE_LOGFILE = '/tmp/failsafe_middlewared.log'
