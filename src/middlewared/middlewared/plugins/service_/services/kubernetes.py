@@ -1,6 +1,8 @@
+import os
 import asyncio
 
 from middlewared.service import CallError
+from middlewared.utils import run
 
 from .base import SimpleService
 
@@ -9,10 +11,26 @@ class KubernetesService(SimpleService):
     name = 'kubernetes'
     etc = ['k3s']
     systemd_unit = 'k3s'
+    kubelet_mountpoint = '/var/lib/kubelet'
 
     async def clear_chart_releases_cache(self):
         await self.middleware.call('chart.release.clear_cached_chart_releases')
         await self.middleware.call('chart.release.clear_portal_cache')
+
+    async def unmount_kubelet_dataset(self):
+        if os.path.ismount(self.kubelet_mountpoint):
+            await run('umount', '-f', '-R', self.kubelet_mountpoint, check=True)
+
+    async def mount_kubelet_dataset(self):
+        config = await self.middleware.call('kubernetes.config')
+        await self.unmount_kubelet_dataset()
+        os.makedirs(self.kubelet_mountpoint, exist_ok=True)
+        await run(
+            'mount', '-t', 'zfs',
+            os.path.join(config['dataset'], 'k3s/kubelet'),
+            self.kubelet_mountpoint,
+            check=True
+        )
 
     async def before_start(self):
         try:
@@ -29,6 +47,7 @@ class KubernetesService(SimpleService):
 
             raise
 
+        await self.mount_kubelet_dataset()
         await self.clear_chart_releases_cache()
 
         for key, value in (
@@ -67,3 +86,4 @@ class KubernetesService(SimpleService):
         # This is necessary to ensure that docker umounts datasets and shuts down cleanly
         await asyncio.sleep(5)
         await self.middleware.call('k8s.cni.cleanup_cni')
+        await self.unmount_kubelet_dataset()

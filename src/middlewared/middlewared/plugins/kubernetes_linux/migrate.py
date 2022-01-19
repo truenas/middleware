@@ -33,6 +33,7 @@ class KubernetesService(Service):
                     'retention_policy': 'NONE',
                     'replicate': True,
                     'readonly': 'IGNORE',
+                    'exclude_mountpoint_property': False,
                 }
             )
             await migrate_job.wait()
