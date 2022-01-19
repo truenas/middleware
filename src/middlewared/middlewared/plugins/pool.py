@@ -670,10 +670,6 @@ class PoolService(CRUDService):
         # format the disks (GELI encryption is ignored on create requests since it was deprecated)
         await self.middleware.call('pool.format_disks', job, disks)
 
-        # now we need to invalidate in-memory cache of disk info
-        # since we just formatted disks and wrote fresh gptid lables
-        await self.middleware.call('geom.cache.invalidate')
-
         options = {
             'feature@lz4_compress': 'enabled',
             'altroot': '/mnt',
@@ -846,7 +842,6 @@ class PoolService(CRUDService):
 
         if disks:
             await self.middleware.call('pool.format_disks', job, disks)
-            await self.middleware.call('geom.cache.invalidate')
             vdevs, enc_disks = await self.middleware.call(
                 'pool.convert_topology_to_vdevs', data['topology'], enc_options
             )
