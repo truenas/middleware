@@ -90,6 +90,10 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         except IndexError:
             return None
 
+    @link_address.setter
+    def link_address(self, link_address):
+        run(["ip", "link", "set", "dev", self.name, "address", link_address])
+
     def __getstate__(self, address_stats=False, vrrp_config=None):
         state = {
             'name': self.name,

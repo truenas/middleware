@@ -4,6 +4,7 @@ import ipaddress
 import socket
 from collections import defaultdict
 from itertools import zip_longest
+from random import randint
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
@@ -694,7 +695,17 @@ class InterfaceService(CRUDService):
             lag_id = None
             lagports_ids = []
             try:
-                async for interface_id in self.__create_interface_datastore(data, {'interface': name}):
+                # 2 different systems using the same hardware has shown that linux kernel generates
+                # mac addresses that will collide...so systemA=macAAA and systemB=macAAA. This is
+                # painful and I'm not quite sure why this happens. Either way, we'll generate a
+                # "locally administered address" (LAA) instead of a universally unique address (UAA).
+                # The reason why we use a LAA is to prevent the possibility of generating a mac
+                # that collides with the global mac address vendor list.
+                # (i.e. we don't want to generate a mac that has the vendor bits set to Intel/Microsoft etc)
+                # The first 3 octets `02:00:00` delineate a LAA address.
+                link_address = '02:00:00:' + ':'.join(f'{randint(0, 255):02x}' for i in range(3))
+                attrs = {'interface': name, 'link_address': link_address}
+                async for interface_id in self.__create_interface_datastore(data, attrs):
                     lag_proto = data['lag_protocol'].lower()
                     xmit = lacpdu_rate = None
                     if lag_proto in ('lacp', 'loadbalance'):

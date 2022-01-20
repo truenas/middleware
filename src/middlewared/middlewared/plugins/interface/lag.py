@@ -89,6 +89,13 @@ class InterfaceService(Service):
             # be sure and bring the lagg back up after making changes
             iface.up()
 
+        # set mac address if needed
+        iface_link_addr = iface.link_address.address.address
+        db_link_addr = lagg['lagg_interface']['int_link_address']
+        if iface_link_addr and iface_link_addr != db_link_addr:
+            self.logger.info('Setting link address for %r to %s', name, db_link_addr)
+            iface.link_address = db_link_addr
+
         members_database = []
         members_configured = {p[0] for p in iface.ports}
         for member in members:
