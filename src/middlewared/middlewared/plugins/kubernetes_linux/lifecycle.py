@@ -257,15 +257,13 @@ class KubernetesService(Service):
 
     @private
     async def create_update_k8s_datasets(self, k8s_ds):
-        create_props = self.k8s_props_default()
-        update_props = self.get_dataset_update_props(create_props)
+        create_props_default = self.k8s_props_default()
         for dataset_name in await self.kubernetes_datasets(k8s_ds):
             custom_props = self.kubernetes_dataset_custom_props(ds=dataset_name.rsplit(k8s_ds)[1].strip('/'))
-            if custom_props:
-                # got custom properties, need to re-calculate
-                # the update and create props.
-                create_props = dict(create_props, **custom_props)
-                update_props = self.get_dataset_update_props(create_props)
+            # got custom properties, need to re-calculate
+            # the update and create props.
+            create_props = dict(create_props_default, **custom_props) if custom_props else create_props_default
+            update_props = self.get_dataset_update_props(create_props)
 
             dataset = await self.middleware.call(
                 'zfs.dataset.query', [['id', '=', dataset_name]], {
