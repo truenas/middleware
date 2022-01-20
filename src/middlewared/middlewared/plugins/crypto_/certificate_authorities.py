@@ -39,64 +39,6 @@ class CertificateAuthorityService(CRUDService):
 
     ENTRY = get_ca_result_entry()
 
-    PROFILES = {
-        'Openvpn Root CA': {
-            'cert_extensions': {
-                'AuthorityKeyIdentifier': {
-                    'enabled': True,
-                    'authority_cert_issuer': True,
-                    'extension_critical': False
-                },
-                'KeyUsage': {
-                    'enabled': True,
-                    'key_cert_sign': True,
-                    'crl_sign': True,
-                    'extension_critical': True
-                },
-                'BasicConstraints': {
-                    'enabled': True,
-                    'ca': True,
-                    'extension_critical': True
-                },
-                'ExtendedKeyUsage': {
-                    'enabled': True,
-                    'extension_critical': False,
-                    'usages': [
-                        'SERVER_AUTH', 'CLIENT_AUTH',
-                    ]
-                }
-            },
-            'key_length': 2048,
-            'key_type': 'RSA',
-            'lifetime': DEFAULT_LIFETIME_DAYS,
-            'digest_algorithm': 'SHA256'
-        },
-        'CA': {
-            'key_length': 2048,
-            'key_type': 'RSA',
-            'lifetime': DEFAULT_LIFETIME_DAYS,
-            'digest_algorithm': 'SHA256',
-            'cert_extensions': {
-                'KeyUsage': {
-                    'enabled': True,
-                    'key_cert_sign': True,
-                    'crl_sign': True,
-                    'extension_critical': True
-                },
-                'BasicConstraints': {
-                    'enabled': True,
-                    'ca': True,
-                    'extension_critical': True
-                },
-                'ExtendedKeyUsage': {
-                    'enabled': True,
-                    'extension_critical': False,
-                    'usages': ['SERVER_AUTH']
-                }
-            }
-        }
-    }
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_create_functions = {
@@ -104,18 +46,6 @@ class CertificateAuthorityService(CRUDService):
             'CA_CREATE_IMPORTED': self.__create_imported_ca,
             'CA_CREATE_INTERMEDIATE': self.__create_intermediate_ca,
         }
-
-    @accepts()
-    @returns(Dict(
-        'certificate_authority_profiles',
-        *[Dict(profile, additional_attrs=True) for profile in PROFILES]
-    ))
-    async def profiles(self):
-        """
-        Returns a dictionary of predefined options for specific use cases i.e OpenVPN certificate authority
-        configurations which can be used for creating certificate authorities.
-        """
-        return self.PROFILES
 
     @periodic(86400, run_on_start=True)
     @private
