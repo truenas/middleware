@@ -24,3 +24,11 @@ EC_CURVES = [
 EC_CURVE_DEFAULT = 'BrainpoolP384R1'
 EKU_OIDS = [i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')]
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
+
+# Defining cert constants being used
+CA_TYPE_EXISTING = 0x01
+CA_TYPE_INTERNAL = 0x02
+CA_TYPE_INTERMEDIATE = 0x04
+CERT_TYPE_EXISTING = 0x08
+CERT_TYPE_INTERNAL = 0x10
+CERT_TYPE_CSR = 0x20
