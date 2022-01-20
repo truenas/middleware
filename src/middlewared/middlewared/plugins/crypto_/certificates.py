@@ -50,10 +50,10 @@ class CertificateService(CRUDService):
         super().__init__(*args, **kwargs)
         self.map_functions = {
             'CERTIFICATE_CREATE_INTERNAL': self.create_internal,
-            'CERTIFICATE_CREATE_IMPORTED': self.__create_imported_certificate,
-            'CERTIFICATE_CREATE_IMPORTED_CSR': self.__create_imported_csr,
+            'CERTIFICATE_CREATE_IMPORTED': self.create_imported_certificate,
+            'CERTIFICATE_CREATE_IMPORTED_CSR': self.create_imported_csr,
             'CERTIFICATE_CREATE_CSR': self.create_csr,
-            'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
+            'CERTIFICATE_CREATE_ACME': self.create_acme_certificate,
         }
 
     @private
@@ -120,10 +120,10 @@ class CertificateService(CRUDService):
     # FOLLOWING TYPES ARE SUPPORTED
     # CREATE_TYPE ( STRING )          - METHOD CALLED
     # CERTIFICATE_CREATE_INTERNAL     - create_internal
-    # CERTIFICATE_CREATE_IMPORTED     - __create_imported_certificate
-    # CERTIFICATE_CREATE_IMPORTED_CSR - __create_imported_csr
+    # CERTIFICATE_CREATE_IMPORTED     - create_imported_certificate
+    # CERTIFICATE_CREATE_IMPORTED_CSR - create_imported_csr
     # CERTIFICATE_CREATE_CSR          - create_csr
-    # CERTIFICATE_CREATE_ACME         - __create_acme_certificate
+    # CERTIFICATE_CREATE_ACME         - create_acme_certificate
 
     @accepts(
         Dict(
@@ -319,8 +319,9 @@ class CertificateService(CRUDService):
             Dict('dns_mapping', additional_attrs=True, required=True)
         )
     )
+    @private
     @skip_arg(count=1)
-    def __create_acme_certificate(self, job, data):
+    def create_acme_certificate(self, job, data):
 
         csr_data = self.middleware.call_sync(
             'certificate.get_instance', data['csr_id']
@@ -401,8 +402,9 @@ class CertificateService(CRUDService):
             Str('passphrase')
         )
     )
+    @private
     @skip_arg(count=1)
-    async def __create_imported_csr(self, job, data):
+    async def create_imported_csr(self, job, data):
 
         # TODO: We should validate csr with private key ?
 
@@ -431,8 +433,9 @@ class CertificateService(CRUDService):
             Str('privatekey', max_length=None)
         )
     )
+    @private
     @skip_arg(count=1)
-    async def __create_imported_certificate(self, job, data):
+    async def create_imported_certificate(self, job, data):
         verrors = ValidationErrors()
 
         csr_id = data.pop('csr_id', None)
