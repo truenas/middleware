@@ -423,22 +423,29 @@ class CatalogService(Service):
             elif ref == 'definitions/nodeIP':
                 data['default'] = context['node_ip']
             elif ref == 'definitions/certificate':
-                data.update({
-                    'enum': [{'value': None, 'description': 'No Certificate'}] + [
-                        {'value': i['id'], 'description': f'{i["name"]!r} Certificate'}
-                        for i in context['certificates']
-                    ],
-                    'default': None,
-                    'null': True,
-                })
+                self._get_cert_ca_options(schema, data, {'value': None, 'description': 'No Certificate'})
+                data['enum'] += [
+                    {'value': i['id'], 'description': f'{i["name"]!r} Certificate'}
+                    for i in context['certificates']
+                ]
             elif ref == 'definitions/certificateAuthority':
-                data.update({
-                    'enum': [{'value': None, 'description': 'No Certificate Authority'}] + [
-                        {'value': i['id'], 'description': f'{i["name"]!r} Certificate Authority'}
-                        for i in context['certificate_authorities']
-                    ],
-                    'default': None,
-                    'null': True,
-                })
+                self._get_cert_ca_options(schema, data, {'value': None, 'description': 'No Certificate Authority'})
+                data['enum'] += [{'value': None, 'description': 'No Certificate Authority'}] + [
+                    {'value': i['id'], 'description': f'{i["name"]!r} Certificate Authority'}
+                    for i in context['certificate_authorities']
+                ]
 
         schema.update(data)
+
+    def _get_cert_ca_options(self, schema, data, default_entry):
+        if schema.get('null', True):
+            data.update({
+                'enum': [default_entry],
+                'default': None,
+                'null': True,
+            })
+        else:
+            data.update({
+                'enum': [],
+                'required': True,
+            })
