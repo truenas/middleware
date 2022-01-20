@@ -39,9 +39,9 @@ class CertificateAuthorityService(CRUDService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_create_functions = {
-            'CA_CREATE_INTERNAL': self.__create_internal,
-            'CA_CREATE_IMPORTED': self.__create_imported_ca,
-            'CA_CREATE_INTERMEDIATE': self.__create_intermediate_ca,
+            'CA_CREATE_INTERNAL': self.create_internal,
+            'CA_CREATE_IMPORTED': self.create_imported_ca,
+            'CA_CREATE_INTERMEDIATE': self.create_intermediate_ca,
         }
 
     @private
@@ -154,9 +154,9 @@ class CertificateAuthorityService(CRUDService):
     # APPROPRIATE METHOD IS CALLED
     # FOLLOWING TYPES ARE SUPPORTED
     # CREATE_TYPE ( STRING )      - METHOD CALLED
-    # CA_CREATE_INTERNAL          - __create_internal
-    # CA_CREATE_IMPORTED          - __create_imported_ca
-    # CA_CREATE_INTERMEDIATE      - __create_intermediate_ca
+    # CA_CREATE_INTERNAL          - create_internal
+    # CA_CREATE_IMPORTED          - create_imported_ca
+    # CA_CREATE_INTERMEDIATE      - create_intermediate_ca
 
     @accepts(
         Patch(
@@ -268,7 +268,8 @@ class CertificateAuthorityService(CRUDService):
             ('add', {'name': 'signedby', 'type': 'int', 'required': True}),
         ),
     )
-    async def __create_intermediate_ca(self, data):
+    @private
+    async def create_intermediate_ca(self, data):
 
         signing_cert = await self.get_instance(data['signedby'])
 
@@ -301,7 +302,8 @@ class CertificateAuthorityService(CRUDService):
             ('rm', {'name': 'create_type'}),
         )
     )
-    async def __create_imported_ca(self, data):
+    @private
+    async def create_imported_ca(self, data):
         data['type'] = CA_TYPE_EXISTING
 
         if all(k in data for k in ('passphrase', 'privatekey')):
@@ -327,7 +329,8 @@ class CertificateAuthorityService(CRUDService):
             register=True
         )
     )
-    async def __create_internal(self, data):
+    @private
+    async def create_internal(self, data):
         cert_info = get_cert_info_from_data(data)
         cert_info['serial'] = random.getrandbits(24)
 
