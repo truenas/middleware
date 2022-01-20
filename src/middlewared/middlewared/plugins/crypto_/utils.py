@@ -12,6 +12,9 @@ CERT_BACKEND_MAPPINGS = {
     'organizational_unit_name': 'organizational_unit',
     'email_address': 'email'
 }
+# Cert locations
+CERT_ROOT_PATH = '/etc/certificates'
+CERT_CA_ROOT_PATH = '/etc/certificates/CA'
 # This constant defines the default lifetime of certificate ( https://support.apple.com/en-us/HT211025 )
 DEFAULT_LIFETIME_DAYS = 397
 EC_CURVES = [
@@ -32,3 +35,17 @@ CA_TYPE_INTERMEDIATE = 0x04
 CERT_TYPE_EXISTING = 0x08
 CERT_TYPE_INTERNAL = 0x10
 CERT_TYPE_CSR = 0x20
+
+
+def get_cert_info_from_data(data):
+    cert_info_keys = [
+        'key_length', 'country', 'state', 'city', 'organization', 'common', 'key_type', 'ec_curve',
+        'san', 'serial', 'email', 'lifetime', 'digest_algorithm', 'organizational_unit'
+    ]
+    return {key: data.get(key) for key in cert_info_keys if data.get(key)}
+
+
+def _set_required(name):
+    def set_r(attr):
+        attr.required = True
+    return {'name': name, 'method': set_r}
