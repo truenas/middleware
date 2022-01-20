@@ -1,16 +1,15 @@
-import datetime
 import random
 
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, returns, Str
-from middlewared.service import CRUDService, periodic, private, ValidationErrors
+from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 
 from .cert_entry import get_ca_result_entry
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .dependencies import check_dependencies
 from .utils import (
-    DEFAULT_LIFETIME_DAYS, get_cert_info_from_data, _set_required,
+    get_cert_info_from_data, _set_required,
     CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE, CERT_TYPE_INTERNAL
 )
 
@@ -46,58 +45,6 @@ class CertificateAuthorityService(CRUDService):
             'CA_CREATE_IMPORTED': self.__create_imported_ca,
             'CA_CREATE_INTERMEDIATE': self.__create_intermediate_ca,
         }
-
-    @periodic(86400, run_on_start=True)
-    @private
-    async def crl_generation(self):
-        await self.middleware.call('service.start', 'ssl')
-
-    @private
-    async def revoke_ca_chain(self, ca_id):
-        chain = await self.get_ca_chain(ca_id)
-        for cert in chain:
-            datastore = f'system.certificate{"authority" if cert["cert_type"] == "CA" else ""}'
-            await self.middleware.call(
-                'datastore.update',
-                datastore,
-                cert['id'], {
-                    'revoked_date': datetime.datetime.utcnow()
-                },
-                {'prefix': self._config.datastore_prefix}
-            )
-
-    @private
-    async def get_ca_chain(self, ca_id):
-        certs = list(
-            map(
-                lambda item: dict(item, cert_type='CERTIFICATE'),
-                await self.middleware.call(
-                    'datastore.query',
-                    'system.certificate',
-                    [['signedby', '=', ca_id]],
-                    {'prefix': self._config.datastore_prefix}
-                )
-            )
-        )
-
-        for ca in await self.middleware.call(
-            'datastore.query',
-            'system.certificateauthority',
-            [['signedby', '=', ca_id]],
-            {'prefix': self._config.datastore_prefix}
-        ):
-            certs.extend((await self.get_ca_chain(ca['id'])))
-
-        ca = await self.middleware.call(
-            'datastore.query',
-            'system.certificateauthority',
-            [['id', '=', ca_id]],
-            {'prefix': self._config.datastore_prefix, 'get': True}
-        )
-        ca.update({'cert_type': 'CA'})
-
-        certs.append(ca)
-        return certs
 
     @private
     async def validate_common_attributes(self, data, schema_name):
@@ -615,7 +562,7 @@ class CertificateAuthorityService(CRUDService):
             )
 
             if old['revoked'] != new['revoked'] and new['revoked']:
-                await self.revoke_ca_chain(id)
+                await self.middleware.call('certificateauthority.revoke_ca_chain', id)
 
             await self.middleware.call('service.start', 'ssl')
 
