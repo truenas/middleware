@@ -143,6 +143,7 @@ def test_exclude_recycle_bin():
         assert ssh(f'ls /mnt/{pool}/cloudsync_remote/bucket') == 'file\n'
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5)
 @pytest.mark.parametrize("anonymous", [True, False])
 @pytest.mark.parametrize("defaultroot", [True, False])
 @pytest.mark.parametrize("has_leading_slash", [True, False])
