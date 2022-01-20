@@ -7,7 +7,10 @@ import re
 import subprocess
 
 from middlewared.async_validators import validate_country
-from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS, EC_CURVES, EC_CURVE_DEFAULT, EKU_OIDS, RE_CERTIFICATE
+from middlewared.plugins.crypto_.utils import (
+    DEFAULT_LIFETIME_DAYS, EC_CURVES, EC_CURVE_DEFAULT, EKU_OIDS, RE_CERTIFICATE,
+    CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE, CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL, CERT_TYPE_CSR
+)
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, OROperator, Patch, Ref, returns, Str
 from middlewared.service import CallError, CRUDService, job, periodic, private, skip_arg, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -20,13 +23,6 @@ from OpenSSL import crypto
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-
-CA_TYPE_EXISTING = 0x01
-CA_TYPE_INTERNAL = 0x02
-CA_TYPE_INTERMEDIATE = 0x04
-CERT_TYPE_EXISTING = 0x08
-CERT_TYPE_INTERNAL = 0x10
-CERT_TYPE_CSR = 0x20
 
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
@@ -1870,54 +1866,3 @@ class CertificateAuthorityService(CRUDService):
         await self.middleware.call('service.start', 'ssl')
 
         return response
-
-
-async def setup(middlewared):
-    failure = False
-    try:
-        system_general_config = await middlewared.call('system.general.config')
-        system_cert = system_general_config['ui_certificate']
-        certs = await middlewared.call('certificate.query')
-    except Exception as e:
-        failure = True
-        middlewared.logger.error(f'Failed to retrieve certificates: {e}', exc_info=True)
-
-    if not failure and (not system_cert or system_cert['id'] not in [c['id'] for c in certs]):
-        # create a self signed cert if it doesn't exist and set ui_certificate to it's value
-        try:
-            if not any('freenas_default' == c['name'] for c in certs):
-                cert, key = await middlewared.call('cryptokey.generate_self_signed_certificate')
-
-                cert_dict = {
-                    'certificate': cert,
-                    'privatekey': key,
-                    'name': 'freenas_default',
-                    'type': CERT_TYPE_EXISTING,
-                }
-
-                # We use datastore.insert to directly insert in db as jobs cannot be waited for at this point
-                id = await middlewared.call(
-                    'datastore.insert',
-                    'system.certificate',
-                    cert_dict,
-                    {'prefix': 'cert_'}
-                )
-
-                await middlewared.call('service.start', 'ssl')
-
-                middlewared.logger.debug('Default certificate for System created')
-            else:
-                id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
-                await middlewared.call('certificate.cert_services_validation', id, 'certificate')
-
-            await middlewared.call(
-                'datastore.update', 'system.settings', system_general_config['id'], {'stg_guicertificate': id}
-            )
-        except Exception as e:
-            failure = True
-            middlewared.logger.debug(
-                'Failed to set certificate for system.general plugin: %s', e, exc_info=True
-            )
-
-    if not failure:
-        middlewared.logger.debug('Certificate setup for System complete')
