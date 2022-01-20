@@ -1,16 +1,18 @@
 import datetime
 import random
 
-from middlewared.plugins.crypto_.dependencies import check_dependencies
-from middlewared.plugins.crypto_.common_validation import _validate_common_attributes, validate_cert_name
-from middlewared.plugins.crypto_.cert_entry import get_ca_result_entry
-from middlewared.plugins.crypto_.utils import (
-    DEFAULT_LIFETIME_DAYS, get_cert_info_from_data, _set_required,
-    CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE, CERT_TYPE_INTERNAL
-)
+
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, returns, Str
 from middlewared.service import CRUDService, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
+
+from .cert_entry import get_ca_result_entry
+from .common_validation import _validate_common_attributes, validate_cert_name
+from .dependencies import check_dependencies
+from .utils import (
+    DEFAULT_LIFETIME_DAYS, get_cert_info_from_data, _set_required,
+    CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE, CERT_TYPE_INTERNAL
+)
 
 
 class CertificateAuthorityModel(sa.Model):
@@ -119,8 +121,6 @@ class CertificateAuthorityService(CRUDService):
     @private
     async def crl_generation(self):
         await self.middleware.call('service.start', 'ssl')
-
-    # HELPER METHODS
 
     @private
     async def revoke_ca_chain(self, ca_id):
