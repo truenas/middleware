@@ -297,21 +297,6 @@ class CertificateService(CRUDService):
 
         return verrors
 
-    @private
-    async def dhparam(self):
-        return '/data/dhparam.pem'
-
-    @private
-    @job()
-    def dhparam_setup(self, job):
-        dhparam_path = self.middleware.call_sync('certificate.dhparam')
-        if not os.path.exists(dhparam_path) or os.stat(dhparam_path).st_size == 0:
-            with open('/dev/console', 'wb') as console:
-                with open(dhparam_path, 'wb') as f:
-                    subprocess.run(
-                        ['openssl', 'dhparam', '-rand', '/dev/urandom', '2048'], stdout=f, stderr=console, check=True
-                    )
-
     # CREATE METHODS FOR CREATING CERTIFICATES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE
     # APPROPRIATE METHOD IS CALLED
