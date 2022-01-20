@@ -24,7 +24,7 @@ class CertificateAuthorityService(Service):
                 cert['id'], {
                     'revoked_date': datetime.datetime.utcnow()
                 },
-                {'prefix': self._config.datastore_prefix}
+                {'prefix': 'cert_'}
             )
 
     @private
@@ -36,7 +36,7 @@ class CertificateAuthorityService(Service):
                     'datastore.query',
                     'system.certificate',
                     [['signedby', '=', ca_id]],
-                    {'prefix': self._config.datastore_prefix}
+                    {'prefix': 'cert_'}
                 )
             )
         )
@@ -45,7 +45,7 @@ class CertificateAuthorityService(Service):
             'datastore.query',
             'system.certificateauthority',
             [['signedby', '=', ca_id]],
-            {'prefix': self._config.datastore_prefix}
+            {'prefix': 'cert_'}
         ):
             certs.extend((await self.get_ca_chain(ca['id'])))
 
@@ -53,7 +53,7 @@ class CertificateAuthorityService(Service):
             'datastore.query',
             'system.certificateauthority',
             [['id', '=', ca_id]],
-            {'prefix': self._config.datastore_prefix, 'get': True}
+            {'prefix': 'cert_', 'get': True}
         )
         ca.update({'cert_type': 'CA'})
 
