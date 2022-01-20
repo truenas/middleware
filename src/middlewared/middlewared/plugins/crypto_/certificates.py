@@ -10,7 +10,7 @@ from OpenSSL import crypto
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import CallError, CRUDService, job, private, skip_arg, ValidationErrors
 from middlewared.validators import Email, Range
 
@@ -19,7 +19,7 @@ from .dependencies import check_dependencies
 from .cert_entry import CERT_ENTRY
 from .utils import (
     CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE, CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL,
-    CERT_TYPE_CSR, CERT_ROOT_PATH, CERT_CA_ROOT_PATH, EC_CURVES, EC_CURVE_DEFAULT, EKU_OIDS, RE_CERTIFICATE,
+    CERT_TYPE_CSR, CERT_ROOT_PATH, CERT_CA_ROOT_PATH, EC_CURVES, EC_CURVE_DEFAULT, RE_CERTIFICATE,
     get_cert_info_from_data, _set_required,
 )
 
@@ -60,14 +60,6 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_CSR': self.create_csr,
             'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
         }
-
-    @accepts()
-    @returns(Ref('country_choices'))
-    async def country_choices(self):
-        """
-        Returns country choices for creating a certificate/csr.
-        """
-        return await self.middleware.call('system.general.country_choices')
 
     @private
     async def cert_extend(self, cert):
@@ -304,58 +296,6 @@ class CertificateService(CRUDService):
         await _validate_common_attributes(self.middleware, data, verrors, schema_name)
 
         return verrors
-
-    @private
-    async def get_domain_names(self, cert_id):
-        data = await self.get_instance(int(cert_id))
-        names = [data['common']] if data['common'] else []
-        names.extend(data['san'])
-        return names
-
-    @accepts()
-    @returns(Dict('acme_server_choices', additional_attrs=True))
-    async def acme_server_choices(self):
-        """
-        Dictionary of popular ACME Servers with their directory URI endpoints which we display automatically
-        in UI
-        """
-        return {
-            'https://acme-staging-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Staging Directory',
-            'https://acme-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Production Directory'
-        }
-
-    @accepts()
-    @returns(Dict(
-        'ec_curve_choices',
-        *[Str(k, enum=[k]) for k in EC_CURVES]
-    ))
-    async def ec_curve_choices(self):
-        """
-        Dictionary of supported EC curves.
-        """
-        return {k: k for k in EC_CURVES}
-
-    @accepts()
-    @returns(Dict(
-        'private_key_type_choices',
-        *[Str(k, enum=[k]) for k in ('RSA', 'EC')]
-    ))
-    async def key_type_choices(self):
-        """
-        Dictionary of supported key types for certificates.
-        """
-        return {k: k for k in ['RSA', 'EC']}
-
-    @accepts()
-    @returns(Dict(
-        'extended_key_usage_choices',
-        *[Str(k, enum=[k]) for k in EKU_OIDS]
-    ))
-    async def extended_key_usage_choices(self):
-        """
-        Dictionary of choices for `ExtendedKeyUsage` extension which can be passed over to `usages` attribute.
-        """
-        return {k: k for k in EKU_OIDS}
 
     @private
     async def dhparam(self):
