@@ -18,9 +18,7 @@ class CertificateService(Service):
     @private
     async def cert_extend_context(self, rows, extra):
         context = {
-            'cas': {
-                c['id']: c for c in await self.middleware.call('certificateauthority.query')
-            }
+            'cas': {c['id']: c for c in await self.middleware.call('certificateauthority.query')},
         }
         return context
 
