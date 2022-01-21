@@ -13,6 +13,7 @@ from middlewared.validators import Email, Range
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .dependencies import check_dependencies
 from .cert_entry import CERT_ENTRY
+from .query_utils import normalize_cert_attrs
 from .utils import (
     CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT,
     get_cert_info_from_data, _set_required,
@@ -40,8 +41,7 @@ class CertificateService(CRUDService):
 
     class Config:
         datastore = 'system.certificate'
-        datastore_extend = 'certificate.cert_extend_new'
-        # datastore_extend = 'certificate.cert_extend'
+        datastore_extend = 'certificate.cert_extend'
         datastore_extend_context = 'certificate.cert_extend_context'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate'
@@ -57,6 +57,21 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_CSR': self.create_csr,
             'CERTIFICATE_CREATE_ACME': self.create_acme_certificate,
         }
+
+    @private
+    def cert_extend_context(self, rows, extra):
+        context = {
+            'cas': {c['id']: c for c in self.middleware.call_sync('certificateauthority.query')},
+        }
+        return context
+
+    @private
+    def cert_extend(self, cert, context):
+        if cert['signedby']:
+            cert['signedby'] = context['cas'][cert['signedby']['id']]
+
+        normalize_cert_attrs(cert)
+        return cert
 
     @private
     async def cert_services_validation(self, id, schema_name, raise_verrors=True):
