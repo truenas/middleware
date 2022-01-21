@@ -81,9 +81,6 @@ class CertificateService(Service):
         else:
             cert['can_be_revoked'] = bool(cert['signedby']) and not cert['revoked']
 
-        if not os.path.exists(root_path):
-            os.makedirs(root_path, 0o755, exist_ok=True)
-
         def cert_issuer(cert):
             issuer = None
             if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING):
