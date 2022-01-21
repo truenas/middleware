@@ -2,6 +2,8 @@ import datetime
 
 from middlewared.service import periodic, private, Service
 
+from .query_utils import get_ca_chain
+
 
 class CertificateAuthorityService(Service):
 
@@ -29,33 +31,6 @@ class CertificateAuthorityService(Service):
 
     @private
     async def get_ca_chain(self, ca_id):
-        certs = list(
-            map(
-                lambda item: dict(item, cert_type='CERTIFICATE'),
-                await self.middleware.call(
-                    'datastore.query',
-                    'system.certificate',
-                    [['signedby', '=', ca_id]],
-                    {'prefix': 'cert_'}
-                )
-            )
-        )
-
-        for ca in await self.middleware.call(
-            'datastore.query',
-            'system.certificateauthority',
-            [['signedby', '=', ca_id]],
-            {'prefix': 'cert_'}
-        ):
-            certs.extend((await self.get_ca_chain(ca['id'])))
-
-        ca = await self.middleware.call(
-            'datastore.query',
-            'system.certificateauthority',
-            [['id', '=', ca_id]],
-            {'prefix': 'cert_', 'get': True}
-        )
-        ca.update({'cert_type': 'CA'})
-
-        certs.append(ca)
-        return certs
+        certs = await self.middleware.call('datastore.query', 'system.certificate', [], {'prefix': 'cert_'})
+        cas = await self.middleware.call('datastore.query', 'system.certificateauthority', [], {'prefix': 'cert_'})
+        return get_ca_chain(ca_id, certs, cas)

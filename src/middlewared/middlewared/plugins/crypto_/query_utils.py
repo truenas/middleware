@@ -1,6 +1,7 @@
 import logging
 import os
 
+from collections import defaultdict
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from typing import Union
@@ -137,3 +138,27 @@ def normalize_cert_attrs(cert: dict) -> None:
         })
 
     cert['parsed'] = not failed_parsing
+
+
+def get_ca_chain(ca_id: int, certs: list, cas: list) -> list:
+    cert_mapping = defaultdict(list)
+    cas_mapping = defaultdict(list)
+    cas_id_mapping = {}
+    for cert in filter(lambda c: c['signedby'], certs):
+        cert_mapping[cert['signedby']['id']].append(cert)
+
+    for ca in cas:
+        cas_id_mapping[ca['id']] = ca
+        if ca['signedby']:
+            cas_mapping[ca['signedby']['id']].append(ca)
+
+    return get_ca_chain_impl(ca_id, cas_id_mapping, cert_mapping, cas_mapping)
+
+
+def get_ca_chain_impl(ca_id: int, cas: dict, certs_mapping: dict, cas_mapping: dict) -> list:
+    certs = certs_mapping[ca_id]
+    for ca in cas_mapping[ca_id]:
+        certs.extend(get_ca_chain_impl(ca['id'], cas, certs_mapping, cas_mapping))
+
+    certs.append({**cas[ca_id], 'cert_type': 'CA'})
+    return certs
