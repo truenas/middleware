@@ -7,7 +7,7 @@ import shutil
 
 from pkg_resources import parse_version
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list
 from middlewared.validators import Match
