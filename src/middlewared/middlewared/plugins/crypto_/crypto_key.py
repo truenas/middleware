@@ -2,8 +2,6 @@ import datetime
 import ipaddress
 import random
 
-from contextlib import suppress
-
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
@@ -15,6 +13,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import Service
 from middlewared.validators import Email, IpAddress
 
+from .load_utils import load_private_key
 from .utils import CERT_BACKEND_MAPPINGS, DEFAULT_LIFETIME_DAYS, EC_CURVES, EC_CURVE_DEFAULT, EKU_OIDS
 
 
@@ -401,12 +400,7 @@ class CryptoKeyService(Service):
             return key
 
     def load_private_key(self, key_string, passphrase=None):
-        with suppress(ValueError, TypeError, AttributeError):
-            return serialization.load_pem_private_key(
-                key_string.encode(),
-                password=passphrase.encode() if passphrase else None,
-                backend=default_backend()
-            )
+        return load_private_key(key_string, passphrase)
 
     def export_private_key(self, buffer, passphrase=None):
         key = self.load_private_key(buffer, passphrase)
