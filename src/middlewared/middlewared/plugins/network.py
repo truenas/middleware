@@ -1749,6 +1749,12 @@ class InterfaceService(CRUDService):
             await asyncio.wait(dhclient_aws, timeout=30)
 
         try:
+            # static routes explicitly defined by the user need to be setup
+            await self.middleware.call('staticroute.sync')
+        except Exception:
+            self.logger.info('Failed to sync static routes', exc_info=True)
+
+        try:
             # We may need to set up routes again as they may have been removed while changing IPs
             await self.middleware.call('route.sync')
         except Exception:
