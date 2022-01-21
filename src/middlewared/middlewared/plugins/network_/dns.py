@@ -1,8 +1,10 @@
 import contextlib
+import re
 
 from middlewared.service import Service, filterable, filterable_returns, private
 from middlewared.schema import Dict, IPAddr, ValidationErrors
 from middlewared.utils import filter_list
+from middlewared.plugins.interface.netif import netif
 
 
 class DNSService(Service):
@@ -53,11 +55,41 @@ class DNSService(Service):
             resolvconf += 'domain {}\n'.format(domain)
         if domains:
             resolvconf += 'search {}\n'.format(' '.join(domains))
-        for ns in nameservers:
-            resolvconf += 'nameserver {}\n'.format(ns)
+
+        resolvconf += self.middleware.call_sync('dns.configure_nameservers', nameservers)
 
         try:
             with open('/etc/resolv.conf', 'w') as f:
                 f.write(resolvconf)
         except Exception:
             self.logger.error('Failed to write /etc/resolv.conf', exc_info=True)
+
+    @private
+    def configure_nameservers(self, nameservers):
+        result = ''
+        if nameservers:
+            # means nameservers are configured explicitly so add them
+            for i in nameservers:
+                result += f'nameserver {i}\n'
+        else:
+            # means there aren't any nameservers configured so let's
+            # check to see if dhcp is running on any of the interfaces
+            # and if there are, then check dhclient leases file for
+            # nameservers that were handed to us via dhcp
+            interfaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
+            if interfaces:
+                interfaces = [i['int_interface'] for i in interfaces if i['int_dhcp']]
+            else:
+                ignore = self.middleware.call_sync('interface.internal_interfaces')
+                ignore.extend(self.middleware.call_sync('failover.internal_interfaces'))
+                ignore = tuple(ignore)
+                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
+
+            for iface in interfaces:
+                dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', iface)
+                if dhclient_running:
+                    leases = self.middleware.call_sync('interface.dhclient_leases', iface)
+                    if reg := re.search(r'option domain-name-servers (.+)', leases or ''):
+                        # just get the first dns address we come across
+                        result += f'nameserver {reg.group(1).split(";")[0]}\n'
+        return result
