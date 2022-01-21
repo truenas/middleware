@@ -5,9 +5,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from middlewared.service import private, Service
 
+from .query_utils import normalize_cert_attrs
 from .utils import (
     CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE, CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL,
-    CERT_TYPE_CSR, CERT_ROOT_PATH, CERT_CA_ROOT_PATH, RE_CERTIFICATE,
+    CERT_TYPE_CSR, RE_CERTIFICATE,
 )
 
 
@@ -15,6 +16,15 @@ class CertificateService(Service):
 
     class Config:
         cli_namespace = 'system.certificate'
+
+    @private
+    async def cert_extend_context(self, rows, extra):
+        context = {
+            'cas': {
+                c['id']: c for c in await self.middleware.call('certificateauthority.query')
+            }
+        }
+        return context
 
     @private
     async def cert_extend(self, cert):
@@ -36,30 +46,7 @@ class CertificateService(Service):
                 }
             )
 
-        # Remove ACME related keys if cert is not an ACME based cert
-        if not cert.get('acme'):
-            for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
-                cert.pop(key, None)
-
-        if cert['type'] in (
-            CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
-        ):
-            root_path = CERT_CA_ROOT_PATH
-        else:
-            root_path = CERT_ROOT_PATH
-        cert['root_path'] = root_path
-        cert['certificate_path'] = os.path.join(
-            root_path, f'{cert["name"]}.crt'
-        )
-        cert['privatekey_path'] = os.path.join(
-            root_path, f'{cert["name"]}.key'
-        )
-        cert['csr_path'] = os.path.join(
-            root_path, f'{cert["name"]}.csr'
-        )
-
-        cert['cert_type'] = 'CA' if root_path == CERT_CA_ROOT_PATH else 'CERTIFICATE'
-        cert['revoked'] = bool(cert['revoked_date'])
+        normalize_cert_attrs(cert)
 
         if cert['cert_type'] == 'CA':
             # TODO: Should we look for intermediate ca's as well which this ca has signed ?
@@ -75,7 +62,6 @@ class CertificateService(Service):
             ca_chain = await self.middleware.call('certificateauthority.get_ca_chain', cert['id'])
             cert.update({
                 'revoked_certs': list(filter(lambda c: c['revoked_date'], ca_chain)),
-                'crl_path': os.path.join(root_path, f'{cert["name"]}.crl'),
                 'can_be_revoked': bool(cert['privatekey']) and not cert['revoked'],
             })
         else:
@@ -168,14 +154,6 @@ class CertificateService(Service):
             })
 
         cert['parsed'] = not failed_parsing
-
-        cert['internal'] = 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
-        cert['CA_type_existing'] = bool(cert['type'] & CA_TYPE_EXISTING)
-        cert['CA_type_internal'] = bool(cert['type'] & CA_TYPE_INTERNAL)
-        cert['CA_type_intermediate'] = bool(cert['type'] & CA_TYPE_INTERMEDIATE)
-        cert['cert_type_existing'] = bool(cert['type'] & CERT_TYPE_EXISTING)
-        cert['cert_type_internal'] = bool(cert['type'] & CERT_TYPE_INTERNAL)
-        cert['cert_type_CSR'] = bool(cert['type'] & CERT_TYPE_CSR)
 
         return cert
 
