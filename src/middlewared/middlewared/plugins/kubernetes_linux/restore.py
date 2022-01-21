@@ -221,7 +221,7 @@ class KubernetesService(Service):
                     'Failed to restore PVC(s) for %r chart release:\n%s', chart_release, '\n'.join(failed_pv_restores)
                 )
 
-            update_jobs.append(self.middleware.call_sync('chart.release.update', chart_release, {'values': {}}))
+            update_jobs.append(self.middleware.call_sync('chart.release.redeploy', chart_release))
 
         for update_job in update_jobs:
             update_job.wait_sync()
