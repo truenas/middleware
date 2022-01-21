@@ -8,9 +8,6 @@ from middlewared.utils import osc
 
 def write_certificates(certs, cacerts):
     for cert in certs:
-        if not os.path.exists(cert['root_path']):
-            os.mkdir(cert['root_path'], 0o755)
-
         if cert['chain_list']:
             with open(cert['certificate_path'], 'w') as f:
                 f.write('\n'.join(cert['chain_list']))
@@ -76,6 +73,9 @@ def write_crls(cas, middleware):
 
 
 def render(service, middleware):
+    os.makedirs('/etc/certificates', 0o755, exist_ok=True)
+    os.makedirs('/etc/certificates/CA', 0o755, exist_ok=True)
+
     certs = middleware.call_sync('certificate.query')
     cas = middleware.call_sync('certificateauthority.query')
     certs.extend(cas)
