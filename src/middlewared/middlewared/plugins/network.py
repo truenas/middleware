@@ -9,7 +9,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
 from middlewared.utils import filter_list, run
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
-from middlewared.utils.generate import random_string
 from middlewared.validators import Range
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
