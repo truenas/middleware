@@ -85,11 +85,15 @@ class DNSService(Service):
                 ignore = tuple(ignore)
                 interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
 
+            dns_from_dhcp = set()
             for iface in interfaces:
                 dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', iface)
                 if dhclient_running:
                     leases = self.middleware.call_sync('interface.dhclient_leases', iface)
-                    if reg := re.search(r'option domain-name-servers (.+)', leases or ''):
-                        # just get the first dns address we come across
-                        result += f'nameserver {reg.group(1).split(";")[0]}\n'
+                    for dns in re.findall(r'option domain-name-servers (.+)', leases or ''):
+                        dns_from_dhcp.add(f'nameserver {dns.split(";")[0]}\n')
+
+            for dns in dns_from_dhcp:
+                result += dns
+
         return result
