@@ -7,7 +7,7 @@ import middlewared.sqlalchemy as sa
 from .cert_entry import get_ca_result_entry
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .dependencies import check_dependencies
-from .query_utils import normalize_cert_attrs
+from .query_utils import get_ca_chain, normalize_cert_attrs
 from .utils import (
     get_cert_info_from_data, _set_required, CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
 )
@@ -76,9 +76,11 @@ class CertificateAuthorityService(CRUDService):
 
         normalize_cert_attrs(cert)
         cert['signed_certificates'] = context['signed_mapping'][cert['id']]
-        ca_chain = self.middleware.call_sync('certificateauthority.get_ca_chain', cert['id'])
         cert.update({
-            'revoked_certs': list(filter(lambda c: c['revoked_date'], ca_chain)),
+            'revoked_certs': list(filter(
+                lambda c: c['revoked_date'],
+                get_ca_chain(cert['id'], context['certs'].values(), context['cas'].values())
+            )),
         })
         return cert
 
