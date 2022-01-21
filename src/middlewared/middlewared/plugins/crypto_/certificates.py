@@ -40,7 +40,9 @@ class CertificateService(CRUDService):
 
     class Config:
         datastore = 'system.certificate'
+        # datastore_extend = 'certificate.cert_extend_new'
         datastore_extend = 'certificate.cert_extend'
+        # datastore_extend_context = 'certificate.cert_extend_context'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate'
 
