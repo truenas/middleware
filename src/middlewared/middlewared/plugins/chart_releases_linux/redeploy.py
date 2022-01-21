@@ -17,7 +17,7 @@ class ChartReleaseService(Service):
     @job(lock=lambda args: f'chart_release_redeploy_{args[0]}')
     async def redeploy(self, job, release_name):
         """
-        Redeploy will initiate a rollout of new pods according to upgrade strategy defined by the chart release
+        Redeploy will initiate a new rollout of the Helm chart according to upgrade strategy defined by the chart release
         workloads. A good example for redeploying is updating kubernetes pods with an updated container image.
         """
         release = await self.middleware.call('chart.release.get_instance', release_name)

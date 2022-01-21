@@ -160,6 +160,7 @@ class KubernetesService(Service):
                 }
             )
         )
+        chart_releases_mapping = {c['name']: c for c in self.middleware.call_sync('chart.release.query')}
         for chart_release in restored_chart_releases:
             # Before we have resources created for the chart releases, we will restore PVs if possible and then
             # restore the chart release, so if there is any PVC expecting a PV, it will be able to claim it as soon
@@ -219,6 +220,24 @@ class KubernetesService(Service):
             if failed_pv_restores:
                 self.logger.error(
                     'Failed to restore PVC(s) for %r chart release:\n%s', chart_release, '\n'.join(failed_pv_restores)
+                )
+
+            release = chart_releases_mapping[chart_release]
+            chart_path = os.path.join(release['path'], 'charts', release['chart_metadata']['version'])
+            # We will create any relevant crds now if applicable
+            crds_path = os.path.join(chart_path, 'crds')
+            failed_crds = []
+            if os.path.exists(crds_path):
+                for crd_file in os.listdir(crds_path):
+                    crd_path = os.path.join(crds_path, crd_file)
+                    try:
+                        self.middleware.call_sync('k8s.cluster.apply_yaml_file', crd_path)
+                    except Exception as e:
+                        failed_crds.append(f'Unable to create CRD(s) at {crd_path!r}: {e}')
+
+            if failed_crds:
+                self.logger.error(
+                    'Failed to restore CRD(s) for %r chart release:\n%s', chart_release, '\n'.join(failed_crds)
                 )
 
             update_jobs.append(self.middleware.call_sync('chart.release.redeploy', chart_release))
