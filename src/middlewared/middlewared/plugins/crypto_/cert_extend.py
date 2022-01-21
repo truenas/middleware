@@ -25,6 +25,14 @@ class CertificateService(Service):
         return context
 
     @private
+    def cert_extend_new(self, cert, context):
+        if cert['signedby']:
+            cert['signedby'] = context['cas'][cert['signedby']['id']]
+
+        normalize_cert_attrs(cert)
+        return cert
+
+    @private
     async def cert_extend(self, cert):
         """Extend certificate with some useful attributes."""
 
