@@ -15,6 +15,7 @@ class DevType(enum.Enum):
     AIRPORT = 'AirPort'
     APPLETV = 'AppleTv1,1'
     MACPRO = 'MacPro'
+    MACPRORACK = 'MacPro7,1@ECOLOR=226,226,224'
     RACKMAC = 'RackMac'
     TIMECAPSULE = 'TimeCapsule6,106'
     XSERVE = 'Xserve'
@@ -102,7 +103,7 @@ class mDNSService(object):
 
         txtrecord = {}
         if self.service == 'DEV_INFO':
-            txtrecord['model'] = DevType.RACKMAC
+            txtrecord['model'] = DevType.MACPRORACK
             return (txtrecord, [AvahiConst.AVAHI_IF_UNSPEC])
 
         if self.service == 'ADISK':
