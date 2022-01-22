@@ -10,6 +10,7 @@ from .utils import LIBVIRT_URI
 class LibvirtConnectionMixin:
 
     LIBVIRT_CONNECTION = None
+    KVM_SUPPORTED = None
 
     def _open(self):
         try:
@@ -33,7 +34,9 @@ class LibvirtConnectionMixin:
         # give the impression that virtualization can be used. We have checks in place to check if system
         # supports virtualization but if we incorporate that check in all of the vm exposed methods which
         # consume libvirt, it would be an expensive call as we figure that out by making a subprocess call
-        return os.path.exists('/dev/kvm')
+        if self.KVM_SUPPORTED is None:
+            self.KVM_SUPPORTED = os.path.exists('/dev/kvm')
+        return self.KVM_SUPPORTED
 
     def _is_libvirt_connection_alive(self):
         with contextlib.suppress(libvirt.libvirtError):
