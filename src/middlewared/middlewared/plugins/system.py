@@ -1105,8 +1105,7 @@ class SystemGeneralService(ConfigService):
 
         if data['ui_certificate']:
             data['ui_certificate'] = await self.middleware.call(
-                'certificate.get_instance',
-                [['id', '=', data['ui_certificate']['id']]],
+                'certificate.get_instance', data['ui_certificate']['id']
             )
 
         data['crash_reporting_is_set'] = data['crash_reporting'] is not None

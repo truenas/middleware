@@ -11,7 +11,6 @@ from xml.etree import ElementTree as etree
 from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
 from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY # noqa
-from middlewared.utils import osc
 
 from .utils import create_element
 
@@ -62,17 +61,17 @@ class VMSupervisorBase(LibvirtConnectionMixin):
     def status(self):
         domain = self.domain
         domain_state = DomainState(domain.state()[0])
-        pid_path = os.path.join(
-            '/var/run/libvirt', 'qemu' if osc.IS_LINUX else 'bhyve', f'{self.libvirt_domain_name}.pid'
-        )
+        pid_path = os.path.join('/var/run/libvirt', 'qemu', f'{self.libvirt_domain_name}.pid')
         data = {
             'state': 'STOPPED' if not domain.isActive() else 'RUNNING',
             'pid': None,
             'domain_state': domain_state.name,
         }
-        # if domain_state == DomainState.RUNNING and os.path.exists(pid_path):
-        #     with open(pid_path, 'r') as f:
-        #        data['pid'] = int(f.read())
+        if domain_state == DomainState.RUNNING:
+            with contextlib.suppress(FileNotFoundError):
+                # Do not make a stat call to check if file exists or not
+                with open(pid_path, 'r') as f:
+                    data['pid'] = int(f.read())
 
         return data
 
