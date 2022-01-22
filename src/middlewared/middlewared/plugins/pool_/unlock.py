@@ -6,7 +6,6 @@ class PoolDatasetService(Service):
 
     class Config:
         namespace = 'pool.dataset'
-        event_send = False
 
     @accepts(Str('dataset'))
     @returns(Dict('services_to_restart', additional_attrs=True))

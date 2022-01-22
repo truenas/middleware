@@ -1,10 +1,13 @@
 import os
 import contextlib
 
-from middlewared.service import CRUDService, private
+from middlewared.service import private, Service
 
 
-class PoolDatasetService(CRUDService):
+class PoolDatasetService(Service):
+
+    class Config:
+        namespace = 'pool.dataset'
 
     @private
     def processes_using_paths(self, paths):
