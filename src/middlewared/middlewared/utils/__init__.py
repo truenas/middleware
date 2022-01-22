@@ -3,13 +3,13 @@ import logging
 import re
 import signal
 import subprocess
-import threading
 from datetime import datetime, timedelta
 from functools import wraps
 from threading import Lock
 
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import osc
+from middlewared.utils.threading import start_daemon_thread  # noqa
 
 BUILDTIME = None
 VERSION = None
@@ -260,12 +260,6 @@ def is_empty(val):
     or just a string containing only spaces
     """
     return val in [None, ''] or val.isspace()
-
-
-def start_daemon_thread(*args, daemon=True, **kwargs):
-    t = threading.Thread(*args, daemon=daemon, **kwargs)
-    t.start()
-    return t
 
 
 class Nid(object):
