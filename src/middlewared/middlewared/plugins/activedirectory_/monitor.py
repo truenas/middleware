@@ -1,11 +1,11 @@
 import json
 import os
 import threading
-import middlewared.utils.osc as osc
 
 from middlewared.plugins.smb import SMBPath
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.service import Service
+from middlewared.utils.threading import set_thread_name
 
 
 class WBStatusThread(threading.Thread):
@@ -79,7 +79,7 @@ class WBStatusThread(threading.Thread):
         self.logger.debug('exiting winbind messaging thread')
 
     def run(self):
-        osc.set_thread_name('ad_monitor_thread')
+        set_thread_name('ad_monitor_thread')
         try:
             self.read_messages()
         except Exception as e:

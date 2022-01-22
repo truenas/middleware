@@ -12,7 +12,7 @@ from middlewared.client import Client, ClientException, CallTimeout
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import start_daemon_thread
-from middlewared.utils.osc import set_thread_name
+from middlewared.utils.threading import set_thread_name
 
 
 logger = logging.getLogger('failover.remote')

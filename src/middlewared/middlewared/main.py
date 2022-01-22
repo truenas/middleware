@@ -12,11 +12,10 @@ from .service_exception import adapt_exception, CallError, CallException, Valida
 from .utils import osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
-from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 from .utils.plugins import LoadPluginsMixin
 from .utils.profile import profile_wrap
-from .utils.run_in_thread import RunInThreadMixin
 from .utils.service.call import ServiceCallMixin
+from .utils.threading import set_thread_name, ThreadExecutor
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from .webhooks.cluster_events import ClusterEventsApplication
@@ -172,8 +171,7 @@ class Application(object):
 
         try:
             async with self._softhardsemaphore:
-                result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self,
-                                                     io_thread=False)
+                result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -838,7 +836,7 @@ class PreparedCall:
         self.job = job
 
 
-class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
+class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
@@ -864,14 +862,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.startup_seq_path = startup_seq_path
         self.app = None
         self.loop = None
-        self.run_in_thread_executor = IoThreadPoolExecutor()
         self.__thread_id = threading.get_ident()
-        # Spawn new processes for ProcessPool instead of forking
-        multiprocessing.set_start_method('spawn')
-        self.__ws_threadpool = concurrent.futures.ThreadPoolExecutor(
-            initializer=lambda: osc.set_thread_name('threadpool_ws'),
-            max_workers=10,
-        )
+        self.thread_pool_executor = ThreadExecutor()
+        multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
         self.__wsclients = {}
         self.__events = Events()
@@ -1175,27 +1168,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
-        if isinstance(pool, IoThreadPoolExecutor) and self.run_in_thread_executor.no_idle_threads:
-            # this means the IoThreadPool has no idle threads so instead of blocking the
-            # main event loop, we'll spin up single-use threads until the threadpool gets
-            # some more idle thread(s)
-            self.logger.trace('Calling %r in single-use thread', method)
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as exc:
-                return await loop.run_in_executor(exc, functools.partial(method, *args, **kwargs))
-
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
-    async def _run_in_conn_threadpool(self, method, *args, **kwargs):
-        """
-        Threads to handle websocket connection are gated on `__ws_threadpool`.
-        Any other calls should use `run_in_thread` as that launches its own thread
-        and does not cause deadlock waiting another thread to finish in the pool
-        (which could happen on the stack call, e.g.
-           service.foo calls something in using the thread pool and something also
-           uses the thread pool. If service.foo is called many times before each thread
-           finishes we will have a deadlock)
-        """
-        return await self.run_in_executor(self.__ws_threadpool, method, *args, **kwargs)
+    async def run_in_thread(self, method, *args, **kwargs):
+        return await self.run_in_executor(self.thread_pool_executor, method, *args, **kwargs)
 
     def __init_procpool(self):
         self.__procpool = concurrent.futures.ProcessPoolExecutor(
@@ -1223,8 +1199,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         return Pipe(self, buffered)
 
     def _call_prepare(
-        self, name, serviceobj, methodobj, params, app=None, io_thread=True, job_on_progress_cb=None, pipes=None,
-        threadsafe=False,
+        self, name, serviceobj, methodobj, params, app=None, job_on_progress_cb=None, pipes=None, threadsafe=False,
     ):
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -1255,10 +1230,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             executor = methodobj._thread_pool
         elif serviceobj._config.thread_pool:
             executor = serviceobj._config.thread_pool
-        elif io_thread:
-            executor = self.run_in_thread_executor
         else:
-            executor = self.__ws_threadpool
+            executor = self.thread_pool_executor
 
         return PreparedCall(args=args, executor=executor)
 
@@ -1317,7 +1290,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         return await self._call(
             name, serviceobj, methodobj, params,
-            app=app, io_thread=True, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
+            app=app, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
     def call_sync(self, name, *params, job_on_progress_cb=None):
@@ -1347,8 +1320,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
     def _in_executor(self, executor):
         if isinstance(executor, concurrent.futures.thread.ThreadPoolExecutor):
             return threading.current_thread() in executor._threads
-        elif isinstance(executor, IoThreadPoolExecutor):
-            return any(worker.thread == threading.current_thread() for worker in executor.workers)
+        elif isinstance(executor, ThreadExecutor):
+            return threading.current_thread().name.startswith(("IoThread", "ExtraIoThread"))
         else:
             raise RuntimeError(f"Unknown executor: {executor!r}")
 
@@ -1457,7 +1430,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 before taking another memory snapshot
         """
         # set the thread name
-        osc.set_thread_name('tracemalloc_monitor')
+        set_thread_name('tracemalloc_monitor')
 
         # initalize tracemalloc
         tracemalloc.start()
@@ -1584,7 +1557,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         DISCLAIMER/TODO: This is not free of race condition so it may show
         false positives.
         """
-        osc.set_thread_name('loop_monitor')
+        set_thread_name('loop_monitor')
         last = None
         while True:
             time.sleep(2)
@@ -1620,7 +1593,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         self._console_write('starting')
 
-        osc.set_thread_name('asyncio_loop')
+        set_thread_name('asyncio_loop')
         self.loop = asyncio.get_event_loop()
 
         if self.loop_debug:

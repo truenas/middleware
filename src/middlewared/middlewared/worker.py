@@ -28,7 +28,7 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
         _logger.configure_logging('console')
         self.loop = asyncio.get_event_loop()
 
-    def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False, job=None):
+    def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, job=None):
         try:
             with Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True) as c:
                 self.client = c
