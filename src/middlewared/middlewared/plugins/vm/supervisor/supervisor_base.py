@@ -70,9 +70,9 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             'pid': None,
             'domain_state': domain_state.name,
         }
-        if domain_state == DomainState.RUNNING and os.path.exists(pid_path):
-            with open(pid_path, 'r') as f:
-                data['pid'] = int(f.read())
+        # if domain_state == DomainState.RUNNING and os.path.exists(pid_path):
+        #     with open(pid_path, 'r') as f:
+        #        data['pid'] = int(f.read())
 
         return data
 

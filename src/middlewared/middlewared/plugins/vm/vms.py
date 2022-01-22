@@ -6,7 +6,7 @@ import warnings
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
-from middlewared.service import CallError, CRUDService, item_method, private
+from middlewared.service import CallError, CRUDService, item_method, private, filterable
 from middlewared.validators import Range
 
 from .vm_supervisor import VMSupervisorMixin
@@ -432,7 +432,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
-        if self._has_domain(vm['name']):
+        if False and self._has_domain(vm['name']):
             try:
                 # Whatever happens, query shouldn't fail
                 return self._status(vm['name'])
