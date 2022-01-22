@@ -75,7 +75,11 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @private
     async def extend_vm(self, vm):
-        vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
+        vm['devices'] = await self.middleware.call(
+            'vm.device.query',
+            [('vm', '=', vm['id'])],
+            {'force_sql_filters': True},
+        )
         vm['status'] = await self.middleware.call('vm.status', vm['id'])
         return vm
 

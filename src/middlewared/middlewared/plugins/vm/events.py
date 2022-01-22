@@ -24,8 +24,14 @@ class VMService(Service, LibvirtConnectionMixin):
             7: 'PMSUSPENDED'
             Above is event mapping for internal reference
             """
-            vms = {f'{d["id"]}_{d["name"]}': d for d in self.middleware.call_sync('vm.query')}
-            if dom.name() not in vms:
+            vm_id = dom.name().split('_')[0]
+            vm = None
+            if vm_id.isdigit():
+                if vms := self.middleware.call_sync('vm.query', [['id', '=', int(vm_id)]], {'force_sql_filters': True}):
+                    if dom.name() == f'{vms[0]["id"]}_{vms[0]["name"]}':
+                        vm = vms[0]
+
+            if vm is None:
                 emit_type = 'REMOVED'
             elif event == 0:
                 emit_type = 'ADDED'
@@ -55,16 +61,12 @@ class VMService(Service, LibvirtConnectionMixin):
             except libvirt.libvirtError:
                 state = 'UNKNOWN'
 
-            vm_id = dom.name().split('_')[0]
             # We do not send an event on removed because that would already be done by vm.delete
-            if vm_id.isdigit() and emit_type != 'REMOVED' and dom.name() in vms:
-                vm = vms[dom.name()]
+            if vm is not None:
                 vm['status']['state'] = state
                 self.middleware.send_event(
                     'vm.query', emit_type, id=int(vm_id), fields=vm, state=vm_state_mapping.get(event, 'UNKNOWN')
                 )
-            else:
-                self.middleware.logger.debug('Received libvirtd event with unknown domain name %s', dom.name())
 
         def event_loop_execution():
             while self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION._o and self.LIBVIRT_CONNECTION.isAlive():
