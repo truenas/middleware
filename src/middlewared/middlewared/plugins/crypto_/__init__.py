@@ -6,7 +6,7 @@ async def setup(middleware):
     try:
         system_general_config = await middleware.call('system.general.config')
         system_cert = system_general_config['ui_certificate']
-        certs = await middleware.call('certificate.query')
+        certs = await middleware.call('datastore.query', 'system.certificate', [], {'prefix': 'cert_'})
     except Exception as e:
         failure = True
         middleware.logger.error(f'Failed to retrieve certificates: {e}', exc_info=True)
