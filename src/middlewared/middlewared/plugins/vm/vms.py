@@ -6,7 +6,7 @@ import warnings
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
-from middlewared.service import CallError, CRUDService, item_method, private, filterable
+from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range
 
 from .vm_supervisor import VMSupervisorMixin
@@ -48,6 +48,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         namespace = 'vm'
         datastore = 'vm.vm'
         datastore_extend = 'vm.extend_vm'
+        datastore_extend_context = 'vm.extend_context'
         cli_namespace = 'service.vm'
 
     ENTRY = Patch(
@@ -63,6 +64,13 @@ class VMService(CRUDService, VMSupervisorMixin):
         ('add', Int('id')),
     )
 
+    @private
+    def extend_context(self, rows, extra):
+        status = {}
+        for row in rows:
+            status[row['id']] = self.status_impl(row)
+        return {'status': status}
+
     @accepts()
     @returns(Dict(
         *[Str(k, enum=[v]) for k, v in BOOT_LOADER_OPTIONS.items()],
@@ -74,13 +82,13 @@ class VMService(CRUDService, VMSupervisorMixin):
         return BOOT_LOADER_OPTIONS
 
     @private
-    async def extend_vm(self, vm):
+    async def extend_vm(self, vm, context):
         vm['devices'] = await self.middleware.call(
             'vm.device.query',
             [('vm', '=', vm['id'])],
             {'force_sql_filters': True},
         )
-        vm['status'] = await self.middleware.call('vm.status', vm['id'])
+        vm['status'] = context['status'][vm['id']]
         return vm
 
     @accepts(Dict(
@@ -432,7 +440,11 @@ class VMService(CRUDService, VMSupervisorMixin):
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
-        if False and self._has_domain(vm['name']):
+        return self.status_impl(vm)
+
+    @private
+    def status_impl(self, vm):
+        if self._has_domain(vm['name']):
             try:
                 # Whatever happens, query shouldn't fail
                 return self._status(vm['name'])
