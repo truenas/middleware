@@ -11,6 +11,8 @@ from pkg_resources import parse_version
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service, ValidationErrors
 
+from .features import version_supported
+from .items_util import get_item_default_values
 from .utils import get_cache_key
 
 
@@ -352,11 +354,11 @@ class CatalogService(Service):
         # like a field referring to available interfaces on the system
         self.normalise_questions(version_data, questions_context)
 
-        version_data['supported'] = self.middleware.call_sync('catalog.version_supported', version_data)
-        version_data['required_features'] = list(version_data['required_features'])
-        version_data['values'] = self.middleware.call_sync(
-            'chart.release.construct_schema_for_item_version', version_data, {}, False
-        )['new_values']
+        version_data.update({
+            'supported': version_supported(version_data),
+            'required_features': list(version_data['required_features']),
+            'values': get_item_default_values(version_data)
+        })
         chart_metadata = version_data['chart_metadata']
         if chart_metadata['name'] != 'ix-chart' and chart_metadata.get('appVersion'):
             version_data['human_version'] = f'{chart_metadata["appVersion"]}_{chart_metadata["version"]}'
