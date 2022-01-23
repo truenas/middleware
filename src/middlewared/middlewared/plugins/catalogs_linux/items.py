@@ -13,6 +13,7 @@ from middlewared.service import accepts, job, private, Service, ValidationErrors
 
 from .features import version_supported
 from .items_util import get_item_default_values
+from .questions_utils import normalise_questions
 from .utils import get_cache_key
 
 
@@ -117,7 +118,7 @@ class CatalogService(Service):
                         version_data = train_data[catalog_item]['versions'][version]
                         if not version_data.get('healthy'):
                             continue
-                        self.normalise_questions(version_data, questions_context)
+                        normalise_questions(version_data, questions_context)
 
                 cached_data[train] = train_data
 
@@ -352,7 +353,7 @@ class CatalogService(Service):
 
         # We will normalise questions now so that if they have any references, we render them accordingly
         # like a field referring to available interfaces on the system
-        self.normalise_questions(version_data, questions_context)
+        normalise_questions(version_data, questions_context)
 
         version_data.update({
             'supported': version_supported(version_data),
@@ -377,77 +378,3 @@ class CatalogService(Service):
             'certificate_authorities': await self.middleware.call('chart.release.certificate_authority_choices'),
             'system.general.config': await self.middleware.call('system.general.config'),
         }
-
-    @private
-    def normalise_questions(self, version_data, context):
-        version_data['required_features'] = set()
-        for question in version_data['schema']['questions']:
-            self._normalise_question(question, version_data, context)
-        version_data['required_features'] = list(version_data['required_features'])
-
-    def _normalise_question(self, question, version_data, context):
-        schema = question['schema']
-        for attr in itertools.chain(*[schema.get(k, []) for k in ('attrs', 'items', 'subquestions')]):
-            self._normalise_question(attr, version_data, context)
-
-        if '$ref' not in schema:
-            return
-
-        data = {}
-        for ref in schema['$ref']:
-            version_data['required_features'].add(ref)
-            if ref == 'definitions/interface':
-                data['enum'] = [
-                    {'value': i, 'description': f'{i!r} Interface'} for i in context['nic_choices']
-                ]
-            elif ref == 'definitions/gpuConfiguration':
-                data['attrs'] = []
-                for gpu, quantity in context['gpus'].items():
-                    data['attrs'].append({
-                        'variable': gpu,
-                        'label': f'GPU Resource ({gpu})',
-                        'description': 'Please enter the number of GPUs to allocate',
-                        'schema': {
-                            'type': 'int',
-                            'max': int(quantity),
-                            'enum': [
-                                {'value': i, 'description': f'Allocate {i!r} {gpu} GPU'}
-                                for i in range(int(quantity) + 1)
-                            ],
-                            'default': 0,
-                        }
-                    })
-            elif ref == 'definitions/timezone':
-                data.update({
-                    'enum': [{'value': t, 'description': f'{t!r} timezone'} for t in context['timezones']],
-                    'default': context['system.general.config']['timezone']
-                })
-            elif ref == 'definitions/nodeIP':
-                data['default'] = context['node_ip']
-            elif ref == 'definitions/certificate':
-                self._get_cert_ca_options(schema, data, {'value': None, 'description': 'No Certificate'})
-                data['enum'] += [
-                    {'value': i['id'], 'description': f'{i["name"]!r} Certificate'}
-                    for i in context['certificates']
-                ]
-            elif ref == 'definitions/certificateAuthority':
-                self._get_cert_ca_options(schema, data, {'value': None, 'description': 'No Certificate Authority'})
-                data['enum'] += [{'value': None, 'description': 'No Certificate Authority'}] + [
-                    {'value': i['id'], 'description': f'{i["name"]!r} Certificate Authority'}
-                    for i in context['certificate_authorities']
-                ]
-
-        schema.update(data)
-
-    def _get_cert_ca_options(self, schema, data, default_entry):
-        if schema.get('null', True):
-            data.update({
-                'enum': [default_entry],
-                'default': None,
-                'null': True,
-            })
-        else:
-            data.update({
-                'enum': [],
-                'required': True,
-            })

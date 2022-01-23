@@ -4,6 +4,8 @@ import os
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, Service
 
+from .questions_utils import normalise_questions
+
 
 class CatalogService(Service):
 
@@ -60,7 +62,7 @@ class CatalogService(Service):
                     )
                     if needs_normalization:
                         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-                        self.middleware.call_sync('catalog.normalise_questions', versioned_item, questions_context)
+                        normalise_questions(versioned_item, questions_context)
                 return item
 
         return self.middleware.call_sync('catalog.retrieve_item_details', item_location)
