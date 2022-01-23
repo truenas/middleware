@@ -1,11 +1,8 @@
-import itertools
-
-from middlewared.schema import Dict, NOT_PROVIDED, ValidationErrors
+from middlewared.schema import NOT_PROVIDED
 from middlewared.service import CallError, private, Service
 from middlewared.utils import filter_list
-from middlewared.validators import validate_schema
 
-from .schema import get_schema, get_list_item_from_value, update_conditional_defaults
+from .schema import construct_schema, get_list_item_from_value
 from .utils import CONTEXT_KEY_NAME, RESERVED_NAMES
 
 
@@ -26,28 +23,7 @@ class ChartReleaseService(Service):
     async def construct_schema_for_item_version(
         self, item_version_details, new_values, update, old_values=NOT_PROVIDED
     ):
-        schema_name = f'chart_release_{"update" if update else "create"}'
-        attrs = list(itertools.chain.from_iterable(
-            get_schema(q, update, old_values) for q in item_version_details['schema']['questions']
-        ))
-        dict_obj = update_conditional_defaults(
-            Dict(schema_name, *attrs, update=update, additional_attrs=True), {
-                'schema': {'attrs': item_version_details['schema']['questions']}
-            }
-        )
-
-        verrors = ValidationErrors()
-        verrors.add_child('values', validate_schema(
-            attrs, new_values, True, dict_kwargs={
-                'conditional_defaults': dict_obj.conditional_defaults, 'update': update,
-            }
-        ))
-        return {
-            'verrors': verrors,
-            'new_values': new_values,
-            'dict_obj': dict_obj,
-            'schema_name': schema_name,
-        }
+        return construct_schema(item_version_details, new_values, update, old_values)
 
     @private
     async def validate_values(self, item_version_details, new_values, update, release_data=None):
