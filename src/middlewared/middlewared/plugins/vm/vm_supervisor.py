@@ -27,7 +27,7 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
         VMSupervisorMixin.vms = {}
 
     def _vm_from_name(self, vm_name):
-        return self.middleware.call_sync('vm.get_instance', vm_name)
+        return self.middleware.call_sync('vm.query', [['name', '=', vm_name]], {'get': True, 'force_sql_filters': True})
 
     def _undefine_domain(self, vm_name):
         domain = self.vms.pop(vm_name, None)
