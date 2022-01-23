@@ -201,11 +201,10 @@ class CatalogService(Service):
         job.set_progress(8, f'Retrieving {", ".join(trains_to_traverse)!r} train(s) information')
 
         total_items = len(items)
-
         with concurrent.futures.ProcessPoolExecutor(max_workers=(5 if total_items > 10 else 2)) as exc:
             for index, result in enumerate(zip(items, exc.map(
                 functools.partial(item_details, items, location, questions_context, options),
-                items, chunksize=10
+                items, chunksize=(10 if total_items > 10 else 5)
             ))):
                 item_key = result[0]
                 item_info = result[1]
