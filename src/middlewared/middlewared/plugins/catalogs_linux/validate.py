@@ -1,7 +1,7 @@
 import errno
 import os
 
-from catalog_validation.validation import validate_catalog, validate_catalog_item_version
+from catalog_validation.validation import validate_catalog
 
 from middlewared.schema import returns, Str
 from middlewared.service import accepts, CallError, job, private, Service
@@ -37,4 +37,3 @@ class CatalogService(Service):
             raise CallError(f'{path!r} does not exist', errno=errno.ENOENT)
 
         check_errors(validate_catalog, path)
-

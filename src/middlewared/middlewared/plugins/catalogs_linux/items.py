@@ -202,7 +202,7 @@ class CatalogService(Service):
 
         total_items = len(items)
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=2) as exc:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=(5 if total_items > 10 else 2)) as exc:
             for index, result in enumerate(zip(items, exc.map(
                 functools.partial(item_details, items, location, questions_context, options),
                 items, chunksize=10
