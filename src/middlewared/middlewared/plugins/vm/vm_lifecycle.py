@@ -29,9 +29,6 @@ class VMService(Service, VMSupervisorMixin):
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
 
-        if not await self.middleware.call('vm.supports_virtualization'):
-            raise CallError('This system does not support virtualization.')
-
         if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
 

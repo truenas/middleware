@@ -49,15 +49,14 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     def initialize_vms(self, timeout=30):
-        if self.middleware.call_sync('datastore.query', 'vm.vm') and self.middleware.call_sync(
-            'vm.supports_virtualization'
-        ):
+        vms = self.middleware.call_sync('vm.query')
+        if vms and self._is_kvm_supported():
             self.setup_libvirt_connection(timeout)
         else:
             return
 
         if self._is_connection_alive():
-            for vm_data in self.middleware.call_sync('vm.query'):
+            for vm_data in vms:
                 try:
                     self._add_with_vm_data(vm_data)
                 except Exception as e:
@@ -70,7 +69,7 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     async def start_on_boot(self):
-        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
+        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)], {'force_sql_filters': True}):
             try:
                 await self.middleware.call('vm.start', vm['id'])
             except Exception as e:
