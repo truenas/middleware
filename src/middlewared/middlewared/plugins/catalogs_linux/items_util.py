@@ -9,7 +9,7 @@ from middlewared.service import ValidationErrors
 
 from .features import version_supported
 from .questions_utils import normalise_questions
-from .validate_utils import validate_item_version
+from .validate_utils import validate_item, validate_item_version
 
 
 ITEM_KEYS = ['icon_url']
@@ -19,7 +19,66 @@ def get_item_default_values(version_details: dict) -> dict:
     return construct_schema(version_details, {}, False)['new_values']
 
 
-def get_item_details(item_path: str, schema: str, questions_context: dict, options: dict) -> dict:
+def get_item_details(item_location: str, questions_context: dict, options: dict) -> dict:
+    item = item_location.rsplit('/', 1)[-1]
+    train = item_location.rsplit('/', 2)[-2]
+
+    retrieve_versions = options.get('retrieve_versions', True)
+    item_data = {
+        'name': item,
+        'categories': [],
+        'app_readme': None,
+        'location': item_location,
+        'healthy': False,  # healthy means that each version the item hosts is valid and healthy
+        'healthy_error': None,  # An error string explaining why the item is not healthy
+        'versions': {},
+        'latest_version': None,
+        'latest_app_version': None,
+        'latest_human_version': None,
+    }
+
+    schema = f'{train}.{item}'
+    try:
+        validate_item(item_location, schema, False)
+    except ValidationErrors as verrors:
+        item_data['healthy_error'] = f'Following error(s) were found with {item!r}:\n'
+        for verror in verrors:
+            item_data['healthy_error'] += f'{verror[0]}: {verror[1]}'
+
+        # If the item format is not valid - there is no point descending any further into versions
+        if not retrieve_versions:
+            item_data.pop('versions')
+        return item_data
+
+    item_data.update(get_item_details_impl(item_location, schema, questions_context, {
+        'retrieve_latest_version': not retrieve_versions,
+    }))
+    unhealthy_versions = []
+    for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
+        if not v['healthy']:
+            unhealthy_versions.append(k)
+        else:
+            if not item_data['app_readme']:
+                item_data['app_readme'] = v['app_readme']
+            if not item_data['latest_version']:
+                item_data['latest_version'] = k
+                item_data['latest_app_version'] = v['chart_metadata'].get('appVersion')
+                item_data['latest_human_version'] = ''
+                if item_data['latest_app_version']:
+                    item_data['latest_human_version'] = f'{item_data["latest_app_version"]}_'
+                item_data['latest_human_version'] += k
+
+    if unhealthy_versions:
+        item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
+    else:
+        item_data['healthy'] = True
+    if not retrieve_versions:
+        item_data.pop('versions')
+
+    return item_data
+
+
+def get_item_details_impl(item_path: str, schema: str, questions_context: dict, options: dict) -> dict:
     # Each directory under item path represents a version of the item and we need to retrieve details
     # for each version available under the item
     retrieve_latest_version = options.get('retrieve_latest_version')
