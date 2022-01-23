@@ -1,4 +1,6 @@
 import copy
+import concurrent.futures
+import functools
 import json
 import os
 
@@ -12,7 +14,13 @@ from .questions_utils import normalise_questions
 from .utils import get_cache_key
 
 
-ITEM_KEYS = ['icon_url']
+def item_details(items, location, questions_context, options, item_key):
+    train = items[item_key]
+    item = item_key.removesuffix(f'_{train}')
+    item_location = os.path.join(location, train, item)
+    return get_item_details(item_location, questions_context, {
+        'retrieve_versions': options['retrieve_versions'],
+    })
 
 
 class CatalogService(Service):
@@ -193,20 +201,23 @@ class CatalogService(Service):
         job.set_progress(8, f'Retrieving {", ".join(trains_to_traverse)!r} train(s) information')
 
         total_items = len(items)
-        for index, item_key in enumerate(items):
-            train = items[item_key]
-            item = item_key.removesuffix(f'_{train}')
-            item_location = os.path.join(location, train, item)
-            job.set_progress(
-                int((index / total_items) * 80) + 10,
-                f'Retrieving information of {item!r} item from {train!r} train'
-            )
 
-            trains[train][item] = get_item_details(item_location, questions_context, {
-                'retrieve_versions': options['retrieve_versions'],
-            })
-            if train in preferred_trains and not trains[train][item]['healthy']:
-                unhealthy_apps.add(f'{item} ({train} train)')
+        with concurrent.futures.ProcessPoolExecutor(max_workers=2) as exc:
+            for index, result in enumerate(zip(items, exc.map(
+                functools.partial(item_details, items, location, questions_context, options),
+                items, chunksize=10
+            ))):
+                item_key = result[0]
+                item_info = result[1]
+                train = items[item_key]
+                item = item_key.removesuffix(f'_{train}')
+                job.set_progress(
+                    int((index / total_items) * 80) + 10,
+                    f'Retrieved information of {item!r} item from {train!r} train'
+                )
+                trains[train][item] = item_info
+                if train in preferred_trains and not trains[train][item]['healthy']:
+                    unhealthy_apps.add(f'{item} ({train} train)')
 
         if unhealthy_apps:
             self.middleware.call_sync(
