@@ -56,11 +56,8 @@ class VMService(Service, VMSupervisorMixin):
         else:
             return
 
-        # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
-        # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
         if self._is_connection_alive():
-            for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm'):
-                vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
+            for vm_data in self.middleware.call_sync('vm.query'):
                 try:
                     self._add_with_vm_data(vm_data)
                 except Exception as e:
