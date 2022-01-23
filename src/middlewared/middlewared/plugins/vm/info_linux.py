@@ -7,6 +7,7 @@ from middlewared.schema import Bool, Dict, Int, returns, Str
 from middlewared.service import accepts, Service
 from middlewared.utils import run
 
+from .connection import LibvirtConnectionMixin
 from .utils import get_virsh_command_args
 
 
@@ -15,32 +16,30 @@ RE_VENDOR_AMD = re.compile(r'AuthenticAMD')
 RE_VENDOR_INTEL = re.compile(r'GenuineIntel')
 
 
-class VMService(Service):
+class VMService(Service, LibvirtConnectionMixin):
 
     CPU_MODEL_CHOICES = {}
 
     @accepts()
     @returns(Bool())
-    async def supports_virtualization(self):
+    def supports_virtualization(self):
         """
         Returns "true" if system supports virtualization, "false" otherwise
         """
-        cp = await run(['kvm-ok'], check=False)
-        return cp.returncode == 0
+        return self._is_kvm_supported()
 
     @accepts()
     @returns(Dict(
         Bool('supported', required=True),
         Str('error', null=True, required=True),
     ))
-    async def virtualization_details(self):
+    def virtualization_details(self):
         """
         Retrieve details if virtualization is supported on the system and in case why it's not supported if it isn't.
         """
-        cp = await run(['kvm-ok'], check=False)
         return {
-            'supported': cp.returncode == 0,
-            'error': None if cp.returncode == 0 else cp.stdout.decode(),
+            'supported': self._is_kvm_supported(),
+            'error': None if self._is_kvm_supported() else 'Your CPU does not support KVM extensions',
         }
 
     @accepts()
@@ -69,7 +68,7 @@ class VMService(Service):
             'amd_rvi': False,
             'amd_asids': False,
         }
-        supports_vm = await self.supports_virtualization()
+        supports_vm = await self.middleware.call('vm.supports_virtualization')
         if not supports_vm:
             return flags
 
