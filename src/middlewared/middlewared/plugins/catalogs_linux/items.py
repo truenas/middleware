@@ -3,10 +3,9 @@ import json
 import os
 
 from catalog_validation.utils import VALID_TRAIN_REGEX
-from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, List, returns, Str
-from middlewared.service import accepts, job, private, Service, ValidationErrors
+from middlewared.service import accepts, job, private, Service
 
 from .items_util import get_item_details, get_item_version_details
 from .questions_utils import normalise_questions
@@ -203,8 +202,7 @@ class CatalogService(Service):
                 f'Retrieving information of {item!r} item from {train!r} train'
             )
 
-            trains[train][item] = self.retrieve_item_details(item_location, {
-                'questions_context': questions_context,
+            trains[train][item] = get_item_details(item_location, questions_context, {
                 'retrieve_versions': options['retrieve_versions'],
             })
             if train in preferred_trains and not trains[train][item]['healthy']:
@@ -219,68 +217,6 @@ class CatalogService(Service):
 
         job.set_progress(90, f'Retrieved {", ".join(trains_to_traverse)} train(s) information')
         return trains
-
-    @private
-    def retrieve_item_details(self, item_location, options=None):
-        item = item_location.rsplit('/', 1)[-1]
-        train = item_location.rsplit('/', 2)[-2]
-        options = options or {}
-        questions_context = options.get('questions_context') or self.middleware.call_sync(
-            'catalog.get_normalised_questions_context'
-        )
-        retrieve_versions = options.get('retrieve_versions', True)
-        item_data = {
-            'name': item,
-            'categories': [],
-            'app_readme': None,
-            'location': item_location,
-            'healthy': False,  # healthy means that each version the item hosts is valid and healthy
-            'healthy_error': None,  # An error string explaining why the item is not healthy
-            'versions': {},
-            'latest_version': None,
-            'latest_app_version': None,
-            'latest_human_version': None,
-        }
-
-        schema = f'{train}.{item}'
-        try:
-            self.middleware.call_sync('catalog.validate_catalog_item', item_location, schema, False)
-        except ValidationErrors as verrors:
-            item_data['healthy_error'] = f'Following error(s) were found with {item!r}:\n'
-            for verror in verrors:
-                item_data['healthy_error'] += f'{verror[0]}: {verror[1]}'
-
-            # If the item format is not valid - there is no point descending any further into versions
-            if not retrieve_versions:
-                item_data.pop('versions')
-            return item_data
-
-        item_data.update(get_item_details(item_location, schema, questions_context, {
-            'retrieve_latest_version': not retrieve_versions,
-        }))
-        unhealthy_versions = []
-        for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
-            if not v['healthy']:
-                unhealthy_versions.append(k)
-            else:
-                if not item_data['app_readme']:
-                    item_data['app_readme'] = v['app_readme']
-                if not item_data['latest_version']:
-                    item_data['latest_version'] = k
-                    item_data['latest_app_version'] = v['chart_metadata'].get('appVersion')
-                    item_data['latest_human_version'] = ''
-                    if item_data['latest_app_version']:
-                        item_data['latest_human_version'] = f'{item_data["latest_app_version"]}_'
-                    item_data['latest_human_version'] += k
-
-        if unhealthy_versions:
-            item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
-        else:
-            item_data['healthy'] = True
-        if not retrieve_versions:
-            item_data.pop('versions')
-
-        return item_data
 
     @private
     def item_version_details(self, version_path, questions_context=None):
