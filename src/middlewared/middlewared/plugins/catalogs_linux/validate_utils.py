@@ -13,9 +13,9 @@ def check_errors(func: callable, *args, **kwargs):
     verrors.check()
 
 
-def validate_item(path: str, schema: dict, validate_versions: bool = True):
+def validate_item(path: str, schema: str, validate_versions: bool = True):
     check_errors(validate_catalog_item, path, schema, validate_versions)
 
 
-def validate_item_version(path: str, schema: dict):
+def validate_item_version(path: str, schema: str):
     check_errors(validate_catalog_item_version, path, schema)

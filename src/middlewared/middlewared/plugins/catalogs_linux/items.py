@@ -1,9 +1,6 @@
 import copy
-import itertools
 import json
-import markdown
 import os
-import yaml
 
 from catalog_validation.utils import VALID_TRAIN_REGEX
 from pkg_resources import parse_version
@@ -11,8 +8,7 @@ from pkg_resources import parse_version
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service, ValidationErrors
 
-from .features import version_supported
-from .items_util import get_item_default_values, get_item_version_details
+from .items_util import get_item_details, get_item_version_details
 from .questions_utils import normalise_questions
 from .utils import get_cache_key
 
@@ -259,9 +255,8 @@ class CatalogService(Service):
                 item_data.pop('versions')
             return item_data
 
-        item_data.update(self.item_details(item_location, schema, {
+        item_data.update(get_item_details(item_location, schema, questions_context, {
             'retrieve_latest_version': not retrieve_versions,
-            'questions_context': questions_context,
         }))
         unhealthy_versions = []
         for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
@@ -284,52 +279,6 @@ class CatalogService(Service):
             item_data['healthy'] = True
         if not retrieve_versions:
             item_data.pop('versions')
-
-        return item_data
-
-    @private
-    def item_details(self, item_path, schema, options):
-        # Each directory under item path represents a version of the item and we need to retrieve details
-        # for each version available under the item
-        questions_context = options['questions_context']
-        retrieve_latest_version = options.get('retrieve_latest_version')
-        item_data = {'versions': {}}
-        with open(os.path.join(item_path, 'item.yaml'), 'r') as f:
-            item_data.update(yaml.safe_load(f.read()))
-
-        item_data.update({k: item_data.get(k) for k in ITEM_KEYS})
-
-        for version in sorted(
-            filter(lambda p: os.path.isdir(os.path.join(item_path, p)), os.listdir(item_path)),
-            reverse=True, key=parse_version,
-        ):
-            item_data['versions'][version] = version_details = {
-                'healthy': False,
-                'supported': False,
-                'healthy_error': None,
-                'location': os.path.join(item_path, version),
-                'required_features': [],
-                'human_version': version,
-                'version': version,
-            }
-            try:
-                self.middleware.call_sync(
-                    'catalog.validate_catalog_item_version', version_details['location'], f'{schema}.{version}'
-                )
-            except ValidationErrors as verrors:
-                version_details['healthy_error'] = f'Following error(s) were found with {schema}.{version!r}:\n'
-                for verror in verrors:
-                    version_details['healthy_error'] += f'{verror[0]}: {verror[1]}'
-
-                # There is no point in trying to see what questions etc the version has as it's invalid
-                continue
-
-            version_details.update({
-                'healthy': True,
-                **self.item_version_details(version_details['location'], questions_context)
-            })
-            if retrieve_latest_version:
-                break
 
         return item_data
 
