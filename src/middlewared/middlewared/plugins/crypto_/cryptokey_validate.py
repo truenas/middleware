@@ -6,6 +6,7 @@ from OpenSSL import crypto, SSL
 
 from middlewared.service import Service
 
+from .load_utils import load_private_key
 from .utils import RE_CERTIFICATE
 
 
@@ -56,7 +57,7 @@ class CryptoKeyService(Service):
         return verrors
 
     def validate_private_key(self, private_key, verrors, schema_name, passphrase=None):
-        private_key_obj = self.middleware.call_sync('cryptokey.load_private_key', private_key, passphrase)
+        private_key_obj = load_private_key(private_key, passphrase)
         if not private_key_obj:
             verrors.add(
                 f'{schema_name}.privatekey',
