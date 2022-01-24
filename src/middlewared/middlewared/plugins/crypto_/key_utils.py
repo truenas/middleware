@@ -60,9 +60,19 @@ def generate_private_key(options: dict) -> typing.Union[
 def export_private_key(buffer: str, passphrase: typing.Optional[str] = None) -> typing.Optional[str]:
     key = load_private_key(buffer, passphrase)
     if key:
-        return key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
-        ).decode()
+        return export_private_key_object(key)
+
+
+def export_private_key_object(key: typing.Union[
+    ed25519.Ed25519PrivateKey,
+    ed448.Ed448PrivateKey,
+    rsa.RSAPrivateKey,
+    dsa.DSAPrivateKey,
+    ec.EllipticCurvePrivateKey,
+]) -> typing.Optional[str]:
+    return key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode()
 
