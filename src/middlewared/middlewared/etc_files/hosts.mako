@@ -6,12 +6,18 @@
 	if ad_config['ad_enable']:
 		hostname = middleware.call_sync('smb.config')['netbiosname_local'].lower()
 		domain_name = ad_config['ad_domainname'].lower()
+
+	k8s_ds = middleware.call_sync('kubernetes.config')['dataset']
+	k8s_node = middleware.call_sync('k8s.node.node_name')
 %>
 % if network_config['hosts']:
 ${network_config['hosts']}
 % endif
 127.0.0.1	localhost
 127.0.0.1	${hostname}.${domain_name} ${hostname}
+% if k8s_ds:
+127.0.0.1	${k8s_node}
+% endif
 
 # The following lines are desirable for IPv6 capable hosts
 ::1	localhost ip6-localhost ip6-loopback

@@ -47,6 +47,7 @@ class KubernetesService(SimpleService):
 
             raise
 
+        await self.middleware.call('service.reload', 'hostname')
         await self.mount_kubelet_dataset()
         await self.clear_chart_releases_cache()
 
@@ -87,3 +88,4 @@ class KubernetesService(SimpleService):
         await asyncio.sleep(5)
         await self.middleware.call('k8s.cni.cleanup_cni')
         await self.unmount_kubelet_dataset()
+        await self.middleware.call('service.reload', 'hostname')

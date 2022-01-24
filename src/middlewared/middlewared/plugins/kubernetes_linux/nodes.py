@@ -56,3 +56,6 @@ class KubernetesNodeService(ConfigService):
     @accepts()
     async def worker_node_password(self):
         return KUBERNETES_WORKER_NODE_PASSWORD
+
+    async def node_name(self):
+        return NODE_NAME
