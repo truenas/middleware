@@ -27,16 +27,22 @@ from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS
             'ca_certificate': None,
             'cert_extensions': {
                 'BasicConstraints': {
-                    'enabled': False,
+                    'enabled': True,
+                    'ca': True,
+                    'extension_critical': True,
                 },
                 'AuthorityKeyIdentifier': {
                     'enabled': False,
                 },
                 'ExtendedKeyUsage': {
-                    'enabled': False,
+                    'enabled': True,
+                    'usages': ['SERVER_AUTH'],
                 },
                 'KeyUsage': {
-                    'enabled': False,
+                    'enabled': True,
+                    'key_cert_sign': True,
+                    'crl_sign': True,
+                    'extension_critical': True,
                 }
             },
         },
@@ -52,6 +58,9 @@ from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS
             'email': 'dev@ix.com',
             'extensions': {
                 'SubjectAltName': 'DNS:domain1, IP Address:8.8.8.8',
+                'BasicConstraints': 'CA:TRUE',
+                'ExtendedKeyUsage': 'TLS Web Server Authentication',
+                'KeyUsage': 'Certificate Sign, CRL Sign',
             },
             'fingerprint': '45:43:04:3D:73:3D:01:CD:98:E9:63:93:8C:61:DC:2F:68:ED:E3:77',
             'from': 'Mon Jan 24 10:20:50 2022',
@@ -108,16 +117,22 @@ from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS
             ),
             'cert_extensions': {
                 'BasicConstraints': {
-                    'enabled': False,
+                    'enabled': True,
+                    'ca': True,
+                    'extension_critical': True,
                 },
                 'AuthorityKeyIdentifier': {
                     'enabled': False,
                 },
                 'ExtendedKeyUsage': {
-                    'enabled': False,
+                    'enabled': True,
+                    'usages': ['SERVER_AUTH'],
                 },
                 'KeyUsage': {
-                    'enabled': False,
+                    'enabled': True,
+                    'key_cert_sign': True,
+                    'crl_sign': True,
+                    'extension_critical': True,
                 }
             },
         }, rsa.RSAPrivateKey, 4096,
@@ -132,6 +147,9 @@ from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS
             'email': 'iamchild@ix.com',
             'extensions': {
                 'SubjectAltName': 'DNS:domain2, IP Address:9.9.9.9',
+                'BasicConstraints': 'CA:TRUE',
+                'ExtendedKeyUsage': 'TLS Web Server Authentication',
+                'KeyUsage': 'Certificate Sign, CRL Sign',
             },
             'fingerprint': '5C:BF:5A:CF:76:12:48:1B:85:A0:AE:2C:5D:E0:51:85:B3:C2:40:79',
             'from': 'Mon Jan 24 11:28:07 2022',
