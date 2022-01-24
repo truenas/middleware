@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives import serialization
 from middlewared.service import Service
 
 from .load_utils import load_private_key
+from .key_utils import retrieve_signing_algorithm
 from .utils import CERT_BACKEND_MAPPINGS
 
 
@@ -75,9 +76,7 @@ class CryptoKeyService(Service):
         ).add_extension(
             x509.CRLNumber(1), False
         ).sign(
-            private_key=private_key, algorithm=self.middleware.call_sync(
-                'cryptokey.retrieve_signing_algorithm', {}, private_key
-            ), backend=default_backend()
+            private_key=private_key, algorithm=retrieve_signing_algorithm({}, private_key), backend=default_backend()
         )
 
         return crl.public_bytes(serialization.Encoding.PEM).decode()
