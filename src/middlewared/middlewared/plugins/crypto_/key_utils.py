@@ -3,12 +3,25 @@ import typing
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed25519, ed448, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 
 from .load_utils import load_private_key
 from .utils import EC_CURVES
+
+
+def retrieve_signing_algorithm(data: dict, signing_key: typing.Union[
+    ed25519.Ed25519PrivateKey,
+    ed448.Ed448PrivateKey,
+    rsa.RSAPrivateKey,
+    dsa.DSAPrivateKey,
+    ec.EllipticCurvePrivateKey,
+]):
+    if isinstance(signing_key, Ed25519PrivateKey):
+        return None
+    else:
+        return getattr(hashes, data.get('digest_algorithm') or 'SHA256')()
 
 
 @accepts(
@@ -69,7 +82,7 @@ def export_private_key_object(key: typing.Union[
     rsa.RSAPrivateKey,
     dsa.DSAPrivateKey,
     ec.EllipticCurvePrivateKey,
-]) -> typing.Optional[str]:
+]) -> str:
     return key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,

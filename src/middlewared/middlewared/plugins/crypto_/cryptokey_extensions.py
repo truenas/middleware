@@ -3,16 +3,13 @@ from cryptography import x509
 from middlewared.schema import accepts, Ref, Str
 from middlewared.service import Service, ValidationErrors
 
-from .extensions_utils import add_extensions, get_extension_params
+from .extensions_utils import get_extension_params
 
 
 class CryptoKeyService(Service):
 
     class Config:
         private = True
-
-    def add_extensions(self, cert, extensions_data, key, issuer=None):
-        return add_extensions(cert, extensions_data, key, issuer)
 
     @accepts(
         Ref('cert_extensions'),

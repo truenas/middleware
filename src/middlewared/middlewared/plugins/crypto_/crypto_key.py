@@ -1,15 +1,15 @@
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import serialization
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import Service
 from middlewared.validators import Email
 
+from .extensions_utils import add_extensions
 from .generate_utils import generate_builder, normalize_san
 from .load_utils import load_private_key
-from .key_utils import generate_private_key
+from .key_utils import generate_private_key, retrieve_signing_algorithm, export_private_key_object
 from .utils import CERT_BACKEND_MAPPINGS, EC_CURVE_DEFAULT, EKU_OIDS
 
 
@@ -41,18 +41,10 @@ class CryptoKeyService(Service):
             'csr': True
         })
 
-        csr = self.middleware.call_sync('cryptokey.add_extensions', csr, data.get('cert_extensions', {}), key, None)
+        csr = add_extensions(csr, data.get('cert_extensions', {}), key, None)
+        csr = csr.sign(key, retrieve_signing_algorithm(data, key), default_backend())
 
-        csr = csr.sign(key, self.retrieve_signing_algorithm(data, key), default_backend())
-
-        return (
-            csr.public_bytes(serialization.Encoding.PEM).decode(),
-            key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
-            ).decode()
-        )
+        return csr.public_bytes(serialization.Encoding.PEM).decode(), export_private_key_object(key)
 
     @accepts(
         Dict(
@@ -144,22 +136,13 @@ class CryptoKeyService(Service):
         else:
             issuer = None
 
-        cert = self.middleware.call_sync(
-            'cryptokey.add_extensions', generate_builder(builder_data), data.get('cert_extensions'), key, issuer
-        )
+        cert = add_extensions(generate_builder(builder_data), data.get('cert_extensions'), key, issuer)
 
         cert = cert.sign(
-            ca_key or key, self.retrieve_signing_algorithm(data, ca_key or key), default_backend()
+            ca_key or key, retrieve_signing_algorithm(data, ca_key or key), default_backend()
         )
 
-        return (
-            cert.public_bytes(serialization.Encoding.PEM).decode(),
-            key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
-            ).decode()
-        )
+        return cert.public_bytes(serialization.Encoding.PEM).decode(), export_private_key_object(key)
 
     @accepts(
         Ref('certificate_cert_info')
@@ -201,22 +184,13 @@ class CryptoKeyService(Service):
         else:
             issuer = None
 
-        cert = self.middleware.call_sync(
-            'cryptokey.add_extensions', generate_builder(builder_data), data.get('cert_extensions'), key, issuer
-        )
+        cert = add_extensions(generate_builder(builder_data), data.get('cert_extensions'), key, issuer)
 
         cert = cert.sign(
-            ca_key or key, self.retrieve_signing_algorithm(data, ca_key or key), default_backend()
+            ca_key or key, retrieve_signing_algorithm(data, ca_key or key), default_backend()
         )
 
-        return (
-            cert.public_bytes(serialization.Encoding.PEM).decode(),
-            key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
-            ).decode()
-        )
+        return cert.public_bytes(serialization.Encoding.PEM).decode(), export_private_key_object(key)
 
     @accepts(
         Dict(
@@ -246,19 +220,13 @@ class CryptoKeyService(Service):
             'san': normalize_san(csr_data.get('san'))
         })
 
-        new_cert = self.middleware.call_sync(
-            'cryptokey.add_extensions', new_cert, data.get('cert_extensions'), csr_key,
+        new_cert = add_extensions(
+            new_cert, data.get('cert_extensions'), csr_key,
             x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
         )
 
         new_cert = new_cert.sign(
-            ca_key, self.retrieve_signing_algorithm(data, ca_key), default_backend()
+            ca_key, retrieve_signing_algorithm(data, ca_key), default_backend()
         )
 
         return new_cert.public_bytes(serialization.Encoding.PEM).decode()
-
-    def retrieve_signing_algorithm(self, data, signing_key):
-        if isinstance(signing_key, Ed25519PrivateKey):
-            return None
-        else:
-            return getattr(hashes, data.get('digest_algorithm') or 'SHA256')()
