@@ -12,6 +12,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import Service
 from middlewared.validators import Email, IpAddress
 
+from .generate_utils import normalize_san
 from .load_utils import load_private_key
 from .key_utils import generate_private_key
 from .utils import CERT_BACKEND_MAPPINGS, DEFAULT_LIFETIME_DAYS, EC_CURVE_DEFAULT, EKU_OIDS
@@ -33,7 +34,7 @@ class CryptoKeyService(Service):
                 'locality_name': 'Maryville',
             },
             'lifetime': DEFAULT_LIFETIME_DAYS,
-            'san': self.normalize_san(['localhost'])
+            'san': normalize_san(['localhost'])
         })
         key = generate_private_key({
             'serialize': False,
@@ -58,20 +59,6 @@ class CryptoKeyService(Service):
             ).decode()
         )
 
-    def normalize_san(self, san_list):
-        # TODO: ADD MORE TYPES WRT RFC'S
-        normalized = []
-        ip_validator = IpAddress()
-        for count, san in enumerate(san_list or []):
-            try:
-                ip_validator(san)
-            except ValueError:
-                normalized.append(['DNS', san])
-            else:
-                normalized.append(['IP', san])
-
-        return normalized
-
     @accepts(
         Patch(
             'certificate_cert_info', 'generate_certificate_signing_request',
@@ -89,7 +76,7 @@ class CryptoKeyService(Service):
             'crypto_subject_name': {
                 k: data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
             },
-            'san': self.normalize_san(data.get('san') or []),
+            'san': normalize_san(data.get('san') or []),
             'serial': data.get('serial'),
             'lifetime': data.get('lifetime'),
             'csr': True
@@ -179,7 +166,7 @@ class CryptoKeyService(Service):
         else:
             ca_key = None
 
-        san_list = self.normalize_san(data.get('san'))
+        san_list = normalize_san(data.get('san'))
 
         builder_data = {
             'crypto_subject_name': {
@@ -236,7 +223,7 @@ class CryptoKeyService(Service):
         else:
             ca_key = None
 
-        san_list = self.normalize_san(data.get('san') or [])
+        san_list = normalize_san(data.get('san') or [])
 
         builder_data = {
             'crypto_subject_name': {
@@ -297,7 +284,7 @@ class CryptoKeyService(Service):
                 k: ca_data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
             },
             'serial': data['serial'],
-            'san': self.normalize_san(csr_data.get('san'))
+            'san': normalize_san(csr_data.get('san'))
         })
 
         new_cert = self.middleware.call_sync(
