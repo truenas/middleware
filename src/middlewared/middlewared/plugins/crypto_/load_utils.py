@@ -22,7 +22,7 @@ def parse_cert_date_string(date_value: str) -> str:
     return t2.ctime()
 
 
-def load_certificate(certificate: str) -> dict:
+def load_certificate(certificate: str, get_issuer: bool = False) -> dict:
     try:
         # digest_algorithm, lifetime, country, state, city, organization, organizational_unit,
         # email, common, san, serial, chain, fingerprint
@@ -31,6 +31,8 @@ def load_certificate(certificate: str) -> dict:
         return {}
     else:
         cert_info = get_x509_subject(cert)
+        if get_issuer:
+            cert_info['issuer_dn'] = parse_name_components(cert.get_issuer()) if cert.get_issuer() else None
 
         valid_algos = ('SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512', 'ED25519')
         signature_algorithm = cert.get_signature_algorithm().decode()
@@ -99,20 +101,22 @@ def get_x509_subject(obj: Union[crypto.X509, crypto.X509Req]) -> dict:
             # so as users request.
             logger.error('Unable to parse extension: %s', e)
 
-    dn = []
-    subject = obj.get_subject()
-    for k in filter(
-        lambda k: k != 'subjectAltName' and hasattr(subject, k), map(lambda v: v[0].decode(), subject.get_components())
-    ):
-        dn.append(f'{k}={getattr(subject, k)}')
-
-    cert_info['DN'] = f'/{"/".join(dn)}'
+    cert_info['DN'] = parse_name_components(obj.get_subject())
 
     if cert_info['san']:
         # We should always trust the extension instead of the subject for SAN
         cert_info['DN'] += f'/subjectAltName={", ".join(cert_info["san"])}'
 
     return cert_info
+
+
+def parse_name_components(obj: crypto.X509Name) -> str:
+    dn = []
+    for k in filter(
+        lambda k: k != 'subjectAltName' and hasattr(obj, k), map(lambda v: v[0].decode(), obj.get_components())
+    ):
+        dn.append(f'{k}={getattr(obj, k)}')
+    return f'/{"/".join(dn)}'
 
 
 def load_certificate_request(csr: str) -> dict:
