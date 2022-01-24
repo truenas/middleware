@@ -118,9 +118,11 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'dhclient.conf', 'platform': 'FreeBSD'},
         ],
         'nfsd': [
-            {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
-            {'type': 'mako', 'path': 'default/nfs-common', 'platform': 'Linux'},
-            {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'default/nfs-common'},
+            {'type': 'mako', 'path': 'default/nfs-kernel-server'},
+            {'type': 'mako', 'path': 'default/rpcbind'},
+            {'type': 'mako', 'path': 'idmapd.conf'},
+            {'type': 'mako', 'path': 'exports'},
         ],
         'pam': [
             {'type': 'mako', 'path': os.path.join('pam.d', f.name[:-5])}

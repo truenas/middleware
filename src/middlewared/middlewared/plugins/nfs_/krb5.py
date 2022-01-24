@@ -51,10 +51,9 @@ class NFSService(Service):
         payload = {
             'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
             'conf': {
-                'bindname': ad['bindname'],
-                'bindpw': ad['bindpw'],
+                'bindname': data['username'],
+                'bindpw': data['password'],
                 'domainname': ad['domainname'],
-                'kerberos_principal': ad['kerberos_principal'],
             }
         }
 

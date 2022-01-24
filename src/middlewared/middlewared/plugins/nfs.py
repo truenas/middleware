@@ -395,6 +395,30 @@ class SharingNFSService(SharingService):
         await self._service_change("nfs", "reload")
 
     @private
+    async def validate_paths(self, data, schema_name, verrors):
+        """
+        Allowing a list of `paths` for NFS shares is for API consistency between
+        Linux and FreeBSD. In Linux case, each path will be treated as a separate
+        export with identical configuration. Since the `locked` property applies
+        to the share as a whole, we enforce same validation on Linux as on FreeBSD
+        (restricting paths to the same filesystem).
+        """
+        dev = None
+        for i, path in enumerate(data["paths"]):
+            sb = os.stat(path)
+            if dev is None:
+                dev = sb.st_dev
+                continue
+
+            elif dev == sb.st_dev:
+                continue
+
+            verrors.add(
+                f'{schema_name}.paths.{i}',
+                'Paths for an NFS share must reside within the same filesystem'
+            )
+
+    @private
     async def validate(self, data, schema_name, verrors, old=None):
         if len(data["aliases"]):
             data['aliases'] = []
@@ -434,6 +458,8 @@ class SharingNFSService(SharingService):
             await check_path_resides_within_volume(
                 verrors, self.middleware, f'{schema_name}.paths.{idx}', i, gluster_bypass=bypass
             )
+
+        await self.middleware.run_in_thread(self.validate_paths, data, schema_name, verrors)
 
         filters = []
         if old:

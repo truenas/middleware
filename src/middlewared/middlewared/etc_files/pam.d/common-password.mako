@@ -20,8 +20,8 @@
         dsp = pam.getDirectoryServicePam(middleware=middleware, file='sshd')
 %>\
 
-% if dsp.enabled() and dsp.name() != 'NIS':
-${dsp.pam_auth()}
+% if dsp.enabled():
+${dsp.pam_passwd()}
 % endif
 
 # here are the per-package modules (the "Primary" block)
