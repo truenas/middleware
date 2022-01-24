@@ -4,7 +4,6 @@ import random
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -14,7 +13,8 @@ from middlewared.service import Service
 from middlewared.validators import Email, IpAddress
 
 from .load_utils import load_private_key
-from .utils import CERT_BACKEND_MAPPINGS, DEFAULT_LIFETIME_DAYS, EC_CURVES, EC_CURVE_DEFAULT, EKU_OIDS
+from .key_utils import generate_private_key
+from .utils import CERT_BACKEND_MAPPINGS, DEFAULT_LIFETIME_DAYS, EC_CURVE_DEFAULT, EKU_OIDS
 
 
 class CryptoKeyService(Service):
@@ -35,7 +35,7 @@ class CryptoKeyService(Service):
             'lifetime': DEFAULT_LIFETIME_DAYS,
             'san': self.normalize_san(['localhost'])
         })
-        key = self.generate_private_key({
+        key = generate_private_key({
             'serialize': False,
             'key_length': 2048,
             'type': 'RSA'
@@ -79,7 +79,7 @@ class CryptoKeyService(Service):
         )
     )
     def generate_certificate_signing_request(self, data):
-        key = self.generate_private_key({
+        key = generate_private_key({
             'type': data.get('key_type') or 'RSA',
             'curve': data.get('ec_curve') or EC_CURVE_DEFAULT,
             'key_length': data.get('key_length') or 2048
@@ -168,14 +168,14 @@ class CryptoKeyService(Service):
         )
     )
     def generate_certificate(self, data):
-        key = self.generate_private_key({
+        key = generate_private_key({
             'type': data.get('key_type') or 'RSA',
             'curve': data.get('ec_curve') or EC_CURVE_DEFAULT,
             'key_length': data.get('key_length') or 2048
         })
 
         if data.get('ca_privatekey'):
-            ca_key = self.load_private_key(data['ca_privatekey'])
+            ca_key = load_private_key(data['ca_privatekey'])
         else:
             ca_key = None
 
@@ -225,14 +225,14 @@ class CryptoKeyService(Service):
         Ref('certificate_cert_info')
     )
     def generate_certificate_authority(self, data):
-        key = self.generate_private_key({
+        key = generate_private_key({
             'type': data.get('key_type') or 'RSA',
             'curve': data.get('ec_curve') or EC_CURVE_DEFAULT,
             'key_length': data.get('key_length') or 2048
         })
 
         if data.get('ca_privatekey'):
-            ca_key = self.load_private_key(data['ca_privatekey'])
+            ca_key = load_private_key(data['ca_privatekey'])
         else:
             ca_key = None
 
@@ -287,8 +287,8 @@ class CryptoKeyService(Service):
     def sign_csr_with_ca(self, data):
         csr_data = self.middleware.call_sync('cryptokey.load_certificate_request', data['csr'])
         ca_data = self.middleware.call_sync('cryptokey.load_certificate', data['ca_certificate'])
-        ca_key = self.load_private_key(data['ca_privatekey'])
-        csr_key = self.load_private_key(data['csr_privatekey'])
+        ca_key = load_private_key(data['ca_privatekey'])
+        csr_key = load_private_key(data['csr_privatekey'])
         new_cert = self.generate_builder({
             'crypto_subject_name': {
                 k: csr_data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
@@ -360,53 +360,3 @@ class CryptoKeyService(Service):
             cert = cert.add_extension(san, False)
 
         return cert
-
-    @accepts(
-        Dict(
-            'generate_private_key',
-            Bool('serialize', default=False),
-            Int('key_length', default=2048),
-            Str('type', default='RSA', enum=['RSA', 'EC']),
-            Str('curve', enum=EC_CURVES, default='BrainpoolP384R1')
-        )
-    )
-    def generate_private_key(self, options):
-        # We should make sure to return in PEM format
-        # Reason for using PKCS8
-        # https://stackoverflow.com/questions/48958304/pkcs1-and-pkcs8-format-for-rsa-private-key
-
-        if options.get('type') == 'EC':
-            if options['curve'] == 'ed25519':
-                key = Ed25519PrivateKey.generate()
-            else:
-                key = ec.generate_private_key(
-                    getattr(ec, options.get('curve')),
-                    default_backend()
-                )
-        else:
-            key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=options.get('key_length'),
-                backend=default_backend()
-            )
-
-        if options.get('serialize'):
-            return key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
-            ).decode()
-        else:
-            return key
-
-    def load_private_key(self, key_string, passphrase=None):
-        return load_private_key(key_string, passphrase)
-
-    def export_private_key(self, buffer, passphrase=None):
-        key = self.load_private_key(buffer, passphrase)
-        if key:
-            return key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
-            ).decode()

@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives import serialization
 
 from middlewared.service import Service
 
+from .load_utils import load_private_key
 from .utils import CERT_BACKEND_MAPPINGS
 
 
@@ -28,7 +29,7 @@ class CryptoKeyService(Service):
         # `ca` is root ca from where the chain `certs` starts.
         # `certs` is a list of all certs ca inclusive which are to be
         # included in the CRL ( if root ca is compromised, it will be in `certs` as well ).
-        private_key = self.middleware.call_sync('cryptokey.load_private_key', ca['privatekey'])
+        private_key = load_private_key(ca['privatekey'])
         ca_cert = x509.load_pem_x509_certificate(ca['certificate'].encode(), default_backend())
 
         if not private_key:

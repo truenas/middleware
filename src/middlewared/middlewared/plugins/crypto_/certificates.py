@@ -13,6 +13,7 @@ from middlewared.validators import Email, Range
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .dependencies import check_dependencies
 from .cert_entry import CERT_ENTRY
+from .key_utils import export_private_key
 from .query_utils import normalize_cert_attrs
 from .utils import (
     CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT,
@@ -430,11 +431,7 @@ class CertificateService(CRUDService):
         job.set_progress(80)
 
         if 'passphrase' in data:
-            data['privatekey'] = await self.middleware.call(
-                'cryptokey.export_private_key',
-                data['privatekey'],
-                data['passphrase']
-            )
+            data['privatekey'] = export_private_key(data['privatekey'], data['passphrase'])
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -481,11 +478,7 @@ class CertificateService(CRUDService):
         data['type'] = CERT_TYPE_EXISTING
 
         if 'passphrase' in data:
-            data['privatekey'] = await self.middleware.call(
-                'cryptokey.export_private_key',
-                data['privatekey'],
-                data['passphrase']
-            )
+            data['privatekey'] = export_private_key(data['privatekey'], data['passphrase'])
 
         return data
 

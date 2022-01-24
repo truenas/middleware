@@ -7,6 +7,7 @@ import middlewared.sqlalchemy as sa
 from .cert_entry import get_ca_result_entry
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .dependencies import check_dependencies
+from .key_utils import export_private_key
 from .query_utils import get_ca_chain, normalize_cert_attrs
 from .utils import (
     get_cert_info_from_data, _set_required, CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
@@ -347,11 +348,7 @@ class CertificateAuthorityService(CRUDService):
         data['type'] = CA_TYPE_EXISTING
 
         if all(k in data for k in ('passphrase', 'privatekey')):
-            data['privatekey'] = await self.middleware.call(
-                'cryptokey.export_private_key',
-                data['privatekey'],
-                data['passphrase']
-            )
+            data['privatekey'] = export_private_key(data['privatekey'], data['passphrase'])
 
         return data
 
