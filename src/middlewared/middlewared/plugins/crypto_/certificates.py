@@ -13,6 +13,7 @@ from middlewared.validators import Email, Range
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .dependencies import check_dependencies
 from .cert_entry import CERT_ENTRY
+from .csr import generate_certificate_signing_request
 from .key_utils import export_private_key
 from .query_utils import normalize_cert_attrs
 from .utils import (
@@ -396,11 +397,7 @@ class CertificateService(CRUDService):
         verrors.check()
 
         data['type'] = CERT_TYPE_CSR
-
-        req, key = await self.middleware.call(
-            'cryptokey.generate_certificate_signing_request',
-            cert_info
-        )
+        req, key = generate_certificate_signing_request(cert_info)
 
         job.set_progress(80)
 

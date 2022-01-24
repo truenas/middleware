@@ -2,13 +2,13 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import Service
 from middlewared.validators import Email
 
 from .extensions_utils import add_extensions
 from .generate_utils import generate_builder, normalize_san
-from .load_utils import load_private_key
+from .load_utils import load_certificate, load_certificate_request, load_private_key
 from .key_utils import generate_private_key, retrieve_signing_algorithm, export_private_key_object
 from .utils import CERT_BACKEND_MAPPINGS, EC_CURVE_DEFAULT, EKU_OIDS
 
@@ -17,34 +17,6 @@ class CryptoKeyService(Service):
 
     class Config:
         private = True
-
-    @accepts(
-        Patch(
-            'certificate_cert_info', 'generate_certificate_signing_request',
-            ('rm', {'name': 'lifetime'})
-        )
-    )
-    def generate_certificate_signing_request(self, data):
-        key = generate_private_key({
-            'type': data.get('key_type') or 'RSA',
-            'curve': data.get('ec_curve') or EC_CURVE_DEFAULT,
-            'key_length': data.get('key_length') or 2048
-        })
-
-        csr = generate_builder({
-            'crypto_subject_name': {
-                k: data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
-            },
-            'san': normalize_san(data.get('san') or []),
-            'serial': data.get('serial'),
-            'lifetime': data.get('lifetime'),
-            'csr': True
-        })
-
-        csr = add_extensions(csr, data.get('cert_extensions', {}), key, None)
-        csr = csr.sign(key, retrieve_signing_algorithm(data, key), default_backend())
-
-        return csr.public_bytes(serialization.Encoding.PEM).decode(), export_private_key_object(key)
 
     @accepts(
         Dict(
@@ -128,7 +100,7 @@ class CryptoKeyService(Service):
             'lifetime': data.get('lifetime')
         }
         if data.get('ca_certificate'):
-            ca_data = self.middleware.call_sync('cryptokey.load_certificate', data['ca_certificate'])
+            ca_data = load_certificate(data['ca_certificate'])
             builder_data['crypto_issuer_name'] = {
                 k: ca_data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
             }
@@ -176,7 +148,7 @@ class CryptoKeyService(Service):
             'lifetime': data.get('lifetime')
         }
         if data.get('ca_certificate'):
-            ca_data = self.middleware.call_sync('cryptokey.load_certificate', data['ca_certificate'])
+            ca_data = load_certificate(data['ca_certificate'])
             builder_data['crypto_issuer_name'] = {
                 k: ca_data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
             }
@@ -205,8 +177,8 @@ class CryptoKeyService(Service):
         )
     )
     def sign_csr_with_ca(self, data):
-        csr_data = self.middleware.call_sync('cryptokey.load_certificate_request', data['csr'])
-        ca_data = self.middleware.call_sync('cryptokey.load_certificate', data['ca_certificate'])
+        csr_data = load_certificate_request(data['csr'])
+        ca_data = load_certificate(data['ca_certificate'])
         ca_key = load_private_key(data['ca_privatekey'])
         csr_key = load_private_key(data['csr_privatekey'])
         new_cert = generate_builder({
