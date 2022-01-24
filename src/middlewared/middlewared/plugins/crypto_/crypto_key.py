@@ -1,18 +1,13 @@
-import datetime
-import ipaddress
-import random
-
 from cryptography import x509
-from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import Service
-from middlewared.validators import Email, IpAddress
+from middlewared.validators import Email
 
-from .generate_utils import normalize_san
+from .generate_utils import generate_builder, normalize_san
 from .load_utils import load_private_key
 from .key_utils import generate_private_key
 from .utils import CERT_BACKEND_MAPPINGS, DEFAULT_LIFETIME_DAYS, EC_CURVE_DEFAULT, EKU_OIDS
@@ -24,7 +19,7 @@ class CryptoKeyService(Service):
         private = True
 
     def generate_self_signed_certificate(self):
-        cert = self.generate_builder({
+        cert = generate_builder({
             'crypto_subject_name': {
                 'country_name': 'US',
                 'organization_name': 'iXsystems',
@@ -72,7 +67,7 @@ class CryptoKeyService(Service):
             'key_length': data.get('key_length') or 2048
         })
 
-        csr = self.generate_builder({
+        csr = generate_builder({
             'crypto_subject_name': {
                 k: data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
             },
@@ -186,7 +181,7 @@ class CryptoKeyService(Service):
             issuer = None
 
         cert = self.middleware.call_sync(
-            'cryptokey.add_extensions', self.generate_builder(builder_data), data.get('cert_extensions'), key, issuer
+            'cryptokey.add_extensions', generate_builder(builder_data), data.get('cert_extensions'), key, issuer
         )
 
         cert = cert.sign(
@@ -243,7 +238,7 @@ class CryptoKeyService(Service):
             issuer = None
 
         cert = self.middleware.call_sync(
-            'cryptokey.add_extensions', self.generate_builder(builder_data), data.get('cert_extensions'), key, issuer
+            'cryptokey.add_extensions', generate_builder(builder_data), data.get('cert_extensions'), key, issuer
         )
 
         cert = cert.sign(
@@ -276,7 +271,7 @@ class CryptoKeyService(Service):
         ca_data = self.middleware.call_sync('cryptokey.load_certificate', data['ca_certificate'])
         ca_key = load_private_key(data['ca_privatekey'])
         csr_key = load_private_key(data['csr_privatekey'])
-        new_cert = self.generate_builder({
+        new_cert = generate_builder({
             'crypto_subject_name': {
                 k: csr_data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
             },
@@ -303,47 +298,3 @@ class CryptoKeyService(Service):
             return None
         else:
             return getattr(hashes, data.get('digest_algorithm') or 'SHA256')()
-
-    def generate_builder(self, options):
-        # We expect backend_mapping keys for crypto_subject_name attr in options and for crypto_issuer_name as well
-        data = {}
-        for key in ('crypto_subject_name', 'crypto_issuer_name'):
-            data[key] = x509.Name([
-                x509.NameAttribute(getattr(NameOID, k.upper()), v)
-                for k, v in (options.get(key) or {}).items() if v
-            ])
-        if not data['crypto_issuer_name']:
-            data['crypto_issuer_name'] = data['crypto_subject_name']
-
-        # Lifetime represents no of days
-        # Let's normalize lifetime value
-        not_valid_before = datetime.datetime.utcnow()
-        not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(
-            days=options.get('lifetime') or DEFAULT_LIFETIME_DAYS
-        )
-
-        # Let's normalize `san`
-        san = x509.SubjectAlternativeName([
-            x509.IPAddress(ipaddress.ip_address(v)) if t == 'IP' else x509.DNSName(v)
-            for t, v in options.get('san') or []
-        ])
-
-        builder = x509.CertificateSigningRequestBuilder if options.get('csr') else x509.CertificateBuilder
-
-        cert = builder(
-            subject_name=data['crypto_subject_name']
-        )
-
-        if not options.get('csr'):
-            cert = cert.issuer_name(
-                data['crypto_issuer_name']
-            ).not_valid_before(
-                not_valid_before
-            ).not_valid_after(
-                not_valid_after
-            ).serial_number(options.get('serial') or random.randint(1000, pow(2, 30)))
-
-        if san:
-            cert = cert.add_extension(san, False)
-
-        return cert
