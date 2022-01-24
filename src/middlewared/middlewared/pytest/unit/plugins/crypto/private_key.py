@@ -58,4 +58,3 @@ def test_loading_private_key(key_str, expected_type, key_size):
     key = load_private_key(key_str)
     assert isinstance(key, expected_type) is True
     assert key.key_size == key_size
-
