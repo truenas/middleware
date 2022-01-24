@@ -1,3 +1,4 @@
+from .generate_self_signed import generate_self_signed_certificate
 from .utils import CERT_TYPE_EXISTING
 
 
@@ -15,7 +16,7 @@ async def setup(middleware):
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
         try:
             if not any('freenas_default' == c['name'] for c in certs):
-                cert, key = await middleware.call('cryptokey.generate_self_signed_certificate')
+                cert, key = generate_self_signed_certificate()
 
                 cert_dict = {
                     'certificate': cert,
