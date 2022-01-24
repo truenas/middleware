@@ -8,13 +8,15 @@ from middlewared.plugins.crypto_.key_utils import load_private_key, generate_pri
 
 @pytest.mark.parametrize('generate_params,expected_type,key_size', [
     ({}, rsa.RSAPrivateKey, 2048),
-    ({
-        'type': 'EC',
-     }, ec.EllipticCurvePrivateKey, 384),
-    ({
-        'type': 'RSA',
-        'key_length': 4096,
-     }, rsa.RSAPrivateKey, 4096),
+    ({'type': 'EC'}, ec.EllipticCurvePrivateKey, 384),
+    (
+        {
+            'type': 'RSA',
+            'key_length': 4096,
+        },
+        rsa.RSAPrivateKey,
+        4096
+    ),
 ])
 def test_generating_private_key(generate_params, expected_type, key_size):
     key = generate_private_key(generate_params)

@@ -88,4 +88,3 @@ def export_private_key_object(key: typing.Union[
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption()
     ).decode()
-
