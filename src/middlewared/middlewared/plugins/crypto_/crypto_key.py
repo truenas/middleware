@@ -10,49 +10,13 @@ from middlewared.validators import Email
 from .generate_utils import generate_builder, normalize_san
 from .load_utils import load_private_key
 from .key_utils import generate_private_key
-from .utils import CERT_BACKEND_MAPPINGS, DEFAULT_LIFETIME_DAYS, EC_CURVE_DEFAULT, EKU_OIDS
+from .utils import CERT_BACKEND_MAPPINGS, EC_CURVE_DEFAULT, EKU_OIDS
 
 
 class CryptoKeyService(Service):
 
     class Config:
         private = True
-
-    def generate_self_signed_certificate(self):
-        cert = generate_builder({
-            'crypto_subject_name': {
-                'country_name': 'US',
-                'organization_name': 'iXsystems',
-                'common_name': 'localhost',
-                'email_address': 'info@ixsystems.com',
-                'state_or_province_name': 'Tennessee',
-                'locality_name': 'Maryville',
-            },
-            'lifetime': DEFAULT_LIFETIME_DAYS,
-            'san': normalize_san(['localhost'])
-        })
-        key = generate_private_key({
-            'serialize': False,
-            'key_length': 2048,
-            'type': 'RSA'
-        })
-
-        cert = cert.public_key(
-            key.public_key()
-        ).add_extension(
-            x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), False
-        ).sign(
-            key, hashes.SHA256(), default_backend()
-        )
-
-        return (
-            cert.public_bytes(serialization.Encoding.PEM).decode(),
-            key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
-            ).decode()
-        )
 
     @accepts(
         Patch(
