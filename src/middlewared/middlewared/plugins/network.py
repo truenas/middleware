@@ -9,7 +9,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
 from middlewared.utils import filter_list, run
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
-from middlewared.utils.generate import random_string
 from middlewared.validators import Range
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
@@ -53,7 +52,6 @@ class NetworkInterfaceModel(sa.Model):
     int_vip = sa.Column(sa.String(42), nullable=True)
     int_vipv6address = sa.Column(sa.String(45), nullable=True)
     int_vhid = sa.Column(sa.Integer(), nullable=True)
-    int_pass = sa.Column(sa.String(100))
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_mtu = sa.Column(sa.Integer(), nullable=True)
@@ -1019,28 +1017,11 @@ class InterfaceService(CRUDService):
                         break
 
     async def __convert_interface_datastore(self, data):
-
-        """
-        Generate a VRRP password of length 8 chars.
-        (VRRP only supports 8 char length passwords.)
-
-        NOTE: we do not use the password on Linux as it doesn't
-        provide any benefit and is not recommended to be used but
-        is created for API compatibility reasons.
-        """
-
-        passwd = ''
-        if not data.get('failover_pass') and data.get('failover_vhid'):
-            passwd = random_string()
-        else:
-            passwd = data.get('failover_pass', '')
-
         return {
             'name': data.get('description') or '',
             'dhcp': data['ipv4_dhcp'],
             'ipv6auto': data['ipv6_auto'],
             'vhid': data.get('failover_vhid'),
-            'pass': passwd,
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
             'mtu': data.get('mtu') or None,
@@ -1290,9 +1271,6 @@ class InterfaceService(CRUDService):
                 )
 
             if not interface_id:
-                if config['int_pass']:
-                    new['failover_pass'] = config['int_pass']
-
                 interface_attrs, new_aliases = self.convert_aliases_to_datastore(new)
                 await self.middleware.call(
                     'datastore.update', 'network.interfaces', config['id'],
