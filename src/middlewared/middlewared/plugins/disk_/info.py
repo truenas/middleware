@@ -12,9 +12,10 @@ class DiskService(Service):
         Returns list of all partitions present in the system
         """
         disks = await self.middleware.call('device.get_disks')
+        part_xml = await self.middleware.call('geom.cache.get_class_xml', 'PART')
         parts = []
         for disk in disks:
-            parts.extend(await self.middleware.call('disk.list_partitions', disk))
+            parts.extend(await self.middleware.call('disk.list_partitions', disk, part_xml))
         return filter_list(parts, filters, options)
 
     @private
