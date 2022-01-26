@@ -142,6 +142,9 @@ class FilesystemService(Service):
         if not path.is_dir():
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
+        if 'ix-applications' in path.parts:
+            raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
+
         rv = []
         only_top_level = path.absolute() == pathlib.Path('/mnt')
         for entry in path.iterdir():
@@ -154,6 +157,8 @@ class FilesystemService(Service):
                 # prevent shares from being configured to point to
                 # a path that doesn't exist on a zpool, we'll
                 # filter these here.
+                continue
+            if 'ix-applications' in entry.parts:
                 continue
             if entry.is_symlink():
                 etype = 'SYMLINK'

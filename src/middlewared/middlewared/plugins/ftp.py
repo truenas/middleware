@@ -1,5 +1,5 @@
 from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname
-from middlewared.schema import accepts, Bool, Dict, Dir, Int, Patch, Str
+from middlewared.schema import Bool, Dict, Dir, Int, Str
 from middlewared.validators import Exact, Match, Or, Range
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
