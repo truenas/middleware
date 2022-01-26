@@ -82,7 +82,7 @@ class CertificateChecksAlertSource(AlertSource):
                 'type': _type,
             },
             {
-                'id': (await self.middleware.call('datastore.config', 'system.settings'))['stg_guicertificate']['id'],
+                'id': (await self.middleware.call('system.general.config'))['ui_certificate']['id'],
                 'service': 'Web UI',
                 'type': _type,
             },

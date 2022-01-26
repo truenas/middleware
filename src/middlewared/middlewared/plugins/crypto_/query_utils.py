@@ -79,6 +79,13 @@ def normalize_cert_attrs(cert: dict) -> None:
         certs = RE_CERTIFICATE.findall(cert['certificate'])
     elif cert['type'] != CERT_TYPE_CSR:
         certs = [cert['certificate']]
+        signing_CA = cert['issuer']
+        # Recursively get all internal/intermediate certificates
+        # FIXME: NONE HAS BEEN ADDED IN THE FOLLOWING CHECK FOR CSR'S WHICH HAVE BEEN SIGNED BY A CA
+        while signing_CA not in ['external', 'self-signed', 'external - signature pending', None]:
+            certs.append(signing_CA['certificate'])
+            signing_CA['issuer'] = cert_issuer(signing_CA)
+            signing_CA = signing_CA['issuer']
 
     failed_parsing = False
     for c in certs:
