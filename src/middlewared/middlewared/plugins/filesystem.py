@@ -143,7 +143,7 @@ class FilesystemService(Service):
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
         if 'ix-applications' in path.parts:
-            raise CallError('Ix-applications is a system managed dataset and it\'s contents cannot be listed')
+            raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
 
         rv = []
         only_top_level = path.absolute() == pathlib.Path('/mnt')
