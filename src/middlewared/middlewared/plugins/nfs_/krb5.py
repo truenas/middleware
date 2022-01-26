@@ -44,9 +44,6 @@ class NFSService(Service):
         relying on the existing kerberos ticket / principal.
         """
         ad = await self.middleware.call('activedirectory.config')
-        ad['bindname'] = data.get("username", "")
-        ad['bindpw'] = data.get("password", "")
-        ad['kerberos_principal'] = ''
 
         payload = {
             'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
@@ -94,16 +91,18 @@ class NFSService(Service):
         ad_status = DSStatus[ds['activedirectory']]
         ldap_status = DSStatus[ds['ldap']]
 
-        if ad_status == DSStatus.HEALTHY:
-            ret = await self.add_principal_ad(data)
+        try:
+            if ad_status == DSStatus.HEALTHY:
+                ret = await self.add_principal_ad(data)
 
-        elif ldap_status == DSStatus.HEALTHY:
-            ret = await self.add_principal_ldap(data)
+            elif ldap_status == DSStatus.HEALTHY:
+                ret = await self.add_principal_ldap(data)
+        finally:
+            """
+            This step is to ensure that elevated permissions are dropped.
+            """
+            await self.middleware.call('kerberos.stop')
+            await self.middleware.call('kerberos.start')
 
-        """
-        This step is to ensure that elevated permissions are dropped.
-        """
-        await self.middleware.call('kerberos.stop')
-        await self.middleware.call('kerberos.start')
-
+        await self._service_change("nfs", "restart")
         return ret
