@@ -644,6 +644,13 @@ class PoolService(CRUDService):
         if not data['topology']['data']:
             verrors.add('pool_create.topology.data', 'At least one data vdev is required')
 
+        if spares := data['topology'].pop('spares', []):
+            # every other vdev type that's passed to us follows this structure
+            # so to keep `mark_disks_for_topology` and `convert_topology_to_vdevs`
+            # simple, we just make the `spares` topology object follow the structure
+            # of the other vdev types.
+            data['topology']['spares'] = [{'type': 'STRIPE', 'disks': spares}]
+
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', None, verrors, {
                 'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False,
