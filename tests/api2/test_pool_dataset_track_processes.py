@@ -19,7 +19,7 @@ def test__open_path_and_check_proc():
             test_file = f'{path}/test_file'
             cmdline = f'python -c "import time; f = open(\"{test_file}\", \"w+\"); time.sleep(10)" & echo $!'
             open_pid = ssh(cmdline)
-            assert open_pid.isdigit(), open_pid
+            assert open_pid.strip().isdigit(), open_pid
             opened = True
 
             # spinning up python interpreter could take some time on busy system so sleep
