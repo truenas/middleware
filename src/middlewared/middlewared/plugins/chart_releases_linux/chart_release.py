@@ -7,7 +7,7 @@ import shutil
 
 from pkg_resources import parse_version
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list
 from middlewared.validators import Match
@@ -568,17 +568,6 @@ class ChartReleaseService(CRUDService):
 
         job.set_progress(100, f'{release_name!r} chart release deleted')
         return True
-
-    @accepts(Str('release_name'))
-    @returns(ENTRY)
-    @job(lock=lambda args: f'chart_release_redeploy_{args[0]}')
-    async def redeploy(self, job, release_name):
-        """
-        Redeploy will initiate a rollout of new pods according to upgrade strategy defined by the chart release
-        workloads. A good example for redeploying is updating kubernetes pods with an updated container image.
-        """
-        update_job = await self.middleware.call('chart.release.update', release_name, {'values': {}})
-        return await job.wrap(update_job)
 
     @private
     async def post_remove_tasks(self, release_name, job=None):

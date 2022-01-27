@@ -58,7 +58,8 @@ class KubernetesService(Service):
 
             secrets = self.middleware.call_sync(
                 'k8s.secret.query', [
-                    ['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '=', chart_release['namespace']]
+                    ['type', 'in', ['helm.sh/release.v1', 'Opaque']],
+                    ['metadata.namespace', '=', chart_release['namespace']]
                 ]
             )
             for secret in sorted(secrets, key=lambda d: d['metadata']['name']):
