@@ -878,6 +878,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 # We need to run pwenc first to ensure we have secret setup to work for encrypted fields which
                 # might be used in the setup functions.
                 'pwenc',
+                # geom plugin must run before any of the other system* related plugins since it's reponsible for
+                # getting xml/disk info from the kernel and caching it in memory
+                'geom',
                 # We run boot plugin first to ensure we are able to retrieve
                 # BOOT POOL during system plugin initialization
                 'boot',
