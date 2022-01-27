@@ -65,7 +65,8 @@ def setup_zpool_and_datasets(ip):
     payload = {
         'name': CLUSTER_INFO['ZPOOL'],
         'encryption': False,
-        'topology': {'data': [{'type': 'STRIPE', 'disks': [CLUSTER_INFO['ZPOOL_DISK']]}]}
+        'topology': {'data': [{'type': 'STRIPE', 'disks': [CLUSTER_INFO['ZPOOL_DISK']]}]},
+        'allow_duplicate_serials': True,
     }
     ans = make_request('post', url, data=payload)
     if ans.status_code != 200:
