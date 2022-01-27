@@ -17,12 +17,10 @@ def get_Kstat():
     Kstat = {}
 
     with open("/proc/spl/kstat/zfs/arcstats") as f:
-        arcstats = f.readlines()
-
-    for line in arcstats[2:]:
-        if line.strip():
-            name, type, data = line.strip().split()
-            Kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
+        for lineno, line in enumerate(f, start=1):
+            if lineno > 2 and (info := line.strip()):
+                name, _, data = info.split()
+                Kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
 
     Kstat["vfs.zfs.version.spa"] = Decimal(5000)
 
