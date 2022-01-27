@@ -37,7 +37,7 @@ def setup_zpool_and_datasets(ip):
             return result
         else:
             if status['state'] != 'SUCCESS':
-                result['ERROR'] = 'Exporting "{pool["name"]}" failed on {ip}'
+                result['ERROR'] = f'Exporting "{pool["name"]}" failed on {ip}'
                 return result
 
     # wipe the disks to clean any remnants of previous zpools
