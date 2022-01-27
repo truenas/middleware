@@ -6,6 +6,9 @@ from config import CLUSTER_INFO, DATASET_HIERARCHY
 from exceptions import JobTimeOut
 
 
+JOB_TIMEOUT = 120  # number of seconds to wait on a job to complete
+
+
 def setup_zpool_and_datasets(ip):
     result = {'ERROR': ''}
 
@@ -28,7 +31,7 @@ def setup_zpool_and_datasets(ip):
             return result
         try:
             print(f'Waiting on "{pool["name"]}" to be exported on {ip}')
-            status = wait_on_job(ans.json(), ip, 20)
+            status = wait_on_job(ans.json(), ip, JOB_TIMEOUT)
         except JobTimeOut:
             result['ERROR'] = f'Timed out waiting on "{pool["name"]}" to be exported on {ip}'
             return result
@@ -47,7 +50,7 @@ def setup_zpool_and_datasets(ip):
         return result
     try:
         print(f'Waiting for disk "{CLUSTER_INFO["ZPOOL_DISK"]}" on {ip} to be wiped')
-        status = wait_on_job(ans.json(), ip, 10)
+        status = wait_on_job(ans.json(), ip, JOB_TIMEOUT)
     except JobTimeOut:
         result['ERROR'] = f'Timed out waiting for disk to be wiped on {ip}'
         return result
@@ -70,7 +73,7 @@ def setup_zpool_and_datasets(ip):
         return result
     try:
         print(f'Waiting on zpool "{CLUSTER_INFO["ZPOOL"]}" to be created on {ip}')
-        status = wait_on_job(ans.json(), ip, 30)
+        status = wait_on_job(ans.json(), ip, JOB_TIMEOUT)
     except JobTimeOut:
         result['ERROR'] = f'Timed out waiting on zpool to be created on {ip}'
         return result
