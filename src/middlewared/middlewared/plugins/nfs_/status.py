@@ -71,7 +71,7 @@ class NFSService(Service):
                 }
                 clients.append(entry)
 
-        except FileNotFoundError
+        except FileNotFoundError:
             pass
 
         return filter_list(clients, filters, options)
