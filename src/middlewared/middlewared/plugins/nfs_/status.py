@@ -13,14 +13,14 @@ class NFSService(Service):
         entries = []
         try:
             with open("/var/lib/nfs/rmtab", "r") as f:
-               for line in f:
-                   ip, data  = line.split(":", 1)
-                   export, refcnt = line.rsplit(":", 1)
-                   # for now we won't display the refcnt
-                   entries.append({
-                       "ip": ip,
-                       "export": export,
-                   })
+                for line in f:
+                    ip, data  = line.split(":", 1)
+                    export, refcnt = line.rsplit(":", 1)
+                    # for now we won't display the refcnt
+                    entries.append({
+                        "ip": ip,
+                        "export": export,
+                    })
         except FileNotFoundError:
             self.logger.debug("Failed to read rmtab", exc_info=True)
 
