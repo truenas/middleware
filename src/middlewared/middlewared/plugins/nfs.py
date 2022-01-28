@@ -395,7 +395,7 @@ class SharingNFSService(SharingService):
         await self._service_change("nfs", "reload")
 
     @private
-    async def validate_paths(self, data, schema_name, verrors):
+    def validate_paths(self, data, schema_name, verrors):
         """
         Allowing a list of `paths` for NFS shares is for API consistency between
         Linux and FreeBSD. In Linux case, each path will be treated as a separate
@@ -422,21 +422,10 @@ class SharingNFSService(SharingService):
     async def validate(self, data, schema_name, verrors, old=None):
         if len(data["aliases"]):
             data['aliases'] = []
-            # FIXME: At the time of writing this nfs-ganesha is at version 3.4-1.
-            # Changing the Pseudo option in the ganesha.conf (`aliases`) requires
-            # that the nfs-ganesha service be restarted. It does not allow graceful
-            # reload of the service. The ability to reload the service when this
-            # config param has been changed was added to nfs-ganesha v4.0 but it
-            # is still in development. When v4.0 of nfs-ganesha has been released
-            # as stable, we need to update to that release. The webUI has hidden
-            # the associated `Alias` box for now.
-            #
-            # To keep long-story short, if you have NFSv4 enabled it requires a
-            # Pseudo parameter in the config so we fill it in by default if one
-            # isn't provided. Yet if you try to change this, it will break client
-            # mounts and then require a restart of the service. So for now, we just
-            # default it to the `Path` parameter which is the absolute path to the
-            # directory being shared. This is done in ganesha.conf.mako.
+            # This feature was originally intended to be provided by nfs-ganesha
+            # since we no longer have ganesha, planning will need to be made about
+            # how to implement for kernel NFS server. One candidate is using bind mounts,
+            # but this will require careful design and testing. For now we will keep it disabled.
             """
             if len(data["aliases"]) != len(data["paths"]):
                 verrors.add(

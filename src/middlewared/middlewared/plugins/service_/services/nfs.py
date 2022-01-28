@@ -7,4 +7,4 @@ class NFSService(SimpleService):
 
     etc = ["nfsd"]
 
-    systemd_unit = "nfs-kernel-server"
+    systemd_unit = "nfs-server"
