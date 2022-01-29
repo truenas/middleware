@@ -22,15 +22,18 @@ class NFSService(Service):
                         "export": export,
                     })
         except FileNotFoundError:
-            self.logger.debug("Failed to read rmtab", exc_info=True)
+            pass
 
         return entries
 
     @private
     @filterable
     def get_nfs3_clients(self, filters, options):
-        # can apply additional filtering here based on socket status:
-        # e.g ss -H -o state established '( sport = :nfs )'
+        """
+        This is a wrapper around get_rmtab so that in future we
+        can apply additional filtering here based on socket status
+        e.g ss -H -o state established '( sport = :nfs )'
+        """
         rmtab = self.get_rmtab()
         return filter_list(rmtab, filters, options)
 
