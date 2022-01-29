@@ -16,7 +16,6 @@ class NFSStat(object):
 
     def read(self):
         try:
-            stats = Stats()
             read_bytes = 0
             write_bytes = 0
             read_ops = 0
