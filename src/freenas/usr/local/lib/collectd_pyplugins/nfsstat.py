@@ -29,7 +29,7 @@ class NFSStat(object):
                         write_bytes = parsed[2]
                         continue
 
-                    if line.startswith('proc3')
+                    if line.startswith('proc3'):
                         parsed = line.split()
                         read_ops = int(parsed[6])
                         write_ops = int(parsed[7])
