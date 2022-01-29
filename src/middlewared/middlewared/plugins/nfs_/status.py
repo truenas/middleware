@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Int, returns
 from middlewared.service import Service, private, filterable
 from middlewared.utils import filter_list
+from contextlib import suppress
 
 import yaml
 import os
@@ -93,3 +94,14 @@ class NFSService(Service):
             cnt += op([], {"count": True})
 
         return cnt
+
+    @private
+    def close_client_state(self, client_id):
+        """
+        force the server to immediately revoke all state held by:
+        `client_id`. This only applies to NFSv4. `client_id` is `id`
+        returned in `get_nfs4_clients`.
+        """
+        with suppress(FIleNotFoundError):
+            with open(f"/proc/fs/nfsd/clients/{client_id}/ctl", "w") as f:
+                f.write("expire\n")
