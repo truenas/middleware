@@ -19,12 +19,15 @@
 
         return output
 
-    def generate_options(share):
+    def generate_options(share, global_sec):
         params = []
         all_squash = False
         if share["security"]:
             sec = f'sec={":".join(share["security"])}'
             params.append(sec.lower())
+        else:
+            sec = f'sec={":".join(global_sec)}'
+            params.append(sec)
 
         if not share["ro"]:
             params.append("rw")
@@ -65,9 +68,14 @@
         ["enabled", "=", True],
         ["locked", "=", False],
     ])
+    if not shares:
+        raise FileShouldNotExist()
+
+    has_nfs_principal = middleware.call_sync('kerberos.keytab.has_nfs_principal')
+    global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal)
 
     for share in shares:
-        opts = generate_options(share)
+        opts = generate_options(share, global_sec)
         for path in share["paths"]:
             if not os.path.exists(path):
                 continue

@@ -21,7 +21,7 @@
 %>\
 
 % if dsp.enabled():
-${dsp.pam_passwd()}
+${dsp.pam_password()}
 % endif
 
 # here are the per-package modules (the "Primary" block)
