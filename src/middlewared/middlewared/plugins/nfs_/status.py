@@ -12,7 +12,7 @@ class NFSService(Service):
     @private
     def get_rmtab(self):
         entries = []
-        try:
+        with suppress(FileNotFoundError):
             with open("/var/lib/nfs/rmtab", "r") as f:
                 for line in f:
                     ip, data = line.split(":", 1)
@@ -22,8 +22,6 @@ class NFSService(Service):
                         "ip": ip,
                         "export": export,
                     })
-        except FileNotFoundError:
-            pass
 
         return entries
 
@@ -41,22 +39,18 @@ class NFSService(Service):
     @private
     def get_nfs4_client_info(self, id):
         info = {}
-        try:
+        with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{id}/info", "r") as f:
                 info = yaml.safe_load(f.read())
-        except FileNotFoundError:
-            pass
 
         return info
 
     @private
     def get_nfs4_client_states(self, id):
         states = []
-        try:
+        with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{id}/states", "r") as f:
                 states = yaml.safe_load(f.read())
-        except FileNotFoundError:
-            pass
 
         # states file may be empty, which changes it to None type
         # return empty list in this case
@@ -66,7 +60,7 @@ class NFSService(Service):
     @filterable
     def get_nfs4_clients(self, filters, options):
         clients = []
-        try:
+        with suppress(FileNotFoundError):
             for client in os.listdir("/proc/fs/nfsd/clients/"):
                 entry = {
                     "id": client,
@@ -74,9 +68,6 @@ class NFSService(Service):
                     "states": self.get_nfs4_client_states(client),
                 }
                 clients.append(entry)
-
-        except FileNotFoundError:
-            pass
 
         return filter_list(clients, filters, options)
 
@@ -102,6 +93,6 @@ class NFSService(Service):
         `client_id`. This only applies to NFSv4. `client_id` is `id`
         returned in `get_nfs4_clients`.
         """
-        with suppress(FIleNotFoundError):
+        with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{client_id}/ctl", "w") as f:
                 f.write("expire\n")
