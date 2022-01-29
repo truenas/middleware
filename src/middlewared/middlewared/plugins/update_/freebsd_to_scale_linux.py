@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class UpdateService(Service):
     @private
     @job()
-    async def freebsd_to_scale(self):
+    async def freebsd_to_scale(self, job):
         logger.info("Updating FreeBSD installation to SCALE")
 
         with contextlib.suppress(FileNotFoundError):
