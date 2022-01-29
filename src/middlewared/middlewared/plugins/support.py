@@ -303,9 +303,6 @@ class SupportService(ConfigService):
         """
         Method to attach a file to a existing ticket.
         """
-
-        self.middleware.call_sync('network.general.will_perform_activity', 'support')
-
         sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
 
         if 'username' in data:
