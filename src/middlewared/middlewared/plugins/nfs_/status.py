@@ -14,7 +14,7 @@ class NFSService(Service):
         try:
             with open("/var/lib/nfs/rmtab", "r") as f:
                 for line in f:
-                    ip, data  = line.split(":", 1)
+                    ip, data = line.split(":", 1)
                     export, refcnt = line.rsplit(":", 1)
                     # for now we won't display the refcnt
                     entries.append({
