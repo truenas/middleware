@@ -24,14 +24,14 @@ class NFSStat(object):
                 for line in f:
                     if line.startswith('io'):
                         parsed = line.split()
-                        read_bytes = parsed[1]
-                        write_bytes = parsed[2]
+                        read_bytes = int(parsed[1])
+                        write_bytes = int(parsed[2])
                         continue
 
                     if line.startswith('proc3'):
                         parsed = line.split()
-                        read_ops = int(parsed[6])
-                        write_ops = int(parsed[7])
+                        read_ops = int(parsed[8])
+                        write_ops = int(parsed[9])
 
                     if line.startswith('proc4ops'):
                         parsed = line.split()
