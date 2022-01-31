@@ -58,15 +58,23 @@ nfs_func()
         section_footer
 
 	section_header "NFS Service Status"
-	systemctl status nfs-ganesha
+	systemctl status nfs-server
 	section_footer
 
 	section_header "rpcinfo -p"
 	rpcinfo -p
 	section_footer
 
-	section_header "NFS Config (/etc/ganesha/ganesha.conf)"
-	sc "/etc/ganesha/ganesha.conf"
+	section_header "NFS Config (/etc/default/nfs-common)"
+	sc "/etc/default/nfs-common"
+	section_footer
+
+	section_header "NFS Config (/etc/default/nfs-kernel-server)"
+	sc "/etc/default/nfs-kernel-server"
+	section_footer
+
+	section_header "NFS Config (/etc/exports)"
+	sc "/etc/exports"
 	section_footer
 
 	section_header "NFS Service Configuration"

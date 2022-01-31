@@ -54,6 +54,19 @@ dom_id = None
 job_status = None
 
 
+def get_export_sec(exports_config):
+    sec_entry = None
+    for entry in exports_config.splitlines():
+        if not entry.startswith("\t"):
+            continue
+
+        line = entry.strip().split("(")[1]
+        sec_entry = line.split(",")[0]
+        break
+
+    return sec_entry
+
+
 @pytest.mark.dependency(name="GOT_DNS")
 def test_01_get_nameserver1_and_nameserver2():
     global nameserver1
@@ -467,11 +480,13 @@ def test_30_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    expected_sec = 'SecType = sys;'
-    cmd = f'grep "{expected_sec}" /etc/ganesha/ganesha.conf'
+    expected_sec = "sec=sys"
+    cmd = 'cat /etc/exports'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == expected_sec, results['output']
+    exports_config = results['output'].strip()
+    sec = get_export_sec(exports_config)
+    assert sec == expected_sec, exports_config
 
 
 @pytest.mark.dependency(name="V4_KRB_ENABLED")
@@ -532,18 +547,14 @@ def test_35_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    results = SSH_TEST("cat /etc/ganesha/ganesha.conf", user, password, ip)
+    results = SSH_TEST("cat /etc/exports", user, password, ip)
     assert results['result'] is True, results['output']
-    ganesha_config = results['output']
+    exports_config = results['output']
 
-    expected_sec = "krb5, krb5i, krb5p;"
-    sec = None
-    for entry in ganesha_config.splitlines():
-        if entry.strip().startswith("SecType"):
-            sec = entry.rsplit("=", 1)[1].strip()
-            break
+    expected_sec = "sec=krb5:krb5i:krb5p"
+    sec = get_export_sec(exports_config)
 
-    assert sec == expected_sec, ganesha_config
+    assert sec == expected_sec, exports_config
 
 
 def test_36_disable_krb5_nfs4(request):
@@ -572,18 +583,14 @@ def test_37_check_nfs_exports_sec(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
-    results = SSH_TEST("cat /etc/ganesha/ganesha.conf", user, password, ip)
+    results = SSH_TEST("cat /etc/exports", user, password, ip)
     assert results['result'] is True, results['output']
-    ganesha_config = results['output']
+    exports_config = results['output']
 
-    expected_sec = "sys, krb5, krb5i, krb5p;"
-    sec = None
-    for entry in ganesha_config.splitlines():
-        if entry.strip().startswith("SecType"):
-            sec = entry.rsplit("=", 1)[1].strip()
-            break
+    expected_sec = "sec=sys:krb5:krb5i:krb5p"
+    sec = get_export_sec(exports_config)
 
-    assert sec == expected_sec, ganesha_config
+    assert sec == expected_sec, exports_config
 
 
 def test_38_cleanup_nfs_settings(request):
