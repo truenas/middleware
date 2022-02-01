@@ -838,6 +838,12 @@ class PoolService(CRUDService):
         await self.__common_validation(verrors, data, 'pool_update', old=pool)
         disks = None
         if 'topology' in data:
+            if spares := data['topology'].pop('spares', []):
+                # every other vdev type that's passed to us follows this structure
+                # so to keep `mark_disks_for_topology` and `convert_topology_to_vdevs`
+                # simple, we just make the `spares` topology object follow the structure
+                # of the other vdev types.
+                data['topology']['spares'] = [{'type': 'STRIPE', 'disks': spares}]
             disks = await self.middleware.call('pool.mark_disks_for_swap', data['topology'])
             availability_verrors, disks_cache = await self.middleware.call('disk.check_disks_availability', list(disks),
                                                                            data['allow_duplicate_serials'])
@@ -984,7 +990,7 @@ class PoolService(CRUDService):
                             enc_disks.append({'disk': disk, 'devname': devname})
 
                     vdevs.append({
-                        'root': vdev_type.upper(),
+                        'root': vdev_type.upper() if vdev_type != 'spares' else 'SPARE',
                         'type': vdev_info['type'],
                         'devices': devices,
                     })
