@@ -10,7 +10,7 @@ kubernetes_func()
 	midclt call kubernetes.config | jq .
 	section_footer
 
-	k8s_running="$(midclt call service.started kubernetes)"
+	k8s_running="$(midclt call kubernetes.validate_k8s_setup false)"
 	if [ "$k8s_running" = "True" ]; then
 		section_header "k3s kubectl describe nodes"
 		k3s kubectl describe nodes
