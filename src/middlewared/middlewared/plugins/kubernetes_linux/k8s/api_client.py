@@ -11,7 +11,9 @@ async def api_client(context=None, api_client_kwargs=None):
     await config.load_kube_config(config_file=KUBECONFIG_FILE)
     context = context or {}
     context['core_api'] = True
-    api_cl = ApiClient(**(api_client_kwargs or {}))
+    api_client_kwargs = api_client_kwargs or {}
+    api_client_kwargs.setdefault('request_timeout', 5)
+    api_cl = ApiClient(**api_client_kwargs)
     user_context = {
         'core_api': client.CoreV1Api(api_cl),
         'apps_api': client.AppsV1Api(api_cl),
