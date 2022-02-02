@@ -592,8 +592,10 @@ class SMBService(TDBWrapConfigService):
 
     @private
     async def get_smb_ha_mode(self):
-        if await self.middleware.call('cache.has_key', 'SMB_HA_MODE'):
+        try:
             return await self.middleware.call('cache.get', 'SMB_HA_MODE')
+        except KeyError:
+            pass
 
         gl_enabled = (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']
 
