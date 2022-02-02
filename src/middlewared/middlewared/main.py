@@ -106,12 +106,27 @@ class Application(object):
         self.__callbacks[name].append(method)
 
     def _send(self, data):
+        serialized = json.dumps(data)
+        if sys.getsizeof(serialized) > 1000000:
+            # no reason to store data in the deque that
+            # is larger than 1MB after being serialized.
+            # This gets _really_ painful on systems with
+            # many (100's) of snapshots because running a
+            # simple `zfs.snapshot.query` via midclt from
+            # the cli produces ridiculously large output.
+            # Caching that in the main middleware process
+            # is excessive and only hurts us. Instead we'll
+            # just store a string indicating it was excluded.
+            message = 'RESULT EXCLUDED BECAUSE THE SIZE IS > 1MB'
+        else:
+            message = serialized
+
         self.middleware.socket_messages_queue.append({
             'type': 'outgoing',
             'session_id': self.session_id,
-            'message': data,
+            'message': message,
         })
-        asyncio.run_coroutine_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
+        asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
@@ -890,7 +905,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
         self.mocks = {}
-        self.socket_messages_queue = deque(maxlen=1000)
+        self.socket_messages_queue = deque(maxlen=50)
 
     def __init_services(self):
         from middlewared.service import CoreService
