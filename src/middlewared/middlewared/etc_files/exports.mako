@@ -72,7 +72,7 @@
         raise FileShouldNotExist()
 
     has_nfs_principal = middleware.call_sync('kerberos.keytab.has_nfs_principal')
-    global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal)
+    global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal) or ["sys"]
 
     for share in shares:
         opts = generate_options(share, global_sec)
@@ -100,5 +100,5 @@
         raise FileShouldNotExist()
 %>
 % for export in entries:
-${export["path"]}${"\\\n\t"}${"\\\n\t".join(export["options"])}
+"${export["path"]}"${"\\\n\t"}${"\\\n\t".join(export["options"])}
 % endfor
