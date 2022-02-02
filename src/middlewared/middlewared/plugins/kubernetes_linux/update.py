@@ -1,3 +1,4 @@
+import asyncio
 import ipaddress
 import itertools
 
@@ -7,6 +8,7 @@ from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, returns, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
+from .k8s import api_client
 from .utils import applications_ds_name
 
 
@@ -314,12 +316,24 @@ class KubernetesService(ConfigService):
         )
 
     @private
-    async def validate_k8s_setup(self):
+    async def validate_k8s_setup(self, raise_exception=True):
+        error = None
         k8s_config = await self.middleware.call('kubernetes.config')
         if not k8s_config['dataset']:
-            raise CallError('Please configure kubernetes pool.')
-        if not await self.middleware.call('service.started', 'kubernetes'):
-            raise CallError('Kubernetes service is not running.')
+            error = 'Please configure kubernetes pool.'
+        if not error and not await self.middleware.call('service.started', 'kubernetes'):
+            error = 'Kubernetes service is not running.'
+
+        if not error:
+            try:
+                async with api_client({'node': True}, {'request_timeout': 2}) as (api, context):
+                    pass
+            except asyncio.exceptions.TimeoutError:
+                error = 'Unable to connect to kubernetes cluster'
+
+        if error and raise_exception:
+            raise CallError(error)
+        return not error
 
     @accepts()
     @returns(Str('kubernetes_node_ip', null=True))
@@ -328,7 +342,7 @@ class KubernetesService(ConfigService):
         Returns IP used by kubernetes which kubernetes uses to allow incoming connections.
         """
         node_ip = None
-        if await self.middleware.call('service.started', 'kubernetes'):
+        if await self.validate_k8s_setup(False):
             k8s_node_config = await self.middleware.call('k8s.node.config')
             if k8s_node_config['node_configured']:
                 node_ip = next((

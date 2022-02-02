@@ -23,7 +23,7 @@ class CatalogService(Service):
             sync_job = await self.middleware.call('catalog.sync', catalog['id'])
             await sync_job.wait()
 
-        if await self.middleware.call('service.started', 'kubernetes'):
+        if await self.middleware.call('kubernetes.validate_k8s_setup', False):
             asyncio.ensure_future(self.middleware.call('chart.release.chart_releases_update_checks_internal'))
 
     @accepts(Str('label', required=True))

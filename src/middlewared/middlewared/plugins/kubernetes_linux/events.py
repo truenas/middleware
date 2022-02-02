@@ -43,7 +43,7 @@ class KubernetesEventService(CRUDService):
 
     @private
     async def setup_k8s_events(self):
-        if not await self.middleware.call('service.started', 'kubernetes'):
+        if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
             return
 
         try:
@@ -79,5 +79,5 @@ class KubernetesEventService(CRUDService):
 
 async def setup(middleware):
     middleware.event_register('kubernetes.events', 'Kubernetes cluster events')
-    if await middleware.call('service.started', 'kubernetes'):
-        asyncio.ensure_future(middleware.call('k8s.event.setup_k8s_events'))
+    # We are going to check in setup k8s events if setting up events is relevant or not
+    asyncio.ensure_future(middleware.call('k8s.event.setup_k8s_events'))
