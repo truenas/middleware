@@ -34,7 +34,6 @@ import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
-import copy
 from dataclasses import dataclass
 import errno
 import fcntl
@@ -107,6 +106,7 @@ class Application(object):
 
     def _send(self, data):
         serialized = json.dumps(data)
+        asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
         if sys.getsizeof(serialized) > 1000000:
             # no reason to store data in the deque that
             # is larger than 1MB after being serialized.
@@ -126,7 +126,6 @@ class Application(object):
             'session_id': self.session_id,
             'message': message,
         })
-        asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
@@ -290,19 +289,6 @@ class Application(object):
         self.middleware.unregister_wsclient(self)
 
     async def on_message(self, message):
-        if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
-            log_message = copy.deepcopy(message)
-            log_message['params'] = self.middleware.dump_args(
-                log_message.get('params', []), method_name=log_message['method']
-            )
-        else:
-            log_message = message
-
-        self.middleware.socket_messages_queue.append({
-            'type': 'incoming',
-            'session_id': self.session_id,
-            'message': log_message,
-        })
         # Run callbacks registered in plugins for on_message
         for method in self.__callbacks['on_message']:
             try:
@@ -380,6 +366,15 @@ class Application(object):
             await self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
             await self.unsubscribe(message['id'])
+
+        if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
+            message['params'] = self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+
+        self.middleware.socket_messages_queue.append({
+            'type': 'incoming',
+            'session_id': self.session_id,
+            'message': message,
+        })
 
     def __getstate__(self):
         return {}
