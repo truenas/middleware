@@ -17,8 +17,8 @@ def test__open_path_and_check_proc():
         try:
             path = f'/mnt/{ds}'
             test_file = f'{path}/test_file'
-            cmdline = f'python -c "import time; f = open(\"{test_file}\", \"w+\"); time.sleep(10)" & echo $!'
-            open_pid = ssh(cmdline)
+            cmdline = f'python -c "import time; f = open(\"{test_file}\", \"w+\"); time.sleep(10)"'
+            open_pid = ssh(cmdline + ' & echo $!')
             assert open_pid.strip().isdigit(), open_pid
             opened = True
 
@@ -27,7 +27,7 @@ def test__open_path_and_check_proc():
             time.sleep(2)
 
             # have to use websocket since the method being called is private
-            payload = {'msg': 'method', 'method': 'pool.dataset.processes_using_paths', 'params': list(path)}
+            payload = {'msg': 'method', 'method': 'pool.dataset.processes_using_paths', 'params': [path]}
             res = make_ws_request(ip, payload)
             assert len(res) == 1, res
             assert int(res[0]['pid']) == int(open_pid), res
