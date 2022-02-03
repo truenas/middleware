@@ -107,7 +107,8 @@ class Application(object):
     def _send(self, data):
         serialized = json.dumps(data)
         asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
-        if sys.getsizeof(serialized) > 1000000:
+        _1MB = 1000000
+        if sys.getsizeof(serialized) > _1MB:
             # no reason to store data in the deque that
             # is larger than 1MB after being serialized.
             # This gets _really_ painful on systems with
@@ -116,8 +117,8 @@ class Application(object):
             # the cli produces ridiculously large output.
             # Caching that in the main middleware process
             # is excessive and only hurts us. Instead we'll
-            # just store a string indicating it was excluded.
-            message = 'RESULT EXCLUDED BECAUSE THE SIZE IS > 1MB'
+            # truncate to 1MB.
+            message = serialized[:_1MB]
         else:
             message = serialized
 
@@ -298,10 +299,7 @@ class Application(object):
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
-                self._send({
-                    'msg': 'failed',
-                    'version': '1',
-                })
+                self._send({'msg': 'failed', 'version': '1'})
             else:
                 features = message.get('features') or []
                 if 'PY_EXCEPTIONS' in features:
@@ -310,60 +308,42 @@ class Application(object):
                 # It is desired to prevent that in this stage in case we are debugging
                 # middlewared via gdb (which makes the program execution a lot slower)
                 await asyncio.shield(self.middleware.call_hook('core.on_connect', app=self))
-                self._send({
-                    'msg': 'connected',
-                    'session': self.session_id,
-                })
+                self._send({'msg': 'connected', 'session': self.session_id})
                 self.handshake = True
-            return
-
-        if not self.handshake:
-            self._send({
-                'msg': 'failed',
-                'version': '1',
-            })
-            return
-
-        if message['msg'] == 'method':
+        elif not self.handshake:
+            self._send({'msg': 'failed', 'version': '1'})
+        elif message['msg'] == 'method':
+            error = False
             if 'method' not in message:
-                self.send_error(message, errno.EINVAL,
-                                "Message is malformed: 'method' is absent.")
-                return
-
-            try:
-                serviceobj, methodobj = self.middleware._method_lookup(message['method'])
-            except CallError as e:
-                self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
-                return
-
-            if not hasattr(methodobj, '_no_auth_required'):
+                self.send_error(message, errno.EINVAL, "Message is malformed: 'method' is absent.")
+                error = True
+            else:
+                try:
+                    serviceobj, methodobj = self.middleware._method_lookup(message['method'])
+                except CallError as e:
+                    self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
+                    error = True
+            if not error and not hasattr(methodobj, '_no_auth_required'):
                 if not self.authenticated:
                     self.send_error(message, errno.EACCES, 'Not authenticated')
-                    return
-
-                if not self.authenticated_credentials.authorize('CALL', message['method']):
+                    error = True
+                elif not self.authenticated_credentials.authorize('CALL', message['method']):
                     self.send_error(message, errno.EACCES, 'Not authorized')
-                    return
-
-            asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
-            return
+                    error = True
+            if not error:
+                asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
             if 'id' in message:
                 pong['id'] = message['id']
             self._send(pong)
-            return
-
-        if not self.authenticated:
+        elif not self.authenticated:
             self.send_error(message, errno.EACCES, 'Not authenticated')
-            return
-
-        if message['msg'] == 'sub':
+        elif message['msg'] == 'sub':
             if not self.authenticated_credentials.authorize('SUBSCRIBE', message['name']):
                 self.send_error(message, errno.EACCES, 'Not authorized')
-                return
-
-            await self.subscribe(message['id'], message['name'])
+            else:
+                await self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
             await self.unsubscribe(message['id'])
 
