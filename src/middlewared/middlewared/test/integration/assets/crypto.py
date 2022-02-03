@@ -50,3 +50,19 @@ def intermediate_certificate_authority(root_ca_name, intermediate_ca_name):
             yield root_ca, intermediate_ca
         finally:
             call('certificateauthority.delete', intermediate_ca['id'])
+
+
+@contextlib.contextmanager
+def certificate_signing_request(csr_name):
+    cert_params = get_cert_params()
+    cert_params.pop('lifetime')
+    csr = call('certificate.create', {
+        'name': csr_name,
+        'create_type': 'CERTIFICATE_CREATE_CSR',
+        **cert_params,
+    }, job=True)
+
+    try:
+        yield csr
+    finally:
+        call('certificate.delete', csr['id'], job=True)
