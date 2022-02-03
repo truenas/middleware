@@ -212,3 +212,55 @@ def test_signing_csr():
                 assert cert['issuer'] == root_ca, cert
             finally:
                 call('certificate.delete', cert['id'], job=True)
+
+
+def test_revoking_cert():
+    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
+        cert = call('certificate.create', {
+            'name': 'cert_test',
+            'signedby': intermediate_ca['id'],
+            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
+            **get_cert_params(),
+        }, job=True)
+        try:
+            assert cert['can_be_revoked'] is True, cert
+            cert = call('certificate.update', cert['id'], {'revoked': True}, job=True)
+            assert cert['revoked'] is True, cert
+
+            root_ca = call('certificateauthority.get_instance', root_ca['id'])
+            intermediate_ca = call('certificateauthority.get_instance', intermediate_ca['id'])
+
+            assert len(root_ca['revoked_certs']) == 1, root_ca
+            assert len(intermediate_ca['revoked_certs']) == 1, intermediate_ca
+
+            assert root_ca['revoked_certs'][0]['certificate'] == cert['certificate'], root_ca
+            assert intermediate_ca['revoked_certs'][0]['certificate'] == cert['certificate'], intermediate_ca
+        finally:
+            call('certificate.delete', cert['id'], job=True)
+
+
+def test_revoking_ca():
+    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
+        cert = call('certificate.create', {
+            'name': 'cert_test',
+            'signedby': intermediate_ca['id'],
+            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
+            **get_cert_params(),
+        }, job=True)
+        try:
+            assert intermediate_ca['can_be_revoked'] is True, intermediate_ca
+            intermediate_ca = call('certificateauthority.update', intermediate_ca['id'], {'revoked': True})
+            assert intermediate_ca['revoked'] is True, intermediate_ca
+
+            cert = call('certificate.get_instance', cert['id'])
+            assert cert['revoked'] is True, cert
+
+            root_ca = call('certificateauthority.get_instance', root_ca['id'])
+            assert len(root_ca['revoked_certs']) == 2, root_ca
+            assert len(intermediate_ca['revoked_certs']) == 2, intermediate_ca
+
+            check_set = {intermediate_ca['certificate'], cert['certificate']}
+            assert set(c['certificate'] for c in intermediate_ca['revoked_certs']) == check_set, intermediate_ca
+            assert set(c['certificate'] for c in root_ca['revoked_certs']) == check_set, root_ca
+        finally:
+            call('certificate.delete', cert['id'], job=True)
