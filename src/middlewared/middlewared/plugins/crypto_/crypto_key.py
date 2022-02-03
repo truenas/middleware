@@ -9,6 +9,7 @@ from middlewared.validators import Email
 from .extensions_utils import add_extensions
 from .generate_ca import generate_certificate_authority
 from .generate_certs import generate_certificate
+from .generate_self_signed import generate_self_signed_certificate
 from .generate_utils import generate_builder, normalize_san
 from .load_utils import load_certificate, load_certificate_request, load_private_key
 from .key_utils import retrieve_signing_algorithm
@@ -19,6 +20,12 @@ class CryptoKeyService(Service):
 
     class Config:
         private = True
+
+    def normalize_san(self, san_list):
+        return normalize_san(san_list)
+
+    def generate_self_signed_certificate(self):
+        return generate_self_signed_certificate()
 
     @accepts(
         Dict(

@@ -141,3 +141,12 @@ def load_private_key(key_string: str, passphrase: Optional[str] = None) -> Union
             password=passphrase.encode() if passphrase else None,
             backend=default_backend()
         )
+
+
+def get_serial_from_certificate_safe(certificate: Union[str, None]) -> Optional[int]:
+    try:
+        cert = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
+    except crypto.Error:
+        return
+    else:
+        return cert.get_serial_number()

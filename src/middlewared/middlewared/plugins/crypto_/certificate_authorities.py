@@ -8,6 +8,7 @@ from .cert_entry import get_ca_result_entry
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .dependencies import check_dependencies
 from .key_utils import export_private_key
+from .load_utils import get_serial_from_certificate_safe
 from .query_utils import get_ca_chain, normalize_cert_attrs
 from .utils import (
     get_cert_info_from_data, _set_required, CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
@@ -116,43 +117,57 @@ class CertificateAuthorityService(CRUDService):
         return verrors
 
     @private
-    async def get_serial_for_certificate(self, ca_id):
+    def get_serial_for_certificate(self, ca_id):
 
-        ca_data = await self.get_instance(ca_id)
+        ca_data = self.middleware.call_sync(
+            'datastore.query', 'system.certificateauthority', [['id', '=', ca_id]], {'get': True, 'prefix': 'cert_'}
+        )
 
         if ca_data.get('signedby'):
             # Recursively call the same function for it's parent and let the function gather all serials in a chain
-            return await self.get_serial_for_certificate(ca_data['signedby']['id'])
+            return self.get_serial_for_certificate(ca_data['signedby']['id'])
         else:
 
-            async def cert_serials(ca_id):
-                return [
-                    data['serial'] for data in await self.middleware.call(
-                        'certificate.query', [['signedby', '=', ca_id]]
-                    )
-                ]
-
-            ca_signed_certs = await cert_serials(ca_id)
-
-            async def child_serials(ca_id):
+            def cert_serials(ca_id):
                 serials = []
-                for child in await self.middleware.call('certificateauthority.query', [['signedby', '=', ca_id]]):
-                    serials.extend((await child_serials(child['id'])))
+                for cert in filter(
+                    lambda c: c['certificate'],
+                    self.middleware.call_sync(
+                        'datastore.query', 'system.certificate', [['signedby', '=', ca_id]], {'prefix': 'cert_'}
+                    )
+                ):
+                    serial = get_serial_from_certificate_safe(cert['certificate'])
+                    if serial is not None:
+                        serials.append(serial)
+                return serials
 
-                serials.extend((await cert_serials(ca_id)))
-                serials.append((await self.get_instance(ca_id))['serial'])
+            ca_signed_certs = cert_serials(ca_id)
+
+            def child_serials(ca):
+                serials = []
+                for child in filter(
+                    lambda c: c['certificate'],
+                    self.middleware.call_sync(
+                        'datastore.query', 'system.certificateauthority',
+                        [['signedby', '=', ca['id']]], {'prefix': 'cert_'}
+                    )
+                ):
+                    serials.extend(child_serials(child))
+
+                serials.extend(cert_serials(ca['id']))
+                serial = get_serial_from_certificate_safe(ca['certificate'])
+                if serial is not None:
+                    serials.append(serial)
 
                 return serials
 
-            ca_signed_certs.extend((await child_serials(ca_id)))
+            ca_signed_certs.extend(child_serials(ca_data))
 
             # This is for a case where the user might have a malformed certificate and serial value returns None
             ca_signed_certs = list(filter(None, ca_signed_certs))
 
             if not ca_signed_certs:
-                return int(
-                    (await self.get_instance(ca_id))['serial'] or 0
-                ) + 1
+                return int(get_serial_from_certificate_safe(ca_data['certificate']) or 0) + 1
             else:
                 return max(ca_signed_certs) + 1
 
@@ -297,7 +312,7 @@ class CertificateAuthorityService(CRUDService):
 
         signing_cert = await self.get_instance(data['signedby'])
 
-        serial = await self.get_serial_for_certificate(signing_cert['id'])
+        serial = await self.middleware.call('certificateauthority.get_serial_for_certificate', signing_cert['id'])
 
         data['type'] = CA_TYPE_INTERMEDIATE
 
