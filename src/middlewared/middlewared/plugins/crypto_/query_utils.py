@@ -1,3 +1,4 @@
+import copy
 import logging
 import os
 
@@ -152,7 +153,7 @@ def get_ca_chain(ca_id: int, certs: list, cas: list) -> list:
     cas_mapping = defaultdict(list)
     cas_id_mapping = {}
     for cert in filter(lambda c: c['signedby'], certs):
-        cert_mapping[cert['signedby']['id']].append(cert)
+        cert_mapping[cert['signedby']['id']].append({**cert, 'cert_type': 'CERTIFICATE'})
 
     for ca in cas:
         cas_id_mapping[ca['id']] = ca
@@ -163,7 +164,7 @@ def get_ca_chain(ca_id: int, certs: list, cas: list) -> list:
 
 
 def get_ca_chain_impl(ca_id: int, cas: dict, certs_mapping: dict, cas_mapping: dict) -> list:
-    certs = certs_mapping[ca_id]
+    certs = copy.deepcopy(certs_mapping[ca_id])
     for ca in cas_mapping[ca_id]:
         certs.extend(get_ca_chain_impl(ca['id'], cas, certs_mapping, cas_mapping))
 
