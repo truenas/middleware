@@ -43,7 +43,7 @@ def intermediate_certificate_authority(root_ca_name, intermediate_ca_name):
             **get_cert_params(),
             'signedby': root_ca['id'],
             'name': intermediate_ca_name,
-            'create_type': 'CA_CREATE_INTERNAL',
+            'create_type': 'CA_CREATE_INTERMEDIATE',
         })
 
         try:
