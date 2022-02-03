@@ -68,13 +68,13 @@ def test_creating_cert_from_root_ca():
         cert = call('certificate.create', {
             'name': 'cert_test',
             'signedby': root_ca['id'],
-            'create_type': 'CA_CREATE_INTERMEDIATE',
+            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
             **get_cert_params(),
-        })
+        }, job=True)
         try:
             assert cert['cert_type_internal'] is True, cert
         finally:
-            call('certificate.delete', cert['id'])
+            call('certificate.delete', cert['id'], job=True)
 
 
 def test_creating_cert_from_intermediate_ca():
@@ -84,11 +84,11 @@ def test_creating_cert_from_intermediate_ca():
             'signedby': intermediate_ca['id'],
             'create_type': 'CERTIFICATE_CREATE_INTERNAL',
             **get_cert_params(),
-        })
+        }, job=True)
         try:
             assert cert['cert_type_internal'] is True, cert
         finally:
-            call('certificate.delete', cert['id'])
+            call('certificate.delete', cert['id'], job=True)
 
 
 def test_cert_chain_reported_correctly():
@@ -98,22 +98,24 @@ def test_cert_chain_reported_correctly():
             'signedby': intermediate_ca['id'],
             'create_type': 'CERTIFICATE_CREATE_INTERNAL',
             **get_cert_params(),
-        })
+        }, job=True)
         try:
             assert cert['chain_list'] == [
                 cert['certificate'], intermediate_ca['certificate'], root_ca['certificate']
             ], cert
         finally:
-            call('certificate.delete', cert['id'])
+            call('certificate.delete', cert['id'], job=True)
 
 
 def test_creating_csr():
+    cert_params = get_cert_params()
+    cert_params.pop('lifetime')
     csr = call('certificate.create', {
         'name': 'csr_test',
         'create_type': 'CERTIFICATE_CREATE_CSR',
-        **get_cert_params(),
-    })
+        **cert_params,
+    }, job=True)
     try:
         assert csr['cert_type_CSR'] is True, csr
     finally:
-        call('certificate.delete', csr['id'])
+        call('certificate.delete', csr['id'], job=True)
