@@ -1,7 +1,7 @@
 import pytest
 
 from middlewared.test.integration.assets.crypto import (
-    get_cert_params, intermediate_certificate_authority, root_certificate_authority
+    certificate_signing_request, get_cert_params, intermediate_certificate_authority, root_certificate_authority
 )
 from middlewared.test.integration.utils import call, ssh
 
@@ -187,28 +187,28 @@ def test_cert_issuer_reported_correctly():
 
 
 def test_creating_csr():
-    cert_params = get_cert_params()
-    cert_params.pop('lifetime')
-    csr = call('certificate.create', {
-        'name': 'csr_test',
-        'create_type': 'CERTIFICATE_CREATE_CSR',
-        **cert_params,
-    }, job=True)
-    try:
+    with certificate_signing_request('csr_test') as csr:
         assert csr['cert_type_CSR'] is True, csr
-    finally:
-        call('certificate.delete', csr['id'], job=True)
 
 
 def test_issuer_of_csr():
-    cert_params = get_cert_params()
-    cert_params.pop('lifetime')
-    csr = call('certificate.create', {
-        'name': 'csr_test',
-        'create_type': 'CERTIFICATE_CREATE_CSR',
-        **cert_params,
-    }, job=True)
-    try:
+    with certificate_signing_request('csr_test') as csr:
         assert csr['issuer'] == 'external - signature pending', csr
-    finally:
-        call('certificate.delete', csr['id'], job=True)
+
+
+def test_signing_csr():
+    with root_certificate_authority('root_ca') as root_ca:
+        with certificate_signing_request('csr_test') as csr:
+            cert = call('certificateauthority.ca_sign_csr', {
+                'ca_id': root_ca['id'],
+                'csr_cert_id': csr['id'],
+                'name': 'signed_cert',
+            })
+            root_ca = call('certificateauthority.get_instance', root_ca['id'])
+            try:
+                assert isinstance(cert['signedby'], dict), cert
+                assert cert['signedby']['id'] == root_ca['id'], cert
+                assert cert['chain_list'] == [cert['certificate'], root_ca['certificate']]
+                assert cert['issuer'] == root_ca, cert
+            finally:
+                call('certificate.delete', cert['id'], job=True)
