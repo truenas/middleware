@@ -127,15 +127,8 @@ class CertificateAuthorityService(CRUDService):
 
             async def cert_serials(ca_id):
                 return [
-                    data['serial'] for data in
-                    await self.middleware.call(
-                        'datastore.query',
-                        'system.certificate',
-                        [('signedby', '=', ca_id)],
-                        {
-                            'prefix': self._config.datastore_prefix,
-                            'extend': self._config.datastore_extend
-                        }
+                    data['serial'] for data in await self.middleware.call(
+                        'certificate.query', [['signedby', '=', ca_id]]
                     )
                 ]
 
@@ -143,17 +136,7 @@ class CertificateAuthorityService(CRUDService):
 
             async def child_serials(ca_id):
                 serials = []
-                children = await self.middleware.call(
-                    'datastore.query',
-                    self._config.datastore,
-                    [('signedby', '=', ca_id)],
-                    {
-                        'prefix': self._config.datastore_prefix,
-                        'extend': self._config.datastore_extend
-                    }
-                )
-
-                for child in children:
+                for child in await self.middleware.call('certificateauthority.query', [['signedby', '=', ca_id]]):
                     serials.extend((await child_serials(child['id'])))
 
                 serials.extend((await cert_serials(ca_id)))
