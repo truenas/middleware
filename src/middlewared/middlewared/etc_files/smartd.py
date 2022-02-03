@@ -94,7 +94,7 @@ def get_smartd_schedule_piece(value, min, max, enum=None):
     elif m := re.match(r"((?P<min>[0-9]+)-(?P<max>[0-9]+)|\*)", value):
         start = int(m.group("min"))
         end = int(m.group("max"))
-        if end < start:
+        if end <= start:
             values = [start]
         else:
             values = [i for i in range(start, end + 1)]
