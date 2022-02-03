@@ -74,4 +74,4 @@ def test_generating_private_key(generate_params, key_type, key_size, csr_info):
     key_obj = load_private_key(key)
     assert csr_details == csr_info, csr_details
     assert isinstance(key_obj, rsa.RSAPrivateKey) is True
-    assert key_type.key_size == key_size
+    assert key_obj.key_size == key_size

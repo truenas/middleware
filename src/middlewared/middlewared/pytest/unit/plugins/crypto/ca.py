@@ -90,31 +90,40 @@ from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS
             'digest_algorithm': 'SHA256',
             'lifetime': DEFAULT_LIFETIME_DAYS,
             'serial': 12934,
-            'ca_certificate': textwrap.dedent(
-                '''-----BEGIN CERTIFICATE-----\nMIIFmzCCA4OgAwIBAgICMoMwDQYJKoZIhvcNAQELBQ
-                AwcjEMMAoGA1UEAwwDZGV2\nMQswCQYDVQQGEwJVUzELMAkGA1UECAwCVE4xEjAQBgNVBAcMCUtub3h2aWxsZTEL\nMA
-                kGA1UECgwCaVgxDDAKBgNVBAsMA2RldjEZMBcGCSqGSIb3DQEJARYKZGV2QGl4\nLmNvbTAeFw0yMjAxMjQxOTI0MTRa
-                Fw0yMzAyMjUxOTI0MTRaMHIxDDAKBgNVBAMM\nA2RldjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAlROMRIwEAYDVQQHDA
-                lLbm94dmls\nbGUxCzAJBgNVBAoMAmlYMQwwCgYDVQQLDANkZXYxGTAXBgkqhkiG9w0BCQEWCmRl\ndkBpeC5jb20wgg
-                IiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDuy5kKf7eT\nLOuxm1pn51kFLgJHD6k05pROjMOXEZel7CsmrDKE
-                ehSSdwDB/WUim3idOsImLrc+\nApXsnKwVY93f7yn1rfF4lgKsa3sb6oqAcPEobgTUqSmJ/OQVilUqOtj/dmFaEWIS\n
-                21eKNzaByNdpyOcoRF/+uDylEsE1Gj0GjkBneVRxyTZFV7LdVyDk38hljesnd8FX\ngnD0DCdI3jBvqSYvd+GvQ2nQ26
-                24HAmEQwfllqKi9PRDngeZIeiTQSWN+rybJbDY\nyonRS0FPxJydt/sDlzi43qzHnrTqUbL+2RjYIqcOqeivNtDZ2joh
-                +xqfRdKzACWu\nQWrhGCL5+9bnqA6PEPA7GQ2jp00gDkjB7+HlQLI8ZCZcST6mkbfs/EaW00WYIcw5\nlb+5oJ8oJqWe
-                bnQB21iwvPjvAv353iA1ApTJxBdo13x7oXBwWsrpxWk6SdL2Z5zU\nNXrC9ZyaoeQ5uZ/oBXbCxJfhSkISyI5D8yeYLj
-                mMxn+AvRBQpkRmVvcy3ls2SHGX\n4XEJ4Q0wj3a0rPqmDZUwpWErbmf+N6D7J+uK8n3pcGlvkFIUaP60UQGp4gwnZA2O
-                \ndZdhVQ4whQHyjTmL7kRKl+gR/vTp+iPvKMfTO1HBQp97iK8IPM7Q2Gpe6U4n/Ll2\nTDaZ9DroM83Vnc6cX69Th555
-                SA9+gP6HWQIDAQABozswOTAYBgNVHREEETAPggdk\nb21haW4xhwQICAgIMB0GA1UdDgQWBBSz0br/9U9mwYZfuRO1Jm
-                KTEorq1DANBgkq\nhkiG9w0BAQsFAAOCAgEAK7nBNA+qjgvkmcSLQC+yXPOwb3o55D+N0J2QLxJFT4NV\nb0GKf0dkz9
-                2Ew1pkKYzsH6lLlKRE23cye6EZLIwkkhhF0sTwYeu8HNy7VmkSDsp0\naKbqxgBzIJx+ztQGNgZ1fQMRjHCRLf8TaSAx
-                nVXaXXUeU6fUBq2gHbYq6BfZkGmU\n6f8DzL7uKHzcMEmWfC5KxfSskFFPOyaz/VGViQ0yffwH1NB+txDlU58rmu9w0w
-                Le\ncOrOjVUNg8axQen2Uejjj3IRmDC18ZfY7EqI8O1PizCtIcPSm+NnZYg/FvVj0KmM\no2QwGMd5QTU2J5lz988Xlo
-                fm/r3GBH32+ETqIcJolBw9bBkwruBvHpcmyLSFcFWK\nsdGgi2gK2rGb+oKwzpHSeCtQVwgQth55qRH1DQGaAdpA1uTr
-                iOdcR96i65/jcz96\naD2B958hF1B/7I4Md+LFYhxgwREBhyQkU6saf7GR0Q+p4F8/oIkjhdLsyzk4YHyI\nPVtK00W8
-                zQMKF6zhHjfaF2uDRO/ycMKCq9NIqQJCZNqwNAo0r4FOmilwud/tzFY8\nGQ9FXeQSqWo7hUIXdbej+aJ7DusYeuE/Cw
-                QFNUnz1khvIFJ5B7YP+gYCyUW7V2Hr\nMv+cZ473U8hYQ1Ij7pXi7DxsOWqWCDhyK0Yp6MZsw0rNaAIPHnTTxYdMfmIY
-                HT0=\n-----END CERTIFICATE-----\n'''
-            ),
+            'ca_certificate': textwrap.dedent('''\
+                -----BEGIN CERTIFICATE-----
+                MIIFmzCCA4OgAwIBAgICMoMwDQYJKoZIhvcNAQELBQAwcjEMMAoGA1UEAwwDZGV2
+                MQswCQYDVQQGEwJVUzELMAkGA1UECAwCVE4xEjAQBgNVBAcMCUtub3h2aWxsZTEL
+                MAkGA1UECgwCaVgxDDAKBgNVBAsMA2RldjEZMBcGCSqGSIb3DQEJARYKZGV2QGl4
+                LmNvbTAeFw0yMjAxMjQxOTI0MTRaFw0yMzAyMjUxOTI0MTRaMHIxDDAKBgNVBAMM
+                A2RldjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAlROMRIwEAYDVQQHDAlLbm94dmls
+                bGUxCzAJBgNVBAoMAmlYMQwwCgYDVQQLDANkZXYxGTAXBgkqhkiG9w0BCQEWCmRl
+                dkBpeC5jb20wggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDuy5kKf7eT
+                LOuxm1pn51kFLgJHD6k05pROjMOXEZel7CsmrDKEehSSdwDB/WUim3idOsImLrc+
+                ApXsnKwVY93f7yn1rfF4lgKsa3sb6oqAcPEobgTUqSmJ/OQVilUqOtj/dmFaEWIS
+                21eKNzaByNdpyOcoRF/+uDylEsE1Gj0GjkBneVRxyTZFV7LdVyDk38hljesnd8FX
+                gnD0DCdI3jBvqSYvd+GvQ2nQ2624HAmEQwfllqKi9PRDngeZIeiTQSWN+rybJbDY
+                yonRS0FPxJydt/sDlzi43qzHnrTqUbL+2RjYIqcOqeivNtDZ2joh+xqfRdKzACWu
+                QWrhGCL5+9bnqA6PEPA7GQ2jp00gDkjB7+HlQLI8ZCZcST6mkbfs/EaW00WYIcw5
+                lb+5oJ8oJqWebnQB21iwvPjvAv353iA1ApTJxBdo13x7oXBwWsrpxWk6SdL2Z5zU
+                NXrC9ZyaoeQ5uZ/oBXbCxJfhSkISyI5D8yeYLjmMxn+AvRBQpkRmVvcy3ls2SHGX
+                4XEJ4Q0wj3a0rPqmDZUwpWErbmf+N6D7J+uK8n3pcGlvkFIUaP60UQGp4gwnZA2O
+                dZdhVQ4whQHyjTmL7kRKl+gR/vTp+iPvKMfTO1HBQp97iK8IPM7Q2Gpe6U4n/Ll2
+                TDaZ9DroM83Vnc6cX69Th555SA9+gP6HWQIDAQABozswOTAYBgNVHREEETAPggdk
+                b21haW4xhwQICAgIMB0GA1UdDgQWBBSz0br/9U9mwYZfuRO1JmKTEorq1DANBgkq
+                hkiG9w0BAQsFAAOCAgEAK7nBNA+qjgvkmcSLQC+yXPOwb3o55D+N0J2QLxJFT4NV
+                b0GKf0dkz92Ew1pkKYzsH6lLlKRE23cye6EZLIwkkhhF0sTwYeu8HNy7VmkSDsp0
+                aKbqxgBzIJx+ztQGNgZ1fQMRjHCRLf8TaSAxnVXaXXUeU6fUBq2gHbYq6BfZkGmU
+                6f8DzL7uKHzcMEmWfC5KxfSskFFPOyaz/VGViQ0yffwH1NB+txDlU58rmu9w0wLe
+                cOrOjVUNg8axQen2Uejjj3IRmDC18ZfY7EqI8O1PizCtIcPSm+NnZYg/FvVj0KmM
+                o2QwGMd5QTU2J5lz988Xlofm/r3GBH32+ETqIcJolBw9bBkwruBvHpcmyLSFcFWK
+                sdGgi2gK2rGb+oKwzpHSeCtQVwgQth55qRH1DQGaAdpA1uTriOdcR96i65/jcz96
+                aD2B958hF1B/7I4Md+LFYhxgwREBhyQkU6saf7GR0Q+p4F8/oIkjhdLsyzk4YHyI
+                PVtK00W8zQMKF6zhHjfaF2uDRO/ycMKCq9NIqQJCZNqwNAo0r4FOmilwud/tzFY8
+                GQ9FXeQSqWo7hUIXdbej+aJ7DusYeuE/CwQFNUnz1khvIFJ5B7YP+gYCyUW7V2Hr
+                Mv+cZ473U8hYQ1Ij7pXi7DxsOWqWCDhyK0Yp6MZsw0rNaAIPHnTTxYdMfmIYHT0=
+                -----END CERTIFICATE-----
+            '''),
             'cert_extensions': {
                 'BasicConstraints': {
                     'enabled': True,
@@ -170,7 +179,7 @@ def test__generating_ca(generate_params, key_type, key_size, ca_info):
     ca_details = load_certificate(ca_str, True)
     key_obj = load_private_key(key)
     assert isinstance(key_obj, rsa.RSAPrivateKey) is True
-    assert key_type.key_size == key_size
+    assert key_obj.key_size == key_size
 
     # there are certain keys which are special and we should not be validating those as they would differ
     special_props = ['fingerprint', 'from', 'until', 'subject_name_hash']
