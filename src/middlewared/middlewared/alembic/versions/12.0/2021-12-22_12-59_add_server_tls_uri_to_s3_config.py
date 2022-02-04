@@ -7,11 +7,27 @@ from alembic import op
 import sqlalchemy as sa
 from OpenSSL import crypto
 
+from middlewared.validators import Hostname
+
 # revision identifiers, used by Alembic.
 revision = '9c11f6c6f152'
 down_revision = 'fee786dfe121'
 branch_labels = None
 depends_on = None
+
+
+def is_valid_hostname(hostname: str):
+    """
+    Validates hostname and makes sure it
+    does not contain a valid card.
+    """
+    validate_hostname = Hostname()
+    try:
+        validate_hostname(hostname)
+    except ValueError:
+        return False
+    else:
+        return "*" not in hostname
 
 
 def upgrade():
@@ -29,18 +45,23 @@ def upgrade():
             try:
                 cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data[0])
                 cert_cn = cert.get_subject().CN
-                cert_san = []
+                if is_valid_hostname(cert_cn):
+                    s3_tls_server_uri = cert_cn
+
+                cert_sans = []
                 for ext in filter(lambda e: e.get_short_name().decode() != 'UNDEF', (
                     map(lambda i: cert.get_extension(i), range(cert.get_extension_count()))
                     if isinstance(cert, crypto.X509)
                     else cert.get_extensions()
                 )):
                     if 'subjectAltName' == ext.get_short_name().decode():
-                        cert_san = [s.strip() for s in ext.__str__().split(',') if s]
-                if cert_san:
-                    s3_tls_server_uri = cert_san[0].split(':')[-1].strip()
-                elif cert_cn:
-                    s3_tls_server_uri = cert_cn
+                        cert_sans = [s.strip() for s in ext.__str__().split(',') if s]
+
+                for cert_san in cert_sans:
+                    san = cert_san.split(':')[-1].strip()
+                    if is_valid_hostname(san):
+                        s3_tls_server_uri = san
+                        break
             except Exception:
                 pass
 

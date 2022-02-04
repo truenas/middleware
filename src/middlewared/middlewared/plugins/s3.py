@@ -1,7 +1,7 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
-from middlewared.validators import Match, Range
+from middlewared.validators import Match, Range, Hostname
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 
@@ -41,7 +41,7 @@ class S3Service(SystemServiceService):
         Str('access_key', max_length=20, required=True),
         Str('secret_key', max_length=40, required=True),
         Bool('browser', required=True),
-        Str('tls_server_uri', null=True, required=True),
+        Str('tls_server_uri', validators=[Hostname()], null=True, required=True),
         Str('storage_path', required=True),
         Int('certificate', null=True, required=True),
         Int('id', required=True),
@@ -131,11 +131,17 @@ class S3Service(SystemServiceService):
                 'certificate.cert_services_validation', new['certificate'], 's3_update.certificate', False
             )))
 
-        if new['certificate'] and not new['tls_server_uri']:
-            verrors.add(
-                's3_update.tls_server_uri',
-                'Please provide a SAN or CN(i.e. Common Name) from the attached certificate.'
-            )
+        if new['certificate']:
+            if not new['tls_server_uri']:
+                verrors.add(
+                    's3_update.tls_server_uri',
+                    'Please provide a SAN or CN(i.e. Common Name) from the attached certificate.'
+                )
+            elif "*" in new['tls_server_uri']:
+                verrors.add(
+                    's3_update.tls_server_uri',
+                    'This cannot contain a wildcard "*".'
+                )
 
         if new['bindip'] not in await self.bindip_choices():
             verrors.add('s3_update.bindip', 'Please provide a valid ip address')
