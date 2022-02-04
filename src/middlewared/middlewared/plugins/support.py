@@ -185,6 +185,7 @@ class SupportService(ConfigService):
         'new_ticket_response',
         Int('ticket', null=True),
         Str('url', null=True),
+        Bool('has_debug'),
         register=True
     ))
     @job()
