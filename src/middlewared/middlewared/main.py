@@ -34,7 +34,6 @@ import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
-import copy
 from dataclasses import dataclass
 import errno
 import fcntl
@@ -106,12 +105,28 @@ class Application(object):
         self.__callbacks[name].append(method)
 
     def _send(self, data):
+        serialized = json.dumps(data)
+        asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
+        _1KB = 1000
+        if len(serialized) > _1KB:
+            # no reason to store data in the deque that
+            # is larger than ~1KB after being serialized.
+            # This gets _really_ painful on systems with
+            # many (100's) of snapshots because running a
+            # simple `zfs.snapshot.query` via midclt from
+            # the cli produces ridiculously large output.
+            # Caching that in the main middleware process
+            # is excessive and only hurts us. Instead we'll
+            # truncate to ~1KB.
+            message = serialized[:_1KB]
+        else:
+            message = serialized
+
         self.middleware.socket_messages_queue.append({
             'type': 'outgoing',
             'session_id': self.session_id,
-            'message': data,
+            'message': message,
         })
-        asyncio.run_coroutine_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
@@ -275,19 +290,6 @@ class Application(object):
         self.middleware.unregister_wsclient(self)
 
     async def on_message(self, message):
-        if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
-            log_message = copy.deepcopy(message)
-            log_message['params'] = self.middleware.dump_args(
-                log_message.get('params', []), method_name=log_message['method']
-            )
-        else:
-            log_message = message
-
-        self.middleware.socket_messages_queue.append({
-            'type': 'incoming',
-            'session_id': self.session_id,
-            'message': log_message,
-        })
         # Run callbacks registered in plugins for on_message
         for method in self.__callbacks['on_message']:
             try:
@@ -297,10 +299,7 @@ class Application(object):
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
-                self._send({
-                    'msg': 'failed',
-                    'version': '1',
-                })
+                self._send({'msg': 'failed', 'version': '1'})
             else:
                 features = message.get('features') or []
                 if 'PY_EXCEPTIONS' in features:
@@ -309,62 +308,53 @@ class Application(object):
                 # It is desired to prevent that in this stage in case we are debugging
                 # middlewared via gdb (which makes the program execution a lot slower)
                 await asyncio.shield(self.middleware.call_hook('core.on_connect', app=self))
-                self._send({
-                    'msg': 'connected',
-                    'session': self.session_id,
-                })
+                self._send({'msg': 'connected', 'session': self.session_id})
                 self.handshake = True
-            return
-
-        if not self.handshake:
-            self._send({
-                'msg': 'failed',
-                'version': '1',
-            })
-            return
-
-        if message['msg'] == 'method':
+        elif not self.handshake:
+            self._send({'msg': 'failed', 'version': '1'})
+        elif message['msg'] == 'method':
+            error = False
             if 'method' not in message:
-                self.send_error(message, errno.EINVAL,
-                                "Message is malformed: 'method' is absent.")
-                return
-
-            try:
-                serviceobj, methodobj = self.middleware._method_lookup(message['method'])
-            except CallError as e:
-                self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
-                return
-
-            if not hasattr(methodobj, '_no_auth_required'):
+                self.send_error(message, errno.EINVAL, "Message is malformed: 'method' is absent.")
+                error = True
+            else:
+                try:
+                    serviceobj, methodobj = self.middleware._method_lookup(message['method'])
+                except CallError as e:
+                    self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
+                    error = True
+            if not error and not hasattr(methodobj, '_no_auth_required'):
                 if not self.authenticated:
                     self.send_error(message, errno.EACCES, 'Not authenticated')
-                    return
-
-                if not self.authenticated_credentials.authorize('CALL', message['method']):
+                    error = True
+                elif not self.authenticated_credentials.authorize('CALL', message['method']):
                     self.send_error(message, errno.EACCES, 'Not authorized')
-                    return
-
-            asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
-            return
+                    error = True
+            if not error:
+                asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
             if 'id' in message:
                 pong['id'] = message['id']
             self._send(pong)
-            return
-
-        if not self.authenticated:
+        elif not self.authenticated:
             self.send_error(message, errno.EACCES, 'Not authenticated')
-            return
-
-        if message['msg'] == 'sub':
+        elif message['msg'] == 'sub':
             if not self.authenticated_credentials.authorize('SUBSCRIBE', message['name']):
                 self.send_error(message, errno.EACCES, 'Not authorized')
-                return
-
-            await self.subscribe(message['id'], message['name'])
+            else:
+                await self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
             await self.unsubscribe(message['id'])
+
+        if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
+            message['params'] = self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+
+        self.middleware.socket_messages_queue.append({
+            'type': 'incoming',
+            'session_id': self.session_id,
+            'message': message,
+        })
 
     def __getstate__(self):
         return {}
@@ -890,7 +880,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
         self.mocks = {}
-        self.socket_messages_queue = deque(maxlen=1000)
+        self.socket_messages_queue = deque(maxlen=200)
 
     def __init_services(self):
         from middlewared.service import CoreService
