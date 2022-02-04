@@ -96,7 +96,11 @@ class Match:
 
 class Hostname(Match):
     def __init__(self, explanation=None):
-        super().__init__(r'^[a-zA-Z\.\-\0-9]+$', explanation=explanation)
+        super().__init__(
+            r'^[a-z\.\-0-9]*[a-z0-9]$',
+            flags=re.IGNORECASE,
+            explanation=explanation
+        )
 
 
 class Or:

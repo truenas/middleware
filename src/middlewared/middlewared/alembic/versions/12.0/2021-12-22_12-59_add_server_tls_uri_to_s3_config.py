@@ -27,7 +27,7 @@ def is_valid_hostname(hostname: str):
     except ValueError:
         return False
     else:
-        return "*" not in hostname
+        return True
 
 
 def upgrade():

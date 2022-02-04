@@ -131,17 +131,11 @@ class S3Service(SystemServiceService):
                 'certificate.cert_services_validation', new['certificate'], 's3_update.certificate', False
             )))
 
-        if new['certificate']:
-            if not new['tls_server_uri']:
-                verrors.add(
-                    's3_update.tls_server_uri',
-                    'Please provide a SAN or CN(i.e. Common Name) from the attached certificate.'
-                )
-            elif "*" in new['tls_server_uri']:
-                verrors.add(
-                    's3_update.tls_server_uri',
-                    'This cannot contain a wildcard "*".'
-                )
+        if new['certificate'] and not new['tls_server_uri']:
+            verrors.add(
+                's3_update.tls_server_uri',
+                'Please provide a SAN or CN(i.e. Common Name) from the attached certificate.'
+            )
 
         if new['bindip'] not in await self.bindip_choices():
             verrors.add('s3_update.bindip', 'Please provide a valid ip address')
