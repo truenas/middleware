@@ -11,7 +11,7 @@ Before=local-fs.target
 Type=oneshot
 RemainAfterExit=yes
 TimeoutStartSec=300
-ExecStart=midclt call -job disk.swaps_configure
+ExecStart=midclt call disk.swaps_configure
 StandardOutput=null
 
 [Install]
