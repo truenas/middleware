@@ -160,7 +160,16 @@ fi
 if [ -d /var/db/system/cores ]; then
 	echo "** 97%: Copying Core Dumps"
 	mkdir "$dir/cores"
-	find /var/db/system/cores -type f -size -524288c -exec cp {} "$dir/cores/" \;
+	for f in $(find /var/db/system/cores -type f -size -524288c | sort);
+	do
+		filename="$(basename "$f")"
+		if echo "$filename" | egrep "^core\." > /dev/null;
+		then
+			binary="$(echo "$filename" | cut -f 2 -d .)"
+			rm -f "$dir/cores/core.$binary."*
+		fi
+		cp "$f" "$dir/cores/"
+	done
 fi
 
 if is_freebsd; then
