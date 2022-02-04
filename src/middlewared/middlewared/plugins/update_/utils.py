@@ -13,15 +13,11 @@ SEP = re.compile(r"[-.]")
 
 def can_update(old_version, new_version):
     for x, y in itertools.zip_longest(SEP.split(old_version), SEP.split(new_version), fillvalue=''):
-        if x == 'MASTER' and y != 'MASTER':
-            return False
-        elif x != 'MASTER' and y == 'MASTER':
-            return True
-
-        if x == 'INTERNAL' and y != 'INTERNAL':
-            return False
-        elif x != 'INTERNAL' and y == 'INTERNAL':
-            return True
+        for special in ['CUSTOM', 'MASTER', 'INTERNAL']:
+            if x == special and y != special:
+                return False
+            elif x != special and y == special:
+                return True
 
         if x < y:
             return True
