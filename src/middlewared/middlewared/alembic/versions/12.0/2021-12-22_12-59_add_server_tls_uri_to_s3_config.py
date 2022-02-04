@@ -3,11 +3,11 @@ Revision ID: 9c11f6c6f152
 Revises: fee786dfe121
 Create Date: 2021-12-22 12:59:17.737066+00:00
 """
+import re
+
 from alembic import op
 import sqlalchemy as sa
 from OpenSSL import crypto
-
-from middlewared.validators import Hostname
 
 # revision identifiers, used by Alembic.
 revision = '9c11f6c6f152'
@@ -15,19 +15,16 @@ down_revision = 'fee786dfe121'
 branch_labels = None
 depends_on = None
 
+# Pattern is taken from middlewared.validators.Hostname
+hostname_re = re.compile(r'^[a-z\.\-0-9]*[a-z0-9]$', flags=re.IGNORECASE)
+
 
 def is_valid_hostname(hostname: str):
     """
     Validates hostname and makes sure it
     does not contain a valid card.
     """
-    validate_hostname = Hostname()
-    try:
-        validate_hostname(hostname)
-    except ValueError:
-        return False
-    else:
-        return True
+    return hostname_re.match(hostname)
 
 
 def upgrade():
@@ -45,7 +42,7 @@ def upgrade():
             try:
                 cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data[0])
                 cert_cn = cert.get_subject().CN
-                if is_valid_hostname(cert_cn):
+                if cert_cn and is_valid_hostname(cert_cn):
                     s3_tls_server_uri = cert_cn
 
                 cert_sans = []
@@ -59,7 +56,7 @@ def upgrade():
 
                 for cert_san in cert_sans:
                     san = cert_san.split(':')[-1].strip()
-                    if is_valid_hostname(san):
+                    if san and is_valid_hostname(san):
                         s3_tls_server_uri = san
                         break
             except Exception:
