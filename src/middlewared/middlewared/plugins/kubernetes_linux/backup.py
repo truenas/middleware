@@ -95,7 +95,7 @@ class KubernetesService(Service):
         """
         List existing chart releases backups.
         """
-        if not self.middleware.call_sync('service.started', 'kubernetes'):
+        if not self.middleware.call_sync('kubernetes.validate_k8s_setup', False):
             return {}
 
         k8s_config = self.middleware.call_sync('kubernetes.config')

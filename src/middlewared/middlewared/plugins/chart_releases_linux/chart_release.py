@@ -102,11 +102,11 @@ class ChartReleaseService(CRUDService):
         `query-options.extra.resource_events` is a boolean when set will retrieve individual events of each resource.
         This only has effect if `query-options.extra.retrieve_resources` is set.
         """
-        k8s_config = await self.middleware.call('kubernetes.config')
-        if not await self.middleware.call('service.started', 'kubernetes') or not k8s_config['dataset']:
+        if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
             # We use filter_list here to ensure that `options` are respected, options like get: true
             return filter_list([], filters, options)
 
+        k8s_config = await self.middleware.call('kubernetes.config')
         update_catalog_config = {}
         catalogs = await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
         container_images = {}

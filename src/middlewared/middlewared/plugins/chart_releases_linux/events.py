@@ -125,5 +125,5 @@ async def chart_release_event(middleware, event_type, args):
 
 async def setup(middleware):
     middleware.event_subscribe('kubernetes.events', chart_release_event)
-    if await middleware.call('service.started', 'kubernetes'):
+    if await middleware.call('kubernetes.validate_k8s_setup', False):
         asyncio.ensure_future(middleware.call('chart.release.refresh_events_state'))

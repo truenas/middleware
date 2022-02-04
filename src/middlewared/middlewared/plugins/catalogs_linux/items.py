@@ -236,7 +236,7 @@ class CatalogService(Service):
 
     @private
     async def get_normalised_questions_context(self):
-        k8s_started = await self.middleware.call('service.started', 'kubernetes')
+        k8s_started = await self.middleware.call('kubernetes.validate_k8s_setup', False)
         return {
             'nic_choices': await self.middleware.call('chart.release.nic_choices'),
             'gpus': await self.middleware.call('k8s.gpu.available_gpus') if k8s_started else {},

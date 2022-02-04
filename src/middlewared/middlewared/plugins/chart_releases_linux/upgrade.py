@@ -342,7 +342,7 @@ class ChartReleaseService(Service):
 
         sync_job = await self.middleware.call('catalog.sync_all')
         await sync_job.wait()
-        if not await self.middleware.call('service.started', 'kubernetes'):
+        if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
             return
 
         await self.chart_releases_update_checks_internal()
