@@ -15,12 +15,15 @@ if __name__ == "__main__":
     kernel_extra_args = advanced.get('kernel_extra_options') or ''
 
     # We need to allow tpm in grub as sedutil-cli requires it
+    # `zfsforce=1` is needed because FreeBSD bootloader imports boot pool with hostid=0 while SCALE releases up to
+    # 22.02-RC.2 use real hostid. We need to be able to boot both of these configurations.
     # TODO: Please remove kernel flag to use cgroups v1 when nvidia device plugin starts working
     #  with it ( https://github.com/NVIDIA/k8s-device-plugin/issues/235 )
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 systemd.unified_cgroup_hierarchy=0 amd_iommu=on iommu=pt '
-        f'kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on{f" {kernel_extra_args}" if kernel_extra_args else ""}"',
+        'kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on zfsforce=1'
+        f'{f" {kernel_extra_args}" if kernel_extra_args else ""}"',
     ]
 
     terminal = ["console"]
