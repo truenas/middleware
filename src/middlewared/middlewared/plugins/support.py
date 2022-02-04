@@ -1,6 +1,8 @@
 import asyncio
 import errno
 import json
+import shutil
+import tempfile
 import time
 
 import aiohttp
@@ -239,6 +241,7 @@ class SupportService(ConfigService):
             raise CallError('New ticket number was not informed', errno.EINVAL)
         job.set_progress(50, f'Ticket created: {ticket}', extra={'ticket': ticket})
 
+        has_debug = False
         if debug:
             job.set_progress(60, 'Generating debug file')
 
@@ -254,43 +257,58 @@ class SupportService(ConfigService):
                     time.strftime('%Y%m%d%H%M%S'),
                 )
 
-            job.set_progress(80, 'Attaching debug file')
+            with tempfile.NamedTemporaryFile("w+b") as f:
+                def copy1():
+                    nonlocal has_debug
+                    try:
+                        rbytes = 0
+                        while True:
+                            r = debug_job.pipes.output.r.read(1048576)
+                            if r == b'':
+                                break
 
-            t = {
-                'ticket': ticket,
-                'filename': debug_name,
-            }
-            if 'token' in data:
-                t['token'] = data['token']
-            tjob = await self.middleware.call(
-                'support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()),
-            )
+                            rbytes += len(r)
+                            if rbytes > DEBUG_MAX_SIZE * 1048576:
+                                return
 
-            def copy():
-                try:
-                    rbytes = 0
-                    while True:
-                        r = debug_job.pipes.output.r.read(1048576)
-                        if r == b'':
-                            break
-                        rbytes += len(r)
-                        if rbytes > DEBUG_MAX_SIZE * 1048576:
-                            raise CallError('Debug too large to attach', errno.EFBIG)
-                        tjob.pipes.input.w.write(r)
-                finally:
-                    debug_job.pipes.output.r.read()
-                    tjob.pipes.input.w.close()
+                            f.write(r)
 
-            await self.middleware.run_in_thread(copy)
+                        f.seek(0)
+                        has_debug = True
+                    finally:
+                        debug_job.pipes.output.r.read()
 
-            await debug_job.wait()
-            await tjob.wait()
+                await self.middleware.run_in_thread(copy1)
+                await debug_job.wait()
+
+                if has_debug:
+                    job.set_progress(80, 'Attaching debug file')
+
+                    t = {
+                        'ticket': ticket,
+                        'filename': debug_name,
+                    }
+                    if 'token' in data:
+                        t['token'] = data['token']
+                    tjob = await self.middleware.call(
+                        'support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()),
+                    )
+
+                    def copy2():
+                        try:
+                            shutil.copyfileobj(f, tjob.pipes.input.w)
+                        finally:
+                            tjob.pipes.input.w.close()
+
+                    await self.middleware.run_in_thread(copy2)
+                    await tjob.wait()
         else:
             job.set_progress(100)
 
         return {
             'ticket': ticket,
             'url': url,
+            'has_debug': has_debug,
         }
 
     @accepts(Dict(
