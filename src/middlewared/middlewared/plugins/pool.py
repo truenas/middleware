@@ -2481,6 +2481,21 @@ class PoolDatasetService(CRUDService):
                 else:
                     unlocked.append(name)
 
+        for failed_ds in failed:
+            failed_datasets = {}
+            for ds in [failed_ds] + failed[failed_ds]['skipped']:
+                mount_path = os.path.join('/mnt', ds)
+                if os.path.exists(mount_path):
+                    try:
+                        self.middleware.call_sync('filesystem.set_immutable', True, mount_path)
+                    except CallError as e:
+                        failed_datasets[ds] = str(e)
+
+            if failed_datasets:
+                failed[failed_ds]['error'] += '\n\nFailed to set immutable flag on following datasets:\n' + '\n'.join(
+                    f'{i + 1}) {ds} ({failed_datasets[ds]})' for i, ds in enumerate(failed_datasets)
+                )
+
         services_to_restart = set()
         if self.middleware.call_sync('system.ready'):
             services_to_restart.add('disk')
