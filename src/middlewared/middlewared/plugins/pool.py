@@ -1427,6 +1427,17 @@ class PoolService(CRUDService):
                 # Let's not make this fatal
                 self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
 
+        # We want to set immutable flag on all of locked datasets
+        for encrypted_ds in await self.middleware.call(
+            'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
+        ):
+            encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
+            if os.path.exists(encrypted_mountpoint):
+                try:
+                    await self.middleware.call('filesystem.set_immutable', True, encrypted_mountpoint)
+                except Exception as e:
+                    self.logger.warning('Failed to set immutable flag at %r: %r', encrypted_mountpoint, e)
+
         # update db
         pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
             'vol_name': pool_name,
