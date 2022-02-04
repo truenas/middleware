@@ -348,12 +348,16 @@ class Application(object):
             await self.unsubscribe(message['id'])
 
         if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
-            message['params'] = self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+            log_message = dict(
+                message, params=self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+            )
+        else:
+            log_message = message
 
         self.middleware.socket_messages_queue.append({
             'type': 'incoming',
             'session_id': self.session_id,
-            'message': message,
+            'message': log_message,
         })
 
     def __getstate__(self):
