@@ -145,7 +145,7 @@ else
 fi
 
 echo "** 96%: Compressing System Logs"
-tar -chf - -C /var --exclude=log/journal --exclude=log/faillog --exclude=log/lastlog --exclude=log/sysstat log | tar -C $dir -xf -
+tar -chf - -C /var --exclude=log/journal --exclude=log/faillog --exclude="log/k3s_daemon.log.*" --exclude=log/lastlog --exclude=log/sysstat log | tar -C $dir -xf -
 if [ -f "/tmp/failsafe_middlewared.log" ]; then
 	cp /tmp/failsafe_middlewared* "$dir"
 fi
