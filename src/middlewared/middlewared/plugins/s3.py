@@ -41,7 +41,7 @@ class S3Service(SystemServiceService):
         Str('access_key', max_length=20, required=True),
         Str('secret_key', max_length=40, required=True),
         Bool('browser', required=True),
-        Str('tls_server_uri', validators=[Hostname()], null=True, required=True),
+        Str('tls_server_uri', null=True, required=True),
         Str('storage_path', required=True),
         Int('certificate', null=True, required=True),
         Int('id', required=True),
@@ -74,6 +74,9 @@ class S3Service(SystemServiceService):
         )}),
         ('edit', {'name': 'secret_key', 'method': lambda x: setattr(
             x, 'validators', [Match(r'^\w+$', explanation='Should only contain alphanumeric characters')]
+        )}),
+        ('edit', {'name': 'tls_server_uri', 'method': lambda x: setattr(
+            x, 'validators', [Hostname(explanation='Should be a valid hostname')]
         )}),
         ('rm', {'name': 'id'}),
         ('attr', {'update': True}),

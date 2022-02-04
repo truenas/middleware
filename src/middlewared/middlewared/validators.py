@@ -87,7 +87,7 @@ class Match:
         self.regex = re.compile(pattern, flags)
 
     def __call__(self, value):
-        if not self.regex.match(value):
+        if value is not None and not self.regex.match(value):
             raise ValueError(self.explanation or f"Value does not match {self.pattern!r} pattern")
 
     def __deepcopy__(self, memo):

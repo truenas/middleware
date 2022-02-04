@@ -22,7 +22,7 @@ hostname_re = re.compile(r'^[a-z\.\-0-9]*[a-z0-9]$', flags=re.IGNORECASE)
 def is_valid_hostname(hostname: str):
     """
     Validates hostname and makes sure it
-    does not contain a valid card.
+    does not contain a wild card.
     """
     return hostname_re.match(hostname)
 
