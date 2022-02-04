@@ -3608,6 +3608,11 @@ class PoolDatasetService(CRUDService):
                 if attachments:
                     await delegate.delete(attachments)
 
+        if dataset['locked'] and os.path.exists(dataset['mountpoint']):
+            # We would like to remove the immutable flag in this case so that it's mountpoint can be
+            # cleaned automatically when we delete the dataset
+            await self.middleware.call('filesystem.set_immutable', False, dataset['mountpoint'])
+
         result = await self.middleware.call('zfs.dataset.delete', id, {
             'force': options['force'],
             'recursive': options['recursive'],
