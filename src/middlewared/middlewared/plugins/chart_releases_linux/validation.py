@@ -16,6 +16,7 @@ validation_mapping = {
     'validations/nodePort': 'port_available_on_node',
     'validations/hostPath': 'custom_host_path',
     'validations/lockedHostPath': 'locked_host_path',
+    'validations/hostPathAttachments': 'host_path_attachments',
 }
 
 
@@ -168,6 +169,7 @@ class ChartReleaseService(Service):
             return
 
         await self.validate_locked_host_path(verrors, path, question, schema_name, release_data)
+        await self.validate_host_path_attachments(verrors, path, question, schema_name, release_data)
         await check_path_resides_within_volume(verrors, self.middleware, schema_name, path)
 
     @private
@@ -177,7 +179,23 @@ class ChartReleaseService(Service):
 
         p = Path(path)
         if not p.is_absolute():
-            verrors.add(schema_name, f"Must be an absolute path: {path}.")
+            verrors.add(schema_name, f'Must be an absolute path: {path}.')
 
         if await self.middleware.call('pool.dataset.path_in_locked_datasets', path):
-            verrors.add(schema_name, f"Dataset is locked at path: {path}.")
+            verrors.add(schema_name, f'Dataset is locked at path: {path}.')
+
+    @private
+    async def validate_host_path_attachments(self, verrors, path, question, schema_name, release_data):
+        if not path:
+            return
+
+        p = Path(path)
+        if not p.is_absolute():
+            verrors.add(schema_name, f'Must be an absolute path: {path}.')
+
+        if attachments := {
+            attachment['type']
+            for attachment in await self.middleware.call('pool.dataset.attachments_with_path', path)
+            if attachment['type'].lower() not in ['kubernetes', 'chart releases']
+        }:
+            verrors.add(schema_name, f"The path '{path}' is already attached to service(s): {', '.join(attachments)}.")
