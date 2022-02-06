@@ -18,6 +18,7 @@ SUPPORTED_FEATURES = {
     'validations/nodePort',
     'validations/hostPath',
     'validations/lockedHostPath',
+    'validations/hostPathAttachments',
 }
 
 
