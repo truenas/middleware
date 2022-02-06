@@ -2,9 +2,10 @@ from middlewared.utils import run
 
 
 async def render(service, middleware):
+    serial_action = 'restart' if (await middleware.call('system.advanced.config'))['serialconsole'] else 'stop'
     for command in [
         ['systemctl', 'restart', 'getty@tty1.service'],
-        ['systemctl', 'restart', 'serial-getty@*.service'],
+        ['systemctl', serial_action, 'serial-getty@*.service'],
     ]:
         cp = await run(command, check=False)
         if cp.returncode:
