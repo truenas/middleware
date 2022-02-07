@@ -370,6 +370,10 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('service.restart', 'powerd')
 
             if original_data['serialconsole'] != config_data['serialconsole']:
+                action = 'enable' if config_data['serialconsole'] else 'disable'
+                cp = await run(['systemctl', action, 'serial-getty@*.service'], check=False)
+                if cp.returncode:
+                    self.logger.error('Failed to %r serialconsole: %r', action, cp.stderr.decode())
                 await self.middleware.call('service.start', 'ttys')
                 generate_grub = True
             elif (
