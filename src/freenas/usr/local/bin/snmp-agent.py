@@ -1,35 +1,21 @@
 #!/usr/bin/env python3
-from middlewared.utils import osc
-
-from collections import defaultdict
 import copy
-from datetime import datetime, timedelta
-from decimal import Decimal
 import threading
 import time
 import libzfs
 import netsnmpagent
 import pysnmp.hlapi  # noqa
 import pysnmp.smi
-if osc.IS_FREEBSD:
-    import sysctl
+from collections import defaultdict
+from datetime import datetime, timedelta
+from decimal import Decimal
 
+import sysctl
 from middlewared.client import Client
 
 
 def get_Kstat():
-    if osc.IS_FREEBSD:
-        return get_Kstat_FreeBSD()
-    else:
-        return get_Kstat_Linux()
-
-
-def get_Kstat_FreeBSD():
-    Kstats = [
-        "kstat.zfs.misc.arcstats",
-        "vfs.zfs.version.spa",
-    ]
-
+    Kstats = ["kstat.zfs.misc.arcstats", "vfs.zfs.version.spa"]
     Kstat = {}
     for kstat in Kstats:
         for s in sysctl.filter(kstat):
@@ -37,22 +23,6 @@ def get_Kstat_FreeBSD():
                 Kstat[s.name] = Decimal(s.value)
             elif isinstance(s.value, bytearray):
                 Kstat[s.name] = Decimal(int.from_bytes(s.value, "little"))
-
-    return Kstat
-
-
-def get_Kstat_Linux():
-    Kstat = {}
-
-    with open("/proc/spl/kstat/zfs/arcstats") as f:
-        arcstats = f.readlines()
-
-    for line in arcstats[2:]:
-        if line.strip():
-            name, type, data = line.strip().split()
-            Kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
-
-    Kstat["vfs.zfs.version.spa"] = Decimal(5000)
 
     return Kstat
 
@@ -315,18 +285,17 @@ zvol_table = agent.Table(
 )
 
 lm_sensors_table = None
-if osc.IS_FREEBSD:
-    lm_sensors_table = agent.Table(
-        oidstr="LM-SENSORS-MIB::lmTempSensorsTable",
-        indexes=[
-            agent.Integer32(),
-        ],
-        columns=[
-            (1, agent.Integer32()),
-            (2, agent.DisplayString()),
-            (3, agent.Unsigned32()),
-        ]
-    )
+lm_sensors_table = agent.Table(
+    oidstr="LM-SENSORS-MIB::lmTempSensorsTable",
+    indexes=[
+        agent.Integer32(),
+    ],
+    columns=[
+        (1, agent.Integer32()),
+        (2, agent.DisplayString()),
+        (3, agent.Unsigned32()),
+    ]
+)
 
 hdd_temp_table = agent.Table(
     oidstr="FREENAS-MIB::hddTempTable",
@@ -541,21 +510,18 @@ if __name__ == "__main__":
     zilstat_1_thread = None
     zilstat_5_thread = None
     zilstat_10_thread = None
+    if config["zilstat"]:
+        zilstat_1_thread = ZilstatThread(1)
+        zilstat_5_thread = ZilstatThread(5)
+        zilstat_10_thread = ZilstatThread(10)
 
-    if osc.IS_FREEBSD:
-        if config["zilstat"]:
-            zilstat_1_thread = ZilstatThread(1)
-            zilstat_5_thread = ZilstatThread(5)
-            zilstat_10_thread = ZilstatThread(10)
-
-            zilstat_1_thread.start()
-            zilstat_5_thread.start()
-            zilstat_10_thread.start()
+        zilstat_1_thread.start()
+        zilstat_5_thread.start()
+        zilstat_10_thread.start()
 
     cpu_temp_thread = None
-    if osc.IS_FREEBSD:
-        cpu_temp_thread = CpuTempThread(10)
-        cpu_temp_thread.start()
+    cpu_temp_thread = CpuTempThread(10)
+    cpu_temp_thread.start()
 
     disk_temp_thread = DiskTempThread(300)
     disk_temp_thread.start()
