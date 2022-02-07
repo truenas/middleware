@@ -88,7 +88,7 @@
                 anonymous = False
 
             for network in share["networks"]:
-                options.append(f'{neworks}({opts})')
+                options.append(f'{network}({opts})')
                 anonymous = False
 
             if anonymous:
