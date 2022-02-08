@@ -290,9 +290,6 @@ class EtcService(Service):
         'aliases': [
             {'type': 'mako', 'path': 'mail/aliases' if osc.IS_FREEBSD else 'aliases', 'local_path': 'mail/aliases'}
         ],
-        'ttys': [
-            {'type': 'py', 'path': 'ttys_config', 'checkpoint_linux': None}
-        ],
         'openvpn_server': [
             {
                 'type': 'mako', 'local_path': 'local/openvpn/server/openvpn_server.conf',
