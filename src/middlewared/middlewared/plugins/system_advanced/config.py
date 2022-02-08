@@ -9,7 +9,6 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
-from middlewared.utils import run
 from middlewared.validators import Range
 
 
@@ -270,37 +269,11 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('service.restart', 'cron')
 
             generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
-            restart_ttys = any(
-                original_data[k] != config_data[k]
-                for k in ('serialconsole', 'serialspeed', 'serialport')
-            )
             if original_data['motd'] != config_data['motd']:
                 await self.middleware.call('service.start', 'motd')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
                 await self.middleware.call('service.restart', 'powerd')
-
-            if original_data['serialconsole'] != config_data['serialconsole']:
-                if original_data['serialport'] == config_data['serialport']:
-                    action = 'enable' if config_data['serialconsole'] else 'disable'
-                    cp = await run(
-                        ['systemctl', action, f'serial-getty@{original_data["serialport"]}.service'], check=False
-                    )
-                    if cp.returncode:
-                        self.logger.error('Failed to %r serialconsole: %r', action, cp.stderr.decode())
-            if original_data['serialport'] != config_data['serialport']:
-                for command in [
-                    ['systemctl', 'disable', f'serial-getty@{original_data["serialport"]}.service'],
-                    ['systemctl', 'stop', f'serial-getty@{original_data["serialport"]}.service'],
-                ] + (
-                    [['systemctl', 'enable', f'serial-getty@{config_data["serialport"]}.service']]
-                    if config_data['serialconsole'] else []
-                ):
-                    cp = await run(command, check=False)
-                    if cp.returncode:
-                        self.logger.error(
-                            'Failed to %r %r serialport service: %r', command[1], command[2], cp.stderr.decode()
-                        )
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd')
@@ -326,12 +299,7 @@ class SystemAdvancedService(ConfigService):
             if original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']:
                 await self.middleware.call('boot.update_initramfs')
 
-            if restart_ttys or config_data['consolemenu'] != original_data['consolemenu']:
-                await self.middleware.call('service.start', 'ttys')
-            if config_data['consolemenu'] != original_data['consolemenu']:
-                await self.middleware.call('service.start', 'tty')
-            if generate_grub or restart_ttys:
-                await self.middleware.call('etc.generate', 'grub')
+            await self.middleware.call('system.advanced.configure_tty', original_data, config_data, generate_grub)
 
         if consolemsg is not None:
             await self.middleware.call('system.general.update', {'ui_consolemsg': consolemsg})
