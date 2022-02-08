@@ -1457,46 +1457,6 @@ async def firstboot(middleware):
                 )
 
 
-async def update_timeout_value(middleware, *args):
-    if not await middleware.call(
-        'tunable.query', [
-            ['var', '=', 'kern.init_shutdown_timeout'],
-            ['type', '=', 'SYSCTL'],
-            ['enabled', '=', True]
-        ]
-    ):
-        # Default 120 seconds is being added to scripts timeout to ensure other
-        # system related scripts can execute safely within the default timeout
-        initial_timeout_value = 120
-        timeout_value = sum(
-            list(
-                map(
-                    lambda i: i['timeout'],
-                    await middleware.call(
-                        'initshutdownscript.query', [
-                            ['enabled', '=', True],
-                            ['when', '=', 'SHUTDOWN']
-                        ]
-                    )
-                )
-            )
-        )
-
-        vm_timeout = (await middleware.call('vm.terminate_timeout'))
-        if vm_timeout > timeout_value:
-            # VM's and init tasks are executed asynchronously - so if VM timeout is greater then init tasks one,
-            # we use that, else init tasks timeout is good enough to ensure VM's cleanly exit
-            timeout_value = vm_timeout
-
-        timeout_value += initial_timeout_value
-
-        await middleware.run_in_thread(
-            lambda: setattr(
-                sysctl.filter('kern.init_shutdown_timeout')[0], 'value', timeout_value
-            )
-        )
-
-
 async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
     if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
         await middleware.call('system.advanced.update', {'autotune': True})
@@ -1518,30 +1478,14 @@ async def setup(middleware):
         SYSTEM_READY = True
     else:
         await firstboot(middleware)
-        autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
-        if autotune_rv == 2:
-            await run('shutdown', '-r', 'now', check=False)
 
-    settings = await middleware.call(
-        'system.general.config',
-    )
+    settings = await middleware.call('system.general.config')
     await middleware.call('core.environ_update', {'TZ': settings['timezone']})
 
     middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
 
     await middleware.call('system.general.set_language')
     await middleware.call('system.general.set_crash_reporting')
-
-    if osc.IS_FREEBSD:
-        asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
-        await update_timeout_value(middleware)
-
-        for srv in ['initshutdownscript', 'tunable', 'vm']:
-            for event in ('create', 'update', 'delete'):
-                middleware.register_hook(
-                    f'{srv}.post_{event}',
-                    update_timeout_value
-                )
 
     middleware.event_subscribe('system', _event_system)
     middleware.register_event_source('system.health', SystemHealthEventSource)
