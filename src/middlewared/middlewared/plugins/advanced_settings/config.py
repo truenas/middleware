@@ -288,23 +288,19 @@ class SystemAdvancedService(ConfigService):
                     )
                     if cp.returncode:
                         self.logger.error('Failed to %r serialconsole: %r', action, cp.stderr.decode())
-            if (
-                original_data['serialspeed'] != config_data['serialspeed'] or
-                original_data['serialport'] != config_data['serialport']
-            ):
-                if original_data['serialport'] != config_data['serialport']:
-                    for command in [
-                        ['systemctl', 'disable', f'serial-getty@{original_data["serialport"]}.service'],
-                        ['systemctl', 'stop', f'serial-getty@{original_data["serialport"]}.service'],
-                    ] + (
-                        [['systemctl', 'enable', f'serial-getty@{config_data["serialport"]}.service']]
-                        if config_data['serialconsole'] else []
-                    ):
-                        cp = await run(command, check=False)
-                        if cp.returncode:
-                            self.logger.error(
-                                'Failed to %r %r serialport service: %r', command[1], command[2], cp.stderr.decode()
-                            )
+            if original_data['serialport'] != config_data['serialport']:
+                for command in [
+                    ['systemctl', 'disable', f'serial-getty@{original_data["serialport"]}.service'],
+                    ['systemctl', 'stop', f'serial-getty@{original_data["serialport"]}.service'],
+                ] + (
+                    [['systemctl', 'enable', f'serial-getty@{config_data["serialport"]}.service']]
+                    if config_data['serialconsole'] else []
+                ):
+                    cp = await run(command, check=False)
+                    if cp.returncode:
+                        self.logger.error(
+                            'Failed to %r %r serialport service: %r', command[1], command[2], cp.stderr.decode()
+                        )
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd')
