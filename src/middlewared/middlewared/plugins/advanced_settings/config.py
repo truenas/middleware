@@ -1,7 +1,6 @@
 import asyncio
 import os
 import re
-import subprocess
 import warnings
 
 from copy import deepcopy
@@ -358,24 +357,3 @@ class SystemAdvancedService(ConfigService):
             'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
         ))['sed_passwd']
         return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
-
-    @private
-    def autotune(self, conf='loader'):
-        if b'/' not in subprocess.run(['whereis', 'autotune'], capture_output=True).stdout:
-            return
-        if self.middleware.call_sync('system.product_type') == 'CORE':
-            kernel_reserved = 1073741824
-            userland_reserved = 2417483648
-        else:
-            kernel_reserved = 6442450944
-            userland_reserved = 4831838208
-        cp = subprocess.run(
-            [
-                'autotune', '-o', f'--kernel-reserved={kernel_reserved}',
-                f'--userland-reserved={userland_reserved}', '--conf', conf
-            ], capture_output=True
-        )
-        if cp.returncode != 0:
-            self.logger.warn('autotune for [%s] failed with error: [%s].',
-                             conf, cp.stderr.decode())
-        return cp.returncode
