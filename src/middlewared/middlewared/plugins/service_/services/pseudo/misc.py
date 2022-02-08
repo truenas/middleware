@@ -258,28 +258,6 @@ class TimeservicesService(PseudoServiceBase):
         await self.middleware.call("core.environ_update", {"TZ": settings["stg_timezone"]})
 
 
-class TtysService(PseudoServiceBase):
-    name = 'ttys'
-
-    async def start(self):
-        config = await self.middleware.call('system.advanced.config')
-        serial_action = 'restart' if config['serialconsole'] else 'stop'
-        cp = await run(['systemctl', serial_action, f'serial-getty@{config["serialport"]}.service'], check=False)
-        if cp.returncode:
-            self.middleware.logger.error(
-                'Failed to %r %r serial port: %r', serial_action, config['serialport'], cp.stderr.decode()
-            )
-
-
-class TtyService(PseudoServiceBase):
-    name = 'tty'
-
-    async def start(self):
-        cp = await run(['systemctl', 'restart', 'getty@tty1.service'], check=False)
-        if cp.returncode:
-            self.middleware.logger.error('Failed to restart tty service: %r', cp.stderr.decode())
-
-
 class DSCacheService(PseudoServiceBase):
     name = "dscache"
 

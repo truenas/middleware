@@ -55,7 +55,6 @@ from .pseudo.misc import (
     SyslogdService,
     SystemService,
     TimeservicesService,
-    TtysService,
     UserService,
 )
 
@@ -108,7 +107,6 @@ all_services = [
     SystemService,
     TimeservicesService,
     TruecommandService,
-    TtysService,
     UserService,
 ]
 if osc.IS_LINUX:
