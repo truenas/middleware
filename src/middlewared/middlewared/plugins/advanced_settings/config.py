@@ -272,7 +272,7 @@ class SystemAdvancedService(ConfigService):
             generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
             restart_ttys = any(
                 original_data[k] != config_data[k]
-                for k in ('consolemenu', 'serialconsole', 'serialspeed', 'serialport')
+                for k in ('serialconsole', 'serialspeed', 'serialport')
             )
             if original_data['motd'] != config_data['motd']:
                 await self.middleware.call('service.start', 'motd')
@@ -293,13 +293,6 @@ class SystemAdvancedService(ConfigService):
                 original_data['serialport'] != config_data['serialport']
             ):
                 if original_data['serialport'] != config_data['serialport']:
-                    commands = [
-                        ['systemctl', 'disable', f'serial-getty@{original_data["serialport"]}.service'],
-                        ['systemctl', 'stop', f'serial-getty@{original_data["serialport"]}.service'],
-                    ]
-                    if config_data['serialconsole']:
-                        commands.append(['systemctl', 'enable', f'serial-getty@{config_data["serialport"]}.service'])
-
                     for command in [
                         ['systemctl', 'disable', f'serial-getty@{original_data["serialport"]}.service'],
                         ['systemctl', 'stop', f'serial-getty@{original_data["serialport"]}.service'],
@@ -337,8 +330,10 @@ class SystemAdvancedService(ConfigService):
             if original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']:
                 await self.middleware.call('boot.update_initramfs')
 
-            if restart_ttys:
+            if restart_ttys or config_data['consolemenu'] != original_data['consolemenu']:
                 await self.middleware.call('service.start', 'ttys')
+            if config_data['consolemenu'] != original_data['consolemenu']:
+                await self.middleware.call('service.start', 'tty')
             if generate_grub or restart_ttys:
                 await self.middleware.call('etc.generate', 'grub')
 
