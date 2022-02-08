@@ -38,8 +38,8 @@ class SystemAdvancedService(Service):
 
         if old['serialport'] != new['serialport']:
             for command in [
-               ['systemctl', 'disable', f'serial-getty@{old["serialport"]}.service'],
-               ['systemctl', 'stop', f'serial-getty@{old["serialport"]}.service'],
+                ['systemctl', 'disable', f'serial-getty@{old["serialport"]}.service'],
+                ['systemctl', 'stop', f'serial-getty@{old["serialport"]}.service'],
             ] + (
                 [['systemctl', 'enable', f'serial-getty@{new["serialport"]}.service']] if new['serialconsole'] else []
             ):
@@ -50,10 +50,17 @@ class SystemAdvancedService(Service):
                     )
 
         if restart_ttys or new['consolemenu'] != new['consolemenu']:
-            await self.middleware.call('service.start', 'ttys')
+            serial_action = 'restart' if new['serialconsole'] else 'stop'
+            cp = await run(['systemctl', serial_action, f'serial-getty@{new["serialport"]}.service'], check=False)
+            if cp.returncode:
+                self.middleware.logger.error(
+                    'Failed to %r %r serial port: %r', serial_action, new['serialport'], cp.stderr.decode()
+                )
 
         if new['consolemenu'] != new['consolemenu']:
-            await self.middleware.call('service.start', 'tty')
+            cp = await run(['systemctl', 'restart', 'getty@tty1.service'], check=False)
+            if cp.returncode:
+                self.middleware.logger.error('Failed to restart tty service: %r', cp.stderr.decode())
 
         if generate_grub or restart_ttys:
             await self.middleware.call('etc.generate', 'grub')
