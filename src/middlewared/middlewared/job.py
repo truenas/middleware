@@ -247,8 +247,8 @@ class Job:
         self.state = State.WAITING
         self.description = None
         self.progress = {
-            'percent': None,
-            'description': None,
+            'percent': 0,
+            'description': '',
             'extra': None,
         }
         self.internal_data = {}
