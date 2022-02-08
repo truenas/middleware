@@ -102,9 +102,9 @@ def SSH_TEST(command, username, passwrd, host):
     output = process.stdout
     stderr = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output, 'stderr': stderr}
+        return {'result': False, 'output': output, 'stderr': stderr, 'return_code': process.returncode}
     else:
-        return {'result': True, 'output': output, 'stderr': stderr}
+        return {'result': True, 'output': output, 'stderr': stderr, 'return_code': process.returncode}
 
 
 def send_file(file, destination, username, passwrd, host):
