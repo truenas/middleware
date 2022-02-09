@@ -11,7 +11,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
     POLLING_GAP_MINUTES = 5
 
     @private
-    @job(lock='poll_ix_portal_api_truecommand')
+    @job(lock='poll_ix_portal_api_truecommand', lock_queue_size=1)
     async def poll_api_for_status(self, job):
         await self.middleware.call('truecommand.set_status', Status.CONNECTING.value)
         config = await self.middleware.call('datastore.config', 'system.truecommand')
