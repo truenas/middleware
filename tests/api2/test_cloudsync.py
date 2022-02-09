@@ -64,35 +64,42 @@ def task(data):
 
 
 @contextlib.contextmanager
+def local_s3_credential(credential_params=None):
+    credential_params = credential_params or {}
+
+    with dataset("cloudsync_remote") as remote_dataset:
+        with s3_server(remote_dataset) as s3:
+            with credential({
+                "provider": "S3",
+                "attributes": {
+                    "access_key_id": s3.access_key,
+                    "secret_access_key": s3.secret_key,
+                    "endpoint": "http://localhost:9000",
+                    "skip_region": True,
+                    **credential_params,
+                },
+            }) as c:
+                yield c
+
+@contextlib.contextmanager
 def local_s3_task(params=None, credential_params=None):
     params = params or {}
     credential_params = credential_params or {}
 
     with dataset("cloudsync_local") as local_dataset:
-        with dataset("cloudsync_remote") as remote_dataset:
-            with s3_server(remote_dataset) as s3:
-                with credential({
-                    "provider": "S3",
-                    "attributes": {
-                        "access_key_id": s3.access_key,
-                        "secret_access_key": s3.secret_key,
-                        "endpoint": "http://localhost:9000",
-                        "skip_region": True,
-                        **credential_params,
-                    },
-                }) as c:
-                    with task({
-                        "direction": "PUSH",
-                        "transfer_mode": "COPY",
-                        "path": f"/mnt/{local_dataset}",
-                        "credentials": c["id"],
-                        "attributes": {
-                            "bucket": "bucket",
-                            "folder": "",
-                        },
-                        **params,
-                    }) as t:
-                        yield t
+        with local_s3_credential(credential_params) as c:
+            with task({
+                "direction": "PUSH",
+                "transfer_mode": "COPY",
+                "path": f"/mnt/{local_dataset}",
+                "credentials": c["id"],
+                "attributes": {
+                    "bucket": "bucket",
+                    "folder": "",
+                },
+                **params,
+            }) as t:
+                yield t
 
 
 def run_task(task):
@@ -221,3 +228,19 @@ def test_snapshot(has_zvol_sibling):
         finally:
             if has_zvol_sibling:
                 ssh(f"zfs destroy -r {pool}/zvol")
+
+
+def test_sync_onetime():
+    with dataset("cloudsync_local") as local_dataset:
+        with local_s3_credential() as c:
+            call("cloudsync.sync_onetime", {
+                "direction": "PUSH",
+                "transfer_mode": "COPY",
+                "path": f"/mnt/{local_dataset}",
+                "credentials": c["id"],
+                "attributes": {
+                    "bucket": "bucket",
+                    "folder": "",
+                },
+                "snapshot": True,
+            }, job=True)
