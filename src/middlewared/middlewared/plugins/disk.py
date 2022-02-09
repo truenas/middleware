@@ -65,6 +65,7 @@ class DiskService(CRUDService):
         Str('subsystem', required=True),
         Int('number', required=True),
         Str('serial', required=True),
+        Str('lunid', required=True, null=True),
         Int('size', required=True),
         Str('description', required=True),
         Str('transfermode', required=True),
@@ -84,6 +85,7 @@ class DiskService(CRUDService):
         Int('rotationrate', required=True, null=True),
         Str('type', required=True, null=True),
         Str('zfs_guid', required=True, null=True),
+        Str('bus', required=True),
         Str('devname', required=True),
         Dict(
             'enclosure',
