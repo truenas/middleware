@@ -38,7 +38,7 @@ def test_disabling_serial_port():
 
 def assert_serial_port_configuration(ports):
     for port, enabled in ports.items():
-        is_enabled = ssh(f'systemctl is-enabled --quiet serial-getty@{port}.service', False, True)['return_code'] == 0
+        is_enabled = ssh(f'systemctl is-enabled serial-getty@{port}.service', False).strip() == 'enabled'
         assert is_enabled is enabled, f'{port!r} enabled assertion failed: {is_enabled!r} != {enabled!r}'
         is_enabled = ssh(f'systemctl is-active --quiet serial-getty@{port}.service', False, True)['return_code'] == 0
         assert is_enabled is enabled, f'{port!r} active assertion failed: {is_enabled!r} != {enabled!r}'
