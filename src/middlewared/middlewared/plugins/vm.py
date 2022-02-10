@@ -905,28 +905,34 @@ class VNC(Device):
     def is_available(self):
         return self.data['attributes']['vnc_bind'] in self.middleware.call_sync('vm.device.vnc_bind_choices')
 
+    def resolution(self):
+        return self.data['attributes'].get('vnc_resolution') or '1024x768'
+
     def xml(self, *args, **kwargs):
         return create_element(
+            'graphics', type='vnc', port=str(self.data['attributes']['vnc_port']), attribute_dict={
+                'children': [
+                    create_element('listen', type='address', address=self.data['attributes']['vnc_bind']),
+                    create_element('address', type='pci', slot='29'),
+                ]
+            }, **(
+                {} if not self.data['attributes']['vnc_password'] else {
+                    'passwd': self.data['attributes']['vnc_password']
+                }
+            )
+        ), create_element(
             'controller', type='usb', model='nec-xhci', attribute_dict={
                 'children': [create_element('address', type='pci', slot='30')]
             }
-        ), create_element('input', type='tablet', bus='usb')
-
-    def bhyve_args(self, *args, **kwargs):
-        attrs = self.data['attributes']
-        width, height = (attrs.get('vnc_resolution') or '1024x768').split('x')
-        return '-s ' + ','.join(filter(
-            bool, [
-                '29',
-                'fbuf',
-                'vncserver',
-                f'tcp={attrs["vnc_bind"]}:{attrs["vnc_port"]}',
-                f'w={width}',
-                f'h={height}',
-                f'password={attrs["vnc_password"]}' if attrs.get('vnc_password') else None,
-                'wait' if attrs.get('wait') else None,
+        ), create_element('input', type='tablet', bus='usb'), create_element('video', attribute_dict={
+            'children': [
+                create_element('model', type='gop', attribute_dict={
+                    'children': [create_element(
+                        'resolution', x=self.resolution().split('x')[0], y=self.resolution().split('x')[-1]
+                    )]
+                })
             ]
-        ))
+        })
 
     @staticmethod
     def get_vnc_web_port(vnc_port):
