@@ -1941,7 +1941,7 @@ class InterfaceService(CRUDService):
 
         """
         list_of_ip = []
-        ignore_nics = ['tap', 'epair', 'pflog']
+        ignore_nics = ['tap', 'epair', 'pflog', 'wg']
         if not choices['loopback']:
             ignore_nics.append('lo')
         ignore_nics = tuple(ignore_nics)
