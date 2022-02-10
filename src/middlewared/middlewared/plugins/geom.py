@@ -61,9 +61,9 @@ class GeomCache(Service):
         with self.LOCK:
             self.DISKS.pop(disk)
             self.MULTIPATH.pop(disk)
-            if ele := self.XML.find(f'.//class[name="DISK"]/geom[name="{disk}"]')
+            if ele := self.XML.find(f'.//class[name="DISK"]/geom[name="{disk}"]'):
                 self.XML.find('.//class[name="DISK"]').remove(ele)
-            if ele := self.XML.find(f'.//class[name="MULTIPATH"]/geom[name="{disk}"]')
+            if ele := self.XML.find(f'.//class[name="MULTIPATH"]/geom[name="{disk}"]'):
                 self.XML.find('.//class[name="MULTIPATH"]').remove(ele)
 
     def _fill_disk_details(self, xmlelem, devices):
