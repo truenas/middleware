@@ -12,6 +12,7 @@ from bsd.disk import get_ident_with_name
 class GeomCache(Service):
     DISKS = {}  # formatted cache for geom DISKS (parsed xml)
     MULTIPATH = {}  # formatted cache for geom MULTIPATH providers (parsed xml)
+    TOPOLOGY = {}  # formatted `camcontrol devlist -v` output
     XML = None  # raw xml cache
     LOCK = threading.Lock()
     RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
@@ -45,6 +46,9 @@ class GeomCache(Service):
     def get_multipath(self):
         return self.MULTIPATH
 
+    def get_topology(self):
+        return self.TOPOLOGY
+
     def get_xml(self):
         return self.XML
 
@@ -61,12 +65,13 @@ class GeomCache(Service):
         with self.LOCK:
             self.DISKS.pop(disk)
             self.MULTIPATH.pop(disk)
+            self.TOPOLOGY.pop(disk)
             if ele := self.XML.find(f'.//class[name="DISK"]/geom[name="{disk}"]'):
                 self.XML.find('.//class[name="DISK"]').remove(ele)
             if ele := self.XML.find(f'.//class[name="MULTIPATH"]/geom[name="{disk}"]'):
                 self.XML.find('.//class[name="MULTIPATH"]').remove(ele)
 
-    def _fill_disk_details(self, xmlelem, devices):
+    def _fill_disk_details(self, xmlelem):
         name = xmlelem.find('provider/name').text
         if name.startswith('cd'):
             # ignore cd devices
@@ -124,7 +129,7 @@ class GeomCache(Service):
             disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
         # get the disk driver
-        if driver := devices.get(name, {}).get('driver'):
+        if driver := self.TOPOLOGY.get(name, {}).get('driver'):
             if driver == 'umass-sim':
                 disk['bus'] = 'USB'
             else:
@@ -171,16 +176,16 @@ class GeomCache(Service):
             self.XML = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value)
             self.MULTIPATH = {}
             self.DISKS = {}
+            self.TOPOLOGY = self.middleware.call_sync('geom.cache.get_devices_topology')
 
             # grab the relevant xml classes and refill the cache objects
             _disks = self.XML.findall('.//class[name="DISK"]/geom')
             _mpdisks = self.XML.findall('.//class[name="MULTIPATH"]/geom')
-            devices = self.middleware.call_sync('geom.cache.get_devices_topology')
             for disk, mpdisk in zip_longest(_disks, _mpdisks, fillvalue=None):
                 if disk is not None:
-                    self._fill_disk_details(disk, devices)
+                    self._fill_disk_details(disk)
                 if mpdisk is not None:
-                    self._fill_disk_details(mpdisk, devices)
+                    self._fill_disk_details(mpdisk)
                     self._fill_multipath_consumer_details(mpdisk)
 
 

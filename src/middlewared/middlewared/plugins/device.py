@@ -1,6 +1,5 @@
 from middlewared.schema import accepts, Str
 from middlewared.service import Service, private
-from middlewared.common.camcontrol import camcontrol_list
 from bsd.devinfo import DevInfo
 
 
@@ -45,4 +44,4 @@ class DeviceService(Service):
 
     @private
     async def get_storage_devices_topology(self):
-        return await camcontrol_list()
+        return await self.middleware.call('geom.cache.get_topology')
