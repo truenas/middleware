@@ -1,8 +1,9 @@
 from mako import exceptions
-from mako.lookup import TemplateLookup
 from middlewared.service import CallError, Service
 from middlewared.utils import osc
 from middlewared.utils.io import write_if_changed
+from middlewared.utils.mako import get_template
+
 
 import asyncio
 from collections import defaultdict
@@ -33,15 +34,8 @@ class MakoRenderer(object):
         try:
             # Mako is not asyncio friendly so run it within a thread
             def do():
-                # Split the path into template name and directory
-                name = os.path.basename(path) + ".mako"
-                dir = os.path.dirname(path)
-
-                # This will be where we search for templates
-                lookup = TemplateLookup(directories=[dir], module_directory="/tmp/mako/%s" % dir)
-
                 # Get the template by its relative path
-                tmpl = lookup.get_template(name)
+                tmpl = get_template(os.path.relpath(path, os.path.dirname(os.path.dirname(__file__))) + ".mako")
 
                 # Render the template
                 return tmpl.render(
