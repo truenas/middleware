@@ -1,27 +1,22 @@
 import asyncio
 import re
 
-from middlewared.utils import osc
-
-
-if osc.IS_FREEBSD:
-    import sysctl
-    RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
+import sysctl
+RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 
 
 async def added_disk(middleware, disk_name):
+    await middleware.call('geom.cache.invalidate')
     await middleware.call('disk.sync', disk_name)
     await middleware.call('disk.sed_unlock', disk_name)
-    if osc.IS_FREEBSD:
-        # TODO: Add support for multipath
-        await middleware.call('disk.multipath_sync')
+    await middleware.call('disk.multipath_sync')
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
 
 
 async def remove_disk(middleware, disk_name):
-    await (await middleware.call('disk.sync_all')).wait()
-    if osc.IS_FREEBSD:
-        await middleware.call('disk.multipath_sync')
+    await middleware.call('geom.cache.remove_disk', disk_name)
+    await middleware.call('disk.sync', disk_name)
+    await middleware.call('disk.multipath_sync')
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
     # If a disk dies we need to reconfigure swaps so we are not left
     # with a single disk mirror swap, which may be a point of failure.
@@ -46,21 +41,6 @@ async def devd_devfs_hook(middleware, data):
         await remove_disk(middleware, data['cdev'])
 
 
-async def udev_block_devices_hook(middleware, data):
-    if data.get('SUBSYSTEM') != 'block' or data.get('DEVTYPE') != 'disk' or data['SYS_NAME'].startswith((
-        'sr', 'md', 'dm-', 'loop'
-    )):
-        return
-
-    if data['ACTION'] == 'add':
-        await added_disk(middleware, data['SYS_NAME'])
-    elif data['ACTION'] == 'remove':
-        await remove_disk(middleware, data['SYS_NAME'])
-
-
 def setup(middleware):
-    if osc.IS_LINUX:
-        middleware.register_hook('udev.block', udev_block_devices_hook)
-    else:
-        # Listen to DEVFS events so we can sync on disk attach/detach
-        middleware.register_hook('devd.devfs', devd_devfs_hook)
+    # Listen to DEVFS events so we can sync on disk attach/detach
+    middleware.register_hook('devd.devfs', devd_devfs_hook)
