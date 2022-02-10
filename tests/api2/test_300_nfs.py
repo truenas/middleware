@@ -303,7 +303,10 @@ def test_30_add_second_nfs_path(request):
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
 
-    paths = [NFS_PATH, NFS_PATH]
+    paths = [f'{NFS_PATH}/sub1', f'{NFS_PATH}/sub2']
+    results = SSH_TEST(f"mkdir {' '.join(paths)}", user, password, ip)
+    assert results['result'] is True, results['error']
+
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'paths': paths})
     assert results.status_code == 200, results.text
 
