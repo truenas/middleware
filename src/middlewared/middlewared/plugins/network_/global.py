@@ -43,7 +43,7 @@ class NetworkConfigurationService(ConfigService):
         'network_configuration_entry',
         Int('id', required=True),
         Str('hostname', required=True, validators=[Hostname()]),
-        Str('domain', required=True, validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')],),
+        Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]*$')],),
         IPAddr('ipv4gateway', required=True),
         IPAddr('ipv6gateway', required=True, allow_zone_index=True),
         IPAddr('nameserver1', required=True),
