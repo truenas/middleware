@@ -19,7 +19,7 @@
 
         return output
 
-    def generate_options(share, global_sec):
+    def generate_options(share, global_sec, config):
         params = []
         all_squash = False
         if share["security"]:
@@ -59,6 +59,9 @@
         if maproot:
             params.extend(maproot)
 
+        if config['allow_nonroot']:
+            params.append("insecure")
+
         return ','.join(params)
 
     entries = []
@@ -74,7 +77,7 @@
     global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal) or ["sys"]
 
     for share in shares:
-        opts = generate_options(share, global_sec)
+        opts = generate_options(share, global_sec, config)
         for path in share["paths"]:
             p = Path(path)
             if not p.exists():
