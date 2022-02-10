@@ -5,6 +5,7 @@ from itertools import zip_longest
 
 import sysctl
 from middlewared.service import Service
+from middlewared.common.camcontrol import camcontrol_list
 from bsd.disk import get_ident_with_name
 
 
@@ -63,7 +64,7 @@ class GeomCache(Service):
             if ele:
                 self.XML.find('.//class[name="DISK"]').remove(ele)
 
-    def _fill_disk_details(self, xmlelem):
+    def _fill_disk_details(self, xmlelem, devices):
         name = xmlelem.find('provider/name').text
         if name.startswith('cd'):
             # ignore cd devices
@@ -120,6 +121,15 @@ class GeomCache(Service):
         if disk['size'] and disk['sectorsize']:
             disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
+        # get the disk driver
+        if driver := devices.get(name, {}).get('driver'):
+            if driver == 'umass-sim':
+                disk['bus'] = 'USB'
+            else:
+                disk['bus'] = driver.upper()
+        else:
+            disk['bus'] = 'UNKNOWN'
+
         # update the cache with the disk info
         self.DISKS[name] = disk
 
@@ -150,6 +160,9 @@ class GeomCache(Service):
             'children': children,
         }
 
+    async def get_devices_topology(self):
+        return await camcontrol_list()
+
     def fill(self):
         with self.LOCK:
             # wipe/overwrite the current cache
@@ -160,11 +173,12 @@ class GeomCache(Service):
             # grab the relevant xml classes and refill the cache objects
             _disks = self.XML.findall('.//class[name="DISK"]/geom')
             _mpdisks = self.XML.findall('.//class[name="MULTIPATH"]/geom')
+            devices = self.middleware.call_sync('geom.cache.get_devices_topology')
             for disk, mpdisk in zip_longest(_disks, _mpdisks, fillvalue=None):
                 if disk is not None:
-                    self._fill_disk_details(disk)
+                    self._fill_disk_details(disk, devices)
                 if mpdisk is not None:
-                    self._fill_disk_details(mpdisk)
+                    self._fill_disk_details(mpdisk, devices)
                     self._fill_multipath_consumer_details(mpdisk)
 
 
