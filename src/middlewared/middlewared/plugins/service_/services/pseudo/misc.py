@@ -258,15 +258,6 @@ class TimeservicesService(PseudoServiceBase):
         await self.middleware.call("core.environ_update", {"TZ": settings["stg_timezone"]})
 
 
-class TtysService(PseudoServiceBase):
-    name = "ttys"
-
-    etc = ["ttys"]
-
-    async def start(self):
-        pass
-
-
 class DSCacheService(PseudoServiceBase):
     name = "dscache"
 

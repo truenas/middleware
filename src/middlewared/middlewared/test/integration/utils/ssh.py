@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 __all__ = ["ssh"]
 
 
-def ssh(command, check=True):
+def ssh(command, check=True, complete_response=False):
     result = SSH_TEST(command, user, password, ip)
     if check:
         assert result["result"] is True, f"stdout: {result['output']}\nstderr: {result['stderr']}"
-    return result["output"]
+    return result if complete_response else result["output"]

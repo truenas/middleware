@@ -13,10 +13,16 @@ def dict_factory(cursor, row):
 def query_config_table(table, database_path=None, prefix=None):
     database_path = database_path or FREENAS_DATABASE
     conn = sqlite3.connect(database_path)
-    conn.row_factory = dict_factory
-    c = conn.cursor()
-    c.execute(f"SELECT * FROM {table}")
-    result = c.fetchone()
+    try:
+        conn.row_factory = dict_factory
+        c = conn.cursor()
+        try:
+            c.execute(f"SELECT * FROM {table}")
+            result = c.fetchone()
+        finally:
+            c.close()
+    finally:
+        conn.close()
     if prefix:
         result = {k.replace(prefix, ''): v for k, v in result.items()}
     return result
