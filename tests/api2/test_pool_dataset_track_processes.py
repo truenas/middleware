@@ -34,4 +34,4 @@ def test__open_path_and_check_proc():
             assert res[0]['cmdline'] == cmdline, res
         finally:
             if opened:
-                ssh(f'kill -9 {open_pid}')
+                ssh(f'kill -9 {open_pid}', check=False)
