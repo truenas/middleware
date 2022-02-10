@@ -1,5 +1,5 @@
 <%
-    import os
+    from pathlib import Path
 
     def do_map(share, map_type):
         output = []
@@ -59,7 +59,6 @@
         if maproot:
             params.extend(maproot)
 
-        params.append("subtree_check")
         return ','.join(params)
 
     entries = []
@@ -77,22 +76,26 @@
     for share in shares:
         opts = generate_options(share, global_sec)
         for path in share["paths"]:
-            if not os.path.exists(path):
+            p = Path(path)
+            if not p.exists():
+                middleware.logger.debug("%s: path does not exist, omitting from NFS exports", path)
                 continue
 
             anonymous = True
             options = []
+            params = opts
+            params += ",no_subtree_check" if p.is_mount() else ",subtree_check"
 
             for host in share["hosts"]:
-                options.append(f'{host}({opts})')
+                options.append(f'{host}({params})')
                 anonymous = False
 
             for network in share["networks"]:
-                options.append(f'{network}({opts})')
+                options.append(f'{network}({params})')
                 anonymous = False
 
             if anonymous:
-                options.append(f'*({opts})')
+                options.append(f'*({params})')
 
             entries.append({"path": path, "options": options})
 
