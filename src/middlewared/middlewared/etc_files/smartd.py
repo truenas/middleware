@@ -82,8 +82,7 @@ def get_smartd_schedule_piece(value, min, max, enum=None):
 
     if value == "*":
         return "." * width
-    m = re.match(r"((?P<min>[0-9]+)-(?P<max>[0-9]+)|\*)/(?P<divisor>[0-9]+)", value)
-    if m:
+    elif m := re.match(r"((?P<min>[0-9]+)-(?P<max>[0-9]+)|\*)/(?P<divisor>[0-9]+)", value):
         d = int(m.group("divisor"))
         if m.group("min") is None:
             if d == 1:
@@ -92,6 +91,13 @@ def get_smartd_schedule_piece(value, min, max, enum=None):
             min = int(m.group("min"))
             max = int(m.group("max"))
         values = [v for v in range(min, max + 1) if v % d == 0]
+    elif m := re.match(r"((?P<min>[0-9]+)-(?P<max>[0-9]+)|\*)", value):
+        start = int(m.group("min"))
+        end = int(m.group("max"))
+        if end <= start:
+            values = [start]
+        else:
+            values = [i for i in range(start, end + 1)]
     else:
         values = list(filter(lambda v: v is not None,
                              map(lambda s: enum.get(s.lower(), int(s) if re.match("([0-9]+)$", s) else None),
