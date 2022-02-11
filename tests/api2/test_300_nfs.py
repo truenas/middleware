@@ -525,6 +525,42 @@ def test_36_check_nfsdir_subtree_behavior(request):
     assert len(exports_paths) == 1, exports_paths
 
 
+ test_37_check_nfs_allow_nonroot_behavior(request):
+    """
+    If global configuration option "allow_nonroot" is set, then
+    we append "insecure" to each exports line.
+    Since this is a global option, it triggers an nfsd restart
+    even though it's not technically required.
+
+    Sample:
+    "/mnt/dozer/NFSV4"\
+        *(sec=sys,rw,insecure,no_subtree_check)
+    """
+
+    # Verify that NFS server configuration is as expected
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    assert results.json()['allow_nonroot'] == False, results.text
+
+    parsed = parse_exports()
+    assert len(parsed) == 1, str(parsed)
+    assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
+
+    results = PUT("/nfs/", {"allow_nonroot": True})
+    assert results.status_code == 200, results.text
+
+    parsed = parse_exports()
+    assert len(parsed) == 1, str(parsed)
+    assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
+
+    results = PUT("/nfs/", {"allow_nonroot": False})
+    assert results.status_code == 200, results.text
+
+    parsed = parse_exports()
+    assert len(parsed) == 1, str(parsed)
+    assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
+
+
 def test_51_stoping_nfs_service(request):
     depends(request, ["pool_04"], scope="session")
     payload = {"service": "nfs"}
