@@ -1544,9 +1544,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             'run_in_thread',
         ),
         LoopMonitorIgnoreFrame(
-            re.compile(r'\s+File ".+/asyncio/subprocess\.py", line [0-9]+, in create_subprocess_exec'),
+            re.compile(r'\s+File ".+/asyncio/subprocess\.py", line [0-9]+, in create_subprocess_(exec|shell)'),
             cut_below=True,
-        )
+        ),
     )
 
     def _loop_monitor_thread(self):
