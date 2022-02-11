@@ -18,8 +18,12 @@ def set_thread_name(name):
     prctl.set_name(name)
 
 
-def start_daemon_thread(*args, daemon=True, **kwargs):
-    t = threading.Thread(*args, daemon=daemon, **kwargs)
+def start_daemon_thread(*args, **kwargs):
+    kwargs.setdefault("daemon", True)
+    if not kwargs["daemon"]:
+        raise ValueError("`start_daemon_thread` called with `daemon=False`")
+
+    t = threading.Thread(*args, **kwargs)
     t.start()
     return t
 
