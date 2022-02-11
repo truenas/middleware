@@ -15,6 +15,7 @@ class SimpleServiceFreeBSD:
     freebsd_rc = NotImplemented
     freebsd_pidfile = None
     freebsd_procname = None
+    freebsd_proc_arguments_match = False
 
     async def _get_state_freebsd(self):
         procname = self.freebsd_procname or self.freebsd_rc
@@ -22,7 +23,7 @@ class SimpleServiceFreeBSD:
         if self.freebsd_pidfile:
             cmd = ["pgrep", "-F", self.freebsd_pidfile, procname]
         else:
-            cmd = ["pgrep", procname]
+            cmd = ["pgrep"] + (["-f"] if self.freebsd_proc_arguments_match else []) + [procname]
 
         proc = await run(*cmd, check=False, encoding="utf-8")
         if proc.returncode == 0:

@@ -7,6 +7,7 @@ class TruecommandService(SimpleService):
     etc = ['rc', 'truecommand']
 
     freebsd_rc = 'wireguard'
-    freebsd_procname = 'wireguard-go'
+    freebsd_procname = 'wg-quick'
+    freebsd_proc_arguments_match = True
 
     systemd_unit = 'wg-quick@wg0'
