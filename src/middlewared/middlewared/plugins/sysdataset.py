@@ -262,7 +262,7 @@ class SystemDatasetService(ConfigService):
         if config['pool'] != boot_pool and not await self.middleware.call(
             'pool.query', [('name', '=', config['pool'])]
         ):
-            self.middleware.logger.debug('Pool %r does not exist, moving system dataset to another pool',
+            self.logger.debug('Pool %r does not exist, moving system dataset to another pool',
                                          config['pool'])
             job = await self.middleware.call('systemdataset.update', {
                 'pool': None, 'pool_exclude': exclude_pool,
@@ -276,7 +276,7 @@ class SystemDatasetService(ConfigService):
         # to put it on.
         if not config['pool_set']:
             if pool := await self._query_pool_for_system_dataset(exclude_pool):
-                self.middleware.logger.debug('System dataset pool was not set, moving it to first available pool %r',
+                self.logger.debug('System dataset pool was not set, moving it to first available pool %r',
                                              pool['name'])
                 job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
                 await job.wait()
@@ -288,7 +288,7 @@ class SystemDatasetService(ConfigService):
                                              {'extra': {'retrieve_children': False}})
         if not dataset or dataset[0]['locked']:
             # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
-            self.middleware.logger.debug(
+            self.logger.debug(
                 'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
                 config['pool'],
             )
@@ -300,7 +300,7 @@ class SystemDatasetService(ConfigService):
             if p.mountpoint == SYSDATASET_PATH:
                 mounted_pool = p.device.split('/')[0]
         if mounted_pool and mounted_pool != config['pool']:
-            self.middleware.logger.debug('Abandoning dataset on %r in favor of %r', mounted_pool, config['pool'])
+            self.logger.debug('Abandoning dataset on %r in favor of %r', mounted_pool, config['pool'])
             async with self._release_system_dataset():
                 await self.__umount(mounted_pool, config['uuid'])
                 await self.__setup_datasets(config['pool'], config['uuid'])
