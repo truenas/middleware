@@ -16,8 +16,11 @@ depends_on = None
 
 
 def upgrade():
-    with op.batch_alter_table('services_snmp', schema=None) as batch_op:
-        batch_op.drop_column('snmp_iftop')
+    try:
+        with op.batch_alter_table('services_snmp', schema=None) as batch_op:
+            batch_op.drop_column('snmp_iftop')
+    except KeyError:
+        pass
 
 
 def downgrade():
