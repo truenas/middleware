@@ -259,14 +259,10 @@ class SystemDatasetService(ConfigService):
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
-        if config['pool'] != boot_pool and not await self.middleware.call(
-            'pool.query', [('name', '=', config['pool'])]
-        ):
-            self.logger.debug('Pool %r does not exist, moving system dataset to another pool',
-                                         config['pool'])
-            job = await self.middleware.call('systemdataset.update', {
-                'pool': None, 'pool_exclude': exclude_pool,
-            })
+        filters = [('name', '=', config['pool'])]
+        if config['pool'] != boot_pool and not await self.middleware.call('pool.query', filters):
+            self.logger.debug('Pool %r does not exist, moving system dataset to another pool', config['pool'])
+            job = await self.middleware.call('systemdataset.update', {'pool': None, 'pool_exclude': exclude_pool})
             await job.wait()
             if job.error:
                 raise CallError(job.error)
@@ -276,8 +272,7 @@ class SystemDatasetService(ConfigService):
         # to put it on.
         if not config['pool_set']:
             if pool := await self._query_pool_for_system_dataset(exclude_pool):
-                self.logger.debug('System dataset pool was not set, moving it to first available pool %r',
-                                             pool['name'])
+                self.logger.debug('Sysdataset pool was not set, moving it to first available pool %r', pool['name'])
                 job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
                 await job.wait()
                 if job.error:
