@@ -272,11 +272,9 @@ class SystemDatasetService(ConfigService):
             os.makedirs(SYSDATASET_PATH)
 
         acltype = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
-        if acltype and acltype[0]['properties']['acltype']['value'] == 'off':
+        if acltype and acltype[0]['properties']['acltype']['value'] != 'off':
             await self.middleware.call(
-                'zfs.dataset.update',
-                config['basename'],
-                {'properties': {'acltype': {'value': 'off'}}},
+                'zfs.dataset.update', config['basename'], {'properties': {'acltype': {'value': 'off'}}}
             )
 
         if mount:
