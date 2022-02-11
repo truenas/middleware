@@ -62,6 +62,23 @@ def parse_exports():
 
     return rv
 
+
+def parse_server_config(fname="nfs-kernel-server"):
+    results = SSH_TEST(f"cat /etc/default/{fname}", user, password, ip)
+    assert results['result'] is True, results['error']
+    conf = results['output'].splitlines()
+    rv = {}
+
+    for line in conf:
+        if not line or line.startswith("#"):
+            continue
+
+        k,v = line.split("=", 1)
+        rv.update({k: v})
+
+    return rv
+
+
 # Enable NFS server
 def test_01_creating_the_nfs_server():
     paylaod = {"servers": 10,
@@ -206,9 +223,19 @@ def test_18_removing_nfs_mountpoint(request):
 
 
 def test_19_updating_the_nfs_service(request):
+    """
+    This test verifies that service can be updated in general,
+    and also that the 'servers' key can be altered.
+    Latter goal is achieved by readig the nfs config file
+    and verifying that the value here was set correctly.
+    """
     depends(request, ["pool_04"], scope="session")
     results = PUT("/nfs/", {"servers": "50"})
     assert results.status_code == 200, results.text
+
+    s = parse_server_config()
+    assert int(s["RPCNFSDCOUNT"][1:-1]) == 50, str(s)
+    assert "--num-threads 50" in s["RPCMOUNTDOPTS"], str(s)
 
 
 def test_20_update_nfs_share(request):
@@ -525,7 +552,7 @@ def test_36_check_nfsdir_subtree_behavior(request):
     assert len(exports_paths) == 1, exports_paths
 
 
- test_37_check_nfs_allow_nonroot_behavior(request):
+def test_37_check_nfs_allow_nonroot_behavior(request):
     """
     If global configuration option "allow_nonroot" is set, then
     we append "insecure" to each exports line.
@@ -559,6 +586,83 @@ def test_36_check_nfsdir_subtree_behavior(request):
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
     assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
+
+
+def test_38_check_nfs_service_v4_parameter(request):
+    """
+    This test verifies that toggling the `v4` option generates expected changes
+    in nfs kernel server config.
+    """
+    depends(request, ["pool_04", "ssh_password"], scope="session")
+
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    assert results.json()['v4'] == True, results.text
+
+    s = parse_server_config()
+    assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
+
+    results = PUT("/nfs/", {"v4": False})
+    assert results.status_code == 200, results.text
+
+    s = parse_server_config()
+    assert "-N 4" in s["RPCNFSDOPTS"], str(s)
+
+    results = PUT("/nfs/", {"v4": True})
+    assert results.status_code == 200, results.text
+
+    s = parse_server_config()
+    assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
+
+
+def test_39_check_nfs_service_udp_parameter(request):
+    """
+    This test verifies that toggling the `udp` option generates expected changes
+    in nfs kernel server config.
+    """
+    depends(request, ["pool_04", "ssh_password"], scope="session")
+
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    assert results.json()['udp'] == False, results.text
+
+    s = parse_server_config()
+    assert "--no-udp" in s["RPCNFSDOPTS"], str(s)
+
+    results = PUT("/nfs/", {"udp": True})
+    assert results.status_code == 200, results.text
+
+    s = parse_server_config()
+    assert "--no-udp" not in s["RPCNFSDOPTS"], str(s)
+
+    results = PUT("/nfs/", {"udp": False})
+    assert results.status_code == 200, results.text
+
+    s = parse_server_config()
+    assert "--no-udp" in s["RPCNFSDOPTS"], str(s)
+
+
+def test_40_check_nfs_service_ports(request):
+    """
+    Port options are spread between two files:
+    /etc/default/nfs-kernel-server
+    /etc/default/nfs-common
+
+    This test verifies that the custom ports we specified in
+    earlier NFS tests are set in the relevant files.
+    """
+    depends(request, ["pool_04", "ssh_password"], scope="session")
+
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    config = results.json()
+
+    s = parse_server_config()
+    assert f'--port {config["mountd_port"]}' in s['RPCMOUNTDOPTS'], str(s)
+
+    s = parse_server_config("nfs-common")
+    assert f'--port {config["rpcstatd_port"]}' in s['STATDOPTS'], str(s)
+    assert f'--nlm-port {config["rpclockd_port"]}' in s['STATDOPTS'], str(s)
 
 
 def test_51_stoping_nfs_service(request):
