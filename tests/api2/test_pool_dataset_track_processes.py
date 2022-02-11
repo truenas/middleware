@@ -29,9 +29,12 @@ def test__open_path_and_check_proc():
             # have to use websocket since the method being called is private
             payload = {'msg': 'method', 'method': 'pool.dataset.processes_using_paths', 'params': [path]}
             res = make_ws_request(ip, payload)
-            assert len(res) == 1, res
-            assert int(res[0]['pid']) == int(open_pid), res
-            assert res[0]['cmdline'] == cmdline, res
+            for i in res:
+                if i['pid'] == int(open_pid):
+                    assert i['cmdline'] == cmdline, i
+                    break
+            else:
+                assert False, f'{open_pid!r} not found in {res!r}'
         finally:
             if opened:
-                ssh(f'kill -9 {open_pid}')
+                ssh(f'kill -9 {open_pid}', check=False)
