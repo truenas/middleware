@@ -226,7 +226,7 @@ def test_19_updating_the_nfs_service(request):
     """
     This test verifies that service can be updated in general,
     and also that the 'servers' key can be altered.
-    Latter goal is achieved by readig the nfs config file
+    Latter goal is achieved by reading the nfs config file
     and verifying that the value here was set correctly.
     """
     depends(request, ["pool_04"], scope="session")
