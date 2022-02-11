@@ -9,7 +9,7 @@ import prctl
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["set_thread_name", "start_daemon_thread", "ThreadExecutor"]
+__all__ = ["set_thread_name", "start_daemon_thread", "IoThreadPoolExecutor"]
 
 counter = count(1)
 
@@ -28,7 +28,7 @@ def start_daemon_thread(*args, **kwargs):
     return t
 
 
-class ThreadExecutor(Executor):
+class IoThreadPoolExecutor(Executor):
     def __init__(self):
         self.thread_count = (20 if ((os.cpu_count() or 1) + 4) < 32 else 32) + 1
         self.executor = ThreadPoolExecutor(
