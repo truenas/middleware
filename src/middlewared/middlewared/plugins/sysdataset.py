@@ -290,7 +290,7 @@ class SystemDatasetService(ConfigService):
             self.force_pool = boot_pool
             config = await self.config()
 
-        mounted_pool = None
+        mounted_pool = mounted = None
         for p in psutil.disk_partitions():
             if p.mountpoint == SYSDATASET_PATH:
                 mounted_pool = p.device.split('/')[0]
@@ -299,6 +299,7 @@ class SystemDatasetService(ConfigService):
             async with self._release_system_dataset():
                 await self.__umount(mounted_pool, config['uuid'])
                 await self.__setup_datasets(config['pool'], config['uuid'])
+                mounted = await self.__mount(config['pool'], config['uuid'])
         else:
             await self.__setup_datasets(config['pool'], config['uuid'])
 
@@ -315,7 +316,8 @@ class SystemDatasetService(ConfigService):
                 {'properties': {'acltype': {'value': 'off'}}},
             )
 
-        mounted = await self.__mount(config['pool'], config['uuid'])
+        if mounted is None:
+            mounted = await self.__mount(config['pool'], config['uuid'])
 
         corepath = f'{SYSDATASET_PATH}/cores'
         if os.path.exists(corepath):
@@ -426,9 +428,10 @@ class SystemDatasetService(ConfigService):
     async def __umount(self, pool, uuid):
         await run('umount', '/var/lib/systemd/coredump', check=False)
 
+        flags = '-f' if not await self.middleware.call('failover.licensed') else '-l'
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
-                await run('umount', '-f', dataset)
+                await run('umount', flags, dataset)
             except subprocess.CalledProcessError as e:
                 stderr = e.stderr.decode()
                 if 'no mount point specified' in stderr:
