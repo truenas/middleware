@@ -493,8 +493,8 @@ class SystemDatasetService(ConfigService):
             restart.insert(0, 'glusterd')
         if await self.middleware.call('service.started_or_enabled', 'webdav'):
             restart.append('webdav')
-        for service in ['open-vm-tools']:
-            restart.append(service)
+        if await self.middleware.call('service.started', 'open-vm-tools'):
+            restart.append('open-vm-tools')
         if await self.middleware.call('service.started', 'idmap'):
             restart.append('idmap')
 
