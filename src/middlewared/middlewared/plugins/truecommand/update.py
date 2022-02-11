@@ -145,6 +145,8 @@ class TruecommandService(ConfigService):
                     'endpoint': None,
                     'tc_public_key': None,
                     'wg_address': None,
+                    'wg_public_key': None,
+                    'wg_private_key': None,
                     'api_key_state': Status.DISABLED.value,
                 })
 
