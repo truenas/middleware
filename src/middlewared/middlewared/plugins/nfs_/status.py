@@ -25,7 +25,6 @@ class NFSService(Service):
 
         return entries
 
-    @private
     @filterable
     def get_nfs3_clients(self, filters, options):
         """
@@ -56,7 +55,6 @@ class NFSService(Service):
         # return empty list in this case
         return states or []
 
-    @private
     @filterable
     def get_nfs4_clients(self, filters, options):
         clients = []
