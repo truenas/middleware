@@ -225,7 +225,7 @@ class NFSService(SystemServiceService):
 
         await self.nfs_compress(new)
 
-        await self._update_service(old, new)
+        await self._update_service(old, new, "restart")
 
         return await self.config()
 
