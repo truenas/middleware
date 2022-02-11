@@ -15,7 +15,7 @@ from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.plugins import LoadPluginsMixin
 from .utils.profile import profile_wrap
 from .utils.service.call import ServiceCallMixin
-from .utils.threading import set_thread_name, ThreadExecutor
+from .utils.threading import set_thread_name, IoThreadPoolExecutor
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from .webhooks.cluster_events import ClusterEventsApplication
@@ -863,7 +863,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.app = None
         self.loop = None
         self.__thread_id = threading.get_ident()
-        self.thread_pool_executor = ThreadExecutor()
+        self.thread_pool_executor = IoThreadPoolExecutor()
         multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
         self.__wsclients = {}
@@ -1320,7 +1320,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def _in_executor(self, executor):
         if isinstance(executor, concurrent.futures.thread.ThreadPoolExecutor):
             return threading.current_thread() in executor._threads
-        elif isinstance(executor, ThreadExecutor):
+        elif isinstance(executor, IoThreadPoolExecutor):
             return threading.current_thread().name.startswith(("IoThread", "ExtraIoThread"))
         else:
             raise RuntimeError(f"Unknown executor: {executor!r}")
