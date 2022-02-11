@@ -1,16 +1,16 @@
-"""remove snmp_iftop column
+"""remove snmp iftop integration (never worked)
 
-Revision ID: ecd42897802c
-Revises: 184b771fb710
-Create Date: 2022-01-25 18:25:01.109629+00:00
+Revision ID: cd7569a7b973
+Revises: 7132a60093ce
+Create Date: 2022-02-07 13:36:26.041217+00:00
 
 """
 from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision = 'ecd42897802c'
-down_revision = '184b771fb710'
+revision = 'cd7569a7b973'
+down_revision = '7132a60093ce'
 branch_labels = None
 depends_on = None
 
