@@ -14,6 +14,7 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from auto_config import pool_name, ha, hostname
 from auto_config import dev_test, password, user
+from protocols import SSH_NFS
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
@@ -663,6 +664,33 @@ def test_40_check_nfs_service_ports(request):
     s = parse_server_config("nfs-common")
     assert f'--port {config["rpcstatd_port"]}' in s['STATDOPTS'], str(s)
     assert f'--nlm-port {config["rpclockd_port"]}' in s['STATDOPTS'], str(s)
+
+
+def test_41_check_nfs_client_status(request):
+    """
+    This test checks the function of API endpoints to list NFSv3 and
+    NFSv4 clients by performing loopback mounts on the remote TrueNAS
+    server and then checking client counts. Due to inherent imprecision
+    of counts over NFSv3 protcol (specifically with regard to decrementing
+    sessions) we only verify that count is non-zero for NFSv3.
+    """
+    depends(request, ["pool_04", "ssh_password"], scope="session")
+
+    with SSH_NFS(ip, NFS_PATH, vers=3, user=user, password=password, ip=ip):
+        results = GET('/nfs/get_nfs3_clients/', payload={
+            'query-filters': [],
+            'query-options': {'count': True}
+        })
+        assert results.status_code == 200, results.text
+        assert results.json() != 0, results.text
+
+    with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+        results = GET('/nfs/get_nfs4_clients/', payload={
+            'query-filters': [],
+            'query-options': {'count': True}
+        })
+        assert results.status_code == 200, results.text
+        assert results.json() == 1, results.text
 
 
 def test_51_stoping_nfs_service(request):
