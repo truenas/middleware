@@ -11,6 +11,10 @@ class NFSService(Service):
 
     @private
     def get_rmtab(self):
+        """
+        In future we can apply enhance based on socket status
+        e.g ss -H -o state established '( sport = :nfs )'
+        """
         entries = []
         with suppress(FileNotFoundError):
             with open("/var/lib/nfs/rmtab", "r") as f:
@@ -28,9 +32,9 @@ class NFSService(Service):
     @filterable
     def get_nfs3_clients(self, filters, options):
         """
-        This is a wrapper around get_rmtab so that in future we
-        can apply additional filtering here based on socket status
-        e.g ss -H -o state established '( sport = :nfs )'
+        Read contents of rmtab. This information may not
+        be accurate due to stale entries. This is ultimately
+        a limitation of the NFSv3 protocol.
         """
         rmtab = self.get_rmtab()
         return filter_list(rmtab, filters, options)
@@ -57,6 +61,10 @@ class NFSService(Service):
 
     @filterable
     def get_nfs4_clients(self, filters, options):
+        """
+        Read information about NFSv4 clients from
+        /proc/fs/nfsd/clients
+        """
         clients = []
         with suppress(FileNotFoundError):
             for client in os.listdir("/proc/fs/nfsd/clients/"):
