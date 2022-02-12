@@ -108,8 +108,8 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nslcd.conf',
                 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
-        'network': [
-            {'type': 'mako', 'path': 'dhclient.conf', 'platform': 'FreeBSD'},
+        'dhclient': [
+            {'type': 'mako', 'path': 'dhcp/dhclient.conf', 'local_path': 'dhclient.conf'},
         ],
         'nfsd': [
             {'type': 'mako', 'path': 'default/nfs-common'},

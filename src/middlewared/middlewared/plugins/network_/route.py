@@ -51,7 +51,7 @@ class RouteService(Service):
 
         # Generate dhclient.conf so we can ignore routes (def gw) option
         # in case there is one explicitly set in network config
-        await self.middleware.call('etc.generate', 'network')
+        await self.middleware.call('etc.generate', 'dhclient')
 
         ipv4_gateway = config['gc_ipv4gateway'] or None
         if not ipv4_gateway:
