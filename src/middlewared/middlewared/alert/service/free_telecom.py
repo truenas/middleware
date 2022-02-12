@@ -1,13 +1,12 @@
 import requests
 import json
-import html2text
 
 from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 class FreeTelecomAlerteService(ThreadedAlertService):
-    title = "AnyWebhook"
+    title = "FreeTelecom"
 
     schema = Dict(
         "FreeTelecom_attributes",
@@ -23,7 +22,7 @@ class FreeTelecomAlerteService(ThreadedAlertService):
             data = json.dumps({
                     "user": self.attributes["user"],
                     "pass": self.attributes["pass"],
-                    "msg": html2text.html2text(self._format_alerts(alerts, gone_alerts, new_alerts))
+                    "msg": self._format_alerts(alerts, gone_alerts, new_alerts)
                 }),
             headers={"Content-type": "application/json"},
             timeout = INTERNET_TIMEOUT
