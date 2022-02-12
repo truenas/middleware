@@ -1673,6 +1673,9 @@ class InterfaceService(CRUDService):
                 self.logger.error('Failed to configure {}'.format(name), exc_info=True)
 
         if run_dhcp:
+            # update dhclient.conf before we run dhclient to ensure the hostname/fqdn
+            # and/or the supersede routers config options are set properly
+            await self.middleware.call('etc.generate', 'dhclient')
             await asyncio.wait([self.run_dhcp(interface, wait_dhcp) for interface in run_dhcp])
         else:
             # first interface that is configured, we kill dhclient on _all_ interfaces
