@@ -1353,7 +1353,7 @@ class CertificateService(CRUDService):
             elif ':' not in domain:
                 normalised_san = ':'.join(self.middleware.call_sync('cryptokey.normalize_san', [domain])[0])
                 if normalised_san not in dns_mapping_copy:
-                    dns_mapping_copy[normalised_san] = domain
+                    dns_mapping_copy[normalised_san] = dns_mapping_copy[domain]
 
         for domain in domains:
             if domain not in dns_mapping_copy:
@@ -1371,7 +1371,7 @@ class CertificateService(CRUDService):
                     'acme_create.dns_mapping',
                     f'Domain {domain} name cannot end with a period'
                 )
-            if '*' in domain and not domain.startswith('*.'):
+            if '*' in domain and not domain.split(':', 1)[-1].strip().startswith('*.'):
                 verrors.add(
                     'acme_create.dns_mapping',
                     'Wildcards must be at the start of domain name followed by a period'
@@ -1395,7 +1395,15 @@ class CertificateService(CRUDService):
         else:
             job.set_progress(progress, 'New order for certificate issuance placed')
 
-            self.handle_authorizations(job, progress, order, dns_mapping_copy, acme_client, key)
+            dns_mapping = {}
+            for d, v in map(lambda v: (v[0].split(':', 1)[-1], v[1]), dns_mapping_copy.items()):
+                dns_mapping[d] = v
+                if '*' in d:
+                    # Boulder returns us domain name stripped of wildcard character,
+                    # hence we account for that in the mapping we keep
+                    dns_mapping[d.replace('*.', '')] = v
+
+            self.handle_authorizations(job, progress, order, dns_mapping, acme_client, key)
 
             try:
                 # Polling for a maximum of 10 minutes while trying to finalize order
@@ -1419,8 +1427,6 @@ class CertificateService(CRUDService):
                 status = False
                 progress += (max_progress / len(order.authorizations))
                 domain = authorization_resource.body.identifier.value
-                # BOULDER DOES NOT RETURN WILDCARDS FOR NOW
-                # OTHER IMPLEMENTATIONS RIGHT NOW ASSUME THAT EVERY DOMAIN HAS A WILD CARD IN CASE OF DNS CHALLENGE
                 challenge = None
                 for chg in authorization_resource.body.challenges:
                     if chg.typ == 'dns-01':
