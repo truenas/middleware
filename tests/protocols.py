@@ -289,7 +289,7 @@ class SSH_NFS(NFS):
         if not self._mounted:
             return
 
-        do_umount = SSH_TEST(f"umount {self._localpath}", self._user, self._password, self._ip)
+        do_umount = SSH_TEST(f"umount -f {self._localpath}", self._user, self._password, self._ip)
         if do_umount['result'] == False:
             raise RuntimeError(do_umount['stderr'])
 
