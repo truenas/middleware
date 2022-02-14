@@ -1,6 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.validators import Match, Range
+from middlewared.validators import Match, Range, Hostname
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 
@@ -61,7 +61,7 @@ class S3Service(SystemServiceService):
         Bool('browser'),
         Str('storage_path'),
         Int('certificate', null=True),
-        Str('tls_server_uri', null=True),
+        Str('tls_server_uri', validators=[Hostname(explanation='Should be a valid hostname')], null=True),
         update=True,
     ))
     async def do_update(self, data):

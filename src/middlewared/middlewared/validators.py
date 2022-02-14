@@ -82,11 +82,20 @@ class Match:
         self.regex = re.compile(pattern, flags)
 
     def __call__(self, value):
-        if not self.regex.match(value):
+        if value is not None and not self.regex.match(value):
             raise ValueError(self.explanation or f"Does not match {self.pattern}")
 
     def __deepcopy__(self, memo):
         return Match(self.pattern, self.flags, self.explanation)
+
+
+class Hostname(Match):
+    def __init__(self, explanation=None):
+        super().__init__(
+            r'^[a-z\.\-0-9]*[a-z0-9]$',
+            flags=re.IGNORECASE,
+            explanation=explanation
+        )
 
 
 class Or:
