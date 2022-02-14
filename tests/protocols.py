@@ -4,6 +4,7 @@ from samba.samba3 import param as s3param
 from samba import credentials
 import subprocess
 from samba import NTSTATUSError
+from functions import SSH_TEST
 
 
 class SMB(object):
@@ -243,3 +244,53 @@ class SMB(object):
         smbcquotas = subprocess.run(cmd, capture_output=True)
         quotaout = smbcquotas.stdout.decode().splitlines()
         return self._parse_quota(quotaout)
+
+
+class NFS(object):
+    def __init__(self, hostname, path, **kwargs):
+        self._path = path
+        self._hostname = hostname
+        self._version = kwargs.get('vers', 3)
+        self._localpath = kwargs.get('localpath', '/mnt/testnfs')
+        self._mounted = False
+        self._user = kwargs.get('user')
+        self._password = kwargs.get('password')
+        self._ip = kwargs.get('ip')
+
+    def mount(self):
+        raise NotImplementedError
+
+    def umount(self):
+        raise NotImplementedError
+
+    def __enter__(self):
+        self.mount()
+
+    def __exit__(self, typ, value, traceback):
+        self.umount()
+
+
+class SSH_NFS(NFS):
+    def mount(self):
+        mkdir = SSH_TEST(f"mkdir {self._localpath}", self._user, self._password, self._ip)
+        cmd = [
+            'mount.nfs',
+            '-o', f'vers={self._version}',
+            f'{self._hostname}:{self._path}',
+            self._localpath
+        ]
+        do_mount = SSH_TEST(" ".join(cmd), self._user, self._password, self._ip)
+        if do_mount['result'] == False:
+            raise RuntimeError(do_mount['output'])
+
+        self._mounted = True
+
+    def umount(self):
+        if not self._mounted:
+            return
+
+        do_umount = SSH_TEST(f"umount -f {self._localpath}", self._user, self._password, self._ip)
+        if do_umount['result'] == False:
+            raise RuntimeError(do_umount['stderr'])
+
+        self._mounted = False
