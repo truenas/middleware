@@ -26,7 +26,7 @@ EC_CURVES = [
     'SECP521R1',
     'ed25519',
 ]
-EC_CURVE_DEFAULT = 'BrainpoolP384R1'
+EC_CURVE_DEFAULT = 'SECP384R1'
 EKU_OIDS = [i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')]
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
