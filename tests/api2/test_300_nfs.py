@@ -7,6 +7,8 @@
 import pytest
 import sys
 import os
+import contextlib
+import urllib.parse
 from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
@@ -78,6 +80,47 @@ def parse_server_config(fname="nfs-kernel-server"):
         rv.update({k: v})
 
     return rv
+
+
+@contextlib.contextmanager
+def nfs_dataset(name, options=None, acl=None, mode=None):
+    assert "/" not in name
+
+    dataset = f"{pool_name}/{name}"
+
+    result = POST("/pool/dataset/", {"name": dataset, **(options or {})})
+    assert result.status_code == 200, result.text
+
+    if acl is None:
+        result = POST("/filesystem/setperm/", {'path': f"/mnt/{dataset}", "mode": mode or "777"})
+    else:
+        result = POST("/filesystem/setacl/", {'path': f"/mnt/{dataset}", "dacl": acl})
+
+    assert result.status_code == 200, result.text
+    job_status = wait_on_job(result.json(), 180)
+    assert job_status["state"] == "SUCCESS", str(job_status["results"])
+
+    try:
+        yield dataset
+    finally:
+        result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
+        assert result.status_code == 200, result.text
+
+
+@contextlib.contextmanager
+def nfs_share(path, options=None):
+    results = POST("/sharing/nfs/", {
+        "paths": [path],
+        **(options or {}),
+    })
+    assert results.status_code == 200, results.text
+    id = results.json()["id"]
+
+    try:
+        yield id
+    finally:
+        result = DELETE(f"/sharing/nfs/id/{id}/")
+        assert result.status_code == 200, result.text
 
 
 # Enable NFS server
@@ -691,6 +734,94 @@ def test_41_check_nfs_client_status(request):
         })
         assert results.status_code == 200, results.text
         assert results.json() == 1, results.text
+
+
+def test_42_check_nfsv4_acl_support(request):
+    """
+    This test validates reading and setting NFSv4 ACLs through an NFSv4
+    mount in the following manner:
+    1) Create and locally mount an NFSv4 share on the TrueNAS server
+    2) Iterate through all possible permissions options and set them
+       via an NFS client, read back through NFS client, and read resulting
+       ACL through the filesystem API.
+    3) Repeate same process for each of the supported flags.
+    """
+    depends(request, ["pool_04", "ssh_password"], scope="session")
+    acl_nfs_path = f'/mnt/{pool_name}/test_nfs4_acl'
+    test_perms = {
+        "READ_DATA": True,
+        "WRITE_DATA": True,
+        "EXECUTE": True,
+        "APPEND_DATA": True,
+        "DELETE_CHILD": True,
+        "DELETE": True,
+        "READ_ATTRIBUTES": True,
+        "WRITE_ATTRIBUTES": True,
+        "READ_NAMED_ATTRS": True,
+        "WRITE_NAMED_ATTRS": True,
+        "READ_ACL": True,
+        "WRITE_ACL": True,
+        "WRITE_OWNER": True,
+        "SYNCHRONIZE": True
+    }
+    test_flags = {
+        "FILE_INHERIT": True,
+        "DIRECTORY_INHERIT": True,
+        "INHERIT_ONLY": False,
+        "NO_PROPAGATE_INHERIT": False,
+        "INHERITED": False
+    }
+    theacl = [
+        {"tag": "owner@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+        {"tag": "group@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+        {"tag": "everyone@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+        {"tag": "USER", "id": 65534, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+        {"tag": "GROUP", "id": 666, "perms": test_perms.copy(), "flags": test_flags.copy(), "type": "ALLOW"},
+    ]
+    with nfs_dataset("test_nfs4_acl", {"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}, theacl):
+        with nfs_share(acl_nfs_path):
+            with SSH_NFS(ip, acl_nfs_path, vers=4, user=user, password=password, ip=ip) as n:
+                nfsacl = n.getacl(".")
+                for idx, ace in enumerate(nfsacl):
+                    assert ace == theacl[idx], str(ace)
+
+                for perm in test_perms.keys():
+                    if perm == 'SYNCHRONIZE':
+                        # break in SYNCHRONIZE because Linux tool limitation
+                        break
+
+                    theacl[4]['perms'][perm] = False
+                    n.setacl(".", theacl)
+                    nfsacl = n.getacl(".")
+                    for idx, ace in enumerate(nfsacl):
+                        assert ace == theacl[idx], str(ace)
+
+                    payload = {
+                        'path': acl_nfs_path,
+                        'simplified': False
+                    }
+                    result = POST('/filesystem/getacl/', payload)
+                    assert result.status_code == 200, results.text
+
+                    for idx, ace in enumerate(result.json()['acl']):
+                        assert ace == nfsacl[idx], str(ace)
+
+                for flag in ("INHERIT_ONLY", "NO_PROPAGATE_INHERIT"):
+                    theacl[4]['flags'][flag] = True
+                    n.setacl(".", theacl)
+                    nfsacl = n.getacl(".")
+                    for idx, ace in enumerate(nfsacl):
+                        assert ace == theacl[idx], str(ace)
+
+                    payload = {
+                        'path': acl_nfs_path,
+                        'simplified': False
+                    }
+                    result = POST('/filesystem/getacl/', payload)
+                    assert result.status_code == 200, results.text
+
+                    for idx, ace in enumerate(result.json()['acl']):
+                        assert ace == nfsacl[idx], str(ace)
 
 
 def test_51_stoping_nfs_service(request):
