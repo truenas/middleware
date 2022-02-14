@@ -1750,17 +1750,6 @@ class PoolService(CRUDService):
                     'Failed to set cache file for %s', pool['name'], exc_info=True,
                 )
 
-            try:
-                if os.path.isdir('/mnt/mnt'):
-                    # Reset all mountpoints
-                    self.middleware.call_sync(
-                        'zfs.dataset.inherit', pool['name'], 'mountpoint', True
-                    )
-            except Exception:
-                self.logger.warning(
-                    'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
-                )
-
             unlock_job = self.middleware.call_sync(
                 'pool.dataset.unlock', pool['name'], {'recursive': True, 'toggle_attachments': False}
             )
