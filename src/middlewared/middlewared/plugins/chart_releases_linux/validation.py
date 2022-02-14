@@ -1,4 +1,7 @@
-from middlewared.schema import NOT_PROVIDED
+from pathlib import Path
+
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.schema import Dict, NOT_PROVIDED
 from middlewared.service import CallError, private, Service
 from middlewared.utils import filter_list
 
@@ -11,6 +14,9 @@ validation_mapping = {
     'definitions/certificateAuthority': 'certificate_authority',
     'validations/containerImage': 'container_image',
     'validations/nodePort': 'port_available_on_node',
+    'validations/hostPath': 'custom_host_path',
+    'validations/lockedHostPath': 'locked_host_path',
+    'validations/hostPathAttachments': 'host_path_attachments',
 }
 
 
@@ -48,12 +54,16 @@ class ChartReleaseService(Service):
         questions = {}
         for variable in item_version_details['schema']['questions']:
             questions[variable['variable']] = variable
-            if 'subquestions' in variable.get('schema', {}):
-                for sub_variable in variable['schema']['subquestions']:
-                    questions[sub_variable['variable']] = sub_variable
         for key in filter(lambda k: k in questions, new_values):
             await self.validate_question(
-                verrors, new_values[key], questions[key], dict_obj.attrs[key], schema_name, release_data,
+                verrors=verrors,
+                parent_value=new_values,
+                value=new_values[key],
+                question=questions[key],
+                parent_attr=dict_obj,
+                var_attr=dict_obj.attrs[key],
+                schema_name=schema_name,
+                release_data=release_data,
             )
 
         verrors.check()
@@ -61,16 +71,16 @@ class ChartReleaseService(Service):
         return dict_obj
 
     @private
-    async def validate_question(self, verrors, value, question, var_attr, schema_name, release_data=None):
+    async def validate_question(self, verrors, parent_value, value, question, parent_attr, var_attr, schema_name, release_data=None):
         schema = question['schema']
         schema_name = f'{schema_name}.{question["variable"]}'
 
-        # TODO: Add nested support for subquestions
         if schema['type'] == 'dict' and value:
             dict_attrs = {v['variable']: v for v in schema['attrs']}
             for k in filter(lambda k: k in dict_attrs, value):
                 await self.validate_question(
-                    verrors, value[k], dict_attrs[k], var_attr.attrs[k], f'{schema_name}.{k}', release_data,
+                    verrors, value, value[k], dict_attrs[k],
+                    var_attr, var_attr.attrs[k], f'{schema_name}.{k}', release_data,
                 )
 
         elif schema['type'] == 'list' and value:
@@ -78,14 +88,30 @@ class ChartReleaseService(Service):
                 item_index, attr = get_list_item_from_value(item, var_attr)
                 if attr:
                     await self.validate_question(
-                        verrors, item, schema['items'][item_index], attr, f'{schema_name}.{index}', release_data,
+                        verrors, value, item, schema['items'][item_index],
+                        var_attr, attr, f'{schema_name}.{index}', release_data,
                     )
 
         for validator_def in filter(lambda k: k in validation_mapping, schema.get('$ref', [])):
             await self.middleware.call(
-                f'chart.release.validate_{validation_mapping[validator_def]}', verrors, value, question, schema_name,
-                release_data,
+                f'chart.release.validate_{validation_mapping[validator_def]}',
+                verrors, value, question, schema_name, release_data,
             )
+
+        subquestions_enabled = (
+            schema['show_subquestions_if'] == value
+            if 'show_subquestions_if' in schema
+            else 'subquestions' in schema
+        )
+        if subquestions_enabled:
+            for sub_question in schema.get('subquestions', []):
+                # TODO: Add support for nested subquestions validation for List schema types.
+                if isinstance(parent_attr, Dict):
+                    item_key, attr = sub_question['variable'], parent_attr.attrs[sub_question['variable']]
+                    await self.validate_question(
+                        verrors, parent_value, parent_value[sub_question['variable']], sub_question,
+                        parent_attr, attr, f'{schema_name}.{item_key}', release_data,
+                    )
 
         return verrors
 
@@ -136,3 +162,40 @@ class ChartReleaseService(Service):
         else:
             if not digest:
                 verrors.add(schema_name, f'Unable to retrieve {tag!r} container image tag details.')
+
+    @private
+    async def validate_custom_host_path(self, verrors, path, question, schema_name, release_data):
+        if not path:
+            return
+
+        await self.validate_locked_host_path(verrors, path, question, schema_name, release_data)
+        await self.validate_host_path_attachments(verrors, path, question, schema_name, release_data)
+        await check_path_resides_within_volume(verrors, self.middleware, schema_name, path)
+
+    @private
+    async def validate_locked_host_path(self, verrors, path, question, schema_name, release_data):
+        if not path:
+            return
+
+        p = Path(path)
+        if not p.is_absolute():
+            verrors.add(schema_name, f'Must be an absolute path: {path}.')
+
+        if await self.middleware.call('pool.dataset.path_in_locked_datasets', path):
+            verrors.add(schema_name, f'Dataset is locked at path: {path}.')
+
+    @private
+    async def validate_host_path_attachments(self, verrors, path, question, schema_name, release_data):
+        if not path:
+            return
+
+        p = Path(path)
+        if not p.is_absolute():
+            verrors.add(schema_name, f'Must be an absolute path: {path}.')
+
+        if attachments := {
+            attachment['type']
+            for attachment in await self.middleware.call('pool.dataset.attachments_with_path', path)
+            if attachment['type'].lower() not in ['kubernetes', 'chart releases']
+        }:
+            verrors.add(schema_name, f"The path '{path}' is already attached to service(s): {', '.join(attachments)}.")
