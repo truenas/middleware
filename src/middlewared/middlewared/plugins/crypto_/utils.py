@@ -22,6 +22,8 @@ EC_CURVES = [
     'BrainpoolP384R1',
     'BrainpoolP256R1',
     'SECP256K1',
+    'SECP384R1',
+    'SECP521R1',
     'ed25519',
 ]
 EC_CURVE_DEFAULT = 'BrainpoolP384R1'
