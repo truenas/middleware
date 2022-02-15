@@ -56,24 +56,6 @@ class VRRPStatesDoNotAgreeAlertClass(AlertClass):
     products = ("SCALE_ENTERPRISE",)
 
 
-class CTLHALinkAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = "CTL HA link Is not Connected"
-    text = "CTL HA link is not connected."
-
-    products = ("ENTERPRISE",)
-
-
-class NoFailoverPassphraseKeysAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = "Passphrase Missing For Legacy-Encrypted Pool"
-    text = "Failover is unavailable until a legacy encryption passphrase is added to %(pool)r."
-
-    products = ("ENTERPRISE",)
-
-
 class FailoverAlertSource(ThreadedAlertSource):
     products = ("ENTERPRISE",)
     failover_related = True
@@ -106,20 +88,5 @@ class FailoverAlertSource(ThreadedAlertSource):
         status = self.middleware.call_sync('failover.status')
         if status in ('ERROR', 'UNKNOWN'):
             return [Alert(FailoverFailedAlertClass, ['Check /root/syslog/failover.log on both controllers.'])]
-        if status == 'BACKUP':
-            fobj = self.middleware.call_sync('failover.generate_failover_data')
-            try:
-                if len(fobj['phrasedvolumes']) > 0:
-                    keys = self.middleware.call_sync('failover.encryption_keys')['geli']
-                    not_found = False
-                    for pool in fobj['phrasedvolumes']:
-                        if pool not in keys:
-                            not_found = True
-                            alerts.append(Alert(NoFailoverPassphraseKeysAlertClass, {'pool': pool}))
-                    if not_found:
-                        # Kick a syncfrompeer if we don't.
-                        self.middleware.call_sync('failover.sync_keys_from_remote_node')
-            except Exception:
-                pass
 
-        return alerts
+        return []
