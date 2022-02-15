@@ -103,6 +103,8 @@ def nfs_dataset(name, options=None, acl=None, mode=None):
     try:
         yield dataset
     finally:
+        # dataset may be busy
+        sleep(10)
         result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
         assert result.status_code == 200, result.text
 
