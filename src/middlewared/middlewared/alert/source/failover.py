@@ -1,5 +1,4 @@
 import errno
-import os
 import subprocess
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
@@ -48,15 +47,6 @@ class FailoverFailedAlertClass(AlertClass):
     title = "Failover Failed"
     text = "Failover failed: %s."
     products = ("SCALE_ENTERPRISE",)
-
-
-class ExternalFailoverLinkStatusAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = "Could not Determine External Failover Link Status"
-    text = "Could not determine external failover link status, check cabling."
-
-    products = ("ENTERPRISE",)
 
 
 class InternalFailoverLinkStatusAlertClass(AlertClass):
@@ -124,10 +114,8 @@ class FailoverAlertSource(ThreadedAlertSource):
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
 
         status = self.middleware.call_sync('failover.status')
-        if status == 'ERROR':
-            return [Alert(FailoverFailedAlertClass, ['Check /root/syslog/failover.log on both controllers.']))
-        elif status not in ('MASTER', 'BACKUP', 'SINGLE'):
-            alerts.append(Alert(ExternalFailoverLinkStatusAlertClass))
+        if status in ('ERROR', 'UNKNOWN'):
+            return [Alert(FailoverFailedAlertClass, ['Check /root/syslog/failover.log on both controllers.'])]
 
         internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
         if internal_ifaces:
