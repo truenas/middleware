@@ -1566,20 +1566,10 @@ class InterfaceService(CRUDService):
         """
         await self.middleware.call_hook('interface.pre_sync')
 
-        disable_capabilities_ifaces = {
-            i['name'] for i in await self.middleware.call(
-                'interface.query', [['disable_offload_capabilities', '=', True]]
-            )
-        }
         interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
         parent_interfaces = []
         sync_interface_opts = defaultdict(dict)
-
-        for physical_iface in await self.middleware.call(
-            'interface.query', [['type', '=', 'PHYSICAL'], ['disable_offload_capabilities', '=', True]]
-        ):
-            await self.middleware.call('interface.disable_capabilities', physical_iface['name'])
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
