@@ -1,9 +1,5 @@
 import errno
 import os
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
 import subprocess
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
@@ -167,13 +163,6 @@ class FailoverAlertSource(ThreadedAlertSource):
             stdout = p1.communicate()[0].strip()
             if status != "SINGLE" and stdout.count("\n") != 1:
                 alerts.append(Alert(InternalFailoverLinkStatusAlertClass))
-
-        if status != "SINGLE":
-            try:
-                if sysctl.filter('kern.cam.ctl.ha_link')[0].value == 1:
-                    alerts.append(Alert(CTLHALinkAlertClass))
-            except Exception:
-                pass
 
         if status == 'BACKUP':
             fobj = self.middleware.call_sync('failover.generate_failover_data')
