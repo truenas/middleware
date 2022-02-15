@@ -270,6 +270,8 @@ class FailoverService(Service):
                 # there is nothing we need to do.
                 logger.warning('Failover is disabled but this node is marked as the BACKUP node. Assuming BACKUP.')
                 raise IgnoreFailoverEvent()
+            elif fobj['disabled']:
+                raise IgnoreFailoverEvent()
 
             # If there is a state change on a non-critical interface then
             # ignore the event and return
