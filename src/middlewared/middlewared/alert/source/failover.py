@@ -15,8 +15,8 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
 class TrueNASVersionsMismatchAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = 'TrueNAS Versions Mismatch In Failover'
-    text = 'TrueNAS versions mismatch in failover. Update both controllers to the same version.'
+    title = 'TrueNAS Software Versions Do Not Match Between Controllers'
+    text = 'TrueNAS software versions must match between controllers.'
     products = ('SCALE_ENTERPRISE',)
 
 
@@ -32,7 +32,7 @@ class FailoverFailedAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = 'Failover Failed'
-    text = 'Failover failed: %s.'
+    text = 'Failover failed. Check /root/syslog/failover.log on both controllers.'
     products = ('SCALE_ENTERPRISE',)
 
 
@@ -73,6 +73,6 @@ class FailoverAlertSource(AlertSource):
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
 
         if await self.middleware.call('failover.status') in ('ERROR', 'UNKNOWN'):
-            return [Alert(FailoverFailedAlertClass, ['Check /root/syslog/failover.log on both controllers.'])]
+            return [Alert(FailoverFailedAlertClass)]
 
         return []
