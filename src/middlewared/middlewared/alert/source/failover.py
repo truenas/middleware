@@ -9,7 +9,7 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failover Internal Interface Not Found'
     text = 'Failover internal interface not found. Contact support.'
-    products = ('ENTERPRISE',)
+    products = ('SCALE_ENTERPRISE',)
 
 
 class TrueNASVersionsMismatchAlertClass(AlertClass):
@@ -17,7 +17,7 @@ class TrueNASVersionsMismatchAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'TrueNAS Versions Mismatch In Failover'
     text = 'TrueNAS versions mismatch in failover. Update both controllers to the same version.'
-    products = ('ENTERPRISE',)
+    products = ('SCALE_ENTERPRISE',)
 
 
 class FailoverStatusCheckFailedAlertClass(AlertClass):
@@ -25,7 +25,7 @@ class FailoverStatusCheckFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failed to Check Failover Status with the Other Controller'
     text = 'Failed to check failover status with the other controller: %s.'
-    products = ('ENTERPRISE',)
+    products = ('SCALE_ENTERPRISE',)
 
 
 class FailoverFailedAlertClass(AlertClass):
@@ -45,7 +45,7 @@ class VRRPStatesDoNotAgreeAlertClass(AlertClass):
 
 
 class FailoverAlertSource(AlertSource):
-    products = ('ENTERPRISE',)
+    products = ('SCALE_ENTERPRISE',)
     failover_related = True
     run_on_backup_node = False
 
