@@ -1585,17 +1585,15 @@ class InterfaceService(CRUDService):
                     'interface.lag_setup', lagg, members, parent_interfaces, sync_interface_opts
                 )
             except Exception:
-                self.middleware.logger.error('Error setting up LAG %s', name, exc_info=True)
+                self.logger.error('Error setting up LAG %s', name, exc_info=True)
 
         vlans = await self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
-            disable_capabilities = vlan['vlan_vint'] in disable_capabilities_ifaces
-
             cloned_interfaces.append(vlan['vlan_vint'])
             try:
-                await self.middleware.call('interface.vlan_setup', vlan, disable_capabilities, parent_interfaces)
+                await self.middleware.call('interface.vlan_setup', vlan, parent_interfaces)
             except Exception:
-                self.middleware.logger.error('Error setting up VLAN %s', vlan['vlan_vint'], exc_info=True)
+                self.logger.error('Error setting up VLAN %s', vlan['vlan_vint'], exc_info=True)
 
         run_dhcp = []
         # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
