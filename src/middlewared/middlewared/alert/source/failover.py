@@ -69,13 +69,12 @@ class InternalFailoverLinkStatusAlertClass(AlertClass):
     products = ("ENTERPRISE",)
 
 
-class CARPStatesDoNotAgreeAlertClass(AlertClass):
+class VRRPStatesDoNotAgreeAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Controllers CARP States Do Not Agree"
-    text = "Controllers CARP states do not agree: %(error)s."
-
-    products = ("ENTERPRISE",)
+    title = "Controllers VRRP States Do Not Agree"
+    text = "Controllers VRRP states do not agree: %(error)s."
+    products = ("SCALE_ENTERPRISE",)
 
 
 class CTLHALinkAlertClass(AlertClass):
@@ -119,14 +118,8 @@ class FailoverAlertSource(ThreadedAlertSource):
 
             local = self.middleware.call_sync('failover.vip.get_states')
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
-
-            errors = self.middleware.call_sync('failover.vip.check_states', local, remote)
-            for error in errors:
-                alerts.append(Alert(
-                    CARPStatesDoNotAgreeAlertClass,
-                    {"error": error},
-                ))
-
+            if err := self.middleware.call_sync('failover.vip.check_states', local, remote):
+                return [Alert(VRRPStatesDoNotAgreeAlertClass, {"error": i}) for i in err]
         except CallError as e:
             if e.errno != errno.ECONNREFUSED:
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
