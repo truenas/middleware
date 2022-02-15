@@ -102,25 +102,20 @@ class FailoverAlertSource(ThreadedAlertSource):
     run_on_backup_node = False
 
     def check_sync(self):
-        alerts = []
-
         if not self.middleware.call_sync('failover.licensed'):
-            return alerts
+            return []
+        elif not self.middleware.call_sync('failover.internal_interfaces'):
+            return [Alert(FailoverInterfaceNotFoundAlertClass)]
 
-        if not self.middleware.call_sync('failover.internal_interfaces'):
-            alerts.append(Alert(FailoverInterfaceNotFoundAlertClass))
-            return alerts
-
+        alerts = []
         try:
-            self.middleware.call_sync('failover.call_remote', 'core.ping')
+            if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
+                raise UnavailableException()
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
             if local_version != remote_version:
                 return [Alert(TrueNASVersionsMismatchAlertClass)]
-
-            if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
-                raise UnavailableException()
 
             local = self.middleware.call_sync('failover.vip.get_states')
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
