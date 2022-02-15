@@ -16,6 +16,9 @@ SUPPORTED_FEATURES = {
     'definitions/nodeIP',
     'validations/containerImage',
     'validations/nodePort',
+    'validations/hostPath',
+    'validations/lockedHostPath',
+    'validations/hostPathAttachments',
 }
 
 
