@@ -21,13 +21,11 @@ class SATADOMWearCriticalAlertClass(AlertClass):
 
 class SATADOMWearAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
     async def check(self):
-        data = await self.middleware.call("system.info")
-        product = data["system_product"]
-        if not product.startswith(("TRUENAS-M", "TRUENAS-Z")):
+        dmi = await self.middleware.call("system.dmidecode_info")
+        if not dmi["system-product-name"].startswith(("TRUENAS-M", "TRUENAS-Z")):
             return []
 
         alerts = []
