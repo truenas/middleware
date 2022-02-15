@@ -1,5 +1,4 @@
 import errno
-import subprocess
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
 from middlewared.service_exception import CallError
@@ -47,15 +46,6 @@ class FailoverFailedAlertClass(AlertClass):
     title = "Failover Failed"
     text = "Failover failed: %s."
     products = ("SCALE_ENTERPRISE",)
-
-
-class InternalFailoverLinkStatusAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = "Could not Determine Internal Failover Link Status"
-    text = "Could not determine internal failover link status. Automatic failover disabled."
-
-    products = ("ENTERPRISE",)
 
 
 class VRRPStatesDoNotAgreeAlertClass(AlertClass):
@@ -116,20 +106,6 @@ class FailoverAlertSource(ThreadedAlertSource):
         status = self.middleware.call_sync('failover.status')
         if status in ('ERROR', 'UNKNOWN'):
             return [Alert(FailoverFailedAlertClass, ['Check /root/syslog/failover.log on both controllers.'])]
-
-        internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
-        if internal_ifaces:
-            p1 = subprocess.Popen(
-                "/sbin/ifconfig %s|grep -E 'vhid (10|20) '|grep 'carp:'" % internal_ifaces[0],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,
-                encoding='utf8',
-            )
-            stdout = p1.communicate()[0].strip()
-            if status != "SINGLE" and stdout.count("\n") != 1:
-                alerts.append(Alert(InternalFailoverLinkStatusAlertClass))
-
         if status == 'BACKUP':
             fobj = self.middleware.call_sync('failover.generate_failover_data')
             try:
