@@ -158,7 +158,6 @@ class InterfaceService(CRUDService):
         Bool('ipv6_auto', required=True),
         Str('description', required=True, null=True),
         Int('mtu', null=True, required=True),
-        Bool('disable_offload_capabilities'),
         Str('vlan_parent_interface', null=True),
         Int('vlan_tag', null=True),
         Int('vlan_pcp', null=True),
@@ -253,7 +252,6 @@ class InterfaceService(CRUDService):
             'ipv6_auto': config['int_ipv6auto'],
             'description': config['int_name'],
             'mtu': config['int_mtu'],
-            'disable_offload_capabilities': config['int_disable_offload_capabilities'],
         })
 
         if ha_hardware:
@@ -574,7 +572,6 @@ class InterfaceService(CRUDService):
         Str('name'),
         Str('description', null=True),
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
-        Bool('disable_offload_capabilities', default=False),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
         List('aliases', unique=True, items=[
@@ -750,9 +747,6 @@ class InterfaceService(CRUDService):
                         )
                 raise
 
-        if data.get('disable_offload_capabilities'):
-            await self.middleware.call('interface.disable_capabilities', name)
-
         return await self.get_instance(name)
 
     @private
@@ -846,11 +840,6 @@ class InterfaceService(CRUDService):
                     await self.middleware.call('interface.validate_name', InterfaceType.BRIDGE, data['name'])
                 except ValueError as e:
                     verrors.add(f'{schema_name}.name', str(e))
-            if data.get('disable_offload_capabilities'):
-                verrors.add(
-                    f'{schema_name}.disable_offload_capabilities',
-                    'Offloading capabilities is not supported for bridge interfaces'
-                )
             for i, member in enumerate(data.get('bridge_members') or []):
                 if member not in ifaces:
                     verrors.add(f'{schema_name}.bridge_members.{i}', 'Not a valid interface.')
@@ -1025,7 +1014,6 @@ class InterfaceService(CRUDService):
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
             'mtu': data.get('mtu') or None,
-            'disable_offload_capabilities': data.get('disable_offload_capabilities') or False,
         }
 
     async def __create_interface_datastore(self, data, attrs):
@@ -1316,31 +1304,6 @@ class InterfaceService(CRUDService):
                         'datastore.delete', 'network.interfaces', interface_id
                     )
             raise
-
-        if new.get('disable_offload_capabilities') != iface.get('disable_offload_capabilities'):
-            if new['disable_offload_capabilities']:
-                await self.middleware.call('interface.disable_capabilities', iface['name'])
-                if licensed:
-                    try:
-                        await self.middleware.call(
-                            'failover.call_remote', 'interface.disable_capabilities', [iface['name']]
-                        )
-                    except Exception as e:
-                        self.middleware.logger.debug(
-                            f'Failed to disable capabilities for {iface["name"]} on standby storage controller: {e}'
-                        )
-            else:
-                capabilities = await self.middleware.call('interface.nic_capabilities')
-                await self.middleware.call('interface.enable_capabilities', iface['name'], capabilities)
-                if licensed:
-                    try:
-                        await self.middleware.call(
-                            'failover.call_remote', 'interface.enable_capabilities', [iface['name'], capabilities]
-                        )
-                    except Exception as e:
-                        self.middleware.logger.debug(
-                            f'Failed to enable capabilities for {iface["name"]} on standby storage controller: {e}'
-                        )
 
         return await self.get_instance(new['name'])
 
