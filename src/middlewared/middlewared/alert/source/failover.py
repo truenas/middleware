@@ -15,8 +15,8 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
 class TrueNASVersionsMismatchAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = 'TrueNAS Software Versions Do Not Match Between Controllers'
-    text = 'TrueNAS software versions must match between controllers.'
+    title = 'TrueNAS Software Versions Must Match Between Storage Controllers'
+    text = 'TrueNAS software versions must match between storage controllers.'
     products = ('SCALE_ENTERPRISE',)
 
 
