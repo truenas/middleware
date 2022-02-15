@@ -47,8 +47,7 @@ class FailoverFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Failover Failed"
     text = "Failover failed: %s."
-
-    products = ("ENTERPRISE",)
+    products = ("SCALE_ENTERPRISE",)
 
 
 class ExternalFailoverLinkStatusAlertClass(AlertClass):
@@ -125,17 +124,8 @@ class FailoverAlertSource(ThreadedAlertSource):
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
 
         status = self.middleware.call_sync('failover.status')
-
         if status == 'ERROR':
-            errmsg = None
-            if os.path.exists('/tmp/.failover_failed'):
-                with open('/tmp/.failover_failed', 'r') as fh:
-                    errmsg = fh.read()
-            if not errmsg:
-                errmsg = 'Unknown error'
-
-            alerts.append(Alert(FailoverFailedAlertClass, [errmsg]))
-
+            return [Alert(FailoverFailedAlertClass, ['Check /root/syslog/failover.log on both controllers.']))
         elif status not in ('MASTER', 'BACKUP', 'SINGLE'):
             alerts.append(Alert(ExternalFailoverLinkStatusAlertClass))
 
