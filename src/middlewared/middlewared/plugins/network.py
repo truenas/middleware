@@ -55,7 +55,6 @@ class NetworkInterfaceModel(sa.Model):
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_mtu = sa.Column(sa.Integer(), nullable=True)
-    int_disable_offload_capabilities = sa.Column(sa.Boolean(), default=False)
     int_link_address = sa.Column(sa.String(17), nullable=True)
 
 
