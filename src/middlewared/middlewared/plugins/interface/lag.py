@@ -9,7 +9,7 @@ class InterfaceService(Service):
         namespace_alias = 'interfaces'
 
     @private
-    def lag_setup(self, lagg, members, disable_capabilities, parent_interfaces, sync_interface_opts):
+    def lag_setup(self, lagg, members, parent_interfaces, sync_interface_opts):
         name = lagg['lagg_interface']['int_interface']
         self.logger.info('Setting up %s', name)
 
@@ -27,13 +27,6 @@ class InterfaceService(Service):
         if iface is None:
             netif.create_interface(name)
             iface = netif.get_interface(name)
-
-        # FIXME: this will fail on SCALE since we don't even have
-        # a "disable_capabilities" method
-        """
-        if disable_capabilities:
-            self.middleware.call_sync('interface.disable_capabilities', name)
-        """
 
         info = {'protocol': None, 'xmit_hash_policy': None, 'lacpdu_rate': None, 'primary_interface': None}
         protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())

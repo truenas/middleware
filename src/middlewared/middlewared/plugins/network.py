@@ -1579,12 +1579,11 @@ class InterfaceService(CRUDService):
             members = await self.middleware.call('datastore.query', 'network.lagginterfacemembers',
                                                  [('lagg_interfacegroup_id', '=', lagg['id'])],
                                                  {'order_by': ['lagg_physnic']})
-            disable_capabilities = name in disable_capabilities_ifaces
-
             cloned_interfaces.append(name)
             try:
-                await self.middleware.call('interface.lag_setup', lagg, members, disable_capabilities,
-                                           parent_interfaces, sync_interface_opts)
+                await self.middleware.call(
+                    'interface.lag_setup', lagg, members, parent_interfaces, sync_interface_opts
+                )
             except Exception:
                 self.middleware.logger.error('Error setting up LAG %s', name, exc_info=True)
 
