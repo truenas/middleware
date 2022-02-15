@@ -9,7 +9,6 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failover Internal Interface Not Found'
     text = 'Failover internal interface not found. Contact support.'
-
     products = ('ENTERPRISE',)
 
 
@@ -18,16 +17,6 @@ class TrueNASVersionsMismatchAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'TrueNAS Versions Mismatch In Failover'
     text = 'TrueNAS versions mismatch in failover. Update both controllers to the same version.'
-
-    products = ('ENTERPRISE',)
-
-
-class FailoverAccessDeniedAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = 'Failover Access Denied'
-    text = 'Failover access denied. Please reconfigure it.'
-
     products = ('ENTERPRISE',)
 
 
@@ -36,7 +25,6 @@ class FailoverStatusCheckFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failed to Check Failover Status with the Other Controller'
     text = 'Failed to check failover status with the other controller: %s.'
-
     products = ('ENTERPRISE',)
 
 
