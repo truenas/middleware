@@ -72,7 +72,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         hardware = chassis_hardware.replace('TRUENAS-', '').split('-')
 
         if hardware[0] == 'UNKNOWN':
-            alerts.append(Alert(LicenseAlertClass, 'You are not running TrueNAS on supported hardware.'))
+            alerts.append(Alert(LicenseAlertClass, 'TrueNAS is running on unsupported hardware.'))
         else:
             if hardware[0] == 'M':
                 if not local_license['model'].startswith('M'):
