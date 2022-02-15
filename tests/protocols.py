@@ -249,30 +249,30 @@ class SMB(object):
 
 
 class NFS(object):
-    perms = {
-        "READ_DATA": False,
-        "WRITE_DATA": False,
-        "EXECUTE": False,
-        "APPEND_DATA": False,
-        "DELETE_CHILD": False,
-        "DELETE": False,
-        "READ_ATTRIBUTES": False,
-        "WRITE_ATTRIBUTES": False,
-        "READ_NAMED_ATTRS": False,
-        "WRITE_NAMED_ATTRS": False,
-        "READ_ACL": False,
-        "WRITE_ACL": False,
-        "WRITE_OWNER": False,
-        "SYNCHRONIZE": False
-    }
+    perms = [
+        "READ_DATA",
+        "WRITE_DATA",
+        "EXECUTE",
+        "APPEND_DATA",
+        "DELETE_CHILD",
+        "DELETE",
+        "READ_ATTRIBUTES",
+        "WRITE_ATTRIBUTES",
+        "READ_NAMED_ATTRS",
+        "WRITE_NAMED_ATTRS",
+        "READ_ACL",
+        "WRITE_ACL",
+        "WRITE_OWNER",
+        "SYNCHRONIZE",
+    ]
 
-    flags = {
-        "FILE_INHERIT": False,
-        "DIRECTORY_INHERIT": False,
-        "INHERIT_ONLY": False,
-        "NO_PROPAGATE_INHERIT": False,
-        "INHERITED": False
-    }
+    flags = [
+        "FILE_INHERIT",
+        "DIRECTORY_INHERIT",
+        "INHERIT_ONLY",
+        "NO_PROPAGATE_INHERIT",
+        "INHERITED"
+    ]
 
     def __init__(self, hostname, path, **kwargs):
         self._path = path
@@ -306,8 +306,8 @@ class SSH_NFS(NFS):
             entry = {
                 "tag": None,
                 "id": -1,
-                "perms": self.perms.copy(),
-                "flags": self.flags.copy(),
+                "perms": {x: False for x in self.perms},
+                "flags": {x: False for x in self.flags},
                 "type": None
             }
             tp, flags, principal, perms = e.split(":")
