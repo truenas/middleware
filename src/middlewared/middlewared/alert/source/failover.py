@@ -1,6 +1,6 @@
 import errno
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
 from middlewared.service_exception import CallError
 
 
@@ -56,37 +56,35 @@ class VRRPStatesDoNotAgreeAlertClass(AlertClass):
     products = ('SCALE_ENTERPRISE',)
 
 
-class FailoverAlertSource(ThreadedAlertSource):
+class FailoverAlertSource(AlertSource):
     products = ('ENTERPRISE',)
     failover_related = True
     run_on_backup_node = False
 
-    def check_sync(self):
-        if not self.middleware.call_sync('failover.licensed'):
+    async def check(self):
+        if not await self.middleware.call('failover.licensed'):
             return []
-        elif not self.middleware.call_sync('failover.internal_interfaces'):
+        elif not await self.middleware.call('failover.internal_interfaces'):
             return [Alert(FailoverInterfaceNotFoundAlertClass)]
 
-        alerts = []
         try:
-            if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
+            if not await self.middleware.call('failover.call_remote', 'system.ready'):
                 raise UnavailableException()
 
-            local_version = self.middleware.call_sync('system.version')
-            remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
+            local_version = await self.middleware.call('system.version')
+            remote_version = await self.middleware.call('failover.call_remote', 'system.version')
             if local_version != remote_version:
                 return [Alert(TrueNASVersionsMismatchAlertClass)]
 
-            local = self.middleware.call_sync('failover.vip.get_states')
-            remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
-            if err := self.middleware.call_sync('failover.vip.check_states', local, remote):
+            local = await self.middleware.call('failover.vip.get_states')
+            remote = await self.middleware.call('failover.call_remote', 'failover.vip.get_states')
+            if err := await self.middleware.call('failover.vip.check_states', local, remote):
                 return [Alert(VRRPStatesDoNotAgreeAlertClass, {'error': i}) for i in err]
         except CallError as e:
             if e.errno != errno.ECONNREFUSED:
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
 
-        status = self.middleware.call_sync('failover.status')
-        if status in ('ERROR', 'UNKNOWN'):
+        if await self.middleware.call('failover.status') in ('ERROR', 'UNKNOWN'):
             return [Alert(FailoverFailedAlertClass, ['Check /root/syslog/failover.log on both controllers.'])]
 
         return []
