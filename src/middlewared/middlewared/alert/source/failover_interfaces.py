@@ -5,7 +5,7 @@ class NoCriticalFailoverInterfaceFoundAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = 'At Least 1 Network Interface Is Required To Be Marked Critical For Failover'
-    text = 'At least 1 network interface is required to be  marked critical for failover.'
+    text = 'At least 1 network interface is required to be marked critical for failover.'
     products = ('SCALE_ENTERPRISE',)
 
 
