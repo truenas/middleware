@@ -429,13 +429,17 @@ class SSH_NFS(NFS):
 
         return ','.join(out)
 
-    def getacl(self, path):
+    def validate(self, path):
         if not self._mounted:
             raise RuntimeError("Export is not mounted")
 
         if path.startswith("/"):
             raise ValueError(f"{path}: absolute paths are not supported")
 
+        return
+
+    def getacl(self, path):
+        self.validate(path)
         getfacl = SSH_TEST(
             f"nfs4_getfacl {self._localpath}/{path}",
             self._user, self._password, self._ip
@@ -446,14 +450,9 @@ class SSH_NFS(NFS):
         return self.acl_from_text(getfacl['output'])
 
     def setacl(self, path, acl):
-        if not self._mounted:
-            raise RuntimeError("Export is not mounted")
-
-        if path.startswith("/"):
-            raise ValueError(f"{path}: absolute paths are not supported")
+        self.validate(path)
 
         acl_spec = self.acl_to_text(acl)
-
         setfacl = SSH_TEST(
             f"nfs4_setfacl {self._localpath}/{path} -s {acl_spec}",
             self._user, self._password, self._ip
@@ -461,6 +460,33 @@ class SSH_NFS(NFS):
 
         if setfacl['result'] == False:
             raise RuntimeError(setfacl['stderr'])
+
+    def getxattr(self, path, xattr_name):
+        self.validate(path)
+
+        cmd = ['getfattr', '--only-values', '-m', xattr_name, f'{self._localpath}/{path}']
+        getxattr = SSH_TEST(' '.join(cmd), self._user, self._password, self._ip)
+        if getxattr['result'] == False:
+            raise RuntimeError(getxattr['stderr'])
+
+        return getxattr['output']
+
+    def setxattr(self, path, xattr_name, value):
+        self.validate(path)
+
+        cmd = ['setfattr', '-n', xattr_name, '-v', value, f'{self._localpath}/{path}']
+        setxattr = SSH_TEST(' '.join(cmd), self._user, self._password, self._ip)
+        if setxattr['result'] == False:
+            raise RuntimeError(setxattr['stderr'])
+
+    def create(self, path, is_dir=False):
+        self.validate(path)
+        create = SSH_TEST(
+            f'{"mkdir" if is_dir else "touch"} {self._localpath}/{path}',
+            self._user, self._password, self._ip
+        )
+        if create['result'] == False:
+            raise RuntimeError(create['stderr'])
 
     def mount(self):
         mkdir = SSH_TEST(f"mkdir {self._localpath}", self._user, self._password, self._ip)

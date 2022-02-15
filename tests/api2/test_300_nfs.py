@@ -824,6 +824,27 @@ def test_42_check_nfsv4_acl_support(request):
                         assert ace == nfsacl[idx], str(ace)
 
 
+def test_44_check_nfs_xattr_support(request):
+    """
+    Perform basic validation of NFSv4.2 xattr support.
+    Mount path via NFS 4.2, create a file and dir,
+    and write + read xattr on each.
+    """
+    xattr_nfs_path = f'/mnt/{pool_name}/test_nfs4_xattr'
+    with nfs_dataset("test_nfs4_xattr"):
+        with nfs_share(xattr_nfs_path):
+            with SSH_NFS(ip, xattr_nfs_path, vers=4.2, user=user, password=password, ip=ip) as n:
+                n.create("testfile")
+                n.setxattr("testfile", "user.testxattr", "the_contents")
+                xattr_val = n.getxattr("testfile", "user.testxattr")
+                assert xattr_val == "the_contents" 
+
+                n.create("testdir", True)
+                n.setxattr("testdir", "user.testxattr2", "the_contents2")
+                xattr_val = n.getxattr("testdir", "user.testxattr2")
+                assert xattr_val == "the_contents2" 
+
+
 def test_51_stoping_nfs_service(request):
     depends(request, ["pool_04"], scope="session")
     payload = {"service": "nfs"}
