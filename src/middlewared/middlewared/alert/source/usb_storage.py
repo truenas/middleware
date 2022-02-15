@@ -6,16 +6,15 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class USBStorageAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = "A USB Storage Device Has Been Connected to This System"
-    text = ("A USB storage device %r has been connected to this system. Please remove that USB device to "
-            "prevent problems with system boot or HA failover.")
-
-    products = ("ENTERPRISE",)
+    title = 'A USB Storage Device Has Been Connected to This System'
+    text = ('A USB storage device %r has been connected to this system. Please remove that USB device to '
+            'prevent problems with system boot or HA failover.')
+    products = ('SCALE_ENTERPRISE',)
     hardware = True
 
 
 class USBStorageAlertSource(ThreadedAlertSource):
-    products = ("ENTERPRISE",)
+    products = ('SCALE_ENTERPRISE',)
 
     def check_sync(self):
         alerts = []
