@@ -7,57 +7,57 @@ from middlewared.service_exception import CallError
 class FailoverInterfaceNotFoundAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Failover Internal Interface Not Found"
-    text = "Failover internal interface not found. Contact support."
+    title = 'Failover Internal Interface Not Found'
+    text = 'Failover internal interface not found. Contact support.'
 
-    products = ("ENTERPRISE",)
+    products = ('ENTERPRISE',)
 
 
 class TrueNASVersionsMismatchAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "TrueNAS Versions Mismatch In Failover"
-    text = "TrueNAS versions mismatch in failover. Update both controllers to the same version."
+    title = 'TrueNAS Versions Mismatch In Failover'
+    text = 'TrueNAS versions mismatch in failover. Update both controllers to the same version.'
 
-    products = ("ENTERPRISE",)
+    products = ('ENTERPRISE',)
 
 
 class FailoverAccessDeniedAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Failover Access Denied"
-    text = "Failover access denied. Please reconfigure it."
+    title = 'Failover Access Denied'
+    text = 'Failover access denied. Please reconfigure it.'
 
-    products = ("ENTERPRISE",)
+    products = ('ENTERPRISE',)
 
 
 class FailoverStatusCheckFailedAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Failed to Check Failover Status with the Other Controller"
-    text = "Failed to check failover status with the other controller: %s."
+    title = 'Failed to Check Failover Status with the Other Controller'
+    text = 'Failed to check failover status with the other controller: %s.'
 
-    products = ("ENTERPRISE",)
+    products = ('ENTERPRISE',)
 
 
 class FailoverFailedAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Failover Failed"
-    text = "Failover failed: %s."
-    products = ("SCALE_ENTERPRISE",)
+    title = 'Failover Failed'
+    text = 'Failover failed: %s.'
+    products = ('SCALE_ENTERPRISE',)
 
 
 class VRRPStatesDoNotAgreeAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Controllers VRRP States Do Not Agree"
-    text = "Controllers VRRP states do not agree: %(error)s."
-    products = ("SCALE_ENTERPRISE",)
+    title = 'Controllers VRRP States Do Not Agree'
+    text = 'Controllers VRRP states do not agree: %(error)s.'
+    products = ('SCALE_ENTERPRISE',)
 
 
 class FailoverAlertSource(ThreadedAlertSource):
-    products = ("ENTERPRISE",)
+    products = ('ENTERPRISE',)
     failover_related = True
     run_on_backup_node = False
 
@@ -80,7 +80,7 @@ class FailoverAlertSource(ThreadedAlertSource):
             local = self.middleware.call_sync('failover.vip.get_states')
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if err := self.middleware.call_sync('failover.vip.check_states', local, remote):
-                return [Alert(VRRPStatesDoNotAgreeAlertClass, {"error": i}) for i in err]
+                return [Alert(VRRPStatesDoNotAgreeAlertClass, {'error': i}) for i in err]
         except CallError as e:
             if e.errno != errno.ECONNREFUSED:
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
