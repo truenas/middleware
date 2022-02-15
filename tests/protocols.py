@@ -454,9 +454,6 @@ class SSH_NFS(NFS):
 
         acl_spec = self.acl_to_text(acl)
 
-        with open("/tmp/out.txt", "w") as f:
-            f.write(f"nfs4_setfacl -s {acl_spec} {self._localpath}/{path}")
-
         setfacl = SSH_TEST(
             f"nfs4_setfacl {self._localpath}/{path} -s {acl_spec}",
             self._user, self._password, self._ip
