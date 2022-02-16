@@ -35,6 +35,7 @@ class EnclosureService(CRUDService):
                 'number': enc.num,
                 'name': enc.encname,
                 'model': enc.model,
+                'status': enc.status,
                 'controller': enc.controller,
                 'label': labels.get(enc.encid) or enc.encname,
                 'elements': enc.elements,
