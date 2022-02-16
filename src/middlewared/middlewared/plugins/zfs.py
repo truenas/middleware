@@ -1014,6 +1014,10 @@ class ZFSSnapshot(CRUDService):
                 return filter_list(snaps, filters, options)
             return snaps
 
+        if options['extra'].get('retention'):
+            if 'id' not in filter_getattrs(filters) and not options.get('limit'):
+                raise CallError('`id` or `limit` is required if `retention` is requested', errno.EINVAL)
+
         extra = copy.deepcopy(options['extra'])
         properties = extra.get('properties')
         with libzfs.ZFS() as zfs:
@@ -1030,7 +1034,7 @@ class ZFSSnapshot(CRUDService):
         select = options.pop('select', None)
         result = filter_list(snapshots, filters, options)
 
-        if not select or 'retention' in select:
+        if options['extra'].get('retention'):
             if isinstance(result, list):
                 result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
             elif isinstance(result, dict):
