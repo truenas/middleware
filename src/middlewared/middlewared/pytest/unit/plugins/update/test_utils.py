@@ -12,6 +12,9 @@ from middlewared.plugins.update_.utils import can_update
     ("FreeNAS-11.3-U2", "TrueNAS-12.0-MASTER-202004190426", True),
     ("FreeNAS-11.3-U2", "TrueNAS-12.0-MASTER-20200419-0426", True),
     ("FreeNAS-11.3", "TrueNAS-12.0-MASTER-20200419-0426", True),
+    ("22.02-MASTER-20220207-112927", "22.02.1-MASTER-20220208-034252", True),
+    ("22.02", "22.02.1", True),
+    ("22.02.0", "22.02.1", True),
     # Anything can be updated to a MASTER release
     ("TrueNAS-SCALE-22.02-RC.1", "TrueNAS-SCALE-22.02-MASTER-20211029-134913", True),
     # Anything can be updated to a INTERNAL build
