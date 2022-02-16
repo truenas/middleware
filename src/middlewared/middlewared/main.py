@@ -20,6 +20,7 @@ from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from .webhooks.cluster_events import ClusterEventsApplication
 from aiohttp import web
+from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
@@ -1516,25 +1517,43 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             async for msg in ws:
                 if msg.type == web.WSMsgType.ERROR:
                     self.logger.error('Websocket error: %r', msg.data)
-                    continue
-
-                if msg.type != web.WSMsgType.TEXT:
-                    self.logger.error('Invalid websocket message type: %r', msg.type)
-                    continue
-
-                if not connection.authenticated and len(msg.data) > 8192:
-                    await ws.close(message='Anonymous connection max message length is 8 kB'.encode('utf-8'))
                     break
 
-                x = json.loads(msg.data)
+                if msg.type != web.WSMsgType.TEXT:
+                    await ws.close(
+                        code=WSCloseCode.UNSUPPORTED_DATA,
+                        message=f'Invalid websocket message type: {msg.type!r}'.encode('utf-8'),
+                    )
+                    break
+
+                if not connection.authenticated and len(msg.data) > 8192:
+                    await ws.close(
+                        code=WSCloseCode.INVALID_TEXT,
+                        message='Anonymous connection max message length is 8 kB'.encode('utf-8'),
+                    )
+                    break
+
                 try:
-                    await connection.on_message(x)
+                    message = json.loads(msg.data)
+                except ValueError as f:
+                    await ws.close(
+                        code=WSCloseCode.INVALID_TEXT,
+                        message=f'{f}'.encode('utf-8'),
+                    )
+                    break
+
+                try:
+                    await connection.on_message(message)
                 except Exception as e:
                     self.logger.error('Connection closed unexpectedly', exc_info=True)
-                    await ws.close(message=str(e).encode('utf-8'))
+                    await ws.close(
+                        code=WSCloseCode.INTERNAL_ERROR,
+                        message=str(e).encode('utf-8'),
+                    )
                     break
         finally:
             await connection.on_close()
+
         return ws
 
     _loop_monitor_ignore_frames = (

@@ -205,10 +205,8 @@ class Job(object):
         # Otherwise we create a new stub for the job with the Event for when
         # the job event arrives to use existing event.
         with client._jobs_lock:
-            job = client._jobs.get(job_id)
-            self.event = None
-            if job:
-                self.event = job.get('__ready')
+            job = client._jobs[job_id]
+            self.event = job.get('__ready')
             if self.event is None:
                 self.event = job['__ready'] = Event()
             job['__callback'] = callback
@@ -399,6 +397,29 @@ class Client(object):
         })
 
     def on_close(self, code, reason=None):
+        error = f'WebSocket connection closed with code={code!r}, reason={reason!r}'
+
+        for call in self._calls.values():
+            if not call.returned.is_set():
+                call.errno = errno.ECONNABORTED
+                call.error = error
+                call.returned.set()
+
+        for job in self._jobs.values():
+            event = job.get('__ready')
+            if event is None:
+                event = job['__ready'] = Event()
+
+            if not event.is_set():
+                job['error'] = error
+                job['exception'] = error
+                job['exc_info'] = {
+                    'type': 'Exception',
+                    'repr': error,
+                    'extra': None,
+                }
+                event.set()
+
         self._closed.set()
 
     def _register_call(self, call):
