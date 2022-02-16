@@ -55,7 +55,6 @@ class NetworkInterfaceModel(sa.Model):
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_mtu = sa.Column(sa.Integer(), nullable=True)
-    int_disable_offload_capabilities = sa.Column(sa.Boolean(), default=False)
     int_link_address = sa.Column(sa.String(17), nullable=True)
 
 
@@ -158,7 +157,6 @@ class InterfaceService(CRUDService):
         Bool('ipv6_auto', required=True),
         Str('description', required=True, null=True),
         Int('mtu', null=True, required=True),
-        Bool('disable_offload_capabilities'),
         Str('vlan_parent_interface', null=True),
         Int('vlan_tag', null=True),
         Int('vlan_pcp', null=True),
@@ -253,7 +251,6 @@ class InterfaceService(CRUDService):
             'ipv6_auto': config['int_ipv6auto'],
             'description': config['int_name'],
             'mtu': config['int_mtu'],
-            'disable_offload_capabilities': config['int_disable_offload_capabilities'],
         })
 
         if ha_hardware:
@@ -574,7 +571,6 @@ class InterfaceService(CRUDService):
         Str('name'),
         Str('description', null=True),
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
-        Bool('disable_offload_capabilities', default=False),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
         List('aliases', unique=True, items=[
@@ -750,9 +746,6 @@ class InterfaceService(CRUDService):
                         )
                 raise
 
-        if data.get('disable_offload_capabilities'):
-            await self.middleware.call('interface.disable_capabilities', name)
-
         return await self.get_instance(name)
 
     @private
@@ -846,11 +839,6 @@ class InterfaceService(CRUDService):
                     await self.middleware.call('interface.validate_name', InterfaceType.BRIDGE, data['name'])
                 except ValueError as e:
                     verrors.add(f'{schema_name}.name', str(e))
-            if data.get('disable_offload_capabilities'):
-                verrors.add(
-                    f'{schema_name}.disable_offload_capabilities',
-                    'Offloading capabilities is not supported for bridge interfaces'
-                )
             for i, member in enumerate(data.get('bridge_members') or []):
                 if member not in ifaces:
                     verrors.add(f'{schema_name}.bridge_members.{i}', 'Not a valid interface.')
@@ -1025,7 +1013,6 @@ class InterfaceService(CRUDService):
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
             'mtu': data.get('mtu') or None,
-            'disable_offload_capabilities': data.get('disable_offload_capabilities') or False,
         }
 
     async def __create_interface_datastore(self, data, attrs):
@@ -1317,31 +1304,6 @@ class InterfaceService(CRUDService):
                     )
             raise
 
-        if new.get('disable_offload_capabilities') != iface.get('disable_offload_capabilities'):
-            if new['disable_offload_capabilities']:
-                await self.middleware.call('interface.disable_capabilities', iface['name'])
-                if licensed:
-                    try:
-                        await self.middleware.call(
-                            'failover.call_remote', 'interface.disable_capabilities', [iface['name']]
-                        )
-                    except Exception as e:
-                        self.middleware.logger.debug(
-                            f'Failed to disable capabilities for {iface["name"]} on standby storage controller: {e}'
-                        )
-            else:
-                capabilities = await self.middleware.call('interface.nic_capabilities')
-                await self.middleware.call('interface.enable_capabilities', iface['name'], capabilities)
-                if licensed:
-                    try:
-                        await self.middleware.call(
-                            'failover.call_remote', 'interface.enable_capabilities', [iface['name'], capabilities]
-                        )
-                    except Exception as e:
-                        self.middleware.logger.debug(
-                            f'Failed to enable capabilities for {iface["name"]} on standby storage controller: {e}'
-                        )
-
         return await self.get_instance(new['name'])
 
     @accepts(Str('id'))
@@ -1603,20 +1565,10 @@ class InterfaceService(CRUDService):
         """
         await self.middleware.call_hook('interface.pre_sync')
 
-        disable_capabilities_ifaces = {
-            i['name'] for i in await self.middleware.call(
-                'interface.query', [['disable_offload_capabilities', '=', True]]
-            )
-        }
         interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
         parent_interfaces = []
         sync_interface_opts = defaultdict(dict)
-
-        for physical_iface in await self.middleware.call(
-            'interface.query', [['type', '=', 'PHYSICAL'], ['disable_offload_capabilities', '=', True]]
-        ):
-            await self.middleware.call('interface.disable_capabilities', physical_iface['name'])
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
@@ -1626,24 +1578,21 @@ class InterfaceService(CRUDService):
             members = await self.middleware.call('datastore.query', 'network.lagginterfacemembers',
                                                  [('lagg_interfacegroup_id', '=', lagg['id'])],
                                                  {'order_by': ['lagg_physnic']})
-            disable_capabilities = name in disable_capabilities_ifaces
-
             cloned_interfaces.append(name)
             try:
-                await self.middleware.call('interface.lag_setup', lagg, members, disable_capabilities,
-                                           parent_interfaces, sync_interface_opts)
+                await self.middleware.call(
+                    'interface.lag_setup', lagg, members, parent_interfaces, sync_interface_opts
+                )
             except Exception:
-                self.middleware.logger.error('Error setting up LAG %s', name, exc_info=True)
+                self.logger.error('Error setting up LAG %s', name, exc_info=True)
 
         vlans = await self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
-            disable_capabilities = vlan['vlan_vint'] in disable_capabilities_ifaces
-
             cloned_interfaces.append(vlan['vlan_vint'])
             try:
-                await self.middleware.call('interface.vlan_setup', vlan, disable_capabilities, parent_interfaces)
+                await self.middleware.call('interface.vlan_setup', vlan, parent_interfaces)
             except Exception:
-                self.middleware.logger.error('Error setting up VLAN %s', vlan['vlan_vint'], exc_info=True)
+                self.logger.error('Error setting up VLAN %s', vlan['vlan_vint'], exc_info=True)
 
         run_dhcp = []
         # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
