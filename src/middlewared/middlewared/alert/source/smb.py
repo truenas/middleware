@@ -3,11 +3,24 @@ from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel,
 from middlewared.alert.schedule import CrontabSchedule
 
 
-async def generate_alert_text(auth_log):
-    alert_text = [
-        f'{x["Authentication"]["clientAccount"]}: {x["Authentication"]["remoteAddress"]}' for x in auth_log
-    ]
-    return alert_text
+def generate_alert_text(auth_log):
+    alert_text = {}
+    for x in auth_log:
+        k = f'{x["Authentication"]["clientAccount"] or x["Authentication"]["becameAccount"]} - '
+        k += x["Authentication"]["workstation"] or x["Authentication"]["remoteAddress"]
+
+        if k in alert_text:
+            alert_text[k]['cnt'] += 1
+            continue
+
+        entry = {
+            "client": k,
+            "address": x["Authentication"]["remoteAddress"],
+            "cnt": 1,
+        }
+        alert_text[k] = entry
+
+    return [str(x) for x in alert_text.values()]
 
 
 class SMBLegacyProtocolAlertClass(AlertClass):
@@ -37,10 +50,12 @@ class SMBLegacyProtocolAlertSource(AlertSource):
             ["timestamp_tval.tv_sec", ">", now - 86400],
             ["Authentication.serviceDescription", "=", "SMB"],
         ])
+        if not auth_log:
+            return
 
         return Alert(
             SMBLegacyProtocolAlertClass,
-            {'err': ', '.join(await generate_alert_text(auth_log))},
+            {'err': ', '.join(generate_alert_text(auth_log))},
             key=None
         )
 
@@ -62,9 +77,11 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
             ["timestamp_tval.tv_sec", ">", now - 86400],
             ["Authentication.passwordType", "=", "NTLMv1"]
         ])
+        if not auth_log:
+            return
 
         return Alert(
             NTLMv1AuthenticationAlertClass,
-            {'err': ', '.join(await generate_alert_text(auth_log))},
+            {'err': ', '.join(generate_alert_text(auth_log))},
             key=None
         )
