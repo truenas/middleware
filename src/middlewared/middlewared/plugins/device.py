@@ -30,15 +30,14 @@ class DeviceService(Service):
             for dev in devices:
                 if not dev.name.startswith('uart'):
                     continue
-                port = self.serial_port_default.copy()
-                port.update({
+                port = {
                     'name': dev.name,
                     'description': dev.desc,
                     'drivername': dev.drivername,
                     'location': dev.location,
                     'start': hex(dev.start),
                     'size': dev.size
-                })
+                }
                 ports.append(port)
         return ports
 
