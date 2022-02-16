@@ -87,22 +87,18 @@ class ISCSIPortalService(CRUDService):
         """
         Returns possible choices for `listen.ip` attribute of portal create and update.
         """
-        choices = {'0.0.0.0': '0.0.0.0', '::': '::'}
-        alua = (await self.middleware.call('iscsi.global.config'))['alua']
-        if alua:
+        choices = {'0.0.0.0': '0.0.0.0'}
+        if (await self.middleware.call('iscsi.global.config'))['alua']:
             # If ALUA is enabled we actually want to show the user the IPs of each node
             # instead of the VIP so its clear its not going to bind to the VIP even though
             # thats the value used under the hoods.
-            for i in await self.middleware.call('datastore.query', 'network.Interfaces', [
-                ('int_vip', 'nin', [None, '']),
-            ]):
+            filters = [('int_vip', 'nin', [None, ''])]
+            for i in await self.middleware.call('datastore.query', 'network.Interfaces', filters):
                 choices[i['int_vip']] = f'{i["int_ipv4address"]}/{i["int_ipv4address_b"]}'
 
-            for i in await self.middleware.call('datastore.query', 'network.Alias', [
-                ('alias_vip', 'nin', [None, '']),
-            ]):
+            filters = [('alias_vip', 'nin', [None, ''])]
+            for i in await self.middleware.call('datastore.query', 'network.Alias', filters):
                 choices[i['alias_vip']] = f'{i["alias_v4address"]}/{i["alias_v4address_b"]}'
-
         else:
             for i in await self.middleware.call('interface.query'):
                 for alias in i.get('failover_virtual_aliases') or []:
@@ -810,19 +806,12 @@ class iSCSITargetExtentService(SharingService):
                 raise verrors  # They need this for anything else
 
             if '/iocage' in path:
-                    verrors.add(
-                        f'{schema_name}.path',
-                        'You need to specify a filepath outside of a jail root'
-                    )
+                verrors.add(f'{schema_name}.path', 'You need to specify a filepath outside of a jail root')
 
-            if (os.path.exists(path) and not
-                    os.path.isfile(path)) or path[-1] == '/':
-                verrors.add(f'{schema_name}.path',
-                            'You need to specify a filepath not a directory')
+            if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
+                verrors.add(f'{schema_name}.path', 'You need to specify a filepath not a directory')
 
-            await check_path_resides_within_volume(
-                verrors, self.middleware, f'{schema_name}.path', path
-            )
+            await check_path_resides_within_volume(verrors, self.middleware, f'{schema_name}.path', path)
 
         return data
 
@@ -1291,7 +1280,9 @@ class iSCSITargetService(CRUDService):
                 filters = [('alias', '=', data['alias'])]
                 if old:
                     filters.append(('id', '!=', old['id']))
-                aliases = await self.middleware.call(f'{self._config.namespace}.query', filters, {'force_sql_filters': True})
+                aliases = await self.middleware.call(
+                    f'{self._config.namespace}.query', filters, {'force_sql_filters': True}
+                )
                 if aliases:
                     verrors.add(f'{schema_name}.alias', 'Alias already exists')
 
