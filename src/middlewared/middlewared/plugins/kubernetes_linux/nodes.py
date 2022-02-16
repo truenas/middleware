@@ -43,8 +43,10 @@ class KubernetesNodeService(ConfigService):
                 await nodes.add_taint(context['core_api'], taint, context['node'])
 
         remaining_taints = {t['key'] for t in taints}
-        while remaining_taints:
+        timeout = 600
+        while remaining_taints and timeout > 0:
             await asyncio.sleep(3)
+            timeout -= 3
 
             config = await self.config()
             if not config['node_configured']:
