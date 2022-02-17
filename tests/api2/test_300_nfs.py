@@ -14,6 +14,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
+from functions import make_ws_request
 from auto_config import pool_name, ha, hostname
 from auto_config import dev_test, password, user
 from protocols import SSH_NFS
@@ -845,6 +846,28 @@ def test_44_check_nfs_xattr_support(request):
                 n.setxattr("testdir", "user.testxattr2", "the_contents2")
                 xattr_val = n.getxattr("testdir", "user.testxattr2")
                 assert xattr_val == "the_contents2" 
+
+
+def test_44_check_setting_runtime_debug(request):
+    """
+    This validates that the private NFS debugging API works correctly.
+    """
+    depends(request, ["pool_04"], scope="session")
+    disabled = {"NFS": ["NONE"], "NFSD": ["NONE"], "NLM": ["NONE"], "RPC": ["NONE"]}
+
+    get_payload = {'msg': 'method', 'method': 'nfs.get_debug', 'params': []}
+    set_payload = {'msg': 'method', 'method': 'nfs.set_debug', 'params': [["NFSD"], ["ALL"]]}
+    res = make_ws_request(ip, get_payload)
+    assert res['result'] == disabled, res
+    
+    make_ws_request(ip, set_payload)
+    res = make_ws_request(ip, get_payload)
+    assert res['result']['NFSD'] == ["ALL"], res
+
+    set_payload['params'][1] = ["NONE"]
+    make_ws_request(ip, set_payload)
+    res = make_ws_request(ip, get_payload)
+    assert res['result'] == disabled, res
 
 
 def test_51_stoping_nfs_service(request):
