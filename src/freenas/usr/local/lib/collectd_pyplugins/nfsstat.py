@@ -46,7 +46,7 @@ class NFSv3_OP(enum.IntEnum):
     NFSV3_OP_REMOVE = enum.auto()
     NFSV3_OP_RMDIR = enum.auto()
     NFSV3_OP_RENAME = enum.auto()
-    NFSV3_OP_LINK  = enum.auto()
+    NFSV3_OP_LINK = enum.auto()
     NFSV3_OP_READDIR = enum.auto()
     NFSV3_OP_READDIRPLUS = enum.auto()
     NFSV3_OP_FSSTAT = enum.auto()
