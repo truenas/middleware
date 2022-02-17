@@ -70,7 +70,7 @@ class DiskService(Service, ServiceChangeMixin):
         # when not all the disks have been resolved
         log_info = {
             ok: {
-                ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
+                ik: iv for ik, iv in ov.items() if ik in ('name', 'lunid', 'serial')
             } for ok, ov in sys_disks.items()
         }
         self.logger.info('Found disks: %r', log_info)
