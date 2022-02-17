@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('network_bridge', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('stp', sa.Boolean(), nullable=False))
+        batch_op.add_column(sa.Column('stp', sa.Boolean(), server_default='1', nullable=False))
 
 
 def downgrade():

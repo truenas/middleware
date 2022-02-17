@@ -33,7 +33,7 @@ class NetworkBridgeModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     members = sa.Column(sa.JSON(type=list), default=[])
     interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
-    stp = sa.Column(sa.Boolean(), default=True)
+    stp = sa.Column(sa.Boolean())
 
 
 class NetworkInterfaceModel(sa.Model):
