@@ -52,6 +52,11 @@ class InterfaceService(Service):
 
             parent_interfaces.append(member)
 
+        if iface.stp != bridge['stp']:
+            verb = 'off' if not bridge['stp'] else 'on'
+            self.logger.info(f'Turning STP {verb} for {name!r}')
+            iface.toggle_stp(name, int(bridge['stp']))
+
         # finally we need to up the main bridge if it's not already up
         if netif.InterfaceFlags.UP not in iface.flags:
             self.logger.info('Bringing up %r', name)

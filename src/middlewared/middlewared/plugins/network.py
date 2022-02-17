@@ -33,6 +33,7 @@ class NetworkBridgeModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     members = sa.Column(sa.JSON(type=list), default=[])
     interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
+    stp = sa.Column(sa.Boolean())
 
 
 class NetworkInterfaceModel(sa.Model):
@@ -600,6 +601,7 @@ class InterfaceService(CRUDService):
             )
         ]),
         List('bridge_members'),
+        Bool('stp', default=True),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
         Str('xmit_hash_policy', enum=[i.value for i in XmitHashChoices], default=None, null=True),
         Str('lacpdu_rate', enum=[i.value for i in LacpduRateChoices], default=None, null=True),
@@ -666,22 +668,14 @@ class InterfaceService(CRUDService):
         if data['type'] == 'BRIDGE':
             name = data.get('name') or await self.middleware.call('interface.get_next', 'br')
             try:
-                async for i in self.__create_interface_datastore(data, {
-                    'interface': name,
-                }):
+                async for i in self.__create_interface_datastore(data, {'interface': name}):
+                    await self.middleware.call('datastore.insert', 'network.bridge', {
+                        'interface': i, 'members': data['bridge_members'], 'stp': data['stp']
+                    })
                     interface_id = i
-
-                await self.middleware.call(
-                    'datastore.insert',
-                    'network.bridge',
-                    {'interface': interface_id, 'members': data['bridge_members']},
-                )
             except Exception:
                 if interface_id:
-                    with contextlib.suppress(Exception):
-                        await self.middleware.call(
-                            'datastore.delete', 'network.interfaces', interface_id
-                        )
+                    await self.middleware.call('datastore.delete', 'network.interfaces', interface_id)
                 raise
         elif data['type'] == 'LINK_AGGREGATION':
             name = data.get('name') or await self.middleware.call('interface.get_next', 'bond')
@@ -1212,13 +1206,14 @@ class InterfaceService(CRUDService):
             )
 
             if iface['type'] == 'BRIDGE':
+                options = {}
                 if 'bridge_members' in data:
-                    await self.middleware.call(
-                        'datastore.update',
-                        'network.bridge',
-                        [('interface', '=', config['id'])],
-                        {'members': data['bridge_members']},
-                    )
+                    options['members'] = data['bridge_members']
+                if 'stp' in data:
+                    options['stp'] = data['stp']
+                if options:
+                    filters = [('interface', '=', config['id'])]
+                    await self.middleware.call('datastore.update', 'network.bridge', filters, options)
             elif iface['type'] == 'LINK_AGGREGATION':
                 xmit = lacpdu = None
                 if new['lag_protocol'] in ('LACP', 'LOADBALANCE'):
