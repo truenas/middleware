@@ -52,6 +52,9 @@ class InterfaceService(Service):
 
             parent_interfaces.append(member)
 
+        self.logger.info('Toggling STP to {bridge["stp"]} for {name!r}')
+        iface.toggle_stp(name, int(bridge['stp']))
+
         # finally we need to up the main bridge if it's not already up
         if netif.InterfaceFlags.UP not in iface.flags:
             self.logger.info('Bringing up %r', name)
