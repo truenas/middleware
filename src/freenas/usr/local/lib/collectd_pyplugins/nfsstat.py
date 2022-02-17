@@ -58,8 +58,8 @@ class NFSStat(object):
     def parse_rpc(self, parsed, data):
         entries = [
             "rpc_cnt",
-            "bad_rpc_cnt",
-            "bad_rpc_fmt",
+            "rpc_bad_cnt",
+            "rpc_bad_fmt",
             "rpc_bad_auth",
             "rpc_bad_clnt"
         ]
