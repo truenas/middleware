@@ -912,7 +912,10 @@ class ZFSSnapshot(CRUDService):
         """
         # Special case for faster listing of snapshot names (#53149)
         if (
-            options and options.get('select') == ['name'] and (
+            (
+                options.get('select') == ['name'] or
+                options.get('count')
+            ) and (
                 not filters or
                 filter_getattrs(filters).issubset({'name', 'pool'})
             )
