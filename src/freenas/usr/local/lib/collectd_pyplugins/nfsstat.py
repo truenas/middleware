@@ -9,9 +9,9 @@ collectd.info('Loading "nfsstat" python plugin')
 
 class NFSStat(object):
     # fs/nfsd/stats.h
-    def parse_entries(self, parsed, entries, data):
+    def parse_entries(self, op, parsed, entries, data):
         for idx, name in enumerate(entries):
-            data[name] = int(parsed[idx])
+            data[op][name] = int(parsed[idx])
 
     def parse_repcache(self, parsed, data):
         """
@@ -22,7 +22,7 @@ class NFSStat(object):
             "rcmisses",
             "rcnocache"
         ]
-        self.parse_entries(parsed, entries, data)
+        self.parse_entries("server", parsed, entries, data)
 
     def parse_fh(self, parsed, data):
         """
@@ -33,18 +33,18 @@ class NFSStat(object):
         Hence, although 5.10 kernel has additional stats,
         we do not expose them.
         """
-        data["fh_stale"] = int(parsed[0])
+        data["server"]["fh_stale"] = int(parsed[0])
 
     def parse_io(self, parsed, data):
-        data["read_bytes"] = int(parsed[0])
-        data["write_bytes"] = int(parsed[1])
+        data["server"]["read_bytes"] = int(parsed[0])
+        data["server"]["write_bytes"] = int(parsed[1])
 
     def parse_th(self, parsed, data):
         """
         Thread busy counters were removed in 2009.
         Same as above in parse_fh()
         """
-        data["thread_count"] = int(parsed[0])
+        data["server"]["thread_count"] = int(parsed[0])
 
     def parse_net(self, parsed, data):
         entries = [
@@ -53,7 +53,7 @@ class NFSStat(object):
             "net_tcp_cnt",
             "net_tcp_conn"
         ]
-        self.parse_entries(parsed, entries, data)
+        self.parse_entries("server", parsed, entries, data)
 
     def parse_rpc(self, parsed, data):
         entries = [
@@ -63,13 +63,13 @@ class NFSStat(object):
             "rpc_bad_auth",
             "rpc_bad_clnt"
         ]
-        self.parse_entries(parsed, entries, data)
+        self.parse_entries("server", parsed, entries, data)
 
     def parse_proc3(self, parsed, data):
         # generic read/write counters for consistency
         # with how we reported from Ganesha
-        data["read"] = int(parsed[7])
-        data["write"] = int(parsed[8])
+        data["server"]["read"] = int(parsed[7])
+        data["server"]["write"] = int(parsed[8])
 
         # NFSv3 operations counters
         # skip NULL op
@@ -97,17 +97,17 @@ class NFSStat(object):
             "nfsv3_op_pathconf",
             "nfsv3_op_commit"
         ]
-        self.parse_entries(parsed[1:], entries, data)
+        self.parse_entries("nfsv3_ops", parsed[1:], entries, data)
 
     def parse_proc4(self, parsed, data):
-        data["nfsv4_null"] = int(parsed[1])
-        data["nfsv4_compound"] = int(parsed[2])
+        data["server"]["nfsv4_null"] = int(parsed[1])
+        data["server"]["nfsv4_compound"] = int(parsed[2])
 
     def parse_proc4ops(self, parsed, data):
         # generic read/write counters for consistency
         # with how we reported from Ganesha
-        data["read"] += int(parsed[26])
-        data["write"] += int(parsed[39])
+        data["server"]["read"] += int(parsed[26])
+        data["server"]["write"] += int(parsed[39])
 
         # NFSv4.0, 4.1, 4.2 operations
         # OP numbers are defined in include/linux/nfs4.h
@@ -190,7 +190,7 @@ class NFSStat(object):
             "nfsv4_op_listxattrs",
             "nfsv4_op_removexattr",
         ]
-        self.parse_entries(parsed[2:], entries, data)
+        self.parse_entries("nfsv4_ops", parsed[2:], entries, data)
 
     op_table = {
         "rc": parse_repcache,
@@ -220,10 +220,9 @@ class NFSStat(object):
 
     def read(self):
         data = {
-            "read": 0,
-            "write": 0,
-            "read_bytes": 0,
-            "write_bytes": 0,
+            "server": {"read": 0, "write": 0, "read_bytes": 0, "write_bytes": 0},
+            "nfsv3_ops": {},
+            "nfsv4_ops": {}
         }
         try:
             with open("/proc/net/rpc/nfsd", "r") as f:
@@ -234,16 +233,17 @@ class NFSStat(object):
 
                     self.op_table[parsed[0]](self, parsed[1:], data)
 
-            for k, v in data.items():
-                self.dispatch_value(k, v)
+            for plugin_instance, plugin_data in data.items():
+                for type_instance, val in plugin_data.items():
+                    self.dispatch_value(plugin_instance, type_instance, val)
 
         except Exception:
             collectd.error(traceback.format_exc())
 
-    def dispatch_value(self, type_instance, value):
+    def dispatch_value(self, plugin_instance, type_instance, value):
         val = collectd.Values()
         val.plugin = 'nfsstat'
-        val.plugin_instance = 'server'
+        val.plugin_instance = plugin_instance
         val.type = 'nfsstat'
         val.type_instance = type_instance
         val.values = [value]
