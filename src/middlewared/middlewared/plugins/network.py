@@ -1206,13 +1206,14 @@ class InterfaceService(CRUDService):
             )
 
             if iface['type'] == 'BRIDGE':
+                options = {}
                 if 'bridge_members' in data:
-                    await self.middleware.call(
-                        'datastore.update',
-                        'network.bridge',
-                        [('interface', '=', config['id'])],
-                        {'members': data['bridge_members']},
-                    )
+                    options['members'] = data['bridge_members']
+                if 'stp' in data:
+                    options['stp'] = data['stp']
+                if options:
+                    filters = [('interface', '=', config['id'])]
+                    await self.middleware.call('datastore.update', 'network.bridge', filters, options)
             elif iface['type'] == 'LINK_AGGREGATION':
                 xmit = lacpdu = None
                 if new['lag_protocol'] in ('LACP', 'LOADBALANCE'):
