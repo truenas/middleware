@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Int, returns
+from middlewared.schema import accepts, Int, returns, Str
 from middlewared.service import Service, private, filterable
 from middlewared.utils import filter_list
 from contextlib import suppress
@@ -102,3 +102,32 @@ class NFSService(Service):
         with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{client_id}/ctl", "w") as f:
                 f.write("expire\n")
+
+
+    @private
+    def get_threadpool_mode(self):
+        with open("/sys/module/sunrpc/parameters/pool_mode", "r") as f:
+            pool_mode = f.readline().strip()
+
+        return pool_mode.upper()
+
+    @private
+    @accepts(Str("pool_mode", enum=["AUTO", "GLOBAL", "PERCPU", "PERNODE"]))
+    def set_threadpool_mode(self, pool_mode):
+        """
+        Control how the NFS server code allocates CPUs to
+        service thread pools.  Depending on how many NICs
+        you have and where their interrupts are bound, this
+        option will affect which CPUs will do NFS serving.
+        Note: this parameter cannot be changed while the
+        NFS server is running.
+
+        auto        the server chooses an appropriate mode
+                    automatically using heuristics
+        global      a single global pool contains all CPUs
+        percpu      one pool for each CPU
+        pernode     one pool for each NUMA node (equivalent
+                    to global on non-NUMA machines)
+        """
+        with open("/sys/module/sunrpc/parameters/pool_mode", "w") as f:
+            f.write(pool_mode.lower())
