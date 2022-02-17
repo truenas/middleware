@@ -29,6 +29,12 @@ class BridgeMixin:
             if link.get("master") == self.name
         ]
 
+    @property
+    def stp(self):
+        with NDB(log="off") as ndb:
+            with ndb.interfaces[self.name] as br:
+                return bool(br['br_stp_state'])
+
     def toggle_stp(self, name, value):
         # 0 is off > 0 is on
         with NDB(log="off") as ndb:
