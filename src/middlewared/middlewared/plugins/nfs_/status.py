@@ -104,7 +104,6 @@ class NFSService(Service):
             with open(f"/proc/fs/nfsd/clients/{client_id}/ctl", "w") as f:
                 f.write("expire\n")
 
-
     @private
     def get_threadpool_mode(self):
         with open("/sys/module/sunrpc/parameters/pool_mode", "r") as f:
