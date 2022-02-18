@@ -870,7 +870,7 @@ def test_44_check_setting_runtime_debug(request):
     assert res['result'] == disabled, res
 
 
-def test_51_stoping_nfs_service(request):
+def test_50_stoping_nfs_service(request):
     depends(request, ["pool_04"], scope="session")
     payload = {"service": "nfs"}
     results = POST("/service/stop/", payload)
@@ -878,10 +878,29 @@ def test_51_stoping_nfs_service(request):
     sleep(1)
 
 
-def test_52_checking_to_see_if_nfs_service_is_stop(request):
+def test_51_checking_to_see_if_nfs_service_is_stop(request):
     depends(request, ["pool_04"], scope="session")
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "STOPPED", results.text
+
+
+def test_52_check_adjusting_threadpool_mode(request):
+    """
+    Verify that NFS thread pool configuration can be adjusted
+    through private API endpoints.
+
+    This request will fail if NFS server is still running.
+    """
+    supported_modes = ["AUTO", "PERCPU", "PERNODE", "GLOBAL"]
+    payload = {'msg': 'method', 'method': None, 'params': []}
+
+    for m in supported_modes:
+        payload.update({'method': 'nfs.set_threadpool_mode', 'params': [m]})
+        make_ws_request(ip, payload)
+
+        payload.update({'method': 'nfs.get_threadpool_mode', 'params': []})
+        res = make_ws_request(ip, payload)
+        assert res['result'] == m, res
 
 
 def test_53_disable_nfs_service_at_boot(request):
