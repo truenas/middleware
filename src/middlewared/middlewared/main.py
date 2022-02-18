@@ -591,6 +591,7 @@ class ShellWorkerThread(threading.Thread):
                 'HOME': '/root',
                 'LANG': 'en_US.UTF-8',
                 'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin',
+                'WEB_CLIENT': 'xterm',
             })
 
         # Terminal baudrate affects input queue size
