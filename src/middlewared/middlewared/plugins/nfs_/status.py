@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Int, returns, Str
 from middlewared.service import Service, private, filterable
 from middlewared.utils import filter_list
+from middlewared.service_exception import CallError
 from contextlib import suppress
 
 import yaml
@@ -129,5 +130,11 @@ class NFSService(Service):
         pernode     one pool for each NUMA node (equivalent
                     to global on non-NUMA machines)
         """
-        with open("/sys/module/sunrpc/parameters/pool_mode", "w") as f:
-            f.write(pool_mode.lower())
+        try:
+            with open("/sys/module/sunrpc/parameters/pool_mode", "w") as f:
+                f.write(pool_mode.lower())
+        except OSError as e:
+            raise CallError(
+                "NFS service must be stopped before threadpool mode changes",
+                errno=e.errno
+            )
