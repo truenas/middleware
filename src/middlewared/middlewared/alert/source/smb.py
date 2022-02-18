@@ -20,7 +20,7 @@ def generate_alert_text(auth_log):
         }
         alert_text[k] = entry
 
-    return [str(x) for x in alert_text.values()]
+    return [f"{entry['client']} at {entry['address']} ({entry['cnt']} times)" for entry in alert_text.values()]
 
 
 class SMBLegacyProtocolAlertClass(AlertClass):
