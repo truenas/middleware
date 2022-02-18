@@ -1,28 +1,142 @@
 import traceback
 
 import collectd
+import enum
+from contextlib import suppress
 
 READ_INTERVAL = 10.0
 
 collectd.info('Loading "nfsstat" python plugin')
 
 
+class ReplyCache(enum.IntEnum):
+    RC_HITS = 0
+    RC_MISSES = enum.auto()
+    RC_NOCACHE = enum.auto()
+
+
+class Net(enum.IntEnum):
+    NET_CNT = 0
+    NET_UDP_CNT = enum.auto()
+    NET_TCP_CNT = enum.auto()
+    NET_TCP_CONN = enum.auto()
+
+
+class Rpc(enum.IntEnum):
+    RPC_CNT = 0
+    RPC_BAD_CNT = enum.auto()
+    RPC_BAD_FMT = enum.auto()
+    RPC_BAD_AUTH = enum.auto()
+    RPC_BAD_CLNT = enum.auto()
+
+
+class NFSv3_OP(enum.IntEnum):
+    NFSV3_OP_NULL = 0
+    NFSV3_OP_GETATTR = enum.auto()
+    NFSV3_OP_SETATTR = enum.auto()
+    NFSV3_OP_LOOKUP = enum.auto()
+    NFSV3_OP_ACCESS = enum.auto()
+    NFSV3_OP_READLINK = enum.auto()
+    NFSV3_OP_READ = enum.auto()
+    NFSV3_OP_WRITE = enum.auto()
+    NFSV3_OP_CREATE = enum.auto()
+    NFSV3_OP_MKDIR = enum.auto()
+    NFSV3_OP_SYMLINK = enum.auto()
+    NFSV3_OP_MKNOD = enum.auto()
+    NFSV3_OP_REMOVE = enum.auto()
+    NFSV3_OP_RMDIR = enum.auto()
+    NFSV3_OP_RENAME = enum.auto()
+    NFSV3_OP_LINK = enum.auto()
+    NFSV3_OP_READDIR = enum.auto()
+    NFSV3_OP_READDIRPLUS = enum.auto()
+    NFSV3_OP_FSSTAT = enum.auto()
+    NFSV3_OP_FSINFO = enum.auto()
+    NFSV3_OP_PATHCONF = enum.auto()
+
+
+class NFSv4_OP(enum.IntEnum):
+    NFSV4_OP_ACCESS = 3
+    NFSV4_OP_CLOSE = enum.auto()
+    NFSV4_OP_COMMIT = enum.auto()
+    NFSV4_OP_CREATE = enum.auto()
+    NFSV4_OP_DELEGPURGE = enum.auto()
+    NFSV4_OP_DELEGRETURN = enum.auto()
+    NFSV4_OP_GETATTR = enum.auto()
+    NFSV4_OP_GETFH = enum.auto()
+    NFSV4_OP_LINK = enum.auto()
+    NFSV4_OP_LOCK = enum.auto()
+    NFSV4_OP_LOCKT = enum.auto()
+    NFSV4_OP_LOCKU = enum.auto()
+    NFSV4_OP_LOOKUP = enum.auto()
+    NFSV4_OP_LOOKUPP = enum.auto()
+    NFSV4_OP_NVERIFY = enum.auto()
+    NFSV4_OP_OPEN = enum.auto()
+    NFSV4_OP_OPENATTR = enum.auto()
+    NFSV4_OP_OPEN_CONFIRM = enum.auto()
+    NFSV4_OP_OPEN_DOWNGRADE = enum.auto()
+    NFSV4_OP_PUTFH = enum.auto()
+    NFSV4_OP_PUTPUBFH = enum.auto()
+    NFSV4_OP_PUTROOTFH = enum.auto()
+    NFSV4_OP_READ = enum.auto()
+    NFSV4_OP_READDIR = enum.auto()
+    NFSV4_OP_READLINK = enum.auto()
+    NFSV4_OP_REMOVE = enum.auto()
+    NFSV4_OP_RENAME = enum.auto()
+    NFSV4_OP_RENEW = enum.auto()
+    NFSV4_OP_RESTOREFH = enum.auto()
+    NFSV4_OP_SAVEFH = enum.auto()
+    NFSV4_OP_SECINFO = enum.auto()
+    NFSV4_OP_SETATTR = enum.auto()
+    NFSV4_OP_SETCLIENTID = enum.auto()
+    NFSV4_OP_SETCLIENTID_CONFIRM = enum.auto()
+    NFSV4_OP_VERIFY = enum.auto()
+    NFSV4_OP_WRITE = enum.auto()
+    NFSV4_OP_RELEASE_LOCK_OWNER = enum.auto()
+    NFSV4_OP_BACKCHANNEL_CTL = enum.auto()
+    NFSV4_OP_BIND_CONN_TO_SESSION = enum.auto()
+    NFSV4_OP_EXCHANGE_ID = enum.auto()
+    NFSV4_OP_CREATE_SESSION = enum.auto()
+    NFSV4_OP_DESTROY_SESSION = enum.auto()
+    NFSV4_OP_FREE_STATEID = enum.auto()
+    NFSV4_OP_GET_DIR_DELEGATION = enum.auto()
+    NFSV4_OP_GETDEVICEINFO = enum.auto()
+    NFSV4_OP_GETDEVICELIST = enum.auto()
+    NFSV4_OP_LAYOUTCOMMMIT = enum.auto()
+    NFSV4_OP_LAYOUTGET = enum.auto()
+    NFSV4_OP_LAYOUTRETURN = enum.auto()
+    NFSV4_OP_SECINFO_NO_NAME = enum.auto()
+    NFSV4_OP_SEQUENCE = enum.auto()
+    NFSV4_OP_SET_SSV = enum.auto()
+    NFSV4_OP_TEST_STATEID = enum.auto()
+    NFSV4_OP_WANT_DELEGATION = enum.auto()
+    NFSV4_OP_DESTROY_CLIENTID = enum.auto()
+    NFSV4_OP_RECLAIM_COMPLETE = enum.auto()
+    NFSV4_OP_ALLOCATE = enum.auto()
+    NFSV4_OP_COPY = enum.auto()
+    NFSV4_OP_COPY_NOTIFY = enum.auto()
+    NFSV4_OP_DEALLOCATE = enum.auto()
+    NFSV4_OP_IO_ADVISE = enum.auto()
+    NFSV4_OP_LAYOUTERROR = enum.auto()
+
+
+class ThreadPool(enum.IntEnum):
+    PACKETS_ARRIVED = 0
+    SOCKETS_ENQUEUED = enum.auto()
+    THREADS_WOKEN = enum.auto()
+    THREADS_TIMEDOUT = enum.auto()
+
+
 class NFSStat(object):
     # fs/nfsd/stats.h
     def parse_entries(self, op, parsed, entries, data):
-        for idx, name in enumerate(entries):
-            data[op][name] = int(parsed[idx])
+        for i in entries:
+            data[op][i.name.lower()] = int(parsed[i])
 
     def parse_repcache(self, parsed, data):
         """
         reply cache hits, misses, and uncached requests
         """
-        entries = [
-            "rchits",
-            "rcmisses",
-            "rcnocache"
-        ]
-        self.parse_entries("server", parsed, entries, data)
+        self.parse_entries("server", parsed, ReplyCache, data)
 
     def parse_fh(self, parsed, data):
         """
@@ -47,23 +161,10 @@ class NFSStat(object):
         data["server"]["thread_count"] = int(parsed[0])
 
     def parse_net(self, parsed, data):
-        entries = [
-            "net_cnt",
-            "net_udp_cnt",
-            "net_tcp_cnt",
-            "net_tcp_conn"
-        ]
-        self.parse_entries("server", parsed, entries, data)
+        self.parse_entries("server", parsed, Net, data)
 
     def parse_rpc(self, parsed, data):
-        entries = [
-            "rpc_cnt",
-            "rpc_bad_cnt",
-            "rpc_bad_fmt",
-            "rpc_bad_auth",
-            "rpc_bad_clnt"
-        ]
-        self.parse_entries("server", parsed, entries, data)
+        self.parse_entries("server", parsed, Rpc, data)
 
     def parse_proc3(self, parsed, data):
         # generic read/write counters for consistency
@@ -72,32 +173,7 @@ class NFSStat(object):
         data["server"]["write"] = int(parsed[8])
 
         # NFSv3 operations counters
-        # skip NULL op
-        entries = [
-            "nfsv3_op_null",
-            "nfsv3_op_getattr",
-            "nfsv3_op_setattr",
-            "nfsv3_op_lookup",
-            "nfsv3_op_access",
-            "nfsv3_op_readlink",
-            "nfsv3_op_read",
-            "nfsv3_op_write",
-            "nfsv3_op_create",
-            "nfsv3_op_mkdir",
-            "nfsv3_op_symlink",
-            "nfsv3_op_mknod",
-            "nfsv3_op_remove",
-            "nfsv3_op_rmdir",
-            "nfsv3_op_rename",
-            "nfsv3_op_link",
-            "nfsv3_op_readdir",
-            "nfsv3_op_readdirplus",
-            "nfsv3_op_fsstat",
-            "nfsv3_op_fsinfo",
-            "nfsv3_op_pathconf",
-            "nfsv3_op_commit"
-        ]
-        self.parse_entries("nfsv3_ops", parsed[1:], entries, data)
+        self.parse_entries("nfsv3_ops", parsed[1:], NFSv3_OP, data)
 
     def parse_proc4(self, parsed, data):
         data["server"]["nfsv4_null"] = int(parsed[1])
@@ -112,85 +188,16 @@ class NFSStat(object):
         # NFSv4.0, 4.1, 4.2 operations
         # OP numbers are defined in include/linux/nfs4.h
         # First OP is OP_ACCESS (3)
-        # NFSv41 ops begin with "nfsv4_op_backchannel_ctl"
-        # NFSv42 ops begin with "nfsv4_op_allocate"
-        # RFC 8726 (xattr) support begins with "nfsv4_op_getxattr"
-        entries = [
-            "nfsv4_op_access",
-            "nfsv4_op_close",
-            "nfsv4_op_commit",
-            "nfsv4_op_create",
-            "nfsv4_op_delegpurge",
-            "nfsv4_op_delegreturn",
-            "nfsv4_op_getattr",
-            "nfsv4_op_getfh",
-            "nfsv4_op_link",
-            "nfsv4_op_lock",
-            "nfsv4_op_lockt",
-            "nfsv4_op_locku",
-            "nfsv4_op_lookup",
-            "nfsv4_op_lookupp",
-            "nfsv4_op_nverify",
-            "nfsv4_op_open",
-            "nfsv4_op_openattr",
-            "nfsv4_op_open_confirm",
-            "nfsv4_op_open_downgrade",
-            "nfsv4_op_putfh",
-            "nfsv4_op_putpubfh",
-            "nfsv4_op_putrootfh",
-            "nfsv4_op_read",
-            "nfsv4_op_readdir",
-            "nfsv4_op_readlink",
-            "nfsv4_op_remove",
-            "nfsv4_op_rename",
-            "nfsv4_op_renew",
-            "nfsv4_op_restorefh",
-            "nfsv4_op_savefh",
-            "nfsv4_op_secinfo",
-            "nfsv4_op_setattr",
-            "nfsv4_op_setclientid",
-            "nfsv4_op_setclientid_confirm",
-            "nfsv4_op_verify",
-            "nfsv4_op_write",
-            "nfsv4_op_release_lock_owner",
-            "nfsv4_op_backchannel_ctl",
-            "nfsv4_op_bind_conn_to_session",
-            "nfsv4_op_exchange_id",
-            "nfsv4_op_create_session",
-            "nfsv4_op_destroy_session",
-            "nfsv4_op_free_stateid",
-            "nfsv4_op_get_dir_delegation",
-            "nfsv4_op_getdeviceinfo",
-            "nfsv4_op_getdevicelist",
-            "nfsv4_op_layoutcommmit",
-            "nfsv4_op_layoutget",
-            "nfsv4_op_layoutreturn",
-            "nfsv4_op_secinfo_no_name",
-            "nfsv4_op_sequence",
-            "nfsv4_op_set_ssv",
-            "nfsv4_op_test_stateid",
-            "nfsv4_op_want_delegation",
-            "nfsv4_op_destroy_clientid",
-            "nfsv4_op_reclaim_complete",
-            "nfsv4_op_allocate",
-            "nfsv4_op_copy",
-            "nfsv4_op_copy_notify",
-            "nfsv4_op_deallocate",
-            "nfsv4_op_io_advise",
-            "nfsv4_op_layouterror",
-            "nfsv4_op_layoutstats",
-            "nfsv4_op_offload_cancel",
-            "nfsv4_op_offload_status",
-            "nfsv4_op_read_plus",
-            "nfsv4_op_seek",
-            "nfsv4_op_write_same",
-            "nfsv4_op_clone",
-            "nfsv4_op_getxattr",
-            "nfsv4_op_setxattr",
-            "nfsv4_op_listxattrs",
-            "nfsv4_op_removexattr",
-        ]
-        self.parse_entries("nfsv4_ops", parsed[2:], entries, data)
+        # NFSv41 ops begin with NFSV4_OP_BACKCHANNEL_CTL
+        # NFSv42 ops begin with NFSV4_OP_ALLOCATE
+        # RFC 8726 (xattr) support begins with NFSV4_OP_GETXATTR
+        self.parse_entries("nfsv4_ops", parsed[1:], NFSv4_OP, data)
+
+    def parse_threadpool_info(self, parsed, data):
+        # https://www.kernel.org/doc/Documentation/filesystems/nfs/knfsd-stats.txt
+        tp = f'threadpool_{int(parsed[0]):03}'
+        data[tp] = {}
+        self.parse_entries(tp, parsed[1:], ThreadPool, data)
 
     op_table = {
         "rc": parse_repcache,
@@ -232,6 +239,14 @@ class NFSStat(object):
                         continue
 
                     self.op_table[parsed[0]](self, parsed[1:], data)
+
+            with suppress(OSError):
+                with open("/proc/fs/nfsd/pool_stats", "r") as f:
+                    for line in f:
+                        if line.startswith("#"):
+                            continue
+
+                        self.parse_threadpool_info(line.split(), data)
 
             for plugin_instance, plugin_data in data.items():
                 for type_instance, val in plugin_data.items():
