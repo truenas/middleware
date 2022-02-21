@@ -37,11 +37,19 @@ class InterfaceService(Service):
             ipv4_field = 'int_ipv4address_b'
             ipv6_field = 'int_ipv6address_b'
             alias_field = 'alias_address_b'
+        elif (
+            # Bridge interface members should not have IP addresses
+            self.middleware.call_sync('interface.type', iface.__getstate__()) in [
+                InterfaceType.BRIDGE,
+                ]):
+            self.logger.info('%r is bridge member, handle specially')
+            ipv4_field = 'int_ipv4address'
+            ipv6_field = 'int_ipv6address'
+            alias_field = 'alias_address'
         else:
             ipv4_field = 'int_ipv4address'
             ipv6_field = 'int_ipv6address'
             alias_field = 'alias_address'
-
         dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
         if dhclient_running and data['int_dhcp']:
             leases = self.middleware.call_sync('interface.dhclient_leases', name)
