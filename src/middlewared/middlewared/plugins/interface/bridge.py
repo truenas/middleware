@@ -33,6 +33,7 @@ class InterfaceService(Service):
             # remove members from the bridge that aren't in the db
             self.logger.info('Removing member interface %r from %r', member, name)
             iface.delete_member(member)
+            ## TODO: Add IP address back to former bridge member based on db
 
         for member in db_members - os_members:
             # now add members that are written in db but do not exist in
@@ -40,6 +41,7 @@ class InterfaceService(Service):
             try:
                 self.logger.info('Adding member interface %r to %r', member, name)
                 iface.add_member(member)
+                ## TODO: Remove IP address from bridge member (but not from db!)
             except FileNotFoundError:
                 self.logger.error('Bridge member %r not found', member)
                 continue
