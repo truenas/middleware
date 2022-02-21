@@ -467,31 +467,33 @@ class Client(object):
 
         c = Call(method, params)
         self._register_call(c)
-        self._send({
-            'msg': 'method',
-            'method': c.method,
-            'id': c.id,
-            'params': c.params,
-        })
+        try:
+            self._send({
+                'msg': 'method',
+                'method': c.method,
+                'id': c.id,
+                'params': c.params,
+            })
 
-        if not c.returned.wait(timeout):
+            if not c.returned.wait(timeout):
+                raise CallTimeout("Call timeout")
+
+            if c.errno:
+                if c.py_exception:
+                    raise c.py_exception
+                if c.trace and c.type == 'VALIDATION':
+                    raise ValidationErrors(c.extra)
+                raise ClientException(c.error, c.errno, c.trace, c.extra)
+
+            if job:
+                jobobj = Job(self, c.result, callback=kwargs.get('callback'))
+                if job == 'RETURN':
+                    return jobobj
+                return jobobj.result()
+
+            return c.result
+        finally:
             self._unregister_call(c)
-            raise CallTimeout("Call timeout")
-
-        if c.errno:
-            if c.py_exception:
-                raise c.py_exception
-            if c.trace and c.type == 'VALIDATION':
-                raise ValidationErrors(c.extra)
-            raise ClientException(c.error, c.errno, c.trace, c.extra)
-
-        if job:
-            jobobj = Job(self, c.result, callback=kwargs.get('callback'))
-            if job == 'RETURN':
-                return jobobj
-            return jobobj.result()
-
-        return c.result
 
     @staticmethod
     def event_payload():
@@ -544,6 +546,7 @@ class Client(object):
         self._ws.close()
         # Wait for websocketclient thread to close
         self._closed.wait(1)
+        self._ws = None
 
 
 def main():

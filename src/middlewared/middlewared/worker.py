@@ -114,6 +114,7 @@ def main_worker(*call_args):
         res = MIDDLEWARE._run(*call_args)
     except SystemExit:
         raise RuntimeError('Worker call raised SystemExit exception')
+
     # TODO: python cant pickle generator for obvious reasons, we should implement
     # it using Pipe.
     if inspect.isgenerator(res):
