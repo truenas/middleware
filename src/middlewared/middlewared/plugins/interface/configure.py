@@ -133,6 +133,7 @@ class InterfaceService(Service):
 
         # Remove addresses configured and not in database
         for addr in addrs_configured:
+            # TODO: Handle IPv4 / IPv6 commit (messages to user?)
             address = str(addr.address)
             # keepalived service is responsible for deleting the VIP(s)
             if address in (vip, vipv6) or address in alias_vips:
@@ -155,6 +156,7 @@ class InterfaceService(Service):
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
+            # TODO: Handle IPv4 / IPv6 commit (messages to user?)
             address = str(addr.address)
             # keepalived service is responsible for adding the VIP(s)
             if address in (vip, vipv6) or address in alias_vips:
