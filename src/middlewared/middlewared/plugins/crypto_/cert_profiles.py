@@ -71,7 +71,8 @@ CERTIFICATE_PROFILES = {
                     'CLIENT_AUTH',
                 ]
             },
-            # keyAgreement is not generally required for EC certs. See Google, cloudflare certs
+            # keyAgreement is not generally required for EC certs.
+            # See Google, cloudflare certs
             'KeyUsage': {
                 'enabled': True,
                 'extension_critical': True,
