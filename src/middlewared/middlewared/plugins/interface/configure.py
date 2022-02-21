@@ -43,6 +43,8 @@ class InterfaceService(Service):
                 InterfaceType.BRIDGE,
                 ]):
             self.logger.info('%r is bridge member, handle specially')
+            # TODO: Specially handle bridge member interfaces: ip change should go to DB, but NOT live.
+            # TODO: signal to web UI that this change is not live, so config can be preemptively changed
             ipv4_field = 'int_ipv4address'
             ipv6_field = 'int_ipv6address'
             alias_field = 'alias_address'
