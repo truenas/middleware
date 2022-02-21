@@ -1,7 +1,7 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
-from middlewared.validators import Match, Range, Hostname
+from middlewared.validators import Range, Hostname
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 
