@@ -1,8 +1,8 @@
 
-Warning: the only supported method of making changes to the TrueNAS
-configuration is through the TrueNAS CLI or the TrueNAS REST and Websocket APIs.
-Manual configuration changes through the system shell will not persist after
-reboot and may not persist after service reload or restart. Altering the base
-install of TrueNAS through installing new packages is also not supported and
-may result in breaking the TrueNAS appliance.
+Warning: the only supported mechanisms for TrueNAS configuration changes
+are the TrueNAS WebUI, TrueNAS CLI, and TrueNAS API. Manual configuration
+changes through the system shell will not persist after reboot and may not
+persist after service reload or restart. Altering the base install of
+TrueNAS install through installing, updating, or removing packages is not
+supported and may result in breaking the TrueNAS appliance.
 
