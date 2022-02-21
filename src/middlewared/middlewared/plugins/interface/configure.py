@@ -77,14 +77,13 @@ class InterfaceService(Service):
                     'address': data[ipv4_field],
                     'netmask': data['int_v4netmaskbit'],
                 }))
-                # TODO: Handle IPv4 / IPv6 commit (messages to user?)
             if data[ipv6_field] and not has_ipv6:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv6_field],
                     'netmask': data['int_v6netmaskbit'],
                 }))
                 has_ipv6 = True
-                # TODO: Handle IPv4 / IPv6 commit (messages to user?)
+
         # configure VRRP
         vip = data.get('int_vip', '')
         if vip:
