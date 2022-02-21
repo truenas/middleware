@@ -1,4 +1,6 @@
 
-Warning: settings changed through the CLI are not written to
-the configuration database and will be reset on reboot.
+Warning: the supported mechanisms for making configuration changes
+are the TrueNAS WebUI and API exclusively. ALL OTHERS ARE
+NOT SUPPORTED AND WILL RESULT IN UNDEFINED BEHAVIOR AND MAY
+RESULT IN SYSTEM FAILURE.
 
