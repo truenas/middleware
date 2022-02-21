@@ -31,8 +31,9 @@ CERTIFICATE_PROFILES = {
                     'CLIENT_AUTH',
                 ]
             },
-            # RSA certs should have "digitalSignature" for DHE, and "keyEncipberment" for nonDHE
-            # Include "keyAgreement" for compatibility, "Required" for DH_DSS / DH_RSA
+            # RSA certs need "digitalSignature" for DHE,
+            # and "keyEncipherment" for nonDHE
+            # Include "keyAgreement" for compatibility (DH_DSS / DH_RSA)
             # See rfc5246
             'KeyUsage': {
                 'enabled': True,
