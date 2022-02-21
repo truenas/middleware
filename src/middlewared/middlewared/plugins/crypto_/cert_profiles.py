@@ -161,8 +161,9 @@ class CertificateService(Service):
     ))
     async def profiles(self):
         """
-        Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
-        configurations which can be used for creating certificates.
+        Returns a dictionary of predefined options for specific use cases, i.e
+        openvpn client/server configurations which can be used
+        for creating certificates.
         """
         return CERTIFICATE_PROFILES
 
@@ -173,7 +174,8 @@ class CertificateService(Service):
     ))
     async def certificate_signing_requests_profiles(self):
         """
-        Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
-        configurations which can be used for creating certificate signing requests.
+        Returns a dictionary of predefined options for specific use cases i.e
+        openvpn client/server configurations which can be used for
+        creating certificate signing requests.
         """
         return CSR_PROFILES
