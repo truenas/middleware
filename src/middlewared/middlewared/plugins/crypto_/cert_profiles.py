@@ -7,8 +7,8 @@ from .utils import DEFAULT_LIFETIME_DAYS
 
 
 CERTIFICATE_PROFILES = {
-        # Options / EKUs reference rfc5246
-        'HTTPS RSA Cert': {
+    # Options / EKUs reference rfc5246
+    'HTTPS RSA Certificate': {
         'cert_extensions': {
             'BasicConstraints': {
                 'enabled': True,
@@ -20,9 +20,9 @@ CERTIFICATE_PROFILES = {
                 'authority_cert_issuer': True,
                 'extension_critical': False
             },
-            #Most TLS certs these days want "ClientAuth" these days.
-            #LetsEncrypt appears to want this extension to issue.
-            #https://community.letsencrypt.org/t/extendedkeyusage-tls-client-authentication-in-tls-server-certificates/59140/7
+            # Most TLS certs these days want "ClientAuth" these days.
+            # LetsEncrypt appears to want this extension to issue.
+            # https://community.letsencrypt.org/t/extendedkeyusage-tls-client-authentication-in-tls-server-certificates/59140/7
             'ExtendedKeyUsage': {
                 'enabled': True,
                 'extension_critical': True,
@@ -47,7 +47,7 @@ CERTIFICATE_PROFILES = {
         'lifetime': NOT_VALID_AFTER_DEFAULT,
         'digest_algorithm': 'SHA256'
     },
-    'HTTPS ECC Cert': {
+    'HTTPS ECC Certificate': {
         'cert_extensions': {
             'BasicConstraints': {
                 'enabled': True,
@@ -59,9 +59,9 @@ CERTIFICATE_PROFILES = {
                 'authority_cert_issuer': True,
                 'extension_critical': False
             },
-            #Most TLS certs these days want "ClientAuth" these days.
-            #LetsEncrypt appears to want this extension to issue.
-            #https://community.letsencrypt.org/t/extendedkeyusage-tls-client-authentication-in-tls-server-certificates/59140/7
+            # Most TLS certs these days want "ClientAuth" these days.
+            # LetsEncrypt appears to want this extension to issue.
+            # https://community.letsencrypt.org/t/extendedkeyusage-tls-client-authentication-in-tls-server-certificates/59140/7
             'ExtendedKeyUsage': {
                 'enabled': True,
                 'extension_critical': True,
