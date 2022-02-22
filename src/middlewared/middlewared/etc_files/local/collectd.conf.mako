@@ -22,8 +22,7 @@
 
 	base_dir = '/var/db/collectd'
 	data_dir = '/var/db/collectd/rrd'
-	network_config = middleware.call_sync('network.configuration.config')
-	hostname = f"{network_config['hostname_local']}.{network_config['domain']}"
+	hostname = middleware.call_sync('reporting.hostname')
 
 	if cpu_in_percentage:
 		cpu_plugin_options = 'ValuesPercentage True'

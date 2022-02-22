@@ -1,6 +1,3 @@
-import contextlib
-import time
-
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset
