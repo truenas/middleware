@@ -666,9 +666,10 @@ class PoolService(CRUDService):
 
         if overprovsize := (await self.middleware.call('system.advanced.config'))['overprovision']:
             log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
+            len_log_disks = len(log_disks)
             for i, disk in enumerate(log_disks):
                 try:
-                    job.set_progress(10, f'Overprovisioning disks ({i}/{len(log_disks)})')
+                    job.set_progress(10, f'Overprovisioning disks ({i}/{len_log_disks})')
                     await self.middleware.call('disk.overprovision', disk, overprovsize, i == 0)
                 except CanNotBeOverprovisionedException:
                     pass
