@@ -367,7 +367,7 @@ class PoolService(CRUDService):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
                 )
                 data = (await proc.communicate())[0].decode('utf8').strip('\n')
-                for line in [l for l in data.split('\n') if l.startswith('feature') and '\t' in l]:
+                for line in [i for i in data.split('\n') if i.startswith('feature') and '\t' in i]:
                     prop, value = line.split('\t', 1)
                     if value not in ('active', 'enabled'):
                         return False
@@ -664,18 +664,15 @@ class PoolService(CRUDService):
         verrors.add_child('pool_create', availability_verrors)
         verrors.check()
 
-        log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
-        if log_disks:
-            adv_config = await self.middleware.call('system.advanced.config')
-            if adv_config['overprovision']:
-                if not osc.IS_FREEBSD:
-                    raise CallError('Overprovision not available in this platform')
-                for i, disk in enumerate(log_disks):
-                    try:
-                        job.set_progress(10, f'Overprovisioning disks ({i}/{len(log_disks)})')
-                        await self.middleware.call('disk.overprovision', disk, adv_config['overprovision'], i == 0)
-                    except CanNotBeOverprovisionedException:
-                        pass
+        if overprovsize := (await self.middleware.call('system.advanced.config'))['overprovision']:
+            log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
+            len_log_disks = len(log_disks)
+            for i, disk in enumerate(log_disks):
+                try:
+                    job.set_progress(10, f'Overprovisioning disks ({i}/{len_log_disks})')
+                    await self.middleware.call('disk.overprovision', disk, overprovsize, i == 0)
+                except CanNotBeOverprovisionedException:
+                    pass
 
         # format the disks (GELI encryption is ignored on create requests since it was deprecated)
         await self.middleware.call('pool.format_disks', job, disks)
