@@ -664,18 +664,14 @@ class PoolService(CRUDService):
         verrors.add_child('pool_create', availability_verrors)
         verrors.check()
 
-        log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
-        if log_disks:
-            adv_config = await self.middleware.call('system.advanced.config')
-            if adv_config['overprovision']:
-                if not osc.IS_FREEBSD:
-                    raise CallError('Overprovision not available in this platform')
-                for i, disk in enumerate(log_disks):
-                    try:
-                        job.set_progress(10, f'Overprovisioning disks ({i}/{len(log_disks)})')
-                        await self.middleware.call('disk.overprovision', disk, adv_config['overprovision'], i == 0)
-                    except CanNotBeOverprovisionedException:
-                        pass
+        if overprovsize := (await self.middleware.call('system.advanced.config'))['overprovision']:
+            log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
+            for i, disk in enumerate(log_disks):
+                try:
+                    job.set_progress(10, f'Overprovisioning disks ({i}/{len(log_disks)})')
+                    await self.middleware.call('disk.overprovision', disk, overprovsize, i == 0)
+                except CanNotBeOverprovisionedException:
+                    pass
 
         # format the disks (GELI encryption is ignored on create requests since it was deprecated)
         await self.middleware.call('pool.format_disks', job, disks)
