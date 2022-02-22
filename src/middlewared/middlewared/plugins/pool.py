@@ -367,7 +367,7 @@ class PoolService(CRUDService):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
                 )
                 data = (await proc.communicate())[0].decode('utf8').strip('\n')
-                for line in [l for l in data.split('\n') if l.startswith('feature') and '\t' in l]:
+                for line in [i for i in data.split('\n') if i.startswith('feature') and '\t' in i]:
                     prop, value = line.split('\t', 1)
                     if value not in ('active', 'enabled'):
                         return False
