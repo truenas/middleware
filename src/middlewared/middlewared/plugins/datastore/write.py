@@ -8,6 +8,26 @@ from .filter import FilterMixin
 from .schema import SchemaMixin
 
 
+"""
+By default, when an update/insert/delete operation occurs we will
+emit an event via our event plugin to be processed for the webui.
+This is important, for example, when a new disk is inserted/removed.
+In either of the above scenarios, the webUI will process this event
+and update the front-end accordingly. It negates the front-end having
+to poll the backend (which is expensive). However, on very large
+systems (i.e. systems with 100+ disks) emitting an event can become absurdly
+expensive. This reason why this becomes expensive is because for every
+db operation, we run the plugins associated "query" method. So if we
+update 1000 table entries, then we run "disk.query" 1000 times. In
+real world testing, this has shown to take roughly 82 seconds to update
+100 entries on the `storage_disk` table when there are 641 entries total.
+The database was on a NVMe disk. The solution to this is adding the
+`batch_operation` key. If this is set to True, then an event will not be
+sent for the db operation. It is the callers responsibility to emit an event
+after all the db operations are complete.
+"""
+
+
 class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     class Config:
@@ -20,6 +40,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             'options',
             Bool('ha_sync', default=True),
             Str('prefix', default=''),
+            Bool('batch_operation', default=False),
         ),
     )
     async def insert(self, name, data, options):
@@ -53,7 +74,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         await self._handle_relationships(pk, relationships)
 
-        await self.middleware.call('datastore.send_insert_events', name, insert)
+        if not options['batch_operation']:
+            await self.middleware.call('datastore.send_insert_events', name, insert)
 
         return pk
 
@@ -65,6 +87,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             'options',
             Bool('ha_sync', default=True),
             Str('prefix', default=''),
+            Bool('batch_operation', default=False),
         ),
     )
     async def update(self, name, id_or_filters, data, options):
@@ -101,7 +124,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             if result.rowcount != 1:
                 raise RuntimeError('No rows were updated')
 
-            await self.middleware.call('datastore.send_update_events', name, id)
+            if not options['batch_operation']:
+                await self.middleware.call('datastore.send_update_events', name, id)
 
         await self._handle_relationships(id, relationships)
 
@@ -156,6 +180,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             'options',
             Bool('ha_sync', default=True),
             Str('prefix', default=''),
+            Bool('batch_operation', default=False),
         ),
     )
     async def delete(self, name, id_or_filters, options):
@@ -172,8 +197,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             },
         )
 
-        # FIXME: Sending events for batch deletes not implemented yet
-        if not isinstance(id_or_filters, list):
+        if not isinstance(id_or_filters, list) and not options['batch_operation']:
             await self.middleware.call('datastore.send_delete_events', name, id_or_filters)
 
         return True
