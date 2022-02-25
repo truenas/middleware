@@ -226,12 +226,25 @@ class NFSStat(object):
         self.errors = set()
 
     def read(self):
-        data = {
-            "server": {"read": 0, "write": 0, "read_bytes": 0, "write_bytes": 0},
-            "nfsv3_ops": {},
-            "nfsv4_ops": {}
-        }
-        try:
+        data = {"server": {}, "nfsv3_ops": {}, "nfsv4_ops": {}}
+
+        """
+        /proc/net/rpc/nfsd:
+
+        rc 0 0 0
+        fh 0 0 0 0 0
+        io 0 0
+        th 50 0 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000
+        ra 0 0 0 0 0 0 0 0 0 0 0 0
+        net 0 0 0 0
+        rpc 0 0 0 0 0
+        proc2 18 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+        proc3 22 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+        proc4 2 0 0
+        proc4ops 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+        """
+        with suppress(OSError):
+            data["server"] = {"read": 0, "write": 0, "read_bytes": 0, "write_bytes": 0}
             with open("/proc/net/rpc/nfsd", "r") as f:
                 for line in f:
                     parsed = line.split()
@@ -240,14 +253,21 @@ class NFSStat(object):
 
                     self.op_table[parsed[0]](self, parsed[1:], data)
 
-            with suppress(OSError):
-                with open("/proc/fs/nfsd/pool_stats", "r") as f:
-                    for line in f:
-                        if line.startswith("#"):
-                            continue
+        """
+        /proc/fs/nfsd/pool_stats:
 
-                        self.parse_threadpool_info(line.split(), data)
+        # pool packets-arrived sockets-enqueued threads-woken threads-timedout
+        0 1 1 0 0
+        """
+        with suppress(OSError):
+            with open("/proc/fs/nfsd/pool_stats", "r") as f:
+                for line in f:
+                    if line.startswith("#"):
+                        continue
 
+                    self.parse_threadpool_info(line.split(), data)
+
+        try:
             for plugin_instance, plugin_data in data.items():
                 for type_instance, val in plugin_data.items():
                     self.dispatch_value(plugin_instance, type_instance, val)
