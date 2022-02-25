@@ -1024,7 +1024,7 @@ class InterfaceService(CRUDService):
         for alias in aliases:
             alias['interface'] = interface_id
             await self.middleware.call(
-                'datastore.insert', 'network.alias', dict(interface=interface_id, **alias), {'prefix': 'alias_'}
+                'datastore.insert', 'network.alias', dict(**alias), {'prefix': 'alias_'}
             )
 
     @private
