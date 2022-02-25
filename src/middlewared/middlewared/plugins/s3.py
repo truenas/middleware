@@ -1,7 +1,7 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
-from middlewared.validators import Match, Range, Hostname
+from middlewared.validators import Range, Hostname
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 
@@ -69,12 +69,6 @@ class S3Service(SystemServiceService):
 
     @accepts(Patch(
         's3_entry', 's3_update',
-        ('edit', {'name': 'access_key', 'method': lambda x: setattr(
-            x, 'validators', [Match(r'^\w+$', explanation='Should only contain alphanumeric characters')]
-        )}),
-        ('edit', {'name': 'secret_key', 'method': lambda x: setattr(
-            x, 'validators', [Match(r'^\w+$', explanation='Should only contain alphanumeric characters')]
-        )}),
         ('edit', {'name': 'tls_server_uri', 'method': lambda x: setattr(
             x, 'validators', [Hostname(explanation='Should be a valid hostname')]
         )}),
