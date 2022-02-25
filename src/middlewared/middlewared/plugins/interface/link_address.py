@@ -1,7 +1,5 @@
 import re
 
-from middlewared.utils import osc
-
 RE_FREEBSD_BRIDGE = re.compile(r"bridge([0-9]+)$")
 RE_FREEBSD_LAGG = re.compile(r"lagg([0-9]+)$")
 
@@ -80,48 +78,54 @@ async def setup(middleware):
         )
 
         # Migrate BSD network interfaces to Linux
-        if osc.IS_LINUX:
-            for db_interface in db_interfaces:
-                if m := RE_FREEBSD_BRIDGE.match(db_interface["interface"]):
-                    name = f"br{m.group(1)}"
-                    await rename_interface(middleware, db_interface, name)
-                    db_interface["interface"] = name
+        for db_interface in db_interfaces:
+            if db_interface["interface"].startswith(("vlan", "br", "bond")):
+                # vlan interfaces dont need to be migrated since they
+                # share the same name between CORE and SCALE
+                # "br" and "bond" interface names are already converted
+                # to scale
+                continue
 
-                if m := RE_FREEBSD_LAGG.match(db_interface["interface"]):
-                    name = f"bond{m.group(1)}"
-                    await rename_interface(middleware, db_interface, name)
-                    db_interface["interface"] = name
+            if m := RE_FREEBSD_BRIDGE.match(db_interface["interface"]):
+                name = f"br{m.group(1)}"
+                await rename_interface(middleware, db_interface, name)
+                db_interface["interface"] = name
 
-                if db_interface["link_address"] is not None:
-                    if real_interfaces.by_name.get(db_interface["interface"]) is not None:
-                        # There already is an interface that matches DB cached one, doing nothing
-                        continue
+            if m := RE_FREEBSD_LAGG.match(db_interface["interface"]):
+                name = f"bond{m.group(1)}"
+                await rename_interface(middleware, db_interface, name)
+                db_interface["interface"] = name
 
-                    real_interface_by_link_address = real_interfaces.by_link_address.get(db_interface["link_address"])
-                    if real_interface_by_link_address is None:
-                        middleware.logger.warning(
-                            "Interface with link address %r does not exist anymore (its name was %r)",
-                            db_interface["link_address"], db_interface["interface"],
-                        )
-                        continue
+            if db_interface["link_address"] is not None:
+                if real_interfaces.by_name.get(db_interface["interface"]) is not None:
+                    # There already is an interface that matches DB cached one, doing nothing
+                    continue
 
-                    db_interface_for_real_interface = db_interfaces.by_name.get(real_interface_by_link_address["name"])
-                    if db_interface_for_real_interface is not None:
-                        if db_interface_for_real_interface != db_interface:
-                            middleware.logger.warning(
-                                "Database already has interface %r (we wanted to set that name for interface %r "
-                                "because it matches its link address %r)",
-                                real_interface_by_link_address["name"], db_interface["interface"],
-                                db_interface["link_address"],
-                            )
-                        continue
-
-                    middleware.logger.info(
-                        "Interface %r is now %r (matched by link address %r)",
-                        db_interface["interface"], real_interface_by_link_address["name"], db_interface["link_address"],
+                real_interface_by_link_address = real_interfaces.by_link_address.get(db_interface["link_address"])
+                if real_interface_by_link_address is None:
+                    middleware.logger.warning(
+                        "Interface with link address %r does not exist anymore (its name was %r)",
+                        db_interface["link_address"], db_interface["interface"],
                     )
-                    await rename_interface(middleware, db_interface, real_interface_by_link_address["name"])
-                    db_interface["interface"] = real_interface_by_link_address["name"]
+                    continue
+
+                db_interface_for_real_interface = db_interfaces.by_name.get(real_interface_by_link_address["name"])
+                if db_interface_for_real_interface is not None:
+                    if db_interface_for_real_interface != db_interface:
+                        middleware.logger.warning(
+                            "Database already has interface %r (we wanted to set that name for interface %r "
+                            "because it matches its link address %r)",
+                            real_interface_by_link_address["name"], db_interface["interface"],
+                            db_interface["link_address"],
+                        )
+                    continue
+
+                middleware.logger.info(
+                    "Interface %r is now %r (matched by link address %r)",
+                    db_interface["interface"], real_interface_by_link_address["name"], db_interface["link_address"],
+                )
+                await rename_interface(middleware, db_interface, real_interface_by_link_address["name"])
+                db_interface["interface"] = real_interface_by_link_address["name"]
 
         # Update link addresses for interfaces in the database
         for db_interface in db_interfaces:
