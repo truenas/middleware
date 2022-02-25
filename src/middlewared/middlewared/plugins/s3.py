@@ -36,8 +36,8 @@ class S3Service(SystemServiceService):
     ENTRY = Dict(
         's3_entry',
         Str('bindip', required=True),
-        Int('bindport', validators=[Range(min=1, max=65535)], required=True),
-        Int('console_bindport', validators=[Range(min=1, max=65535)], required=True),
+        Int('bindport', validators=[Range(min=1024, max=65535)], required=True),
+        Int('console_bindport', validators=[Range(min=1024, max=65535)], required=True),
         Str('access_key', max_length=20, required=True),
         Str('secret_key', max_length=40, required=True),
         Bool('browser', required=True),
