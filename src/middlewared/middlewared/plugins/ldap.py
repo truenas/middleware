@@ -878,7 +878,7 @@ class LDAPService(TDBWrapConfigService):
             aux_params = [
                 'map group member uniqueMember',
                 f'base passwd cn=users,cn=accounts,{default_naming_context}',
-                f'base group cn=groupss,cn=accounts,{default_naming_context}',
+                f'base group cn=groups,cn=accounts,{default_naming_context}',
             ]
             data.update({
                 'schema': 'RFC2307BIS',
