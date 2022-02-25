@@ -6,7 +6,6 @@ from itertools import zip_longest
 from bsd import geom
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middlewared.service_exception import MatchNotFound
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -195,14 +194,11 @@ class DiskService(Service, ServiceChangeMixin):
             if name not in seen_disks:
                 disk_identifier = await self.middleware.call('disk.device_to_identifier', name, sys_disks)
                 if qs is None:
-                    try:
-                        qs = await self.middleware.call('datastore.query', 'storage.disk', {'get': True})
-                    except MatchNotFound:
-                        # there isn't a single db entry for a disk??? not likely but better safe
-                        # than sorry
-                        qs = {}
-                if disk := qs.get(disk_identifier):
+                    qs = await self.middleware.call('datastore.query', 'storage.disk')
+
+                if disk := [i for i in qs if i['disk_identifer'] == disk_identifier]:
                     new = False
+                    disk = disk[0]
                 else:
                     new = True
                     disk = {'disk_identifier': disk_identifier}
@@ -235,10 +231,10 @@ class DiskService(Service, ServiceChangeMixin):
 
         if changed or deleted:
             await self.middleware.call('disk.restart_services_after_sync')
-            disks = await self.middleware.call('disk.query', [], {'prefix': 'disk_', 'get': True})
+            disks = await self.middleware.call('disk.query', [], {'prefix': 'disk_'})
             for change, delete in zip_longest(changed, deleted, fillvalue=None):
-                if change and change == (disk := disks.get('identifier')):
-                    self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disk)
+                if change and (disk := [i for i in disks if i['identifier'] == change]):
+                    self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disk[0])
                 if delete:
                     self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
