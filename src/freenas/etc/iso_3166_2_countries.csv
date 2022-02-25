@@ -192,13 +192,11 @@ Sort Order,Common Name,Formal Name,Type,Sub Type,Sovereignty,Capital,ISO 4217 Cu
 191,Yemen,Republic of Yemen,Independent State,,,Sanaa,YER,Rial,967,YE,YEM,887,.ye
 192,Zambia,Republic of Zambia,Independent State,,,Lusaka,ZMK,Kwacha,260,ZM,ZMB,894,.zm
 193,Zimbabwe,Republic of Zimbabwe,Independent State,,,Harare,ZWD,Dollar,263,ZW,ZWE,716,.zw
-194,Abkhazia,Republic of Abkhazia,Proto Independent State,,,Sokhumi,RUB,Ruble,995,GE,GEO,268,.ge
 195,"China, Republic of (Taiwan)",Republic of China,Proto Independent State,,,Taipei,TWD,Dollar,886,TW,TWN,158,.tw
 196,Nagorno-Karabakh,Nagorno-Karabakh Republic,Proto Independent State,,,Stepanakert,AMD,Dram,277,AZ,AZE,31,.az
 197,Northern Cyprus,Turkish Republic of Northern Cyprus,Proto Independent State,,,Nicosia,TRY,Lira,-302,CY,CYP,196,.nc.tr
 198,Pridnestrovie (Transnistria),Pridnestrovian Moldavian Republic,Proto Independent State,,,Tiraspol,,Ruple,-160,MD,MDA,498,.md
 199,Somaliland,Republic of Somaliland,Proto Independent State,,,Hargeisa,,Shilling,252,SO,SOM,706,.so
-200,South Ossetia,Republic of South Ossetia,Proto Independent State,,,Tskhinvali,RUB and GEL,Ruble and Lari,995,GE,GEO,268,.ge
 201,Ashmore and Cartier Islands,Territory of Ashmore and Cartier Islands,Dependency,External Territory,Australia,,,,,AU,AUS,36,.au
 202,Christmas Island,Territory of Christmas Island,Dependency,External Territory,Australia,The Settlement (Flying Fish Cove),AUD,Dollar,61,CX,CXR,162,.cx
 203,Cocos (Keeling) Islands,Territory of Cocos (Keeling) Islands,Dependency,External Territory,Australia,West Island,AUD,Dollar,61,CC,CCK,166,.cc
