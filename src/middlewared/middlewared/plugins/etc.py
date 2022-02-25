@@ -251,8 +251,7 @@ class EtcService(Service):
             },
         ],
         'snmpd': [
-            {'type': 'mako', 'path': 'local/snmpd.conf' if osc.IS_FREEBSD else 'snmp/snmpd.conf',
-             'local_path': 'local/snmpd.conf'},
+            {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},
         ],
         'sudoers': [
             {'type': 'mako', 'path': 'local/sudoers'}
