@@ -297,26 +297,6 @@ hdd_temp_table = agent.Table(
     ]
 )
 
-interface_top_host_table = agent.Table(
-    oidstr="FREENAS-MIB::interfaceTopHostTable",
-    indexes=[
-        agent.Integer32(),
-    ],
-    columns=[
-        (2, agent.DisplayString()),
-        (3, agent.DisplayString()),
-        (4, agent.Unsigned32()),
-        (5, agent.DisplayString()),
-        (6, agent.Unsigned32()),
-        (7, agent.Unsigned32()),
-        (8, agent.Unsigned32()),
-        (9, agent.Unsigned32()),
-        (10, agent.Unsigned32()),
-        (11, agent.Unsigned32()),
-        (12, agent.Unsigned32()),
-    ]
-)
-
 zfs_arc_size = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcSize")
 zfs_arc_meta = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcMeta")
 zfs_arc_data = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcData")
