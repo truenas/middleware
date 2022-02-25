@@ -1,6 +1,7 @@
 import asyncio
 import os
 from datetime import datetime, timedelta
+from itertools import zip_longest
 
 from bsd import geom
 from middlewared.schema import accepts, Str
@@ -126,8 +127,8 @@ class DiskService(Service, ServiceChangeMixin):
 
         seen_disks = {}
         serials = []
-        changed = []
-        deleted = []
+        changed = set()
+        deleted = set()
         for disk in (
             await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
         ):
@@ -147,7 +148,7 @@ class DiskService(Service, ServiceChangeMixin):
                     await self.middleware.call(
                         'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_event': False}
                     )
-                    changed.append({'id': disk['disk_identifier'], 'disk': disk})
+                    changed.add(disk['disk_identifier'])
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
                     for extent in await self.middleware.call(
@@ -161,7 +162,7 @@ class DiskService(Service, ServiceChangeMixin):
                     await self.middleware.call(
                         'datastore.delete', 'storage.disk', disk['disk_identifier'], {'send_event': False}
                     )
-                    deleted.append({'id': disk['disk_identifier']})
+                    deleted.add(disk['disk_identifier'])
                 continue
             else:
                 disk['disk_expiretime'] = None
@@ -184,7 +185,7 @@ class DiskService(Service, ServiceChangeMixin):
                 await self.middleware.call(
                     'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_event': False}
                 )
-                changed.append({'id': disk['disk_identifier'], 'disk': disk})
+                changed.add(disk['disk_identifier'])
 
             seen_disks[name] = disk
 
@@ -218,10 +219,10 @@ class DiskService(Service, ServiceChangeMixin):
                         await self.middleware.call(
                             'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_event': False}
                         )
-                        changed.append({'id': disk['disk_identifier'], 'disk': disk})
+                        changed.add(disk['disk_identifier'])
                 else:
                     await self.middleware.call('datastore.insert', 'storage.disk', disk, {'send_event': False})
-                    changed.append({'id': disk['disk_identifier'], 'disk': disk})
+                    changed.add(disk['disk_identifier'])
 
         # make sure the database entries for enclosure slot information for each disk
         # matches with what is reported by the OS
@@ -229,11 +230,12 @@ class DiskService(Service, ServiceChangeMixin):
 
         if changed or deleted:
             await self.middleware.call('disk.restart_services_after_sync')
-
-        for change in changed:
-            self.middleware.send_event('disk.query', 'CHANGED', id=change['id'], fields=change['disk'])
-        for delete in deleted:
-            self.middleware.send_event('disk.query', 'CHANGED', id=delete['id'], cleared=True)
+            disks = await self.middleware.call('disk.query', [], {'prefix': 'disk_', 'get': True})
+            for change, delete in zip_longest(changed, deleted, fillvalue=None):
+                if change and change == (disk := disks.get('identifier')):
+                    self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disk)
+                if delete:
+                    self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
         return 'OK'
 
