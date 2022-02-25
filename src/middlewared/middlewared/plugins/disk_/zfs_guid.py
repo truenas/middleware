@@ -33,24 +33,24 @@ class DiskService(Service):
             if vdev["type"] == "DISK" and vdev["disk"] is not None:
                 disk_to_guid[vdev["disk"]] = vdev["guid"]
 
-        events = {}
+        events = []
         for disk in await self.middleware.call("disk.query", [], {"extra": {"include_expired": True}}):
             guid = disk_to_guid.get(disk["devname"])
             if guid is not None and guid != disk["zfs_guid"]:
                 self.logger.debug("Setting disk %r zfs_guid %r", disk["identifier"], guid)
-                events.update({"id": disk["identifier"], "zfs_guid": guid})
+                events.append({"id": disk["identifier"], "zfs_guid": guid})
                 await self.middleware.call(
                     "datastore.update", "storage.disk", disk["identifier"],
-                    {"zfs_guid": guid}, {"prefix": "disk_", "batch_operation": True},
+                    {"zfs_guid": guid}, {"prefix": "disk_", "send_event": False},
                 )
             elif disk["zfs_guid"]:
                 devname = disk_to_guid.inv.get(disk["zfs_guid"])
                 if devname is not None and devname != disk["devname"]:
                     self.logger.debug("Removing disk %r zfs_guid as %r has it", disk["identifier"], devname)
-                    events.update({"id": disk["identifier"], "zfs_guid": None})
+                    events.append({"id": disk["identifier"], "zfs_guid": None})
                     await self.middleware.call(
                         "datastore.update", "storage.disk", disk["identifier"],
-                        {"zfs_guid": None}, {"prefix": "disk_", "batch_operation": True},
+                        {"zfs_guid": None}, {"prefix": "disk_", "send_event": False},
                     )
 
         if events:
