@@ -6,6 +6,7 @@ from itertools import zip_longest
 from bsd import geom
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
+from middlewared.service_exception import MatchNotFound
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -189,15 +190,19 @@ class DiskService(Service, ServiceChangeMixin):
 
             seen_disks[name] = disk
 
+        qs = None
         for name in sys_disks:
             if name not in seen_disks:
                 disk_identifier = await self.middleware.call('disk.device_to_identifier', name, sys_disks)
-                qs = await self.middleware.call(
-                    'datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)]
-                )
-                if qs:
+                if qs is None:
+                    try:
+                        qs = await self.middleware.call('datastore.query', 'storage.disk', {'get': True})
+                    except MatchNotFound:
+                        # there isn't a single db entry for a disk??? not likely but better safe
+                        # than sorry
+                        qs = {}
+                if disk := qs.get(disk_identifier):
                     new = False
-                    disk = qs[0]
                 else:
                     new = True
                     disk = {'disk_identifier': disk_identifier}
