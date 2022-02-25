@@ -7,7 +7,6 @@ from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
 from .kuberouter import KubeRouterService
 from .kubernetes import KubernetesService
-from .lldp import LLDPService
 from .mdns import MDNSService
 from .netbios import NetBIOSService
 from .nfs import NFSService
@@ -64,7 +63,6 @@ all_services = [
     DynamicDNSService,
     FTPService,
     ISCSITargetService,
-    LLDPService,
     MDNSService,
     NetBIOSService,
     NFSService,

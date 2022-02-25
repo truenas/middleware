@@ -17,7 +17,6 @@ enable syslog-ng.service
 # Disabled services
 disable smbd.service
 disable proftpd.service
-disable ladvd.service
 disable avahi-daemon.service
 disable nmbd.service
 disable nfs*
