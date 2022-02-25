@@ -35,7 +35,7 @@
         try:
             mapall = do_map(share, "mapall")
         except KeyError:
-            self.logger.warning(
+            middleware.logger.warning(
                 "NSS lookup for anonymous account failed. "
                 "disabling NFS exports.",
                 exc_info = True
@@ -49,7 +49,7 @@
         try:
             maproot = do_map(share, "maproot")
         except KeyError:
-            self.logger.warning(
+            middleware.logger.warning(
                 "NSS lookup for anonymous account failed. "
                 "disabling NFS exports.",
                 exc_info = True
