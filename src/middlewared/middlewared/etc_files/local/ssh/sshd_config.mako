@@ -28,9 +28,12 @@
 	twofactor_auth = middleware.call_sync('auth.twofactor.config')
 	twofactor_enabled = twofactor_auth['enabled'] and twofactor_auth['services']['ssh']
 	ad_allow_pam = False
+	ldap_enabled = False
 	ad = middleware.call_sync("activedirectory.config")
 	if ad['enable'] and not ad['restrict_pam']:
 		ad_allow_pam = True
+	if not ad['enable']:
+		ldap_enabled = middleware.call_sync("ldap.config")["enable"]
 
 %>\
 Subsystem	sftp	${"internal-sftp" if IS_LINUX else "/usr/libexec/sftp-server"} -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
@@ -87,7 +90,7 @@ GSSAPIAuthentication yes
 % endif
 PubkeyAuthentication yes
 ${ssh_config['options']}
-% if twofactor_enabled or ad_allow_pam:
+% if twofactor_enabled or ad_allow_pam or ldap_enabled:
 # These are forced to be enabled with 2FA
 UsePAM yes
 ChallengeResponseAuthentication yes
