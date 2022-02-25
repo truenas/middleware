@@ -53,8 +53,8 @@ class DiskService(Service):
                         {"zfs_guid": None}, {"prefix": "disk_", "send_event": False},
                     )
 
-        if events:
-            self.middleware.send_event('disk.query', 'CHANGED', fields=events)
+        for event in events:
+            self.middleware.send_event("disk.query", "CHANGED", id=event["id"], fields={"zfs_guid": event["zfs_guid"]})
 
 
 async def devd_zfs_hook(middleware, data):
