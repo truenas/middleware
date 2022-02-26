@@ -36,10 +36,6 @@
 	ups_service = middleware.call_sync('service.query', [['service', '=', 'ups']], {'get': True})
 
 	has_internal_graphite_server = middleware.call_sync('reporting.has_internal_graphite_server')
-
-	# TODO: NUT plugin has been disabled in upstream - https://salsa.debian.org/debian/pkg-collectd/-/blob/master/debian/changelog#L86
-	# Let's bring it back once upstream brings it in
-
 %>
 Hostname "${hostname}"
 BaseDir "${base_dir}"
@@ -55,6 +51,7 @@ LoadPlugin exec
 LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
+LoadPlugin nut
 LoadPlugin processes
 LoadPlugin rrdcached
 LoadPlugin swap
@@ -64,15 +61,8 @@ LoadPlugin threshold
 LoadPlugin zfs_arc
 LoadPlugin write_graphite
 LoadPlugin python
-% if IS_FREEBSD:
-LoadPlugin cputemp
-LoadPlugin ctl
-LoadPlugin geom_stat
-LoadPlugin nut
-LoadPlugin zfs_arc_v2
-% endif
 
-% if IS_FREEBSD and (ups_service['state'] == 'RUNNING' or ups_service['enable']):
+% if ups_service['state'] == 'RUNNING' or ups_service['enable']:
 <Plugin "nut">
 	UPS "${ups_config['complete_identifier']}"
 </Plugin>
