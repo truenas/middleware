@@ -681,35 +681,6 @@ class SystemGeneralService(Service):
         self._kbdmap_choices = None
         self._country_choices = {}
 
-    @private
-    async def _initialize_timezone_choices(self):
-        pipe = await Popen(
-            'find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'',
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True
-        )
-        self._timezone_choices = (await pipe.communicate())[0].decode().strip().split('\n')
-        self._timezone_choices = {
-            x[20:]: x[20:] for x in self._timezone_choices if osc.IS_FREEBSD or (
-                not x[20:].startswith(('right/', 'posix/')) and '.' not in x[20:]
-            )
-        }
-
-    @accepts()
-    @returns(Dict(
-        'system_timezone_choices',
-        additional_attrs=True,
-        title='System Timezone Choices',
-    ))
-    async def timezone_choices(self):
-        """
-        Returns time zone choices.
-        """
-        if not self._timezone_choices:
-            await self._initialize_timezone_choices()
-        return self._timezone_choices
-
     @accepts()
     @returns(Dict('country_choices', additional_attrs=True, register=True))
     async def country_choices(self):
