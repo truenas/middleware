@@ -1,21 +1,12 @@
 import asyncio
-from collections import defaultdict
 from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
-from middlewared.i18n import set_language
-from middlewared.logger import CrashReporting
-from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, IPAddr, List, Patch, returns, Str
-from middlewared.service import (
-    CallError, ConfigService, no_auth_required, job, pass_app, private, rest_api_metadata,
-    Service, throttle, ValidationErrors
-)
-import middlewared.sqlalchemy as sa
+from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
+from middlewared.service import CallError, no_auth_required, job, pass_app, private, Service, throttle
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, sw_version_is_stable, osc
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
-from middlewared.validators import Range
 
 import ntplib
-import csv
 import io
 import os
 import psutil
@@ -25,16 +16,10 @@ import shutil
 import socket
 import subprocess
 import hashlib
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
-import syslog
 import tarfile
 import textwrap
 import time
 import uuid
-import warnings
 
 from licenselib.license import ContractType, Features, License
 from pathlib import Path
@@ -643,91 +628,6 @@ class SystemService(Service):
             with open(debug_job.result, 'rb') as f:
                 shutil.copyfileobj(f, job.pipes.output.w)
         job.pipes.output.w.close()
-
-
-class SystemGeneralModel(sa.Model):
-    __tablename__ = 'system_settings'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    stg_guiaddress = sa.Column(sa.JSON(type=list), default=['0.0.0.0'])
-    stg_guiv6address = sa.Column(sa.JSON(type=list), default=['::'])
-    stg_guiport = sa.Column(sa.Integer(), default=80)
-    stg_guihttpsport = sa.Column(sa.Integer(), default=443)
-    stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
-    stg_guix_frame_options = sa.Column(sa.String(120), default='SAMEORIGIN')
-    stg_language = sa.Column(sa.String(120), default='en')
-    stg_kbdmap = sa.Column(sa.String(120))
-    stg_birthday = sa.Column(sa.DateTime(), nullable=True)
-    stg_timezone = sa.Column(sa.String(120), default='America/Los_Angeles')
-    stg_wizardshown = sa.Column(sa.Boolean(), default=False)
-    stg_pwenc_check = sa.Column(sa.String(100))
-    stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
-    stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
-    stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
-    stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
-
-
-class SystemGeneralService(Service):
-    HTTPS_PROTOCOLS = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']
-
-    class Config:
-        namespace = 'system.general'
-        cli_namespace = 'system.general'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._timezone_choices = None
-        self._kbdmap_choices = None
-        self._country_choices = {}
-
-    @accepts()
-    @returns(Dict('country_choices', additional_attrs=True, register=True))
-    async def country_choices(self):
-        """
-        Returns country choices.
-        """
-        if not self._country_choices:
-            await self._initialize_country_choices()
-        return self._country_choices
-
-    @private
-    async def _initialize_country_choices(self):
-
-        def _get_index(country_columns, column):
-            index = -1
-
-            i = 0
-            for c in country_columns:
-                if c.lower() == column.lower():
-                    index = i
-                    break
-
-                i += 1
-
-            return index
-
-        country_file = '/etc/iso_3166_2_countries.csv'
-        cni, two_li = None, None
-        with open(country_file, 'r', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile)
-
-            for index, row in enumerate(reader):
-                if index != 0:
-                    if row[cni] and row[two_li]:
-                        if row[two_li] in self._country_choices:
-                            # If two countries in the iso file have the same key, we concatenate their names
-                            self._country_choices[row[two_li]] += f' + {row[cni]}'
-                        else:
-                            self._country_choices[row[two_li]] = row[cni]
-                else:
-                    # ONLY CNI AND TWO_LI ARE BEING CONSIDERED FROM THE CSV
-                    cni = _get_index(row, 'Common Name')
-                    two_li = _get_index(row, 'ISO 3166-1 2 Letter Code')
-
-    @private
-    def set_crash_reporting(self):
-        CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
 async def _update_birthday(middleware):

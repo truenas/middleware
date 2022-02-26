@@ -1,11 +1,37 @@
 import syslog
 import warnings
 
+import middlewared.sqlalchemy as sa
+
+from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.validators import Range
 
 from .utils import HTTPS_PROTOCOLS
+
+
+class SystemGeneralModel(sa.Model):
+    __tablename__ = 'system_settings'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    stg_guiaddress = sa.Column(sa.JSON(type=list), default=['0.0.0.0'])
+    stg_guiv6address = sa.Column(sa.JSON(type=list), default=['::'])
+    stg_guiport = sa.Column(sa.Integer(), default=80)
+    stg_guihttpsport = sa.Column(sa.Integer(), default=443)
+    stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
+    stg_guix_frame_options = sa.Column(sa.String(120), default='SAMEORIGIN')
+    stg_language = sa.Column(sa.String(120), default='en')
+    stg_kbdmap = sa.Column(sa.String(120))
+    stg_birthday = sa.Column(sa.DateTime(), nullable=True)
+    stg_timezone = sa.Column(sa.String(120), default='America/Los_Angeles')
+    stg_wizardshown = sa.Column(sa.Boolean(), default=False)
+    stg_pwenc_check = sa.Column(sa.String(100))
+    stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
+    stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
+    stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
+    stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
 
 
 class SystemGeneralService(ConfigService):
@@ -231,3 +257,7 @@ class SystemGeneralService(ConfigService):
         await self.middleware.call('service.start', 'ssl')
 
         return await self.config()
+
+    @private
+    def set_crash_reporting(self):
+        CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
