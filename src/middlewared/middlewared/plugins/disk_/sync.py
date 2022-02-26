@@ -3,7 +3,6 @@ import os
 from datetime import datetime, timedelta
 from itertools import zip_longest
 
-from bsd import geom
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
 
@@ -110,7 +109,7 @@ class DiskService(Service, ServiceChangeMixin):
                 self.logger.warning('Starting disk.sync_all when devd is not connected yet')
 
         sys_disks = await self.middleware.call('device.get_disks')
-        geom_xml = geom.class_by_name('DISK').xml
+        geom_xml = await self.middleware.call('geom.cache.get_class_xml', 'DISK')
 
         number_of_disks = len(sys_disks)
         if 0 > number_of_disks <= 25:
