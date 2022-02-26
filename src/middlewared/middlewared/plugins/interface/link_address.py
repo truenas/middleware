@@ -79,11 +79,13 @@ async def setup(middleware):
 
         # Migrate BSD network interfaces to Linux
         for db_interface in db_interfaces:
-            if db_interface["interface"].startswith(("vlan", "br", "bond")):
-                # vlan interfaces dont need to be migrated since they
-                # share the same name between CORE and SCALE
-                # "br" and "bond" interface names are already converted
-                # to scale
+            if db_interface["interface"].startswith(("vlan", "bond")):
+                # "vlan" interfaces dont need to be migrated since they
+                # share the same name as CORE
+                # "bond" has already been migrated
+                continue
+            elif db_interface["interface"][:2] == "br" and db_interface["interface"].find("bridge") == -1:
+                # "br" has already been migrated
                 continue
 
             if m := RE_FREEBSD_BRIDGE.match(db_interface["interface"]):
