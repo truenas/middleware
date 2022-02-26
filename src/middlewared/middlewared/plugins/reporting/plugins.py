@@ -4,7 +4,7 @@ import os
 import re
 import subprocess
 
-from .rrd_utils import RRDBase, RRDType
+from .rrd_utils import RRDBase, RRD_BASE_DIR_PATH, RRDType
 
 
 class CPUPlugin(RRDBase):
@@ -361,3 +361,43 @@ class ARCResultPlugin(RRDBase):
 
     def get_identifiers(self):
         return ['demand_data', 'demand_metadata', 'prefetch_data', 'prefetch_metadata']
+
+
+class UPSBase:
+
+    plugin = 'nut'
+
+    @property
+    def _base_path(self):
+        ups_config = self.middleware.call_sync('ups.config')
+        if ups_config['mode'] == 'SLAVE':
+            return os.path.join(RRD_BASE_DIR_PATH, ups_config['remotehost'])
+        else:
+            return super()._base_path
+
+    def get_identifiers(self):
+        ups_identifier = self.middleware.call_sync('ups.config')['identifier']
+
+        if all(os.path.exists(os.path.join(self._base_path, f'{self.plugin}-{ups_identifier}', f'{_type}.rrd'))
+               for _type, dsname, transform, in self.rrd_types):
+            return [ups_identifier]
+
+        return []
+
+
+class UPSBatteryChargePlugin(UPSBase, RRDBase):
+
+    title = 'UPS Battery Statistics'
+    vertical_label = 'Percent'
+    rrd_types = (
+        ('percent-charge', 'value', None),
+    )
+
+
+class UPSRemainingBatteryPlugin(UPSBase, RRDBase):
+
+    title = 'UPS Battery Time Remaining Statistics'
+    vertical_label = 'Minutes'
+    rrd_types = (
+        ('timeleft-battery', 'value', '%name%,60,/'),
+    )
