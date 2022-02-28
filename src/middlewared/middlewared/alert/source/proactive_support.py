@@ -7,16 +7,16 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
-class IxAlertClass(AlertClass):
+class ProactiveSupportAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "iXsystems alert"
+    title = "Proactive Support Is Not Configured"
     text = "%s"
 
     products = ("ENTERPRISE",)
 
 
-class IxAlertSource(AlertSource):
+class ProactiveSupportAlertSource(AlertSource):
     products = ("ENTERPRISE",)
     run_on_backup_node = False
 
@@ -25,9 +25,10 @@ class IxAlertSource(AlertSource):
         available = await self.middleware.call('support.is_available')
         if available and support['enabled'] is None:
             return Alert(
-                IxAlertClass,
-                'Proactive Support is not enabled. Please see the System/Proactive Support page.'
+                ProactiveSupportAlertClass,
+                'Proactive Support is not configured. Please see the System/Proactive Support page.'
             )
+
         if support['enabled']:
             # This is for people who had ix alert enabled before Proactive Support
             # feature and have not filled all the new fields.
@@ -35,8 +36,9 @@ class IxAlertSource(AlertSource):
             for name, verbose_name in await self.middleware.call('support.fields'):
                 if not support[name]:
                     unfilled.append(verbose_name)
+
             if unfilled:
                 return Alert(
-                    IxAlertClass,
+                    ProactiveSupportAlertClass,
                     'Please complete these fields on the System/Proactive Support page: %s.' % ', '.join(unfilled)
                 )
