@@ -16,7 +16,6 @@ import uuid
 
 try:
     from samba.samba3 import param
-    from samba.samba3 import passdb
 except ImportError:
     param = None
 
@@ -370,23 +369,6 @@ class SMBService(SystemServiceService):
             self.logger.warning("Failed to reload smb.conf: %s", e)
 
         return LP_CTX.set('passdb backend', backend_type)
-
-    @private
-    async def get_next_rid(self):
-        next_rid = (await self.config())['next_rid']
-        if next_rid == 0:
-            try:
-                private_dir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
-                next_rid = passdb.PDB(f"tdbsam:{private_dir}/passdb.tdb").new_rid()
-            except Exception:
-                self.logger.warning("Failed to initialize RID counter from passdb. "
-                                    "Using default value for initialization.", exc_info=True)
-                next_rid = 5000
-
-        await self.middleware.call('datastore.update', 'services.cifs', 1,
-                                   {'next_rid': next_rid + 1},
-                                   {'prefix': 'cifs_srv_'})
-        return next_rid
 
     @private
     async def setup_directories(self):

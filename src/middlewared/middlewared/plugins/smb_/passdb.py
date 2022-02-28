@@ -15,6 +15,20 @@ class SMBService(Service):
         service_verb = 'restart'
 
     @private
+    async def smbpasswd_dump(self):
+        out = {}
+        p = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-Lw'], check=False)
+        if p.returncode != 0:
+            raise CallError(f'Failed to dump passdb file: {p.stderr.decode()}')
+
+        for entry in p.stdout.decode().splitlines():
+            out.update({
+                entry.split(":")[0]: entry
+            })
+
+        return out
+
+    @private
     async def passdb_list(self, verbose=False):
         """
         passdb entries for local SAM database. This will be populated with
@@ -64,29 +78,12 @@ class SMBService(Service):
         return pdbentries
 
     @private
-    async def update_passdb_user(self, username, passdb_backend=None):
-        """
-        Updates a user's passdb entry to reflect the current server configuration.
-        Accounts that are 'locked' in the UI will have their corresponding passdb entry
-        disabled.
-        """
-        if passdb_backend is None:
-            passdb_backend = await self.middleware.call('smb.getparm',
-                                                        'passdb backend',
-                                                        'global')
-
-        if passdb_backend != 'tdbsam':
+    async def update_passdb_user(self, user):
+        if user['smbhash'] == user['pdb']:
             return
 
-        bsduser = await self.middleware.call('user.query', [
-            ('username', '=', username),
-            ('smb', '=', True),
-        ])
-        if not bsduser:
-            self.logger.debug(f'{username} is not an SMB user, bypassing passdb import')
-            return
-
-        smbpasswd_string = bsduser[0]['smbhash'].split(':')
+        smbpasswd_string = user['smbhash'].split(":")
+        username = user['username']
         if len(smbpasswd_string) != 7:
             self.logger.warning("SMB hash for user [%s] is invalid. Authentication for SMB "
                                 "sessions for this user will fail until this is repaired. "
@@ -94,12 +91,8 @@ class SMBService(Service):
                                 "seed, and may be repaired by resetting the user password.", username)
             return
 
-        p = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-Lw', username], check=False)
-        if p.returncode != 0:
-            CallError(f'Failed to retrieve passdb entry for {username}: {p.stderr.decode()}')
-        entry = p.stdout.decode()
-        if not entry:
-            next_rid = str(await self.middleware.call('smb.get_next_rid'))
+        if user['pdb'] is None:
+            next_rid = str(20000 + user['id'])
             self.logger.debug("User [%s] does not exist in the passdb.tdb file. "
                               "Creating entry with rid [%s].", username, next_rid)
             pdbcreate = await Popen(
@@ -110,13 +103,10 @@ class SMBService(Service):
             setntpass = await run([SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
             if setntpass.returncode != 0:
                 raise CallError(f'Failed to set NT password for {username}: {setntpass.stderr.decode()}')
-            if bsduser[0]['locked']:
+            if user['locked']:
                 disableacct = await run([SMBCmd.SMBPASSWD.value, '-d', username], check=False)
                 if disableacct.returncode != 0:
                     raise CallError(f'Failed to disable {username}: {disableacct.stderr.decode()}')
-            return
-
-        if entry == bsduser[0]['smbhash']:
             return
 
         """
@@ -127,18 +117,17 @@ class SMBService(Service):
         in smbpasswd format (-Lw). This is the reason why we pre-emptively
         splitlines() and use last element of resulting list for our checks.
         """
-        entry = entry.splitlines()[-1]
-        entry = entry.split(':')
+        entry = user['pdb'].split(":")
 
         if smbpasswd_string[3] != entry[3]:
             setntpass = await run([SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
             if setntpass.returncode != 0:
                 raise CallError(f'Failed to set NT password for {username}: {setntpass.stderr.decode()}')
-        if bsduser[0]['locked'] and 'D' not in entry[4]:
+        if user['locked'] and 'D' not in entry[4]:
             disableacct = await run([SMBCmd.SMBPASSWD.value, '-d', username], check=False)
             if disableacct.returncode != 0:
                 raise CallError(f'Failed to disable {username}: {disableacct.stderr.decode()}')
-        elif not bsduser[0]['locked'] and 'D' in entry[4]:
+        elif not user['locked'] and 'D' in entry[4]:
             enableacct = await run([SMBCmd.SMBPASSWD.value, '-e', username], check=False)
             if enableacct.returncode != 0:
                 raise CallError(f'Failed to enable {username}: {enableacct.stderr.decode()}')
@@ -166,7 +155,7 @@ class SMBService(Service):
         os.rename(old_path, new_path)
         self.logger.debug("Backing up original passdb to [%s]", new_path)
         for u in conf_users:
-            await self.middleware.call('smb.update_passdb_user', u['username'], 'tdbsam')
+            await self.middleware.call('smb.update_passdb_user', u)
 
         net = await run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
         if net.returncode != 0:
@@ -190,17 +179,18 @@ class SMBService(Service):
             return
 
         conf_users = await self.middleware.call('user.query', [("smb", "=", True)])
-        for u in conf_users:
-            await self.middleware.call('smb.update_passdb_user', u['username'], passdb_backend)
 
-        pdb_users = await self.passdb_list()
-        if len(pdb_users) > len(conf_users):
-            for entry in pdb_users:
-                if not any(filter(lambda x: entry['username'] == x['username'], conf_users)):
-                    self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry['username'])
-                    try:
-                        await self.remove_passdb_user(entry['username'])
-                    except Exception:
-                        self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
-                        await self.passdb_reinit(conf_users)
-                        return
+        pdb_users = await self.smbpasswd_dump()
+        for u in conf_users:
+            pdb_entry = pdb_users.pop(u['username'], None)
+            u.update({"pdb": pdb_entry})
+            await self.middleware.call('smb.update_passdb_user', u)
+
+        for entry in pdb_users.keys():
+            self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry)
+            try:
+                await self.remove_passdb_user(entry)
+            except Exception:
+                self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
+                await self.passdb_reinit(conf_users)
+                return
