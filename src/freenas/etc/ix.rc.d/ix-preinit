@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-preinit
-# REQUIRE: FILESYSTEMS
+# REQUIRE: middlewared FILESYSTEMS
 # BEFORE: SERVERS
 
 . /etc/rc.subr
