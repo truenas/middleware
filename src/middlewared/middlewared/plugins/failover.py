@@ -883,8 +883,8 @@ class FailoverService(ConfigService):
         # The procedure is supposed to look like this:
         #   1. upgrade both controllers
         #   2. standby controller activates new BE and reboots
-        #   3. end-user verfies the standby controller upgraded without issues
-        #   4. end-user then failsover (reboots) to the newly upgraded node
+        #   3. end-user verifies the standby controller upgraded without issues
+        #   4. end-user then failovers (reboots) to the newly upgraded node
         #   5. end-user verifies that the new software functions as expected
         #   6. end-user is then presented with a webUI option to "apply pending upgrade"
         #   7. end-user chooses that webUI option
@@ -920,7 +920,7 @@ class FailoverService(ConfigService):
             pass
         else:
             raise CallError(
-                'Timed out waiting {shutdown_timeout} seconds for the standby controller to reboot',
+                f'Timed out waiting {shutdown_timeout} seconds for the standby controller to reboot',
                 errno.ETIMEDOUT
             )
 
