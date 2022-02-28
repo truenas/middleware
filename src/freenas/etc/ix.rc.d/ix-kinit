@@ -6,9 +6,7 @@
 #
 
 # PROVIDE: ix-kinit
-# REQUIRE: kdc
-# REQUIRE: ix-pre-samba
-# REQUIRE: ntpd
+# REQUIRE: middlewared kdc ix-pre-samba ntpd
 
 . /etc/rc.freenas
 

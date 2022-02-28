@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-sed
-# REQUIRE: ix-syncdisks
+# REQUIRE: middlewared ix-syncdisks
 # BEFORE: ix-zfs
 
 . /etc/rc.freenas

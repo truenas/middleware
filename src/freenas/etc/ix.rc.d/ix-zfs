@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-zfs
-# REQUIRE: hostid mountcritlocal
+# REQUIRE: middlewared hostid mountcritlocal
 # BEFORE: FILESYSTEMS var
 
 . /etc/rc.subr

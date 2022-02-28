@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-syncmultipaths
-# REQUIRE: FILESYSTEMS ix-syncdisks
+# REQUIRE: middlewared FILESYSTEMS ix-syncdisks
 
 . /etc/rc.subr
 

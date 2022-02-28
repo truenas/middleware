@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-nfsbind
+# REQUIRE: middlewared
 # BEFORE: mountd gssd nfsuserd nfsd
 
 
