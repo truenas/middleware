@@ -362,7 +362,7 @@ class SMBService(Service):
         to_add = [{
             "gid": g_dict[x]["gid"],
             "nt_name": g_dict[x]["group"],
-            "rid": await self.middleware.call('smb.get_next_rid'),
+            "rid": 200000 + g_dict[x]["id"],
             "group_type_str": "local"
         } for x in set_to_add]
 
