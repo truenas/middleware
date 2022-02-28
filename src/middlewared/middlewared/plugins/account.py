@@ -21,6 +21,7 @@ import string
 import stat
 import time
 from pathlib import Path
+from contextlib import suppress
 
 SKEL_PATH = '/usr/share/skel/'
 
@@ -126,30 +127,47 @@ class UserService(CRUDService):
     class Config:
         datastore = 'account.bsdusers'
         datastore_extend = 'user.user_extend'
+        datastore_extend_context = 'user.user_extend_context'
         datastore_prefix = 'bsdusr_'
 
     @private
-    async def user_extend(self, user):
+    async def user_extend_context(self, extra):
+        memberships = {}
+        res = await self.middleware.call(
+            'datastore.query', 'account.bsdgroupmembership',
+            [], {'prefix': 'bsdgrpmember_'}
+        )
+
+        for i in res:
+            uid = i['user']['id']
+            if uid in memberships:
+                memberships[uid].append(i['group']['id'])
+            else:
+                memberships[uid] = [i['group']['id']]
+
+        return {"memberships": memberships}
+
+    @private
+    def _read_authorized_keys(self, homedir):
+        keysfile = f'{homedir}/.ssh/authorized_keys'
+        rv = None
+        with suppress(FileNotFoundError):
+            with open(keysfile, 'r') as f:
+                rv = f.read()
+
+        return rv
+
+    @private
+    async def user_extend(self, user, ctx):
 
         # Normalize email, empty is really null
         if user['email'] == '':
             user['email'] = None
 
-        # Get group membership
-        user['groups'] = [gm['group']['id'] for gm in await self.middleware.call(
-            'datastore.query', 'account.bsdgroupmembership',
-            [('user', '=', user['id'])], {'prefix': 'bsdgrpmember_'}
-        )]
-
+        user['groups'] = ctx['memberships'].get(user['id'], [])
         # Get authorized keys
-        keysfile = f'{user["home"]}/.ssh/authorized_keys'
-        user['sshpubkey'] = None
-        if os.path.exists(keysfile):
-            try:
-                with open(keysfile, 'r') as f:
-                    user['sshpubkey'] = f.read()
-            except Exception:
-                pass
+        user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
+
         return user
 
     @private
@@ -1048,12 +1066,36 @@ class GroupService(CRUDService):
         datastore = 'account.bsdgroups'
         datastore_prefix = 'bsdgrp_'
         datastore_extend = 'group.group_extend'
+        datastore_extend_context = 'group.group_extend_context'
 
     @private
-    async def group_extend(self, group):
-        # Get group membership
-        group['users'] = [gm['user']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('group', '=', group['id'])], {'prefix': 'bsdgrpmember_'})]
-        group['users'] += [gmu['id'] for gmu in await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_group_id', '=', group['id'])])]
+    async def group_extend_context(self, extra):
+        mem = {}
+        membership = await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'})
+        users = await self.middleware.call('datastore.query', 'account.bsdusers')
+
+        # uid and gid variables here reference database ids rather than OS uid / gid
+        for g in membership:
+            gid = g['group']['id']
+            uid = g['user']['id']
+            if gid in mem:
+                mem[gid].append(uid)
+            else:
+                mem[gid] = [uid]
+
+        for u in users:
+            gid = u['bsdusr_group']['id']
+            uid = u['id']
+            if gid in mem:
+                mem[gid].append(uid)
+            else:
+                mem[gid] = [uid]
+
+        return {"memberships": mem}
+
+    @private
+    async def group_extend(self, group, ctx):
+        group['users'] = ctx['memberships'].get(group['id'], [])
         return group
 
     @private
