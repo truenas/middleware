@@ -100,7 +100,7 @@ class SystemGeneralService(ConfigService):
         verrors = ValidationErrors()
 
         language = data.get('language')
-        system_languages = self.middleware.call('system.general.language_choices')
+        system_languages = await self.middleware.call('system.general.language_choices')
         if language not in system_languages.keys():
             verrors.add(
                 f'{schema}.language',
