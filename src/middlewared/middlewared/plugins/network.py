@@ -1621,12 +1621,6 @@ class InterfaceService(CRUDService):
             # and/or the supersede routers config options are set properly
             await self.middleware.call('etc.generate', 'dhclient')
             await asyncio.wait([self.run_dhcp(interface, wait_dhcp) for interface in run_dhcp])
-        else:
-            # first interface that is configured, we kill dhclient on _all_ interfaces
-            # but dhclient could have added items to /etc/resolv.conf. To "fix" this
-            # we run dns.sync which will wipe the contents of resolv.conf and it is
-            # expected that the end-user fills this out via the network global webUI page
-            await self.middleware.call('dns.sync')
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
@@ -1672,6 +1666,20 @@ class InterfaceService(CRUDService):
 
         if wait_dhcp and dhclient_aws:
             await asyncio.wait(dhclient_aws, timeout=30)
+
+        # first interface that is configured, we kill dhclient on _all_ interfaces
+        # but dhclient could have added items to /etc/resolv.conf. To "fix" this
+        # we run dns.sync which will wipe the contents of resolv.conf and it is
+        # expected that the end-user fills this out via the network global webUI page
+        # OR if this is a system that has been freshly migrated from CORE to SCALE
+        # then we need to make sure that if the user didn't have network configured
+        # but left interfaces configured as DHCP only, then we need to generate the
+        # /etc/resolv.conf here. In practice, this is a potential race condition
+        # here because dhclient could not have received a lease from the dhcp server
+        # for all the interfaces that have dhclient running. There is, currently,
+        # no better solution unless we redesigned significant portions of our network
+        # API to account for this...
+        await self.middleware.call('dns.sync')
 
         try:
             # static routes explicitly defined by the user need to be setup
