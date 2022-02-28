@@ -1,5 +1,7 @@
 import errno
+import os
 from pathlib import Path
+from contextlib import suppress
 from glustercli.cli import volume
 
 from middlewared.service import Service, CallError, job
@@ -141,25 +143,47 @@ class CtdbSharedVolumeService(Service):
         if not info['exists']:
             return
 
-        data = {'event': None, 'name': CTDB_VOL_NAME, 'forward': True}
-
         # need to stop smb locally and on all peers
         if await self.middleware.call('service.started', 'cifs'):
-            data['event'] = 'SMB_STOP'
-            await self.middleware.call('gluster.localevents.send', data)
+            job.set_progress(16, 'Stopping SMB on all nodes')
+            stop_job = await self.middleware.call('clusterjob.submit', 'service.stop', 'cifs')
+            await stop_job.wait()
 
         # need to stop ctdb locally and on all peers
-        data['event'] = 'CTDB_STOP'
-        await self.middleware.call('gluster.localevents.send', data)
+        job.set_progress(36, 'Stopping ctdbd on all nodes')
+        stop_job = await self.middleware.call('clusterjob.submit', 'service.stop', 'ctdb')
+        await stop_job.wait()
+
+        def __remove_config():
+            # keep this method inside here so it doesn't get (mis)used anywhere else.
+            files = (
+                CTDBConfig.ETC_GEN_FILE.value,
+                CTDBConfig.ETC_REC_FILE.value,
+                CTDBConfig.ETC_PRI_IP_FILE.value,
+                CTDBConfig.ETC_PUB_IP_FILE.value,
+            )
+            with suppress(FileNotFoundError):
+                for i in files:
+                    try:
+                        os.remove(i)
+                    except Exception:
+                        self.logger.warning(f'Failed to remove {i!r}', exc_info=True)
+
+        job.set_progress(52, 'Removing ctdbd configuration data')
+        await self.middleware.run_in_thread(__remove_config)
 
         # need to unmount the gluster fuse mountpoint locally and on all peers
-        data['event'] = 'VOLUME_STOP'
-        await self.middleware.call('gluster.localevents.send', data)
+        job.set_progress(68, f'Umounting {CTDB_VOL_NAME!r} fuse filesystem on all nodes')
+        stop_job = await self.middleware.call('clusterjob.submit', 'gluster.fuse.umount', {'name': CTDB_VOL_NAME})
+        await stop_job.wait()
 
         # stop the gluster volume
         if info['started']:
             options = {'args': (CTDB_VOL_NAME,), 'kwargs': {'force': True}}
+            job.set_progress(84, f'Stopping gluster volume {CTDB_VOL_NAME!r}')
             await self.middleware.call('gluster.method.run', volume.stop, options)
 
         # finally, we delete it
+        job.set_progress(99, f'Deleting gluster volume {CTDB_VOL_NAME!r}')
         await self.middleware.call('gluster.method.run', volume.delete, {'args': (CTDB_VOL_NAME,)})
+        job.set_progress(100, f'Successfully deleted {CTDB_VOL_NAME!r}')
