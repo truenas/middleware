@@ -1,5 +1,5 @@
 <%
-    config = middleware.call_sync("nfs.config")
+    config = render_ctx["nfs.config"]
     if not config["v4"]:
         raise FileShouldNotExist()
 %>
