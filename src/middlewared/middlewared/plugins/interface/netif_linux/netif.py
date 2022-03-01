@@ -32,8 +32,9 @@ def destroy_interface(name):
         run(["ip", "link", "set", name, "down"])
 
 
-def get_interface(name):
-    return list_interfaces()[name]
+def get_interface(name, safe_retrieval=False):
+    ifaces = list_interfaces()
+    return ifaces.get(name) if safe_retrieval else ifaces[name]
 
 
 def list_interfaces():
