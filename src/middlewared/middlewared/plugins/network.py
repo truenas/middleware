@@ -47,7 +47,6 @@ class NetworkInterfaceModel(sa.Model):
     int_address_b = sa.Column(sa.String(45), default='')
     int_netmask = sa.Column(sa.Integer())
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
-    int_v6netmaskbit = sa.Column(sa.String(3), default='')
     int_vip = sa.Column(sa.String(42), nullable=True)
     int_vipv6address = sa.Column(sa.String(45), nullable=True)
     int_vhid = sa.Column(sa.Integer(), nullable=True)
@@ -990,7 +989,6 @@ class InterfaceService(CRUDService):
             'address': '',
             'address_b': '',
             'netmask': 0,
-            'v6netmaskbit': '',
             'vip': '',
             'vipv6address': ''
         }
@@ -1012,7 +1010,7 @@ class InterfaceService(CRUDService):
                     a_key = 'address'
                     b_key = 'address_b'
                     v_key = 'vipv6address'
-                    net_key = 'v6netmaskbit'
+                    net_key = 'netmask'
 
                 # fill out info
                 iface[a_key] = ipa
@@ -1063,7 +1061,6 @@ class InterfaceService(CRUDService):
                     'address_b': '',
                     'netmask': 0,
                     'ipv6auto': False,
-                    'v6netmaskbit': '',
                     'vip': '',
                     'vhid': None,
                     'critical': False,
