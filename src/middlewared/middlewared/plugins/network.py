@@ -45,7 +45,7 @@ class NetworkInterfaceModel(sa.Model):
     int_dhcp = sa.Column(sa.Boolean(), default=False)
     int_address = sa.Column(sa.String(45), default='')
     int_address_b = sa.Column(sa.String(45), default='')
-    int_v4netmaskbit = sa.Column(sa.String(3), default='')
+    int_netmask = sa.Column(sa.Integer())
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
     int_ipv6address = sa.Column(sa.String(45), default='')
     int_ipv6address_b = sa.Column(sa.String(45), default='')
@@ -261,7 +261,7 @@ class InterfaceService(CRUDService):
                 iface['failover_aliases'].append({
                     'type': 'INET',
                     'address': config['int_address_b'],
-                    'netmask': int(config['int_v4netmaskbit']),
+                    'netmask': config['int_netmask'],
                 })
             if config['int_ipv6address_b']:
                 iface['failover_aliases'].append({
@@ -338,11 +338,11 @@ class InterfaceService(CRUDService):
                     'vlan_pcp': None,
                 })
 
-        if not config['int_dhcp'] and if config['int_address']:
+        if not config['int_dhcp'] and config['int_address']:
             iface['aliases'].append({
                 'type': 'INET',
                 'address': config['int_address'],
-                'netmask': int(config['int_v4netmaskbit']),
+                'netmask': config['int_netmask'],
             })
 
         if not config['int_ipv6auto']:
@@ -1004,7 +1004,7 @@ class InterfaceService(CRUDService):
         iface = {
             'address': '',
             'address_b': '',
-            'v4netmaskbit': '',
+            'netmask': 0,
             'ipv6address': '',
             'ipv6address_b': '',
             'v6netmaskbit': '',
@@ -1024,7 +1024,7 @@ class InterfaceService(CRUDService):
                     a_key = 'address'
                     b_key = 'address_b'
                     v_key = 'vip'
-                    net_key = 'v4netmaskbit'
+                    net_key = 'netmask'
                 else:
                     a_key = 'ipv6address'
                     b_key = 'ipv6address_b'
@@ -1078,7 +1078,7 @@ class InterfaceService(CRUDService):
                     'dhcp': False,
                     'address': '',
                     'address_b': '',
-                    'v4netmaskbit': '',
+                    'netmask': 0,
                     'ipv6auto': False,
                     'ipv6address': '',
                     'v6netmaskbit': '',
