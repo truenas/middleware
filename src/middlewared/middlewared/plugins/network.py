@@ -43,7 +43,7 @@ class NetworkInterfaceModel(sa.Model):
     int_interface = sa.Column(sa.String(300))
     int_name = sa.Column(sa.String(120))
     int_dhcp = sa.Column(sa.Boolean(), default=False)
-    int_ipv4address = sa.Column(sa.String(42), default='')
+    int_address = sa.Column(sa.String(45), default='')
     int_ipv4address_b = sa.Column(sa.String(42), default='')
     int_v4netmaskbit = sa.Column(sa.String(3), default='')
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
@@ -338,10 +338,10 @@ class InterfaceService(CRUDService):
                     'vlan_pcp': None,
                 })
 
-        if not config['int_dhcp'] and if config['int_ipv4address']:
+        if not config['int_dhcp'] and if config['int_address']:
             iface['aliases'].append({
                 'type': 'INET',
-                'address': config['int_ipv4address'],
+                'address': config['int_address'],
                 'netmask': int(config['int_v4netmaskbit']),
             })
 
@@ -1002,7 +1002,7 @@ class InterfaceService(CRUDService):
 
         aliases = []
         iface = {
-            'ipv4address': '',
+            'address': '',
             'ipv4address_b': '',
             'v4netmaskbit': '',
             'ipv6address': '',
@@ -1021,7 +1021,7 @@ class InterfaceService(CRUDService):
             if idx == 0:
                 # first IP address is always written to `network_interface` table
                 if version == 4:
-                    a_key = 'ipv4address'
+                    a_key = 'address'
                     b_key = 'ipv4address_b'
                     v_key = 'vip'
                     net_key = 'v4netmaskbit'
@@ -1076,7 +1076,7 @@ class InterfaceService(CRUDService):
                 portinterface = portinterface[0]
                 portinterface.update({
                     'dhcp': False,
-                    'ipv4address': '',
+                    'address': '',
                     'ipv4address_b': '',
                     'v4netmaskbit': '',
                     'ipv6auto': False,
