@@ -186,3 +186,28 @@ class SystemService(Service):
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )
+
+    @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'VM']))
+    @returns(Bool('feature_enabled'))
+    async def feature_enabled(self, name):
+        """
+        Returns whether the `feature` is enabled or not
+        """
+        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
+        if name == 'FIBRECHANNEL' and is_core:
+            return False
+        elif is_core:
+            return True
+        license = await self.middleware.call('system.license')
+        if license and name in license['features']:
+            return True
+        return False
+
+    @private
+    async def is_ix_hardware(self):
+        product = (await self.middleware.call('system.dmidecode_info'))['system-product-name']
+        return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
+
+    @private
+    async def is_enterprise_ix_hardware(self):
+        return await self.middleware.call('truenas.get_chassis_hardware') != 'TRUENAS-UNKNOWN'
