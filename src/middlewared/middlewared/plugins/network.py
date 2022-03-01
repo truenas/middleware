@@ -45,6 +45,7 @@ class NetworkInterfaceModel(sa.Model):
     int_dhcp = sa.Column(sa.Boolean(), default=False)
     int_address = sa.Column(sa.String(45), default='')
     int_address_b = sa.Column(sa.String(45), default='')
+    int_version = sa.Column(sa.Integer())
     int_netmask = sa.Column(sa.Integer())
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
     int_vip = sa.Column(sa.String(45), nullable=True)
