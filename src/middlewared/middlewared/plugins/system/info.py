@@ -1,4 +1,5 @@
 import hashlib
+import ntplib
 import os
 import psutil
 import re
@@ -184,3 +185,21 @@ class SystemService(Service):
             'system_manufacturer': dmidecode['system-manufacturer'] if dmidecode['system-manufacturer'] else None,
             'ecc_memory': dmidecode['ecc-memory'],
         }
+
+    @private
+    def get_synced_clock_time(self):
+        """
+        Will return synced clock time if ntpd has synced with ntp servers
+        otherwise will return none
+        """
+        client = ntplib.NTPClient()
+        try:
+            response = client.request('localhost')
+        except Exception:
+            # Cannot connect to NTP server
+            self.logger.error('Error while connecting to NTP server', exc_info=True)
+        else:
+            if response.version and response.leap != 3:
+                # https://github.com/darkhelmet/ntpstat/blob/11f1d49cf4041169e1f741f331f65645b67680d8/ntpstat.c#L172
+                # if leap second indicator is 3, it means that the clock has not been synchronized
+                return datetime.fromtimestamp(response.tx_time, timezone.utc)
