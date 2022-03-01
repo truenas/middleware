@@ -48,7 +48,6 @@ class NetworkInterfaceModel(sa.Model):
     int_netmask = sa.Column(sa.Integer())
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
     int_vip = sa.Column(sa.String(42), nullable=True)
-    int_vipv6address = sa.Column(sa.String(45), nullable=True)
     int_vhid = sa.Column(sa.Integer(), nullable=True)
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
@@ -249,7 +248,7 @@ class InterfaceService(CRUDService):
         })
 
         if ha_hardware:
-            _type = 'INET' if config['int_version'] == 4 else 'INET6'
+            info = ('INET', 32) if config['int_version'] == 4 else ('INET6', 128)
             iface.update({
                 'failover_critical': config['int_critical'],
                 'failover_vhid': config['int_vhid'],
@@ -257,21 +256,15 @@ class InterfaceService(CRUDService):
             })
             if config['int_address_b']:
                 iface['failover_aliases'].append({
-                    'type': _type,
+                    'type': info[0],
                     'address': config['int_address_b'],
                     'netmask': config['int_netmask'],
                 })
             if config['int_vip']:
                 iface['failover_virtual_aliases'].append({
-                    'type': _type,
+                    'type': info[0],
                     'address': config['int_vip'],
-                    'netmask': 32,
-                })
-            if config['int_vipv6address']:
-                iface['failover_virtual_aliases'].append({
-                    'type': _type,
-                    'address': config['int_vipv6address'],
-                    'netmask': 128,
+                    'netmask': info[1]
                 })
 
         if itype == InterfaceType.BRIDGE:
@@ -990,7 +983,6 @@ class InterfaceService(CRUDService):
             'address_b': '',
             'netmask': 0,
             'vip': '',
-            'vipv6address': ''
         }
         for idx, (a, fa, fva) in enumerate(zip_longest(da, dfa, dfva, fillvalue={})):
             netmask = a['netmask']
@@ -1009,7 +1001,7 @@ class InterfaceService(CRUDService):
                 else:
                     a_key = 'address'
                     b_key = 'address_b'
-                    v_key = 'vipv6address'
+                    v_key = 'vip'
                     net_key = 'netmask'
 
                 # fill out info
