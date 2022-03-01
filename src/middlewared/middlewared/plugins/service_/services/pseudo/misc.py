@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.utils import osc, run
+from middlewared.utils import osc
 
 from middlewared.plugins.service_.services.base import ServiceState, ServiceInterface, SimpleService
 from middlewared.plugins.service_.services.base_freebsd import freebsd_service
@@ -194,21 +194,6 @@ class SslService(PseudoServiceBase):
 
     async def start(self):
         pass
-
-
-class SysconsService(SimpleService):
-    name = "syscons"
-
-    etc = ["rc"] if osc.IS_FREEBSD else ["keyboard"]
-    restartable = True
-
-    freebsd_rc = "syscons"
-
-    async def get_state(self):
-        return ServiceState(True, [])
-
-    async def _restart_linux(self):
-        await run(["setupcon"], check=False)
 
 
 class SysctlService(PseudoServiceBase):

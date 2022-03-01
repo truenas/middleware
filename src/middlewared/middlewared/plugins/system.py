@@ -1152,7 +1152,9 @@ class SystemGeneralService(ConfigService):
         )
 
         if config['kbdmap'] != new_config['kbdmap']:
-            await self.middleware.call('service.restart', 'syscons')
+            await self.middleware.call('etc.generate', 'keyboard')
+            await run(['setupcon'], check=False)
+            await run(['localectl', 'set-keymap', new_config['kbdmap']], check=False)
 
         if config['timezone'] != new_config['timezone']:
             await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
