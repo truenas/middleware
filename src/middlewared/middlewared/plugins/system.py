@@ -78,15 +78,6 @@ class SystemService(Service):
         return "BOOTING"
 
     @private
-    async def is_ix_hardware(self):
-        product = (await self.middleware.call('system.dmidecode_info'))['system-product-name']
-        return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
-
-    @private
-    async def is_enterprise_ix_hardware(self):
-        return await self.middleware.call('truenas.get_chassis_hardware') != 'TRUENAS-UNKNOWN'
-
-    @private
     def get_synced_clock_time(self):
         """
         Will return synced clock time if ntpd has synced with ntp servers
@@ -103,22 +94,6 @@ class SystemService(Service):
                 # https://github.com/darkhelmet/ntpstat/blob/11f1d49cf4041169e1f741f331f65645b67680d8/ntpstat.c#L172
                 # if leap second indicator is 3, it means that the clock has not been synchronized
                 return datetime.fromtimestamp(response.tx_time, timezone.utc)
-
-    @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'VM']))
-    @returns(Bool('feature_enabled'))
-    async def feature_enabled(self, name):
-        """
-        Returns whether the `feature` is enabled or not
-        """
-        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
-        if name == 'FIBRECHANNEL' and is_core:
-            return False
-        elif is_core:
-            return True
-        license = await self.middleware.call('system.license')
-        if license and name in license['features']:
-            return True
-        return False
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @returns()
