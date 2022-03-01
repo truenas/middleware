@@ -44,7 +44,7 @@ class NetworkInterfaceModel(sa.Model):
     int_name = sa.Column(sa.String(120))
     int_dhcp = sa.Column(sa.Boolean(), default=False)
     int_address = sa.Column(sa.String(45), default='')
-    int_ipv4address_b = sa.Column(sa.String(42), default='')
+    int_address_b = sa.Column(sa.String(45), default='')
     int_v4netmaskbit = sa.Column(sa.String(3), default='')
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
     int_ipv6address = sa.Column(sa.String(45), default='')
@@ -257,10 +257,10 @@ class InterfaceService(CRUDService):
                 'failover_vhid': config['int_vhid'],
                 'failover_group': config['int_group'],
             })
-            if config['int_ipv4address_b']:
+            if config['int_address_b']:
                 iface['failover_aliases'].append({
                     'type': 'INET',
-                    'address': config['int_ipv4address_b'],
+                    'address': config['int_address_b'],
                     'netmask': int(config['int_v4netmaskbit']),
                 })
             if config['int_ipv6address_b']:
@@ -1003,7 +1003,7 @@ class InterfaceService(CRUDService):
         aliases = []
         iface = {
             'address': '',
-            'ipv4address_b': '',
+            'address_b': '',
             'v4netmaskbit': '',
             'ipv6address': '',
             'ipv6address_b': '',
@@ -1022,7 +1022,7 @@ class InterfaceService(CRUDService):
                 # first IP address is always written to `network_interface` table
                 if version == 4:
                     a_key = 'address'
-                    b_key = 'ipv4address_b'
+                    b_key = 'address_b'
                     v_key = 'vip'
                     net_key = 'v4netmaskbit'
                 else:
@@ -1077,7 +1077,7 @@ class InterfaceService(CRUDService):
                 portinterface.update({
                     'dhcp': False,
                     'address': '',
-                    'ipv4address_b': '',
+                    'address_b': '',
                     'v4netmaskbit': '',
                     'ipv6auto': False,
                     'ipv6address': '',
