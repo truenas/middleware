@@ -8,7 +8,7 @@ import tarfile
 from middlewared.schema import accepts, returns
 from middlewared.service import CallError, job, private, Service
 
-DEBUG_MAX_SIZE = 30
+from .utils import DEBUG_MAX_SIZE
 
 
 class SystemService(Service):

@@ -78,3 +78,6 @@ class SystemHealthEventSource(EventSource):
                 'update': self._check_update,
             })
 
+
+async def setup(middleware):
+    middleware.register_event_source('system.health', SystemHealthEventSource)

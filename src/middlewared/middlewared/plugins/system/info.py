@@ -12,7 +12,7 @@ from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, 
 from middlewared.service import no_auth_required, pass_app, private, Service, throttle
 from middlewared.utils import sw_buildtime
 
-DEBUG_MAX_SIZE = 30
+
 RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)
 
 
@@ -35,7 +35,7 @@ class SystemService(Service):
         'date': None,
     }
 
-    HOST_ID = PRODUCT_TYPE = None
+    HOST_ID = None
 
     class Config:
         cli_namespace = 'system'

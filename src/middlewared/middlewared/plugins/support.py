@@ -11,7 +11,7 @@ import requests
 import simplejson
 
 from middlewared.pipe import Pipes
-from middlewared.plugins.system import DEBUG_MAX_SIZE
+from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
