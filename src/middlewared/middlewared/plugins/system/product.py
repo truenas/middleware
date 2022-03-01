@@ -213,3 +213,12 @@ class SystemService(Service):
     @private
     async def is_enterprise_ix_hardware(self):
         return await self.middleware.call('truenas.get_chassis_hardware') != 'TRUENAS-UNKNOWN'
+
+
+async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
+    if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
+        await middleware.call('system.advanced.update', {'autotune': True})
+
+
+async def setup(middleware):
+    middleware.register_hook('system.post_license_update', hook_license_update)
