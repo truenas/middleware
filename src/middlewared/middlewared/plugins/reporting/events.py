@@ -213,11 +213,7 @@ class RealtimeEventSource(EventSource):
                 if iface_name.startswith(internal_interfaces):
                     continue
 
-                try:
-                    iface_obj = netif.get_interface(iface_name)
-                except KeyError:
-                    iface_obj = None
-
+                iface_obj = netif.get_interface(iface_name, True)
                 data['interfaces'][iface_name] = {
                     'speed': last_interface_speeds['speeds'].get(iface_name),
                     'link_state': iface_obj.link_state.name if iface_obj else 'LINK_STATE_UNKNOWN',
