@@ -1,4 +1,10 @@
 import enum
+import re
+
+
+DEBUG_MAX_SIZE = 30
+FIRST_INSTALL_SENTINEL = '/data/first-boot'
+RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=re.M)
 
 
 class VMProvider(enum.Enum):

@@ -15,6 +15,8 @@ LICENSE_FILE = '/data/license'
 
 class SystemService(Service):
 
+    PRODUCT_TYPE = None
+
     @no_auth_required
     @accepts()
     @returns(Bool('system_is_truenas_core'))
