@@ -207,4 +207,8 @@ system_func()
 	section_header "Failed updates /data/update.failed"
 	sc /data/update.failed
 	section_footer
+
+	section_header "Truecommand connection"
+	midclt call truecommand.connected | jq 'del(.truecommand_ip,.truecommand_url)'
+	section_footer
 }	
