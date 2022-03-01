@@ -17,23 +17,14 @@ class InterfaceService(Service):
     @private
     def configure(self, data, aliases, options):
         options = options or {}
-
         name = data['int_interface']
         self.logger.info('Configuring interface %r', name)
-
         iface = netif.get_interface(name)
-
-        addrs_database = set()
-        addrs_configured = set([
-            a for a in iface.addresses
-            if a.af != netif.AddressFamily.LINK
-        ])
+        addrs_configured = set([a for a in iface.addresses if a.af != netif.AddressFamily.LINK])
 
         has_ipv6 = data['int_ipv6auto'] or False
 
-        if (
-            self.middleware.call_sync('system.is_enterprise') and self.middleware.call_sync('failover.node') == 'B'
-        ):
+        if self.middleware.call_sync('failover.node') == 'B':
             ipv4_field = 'int_ipv4address_b'
             ipv6_field = 'int_ipv6address_b'
             alias_field = 'alias_address_b'
@@ -42,24 +33,20 @@ class InterfaceService(Service):
             ipv6_field = 'int_ipv6address'
             alias_field = 'alias_address'
 
+        addrs_database = set()
         dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
         if dhclient_running and data['int_dhcp']:
-            leases = self.middleware.call_sync('interface.dhclient_leases', name)
-            if leases:
-                reg_address = re.search(r'fixed-address\s+(.+);', leases)
-                reg_netmask = re.search(r'option subnet-mask\s+(.+);', leases)
-                if reg_address and reg_netmask:
-                    addrs_database.add(self.alias_to_addr({
-                        'address': reg_address.group(1),
-                        'netmask': reg_netmask.group(1),
-                    }))
+            if leases := self.middleware.call_sync('interface.dhclient_leases', name):
+                _addr = re.search(r'fixed-address\s+(.+);', leases)
+                _net = re.search(r'option subnet-mask\s+(.+);', leases)
+                if (_addr and (_addr := _addr.group(1))) and (_net and (_net := _net.group(1))):
+                    addrs_database.add(self.alias_to_addr({'address': _addr, 'netmask': _net}))
                 else:
                     self.logger.info('Unable to get address from dhclient')
             if data[ipv6_field] and not has_ipv6:
-                addrs_database.add(self.alias_to_addr({
-                    'address': data[ipv6_field],
-                    'netmask': data['int_v6netmaskbit'],
-                }))
+                addrs_database.add(self.alias_to_addr(
+                    {'address': data[ipv6_field], 'netmask': data['int_v6netmaskbit']}
+                ))
                 has_ipv6 = True
         else:
             if data[ipv4_field] and not data['int_dhcp']:
@@ -118,7 +105,7 @@ class InterfaceService(Service):
             addrs_database.add(self.alias_to_addr(link_local))
 
         if dhclient_running and not data['int_dhcp']:
-            self.logger.debug('Killing dhclient for {}'.format(name))
+            self.logger.debug('Killing dhclient for %r', name)
             os.kill(dhclient_pid, signal.SIGTERM)
 
         # Remove addresses configured and not in database
@@ -130,10 +117,10 @@ class InterfaceService(Service):
             if vipv6 and address.startswith('fe80::'):
                 continue
             if addr not in addrs_database:
-                self.logger.debug('{}: removing {}'.format(name, addr))
+                self.logger.debug('%s: removing %s', name, addr)
                 iface.remove_address(addr)
             elif not data['int_dhcp']:
-                self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
+                self.logger.debug('%s: removing possible valid_lft and preferred_lft on %s', name, addr)
                 iface.replace_address(addr)
 
         if vip or vipv6 or alias_vips:
@@ -149,7 +136,7 @@ class InterfaceService(Service):
             # keepalived service is responsible for adding the VIP(s)
             if address in (vip, vipv6) or address in alias_vips:
                 continue
-            self.logger.debug('{}: adding {}'.format(name, addr))
+            self.logger.debug('%s: adding %s', name, addr)
             iface.add_address(addr)
 
         # In case there is no MTU in interface and it is currently
@@ -165,7 +152,7 @@ class InterfaceService(Service):
             try:
                 iface.description = data['int_name']
             except Exception:
-                self.logger.warn(f'Failed to set interface {name} description', exc_info=True)
+                self.logger.warning('Failed to set interface description on %s', name, exc_info=True)
 
         if netif.InterfaceFlags.UP not in iface.flags:
             iface.up()
