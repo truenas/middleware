@@ -1,28 +1,13 @@
 import asyncio
-from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
-from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
-from middlewared.service import CallError, no_auth_required, job, pass_app, private, Service, throttle
-from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, sw_version_is_stable, osc
-from middlewared.utils.license import LICENSE_ADDHW_MAPPING
+from middlewared.utils import run, start_daemon_thread, osc
 
-import ntplib
-import io
 import os
 import psutil
 import re
-import requests
-import shutil
-import socket
-import subprocess
-import hashlib
-import tarfile
 import textwrap
 import time
 import uuid
-
-from licenselib.license import ContractType, Features, License
-from pathlib import Path
 
 
 SYSTEM_BOOT_ID = None
@@ -36,106 +21,6 @@ CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 
 RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=re.M)
-
-
-class SystemService(Service):
-
-    @private
-    async def first_boot(self):
-        return SYSTEM_FIRST_BOOT
-
-    @accepts()
-    @returns(Str('system_boot_identifier'))
-    async def boot_id(self):
-        """
-        Returns an unique boot identifier.
-
-        It is supposed to be unique every system boot.
-        """
-        return SYSTEM_BOOT_ID
-
-    @accepts()
-    @returns(Bool('system_ready'))
-    async def ready(self):
-        """
-        Returns whether the system completed boot and is ready to use
-        """
-        return await self.middleware.call("system.state") != "BOOTING"
-
-    @accepts()
-    @returns(Str('system_state', enum=['SHUTTING_DOWN', 'READY', 'BOOTING']))
-    async def state(self):
-        """
-        Returns system state:
-        "BOOTING" - System is booting
-        "READY" - System completed boot and is ready to use
-        "SHUTTING_DOWN" - System is shutting down
-        """
-        if SYSTEM_SHUTTING_DOWN:
-            return "SHUTTING_DOWN"
-        if SYSTEM_READY:
-            return "READY"
-        return "BOOTING"
-
-    @private
-    def get_synced_clock_time(self):
-        """
-        Will return synced clock time if ntpd has synced with ntp servers
-        otherwise will return none
-        """
-        client = ntplib.NTPClient()
-        try:
-            response = client.request('localhost')
-        except Exception:
-            # Cannot connect to NTP server
-            self.logger.error('Error while connecting to NTP server', exc_info=True)
-        else:
-            if response.version and response.leap != 3:
-                # https://github.com/darkhelmet/ntpstat/blob/11f1d49cf4041169e1f741f331f65645b67680d8/ntpstat.c#L172
-                # if leap second indicator is 3, it means that the clock has not been synchronized
-                return datetime.fromtimestamp(response.tx_time, timezone.utc)
-
-    @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
-    @returns()
-    @job()
-    async def reboot(self, job, options):
-        """
-        Reboots the operating system.
-
-        Emits an "added" event of name "system" and id "reboot".
-        """
-        if options is None:
-            options = {}
-
-        self.middleware.send_event('system', 'ADDED', id='reboot', fields={
-            'description': 'System is going to reboot',
-        })
-
-        delay = options.get('delay')
-        if delay:
-            await asyncio.sleep(delay)
-
-        await Popen(['/sbin/shutdown', '-r', 'now'])
-
-    @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
-    @returns()
-    @job()
-    async def shutdown(self, job, options):
-        """
-        Shuts down the operating system.
-
-        An "added" event of name "system" and id "shutdown" is emitted when shutdown is initiated.
-        """
-        if options is None:
-            options = {}
-
-        delay = options.get('delay')
-        if delay:
-            await asyncio.sleep(delay)
-
-        await Popen(['/sbin/poweroff'])
-
-
 
 
 async def _update_birthday(middleware):
