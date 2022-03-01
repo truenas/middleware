@@ -31,17 +31,20 @@ class InterfaceService(Service):
 
         addrs_database = set()
         dhclient_run, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
-        if dhclient_run and data['int_dhcp'] and (i := self.middleware.call_sync('interface.dhclient_leases', name)):
-            # dhclient is running and is marked for dhcp AND we have a lease file for the interface
+        if dhclient_run and not data['int_dhcp']:
+            # dhclient is running on the interface but is marked to not have dhcp configure the interface
+            self.logger.debug('Killing dhclient for %r', name)
+            os.kill(dhclient_pid, signal.SIGTERM)
+        elif dhclient_run and data['int_dhcp'] and (i := self.middleware.call_sync('interface.dhclient_leases', name)):
+            # dhclient is running on the interface and is marked for dhcp AND we have a lease file for it
             _addr = re.search(r'fixed-address\s+(.+);', i)
             _net = re.search(r'option subnet-mask\s+(.+);', i)
             if (_addr and (_addr := _addr.group(1))) and (_net and (_net := _net.group(1))):
                 addrs_database.add(self.alias_to_addr({'address': _addr, 'netmask': _net}))
             else:
                 self.logger.info('Unable to get address from dhclient lease file for %r', name)
-        elif has_ipv6 and data[addr_key]:
-            # TODO: this will _ONLY_ ever work when an IPv6 address has been given to us.
-            # We're ignoring int_ipv6auto column...
+        elif data[addr_key] and not data['int_dhcp']:
+            # TODO: how are we handling int_ipv6auto (is it SLAAC or stateless DHCPv6 or stateful DHCPv6)??
             addrs_database.add(self.alias_to_addr({'address': data[addr_key], 'netmask': data['int_netmask']}))
 
         if vip := data.get('int_vip', ''):
@@ -67,14 +70,11 @@ class InterfaceService(Service):
             link_local = {'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)), 'netmask': '64'}
             addrs_database.add(self.alias_to_addr(link_local))
 
-        if dhclient_run and not data['int_dhcp']:
-            self.logger.debug('Killing dhclient for %r', name)
-            os.kill(dhclient_pid, signal.SIGTERM)
-
         for addr in addrs_configured:
             address = str(addr.address)
-            if address == vip or address in alias_vips or has_ipv6 and address.startswith('fe80::'):
+            if address == vip or address in alias_vips or (has_ipv6 and address.startswith('fe80::')):
                 # keepalived service is responsible for deleting the VIP(s)
+                # dont remove fe80 address if ipv6 is configured since it's needed
                 continue
             elif addr not in addrs_database:
                 # Remove addresses configured and not in database
