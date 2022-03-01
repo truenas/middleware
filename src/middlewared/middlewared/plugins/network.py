@@ -218,9 +218,7 @@ class InterfaceService(CRUDService):
 
     @private
     def iface_extend(self, iface_state, configs, ha_hardware, fake=False):
-
         itype = self.middleware.call_sync('interface.type', iface_state)
-
         iface = {
             'id': iface_state['name'],
             'name': iface_state['name'],
@@ -233,7 +231,6 @@ class InterfaceService(CRUDService):
             'description': None,
             'mtu': None,
         }
-
         if ha_hardware:
             iface.update({
                 'failover_critical': False,
@@ -341,13 +338,13 @@ class InterfaceService(CRUDService):
                     'vlan_pcp': None,
                 })
 
-        if not config['int_dhcp']:
-            if config['int_ipv4address']:
-                iface['aliases'].append({
-                    'type': 'INET',
-                    'address': config['int_ipv4address'],
-                    'netmask': int(config['int_v4netmaskbit']),
-                })
+        if not config['int_dhcp'] and if config['int_ipv4address']:
+            iface['aliases'].append({
+                'type': 'INET',
+                'address': config['int_ipv4address'],
+                'netmask': int(config['int_v4netmaskbit']),
+            })
+
         if not config['int_ipv6auto']:
             if config['int_ipv6address']:
                 iface['aliases'].append({
@@ -641,9 +638,7 @@ class InterfaceService(CRUDService):
         > network interface create name=vlan0 type=VLAN vlan_parent_interface=enp0s10
             vlan_tag=10 vlan_pcp=4 ipv4_dhcp=true ipv6_auto=true
         """
-
         await self.__check_failover_disabled()
-
         verrors = ValidationErrors()
         if data['type'] == 'BRIDGE':
             required_attrs = ('bridge_members', )
@@ -651,15 +646,11 @@ class InterfaceService(CRUDService):
             required_attrs = ('lag_protocol', 'lag_ports')
         elif data['type'] == 'VLAN':
             required_attrs = ('vlan_parent_interface', 'vlan_tag')
-
-        for i in required_attrs:
-            if i not in data:
-                verrors.add(f'interface_create.{i}', 'This field is required')
-
+        for i in filter(lambda x: x not in data, required_attrs):
+            verrors.add(f'interface_create.{i}', 'This field is required')
         verrors.check()
 
         await self._common_validation(verrors, 'interface_create', data, data['type'])
-
         verrors.check()
 
         await self.__save_datastores()
@@ -705,39 +696,26 @@ class InterfaceService(CRUDService):
             except Exception:
                 if lag_id:
                     with contextlib.suppress(Exception):
-                        await self.middleware.call(
-                            'datastore.delete', 'network.lagginterface', lag_id
-                        )
+                        await self.middleware.call('datastore.delete', 'network.lagginterface', lag_id)
                 if interface_id:
                     with contextlib.suppress(Exception):
-                        await self.middleware.call(
-                            'datastore.delete', 'network.interfaces', interface_id
-                        )
+                        await self.middleware.call('datastore.delete', 'network.interfaces', interface_id)
                 raise
         elif data['type'] == 'VLAN':
             name = data.get('name') or await self.middleware.call('interface.get_next', 'vlan')
+            interface_id = None
             try:
-                async for i in self.__create_interface_datastore(data, {
-                    'interface': name,
-                }):
+                async for i in self.__create_interface_datastore(data, {'interface': name}):
                     interface_id = i
-                await self.middleware.call(
-                    'datastore.insert',
-                    'network.vlan',
-                    {
+                    await self.middleware.call('datastore.insert', 'network.vlan', {
                         'vint': name,
                         'pint': data['vlan_parent_interface'],
                         'tag': data['vlan_tag'],
                         'pcp': data.get('vlan_pcp'),
-                    },
-                    {'prefix': 'vlan_'},
-                )
+                    }, {'prefix': 'vlan_'})
             except Exception:
                 if interface_id:
-                    with contextlib.suppress(Exception):
-                        await self.middleware.call(
-                            'datastore.delete', 'network.interfaces', interface_id
-                        )
+                    await self.middleware.call('datastore.delete', 'network.interfaces', interface_id)
                 raise
 
         return await self.get_instance(name)
@@ -761,42 +739,31 @@ class InterfaceService(CRUDService):
         def _get_filters(key):
             return [[key, '!=', update['id']]] if update else []
 
+        cant = ' cannot be changed.'
+        required = ' is required when configuring HA.'
         validation_attrs = {
-            'aliases': [
-                'Active node IP address', ' cannot be changed.', ' is required when configuring HA'
-            ],
-            'failover_aliases': [
-                'Standby node IP address', ' cannot be changed.', ' is required when configuring HA'
-            ],
-            'failover_virtual_aliases': [
-                'Virtual IP address', ' cannot be changed.', ' is required when configuring HA'
-            ],
-            'failover_group': [
-                'Failover group number', ' cannot be changed.', ' is required when configuring HA'
-            ],
-            'mtu': ['MTU', ' cannot be changed.'],
-            'ipv4_dhcp': ['DHCP', ' cannot be changed.'],
-            'ipv6_auto': ['Autoconfig for IPv6', ' cannot be changed.'],
+            'aliases': ['Active node IP address', cant, required],
+            'failover_aliases': ['Standby node IP address', cant, required],
+            'failover_virtual_aliases': ['Virtual IP address', cant, required],
+            'failover_group': ['Failover group number', cant, required],
+            'mtu': ['MTU', cant],
+            'ipv4_dhcp': ['DHCP', cant],
+            'ipv6_auto': ['Autoconfig for IPv6', cant],
         }
 
-        ifaces = {
-            i['name']: i
-            for i in await self.middleware.call('interface.query', _get_filters('id'))
-        }
-        datastore_ifaces = await self.middleware.call(
-            'datastore.query', 'network.interfaces', _get_filters('int_interface')
-        )
+        ifaces = {i['name']: i for i in await self.middleware.call('interface.query', _get_filters('id'))}
+        ds_ifaces = await self.middleware.call('datastore.query', 'network.interfaces', _get_filters('int_interface'))
 
         if 'name' in data and data['name'] in ifaces:
             verrors.add(f'{schema_name}.name', 'Interface name is already in use.')
 
         if data.get('ipv4_dhcp') and any(
-            filter(lambda x: x['int_dhcp'] and not ifaces[x['int_interface']]['fake'], datastore_ifaces)
+            filter(lambda x: x['int_dhcp'] and not ifaces[x['int_interface']]['fake'], ds_ifaces)
         ):
             verrors.add(f'{schema_name}.ipv4_dhcp', 'Only one interface can be used for DHCP.')
 
         if data.get('ipv6_auto') and any(
-            filter(lambda x: x['int_ipv6auto'] and not ifaces[x['int_interface']]['fake'], datastore_ifaces)
+            filter(lambda x: x['int_ipv6auto'] and not ifaces[x['int_interface']]['fake'], ds_ifaces)
         ):
             verrors.add(
                 f'{schema_name}.ipv6_auto',
@@ -1369,8 +1336,7 @@ class InterfaceService(CRUDService):
             return
 
         remote_port = (
-            app.request.headers.get('X-Real-Remote-Port') or
-            app.request.transport.get_extra_info('peername')[1]
+            app.request.headers.get('X-Real-Remote-Port') or app.request.transport.get_extra_info('peername')[1]
         )
         if not remote_port:
             return
