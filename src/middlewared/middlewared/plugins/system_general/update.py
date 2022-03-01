@@ -6,6 +6,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, Str
 from middlewared.service import ConfigService, private, ValidationErrors
+from middlewared.utils import run
 from middlewared.validators import Range
 
 from .utils import HTTPS_PROTOCOLS
@@ -107,7 +108,11 @@ class SystemGeneralService(ConfigService):
                 f'Specified "{language}" language unknown. Please select a valid language.'
             )
 
-        # kbd map needs work
+        if data['kbdmap'] not in await self.middleware.call('system.general.kbdmap_choices'):
+            verrors.add(
+                f'{schema}.kbdmap',
+                'Please enter a valid keyboard layout'
+            )
 
         timezone = data.get('timezone')
         timezones = await self.middleware.call('system.general.timezone_choices')
@@ -241,7 +246,9 @@ class SystemGeneralService(ConfigService):
         )
 
         if config['kbdmap'] != new_config['kbdmap']:
-            await self.middleware.call('service.restart', 'syscons')
+            await self.middleware.call('etc.generate', 'keyboard')
+            await run(['setupcon'], check=False)
+            await run(['localectl', 'set-keymap', new_config['kbdmap']], check=False)
 
         if config['timezone'] != new_config['timezone']:
             await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
