@@ -2,7 +2,7 @@ import psutil
 import time
 
 from middlewared.event import EventSource
-from middlewared.utils import run, start_daemon_thread
+from middlewared.utils import start_daemon_thread
 
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'

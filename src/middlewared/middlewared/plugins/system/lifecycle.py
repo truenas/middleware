@@ -2,9 +2,9 @@ import asyncio
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import job, private, Service
-from middlewared.utils import Popen
+from middlewared.utils import Popen, run
 
-from .utils import lifecycle_conf
+from .utils import lifecycle_conf, RE_KDUMP_CONFIGURED
 
 
 class SystemService(Service):
@@ -83,3 +83,52 @@ class SystemService(Service):
             await asyncio.sleep(delay)
 
         await Popen(['/sbin/poweroff'])
+
+
+async def _update_birthday(middleware):
+    while True:
+        birthday = await middleware.call('system.get_synced_clock_time')
+        if birthday:
+            middleware.logger.debug('Updating birthday data')
+            # update db with new birthday
+            settings = await middleware.call('datastore.config', 'system.settings')
+            await middleware.call(
+                'datastore.update', 'system.settings', settings['id'], {'stg_birthday': birthday}, {'ha_sync': False}
+            )
+            break
+        else:
+            await asyncio.sleep(300)
+
+
+async def _event_system(middleware, event_type, args):
+
+    if args['id'] == 'ready':
+        lifecycle_conf.SYSTEM_READY = True
+
+        # Check if birthday is already set
+        birthday = await middleware.call('system.birthday')
+        if birthday is None:
+            # try to set birthday in background
+            asyncio.ensure_future(_update_birthday(middleware))
+
+        if (await middleware.call('system.advanced.config'))['kdump_enabled']:
+            cp = await run(['kdump-config', 'status'], check=False)
+            if cp.returncode:
+                middleware.logger.error('Failed to retrieve kdump-config status: %s', cp.stderr.decode())
+            else:
+                if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
+                    await middleware.call('alert.oneshot_create', 'KdumpNotReady', None)
+                else:
+                    await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+        else:
+            await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+
+        if await middleware.call('system.first_boot'):
+            asyncio.ensure_future(middleware.call('usage.firstboot'))
+
+    if args['id'] == 'shutdown':
+        lifecycle_conf.SYSTEM_SHUTTING_DOWN = True
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system', _event_system)
