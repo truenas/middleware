@@ -18,14 +18,11 @@ non_ha_with_1_v4ip = (
     },
     (
         {
-            'ipv4address': '1.1.1.1',
-            'ipv4address_b': '',
-            'v4netmaskbit': 24,
-            'ipv6address': '',
-            'ipv6address_b': '',
-            'v6netmaskbit': '',
+            'address': '1.1.1.1',
+            'address_b': '',
+            'netmaskt': 24,
             'vip': '',
-            'vipv6address': '',
+            'version': 4,
         },
         []
     )
@@ -43,14 +40,11 @@ non_ha_with_1_v6ip = (
     },
     (
         {
-            'ipv4address': '',
-            'ipv4address_b': '',
-            'v4netmaskbit': '',
-            'ipv6address': 'aaaa:bbbb:cccc:dddd::1',
-            'ipv6address_b': '',
-            'v6netmaskbit': 64,
+            'address': 'aaaa:bbbb:cccc:dddd::1',
+            'address_b': '',
+            'netmaskt': 64,
+            'version': 6,
             'vip': '',
-            'vipv6address': '',
         },
         []
     )
@@ -73,14 +67,11 @@ non_ha_with_2_v4ips = (
     },
     (
         {
-            'ipv4address': '1.1.1.1',
-            'ipv4address_b': '',
-            'v4netmaskbit': 24,
-            'ipv6address': '',
-            'ipv6address_b': '',
-            'v6netmaskbit': '',
+            'address': '1.1.1.1',
+            'address_b': '',
+            'netmask': 24,
+            'version': 4,
             'vip': '',
-            'vipv6address': '',
         },
         [{
             'address': '2.2.2.2',
@@ -109,14 +100,11 @@ non_ha_with_2_v6ips = (
     },
     (
         {
-            'ipv4address': '',
-            'ipv4address_b': '',
-            'v4netmaskbit': '',
-            'ipv6address': 'aaaa:bbbb:cccc:dddd::1',
-            'ipv6address_b': '',
-            'v6netmaskbit': 64,
+            'address': 'aaaa:bbbb:cccc:dddd::1',
+            'address_b': '',
+            'netmask': 64,
+            'version': 6,
             'vip': '',
-            'vipv6address': '',
         },
         [{
             'address': 'aaaa:bbbb:cccc:eeee::1',
@@ -145,14 +133,11 @@ non_ha_with_2_mixed_ips = (
     },
     (
         {
-            'ipv4address': '1.1.1.1',
-            'ipv4address_b': '',
-            'v4netmaskbit': 24,
-            'ipv6address': '',
-            'ipv6address_b': '',
-            'v6netmaskbit': '',
+            'address': '1.1.1.1',
+            'address_b': '',
+            'netmask': 24,
+            'version': 4,
             'vip': '',
-            'vipv6address': '',
         },
         [{
             'address': 'aaaa:bbbb:cccc:dddd::1',
@@ -182,14 +167,11 @@ ha_with_1_v4ip = (
     },
     (
         {
-            'ipv4address': '1.1.1.1',
-            'ipv4address_b': '1.1.1.2',
-            'v4netmaskbit': 24,
-            'ipv6address': '',
-            'ipv6address_b': '',
-            'v6netmaskbit': '',
+            'address': '1.1.1.1',
+            'address_b': '1.1.1.2',
+            'netmask': 24,
+            'version': 4,
             'vip': '1.1.1.3',
-            'vipv6address': '',
         },
         []
     )
@@ -213,14 +195,11 @@ ha_with_1_v6ip = (
     },
     (
         {
-            'ipv4address': '',
-            'ipv4address_b': '',
-            'v4netmaskbit': '',
-            'ipv6address': 'aaaa:bbbb:cccc:dddd::1',
-            'ipv6address_b': 'aaaa:bbbb:cccc:dddd::2',
-            'v6netmaskbit': 64,
-            'vip': '',
-            'vipv6address': 'aaaa:bbbb:cccc:dddd::3',
+            '6address': 'aaaa:bbbb:cccc:dddd::1',
+            'address_b': 'aaaa:bbbb:cccc:dddd::2',
+            'netmask': 64,
+            'version': 6,
+            'vip': 'aaaa:bbbb:cccc:dddd::3',
         },
         []
     )
@@ -263,14 +242,11 @@ ha_with_2_v4ips = (
     },
     (
         {
-            'ipv4address': '1.1.1.1',
-            'ipv4address_b': '1.1.1.2',
-            'v4netmaskbit': 24,
-            'ipv6address': '',
-            'ipv6address_b': '',
-            'v6netmaskbit': '',
+            'address': '1.1.1.1',
+            'address_b': '1.1.1.2',
+            'netmask': 24,
+            'version': 4,
             'vip': '1.1.1.3',
-            'vipv6address': '',
         },
         [{
             'address': '2.2.2.1',
@@ -320,14 +296,11 @@ ha_with_2_v6ips = (
     },
     (
         {
-            'ipv4address': '',
-            'ipv4address_b': '',
-            'v4netmaskbit': '',
-            'ipv6address': 'aaaa:bbbb:cccc:dddd::1',
-            'ipv6address_b': 'aaaa:bbbb:cccc:dddd::2',
-            'v6netmaskbit': 64,
-            'vip': '',
-            'vipv6address': 'aaaa:bbbb:cccc:dddd::3',
+            'address': 'aaaa:bbbb:cccc:dddd::1',
+            '6address_b': 'aaaa:bbbb:cccc:dddd::2',
+            'netmask': 64,
+            'version': 6,
+            'vip': 'aaaa:bbbb:cccc:dddd::3',
         },
         [{
             'address': 'aaaa:bbbb:3333:eeee::1',
@@ -376,14 +349,11 @@ ha_with_2_mixed_ips = (
     },
     (
         {
-            'ipv4address': '',
-            'ipv4address_b': '',
-            'v4netmaskbit': '',
-            'ipv6address': 'aaaa:bbbb:cccc:dddd::1',
-            'ipv6address_b': 'aaaa:bbbb:cccc:dddd::2',
-            'v6netmaskbit': 64,
-            'vip': '',
-            'vipv6address': 'aaaa:bbbb:cccc:dddd::3',
+            'address': 'aaaa:bbbb:cccc:dddd::1',
+            'address_b': 'aaaa:bbbb:cccc:dddd::2',
+            'netmask': 64,
+            'version': 6,
+            'vip': 'aaaa:bbbb:cccc:dddd::3',
         },
         [{
             'address': '1.1.1.1',
