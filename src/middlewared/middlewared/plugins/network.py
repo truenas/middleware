@@ -47,7 +47,6 @@ class NetworkInterfaceModel(sa.Model):
     int_address_b = sa.Column(sa.String(45), default='')
     int_netmask = sa.Column(sa.Integer())
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
-    int_ipv6address = sa.Column(sa.String(45), default='')
     int_ipv6address_b = sa.Column(sa.String(45), default='')
     int_v6netmaskbit = sa.Column(sa.String(3), default='')
     int_vip = sa.Column(sa.String(42), nullable=True)
@@ -338,20 +337,12 @@ class InterfaceService(CRUDService):
                     'vlan_pcp': None,
                 })
 
-        if not config['int_dhcp'] and config['int_address']:
+        if not (config['int_dhcp'] or not config['int_ipv6auto']) and config['int_address']:
             iface['aliases'].append({
-                'type': 'INET',
+                'type': 'INET' if config['int_version'] == 4 else 'INET6',
                 'address': config['int_address'],
                 'netmask': config['int_netmask'],
             })
-
-        if not config['int_ipv6auto']:
-            if config['int_ipv6address']:
-                iface['aliases'].append({
-                    'type': 'INET6',
-                    'address': config['int_ipv6address'],
-                    'netmask': int(config['int_v6netmaskbit']),
-                })
 
         filters = [('alias_interface', '=', config['id'])]
         for alias in self.middleware.call_sync('datastore.query', 'network.alias', filters):
@@ -1005,7 +996,6 @@ class InterfaceService(CRUDService):
             'address': '',
             'address_b': '',
             'netmask': 0,
-            'ipv6address': '',
             'ipv6address_b': '',
             'v6netmaskbit': '',
             'vip': '',
@@ -1026,7 +1016,7 @@ class InterfaceService(CRUDService):
                     v_key = 'vip'
                     net_key = 'netmask'
                 else:
-                    a_key = 'ipv6address'
+                    a_key = 'address'
                     b_key = 'ipv6address_b'
                     v_key = 'vipv6address'
                     net_key = 'v6netmaskbit'
@@ -1080,7 +1070,6 @@ class InterfaceService(CRUDService):
                     'address_b': '',
                     'netmask': 0,
                     'ipv6auto': False,
-                    'ipv6address': '',
                     'v6netmaskbit': '',
                     'vip': '',
                     'vhid': None,
