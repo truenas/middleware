@@ -47,7 +47,7 @@ class NetworkInterfaceModel(sa.Model):
     int_address_b = sa.Column(sa.String(45), default='')
     int_netmask = sa.Column(sa.Integer())
     int_ipv6auto = sa.Column(sa.Boolean(), default=False)
-    int_vip = sa.Column(sa.String(42), nullable=True)
+    int_vip = sa.Column(sa.String(45), nullable=True)
     int_vhid = sa.Column(sa.Integer(), nullable=True)
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
