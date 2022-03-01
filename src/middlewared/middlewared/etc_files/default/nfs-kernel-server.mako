@@ -1,5 +1,5 @@
 <%
-    config = middleware.call_sync("nfs.config")
+    config = render_ctx["nfs.config"]
     mountd_opts = [f'--num-threads {config["servers"]}', '-N 2']
     nfsd_opts = ['-s', '-N 2']
 

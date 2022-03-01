@@ -65,11 +65,8 @@
         return ','.join(params)
 
     entries = []
-    config = middleware.call_sync("nfs.config")
-    shares = middleware.call_sync("sharing.nfs.query", [
-        ["enabled", "=", True],
-        ["locked", "=", False],
-    ])
+    config = render_ctx["nfs.config"]
+    shares = render_ctx["sharing.nfs.query"]
     if not shares:
         raise FileShouldNotExist()
 
