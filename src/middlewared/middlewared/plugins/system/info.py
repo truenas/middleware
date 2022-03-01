@@ -1,16 +1,18 @@
 import hashlib
 import os
 import psutil
+import re
 import socket
 import time
 
 from datetime import datetime, timedelta, timezone
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
-from middlewared.service import CallError, job, no_auth_required, pass_app, private, Service, throttle
+from middlewared.service import no_auth_required, pass_app, private, Service, throttle
 from middlewared.utils import sw_buildtime
 
 DEBUG_MAX_SIZE = 30
+RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)
 
 
 def throttle_condition(middleware, app, *args, **kwargs):
@@ -57,14 +59,19 @@ class SystemService(Service):
         return self.MEM_INFO
 
     @private
-    async def cpu_info(self):
+    def get_cpu_model(self):
+        with open('/proc/cpuinfo', 'r') as f:
+            model = RE_CPU_MODEL.search(f.read())
+            return model.group(1) if model else None
 
+    @private
+    async def cpu_info(self):
         """
         CPU info doesn't change after boot so cache the results
         """
 
         if self.CPU_INFO['cpu_model'] is None:
-            self.CPU_INFO['cpu_model'] = osc.get_cpu_model()
+            self.CPU_INFO['cpu_model'] = await self.middleware.call('system.get_cpu_model')
 
         if self.CPU_INFO['core_count'] is None:
             self.CPU_INFO['core_count'] = psutil.cpu_count(logical=True)
