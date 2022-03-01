@@ -978,37 +978,20 @@ class InterfaceService(CRUDService):
         dfva = data.get('failover_virtual_aliases', [])
 
         aliases = []
-        iface = {
-            'address': '',
-            'address_b': '',
-            'netmask': 0,
-            'vip': '',
-        }
+        iface = {}
         for idx, (a, fa, fva) in enumerate(zip_longest(da, dfa, dfva, fillvalue={})):
             netmask = a['netmask']
             ipa = a['address']
             ipb = fa.get('address', '')
             ipv = fva.get('address', '')
-
             version = ipaddress.ip_interface(ipa).version
             if idx == 0:
                 # first IP address is always written to `network_interface` table
-                if version == 4:
-                    a_key = 'address'
-                    b_key = 'address_b'
-                    v_key = 'vip'
-                    net_key = 'netmask'
-                else:
-                    a_key = 'address'
-                    b_key = 'address_b'
-                    v_key = 'vip'
-                    net_key = 'netmask'
-
-                # fill out info
-                iface[a_key] = ipa
-                iface[b_key] = ipb
-                iface[v_key] = ipv
-                iface[net_key] = netmask
+                iface['address'] = ipa
+                iface['address_b'] = ipb
+                iface['netmask'] = netmask
+                iface['version'] = version
+                iface['vip'] = ipv
             else:
                 # this means it's the 2nd (or more) ip address
                 # on a singular interface so we need to write
