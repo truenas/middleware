@@ -1,6 +1,8 @@
 <%
-    users = middleware.call_sync('user.query', [["sudo", "=", True]])
-    groups = middleware.call_sync('group.query', [["sudo", "=", True]])
+    from middlewared.utils import filter_list
+
+    users = filter_list(render_ctx['user.query'], [["sudo", "=", True]])
+    groups = filter_list(render_ctx['group.query'], [["sudo", "=", True]])
 
     def sudo_commands(commands):
         commands = list(filter(None, [command.strip() for command in commands]))
@@ -14,9 +16,6 @@
         return command
 
 %>\
-% if IS_LINUX:
-root ALL=(ALL:ALL) ALL
-% endif
 % for user in users:
 % if user['sudo_nopasswd']:
 ${user['username']} ALL=(ALL) NOPASSWD: ${sudo_commands(user['sudo_commands'])}

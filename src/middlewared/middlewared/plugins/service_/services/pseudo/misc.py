@@ -295,7 +295,7 @@ class TtysService(PseudoServiceBase):
 class UserService(PseudoServiceBase):
     name = "user"
 
-    etc = ["user", "aliases", "sudoers"]
+    etc = ["user"]
     reloadable = True
 
     async def reload(self):

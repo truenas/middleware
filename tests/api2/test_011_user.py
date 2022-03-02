@@ -52,6 +52,12 @@ home_acl = [
 ]
 
 
+def check_config_file(file_name, expected_line):
+    results = SSH_TEST(f'cat {file_name}', user, password, ip)
+    assert results['result'], results['output']
+    assert expected_line in results['output'].splitlines(), results['output']
+
+
 @pytest.mark.dependency(name="user_01")
 def test_01_get_next_uid(request):
     results = GET('/user/get_next_uid/')
@@ -93,7 +99,23 @@ def test_03_verify_post_user_do_not_leak_password_in_middleware_log(request):
 
 def test_04_look_user_is_created(request):
     depends(request, ["user_02", "user_01"])
-    assert len(GET('/user?username=testuser').json()) == 1
+    results = GET('/user?username=testuser')
+    assert len(results.json()) == 1, results.text
+
+    u = results.json()[0]
+    g = u['group']
+    to_check = [
+        {
+            'file': '/etc/master.passwd',
+            'value': f"testuser:{u['unixhash']}:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
+        },
+        {
+            'file': '/etc/group',
+            'value': f'{g["bsdgrp_group"]}:*:{g["bsdgrp_gid"]}:'
+        }
+    ]
+    for f in to_check:
+        check_config_file(f['file'], f['value'])
 
 
 def test_05_check_user_exists(request):
@@ -110,7 +132,8 @@ def test_05_check_user_exists(request):
         pw = results.json()
         assert pw['pw_uid'] == next_uid, results.text
         assert pw['pw_shell'] == '/bin/csh', results.text
-
+        assert pw['pw_gecos'] == 'Test User', results.txt
+        assert pw['pw_dir'] == '/nonexistent', results.txt
 
 def test_06_get_user_info(request):
     depends(request, ["user_02", "user_01"])
@@ -325,6 +348,17 @@ def test_31_creating_user_with_homedir(request):
     user_id = results.json()
     time.sleep(5)
 
+    payload = {"username": "testuser2"}
+    results = POST("/user/get_user_obj/", payload)
+    assert results.status_code == 200, results.text
+
+    pw = results.json()
+    assert pw['pw_dir'] == payload['home'], results.text
+    assert pw['pw_name'] == payload['username'], results.text
+    assert pw['pw_uid'] == payload['uid'], results.text
+    assert pw['pw_shell'] == payload['shell'], results.text
+    assert pw['pw_gecos'] == payload['full_name'], results.text
+
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
     depends(request, ["USER_CREATED", "ssh_password"], scope="session")
@@ -423,8 +457,15 @@ def test_41_lock_smb_user(request):
     }
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 200, results.text
-    time.sleep(2)
 
+    results = GET('/user?username=testuser2')
+    assert results.status_code == 200, results.text
+    u = results.json()[0]
+
+    check_config_file(
+        '/etc/master.passwd',
+        f"testuser2:*LOCKED*:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
+    )
 
 def test_42_verify_locked_smb_user_is_disabled(request):
     """
@@ -578,19 +619,47 @@ def test_52_converted_smb_user_passb_entry_exists(request):
         assert my_entry["Account Flags"] == "[U          ]", str(my_entry)
 
 
-def test_53_deleting_non_smb_user(request):
+def test_53_add_user_to_sudoers(request):
+    depends(request, ["ssh_password"], scope="session")
+    results = PUT(f"/user/id/{user_id}", {"sudo": True})
+    assert results.status_code == 200, results.text
+
+    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL")
+
+    results = PUT(f"/user/id/{user_id}", {"sudo_nopasswd": True})
+    assert results.status_code == 200, results.text
+
+    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) NOPASSWD: ALL")
+
+
+def test_54_disable_password_auth(request):
+    depends(request, ["ssh_password"], scope="session")
+    results = PUT(f"/user/id/{user_id}", {"password_disabled": True})
+    assert results.status_code == 200, results.text
+
+    results = GET('/user?username=testuser3')
+    assert results.status_code == 200, results.text
+    u = results.json()[0]
+
+    check_config_file(
+        '/etc/master.passwd',
+        f"testuser2:*:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
+    )
+
+
+def test_55_deleting_non_smb_user(request):
     depends(request, ["NON_SMB_USER_CREATED"])
     results = DELETE(f"/user/id/{user_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
 
-def test_54_destroying_home_dataset(request):
+def test_56_destroying_home_dataset(request):
     depends(request, ["HOME_DS_CREATED"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
-def test_55_check_no_builtin_smb_users(request):
+def test_57_check_no_builtin_smb_users(request):
     """
     We have builtin SMB groups, but should have no builtin
     users. Failure here may indicate an issue with builtin user
