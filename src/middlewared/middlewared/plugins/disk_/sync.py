@@ -145,7 +145,7 @@ class DiskService(Service, ServiceChangeMixin):
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
                     await self.middleware.call(
-                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_event': False}
+                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
                     )
                     changed.add(disk['disk_identifier'])
                 elif disk['disk_expiretime'] < datetime.utcnow():
@@ -159,7 +159,7 @@ class DiskService(Service, ServiceChangeMixin):
                             'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uid']
                         ))
                     await self.middleware.call(
-                        'datastore.delete', 'storage.disk', disk['disk_identifier'], {'send_event': False}
+                        'datastore.delete', 'storage.disk', disk['disk_identifier'], {'send_events': False}
                     )
                     deleted.add(disk['disk_identifier'])
                 continue
@@ -182,7 +182,7 @@ class DiskService(Service, ServiceChangeMixin):
             # when lots of drives are present
             if self._disk_changed(disk, original_disk):
                 await self.middleware.call(
-                    'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_event': False}
+                    'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
                 )
                 changed.add(disk['disk_identifier'])
 
@@ -217,11 +217,11 @@ class DiskService(Service, ServiceChangeMixin):
                     # when lots of drives are present
                     if self._disk_changed(disk, original_disk):
                         await self.middleware.call(
-                            'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_event': False}
+                            'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
                         )
                         changed.add(disk['disk_identifier'])
                 else:
-                    await self.middleware.call('datastore.insert', 'storage.disk', disk, {'send_event': False})
+                    await self.middleware.call('datastore.insert', 'storage.disk', disk, {'send_events': False})
                     changed.add(disk['disk_identifier'])
 
         # make sure the database entries for enclosure slot information for each disk

@@ -41,7 +41,7 @@ class DiskService(Service):
                 events.add(disk["identifier"])
                 await self.middleware.call(
                     "datastore.update", "storage.disk", disk["identifier"],
-                    {"zfs_guid": guid}, {"prefix": "disk_", "send_event": False},
+                    {"zfs_guid": guid}, {"prefix": "disk_", "send_events": False},
                 )
             elif disk["zfs_guid"]:
                 devname = disk_to_guid.inv.get(disk["zfs_guid"])
@@ -50,7 +50,7 @@ class DiskService(Service):
                     events.add(disk["identifier"])
                     await self.middleware.call(
                         "datastore.update", "storage.disk", disk["identifier"],
-                        {"zfs_guid": None}, {"prefix": "disk_", "send_event": False},
+                        {"zfs_guid": None}, {"prefix": "disk_", "send_events": False},
                     )
 
         if events:

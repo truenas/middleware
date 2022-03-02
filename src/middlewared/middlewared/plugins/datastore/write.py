@@ -22,7 +22,7 @@ update 1000 table entries, then we run "disk.query" 1000 times. In
 real world testing, this has shown to take roughly 82 seconds to update
 100 entries on the `storage_disk` table when there are 641 entries total.
 The database was on a NVMe disk. The solution to this is adding the
-`send_event` key. If this is set to False, then an event will not be
+`send_events` key. If this is set to False, then an event will not be
 sent for the db operation. It is the callers responsibility to emit an event
 after all the db operations are complete.
 """
@@ -40,7 +40,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             'options',
             Bool('ha_sync', default=True),
             Str('prefix', default=''),
-            Bool('send_event', default=True),
+            Bool('send_events', default=True),
         ),
     )
     async def insert(self, name, data, options):
@@ -74,7 +74,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         await self._handle_relationships(pk, relationships)
 
-        if options['send_event']:
+        if options['send_events']:
             await self.middleware.call('datastore.send_insert_events', name, insert)
 
         return pk
@@ -87,7 +87,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             'options',
             Bool('ha_sync', default=True),
             Str('prefix', default=''),
-            Bool('send_event', default=True),
+            Bool('send_events', default=True),
         ),
     )
     async def update(self, name, id_or_filters, data, options):
@@ -124,7 +124,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             if result.rowcount != 1:
                 raise RuntimeError('No rows were updated')
 
-            if options['send_event']:
+            if options['send_events']:
                 await self.middleware.call('datastore.send_update_events', name, id)
 
         await self._handle_relationships(id, relationships)
@@ -180,7 +180,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             'options',
             Bool('ha_sync', default=True),
             Str('prefix', default=''),
-            Bool('send_event', default=True),
+            Bool('send_events', default=True),
         ),
     )
     async def delete(self, name, id_or_filters, options):
@@ -197,7 +197,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             },
         )
 
-        if not isinstance(id_or_filters, list) and options['send_event']:
+        if not isinstance(id_or_filters, list) and options['send_events']:
             await self.middleware.call('datastore.send_delete_events', name, id_or_filters)
 
         return True
