@@ -826,7 +826,7 @@ class CloudSyncService(TaskPathService):
             if limit1["time"] >= limit2["time"]:
                 verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
 
-        await self.validate_path_field(data, name, verrors)
+        await self.validate_path_field(data, name, verrors, True)
 
         if data["snapshot"]:
             if data["direction"] != "PUSH":
