@@ -1,5 +1,6 @@
 import asyncio
 from collections import namedtuple
+from itertools import zip_longest
 
 from middlewared.schema import Dict, List, returns, Str
 from middlewared.service import accepts, Service, private
@@ -67,14 +68,13 @@ class InterfaceService(Service):
 
     def _collect_addresses(self, datastores):
         addresses = set()
-        for interface in datastores["interfaces"]:
-            for k in ["int_ipv4address", "int_ipv6address"]:
-                addresses.add(interface[k])
-                addresses.add(interface[f"{k}_b"])
-        for alias in datastores["alias"]:
-            addresses.add(alias["alias_address"])
-            addresses.add(alias["alias_address_b"])
-            addresses.add(alias["alias_vip"])
+        for iface, alias in zip_longest(datastores["interfaces"], datastores["alias"], fillvalue={}):
+            addresses.add(iface.get("int_address", ""))
+            addresses.add(iface.get("int_address_b", ""))
+            addresses.add(iface.get("int_vip", ""))
+            addresses.add(alias.get("alias_address", ""))
+            addresses.add(alias.get("alias_address_b", ""))
+            addresses.add(alias.get("alias_vip", ""))
         addresses.discard("")
         return addresses
 

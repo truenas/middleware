@@ -88,15 +88,13 @@ class ISCSIPortalService(CRUDService):
         Returns possible choices for `listen.ip` attribute of portal create and update.
         """
         choices = {'0.0.0.0': '0.0.0.0', '::': '::'}
-        alua = (await self.middleware.call('iscsi.global.config'))['alua']
-        if alua:
+        if (await self.middleware.call('iscsi.global.config'))['alua']:
             # If ALUA is enabled we actually want to show the user the IPs of each node
             # instead of the VIP so its clear its not going to bind to the VIP even though
             # thats the value used under the hoods.
-            for i in await self.middleware.call('datastore.query', 'network.Interfaces', [
-                ('int_vip', 'nin', [None, '']),
-            ]):
-                choices[i['int_vip']] = f'{i["int_ipv4address"]}/{i["int_ipv4address_b"]}'
+            filters = [('int_vip', 'nin', [None, ''])]
+            for i in await self.middleware.call('datastore.query', 'network.Interfaces', filters):
+                choices[i['int_vip']] = f'{i["int_address"]}/{i["int_address_b"]}'
 
             filters = [('alias_vip', 'nin', [None, ''])]
             for i in await self.middleware.call('datastore.query', 'network.Alias', filters):
