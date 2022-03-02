@@ -1,11 +1,14 @@
-% for user in middleware.call_sync('user.query', [], {'order_by': ['-builtin', 'uid']}):
 <%
-if user['password_disabled']:
-    passwd = "*"
-elif user['locked']:
-    passwd = "!"
-else:
-    passwd = user['unixhash']
+    from middlewared.utils import filter_list
+
+    def get_passwd(entry):
+        if entry['password_disabled']:
+            return "*"
+        elif user['locked']:
+            return "!"
+
+        return entry['unixhash']
 %>\
-${user['username']}:${passwd}:18397:0:99999:7:::
+% for user in filter_list(render_ctx['user.query'], [], {'order_by': ['-builtin', 'uid']}):
+${user['username']}:${get_passwd(user)}:18397:0:99999:7:::
 % endfor
