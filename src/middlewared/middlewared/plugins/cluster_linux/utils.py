@@ -3,7 +3,6 @@ import asyncio
 import enum
 import time
 from ipaddress import ip_address
-from dns import asyncresolver
 
 from middlewared.service import Service, job, ValidationErrors
 from middlewared.service_exception import CallError
@@ -14,36 +13,40 @@ class ClusterUtils(Service):
         namespace = 'cluster.utils'
         private = True
 
-    async def _resolve_hostname(self, hostname):
+    async def _resolve_hostname(self, host, avail_ips):
+        result = {'ip': '', 'error': ''}
         try:
-            ip = ip_address(hostname)
-            # we will return the IP address so long as it's not loopback address
-            # else we'll return an empty list so that the caller of this raises
-            # a validation error
-            return [ip.compressed] if not ip.is_loopback else []
+            ip = ip_address(host)
+            if ip.is_loopback:
+                result['error'] = 'Loopback addresses are not allowed'
+            else:
+                result['ip'] = ip.compressed
+            return result
         except ValueError:
-            # means it's a hostname so we need to try and resolve
-            pass
-
-        lifetime = 6  # total amount of time to try and resolve `hostname`
-        timeout = lifetime // 3  # time to wait before moving on to next entry in resolv.conf
-
-        ar = asyncresolver.Resolver()
-        ar.lifetime = lifetime
-        ar.timeout = timeout
+            if host.find('/') != -1:
+                # gives a clear(er) error to the caller
+                result['error'] = 'Invalid character "/" detected'
+                return result
+            else:
+                # means it's a hostname so we need to try and resolve
+                pass
 
         try:
-            ans = [i.to_text() for i in (await ar.resolve(hostname)).response.answer[0].items]
-        except Exception:
-            ans = []
+            ans = [i['address'] for i in await self.middleware.call('dnsclient.forward_lookup', {"names": [host]})]
+        except Exception as e:
+            # failed to resolve the hostname
+            result['error'] = e.errmsg
+        else:
+            if not ans:
+                # this shouldn't happen....but paranoia plagues me
+                result['error'] = 'No IP addresses detected'
+            elif len(ans) > 1:
+                # Duplicate IPs aren't supported anywhere in the cluster stack
+                result['error'] = f'Duplicate IPs detected: {", ".join(ans)!r}'
+            else:
+                result['ip'] = ans[0]
 
-        # check the resolved IP addresses to make sure they're not loopback addresses
-        # idk...shouldn't happen but be sure
-        for ip in ans[:]:
-            if ip_address(ip).is_loopback:
-                ans.remove(ip)
-
-        return ans
+        return result
 
     async def resolve_hostnames(self, hostnames):
         """
@@ -51,17 +54,16 @@ class ClusterUtils(Service):
         """
         hostnames = list(set(hostnames))
         verrors = ValidationErrors()
-
-        results = await asyncio.gather(*[self._resolve_hostname(host) for host in hostnames])
+        avail_ips = await self.middleware.call('gluster.peer.ips_available')
+        results = await asyncio.gather(*[self._resolve_hostname(host, avail_ips) for host in hostnames])
 
         ips = []
         for host, result in zip(hostnames, results):
-            if not result:
-                verrors.add(f'resolve_hostname.{host}', 'Failed to resolve hostname')
+            if result['error']:
+                verrors.add(f'resolve_hostname.{host}', result['error'])
             else:
-                ips.extend(result)
+                ips.append(result['ip'])
 
-        # if any hostnames failed to be resolved it will be raised here
         verrors.check()
 
         return list(set(ips))
