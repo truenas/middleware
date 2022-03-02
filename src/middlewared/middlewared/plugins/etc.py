@@ -21,7 +21,7 @@ class MakoRenderer(object):
     def __init__(self, service):
         self.service = service
 
-    async def render(self, path):
+    async def render(self, path, ctx):
         try:
             # Mako is not asyncio friendly so run it within a thread
             def do():
@@ -42,6 +42,7 @@ class MakoRenderer(object):
                     FileShouldNotExist=FileShouldNotExist,
                     IS_FREEBSD=osc.IS_FREEBSD,
                     IS_LINUX=osc.IS_LINUX,
+                    render_ctx=ctx
                 )
 
             return await self.service.middleware.run_in_thread(do)
@@ -59,16 +60,18 @@ class PyRenderer(object):
     def __init__(self, service):
         self.service = service
 
-    async def render(self, path):
+    async def render(self, path, ctx):
         name = os.path.basename(path)
         find = imp.find_module(name, [os.path.dirname(path)])
         mod = imp.load_module(name, *find)
+        args = [self.service, self.service.middleware]
+        if ctx is not None:
+            args.append(ctx)
+
         if asyncio.iscoroutinefunction(mod.render):
-            return await mod.render(self.service, self.service.middleware)
+            return await mod.render(*args)
         else:
-            return await self.service.middleware.run_in_thread(
-                mod.render, self.service, self.service.middleware,
-            )
+            return await self.service.middleware.run_in_thread(mod.render, *args)
 
 
 class EtcService(Service):
@@ -119,8 +122,6 @@ class EtcService(Service):
         ],
         'nfsd': [
             {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
-            {'type': 'mako', 'path': 'default/nfs-common', 'platform': 'Linux'},
-            {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'},
         ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
@@ -296,14 +297,29 @@ class EtcService(Service):
             'py': PyRenderer(self),
         }
 
+    async def gather_ctx(self, methods):
+        rv = {}
+        for m in methods:
+            method = m['method']
+            args = m.get('args', [])
+            rv[method] = await self.middleware.call(method, *args)
+
+        return rv
+
     async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
 
         async with self.LOCKS[name]:
-            for entry in group:
+            if isinstance(group, dict):
+                ctx = await self.gather_ctx(group['ctx'])
+                entries = group['entries']
+            else:
+                ctx = None
+                entries = group
 
+            for entry in entries:
                 renderer = self._renderers.get(entry['type'])
                 if renderer is None:
                     raise ValueError(f'Unknown type: {entry["type"]}')
@@ -327,7 +343,7 @@ class EtcService(Service):
                         entry_path = entry_path[len('local/'):]
                 outfile = f'/etc/{entry_path}'
                 try:
-                    rendered = await renderer.render(path)
+                    rendered = await renderer.render(path, ctx)
                 except FileShouldNotExist:
                     self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
 
