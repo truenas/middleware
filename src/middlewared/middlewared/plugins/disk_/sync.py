@@ -1,7 +1,6 @@
 import asyncio
 import os
 from datetime import datetime, timedelta
-from itertools import zip_longest
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
@@ -230,12 +229,11 @@ class DiskService(Service, ServiceChangeMixin):
 
         if changed or deleted:
             await self.middleware.call('disk.restart_services_after_sync')
-            disks = await self.middleware.call('disk.query', [], {'prefix': 'disk_'})
-            for change, delete in zip_longest(changed, deleted, fillvalue=None):
-                if change and (disk := [i for i in disks if i['identifier'] == change]):
-                    self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disk[0])
-                if delete:
-                    self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
+            disks = {i['identifier']: i for i in await self.middleware.call('disk.query', [], {'prefix': 'disk_'})}
+            for change in changed:
+                self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
+            for delete in deleted:
+                self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
         return 'OK'
 
