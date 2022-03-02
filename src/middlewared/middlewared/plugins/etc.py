@@ -81,13 +81,20 @@ class EtcService(Service):
     APACHE_DIR = 'local/apache24' if osc.IS_FREEBSD else 'local/apache2'
 
     GROUPS = {
-        'user': [
-            {'type': 'mako', 'path': 'local/smbusername.map'},
-            {'type': 'mako', 'path': 'group'},
-            {'type': 'mako', 'path': 'master.passwd' if osc.IS_FREEBSD else 'passwd', 'local_path': 'master.passwd'},
-            {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
-            {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': 'shadow', 'mode': 0o0640},
-        ],
+        'user': {
+            'ctx': [
+                {'method': 'user.query'},
+                {'method': 'group.query'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'local/smbusername.map'},
+                {'type': 'mako', 'path': 'group'},
+                {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
+                {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': 'shadow', 'mode': 0o0640},
+                {'type': 'mako', 'path': 'local/sudoers'},
+                {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'}
+            ]
+        },
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure', 'checkpoint_linux': 'post_init'}
@@ -262,9 +269,6 @@ class EtcService(Service):
         'snmpd': [
             {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},
         ],
-        'sudoers': [
-            {'type': 'mako', 'path': 'local/sudoers'}
-        ],
         'syslogd': [
             {'type': 'mako', 'path': 'default/syslog-ng', 'checkpoint': 'pool_import'},
             {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
@@ -288,9 +292,6 @@ class EtcService(Service):
         ],
         'inadyn': [
             {'type': 'mako', 'path': 'local/inadyn.conf'}
-        ],
-        'aliases': [
-            {'type': 'mako', 'path': 'mail/aliases' if osc.IS_FREEBSD else 'aliases', 'local_path': 'mail/aliases'}
         ],
         'openvpn_server': [
             {
