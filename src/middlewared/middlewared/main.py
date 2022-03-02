@@ -1095,7 +1095,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def unregister_wsclient(self, client):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name, method, sync=True, inline=False, order=0):
+    def register_hook(self, name, method, *, inline=False, order=0, raise_error=False, sync=True):
         """
         Register a hook under `name`.
 
@@ -1103,8 +1103,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         Args:
             name(str): name of the hook, e.g. service.hook_name
             method(callable): method to be called
-            sync(bool): whether the method should be called in a sync way
             inline(bool): whether the method should be called in executor's context synchronously
+            order(int): hook execution order
+            raise_error(bool): whether an exception should be raised if a sync hook call fails
+            sync(bool): whether the method should be called in a sync way
         """
 
         if inline:
@@ -1114,11 +1116,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if not sync:
                 raise RuntimeError('Inline hooks are always called in a sync way')
 
+        if raise_error:
+            if not sync:
+                raise RuntimeError('Hooks that raise error must be called in a sync way')
+
         self.__hooks[name].append({
             'method': method,
             'inline': inline,
-            'sync': sync,
             'order': order,
+            'raise_error': raise_error,
+            'sync': sync,
         })
         self.__hooks[name] = sorted(self.__hooks[name], key=lambda hook: hook['order'])
 
@@ -1127,6 +1134,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             try:
                 yield hook, hook['method'](self, *args, **kwargs)
             except Exception:
+                if hook['raise_error']:
+                    raise
+
                 self.logger.error(
                     'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
                 )
@@ -1146,6 +1156,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 else:
                     asyncio.ensure_future(fut)
             except Exception:
+                if hook['raise_error']:
+                    raise
+
                 self.logger.error(
                     'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
                 )
@@ -1492,6 +1505,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         if hasattr(methodobj, '_job'):
             f._job = methodobj._job
+        if hasattr(mock, '_job'):
+            f._job = mock._job
 
         self.mocks[name] = f
 
