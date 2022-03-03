@@ -41,7 +41,7 @@ class VMModel(sa.Model):
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)
-    uuid = sa.Column(sa.String(255), default=None, nullable=True)
+    uuid = sa.Column(sa.String(255))
 
 
 class VMService(CRUDService, VMSupervisorMixin):
