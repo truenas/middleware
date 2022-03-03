@@ -8,7 +8,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
-from middlewared.validators import Range
+from middlewared.validators import Range, UUID
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -112,7 +112,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('shutdown_timeout', default=90, validators=[Range(min=5, max=300)]),
         Str('arch_type', null=True, default=None),
         Str('machine_type', null=True, default=None),
-        Str('uuid', null=True, default=None),
+        Str('uuid', null=True, default=None, validators=[UUID()]),
         register=True,
     ))
     async def do_create(self, data):
