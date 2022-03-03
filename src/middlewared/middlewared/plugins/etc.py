@@ -7,7 +7,6 @@ from middlewared.utils.mako import get_template
 
 import asyncio
 from collections import defaultdict
-from pathlib import Path
 import grp
 import imp
 import os
@@ -15,10 +14,6 @@ import pwd
 
 
 UPS_GROUP = 'nut' if osc.IS_LINUX else 'uucp'
-PAM_PATH = Path(f'{Path(__file__).parent.parent}/etc_files/pam.d')
-LINUX_PAM_FILES = set(PAM_PATH.glob('common*'))
-FREEBSD_PAM_FILES = set(PAM_PATH.iterdir()) - LINUX_PAM_FILES
-PAM_FILES = LINUX_PAM_FILES if osc.IS_LINUX else FREEBSD_PAM_FILES
 
 
 class FileShouldNotExist(Exception):
@@ -134,10 +129,19 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'exports'},
             ]
         },
-        'pam': [
-            {'type': 'mako', 'path': os.path.join('pam.d', f.name[:-5])}
-            for f in PAM_FILES
-        ],
+        'pam': {
+            'ctx': [
+                {'method': 'activedirectory.config'},
+                {'method': 'ldap.config'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'pam.d/common-account'},
+                {'type': 'mako', 'path': 'pam.d/common-auth'},
+                {'type': 'mako', 'path': 'pam.d/common-password'},
+                {'type': 'mako', 'path': 'pam.d/common-session-noninteractive'},
+                {'type': 'mako', 'path': 'pam.d/common-session'},
+            ]
+        },
         'ftp': [
             {'type': 'mako', 'path': 'local/proftpd.conf' if osc.IS_FREEBSD else 'proftpd/proftpd.conf',
              'local_path': 'local/proftpd.conf'},
