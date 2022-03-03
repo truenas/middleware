@@ -1,4 +1,3 @@
-import os
 import pyudev
 
 from middlewared.service import Service
@@ -20,10 +19,9 @@ class ZFSPoolService(Service):
         ):
             if dev['DEVTYPE'] == 'disk':
                 mapping[dev.sys_name] = dev.sys_name
-            elif dev.get('ID_PART_ENTRY_UUID'):
-                parent = dev.find_parent('block')
-                mapping[dev.sys_name] = parent.sys_name
-                mapping[os.path.join('disk/by-partuuid', dev['ID_PART_ENTRY_UUID'])] = parent.sys_name
+
+            for link in (dev.get('DEVLINKS') or '').split():
+                mapping[link[len('/dev/'):]] = dev.sys_name
 
         pool_disks = []
         for dev in disks:
