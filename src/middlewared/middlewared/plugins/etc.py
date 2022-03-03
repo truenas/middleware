@@ -11,9 +11,20 @@ import grp
 import imp
 import os
 import pwd
+import stat
+import enum
 
 
-UPS_GROUP = 'nut' if osc.IS_LINUX else 'uucp'
+class EtcUSR(enum.IntEnum):
+    ROOT = 0
+    NSLCD = 110
+
+
+class EtcGRP(enum.IntEnum):
+    ROOT = 0
+    SHADOW = 42
+    NSLCD = 115
+    NUT = 126
 
 
 class FileShouldNotExist(Exception):
@@ -85,7 +96,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'local/smbusername.map'},
                 {'type': 'mako', 'path': 'group'},
                 {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
-                {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': 'shadow', 'mode': 0o0640},
+                {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': EtcGRP.SHADOW, 'mode': 0o0640},
                 {'type': 'mako', 'path': 'local/sudoers'},
                 {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'}
             ]
@@ -112,7 +123,7 @@ class EtcService(Service):
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
             {'type': 'mako', 'path': 'local/nslcd.conf',
-                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
+                'owner': EtcUSR.NSLCD, 'group': EtcGRP.NSLCD, 'mode': 0o0400},
         ],
         'dhclient': [
             {'type': 'mako', 'path': 'dhcp/dhclient.conf', 'local_path': 'dhclient.conf'},
@@ -200,7 +211,7 @@ class EtcService(Service):
                 'type': 'mako',
                 'path': 'glusterfs/glusterd.vol',
                 'local_path': 'glusterd.conf',
-                'user': 'root', 'group': 'root', 'mode': 0o644,
+                'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
                 'checkpoint': 'pool_import',
                 'platform': 'Linux',
             },
@@ -209,7 +220,7 @@ class EtcService(Service):
             {
                 'type': 'mako',
                 'path': 'keepalived/keepalived.conf',
-                'user': 'root', 'group': 'root', 'mode': 0o644,
+                'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
                 'local_path': 'keepalived.conf',
                 'platform': 'Linux',
             },
@@ -241,14 +252,14 @@ class EtcService(Service):
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
-            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
             {
-                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root',
-                'group': UPS_GROUP, 'mode': 0o440, 'platform': 'Linux',
+                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': EtcUSR.ROOT,
+                'group': EtcGRP.NUT, 'mode': 0o440, 'platform': 'Linux',
             },
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
@@ -367,6 +378,45 @@ class EtcService(Service):
 
         return rv
 
+    def set_etc_file_perms(self, file, entry):
+        perm_changed = False
+        uid = entry.get("owner", -1)
+        gid = entry.get("group", -1)
+        mode = entry.get("mode", None)
+
+        if uid == -1 and gid == -1 and mode is None:
+            return perm_changed
+
+        if isinstance(uid, str):
+            uid = pwd.getpwnam(entry["owner"]).pw_uid
+
+        if isinstance(gid, str):
+            gid = grp.getgrnam(entry["group"]).gr_gid
+
+        try:
+            fd = os.open(file, os.O_RDWR)
+            st = os.fstat(fd)
+            uid_to_set = -1
+            gid_to_set = -1
+
+            if uid != -1 and st.st_uid != uid:
+                uid_to_set = uid
+
+            if gid != -1 and st.st_gid != gid:
+                gid_to_set = gid
+
+            if gid_to_set != -1 or uid_to_set != -1:
+                os.fchown(fd, uid_to_set, gid_to_set)
+                perm_changed = True
+
+            if mode and stat.S_IMODE(st.st_mode) != mode:
+                os.fchmod(fd, mode)
+                perm_changed = True
+        finally:
+            os.close(fd)
+
+        return perm_changed
+
     async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
         if group is None:
@@ -431,30 +481,9 @@ class EtcService(Service):
 
                 # If ownership or permissions are specified, see if
                 # they need to be changed.
-                st = os.stat(outfile)
-                if 'owner' in entry and entry['owner']:
-                    try:
-                        pw = await self.middleware.run_in_thread(pwd.getpwnam, entry['owner'])
-                        if st.st_uid != pw.pw_uid:
-                            os.chown(outfile, pw.pw_uid, -1)
-                            changes = True
-                    except Exception:
-                        pass
-                if 'group' in entry and entry['group']:
-                    try:
-                        gr = await self.middleware.run_in_thread(grp.getgrnam, entry['group'])
-                        if st.st_gid != gr.gr_gid:
-                            os.chown(outfile, -1, gr.gr_gid)
-                            changes = True
-                    except Exception:
-                        pass
-                if 'mode' in entry and entry['mode']:
-                    try:
-                        if (st.st_mode & 0x3FF) != entry['mode']:
-                            os.chmod(outfile, entry['mode'])
-                            changes = True
-                    except Exception:
-                        pass
+                changes = await self.middleware.run_in_thread(
+                    self.set_etc_file_perms, outfile, entry
+                )
 
                 if not changes:
                     self.logger.debug(f'No new changes for {outfile}')
