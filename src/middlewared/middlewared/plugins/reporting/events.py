@@ -7,6 +7,7 @@ import time
 import humanfriendly
 
 from middlewared.event import EventSource
+from middlewared.plugins.interface.netif import netif
 
 from .iostat import DiskStats
 
@@ -129,6 +130,7 @@ class RealtimeEventSource(EventSource):
         last_interface_stats = {}
         last_interface_speeds = {'time': time.monotonic(), 'speeds': self.get_interface_speeds()}
         last_disk_stats = {}
+        internal_interfaces = tuple(self.middleware.call_sync('interface.internal_interfaces'))
 
         while not self._cancel_sync.is_set():
             data = {}
@@ -208,7 +210,14 @@ class RealtimeEventSource(EventSource):
             stats_time = time.time()
             for i in glob.glob('/sys/class/net/*/statistics'):
                 iface_name = i.replace('/sys/class/net/', '').split('/')[0]
-                data['interfaces'][iface_name]['speed'] = last_interface_speeds['speeds'].get(iface_name)
+                if iface_name.startswith(internal_interfaces):
+                    continue
+
+                iface_obj = netif.get_interface(iface_name, True)
+                data['interfaces'][iface_name] = {
+                    'speed': last_interface_speeds['speeds'].get(iface_name),
+                    'link_state': iface_obj.link_state.name if iface_obj else 'LINK_STATE_UNKNOWN',
+                }
                 for stat, name in retrieve_stat.items():
                     with open(f'{i}/{stat}', 'r') as f:
                         value = int(f.read())
