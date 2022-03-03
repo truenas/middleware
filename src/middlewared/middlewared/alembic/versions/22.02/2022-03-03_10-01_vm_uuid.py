@@ -21,7 +21,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     with op.batch_alter_table('vm_vm', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('uuid', sa.Boolean(), server_default='1', nullable=False))
+        batch_op.add_column(sa.Column('uuid', sa.String(length=255), nullable=True))
 
     for vm in map(dict, conn.execute("SELECT * FROM vm_vm").fetchall()):
         conn.execute("UPDATE vm_vm SET uuid = ? WHERE id = ?", (str(uuid.uuid4()), vm['id']))
