@@ -84,8 +84,6 @@ class PyRenderer(object):
 
 class EtcService(Service):
 
-    APACHE_DIR = 'local/apache24' if osc.IS_FREEBSD else 'local/apache2'
-
     GROUPS = {
         'user': {
             'ctx': [
@@ -96,7 +94,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'local/smbusername.map'},
                 {'type': 'mako', 'path': 'group'},
                 {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
-                {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': EtcGRP.SHADOW, 'mode': 0o0640},
+                {'type': 'mako', 'path': 'shadow', 'group': EtcGRP.SHADOW, 'mode': 0o0640},
                 {'type': 'mako', 'path': 'local/sudoers'},
                 {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'}
             ]
@@ -111,10 +109,9 @@ class EtcService(Service):
         ],
         'cron': [
             {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
-            {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
         ],
         'grub': [
-            {'type': 'py', 'path': 'grub', 'platform': 'Linux', 'checkpoint': 'post_init'},
+            {'type': 'py', 'path': 'grub', 'checkpoint': 'post_init'},
         ],
         'keyboard': [
             {'type': 'mako', 'path': 'default/keyboard', 'platform': 'Linux'},
@@ -154,15 +151,15 @@ class EtcService(Service):
             ]
         },
         'ftp': [
-            {'type': 'mako', 'path': 'local/proftpd.conf' if osc.IS_FREEBSD else 'proftpd/proftpd.conf',
+            {'type': 'mako', 'path': 'proftpd/proftpd.conf',
              'local_path': 'local/proftpd.conf'},
             {'type': 'py', 'path': 'local/proftpd'},
         ],
         'kdump': [
-            {'type': 'mako', 'path': 'default/kdump-tools', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/kdump-tools'},
         ],
         'rc': [
-            {'type': 'py', 'path': 'systemd', 'platform': 'Linux'},
+            {'type': 'py', 'path': 'systemd'},
         ],
         'sysctl': [
             {'type': 'py', 'path': 'sysctl_config'},
@@ -178,32 +175,29 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'}
+            {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import'}
         ],
         'webdav': [
             {
                 'type': 'mako',
                 'local_path': 'local/apache24/httpd.conf',
-                'path': f'{APACHE_DIR}/{"httpd" if osc.IS_FREEBSD else "apache2"}.conf',
+                'path': 'local/apache2/apache2.conf',
             },
             {
                 'type': 'mako',
                 'local_path': 'local/apache24/Includes/webdav.conf',
-                'path': f'{APACHE_DIR}/Includes/webdav.conf',
+                'path': 'local/apache2/Includes/webdav.conf',
                 'checkpoint': 'pool_import'
             },
             {
                 'type': 'py',
                 'local_path': 'local/apache24/webdav_config',
-                'path': f'{APACHE_DIR}/webdav_config',
+                'path': 'local/apache2/webdav_config',
                 'checkpoint': 'pool_import',
             },
         ],
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf', 'checkpoint': 'interface_sync'}
-        ],
-        'pf': [
-            {'type': 'py', 'path': 'pf', 'platform': 'FreeBSD'},
         ],
         'glusterd': [
             {
@@ -212,7 +206,6 @@ class EtcService(Service):
                 'local_path': 'glusterd.conf',
                 'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
                 'checkpoint': 'pool_import',
-                'platform': 'Linux',
             },
         ],
         'keepalived': [
@@ -221,23 +214,19 @@ class EtcService(Service):
                 'path': 'keepalived/keepalived.conf',
                 'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
                 'local_path': 'keepalived.conf',
-                'platform': 'Linux',
             },
 
         ],
         'collectd': [
             {
-                'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
+                'type': 'mako', 'path': 'collectd/collectd.conf',
                 'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
             },
-            {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'default/rrdcached', 'checkpoint': 'pool_import'},
         ],
         'docker': [
             {'type': 'mako', 'path': 'systemd/system/docker.service.d/http-proxy.conf', 'checkpoint': None},
-            {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': None},
-        ],
-        'inetd': [
-            {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
+            {'type': 'py', 'path': 'docker', 'checkpoint': None},
         ],
         'motd': [
             {'type': 'mako', 'path': 'motd'}
@@ -258,7 +247,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
             {
                 'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': EtcUSR.ROOT,
-                'group': EtcGRP.NUT, 'mode': 0o440, 'platform': 'Linux',
+                'group': EtcGRP.NUT, 'mode': 0o440
             },
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
@@ -278,7 +267,6 @@ class EtcService(Service):
                 'path': 'ctdb/ctdb.conf',
                 'checkpoint': 'pool_import',
                 'local_path': 'ctdb.conf',
-                'platform': 'Linux',
             },
         ],
         'snmpd': [
@@ -302,7 +290,7 @@ class EtcService(Service):
             ],
             "entries": [
                 {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
-                {'type': 'mako', 'path': 'pam.d/sshd', 'local_path': 'pam.d/sshd_linux', 'platform': 'Linux'},
+                {'type': 'mako', 'path': 'pam.d/sshd', 'local_path': 'pam.d/sshd_linux'},
                 {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
                 {'type': 'py', 'path': 'local/ssh/config'},
             ]
@@ -319,36 +307,36 @@ class EtcService(Service):
         'openvpn_server': [
             {
                 'type': 'mako', 'local_path': 'local/openvpn/server/openvpn_server.conf',
-                'path': f'local/openvpn/server/{"openvpn_" if osc.IS_FREEBSD else ""}server.conf'
+                'path': 'local/openvpn/server/server.conf'
             }
         ],
         'openvpn_client': [
             {
                 'type': 'mako', 'local_path': 'local/openvpn/client/openvpn_client.conf',
-                'path': f'local/openvpn/client/{"openvpn_" if osc.IS_FREEBSD else ""}client.conf'
+                'path': 'local/openvpn/client/client.conf'
             }
         ],
         'kmip': [
             {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
         ],
         'tftp': [
-            {'type': 'mako', 'path': 'default/tftpd-hpa', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/tftpd-hpa'},
         ],
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/wg0.conf'}
         ],
         'k3s': [
-            {'type': 'py', 'path': 'rancher/k3s/flags', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'py', 'path': 'rancher/node/node_passwd', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'rancher/k3s/flags', 'checkpoint': None},
+            {'type': 'py', 'path': 'rancher/node/node_passwd', 'checkpoint': None},
         ],
         'cni': [
-            {'type': 'py', 'path': 'cni/multus', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'py', 'path': 'cni/kube-router', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'mako', 'path': 'cni/net.d/multus.d/multus.kubeconfig', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'mako', 'path': 'cni/net.d/kube-router.d/kubeconfig', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'cni/multus', 'checkpoint': None},
+            {'type': 'py', 'path': 'cni/kube-router', 'checkpoint': None},
+            {'type': 'mako', 'path': 'cni/net.d/multus.d/multus.kubeconfig', 'checkpoint': None},
+            {'type': 'mako', 'path': 'cni/net.d/kube-router.d/kubeconfig', 'checkpoint': None},
         ],
         'libvirt': [
-            {'type': 'py', 'path': 'libvirt', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'libvirt', 'checkpoint': None},
         ],
     }
     LOCKS = defaultdict(asyncio.Lock)
@@ -448,9 +436,8 @@ class EtcService(Service):
 
                 path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])
                 entry_path = entry['path']
-                if osc.IS_LINUX:
-                    if entry_path.startswith('local/'):
-                        entry_path = entry_path[len('local/'):]
+                if entry_path.startswith('local/'):
+                    entry_path = entry_path[len('local/'):]
                 outfile = f'/etc/{entry_path}'
                 try:
                     rendered = await renderer.render(path, ctx)
