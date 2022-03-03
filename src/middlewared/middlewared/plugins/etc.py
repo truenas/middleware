@@ -106,7 +106,8 @@ class EtcService(Service):
             {'type': 'py', 'path': 'grub', 'platform': 'Linux', 'checkpoint': 'post_init'},
         ],
         'keyboard': [
-            {'type': 'mako', 'path': 'default/keyboard', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/keyboard'},
+            {'type': 'mako', 'path': 'vconsole.conf'},
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
