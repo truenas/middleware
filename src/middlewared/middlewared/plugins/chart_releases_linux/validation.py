@@ -106,7 +106,7 @@ class ChartReleaseService(Service):
         if subquestions_enabled:
             for sub_question in schema.get('subquestions', []):
                 # TODO: Add support for nested subquestions validation for List schema types.
-                if isinstance(parent_attr, Dict):
+                if isinstance(parent_attr, Dict) and sub_question['variable'] in parent_value:
                     item_key, attr = sub_question['variable'], parent_attr.attrs[sub_question['variable']]
                     await self.validate_question(
                         verrors, parent_value, parent_value[sub_question['variable']], sub_question,
