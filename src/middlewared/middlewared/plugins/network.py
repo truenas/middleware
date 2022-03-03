@@ -324,7 +324,7 @@ class InterfaceService(CRUDService):
                     'vlan_pcp': None,
                 })
 
-        if not (config['int_dhcp'] or not config['int_ipv6auto']) and config['int_address']:
+        if (not config['int_dhcp'] or not config['int_ipv6auto']) and config['int_address']:
             iface['aliases'].append({
                 'type': 'INET' if config['int_version'] == 4 else 'INET6',
                 'address': config['int_address'],
