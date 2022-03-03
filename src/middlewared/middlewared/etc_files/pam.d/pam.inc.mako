@@ -6,13 +6,7 @@
             self.pam_ldap = "pam_ldap.so"
             self.pam_winbind = "pam_winbind.so"
             self.pam_krb5 = "pam_krb5.so"
-
-        def safe_call(self, *args):
-            try: 
-                val = self.middleware.call_sync(*args)
-            except:
-                val = False
-            return val
+            self.render_ctx = kwargs.get("render_ctx")
 
         def name(self):
             return 'Base'
@@ -41,7 +35,7 @@
             return 'ActiveDirectory'
 
         def enabled(self):
-            config = self.safe_call('activedirectory.config')
+            config = self.render_ctx['activedirectory.config']
             if config['restrict_pam']:
                 return False
 
@@ -80,13 +74,13 @@
             return 'LDAP'
 
         def enabled(self):
-            return self.safe_call('ldap.config')['enable']
+            return self.render_ctx['ldap.config']['enable']
 
         def is_kerberized(self):
-            return True if (self.safe_call('ldap.config'))['kerberos_realm'] else False
+            return True if self.render_ctx['ldap.config']['kerberos_realm'] else False
 
         def min_uid(self):
-            config = self.safe_call('ldap.config')
+            config = self.render_ctx['ldap.config']
             min_uid = 1000
             for param in config['auxiliary_parameters'].splitlines():
                 param = param.strip()
@@ -168,17 +162,6 @@
                 return ldap_entry
 
 
-    class NISPam(DirectoryServicePamBase):
-        def __init__(self, **kwargs):
-            super(NISPam, self).__init__(**kwargs)
-
-        def name(self):
-            return 'NIS'
-
-        def enabled(self):
-            return IS_FREEBSD and self.safe_call('nis.config')['enable']
-
-
     class DirectoryServicePam(DirectoryServicePamBase):
         def __new__(cls, **kwargs):
             obj = None
@@ -188,9 +171,7 @@
                     obj = ActiveDirectoryPam(**kwargs)
                 elif LDAPPam(**kwargs).enabled():
                     obj = LDAPPam(**kwargs)
-                elif NISPam(**kwargs).enabled():
-                    obj = NISPam(**kwargs)
-            except Exception as e:
+            except Exception:
                 obj = None
 
             if not obj:
