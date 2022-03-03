@@ -1,6 +1,6 @@
 <%
     config = render_ctx["nfs.config"]
-    statd_opts = ["-N 2"]
+    statd_opts = []
     if config["rpcstatd_port"]:
         statd_opts.append(f'--port {config["rpcstatd_port"]}')
 
