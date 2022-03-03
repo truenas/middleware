@@ -7,25 +7,14 @@
 	import subprocess
 
 	from string import digits, ascii_uppercase, ascii_lowercase
-	from middlewared.utils import osc
 
 	# Check to see if there is a webdav lock databse directory, if not create
 	# one. Take care of necessary permissions whilst creating it!
-	apache_dir = service.APACHE_DIR
-	if osc.IS_LINUX:
-		apache_dir = apache_dir.replace('local/', '')
-	oscmd = f'/etc/{apache_dir}/var'
+	oscmd = '/etc/apache2/var'
 	if not os.path.isdir(oscmd):
 		os.mkdir(oscmd, 0o774)
 
-	try:
-		uid = middleware.call_sync('user.get_user_obj', {'username': 'webdav'})['pw_uid']
-		gid = middleware.call_sync('group.get_group_obj', {'groupname': 'webdav'})['gr_gid']
-	except Exception:
-		uid = 0
-		gid = 0
-
-	subprocess.run(['chown', '-R', f'{uid}:{gid}', oscmd], check=False)
+	subprocess.run(['chown', '-R', '666:666', oscmd], check=False)
 
 	webdav_config = middleware.call_sync('webdav.config')
 	auth_type = webdav_config['htauth'].lower()
@@ -45,11 +34,11 @@
 	if auth_type == 'none':
 		path = None
 	elif auth_type == 'basic':
-		path = f'/etc/{apache_dir}/webdavhtbasic'
+		path = '/etc/apache2/webdavhtbasic'
 		with open(path, 'w+') as f:
 			f.write(f'webdav:{crypt.crypt(password, salt())}')
 	elif auth_type == 'digest':
-		path = f'/etc/{apache_dir}/webdavhtdigest'
+		path = '/etc/apache2/webdavhtdigest'
 		with open(path, 'w+') as f:
 			f.write(
 				"webdav:webdav:{0}".format(hashlib.md5(f"webdav:webdav:{password}".encode()).hexdigest())
@@ -58,19 +47,19 @@
 		raise ValueError("Invalid auth_type (must be one of 'none', 'basic', 'digest')")
 
 	if path:
-		os.chown(path, uid, gid)
+		os.chown(path, 666, 666)
 
 %>\
 Listen ${webdav_config['tcpport']}
 	<VirtualHost *:${webdav_config['tcpport']}>
-		DavLockDB "/etc/${apache_dir}/var/DavLock"
+		DavLockDB "/etc/apache2/var/DavLock"
 		AssignUserId webdav webdav
 
 		<Directory />
 % if auth_type != 'none':
 			AuthType ${auth_type}
 			AuthName webdav
-			AuthUserFile "/etc/${apache_dir}/webdavht${auth_type}"
+			AuthUserFile "/etc/apache2/webdavht${auth_type}"
 	% if auth_type == 'digest':
 			AuthDigestProvider file
 	% endif

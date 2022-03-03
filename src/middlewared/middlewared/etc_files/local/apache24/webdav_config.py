@@ -1,16 +1,9 @@
 import re
-from middlewared.utils import osc
 
 
 def generate_webdav_config(service, middleware):
     webdav_config = middleware.call_sync('webdav.config')
-    apache_dir = service.APACHE_DIR.replace('local/', '')
-    if osc.IS_LINUX:
-        apache_dir = f'/etc/{apache_dir}'
-    elif osc.IS_FREEBSD:
-        apache_dir = f'/usr/local/etc/{apache_dir}'
-    else:
-        raise NotImplementedError()
+    apache_dir = '/etc/apache2'
 
     if webdav_config['protocol'] in ('HTTPS', 'HTTPHTTPS'):
         middleware.call_sync('certificate.cert_services_validation', webdav_config['certssl'], 'webdav.certssl')
