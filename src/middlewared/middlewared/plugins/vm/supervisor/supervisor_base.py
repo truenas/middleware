@@ -226,6 +226,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
     def get_domain_children(self):
         domain_children = [
             create_element('name', attribute_dict={'text': self.libvirt_domain_name}),
+            create_element('uuid', attribute_dict={'text': self.vm_data['uuid']}),
             create_element('title', attribute_dict={'text': self.vm_data['name']}),
             create_element('description', attribute_dict={'text': self.vm_data['description']}),
             # OS/boot related xml - returns an iterable
