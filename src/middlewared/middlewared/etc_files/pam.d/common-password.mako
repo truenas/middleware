@@ -17,7 +17,7 @@
 
 <%namespace name="pam" file="pam.inc.mako" />\
 <%
-        dsp = pam.getDirectoryServicePam(middleware=middleware, file='sshd')
+        dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx)
 %>\
 
 % if dsp.enabled():
