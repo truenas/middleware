@@ -1,6 +1,7 @@
 import asyncio
 import errno
 import re
+import uuid
 import warnings
 
 import middlewared.sqlalchemy as sa
@@ -111,6 +112,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('shutdown_timeout', default=90, validators=[Range(min=5, max=300)]),
         Str('arch_type', null=True, default=None),
         Str('machine_type', null=True, default=None),
+        Str('uuid', null=True, default=None),
         register=True,
     ))
     async def do_create(self, data):
@@ -206,6 +208,9 @@ class VMService(CRUDService, VMSupervisorMixin):
             raise
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
+        if not data.get('uuid'):
+            data['uuid'] = str(uuid.uuid4())
+
         vcpus = data['vcpus'] * data['cores'] * data['threads']
         if vcpus:
             flags = await self.middleware.call('vm.flags')
