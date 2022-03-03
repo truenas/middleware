@@ -200,6 +200,9 @@ class ReplicationSnapshotNamingSchema:
 
 class UUID:
     def __call__(self, value):
+        if value is None:
+            return
+
         try:
             uuid.UUID(value, version=4)
         except ValueError as e:
