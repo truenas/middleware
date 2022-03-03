@@ -12,6 +12,19 @@ import imp
 import os
 import pwd
 import stat
+import enum
+
+
+class EtcUSR(enum.IntEnum):
+    ROOT = 0
+    NSLCD = 110
+
+
+class EtcGRP(enum.IntEnum):
+    ROOT = 0
+    SHADOW = 42
+    NSLCD = 115
+    NUT = 126
 
 
 class FileShouldNotExist(Exception):
@@ -83,7 +96,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'local/smbusername.map'},
                 {'type': 'mako', 'path': 'group'},
                 {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
-                {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': 42, 'mode': 0o0640},
+                {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': EtcGRP.SHADOW, 'mode': 0o0640},
                 {'type': 'mako', 'path': 'local/sudoers'},
                 {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'}
             ]
@@ -109,7 +122,7 @@ class EtcService(Service):
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
             {'type': 'mako', 'path': 'local/nslcd.conf',
-                'owner': 110, 'group': 115, 'mode': 0o0400},
+                'owner': EtcUSR.NSLCD, 'group': EtcGRP.NSLCD, 'mode': 0o0400},
         ],
         'dhclient': [
             {'type': 'mako', 'path': 'dhcp/dhclient.conf', 'local_path': 'dhclient.conf'},
@@ -197,7 +210,7 @@ class EtcService(Service):
                 'type': 'mako',
                 'path': 'glusterfs/glusterd.vol',
                 'local_path': 'glusterd.conf',
-                'user': 0, 'group': 0, 'mode': 0o644,
+                'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
                 'checkpoint': 'pool_import',
                 'platform': 'Linux',
             },
@@ -206,7 +219,7 @@ class EtcService(Service):
             {
                 'type': 'mako',
                 'path': 'keepalived/keepalived.conf',
-                'user': 0, 'group': 0, 'mode': 0o644,
+                'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
                 'local_path': 'keepalived.conf',
                 'platform': 'Linux',
             },
@@ -238,14 +251,14 @@ class EtcService(Service):
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
-            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 0, 'group': 126, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 0, 'group': 126, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 0, 'group': 126, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 0, 'group': 126, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 0, 'group': 126, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
             {
-                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 0,
-                'group': 126, 'mode': 0o440, 'platform': 'Linux',
+                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': EtcUSR.ROOT,
+                'group': EtcGRP.NUT, 'mode': 0o440, 'platform': 'Linux',
             },
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
