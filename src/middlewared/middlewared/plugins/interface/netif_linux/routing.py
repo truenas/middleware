@@ -164,7 +164,7 @@ class RoutingTable:
                 network,
                 netmask,
                 ipaddress.ip_address(attrs["RTA_GATEWAY"]) if "RTA_GATEWAY" in attrs else None,
-                interfaces[attrs["RTA_OIF"]] if "RTA_OIF" in attrs else None,
+                interfaces[attrs["RTA_OIF"]] if "RTA_OIF" in attrs and attrs["RTA_OIF"] in interfaces else None,
                 table_id=attrs["RTA_TABLE"],
                 preferred_source=attrs.get("RTA_PREFSRC"),
                 scope=r["scope"],
