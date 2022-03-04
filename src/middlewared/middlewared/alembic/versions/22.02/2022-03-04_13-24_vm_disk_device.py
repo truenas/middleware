@@ -22,6 +22,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     for device in map(dict, conn.execute("SELECT * FROM vm_device WHERE dtype = 'DISK'").fetchall()):
+        device["attributes"] = json.loads(device["attributes"])
         if device["attributes"].get("path"):
             device["attributes"]["path"] = device["attributes"]["path"].replace(" ", "+")
             conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (
