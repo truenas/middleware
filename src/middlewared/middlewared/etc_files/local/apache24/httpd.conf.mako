@@ -123,7 +123,7 @@ LogLevel warn
 <IfModule ssl_module>
 SSLRandomSeed startup builtin
 SSLRandomSeed connect builtin
-SSLProtocol +TLSv1 +TLSv1.1 +TLSv1.2
+SSLProtocol +TLSv1.2 +TLSv1.3
 </IfModule>
 
 Include Includes/*.conf
