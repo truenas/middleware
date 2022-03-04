@@ -2,8 +2,9 @@ import asyncio
 import os
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
+from middlewared.schema import accepts, returns, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import SharingService, SystemServiceService, private
+from middlewared.plugins.etc import EtcUSR, EtcGRP
 import middlewared.sqlalchemy as sa
 
 
@@ -87,8 +88,8 @@ class WebDAVSharingService(SharingService):
         if data['perm']:
             await self.middleware.call('filesystem.chown', {
                 'path': data['path'],
-                'uid': (await self.middleware.call('dscache.get_uncached_user', 'webdav'))['pw_uid'],
-                'gid': (await self.middleware.call('dscache.get_uncached_group', 'webdav'))['gr_gid'],
+                'uid': EtcUSR.WEBDAV.value,
+                'gid': EtcGRP.WEBDAV.value,
                 'options': {'recursive': True}
             })
 
@@ -127,8 +128,8 @@ class WebDAVSharingService(SharingService):
         if not old['perm'] and new['perm']:
             await self.middleware.call('filesystem.chown', {
                 'path': new['path'],
-                'uid': (await self.middleware.call('dscache.get_uncached_user', 'webdav'))['pw_uid'],
-                'gid': (await self.middleware.call('dscache.get_uncached_group', 'webdav'))['gr_gid'],
+                'uid': EtcUSR.WEBDAV.value,
+                'gid': EtcGRP.WEBDAV.value,
                 'options': {'recursive': True}
             })
 
@@ -226,6 +227,19 @@ class WebDAVService(SystemServiceService):
 
         return data
 
+    @accepts()
+    @returns(Dict(additional_attrs=True))
+    async def cert_choices(self):
+        """
+        Permitted certificate choices for webdav service.
+        """
+        return {
+            i['id']: i['name']
+            for i in await self.middleware.call('certificate.query', [
+                ('cert_type_CSR', '=', False)
+            ])
+        }
+
     @private
     async def validate(self, data, schema_name):
         verrors = ValidationErrors()
@@ -248,9 +262,7 @@ class WebDAVService(SystemServiceService):
                     'certificate.cert_services_validation', cert_ssl, f'{schema_name}.certssl', False
                 )))
 
-        if verrors:
-            raise verrors
-
+        verrors.check()
         return data
 
 
