@@ -53,7 +53,6 @@
 Listen ${webdav_config['tcpport']}
 	<VirtualHost *:${webdav_config['tcpport']}>
 		DavLockDB "/etc/apache2/var/DavLock"
-		AssignUserId webdav webdav
 
 		<Directory />
 % if auth_type != 'none':
