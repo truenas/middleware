@@ -1,8 +1,5 @@
 <%
-    if IS_FREEBSD:
-        module_path = "libexec/apache24"
-    else:
-        module_path = "/usr/lib/apache2/modules"
+    module_path = "/usr/lib/apache2/modules"
 %>\
 # Generating apache general httpd.conf
 # The absolutely necessary modules
@@ -11,13 +8,7 @@ LoadModule authn_core_module ${module_path}/mod_authn_core.so
 LoadModule authz_user_module ${module_path}/mod_authz_user.so
 LoadModule authz_core_module ${module_path}/mod_authz_core.so
 LoadModule alias_module ${module_path}/mod_alias.so
-LoadModule mpm_prefork_module ${module_path}/mod_mpm_prefork.so
-% if IS_FREEBSD:
-LoadModule mpm_itk_module ${module_path}/mod_mpm_itk.so
-LoadModule unixd_module ${module_path}/mod_unixd.so
-% else:
-LoadModule mpm_itk_module ${module_path}/mpm_itk.so
-% endif
+LoadModule mpm_event_module ${module_path}/mod_mpm_event.so
 LoadModule auth_basic_module ${module_path}/mod_auth_basic.so
 LoadModule auth_digest_module ${module_path}/mod_auth_digest.so
 LoadModule setenvif_module ${module_path}/mod_setenvif.so
@@ -34,9 +25,6 @@ LoadModule access_compat_module ${module_path}/mod_access_compat.so
 LoadModule reqtimeout_module ${module_path}/mod_reqtimeout.so
 LoadModule filter_module ${module_path}/mod_filter.so
 LoadModule mime_module ${module_path}/mod_mime.so
-% if IS_FREEBSD:
-LoadModule log_config_module ${module_path}/mod_log_config.so
-% endif
 LoadModule env_module ${module_path}/mod_env.so
 LoadModule headers_module ${module_path}/mod_headers.so
 #LoadModule version_module ${module_path}/mod_version.so
@@ -45,36 +33,11 @@ LoadModule autoindex_module ${module_path}/mod_autoindex.so
 LoadModule dir_module ${module_path}/mod_dir.so
 
 # Third party modules
-% if IS_FREEBSD:
-IncludeOptional etc/apache24/modules.d/[0-9][0-9][0-9]_*.conf
-% endif
 ServerName localhost
 
-# Limiting the number of idle threads
-# see: http://httpd.apache.org/docs/current/mod/prefork.html#MinSpareServers
-<IfModule mpm_itk_module>
-        StartServers 1
-        MinSpareServers 1
-</IfModule>
-
-# I really do not know why mpm-prefork or mpm-event are needed
-# to start apache24 successfully when I already have mpm itk
-# (see: https://bugs.freenas.org/issues/14396)
-# Bandaid fix, till I can (hopefully) think of a better fix
-# Please fix if you can!
-<IfModule mpm_prefork_module>
-        StartServers 1
-        MinSpareServers 1
-</IfModule>
-
 <IfModule unixd_module>
-% if IS_FREEBSD:
-User www
-Group www
-% else:
-User www-data
-Group www-data
-% endif
+User webdav
+Group webdav
 </IfModule>
 
 <IfModule dir_module>
@@ -107,11 +70,7 @@ LogLevel warn
     # TypesConfig points to the file containing the list of mappings from
     # filename extension to MIME-type.
     #
-    % if IS_FREEBSD:
-    TypesConfig etc/apache24/mime.types
-    % else:
     TypesConfig /etc/mime.types
-    % endif
 
     #
     # AddType allows you to add to or override the MIME configuration
@@ -167,8 +126,4 @@ SSLRandomSeed connect builtin
 SSLProtocol +TLSv1 +TLSv1.1 +TLSv1.2
 </IfModule>
 
-% if IS_FREEBSD:
-Include etc/apache24/Includes/*.conf
-% else:
 Include Includes/*.conf
-% endif
