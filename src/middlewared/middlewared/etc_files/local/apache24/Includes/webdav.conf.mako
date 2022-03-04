@@ -1,54 +1,25 @@
 <%
-	import crypt
-	import hashlib
-	import itertools
-	import os
-	import random
-	import subprocess
+    import os
+    import shutil
+    import stat
 
-	from string import digits, ascii_uppercase, ascii_lowercase
+    from contextlib import suppress
+    from middlewared.plugins.etc import EtcUSR, EtcGRP
 
-	# Check to see if there is a webdav lock databse directory, if not create
-	# one. Take care of necessary permissions whilst creating it!
-	oscmd = '/etc/apache2/var'
-	if not os.path.isdir(oscmd):
-		os.mkdir(oscmd, 0o774)
+    # Check to see if there is a webdav lock database directory, if not create
+    # one. Take care of necessary permissions whilst creating it!
+    oscmd = '/etc/apache2/var'
+    with suppress(FileExistsError):
+        os.mkdir(oscmd, 0o774)
 
-	subprocess.run(['chown', '-R', '666:666', oscmd], check=False)
+    if stat.S_IMODE(os.stat(oscmd).st_mode) != 0o774:
+        os.chmod(oscmd, 0o774)
 
-	webdav_config = middleware.call_sync('webdav.config')
-	auth_type = webdav_config['htauth'].lower()
-	web_shares = middleware.call_sync('sharing.webdav.query', [['enabled', '=', True]])
-	password = webdav_config["password"]
+    shutil.chown(oscmd, user=EtcUSR.WEBDAV, group=EtcUSR.WEBDAV)
 
-	# Generating relevant password files
-
-	def salt():
-		"""
-		Returns a string of 2 random letters.
-		Taken from Eli Carter's htpasswd.py
-		"""
-		letters = f'{ascii_lowercase}{ascii_uppercase}{digits}/.'
-		return '$6${0}'.format(''.join([random.choice(letters) for i in range(16)]))
-
-	if auth_type == 'none':
-		path = None
-	elif auth_type == 'basic':
-		path = '/etc/apache2/webdavhtbasic'
-		with open(path, 'w+') as f:
-			f.write(f'webdav:{crypt.crypt(password, salt())}')
-	elif auth_type == 'digest':
-		path = '/etc/apache2/webdavhtdigest'
-		with open(path, 'w+') as f:
-			f.write(
-				"webdav:webdav:{0}".format(hashlib.md5(f"webdav:webdav:{password}".encode()).hexdigest())
-			)
-	else:
-		raise ValueError("Invalid auth_type (must be one of 'none', 'basic', 'digest')")
-
-	if path:
-		os.chown(path, 666, 666)
-
+    webdav_config = render_ctx['webdav.config']
+    auth_type = webdav_config['htauth'].lower()
+    web_shares = render_ctx['sharing.webdav.query']
 %>\
 Listen ${webdav_config['tcpport']}
 	<VirtualHost *:${webdav_config['tcpport']}>
