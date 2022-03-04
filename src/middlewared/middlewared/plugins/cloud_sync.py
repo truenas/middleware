@@ -146,7 +146,7 @@ def check_local_path(path):
         raise CallError(f"Directory {path!r} must reside within volume mount point")
 
 
-async def rclone(middleware, job, cloud_sync, dry_run=False):
+async def rclone(middleware, job, cloud_sync, dry_run):
     await middleware.call("network.general.will_perform_activity", "cloud_sync")
 
     await middleware.run_in_thread(check_local_path, cloud_sync["path"])
@@ -1111,7 +1111,7 @@ class CloudSyncService(TaskPathService):
         Patch("cloud_sync_create", "cloud_sync_sync_onetime"),
         Patch("cloud_sync_sync_options", "cloud_sync_sync_onetime_options"),
     )
-    @job(logs=True)
+    @job(logs=True, abortable=True)
     async def sync_onetime(self, job, cloud_sync, options):
         """
         Run cloud sync task without creating it.
