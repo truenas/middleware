@@ -48,6 +48,19 @@ class VMDeviceService(CRUDService):
         datastore_extend = 'vm.device.extend_device'
         cli_namespace = 'service.vm.device'
 
+    @accepts()
+    @returns(Dict())
+    async def disk_choices(self):
+        """
+        Returns disk choices for device type "DISK".
+        """
+        return {
+            vol['id']: os.path.join('/dev/zvol', vol['id'].replace(' ', '+'))
+            for vol in await self.middleware.call(
+                'pool.dataset.query', [['type', '=', 'VOLUME']], {'extra': {'properties': []}}
+            )
+        }
+
     @private
     async def create_resource(self, device, old=None):
         return (
