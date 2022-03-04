@@ -30,7 +30,7 @@ def generate_webdav_config(service, middleware):
             f'<VirtualHost *:{webdav_config["tcpportssl"]}>\n\t\tSSLEngine on\n\t\t'
             f'SSLCertificateFile "{webdav_config["certssl"]["certificate_path"]}"\n\t\t'
             f'SSLCertificateKeyFile "{webdav_config["certssl"]["privatekey_path"]}"\n\t\t'
-            f'SSLProtocol +TLSv1 +TLSv1.1 +TLSv1.2\n\t\t'
+            f'SSLProtocol +TLSv1.2 +TLSv1.3\n\t\t'
             f'SSLCipherSuite HIGH:MEDIUM\n\n',
             data
         )
