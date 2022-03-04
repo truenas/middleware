@@ -180,25 +180,31 @@ class EtcService(Service):
         'scst': [
             {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import'}
         ],
-        'webdav': [
-            {
-                'type': 'mako',
-                'local_path': 'local/apache24/httpd.conf',
-                'path': 'local/apache2/apache2.conf',
-            },
-            {
-                'type': 'mako',
-                'local_path': 'local/apache24/Includes/webdav.conf',
-                'path': 'local/apache2/Includes/webdav.conf',
-                'checkpoint': 'pool_import'
-            },
-            {
-                'type': 'py',
-                'local_path': 'local/apache24/webdav_config',
-                'path': 'local/apache2/webdav_config',
-                'checkpoint': 'pool_import',
-            },
-        ],
+        'webdav': {
+            'ctx': [
+                {'method': 'sharing.webdav.query', 'args': [[("enabled", "=", True)]]},
+                {'method': 'webdav.config'},
+            ],
+            'entries': [
+                {
+                    'type': 'mako',
+                    'local_path': 'local/apache24/httpd.conf',
+                    'path': 'local/apache2/apache2.conf',
+                },
+                {
+                    'type': 'mako',
+                    'local_path': 'local/apache24/Includes/webdav.conf',
+                    'path': 'local/apache2/Includes/webdav.conf',
+                    'checkpoint': 'pool_import'
+                },
+                {
+                    'type': 'py',
+                    'local_path': 'local/apache24/webdav_config',
+                    'path': 'local/apache2/webdav_config',
+                    'checkpoint': 'pool_import',
+                },
+            ]
+        },
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf', 'checkpoint': 'interface_sync'}
         ],
