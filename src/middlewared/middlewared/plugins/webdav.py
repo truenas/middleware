@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.schema import accepts, returns, Bool, Dict, Int, Patch, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import SharingService, SystemServiceService, private
 from middlewared.plugins.etc import EtcUSR, EtcGRP
 import middlewared.sqlalchemy as sa
@@ -219,7 +219,6 @@ class WebDAVService(SystemServiceService):
         return data
 
     @accepts()
-    @returns(Dict(additional_attrs=True))
     async def cert_choices(self):
         """
         Permitted certificate choices for webdav service.
