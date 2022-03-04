@@ -244,3 +244,24 @@ def test_sync_onetime():
                 },
                 "snapshot": True,
             }, job=True)
+
+
+def test_abort():
+    with dataset("test") as ds:
+        ssh(f"dd if=/dev/urandom of=/mnt/{ds}/blob bs=1M count=1")
+
+        with local_s3_task({
+            "path": f"/mnt/{ds}",
+            "bwlimit": [{"time": "00:00", "bandwidth": 1024 * 100}],  # So it'll take 10 seconds
+            "snapshot": True,
+        }) as task:
+            job_id = call("cloudsync.sync", task["id"])
+
+            time.sleep(2.5)
+
+            call("core.job_abort", job_id)
+
+            time.sleep(1)
+
+            assert "rclone" not in ssh("ps ax")
+            assert call("cloudsync.query", [["id", "=", task["id"]]], {"get": True})["job"]["state"] == "ABORTED"
