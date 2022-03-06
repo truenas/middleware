@@ -243,7 +243,7 @@ class RuleTable:
         tables = {t.table_id: t for t in RoutingTable().routing_tables.values()}
         for rule in filter(lambda r: r.get('attrs'), ip.get_rules()):
             attrs = dict(rule['attrs'])
-            if not all(k in attrs for k in ('FRA_TABLE', 'FRA_PRIORITY')):
+            if not all(k in attrs for k in ('FRA_TABLE', 'FRA_PRIORITY')) or attrs.get('FRA_TABLE') not in tables:
                 continue
 
             rules.append({
