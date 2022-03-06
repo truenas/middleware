@@ -351,8 +351,12 @@ class ZFSPoolService(CRUDService):
         Bool('any_host', default=True),
         Str('cachefile', null=True, default=None),
         Str('new_name', null=True, default=None),
+        Dict(
+            'import_options',
+            Bool('missing_log', default=False)
+        ),
     )
-    def import_pool(self, name_or_guid, pool_options, any_host, cachefile, new_name):
+    def import_pool(self, name_or_guid, pool_options, any_host, cachefile, new_name, import_options):
         found = False
         with libzfs.ZFS() as zfs:
             for pool in zfs.find_import(
@@ -365,7 +369,7 @@ class ZFSPoolService(CRUDService):
             if not found:
                 raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
 
-            missing_log = pool_options.pop('missing_log', False)
+            missing_log = import_options['missing_log']
             pool_name = new_name or found.name
             try:
                 zfs.import_pool(found, pool_name, pool_options, missing_log=missing_log, any_host=any_host)

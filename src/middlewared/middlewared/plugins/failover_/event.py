@@ -423,7 +423,8 @@ class FailoverService(Service):
         job.set_progress(None, description='IMPORTING')
 
         failed = []
-        options = {'altroot': '/mnt', 'missing_log': True}
+        options = {'altroot': '/mnt'}
+        import_options = {'missing_log': True}
         any_host = True
         cachefile = self.ZPOOL_CACHE_FILE
         new_name = None
@@ -433,7 +434,9 @@ class FailoverService(Service):
             # import the zpool(s)
             try_again = False
             try:
-                self.run_call('zfs.pool.import_pool', vol['guid'], options, any_host, cachefile, new_name)
+                self.run_call(
+                    'zfs.pool.import_pool', vol['guid'], options, any_host, cachefile, new_name, import_options
+                )
             except Exception as e:
                 if e.errno == errno.ENOENT:
                     logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
@@ -447,7 +450,9 @@ class FailoverService(Service):
                 # means the cachefile is "stale" or invalid which will prevent
                 # an import so let's try to import without it
                 try:
-                    self.run_call('zfs.pool.import_pool', vol['guid'], options, any_host, None, new_name)
+                    self.run_call(
+                        'zfs.pool.import_pool', vol['guid'], options, any_host, None, new_name, import_options
+                    )
                 except Exception as e:
                     vol['error'] = str(e)
                     failed.append(vol)
