@@ -3,7 +3,7 @@ import pytest
 from middlewared.test.integration.assets.crypto import (
     certificate_signing_request, get_cert_params, intermediate_certificate_authority, root_certificate_authority
 )
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call
 
 import sys
 import os
@@ -264,3 +264,50 @@ def test_revoking_ca():
             assert set(c['certificate'] for c in root_ca['revoked_certs']) == check_set, root_ca
         finally:
             call('certificate.delete', cert['id'], job=True)
+
+
+def test_created_certs_exist_on_filesystem():
+    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
+        with certificate_signing_request('csr_test') as csr:
+            cert = call('certificate.create', {
+                'name': 'cert_test',
+                'signedby': intermediate_ca['id'],
+                'create_type': 'CERTIFICATE_CREATE_INTERNAL',
+                **get_cert_params(),
+            }, job=True)
+            try:
+                assert get_cert_current_files() == get_cert_expected_files()
+            finally:
+                call('certificate.delete', cert['id'], job=True)
+
+
+def test_deleted_certs_dont_exist_on_filesystem():
+    with intermediate_certificate_authority('root_ca2', 'intermediate_ca2') as (root_ca2, intermediate_ca2):
+        # no-op
+        pass
+    with certificate_signing_request('csr_test2') as csr2:
+        pass
+    assert get_cert_current_files() == get_cert_expected_files()
+
+
+def get_cert_expected_files():
+    certs = call('certificate.query')
+    cas = call('certificateauthority.query')
+    expected_files = {'/etc/certificates/CA'}
+    for cert in certs + cas:
+        if cert['chain_list']:
+            expected_files.add(cert['certificate_path'])
+        if cert['privatekey']:
+            expected_files.add(cert['privatekey_path'])
+        if cert['cert_type_CSR']:
+            expected_files.add(cert['csr_path'])
+        if any(cert[k] for k in ('CA_type_existing', 'CA_type_internal', 'CA_type_intermediate')):
+            expected_files.add(cert['crl_path'])
+    return expected_files
+
+
+def get_cert_current_files():
+    return {
+        f['path']
+        for p in ('/etc/certificates', '/etc/certificates/CA') for f in call('filesystem.listdir', p)
+    }
