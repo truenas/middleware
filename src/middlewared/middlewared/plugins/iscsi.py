@@ -1,6 +1,7 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import ListenDelegate
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
 from middlewared.service import CallError, CRUDService, private, ServiceChangeMixin, SharingService, ValidationErrors
@@ -514,9 +515,9 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     async def sharing_task_datasets(self, data):
-        if data['type'] == 'ZVOL':
+        if data['type'] == 'DISK':
             if data['path'].startswith('zvol/'):
-                return [data['path'][5:]]
+                return [zvol_path_to_name(f'/dev/{data["path"]}')]
             else:
                 return []
 
@@ -524,8 +525,11 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
-        if data['type'] == 'ZVOL':
-            return any(data['path'][5:] == d['id'] for d in locked_datasets)
+        if data['type'] == 'DISK':
+            if data['path'].startswith('zvol/'):
+                return any(zvol_path_to_name(f'/dev/{data["path"]}') == d['id'] for d in locked_datasets)
+            else:
+                return False
         else:
             return await super().sharing_task_determine_locked(data, locked_datasets)
 
@@ -556,7 +560,7 @@ class iSCSITargetExtentService(SharingService):
         When `type` is set to FILE, attribute `filesize` is used and it represents number of bytes. `filesize` if
         not zero should be a multiple of `blocksize`. `path` is a required attribute with `type` set as FILE.
 
-        With `type` being set to DISK, a valid ZVOL is required.
+        With `type` being set to DISK, a valid ZFS volume is required.
 
         `insecure_tpc` when enabled allows an initiator to bypass normal access control and access any scannable
         target. This allows xcopy operations otherwise blocked by access control.
@@ -566,7 +570,6 @@ class iSCSITargetExtentService(SharingService):
         `ro` when set to true prevents the initiator from writing to this LUN.
         """
         verrors = ValidationErrors()
-        await self.compress(data)
         await self.validate(data)
         await self.clean(data, 'iscsi_extent_create', verrors)
         verrors.check()
@@ -598,7 +601,6 @@ class iSCSITargetExtentService(SharingService):
         new = old.copy()
         new.update(data)
 
-        await self.compress(new)
         await self.validate(new)
         await self.clean(
             new, 'iscsi_extent_update', verrors, old=old
@@ -645,7 +647,6 @@ class iSCSITargetExtentService(SharingService):
                 raise CallError(sessions_str)
 
         if remove:
-            await self.compress(data)
             delete = await self.remove_extent_file(data)
 
             if delete is not True:
@@ -667,24 +668,10 @@ class iSCSITargetExtentService(SharingService):
         data['naa'] = self.extent_naa(data.get('naa'))
 
     @private
-    async def compress(self, data):
-        if data['type'] == 'DISK':
-            data['type'] = 'ZVOL'
-        elif data['type'] == 'FILE':
-            data['type'] = 'File'
-
-        if data['rpm'] == 'UNKNOWN':
-            data['rpm'] = 'Unknown'
-
-    @private
     async def extend(self, data):
-        extent_type = data['type'].upper()
-        extent_rpm = data['rpm'].upper()
-
-        if extent_type == 'ZVOL':
-            extent_type = 'DISK'
+        if data['type'] == 'DISK':
             data['disk'] = data['path']
-        elif extent_type == 'FILE':
+        elif data['type'] == 'FILE':
             data['disk'] = None
             extent_size = data['filesize']
             # Legacy Compat for having 2[KB, MB, GB, etc] in database
@@ -703,9 +690,6 @@ class iSCSITargetExtentService(SharingService):
                         extent_size = int(extent_size) * suffixes[x]
 
                         data['filesize'] = extent_size
-
-        data['rpm'] = extent_rpm
-        data['type'] = extent_type
 
         return data
 
@@ -753,16 +737,25 @@ class iSCSITargetExtentService(SharingService):
         extent_type = data['type']
         disk = data['disk']
         path = data['path']
-        if extent_type == 'ZVOL':
+        if extent_type == 'DISK':
             if not disk:
                 verrors.add(f'{schema_name}.disk', 'This field is required')
-                raise verrors  # They need this for anything else
+                raise verrors
 
-            zvol_name = disk.split('zvol/', 1)[-1]
+            if not disk.startswith('zvol/'):
+                verrors.add(f'{schema_name}.disk', 'Disk name must start with "zvol/"')
+                raise verrors
+
+            device = os.path.join('/dev', disk)
+
+            zvol_name = zvol_path_to_name(device)
             zvol = await self.middleware.call('pool.dataset.query', [['id', '=', zvol_name]])
             if not zvol:
-                verrors.add(f'{schema_name}.disk', f'Zvol {zvol_name} does not exist')
-        elif extent_type == 'File':
+                verrors.add(f'{schema_name}.disk', f'Volume {zvol_name!r} does not exist')
+
+            if not os.path.exists(device):
+                verrors.add(f'{schema_name}.disk', f'Device {device!r} for volume {zvol_name!r} does not exist')
+        elif extent_type == 'FILE':
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')
                 raise verrors  # They need this for anything else
@@ -847,7 +840,7 @@ class iSCSITargetExtentService(SharingService):
         """
         diskchoices = {}
 
-        zvol_query_filters = [('type', '=', 'ZVOL')]
+        zvol_query_filters = [('type', '=', 'DISK')]
         for i in ignore:
             zvol_query_filters.append(('path', 'nin', i))
 
@@ -866,20 +859,21 @@ class iSCSITargetExtentService(SharingService):
             zvol_name = zvol['name']
             zvol_size = zvol['volsize']['value']
             zvol_list.append(zvol_name)
-            if f'zvol/{zvol_name}' not in used_zvols:
-                diskchoices[f'zvol/{zvol_name}'] = f'{zvol_name} ({zvol_size})'
+            key = os.path.relpath(zvol_name_to_path(zvol_name), '/dev')
+            if key not in used_zvols:
+                diskchoices[key] = f'{zvol_name} ({zvol_size})'
 
         zfs_snaps = await self.middleware.call('zfs.snapshot.query', [], {'select': ['name']})
         for snap in zfs_snaps:
             ds_name, snap_name = snap['name'].rsplit('@', 1)
             if ds_name in zvol_list:
-                diskchoices[f'zvol/{snap["name"]}'] = f'{snap["name"]} [ro]'
+                diskchoices[os.path.relpath(zvol_name_to_path(snap['name']), '/dev')] = f'{snap["name"]} [ro]'
 
         return diskchoices
 
     @private
     async def save(self, data, schema_name, verrors):
-        if data['type'] == 'File':
+        if data['type'] == 'FILE':
             path = data['path']
             dirs = '/'.join(path.split('/')[:-1])
 
@@ -901,7 +895,7 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     async def remove_extent_file(self, data):
-        if data['type'] == 'File':
+        if data['type'] == 'FILE':
             try:
                 os.unlink(data['path'])
             except Exception as e:
@@ -1537,7 +1531,9 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
         return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))
 
     async def is_child_of_path(self, resource, path):
-        return is_child(resource[self.path_field], os.path.join('zvol', os.path.relpath(path, '/mnt')))
+        dataset_name = os.path.relpath(path, '/mnt')
+        full_zvol_path = zvol_name_to_path(dataset_name)
+        return is_child(resource[self.path_field], os.path.relpath(full_zvol_path, '/dev'))
 
     async def delete(self, attachments):
         orphan_targets_ids = set()
