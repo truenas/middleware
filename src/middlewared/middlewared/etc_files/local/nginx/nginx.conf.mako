@@ -81,20 +81,8 @@
 #
 #    FreeNAS nginx configuration file
 #
-
-% if IS_FREEBSD:
-    load_module /usr/local/libexec/nginx/ngx_http_uploadprogress_module.so;
-% endif
-% if IS_LINUX:
-    load_module modules/ngx_http_uploadprogress_module.so;
-% endif
-
-% if IS_FREEBSD:
-    user www www;
-% endif
-% if IS_LINUX:
-    user www-data www-data;
-% endif
+load_module modules/ngx_http_uploadprogress_module.so;
+user www-data www-data;
 worker_processes  1;
 
 events {
@@ -201,11 +189,7 @@ http {
         }
 
         location /api/docs/restful/static {
-% if IS_FREEBSD:
-            alias /usr/local/www/swagger-ui/node_modules/swagger-ui-dist;
-% else:
             alias /usr/local/share/swagger-ui-dist;
-% endif
         }
 
         location /ui {
@@ -213,12 +197,7 @@ http {
                 proxy_pass http://127.0.0.1:6000;
             }
             try_files $uri $uri/ /index.html =404;
-% if IS_FREEBSD:
-            alias /usr/local/www/webui;
-% endif
-% if IS_LINUX:
             alias /usr/share/truenas/webui;
-% endif
             add_header Cache-Control "must-revalidate";
             add_header Etag "${system_version}";
             add_header Strict-Transport-Security "max-age=${63072000 if general_settings['ui_httpsredirect'] else 0}; includeSubDomains; preload" always;
