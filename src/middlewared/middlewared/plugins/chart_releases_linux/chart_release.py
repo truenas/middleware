@@ -539,9 +539,15 @@ class ChartReleaseService(CRUDService):
         job.set_progress(100, 'Update completed for chart release')
         return await self.get_instance(chart_release)
 
-    @accepts(Str('release_name'))
+    @accepts(
+        Str('release_name'),
+        Dict(
+            'options',
+            Bool('delete_unused_images', default=False),
+        )
+    )
     @job(lock=lambda args: f'chart_release_delete_{args[0]}')
-    async def do_delete(self, job, release_name):
+    async def do_delete(self, job, release_name, options):
         """
         Delete existing chart release.
 
@@ -550,7 +556,7 @@ class ChartReleaseService(CRUDService):
         """
         # For delete we will uninstall the release first and then remove the associated datasets
         await self.middleware.call('kubernetes.validate_k8s_setup')
-        await self.get_instance(release_name)
+        chart_release = await self.get_instance(release_name, {'extra': {'retrieve_resources': True}})
 
         cp = await run(['helm', 'uninstall', release_name, '-n', get_namespace(release_name)], check=False)
         if cp.returncode:
@@ -565,6 +571,14 @@ class ChartReleaseService(CRUDService):
         await self.middleware.call('chart.release.remove_chart_release_from_events_state', release_name)
         await self.middleware.call('chart.release.clear_chart_release_portal_cache', release_name)
         await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', release_name)
+        if options['delete_unused_images']:
+            job.set_progress(97, 'Deleting unused container images')
+            failed = await self.middleware.call('chart.release.delete_unused_app_images', chart_release)
+            if failed:
+                msg = '\n'
+                for i, v in failed.items():
+                    msg += f'{i+1}) {v[0]} ({v[1]})\n'
+                raise CallError(f'{release_name!r} was deleted but unable to delete following images:{msg}')
 
         job.set_progress(100, f'{release_name!r} chart release deleted')
         return True
