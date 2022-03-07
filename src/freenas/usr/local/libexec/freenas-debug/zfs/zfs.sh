@@ -141,20 +141,14 @@ zfs_func()
 	done
 	section_footer
 
-	if is_linux; then
-		lsblk -o name,partuuid -l > /tmp/glabel.out
-	else
-		glabel status > /tmp/glabel.out
-		section_header  "enclosure use normal form"
-		sesutil map | ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_ses.nawk | tee /tmp/ses.normal
-		section_footer
-
-		section_header  "enclosure data joined to pool"
-		cat  /tmp/ses.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_ses.nawk
-		section_footer
-	fi
-	section_header  "zpool disk membership normal form"
-	zpool status | ${FREENAS_DEBUG_MODULEDIR}/zfs/normalize_pool.nawk | tee /tmp/pool.normal
+	section_header "lsblk -o name,partuuid -l"
+	lsblk -o name,partuuid -l
+	section_footer
+	section_header  "zpool status -v"
+	zpool status -v
+	section_footer
+	section_header  "zpool status -g"
+	zpool status -g
 	section_footer
 
 	for pool in $(zpool list -Ho name | grep -v -e "$(midclt call boot.pool_name)"); do
