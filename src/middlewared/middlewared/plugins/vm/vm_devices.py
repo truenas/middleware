@@ -49,7 +49,7 @@ class VMDeviceService(CRUDService):
         cli_namespace = 'service.vm.device'
 
     @accepts()
-    @returns(Dict())
+    @returns(Dict(additional_attrs=True, example={'vms/test 1': '/dev/zvol/vms/test+1'}))
     async def disk_choices(self):
         """
         Returns disk choices for device type "DISK".
@@ -57,7 +57,9 @@ class VMDeviceService(CRUDService):
         return {
             vol['id']: os.path.join('/dev/zvol', vol['id'].replace(' ', '+'))
             for vol in await self.middleware.call(
-                'pool.dataset.query', [['type', '=', 'VOLUME']], {'extra': {'properties': []}}
+                'pool.dataset.query', [['type', '=', 'VOLUME'], ['locked', '=', False]], {
+                    'extra': {'properties': ['encryption', 'keystatus']}
+                }
             )
         }
 
