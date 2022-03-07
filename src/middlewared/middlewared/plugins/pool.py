@@ -2306,7 +2306,8 @@ class PoolDatasetService(CRUDService):
         finally:
             await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
-        await self.middleware.call('filesystem.set_immutable', True, ds['mountpoint'])
+        if ds['mountpoint']:
+            await self.middleware.call('filesystem.set_immutable', True, ds['mountpoint'])
 
         await self.middleware.call_hook('dataset.post_lock', id)
 
@@ -3597,7 +3598,7 @@ class PoolDatasetService(CRUDService):
                 if attachments:
                     await delegate.delete(attachments)
 
-        if dataset['locked'] and os.path.exists(dataset['mountpoint']):
+        if dataset['locked'] and dataset['mountpoint'] and os.path.exists(dataset['mountpoint']):
             # We would like to remove the immutable flag in this case so that it's mountpoint can be
             # cleaned automatically when we delete the dataset
             await self.middleware.call('filesystem.set_immutable', False, dataset['mountpoint'])
