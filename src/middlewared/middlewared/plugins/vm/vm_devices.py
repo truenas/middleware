@@ -4,6 +4,7 @@ import re
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.utils import osc, run
@@ -55,7 +56,7 @@ class VMDeviceService(CRUDService):
         Returns disk choices for device type "DISK".
         """
         return {
-            vol['id']: os.path.join('/dev/zvol', vol['id'].replace(' ', '+'))
+            zvol_name_to_path(vol['id']): vol['id']
             for vol in await self.middleware.call(
                 'pool.dataset.query', [['type', '=', 'VOLUME'], ['locked', '=', False]], {
                     'extra': {'properties': ['encryption', 'keystatus']}
@@ -193,7 +194,9 @@ class VMDeviceService(CRUDService):
         if options['zvol']:
             if device['dtype'] != 'DISK':
                 raise CallError('The device is not a disk and has no zvol to destroy.')
-            zvol_id = device['attributes'].get('path', '').rsplit('/dev/zvol/')[-1]
+            if not device['attributes'].get('path', '').startswith('/dev/zvol'):
+                raise CallError('Unable to destroy zvol as disk device has misconfigured path')
+            zvol_id = zvol_path_to_name(device['attributes']['path'])
             if await self.middleware.call('pool.dataset.query', [['id', '=', zvol_id]]):
                 # FIXME: We should use pool.dataset.delete but right now FS attachments will consider
                 # the current device as a valid reference. Also should we stopping the vm only when deleting an
