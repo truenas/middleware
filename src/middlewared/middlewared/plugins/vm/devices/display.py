@@ -7,7 +7,7 @@ from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Range
 
 from .device import Device
-from .utils import create_element
+from .utils import create_element, NGINX_PREFIX
 
 
 class DISPLAY(Device):
@@ -112,3 +112,10 @@ class DISPLAY(Device):
         if self.web_process and psutil.pid_exists(self.web_process.pid):
             self.middleware.call_sync('service.terminate_process', self.web_process.pid)
         self.web_process = None
+
+    def get_webui_info(self):
+        return {
+            'path': f'{NGINX_PREFIX}{self.data["id"]}/',
+            'redirect_uri': f'http://{self.data["attributes"]["bind"]}:'
+                            f'{self.get_web_port(self.data["attributes"]["port"])}',
+        }
