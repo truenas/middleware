@@ -5,7 +5,8 @@ from glustercli.cli import peer
 from middlewared.utils import filter_list
 from middlewared.schema import Dict, Str, Bool, List, returns
 from middlewared.service import (accepts, private, job, filterable,
-                                 CallError, CRUDService, ValidationErrors)
+                                 CallError, CRUDService, ValidationErrors,
+                                 filterable_returns)
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from .utils import GlusterConfig
 
@@ -21,6 +22,15 @@ class GlusterPeerService(CRUDService):
         cli_namespace = 'service.gluster.peer'
 
     @filterable
+    @filterable_returns(Dict(
+        'peer',
+        Str('id', required=True),
+        Str('uuid', required=True),
+        Str('hostname', required=True),
+        Str('connected', required=True),
+        Str('state', required=True),
+        Str('status', required=True)
+    ))
     async def query(self, filters, options):
         peers = []
         if await self.middleware.call('service.started', 'glusterd'):
