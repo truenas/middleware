@@ -58,8 +58,8 @@ class GlusterFuseService(Service):
         Bool('all', default=False),
         Bool('raise', default=False),
     ))
-    @job(lock='glusterfuse')
     @returns(Bool())
+    @job(lock='glusterfuse')
     async def mount(self, job, data):
         """
         Mount a gluster volume using the gluster FUSE client.
@@ -146,8 +146,8 @@ class GlusterFuseService(Service):
         Bool('all', default=False),
         Bool('raise', default=False),
     ))
-    @job(lock='glusterfuse')
     @returns(Bool())
+    @job(lock='glusterfuse')
     async def umount(self, job, data):
         """
         Unmount a locally FUSE mounted gluster volume.

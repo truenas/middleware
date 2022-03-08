@@ -84,7 +84,6 @@ class GlusterPeerService(CRUDService):
         'peer_create',
         Str('hostname', required=True, max_length=253)
     ))
-    @job(lock=GLUSTER_JOB_LOCK)
     @returns(Dict(
         'peer',
         Str('id', required=True),
@@ -94,6 +93,7 @@ class GlusterPeerService(CRUDService):
         Str('state', required=True),
         Str('status', required=True)
     ))
+    @job(lock=GLUSTER_JOB_LOCK)
     async def do_create(self, job, data):
         """
         Add peer to the Trusted Storage Pool.
@@ -110,8 +110,8 @@ class GlusterPeerService(CRUDService):
         return await self.middleware.call('gluster.peer.query', [('hostname', '=', data['hostname'])])
 
     @accepts(Str('id'))
-    @job(lock=GLUSTER_JOB_LOCK)
     @returns()
+    @job(lock=GLUSTER_JOB_LOCK)
     async def do_delete(self, job, id):
         """
         Remove peer of `id` from the Trusted Storage Pool.

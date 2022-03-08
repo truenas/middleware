@@ -94,8 +94,8 @@ class GlusterVolumeService(CRUDService):
         Int('redundancy'),
         Bool('force'),
     ))
-    @job(lock=GLUSTER_JOB_LOCK)
     @returns(List('volumes', items=[Dict('volume', additional_attrs=True)]))
+    @job(lock=GLUSTER_JOB_LOCK)
     async def do_create(self, job, data):
         """
         Create a gluster volume.
@@ -203,8 +203,8 @@ class GlusterVolumeService(CRUDService):
         return result
 
     @accepts(Str('id'))
-    @job(lock=GLUSTER_JOB_LOCK)
     @returns()
+    @job(lock=GLUSTER_JOB_LOCK)
     async def do_delete(self, job, id):
         """
         Delete a gluster volume.
