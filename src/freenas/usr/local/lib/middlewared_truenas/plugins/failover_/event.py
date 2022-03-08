@@ -650,6 +650,10 @@ class FailoverService(Service):
                 self.run_call('vm.start_on_boot')
                 self.run_call('truecommand.start_truecommand_service')
 
+                # regenerate the geom disk cache before syncing all disks with db
+                logger.warning('Reinitializing disk cache')
+                self.run_call('geom.cache.invalidate')
+
                 # disk.sync_all and enclosure.sync_zpool takes awhile
                 # on large systems (100's of disks) so we start the
                 # job here after restarting all the services
