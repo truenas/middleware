@@ -18,12 +18,18 @@ def can_update(old_version, new_version):
         if y.startswith('U') and y[1:].isdigit():
             y = y[1:]
 
+        for special in ['CUSTOM']:
+            if x == special and y != special:
+                return False
+            elif x != special and y == special:
+                return True
+
         if not x.isdigit() and (y.isdigit() or y == ''):
             return True
         if (x.isdigit() or x == '') and not y.isdigit():
             return False
 
-        for special in ['CUSTOM', 'MASTER', 'INTERNAL']:
+        for special in ['MASTER', 'INTERNAL']:
             if x == special and y != special:
                 return False
             elif x != special and y == special:
