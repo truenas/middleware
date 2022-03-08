@@ -6,6 +6,9 @@ def write_if_changed(path, data):
     if isinstance(data, str):
         data = data.encode()
 
+    if isinstance(path, int):
+        path = f'/proc/self/fd/{path}'
+
     changed = False
 
     with open(os.open(path, os.O_CREAT | os.O_RDWR), 'wb+') as f:
