@@ -9,6 +9,8 @@ from .utils import create_element, disk_from_number
 
 class StorageDevice(Device):
 
+    TYPE = NotImplemented
+
     def identity(self):
         return self.data['attributes']['path']
 
@@ -22,7 +24,7 @@ class StorageDevice(Device):
         physical_sectorsize = self.data['attributes']['physical_sectorsize']
 
         return create_element(
-            'disk', type='block', device='disk', attribute_dict={
+            'disk', type=self.TYPE, device='disk', attribute_dict={
                 'children': [
                     create_element('driver', name='qemu', type='raw', cache='none'),
                     create_element('source', dev=self.data['attributes']['path']),
@@ -43,6 +45,8 @@ class StorageDevice(Device):
 
 class RAW(StorageDevice):
 
+    TYPE = 'file'
+
     schema = Dict(
         'attributes',
         Str('path', required=True, validators=[Match(
@@ -58,6 +62,8 @@ class RAW(StorageDevice):
 
 
 class DISK(StorageDevice):
+
+    TYPE = 'block'
 
     schema = Dict(
         'attributes',
