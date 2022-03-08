@@ -17,8 +17,8 @@ class GlusterRebalanceService(Service):
         'rebalance_status',
         Str('name', required=True),
     ))
-    @job(lock=LOCK)
     @returns(Dict(additional_attrs=True))
+    @job(lock=LOCK)
     async def status(self, job, data):
         """
         Return the status of a rebalance operation
@@ -34,8 +34,8 @@ class GlusterRebalanceService(Service):
         'rebalance_fix_layout',
         Str('name', required=True),
     ))
-    @job(lock=LOCK)
     @returns()
+    @job(lock=LOCK)
     async def fix_layout(self, job, data):
         """
         Start a fix-layout operation for a given
@@ -52,8 +52,8 @@ class GlusterRebalanceService(Service):
         Str('name', required=True),
         Bool('force', default=False),
     ))
-    @job(lock=LOCK)
     @returns()
+    @job(lock=LOCK)
     async def start(self, job, data):
         """
         Start a rebalance operation for a given
@@ -74,8 +74,8 @@ class GlusterRebalanceService(Service):
         'rebalance_stop',
         Str('name', required=True),
     ))
-    @job(lock=LOCK)
     @returns()
+    @job(lock=LOCK)
     async def stop(self, job, data):
         """
         Stop a rebalance operation for a given
