@@ -1,12 +1,7 @@
-import logging
-
 import bidict
 
 from middlewared.service import private, Service
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import osc
-
-logger = logging.getLogger(__name__)
 
 
 class DiskService(Service):
@@ -40,40 +35,36 @@ class DiskService(Service):
                 if vdev["disk"] is not None:
                     disk_to_guid[vdev["disk"]] = vdev["guid"]
                 else:
-                    logger.debug("Pool %r vdev %r disk is None", pool["name"], vdev["guid"])
+                    self.logger.debug("Pool %r vdev %r disk is None", pool["name"], vdev["guid"])
 
+        events = set()
         for disk in await self.middleware.call("disk.query", [], {"extra": {"include_expired": True}}):
             guid = disk_to_guid.get(disk["devname"])
             if guid is not None and guid != disk["zfs_guid"]:
-                logger.debug("Setting disk %r zfs_guid %r", disk["identifier"], guid)
+                self.logger.debug("Setting disk %r zfs_guid %r", disk["identifier"], guid)
+                events.add(disk["identifier"])
                 await self.middleware.call(
-                    "datastore.update", "storage.disk", disk["identifier"], {"zfs_guid": guid}, {"prefix": "disk_"},
+                    "datastore.update", "storage.disk", disk["identifier"],
+                    {"zfs_guid": guid}, {"prefix": "disk_", "send_events": False},
                 )
             elif disk["zfs_guid"]:
                 devname = disk_to_guid.inv.get(disk["zfs_guid"])
                 if devname is not None and devname != disk["devname"]:
-                    logger.debug("Removing disk %r zfs_guid as %r has it", disk["identifier"], devname)
+                    self.logger.debug("Removing disk %r zfs_guid as %r has it", disk["identifier"], devname)
+                    events.add(disk["identifier"])
                     await self.middleware.call(
-                        "datastore.update", "storage.disk", disk["identifier"], {"zfs_guid": None}, {"prefix": "disk_"},
+                        "datastore.update", "storage.disk", disk["identifier"],
+                        {"zfs_guid": None}, {"prefix": "disk_", "send_events": False},
                     )
 
-
-async def devd_zfs_hook(middleware, data):
-    if data.get("type") in (
-        "sysevent.fs.zfs.config_sync",
-    ):
-        try:
-            await middleware.call("disk.sync_zfs_guid", data["pool"])
-        except MatchNotFound:
-            pass
+        if events:
+            disks = {i["identifier"]: i for i in await self.middleware.call("disk.query", [], {"prefix": "disk_"})}
+            for event in events:
+                self.middleware.send_event("disk.query", "CHANGED", id=event, fields=disks[event])
 
 
 async def zfs_events_hook(middleware, data):
-    event_id = data["class"]
-
-    if event_id in [
-        "sysevent.fs.zfs.config_sync",
-    ]:
+    if data["class"] == "sysevent.fs.zfs.config_sync":
         try:
             await middleware.call("disk.sync_zfs_guid", data["pool"])
         except MatchNotFound:
@@ -85,9 +76,5 @@ async def hook(middleware, pool):
 
 
 async def setup(middleware):
-    if osc.IS_FREEBSD:
-        middleware.register_hook("devd.zfs", devd_zfs_hook)
-    else:
-        middleware.register_hook("zfs.pool.events", zfs_events_hook)
-
+    middleware.register_hook("zfs.pool.events", zfs_events_hook)
     middleware.register_hook("pool.post_create_or_update", hook)
