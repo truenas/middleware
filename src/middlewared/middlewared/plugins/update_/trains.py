@@ -27,7 +27,7 @@ class UpdateService(Service):
             ) as session:
                 new_manifest = await (await session.get(f"{scale_update_server()}/{train}/manifest.json")).json()
 
-        if new_manifest["version"] == current_version:
+        if new_manifest["version"].replace(".RELEASE", ".0") == current_version:
             return {"status": "UNAVAILABLE"}
 
         return {
