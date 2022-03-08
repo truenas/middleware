@@ -3,9 +3,10 @@ import xml.etree.ElementTree as ET
 from glustercli.cli import peer
 
 from middlewared.utils import filter_list
-from middlewared.schema import Dict, Str, Bool
+from middlewared.schema import Dict, Str, Bool, List, returns
 from middlewared.service import (accepts, private, job, filterable,
-                                 CallError, CRUDService, ValidationErrors)
+                                 CallError, CRUDService, ValidationErrors,
+                                 filterable_returns)
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from .utils import GlusterConfig
 
@@ -21,6 +22,15 @@ class GlusterPeerService(CRUDService):
         cli_namespace = 'service.gluster.peer'
 
     @filterable
+    @filterable_returns(Dict(
+        'peer',
+        Str('id', required=True),
+        Str('uuid', required=True),
+        Str('hostname', required=True),
+        Str('connected', required=True),
+        Str('state', required=True),
+        Str('status', required=True)
+    ))
     async def query(self, filters, options):
         peers = []
         if await self.middleware.call('service.started', 'glusterd'):
@@ -74,6 +84,15 @@ class GlusterPeerService(CRUDService):
         'peer_create',
         Str('hostname', required=True, max_length=253)
     ))
+    @returns(Dict(
+        'peer',
+        Str('id', required=True),
+        Str('uuid', required=True),
+        Str('hostname', required=True),
+        Str('connected', required=True),
+        Str('state', required=True),
+        Str('status', required=True)
+    ))
     @job(lock=GLUSTER_JOB_LOCK)
     async def do_create(self, job, data):
         """
@@ -91,6 +110,7 @@ class GlusterPeerService(CRUDService):
         return await self.middleware.call('gluster.peer.query', [('hostname', '=', data['hostname'])])
 
     @accepts(Str('id'))
+    @returns()
     @job(lock=GLUSTER_JOB_LOCK)
     async def do_delete(self, job, id):
         """
@@ -107,6 +127,15 @@ class GlusterPeerService(CRUDService):
         'peer_status',
         Bool('localhost', default=True),
     ))
+    @returns(List('peers', items=[Dict(
+        'peer',
+        Str('id', required=True),
+        Str('uuid', required=True),
+        Str('hostname', required=True),
+        Str('connected', required=True),
+        Str('state', required=True),
+        Str('status', required=True)
+    )]))
     def status(self, data):
         """
         List the status of peers in the Trusted Storage Pool.
@@ -177,13 +206,9 @@ class GlusterPeerService(CRUDService):
         return local_peers
 
     @accepts()
+    @returns(List('ips', items=[Str('address', required=True)]))
     async def ips_available(self):
         """
         Return list of VIP(v4/v6) addresses available on the system
         """
-
-        return [
-            d['address'] for d in await self.middleware.call(
-                'interface.ip_in_use', {'static': True}
-            )
-        ]
+        return [d['address'] for d in await self.middleware.call('interface.ip_in_use', {'static': True})]
