@@ -139,15 +139,16 @@ class DiskService(Service, ServiceChangeMixin):
 
             seen_disks[name] = disk
 
+        qs = None
         for name in sys_disks:
             if name not in seen_disks:
                 disk_identifier = await self.middleware.call('disk.device_to_identifier', name, sys_disks)
-                qs = await self.middleware.call(
-                    'datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)]
-                )
-                if qs:
+                if qs is None:
+                    qs = await self.middleware.call('datastore.query', 'storage.disk')
+
+                if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
                     new = False
-                    disk = qs[0]
+                    disk = disk[0]
                 else:
                     new = True
                     disk = {'disk_identifier': disk_identifier}
