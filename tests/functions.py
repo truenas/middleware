@@ -98,10 +98,11 @@ def SSH_TEST(command, username, passwrd, host):
     ]
     process = run(cmd, stdout=PIPE, universal_newlines=True)
     output = process.stdout
+    stderr = process.stderr
     if process.returncode != 0:
         return {'result': False, 'output': output}
     else:
-        return {'result': True, 'output': output}
+        return {'result': True, 'output': stderr}
 
 
 def send_file(file, destination, username, passwrd, host):
@@ -166,10 +167,11 @@ def return_output(command):
 def cmd_test(command):
     process = run(command, shell=True, stdout=PIPE, universal_newlines=True)
     output = process.stdout
+    stderr = process.stderr
     if process.returncode != 0:
         return {'result': False, 'output': output}
     else:
-        return {'result': True, 'output': output}
+        return {'result': True, 'output': stderr}
 
 
 def start_ssh_agent():
