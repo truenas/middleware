@@ -6,6 +6,7 @@ import warnings
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range, UUID
@@ -407,7 +408,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                     if not zvol['attributes']['path'].startswith('/dev/zvol/'):
                         continue
 
-                    disk_name = zvol['attributes']['path'].rsplit('/dev/zvol/')[-1]
+                    disk_name = zvol_path_to_name(zvol['attributes']['path'])
                     try:
                         await self.middleware.call('zfs.dataset.delete', disk_name, {'recursive': True})
                     except Exception:
