@@ -67,7 +67,7 @@ class DiskService(Service, ServiceChangeMixin):
         sys_disks = await self.middleware.call('device.get_disks')
 
         number_of_disks = len(sys_disks)
-        if 0 > number_of_disks <= 25:
+        if number_of_disks <= 25:
             # output logging information to middlewared.log in case we sync disks
             # when not all the disks have been resolved
             log_info = {
