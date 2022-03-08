@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from glustercli.cli import peer
 
 from middlewared.utils import filter_list
-from middlewared.schema import Dict, Str, Bool
+from middlewared.schema import Dict, Str, Bool, List, returns
 from middlewared.service import (accepts, private, job, filterable,
                                  CallError, CRUDService, ValidationErrors)
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
@@ -75,6 +75,15 @@ class GlusterPeerService(CRUDService):
         Str('hostname', required=True, max_length=253)
     ))
     @job(lock=GLUSTER_JOB_LOCK)
+    @returns(Dict(
+        'peer',
+        Str('id', required=True),
+        Str('uuid', required=True),
+        Str('hostname', required=True),
+        Str('connected', required=True),
+        Str('state', required=True),
+        Str('status', required=True)
+    ))
     async def do_create(self, job, data):
         """
         Add peer to the Trusted Storage Pool.
@@ -92,6 +101,7 @@ class GlusterPeerService(CRUDService):
 
     @accepts(Str('id'))
     @job(lock=GLUSTER_JOB_LOCK)
+    @returns()
     async def do_delete(self, job, id):
         """
         Remove peer of `id` from the Trusted Storage Pool.
@@ -107,6 +117,15 @@ class GlusterPeerService(CRUDService):
         'peer_status',
         Bool('localhost', default=True),
     ))
+    @returns(List('peers', items=[Dict(
+        'peer',
+        Str('id', required=True),
+        Str('uuid', required=True),
+        Str('hostname', required=True),
+        Str('connected', required=True),
+        Str('state', required=True),
+        Str('status', required=True)
+    )]))
     def status(self, data):
         """
         List the status of peers in the Trusted Storage Pool.
@@ -177,13 +196,9 @@ class GlusterPeerService(CRUDService):
         return local_peers
 
     @accepts()
+    @returns(List('ips', items=Str('address', required=True)))
     async def ips_available(self):
         """
         Return list of VIP(v4/v6) addresses available on the system
         """
-
-        return [
-            d['address'] for d in await self.middleware.call(
-                'interface.ip_in_use', {'static': True}
-            )
-        ]
+        return [d['address'] for d in await self.middleware.call('interface.ip_in_use', {'static': True})]
