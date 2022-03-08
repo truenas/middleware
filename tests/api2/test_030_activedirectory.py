@@ -21,8 +21,8 @@ try:
     # AD_USER is use for API call and CMD_AD_USER for command
     # r-string is use for raw string to stop pytest and flake8 complaining
     # about \
-    AD_USER = fr"AD01\{ADUSERNAME.lower()}"
-    CMD_AD_USER = fr"AD01\\{ADUSERNAME.lower()}"
+    AD_USER = fr"AD02\{ADUSERNAME.lower()}"
+    CMD_AD_USER = fr"AD02\\{ADUSERNAME.lower()}"
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
@@ -121,7 +121,8 @@ def test_07_enabling_activedirectory(request):
     payload = {
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
-        "domainname": AD_DOMAIN,
+        "domainname": AD_
+        DOMAIN,
         "netbiosname": hostname,
         "dns_timeout": 15,
         "verbose_logging": True,
