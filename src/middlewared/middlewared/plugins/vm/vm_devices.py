@@ -7,7 +7,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
-from middlewared.utils import osc, run
+from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
 
 from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY
@@ -436,8 +436,6 @@ class VMDeviceService(CRUDService):
             await self.failover_nic_check(device, verrors, 'attributes')
         elif device.get('dtype') == 'PCI':
             pptdev = device['attributes'].get('pptdev')
-            if osc.IS_FREEBSD and not RE_PPTDEV_NAME.findall(pptdev):
-                verrors.add('attribute.pptdev', 'Please specify correct PCI device for passthru.')
             device_details = await self.middleware.call('vm.device.passthrough_device', pptdev)
             if device_details.get('error'):
                 verrors.add(
@@ -448,16 +446,10 @@ class VMDeviceService(CRUDService):
                 verrors.add('attribute.pptdev', 'IOMMU support is required.')
         elif device.get('dtype') == 'DISPLAY':
             if vm_instance:
-                if osc.IS_FREEBSD and vm_instance['bootloader'] != 'UEFI':
-                    verrors.add('dtype', 'Display only works with UEFI bootloader.')
-
                 if not update:
                     vm_instance['devices'].append(device)
 
                 await self.validate_display_devices(verrors, vm_instance)
-
-            if osc.IS_FREEBSD and device['attributes']['type'] != 'VNC':
-                verrors.add('attributes.type', 'Only VNC Display device is supported for this platform.')
 
             all_ports = [
                 d['attributes'].get('port')
