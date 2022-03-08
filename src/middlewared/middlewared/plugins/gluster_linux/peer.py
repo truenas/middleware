@@ -206,7 +206,7 @@ class GlusterPeerService(CRUDService):
         return local_peers
 
     @accepts()
-    @returns(List('ips', items=Str('address', required=True)))
+    @returns(List('ips', items=[Str('address', required=True)]))
     async def ips_available(self):
         """
         Return list of VIP(v4/v6) addresses available on the system
