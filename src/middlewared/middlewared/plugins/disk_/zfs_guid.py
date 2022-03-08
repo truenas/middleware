@@ -37,20 +37,30 @@ class DiskService(Service):
                 else:
                     self.logger.debug("Pool %r vdev %r disk is None", pool["name"], vdev["guid"])
 
+        events = set()
         for disk in await self.middleware.call("disk.query", [], {"extra": {"include_expired": True}}):
             guid = disk_to_guid.get(disk["devname"])
             if guid is not None and guid != disk["zfs_guid"]:
                 self.logger.debug("Setting disk %r zfs_guid %r", disk["identifier"], guid)
+                events.add(disk["identifier"])
                 await self.middleware.call(
-                    "datastore.update", "storage.disk", disk["identifier"], {"zfs_guid": guid}, {"prefix": "disk_"},
+                    "datastore.update", "storage.disk", disk["identifier"],
+                    {"zfs_guid": guid}, {"prefix": "disk_", "send_events": False},
                 )
             elif disk["zfs_guid"]:
                 devname = disk_to_guid.inv.get(disk["zfs_guid"])
                 if devname is not None and devname != disk["devname"]:
                     self.logger.debug("Removing disk %r zfs_guid as %r has it", disk["identifier"], devname)
+                    events.add(disk["identifier"])
                     await self.middleware.call(
-                        "datastore.update", "storage.disk", disk["identifier"], {"zfs_guid": None}, {"prefix": "disk_"},
+                        "datastore.update", "storage.disk", disk["identifier"],
+                        {"zfs_guid": None}, {"prefix": "disk_", "send_events": False},
                     )
+
+        if events:
+            disks = {i["identifier"]: i for i in await self.middleware.call("disk.query", [], {"prefix": "disk_"})}
+            for event in events:
+                self.middleware.send_event("disk.query", "CHANGED", id=event, fields=disks[event])
 
 
 async def zfs_events_hook(middleware, data):
