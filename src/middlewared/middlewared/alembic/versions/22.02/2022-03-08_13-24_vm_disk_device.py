@@ -2,8 +2,8 @@
 Fix disk type devices path
 
 Revision ID: b3c5a5321aef
-Revises: 2ed09f3b17b7
-Create Date: 2022-03-04 13:24:38.186590+00:00
+Revises: 4e027c93e4d1
+Create Date: 2022-03-08 13:24:38.186590+00:00
 
 """
 import json
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'b3c5a5321aef'
-down_revision = '2ed09f3b17b7'
+down_revision = '4e027c93e4d1'
 branch_labels = None
 depends_on = None
 
