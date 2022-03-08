@@ -111,7 +111,7 @@ class DiskService(Service, ServiceChangeMixin):
         geom_xml = await self.middleware.call('geom.cache.get_class_xml', 'DISK')
 
         number_of_disks = len(sys_disks)
-        if 0 > number_of_disks <= 25:
+        if number_of_disks <= 25:
             # output logging information to middlewared.log in case we sync disks
             # when not all the disks have been resolved
             log_info = {
