@@ -1,7 +1,7 @@
 from glustercli.cli import volume, quota
 
 from middlewared.utils import filter_list
-from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors
+from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors, filterable_returns
 from middlewared.schema import Dict, Str, Int, Bool, List, returns
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from .utils import GlusterConfig
@@ -20,6 +20,30 @@ class GlusterVolumeService(CRUDService):
         cli_namespace = 'service.gluster.volume'
 
     @filterable
+    @filterable_returns(Dict(
+        'volume',
+        Str('name'),
+        Str('uuid'),
+        Str('type'),
+        Bool('online'),
+        Dict(
+            'ports',
+            Str('tcp'),
+            Str('rdma'),
+        ),
+        Str('pid'),
+        Int('size_total'),
+        Int('size_free'),
+        Int('size_used'),
+        Int('inodes_total'),
+        Int('inodes_free'),
+        Int('inodes_used'),
+        Str('device'),
+        Str('block_size'),
+        Str('mnt_options'),
+        Str('fs_name'),
+        additional_attrs=True,
+    ))
     async def query(self, filters, options):
         vols = []
         if await self.middleware.call('service.started', 'glusterd'):
