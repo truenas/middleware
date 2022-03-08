@@ -2,7 +2,7 @@ import ipaddress
 import psutil
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
-from middlewared.service import pass_app, Service
+from middlewared.service import pass_app, private, Service
 from middlewared.validators import MACAddr
 
 from .devices import NIC, DISPLAY
@@ -190,3 +190,15 @@ class VMService(Service):
         Retrieve supported resolution choices for VM Display devices.
         """
         return {r: r for r in DISPLAY.RESOLUTION_ENUM}
+
+    @private
+    async def get_running_display_devices(self):
+        devices = []
+        for vm in await self.middleware.call('vm.query', [['status.state', '=', 'RUNNING']]):
+            devices.extend([
+                dev.get_webui_info() for dev in map(
+                    lambda d: DISPLAY(d, middleware=self.middleware),
+                    filter(lambda d: d['dtype'] == 'DISPLAY', vm['devices'])
+                )
+            ])
+        return devices
