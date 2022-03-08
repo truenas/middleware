@@ -19,6 +19,11 @@ DEFAULT_FILES = ['moduli', 'ssh_config', 'ssh_config.d', 'sshd_config', 'sshd_co
 
 
 def generate_ssh_config(middleware, ssh_config, dirfd):
+    mode = 0o600
+
+    def opener(path, flags):
+        return os.open(path, flags, mode=mode, dir_fd=dirfd)
+
     for k in SSH_KEYS:
         must_remove = True
         s_key = re.sub(r'([.-])', '_', k).replace('ssh_', '', 1)
@@ -27,8 +32,7 @@ def generate_ssh_config(middleware, ssh_config, dirfd):
             if decoded_key:
                 mode = 0o644 if k.endswith('.pub') else 0o600
 
-                fd = os.open(k, os.O_WRONLY | os.O_CREAT, mode=mode, dir_fd=dirfd)
-                with open(fd, 'wb') as f:
+                with open(k, 'wb', opener=opener) as f:
                     st = os.fstat(f.fileno())
                     if stat.S_ISREG(st.st_mode) == 0:
                         middleware.logger.warning(
