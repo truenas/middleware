@@ -5,7 +5,7 @@ import enum
 import asyncio
 
 from middlewared.service_exception import CallError
-from middlewared.schema import Dict, Str, Bool
+from middlewared.schema import Dict, Str, Bool, returns
 from middlewared.service import (accepts, Service,
                                  private, ValidationErrors)
 from .utils import GlusterConfig
@@ -83,6 +83,7 @@ class GlusterLocalEventsService(Service):
                 )
 
     @accepts()
+    @returns(Str())
     def get_set_jwt_secret(self):
         """
         Return the secret key used to encode/decode
@@ -108,6 +109,7 @@ class GlusterLocalEventsService(Service):
         Str('secret', required=True),
         Bool('force', default=False),
     ))
+    @returns()
     def add_jwt_secret(self, data):
         """
         Add a `secret` key used to encode/decode
