@@ -1,8 +1,8 @@
 from glustercli.cli import volume, quota
 
 from middlewared.utils import filter_list
-from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors
-from middlewared.schema import Dict, Str, Int, Bool, List
+from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors, filterable_returns
+from middlewared.schema import Dict, Str, Int, Bool, List, returns
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from .utils import GlusterConfig
 
@@ -20,6 +20,30 @@ class GlusterVolumeService(CRUDService):
         cli_namespace = 'service.gluster.volume'
 
     @filterable
+    @filterable_returns(Dict(
+        'volume',
+        Str('name'),
+        Str('uuid'),
+        Str('type'),
+        Bool('online'),
+        Dict(
+            'ports',
+            Str('tcp'),
+            Str('rdma'),
+        ),
+        Str('pid'),
+        Int('size_total'),
+        Int('size_free'),
+        Int('size_used'),
+        Int('inodes_total'),
+        Int('inodes_free'),
+        Int('inodes_used'),
+        Str('device'),
+        Str('block_size'),
+        Str('mnt_options'),
+        Str('fs_name'),
+        additional_attrs=True,
+    ))
     async def query(self, filters, options):
         vols = []
         if await self.middleware.call('service.started', 'glusterd'):
@@ -70,6 +94,7 @@ class GlusterVolumeService(CRUDService):
         Int('redundancy'),
         Bool('force'),
     ))
+    @returns(List('volumes', items=[Dict('volume', additional_attrs=True)]))
     @job(lock=GLUSTER_JOB_LOCK)
     async def do_create(self, job, data):
         """
@@ -117,6 +142,7 @@ class GlusterVolumeService(CRUDService):
         Str('name', required=True),
         Bool('force', default=True)
     ))
+    @returns()
     async def start(self, data):
         """
         Start a gluster volume.
@@ -140,6 +166,7 @@ class GlusterVolumeService(CRUDService):
         Str('name', required=True),
         Bool('force', default=True)
     ))
+    @returns()
     async def restart(self, data):
         """
         Restart a gluster volume.
@@ -156,6 +183,7 @@ class GlusterVolumeService(CRUDService):
         Str('name', required=True),
         Bool('force', default=False)
     ))
+    @returns()
     async def stop(self, data):
         """
         Stop a gluster volume.
@@ -175,6 +203,7 @@ class GlusterVolumeService(CRUDService):
         return result
 
     @accepts(Str('id'))
+    @returns()
     @job(lock=GLUSTER_JOB_LOCK)
     async def do_delete(self, job, id):
         """
@@ -203,13 +232,29 @@ class GlusterVolumeService(CRUDService):
         'volume_info',
         Str('name', required=True),
     ))
+    @returns(List('volumes', items=[Dict(
+        'volume',
+        Str('name'),
+        Str('uuid'),
+        Str('type'),
+        Str('status'),
+        Int('num_bricks'),
+        Int('distribute'),
+        Int('stripe'),
+        Int('replica'),
+        Int('disperse'),
+        Int('disperse_redundancy'),
+        Int('transport'),
+        Int('snapshot_count'),
+        List('bricks'),
+        List('options'),
+    )]))
     async def info(self, data):
         """
         Return information about gluster volume(s).
 
         `name` String representing name of gluster volume
         """
-
         options = {'kwargs': {'volname': data['name']}}
         return await self.middleware.call('gluster.method.run', volume.info, options)
 
@@ -218,6 +263,30 @@ class GlusterVolumeService(CRUDService):
         Str('name', required=True),
         Bool('verbose', default=True),
     ))
+    @returns(List('volumes', items=[Dict(
+        'volume',
+        Str('name'),
+        Str('uuid'),
+        Str('type'),
+        Bool('online'),
+        Dict(
+            'ports',
+            Str('tcp'),
+            Str('rdma'),
+        ),
+        Str('pid'),
+        Int('size_total'),
+        Int('size_free'),
+        Int('size_used'),
+        Int('inodes_total'),
+        Int('inodes_free'),
+        Int('inodes_used'),
+        Str('device'),
+        Str('block_size'),
+        Str('mnt_options'),
+        Str('fs_name'),
+        additional_attrs=True,
+    )]))
     async def status(self, data):
         """
         Return detailed information about gluster volume.
@@ -225,16 +294,15 @@ class GlusterVolumeService(CRUDService):
         `name` String representing name of gluster volume
         `verbose` Boolean, If False, only return brick information
         """
-
         options = {'kwargs': {'volname': data['name'], 'group_subvols': data['verbose']}}
         return await self.middleware.call('gluster.method.run', volume.status_detail, options)
 
     @accepts()
+    @returns(List('volumes', items=[Str('volume')]))
     async def list(self):
         """
         Return list of gluster volumes.
         """
-
         return await self.middleware.call('gluster.method.run', volume.vollist, {})
 
     @accepts(Dict(
@@ -262,6 +330,7 @@ class GlusterVolumeService(CRUDService):
         Str('name', required=True),
         Dict('opts', required=True, additional_attrs=True),
     ))
+    @returns()
     async def optset(self, data):
         """
         Set gluster volume options.
@@ -289,6 +358,7 @@ class GlusterVolumeService(CRUDService):
         Int('arbiter'),
         Bool('force'),
     ))
+    @returns()
     async def addbrick(self, data):
         """
         Add bricks to a gluster volume.
@@ -326,6 +396,7 @@ class GlusterVolumeService(CRUDService):
         ),
         Int('replica'),
     ))
+    @returns()
     async def removebrick(self, data):
         """
         Perform a remove operation on the brick(s) in the gluster volume.
@@ -379,6 +450,7 @@ class GlusterVolumeService(CRUDService):
             required=True,
         ),
     ))
+    @returns()
     async def replacebrick(self, data):
         """
         Commit the replacement of a brick.
@@ -406,6 +478,7 @@ class GlusterVolumeService(CRUDService):
         Str('name', required=True),
         Bool('enable', required=True),
     ))
+    @returns()
     async def quota(self, data):
         """
         Enable/Disable the quota for a given gluster volume.

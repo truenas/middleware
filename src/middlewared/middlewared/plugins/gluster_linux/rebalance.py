@@ -1,7 +1,7 @@
 from glustercli.cli import rebalance
 
 from middlewared.service import accepts, Service, job
-from middlewared.schema import Dict, Str, Bool
+from middlewared.schema import Dict, Str, Bool, returns
 
 
 LOCK = 'rebalance_lock'
@@ -17,6 +17,7 @@ class GlusterRebalanceService(Service):
         'rebalance_status',
         Str('name', required=True),
     ))
+    @returns(Dict(additional_attrs=True))
     @job(lock=LOCK)
     async def status(self, job, data):
         """
@@ -33,6 +34,7 @@ class GlusterRebalanceService(Service):
         'rebalance_fix_layout',
         Str('name', required=True),
     ))
+    @returns()
     @job(lock=LOCK)
     async def fix_layout(self, job, data):
         """
@@ -50,6 +52,7 @@ class GlusterRebalanceService(Service):
         Str('name', required=True),
         Bool('force', default=False),
     ))
+    @returns()
     @job(lock=LOCK)
     async def start(self, job, data):
         """
@@ -71,6 +74,7 @@ class GlusterRebalanceService(Service):
         'rebalance_stop',
         Str('name', required=True),
     ))
+    @returns()
     @job(lock=LOCK)
     async def stop(self, job, data):
         """

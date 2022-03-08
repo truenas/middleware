@@ -4,6 +4,7 @@ from middlewared.utils import run
 from middlewared.service import (Service, CallError, job,
                                  accepts, Dict, Str, Bool,
                                  ValidationErrors, private)
+from middlewared.schema import returns
 from middlewared.plugins.cluster_linux.utils import FuseConfig
 
 
@@ -20,6 +21,7 @@ class GlusterFuseService(Service):
         'glusterfuse_mounted',
         Str('name', required=True),
     ))
+    @returns(Bool())
     async def is_mounted(self, data):
         """
         Check if gluster volume is FUSE mounted locally.
@@ -56,6 +58,7 @@ class GlusterFuseService(Service):
         Bool('all', default=False),
         Bool('raise', default=False),
     ))
+    @returns(Bool())
     @job(lock='glusterfuse')
     async def mount(self, job, data):
         """
@@ -143,6 +146,7 @@ class GlusterFuseService(Service):
         Bool('all', default=False),
         Bool('raise', default=False),
     ))
+    @returns(Bool())
     @job(lock='glusterfuse')
     async def umount(self, job, data):
         """
