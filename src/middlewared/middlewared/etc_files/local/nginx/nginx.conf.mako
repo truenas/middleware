@@ -176,8 +176,8 @@ http {
         }
 
 % for dev in middleware.call_sync('vm.get_running_display_devices'):
-        location ~ ${dev["path"]}(.*)$ {
-            proxy_pass ${dev["redirect_uri"]}/$1?$args;
+        location ${dev["path"][:-1]} {
+            proxy_pass ${dev["redirect_uri"]}/;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
