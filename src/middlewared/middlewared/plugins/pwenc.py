@@ -26,7 +26,7 @@ class PWEncService(Service):
     def generate_secret(self, reset_passwords=True):
         secret = os.urandom(PWENC_BLOCK_SIZE)
         with open(PWENC_FILE_SECRET, 'wb') as f:
-            os.chmod(PWENC_FILE_SECRET, 0o600)
+            os.fchmod(f.fileno(), 0o600)
             f.write(secret)
         self.reset_secret_cache()
 

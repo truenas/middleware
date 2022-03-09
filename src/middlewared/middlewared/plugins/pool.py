@@ -14,10 +14,10 @@ import re
 import secrets
 import shutil
 import subprocess
-import tempfile
 import uuid
 
 from collections import defaultdict
+from io import BytesIO
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.plugins.zfs import ZFSSetPropertyError
@@ -2217,18 +2217,8 @@ class PoolDatasetService(CRUDService):
         sync_job.wait_sync()
 
         datasets = self.query_encrypted_roots_keys([['OR', [['name', '=', id], ['name', '^', f'{id}/']]]])
-        temp_path = None
-        try:
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-                temp_path = f.name
-                os.chmod(temp_path, 0o600)
-                f.write(json.dumps(datasets))
-
-            with open(temp_path, 'rb') as f:
-                shutil.copyfileobj(f, job.pipes.output.w)
-        finally:
-            if os.path.exists(temp_path or ''):
-                os.unlink(temp_path)
+        with BytesIO(json.dumps(datasets).encode()) as f:
+            shutil.copyfileobj(f, job.pipes.output.w)
 
     @accepts(
         Str('id'),

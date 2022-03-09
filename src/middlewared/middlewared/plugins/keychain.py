@@ -125,7 +125,7 @@ class SSHKeyPair(KeychainCredentialType):
 
             attributes["private_key"] = (attributes["private_key"].strip()) + "\n"
             with tempfile.NamedTemporaryFile("w+") as f:
-                os.chmod(f.name, 0o600)
+                os.fchmod(f.file.fileno(), 0o600)
 
                 f.write(attributes["private_key"])
                 f.flush()
@@ -153,7 +153,7 @@ class SSHKeyPair(KeychainCredentialType):
             return
 
         with tempfile.NamedTemporaryFile("w+") as f:
-            os.chmod(f.name, 0o600)
+            os.fchmod(f.file.fileno(), 0o600)
 
             f.write(attributes["public_key"])
             f.flush()
