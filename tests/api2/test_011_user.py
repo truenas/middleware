@@ -135,6 +135,7 @@ def test_05_check_user_exists(request):
         assert pw['pw_gecos'] == 'Test User', results.txt
         assert pw['pw_dir'] == '/nonexistent', results.txt
 
+
 def test_06_get_user_info(request):
     depends(request, ["user_02", "user_01"])
     global userinfo
@@ -332,7 +333,7 @@ def test_30_creating_home_dataset(request):
 def test_31_creating_user_with_homedir(request):
     depends(request, ["HOME_DS_CREATED"])
     global user_id
-    payload = {
+    payload1 = {
         "username": "testuser2",
         "full_name": "Test User2",
         "group_create": True,
@@ -343,21 +344,21 @@ def test_31_creating_user_with_homedir(request):
         "home": f'/mnt/{dataset}/testuser2',
         "home_mode": '750'
     }
-    results = POST("/user/", payload)
+    results = POST("/user/", payload1)
     assert results.status_code == 200, results.text
     user_id = results.json()
     time.sleep(5)
 
-    payload = {"username": "testuser2"}
-    results = POST("/user/get_user_obj/", payload)
+    payload2 = {"username": "testuser2"}
+    results = POST("/user/get_user_obj/", payload2)
     assert results.status_code == 200, results.text
 
     pw = results.json()
-    assert pw['pw_dir'] == payload['home'], results.text
-    assert pw['pw_name'] == payload['username'], results.text
-    assert pw['pw_uid'] == payload['uid'], results.text
-    assert pw['pw_shell'] == payload['shell'], results.text
-    assert pw['pw_gecos'] == payload['full_name'], results.text
+    assert pw['pw_dir'] == payload1['home'], results.text
+    assert pw['pw_name'] == payload1['username'], results.text
+    assert pw['pw_uid'] == payload1['uid'], results.text
+    assert pw['pw_shell'] == payload1['shell'], results.text
+    assert pw['pw_gecos'] == payload1['full_name'], results.text
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
@@ -466,6 +467,7 @@ def test_41_lock_smb_user(request):
         '/etc/master.passwd',
         f"testuser2:*LOCKED*:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
     )
+
 
 def test_42_verify_locked_smb_user_is_disabled(request):
     """
@@ -629,7 +631,7 @@ def test_53_add_user_to_sudoers(request):
     results = PUT(f"/user/id/{user_id}", {"sudo_nopasswd": True})
     assert results.status_code == 200, results.text
 
-    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) NOPASSWD: ALL")
+    check_config_file("/usr/local/etc/sudoers", "testuser3 ALL=(ALL) NOPASSWD: ALL")
 
 
 def test_54_disable_password_auth(request):
@@ -643,7 +645,7 @@ def test_54_disable_password_auth(request):
 
     check_config_file(
         '/etc/master.passwd',
-        f"testuser2:*:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
+        f"testuser3:*:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
     )
 
 
