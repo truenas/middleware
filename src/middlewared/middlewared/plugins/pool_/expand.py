@@ -3,19 +3,15 @@ import os
 import shutil
 import subprocess
 
+import sysctl
 from middlewared.job import Pipes
 from middlewared.service import CallError, item_method, job, Service
 from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.utils import osc, run
+from middlewared.utils import run
 from middlewared.utils.shell import join_commandline
 
 
 logger = logging.getLogger(__name__)
-
-# platform specific imports
-if osc.IS_FREEBSD:
-    import sysctl
-
 
 class PoolService(Service):
 
@@ -36,28 +32,19 @@ class PoolService(Service):
         Expand pool to fit all available disk space.
         """
         pool = await self.middleware.call('pool.get_instance', id)
-        if osc.IS_LINUX:
-            if options.get('passphrase'):
-                raise CallError('Passphrase should not be supplied for this platform.')
-            # FIXME: We have issues in ZoL where when pool is created with partition uuids, we are unable
-            #  to expand pool where all pool related options error out saying I/O error
-            #  https://github.com/zfsonlinux/zfs/issues/9830
-            raise CallError('Expand is not supported on this platform yet because of underlying ZFS issues.')
-        else:
-            if pool['encrypt']:
-                if not pool['is_decrypted']:
-                    raise CallError('You can only expand decrypted pool')
+        if pool['encrypt']:
+            if not pool['is_decrypted']:
+                raise CallError('You can only expand decrypted pool')
 
-                for error in (
-                    await self.middleware.call('pool.pool_lock_pre_check', pool, options['geli']['passphrase'])
-                ).errors:
-                    raise CallError(error.errmsg)
+            for error in (
+                await self.middleware.call('pool.pool_lock_pre_check', pool, options['geli']['passphrase'])
+            ).errors:
+                raise CallError(error.errmsg)
 
         all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
 
         try:
-            if osc.IS_FREEBSD:
-                sysctl.filter('kern.geom.debugflags')[0].value = 16
+            sysctl.filter('kern.geom.debugflags')[0].value = 16
             geli_resize = []
             vdevs = []
             try:
@@ -97,11 +84,10 @@ class PoolService(Service):
                         await self._resize_disk(part_data, pool['encrypt'], geli_resize)
                         vdevs.append(guid)
             finally:
-                if osc.IS_FREEBSD and geli_resize:
+                if geli_resize:
                     await self.__geli_resize(pool, geli_resize, options)
         finally:
-            if osc.IS_FREEBSD:
-                sysctl.filter('kern.geom.debugflags')[0].value = 0
+            sysctl.filter('kern.geom.debugflags')[0].value = 0
 
         # spare/cache devices cannot be expanded
         # We resize them anyways, for cache devices, whenever we are going to import the pool
@@ -118,23 +104,13 @@ class PoolService(Service):
 
     async def _resize_disk(self, part_data, encrypted_pool, geli_resize):
         partition_number = part_data['partition_number']
-        if osc.IS_LINUX:
-            await run(
-                'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0',
-                '-c', '2:', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
-                '-t', f'{partition_number}:BF01', part_data['path']
-            )
-            await run('partprobe', os.path.join('/dev', part_data['disk']))
-        else:
-            if not part_data['disk'].startswith(('nvd', 'vtbd')):
-                await run('camcontrol', 'reprobe', part_data['disk'])
-            await run('gpart', 'recover', part_data['disk'])
-            await run('gpart', 'resize', '-a', '4k', '-i', str(partition_number), part_data['disk'])
+        if not part_data['disk'].startswith(('nvd', 'vtbd')):
+            await run('camcontrol', 'reprobe', part_data['disk'])
+        await run('gpart', 'recover', part_data['disk'])
+        await run('gpart', 'resize', '-a', '4k', '-i', str(partition_number), part_data['disk'])
 
-        if osc.IS_FREEBSD and encrypted_pool:
-            geli_resize_cmd = (
-                'geli', 'resize', '-a', '4k', '-s', str(part_data['size']), part_data['name']
-            )
+        if encrypted_pool:
+            geli_resize_cmd = ('geli', 'resize', '-a', '4k', '-s', str(part_data['size']), part_data['name'])
             rollback_cmd = (
                 'gpart', 'resize', '-a', '4k', '-i', str(partition_number),
                 '-s', f'{part_data["size"]}B', part_data['disk']
