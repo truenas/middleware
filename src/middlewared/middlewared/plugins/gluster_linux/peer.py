@@ -3,10 +3,8 @@ import xml.etree.ElementTree as ET
 from glustercli.cli import peer
 
 from middlewared.utils import filter_list
-from middlewared.schema import Dict, Str, Bool, List, returns
-from middlewared.service import (accepts, private, job, filterable,
-                                 CallError, CRUDService, ValidationErrors,
-                                 filterable_returns)
+from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
+from middlewared.service import private, job, filterable, CallError, CRUDService, ValidationErrors
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from .utils import GlusterConfig
 
@@ -21,16 +19,17 @@ class GlusterPeerService(CRUDService):
         namespace = 'gluster.peer'
         cli_namespace = 'service.gluster.peer'
 
-    @filterable
-    @filterable_returns(Dict(
-        'peer',
+    ENTRY = Dict(
+        'gluster_peer_entry',
         Str('id', required=True),
         Str('uuid', required=True),
         Str('hostname', required=True),
         Str('connected', required=True),
         Str('state', required=True),
         Str('status', required=True)
-    ))
+    )
+
+    @filterable
     async def query(self, filters, options):
         peers = []
         if await self.middleware.call('service.started', 'glusterd'):
@@ -84,15 +83,6 @@ class GlusterPeerService(CRUDService):
         'peer_create',
         Str('hostname', required=True, max_length=253)
     ))
-    @returns(Dict(
-        'peer',
-        Str('id', required=True),
-        Str('uuid', required=True),
-        Str('hostname', required=True),
-        Str('connected', required=True),
-        Str('state', required=True),
-        Str('status', required=True)
-    ))
     @job(lock=GLUSTER_JOB_LOCK)
     async def do_create(self, job, data):
         """
@@ -127,15 +117,7 @@ class GlusterPeerService(CRUDService):
         'peer_status',
         Bool('localhost', default=True),
     ))
-    @returns(List('peers', items=[Dict(
-        'peer',
-        Str('id', required=True),
-        Str('uuid', required=True),
-        Str('hostname', required=True),
-        Str('connected', required=True),
-        Str('state', required=True),
-        Str('status', required=True)
-    )]))
+    @returns(List('peers', items=[Ref('gluster_peer_entry')]))
     def status(self, data):
         """
         List the status of peers in the Trusted Storage Pool.
