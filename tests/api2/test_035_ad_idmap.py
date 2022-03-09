@@ -171,9 +171,9 @@ def test_08_test_backend_options(request, backend):
     """
     cmd = f'midclt call smb.getparm "{IDMAP_CFG}: backend" GLOBAL'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     running_backend = results['output'].strip()
-    assert running_backend == backend.lower(), results['output']
+    assert running_backend == backend.lower(), f'out: {results["output"]}, err: {results["stderr"]}'
 
     if backend == "RID":
         """
@@ -251,7 +251,7 @@ def test_08_test_backend_options(request, backend):
         """
         cmd = f'midclt call smb.getparm "{IDMAP_CFG} : {k}" GLOBAL'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         try:
             res = json.loads(results['output'].strip())
             assert res == v, f"[{k}]: {res}"
@@ -272,10 +272,10 @@ def test_08_test_backend_options(request, backend):
         """
         cmd = 'midclt call directoryservices.get_db_secrets'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         sec = json.loads(results['output'].strip())
         sec_key = f"SECRETS/GENERIC/IDMAP_LDAP_{WORKGROUP}/{secret}"
-        assert sec_key in sec[f'{hostname.upper()}$'], results['output']
+        assert sec_key in sec[f'{hostname.upper()}$'], f'out: {results["output"]}, err: {results["stderr"]}'
         if sec_key in sec[f'{hostname.upper()}$']:
             stored_sec = sec[f'{hostname.upper()}$'][sec_key]
             decoded_sec = b64decode(stored_sec).rstrip(b'\x00').decode()
@@ -348,7 +348,7 @@ def test_13_idmap_new_domain(request):
     global dom_id
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     low, high = json.loads(results['output'].strip())
 
     payload = {
@@ -371,7 +371,7 @@ def test_14_idmap_new_domain_duplicate_fail(request):
     depends(request, ["JOINED_AD", "ssh_password"], scope="session")
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     low, high = json.loads(results['output'].strip())
 
     payload = {

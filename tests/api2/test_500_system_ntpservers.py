@@ -71,4 +71,4 @@ def test_06_Checking_ntpservers_num_configured_using_ssh(ntp_dict, request):
     results = SSH_TEST('grep -R ^server /etc/ntp.conf', user, password, ip)
     assert results['result'] is True, results
     assert len(results['output'].strip().split('\n')) == \
-        len(ntp_dict['servers']), results['output']
+        len(ntp_dict['servers']), f'out: {results["output"]}, err: {results["stderr"]}'

@@ -28,8 +28,8 @@ def test_02_verify_default_aclmode_from_pool_dataset_with_zfs_get(request):
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'passthrough' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'passthrough' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_03_create_test1_dataset_to_verify_inherit_parent_aclmode(request):
@@ -53,8 +53,8 @@ def test_05_verify_test1_dataset_inherited_parent_aclmode_with_zfs_get(request):
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'passthrough' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'passthrough' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_06_change_the_default_aclmode_of_the_pool_dataset_to_restricted(request):
@@ -77,8 +77,8 @@ def test_08_verify_the_pool_dataset_aclmode_changed_to_restricted_with_zfs_get(r
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'restricted' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'restricted' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_09_verify_test1_dataset_inherited_parent_aclmode_changes_with_api(request):
@@ -92,8 +92,8 @@ def test_10_verify_test1_dataset_inherited_parent_aclmode_changes_with_zfs_get(r
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'restricted' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'restricted' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_11_create_test2_dataset_to_verify_inherit_parent_aclmode(request):
@@ -117,8 +117,8 @@ def test_13_verify_test2_dataset_inherited_parent_restricted_aclmode_with_zfs_ge
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test2_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'restricted' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'restricted' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_14_change_the_pool_dataset_aclmode_back_to_passthrough(request):
@@ -141,8 +141,8 @@ def test_16_verify_test1_dataset_inherited_parent_aclmode_changes_with_zfs_get(r
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'passthrough' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'passthrough' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_17_verify_test2_dataset_inherited_parent_aclmode_changes_with_api(request):
@@ -156,8 +156,8 @@ def test_18_verify_test2_dataset_inherited_parent_aclmode_changes_with_zfs_get(r
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test2_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'passthrough' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'passthrough' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_19_verify_the_pool_dataset_aclmode_changed_to_passthrough_with_api(request):
@@ -171,8 +171,8 @@ def test_20_verify_the_pool_dataset_aclmode_changed_to_passthrough_with_zfs_get(
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'passthrough' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'passthrough' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_21_change_test1_dataset_aclmode_to_restricted(request):
@@ -195,8 +195,8 @@ def test_23_verify_test1_dataset_aclmode_changed_to_restricted_with_zfs_get(requ
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = f"zfs get aclmode {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'restricted' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'restricted' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_24_delete_test1_dataset(request):

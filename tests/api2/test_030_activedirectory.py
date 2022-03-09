@@ -192,10 +192,10 @@ def test_17_kerberos_keytab_verify(request):
     depends(request, ["ad_dataset_permission", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
         kt = json.loads(results['output'].strip())
-        assert len(kt) != 0, results['output']
+        assert len(kt) != 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_18_kerberos_restart_verify(request):
@@ -205,22 +205,22 @@ def test_18_kerberos_restart_verify(request):
     depends(request, ["kerberos_verified", "ssh_password"], scope="session")
     cmd = 'rm /etc/krb5.keytab'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = 'midclt call kerberos.stop'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = 'midclt call kerberos.start'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
     kt = json.loads(results['output'].strip())
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
-        assert len(kt) != 0, results['output']
+        assert len(kt) != 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = 'midclt call kerberos._klist_test'
     results = SSH_TEST(cmd, user, password, ip)

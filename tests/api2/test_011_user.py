@@ -54,8 +54,8 @@ home_acl = [
 
 def check_config_file(file_name, expected_line):
     results = SSH_TEST(f'cat {file_name}', user, password, ip)
-    assert results['result'], results['output']
-    assert expected_line in results['output'].splitlines(), results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
+    assert expected_line in results['output'].splitlines(), f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @pytest.mark.dependency(name="user_01")
@@ -372,7 +372,7 @@ def test_33_smb_user_passb_entry_exists(request):
     depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -380,7 +380,7 @@ def test_33_smb_user_passb_entry_exists(request):
             my_entry = entry
             break
 
-    assert my_entry is not None, results['output']
+    assert my_entry is not None, f'out: {results["output"]}, err: {results["stderr"]}'
     if my_entry is not None:
         assert my_entry["Account Flags"] == "[U          ]", str(my_entry)
 
@@ -417,7 +417,7 @@ def test_37_homedir_testfile_create(request):
 
     cmd = f'touch {testfile}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     results = POST('/filesystem/stat/', testfile)
     assert results.status_code == 200, results.text
@@ -477,7 +477,7 @@ def test_42_verify_locked_smb_user_is_disabled(request):
     depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -485,7 +485,7 @@ def test_42_verify_locked_smb_user_is_disabled(request):
             my_entry = entry
             break
 
-    assert my_entry is not None, results['output']
+    assert my_entry is not None, f'out: {results["output"]}, err: {results["stderr"]}'
     if my_entry is not None:
         assert my_entry["Account Flags"] == "[DU         ]", str(my_entry)
 
@@ -507,7 +507,7 @@ def test_44_verify_absent_from_passdb(request):
     depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -515,7 +515,7 @@ def test_44_verify_absent_from_passdb(request):
             my_entry = entry
             break
 
-    assert my_entry is None, results['output']
+    assert my_entry is None, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_45_deleting_homedir_user(request):
@@ -556,7 +556,7 @@ def test_48_verify_non_smb_user_absent_from_passdb(request):
     depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -564,7 +564,7 @@ def test_48_verify_non_smb_user_absent_from_passdb(request):
             my_entry = entry
             break
 
-    assert my_entry is None, results['output']
+    assert my_entry is None, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_49_convert_to_smb_knownfail(request):
@@ -608,7 +608,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
     depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -616,7 +616,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
             my_entry = entry
             break
 
-    assert my_entry is not None, results['output']
+    assert my_entry is not None, f'out: {results["output"]}, err: {results["stderr"]}'
     if my_entry is not None:
         assert my_entry["Account Flags"] == "[U          ]", str(my_entry)
 

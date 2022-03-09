@@ -77,7 +77,7 @@ if not ha:
         depends(request, ["pool_04", "ssh_password"], scope="session")
         cmd = f'test -f {dataset_path}/Directory/File'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     def test_05_import_nonascii_msdosfs_fails(request):
         depends(request, ["pool_04"], scope="session")
@@ -100,7 +100,7 @@ if not ha:
         depends(request, ["pool_04", "ssh_password"], scope="session")
         cmd = f'test -f {dataset_path}/Directory/File'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     def test_07_import_nonascii_msdosfs(request):
         depends(request, ["pool_04"], scope="session")
@@ -120,7 +120,7 @@ if not ha:
         depends(request, ["pool_04", "ssh_password"], scope="session")
         cmd = f'test -f {dataset_path}/Каталог/Файл'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     def test_09_import_ntfs(request):
         depends(request, ["pool_04"], scope="session")
@@ -141,14 +141,14 @@ if not ha:
         depends(request, ["pool_04", "ssh_password"], scope="session")
         cmd = f'test -f {dataset_path}/Каталог/Файл'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
     def test_11_stop_image_with_mdconfig(request, image):
         depends(request, ["pool_04", "ssh_password"], scope="session")
         cmd = f"mdconfig -d -u {IMAGES[image].replace('s1', '')}"
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
         cmd = f"rm -fv /tmp/{image}.gz"
         gunzip_results = SSH_TEST(cmd, user, password, ip)
