@@ -316,6 +316,7 @@ class NetworkConfigurationService(ConfigService):
 
         if hostname_changed or domainname_changed or dnssearch_changed or dnsservers_changed:
             await self.middleware.call('service.reload', 'resolvconf')
+            await self.middleware.call('service.reload', 'nscd')
 
             # need to tell the CLI program to reload so it shows the new info
             def reload_cli():
