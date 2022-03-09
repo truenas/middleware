@@ -77,6 +77,7 @@
         disabled_ciphers = ':!SHA1:!SHA256:!SHA384'
     else:
         disabled_ciphers = ''
+    display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
 %>
 #
 #    TrueNAS nginx configuration file
@@ -175,7 +176,8 @@ http {
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
 
-        location ${middleware.call_sync('vm.get_vm_display_nginx_route')} {
+        location ${display_device_path} {
+            rewrite ${display_device_path}/(.*) /$1  break;
             proxy_pass http://${middleware.call_sync('vm.get_haproxy_uri')}/;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
