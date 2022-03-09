@@ -137,7 +137,7 @@ if not ha:
         }
         results = POST('/plugin/', payload)
         assert results.status_code == 200, results.text
-        job_status = wait_on_job(results.json(), 1800)
+        job_status = wait_on_job(results.json(), 2400)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_11_search_plugin_asigra_id(request):

@@ -81,8 +81,7 @@ def test_08_Checking_to_see_if_rsyncd_service_is_running(request):
 
 def test_09_Testing_rsync_access(request):
     depends(request, ["pool_04"], scope="session")
-    results = cmd_test(f'rsync -avn {ip}::testmod')
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    cmd_test(f'rsync -avn {ip}::testmod')['result'] is True
 
 
 def test_10_Disable_rsync_task(request, rsynctask_dict):
