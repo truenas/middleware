@@ -1,8 +1,8 @@
 from glustercli.cli import volume, quota
 
 from middlewared.utils import filter_list
-from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors, filterable_returns
-from middlewared.schema import Dict, Str, Int, Bool, List, returns
+from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors
+from middlewared.schema import Dict, Str, Int, Bool, List, Ref, returns
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from .utils import GlusterConfig
 
@@ -19,9 +19,8 @@ class GlusterVolumeService(CRUDService):
         namespace = 'gluster.volume'
         cli_namespace = 'service.gluster.volume'
 
-    @filterable
-    @filterable_returns(Dict(
-        'volume',
+    ENTRY = Dict(
+        'gluster_volume_entry',
         Str('name'),
         Str('uuid'),
         Str('type'),
@@ -43,7 +42,9 @@ class GlusterVolumeService(CRUDService):
         Str('mnt_options'),
         Str('fs_name'),
         additional_attrs=True,
-    ))
+    )
+
+    @filterable
     async def query(self, filters, options):
         vols = []
         if await self.middleware.call('service.started', 'glusterd'):
@@ -94,7 +95,6 @@ class GlusterVolumeService(CRUDService):
         Int('redundancy'),
         Bool('force'),
     ))
-    @returns(List('volumes', items=[Dict('volume', additional_attrs=True)]))
     @job(lock=GLUSTER_JOB_LOCK)
     async def do_create(self, job, data):
         """
@@ -263,30 +263,7 @@ class GlusterVolumeService(CRUDService):
         Str('name', required=True),
         Bool('verbose', default=True),
     ))
-    @returns(List('volumes', items=[Dict(
-        'volume',
-        Str('name'),
-        Str('uuid'),
-        Str('type'),
-        Bool('online'),
-        Dict(
-            'ports',
-            Str('tcp'),
-            Str('rdma'),
-        ),
-        Str('pid'),
-        Int('size_total'),
-        Int('size_free'),
-        Int('size_used'),
-        Int('inodes_total'),
-        Int('inodes_free'),
-        Int('inodes_used'),
-        Str('device'),
-        Str('block_size'),
-        Str('mnt_options'),
-        Str('fs_name'),
-        additional_attrs=True,
-    )]))
+    @returns(List('volumes', items=[Ref('gluster_volume_entry')]))
     async def status(self, data):
         """
         Return detailed information about gluster volume.
