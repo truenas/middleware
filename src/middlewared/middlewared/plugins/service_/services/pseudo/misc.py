@@ -247,16 +247,9 @@ class DSCacheService(PseudoServiceBase):
     name = "dscache"
 
     async def start(self):
-        ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
-        if ldap_enabled:
-            await systemd_unit("nscd", "restart")
-        else:
-            await systemd_unit("nscd", "stop")
-
         await self.middleware.call('dscache.refresh')
 
     async def stop(self):
-        await systemd_unit("nscd", "stop")
         await self.middleware.call('idmap.clear_idmap_cache')
         await self.middleware.call('dscache.refresh')
 

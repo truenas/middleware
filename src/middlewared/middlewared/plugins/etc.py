@@ -249,6 +249,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': None},
             {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': None}
         ],
+        'nscd': [
+            {'type': 'mako', 'path': 'nscd.conf'},
+        ],
         'wsd': [
             {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'post_init'},
         ],
