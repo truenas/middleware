@@ -192,15 +192,10 @@ class GlusterVolumeService(CRUDService):
         `force` Boolean, if True forcefully stop the gluster volume
         """
         name = data.pop('name')
-        options = {'args': (name,), 'kwargs': data}
-        result = await self.middleware.call('gluster.method.run', volume.stop, options)
 
-        # this will send a request to all peers
-        # in the TSP to unmount the FUSE mountpoint
-        data = {'event': 'VOLUME_STOP', 'name': name, 'forward': True}
-        await self.middleware.call('gluster.localevents.send', data)
-
-        return result
+        # this will send a request to all peers in the TSP to unmount the FUSE mountpoint
+        await self.middleware.call('gluster.localevents.send', {'event': 'VOLUME_STOP', 'name': name, 'forward': True})
+        return await self.middleware.call('gluster.method.run', volume.stop, {'args': (name,), 'kwargs': data})
 
     @accepts(Str('id'))
     @returns()
