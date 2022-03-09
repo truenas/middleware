@@ -79,7 +79,7 @@
         disabled_ciphers = ''
 %>
 #
-#    FreeNAS nginx configuration file
+#    TrueNAS nginx configuration file
 #
 load_module modules/ngx_http_uploadprogress_module.so;
 user www-data www-data;
@@ -181,7 +181,6 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
-            proxy_set_header Host $host;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "Upgrade";
