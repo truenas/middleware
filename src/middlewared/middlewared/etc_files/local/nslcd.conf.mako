@@ -35,7 +35,7 @@
     base 	${ldap['basedn']}
   % if ldap['ssl'] in ('START_TLS', 'ON'):
     ssl 	${ldap['ssl'].lower()}
-    tls_cacert	/etc/ssl/truenas_cacerts.pem
+    tls_cacert	/etc/ssl/certs/ca-certificates.crt
     % if certpath:
     tls_cert	${certpath}
     tls_key	${keypath}

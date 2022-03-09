@@ -74,7 +74,7 @@ BASE ${base}
     %endif
 NETWORK_TIMEOUT ${network_timeout}
 TIMEOUT ${timeout}
-TLS_CACERT /etc/ssl/truenas_cacerts.pem
+TLS_CACERT /etc/ssl/certs/ca-certificates.crt
     % if ssl:
         % if tls_certfile:
 TLS_CERT ${tls_certfile}

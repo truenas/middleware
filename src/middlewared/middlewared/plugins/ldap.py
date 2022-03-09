@@ -223,7 +223,7 @@ class LDAPClient(Service):
 
         pyldap.set_option(
             pyldap.OPT_X_TLS_CACERTFILE,
-            '/etc/ssl/truenas_cacerts.pem'
+            '/etc/ssl/certs/ca-certificates.crt'
         )
 
         if data['security']['validate_certificates']:
