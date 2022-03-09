@@ -1,7 +1,6 @@
-import grp
 import os
-import pwd
 import shutil
+from middlewared.plugins.etc import EtcUSR, EtcGRP
 
 
 def render_certificates(s3, middleware):
@@ -24,22 +23,22 @@ def render_certificates(s3, middleware):
         minio_certificate = os.path.join(minio_certpath, "public.crt")
         minio_privatekey = os.path.join(minio_certpath, "private.key")
 
-        minio_uid = pwd.getpwnam('minio').pw_uid
-        minio_gid = grp.getgrnam('minio').gr_gid
+        minio_uid = EtcUSR.MINIO
+        minio_gid = EtcGRP.MINIO
 
         os.makedirs(minio_CApath, mode=0o555, exist_ok=True)
         os.chown(minio_CApath, minio_uid, minio_gid)
         os.chown(minio_path, minio_uid, minio_gid)
 
         with open(minio_certificate, 'w') as f:
+            os.fchown(f.fileno(), minio_uid, minio_gid)
+            os.fchmod(f.fileno(), 0o644)
             f.write(cert['certificate'])
-        os.chown(minio_certificate, minio_uid, minio_gid)
-        os.chmod(minio_certificate, 0o644)
 
         with open(minio_privatekey, 'w') as f:
+            os.fchown(f.fileno(), minio_uid, minio_gid)
+            os.fchmod(f.fileno(), 0o600)
             f.write(cert['privatekey'])
-        os.chown(minio_privatekey, minio_uid, minio_gid)
-        os.chmod(minio_privatekey, 0o600)
 
 
 def render(__, middleware):
