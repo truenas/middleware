@@ -18,6 +18,7 @@ class EtcUSR(enum.IntEnum):
     ROOT = 0
     UUCP = 66
     NSLCD = 110
+    MINIO = 473
     WEBDAV = 666
 
 
@@ -27,6 +28,7 @@ class EtcGRP(enum.IntEnum):
     UUCP = 66
     NSLCD = 115
     NUT = 126
+    MINIO = 473
     WEBDAV = 666
 
 
