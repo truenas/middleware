@@ -1,8 +1,9 @@
 import logging
 import os
 import base64
-
-from middlewared.utils import run
+import stat
+import subprocess
+from contextlib import suppress
 
 logger = logging.getLogger(__name__)
 kdir = "/etc/kerberos"
@@ -10,31 +11,47 @@ keytabfile = "/etc/krb5.keytab"
 ktutil_cmd = "/usr/sbin/ktutil"
 
 
-async def write_keytab(db_keytabname, db_keytabfile):
-    temp_keytab = f'{kdir}/{db_keytabname}'
-    if not os.path.exists(kdir):
-        os.mkdir(kdir)
-    if os.path.exists(temp_keytab):
-        os.remove(temp_keytab)
-    with open(temp_keytab, "wb") as f:
-        f.write(db_keytabfile)
-
-    ktutil = await run([ktutil_cmd, "copy", temp_keytab, keytabfile], check=False)
-    ktutil_errs = ktutil.stderr.decode()
-
-    if ktutil_errs:
-        logger.debug(f'Keytab generation failed with error: {ktutil_errs}')
-
-    os.remove(temp_keytab)
+def set_mode(fd, mode):
+    if stat.S_IMODE(os.fstat(fd).st_mode) != mode:
+        os.fchmod(fd, mode)
 
 
-async def render(service, middleware):
-    keytabs = await middleware.call('kerberos.keytab.query')
+def write_keytab(db_keytabname, db_keytabfile):
+    def opener(path, flags):
+        return os.open(path, flags, dir_fd=dirfd, mode=0o600)
+
+    with suppress(FileExistsError):
+        os.mkdir(kdir, mode=0o700)
+
+    try:
+        dirfd = os.open(kdir, os.O_DIRECTORY)
+        set_mode(dirfd, 0o700)
+
+        with open(db_keytabname, "wb", opener=opener) as f:
+            set_mode(f.fileno(), 0o600)
+            f.write(db_keytabfile)
+
+        ktutil = subprocess.run([
+            ktutil_cmd, "copy", f'{kdir}/{db_keytabname}', keytabfile
+        ], check=False, capture_output=True)
+
+        if ktutil.stderr:
+            logger.debug("%s: keytab generation failed: %s",
+                         db_keytabname, ktutil.stderr.decode())
+
+        os.remove(db_keytabname, dir_fd=dirfd)
+
+    finally:
+        os.close(dirfd)
+
+
+def render(service, middleware):
+    keytabs = middleware.call_sync('kerberos.keytab.query')
     if not keytabs:
-        logger.trace(f'No keytabs in configuration database, skipping keytab generation')
+        logger.trace('No keytabs in configuration database, skipping keytab generation')
         return
 
     for keytab in keytabs:
         db_keytabfile = base64.b64decode(keytab['file'].encode())
-        db_keytabname = keytab['id']
-        await write_keytab(db_keytabname, db_keytabfile)
+        db_keytabname = f'keytab_{keytab["id"]}'
+        write_keytab(db_keytabname, db_keytabfile)
