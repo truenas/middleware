@@ -211,6 +211,9 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf', 'checkpoint': 'interface_sync'}
         ],
+        'haproxy': [
+            {'type': 'mako', 'path': 'haproxy/haproxy.cfg', 'checkpoint': 'interface_sync'},
+        ],
         'glusterd': [
             {
                 'type': 'mako',
