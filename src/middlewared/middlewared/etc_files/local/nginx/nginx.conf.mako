@@ -175,6 +175,16 @@ http {
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
 
+        location ${middleware.call_sync('vm.get_vm_display_nginx_route')} {
+            proxy_pass http://${middleware.call_sync('vm.get_haproxy_uri')}/;
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+        }
+
 % for dev in middleware.call_sync('vm.get_running_display_devices'):
         location ${dev["path"][:-1]} {
             proxy_pass ${dev["redirect_uri"]}/;

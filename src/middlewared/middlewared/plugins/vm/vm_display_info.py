@@ -4,6 +4,7 @@ from middlewared.schema import accepts, Dict, Int, List, Ref, returns, Str
 from middlewared.service import pass_app, private, Service
 
 from .devices import DISPLAY
+from .utils import NGINX_PREFIX
 
 
 class VMService(Service):
@@ -112,3 +113,11 @@ class VMService(Service):
                 )
             ])
         return devices
+
+    @private
+    async def get_vm_display_nginx_route(self):
+        return NGINX_PREFIX
+
+    @private
+    async def get_haproxy_uri(self):
+        return 'localhost:700'
