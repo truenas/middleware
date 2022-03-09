@@ -1,5 +1,3 @@
-import logging
-import os
 import shutil
 import subprocess
 
@@ -10,8 +8,6 @@ from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.utils import run
 from middlewared.utils.shell import join_commandline
 
-
-logger = logging.getLogger(__name__)
 
 class PoolService(Service):
 
@@ -50,7 +46,7 @@ class PoolService(Service):
             try:
                 for vdev in sum(pool['topology'].values(), []):
                     if vdev['status'] != 'ONLINE':
-                        logger.debug('Not expanding vdev(%r) that is %r', vdev['guid'], vdev['status'])
+                        self.logger.debug('Not expanding vdev(%r) that is %r', vdev['guid'], vdev['status'])
                         continue
 
                     c_vdevs = []
@@ -77,7 +73,7 @@ class PoolService(Service):
                             c_vdevs.append((child['guid'], part_data))
 
                     if skip_vdev:
-                        logger.debug('Not expanding vdev(%r): %r', vdev['guid'], skip_vdev)
+                        self.logger.debug('Not expanding vdev(%r): %r', vdev['guid'], skip_vdev)
                         continue
 
                     for guid, part_data in c_vdevs:
@@ -116,10 +112,11 @@ class PoolService(Service):
                 '-s', f'{part_data["size"]}B', part_data['disk']
             )
 
-            logger.warning('It will be obligatory to notify GELI that the provider has been resized: %r',
-                           join_commandline(geli_resize_cmd))
-            logger.warning('Or to resize provider back: %r',
-                           join_commandline(rollback_cmd))
+            self.logger.warning(
+                'It will be obligatory to notify GELI that the provider has been resized: %r',
+                join_commandline(geli_resize_cmd)
+            )
+            self.logger.warning('Or to resize provider back: %r', join_commandline(rollback_cmd))
             geli_resize.append((geli_resize_cmd, rollback_cmd))
 
     async def __geli_resize(self, pool, geli_resize, options):
@@ -128,30 +125,28 @@ class PoolService(Service):
         lock_job = await self.middleware.call('pool.lock', pool['id'], options['geli']['passphrase'])
         await lock_job.wait()
         if lock_job.error:
-            logger.warning('Error locking pool: %s', lock_job.error)
+            self.logger.warning('Error locking pool: %s', lock_job.error)
 
             for geli_resize_cmd, rollback_cmd in geli_resize:
                 if not await self.__run_rollback_cmd(rollback_cmd):
                     failed_rollback.append(rollback_cmd)
 
             if failed_rollback:
-                raise CallError(
-                    'Locking your encrypted pool failed and rolling back changes failed too. '
-                    f'You\'ll need to run the following commands manually:\n%s' % '\n'.join(
-                        map(join_commandline, failed_rollback)
-                    )
-                )
+                cli = '\n'.join(map(join_commandline, failed_rollback))
+                err = 'Locking your encrypted pool failed and rolling back changes failed too. '
+                err += f'You\'ll need to run the following commands manually:\n{cli}'
+                raise CallError(err)
         else:
             for geli_resize_cmd, rollback_cmd in geli_resize:
                 try:
                     await run(*geli_resize_cmd, encoding='utf-8', errors='ignore')
                 except subprocess.CalledProcessError as geli_resize_error:
                     if geli_resize_error.stderr.strip() == 'geli: Size hasn\'t changed.':
-                        logger.info(
+                        self.logger.info(
                             '%s: %s', join_commandline(geli_resize_cmd), geli_resize_error.stderr.strip()
                         )
                     else:
-                        logger.error(
+                        self.logger.error(
                             '%r failed: %s. Resizing partition back', join_commandline(geli_resize_cmd),
                             geli_resize_error.stderr.strip()
                         )
@@ -188,12 +183,11 @@ class PoolService(Service):
             if unlock_job.error:
                 raise CallError(unlock_job.error)
 
-    @staticmethod
-    async def __run_rollback_cmd(rollback_cmd):
+    async def __run_rollback_cmd(self, rollback_cmd):
         try:
             await run(*rollback_cmd, encoding='utf-8', errors='ignore')
         except subprocess.CalledProcessError as rollback_error:
-            logger.critical(
+            self.logger.critical(
                 '%r failed: %s. To restore your pool functionality you will have to run this command manually.',
                 join_commandline(rollback_cmd),
                 rollback_error.stderr.strip()
