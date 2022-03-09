@@ -100,7 +100,7 @@ class PoolService(Service):
 
     async def _resize_disk(self, part_data, encrypted_pool, geli_resize):
         partition_number = part_data['partition_number']
-        if not part_data['disk'].startswith(('nvd', 'vtbd')):
+        if not part_data['disk'].startswith(('nvd', 'vtbd', 'pmem')):
             await run('camcontrol', 'reprobe', part_data['disk'])
         await run('gpart', 'recover', part_data['disk'])
         await run('gpart', 'resize', '-a', '4k', '-i', str(partition_number), part_data['disk'])
