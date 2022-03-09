@@ -100,9 +100,9 @@ def SSH_TEST(command, username, passwrd, host):
     output = process.stdout
     stderr = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output}
+        return {'result': False, 'output': stderr}
     else:
-        return {'result': True, 'output': stderr}
+        return {'result': True, 'output': output}
 
 
 def send_file(file, destination, username, passwrd, host):
@@ -169,9 +169,9 @@ def cmd_test(command):
     output = process.stdout
     stderr = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output}
+        return {'result': False, 'output': stderr}
     else:
-        return {'result': True, 'output': stderr}
+        return {'result': True, 'output': output}
 
 
 def start_ssh_agent():
