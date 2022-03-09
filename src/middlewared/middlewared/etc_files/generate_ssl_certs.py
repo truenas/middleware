@@ -3,7 +3,6 @@ import shutil
 import subprocess
 
 from middlewared.service import CallError
-from middlewared.utils import osc
 
 
 def write_certificates(certs, cacerts):
@@ -14,32 +13,12 @@ def write_certificates(certs, cacerts):
 
         if cert['privatekey']:
             with open(cert['privatekey_path'], 'w') as f:
+                os.fchmod(f.fileno(), 0o400)
                 f.write(cert['privatekey'])
-            os.chmod(cert['privatekey_path'], 0o400)
 
         if cert['type'] & 0x20 and cert['CSR']:
             with open(cert['csr_path'], 'w') as f:
                 f.write(cert['CSR'])
-
-    """
-    Write unified CA certificate file for use with LDAP.
-    """
-    # TODO: See if we can remove the truenas_cacerts reference completely
-    if not cacerts:
-        if osc.IS_FREEBSD:
-            ca_root_path = '/usr/local/share/certs/ca-root-nss.crt'
-        elif osc.IS_LINUX:
-            ca_root_path = '/etc/ssl/certs/ca-certificates.crt'
-        else:
-            raise NotImplementedError()
-        shutil.copyfile(ca_root_path, '/etc/ssl/truenas_cacerts.pem')
-    else:
-        with open('/etc/ssl/truenas_cacerts.pem', 'w') as f:
-            f.write('## USER PROVIDED CA CERTIFICATES ##\n')
-            for c in cacerts:
-                if cert['chain_list']:
-                    f.write('\n'.join(c['chain_list']))
-                    f.write('\n\n')
 
     trusted_cas_path = '/usr/local/share/ca-certificates'
     shutil.rmtree(trusted_cas_path, ignore_errors=True)
