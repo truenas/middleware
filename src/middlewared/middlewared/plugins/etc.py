@@ -21,6 +21,7 @@ DEFAULT_ETC_PERMS = 0o644
 class EtcUSR(enum.IntEnum):
     ROOT = 0
     NSLCD = 110
+    MINIO = 473
     WEBDAV = 666
 
 
@@ -29,6 +30,7 @@ class EtcGRP(enum.IntEnum):
     SHADOW = 42
     NSLCD = 115
     NUT = 126
+    MINIO = 473
     WEBDAV = 666
 
 
