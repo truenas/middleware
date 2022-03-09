@@ -116,7 +116,8 @@ class DISPLAY(Device):
 
     def get_webui_info(self):
         return {
-            'path': f'{NGINX_PREFIX}{self.data["id"]}/',
-            'redirect_uri': f'http://{self.data["attributes"]["bind"]}:'
+            'id': self.data['id'],
+            'path': f'{NGINX_PREFIX}/{self.data["id"]}/',
+            'redirect_uri': f'{self.data["attributes"]["bind"]}:'
                             f'{self.get_web_port(self.data["attributes"]["port"])}',
         }
