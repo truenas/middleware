@@ -2921,7 +2921,7 @@ class PoolDatasetService(CRUDService):
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('acltype', enum=['NOACL', 'NFS4ACL', 'POSIXACL']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
-        Str('xattr', enum=['ON', 'SA']),
+        Str('xattr', default='SA', enum=['ON', 'SA']),
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
