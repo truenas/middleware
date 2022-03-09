@@ -626,7 +626,7 @@ def test_53_add_user_to_sudoers(request):
     results = PUT(f"/user/id/{user_id}", {"sudo": True})
     assert results.status_code == 200, results.text
 
-    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL")
+    check_config_file("/usr/local/etc/sudoers", "testuser3 ALL=(ALL) ALL")
 
     results = PUT(f"/user/id/{user_id}", {"sudo_nopasswd": True})
     assert results.status_code == 200, results.text
