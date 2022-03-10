@@ -303,6 +303,7 @@ class NetworkConfigurationService(ConfigService):
             except Exception:
                 self.logger.warning('Failed to set hostname on standby storage controller', exc_info=True)
 
+        # dns domain name changed
         licensed = await self.middleware.call('failover.licensed')
         domainname_changed = new_config['domain'] != config['domain']
         if domainname_changed:
@@ -314,6 +315,7 @@ class NetworkConfigurationService(ConfigService):
                 except Exception:
                     self.logger.warning('Failed to set domain name on standby storage controller', exc_info=True)
 
+        # anything related to resolv.conf changed
         dnssearch_changed = new_config['domains'] != config['domains']
         dns1_changed = new_config['nameserver1'] != config['nameserver1']
         dns2_changed = new_config['nameserver2'] != config['nameserver2']
@@ -336,6 +338,7 @@ class NetworkConfigurationService(ConfigService):
 
             await self.middleware.run_in_thread(reload_cli)
 
+        # default gateways changed
         ipv4gw_changed = new_config['ipv4gateway'] != config['ipv4gateway']
         ipv6gw_changed = new_config['ipv6gateway'] != config['ipv6gateway']
         if ipv4gw_changed or ipv6gw_changed:
@@ -346,9 +349,10 @@ class NetworkConfigurationService(ConfigService):
                 except Exception:
                     self.logger.warning('Failed to generate routes on standby storage controller', exc_info=True)
 
+        # kerberized NFS needs to be restarted if these change
         if lhost_changed or vhost_changed or domainname_changed:
             if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
-                await self.middleware.call('service.restart', 'nfs')
+                to_restart.add('nfs')
 
         # proxy server has changed
         if new_config['httpproxy'] != config['httpproxy']:
