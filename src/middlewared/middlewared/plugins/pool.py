@@ -2921,7 +2921,7 @@ class PoolDatasetService(CRUDService):
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('acltype', enum=['NOACL', 'NFS4ACL', 'POSIXACL']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
-        Str('xattr', default='SA', enum=['ON', 'SA']),
+        Str('xattr', enum=['ON', 'SA']),
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
@@ -2979,7 +2979,7 @@ class PoolDatasetService(CRUDService):
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
-        if data['type'] == 'FILESYSTEM':
+        if data['type'] == 'FILESYSTEM' and 'xattr' not in data:
             data['xattr'] = 'SA'
 
         if osc.IS_LINUX and not data.get('acltype') and data['type'] == 'FILESYSTEM':
@@ -3277,7 +3277,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
 
             for i in (
-                'aclmode', 'acltype', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+                'aclmode', 'acltype', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'xattr'
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
