@@ -1439,12 +1439,11 @@ class SharingSMBService(SharingService):
             verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
 
-        bypass = bool(data['cluster_volname'])
-
         await self.cluster_share_validate(data, schema_name, verrors)
 
         if data['path']:
-            await self.validate_path_field(data, schema_name, verrors, bypass=bypass)
+            if not data['cluster_volname']:
+                await self.validate_path_field(data, schema_name, verrors)
 
             """
             When path is not a clustervolname, legacy behavior is to make all path components

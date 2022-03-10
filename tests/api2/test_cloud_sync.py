@@ -1,10 +1,9 @@
-import contextlib
 import re
 import time
 
 import pytest
 
-from middlewared.test.integration.assets.cloud_sync import credential, task, local_s3_credential, local_s3_task
+from middlewared.test.integration.assets.cloud_sync import credential, task, local_s3_credential, local_s3_task, run_task
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool, ssh
@@ -13,30 +12,10 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE
 from auto_config import dev_test
 reason = 'Skip for testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
-
-
-def run_task(task):
-    result = POST(f"/cloudsync/id/{task['id']}/sync/")
-    assert result.status_code == 200, result.text
-    for i in range(120):
-        result = GET(f"/cloudsync/id/{task['id']}/")
-        assert result.status_code == 200, result.text
-        state = result.json()
-        if state["job"] is None:
-            time.sleep(1)
-            continue
-        if state["job"]["state"] in ["WAITING", "RUNNING"]:
-            time.sleep(1)
-            continue
-        assert state["job"]["state"] == "SUCCESS", state
-        return
-
-    assert False, state
 
 
 def test_include():

@@ -6,11 +6,7 @@ from pathlib import Path
 from middlewared.validators import IpAddress
 
 
-async def check_path_resides_within_volume(verrors, middleware, name, path, gluster_bypass=False):
-
-    # when a sharing service is using gluster, the path checks below do not apply
-    if gluster_bypass:
-        return
+async def check_path_resides_within_volume(verrors, middleware, name, path):
 
     # we need to make sure the sharing service is configured within the zpool
     rp = os.path.realpath(path)

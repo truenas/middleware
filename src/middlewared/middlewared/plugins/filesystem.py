@@ -45,6 +45,10 @@ class FilesystemService(Service):
         chflags.set_immutable(path, set_flag)
 
     @private
+    def is_cluster_path(self, path):
+        return path.startswith(FuseConfig.FUSE_PATH_SUBST.value)
+
+    @private
     def resolve_cluster_path(self, path, ignore_ctdb=False):
         """
         Convert a "CLUSTER:"-prefixed path to an absolute path
