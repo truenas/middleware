@@ -155,10 +155,10 @@ def test_08_system_keytab_verify(request):
     global orig_kt_len
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
         orig_kt_len = len(json.loads(results['output'].strip()))
-        assert orig_kt_len != 0, results['output']
+        assert orig_kt_len != 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @pytest.mark.dependency(name="KRB5_IS_HEALTHY")
@@ -217,10 +217,10 @@ def test_12_second_keytab_system_keytab_verify(request):
     depends(request, ["SECOND_KEYTAB", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
         new_kt_len = len(json.loads(results['output'].strip()))
-        assert new_kt_len > orig_kt_len, results['output']
+        assert new_kt_len > orig_kt_len, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_13_delete_second_keytab(request):
@@ -288,7 +288,7 @@ def test_18_second_realm_krb5_conf_verify(request):
     has_kpasswd_server = False
     cmd = 'cat /etc/krb5.conf'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
         for entry in results['output'].splitlines():
             if entry.lstrip() == f"kdc = {' '.join(SAMPLEDOM_REALM['kdc'])}":
@@ -300,9 +300,9 @@ def test_18_second_realm_krb5_conf_verify(request):
             if entry.lstrip() == f"kpasswd_server = {' '.join(SAMPLEDOM_REALM['kpasswd_server'])}":
                 has_kpasswd_server = True
 
-    assert has_kdc is True, results['output']
-    assert has_admin_server is True, results['output']
-    assert has_kpasswd_server is True, results['output']
+    assert has_kdc is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert has_admin_server is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert has_kpasswd_server is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_19_second_realm_delete(request):
@@ -333,7 +333,7 @@ def test_21_base_krb5_pam_verify(request):
 
     cmd = 'cat /etc/krb5.conf'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if not results['result'] is True:
         return
 
@@ -352,8 +352,8 @@ def test_21_base_krb5_pam_verify(request):
             if entry.strip() == "ticket_lifetime = 36000":
                 has_ticket_lifetime = True
 
-    assert has_forwardable is True, results['output']
-    assert has_ticket_lifetime is True, results['output']
+    assert has_forwardable is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert has_ticket_lifetime is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_22_base_krb5_appdefaults_add(request):
@@ -368,7 +368,7 @@ def test_23_base_krb5_appdefaults_verify(request):
 
     cmd = 'cat /etc/krb5.conf'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if not results['result'] is True:
         return
 
@@ -387,7 +387,7 @@ def test_23_base_krb5_appdefaults_verify(request):
                 has_aux = True
                 break
 
-    assert has_aux is True, results['output']
+    assert has_aux is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_24_base_krb5_libdefaults_add(request):
@@ -402,7 +402,7 @@ def test_25_base_krb5_libdefaults_verify(request):
 
     cmd = 'cat /etc/krb5.conf'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if not results['result'] is True:
         return
 
@@ -416,7 +416,7 @@ def test_25_base_krb5_libdefaults_verify(request):
                 has_aux = True
                 break
 
-    assert has_aux is True, results['output']
+    assert has_aux is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_26_base_krb5_base_reset_aux(request):
@@ -441,7 +441,7 @@ def test_29_verify_no_nfs_principals(request):
     depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.has_nfs_principal'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     assert results['output'].strip() == 'False'
 
 
@@ -466,13 +466,13 @@ def test_30_check_nfs_exports_sec(request):
 
     cmd = 'midclt call etc.generate nfsd'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     expected_sec = "V4: / -sec=sys"
     cmd = f'grep "{expected_sec}" /etc/exports'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == expected_sec, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['output'].strip() == expected_sec, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @pytest.mark.dependency(name="V4_KRB_ENABLED")
@@ -493,14 +493,14 @@ def test_32_add_krb_spn(request):
     depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
     cmd = 'midclt call activedirectory.add_nfs_spn'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_33_verify_has_nfs_principals(request):
     depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.has_nfs_principal'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     assert results['output'].strip() == 'True'
 
 
@@ -508,7 +508,7 @@ def test_34_verify_ad_nfs_parameters(request):
     depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.getparm "winbind use default domain" GLOBAL'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if not results['result']:
         return
     assert results['output'].strip() == "True"
@@ -523,13 +523,13 @@ def test_35_check_nfs_exports_sec(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = 'midclt call etc.generate nfsd'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     expected_sec = "V4: / -sec=krb5:krb5i:krb5p"
     cmd = f'grep "{expected_sec}" /etc/exports'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == expected_sec, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['output'].strip() == expected_sec, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_36_disable_krb5_nfs4(request):
@@ -556,13 +556,13 @@ def test_37_check_nfs_exports_sec(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = 'midclt call etc.generate nfsd'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     expected_sec = "V4: / -sec=sys:krb5:krb5i:krb5p"
     cmd = f'grep "{expected_sec}" /etc/exports'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == expected_sec, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['output'].strip() == expected_sec, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_38_cleanup_nfs_settings(request):

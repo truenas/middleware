@@ -9,7 +9,7 @@ import os
 import re
 import websocket
 import uuid
-from subprocess import run, Popen, PIPE
+from subprocess import run, PIPE
 from time import sleep
 
 from auto_config import api_url, user, password
@@ -98,10 +98,11 @@ def SSH_TEST(command, username, passwrd, host):
     ]
     process = run(cmd, stdout=PIPE, universal_newlines=True)
     output = process.stdout
+    stderr = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output}
+        return {'result': False, 'output': output, 'stderr': stderr}
     else:
-        return {'result': True, 'output': output}
+        return {'result': True, 'output': output, 'stderr': stderr}
 
 
 def send_file(file, destination, username, passwrd, host):
@@ -119,10 +120,11 @@ def send_file(file, destination, username, passwrd, host):
     ]
     process = run(cmd, stdout=PIPE, universal_newlines=True)
     output = process.stdout
+    stderr = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output}
+        return {'result': False, 'output': output, 'stderr': stderr}
     else:
-        return {'result': True, 'output': output}
+        return {'result': True, 'output': output, 'stderr': stderr}
 
 
 def get_file(file, destination, username, passwrd, host):
@@ -140,36 +142,21 @@ def get_file(file, destination, username, passwrd, host):
     ]
     process = run(cmd, stdout=PIPE, universal_newlines=True)
     output = process.stdout
+    stderr = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output}
+        return {'result': False, 'output': output, 'stderr': stderr}
     else:
-        return {'result': True, 'output': output}
-
-
-def RC_TEST(command):
-    process = run(command, shell=True)
-    if process.returncode != 0:
-        return False
-    else:
-        return True
-
-
-def return_output(command):
-    process = Popen(command, shell=True, stdout=PIPE, universal_newlines=True)
-    output = process.stdout.readlines()
-    if len(output) == 0:
-        return None
-    else:
-        return output[0].strip()
+        return {'result': True, 'output': output, 'stderr': stderr}
 
 
 def cmd_test(command):
     process = run(command, shell=True, stdout=PIPE, universal_newlines=True)
     output = process.stdout
+    stderr = process.stderr
     if process.returncode != 0:
-        return {'result': False, 'output': output}
+        return {'result': False, 'output': output, 'stderr': stderr}
     else:
-        return {'result': True, 'output': output}
+        return {'result': True, 'output': output, 'stderr': stderr}
 
 
 def start_ssh_agent():

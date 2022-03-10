@@ -16,8 +16,8 @@ try:
     # AD_USER is use for API call and CMD_AD_USER for command
     # r-string is use for raw string to stop pytest and flake8 complaining
     # about \
-    AD_USER = fr"AD01\{ADUSERNAME.lower()}"
-    CMD_AD_USER = fr"AD01\\{ADUSERNAME.lower()}"
+    AD_USER = fr"AD02\{ADUSERNAME.lower()}"
+    CMD_AD_USER = fr"AD02\\{ADUSERNAME.lower()}"
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
@@ -192,10 +192,10 @@ def test_17_kerberos_keytab_verify(request):
     depends(request, ["ad_dataset_permission", "ssh_password"], scope="session")
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
         kt = json.loads(results['output'].strip())
-        assert len(kt) != 0, results['output']
+        assert len(kt) != 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_18_kerberos_restart_verify(request):
@@ -205,22 +205,22 @@ def test_18_kerberos_restart_verify(request):
     depends(request, ["kerberos_verified", "ssh_password"], scope="session")
     cmd = 'rm /etc/krb5.keytab'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = 'midclt call kerberos.stop'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = 'midclt call kerberos.start'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
     results = SSH_TEST(cmd, user, password, ip)
     kt = json.loads(results['output'].strip())
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
-        assert len(kt) != 0, results['output']
+        assert len(kt) != 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = 'midclt call kerberos._klist_test'
     results = SSH_TEST(cmd, user, password, ip)
@@ -332,7 +332,7 @@ def test_32_create_a_file_and_put_on_the_active_directory_share(request):
         ' -c "put testfile.txt testfile.txt"'
     results = cmd_test(command)
     cmd_test('rm testfile.txt')
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_33_verify_testfile_is_on_the_active_directory_share(request):
@@ -346,7 +346,7 @@ def test_34_create_a_directory_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "mkdir testdir"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_35_verify_testdir_exist_on_the_active_directory_share(request):
@@ -360,7 +360,7 @@ def test_36_copy_testfile_in_testdir_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "scopy testfile.txt testdir/testfile2.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_37_verify_testfile2_exist_in_testdir_on_the_active_directory_share(request):
@@ -468,7 +468,7 @@ def test_49_delete_testfile_on_the_active_directory_share(request):
     command = fr'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rm testfile.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_50_verify_testfile_is_deleted_on_the_active_directory_share(request):
@@ -482,7 +482,7 @@ def test_51_delele_testfile_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rm testdir/testfile2.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_52_verify_testfile2_is_deleted_on_the_active_directory_share(request):
@@ -496,7 +496,7 @@ def test_53_delete_testdir_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U {CMD_AD_USER}%{ADPASSWORD}' \
         ' -c "rmdir testdir"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_54_verify_testdir_is_deleted_on_the_active_directory_share(request):

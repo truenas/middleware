@@ -74,7 +74,7 @@ def test_08_look_for_testgroup_is_in_freenas_group(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = 'getent group | grep -q testgroup'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_09_get_new_next_gid():
@@ -115,14 +115,14 @@ def test_15_look_for_testgroup_is_not_in_freenas_group(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = 'getent group | grep -q testgroup'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, results['output']
+    assert results['result'] is False, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_16_look_for_newgroup_is_in_freenas_group(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = 'getent group | grep -q newgroup'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_17_convert_to_smb_group():
@@ -141,11 +141,11 @@ def test_18_check_groupmap_added(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
         groupmap = json.loads(results['output'])
         local_maps = groupmap['local'].values()
-        assert len(local_maps) != 0, results['output']
+        assert len(local_maps) != 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 # Delete the group
@@ -162,7 +162,7 @@ def test_21_look_for_newgroup_is_not_in_freenas_group(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = 'getent group | grep -q newgroup'
     results = SSH_TEST(cmd, 'root', 'testing', ip)
-    assert results['result'] is False, results['output']
+    assert results['result'] is False, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 # Test new SMB groupmap
@@ -195,12 +195,12 @@ def test_24_check_groupmap_added(request):
     depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     global groupmap
     if results['result'] is True:
         groupmap = json.loads(results['output'])
         local_maps = groupmap['local'].values()
-        assert len(local_maps) != 0, results['output']
+        assert len(local_maps) != 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_25_test_name_change_smb_group(request):
@@ -218,7 +218,7 @@ def test_26_groupmap_entry_nt_name_change(request):
     depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     gm = None
 
     for groupmap_entry in groupmap['local'].values():
@@ -230,9 +230,9 @@ def test_26_groupmap_entry_nt_name_change(request):
         new = json.loads(results['output'])
         old_sid = gm['sid']
         new_entry = new['local'].get(str(gm['gid']))
-        assert new_entry, results['output']
-        assert old_sid == new_entry['sid'], results['output']
-        assert gm['nt_name'] != new_entry['nt_name'], results['output']
+        assert new_entry, f'out: {results["output"]}, err: {results["stderr"]}'
+        assert old_sid == new_entry['sid'], f'out: {results["output"]}, err: {results["stderr"]}'
+        assert gm['nt_name'] != new_entry['nt_name'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_27_new_groupmap_added_after_name_change(request):
@@ -243,11 +243,11 @@ def test_27_new_groupmap_added_after_name_change(request):
     depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
         groupmap = json.loads(results['output'])
         local_maps = groupmap['local'].values()
-        assert len(local_maps) != 0, results['output']
+        assert len(local_maps) != 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_28_convert_smb_group_to_non_smb(request):
@@ -266,10 +266,10 @@ def test_29_groupmap_deleted_after_smb_change(request):
     depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call smb.groupmap_list'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is True:
         groupmap = (json.loads(results['output'])).get('newsmbgroup')
-        assert groupmap is None, results['output']
+        assert groupmap is None, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_30_delete_group_smb_newgroup(request):

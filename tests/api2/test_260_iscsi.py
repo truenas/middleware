@@ -144,7 +144,7 @@ def test_09_Connecting_to_iSCSI_target(request):
     depends(request, ["iscsi_05"])
     cmd = f'iscsictl -A -p {ip}:3260 -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -157,7 +157,7 @@ def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
     while True:
         cmd = f'iscsictl -L | grep {ip}:3260'
         results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         iscsictl_list = results['output'].strip().split()
         if iscsictl_list[2] == "Connected:":
             file_device_name = iscsictl_list[3]
@@ -173,7 +173,7 @@ def test_11_Format_the_target_volume(request):
     SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     cmd2 = f'newfs "/dev/{file_device_name}"'
     results = SSH_TEST(cmd2, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -181,7 +181,7 @@ def test_12_Creating_iSCSI_mountpoint(request):
     depends(request, ["iscsi_10"])
     cmd = f'mkdir -p {file_mountpoint}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -190,7 +190,7 @@ def test_13_Mount_the_target_volume(request):
     depends(request, ["iscsi_10"])
     cmd = f'mount "/dev/{file_device_name}" "{file_mountpoint}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -198,7 +198,7 @@ def test_14_Creating_file(request):
     depends(request, ["iscsi_10"])
     cmd = 'touch "%s/testfile"' % file_mountpoint
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -206,7 +206,7 @@ def test_15_Moving_file(request):
     depends(request, ["iscsi_10"])
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (file_mountpoint, file_mountpoint)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -214,7 +214,7 @@ def test_16_Copying_file(request):
     depends(request, ["iscsi_10"])
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (file_mountpoint, file_mountpoint)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -222,7 +222,7 @@ def test_17_Deleting_file(request):
     depends(request, ["iscsi_10"])
     results = SSH_TEST('rm "%s/testfile2"' % file_mountpoint,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -230,7 +230,7 @@ def test_18_verifiying_iscsi_session_on_truenas(request):
     depends(request, ["iscsi_10", "ssh_password"], scope="session")
     try:
         results = SSH_TEST('ctladm islist', user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         hostname = SSH_TEST('hostname', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)['output'].strip()
     except AssertionError as e:
         raise AssertionError(f'Could not verify iscsi session on TrueNAS : {e}')
@@ -243,7 +243,7 @@ def test_19_Unmounting_iSCSI_volume(request):
     depends(request, ["iscsi_10"])
     cmd = f'umount "{file_mountpoint}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     sleep(1)
 
 
@@ -252,7 +252,7 @@ def test_20_Removing_iSCSI_volume_mountpoint(request):
     depends(request, ["iscsi_10"])
     cmd = f'rm -rf "{file_mountpoint}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -260,7 +260,7 @@ def test_21_Disconnect_iSCSI_target(request):
     depends(request, ["iscsi_10"])
     cmd = f'iscsictl -R -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_25_Delete_associate_iSCSI_file_targetextent(request):
@@ -366,7 +366,7 @@ def test_33_verify_the_iscsi_service_is_running(request):
 def test_34_connecting_to_the_zvol_iscsi_target(request):
     depends(request, ["iscsi_32"])
     results = cmd_test(f'iscsictl -A -p {ip}:3260 -t {basename}:{zvol_name}')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -391,7 +391,7 @@ def test_36_format_the_target_volume(request):
     depends(request, ["iscsi_35"])
     cmd_test(f'umount "/media/{zvol_device_name}"')
     results = cmd_test(f'newfs "/dev/{zvol_device_name}"')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -399,7 +399,7 @@ def test_36_format_the_target_volume(request):
 def test_37_creating_iscsi_mountpoint(request):
     depends(request, ["iscsi_35"])
     results = cmd_test(f'mkdir -p {zvol_mountpoint}')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -408,14 +408,14 @@ def test_37_creating_iscsi_mountpoint(request):
 def test_38_mount_the_zvol_target_volume(request):
     depends(request, ["iscsi_37"])
     results = cmd_test(f'mount /dev/{zvol_device_name} {zvol_mountpoint}')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
 def test_39_creating_file_in_zvol_iscsi_share(request):
     depends(request, ["iscsi_38"])
     results = cmd_test(f'touch "{zvol_mountpoint}/myfile.txt"')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -423,14 +423,14 @@ def test_40_moving_file_in_zvol_iscsi_share(request):
     depends(request, ["iscsi_38"])
     cmd = f'mv "{zvol_mountpoint}/myfile.txt" "{zvol_mountpoint}/newfile.txt"'
     results = cmd_test(cmd)
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
 def test_41_creating_a_directory_in_zvol_iscsi_share(request):
     depends(request, ["iscsi_38"])
     results = cmd_test(f'mkdir "{zvol_mountpoint}/mydir"')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -438,7 +438,7 @@ def test_42_copying_file_to_new_dir_in_zvol_iscsi_share(request):
     depends(request, ["iscsi_38"])
     cmd = f'cp "{zvol_mountpoint}/newfile.txt" "{zvol_mountpoint}/mydir/myfile.txt"'
     results = cmd_test(cmd)
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -446,7 +446,7 @@ def test_43_verifying_iscsi_session_on_truenas(request):
     depends(request, ["iscsi_38", "ssh_password"], scope="session")
     try:
         results = SSH_TEST('ctladm islist', user, password, ip)
-        assert results['result'], results['output']
+        assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
         hostname = cmd_test('hostname')['output'].strip()
     except AssertionError as e:
         raise AssertionError(f'Could not verify iscsi session on TrueNAS : {e}')
@@ -458,21 +458,21 @@ def test_43_verifying_iscsi_session_on_truenas(request):
 def test_44_unmounting_the_zvol_iscsi_volume(request):
     depends(request, ["iscsi_38"])
     results = cmd_test(f'umount "{zvol_mountpoint}"')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
 def test_45_verify_the_zvol_mountpoint_is_empty(request):
     depends(request, ["iscsi_38"])
     results = cmd_test(f'test -f {zvol_mountpoint}/newfile.txt')
-    assert not results['result'], results['output']
+    assert not results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
 def test_46_disconnect_iscsi_zvol_target(request):
     depends(request, ["iscsi_34"])
     results = cmd_test(f'iscsictl -R -t {basename}:{zvol_name}')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -480,7 +480,7 @@ def test_46_disconnect_iscsi_zvol_target(request):
 def test_47_connecting_to_the_zvol_iscsi_target(request):
     depends(request, ["iscsi_32"])
     results = cmd_test(f'iscsictl -A -p {ip}:3260 -t {basename}:{zvol_name}')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -513,7 +513,7 @@ def test_49_unmount_media(request):
 def test_50_remount_the_zvol_target_volume(request):
     depends(request, ["iscsi_48"])
     results = cmd_test(f'mount /dev/{zvol_device_name} {zvol_mountpoint}')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
@@ -529,7 +529,7 @@ def test_51_verify_files_and_directory_was_kept_on_the_zvol_iscsi_share(request)
 def test_52_unmounting_the_zvol_iscsi_volume(request):
     depends(request, ["iscsi_50"])
     results = cmd_test(f'umount "{zvol_mountpoint}"')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
     sleep(1)
 
 
@@ -537,14 +537,14 @@ def test_52_unmounting_the_zvol_iscsi_volume(request):
 def test_53_removing_iscsi_volume_mountpoint(request):
     depends(request, ["iscsi_50"])
     results = cmd_test(f'rm -rf "{zvol_mountpoint}"')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @bsd_host_cfg
 def test_54_redisconnect_iscsi_zvol_target(request):
     depends(request, ["iscsi_47"])
     results = cmd_test(f'iscsictl -R -t {basename}:{zvol_name}')
-    assert results['result'], results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_55_disable_iscsi_service(request):

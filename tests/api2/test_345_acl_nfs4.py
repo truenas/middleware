@@ -372,15 +372,15 @@ def test_12_prepare_recursive_tests(request):
 
     cmd = f'mkdir -p /mnt/{ACLTEST_DATASET}/dir1/dir2'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = f'touch /mnt/{ACLTEST_DATASET}/dir1/testfile'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = f'touch /mnt/{ACLTEST_DATASET}/dir1/dir2/testfile'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_13_recursive_no_traverse(request):
@@ -580,11 +580,11 @@ def test_22_prep_testfile(request):
             scope="session")
     cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 """
@@ -680,10 +680,10 @@ def test_23_test_acl_function_deny(perm, request):
         # unfortunately, we now need to recreate our testfile.
         cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     else:
         assert results['result'] is False, errstr
 
@@ -775,11 +775,11 @@ def test_24_test_acl_function_allow(perm, request):
         # unfortunately, we now need to recreate our testfile.
         cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
         cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @pytest.mark.parametrize('perm', IMPLEMENTED_ALLOW)
@@ -938,11 +938,11 @@ def test_25_test_acl_function_allow_restrict(perm, request):
             # will ensure that new file has right ACL.
             cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
             results = SSH_TEST(cmd, user, password, ip)
-            assert results['result'] is True, results['output']
+            assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
             cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
             results = SSH_TEST(cmd, user, password, ip)
-            assert results['result'] is True, results['output']
+            assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     if "READ_DATA" not in tests_to_skip:
         cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
@@ -1021,7 +1021,7 @@ def test_26_file_execute_deny(request):
 
     cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
@@ -1074,7 +1074,7 @@ def test_27_file_execute_allow(request):
 
     cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
@@ -1125,7 +1125,7 @@ def test_28_file_execute_omit(request):
 
     cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)

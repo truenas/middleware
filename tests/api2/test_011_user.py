@@ -54,8 +54,8 @@ home_acl = [
 
 def check_config_file(file_name, expected_line):
     results = SSH_TEST(f'cat {file_name}', user, password, ip)
-    assert results['result'], results['output']
-    assert expected_line in results['output'].splitlines(), results['output']
+    assert results['result'], f'out: {results["output"]}, err: {results["stderr"]}'
+    assert expected_line in results['output'].splitlines(), f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @pytest.mark.dependency(name="user_01")
@@ -134,6 +134,7 @@ def test_05_check_user_exists(request):
         assert pw['pw_shell'] == '/bin/csh', results.text
         assert pw['pw_gecos'] == 'Test User', results.txt
         assert pw['pw_dir'] == '/nonexistent', results.txt
+
 
 def test_06_get_user_info(request):
     depends(request, ["user_02", "user_01"])
@@ -332,7 +333,7 @@ def test_30_creating_home_dataset(request):
 def test_31_creating_user_with_homedir(request):
     depends(request, ["HOME_DS_CREATED"])
     global user_id
-    payload = {
+    payload1 = {
         "username": "testuser2",
         "full_name": "Test User2",
         "group_create": True,
@@ -343,21 +344,21 @@ def test_31_creating_user_with_homedir(request):
         "home": f'/mnt/{dataset}/testuser2',
         "home_mode": '750'
     }
-    results = POST("/user/", payload)
+    results = POST("/user/", payload1)
     assert results.status_code == 200, results.text
     user_id = results.json()
     time.sleep(5)
 
-    payload = {"username": "testuser2"}
-    results = POST("/user/get_user_obj/", payload)
+    payload2 = {"username": "testuser2"}
+    results = POST("/user/get_user_obj/", payload2)
     assert results.status_code == 200, results.text
 
     pw = results.json()
-    assert pw['pw_dir'] == payload['home'], results.text
-    assert pw['pw_name'] == payload['username'], results.text
-    assert pw['pw_uid'] == payload['uid'], results.text
-    assert pw['pw_shell'] == payload['shell'], results.text
-    assert pw['pw_gecos'] == payload['full_name'], results.text
+    assert pw['pw_dir'] == payload1['home'], results.text
+    assert pw['pw_name'] == payload1['username'], results.text
+    assert pw['pw_uid'] == payload1['uid'], results.text
+    assert pw['pw_shell'] == payload1['shell'], results.text
+    assert pw['pw_gecos'] == payload1['full_name'], results.text
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
@@ -371,7 +372,7 @@ def test_33_smb_user_passb_entry_exists(request):
     depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -379,7 +380,7 @@ def test_33_smb_user_passb_entry_exists(request):
             my_entry = entry
             break
 
-    assert my_entry is not None, results['output']
+    assert my_entry is not None, f'out: {results["output"]}, err: {results["stderr"]}'
     if my_entry is not None:
         assert my_entry["Account Flags"] == "[U          ]", str(my_entry)
 
@@ -416,7 +417,7 @@ def test_37_homedir_testfile_create(request):
 
     cmd = f'touch {testfile}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     results = POST('/filesystem/stat/', testfile)
     assert results.status_code == 200, results.text
@@ -467,6 +468,7 @@ def test_41_lock_smb_user(request):
         f"testuser2:*LOCKED*:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
     )
 
+
 def test_42_verify_locked_smb_user_is_disabled(request):
     """
     This test verifies that the passdb user is disabled
@@ -475,7 +477,7 @@ def test_42_verify_locked_smb_user_is_disabled(request):
     depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -483,7 +485,7 @@ def test_42_verify_locked_smb_user_is_disabled(request):
             my_entry = entry
             break
 
-    assert my_entry is not None, results['output']
+    assert my_entry is not None, f'out: {results["output"]}, err: {results["stderr"]}'
     if my_entry is not None:
         assert my_entry["Account Flags"] == "[DU         ]", str(my_entry)
 
@@ -505,7 +507,7 @@ def test_44_verify_absent_from_passdb(request):
     depends(request, ["USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -513,7 +515,7 @@ def test_44_verify_absent_from_passdb(request):
             my_entry = entry
             break
 
-    assert my_entry is None, results['output']
+    assert my_entry is None, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_45_deleting_homedir_user(request):
@@ -554,7 +556,7 @@ def test_48_verify_non_smb_user_absent_from_passdb(request):
     depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -562,7 +564,7 @@ def test_48_verify_non_smb_user_absent_from_passdb(request):
             my_entry = entry
             break
 
-    assert my_entry is None, results['output']
+    assert my_entry is None, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_49_convert_to_smb_knownfail(request):
@@ -606,7 +608,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
     depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     pdb_list = json.loads(results['output'])
     my_entry = None
     for entry in pdb_list:
@@ -614,7 +616,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
             my_entry = entry
             break
 
-    assert my_entry is not None, results['output']
+    assert my_entry is not None, f'out: {results["output"]}, err: {results["stderr"]}'
     if my_entry is not None:
         assert my_entry["Account Flags"] == "[U          ]", str(my_entry)
 
@@ -624,12 +626,12 @@ def test_53_add_user_to_sudoers(request):
     results = PUT(f"/user/id/{user_id}", {"sudo": True})
     assert results.status_code == 200, results.text
 
-    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL")
+    check_config_file("/usr/local/etc/sudoers", "testuser3 ALL=(ALL) ALL")
 
     results = PUT(f"/user/id/{user_id}", {"sudo_nopasswd": True})
     assert results.status_code == 200, results.text
 
-    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) NOPASSWD: ALL")
+    check_config_file("/usr/local/etc/sudoers", "testuser3 ALL=(ALL) NOPASSWD: ALL")
 
 
 def test_54_disable_password_auth(request):
@@ -643,7 +645,7 @@ def test_54_disable_password_auth(request):
 
     check_config_file(
         '/etc/master.passwd',
-        f"testuser2:*:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
+        f"testuser3:*:{u['uid']}:{u['group']['bsdgrp_gid']}::0:0:{u['full_name']}:{u['home']}:{u['shell']}"
     )
 
 

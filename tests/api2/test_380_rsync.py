@@ -8,7 +8,7 @@ from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET, RC_TEST, DELETE, POST, SSH_TEST
+from functions import PUT, GET, cmd_test, DELETE, POST, SSH_TEST
 from auto_config import ip, user, dev_test
 reason = 'Skipping for test development'
 # comment pytestmark for development testing with --dev-test
@@ -34,7 +34,7 @@ def test_03_create_root_ssh_key(request):
     depends(request, ["ssh_key"], scope="session")
     cmd = 'ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -N ""'
     results = SSH_TEST(cmd, user, None, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_04_Creating_rsync_task(request, rsynctask_dict):
@@ -66,24 +66,22 @@ def test_06_Checking_to_see_if_rsyncd_service_is_enabled(request):
     assert results.json()[0]['enable'] is True, results
 
 
-def test_07_Testing_rsync_access(request):
+def test_07_Starting_rsyncd_service(request):
     depends(request, ["pool_04"], scope="session")
-    RC_TEST(f'rsync -avn {ip}::testmod') is True
-
-
-def test_08_Starting_rsyncd_service(request):
-    depends(request, ["pool_04"], scope="session")
-    results = POST("/service/start/",
-                   {'service': 'rsync'}
-                   )
+    results = POST("/service/start/", {'service': 'rsync'})
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_09_Checking_to_see_if_rsyncd_service_is_running(request):
+def test_08_Checking_to_see_if_rsyncd_service_is_running(request):
     depends(request, ["pool_04"], scope="session")
     results = GET("/service?service=rsync")
     assert results.json()[0]['state'] == 'RUNNING', results.text
+
+
+def test_09_Testing_rsync_access(request):
+    depends(request, ["pool_04"], scope="session")
+    cmd_test(f'rsync -avn {ip}::testmod')['result'] is True
 
 
 def test_10_Disable_rsync_task(request, rsynctask_dict):
@@ -118,4 +116,4 @@ def test_14_remove_root_ssh_key(request):
     depends(request, ["pool_04", "ssh_key"], scope="session")
     cmd = 'rm /root/.ssh/id_rsa*'
     results = SSH_TEST(cmd, user, None, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'

@@ -25,9 +25,9 @@ if update is True:
         mv_cmd = f'mv {update_conf} /data/update.conf'
         if 'INTERNAL' in version:
             results = SSH_TEST(fetch_cmd, user, password, ip)
-            assert results['result'] is True, results['output']
+            assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
             results = SSH_TEST(mv_cmd, user, password, ip)
-            assert results['result'] is True, results['output']
+            assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         assert True
 
     def test_01_get_initial_FreeNAS_version():

@@ -42,15 +42,15 @@ def test_04_degrading_a_pool_to_create_an_alert(request):
     gptid = get_pool['topology']['data'][0]['path'].replace('/dev/', '')
     cmd = f'zinject -d {gptid} -A fault {pool_name}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_05_verify_the_pool_is_degraded(request):
     depends(request, ['degrade_pool'])
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'DEGRADED' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'DEGRADED' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @pytest.mark.timeout(120)
@@ -122,15 +122,15 @@ def test_12_clear_the_pool_degradation(request):
     depends(request, ['degrade_pool'])
     cmd = f'zpool clear {pool_name}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_13_verify_the_pool_is_not_degraded(request):
     depends(request, ['degrade_pool'])
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'DEGRADED' not in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'DEGRADED' not in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 @pytest.mark.timeout(120)
@@ -156,7 +156,7 @@ if not ha:
         depends(request, ['smb_service'])
         cmd = 'killall -6 smbd'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     @pytest.mark.timeout(120)
     @pytest.mark.dependency(name='wait_alert')
@@ -222,7 +222,7 @@ if not ha:
         depends(request, ['wait_alert'])
         cmd = 'rm -f /var/db/system/cores/*'
         results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     @pytest.mark.timeout(120)
     def test_24_wait_for_the_corefiles_alert_to_disappear(request):

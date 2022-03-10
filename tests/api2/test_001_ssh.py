@@ -52,7 +52,7 @@ def test_05_Checking_if_ssh_is_running():
 def test_06_test_ssh():
     cmd = 'ls -la'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_07_Ensure_ssh_agent_is_setup():
@@ -74,4 +74,4 @@ def test_10_test_ssh_key(request):
     depends(request, ["ssh_password"])
     cmd = 'ls -la'
     results = SSH_TEST(cmd, user, None, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'

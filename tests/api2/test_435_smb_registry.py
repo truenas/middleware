@@ -119,7 +119,7 @@ def test_005_shares_in_registry(request):
     depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     reg_shares = json.loads(results['output'].strip())
     for smb_share in SHARES:
         assert smb_share in reg_shares
@@ -142,7 +142,7 @@ def test_007_renamed_shares_in_registry(request):
     depends(request, ["SHARES_CREATED"])
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     reg_shares = json.loads(results['output'].strip())
     for smb_share in SHARES:
         assert f'NEW_{smb_share}' in reg_shares
@@ -353,9 +353,9 @@ def test_013_registry_is_empty(request):
     depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     reg_shares = json.loads(results['output'].strip())
-    assert len(reg_shares) == 0, results['output']
+    assert len(reg_shares) == 0, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_014_config_is_empty(request):
@@ -406,7 +406,7 @@ def test_016_verify_homeshare_in_registry(request):
     has_homes_share = False
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is not True:
         return
 
@@ -415,7 +415,7 @@ def test_016_verify_homeshare_in_registry(request):
         if share.casefold() == "homes".casefold():
             has_homes_share = True
 
-    assert has_homes_share is True, results['output']
+    assert has_homes_share is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_017_convert_to_non_homes_share(request):
@@ -435,7 +435,7 @@ def test_018_verify_non_home_share_in_registry(request):
     has_homes_share = False
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is not True:
         return
 
@@ -444,7 +444,7 @@ def test_018_verify_non_home_share_in_registry(request):
         if share.casefold() == "HOME_CREATE".casefold():
             has_homes_share = True
 
-    assert has_homes_share is True, results['output']
+    assert has_homes_share is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_019_convert_back_to_homes_share(request):
@@ -464,7 +464,7 @@ def test_020_verify_homeshare_in_registry(request):
     has_homes_share = False
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is not True:
         return
 
@@ -473,7 +473,7 @@ def test_020_verify_homeshare_in_registry(request):
         if share.casefold() == "homes".casefold():
             has_homes_share = True
 
-    assert has_homes_share is True, results['output']
+    assert has_homes_share is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_021_registry_has_single_entry(request):
@@ -485,9 +485,9 @@ def test_021_registry_has_single_entry(request):
     depends(request, ["HOME_SHARE_CREATED", "ssh_password"], scope="session")
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     reg_shares = json.loads(results['output'].strip())
-    assert len(reg_shares) == 1, results['output']
+    assert len(reg_shares) == 1, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_022_registry_rebuild_homes(request):
@@ -502,7 +502,7 @@ def test_022_registry_rebuild_homes(request):
     depends(request, ["HOME_SHARE_CREATED", "ssh_password"], scope="session")
     cmd = 'net conf delshare HOMES'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
     payload = {"service": "cifs"}
     results = POST("/service/reload/", payload)
@@ -511,7 +511,7 @@ def test_022_registry_rebuild_homes(request):
     has_homes_share = False
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     if results['result'] is not True:
         return
 
@@ -520,7 +520,7 @@ def test_022_registry_rebuild_homes(request):
         if share.casefold() == "homes".casefold():
             has_homes_share = True
 
-    assert has_homes_share is True, results['output']
+    assert has_homes_share is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_023_delete_home_share(request):

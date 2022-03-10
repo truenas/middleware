@@ -176,9 +176,9 @@ def test_011_verify_smbclient_127_0_0_1_connection(request):
     depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert 'TestCifsSMB' in results['output'], results['output']
-    assert 'My Test SMB Share' in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'TestCifsSMB' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'My Test SMB Share' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_012_create_a_file_and_put_on_the_active_directory_share(request):
@@ -188,7 +188,7 @@ def test_012_create_a_file_and_put_on_the_active_directory_share(request):
         ' -m NT1 -c "put testfile.txt testfile.txt"'
     results = cmd_test(command)
     cmd_test('rm testfile.txt')
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_013_verify_testfile_is_on_the_active_directory_share(request):
@@ -202,7 +202,7 @@ def test_014_create_a_directory_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
         ' -m NT1 -c "mkdir testdir"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_015_verify_testdir_exist_on_the_active_directory_share(request):
@@ -216,7 +216,7 @@ def test_016_copy_testfile_in_testdir_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
         ' -m NT1 -c "scopy testfile.txt testdir/testfile2.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_017_verify_testfile2_exist_in_testdir_on_the_active_directory_share(request):
@@ -249,15 +249,15 @@ def test_020_verify_smbclient_127_0_0_1_nt_status_access_is_denied(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, results['output']
-    assert 'NT_STATUS_ACCESS_DENIED' in results['output'], results['output']
+    assert results['result'] is False, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert 'NT_STATUS_ACCESS_DENIED' in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_021_verify_smb_getparm_path_homes(request):
     depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     assert results['output'].strip() == f'{SMB_PATH}/%U'
 
 
@@ -307,7 +307,7 @@ def test_028_delete_testfile_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         ' -c "rm testfile.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_029_verify_testfile_is_deleted_on_the_active_directory_share(request):
@@ -321,7 +321,7 @@ def test_030_delele_testfile_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         ' -c "rm testdir/testfile2.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_031_verify_testfile2_is_deleted_on_the_active_directory_share(request):
@@ -335,7 +335,7 @@ def test_032_delete_testdir_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         ' -c "rmdir testdir"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_033_verify_testdir_is_deleted_on_the_active_directory_share(request):
@@ -373,16 +373,16 @@ def test_036_verify_smb_getparm_vfs_objects_share(request, vfs_object):
     depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert vfs_object in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert vfs_object in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_037_verify_smb_getparm_fruit_time_machine_is_yes(request):
     depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert bool(results['output'].strip()) is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert bool(results['output'].strip()) is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_038_disable_time_machine(request):
@@ -423,8 +423,8 @@ def test_041_verify_smb_getparm_vfs_objects_share(request, vfs_object):
     depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert vfs_object in results['output'], results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert vfs_object in results['output'], f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_042_create_a_file_and_put_on_the_active_directory_share(request):
@@ -434,7 +434,7 @@ def test_042_create_a_file_and_put_on_the_active_directory_share(request):
         ' -c "put testfile.txt testfile.txt"'
     results = cmd_test(command)
     cmd_test('rm testfile.txt')
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_043_verify_testfile_is_on_the_active_directory_share(request):
@@ -448,7 +448,7 @@ def test_044_delete_testfile_on_the_active_directory_share(request):
     command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
         ' -c "rm testfile.txt"'
     results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['result'] is True, results["output"]
 
 
 def test_045_verify_testfile_is_deleted_on_the_active_directory_share(request):
@@ -468,10 +468,10 @@ def test_047_create_a_dir_and_a_file_in_windows(request):
     depends(request, ["service_cifs_running"], scope="session")
     cmd1 = 'mkdir testdir'
     results = SSH_TEST(cmd1, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     cmd2 = r'echo some-text  > testdir\testfile.txt'
     results = SSH_TEST(cmd2, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     cmd3 = r'dir testdir\testfile.txt'
     results3 = SSH_TEST(cmd3, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
     assert results3['result'] is True, results3['output']
@@ -504,13 +504,13 @@ def test_048_mount_the_smb_share_robocopy_testdir_to_the_share_windows_mount(req
         WIN_PASSWORD,
         WIN_HOST
     )
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     cmd_results = SSH_TEST('runtest.cmd', WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
     assert cmd_results['result'] is True, cmd_results['output']
     os.remove("runtest.cmd")
     cmd = 'del runtest.cmd'
     results = SSH_TEST(cmd, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     regex = re.compile(r"^(?=.*testfile)(?!.*New).*", re.MULTILINE)
     data_list = regex.findall(cmd_results['output'])[0].split()
     global mounted_time, mounted_date
@@ -547,7 +547,7 @@ def test_051_delete_the_test_dir_and_a_file_in_windows(request):
     depends(request, ["service_cifs_running"], scope="session")
     cmd = 'rmdir /S /Q testdir'
     results = SSH_TEST(cmd, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_052_get_smb_sharesec_id_and_set_smb_sharesec_share_acl(request):
@@ -580,8 +580,8 @@ def test_054_verify_midclt_call_smb_getparm_access_based_share_enum_is_false(req
     depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == 'null', results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    assert results['output'].strip() == 'null', f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_055_delete_cifs_share(request):
@@ -597,7 +597,7 @@ def set_netbios_name(netbios_name):
     """
     cmd = "midclt call smb.get_smb_ha_mode"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     ha_mode = results['output'].strip()
 
     assert ha_mode != 'LEGACY', 'LEGACY HA mode - possible error with sysdataset'
@@ -666,7 +666,7 @@ def test_056_create_new_smb_group_for_sid_test(request):
 
     cmd = "midclt call smb.groupmap_list"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     groupinfo = GET('/group?group=testsidgroup').json()[0]
     groupmaps = json.loads(results['output'].strip())['local']
 
@@ -688,7 +688,7 @@ def test_057_change_netbios_name_and_check_groupmap(request):
 
     cmd = "midclt call smb.groupmap_list"
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     groupinfo = GET('/group?group=testsidgroup').json()[0]
     groupmaps = json.loads(results['output'].strip())['local']
     entry = groupmaps.get(str(groupinfo['gid']))
