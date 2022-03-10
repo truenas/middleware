@@ -2224,7 +2224,7 @@ class PoolDatasetService(CRUDService):
         Str('id'),
         Bool('download', default=False),
     )
-    @returns(Str('key', null=True))
+    @returns(Str('key', null=True, private=True))
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
     def export_key(self, job, id, download):
         """
