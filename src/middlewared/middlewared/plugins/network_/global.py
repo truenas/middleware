@@ -288,14 +288,10 @@ class NetworkConfigurationService(ConfigService):
             'datastore.update', 'network.globalconfiguration', config['id'], new_config, {'prefix': 'gc_'}
         )
 
-        to_restart = set()
+        service_actions = set()
         if lhost_changed:
             await self.middleware.call('etc.generate', 'hostname')
-            to_restart.add('mdns')
-            to_restart.add('collectd')
-
-        if vhost_changed:
-            to_restart.add('mdns')
+            service_actions.add(('collectd', 'restart'))
 
         if bhost_changed:
             try:
@@ -308,7 +304,7 @@ class NetworkConfigurationService(ConfigService):
         domainname_changed = new_config['domain'] != config['domain']
         if domainname_changed:
             await self.middleware.call('etc.generate', 'hosts')
-            to_restart.add('collectd')
+            service_actions.add(('collectd', 'restart'))
             if licensed:
                 try:
                     await self.middleware.call('failover.call_remote', 'etc.generate', ['hosts'])
@@ -352,7 +348,7 @@ class NetworkConfigurationService(ConfigService):
         # kerberized NFS needs to be restarted if these change
         if lhost_changed or vhost_changed or domainname_changed:
             if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
-                to_restart.add('nfs')
+                service_actions.add(('nfs', 'restart'))
 
         # proxy server has changed
         if new_config['httpproxy'] != config['httpproxy']:
@@ -366,6 +362,31 @@ class NetworkConfigurationService(ConfigService):
         # allowing outbound network activity has been changed
         if new_config['activity'] != config['activity']:
             await self.middleware.call('zettarepl.update_tasks')
+
+        # handle the various service announcement daemons
+        announce_changed = new_config['service_announcement'] != config['service_announcement']
+        announce_srv = {'mdns': 'mdns', 'netbios': 'nmbd', 'wsd': 'wsdd'}
+        if any((lhost_changed, vhost_changed)) or announce_changed:
+            # lhost_changed is the local hostname and vhost_changed is the virtual hostname
+            # and if either of these change then we need to toggle the service announcement
+            # daemons irregardless whether or not these were toggled on their own
+            for srv, enabled in new_config['service_announcement'].items():
+                service_name = announce_srv[srv]
+                started = await self.middleware.call('service.started', service_name)
+                verb = None
+
+                if enabled:
+                    verb = 'restart' if started else 'start'
+                else:
+                    verb = 'stop' if started else None
+
+                if not verb:
+                    continue
+
+                service_actions.add((service_name, verb))
+
+        for service, verb in service_actions:
+            await self.middleware.call(f'service.{verb}', service)
 
         await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
 
