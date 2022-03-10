@@ -251,6 +251,9 @@ class NetworkConfigurationService(ConfigService):
         new_config = config.copy()
         new_config.update(data)
         new_config['service_announcement'] = config['service_announcement'] | data.get('service_announcement', {})
+        if new_config == config:
+            # nothing changed so return early
+            return await self.config()
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
