@@ -6,12 +6,15 @@ from middlewared.utils.io import write_if_changed
 
 import asyncio
 from collections import defaultdict
+from contextlib import suppress
 import grp
 import imp
 import os
 import pwd
 import stat
 import enum
+
+DEFAULT_ETC_PERMS = 0o644
 
 
 class EtcUSR(enum.IntEnum):
@@ -331,11 +334,11 @@ class EtcService(Service):
 
         return rv
 
-    def set_etc_file_perms(self, file, entry):
+    def set_etc_file_perms(self, fd, entry):
         perm_changed = False
         uid = entry.get("owner", -1)
         gid = entry.get("group", -1)
-        mode = entry.get("mode", None)
+        mode = entry.get("mode", DEFAULT_ETC_PERMS)
 
         if uid == -1 and gid == -1 and mode is None:
             return perm_changed
@@ -346,29 +349,41 @@ class EtcService(Service):
         if isinstance(gid, str):
             gid = grp.getgrnam(entry["group"]).gr_gid
 
-        try:
-            fd = os.open(file, os.O_RDWR)
-            st = os.fstat(fd)
-            uid_to_set = -1
-            gid_to_set = -1
+        st = os.fstat(fd)
+        uid_to_set = -1
+        gid_to_set = -1
 
-            if uid != -1 and st.st_uid != uid:
-                uid_to_set = uid
+        if uid != -1 and st.st_uid != uid:
+            uid_to_set = uid
 
-            if gid != -1 and st.st_gid != gid:
-                gid_to_set = gid
+        if gid != -1 and st.st_gid != gid:
+            gid_to_set = gid
 
-            if gid_to_set != -1 or uid_to_set != -1:
-                os.fchown(fd, uid_to_set, gid_to_set)
-                perm_changed = True
+        if gid_to_set != -1 or uid_to_set != -1:
+            os.fchown(fd, uid_to_set, gid_to_set)
+            perm_changed = True
 
-            if mode and stat.S_IMODE(st.st_mode) != mode:
-                os.fchmod(fd, mode)
-                perm_changed = True
-        finally:
-            os.close(fd)
+        if mode and stat.S_IMODE(st.st_mode) != mode:
+            os.fchmod(fd, mode)
+            perm_changed = True
 
         return perm_changed
+
+    def make_changes(self, full_path, entry, rendered):
+        mode = entry.get('mode', DEFAULT_ETC_PERMS)
+
+        def opener(path, flags):
+            return os.open(path, os.O_CREAT | os.O_RDWR, mode=mode)
+
+        outfile_dirname = os.path.dirname(full_path)
+        if outfile_dirname != '/etc':
+            os.makedirs(outfile_dirname, exist_ok=True)
+
+        with open(full_path, "w", opener=opener) as f:
+            perms_changed = self.set_etc_file_perms(f.fileno(), entry)
+            contents_changed = write_if_changed(f.fileno(), rendered)
+
+        return perms_changed or contents_changed
 
     async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
@@ -406,15 +421,14 @@ class EtcService(Service):
                     if entry_path.startswith('local/'):
                         entry_path = entry_path[len('local/'):]
                 outfile = f'/etc/{entry_path}'
+
                 try:
                     rendered = await renderer.render(path, ctx)
                 except FileShouldNotExist:
                     self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
 
-                    try:
-                        os.unlink(outfile)
-                    except FileNotFoundError:
-                        pass
+                    with suppress(FileNotFoundError):
+                        await self.middleware.run_in_thread(os.unlink, outfile)
 
                     continue
                 except Exception:
@@ -424,17 +438,7 @@ class EtcService(Service):
                 if rendered is None:
                     continue
 
-                outfile_dirname = os.path.dirname(outfile)
-                if not os.path.exists(outfile_dirname):
-                    os.makedirs(outfile_dirname)
-
-                changes = write_if_changed(outfile, rendered)
-
-                # If ownership or permissions are specified, see if
-                # they need to be changed.
-                changes = await self.middleware.run_in_thread(
-                    self.set_etc_file_perms, outfile, entry
-                )
+                changes = await self.middleware.run_in_thread(self.make_changes, outfile, entry, rendered)
 
                 if not changes:
                     self.logger.debug(f'No new changes for {outfile}')
