@@ -20,7 +20,9 @@ import psutil
 
 from middlewared.common.environ import environ_update
 import middlewared.main
-from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns, Str
+from middlewared.schema import (
+    accepts, Any, Bool, convert_schema, Datetime, Dict, Int, List, OROperator, Patch, Ref, returns, Str
+)
 from middlewared.service_exception import (  # noqa
     CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors
 )
@@ -1497,6 +1499,36 @@ class CoreService(Service):
             }
 
     @filterable
+    @filterable_returns(Dict(
+        'job',
+        Int('id'),
+        Str('method'),
+        List('arguments'),
+        Str('description', null=True),
+        Bool('abortable'),
+        Str('logs_path', null=True),
+        Str('logs_excerpt', null=True),
+        Dict(
+            'progress',
+            Int('percent', null=True),
+            Str('description', null=True),
+            Any('extra', null=True),
+        ),
+        Any('result', null=True),
+        Str('error', null=True),
+        Str('exception', null=True),
+        Dict(
+            'exc_info',
+            Str('repr', null=True),
+            Str('type', null=True),
+            Any('extra', null=True),
+            null=True
+        ),
+        Str('state'),
+        Datetime('time_started', null=True),
+        Datetime('time_finished', null=True),
+        register=True,
+    ))
     def get_jobs(self, filters, options):
         """Get the long running jobs."""
         jobs = filter_list([
