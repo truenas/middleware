@@ -158,6 +158,8 @@ def setup_network(ip):
     if ans.status_code != 200:
         result['ERROR'] = f'Failed to commit static IP information for {ip}:{ans.text}'
         return result
+    
+    time.sleep(1)
 
     # checkin the changes (finalize them)
     print(f'Checkin network changes on {ip}')
