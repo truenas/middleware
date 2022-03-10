@@ -1,9 +1,8 @@
-from middlewared.utils import osc
-
 from .cifs import CIFSService
 from .docker import DockerService
 from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
+from .haproxy import HAProxyService
 from .iscsitarget import ISCSITargetService
 from .kuberouter import KubeRouterService
 from .kubernetes import KubernetesService
@@ -80,12 +79,21 @@ all_services = [
     LdapService,
     NisService,
     IdmapService,
+    KeepalivedService,
+    GlusterdService,
+    GlusterEventsdService,
+    CtdbService,
+    DockerService,
+    KubernetesService,
+    KubeRouterService,
+    OpenVmToolsService,
     CollectDService,
     RRDCacheDService,
     LibvirtdService,
     CronService,
     DiskService,
     KmipService,
+    HAProxyService,
     LoaderService,
     MOTDService,
     HostnameService,
@@ -105,14 +113,3 @@ all_services = [
     TruecommandService,
     UserService,
 ]
-if osc.IS_LINUX:
-    all_services.extend([
-        KeepalivedService,
-        GlusterdService,
-        GlusterEventsdService,
-        CtdbService,
-        DockerService,
-        KubernetesService,
-        KubeRouterService,
-        OpenVmToolsService,
-    ])
