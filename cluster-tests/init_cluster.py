@@ -119,20 +119,6 @@ def setup_zpool_and_datasets(ip):
     return result
 
 
-def setup_defgw_and_dns(ip):
-    result = {'ERROR': ''}
-
-    # setup router/dns/defgw first
-    print(f'Setting up default gateway and dns on {ip}')
-    url = f'http://{ip}/api/v2.0/network/configuration'
-    payload = {'ipv4gateway': CLUSTER_INFO['DEFGW'], 'nameserver1': CLUSTER_INFO['DNS1']}
-    ans = make_request('put', url, data=payload)
-    if ans.status_code != 200:
-        result['ERROR'] = f'Failed to configure gateway on {ip}:{ans.text}'
-
-    return result
-
-
 def get_os_version(ip):
     # the os versions for all peers need to match
     # or we're going to have a bad time
