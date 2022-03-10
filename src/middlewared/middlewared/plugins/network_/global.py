@@ -295,6 +295,7 @@ class NetworkConfigurationService(ConfigService):
         if lhost_changed:
             await self.middleware.call('etc.generate', 'hostname')
             service_actions.add(('collectd', 'restart'))
+            service_actions.add(('nscd', 'reload'))
 
         if bhost_changed:
             try:
@@ -308,6 +309,7 @@ class NetworkConfigurationService(ConfigService):
         if domainname_changed:
             await self.middleware.call('etc.generate', 'hosts')
             service_actions.add(('collectd', 'restart'))
+            service_actions.add(('nscd', 'reload'))
             if licensed:
                 try:
                     await self.middleware.call('failover.call_remote', 'etc.generate', ['hosts'])
@@ -322,6 +324,7 @@ class NetworkConfigurationService(ConfigService):
         dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
         if dnssearch_changed or dnsservers_changed:
             await self.middleware.call('dns.sync')
+            service_actions.add(('nscd', 'reload'))
             if licensed:
                 try:
                     await self.middleware.call('failover.call_remote', 'dns.sync')
