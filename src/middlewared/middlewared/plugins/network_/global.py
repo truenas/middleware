@@ -288,19 +288,45 @@ class NetworkConfigurationService(ConfigService):
             'datastore.update', 'network.globalconfiguration', config['id'], new_config, {'prefix': 'gc_'}
         )
 
+        to_restart = set()
+        if lhost_changed:
+            await self.middleware.call('etc.generate', 'hostname')
+            to_restart.add('mdns')
+            to_restart.add('collectd')
+
+        if vhost_changed:
+            to_restart.add('mdns')
+
+        if bhost_changed:
+            try:
+                await self.middleware.call('failover.call_remote', 'etc.generate', ['hostname'])
+            except Exception:
+                self.logger.warning('Failed to set hostname on standby storage controller', exc_info=True)
+
+        licensed = await self.middleware.call('failover.licensed')
         domainname_changed = new_config['domain'] != config['domain']
+        if domainname_changed:
+            await self.middleware.call('etc.generate', 'hosts')
+            to_restart.add('collectd')
+            if licensed:
+                try:
+                    await self.middleware.call('failover.call_remote', 'etc.generate', ['hosts'])
+                except Exception:
+                    self.logger.warning('Failed to set domain name on standby storage controller', exc_info=True)
+
         dnssearch_changed = new_config['domains'] != config['domains']
         dns1_changed = new_config['nameserver1'] != config['nameserver1']
         dns2_changed = new_config['nameserver2'] != config['nameserver2']
         dns3_changed = new_config['nameserver3'] != config['nameserver3']
         dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
-        hostnames_changed = any((lhost_changed, bhost_changed, vhost_changed))
+        if dnssearch_changed or dnsservers_changed:
+            await self.middleware.call('dns.sync')
+            if licensed:
+                try:
+                    await self.middleware.call('failover.call_remote', 'dns.sync')
+                except Exception:
+                    self.logger.warning('Failed to generate resolv.conf on standby storage controller', exc_info=True)
 
-        if hostnames_changed or domainname_changed or dnssearch_changed or dnsservers_changed:
-            await self.middleware.call('service.reload', 'resolvconf')
-            await self.middleware.call('service.reload', 'nscd')
-
-            # need to tell the CLI program to reload so it shows the new info
             def reload_cli():
                 for process in psutil.process_iter(['pid', 'cmdline']):
                     cmdline = process.cmdline()
@@ -310,16 +336,19 @@ class NetworkConfigurationService(ConfigService):
 
             await self.middleware.run_in_thread(reload_cli)
 
-        # default gateway has changed
-        if new_config['ipv4gateway'] != config['ipv4gateway'] or new_config['ipv6gateway'] != config['ipv6gateway']:
+        ipv4gw_changed = new_config['ipv4gateway'] != config['ipv4gateway']
+        ipv6gw_changed = new_config['ipv6gateway'] != config['ipv6gateway']
+        if ipv4gw_changed or ipv6gw_changed:
             await self.middleware.call('route.sync')
+            if licensed:
+                try:
+                    await self.middleware.call('failover.call_remote', 'route.sync')
+                except Exception:
+                    self.logger.warning('Failed to generate routes on standby storage controller', exc_info=True)
 
-        # if virtual_hostname (only HA) or domain name changed
-        # then restart nfs service if it's enabled and running
-        # and we have a nfs principal in the keytab
-        if vhost_changed or domainname_changed:
+        if lhost_changed or vhost_changed or domainname_changed:
             if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
-                await self._service_change('nfs', 'restart')
+                await self.middleware.call('service.restart', 'nfs')
 
         # proxy server has changed
         if new_config['httpproxy'] != config['httpproxy']:
