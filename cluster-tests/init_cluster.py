@@ -153,7 +153,7 @@ def setup_network(ip):
     # commit changes
     print(f'Commit network changes on {ip}')
     url = f'http://{ip}/api/v2.0/interface/commit'
-    payload = {'rollback': True, 'checkin_timeout': 5}
+    payload = {'rollback': True, 'checkin_timeout': 60}
     ans = make_request('post', url, data=payload)
     if ans.status_code != 200:
         result['ERROR'] = f'Failed to commit static IP information for {ip}:{ans.text}'
