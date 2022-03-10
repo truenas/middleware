@@ -261,21 +261,17 @@ class NetworkConfigurationService(ConfigService):
                 'NAS is configured as a time machine target. mDNS is required.'
             )
 
-        # we need to check if the `hostname_virtual` parameter changed in a couple places
-        # in this method, so go ahead and set it here
-        virt_hostname_changed = False
-        if new_config.get('hostname_b', False):
-            virt_hostname_changed = config['hostname_virtual'] != new_config['hostname_virtual']
+        lhost_changed = config['hostname_local'] != new_config['hostname_local']
+        bhost_changed = config.get('hostname_b') and config['hostname_b'] != new_config['hostname_b']
+        vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
 
-        # if this is an HA system and the virtual_hostname has changed we need to make sure
-        # that if the system is joined to AD they leave the domain first and then change
-        # that parameter
-        if virt_hostname_changed:
-            if await self.middleware.call('activedirectory.get_state') != "DISABLED":
-                verrors.add('global_configuration_update.hostname_virtual',
-                            'This parameter may not be changed after joining Active Directory (AD). '
-                            'If it must be changed, the proper procedure is to leave the AD domain '
-                            'and then alter the parameter before re-joining the domain.')
+        if vhost_changed and await self.middleware.call('activedirectory.get_state') != "DISABLED":
+            verrors.add(
+                'global_configuration_update.hostname_virtual',
+                'This parameter may not be changed after joining Active Directory (AD). '
+                'If it must be changed, the proper procedure is to leave the AD domain '
+                'and then alter the parameter before re-joining the domain.'
+            )
 
         verrors.check()
 
@@ -332,7 +328,7 @@ class NetworkConfigurationService(ConfigService):
         # if virtual_hostname (only HA) or domain name changed
         # then restart nfs service if it's enabled and running
         # and we have a nfs principal in the keytab
-        if virt_hostname_changed or domainname_changed:
+        if vhost_changed or domainname_changed:
             if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
                 await self._service_change('nfs', 'restart')
 
