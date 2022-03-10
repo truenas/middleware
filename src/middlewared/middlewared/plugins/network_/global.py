@@ -277,7 +277,7 @@ class NetworkConfigurationService(ConfigService):
 
         # pop the `hostname_local` key since that's created in the _extend method
         # and doesn't exist in the database
-        new_hostname = new_config.pop('hostname_local', None)
+        new_config.pop('hostname_local', None)
 
         # normalize the `domains` and `netwait_ip` keys
         new_config['domains'] = ' '.join(new_config.get('domains', []))
@@ -285,29 +285,18 @@ class NetworkConfigurationService(ConfigService):
 
         # update the db
         await self.middleware.call(
-            'datastore.update',
-            'network.globalconfiguration',
-            config['id'],
-            new_config,
-            {'prefix': 'gc_'}
+            'datastore.update', 'network.globalconfiguration', config['id'], new_config, {'prefix': 'gc_'}
         )
 
-        # check if hostname changed
-        hostname_changed = new_hostname != config['hostname_local']
-
-        # check if domain name changed
         domainname_changed = new_config['domain'] != config['domain']
-
-        # check if dns search realms changed
         dnssearch_changed = new_config['domains'] != config['domains']
-
-        # check if any dns servers changed
         dns1_changed = new_config['nameserver1'] != config['nameserver1']
         dns2_changed = new_config['nameserver2'] != config['nameserver2']
         dns3_changed = new_config['nameserver3'] != config['nameserver3']
         dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
+        hostnames_changed = any((lhost_changed, bhost_changed, vhost_changed))
 
-        if hostname_changed or domainname_changed or dnssearch_changed or dnsservers_changed:
+        if hostnames_changed or domainname_changed or dnssearch_changed or dnsservers_changed:
             await self.middleware.call('service.reload', 'resolvconf')
             await self.middleware.call('service.reload', 'nscd')
 
