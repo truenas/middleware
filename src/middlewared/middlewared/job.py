@@ -482,6 +482,8 @@ class Job:
 
                         lines += 1
 
+                os.unlink(self.logs_path)
+
                 if lines > 20:
                     excerpt = "%s... %d more lines ...\n%s" % ("".join(head), lines - 20, "".join(tail))
                 else:
