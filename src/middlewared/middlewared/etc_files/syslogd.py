@@ -83,7 +83,7 @@ def generate_syslog_remote_destination(middleware, advanced_config):
     return result
 
 
-def generate_k3s_filters():
+def generate_svc_filters():
     return textwrap.dedent("""
         #####################
         # filter k3s messages
@@ -98,12 +98,19 @@ def generate_k3s_filters():
         filter f_containerd { program("containerd") or program("dockerd"); };
         destination d_containerd { file("/var/log/containerd.log"); };
         log { source(s_src); filter(f_containerd); destination(d_containerd); };
+
+        #####################
+        # filter haproxy messages
+        #####################
+        filter f_haproxy { program("haproxy");; };
+        destination d_haproxy { file("/var/log/haproxy.log"); };
+        log { source(s_src); filter(f_haproxy); filter(f_crit); destination(d_haproxy); };
     """)
 
 
 def generate_syslog_conf(middleware):
     with open(SYSLOG_NG_CONF_ORIG) as f:
-        syslog_conf = RE_DESTINATION.sub(fr"{generate_k3s_filters()}\n\1", f.read())
+        syslog_conf = RE_DESTINATION.sub(fr"{generate_svc_filters()}\n\1", f.read())
 
     for line in (
         "filter f_daemon { facility(daemon) and not filter(f_debug); };",
@@ -112,7 +119,7 @@ def generate_syslog_conf(middleware):
     ):
         syslog_conf = syslog_conf.replace(
             line, RE_K3S_FILTER.sub(
-                r'\1not filter(f_k3s) and not filter(f_containerd) and ', line
+                r'\1not filter(f_k3s) and not filter(f_containerd) and not filter(f_haproxy) and ', line
             )
         )
 
