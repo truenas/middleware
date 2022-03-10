@@ -1,15 +1,11 @@
 from lockfile import LockFile, AlreadyLocked
 from collections import defaultdict
-from shlex import quote
 import multiprocessing
 import os
 import subprocess
 import logging
 import asyncio
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
+import sysctl
 import time
 import struct
 
@@ -198,10 +194,10 @@ class FailoverService(Service):
             'timeout': failovercfg['timeout'],
             'groups': defaultdict(list),
             'volumes': [
-                i['name'] for i in filter_list(pools, [('encrypt', '<', 2)])
+                {'name': i['name'], 'guid': i['guid']} for i in filter_list(pools, [('encrypt', '<', 2)])
             ],
             'phrasedvolumes': [
-                i['name'] for i in filter_list(pools, [('encrypt', '=', 2)])
+                {'name': i['name'], 'guid': i['guid']} for i in filter_list(pools, [('encrypt', '=', 2)])
             ],
             'non_crit_interfaces': [
                 i['id'] for i in filter_list(interfaces, [
@@ -274,7 +270,7 @@ class FailoverService(Service):
                         masterret = False
                         for vol in fobj['volumes'] + fobj['phrasedvolumes']:
                             # TODO run, or zfs lib
-                            ret = os.system(f'zpool status {vol} > /dev/null')
+                            ret = os.system(f'zpool status {vol["name"]} > /dev/null')
                             if ret:
                                 masterret = True
                                 for group in fobj['groups']:
@@ -547,14 +543,14 @@ class FailoverService(Service):
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
                 for volume in fobj['volumes']:
-                    logger.warning('Importing %r', volume)
+                    logger.warning('Importing %r', volume["name"])
                     # TODO: try to import using cachefile and then fallback without if it fails
-                    error, output = run(f'zpool import -o cachefile=none -m -R /mnt -f {quote(volume)}', stderr=True)
+                    error, output = run(f'zpool import -o cachefile=none -m -R /mnt -f {volume["guid"]}', stderr=True)
                     if error:
-                        logger.error('Failed to import %s: %s', volume, output)
+                        logger.error('Failed to import %s: %s', volume["name"], output)
                         open(FAILED_FILE, 'w').close()
                     else:
-                        unlock_job = self.middleware.call_sync('failover.unlock_zfs_datasets', volume)
+                        unlock_job = self.middleware.call_sync('failover.unlock_zfs_datasets', volume["name"])
                         unlock_job.wait_sync()
                         if unlock_job.error:
                             logger.error('Failed to unlock ZFS encrypted datasets: %s', unlock_job.error)
@@ -562,7 +558,7 @@ class FailoverService(Service):
                             logger.error(
                                 'Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed'])
                             )
-                    run(f'zpool set cachefile=/data/zfs/zpool.cache {volume}')
+                    run(f'zpool set cachefile=/data/zfs/zpool.cache {volume["name"]}')
 
                 p.terminate()
                 os.system("pkill -9 -f 'dtrace -qn'")
@@ -807,17 +803,14 @@ class FailoverService(Service):
                 # Note this wouldn't be needed with a proper state engine.
                 volumes = False
                 for volume in fobj['volumes'] + fobj['phrasedvolumes']:
-                    error, output = run(f'zpool list {volume}')
+                    error, output = run(f'zpool list {volume["name"]}')
                     if not error:
                         volumes = True
-                        logger.warning('Exporting %s', volume)
-                        error, output = run(f'zpool export -f {volume}')
+                        logger.warning('Exporting %s', volume["name"])
+                        error, output = run(f'zpool export -f {volume["name"]}')
                         if error:
-                            # the zpool status here is extranious.  The sleep
-                            # is going to run off the watchdog and the system will reboot.
-                            run(f'zpool status {volume}')
                             time.sleep(5)
-                        logger.warning('Exported %s', volume)
+                        logger.warning('Exported %s', volume["name"])
 
                 run('watchdog -t 0')
                 try:
