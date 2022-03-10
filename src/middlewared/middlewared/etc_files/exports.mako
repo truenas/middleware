@@ -1,4 +1,6 @@
 <%
+    import ipaddress
+    import socket
     from pathlib import Path
 
     map_ids = {
@@ -77,7 +79,24 @@
 
         return ','.join(params)
 
+    def parse_host(hostname, gaierrors):
+        try:
+            addr = ipaddress.ip_address(hostname)
+            return addr.compressed
+
+        except ValueError:
+            pass
+
+        try:
+            socket.getaddrinfo(hostname, None)
+        except socket.gaierror:
+            gaierrors.append(hostname)
+            return None
+
+        return hostname
+
     entries = []
+    gaierrors = []
     config = render_ctx["nfs.config"]
     shares = render_ctx["sharing.nfs.query"]
     if not shares:
@@ -100,8 +119,12 @@
             params += ",no_subtree_check" if p.is_mount() else ",subtree_check"
 
             for host in share["hosts"]:
-                options.append(f'{host}({params})')
                 anonymous = False
+                export_host = parse_host(host, gaierrors)
+                if export_host is None:
+                    continue
+
+                options.append(f'{host}({params})')
 
             for network in share["networks"]:
                 options.append(f'{network}({params})')
@@ -110,7 +133,20 @@
             if anonymous:
                 options.append(f'*({params})')
 
+            if not options:
+                # this may happen if no hosts resolve
+                continue
+
             entries.append({"path": path, "options": options})
+
+    if gaierrors:
+        middleware.call_sync(
+            'alert.oneshot_create',
+            'NFSHostnameLookupFail',
+            {'hosts': ', '.join(gaierrors)}
+        )
+    else:
+        middleware.call_sync('alert.oneshot_delete', 'NFSHostnameLookupFail', None)
 
     if not entries:
         raise FileShouldNotExist()
