@@ -42,6 +42,8 @@ class VMService(Service, VMSupervisorMixin):
                 await self.middleware.call('vm.teardown_guest_vmemory', id)
             raise
 
+        await self.middleware.call('service.reload', 'haproxy')
+
     @item_method
     @accepts(
         Int('id'),
@@ -111,6 +113,7 @@ async def _event_vms(middleware, event_type, args):
         return
 
     asyncio.ensure_future(middleware.call('vm.teardown_guest_vmemory', args['id']))
+    await middleware.call('service.reload', 'haproxy')
 
 
 async def setup(middleware):
