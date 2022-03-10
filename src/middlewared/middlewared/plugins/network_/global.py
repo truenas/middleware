@@ -249,20 +249,17 @@ class NetworkConfigurationService(ConfigService):
         config.pop('state')
 
         new_config = config.copy()
-        srv = config['service_announcement'] | data.get('service_announcement', {})
         new_config.update(data)
-        new_config['service_announcement'] = srv
+        new_config['service_announcement'] = config['service_announcement'] | data.get('service_announcement', {})
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
-        if not srv['mdns']:
-            tm_shares = await self.middleware.call(
-                'sharing.smb.query',
-                [('timemachine', '=', True), ('enabled', '=', True)]
+        filters = [('timemachine', '=', True), ('enabled', '=', True)]
+        if not new_config['service_announcement']['mdns'] and await self.middleware.call('sharing.smb.query', filters):
+            verrors.add(
+                'global_configuration_update.service_announcement.mdns',
+                'NAS is configured as a time machine target. mDNS is required.'
             )
-            if tm_shares:
-                verrors.add('global_configuration_update.service_announcement.mdns',
-                            'NAS is configured as a time machine target. mDNS is required.')
 
         # we need to check if the `hostname_virtual` parameter changed in a couple places
         # in this method, so go ahead and set it here
