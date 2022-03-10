@@ -142,7 +142,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'default/nfs-kernel-server'},
                 {'type': 'mako', 'path': 'default/rpcbind'},
                 {'type': 'mako', 'path': 'idmapd.conf'},
-                {'type': 'mako', 'path': 'exports'},
+                {'type': 'mako', 'path': 'exports', 'checkpoint': 'interface_sync'},
             ]
         },
         'pam': {
