@@ -92,6 +92,10 @@ class VMService(Service, VMSupervisorMixin):
             await self.middleware.call('service.stop', 'libvirtd')
 
     @private
+    async def generate_nginx_route(self):
+        return bool(await self.middleware.call('vm.query'))
+
+    @private
     def close_libvirt_connection(self):
         if self.LIBVIRT_CONNECTION:
             with contextlib.suppress(CallError):
