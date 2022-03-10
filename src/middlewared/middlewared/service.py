@@ -1531,8 +1531,9 @@ class CoreService(Service):
     ))
     def get_jobs(self, filters, options):
         """Get the long running jobs."""
+        normalize_result = options['extra'].get('normalize_result', False)
         jobs = filter_list([
-            i.__encode__() for i in list(self.middleware.jobs.all().values())
+            i.__encode__(normalize_result) for i in list(self.middleware.jobs.all().values())
         ], filters, options)
         return jobs
 
