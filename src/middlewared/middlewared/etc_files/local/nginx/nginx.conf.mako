@@ -176,7 +176,6 @@ http {
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
 
-% if middleware.call_sync('vm.generate_nginx_route'):
         location ${display_device_path} {
             rewrite ${display_device_path}/(.*) /$1  break;
             proxy_pass http://${middleware.call_sync('vm.get_haproxy_uri')}/;
@@ -188,7 +187,6 @@ http {
             proxy_set_header Connection "Upgrade";
         }
 
-% endif
         location /progress {
             # report uploads tracked in the 'proxied' zone
             report_uploads proxied;

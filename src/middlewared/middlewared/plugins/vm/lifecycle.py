@@ -64,7 +64,6 @@ class VMService(Service, VMSupervisorMixin):
                     self.middleware.logger.error(
                         'Unable to setup %r VM object: %s', vm_data['name'], str(e), exc_info=True
                     )
-            self.middleware.call_sync('service.reload', 'http')
             self.middleware.call_sync('service.reload', 'haproxy')
         else:
             self.middleware.logger.error('Failed to establish libvirt connection')
@@ -86,14 +85,9 @@ class VMService(Service, VMSupervisorMixin):
     )
     async def deinitialize_vms(self, options):
         await self.middleware.call('vm.close_libvirt_connection')
-        self.middleware.call_sync('service.reload', 'http')
-        self.middleware.call_sync('service.stop', 'haproxy')
+        await self.middleware.call('service.stop', 'haproxy')
         if options['stop_libvirt']:
             await self.middleware.call('service.stop', 'libvirtd')
-
-    @private
-    async def generate_nginx_route(self):
-        return bool(await self.middleware.call('vm.query'))
 
     @private
     def close_libvirt_connection(self):
