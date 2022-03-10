@@ -51,6 +51,8 @@ class VMService(Service, VMSupervisorMixin):
     def initialize_vms(self, timeout=30):
         vms = self.middleware.call_sync('vm.query')
         if vms and self._is_kvm_supported():
+            self.middleware.call_sync('service.reload', 'http')
+            self.middleware.call_sync('service.reload', 'haproxy')
             self.setup_libvirt_connection(timeout)
         else:
             return
@@ -84,6 +86,8 @@ class VMService(Service, VMSupervisorMixin):
     )
     async def deinitialize_vms(self, options):
         await self.middleware.call('vm.close_libvirt_connection')
+        self.middleware.call_sync('service.reload', 'http')
+        self.middleware.call_sync('service.stop', 'haproxy')
         if options['stop_libvirt']:
             await self.middleware.call('service.stop', 'libvirtd')
 
