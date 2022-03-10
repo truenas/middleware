@@ -51,8 +51,6 @@ class VMService(Service, VMSupervisorMixin):
     def initialize_vms(self, timeout=30):
         vms = self.middleware.call_sync('vm.query')
         if vms and self._is_kvm_supported():
-            self.middleware.call_sync('service.reload', 'http')
-            self.middleware.call_sync('service.reload', 'haproxy')
             self.setup_libvirt_connection(timeout)
         else:
             return
@@ -66,6 +64,8 @@ class VMService(Service, VMSupervisorMixin):
                     self.middleware.logger.error(
                         'Unable to setup %r VM object: %s', vm_data['name'], str(e), exc_info=True
                     )
+            self.middleware.call_sync('service.reload', 'http')
+            self.middleware.call_sync('service.reload', 'haproxy')
         else:
             self.middleware.logger.error('Failed to establish libvirt connection')
 
