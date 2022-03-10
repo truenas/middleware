@@ -293,10 +293,8 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/syslog-ng', 'checkpoint': 'pool_import'},
             {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
         ],
-        'hostname': [
-            {'type': 'mako', 'path': 'hosts', 'mode': 0o644},
-            {'type': 'py', 'path': 'hostname', 'checkpoint': 'pre_interface_sync'},
-        ],
+        'hosts': [{'type': 'mako', 'path': 'hosts', 'mode': 0o644, 'checkpoint': 'pre_interface_sync'}],
+        'hostname': [{'type': 'py', 'path': 'hostname', 'checkpoint': 'pre_interface_sync'}],
         'ssh': {
             "ctx": [
                 {'method': 'ssh.config'},
