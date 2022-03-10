@@ -509,7 +509,11 @@ class FailoverService(Service):
                 except Exception:
                     pass
 
-                run("sysctl -n kern.disks | tr ' ' '\\n' | sed -e 's,^,/dev/,' | egrep '^/dev/(da|nvd|pmem)' | xargs -n 1 echo 'false >' | sh")
+                cmd = "sysctl -n kern.disks | tr ' ' '\\n'"
+                cmd += " | sed -e 's,^,/dev/,'"
+                cmd += " | egrep '^/dev/(da|nvd|pmem)'"
+                cmd += " | xargs -n 1 echo 'false >' | sh"
+                run(cmd)
 
                 if os.path.exists('/data/zfs/killcache'):
                     run('rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
@@ -540,7 +544,9 @@ class FailoverService(Service):
                     # so log an error and move on
                     logger.error('Failed to unlock SED disks with error: %r', e)
 
-                p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
+                cmd = """dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}'"""
+                cmd += """ > /dev/console &"""
+                p = multiprocessing.Process(target=os.system(cmd))
                 p.start()
                 for volume in fobj['volumes']:
                     logger.warning('Importing %r', volume["name"])
@@ -769,7 +775,8 @@ class FailoverService(Service):
                 # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
                 # TrueNAS HA, by design, has a triggered unclean shutdown.
                 # If a controller is demoted to standby, we set a 4 sec countdown using watchdog.
-                # If the zpool(s) can't export within that timeframe, we use watchdog to violently reboot the controller.
+                # If the zpool(s) can't export within that timeframe, we use watchdog to violently
+                # reboot the controller.
                 # When this occurrs, the customer gets an email about an "Unauthorized system reboot".
                 # The idea for creating a new sentinel file for watchdog related panics,
                 # is so that we can send an appropriate email alert.
@@ -820,7 +827,8 @@ class FailoverService(Service):
 
                 # We also remove this file here, because this code path is executed on boot.
                 # The middlewared process is removing the file and then sending an email as expected.
-                # However, this python file is being called about 1min after middlewared and recreating the file on line 651.
+                # However, this python file is being called about 1min after middlewared and
+                # recreating the file on line 651.
                 try:
                     os.unlink(WATCHDOG_ALERT_FILE)
                 except EnvironmentError:
