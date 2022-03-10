@@ -2,18 +2,19 @@
     devices = middleware.call_sync('vm.get_running_display_devices')
 %>\
 global
-    log /dev/log	local0
-    log /dev/log	local1 notice
+    log /dev/log local0 emerg emerg
     chroot /var/lib/haproxy
     user haproxy
     group haproxy
     daemon
 
 defaults
-    log	global
+    log global
     mode	http
-    option	httplog
     option	dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
     errorfile 400 /etc/haproxy/errors/400.http
     errorfile 403 /etc/haproxy/errors/403.http
     errorfile 408 /etc/haproxy/errors/408.http
