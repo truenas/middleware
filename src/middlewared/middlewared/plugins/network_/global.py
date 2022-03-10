@@ -249,42 +249,38 @@ class NetworkConfigurationService(ConfigService):
         config.pop('state')
 
         new_config = config.copy()
-        srv = config['service_announcement'] | data.get('service_announcement', {})
         new_config.update(data)
-        new_config['service_announcement'] = srv
+        new_config['service_announcement'] = config['service_announcement'] | data.get('service_announcement', {})
+        if new_config == config:
+            # nothing changed so return early
+            return await self.config()
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
-        if not srv['mdns']:
-            tm_shares = await self.middleware.call(
-                'sharing.smb.query',
-                [('timemachine', '=', True), ('enabled', '=', True)]
+        filters = [('timemachine', '=', True), ('enabled', '=', True)]
+        if not new_config['service_announcement']['mdns'] and await self.middleware.call('sharing.smb.query', filters):
+            verrors.add(
+                'global_configuration_update.service_announcement.mdns',
+                'NAS is configured as a time machine target. mDNS is required.'
             )
-            if tm_shares:
-                verrors.add('global_configuration_update.service_announcement.mdns',
-                            'NAS is configured as a time machine target. mDNS is required.')
 
-        # we need to check if the `hostname_virtual` parameter changed in a couple places
-        # in this method, so go ahead and set it here
-        virt_hostname_changed = False
-        if new_config.get('hostname_b', False):
-            virt_hostname_changed = config['hostname_virtual'] != new_config['hostname_virtual']
+        lhost_changed = config['hostname_local'] != new_config['hostname_local']
+        bhost_changed = config.get('hostname_b') and config['hostname_b'] != new_config['hostname_b']
+        vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
 
-        # if this is an HA system and the virtual_hostname has changed we need to make sure
-        # that if the system is joined to AD they leave the domain first and then change
-        # that parameter
-        if virt_hostname_changed:
-            if await self.middleware.call('activedirectory.get_state') != "DISABLED":
-                verrors.add('global_configuration_update.hostname_virtual',
-                            'This parameter may not be changed after joining Active Directory (AD). '
-                            'If it must be changed, the proper procedure is to leave the AD domain '
-                            'and then alter the parameter before re-joining the domain.')
+        if vhost_changed and await self.middleware.call('activedirectory.get_state') != "DISABLED":
+            verrors.add(
+                'global_configuration_update.hostname_virtual',
+                'This parameter may not be changed after joining Active Directory (AD). '
+                'If it must be changed, the proper procedure is to leave the AD domain '
+                'and then alter the parameter before re-joining the domain.'
+            )
 
         verrors.check()
 
         # pop the `hostname_local` key since that's created in the _extend method
         # and doesn't exist in the database
-        new_hostname = new_config.pop('hostname_local', None)
+        new_config.pop('hostname_local', None)
 
         # normalize the `domains` and `netwait_ip` keys
         new_config['domains'] = ' '.join(new_config.get('domains', []))
@@ -292,33 +288,49 @@ class NetworkConfigurationService(ConfigService):
 
         # update the db
         await self.middleware.call(
-            'datastore.update',
-            'network.globalconfiguration',
-            config['id'],
-            new_config,
-            {'prefix': 'gc_'}
+            'datastore.update', 'network.globalconfiguration', config['id'], new_config, {'prefix': 'gc_'}
         )
 
-        # check if hostname changed
-        hostname_changed = new_hostname != config['hostname_local']
+        service_actions = set()
+        if lhost_changed:
+            await self.middleware.call('etc.generate', 'hostname')
+            service_actions.add(('collectd', 'restart'))
+            service_actions.add(('nscd', 'reload'))
 
-        # check if domain name changed
+        if bhost_changed:
+            try:
+                await self.middleware.call('failover.call_remote', 'etc.generate', ['hostname'])
+            except Exception:
+                self.logger.warning('Failed to set hostname on standby storage controller', exc_info=True)
+
+        # dns domain name changed
+        licensed = await self.middleware.call('failover.licensed')
         domainname_changed = new_config['domain'] != config['domain']
+        if domainname_changed:
+            await self.middleware.call('etc.generate', 'hosts')
+            service_actions.add(('collectd', 'restart'))
+            service_actions.add(('nscd', 'reload'))
+            if licensed:
+                try:
+                    await self.middleware.call('failover.call_remote', 'etc.generate', ['hosts'])
+                except Exception:
+                    self.logger.warning('Failed to set domain name on standby storage controller', exc_info=True)
 
-        # check if dns search realms changed
+        # anything related to resolv.conf changed
         dnssearch_changed = new_config['domains'] != config['domains']
-
-        # check if any dns servers changed
         dns1_changed = new_config['nameserver1'] != config['nameserver1']
         dns2_changed = new_config['nameserver2'] != config['nameserver2']
         dns3_changed = new_config['nameserver3'] != config['nameserver3']
         dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
+        if dnssearch_changed or dnsservers_changed:
+            await self.middleware.call('dns.sync')
+            service_actions.add(('nscd', 'reload'))
+            if licensed:
+                try:
+                    await self.middleware.call('failover.call_remote', 'dns.sync')
+                except Exception:
+                    self.logger.warning('Failed to generate resolv.conf on standby storage controller', exc_info=True)
 
-        if hostname_changed or domainname_changed or dnssearch_changed or dnsservers_changed:
-            await self.middleware.call('service.reload', 'resolvconf')
-            await self.middleware.call('service.reload', 'nscd')
-
-            # need to tell the CLI program to reload so it shows the new info
             def reload_cli():
                 for process in psutil.process_iter(['pid', 'cmdline']):
                     cmdline = process.cmdline()
@@ -328,16 +340,21 @@ class NetworkConfigurationService(ConfigService):
 
             await self.middleware.run_in_thread(reload_cli)
 
-        # default gateway has changed
-        if new_config['ipv4gateway'] != config['ipv4gateway'] or new_config['ipv6gateway'] != config['ipv6gateway']:
+        # default gateways changed
+        ipv4gw_changed = new_config['ipv4gateway'] != config['ipv4gateway']
+        ipv6gw_changed = new_config['ipv6gateway'] != config['ipv6gateway']
+        if ipv4gw_changed or ipv6gw_changed:
             await self.middleware.call('route.sync')
+            if licensed:
+                try:
+                    await self.middleware.call('failover.call_remote', 'route.sync')
+                except Exception:
+                    self.logger.warning('Failed to generate routes on standby storage controller', exc_info=True)
 
-        # if virtual_hostname (only HA) or domain name changed
-        # then restart nfs service if it's enabled and running
-        # and we have a nfs principal in the keytab
-        if virt_hostname_changed or domainname_changed:
+        # kerberized NFS needs to be restarted if these change
+        if lhost_changed or vhost_changed or domainname_changed:
             if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
-                await self._service_change('nfs', 'restart')
+                service_actions.add(('nfs', 'restart'))
 
         # proxy server has changed
         if new_config['httpproxy'] != config['httpproxy']:
@@ -351,6 +368,31 @@ class NetworkConfigurationService(ConfigService):
         # allowing outbound network activity has been changed
         if new_config['activity'] != config['activity']:
             await self.middleware.call('zettarepl.update_tasks')
+
+        # handle the various service announcement daemons
+        announce_changed = new_config['service_announcement'] != config['service_announcement']
+        announce_srv = {'mdns': 'mdns', 'netbios': 'nmbd', 'wsd': 'wsdd'}
+        if any((lhost_changed, vhost_changed)) or announce_changed:
+            # lhost_changed is the local hostname and vhost_changed is the virtual hostname
+            # and if either of these change then we need to toggle the service announcement
+            # daemons irregardless whether or not these were toggled on their own
+            for srv, enabled in new_config['service_announcement'].items():
+                service_name = announce_srv[srv]
+                started = await self.middleware.call('service.started', service_name)
+                verb = None
+
+                if enabled:
+                    verb = 'restart' if started else 'start'
+                else:
+                    verb = 'stop' if started else None
+
+                if not verb:
+                    continue
+
+                service_actions.add((service_name, verb))
+
+        for service, verb in service_actions:
+            await self.middleware.call(f'service.{verb}', service)
 
         await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
 

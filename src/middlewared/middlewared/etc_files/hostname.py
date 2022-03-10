@@ -4,12 +4,8 @@ from middlewared.service import CallError
 
 
 def render(service, middleware):
-    config = middleware.call_sync("network.configuration.config")
-    hostname = config['hostname_local']
-    if config['domain']:
-        hostname += f'.{config["domain"]}'
+    hostname = middleware.call_sync("network.configuration.config")['hostname_local']
 
-    # write the hostname to the file
     with open("/etc/hostname", "w") as f:
         f.write(hostname)
 
