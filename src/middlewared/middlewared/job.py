@@ -39,17 +39,17 @@ class JobSharedLock(object):
     def __init__(self, queue, name):
         self.queue = queue
         self.name = name
-        self.jobs = []
+        self.jobs = set()
         self.semaphore = asyncio.Semaphore()
 
     def add_job(self, job):
-        self.jobs.append(job)
+        self.jobs.add(job)
 
     def get_jobs(self):
         return self.jobs
 
     def remove_job(self, job):
-        self.jobs.remove(job)
+        self.jobs.discard(job)
 
     def locked(self):
         return self.semaphore.locked()
