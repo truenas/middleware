@@ -457,10 +457,7 @@ class Client(object):
         self._jobs_watching = True
         self.subscribe('core.get_jobs', self._jobs_callback)
 
-    def call(self, method, *params, **kwargs):
-        timeout = kwargs.pop('timeout', CALL_TIMEOUT)
-        job = kwargs.pop('job', False)
-
+    def call(self, method, *params, background=False, callback=None, job=False, timeout=CALL_TIMEOUT):
         # We need to make sure we are subscribed to receive job updates
         if job and not self._jobs_watching:
             self._jobs_subscribe()
@@ -475,6 +472,16 @@ class Client(object):
                 'params': c.params,
             })
 
+            if background:
+                return c
+
+            return self.wait(c, callback=callback, job=job, timeout=timeout)
+        finally:
+            if not background:
+                self._unregister_call(c)
+
+    def wait(self, c, *, callback=None, job=False, timeout=CALL_TIMEOUT):
+        try:
             if not c.returned.wait(timeout):
                 raise CallTimeout("Call timeout")
 
@@ -486,7 +493,7 @@ class Client(object):
                 raise ClientException(c.error, c.errno, c.trace, c.extra)
 
             if job:
-                jobobj = Job(self, c.result, callback=kwargs.get('callback'))
+                jobobj = Job(self, c.result, callback=callback)
                 if job == 'RETURN':
                     return jobobj
                 return jobobj.result()
