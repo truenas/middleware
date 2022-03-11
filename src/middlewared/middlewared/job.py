@@ -40,7 +40,7 @@ class JobSharedLock(object):
         self.queue = queue
         self.name = name
         self.jobs = set()
-        self.semaphore = asyncio.Semaphore()
+        self.lock = asyncio.Lock()
 
     def add_job(self, job):
         self.jobs.add(job)
@@ -52,13 +52,13 @@ class JobSharedLock(object):
         self.jobs.discard(job)
 
     def locked(self):
-        return self.semaphore.locked()
+        return self.lock.locked()
 
     async def acquire(self):
-        return await self.semaphore.acquire()
+        return await self.lock.acquire()
 
     def release(self):
-        return self.semaphore.release()
+        return self.lock.release()
 
 
 class JobsQueue(object):
@@ -87,9 +87,9 @@ class JobsQueue(object):
         return self.deque.all()
 
     def add(self, job):
+        self.handle_lock(job)
         if job.options["lock_queue_size"] is not None:
-            lock = self.get_lock(job)
-            queued_jobs = [another_job for another_job in self.queue if self.get_lock(another_job) is lock]
+            queued_jobs = [another_job for another_job in self.queue if another_job.lock is job.lock]
             if len(queued_jobs) >= job.options["lock_queue_size"]:
                 return queued_jobs[-1]
 
@@ -107,25 +107,24 @@ class JobsQueue(object):
     def remove(self, job_id):
         self.deque.remove(job_id)
 
-    def get_lock(self, job):
-        """
-        Get a shared lock for a job
-        """
+    def handle_lock(self, job):
         name = job.get_lock_name()
         if name is None:
-            return None
+            return
 
         lock = self.job_locks.get(name)
         if lock is None:
             lock = JobSharedLock(self, name)
             self.job_locks[lock.name] = lock
+
         lock.add_job(job)
-        return lock
+        job.lock = lock
 
     def release_lock(self, job):
-        lock = job.get_lock()
-        if not lock:
+        lock = job.lock
+        if job.lock is None:
             return
+
         # Remove job from lock list and release it so another job can use it
         lock.remove_job(job)
         lock.release()
@@ -146,16 +145,11 @@ class JobsQueue(object):
             await self.queue_event.wait()
             found = None
             for job in self.queue:
-                try:
-                    lock = self.get_lock(job)
-                except Exception:
-                    logger.error('Failed to get lock for %r', job, exc_info=True)
-                    lock = None
                 # Get job in the queue if it has no lock or its not locked
-                if lock is None or not lock.locked():
+                if job.lock is None or not job.lock.locked():
                     found = job
-                    if lock:
-                        await job.set_lock(lock)
+                    if job.lock:
+                        await job.lock.acquire()
                     break
             if found:
                 # Unlocked job found to run
@@ -280,21 +274,14 @@ class Job:
         if getattr(self.pipes, pipe) is None:
             raise ValueError("Pipe %r is not open" % pipe)
 
-    def set_id(self, id):
-        self.id = id
-
     def get_lock_name(self):
         lock_name = self.options.get('lock')
         if callable(lock_name):
             lock_name = lock_name(self.args)
         return lock_name
 
-    def get_lock(self):
-        return self.lock
-
-    async def set_lock(self, lock):
-        self.lock = lock
-        await self.lock.acquire()
+    def set_id(self, id):
+        self.id = id
 
     def set_result(self, result):
         self.result = result
