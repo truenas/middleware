@@ -806,17 +806,17 @@ class InterfaceService(CRUDService):
         await self.middleware.run_in_thread(self.__validate_aliases, verrors, schema_name, data, ifaces)
 
         bridge_used = {}
-        for k, v in filter(lambda x: x[0].startswith('br'), ifaces.items()):
-            for port in (v.get('bridge_members') or []):
-                bridge_used[port] = k
-        vlan_used = {
-            v['vlan_parent_interface']: k
-            for k, v in filter(lambda x: x[0].startswith('vlan'), ifaces.items())
-        }
+        vlan_used = {}
         lag_used = {}
-        for k, v in filter(lambda x: x[0].startswith('bond'), ifaces.items()):
-            for port in (v.get('lag_ports') or []):
-                lag_used[port] = k
+        for k, v in ifaces.items():
+            if k.startswith('br'):
+                for port in (v.get('bridge_members') or []):
+                    bridge_used[port] = k
+            elif k.startswith('vlan'):
+                vlan_used[v['vlan_parent_inteface']] = k
+            elif k.startswith('bond'):
+                for port in (v.get('lag_ports') or []):
+                    lag_used[port] = k
 
         if itype == 'PHYSICAL':
             if data['name'] in lag_used:
