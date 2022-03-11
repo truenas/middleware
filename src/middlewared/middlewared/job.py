@@ -500,7 +500,7 @@ class Job:
 
         await self.middleware.run_in_thread(close_pipes)
 
-    def __encode__(self):
+    def __encode__(self, raw_result=True):
         exc_info = None
         if self.exc_info:
             etype = self.exc_info[0]
@@ -531,7 +531,7 @@ class Job:
             'logs_path': self.logs_path,
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,
-            'result': self.result,
+            'result': self.result if raw_result else self.middleware.dump_result(self.result, method=self.method),
             'error': self.error,
             'exception': self.exception,
             'exc_info': exc_info,
