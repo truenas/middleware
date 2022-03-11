@@ -26,3 +26,8 @@ class TestService(Service):
 
     async def remove_mock(self, name):
         self.middleware.remove_mock(name)
+
+    # Dummy methods to mock for internal infrastructure testing (i.e. jobs manager)
+
+    async def test1(self):
+        pass
