@@ -57,8 +57,7 @@ class ClusterJob(Service):
     @periodic(3600)
     @job(lock="queue_lock", transient=True)
     async def process_queue(self, job):
-        gl_enabled = (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']
-        if not gl_enabled:
+        if not (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']:
             return
 
         node = (await self.middleware.call('ctdb.general.status', {'all_nodes': False}))[0]
@@ -135,14 +134,11 @@ class ClusterJob(Service):
             'is_job': is_job,
             'status': CLStatus.ACTIVE.name
         }
-
         await self.wait_for_method(job, method, 10)
-        nodes = await self.middleware.call('ctdb.general.status')
-
-        job.set_progress(50, f'Setting job status indicator for nodes {", ".join([node["pnn"] for node in nodes])!r}')
-        for node in nodes:
+        for node in await self.middleware.call('ctdb.general.status'):
             if node['this_node'] or node['pnn'] == -1:
                 continue
+            job.set_progress(50, f'Setting job status indicator for node {node["address"]!r}')
             key = f'CLJOB_{method}_{node["pnn"]}'
             await self.middleware.call('clustercache.put', key, payload, timeout)
 
