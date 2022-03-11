@@ -25,7 +25,6 @@ def generate_ssh_config(middleware, ssh_config, dirfd):
         return os.open(path, flags, mode=mode, dir_fd=dirfd)
 
     for k in SSH_KEYS:
-        must_remove = True
         s_key = re.sub(r'([.-])', '_', k).replace('ssh_', '', 1)
         if ssh_config[s_key]:
             decoded_key = base64.b64decode(ssh_config[s_key])
@@ -60,11 +59,6 @@ def generate_ssh_config(middleware, ssh_config, dirfd):
                         os.fchown(f.fileno(), 0, 0)
 
                     f.write(decoded_key)
-                    must_remove = False
-
-        if must_remove:
-            with suppress(FileNotFoundError):
-                os.remove(os.path.join(SSH_CONFIG_PATH, k))
 
     expected_files = SSH_KEYS + DEFAULT_FILES
     with os.scandir(dirfd) as entries:
