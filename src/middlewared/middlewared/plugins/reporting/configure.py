@@ -1,6 +1,6 @@
 import os
 
-from middlewared.service import private, Service
+from middlewared.service import lock, private, Service
 from middlewared.utils.shutil import rmtree_one_filesystem
 
 
@@ -11,6 +11,7 @@ class ReportingService(Service):
         return f"{network_config['hostname_local']}.{network_config['domain']}"
 
     @private
+    @lock('reporting.setup')
     def setup(self):
         systemdatasetconfig = self.middleware.call_sync('systemdataset.config')
         if not systemdatasetconfig['path']:
