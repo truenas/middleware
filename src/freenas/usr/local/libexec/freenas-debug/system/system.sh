@@ -148,7 +148,7 @@ system_func()
 	section_footer
 
 	section_header "Middleware Jobs - 'midclt call core.get_jobs'"
-	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' '{"extra": {"normalize_result": true}}' | jq .
+	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' '{"extra": {"raw_result": false}}' | jq .
 	section_footer
 
 	section_header "Middleware Websocket Incoming/Outgoing Message(s) - 'midclt call core.get_websocket_messages'"
