@@ -1213,8 +1213,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return Pipe(self, buffered)
 
     def _call_prepare(
-        self, name, serviceobj, methodobj, params, app=None, job_on_progress_cb=None, pipes=None, threadsafe=False,
+        self, name, serviceobj, methodobj, params, app=None, job_on_progress_cb=None, pipes=None, in_event_loop=True,
     ):
+        """
+        :param in_event_loop: Whether we are in the event loop thread.
+        :return:
+        """
         args = []
         if hasattr(methodobj, '_pass_app'):
             args.append(app)
@@ -1231,12 +1235,19 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             # Create a job instance with required args
             job = Job(self, name, serviceobj, methodobj, args, job_options, pipes, job_on_progress_cb)
             # Add the job to the queue.
-            # At this point an `id` is assinged to the job.
-            if not threadsafe:
-                self.jobs.add(job)
+            # At this point an `id` is assigned to the job.
+            # Job might be replaced with an already existing job if `lock_queue_size` is used.
+            if in_event_loop:
+                job = self.jobs.add(job)
             else:
                 event = threading.Event()
-                self.loop.call_soon_threadsafe(lambda: (self.jobs.add(job), event.set()))
+
+                def cb():
+                    nonlocal job
+                    job = self.jobs.add(job)
+                    event.set()
+
+                self.loop.call_soon_threadsafe(cb)
                 event.wait()
             return PreparedCall(job=job)
 
@@ -1319,7 +1330,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         serviceobj, methodobj = self._method_lookup(name)
 
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb,
-                                           threadsafe=True)
+                                           in_event_loop=True)
 
         if prepared_call.job:
             return prepared_call.job
