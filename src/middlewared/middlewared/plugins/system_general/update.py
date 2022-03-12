@@ -23,7 +23,7 @@ class SystemGeneralModel(sa.Model):
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
     stg_guix_frame_options = sa.Column(sa.String(120), default='SAMEORIGIN')
     stg_language = sa.Column(sa.String(120), default='en')
-    stg_kbdmap = sa.Column(sa.String(120))
+    stg_kbdmap = sa.Column(sa.String(120), default='us')
     stg_birthday = sa.Column(sa.DateTime(), nullable=True)
     stg_timezone = sa.Column(sa.String(120), default='America/Los_Angeles')
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
