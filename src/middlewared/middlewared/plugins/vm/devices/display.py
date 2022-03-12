@@ -43,7 +43,7 @@ class DISPLAY(Device):
     def password_configured(self):
         return bool(self.data['attributes'].get('password'))
 
-    def web_uri(self, host, password=None):
+    def web_uri(self, host, password=None, protocol='http'):
         path = self.get_webui_info()['path'][1:]
         params = {'path': path}
         if self.is_spice_type():
@@ -55,7 +55,7 @@ class DISPLAY(Device):
             params['password'] = password
 
         get_params = f'?{urlencode(params, quote_via=quote_plus)}'
-        return f'http://{host}/{path}{"spice_auto" if self.is_spice_type() else "vnc"}.html{get_params}'
+        return f'{protocol}://{host}/{path}{"spice_auto" if self.is_spice_type() else "vnc"}.html{get_params}'
 
     def is_available(self):
         return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
