@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
+from collections import defaultdict
 import copy
+from datetime import datetime, timedelta
+from decimal import Decimal
 import threading
 import time
+
 import libzfs
 import netsnmpagent
 import pysnmp.hlapi  # noqa
 import pysnmp.smi
-from collections import defaultdict
-from datetime import datetime, timedelta
-from decimal import Decimal
 
 from middlewared.client import Client
 
