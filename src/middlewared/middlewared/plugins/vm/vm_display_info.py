@@ -61,7 +61,8 @@ class VMService(Service):
                 'device_password',
                 Int('device_id', required=True),
                 Str('password', required=True, empty=False))
-            ])
+            ]),
+            Str('protocol', default='HTTP', enum=['HTTP', 'HTTPS']),
         )
     )
     @returns(Dict('display_devices_uri', additional_attrs=True))
@@ -75,7 +76,7 @@ class VMService(Service):
         retrieved because of missing password information.
         """
         web_uris = {}
-
+        protocol = options['protocol'].lower()
         host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
         try:
             ipaddress.IPv6Address(host)
@@ -96,7 +97,7 @@ class VMService(Service):
                     elif not creds.get(device.data['id']):
                         uri_data['error'] = 'Password not specified'
 
-                uri_data['uri'] = device.web_uri(host, creds.get(device.data['id']))
+                uri_data['uri'] = device.web_uri(host, creds.get(device.data['id']), protocol)
             else:
                 uri_data['error'] = 'Web display is not configured'
             web_uris[device.data['id']] = uri_data
