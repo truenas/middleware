@@ -1,8 +1,7 @@
-import subprocess
+import os
 
 from middlewared.schema import accepts, Dict, returns
 from middlewared.service import private, Service
-from middlewared.utils import Popen
 
 
 class SystemGeneralService(Service):
@@ -26,15 +25,15 @@ class SystemGeneralService(Service):
 
     @private
     async def get_timezone_choices(self):
-        pipe = await Popen(
-            'find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'',
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True
-        )
-        choices = (await pipe.communicate())[0].decode().strip().split('\n')
-        return {
-            x[20:]: x[20:] for x in choices if (
-                not x[20:].startswith(('right/', 'posix/')) and '.' not in x[20:]
-            )
-        }
+        timezones = {}
+        basepath = '/usr/share/zoneinfo/'
+        for root, dirs, files in os.walk(basepath):
+            relpath = os.path.normpath(os.path.relpath(root, basepath))
+            for timezone in (files if 'right' not in relpath and 'posix' not in relpath else []):
+                if relpath != '.':
+                    zone_name = f'{relpath}/{timezone}'
+                else:
+                    zone_name = timezone
+                if 'Etc/GMT' not in zone_name:
+                    timezones[zone_name] = zone_name
+        return timezones
