@@ -4,7 +4,7 @@ import subprocess
 import tarfile
 import time
 
-from middlewared.service import private, Service
+from middlewared.service import lock, private, Service
 
 
 def get_members(tar, prefix):
@@ -17,6 +17,7 @@ def get_members(tar, prefix):
 class ReportingService(Service):
 
     @private
+    @lock('reporting.setup')
     def setup(self):
         systemdatasetconfig = self.middleware.call_sync('systemdataset.config')
         if not systemdatasetconfig['path']:
