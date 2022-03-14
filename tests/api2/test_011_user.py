@@ -610,6 +610,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
     At this point the non-SMB user has been converted to an SMB user. Verify
     that a passdb entry was appropriately generated.
     """
+    global testuser_id
     depends(request, ["NON_SMB_USER_CREATED"], scope="session")
     result = GET(
         '/user', payload={
@@ -620,6 +621,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
             }
         }
     )
+    testuser_id = result.json()['id']
     assert result.status_code == 200, result.text
     assert result.json()['sid'], result.text
     assert result.json()['nt_name'], result.text
@@ -627,7 +629,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
 
 def test_53_add_user_to_sudoers(request):
     depends(request, ["ssh_password"], scope="session")
-    results = PUT(f"/user/id/{user_id}", {"sudo": True})
+    results = PUT(f"/user/id/{testuser_id}", {"sudo": True})
     assert results.status_code == 200, results.text
 
     check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL")
@@ -640,7 +642,7 @@ def test_53_add_user_to_sudoers(request):
 
 def test_54_disable_password_auth(request):
     depends(request, ["ssh_password"], scope="session")
-    results = PUT(f"/user/id/{user_id}", {"password_disabled": True})
+    results = PUT(f"/user/id/{testuser_id}", {"password_disabled": True})
     assert results.status_code == 200, results.text
 
     check_config_file("/etc/shadow", "testuser3:*:18397:0:99999:7:::")
@@ -648,7 +650,7 @@ def test_54_disable_password_auth(request):
 
 def test_55_deleting_non_smb_user(request):
     depends(request, ["NON_SMB_USER_CREATED"])
-    results = DELETE(f"/user/id/{user_id}/", {"delete_group": True})
+    results = DELETE(f"/user/id/{testuser_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
 
