@@ -77,10 +77,6 @@ class FailoverService(Service):
     # that's being handled by us explicitly
     HA_PROPAGATE = {'ha_propagate': False}
 
-    # file created by the pool plugin during certain
-    # scenarios when importing zpools on boot
-    ZPOOL_KILLCACHE = '/data/zfs/killcache'
-
     # zpool cache file managed by ZFS
     ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 
@@ -386,19 +382,6 @@ class FailoverService(Service):
             logger.warning('No zpools to import, exiting failover event')
             self.FAILOVER_RESULT = 'INFO'
             return self.FAILOVER_RESULT
-
-        # remove the zpool cache files if necessary
-        if os.path.exists(self.ZPOOL_KILLCACHE):
-            for i in (self.ZPOOL_CACHE_FILE, self.ZPOOL_CACHE_FILE_SAVED):
-                with contextlib.suppress(Exception):
-                    os.unlink(i)
-
-        # create the self.ZPOOL_KILLCACHE file
-        else:
-            with contextlib.suppress(Exception):
-                with open(self.ZPOOL_KILLCACHE, 'w') as f:
-                    f.flush()  # be sure it goes straight to disk
-                    os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
 
         # if we're here and the zpool "saved" cache file exists we need to check
         # if it's modify time is < the standard zpool cache file and if it is
