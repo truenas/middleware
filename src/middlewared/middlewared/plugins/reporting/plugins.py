@@ -371,7 +371,13 @@ class UPSBase:
     def _base_path(self):
         ups_config = self.middleware.call_sync('ups.config')
         if ups_config['mode'] == 'SLAVE':
-            return os.path.join(RRD_BASE_DIR_PATH, ups_config['remotehost'])
+            remote_host = os.path.join(RRD_BASE_DIR_PATH, ups_config['remotehost'])
+            files = os.listdir(remote_host)
+            if not any(f.endswith('.rrd') for f in files):
+                remote_host = next(
+                    (f for f in map(lambda f: os.path.join(remote_host, f), files) if os.path.isdir(f)), remote_host
+                )
+            return remote_host
         else:
             return super()._base_path
 
