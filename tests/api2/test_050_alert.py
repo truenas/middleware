@@ -135,7 +135,7 @@ def test_13_verify_the_pool_is_not_degraded(request):
 
 
 @pytest.mark.timeout(120)
-def test_14_wait_for_the_alert_to_dissapear(request):
+def test_14_wait_for_the_alert_to_disappear(request):
     depends(request, ["degrade_pool"], scope="session")
     while True:
         if alert_id not in GET("/alert/list/").text:
@@ -219,7 +219,7 @@ if not ha:
         assert results['result'] is True, results['output']
 
     @pytest.mark.timeout(120)
-    def test_23_wait_for_the_corefiles_alert_to_dissapear(request):
+    def test_23_wait_for_the_corefiles_alert_to_disappear(request):
         depends(request, ['wait_alert'])
         while True:
             if alert_id not in GET("/alert/list/").text:
