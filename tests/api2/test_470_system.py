@@ -32,10 +32,12 @@ def test_03_check_system_version_match_with_system_info():
     assert system_version == system_info_version
 
 
-def test_04_check_system_is_freenas():
-    results = GET("/system/is_freenas/")
+def test_04_check_system_product_type():
+    results = GET("/system/product_type/")
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), bool) is True, results.text
+    result = results.json()
+    assert isinstance(result, str), results.text
+    assert result in ('SCALE', 'SCALE_ENTERPRISE'), results.text
 
 
 def test_05_check_system_debug():
