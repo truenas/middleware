@@ -781,6 +781,11 @@ class ZettareplService(Service):
         if transport != "LOCAL":
             await self.middleware.call("network.general.will_perform_activity", "replication")
 
+        if transport == "SSH+NETCAT":
+            # There is no difference shell-wise, but `_define_transport` for `SSH+NETCAT` will fail if we don't
+            # supply `netcat_active_side` and other parameters which are totally unrelated here.
+            transport = "SSH"
+
         transport_definition = await self._define_transport(transport, ssh_credentials)
         transport = create_transport(transport_definition)
         shell = transport.shell(transport)
