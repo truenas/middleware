@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.schema import accepts, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import CallError, job, Service, ValidationErrors
 
 
@@ -13,6 +13,7 @@ class PoolService(Service):
             Str('target_vdev', required=True),
             Str('new_disk', required=True),
             Str('passphrase'),
+            Bool('allow_duplicate_serials', default=False),
         )
     )
     @job(lock=lambda args: f'pool_attach_{args[0]}')
@@ -59,7 +60,10 @@ class PoolService(Service):
                 verrors.add('pool_attach.passphrase', 'Passphrase is not valid.')
 
         # Let's validate new disk now
-        await self.middleware.call('disk.check_disks_availability', verrors, [options['new_disk']], 'pool_attach')
+        availability_errors, _ = await self.middleware.call(
+            'disk.check_disks_availability', [options['new_disk']], options['allow_duplicate_serials']
+        )
+        verrors.add_child('pool_attach', availability_errors)
         verrors.check()
 
         disks = {options['new_disk']: {'create_swap': topology_type == 'data'}}
