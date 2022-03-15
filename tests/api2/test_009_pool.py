@@ -7,7 +7,7 @@ import re
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET, wait_on_job
+from functions import POST, GET, wait_on_job, make_ws_request
 from auto_config import pool_name, ha_pool_name, ha
 
 IMAGES = {}
@@ -21,6 +21,11 @@ disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys(
 disk_pool = sorted(list(set(disk_list) - set(nas_disk)))
 ha_disk_pool = disk_pool[:1] if ha else None
 tank_disk_pool = disk_pool[1:] if ha else disk_pool
+
+if ha and "virtual_ip" in os.environ:
+    ip = os.environ["virtual_ip"]
+else:
+    from auto_config import ip
 
 
 @pytest.fixture(scope='module')
@@ -79,11 +84,10 @@ if ha:
 
     def test_05_get_ha_pool_disks(request, pool_data):
         depends(request, ["get_ha_pool_id"])
-        results = GET(f'/pool/{pool_data["ha_pool_id"]}/get_disks')
-        assert results.status_code == 200, results.text
-        disks = results.json()
-        assert isinstance(disks, list), results.text
-        assert disks and disks == ha_disk_pool
+        payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['ha_pool_id']]}
+        res = make_ws_request(ip, payload)
+        assert isinstance(res['result'], list), res
+        assert res['result'] and res['result'] == ha_disk_pool
 
 
 @pytest.mark.dependency(name="pool_04")
@@ -117,11 +121,10 @@ def test_07_get_pool_id(request, pool_data):
 
 def test_08_get_pool_disks(request, pool_data):
     depends(request, ["get_pool_id"])
-    results = GET(f'/pool/{pool_data["id"]}/get_disks')
-    assert results.status_code == 200, results.text
-    disks = results.json()
-    assert isinstance(disks, list), results.text
-    assert disks and disks == disk_pool
+    payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['id']]}
+    res = make_ws_request(ip, payload)
+    assert isinstance(res['result'], list), res
+    assert res['result'] and res['result'] == tank_disk_pool, res
 
 
 def test_09_get_pool_id_info(request, pool_data):
