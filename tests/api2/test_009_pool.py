@@ -8,7 +8,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, wait_on_job
-from auto_config import pool_name, ha
+from auto_config import pool_name, ha_pool_name, ha
 
 IMAGES = {}
 loops = {
@@ -50,11 +50,12 @@ def test_02_wipe_all_pool_disk():
 
 # Only read the test on HA
 if ha:
+    @pytest.mark.dependency(name="create_ha_pool")
     def test_03_creating_ha_pool(request):
         depends(request, ["wipe_disk"])
         global payload
         payload = {
-            "name": "ha",
+            "name": ha_pool_name,
             "encryption": False,
             "topology": {
                 "data": [
@@ -68,9 +69,25 @@ if ha:
         job_status = wait_on_job(job_id, 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
+    @pytest.mark.dependency(name="get_ha_pool_id")
+    def test_04_get_ha_pool_id(request, pool_data):
+        depends(request, ["create_ha_pool"])
+        results = GET(f"/pool?name={ha_pool_name}")
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), list), results.text
+        pool_data['ha_pool_id'] = results.json()[0]['id']
+
+    def test_05_get_ha_pool_disks(request, pool_data):
+        depends(request, ["get_ha_pool_id"])
+        results = GET(f'/pool/{pool_data["ha_pool_id"]}/get_disks')
+        assert results.status_code == 200, results.text
+        disks = results.json()
+        assert isinstance(disks, list), results.text
+        assert disks and disks == ha_disk_pool
+
 
 @pytest.mark.dependency(name="pool_04")
-def test_04_creating_a_pool(request):
+def test_06_creating_a_pool(request):
     depends(request, ["wipe_disk"])
     global payload
     payload = {
@@ -89,7 +106,8 @@ def test_04_creating_a_pool(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_05_get_pool_id(request, pool_data):
+@pytest.mark.dependency(name="get_pool_id")
+def test_07_get_pool_id(request, pool_data):
     depends(request, ["pool_04"])
     results = GET(f"/pool?name={pool_name}")
     assert results.status_code == 200, results.text
@@ -97,7 +115,16 @@ def test_05_get_pool_id(request, pool_data):
     pool_data['id'] = results.json()[0]['id']
 
 
-def test_06_get_pool_id_info(request, pool_data):
+def test_08_get_pool_disks(request, pool_data):
+    depends(request, ["get_pool_id"])
+    results = GET(f'/pool/{pool_data["id"]}/get_disks')
+    assert results.status_code == 200, results.text
+    disks = results.json()
+    assert isinstance(disks, list), results.text
+    assert disks and disks == disk_pool
+
+
+def test_09_get_pool_id_info(request, pool_data):
     depends(request, ["pool_04"])
     results = GET(f"/pool/id/{pool_data['id']}/")
     assert results.status_code == 200, results.text
@@ -107,7 +134,7 @@ def test_06_get_pool_id_info(request, pool_data):
 
 
 @pytest.mark.parametrize('pool_keys', ["name", "topology:data:disks"])
-def test_07_looking_pool_info_of_(request, pool_keys):
+def test_10_looking_pool_info_of_(request, pool_keys):
     depends(request, ["pool_04"])
     results = pool_info
     if ':' in pool_keys:
