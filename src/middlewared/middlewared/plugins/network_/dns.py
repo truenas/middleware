@@ -90,8 +90,9 @@ class DNSService(Service):
                 dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', iface)
                 if dhclient_running:
                     leases = self.middleware.call_sync('interface.dhclient_leases', iface)
-                    for dns in re.findall(r'option domain-name-servers (.+)', leases or ''):
-                        dns_from_dhcp.add(f'nameserver {dns.split(";")[0]}\n')
+                    for dns_srvs in re.findall(r'option domain-name-servers (.+)', leases or ''):
+                        for dns in dns_srvs.split(';')[0].split(','):
+                            dns_from_dhcp.add(f'nameserver {dns.strip()}\n')
 
             for dns in dns_from_dhcp:
                 result += dns
