@@ -5,7 +5,7 @@ from itertools import chain
 from typing import Union
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.schema import Bool, Cron, Dict, HostPath, Int, IPAddr, List, NOT_PROVIDED, Path, Str
+from middlewared.schema import Bool, Cron, Dict, HostPath, Int, IPAddr, List, NOT_PROVIDED, Path, Str, URI
 from middlewared.validators import Match, Range, validate_schema
 
 
@@ -19,6 +19,7 @@ mapping = {
     'dict': Dict,
     'ipaddr': IPAddr,
     'cron': Cron,
+    'uri': URI,
 }
 
 
