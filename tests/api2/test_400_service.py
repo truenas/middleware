@@ -14,7 +14,7 @@ from auto_config import ha, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-services = ['cifs', 'iscsitarget', 'snmp', 'rsync', 'lldp']
+services = ['cifs', 'iscsitarget', 'snmp', 'rsync']
 
 all_services = []
 for service in GET('/service/', controller_a=ha).json():
