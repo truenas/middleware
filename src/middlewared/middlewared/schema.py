@@ -10,6 +10,7 @@ import errno
 import inspect
 import ipaddress
 import os
+from urllib.parse import urlparse
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
@@ -316,6 +317,17 @@ class File(HostPath):
     def validate_internal(self, verrors, value):
         if not os.path.isfile(value):
             verrors.add(self.name, "This path is not a file.", errno.EISDIR)
+
+
+class URI(Str):
+
+    def validate(self, value):
+        super().validate(value)
+        verrors = ValidationErrors()
+        uri = urlparse(value)
+        if not any(getattr(uri, k) for k in ('scheme', 'netloc')):
+            verrors.add(self.name, 'Not a valid URI')
+        verrors.check()
 
 
 class IPAddr(Str):
