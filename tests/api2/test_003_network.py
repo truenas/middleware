@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# Author: Eric Turgeon
-# License: BSD
-
 import pytest
 import sys
 import os
@@ -23,7 +20,7 @@ if ha and "domain" in os.environ:
     secondary_dns = os.environ["secondary_dns"]
     ip = os.environ["controller1_ip"]
 
-    def test_01_set_network_for_ha():
+    def test_01_set_default_network_settings_for_ha():
         payload = {
             "domain": domain,
             "ipv4gateway": gateway,
@@ -35,64 +32,66 @@ if ha and "domain" in os.environ:
         }
         results = PUT("/network/configuration/", payload, controller_a=ha)
         assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
 
+        global GATEWAY, NAMESERVERS, PAYLOAD, RESULTS
+        GATEWAY = gateway
+        NAMESERVERS = [primary_dns, secondary_dns]
+        PAYLOAD = payload
+        RESULTS = results.json()
 else:
     from auto_config import hostname, domain, ip
 
-    def test_02_get_default_network_general_summary():
-        global gateway, nameservers
+    def test_01_set_default_network_settings():
+        # NOTE: on a non-HA system, this method is assuming
+        # that the machine has been handed a default route
+        # and nameserver(s) from a DHCP server. That's why
+        # we're getting this information.
         results = GET("/network/general/summary/")
         assert results.status_code == 200
-        assert isinstance(results.json(), dict), results.text
-        assert isinstance(results.json()['default_routes'], list), results.text
-        assert isinstance(results.json()['nameservers'], list), results.text
-        # get default_routes to set ipv4gateway for network/configuration
-        gateway = results.json()['default_routes'][0]
-        # get nameservers to set nameservers for network/configuration
-        nameservers = results.json()['nameservers']
+        ans = results.json()
+        assert isinstance(ans, dict), results.text
+        assert isinstance(ans['default_routes'], list), results.text
+        assert isinstance(ans['nameservers'], list), results.text
 
-    def test_03_configure_setting_domain_hostname_and_dns():
-        global payload, results
-        payload = {
-            "domain": domain,
-            "hostname": hostname,
-            "ipv4gateway": gateway,
-        }
-        # set nameservers
-        for num, nameserver in enumerate(nameservers, start=1):
+        payload = {"domain": domain, "hostname": hostname, "ipv4gateway": ans['default_routes'][0]}
+        for num, nameserver in enumerate(ans['nameservers'], start=1):
+            if num > 3:
+                # only 3 nameservers allowed via the API
+                break
             payload[f'nameserver{num}'] = nameserver
+
         results = PUT("/network/configuration/", payload)
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
 
-    @pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway", "nameserver1"])
-    def test_04_looking_put_network_configuration_output_(dkeys):
-        assert results.json()[dkeys] == payload[dkeys], results.text
+        global GATEWAY, NAMESERVERS, PAYLOAD, RESULTS
+        GATEWAY = ans['default_routes'][0]
+        NAMESERVERS = ans['nameservers']
+        PAYLOAD = payload
+        RESULTS = results.json()
 
-    def test_05_get_network_configuration_info_():
-        global results
-        results = GET("/network/configuration/")
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), dict), results.text
 
-    @pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway", "nameserver1"])
-    def test_06_looking_get_network_configuration_output_(dkeys):
-        assert results.json()[dkeys] == payload[dkeys], results.text
+def test_02_verify_network_configuration_config():
+    for payload_key, payload_value in PAYLOAD.items():
+        assert RESULTS[payload_key] == payload_value
 
-    def test_07_get_network_general_summary():
-        global results
-        results = GET("/network/general/summary/")
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), dict), results.text
 
-    def test_08_verify_network_general_summary_nameservers():
-        for nameserver in nameservers:
-            assert nameserver in results.json()['nameservers'], results.text
+def test_03_get_network_general_summary():
+    results = GET("/network/general/summary/")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    global RESULTS
+    RESULTS = results.json()
 
-    def test_09_verify_network_general_summary_default_routes():
-        assert gateway in results.json()['default_routes'], results.text
 
-    def test_09_verify_network_general_summary_ips():
-        for value in results.json()['ips'][interface]['IPV4']:
-            if ip in value:
-                assert ip in value, results.text
+def test_04_verify_network_general_summary_nameservers():
+    assert set(RESULTS['nameservers']) == set(NAMESERVERS)
+
+
+def test_05_verify_network_general_summary_default_routes():
+    assert RESULTS['default_routes'][0] == GATEWAY
+
+
+def test_06_verify_network_general_summary_ips():
+    assert any(i.startswith(ip) for i in RESULTS['ips'][interface]['IPV4'])
