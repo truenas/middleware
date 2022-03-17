@@ -364,6 +364,9 @@ class FailoverEventsService(Service):
             # error and move on
             logger.error('Failed to unlock SED disk(s) with error: %r', e)
 
+        # setup the zpool cachefile
+        self.run_call('failover.zpool.cachefile.setup', 'MASTER')
+
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
 
@@ -402,6 +405,16 @@ class FailoverEventsService(Service):
                     vol['error'] = str(e)
                     failed.append(vol)
                     continue
+
+            self.logger.info('Successfully imported %r', vol['name'])
+
+            try:
+                # make sure the zpool cachefile property is set appropriately
+                self.run_call(
+                    'zfs.pool.update', vol['name'], {'properties': {'cachefile': {'value': ZPOOL_CACHE_FILE}}}
+                )
+            except Exception:
+                self.logger.warning('Failed to set cachefile property for %r', vol['name'], exc_info=True)
 
             # try to unlock the zfs datasets (if any)
             unlock_job = self.run_call('failover.unlock_zfs_datasets', vol['name'])
@@ -576,6 +589,9 @@ class FailoverEventsService(Service):
                 f.write(int(time.time()).to_bytes(4, sys.byteorder))
                 f.flush()  # be sure it goes straight to disk
                 os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
+
+        # setup the zpool cachefile
+        self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
 
         # export zpools in a thread and set a timeout to
         # to `self.ZPOOL_EXPORT_TIMEOUT`.
