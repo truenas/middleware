@@ -20,6 +20,7 @@ from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.utils.contextlib import asyncnullcontext
+from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -1237,6 +1238,12 @@ async def hook_setup_ha(middleware, *args, **kwargs):
             # standby node before we call `interface.sync`
             middleware.logger.debug('[HA] Sending database to standby node')
             await middleware.call('failover.send_database')
+
+            # Need to send the zpool cachefile to the other node so it matches
+            # when a failover event occurs
+            middleware.logger.debug('[HA] Sending zpool cachefile to standby node')
+            await middleware.call('failover.send_small_file', ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE)
+            await middleware.call('failover.call_remote', 'failover.zpool.cachefile.setup' ['SYNC'])
 
             middleware.logger.debug('[HA] Configuring network on standby node')
             await middleware.call('failover.call_remote', 'interface.sync')
