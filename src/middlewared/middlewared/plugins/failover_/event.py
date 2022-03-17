@@ -12,6 +12,7 @@ from collections import defaultdict
 from middlewared.utils import filter_list
 from middlewared.service import Service, job, accepts
 from middlewared.schema import Dict, Bool, Int
+from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 
 logger = logging.getLogger('failover')
 
@@ -34,28 +35,6 @@ logger = logging.getLogger('failover')
 # If any of the above scenarios occur, we want to ensure
 # that only one thread is trying to run fenced or import the
 # zpools.
-
-
-class AllZpoolsFailedToImport(Exception):
-    """
-    This is raised if all zpools failed to
-    import when becoming master.
-    """
-    pass
-
-
-class IgnoreFailoverEvent(Exception):
-    """
-    This is raised when a failover event is ignored.
-    """
-    pass
-
-
-class FencedError(Exception):
-    """
-    This is raised if fenced fails to run.
-    """
-    pass
 
 
 class FailoverService(Service):
