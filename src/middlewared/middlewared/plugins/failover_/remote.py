@@ -233,7 +233,7 @@ class FailoverService(Service):
         Call a method in the other node.
         """
         options = options or {}
-        if options.get('job') and options.pop('job_return'):
+        if options.pop('job_return'):
             options['job'] = 'RETURN'
         try:
             return self.CLIENT.call(method, *args, **options)
