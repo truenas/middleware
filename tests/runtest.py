@@ -134,6 +134,7 @@ ntpServer = "10.20.20.122"
 localHome = "{localHome}"
 keyPath = "{keyPath}"
 pool_name = "tank"
+ha_pool_name = "ha"
 ha = {ha}
 update = {update}
 dev_test = {dev_test}
