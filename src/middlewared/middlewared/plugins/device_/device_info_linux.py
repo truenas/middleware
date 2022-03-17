@@ -1,4 +1,3 @@
-import glob
 import os
 import pyudev
 import re
@@ -32,12 +31,12 @@ class DeviceService(Service, DeviceInfoBase):
         disks = {}
         disks_data = self.retrieve_disks_data()
 
-        for block_device in pyudev.Context().list_devices(subsystem='block', DEVTYPE='disk'):
-            if block_device.sys_name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
+        for dev in pyudev.Context().list_devices(subsystem='block', DEVTYPE='disk'):
+            if dev.sys_name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
                 continue
-            if RE_NVME_PRIVATE_NAMESPACE.match(block_device.sys_name):
+            if RE_NVME_PRIVATE_NAMESPACE.match(dev.sys_name):
                 continue
-            device_type = os.path.join('/sys/block', block_device.sys_name, 'device/type')
+            device_type = os.path.join('/sys/block', dev.sys_name, 'device/type')
             if os.path.exists(device_type):
                 with open(device_type, 'r') as f:
                     if f.read().strip() != '0':
@@ -45,11 +44,9 @@ class DeviceService(Service, DeviceInfoBase):
             # nvme drives won't have this
 
             try:
-                disks[block_device.sys_name] = self.get_disk_details(block_device, self.disk_default.copy(), disks_data)
-            except Exception as e:
-                self.middleware.logger.debug(
-                    'Failed to retrieve disk details for %s : %s', block_device.sys_name, str(e)
-                )
+                disks[dev.sys_name] = self.get_disk_details(dev, self.disk_default.copy(), disks_data)
+            except Exception:
+                self.logger.debug('Failed to retrieve disk details for %s : %s', dev.sys_name, exc_info=True)
 
         return disks
 
@@ -78,11 +75,11 @@ class DeviceService(Service, DeviceInfoBase):
                 lsblk_disks = json.loads(disks_cp.stdout)['blockdevices']
                 lsblk_disks = {i['path']: i for i in lsblk_disks}
             except Exception as e:
-                self.middleware.logger.error(
+                self.logger.error(
                     'Failed parsing lsblk information with error: %s', e
                 )
         else:
-            self.middleware.logger.error(
+            self.logger.error(
                 'Failed running lsblk command with error: %s', disks_cp.stderr.decode()
             )
 
@@ -219,13 +216,13 @@ class DeviceService(Service, DeviceInfoBase):
             with open(path, 'r') as f:
                 size = f.read().strip()
             if not size.isdigit():
-                self.middleware.logger.error(
+                self.logger.error(
                     'Unable to retrieve %r disk logical block size: malformed value %r found', name, size
                 )
             else:
                 return int(size)
         else:
-            self.middleware.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
+            self.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
 
     def get_storage_devices_topology(self):
         disks = self.get_disks()
