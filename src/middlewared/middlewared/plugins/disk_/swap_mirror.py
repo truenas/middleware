@@ -2,12 +2,13 @@ import glob
 import os
 import contextlib
 
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, private
 from middlewared.utils import filter_list, run
 
 
 class DiskService(Service):
 
+    @private
     async def create_swap_mirror(self, name, options):
         extra = options['extra']
         cp = await run(
@@ -17,6 +18,7 @@ class DiskService(Service):
         if cp.returncode:
             raise CallError(f'Failed to create mirror {name}: {cp.stderr}')
 
+    @private
     async def destroy_swap_mirror(self, name):
         mirror = await self.middleware.call('disk.get_swap_mirrors', [['name', '=', name]], {'get': True})
         if mirror['encrypted_provider']:
@@ -27,6 +29,7 @@ class DiskService(Service):
         if cp.returncode:
             raise CallError(f'Failed to stop mirror {name!r}: {cp.stderr}')
 
+    @private
     def get_swap_mirrors(self, filters, options):
         mirrors = []
         with contextlib.suppress(FileNotFoundError):

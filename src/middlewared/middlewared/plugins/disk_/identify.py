@@ -51,6 +51,7 @@ class DiskService(Service):
 
         return f'{{devicename}}{name}'
 
+    @private
     async def identifier_to_device(self, ident, disks):
         if not ident:
             return None
