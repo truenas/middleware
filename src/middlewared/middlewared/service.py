@@ -1624,14 +1624,22 @@ class CoreService(Service):
         job = self.middleware.jobs.all()[id]
         return job.abort()
 
-    @accepts(Bool('cli', default=False))
-    def get_services(self, cli):
+    def _should_list_service(self, name, service, target):
+        if service._config.private is True:
+            if not (target == 'REST' and name == 'resttest'):
+                return False
+
+        if target == 'CLI' and service._config.cli_private:
+            return False
+
+        return True
+
+    @accepts(Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
+    def get_services(self, target):
         """Returns a list of all registered services."""
         services = {}
         for k, v in list(self.middleware.get_services().items()):
-            if v._config.private is True:
-                continue
-            if cli and v._config.cli_private:
+            if not self._should_list_service(k, v, target):
                 continue
 
             if is_service_class(v, CRUDService):
@@ -1654,8 +1662,8 @@ class CoreService(Service):
 
         return services
 
-    @accepts(Str('service', default=None, null=True), Bool('cli', default=False))
-    def get_methods(self, service, cli):
+    @accepts(Str('service', default=None, null=True), Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
+    def get_methods(self, service, target):
         """
         Return methods metadata of every available service.
 
@@ -1666,10 +1674,7 @@ class CoreService(Service):
             if service is not None and name != service:
                 continue
 
-            # Skip private services
-            if svc._config.private:
-                continue
-            if cli and svc._config.cli_private:
+            if not self._should_list_service(name, svc, target):
                 continue
 
             for attr in dir(svc):
@@ -1721,7 +1726,7 @@ class CoreService(Service):
                 # Skip private methods
                 if hasattr(method, '_private'):
                     continue
-                if cli and hasattr(method, '_cli_private'):
+                if target == 'CLI' and hasattr(method, '_cli_private'):
                     continue
 
                 # terminate is a private method used to clean up a service on shutdown
@@ -1812,9 +1817,7 @@ class CoreService(Service):
                     'job': hasattr(method, '_job'),
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
                     'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
-                    'require_pipes': hasattr(method, '_job') and method._job['check_pipes'] and any(
-                        i in method._job['pipes'] for i in ('input', 'output')
-                    ),
+                    'check_pipes': hasattr(method, '_job') and method._job['pipes'] and method._job['check_pipes'],
                     **method_schemas,
                 }
 

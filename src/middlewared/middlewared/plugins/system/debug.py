@@ -62,10 +62,7 @@ class SystemService(Service):
     @job(lock='system.debug', pipes=['output'])
     def debug(self, job):
         """
-        Job to stream debug file.
-
-        This method is meant to be used in conjuntion with `core.download` to get the debug
-        downloaded via HTTP.
+        Download a debug file.
         """
         job.set_progress(0, 'Generating debug file')
         debug_job = self.middleware.call_sync(
