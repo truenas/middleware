@@ -643,12 +643,11 @@ class FailoverService(Service):
         self.run_call('truecommand.stop_truecommand_service')
 
         # we keep SSH running on both controllers (if it's enabled by user)
-        for i in self.run_call('datastore.query', 'services_services'):
-            if i['srv_service'] == 'ssh':
-                if i['srv_enable']:
-                    logger.info('Restarting SSH')
-                    self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
-                break
+        filters = [['srv_service', '=', 'ssh']]
+        options = {'get': True}
+        if self.run_call('datastore.query', 'services.services', filters, options)['srv_enable']:
+            logger.info('Restarting SSH')
+            self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
 
         # TODO: ALUA on SCALE??
         # do something with iscsi service here
