@@ -1037,13 +1037,10 @@ class PoolService(CRUDService):
         Get all disks in use by pools.
         If `id` is provided only the disks from the given pool `id` will be returned.
         """
-        filters = []
         disks = []
-        if oid:
-            filters.append(('id', '=', oid))
-        for pool in await self.query(filters):
+        for pool in await self.middleware.call('pool.query', [] if not oid else [('id', '=', oid)]):
             if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
-                disks.extend(list(await self.middleware.call('zfs.pool.get_disks', pool['name'])))
+                disks.extend(await self.middleware.call('zfs.pool.get_disks', pool['name']))
         return disks
 
     @item_method
