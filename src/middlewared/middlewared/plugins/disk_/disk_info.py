@@ -4,10 +4,8 @@ import pyudev
 
 from middlewared.service import CallError, private, Service
 
-from .disk_info_base import DiskInfoBase
 
-
-class DiskService(Service, DiskInfoBase):
+class DiskService(Service):
 
     def get_dev_size(self, dev):
         try:
