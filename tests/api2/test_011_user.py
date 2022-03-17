@@ -344,7 +344,7 @@ def test_30_creating_home_dataset(request):
 def test_31_creating_user_with_homedir(request):
     depends(request, ["HOME_DS_CREATED"])
     global user_id
-    payload = {
+    user_payload = {
         "username": "testuser2",
         "full_name": "Test User2",
         "group_create": True,
@@ -355,7 +355,7 @@ def test_31_creating_user_with_homedir(request):
         "home": f'/mnt/{dataset}/testuser2',
         "home_mode": '750'
     }
-    results = POST("/user/", payload)
+    results = POST("/user/", user_payload)
     assert results.status_code == 200, results.text
     user_id = results.json()
     time.sleep(5)
@@ -365,11 +365,11 @@ def test_31_creating_user_with_homedir(request):
     assert results.status_code == 200, results.text
 
     pw = results.json()
-    assert pw['pw_dir'] == payload['home'], results.text
-    assert pw['pw_name'] == payload['username'], results.text
-    assert pw['pw_uid'] == payload['uid'], results.text
-    assert pw['pw_shell'] == payload['shell'], results.text
-    assert pw['pw_gecos'] == payload['full_name'], results.text
+    assert pw['pw_dir'] == user_payload['home'], results.text
+    assert pw['pw_name'] == user_payload['username'], results.text
+    assert pw['pw_uid'] == user_payload['uid'], results.text
+    assert pw['pw_shell'] == user_payload['shell'], results.text
+    assert pw['pw_gecos'] == user_payload['full_name'], results.text
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
