@@ -58,6 +58,8 @@
 
         if maproot:
             params.extend(maproot)
+        else:
+            params.append("no_root_squash")
 
         if config['allow_nonroot']:
             params.append("insecure")
