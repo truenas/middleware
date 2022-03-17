@@ -31,12 +31,12 @@ class DeviceService(Service, DeviceInfoBase):
         disks = {}
         disks_data = self.retrieve_disks_data()
 
-        for block_device in pyudev.Context().list_devices(subsystem='block', DEVTYPE='disk'):
-            if block_device.sys_name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
+        for dev in pyudev.Context().list_devices(subsystem='block', DEVTYPE='disk'):
+            if dev.sys_name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
                 continue
-            if RE_NVME_PRIVATE_NAMESPACE.match(block_device.sys_name):
+            if RE_NVME_PRIVATE_NAMESPACE.match(dev.sys_name):
                 continue
-            device_type = os.path.join('/sys/block', block_device.sys_name, 'device/type')
+            device_type = os.path.join('/sys/block', dev.sys_name, 'device/type')
             if os.path.exists(device_type):
                 with open(device_type, 'r') as f:
                     if f.read().strip() != '0':
@@ -44,11 +44,9 @@ class DeviceService(Service, DeviceInfoBase):
             # nvme drives won't have this
 
             try:
-                disks[block_device.sys_name] = self.get_disk_details(block_device, self.disk_default.copy(), disks_data)
-            except Exception as e:
-                self.logger.debug(
-                    'Failed to retrieve disk details for %s : %s', block_device.sys_name, str(e)
-                )
+                disks[dev.sys_name] = self.get_disk_details(dev, self.disk_default.copy(), disks_data)
+            except Exception:
+                self.logger.debug('Failed to retrieve disk details for %s : %s', dev.sys_name, exc_info=True)
 
         return disks
 
