@@ -36,7 +36,7 @@ def test_02_get_boot_state(request):
 
 
 @pytest.mark.dependency(name='BOOT_SCRUB')
-def test_03_get_boot_scrub():
+def test_03_get_boot_scrub(request):
     depends(request, ['BOOT_STATE'])
     global JOB_ID
     results = GET('/boot/scrub/')
@@ -45,7 +45,7 @@ def test_03_get_boot_scrub():
     JOB_ID = results.json()
 
 
-def test_04_verify_boot_scrub_job():
+def test_04_verify_boot_scrub_job(request):
     depends(request, ['BOOT_SCRUB'])
     stop_time = time() + 600
     while True:
