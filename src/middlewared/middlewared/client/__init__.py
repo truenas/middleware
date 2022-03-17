@@ -1,1 +1,1 @@
-from .client import Client, ClientException, CallTimeout, ValidationErrors, ErrnoMixin  # NOQA
+from .client import Client, ClientException, CallTimeout, ValidationErrors, ErrnoMixin, CALL_TIMEOUT  # NOQA
