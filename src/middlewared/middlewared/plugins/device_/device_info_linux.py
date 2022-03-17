@@ -1,4 +1,3 @@
-import glob
 import os
 import pyudev
 import re
