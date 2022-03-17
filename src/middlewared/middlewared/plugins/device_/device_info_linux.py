@@ -47,7 +47,7 @@ class DeviceService(Service, DeviceInfoBase):
             try:
                 disks[block_device.sys_name] = self.get_disk_details(block_device, self.disk_default.copy(), disks_data)
             except Exception as e:
-                self.middleware.logger.debug(
+                self.logger.debug(
                     'Failed to retrieve disk details for %s : %s', block_device.sys_name, str(e)
                 )
 
@@ -78,11 +78,11 @@ class DeviceService(Service, DeviceInfoBase):
                 lsblk_disks = json.loads(disks_cp.stdout)['blockdevices']
                 lsblk_disks = {i['path']: i for i in lsblk_disks}
             except Exception as e:
-                self.middleware.logger.error(
+                self.logger.error(
                     'Failed parsing lsblk information with error: %s', e
                 )
         else:
-            self.middleware.logger.error(
+            self.logger.error(
                 'Failed running lsblk command with error: %s', disks_cp.stderr.decode()
             )
 
@@ -219,13 +219,13 @@ class DeviceService(Service, DeviceInfoBase):
             with open(path, 'r') as f:
                 size = f.read().strip()
             if not size.isdigit():
-                self.middleware.logger.error(
+                self.logger.error(
                     'Unable to retrieve %r disk logical block size: malformed value %r found', name, size
                 )
             else:
                 return int(size)
         else:
-            self.middleware.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
+            self.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
 
     def get_storage_devices_topology(self):
         disks = self.get_disks()
