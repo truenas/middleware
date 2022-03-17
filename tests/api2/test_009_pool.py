@@ -124,7 +124,7 @@ def test_08_get_pool_disks(request, pool_data):
     payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['id']]}
     res = make_ws_request(ip, payload)
     assert isinstance(res['result'], list), res
-    assert res['result'] and res['result'] == tank_disk_pool, res
+    assert res['result'] and (set(res['result']) == set(tank_disk_pool)), res
 
 
 def test_09_get_pool_id_info(request, pool_data):
