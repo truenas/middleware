@@ -19,9 +19,16 @@ class ZFSPoolService(Service):
             # this is "sda/sda1/sda2/sda3" etc
             sys_devices[dev.sys_name] = dev.sys_name
 
-            # this is the various "disk/by-partuuid" or "disk/by-label" or "disk/by-id" etc
-            for link in (dev.properties['DEVLINKS'] or '').split():
-                sys_devices[link.removeprefix('/dev/')] = dev.sys_name
+            # zpool could have been created using the raw partition
+            # (i.e. "sda3"). This happens on the "boot-pool" for example.
+            # We need to get the parent device name when this occurs.
+            if dev.sys_number and (parent := dev.find_parent('block')):
+                sys_devices[dev.sys_name] = parent.sys_name
+
+            # these are the the various by-{partuuid/label/id/path} etc labels
+            if dev.properties['DEVTYPE'] == 'partition':
+                for link in (dev.properties['DEVLINKS'] or '').split():
+                    sys_devices[link.removeprefix('/dev/')] = dev.find_parent('block').sys_name
 
         mapping = {name: set()}
         for disk in self.middleware.call_sync('zfs.pool.get_devices', name):
