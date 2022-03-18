@@ -2,12 +2,12 @@
 import math
 import psutil
 
-from middlewared.utils import osc
+from middlewared.utils.serial_devices import serial_port_choices
 from middlewared.utils.db import query_config_table
 
 
 def get_serial_ports():
-    return {e['start']: e['name'].replace('uart', 'ttyS') for e in osc.system.serial_port_choices()}
+    return {e['start']: e['name'].replace('uart', 'ttyS') for e in serial_port_choices()}
 
 
 if __name__ == "__main__":
@@ -53,10 +53,5 @@ if __name__ == "__main__":
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
     config.append("")
 
-    if osc.IS_FREEBSD:
-        path = "/usr/local/etc/default/grub"
-    else:
-        path = "/etc/default/grub.d/truenas.cfg"
-
-    with open(path, "w") as f:
+    with open("/etc/default/grub.d/truenas.cfg",  "w") as f:
         f.write("\n".join(config))

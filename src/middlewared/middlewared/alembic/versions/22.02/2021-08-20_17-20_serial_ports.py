@@ -8,7 +8,7 @@ Create Date: 2021-20-08 17:20:42.818433+00:00
 from alembic import op
 import sqlalchemy as sa
 
-from middlewared.utils import osc
+from middlewared.utils.serial_devices import serial_port_choices
 
 
 revision = '725b7264abe6'
@@ -19,7 +19,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    io_choices = {e['start']: e['name'] for e in osc.system.serial_port_choices()}
+    io_choices = {e['start']: e['name'] for e in serial_port_choices()}
     sys_config = [dict(row) for row in conn.execute("SELECT * FROM system_advanced").fetchall()]
     if not sys_config:
         return
