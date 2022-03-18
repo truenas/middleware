@@ -1635,6 +1635,7 @@ class CoreService(Service):
         return True
 
     @accepts(Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
+    @private
     def get_services(self, target):
         """Returns a list of all registered services."""
         services = {}
@@ -1663,6 +1664,7 @@ class CoreService(Service):
         return services
 
     @accepts(Str('service', default=None, null=True), Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
+    @private
     def get_methods(self, service, target):
         """
         Return methods metadata of every available service.
