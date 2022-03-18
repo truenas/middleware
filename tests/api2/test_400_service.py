@@ -12,16 +12,18 @@ from auto_config import dev_test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 all_services = {i['service']: i for i in GET('/service').json()}
+service_names = list(all_services.keys())
+
 
 @pytest.mark.dependency(name='ENABLE')
-@pytest.mark.parametrize('svc', list(all_services.keys()))
+@pytest.mark.parametrize('svc', service_names)
 def test_01_enable_service(svc):
     results = PUT(f'/service/id/{all_services[svc]["id"]}/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.dependency(name='VERIFY_ENABLE')
-@pytest.mark.parametrize('svc', list(all_services.keys()))
+@pytest.mark.parametrize('svc', service_names)
 def test_02_verify_service_was_enabled(svc, request):
     depends(request, ['ENABLE'])
     results = GET(f'/service/id/{all_services[svc]["id"]}/')
@@ -30,14 +32,14 @@ def test_02_verify_service_was_enabled(svc, request):
 
 
 @pytest.mark.dependency(name='DISABLE')
-@pytest.mark.parametrize('svc', list(all_services.keys()))
+@pytest.mark.parametrize('svc', service_names)
 def test_03_disable_service(svc, request):
     depends(request, ['VERIFY_ENABLE'])
     results = PUT(f'/service/id/{all_services[svc]["id"]}/', {'enable': False})
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('svc', list(all_services.keys()))
+@pytest.mark.parametrize('svc', service_names)
 def test_04_verify_service_was_disabled(svc, request):
     depends(request, ['DISABLE'])
     results = GET(f'/service/id/{all_services[svc]["id"]}/')
