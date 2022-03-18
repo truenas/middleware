@@ -1,3 +1,5 @@
+from time import sleep
+
 import pytest
 
 from config import CLUSTER_INFO, CLUSTER_IPS
@@ -44,11 +46,12 @@ def test_02_mount_dataset_heirarchy(ip, request):
     assert not res.get('error', {}), res['error'].get('reason', 'NO REASON GIVEN')
 
 
+@pytest.mark.parametrize('volume', GVOL)
 @pytest.mark.dependency(name='CREATE_GVOLUME')
-def test_03_create_gluster_volume(request):
+def test_03_create_gluster_volume(volume, request):
     depends(request, ['MOUNT_DATASETS'])
     payload = {
-        'name': GVOL,
+        'name': volume,
         'bricks': [{'peer_name': i, 'peer_path': BRICK_PATH} for i in CLUSTER_IPS],
         'force': True,
     }
@@ -64,57 +67,74 @@ def test_03_create_gluster_volume(request):
         assert status['state'] == 'SUCCESS', status
 
     # query a node for the volume
-    payload = {'query-filters': [['name', '=', GVOL]]}
+    payload = {'query-filters': [['name', '=', volume]]}
     ans = make_request('get', '/gluster/volume', data=payload)
     assert ans.status_code == 200, ans.text
-    assert len(ans.json()) > 0 and any(i['id'] == GVOL for i in ans.json()), ans.text
+    res = ans.json()
+    assert len(res) > 0 and res[0]['id'] == volume, ans.text
 
 
-@pytest.mark.dependency(name='START_GVOLUME')
-def test_04_start_gluster_volume(request):
+@pytest.mark.parametrize('volume', GVOL)
+@pytest.mark.dependency(name='STARTED_GVOLUME')
+def test_04_verify_gluster_volume_is_started(volume, request):
     depends(request, ['CREATE_GVOLUME'])
-    ans = make_request('post', '/gluster/volume/start', data={'name': GVOL})
+    ans = make_request('post', '/gluster/volume/info', data={'name': volume})
     assert ans.status_code == 200, ans.text
+    assert ans.json()['status'] == 'Started', ans.text
 
 
+@pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name='VERIFY_FUSE_MOUNTED')
-def test_05_verify_gluster_volume_is_fuse_mounted(request):
-    depends(request, ['START_GVOLUME'])
-    result = {}
-    # make sure all nodes have fuse mounted the gluster volume
-    # (this should happen when the gluster volume is started)
-    for ip in CLUSTER_IPS:
-        url = f'http://{ip}/api/v2.0/gluster/fuse/is_mounted'
-        ans = make_request('post', url, data={'name': GVOL})
-        result.add((f'{ip} has fuse mount?', ans.json()))
-    assert all(i[1] is True for i in result), result
+def test_05_verify_gluster_volume_is_fuse_mounted(ip, request):
+    depends(request, ['STARTED_GVOLUME'])
+
+    total_time_to_wait = 10
+    sleepy_time = 1
+    while total_time_to_wait > 0:
+        # give each node a little time to actually fuse mount the volume before we claim failure
+        ans = make_request('post', f'http://{ip}/api/v2.0/gluster/fuse/is_mounted', data={'name': GVOL})
+        assert ans.status_code == 200
+        if not ans.json():
+            total_time_to_wait -= sleepy_time
+            sleep(1)
+        break
+
+    assert ans.json(), ans.text
 
 
+@pytest.mark.parametrize('volume', GVOL)
 @pytest.mark.dependency(name='STOP_GVOLUME')
-def test_06_stop_gluster_volume(request):
+def test_06_stop_gluster_volume(volume, request):
     depends(request, ['START_GVOLUME'])
-    ans = make_request('post', '/gluster/volume/stop', data={'name': GVOL, 'force': True})
+    ans = make_request('post', '/gluster/volume/stop', data={'name': volume, 'force': True})
     assert ans.status_code == 200, ans.text
 
 
+@pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name='VERIFY_FUSE_UMOUNTED')
-def test_07_verify_gluster_volume_is_fuse_umounted(request):
-    depends(request, ['VERIFY_FUSE_MOUNTED'])
-    result = {}
-    # make sure all nodes have fuse umounted the gluster volume
-    # (this should happen when the gluster volume is stopped)
-    for ip in CLUSTER_IPS:
-        url = f'http://{ip}/api/v2.0/gluster/fuse/is_mounted'
-        ans = make_request('post', url, data={'name': GVOL})
-        result.add((f'{ip} has fuse mount?', ans.json()))
-    assert all(i[1] is False for i in result), result
+def test_07_verify_gluster_volume_is_fuse_umounted(ip, request):
+    depends(request, ['STOP_GVOLUME'])
+
+    total_time_to_wait = 10
+    sleepy_time = 1
+    while total_time_to_wait > 0:
+        # give each node a little time to actually umount the fuse volume before we claim failure
+        ans = make_request('post', f'http://{ip}/api/v2.0/gluster/fuse/is_mounted', data={'name': GVOL})
+        assert ans.status_code == 200
+        if ans.json():
+            total_time_to_wait -= sleepy_time
+            sleep(1)
+        break
+
+    assert not ans.json(), ans.text
 
 
-def test_08_delete_gluster_volume(request):
+@pytest.mark.parametrize('volume', GVOL)
+def test_08_delete_gluster_volume(volume, request):
     depends(request, ['VERIFY_FUSE_UMOUNTED'])
-    ans = make_request('delete', f'/gluster/volume/id/{GVOL}')
+    ans = make_request('delete', f'/gluster/volume/id/{volume}')
     assert ans.status_code == 200, ans.text
 
     ans = make_request('get', '/gluster/volume/list')
     assert ans.status_code == 200, ans.text
-    assert GVOL not in ans.json(), ans.json()
+    assert volume not in ans.json(), ans.text
