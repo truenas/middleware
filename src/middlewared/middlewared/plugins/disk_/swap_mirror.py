@@ -53,7 +53,7 @@ class DiskService(Service):
                     if os.path.exists(partition):
                         provider_data = {'name': provider.name, 'id': provider.name}
                         with open(partition, 'r') as f:
-                            provider_data['disk'] = provider.rsplit(f.read().strip(), 1)[0].strip()
+                            provider_data['disk'] = provider.name.rsplit(f.read().strip(), 1)[0].strip()
                         mirror['providers'].append(provider_data)
 
                 mirrors.append(mirror)
