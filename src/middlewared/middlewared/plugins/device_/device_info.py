@@ -6,12 +6,10 @@ import json
 
 import libsgio
 
-from .device_info_base import DeviceInfoBase
-
 from middlewared.schema import Dict, returns
 from middlewared.service import accepts, private, Service
 from middlewared.utils.gpu import get_gpus
-from middlewared.utils import osc
+from middlewared.utils.serial import serial_port_choices
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
 RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')
@@ -19,14 +17,35 @@ RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
 
 
-class DeviceService(Service, DeviceInfoBase):
+class DeviceService(Service):
 
     DISK_ROTATION_ERROR_LOG_CACHE = set()
     HOST_TYPE = None
+    DISK_DEFAULT = {
+        'name': None,
+        'mediasize': None,
+        'sectorsize': None,
+        'stripesize': None,
+        'rotationrate': None,
+        'ident': '',
+        'lunid': None,
+        'descr': None,
+        'subsystem': '',
+        'number': 1,  # Database defaults
+        'model': None,
+        'type': 'UNKNOWN',
+        'bus': 'UNKNOWN',
+        'serial': '',
+        'size': None,
+        'serial_lunid': None,
+        'blocks': None,
+    }
 
+    @private
     def get_serials(self):
-        return osc.system.serial_port_choices()
+        return serial_port_choices()
 
+    @private
     def get_disks(self):
         disks = {}
         disks_data = self.retrieve_disks_data()
@@ -44,7 +63,7 @@ class DeviceService(Service, DeviceInfoBase):
             # nvme drives won't have this
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(dev, self.disk_default.copy(), disks_data)
+                disks[dev.sys_name] = self.get_disk_details(dev, self.DISK_DEFAULT.copy(), disks_data)
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s : %s', dev.sys_name, exc_info=True)
 
@@ -85,8 +104,9 @@ class DeviceService(Service, DeviceInfoBase):
 
         return lsblk_disks
 
+    @private
     def get_disk(self, name):
-        disk = self.disk_default.copy()
+        disk = self.DISK_DEFAULT.copy()
         context = pyudev.Context()
         try:
             block_device = pyudev.Devices.from_name(context, 'block', name)
@@ -224,6 +244,7 @@ class DeviceService(Service, DeviceInfoBase):
         else:
             self.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
 
+    @private
     def get_storage_devices_topology(self):
         disks = self.get_disks()
         topology = {}
@@ -241,6 +262,7 @@ class DeviceService(Service, DeviceInfoBase):
                 }
         return topology
 
+    @private
     def get_gpus(self):
         gpus = get_gpus()
         to_isolate_gpus = self.middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']

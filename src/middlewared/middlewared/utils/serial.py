@@ -1,22 +1,14 @@
-# -*- coding=utf-8 -*-
-import glob
-import logging
-import os
 import re
+import os
+import glob
 import subprocess
 
-logger = logging.getLogger(__name__)
-
-__all__ = ['serial_port_choices']
-
-RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)
 RE_PORT_UART = re.compile(r'at\s*(\w*).*is a\s*(\w+)')
 
 
 def serial_port_choices():
     devices = []
     for tty in map(lambda t: os.path.basename(t), glob.glob('/dev/ttyS*')):
-        # We want to filter out platform based serial devices here
         serial_dev = {
             'name': None,
             'location': None,
