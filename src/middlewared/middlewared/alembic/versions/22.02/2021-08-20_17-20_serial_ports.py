@@ -8,7 +8,7 @@ Create Date: 2021-20-08 17:20:42.818433+00:00
 from alembic import op
 import sqlalchemy as sa
 
-from middlewared.utils.serial_devices import serial_port_choices
+from middlewared.utils.serial import serial_port_choices
 
 
 revision = '725b7264abe6'

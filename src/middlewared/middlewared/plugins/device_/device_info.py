@@ -9,7 +9,7 @@ import libsgio
 from middlewared.schema import Dict, returns
 from middlewared.service import accepts, private, Service
 from middlewared.utils.gpu import get_gpus
-from middlewared.utils.serial_devices import serial_port_choices
+from middlewared.utils.serial import serial_port_choices
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
 RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')

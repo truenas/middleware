@@ -2,7 +2,7 @@
 import math
 import psutil
 
-from middlewared.utils.serial_devices import serial_port_choices
+from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
 
 
