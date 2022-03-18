@@ -6,8 +6,6 @@ import json
 
 import libsgio
 
-from .device_info_base import DeviceInfoBase
-
 from middlewared.schema import Dict, returns
 from middlewared.service import accepts, private, Service
 from middlewared.utils.gpu import get_gpus
@@ -19,7 +17,7 @@ RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
 
 
-class DeviceService(Service, DeviceInfoBase):
+class DeviceService(Service):
 
     DISK_ROTATION_ERROR_LOG_CACHE = set()
     HOST_TYPE = None
