@@ -1,5 +1,6 @@
 import re
-from typing import Dict
+from collections import defaultdict
+from typing import Dict, Union
 
 from middlewared.service import CallError
 
@@ -59,3 +60,21 @@ def normalize_reference(reference: str) -> Dict:
         'complete_tag': f'{registry}/{image}{sep}{tag}',
         'reference_is_digest': ref_is_digest,
     }
+
+
+def get_chart_releases_consuming_image(
+    image_names: Union[list, set], chart_releases: list, get_mapping: bool = False
+) -> Union[dict, list]:
+    chart_releases_consuming_image = defaultdict(list) if get_mapping else set()
+    images = {i['complete_tag']: i for i in map(normalize_reference, image_names)}
+    for chart_release in chart_releases:
+        for image in chart_release['resources']['container_images']:
+            parsed_image = normalize_reference(image)
+            if parsed_image['complete_tag'] in images and images[
+                parsed_image['complete_tag']
+            ]['tag'] == parsed_image['tag']:
+                if get_mapping:
+                    chart_releases_consuming_image[chart_release['name']].append(parsed_image['reference'])
+                else:
+                    chart_releases_consuming_image.add(chart_release['name'])
+    return chart_releases_consuming_image if get_mapping else list(chart_releases_consuming_image)

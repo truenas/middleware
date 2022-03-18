@@ -41,7 +41,8 @@ class DockerImagesService(CRUDService):
             Str('tag'),
             Str('registry'),
             Str('complete_tag'),
-        )])
+        )]),
+        List('complete_tags', items=[Str('complete_tag')]),
     )
 
     @filterable
@@ -59,13 +60,13 @@ class DockerImagesService(CRUDService):
         extra = deepcopy(options.get('extra', {}))
         update_cache = await self.middleware.call('container.image.image_update_cache')
         system_images = await self.middleware.call('container.image.get_system_images_tags')
-        parse_tags = extra.get('parse_tags', False)
+        parse_tags = extra.get('parse_tags', False) or extra.get('complete_tags', False)
 
         async with aiodocker.Docker() as docker:
             for image in await docker.images.list():
                 repo_tags = image['RepoTags'] or []
                 system_image = any(tag in system_images for tag in repo_tags)
-                results.append({
+                result = {
                     'id': image['Id'],
                     'labels': image['Labels'] or {},
                     'repo_tags': repo_tags,
@@ -75,11 +76,13 @@ class DockerImagesService(CRUDService):
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
                     'update_available': not system_image and any(update_cache[r] for r in repo_tags),
                     'system_image': system_image,
-                    **(
-                        {'parsed_repo_tags': await self.middleware.call('container.image.parse_tags', repo_tags)}
-                        if parse_tags else {}
-                    )
-                })
+                }
+                if parse_tags:
+                    result['parsed_repo_tags'] = await self.middleware.call('container.image.parse_tags', repo_tags)
+                if extra.get('complete_tags', False):
+                    result['complete_tags'] = [tag['complete_tag'] for tag in result['parsed_repo_tags']]
+
+                results.append(result)
         return filter_list(results, filters, options)
 
     @accepts(
