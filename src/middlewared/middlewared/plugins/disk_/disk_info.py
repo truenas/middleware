@@ -4,11 +4,10 @@ import pyudev
 
 from middlewared.service import CallError, private, Service
 
-from .disk_info_base import DiskInfoBase
 
+class DiskService(Service):
 
-class DiskService(Service, DiskInfoBase):
-
+    @private
     def get_dev_size(self, dev):
         try:
             block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', dev)
@@ -33,6 +32,7 @@ class DiskService(Service, DiskInfoBase):
         elif block_device.get('ID_PART_ENTRY_SIZE'):
             return logical_sector_size * int(block_device['ID_PART_ENTRY_SIZE'])
 
+    @private
     def list_partitions(self, disk):
         parts = []
         try:
@@ -80,6 +80,7 @@ class DiskService(Service, DiskInfoBase):
             parts.append(part)
         return parts
 
+    @private
     def gptid_from_part_type(self, disk, part_type):
         try:
             block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
@@ -98,12 +99,15 @@ class DiskService(Service, DiskInfoBase):
             raise CallError(f'Partition type {part_type} not found on {disk}')
         return f'disk/by-partuuid/{part}'
 
+    @private
     async def get_zfs_part_type(self):
         return '6a898cc3-1dd2-11b2-99a6-080020736631'
 
+    @private
     async def get_swap_part_type(self):
         return '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f'
 
+    @private
     def get_swap_devices(self):
         with open('/proc/swaps', 'r') as f:
             data = f.read()
@@ -122,6 +126,7 @@ class DiskService(Service, DiskInfoBase):
         else:
             return dev if dev != label.split('/')[-1] else None
 
+    @private
     def label_to_disk(self, label, *args):
         part_disk = self.label_to_dev(label)
         if part_disk == label:
@@ -129,6 +134,7 @@ class DiskService(Service, DiskInfoBase):
         else:
             return self.get_disk_from_partition(part_disk) if part_disk else None
 
+    @private
     def get_disk_from_partition(self, part_name):
         if not os.path.exists(os.path.join('/dev', part_name)):
             return None
