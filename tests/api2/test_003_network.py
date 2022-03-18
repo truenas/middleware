@@ -78,7 +78,7 @@ def test_02_verify_network_configuration_config():
 
 
 def test_03_get_network_general_summary():
-    results = GET("/network/general/summary/")
+    results = GET("/network/general/summary/", controller_a=ha)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     global RESULTS
