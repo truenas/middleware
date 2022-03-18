@@ -17,31 +17,21 @@ service_names = list(all_services.keys())
 
 @pytest.mark.dependency(name='ENABLE')
 @pytest.mark.parametrize('svc', service_names)
-def test_01_enable_service(svc):
+def test_01_enable_and_verify_service(svc):
     results = PUT(f'/service/id/{all_services[svc]["id"]}/', {'enable': True})
     assert results.status_code == 200, results.text
 
-
-@pytest.mark.dependency(name='VERIFY_ENABLE')
-@pytest.mark.parametrize('svc', service_names)
-def test_02_verify_service_was_enabled(svc, request):
-    depends(request, ['ENABLE'])
     results = GET(f'/service/id/{all_services[svc]["id"]}/')
     assert results.status_code == 200, results.text
     assert results.json()['enable'], results.text
 
 
-@pytest.mark.dependency(name='DISABLE')
 @pytest.mark.parametrize('svc', service_names)
-def test_03_disable_service(svc, request):
-    depends(request, ['VERIFY_ENABLE'])
+def test_02_disable_and_verify_service(svc, request):
+    depends(request, ['ENABLE'])
     results = PUT(f'/service/id/{all_services[svc]["id"]}/', {'enable': False})
     assert results.status_code == 200, results.text
 
-
-@pytest.mark.parametrize('svc', service_names)
-def test_04_verify_service_was_disabled(svc, request):
-    depends(request, ['DISABLE'])
     results = GET(f'/service/id/{all_services[svc]["id"]}/')
     assert results.status_code == 200, results.text
     assert not results.json()['enable'], results.text
