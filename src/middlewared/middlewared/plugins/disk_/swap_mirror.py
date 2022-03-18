@@ -2,7 +2,7 @@ import glob
 import os
 import contextlib
 
-from middlewared.service import CallError, Service, private
+from middlewared.service import CallError, filterable, private, Service
 from middlewared.utils import filter_list, run
 
 
@@ -30,6 +30,7 @@ class DiskService(Service):
             raise CallError(f'Failed to stop mirror {name!r}: {cp.stderr}')
 
     @private
+    @filterable
     def get_swap_mirrors(self, filters, options):
         mirrors = []
         with contextlib.suppress(FileNotFoundError):
