@@ -540,15 +540,19 @@ class SharingNFSService(SharingService):
                     used_networks.add(ipaddress.ip_network("::/0"))
 
         for host in set(data["hosts"]):
-            host = dns_cache[host]
-            if host is None:
+            cached_host = dns_cache[host]
+            if cached_host is None:
+                verrors.add(
+                    f"{schema_name}.hosts",
+                    f"Unable to resolve host {host}"
+                )
                 continue
 
-            network = ipaddress.ip_network(host)
+            network = ipaddress.ip_network(cached_host)
             if network in used_networks:
                 verrors.add(
                     f"{schema_name}.hosts",
-                    f"Another NFS share already exports this dataset for {host}"
+                    f"Another NFS share already exports this dataset for {cached_host}"
                 )
 
             used_networks.add(network)
