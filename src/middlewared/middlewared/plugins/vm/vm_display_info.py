@@ -21,13 +21,22 @@ class VMService(Service):
 
         Returns a dict with two keys `port` and `web`.
         """
-        all_ports = [
-            d['attributes'].get('port')
-            for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]))
-        ] + [6000, 6100]
+        all_ports = await self.all_used_display_device_ports()
 
-        port = next((i for i in range(5900, 65535) if i not in all_ports))
-        return {'port': port, 'web': DISPLAY.get_web_port(port)}
+        def get_next_port():
+            for i in filter(lambda i: i not in all_ports, range(5900, 65535)):
+                yield i
+
+        gen = get_next_port()
+        return {'port': next(gen), 'web': next(gen)}
+
+    @private
+    async def all_used_display_device_ports(self, additional_filters=None):
+        all_ports = [6000]
+        additional_filters = additional_filters or []
+        for device in await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']] + additional_filters):
+            all_ports.extend([device['attributes']['port'], device['attributes']['web_port']])
+        return all_ports
 
     @accepts()
     @returns(Dict(

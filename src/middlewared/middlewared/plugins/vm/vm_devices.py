@@ -451,16 +451,16 @@ class VMDeviceService(CRUDService):
 
                 await self.validate_display_devices(verrors, vm_instance)
 
-            all_ports = [
-                d['attributes'].get('port')
-                for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]))
-                if d['id'] != device.get('id')
-            ]
-            if device['attributes'].get('port'):
-                if device['attributes']['port'] in all_ports:
-                    verrors.add('attributes.port', 'Specified display port is already in use')
-            else:
-                device['attributes']['port'] = (await self.middleware.call('vm.port_wizard'))['port']
+            all_ports = await self.middleware.call(
+                'vm.device.all_used_display_device_ports', [['id', '!=', device.get('id')]]
+            )
+            new_ports = list((await self.middleware.call('vm.port_wizard')).values())
+            for key in ('port', 'web_port'):
+                if device['attributes'].get(key):
+                    if device['attributes'][key] in all_ports:
+                        verrors.add(f'attributes.{key}', 'Specified display port is already in use')
+                else:
+                    device['attributes'][key] = new_ports.pop(0)
 
         if device['dtype'] in ('RAW', 'DISK') and device['attributes'].get('physical_sectorsize')\
                 and not device['attributes'].get('logical_sectorsize'):
