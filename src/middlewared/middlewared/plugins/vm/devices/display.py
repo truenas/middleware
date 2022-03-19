@@ -22,6 +22,7 @@ class DISPLAY(Device):
         'attributes',
         Str('resolution', enum=RESOLUTION_ENUM, default='1024x768'),
         Int('port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
+        Int('web_port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
         Str('bind', default='0.0.0.0'),
         Bool('wait', default=False),
         Str('password', default=None, null=True, private=True),
@@ -86,15 +87,10 @@ class DISPLAY(Device):
             ]
         })
 
-    @staticmethod
-    def get_web_port(port):
-        split_port = int(str(port)[:2]) - 1
-        return int(str(split_port) + str(port)[2:])
-
     def get_start_attrs(self):
         port = self.data['attributes']['port']
         bind = self.data['attributes']['bind']
-        web_port = self.get_web_port(port)
+        web_port = self.data['attributes']['web_port']
         return {
             'web_bind': f':{web_port}' if bind == '0.0.0.0' else f'{bind}:{web_port}',
             'server_addr': f'{bind}:{port}'
@@ -119,5 +115,5 @@ class DISPLAY(Device):
             'id': self.data['id'],
             'path': f'{NGINX_PREFIX}/{self.data["id"]}/',
             'redirect_uri': f'{self.data["attributes"]["bind"]}:'
-                            f'{self.get_web_port(self.data["attributes"]["port"])}',
+                            f'{self.data["attributes"]["web_port"]}',
         }
