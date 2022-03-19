@@ -1,6 +1,8 @@
 import re
 from typing import Dict
 
+import docker
+
 from middlewared.service import CallError
 
 # Default values
@@ -59,3 +61,7 @@ def normalize_reference(reference: str) -> Dict:
         'complete_tag': f'{registry}/{image}{sep}{tag}',
         'reference_is_digest': ref_is_digest,
     }
+
+
+def get_docker_client() -> docker.DockerClient:
+    return docker.from_env()
