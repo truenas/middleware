@@ -1021,6 +1021,9 @@ class ZFSSnapshot(CRUDService):
         `query-options.extra.max_txg` can be specified to limit snapshot retrieval based on maximum transaction group.
         """
         # Special case for faster listing of snapshot names (#53149)
+        extra = copy.deepcopy(options['extra'])
+        min_txg = extra.get('min_txg', 0)
+        max_txg = extra.get('max_txg', 0)
         if (
             (
                 options.get('select') == ['name'] or
@@ -1031,7 +1034,7 @@ class ZFSSnapshot(CRUDService):
             )
         ):
             with libzfs.ZFS() as zfs:
-                snaps = zfs.snapshots_serialized(['name'])
+                snaps = zfs.snapshots_serialized(['name'], min_txg=min_txg, max_txg=max_txg)
 
             if filters or len(options) > 1:
                 return filter_list(snaps, filters, options)
@@ -1041,14 +1044,10 @@ class ZFSSnapshot(CRUDService):
             if 'id' not in filter_getattrs(filters) and not options.get('limit'):
                 raise CallError('`id` or `limit` is required if `retention` is requested', errno.EINVAL)
 
-        extra = copy.deepcopy(options['extra'])
         properties = extra.get('properties')
         with libzfs.ZFS() as zfs:
             # Handle `id` filter to avoid getting all snapshots first
-            kwargs = dict(
-                holds=False, mounted=False, props=properties,
-                min_txg=extra.get('min_txg', 0), max_txg=extra.get('max_txg', 0)
-            )
+            kwargs = dict(holds=False, mounted=False, props=properties, min_txg=min_txg, max_txg=max_txg)
             if filters and len(filters) == 1 and len(filters[0]) == 3 and filters[0][0] in (
                 'id', 'name'
             ) and filters[0][1] == '=':
