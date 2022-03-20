@@ -1015,6 +1015,10 @@ class ZFSSnapshot(CRUDService):
     def query(self, filters, options):
         """
         Query all ZFS Snapshots with `query-filters` and `query-options`.
+
+        `query-options.extra.min_txg` can be specified to limit snapshot retrieval based on minimum transaction group.
+
+        `query-options.extra.max_txg` can be specified to limit snapshot retrieval based on maximum transaction group.
         """
         # Special case for faster listing of snapshot names (#53149)
         if (
@@ -1041,7 +1045,10 @@ class ZFSSnapshot(CRUDService):
         properties = extra.get('properties')
         with libzfs.ZFS() as zfs:
             # Handle `id` filter to avoid getting all snapshots first
-            kwargs = dict(holds=False, mounted=False, props=properties)
+            kwargs = dict(
+                holds=False, mounted=False, props=properties,
+                min_txg=extra.get('min_txg', 0), max_txg=extra.get('max_txg', 0)
+            )
             if filters and len(filters) == 1 and len(filters[0]) == 3 and filters[0][0] in (
                 'id', 'name'
             ) and filters[0][1] == '=':
