@@ -7,7 +7,9 @@
     if config["rpclockd_port"]:
         statd_opts.append(f'--nlm-port {config["rpclockd_port"]}')
 %>
+% if statd_opts:
 STATDOPTS="${' '.join(statd_opts)}"
+%endif
 NEED_STATD=yes
 % if config["v4_krb_enabled"]:
 NEED_GSSD=yes
