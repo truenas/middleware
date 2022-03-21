@@ -478,10 +478,14 @@ class SharingNFSService(SharingService):
         if data["maproot_user"] and data["mapall_user"]:
             verrors.add(f"{schema_name}.mapall_user", "maproot_user disqualifies mapall_user")
 
-        if data["security"]:
+        v4_sec = list(filter(lambda sec: sec != "SYS", data.get("security", [])))
+        if v4_sec:
             nfs_config = await self.middleware.call("nfs.config")
             if not nfs_config["v4"]:
-                verrors.add(f"{schema_name}.security", "This is not allowed when NFS v4 is disabled")
+                verrors.add(
+                    f"{schema_name}.security",
+                    f"The following security flavor(s) require NFSv4 to be enabled: {','.join(v4_sec)}."
+                )
 
     @private
     async def resolve_hostnames(self, hostnames):
