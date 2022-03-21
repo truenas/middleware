@@ -43,7 +43,8 @@ class InterfaceService(Service):
                 addrs_database.add(self.alias_to_addr({'address': _addr, 'netmask': _net}))
             else:
                 self.logger.info('Unable to get address from dhclient lease file for %r', name)
-        elif data[addr_key] and not data['int_dhcp']:
+
+        if data[addr_key] and not data['int_dhcp']:
             # TODO: how are we handling int_ipv6auto (is it SLAAC or stateless DHCPv6 or stateful DHCPv6)??
             addrs_database.add(self.alias_to_addr({'address': data[addr_key], 'netmask': data['int_netmask']}))
 
