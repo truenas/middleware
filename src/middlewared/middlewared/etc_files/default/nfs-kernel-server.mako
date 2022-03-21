@@ -5,9 +5,8 @@
 
     if not config["v4"]:
         nfsd_opts.append('-N 4')
-        if config["userd_manage_gids"]:
-            mountd_opts.append("--manage-gids")
-    else:
+
+    if config["userd_manage_gids"]:
         mountd_opts.append("--manage-gids")
 
     if not config["udp"]:
