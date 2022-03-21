@@ -881,19 +881,18 @@ class SystemGeneralService(ConfigService):
         return dict(languagues)
 
     @private
-    async def _initialize_timezone_choices(self):
-        pipe = await Popen(
-            'find /usr/share/zoneinfo/ -type f -not -name zone.tab -not -regex \'.*/Etc/GMT.*\'',
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True
-        )
-        self._timezone_choices = (await pipe.communicate())[0].decode().strip().split('\n')
-        self._timezone_choices = {
-            x[20:]: x[20:] for x in self._timezone_choices if osc.IS_FREEBSD or (
-                not x[20:].startswith(('right/', 'posix/')) and '.' not in x[20:]
-            )
-        }
+    def _initialize_timezone_choices(self):
+        self._timezone_choices = {}
+        basepath = '/usr/share/zoneinfo/'
+        for root, dirs, files in os.walk(basepath):
+            relpath = os.path.normpath(os.path.relpath(root, basepath))
+            for timezone_entry in (files if 'right' not in relpath and 'posix' not in relpath else []):
+                if relpath != '.':
+                    zone_name = f'{relpath}/{timezone_entry}'
+                else:
+                    zone_name = timezone_entry
+                if 'Etc/GMT' not in zone_name:
+                    self._timezone_choices[zone_name] = zone_name
 
     @accepts()
     @returns(Dict(
@@ -901,12 +900,12 @@ class SystemGeneralService(ConfigService):
         additional_attrs=True,
         title='System Timezone Choices',
     ))
-    async def timezone_choices(self):
+    def timezone_choices(self):
         """
         Returns time zone choices.
         """
         if not self._timezone_choices:
-            await self._initialize_timezone_choices()
+            self._initialize_timezone_choices()
         return self._timezone_choices
 
     @accepts()
@@ -1004,7 +1003,7 @@ class SystemGeneralService(ConfigService):
         # kbd map needs work
 
         timezone = data.get('timezone')
-        timezones = await self.timezone_choices()
+        timezones = await self.middleware.call('system.general.timezone_choices')
         if timezone not in timezones:
             verrors.add(
                 f'{schema}.timezone',
