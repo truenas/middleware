@@ -22,8 +22,8 @@ class FailoverZpoolCacheFileService(Service):
         de = default.exists()
         oe = overwrite.exists()
 
-        if event == 'MASTER':
-            if (se and de) or (se and not de):
+        try:
+            if event == 'MASTER' and se:
                 # we're becoming master which means on backup
                 # event we modify the save cache file first and
                 # if the pool is successfully exported then the
@@ -33,17 +33,19 @@ class FailoverZpoolCacheFileService(Service):
                 # intuitive to what we're trying to do so that's
                 # why we save the cachefile before we export
                 saved.rename(default)
-        elif event == 'BACKUP' and de:
-            # means we're becoming backup so we need to save
-            # the zpool cachefile before we export the zpools
-            saved.write_bytes(default.read_bytes())
-        elif event == 'SYNC' and oe:
-            # a zpool was created/updated on the active controller
-            # and the newly created zpool cachefile was sent to this
-            # controller so we need to overwrite
-            overwrite.rename(default)
+            elif event == 'BACKUP' and de:
+                # means we're becoming backup so we need to save
+                # the zpool cachefile before we export the zpools
+                saved.write_bytes(default.read_bytes())
+            elif event == 'SYNC' and oe:
+                # a zpool was created/updated on the active controller
+                # and the newly created zpool cachefile was sent to this
+                # controller so we need to overwrite
+                overwrite.rename(default)
 
-        default.touch(exist_ok=True)
-        if not event == 'BACKUP':
-            saved.unlink(missing_ok=True)
-        overwrite.unlink(missing_ok=True)
+            default.touch(exist_ok=True)
+            if not event == 'BACKUP':
+                saved.unlink(missing_ok=True)
+            overwrite.unlink(missing_ok=True)
+        except Exception:
+            self.logger.warning('Failed setting up zpool cacheilfe', exc_info=True)
