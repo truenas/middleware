@@ -32,7 +32,6 @@
             'mapall_group': -1,
         }
 
-        all_squash = False
         if share["security"]:
             sec = f'sec={":".join(share["security"])}'
             params.append(sec.lower())
