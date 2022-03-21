@@ -129,7 +129,6 @@ def nfs_share(path, options=None):
 # Enable NFS server
 def test_01_creating_the_nfs_server():
     paylaod = {"servers": 10,
-               "bindip": [ip],
                "mountd_port": 618,
                "allow_nonroot": False,
                "udp": False,
@@ -903,13 +902,22 @@ def test_52_check_adjusting_threadpool_mode(request):
         assert res['result'] == m, res
 
 
-def test_53_disable_nfs_service_at_boot(request):
+def test_53_set_bind_ip():
+    res = GET("/nfs/bindip_choices")
+    assert res.status_code == 200, res.text
+    assert ip in res.json(), res.text
+
+    res = PUT("/nfs/", {"bindip": [ip]})
+    assert res.status_code == 200, res.text
+
+
+def test_54_disable_nfs_service_at_boot(request):
     depends(request, ["pool_04"], scope="session")
     results = PUT("/service/id/nfs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_54_checking_nfs_disable_at_boot(request):
+def test_55_checking_nfs_disable_at_boot(request):
     depends(request, ["pool_04"], scope="session")
     results = GET("/service?service=nfs")
     assert results.json()[0]['enable'] is False, results.text
