@@ -371,10 +371,12 @@ class FailoverService(ConfigService):
         self.logger.debug('Syncing cached encryption keys to' + standby)
         self.middleware.call_sync('failover.sync_keys_to_remote_node')
 
-        self.logger.debug('Syncing license, pwenc and authorized_keys files to' + standby)
+        self.logger.debug('Syncing zpool cachefile, license, pwenc and authorized_keys files to' + standby)
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
         self.send_small_file('/root/.ssh/authorized_keys')
+        self.send_small_file(ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE)
+        self.middleware.call_sync('failover.call_remote', 'failover.zpool.cachefile.setup', ['SYNC'])
 
         self.middleware.call_sync(
             'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
@@ -1243,7 +1245,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
             # when a failover event occurs
             middleware.logger.debug('[HA] Sending zpool cachefile to standby node')
             await middleware.call('failover.send_small_file', ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE)
-            await middleware.call('failover.call_remote', 'failover.zpool.cachefile.setup' ['SYNC'])
+            await middleware.call('failover.call_remote', 'failover.zpool.cachefile.setup', ['SYNC'])
 
             middleware.logger.debug('[HA] Configuring network on standby node')
             await middleware.call('failover.call_remote', 'interface.sync')
