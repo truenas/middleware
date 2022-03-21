@@ -3,13 +3,6 @@
     import socket
     from pathlib import Path
 
-    map_ids = {
-        'maproot_user': -1,
-        'maproot_group': -1,
-        'mapall_user': -1,
-        'mapall_group': -1,
-    }
-
     def do_map(share, map_type):
         output = []
         if share[f'{map_type}_user']:
@@ -32,6 +25,12 @@
 
     def generate_options(share, global_sec, config):
         params = []
+        map_ids = {
+            'maproot_user': -1,
+            'maproot_group': -1,
+            'mapall_user': -1,
+            'mapall_group': -1,
+        }
 
         all_squash = False
         if share["security"]:
