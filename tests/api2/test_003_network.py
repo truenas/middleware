@@ -3,6 +3,7 @@
 import pytest
 import sys
 import os
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import ha, interface
@@ -20,6 +21,7 @@ if ha and "domain" in os.environ:
     secondary_dns = os.environ["secondary_dns"]
     ip = os.environ["controller1_ip"]
 
+    @pytest.mark.dependency(name='DEFAULT')
     def test_01_set_default_network_settings_for_ha():
         payload = {
             "domain": domain,
@@ -42,6 +44,7 @@ if ha and "domain" in os.environ:
 else:
     from auto_config import hostname, domain, ip
 
+    @pytest.mark.dependency(name='DEFAULT')
     def test_01_set_default_network_settings():
         # NOTE: on a non-HA system, this method is assuming
         # that the machine has been handed a default route
@@ -71,25 +74,30 @@ else:
         PAYLOAD = payload
         RESULTS = results.json()
 
-
-def test_02_verify_network_configuration_config():
+@pytest.mark.dependency(name='VERIFY')
+def test_02_verify_network_configuration_config(request):
+    depends(request, ['DEFAULT'])
     for payload_key, payload_value in PAYLOAD.items():
         assert RESULTS[payload_key] == payload_value
 
 
-def test_03_get_network_general_summary():
-    results = GET("/network/general/summary/")
+@pytest.mark.dependency(name='GENERAL')
+def test_03_get_network_general_summary(request):
+    depends(request, ['VERIFY'])
+    results = GET("/network/general/summary/", controller_a=ha)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     global RESULTS
     RESULTS = results.json()
 
 
-def test_04_verify_network_general_summary_nameservers():
+def test_04_verify_network_general_summary_nameservers(request):
+    depends(request, ['GENERAL'])
     assert set(RESULTS['nameservers']) == set(NAMESERVERS)
 
 
-def test_05_verify_network_general_summary_default_routes():
+def test_05_verify_network_general_summary_default_routes(request):
+    depends(request, ['GENERAL'])
     assert RESULTS['default_routes'][0] == GATEWAY
 
 
