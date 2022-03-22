@@ -405,16 +405,15 @@ class FailoverEventsService(Service):
                     vol['error'] = str(e)
                     failed.append(vol)
                     continue
+                try:
+                    # make sure the zpool cachefile property is set appropriately
+                    self.run_call(
+                        'zfs.pool.update', vol['name'], {'properties': {'cachefile': {'value': ZPOOL_CACHE_FILE}}}
+                    )
+                except Exception:
+                    logger.warning('Failed to set cachefile property for %r', vol['name'], exc_info=True)
 
-            self.logger.info('Successfully imported %r', vol['name'])
-
-            try:
-                # make sure the zpool cachefile property is set appropriately
-                self.run_call(
-                    'zfs.pool.update', vol['name'], {'properties': {'cachefile': {'value': ZPOOL_CACHE_FILE}}}
-                )
-            except Exception:
-                self.logger.warning('Failed to set cachefile property for %r', vol['name'], exc_info=True)
+            logger.info('Successfully imported %r', vol['name'])
 
             # try to unlock the zfs datasets (if any)
             unlock_job = self.run_call('failover.unlock_zfs_datasets', vol['name'])
