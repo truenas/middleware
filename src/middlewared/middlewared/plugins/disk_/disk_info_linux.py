@@ -9,29 +9,27 @@ from .disk_info_base import DiskInfoBase
 
 class DiskService(Service, DiskInfoBase):
 
-    def get_dev_size(self, dev):
+    def get_dev_size(self, device):
         try:
-            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', dev)
+            dev = pyudev.Devices.from_name(pyudev.Context(), 'block', device)
         except pyudev.DeviceNotFoundByNameError:
             return
+        else:
+            if dev.get('DEVTYPE') not in ('disk', 'partition'):
+                return
 
-        if block_device.get('DEVTYPE') not in ('disk', 'partition'):
+        size = dev.attributes.asint('size')
+
+        try:
+            attr = 'queue/logical_block_size'
+            if parent := dev.find_parent('block'):
+                lbs = pyudev.Devices.from_name(pyudev.Context(), 'block', parent.sys_name).attributes.asint(attr)
+            else:
+                lbs = dev.attributes.asint(attr)
+        except KeyError:
             return
 
-        logical_sector_size = self.middleware.call_sync(
-            'device.logical_sector_size',
-            dev if block_device['DEVTYPE'] == 'disk' else block_device.find_parent('block').sys_name
-        )
-        if not logical_sector_size:
-            return
-
-        if block_device['DEVTYPE'] == 'disk':
-            path = os.path.join('/sys/block', dev, 'device/block', dev, 'size')
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    return int(f.read().strip()) * logical_sector_size
-        elif block_device.get('ID_PART_ENTRY_SIZE'):
-            return logical_sector_size * int(block_device['ID_PART_ENTRY_SIZE'])
+        return size * lbs
 
     def list_partitions(self, disk):
         parts = []
