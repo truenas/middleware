@@ -19,8 +19,8 @@ loops = {
 boot_pool_disks = GET('/boot/get_disks/', controller_a=ha).json()
 all_disks = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 pool_disks = sorted(list(set(all_disks) - set(boot_pool_disks)))
-ha_pool_disks = [disk_pool[0]] if ha else []
-tank_pool_disks = [disk_pool[1] if ha else disk_pool[0]]
+ha_pool_disks = [pool_disks[0]] if ha else []
+tank_pool_disks = [pool_disks[1] if ha else pool_disks[0]]
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -41,7 +41,7 @@ def test_01_get_pool():
 
 @pytest.mark.dependency(name="wipe_disk")
 def test_02_wipe_all_pool_disk():
-    for disk in disk_pool:
+    for disk in pool_disks:
         payload = {
             "dev": f"{disk}",
             "mode": "QUICK",

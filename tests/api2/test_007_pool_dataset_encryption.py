@@ -37,7 +37,7 @@ if not ha:
             'encryption': False,
             'topology': {
                 'data': [
-                    {'type': 'STRIPE', 'disks': disk_pool}
+                    {'type': 'STRIPE', 'disks': pool_disks}
                 ],
             }
         }
@@ -387,7 +387,7 @@ if not ha:
             },
             'topology': {
                 'data': [
-                    {'type': 'STRIPE', 'disks': disk_pool}
+                    {'type': 'STRIPE', 'disks': pool_disks}
                 ],
             }
         }
@@ -534,7 +534,7 @@ if not ha:
             },
             'topology': {
                 'data': [
-                    {'type': 'STRIPE', 'disks': disk_pool}
+                    {'type': 'STRIPE', 'disks': pool_disks}
                 ],
             }
         }
