@@ -1,11 +1,12 @@
+import json
+
 import pytest
 
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 DISKS = list(call('device.get_disks').keys())
-TYPES = (type(None), int)
-
+CONTROL = {i['name']: i for i in json.loads(ssh('lsblk -bJ -o NAME,SIZE'))['blockdevices']}
 
 @pytest.mark.parametrize('disk', DISKS)
 def test_get_dev_size_for(disk):
-    assert isinstance(call('disk.get_dev_size', disk), TYPES)
+    assert CONTROL[disk]['size'] == call('disk.get_dev_size', disk)
