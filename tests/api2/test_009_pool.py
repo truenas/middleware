@@ -9,6 +9,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, wait_on_job, make_ws_request
 from auto_config import pool_name, ha_pool_name, ha
+from middlewared.test.integration.assets.pool import test_pool
 
 IMAGES = {}
 loops = {
@@ -153,3 +154,66 @@ def test_10_looking_pool_info_of_(request, pool_keys):
             info = results.json()[keys_list[0]][keys_list[1]][keys_list[2]]
     else:
         assert payload[pool_keys] == results.json()[pool_keys], results.text
+
+
+def test_11_test_pool_property_normalization(request):
+    """
+    middleware attempts to normalize certain ZFS dataset properties so that
+    importing a foreign pool doesn't break our configuration. Currently we
+    do this by resetting the mountpoint of datasets, and disabling sharenfs
+    property. This test simultates such a situation by creating a test pool
+    setting parameters that must be migrated, then exporting the pool and
+    re-importing it. Once this is complete, we check whether properties
+    have been set to their correct new values.
+    """
+    depends(request, ["pool_04"])
+    with test_pool() as tp:
+        payload = {'msg': 'method', 'method': 'zfs.dataset.update', 'params': [
+            tp['name'],
+            {'properties': {
+                'sharenfs': {'value': 'on'},
+            }},
+        ]}
+        res = make_ws_request(ip, payload)
+        error = res.get('error')
+        assert error is None, str(error)
+
+        result = POST("/pool/dataset/", {"name": f"{tp['name']}/ds1"})
+        assert result.status_code == 200, result.text
+
+        payload['params'][0] += "/ds1"
+        payload['params'][1]['properties'].update({
+            'mountpoint': {'value': 'legacy'},
+        })
+        res = make_ws_request(ip, payload)
+        error = res.get('error')
+        assert error is None, str(error)
+
+    res = GET("/pool/import_find")
+    assert res.status_code == 200, res.text
+    job_id = res.json()
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+    available = job_status['results']['result']
+    assert len(available) == 1, res.text
+    assert available[0]['name'] == tp['name'], res.text
+
+    res = POST('/pool/import_pool', {'guid': available[0]['guid']})
+    assert res.status_code == 200, res.text
+    job_id = res.json()
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+    for ds in (f'{tp["name"]}/ds1', tp['name']):
+        payload = {'msg': 'method', 'method': 'zfs.dataset.query', 'params': [
+            [['id', '=', ds]],
+            {'get': True, 'extra': {'retrieve_children': False}}
+        ]}
+        req = make_ws_request(ip, payload)
+        error = req.get('error')
+        ds = req.get('result')
+
+        assert error is None, str(error)
+        assert ds['properties']['mountpoint']['value'] != 'legacy', str(ds['properties'])
+        assert ds['properties']['sharenfs']['value'] == 'off', str(ds['properties'])
