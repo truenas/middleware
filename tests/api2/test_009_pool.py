@@ -16,11 +16,11 @@ loops = {
     'msdosfs-nonascii': '/dev/loop9',
     'ntfs': '/dev/loop10'
 }
-nas_disk = GET('/boot/get_disks/', controller_a=ha).json()
-disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
-disk_pool = sorted(list(set(disk_list) - set(nas_disk)))
-ha_disk_pool = disk_pool[:1] if ha else None
-tank_disk_pool = disk_pool[1:] if ha else disk_pool
+boot_pool_disks = GET('/boot/get_disks/', controller_a=ha).json()
+all_disks = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
+pool_disks = sorted(list(set(all_disks) - set(boot_pool_disks)))
+ha_pool_disks = [disk_pool[0]] if ha else []
+tank_pool_disks = [disk_pool[1] if ha else disk_pool[0]]
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -64,7 +64,7 @@ if ha:
             "encryption": False,
             "topology": {
                 "data": [
-                    {"type": "STRIPE", "disks": ha_disk_pool}
+                    {"type": "STRIPE", "disks": ha_pool_disks}
                 ],
             }
         }
@@ -87,7 +87,7 @@ if ha:
         payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['ha_pool_id']]}
         res = make_ws_request(ip, payload)
         assert isinstance(res['result'], list), res
-        assert res['result'] and res['result'] == ha_disk_pool
+        assert res['result'] and res['result'] == ha_pool_disks
 
 
 @pytest.mark.dependency(name="pool_04")
@@ -99,7 +99,7 @@ def test_06_creating_a_pool(request):
         "encryption": False,
         "topology": {
             "data": [
-                {"type": "STRIPE", "disks": tank_disk_pool}
+                {"type": "STRIPE", "disks": tank_pool_disks}
             ],
         }
     }
@@ -124,7 +124,7 @@ def test_08_get_pool_disks(request, pool_data):
     payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['id']]}
     res = make_ws_request(ip, payload)
     assert isinstance(res['result'], list), res
-    assert res['result'] and (set(res['result']) == set(tank_disk_pool)), res
+    assert res['result'] and (set(res['result']) == set(tank_pool_disks)), res
 
 
 def test_09_get_pool_id_info(request, pool_data):

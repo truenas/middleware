@@ -15,9 +15,9 @@ from auto_config import pool_name, ha, ip, password, user, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
 
-nas_disk = GET('/boot/get_disks/', controller_a=ha).json()
-disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
-disk_pool = sorted(list(set(disk_list) - set(nas_disk)))
+boot_pool_disks = GET('/boot/get_disks/', controller_a=ha).json()
+all_disks = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
+pool_disks = sorted(list(set(all_disks) - set(boot_pool_disks)))
 # genrated token_hex 32bit for
 pool_token_hex = secrets.token_hex(32)
 pool_token_hex2 = secrets.token_hex(32)
