@@ -980,7 +980,19 @@ class ZFSDatasetService(CRUDService):
                     raise CallError(f'Property {prop!r} not found.', errno.ENOENT)
                 zprop.inherit(recursive=recursive)
         except libzfs.ZFSException as e:
-            raise CallError(str(e))
+            if prop != 'mountpoint':
+                raise CallError(str(e))
+
+            err = e.code.name
+            if err not in ("SHARENFSFAILED", "SHARESMBFAILED"):
+                raise CallError(str(e))
+
+            # We set /etc/exports.d to be immutable, which
+            # results on inherit of mountpoint failing with
+            # SHARENFSFAILED. We give special return in this case
+            # so that caller can set this property to "off"
+            raise CallError(err, errno.EPROTONOSUPPORT)
+
 
     def destroy_snapshots(self, name, snapshot_spec):
         try:

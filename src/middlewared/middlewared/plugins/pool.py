@@ -1346,6 +1346,15 @@ class PoolService(CRUDService):
             result.append(entry)
         return result
 
+    @private
+    async def disable_shares(self, ds):
+        await self.middleware.call('zfs.dataset.update', ds, {
+            'properties': {
+                'sharenfs': {'value': "off"},
+                'sharesmb': {'value': "off"},
+            }
+        })
+
     @accepts(Dict(
         'pool_import',
         Str('guid', required=True),
@@ -1406,8 +1415,26 @@ class PoolService(CRUDService):
         else:
             pool_name = new_name
 
-        # reset top-level zpool `aclinherit` property
-        opts = {'properties': {'aclinherit': {'value': 'passthrough'}}}
+        # set acl properties correctly for given top-level dataset's acltype
+        ds = await self.middleware.call(
+            'pool.dataset.query',
+            [['id', '=', pool_name]],
+            {'get': True, 'extra': {'retrieve_children': False}}
+        )
+        if ds['acltype']['value'] == 'NFSV4':
+            opts = {'properties': {
+                'aclinherit': {'value': 'passthrough'}
+            }}
+        else:
+            opts = {'properties': {
+                'aclinherit': {'value': 'discard'},
+                'aclmode': {'value': 'discard'},
+            }}
+
+        opts['properties'].update({
+            'sharenfs': {'value': "off"}, 'sharesmb': {'value': "off"},
+        })
+
         await self.middleware.call('zfs.dataset.update', pool_name, opts)
 
         # Recursively reset dataset mountpoints for the zpool.
@@ -1420,6 +1447,15 @@ class PoolService(CRUDService):
             try:
                 # Reset all mountpoints
                 await self.middleware.call('zfs.dataset.inherit', child, 'mountpoint', recursive)
+
+            except CallError as e:
+                if e.errno != errno.EPROTONOSUPPORT:
+                    self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
+                try:
+                    await self.disable_shares(child)
+                except Exception:
+                    self.logger.warning('%s: failed to disable share: %s.', child, str(e), exc_info=True)
+
             except Exception as e:
                 # Let's not make this fatal
                 self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
