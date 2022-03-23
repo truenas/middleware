@@ -350,7 +350,7 @@ class EnclosureService(Service):
                     orig_id = orig[0]["id"]
                     # pull out the original slots
                     orig_slots = orig[0]["elements"].pop("Array Device Slot")
-                    # go ahead and pull out the other elements from the head-unit to prevent lossfull translation
+                    # go ahead and pull out the other elements from the head-unit to prevent lossful translation
                     mapped[0]["elements"].update(orig[0]["elements"])
                     # set the model of the mapped enclosure
                     mapped[0]["model"] = orig[0]["model"]
