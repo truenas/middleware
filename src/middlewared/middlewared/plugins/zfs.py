@@ -989,7 +989,6 @@ class ZFSDatasetService(CRUDService):
             # so that caller can set this property to "off"
             raise CallError(err, errno.EPROTONOSUPPORT)
 
-
     def destroy_snapshots(self, name, snapshot_spec):
         try:
             with libzfs.ZFS() as zfs:
