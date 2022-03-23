@@ -349,14 +349,16 @@ class EnclosureService(Service):
                     this_num = mapping.num
                     orig_id = orig[0]["id"]
                     # pull out the original slots
-                    orig_slots = orig[0]["elements"]["Array Device Slot"]
+                    orig_slots = orig[0]["elements"].pop("Array Device Slot")
+                    # go ahead and pull out the other elements from the head-unit to prevent lossful translation
+                    mapped[0]["elements"].update(orig[0]["elements"])
                     # set the model of the mapped enclosure
                     mapped[0]["model"] = orig[0]["model"]
 
             # now we need to map the original enclosures disk slots to the new mapping
             try:
                 orig_slot = orig_slots[mapping.slot]
-            except IndexError:
+            except KeyError:
                 self.logger.error(
                     "Failed to detect slot %d in enclosure /dev/ses%d. Mapping slot failed.", mapping.slot, mapping.num
                 )
