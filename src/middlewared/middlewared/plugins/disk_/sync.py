@@ -194,7 +194,7 @@ class DiskService(Service, ServiceChangeMixin):
                 if qs is None:
                     qs = await self.middleware.call('datastore.query', 'storage.disk')
 
-                if disk := [i for i in qs if i['disk_identifer'] == disk_identifier]:
+                if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
                     new = False
                     disk = disk[0]
                 else:
