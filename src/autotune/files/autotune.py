@@ -300,9 +300,7 @@ def main(argv):
     open(NO_HASYNC, 'w').close()
     qs = {i['var']: i for i in c.call('tunable.query')}
     for var, value in recommendations.items():
-        found = qs.get(var, {})
-        qs = c.call('tunable.query', [('var', '=', var)])
-        if found:
+        if found := qs.get(var, {}):
             if not args.overwrite:
                 # Already exists and we're honoring the user setting. Move along.
                 continue
