@@ -100,7 +100,6 @@ DEF_KNOBS = {
         'net.inet.tcp.sendbuf_max',
         'net.inet.tcp.recvbuf_max',
         'net.inet.tcp.sendbuf_inc',
-        'net.inet.tcp.recvbuf_inc',
         'vfs.zfs.vdev.async_read_max_active',
         'vfs.zfs.vdev.sync_read_max_active',
         'vfs.zfs.vdev.async_write_max_active',
@@ -211,10 +210,6 @@ def guess_net_inet_tcp_sendspace():
 
 def guess_net_inet_tcp_sendbuf_inc():
     return 16 * KiB
-
-
-def guess_net_inet_tcp_recvbuf_inc():
-    return 512 * KiB
 
 
 def guess_vfs_zfs_vdev_async_read_max_active():
