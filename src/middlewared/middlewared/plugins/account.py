@@ -500,10 +500,14 @@ class UserService(CRUDService):
             user['group'] = group['id']
 
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
-        updated = data | user
+        updated = user | data
         if updated['microsoft_account'] and not updated['email']:
             verrors.add('user_update.microsoft_account',
                         'The Microsoft Account feature requires an email address.')
+
+        if updated['microsoft_account'] and not updated['builtin']:
+            verrors.add('user_update.microsoft_account',
+                        'This property is not permitted for builtin accounts.')
 
         try:
             st = os.stat(user.get("home", "/nonexistent")).st_mode
