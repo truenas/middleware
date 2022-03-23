@@ -475,7 +475,6 @@ class UsageService(Service):
                     sharing_list.append(
                         {
                             'type': service.upper(),
-                            'alldirs': s['alldirs'],
                             'readonly': s['ro'],
                             'quiet': s['quiet']
                         }

@@ -170,38 +170,36 @@
     global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal) or ["sys"]
 
     for share in shares:
-        opts = generate_options(share, global_sec, config)
-        for path in share["paths"]:
-            p = Path(path)
-            if not p.exists():
-                middleware.logger.debug("%s: path does not exist, omitting from NFS exports", path)
+        params = generate_options(share, global_sec, config)
+        p = Path(share['path'])
+        if not p.exists():
+            middleware.logger.debug("%s: path does not exist, omitting from NFS exports", path)
+            continue
+
+        anonymous = True
+        options = []
+        params += ",no_subtree_check" if p.is_mount() else ",subtree_check"
+
+        for host in share["hosts"]:
+            anonymous = False
+            export_host = parse_host(host, gaierrors)
+            if export_host is None:
                 continue
 
-            anonymous = True
-            options = []
-            params = opts
-            params += ",no_subtree_check" if p.is_mount() else ",subtree_check"
+            options.append(f'{host}({params})')
 
-            for host in share["hosts"]:
-                anonymous = False
-                export_host = parse_host(host, gaierrors)
-                if export_host is None:
-                    continue
+        for network in share["networks"]:
+            options.append(f'{network}({params})')
+            anonymous = False
 
-                options.append(f'{host}({params})')
+        if anonymous:
+            options.append(f'*({params})')
 
-            for network in share["networks"]:
-                options.append(f'{network}({params})')
-                anonymous = False
+        if not options:
+            # this may happen if no hosts resolve
+            continue
 
-            if anonymous:
-                options.append(f'*({params})')
-
-            if not options:
-                # this may happen if no hosts resolve
-                continue
-
-            entries.append({"path": path, "options": options})
+        entries.append({"path": share["path"], "options": options})
 
     if gaierrors:
         middleware.call_sync(

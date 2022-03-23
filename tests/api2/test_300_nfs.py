@@ -113,7 +113,7 @@ def nfs_dataset(name, options=None, acl=None, mode=None):
 @contextlib.contextmanager
 def nfs_share(path, options=None):
     results = POST("/sharing/nfs/", {
-        "paths": [path],
+        "path": path,
         **(options or {}),
     })
     assert results.status_code == 200, results.text
@@ -170,7 +170,7 @@ def test_05_creating_a_nfs_share_on_nfs_PATH(request):
     depends(request, ["pool_04"], scope="session")
     global nfsid
     paylaod = {"comment": "My Test Share",
-               "paths": [NFS_PATH],
+               "path": NFS_PATH,
                "security": ["SYS"]}
     results = POST("/sharing/nfs/", paylaod)
     assert results.status_code == 200, results.text
@@ -362,37 +362,6 @@ def test_29_removing_nfs_mountpoint(request):
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
-
-
-def test_30_add_second_nfs_path(request):
-    """
-    Verify that adding a second path generates second exports entry
-    Sample:
-
-    "/mnt/dozer/NFSV4/foo"\
-    	*(sec=sys,rw,subtree_check)
-    "/mnt/dozer/NFSV4/foobar"\
-    	*(sec=sys,rw,subtree_check)
-    """
-    depends(request, ["pool_04", "ssh_password"], scope="session")
-
-    paths = [f'{NFS_PATH}/sub1', f'{NFS_PATH}/sub2']
-    results = SSH_TEST(f"mkdir {' '.join(paths)}", user, password, ip)
-    assert results['result'] is True, results['error']
-
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'paths': paths})
-    assert results.status_code == 200, results.text
-
-    exports_paths = [x['path'] for x in parse_exports()]
-    diff = set(exports_paths) ^ set(paths)
-    assert len(diff) == 0, str(diff)
-
-    # Restore to single entry
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'paths': [NFS_PATH]})
-    assert results.status_code == 200, results.text
-
-    exports_paths = [x['path'] for x in parse_exports()]
-    assert len(exports_paths) == 1, exports_paths
 
 
 def test_31_check_nfs_share_network(request):
@@ -609,26 +578,17 @@ def test_36_check_nfsdir_subtree_behavior(request):
     "/mnt/dozer/NFSV4/foobar"\
     	*(sec=sys,rw,subtree_check)
     """
-    paths = [NFS_PATH, f'{NFS_PATH}/sub1']
+    tmp_path = f'{NFS_PATH}/sub1'
 
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'paths': paths})
-    assert results.status_code == 200, results.text
+    with nfs_share(tmp_path):
+        parsed = parse_exports()
+        assert len(parsed) == 2, str(parsed)
 
-    parsed = parse_exports()
-    assert len(parsed) == 2, str(parsed)
+        assert parsed[0]['path'] == NFS_PATH, str(parsed)
+        assert 'no_subtree_check' in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-    assert parsed[0]['path'] == paths[0], str(parsed)
-    assert 'no_subtree_check' in parsed[0]['opts'][0]['parameters'], str(parsed)
-
-    assert parsed[1]['path'] == paths[1], str(parsed)
-    assert 'subtree_check' in parsed[1]['opts'][0]['parameters'], str(parsed)
-
-    # Restore to single entry
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'paths': [NFS_PATH]})
-    assert results.status_code == 200, results.text
-
-    exports_paths = [x['path'] for x in parse_exports()]
-    assert len(exports_paths) == 1, exports_paths
+        assert parsed[1]['path'] == tmp_path, str(parsed)
+        assert 'subtree_check' in parsed[1]['opts'][0]['parameters'], str(parsed)
 
 
 def test_37_check_nfs_allow_nonroot_behavior(request):
