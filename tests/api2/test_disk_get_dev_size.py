@@ -5,14 +5,13 @@ from pytest_dependency import depends
 
 from middlewared.test.integration.utils import call, ssh
 
-DISKS = None
+DISKS = list(call('device.get_disks').keys())
 CONTROL = None
 
 
 @pytest.mark.dependency(name='GET_DISK_INFO')
-def test_get_disk_information():
-    global DISKS, CONTROL
-    DISKS = list(call('device.get_disks').keys())
+def test_get_disk_info():
+    global CONTROL
     CONTROL = {i['name']: i for i in json.loads(ssh('lsblk -bJ -o NAME,SIZE'))['blockdevices']}
 
 
