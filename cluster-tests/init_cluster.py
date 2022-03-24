@@ -1,6 +1,5 @@
 import sys
-import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed import time
 
 from utils import make_request, make_ws_request, wait_on_job
 from config import CLUSTER_INFO, DATASET_HIERARCHY
