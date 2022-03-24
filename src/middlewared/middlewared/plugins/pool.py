@@ -1451,8 +1451,11 @@ class PoolService(CRUDService):
             except CallError as e:
                 if e.errno != errno.EPROTONOSUPPORT:
                     self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
+                    continue
+
                 try:
                     await self.disable_shares(child)
+                    self.logger.warning('%s: disabling ZFS dataset property-based shares', child)
                 except Exception:
                     self.logger.warning('%s: failed to disable share: %s.', child, str(e), exc_info=True)
 

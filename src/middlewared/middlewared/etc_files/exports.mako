@@ -3,6 +3,7 @@
     import socket
     import os
     from pathlib import Path
+    from contextlib import suppress
 
     map_ids = {
         'maproot_user': -1,
@@ -127,6 +128,10 @@
 
     def disable_exportsd():
         immutable_disabled = False
+
+        with suppress(FileExistsError):
+            os.mkdir('/etc/exports.d', mode=0o755)
+
         for file in os.listdir('/etc/exports.d'):
             if not immutable_disabled:
                 middleware.call_sync('filesystem.set_immutable', False, '/etc/exports.d')
