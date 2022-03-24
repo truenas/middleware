@@ -505,7 +505,7 @@ class UserService(CRUDService):
             verrors.add('user_update.microsoft_account',
                         'The Microsoft Account feature requires an email address.')
 
-        if updated['microsoft_account'] and not updated['builtin']:
+        if updated['microsoft_account'] and updated['builtin']:
             verrors.add('user_update.microsoft_account',
                         'This property is not permitted for builtin accounts.')
 
