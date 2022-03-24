@@ -510,6 +510,40 @@ def test_34_check_nfs_share_maproot(request):
     assert 'anonuid=65534' in params, str(parsed)
     assert 'anongid=65534' in params, str(parsed)
 
+    """
+    setting maproot_user and maproot_group to root should
+    cause us to append "not_root_squash" to options.
+    """
+    payload = {
+        'maproot_user': 'root',
+        'maproot_group': 'root'
+    }
+    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
+    assert results.status_code == 200, results.text
+
+    parsed = parse_exports()
+    assert len(parsed) == 1, str(parsed)
+    params = parsed[0]['opts'][0]['parameters']
+    assert 'no_root_squash' in params, str(parsed)
+    assert 'anonuid=0' in params, str(parsed)
+    assert 'anongid=0' in params, str(parsed)
+
+    """
+    Second share should have normal (no maproot) params.
+    """
+    second_share = f'/mnt/{pool_name}/second_share'
+    with nfs_dataset('second_share'):
+        with nfs_share(second_share):
+            parsed = parse_exports()
+            assert len(parsed) == 2, str(parsed)
+
+            params = parsed[0]['opts'][0]['parameters']
+            assert 'no_root_squash' in params, str(parsed)
+
+            params = parsed[1]['opts'][0]['parameters']
+            assert 'no_root_squash' not in params, str(parsed)
+            assert not any(filter(lambda x: x.startswith('anon'), params)), str(parsed)
+
     payload = {
         'maproot_user': '',
         'maproot_group': ''
@@ -923,7 +957,7 @@ def test_55_checking_nfs_disable_at_boot(request):
     assert results.json()[0]['enable'] is False, results.text
 
 
-def test_55_destroying_smb_dataset(request):
+def test_56_destroying_smb_dataset(request):
     depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
