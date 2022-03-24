@@ -140,7 +140,19 @@ def init():
         ips = [v for k, v in CLUSTER_INFO.items() if k in nodes_ip_keys]
         errors = []
 
-        # Verify the OS versions match
+        # First, setup the defgw and dns
+        futures = [exc.submit(setup_defgw_and_dns, ip) for ip in ips]
+        for fut in as_completed(futures):
+            res = fut.result()
+            errors.append(res['ERROR']) if res['ERROR'] else None
+        if errors:
+            for error in errors:
+                # means the network setup failed on at least
+                # one of the peers
+                print(error)
+            sys.exit(2)
+
+        # Second, verify the OS versions match
         futures = [exc.submit(get_os_version, ip) for ip in ips]
         versions = set()
         for fut in as_completed(futures):
