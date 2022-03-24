@@ -1,4 +1,5 @@
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from utils import make_request, make_ws_request, wait_on_job
@@ -119,7 +120,11 @@ def setup_zpool_and_datasets(ip):
     return result
 
 
-def setup_defgw_and_dns(ip):
+def setup_network(ip):
+    # the cluster nodes are assigned an IP
+    # address via DHCP reservations, however,
+    # it's a prerequisite that the peers in
+    # the cluster have static IP addresses
     result = {'ERROR': ''}
 
     # setup router/dns/defgw first
@@ -129,6 +134,41 @@ def setup_defgw_and_dns(ip):
     ans = make_request('put', url, data=payload)
     if ans.status_code != 200:
         result['ERROR'] = f'Failed to configure gateway on {ip}:{ans.text}'
+        return result
+
+    # setup the static IP address
+    print(f'Setting up static ip on {ip}')
+    url = f'http://{ip}/api/v2.0/interface/id/{CLUSTER_INFO["INTERFACE"]}'
+    payload = {
+        'ipv4_dhcp': False,
+        'aliases': [{
+            'address': ip,
+            'netmask': CLUSTER_INFO['NETMASK'],
+        }],
+    }
+    ans = make_request('put', url, data=payload)
+    if ans.status_code != 200:
+        result['ERROR'] = f'Failed to configure static IP information for {ip}:{ans.text}'
+        return result
+
+    # commit changes
+    print(f'Commit network changes on {ip}')
+    url = f'http://{ip}/api/v2.0/interface/commit'
+    payload = {'rollback': True, 'checkin_timeout': 60}
+    ans = make_request('post', url, data=payload)
+    if ans.status_code != 200:
+        result['ERROR'] = f'Failed to commit static IP information for {ip}:{ans.text}'
+        return result
+    
+    time.sleep(1)
+
+    # checkin the changes (finalize them)
+    print(f'Checkin network changes on {ip}')
+    url = f'http://{ip}/api/v2.0/interface/checkin'
+    ans = make_request('get', url)
+    if ans.status_code != 200:
+        result['ERROR'] = 'Failed to commit static IP information for {ip}:{ans.text}'
+        return result
 
     return result
 
@@ -154,8 +194,8 @@ def init():
         ips = [v for k, v in CLUSTER_INFO.items() if k in nodes_ip_keys]
         errors = []
 
-        # First, setup the defgw and dns
-        futures = [exc.submit(setup_defgw_and_dns, ip) for ip in ips]
+        # First, setup the network
+        futures = [exc.submit(setup_network, ip) for ip in ips]
         for fut in as_completed(futures):
             res = fut.result()
             errors.append(res['ERROR']) if res['ERROR'] else None
