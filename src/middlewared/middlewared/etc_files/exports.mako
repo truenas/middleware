@@ -3,7 +3,7 @@
     import socket
     from pathlib import Path
 
-    def do_map(share, map_type):
+    def do_map(share, map_type, map_ids):
         output = []
         if share[f'{map_type}_user']:
             uid = middleware.call_sync(
@@ -43,7 +43,7 @@
             params.append("rw")
 
         try:
-            mapall = do_map(share, "mapall")
+            mapall = do_map(share, "mapall", map_ids)
         except KeyError:
             middleware.logger.warning(
                 "NSS lookup for anonymous account failed. "
@@ -57,7 +57,7 @@
             params.append("all_squash")
 
         try:
-            maproot = do_map(share, "maproot")
+            maproot = do_map(share, "maproot", map_ids)
         except KeyError:
             middleware.logger.warning(
                 "NSS lookup for anonymous account failed. "
