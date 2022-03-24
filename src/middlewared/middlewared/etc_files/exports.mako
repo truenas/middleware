@@ -60,6 +60,10 @@
 
         try:
             maproot = do_map(share, "maproot", map_ids)
+            if map_ids['maproot_user'] == 0 and map_ids['maproot_group'] == 0:
+                params.append('no_root_squash')
+                maproot = []
+
         except KeyError:
             middleware.logger.warning(
                 "NSS lookup for anonymous account failed. "
@@ -70,9 +74,6 @@
 
         if maproot:
             params.extend(maproot)
-
-        if map_ids['maproot_user'] == 0 and map_ids['maproot_group'] == 0:
-            params.append('no_root_squash')
 
         if config['allow_nonroot']:
             params.append("insecure")

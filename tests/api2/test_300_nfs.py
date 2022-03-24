@@ -525,8 +525,7 @@ def test_34_check_nfs_share_maproot(request):
     assert len(parsed) == 1, str(parsed)
     params = parsed[0]['opts'][0]['parameters']
     assert 'no_root_squash' in params, str(parsed)
-    assert 'anonuid=0' in params, str(parsed)
-    assert 'anongid=0' in params, str(parsed)
+    assert not any(filter(lambda x: x.startswith('anon'), params)), str(parsed)
 
     """
     Second share should have normal (no maproot) params.
