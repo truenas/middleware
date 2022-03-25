@@ -47,8 +47,8 @@ def main(command, quiet):
                 print("Failover status: Unavailable (no network interfaces are marked critical for failover)")
             elif 'MISMATCH_DISKS' in ret:
                 print("Failover status: Unavailable (disks do not match between storage controllers)")
-            elif 'DISAGREE_CARP' in ret:
-                print("Failover status: Unavailable (nodes CARP states do not agree)")
+            elif 'DISAGREE_VIP' in ret:
+                print("Failover status: Unavailable (nodes Virtual IP states do not agree)")
             elif 'NO_LICENSE' in ret:
                 print("Failover status: Unavailable (standby storage controller has no license)")
             elif 'NO_FAILOVER' in ret:

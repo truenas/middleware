@@ -25,7 +25,7 @@ class FailoverDisabledReasonsService(ConfigService):
         NO_PONG - Other storage controller is not communicable.
         NO_FAILOVER - Failover is administratively disabled.
         NO_LICENSE - Other storage controller has no license.
-        DISAGREE_CARP - Nodes CARP states do not agree.
+        DISAGREE_VIP - Nodes Virtual IP states do not agree.
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         """
@@ -83,7 +83,7 @@ class FailoverDisabledReasonsService(ConfigService):
             local = self.middleware.call_sync('failover.vip.get_states', ifaces)
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
-                reasons.add('DISAGREE_CARP')
+                reasons.add('DISAGREE_VIP')
 
             mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
             if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
