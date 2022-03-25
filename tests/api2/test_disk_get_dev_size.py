@@ -5,9 +5,6 @@ from pytest_dependency import depends
 
 from middlewared.test.integration.utils import call, ssh
 
-DISKS = list(call('device.get_disks').keys())
-CONTROL = None
-
 
 @pytest.mark.dependency(name='GET_DISK_INFO')
 def test_get_disk_info():
@@ -15,7 +12,7 @@ def test_get_disk_info():
     CONTROL = {i['name']: i for i in json.loads(ssh('lsblk -bJ -o NAME,SIZE'))['blockdevices']}
 
 
-@pytest.mark.parametrize('disk', DISKS)
-def test_get_dev_size_for(disk, request):
+def test_get_dev_size_for_all_disks(request):
     depends(request, ['GET_DISK_INFO'])
-    assert CONTROL[disk]['size'] == call('disk.get_dev_size', disk)
+    for disk, disk_info in CONTROL.items():
+        assert disk_info['size'] == call('disk.get_dev_size', disk)
