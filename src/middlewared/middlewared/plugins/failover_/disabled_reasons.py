@@ -8,7 +8,7 @@ class FailoverDisabledReasonsService(ConfigService):
     class Config:
         namespace = 'failover.disabled'
 
-    LAST_DISABLEDREASONS = None
+    LAST_DISABLED_REASONS = None
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
@@ -30,8 +30,8 @@ class FailoverDisabledReasonsService(ConfigService):
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         """
         reasons = set(self.middleware.call_sync('failover.disabled.get_reasons', app))
-        if reasons != self.LAST_DISABLEDREASONS:
-            self.LAST_DISABLEDREASONS = reasons
+        if reasons != FailoverDisabledReasonsService.LAST_DISABLED_REASONS:
+            FailoverDisabledReasonsService.LAST_DISABLED_REASONS = reasons
             self.middleware.send_event(
                 'failover.disabled.reasons', 'CHANGED',
                 fields={'disabled_reasons': list(reasons)}
