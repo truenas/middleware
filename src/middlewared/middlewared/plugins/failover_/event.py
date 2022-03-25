@@ -3,7 +3,6 @@ import os
 import sys
 import time
 import contextlib
-import shutil
 import threading
 import logging
 import errno
@@ -12,6 +11,8 @@ from collections import defaultdict
 from middlewared.utils import filter_list
 from middlewared.service import Service, job, accepts
 from middlewared.schema import Dict, Bool, Int
+from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
+from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 
 logger = logging.getLogger('failover')
 
@@ -36,29 +37,7 @@ logger = logging.getLogger('failover')
 # zpools.
 
 
-class AllZpoolsFailedToImport(Exception):
-    """
-    This is raised if all zpools failed to
-    import when becoming master.
-    """
-    pass
-
-
-class IgnoreFailoverEvent(Exception):
-    """
-    This is raised when a failover event is ignored.
-    """
-    pass
-
-
-class FencedError(Exception):
-    """
-    This is raised if fenced fails to run.
-    """
-    pass
-
-
-class FailoverService(Service):
+class FailoverEventsService(Service):
 
     class Config:
         private = True
@@ -76,17 +55,6 @@ class FailoverService(Service):
     # the state of a service to the other controller since
     # that's being handled by us explicitly
     HA_PROPAGATE = {'ha_propagate': False}
-
-    # file created by the pool plugin during certain
-    # scenarios when importing zpools on boot
-    ZPOOL_KILLCACHE = '/data/zfs/killcache'
-
-    # zpool cache file managed by ZFS
-    ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
-
-    # zpool cache file that's been saved by pool plugin
-    # during certain scenarios importing zpools on boot
-    ZPOOL_CACHE_FILE_SAVED = f'{ZPOOL_CACHE_FILE}.saved'
 
     # This file is managed in unscheduled_reboot_alert.py
     # Ticket 39114
@@ -387,29 +355,6 @@ class FailoverService(Service):
             self.FAILOVER_RESULT = 'INFO'
             return self.FAILOVER_RESULT
 
-        # remove the zpool cache files if necessary
-        if os.path.exists(self.ZPOOL_KILLCACHE):
-            for i in (self.ZPOOL_CACHE_FILE, self.ZPOOL_CACHE_FILE_SAVED):
-                with contextlib.suppress(Exception):
-                    os.unlink(i)
-
-        # create the self.ZPOOL_KILLCACHE file
-        else:
-            with contextlib.suppress(Exception):
-                with open(self.ZPOOL_KILLCACHE, 'w') as f:
-                    f.flush()  # be sure it goes straight to disk
-                    os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
-
-        # if we're here and the zpool "saved" cache file exists we need to check
-        # if it's modify time is < the standard zpool cache file and if it is
-        # we overwrite the zpool "saved" cache file with the standard one
-        if os.path.exists(self.ZPOOL_CACHE_FILE_SAVED) and os.path.exists(self.ZPOOL_CACHE_FILE):
-            zpool_cache_mtime = os.stat(self.ZPOOL_CACHE_FILE).st_mtime
-            zpool_cache_saved_mtime = os.stat(self.ZPOOL_CACHE_FILE_SAVED).st_mtime
-            if zpool_cache_mtime > zpool_cache_saved_mtime:
-                with contextlib.suppress(Exception):
-                    shutil.copy2(self.ZPOOL_CACHE_FILE, self.ZPOOL_CACHE_FILE_SAVED)
-
         # unlock SED disks
         try:
             self.run_call('disk.sed_unlock_all')
@@ -419,13 +364,16 @@ class FailoverService(Service):
             # error and move on
             logger.error('Failed to unlock SED disk(s) with error: %r', e)
 
+        # setup the zpool cachefile
+        self.run_call('failover.zpool.cachefile.setup', 'MASTER')
+
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
 
         failed = []
         options = {'altroot': '/mnt', 'missing_log': True}
         any_host = True
-        cachefile = self.ZPOOL_CACHE_FILE
+        cachefile = ZPOOL_CACHE_FILE
         new_name = None
         for vol in fobj['volumes']:
             logger.info('Importing %r', vol['name'])
@@ -452,6 +400,15 @@ class FailoverService(Service):
                     vol['error'] = str(e)
                     failed.append(vol)
                     continue
+                try:
+                    # make sure the zpool cachefile property is set appropriately
+                    self.run_call(
+                        'zfs.pool.update', vol['name'], {'properties': {'cachefile': {'value': ZPOOL_CACHE_FILE}}}
+                    )
+                except Exception:
+                    logger.warning('Failed to set cachefile property for %r', vol['name'], exc_info=True)
+
+            logger.info('Successfully imported %r', vol['name'])
 
             # try to unlock the zfs datasets (if any)
             unlock_job = self.run_call('failover.unlock_zfs_datasets', vol['name'])
@@ -627,6 +584,9 @@ class FailoverService(Service):
                 f.flush()  # be sure it goes straight to disk
                 os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
 
+        # setup the zpool cachefile
+        self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
+
         # export zpools in a thread and set a timeout to
         # to `self.ZPOOL_EXPORT_TIMEOUT`.
         # if we can't export the zpool(s) in this timeframe,
@@ -676,12 +636,11 @@ class FailoverService(Service):
         self.run_call('truecommand.stop_truecommand_service')
 
         # we keep SSH running on both controllers (if it's enabled by user)
-        for i in self.run_call('datastore.query', 'services_services'):
-            if i['srv_service'] == 'ssh':
-                if i['srv_enable']:
-                    logger.info('Restarting SSH')
-                    self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
-                break
+        filters = [['srv_service', '=', 'ssh']]
+        options = {'get': True}
+        if self.run_call('datastore.query', 'services.services', filters, options)['srv_enable']:
+            logger.info('Restarting SSH')
+            self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
 
         # TODO: ALUA on SCALE??
         # do something with iscsi service here
