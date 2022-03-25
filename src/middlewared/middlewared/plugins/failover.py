@@ -259,7 +259,7 @@ class FailoverService(ConfigService):
         await self.middleware.call('cache.pop', 'failover_status')
         # Kick a new status so it may be ready on next user call
         await self.middleware.call('failover.status')
-        await self.middleware.call('failover.disabled_reasons')
+        await self.middleware.call('failover.disabled.reasons')
 
     @accepts()
     @returns(Bool())
@@ -1324,7 +1324,7 @@ async def setup(middleware):
     middleware.event_register('failover.setup', 'Sent when failover is being setup.')
     middleware.event_register('failover.status', 'Sent when failover status changes.')
     middleware.event_register(
-        'failover.disabled_reasons',
+        'failover.disabled.reasons',
         'Sent when the reasons for failover being disabled have changed.'
     )
     middleware.event_register('failover.upgrade_pending', textwrap.dedent('''\

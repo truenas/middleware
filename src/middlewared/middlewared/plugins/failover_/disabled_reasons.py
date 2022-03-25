@@ -1,9 +1,12 @@
 from middlewared.schema import accepts, returns, List, Str
-from middlewared.service import ConfigService, throttle, pass_app, no_auth_required
+from middlewared.service import ConfigService, throttle, pass_app, no_auth_required, private
 from middlewared.plugins.failover_.utils import throttle_condition
 
 
-class FailoverService(ConfigService):
+class FailoverDisabledReasonsService(ConfigService):
+
+    class Config:
+        namespace = 'failover.disabled'
 
     LAST_DISABLEDREASONS = None
 
@@ -12,7 +15,7 @@ class FailoverService(ConfigService):
     @accepts()
     @returns(List('reasons', items=[Str('reason')]))
     @pass_app()
-    def disabled_reasons(self, app):
+    def reasons(self, app):
         """
         Returns a list of reasons why failover is not enabled/functional.
 
@@ -26,16 +29,17 @@ class FailoverService(ConfigService):
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         """
-        reasons = set(self._disabled_reasons(app))
+        reasons = set(self.middleware.call_sync('failover.disabled.get_reasons', app))
         if reasons != self.LAST_DISABLEDREASONS:
             self.LAST_DISABLEDREASONS = reasons
             self.middleware.send_event(
-                'failover.disabled_reasons', 'CHANGED',
+                'failover.disabled.reasons', 'CHANGED',
                 fields={'disabled_reasons': list(reasons)}
             )
         return list(reasons)
 
-    def _disabled_reasons(self, app):
+    @private
+    def get_reasons(self, app):
         reasons = []
         if not self.middleware.call_sync('pool.query'):
             reasons.append('NO_VOLUME')

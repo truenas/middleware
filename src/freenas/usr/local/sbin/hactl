@@ -42,7 +42,7 @@ def main(command, quiet):
                     other_serial = f'ERROR: {e}'
                 print(f"Other node serial: {other_serial}{' (ACTIVE)' if ret == 'BACKUP' else ''}")
 
-            ret = client.call('failover.disabled_reasons')
+            ret = client.call('failover.disabled.reasons')
             if 'NO_CRITICAL_INTERFACES' in ret:
                 print("Failover status: Unavailable (no network interfaces are marked critical for failover)")
             elif 'MISMATCH_DISKS' in ret:
