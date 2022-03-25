@@ -83,6 +83,13 @@ class ACLType(enum.Enum):
 
         return out
 
+    def xattr_names():
+        return set([
+            "system.posix_acl_access",
+            "system.posix_acl_default",
+            "system.nfs4_acl_xdr"
+        ])
+
 
 class ACLBase(ServicePartBase):
 
