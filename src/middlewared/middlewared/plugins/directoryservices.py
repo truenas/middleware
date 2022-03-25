@@ -65,10 +65,7 @@ class DirectorySecrets(object):
         self.is_open = False
 
     def open_tdb(self):
-        if self.ha_mode == "LEGACY":
-            secret_path = f'{SMBPath.LEGACYPRIVATE.platform()}/secrets.tdb'
-        else:
-            secret_path = f'{SMBPath.PRIVATEDIR.platform()}/secrets.tdb'
+        secret_path = f'{SMBPath.PRIVATEDIR.platform()}/secrets.tdb'
 
         if os.path.isfile(secret_path):
             self.tdb = tdb.open(secret_path, self.flags)
