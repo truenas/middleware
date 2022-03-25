@@ -549,22 +549,32 @@ class FailoverService(Service):
                 p = multiprocessing.Process(target=os.system(cmd))
                 p.start()
                 for volume in fobj['volumes']:
-                    logger.warning('Importing %r', volume["name"])
-                    # TODO: try to import using cachefile and then fallback without if it fails
-                    error, output = run(f'zpool import -o cachefile=none -m -R /mnt -f {volume["guid"]}', stderr=True)
+                    logger.info('Importing %r', volume["name"])
+                    set_cachefile = False
+                    cmd = f'zpool import -o cachefile=none -m -R /mnt -f {volume["guid"]} -c /data/zfs/zpool.cache'
+                    error, output = run(cmd, stderr=True)
                     if error:
-                        logger.error('Failed to import %s: %s', volume["name"], output)
-                        open(FAILED_FILE, 'w').close()
-                    else:
-                        unlock_job = self.middleware.call_sync('failover.unlock_zfs_datasets', volume["name"])
-                        unlock_job.wait_sync()
-                        if unlock_job.error:
-                            logger.error('Failed to unlock ZFS encrypted datasets: %s', unlock_job.error)
-                        elif unlock_job.result['failed']:
-                            logger.error(
-                                'Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed'])
-                            )
-                    run(f'zpool set cachefile=/data/zfs/zpool.cache {volume["name"]}')
+                        set_cachefile = True
+                        logger.error('Failed to import %r using cachefile so retrying without it', volume["name"])
+                        error, output = run(
+                            f'zpool import -o cachefile=none -m -R /mnt -f {volume["guid"]}', stderr=True
+                        )
+                        if error:
+                            open(FAILED_FILE, 'w').close()
+                            logger.error('Failed to import %r with error %r', volume["name"], output)
+                            continue
+
+                    unlock_job = self.middleware.call_sync('failover.unlock_zfs_datasets', volume["name"])
+                    unlock_job.wait_sync()
+                    if unlock_job.error:
+                        logger.error('Failed to unlock ZFS encrypted datasets: %s', unlock_job.error)
+                    elif unlock_job.result['failed']:
+                        logger.error(
+                            'Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed'])
+                        )
+
+                    if set_cachefile:
+                        run(f'zpool set cachefile=/data/zfs/zpool.cache {volume["name"]}')
 
                 p.terminate()
                 os.system("pkill -9 -f 'dtrace -qn'")
