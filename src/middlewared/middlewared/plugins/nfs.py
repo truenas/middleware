@@ -251,7 +251,6 @@ class NFSShareModel(sa.Model):
 
 class SharingNFSService(SharingService):
 
-    path_field = 'path'
     share_task_type = 'NFS'
 
     class Config:
@@ -267,22 +266,6 @@ class SharingNFSService(SharingService):
         ('add', Bool('locked')),
         register=True,
     )
-
-    @private
-    async def human_identifier(self, share_task):
-        return ', '.join(share_task[self.path_field])
-
-    @private
-    async def sharing_task_datasets(self, data):
-        return [os.path.relpath(path, '/mnt') for path in data[self.path_field]]
-
-    @private
-    async def sharing_task_determine_locked(self, data, locked_datasets):
-        for path in data[self.path_field]:
-            if await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets):
-                return True
-        else:
-            return False
 
     @accepts(Dict(
         "sharingnfs_create",
@@ -576,12 +559,6 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     title = 'NFS Share'
     service = 'nfs'
     service_class = SharingNFSService
-
-    async def is_child_of_path(self, resource, path):
-        return any(is_child(nfs_path, path) for nfs_path in resource[self.path_field])
-
-    async def get_attachment_name(self, attachment):
-        return attachment['path']
 
     async def restart_reload_services(self, attachments):
         await self._service_change('nfs', 'reload')

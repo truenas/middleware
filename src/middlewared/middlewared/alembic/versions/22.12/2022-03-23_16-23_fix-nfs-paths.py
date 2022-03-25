@@ -7,6 +7,7 @@ Create Date: 2022-03-23 16:23:22.667861+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+import json
 
 
 # revision identifiers, used by Alembic.
@@ -26,13 +27,24 @@ def upgrade():
     for entry in nfs_shares:
         # use existing entry for first path and add new entries for subsequent paths
         _id = entry.pop("id")
-        paths = eval(entry['nfs_paths'])
-        first_path = paths.pop(0)
+        try:
+            paths = json.loads(entry['nfs_paths'])
+        except Exception:
+            paths = ["/var/empty"]
+
+        try:
+            first_path = paths.pop(0)
+        except IndexError:
+            first_path = "/var/empty"
+
         conn.execute(f'UPDATE sharing_nfs_share SET nfs_path = "{first_path}" WHERE id = {_id}')
         if not paths:
             continue
 
         for path in paths:
+            if not path:
+                continue
+
             entry['nfs_path'] = path
             conn.execute(
                 f"INSERT INTO sharing_nfs_share ({','.join(entry.keys())}) VALUES ({','.join(['?'] * len(entry))})",
