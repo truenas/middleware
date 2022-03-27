@@ -364,9 +364,14 @@ class OpenAPIResource(object):
 
         servers = []
         host = req.headers.get('Host')
+        scheme = req.headers.get('X-Scheme') or req.scheme
+        port = int(req.headers.get('X-Server-Port') or 80)
         if host:
+            # This condition is only cosmetic to avoid specifying 80/443 in the uri
+            if port not in [80, 443]:
+                host = f'{host}:{port}'
             servers.append({
-                'url': f'{req.scheme}://{host}/api/v2.0',
+                'url': f'{scheme}://{host}/api/v2.0',
             })
 
         result = {
