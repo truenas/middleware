@@ -252,6 +252,8 @@ http {
             proxy_set_header X-Real-Remote-Port $remote_port;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Server-Port $server_port;
+            proxy_set_header X-Scheme $Scheme;
         }
 
         location /_download {
