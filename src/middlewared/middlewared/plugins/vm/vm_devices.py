@@ -452,7 +452,7 @@ class VMDeviceService(CRUDService):
                 await self.validate_display_devices(verrors, vm_instance)
 
             all_ports = await self.middleware.call(
-                'vm.device.all_used_display_device_ports', [['id', '!=', device.get('id')]]
+                'vm.all_used_display_device_ports', [['id', '!=', device.get('id')]]
             )
             new_ports = list((await self.middleware.call('vm.port_wizard')).values())
             for key in ('port', 'web_port'):

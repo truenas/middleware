@@ -2,8 +2,8 @@
 Normalize VM Display Device Port(s)
 
 Revision ID: d46d345ef8a8
-Revises: 0b02e21a1a10
-Create Date: 2022-03-19 20:20:11.823446+00:00
+Revises: 696b3d876084
+Create Date: 2022-03-28 20:20:11.823446+00:00
 
 """
 import json
@@ -12,7 +12,7 @@ from alembic import op
 
 
 revision = 'd46d345ef8a8'
-down_revision = '0b02e21a1a10'
+down_revision = '696b3d876084'
 branch_labels = None
 depends_on = None
 
