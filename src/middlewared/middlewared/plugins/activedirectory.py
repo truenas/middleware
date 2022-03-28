@@ -162,13 +162,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 'netbiosname': ngc['hostname_virtual'],
                 'netbiosalias': smb['netbiosalias']
             })
-        elif smb_ha_mode == 'LEGACY':
-            ngc = await self.middleware.call('network.configuration.config')
-            ad.update({
-                'netbiosname': ngc['hostname'],
-                'netbiosname_b': ngc['hostname_b'],
-                'netbiosalias': smb['netbiosalias']
-            })
 
         if ad.get('nss_info'):
             ad['nss_info'] = ad['nss_info'].upper()
@@ -222,15 +215,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
             await self.middleware.call('network.configuration.update', {'hostname_virtual': new['netbiosname']})
 
-        elif smb_ha_mode == 'LEGACY' and must_update:
-            await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
-            await self.middleware.call(
-                'network.configuration.update',
-                {
-                    'hostname': new['netbiosname'],
-                    'hostname_b': new['netbiosname_b']
-                }
-            )
         return
 
     @private
@@ -401,6 +385,16 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.common_validate(new, old, verrors)
 
         verrors.check()
+
+        if new['enable']:
+            if await self.middleware.call('failover.licensed'):
+                sysdataset = await self.middleware.call('systemdataset.config')
+                if sysdataset['pool'] == 'freenas-boot':
+                    raise ValidationError(
+                        'activedirectory.enable',
+                        'Active Directory may not be enabled while '
+                        'system dataset is on the boot pool'
+                    )
 
         if new['enable'] and not old['enable']:
             """
@@ -591,25 +585,24 @@ class ActiveDirectoryService(TDBWrapConfigService):
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join(ad)
             await self.middleware.call('activedirectory.register_dns', ad, smb, smb_ha_mode)
-            if smb_ha_mode != 'LEGACY':
-                """
-                Manipulating the SPN entries must be done with elevated privileges. Add NFS service
-                principals while we have these on-hand.
-                Since this may potentially take more than a minute to complete, run in background job.
-                """
-                job.set_progress(60, 'Adding NFS Principal entries.')
-                # Skip health check for add_nfs_spn since by this point our AD join should be de-facto healthy.
-                spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad['netbiosname'], ad['domainname'], False, False)
-                await spn_job.wait()
+            """
+            Manipulating the SPN entries must be done with elevated privileges. Add NFS service
+            principals while we have these on-hand.
+            Since this may potentially take more than a minute to complete, run in background job.
+            """
+            job.set_progress(60, 'Adding NFS Principal entries.')
+            # Skip health check for add_nfs_spn since by this point our AD join should be de-facto healthy.
+            spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad['netbiosname'], ad['domainname'], False, False)
+            await spn_job.wait()
 
-                job.set_progress(70, 'Storing computer account keytab.')
-                kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
-                if kt_id:
-                    self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
-                    ad = await self.direct_update({
-                        'bindpw': '',
-                        'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
-                    })
+            job.set_progress(70, 'Storing computer account keytab.')
+            kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
+            if kt_id:
+                self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
+                ad = await self.direct_update({
+                    'bindpw': '',
+                    'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
+                })
 
             ret = neterr.JOINED
 
@@ -629,12 +622,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
 
-            if smb_ha_mode == "LEGACY" and (await self.middleware.call('failover.status')) == 'MASTER':
-                job.set_progress(95, 'starting active directory on standby controller')
-                try:
-                    await self.middleware.call('failover.call_remote', 'activedirectory.start')
-                except Exception:
-                    self.logger.warning('Failed to start active directory service on standby controller', exc_info=True)
         else:
             await self.set_state(DSStatus['FAULTED'].name)
             self.logger.warning('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
@@ -674,14 +661,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             self.logger.warning("Failed to flush samba's general cache after stopping Active Directory service.")
 
         smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
-        if smb_ha_mode == "LEGACY" and (await self.middleware.call('failover.status')) == 'MASTER':
-            job.set_progress(70, 'Propagating changes to standby controller.')
-            try:
-                await self.middleware.call('failover.call_remote', 'activedirectory.stop')
-            except Exception:
-                self.logger.warning('Failed to stop active directory service on standby controller', exc_info=True)
-
-        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if smb_ha_mode == 'CLUSTERED':
             job.set_progress(70, 'Propagating changes to cluster.')
             cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'STOP')
@@ -934,13 +913,12 @@ class ActiveDirectoryService(TDBWrapConfigService):
             self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
 
         job.set_progress(20, 'Removing kerberos keytab and realm.')
-        if smb_ha_mode != 'LEGACY':
-            krb_princ = await self.middleware.call(
-                'kerberos.keytab.query',
-                [('name', '=', 'AD_MACHINE_ACCOUNT')]
-            )
-            if krb_princ:
-                await self.middleware.call('kerberos.keytab.direct_delete', krb_princ[0]['id'])
+        krb_princ = await self.middleware.call(
+            'kerberos.keytab.query',
+            [('name', '=', 'AD_MACHINE_ACCOUNT')]
+        )
+        if krb_princ:
+            await self.middleware.call('kerberos.keytab.direct_delete', krb_princ[0]['id'])
 
         if ad['kerberos_realm']:
             try:
@@ -967,11 +945,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         }
         new = await self.middleware.call('activedirectory.direct_update', payload)
         await self.set_state(DSStatus['DISABLED'].name)
-        if smb_ha_mode == 'LEGACY' and (await self.middleware.call('failover.status')) == 'MASTER':
-            try:
-                await self.middleware.call('failover.call_remote', 'activedirectory.leave', [data])
-            except Exception:
-                self.logger.warning("Failed to leave AD domain on passive storage controller.", exc_info=True)
 
         job.set_progress(40, 'Flushing caches.')
         flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
