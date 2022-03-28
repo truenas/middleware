@@ -18,6 +18,7 @@ from middlewared.plugins.filesystem_ import chflags, stat_x
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
 from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list
+from middlewared.plugins.filesystem_.acl_base import ACLType
 
 
 class FilesystemService(Service):
@@ -504,8 +505,10 @@ class FilesystemService(Service):
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 
-        acl = self.middleware.call_sync('filesystem.getacl', path, True)
-        return acl['trivial']
+        acl_xattrs = ACLType.xattr_names()
+        xattrs_present = set(os.listxattr(path))
+
+        return False if (xattrs_present & acl_xattrs) else True
 
 
 class FileFollowTailEventSource(EventSource):
