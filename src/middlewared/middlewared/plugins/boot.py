@@ -2,7 +2,7 @@ import os
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, Str, returns
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils import osc, run
+from middlewared.utils import run
 from middlewared.validators import Range
 
 try:
@@ -129,27 +129,8 @@ class BootService(Service):
         Returns:
             "BIOS", "EFI", None
         """
-        if osc.IS_LINUX:
-            # https://wiki.debian.org/UEFI
-            return 'EFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
-        else:
-            return await self.__get_boot_type_freebsd()
-
-    async def __get_boot_type_freebsd(self):
-        await self.middleware.run_in_thread(geom.scan)
-        labelclass = geom.class_by_name('PART')
-        efi = bios = 0
-        for disk in await self.get_disks():
-            for e in labelclass.xml.findall(f".//geom[name='{disk}']/provider/config/type"):
-                if e.text == 'efi':
-                    efi += 1
-                elif e.text == 'freebsd-boot':
-                    bios += 1
-        if efi == 0 and bios == 0:
-            return None
-        if bios > 0:
-            return 'BIOS'
-        return 'EFI'
+        # https://wiki.debian.org/UEFI
+        return 'EFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
 
     @accepts(
         Str('dev'),
