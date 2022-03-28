@@ -97,7 +97,11 @@ class SystemDatasetService(ConfigService):
 
     @private
     async def is_boot_pool(self):
-        pool = (await self.confg())['pool']
+        pool = (await self.config())['pool']
+        if not pool:
+            raise CallError('System dataset pool is not set. This may prevent '
+                            'system services from functioning properly.')
+
         return pool in BOOT_POOL_NAME_VALID
 
     @accepts()
