@@ -61,11 +61,17 @@ def normalize_san(san_list: list) -> list:
     normalized = []
     ip_validator = IpAddress()
     for count, san in enumerate(san_list or []):
-        try:
-            ip_validator(san)
-        except ValueError:
-            normalized.append(['DNS', san])
+        # If we already have SAN normalized, let's use the normalized version and don't
+        # try to add a type ourselves
+        if ':' in san:
+            san_type, san = san.split(':', 1)
         else:
-            normalized.append(['IP', san])
+            try:
+                ip_validator(san)
+            except ValueError:
+                san_type = 'DNS'
+            else:
+                san_type = 'IP'
+        normalized.append([san_type, san])
 
     return normalized
