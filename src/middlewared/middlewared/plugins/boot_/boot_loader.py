@@ -2,19 +2,15 @@ import os
 import shutil
 import tempfile
 
-from middlewared.service import Service
+from middlewared.service import Service, private
 from middlewared.utils import run
 
-from .boot_loader_base import BootLoaderBase
 
+class BootService(Service):
 
-class BootService(Service, BootLoaderBase):
-
+    @private
     async def install_loader(self, dev):
-        if "nvme" in dev:
-            partition = f'{dev}p2'
-        else:
-            partition = f'{dev}2'
+        partition = f'{dev}p2' if 'nvme' in dev else f'{dev}2'
 
         await run('grub-install', '--target=i386-pc', f'/dev/{dev}')
         await run('mkdosfs', '-F', '32', '-s', '1', '-n', 'EFI', f'/dev/{partition}')
