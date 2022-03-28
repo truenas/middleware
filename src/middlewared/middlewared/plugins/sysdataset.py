@@ -4,6 +4,7 @@ from middlewared.service_exception import InstanceNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.size import format_size
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 
 try:
     from middlewared.plugins.cluster_linux.utils import CTDBConfig
@@ -93,6 +94,11 @@ class SystemDatasetService(ConfigService):
             config['path'] = SYSDATASET_PATH
 
         return config
+
+    @private
+    async def is_boot_pool(self):
+        pool = (await self.confg())['pool']
+        return pool in BOOT_POOL_NAME_VALID
 
     @accepts()
     @returns(Dict('systemdataset_pool_choices', additional_attrs=True))

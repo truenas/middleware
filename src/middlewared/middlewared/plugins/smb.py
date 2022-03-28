@@ -29,7 +29,6 @@ class SMBHAMODE(enum.IntEnum):
     'unified' - Single set of state files migrating between controllers. Single netbios name.
     """
     STANDALONE = 0
-    LEGACY = 1
     UNIFIED = 2
     CLUSTERED = 3
 
@@ -233,10 +232,6 @@ class SMBService(TDBWrapConfigService):
 
         if ha_mode in [SMBHAMODE.STANDALONE, SMBHAMODE.CLUSTERED]:
             smb['netbiosname_local'] = smb['netbiosname']
-
-        elif ha_mode == SMBHAMODE.LEGACY:
-            failover_node = await self.middleware.call('failover.node')
-            smb['netbiosname_local'] = smb['netbiosname'] if failover_node == 'A' else smb['netbiosname_b']
 
         elif ha_mode == SMBHAMODE.UNIFIED:
             ngc = await self.middleware.call('network.configuration.config')
@@ -602,11 +597,7 @@ class SMBService(TDBWrapConfigService):
         if gl_enabled:
             hamode = SMBHAMODE['CLUSTERED'].name
         elif await self.middleware.call('failover.licensed'):
-            system_dataset = await self.middleware.call('systemdataset.config')
-            if system_dataset['pool'] != await self.middleware.call('boot.pool_name'):
-                hamode = SMBHAMODE['UNIFIED'].name
-            else:
-                hamode = SMBHAMODE['LEGACY'].name
+            hamode = SMBHAMODE['UNIFIED'].name
 
         else:
             hamode = SMBHAMODE['STANDALONE'].name
@@ -716,18 +707,7 @@ class SMBService(TDBWrapConfigService):
             verrors.add('smb_update.netbiosname', 'NetBIOS name is required.')
 
         ha_mode = SMBHAMODE[(await self.get_smb_ha_mode())]
-        if ha_mode == SMBHAMODE.LEGACY:
-            if not new.get('netbiosname_b'):
-                verrors.add('smb_update.netbiosname_b',
-                            'NetBIOS name for B controller is required while '
-                            'system dataset is located on boot pool.')
-            if len(new['netbiosalias']) == 0:
-                verrors.add('smb_update.netbiosalias',
-                            'At least one netbios alias is required for active '
-                            'controller while system dataset is located on '
-                            'boot pool.')
-
-        elif ha_mode == SMBHAMODE.UNIFIED:
+        if ha_mode == SMBHAMODE.UNIFIED:
             if not new.get('netbiosname_local'):
                 verrors.add('smb_update.netbiosname',
                             'Virtual Hostname is required for SMB configuration '
