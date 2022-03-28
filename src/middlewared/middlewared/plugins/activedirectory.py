@@ -388,8 +388,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         if new['enable']:
             if await self.middleware.call('failover.licensed'):
-                sysdataset = await self.middleware.call('systemdataset.config')
-                if sysdataset['pool'] == 'freenas-boot':
+                if await self.middleware.call('systemdataset.is_boot_pool'):
                     raise ValidationError(
                         'activedirectory.enable',
                         'Active Directory may not be enabled while '
