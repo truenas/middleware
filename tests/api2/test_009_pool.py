@@ -176,7 +176,8 @@ def test_11_test_pool_property_normalization(request):
         ]}
         res = make_ws_request(ip, payload)
         error = res.get('error')
-        assert error is None, str(error)
+        assert error is not None, str(error)
+        assert 'NFS share creation failed' in error['reason'], str(error['reason'])
 
         result = POST("/pool/dataset/", {"name": f"{tp['name']}/ds1"})
         assert result.status_code == 200, result.text
