@@ -15,3 +15,7 @@ down_revision = '99aef90c4cd6'
 def upgrade():
     conn = op.get_bind()
     conn.execute('DELETE FROM system_tunable WHERE tun_var = "net.inet.tcp.recvbuf_in"')
+
+
+def downgrade():
+    pass
