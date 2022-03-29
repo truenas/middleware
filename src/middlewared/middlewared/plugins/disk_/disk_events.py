@@ -2,13 +2,13 @@ import asyncio
 import re
 
 
-DISK = ('da', 'ada', 'vtbd', 'mfid', 'nvd', 'pmem')
+DISKS = ('da', 'ada', 'vtbd', 'mfid', 'nvd', 'pmem')
 SHELF = ('ses',)
 TYPES = ('CREATE', 'DESTROY')
 PREVIOUS = {'method': '', 'task': None}
 MAX_WAIT_TIME = 60
 SETTLE_TIME = 5
-HAS_PARTITION = re.compile(r'.*p[0-9].*$')
+HAS_PARTITION = re.compile(rf'^({"|".join(DISKS)})p[0-9].*$')
 
 
 async def reset_cache(middleware, *args):
@@ -53,9 +53,9 @@ async def remove_disk(middleware, disk_name):
 async def devd_devfs_hook(middleware, data):
     if data.get('subsystem') != 'CDEV' or data['type'] not in TYPES:
         return
-    elif not data['cdev'].startswith(DISK + SHELF):
+    elif not data['cdev'].startswith(DISKS + SHELF):
         return
-    elif data['type'] == 'CREATE' and data['cdev'].startswith(DISK) and HAS_PARTITION.match(data['cdev']):
+    elif data['type'] == 'CREATE' and data['cdev'].startswith(DISKS) and HAS_PARTITION.match(data['cdev']):
         # Means we received an event for something like "da1p1" which means
         # we have (or will) receive an event for the raw disk (i.e. "da1")
         # so we ignore this event
@@ -63,7 +63,7 @@ async def devd_devfs_hook(middleware, data):
 
     global PREVIOUS
     if not PREVIOUS['task']:
-        if data['cdev'].startswith(DISK):
+        if data['cdev'].startswith(DISKS):
             method = added_disk if data['type'] == 'CREATE' else remove_disk
         else:
             method = reset_cache
