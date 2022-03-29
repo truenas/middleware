@@ -269,16 +269,12 @@ class InterfaceService(CRUDService):
                 })
 
         if itype == InterfaceType.BRIDGE:
-            bridge = self.middleware.call_sync(
-                'datastore.query',
-                'network.bridge',
-                [('interface', '=', config['id'])],
-            )
-            if bridge:
-                bridge = bridge[0]
-                iface.update({'bridge_members': bridge['members']})
+            filters = [('interface', '=', config['id'])]
+            if br := self.middleware.call_sync('datastore.query', 'network.bridge', filters):
+                iface.update({'bridge_members': br[0]['members'], 'stp': br[0]['stp']})
             else:
-                iface.update({'bridge_members': []})
+                iface.update({'bridge_members': [], 'stp': True})
+
         elif itype == InterfaceType.LINK_AGGREGATION:
             lag = self.middleware.call_sync(
                 'datastore.query',
