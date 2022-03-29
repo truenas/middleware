@@ -1,4 +1,6 @@
 import asyncio
+import re
+
 
 DISK = ('da', 'ada', 'vtbd', 'mfid', 'nvd', 'pmem')
 SHELF = ('ses',)
@@ -7,6 +9,7 @@ PREVIOUS = {'method': '', 'task': None}
 MAX_WAIT_TIME = 60
 SETTLE_TIME = 5
 LAST_EVENT_TIME = None
+HAS_PARTITION = re.compile(r'.*p[0-9].*$')
 
 
 async def reset_cache(middleware, *args):
@@ -47,6 +50,11 @@ async def devd_devfs_hook(middleware, data):
         return
     elif not data['cdev'].startswith(DISK + SHELF):
         return
+    elif data['type'] == 'CREATE' and data['cdev'].startswith(DISK) and HAS_PARTITION.match(data['cdev']):
+        # Means we received an event for something like "da1p1" which means
+        # we have (or will) receive an event for the raw disk (i.e. "da1")
+        # so we ignore this event
+        return
 
     now = asyncio.get_event_loop().time()
 
@@ -57,11 +65,11 @@ async def devd_devfs_hook(middleware, data):
         else:
             method = reset_cache
 
-            PREVIOUS['task'] = asyncio.get_event_loop().call_later(
-                SETTLE_TIME, lambda: asyncio.ensure_future(method(middleware, data['cdev']))
-            )
-            PREVIOUS['method'] = method.__name__
-            LAST_EVENT_TIME = now
+        PREVIOUS['task'] = asyncio.get_event_loop().call_later(
+            SETTLE_TIME, lambda: asyncio.ensure_future(method(middleware, data['cdev']))
+        )
+        PREVIOUS['method'] = method.__name__
+        LAST_EVENT_TIME = now
     elif PREVIOUS['method'] != 'reset_cache':
         # we have a previously scheduled task and the event we received came
         # in within SETTLE_TIME AND the previous task method to be run was
