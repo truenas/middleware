@@ -1,11 +1,9 @@
 import os
 import re
-from xml.etree import ElementTree as etree
 
 import bsd
 import bsd.geom
 import bsd.disk
-import sysctl
 from middlewared.service import Service
 from .disk_info_base import DiskInfoBase
 
@@ -24,7 +22,7 @@ class DiskService(Service, DiskInfoBase):
     def list_partitions(self, disk, part_xml=None):
         parts = []
         if part_xml is None:
-            part_xml = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value).find('.//class[name="PART"]')
+            part_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'PART')
             if not part_xml:
                 return parts
 
@@ -65,7 +63,7 @@ class DiskService(Service, DiskInfoBase):
 
     def gptid_from_part_type(self, disk, part_type, part_xml=None):
         if part_xml is None:
-            part_xml = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value).find('.//class[name="PART"]')
+            part_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'PART')
 
         uuid = part_xml.find(f'.//geom[name="{disk}"]//config/[rawtype="{part_type}"]/rawuuid')
         if uuid is None:
