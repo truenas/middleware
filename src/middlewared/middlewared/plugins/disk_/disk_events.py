@@ -8,7 +8,6 @@ TYPES = ('CREATE', 'DESTROY')
 PREVIOUS = {'method': '', 'task': None}
 MAX_WAIT_TIME = 60
 SETTLE_TIME = 5
-LAST_EVENT_TIME = None
 HAS_PARTITION = re.compile(r'.*p[0-9].*$')
 
 
@@ -16,9 +15,11 @@ async def reset_cache(middleware, *args):
     await middleware.call('geom.cache.invalidate')
     await (await middleware.call('disk.sync_all')).wait()
     await middleware.call('disk.sed_unlock_all')
+
     global PREVIOUS
-    PREVIOUS['method'] = ''
+    PREVIOUS['method'] = 'reset_cache'
     PREVIOUS['task'] = None
+    PREVIOUS['task_time'] = asyncio.get_event_loop().time()
 
 
 async def added_disk(middleware, disk_name):
@@ -27,9 +28,11 @@ async def added_disk(middleware, disk_name):
     await middleware.call('disk.sed_unlock', disk_name)
     await middleware.call('disk.multipath_sync')
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
+
     global PREVIOUS
-    PREVIOUS['method'] = ''
+    PREVIOUS['method'] = 'added_disk'
     PREVIOUS['task'] = None
+    PREVIOUS['task_time'] = asyncio.get_event_loop().time()
 
 
 async def remove_disk(middleware, disk_name):
@@ -40,9 +43,11 @@ async def remove_disk(middleware, disk_name):
     # If a disk dies we need to reconfigure swaps so we are not left
     # with a single disk mirror swap, which may be a point of failure.
     asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+
     global PREVIOUS
-    PREVIOUS['method'] = ''
+    PREVIOUS['method'] = 'remove_disk'
     PREVIOUS['task'] = None
+    PREVIOUS['task_time'] = asyncio.get_event_loop().time()
 
 
 async def devd_devfs_hook(middleware, data):
@@ -56,9 +61,7 @@ async def devd_devfs_hook(middleware, data):
         # so we ignore this event
         return
 
-    now = asyncio.get_event_loop().time()
-
-    global PREVIOUS, LAST_EVENT_TIME
+    global PREVIOUS
     if not PREVIOUS['task']:
         if data['cdev'].startswith(DISK):
             method = added_disk if data['type'] == 'CREATE' else remove_disk
@@ -68,8 +71,6 @@ async def devd_devfs_hook(middleware, data):
         PREVIOUS['task'] = asyncio.get_event_loop().call_later(
             SETTLE_TIME, lambda: asyncio.ensure_future(method(middleware, data['cdev']))
         )
-        PREVIOUS['method'] = method.__name__
-        LAST_EVENT_TIME = now
     elif PREVIOUS['method'] != 'reset_cache':
         # we have a previously scheduled task and the event we received came
         # in within SETTLE_TIME AND the previous task method to be run was
@@ -82,14 +83,11 @@ async def devd_devfs_hook(middleware, data):
         PREVIOUS['task'] = asyncio.get_event_loop().call_later(
             SETTLE_TIME, lambda: asyncio.ensure_future(reset_cache(middleware))
         )
-        PREVIOUS['method'] = 'reset_cache'
-    elif (now - LAST_EVENT_TIME >= MAX_WAIT_TIME):
+    elif (asyncio.get_event_loop().time() - PREVIOUS['event_time']) >= MAX_WAIT_TIME:
         # we have continually received a stream of events for at least
         # MAX_WAIT_TIME which means something is misbehaving badly. Log
         # a warning and run the method directly
         PREVIOUS['task'].cancel()
-        PREVIOUS = {'method': '', 'task': None}
-        LAST_EVENT_TIME = None
 
         err = f'Waited at least {MAX_WAIT_TIME}seconds but have continually received devd events.'
         err += ' Resetting disk cache.'
