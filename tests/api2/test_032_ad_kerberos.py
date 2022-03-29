@@ -467,7 +467,7 @@ def test_30_check_nfs_exports_sec(request):
     depends(request, ["KRB5_IS_HEALTHY", "ssh_password", "KRB_DATASET"], scope="session")
     payload = {
         "comment": "KRB Test Share",
-        "paths": [f'/mnt/{dataset}'],
+        "path": [f'/mnt/{dataset}'],
     }
     results = POST("/sharing/nfs/", payload)
     assert results.status_code == 200, results.text
