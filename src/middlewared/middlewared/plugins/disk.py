@@ -3,9 +3,7 @@ import errno
 import re
 import subprocess
 from collections import defaultdict
-from xml.etree import ElementTree as etree
 
-import sysctl
 import middlewared.sqlalchemy as sa
 from bsd import geom
 from nvme import get_nsid
@@ -284,7 +282,7 @@ class DiskService(CRUDService):
 
     @private
     def get_part_xml(self):
-        return etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value).find('.//class[name="PART"]')
+        return self.middleware.call_sync('geom.cache.get_class_xml', 'PART')
 
     @private
     async def check_clean(self, disk):
