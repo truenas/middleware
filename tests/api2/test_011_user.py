@@ -425,7 +425,7 @@ def test_37_homedir_testfile_create(request):
     depends(request, ["HOMEDIR_EXISTS", "ssh_password"], scope="session")
     testfile = f'/mnt/{dataset}/testuser2/testfile.txt'
 
-    cmd = f'touch {testfile}'
+    cmd = f'touch {testfile}; chown {next_uid} {testfile}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -441,6 +441,11 @@ def test_38_homedir_move_new_directory(request):
     }
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 200, results.text
+
+    results = GET('/core/get_jobs/?method=user.do_home_copy')
+    assert results.status_code == 200, results.text
+    job_status = wait_on_job(results.json()[-1]['id'], 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/new_home')
     assert results.status_code == 200, results.text
