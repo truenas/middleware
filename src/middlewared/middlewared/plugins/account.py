@@ -909,6 +909,9 @@ class UserService(CRUDService):
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
     async def do_home_copy(self, job, home_old, home_new, username, new_mode, uid):
+        if home_old == '/nonexistent':
+            return
+
         if new_mode is not None:
             perm_job = await self.middleware.call('filesystem.setperm', {
                 'uid': uid,
@@ -916,10 +919,16 @@ class UserService(CRUDService):
                 'mode': new_mode,
                 'options': {'stripacl': True},
             })
-            await perm_job.wait()
+        else:
+            current_mode = stat.S_IMODE((await self.middleware.call('filesystem.stat', home_old))['mode'])
+            perm_job = await self.middleware.call('filesystem.setperm', {
+                'uid': uid,
+                'path': home_new,
+                'mode': f'{current_mode:03o}',
+                'options': {'stripacl': True},
+            })
 
-        if home_old == '/nonexistent':
-            return
+        await perm_job.wait()
 
         command = f"/bin/cp -a {shlex.quote(home_old) + '/' + '.'} {shlex.quote(home_new + '/')}"
         do_copy = await run(["/usr/bin/su", "-", username, "-c", command], check=False)
