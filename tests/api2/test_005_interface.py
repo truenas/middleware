@@ -169,7 +169,7 @@ if not ha:
     @pytest.mark.parametrize('dkey', ['ipv4_dhcp', 'name', 'vlan_parent_interface',
                                       'type', 'vlan_tag', 'vlan_pcp'])
     def test_12_compare_payload_with_created_vlan1_interface_result_output_(dkey, request):
-        depends(request, ['CREAET_VLAN1'])
+        depends(request, ['CREATE_VLAN1'])
         assert results.json()[dkey] == payload[dkey], results.text
 
     @pytest.mark.dependency(name='GET_VLAN1')
