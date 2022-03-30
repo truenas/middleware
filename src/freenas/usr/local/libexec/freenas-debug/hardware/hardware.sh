@@ -27,18 +27,10 @@
 #####################################################################
 
 
-get_physical_disks_list()
-{
-	sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
-		| sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
-}
-
-
 hardware_opt() { echo h; }
 hardware_help() { echo "Dump Hardware Configuration"; }
 hardware_directory() { echo "Hardware"; }
-
-hardware_linux()
+hardware_func()
 {
 	section_header "CPU and Memory information"
 
@@ -75,131 +67,8 @@ hardware_linux()
 	section_header "Disk information (device.retrieve_disks_data)"
 	midclt call device.retrieve_disks_data | jq
 	section_footer
-}
 
-hardware_freebsd()
-{
-	section_header "Hardware"
-
-	desc=$(sysctl -nd hw.machine)
-	out=$(sysctl -n hw.machine)
-	echo "${desc}: ${out}"
-
-	desc=$(sysctl -nd hw.machine_arch)
-	out=$(sysctl -n hw.machine_arch)
-	echo "${desc}: ${out}"
-
-	desc=$(sysctl -nd hw.model)
-	out=$(sysctl -n hw.model)
-	echo "${desc}: ${out}"
-
-	desc=$(sysctl -nd hw.ncpu)
-	out=$(sysctl -n hw.ncpu)
-	echo "${desc}: ${out}"
-
-	desc=$(sysctl -nd kern.smp.cpus)
-	out=$(sysctl -n kern.smp.cpus)
-	echo "${desc}: ${out}"
-
-	desc=$(sysctl -nd dev.cpu.0.freq)
-	freq=$(sysctl -n dev.cpu.0.freq)
-	out=$(echo "scale=4;${freq}/1024"|bc|xargs printf "%0.2f")
-	echo "${desc}: ${out} Ghz"
-
-	desc="Physical Memory"
-	ram=$(sysctl -n hw.physmem)
-	rram=$(echo "scale=4;${ram}/1024/1024/1024"|bc|xargs printf "%0.2f")
-	echo "${desc}: ${rram} GiB"
-
+	section_header "sensors -j"
+	sensors -j
 	section_footer
-
-	section_header "pciconf -lvcb"
-	pciconf -lvcb
-	section_footer
-
-	section_header "devinfo -rv"
-	devinfo -rv
-	section_footer
-
-	section_header "usbconfig list"
-	usbconfig list
-	section_footer
-
-	section_header "dmidecode"
-	dmidecode
-	section_footer
-
-	section_header "memcontrol list"
-	memcontrol list
-	section_footer
-
-	section_header "camcontrol devlist -v"
-	camcontrol devlist -v
-	section_footer
-
-	section_header "nvmecontrol devlist"
-	nvmecontrol devlist
-	section_footer
-
-	for disk in $(get_physical_disks_list)
-	do
-		if echo "${disk}" | egrep -q '^da[0-9]+'
-		then
-			section_header "camcontrol inquiry ${disk}"
-			camcontrol inquiry "${disk}"
-			section_footer
-		fi
-	done
-
-	for disk in $(get_physical_disks_list)
-	do
-		if echo "${disk}" | egrep -q '^ada[0-9]+'
-		then
-			section_header "camcontrol identify ${disk}"
-			camcontrol identify "${disk}"
-			section_footer
-		fi
-	done
-
-	#
-	#	This logic is being moved to the IPMI module
-	#	because we are running duplicate ipmitool commands
-	#
-	#if [ -c /dev/ipmi0 ]
-	#then
-	#	for list_type in sel sdr
-	#	do
-	#		section_header "ipmitool $list_type list"
-	#		ipmitool $list_type list
-	#		section_footer
-	#	done
-	#fi
-
-	if which getencstat > /dev/null
-	then
-		section_header "getencstat -V /dev/ses*"
-		getencstat -V /dev/ses*
-		section_footer
-	fi
-
-	if [ -c /dev/mps0 ]; then
-		section_header "sas2flash -listall"
-		sas2flash -listall
-		section_footer
-	fi
-
-	if [ -c /dev/mpr0 ]; then
-		section_header "sas3flash -listall"
-		sas3flash -listall
-		section_footer
-	fi
-}
-
-hardware_func()
-{
-	if is_linux; then
-		hardware_linux
-	else
-		hardware_freebsd
-	fi
 }
