@@ -8,7 +8,7 @@ TYPES = ('CREATE', 'DESTROY')
 PREVIOUS = {'method': '', 'task': None}
 MAX_WAIT_TIME = 60
 SETTLE_TIME = 5
-HAS_PARTITION = re.compile(rf'^({"|".join(DISKS)})p[0-9].*$')
+HAS_PARTITION = re.compile(rf'^({"|".join(DISKS)})[0-9]+p[0-9]+.*$')
 
 
 async def reset_cache(middleware, *args):
