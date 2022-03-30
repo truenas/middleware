@@ -8,7 +8,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, wait_on_job, make_ws_request
-from auto_config import pool_name, ha_pool_name, ha
+from auto_config import pool_name, ha  # , ha_pool_name
 from middlewared.test.integration.assets.pool import test_pool
 
 IMAGES = {}
@@ -20,7 +20,7 @@ loops = {
 boot_pool_disks = GET('/boot/get_disks/', controller_a=ha).json()
 all_disks = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 pool_disks = sorted(list(set(all_disks) - set(boot_pool_disks)))
-ha_pool_disks = [pool_disks[0]] if ha else []
+# ha_pool_disks = [pool_disks[0]] if ha else []
 tank_pool_disks = [pool_disks[1] if ha else pool_disks[0]]
 
 if ha and "virtual_ip" in os.environ:
@@ -55,40 +55,40 @@ def test_02_wipe_all_pool_disk():
 
 
 # Only read the test on HA
-if ha:
-    @pytest.mark.dependency(name="create_ha_pool")
-    def test_03_creating_ha_pool(request):
-        depends(request, ["wipe_disk"])
-        global payload
-        payload = {
-            "name": ha_pool_name,
-            "encryption": False,
-            "topology": {
-                "data": [
-                    {"type": "STRIPE", "disks": ha_pool_disks}
-                ],
-            }
-        }
-        results = POST("/pool/", payload)
-        assert results.status_code == 200, results.text
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+# if ha:
+#     @pytest.mark.dependency(name="create_ha_pool")
+#     def test_03_creating_ha_pool(request):
+#         depends(request, ["wipe_disk"])
+#         global payload
+#         payload = {
+#             "name": ha_pool_name,
+#             "encryption": False,
+#             "topology": {
+#                 "data": [
+#                     {"type": "STRIPE", "disks": ha_pool_disks}
+#                 ],
+#             }
+#         }
+#         results = POST("/pool/", payload)
+#         assert results.status_code == 200, results.text
+#         job_id = results.json()
+#         job_status = wait_on_job(job_id, 180)
+#         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-    @pytest.mark.dependency(name="get_ha_pool_id")
-    def test_04_get_ha_pool_id(request, pool_data):
-        depends(request, ["create_ha_pool"])
-        results = GET(f"/pool?name={ha_pool_name}")
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), list), results.text
-        pool_data['ha_pool_id'] = results.json()[0]['id']
+#     @pytest.mark.dependency(name="get_ha_pool_id")
+#     def test_04_get_ha_pool_id(request, pool_data):
+#         depends(request, ["create_ha_pool"])
+#         results = GET(f"/pool?name={ha_pool_name}")
+#         assert results.status_code == 200, results.text
+#         assert isinstance(results.json(), list), results.text
+#         pool_data['ha_pool_id'] = results.json()[0]['id']
 
-    def test_05_get_ha_pool_disks(request, pool_data):
-        depends(request, ["get_ha_pool_id"])
-        payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['ha_pool_id']]}
-        res = make_ws_request(ip, payload)
-        assert isinstance(res['result'], list), res
-        assert res['result'] and res['result'] == ha_pool_disks
+#     def test_05_get_ha_pool_disks(request, pool_data):
+#         depends(request, ["get_ha_pool_id"])
+#         payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['ha_pool_id']]}
+#         res = make_ws_request(ip, payload)
+#         assert isinstance(res['result'], list), res
+#         assert res['result'] and res['result'] == ha_pool_disks
 
 
 @pytest.mark.dependency(name="pool_04")
