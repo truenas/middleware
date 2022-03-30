@@ -579,8 +579,10 @@ def test_36_check_nfsdir_subtree_behavior(request):
     	*(sec=sys,rw,subtree_check)
     """
     tmp_path = f'{NFS_PATH}/sub1'
+    results = POST('/filesystem/mkdir', tmp_path)
+    assert results.status_code ==  200, results.text
 
-    with nfs_share(tmp_path):
+    with nfs_share(tmp_path, {'hosts': ['127.0.0.1']}):
         parsed = parse_exports()
         assert len(parsed) == 2, str(parsed)
 
