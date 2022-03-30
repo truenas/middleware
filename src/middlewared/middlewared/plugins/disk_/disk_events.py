@@ -83,7 +83,7 @@ async def devd_devfs_hook(middleware, data):
         PREVIOUS['task'] = asyncio.get_event_loop().call_later(
             SETTLE_TIME, lambda: asyncio.ensure_future(reset_cache(middleware))
         )
-    elif (asyncio.get_event_loop().time() - PREVIOUS['event_time']) >= MAX_WAIT_TIME:
+    elif (asyncio.get_event_loop().time() - PREVIOUS['task_time']) >= MAX_WAIT_TIME:
         # we have continually received a stream of events for at least
         # MAX_WAIT_TIME which means something is misbehaving badly. Log
         # a warning and run the method directly
