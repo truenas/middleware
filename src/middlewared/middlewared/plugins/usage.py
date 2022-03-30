@@ -249,9 +249,12 @@ class UsageService(Service):
                 'cluster_cidr': k8s_config['cluster_cidr'],
                 'service_cidr': k8s_config['service_cidr'],
             },
+            'custom_deployed_images': set(),
+            'chart_releases_images': set(),
         }
         catalogs = {c['label']: c for c in await self.middleware.call('catalog.query')}
-        chart_releases = await self.middleware.call('chart.release.query')
+        official_label = await self.middleware.call('catalog.official_catalog_label')
+        chart_releases = await self.middleware.call('chart.release.query', [], {'extra': {'retrieve_resources': True}})
         output['chart_releases'] = len(chart_releases)
         for chart_release in chart_releases:
             chart = chart_release['chart_metadata']
@@ -262,6 +265,14 @@ class UsageService(Service):
                 continue
             output['catalog_items'][catalog['repository']][catalog['branch']][
                 chart_release['catalog_train']][chart['name']][chart['version']] += 1
+            for reference in chart_release['resources']['container_images']:
+                parsed_tag = (
+                    await self.middleware.call('container.image.normalize_reference', reference)
+                )['complete_tag']
+                if chart_release['catalog'] == official_label and chart['name'] == 'ix-chart':
+                    output['custom_deployed_images'].add(parsed_tag)
+                else:
+                    output['chart_releases_images'].add(parsed_tag)
 
         backups = await self.middleware.call('kubernetes.list_backups')
         backup_update_prefix = await self.middleware.call('kubernetes.get_system_update_backup_prefix')
@@ -272,7 +283,8 @@ class UsageService(Service):
         for image in await self.middleware.call('container.image.query'):
             output['docker_images'].update(image['repo_tags'])
 
-        output['docker_images'] = list(output['docker_images'])
+        for key in ('docker_images', 'custom_deployed_images', 'chart_releases_images'):
+            output[key] = list(output[key])
 
         return output
 
