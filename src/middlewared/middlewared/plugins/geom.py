@@ -63,9 +63,9 @@ class GeomCache(Service):
 
     def remove_disk(self, disk):
         with self.LOCK:
-            self.DISKS.pop(disk)
-            self.MULTIPATH.pop(disk)
-            self.TOPOLOGY.pop(disk)
+            self.DISKS.pop(disk, None)
+            self.MULTIPATH.pop(disk, None)
+            self.TOPOLOGY.pop(disk, None)
             if ele := self.XML.find(f'.//class[name="DISK"]/geom[name="{disk}"]'):
                 self.XML.find('.//class[name="DISK"]').remove(ele)
             if ele := self.XML.find(f'.//class[name="MULTIPATH"]/geom[name="{disk}"]'):
