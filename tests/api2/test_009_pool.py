@@ -20,7 +20,7 @@ loops = {
 boot_pool_disks = GET('/boot/get_disks/', controller_a=ha).json()
 all_disks = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 pool_disks = sorted(list(set(all_disks) - set(boot_pool_disks)))
-tank_pool_disks = pool_disks[0]
+tank_pool_disks = [pool_disks[0]]
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -40,17 +40,17 @@ def test_01_get_pool():
 
 
 @pytest.mark.dependency(name="wipe_disk")
-def test_02_wipe_all_pool_disk():
-    for disk in pool_disks:
-        payload = {
-            "dev": f"{disk}",
-            "mode": "QUICK",
-            "synccache": True
-        }
-        results = POST('/disk/wipe/', payload)
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+@pytest.mark.parametrize('disk', pool_disks)
+def test_02_wipe_pool_disk(disk):
+    payload = {
+        "dev": disk,
+        "mode": "QUICK",
+        "synccache": True
+    }
+    results = POST('/disk/wipe/', payload)
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @pytest.mark.dependency(name="pool_04")
@@ -128,6 +128,7 @@ def test_08_test_pool_property_normalization(request):
     re-importing it. Once this is complete, we check whether properties
     have been set to their correct new values.
     """
+    global tp
     depends(request, ["pool_04"])
     with test_pool() as tp:
         payload = {'msg': 'method', 'method': 'zfs.dataset.update', 'params': [
@@ -180,3 +181,19 @@ def test_08_test_pool_property_normalization(request):
         assert error is None, str(error)
         assert ds['properties']['mountpoint']['value'] != 'legacy', str(ds['properties'])
         assert ds['properties']['sharenfs']['value'] == 'off', str(ds['properties'])
+
+
+def test_09_export_test_pool_with_destroy_true(request):
+    payload = {
+        'cascade': True,
+        'restart_services': True,
+        'destroy': True
+    }
+    results = POST(f'/pool/id/{tp["id"]}/export/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+    results = GET(f'/pool/id/{tp["id"]}')
+    assert results.status_code == 404, results.text
