@@ -907,7 +907,7 @@ class PoolService(CRUDService):
         verrors.check()
 
         if disks and vdevs:
-            await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': None})
+            await self.middleware.call('pool.format_disks', job, disks)
 
             job.set_progress(90, 'Extending ZFS Pool')
             extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
