@@ -426,18 +426,6 @@ class InterfaceService(CRUDService):
 
         self._original_datastores.clear()
 
-    async def __check_dhcp_or_aliases(self):
-        for iface in await self.middleware.call('interface.query'):
-            if iface['ipv4_dhcp'] or iface['ipv6_auto']:
-                break
-            if iface['aliases']:
-                break
-        else:
-            raise CallError(
-                'At least one interface configured with either IPv4 DHCP, IPv6 auto or a static IP'
-                ' is required.'
-            )
-
     @private
     async def get_original_datastores(self):
         return self._original_datastores
@@ -516,7 +504,7 @@ class InterfaceService(CRUDService):
         verrors = ValidationErrors()
         schema = 'interface.commit'
         await self.middleware.call('network.common.check_failover_disabled', schema, verrors)
-        await self.__check_dhcp_or_aliases()
+        await self.middleware.call('network.common.check_dhcp_or_aliases', schema, verrors)
         verrors.check()
 
         try:
