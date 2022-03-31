@@ -426,14 +426,6 @@ class InterfaceService(CRUDService):
 
         self._original_datastores.clear()
 
-    async def __check_failover_disabled(self):
-        if not await self.middleware.call('failover.licensed'):
-            return
-        if await self.middleware.call('failover.status') == 'SINGLE':
-            return
-        if not (await self.middleware.call('failover.config'))['disabled']:
-            raise CallError('Disable failover before performing interfaces changes.')
-
     async def __check_dhcp_or_aliases(self):
         for iface in await self.middleware.call('interface.query'):
             if iface['ipv4_dhcp'] or iface['ipv6_auto']:
@@ -521,8 +513,12 @@ class InterfaceService(CRUDService):
         the interfaces changes happened as planned from the user. If checkin does not happen
         within this period of time the changes will get reverted.
         """
-        await self.__check_failover_disabled()
+        verrors = ValidationErrors()
+        schema = 'interface.commit'
+        await self.middleware.call('network.common.check_failover_disabled', schema, verrors)
         await self.__check_dhcp_or_aliases()
+        verrors.check()
+
         try:
             await self.sync()
         except Exception:
@@ -612,8 +608,9 @@ class InterfaceService(CRUDService):
         > network interface create name=vlan0 type=VLAN vlan_parent_interface=enp0s10
             vlan_tag=10 vlan_pcp=4 ipv4_dhcp=true ipv6_auto=true
         """
-        await self.__check_failover_disabled()
         verrors = ValidationErrors()
+        await self.middleware.call('network.common.check_failover_disabled', 'interface.create', verrors)
+
         if data['type'] == 'BRIDGE':
             required_attrs = ('bridge_members', )
         elif data['type'] == 'LINK_AGGREGATION':
@@ -1072,21 +1069,19 @@ class InterfaceService(CRUDService):
 
         > network interface update enp0s3 aliases="192.168.0.10"
         """
-        await self.__check_failover_disabled()
+        verrors = ValidationErrors()
+        await self.middleware.call('network.common.check_failover_disabled', 'interface.update', verrors)
 
         iface = await self.get_instance(oid)
 
         new = iface.copy()
         new.update(data)
 
-        verrors = ValidationErrors()
         await self._common_validation(
             verrors, 'interface_update', new, iface['type'], update=iface
         )
-        licensed = await self.middleware.call('failover.licensed')
-        if licensed:
-            if new.get('ipv4_dhcp') or new.get('ipv6_auto'):
-                verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
+        if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
+            verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
 
         verrors.check()
 
@@ -1225,24 +1220,23 @@ class InterfaceService(CRUDService):
         """
         Delete Interface of `id`.
         """
-        await self.__check_failover_disabled()
+        verrors = ValidationErrors()
+        schema = 'interface.delete'
+        await self.middleware.call('network.common.check_failover_disabled', schema, verrors)
 
-        iface = await self.get_instance(oid)
-
-        await self.__save_datastores()
-
-        if iface['type'] == 'LINK_AGGREGATION':
-            vlans = ', '.join([
-                i['name'] for i in await self.middleware.call('interface.query', [
-                    ('type', '=', 'VLAN'), ('vlan_parent_interface', '=', iface['id'])
-                ])
-            ])
-            if vlans:
-                raise CallError(f'The following VLANs depend on this interface: {vlans}')
+        if iface := await self.get_instance(oid):
+            if iface['type'] == 'LINK_AGGREGATION':
+                filters = [('type', '=', 'VLAN'), ('vlan_parent_interface', '=', iface['id'])]
+                if vlans := ', '.join([i['name'] for i in await self.middleware.call('interface.query', filters)]):
+                    verrors.add(schema, f'The following VLANs depend on this interface: {vlans}')
 
         config = await self.middleware.call('kubernetes.config')
         if any(config[k] == oid for k in ('route_v4_interface', 'route_v6_interface')):
-            raise CallError('Interface is in use by kubernetes')
+            verrors.add(schema, 'Interface is in use by kubernetes')
+
+        verrors.check()
+
+        await self.__save_datastores()
 
         await self.delete_network_interface(oid)
 
