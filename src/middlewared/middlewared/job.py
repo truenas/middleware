@@ -32,11 +32,12 @@ class JobSharedLock(object):
     for this lock.
     """
 
-    def __init__(self, queue, name):
+    def __init__(self, queue, name, *, loop=None):
         self.queue = queue
         self.name = name
         self.jobs = set()
-        self.lock = asyncio.Lock()
+        # Once we upgrade to python 3.10 and it starts crashing here, just revert a commit that introduced `loop=loop`
+        self.lock = asyncio.Lock(loop=loop)
 
     def add_job(self, job):
         self.jobs.add(job)
@@ -110,7 +111,7 @@ class JobsQueue(object):
 
         lock = self.job_locks.get(name)
         if lock is None:
-            lock = JobSharedLock(self, name)
+            lock = JobSharedLock(self, name, loop=self.middleware.loop)
             self.job_locks[lock.name] = lock
 
         lock.add_job(job)
