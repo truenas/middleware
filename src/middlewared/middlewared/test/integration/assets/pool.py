@@ -4,20 +4,44 @@ from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, pool
 
 
+test_pool_topologies = [
+    (1, lambda disks: {
+        "data": [
+            {"type": "STRIPE", "disks": disks[0:1]},
+        ],
+    }),
+    (2, lambda disks: {
+        "data": [
+            {"type": "MIRROR", "disks": disks[0:2]}
+        ],
+    }),
+    (4, lambda disks: {
+        "data": [
+            {
+                "type": "RAIDZ2",
+                "disks": disks[0:4]
+            }
+        ],
+    }),
+]
+
+
 @contextlib.contextmanager
-def test_pool():
+def test_pool(data=None, topology=None):
+    data = data or {}
+
+    if topology is None:
+        topology = test_pool_topologies[0]
+
     unused = call("disk.get_unused")
-    if not unused:
-        raise RuntimeError("There are no unused disks")
+    if len(unused) < topology[0]:
+        raise RuntimeError(f"At least {topology[0]} unused disks required to test this pool topology")
 
     pool = call("pool.create", {
         "name": "test",
         "encryption": False,
-        "topology": {
-            "data": [
-                {"type": "STRIPE", "disks": [unused[0]["devname"]]},
-            ],
-        }
+        "topology": topology[1]([d["devname"] for d in unused]),
+        **data,
     }, job=True)
 
     try:

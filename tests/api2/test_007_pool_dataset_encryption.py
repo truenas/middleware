@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
 
 boot_pool_disks = GET('/boot/get_disks/', controller_a=ha).json()
 all_disks = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
-pool_disks = sorted(list(set(all_disks) - set(boot_pool_disks)))
+pool_disks = sorted(list(set(all_disks) - set(boot_pool_disks)))[:1]
 # genrated token_hex 32bit for
 pool_token_hex = secrets.token_hex(32)
 pool_token_hex2 = secrets.token_hex(32)
