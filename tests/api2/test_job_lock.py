@@ -108,3 +108,20 @@ def test_lock_queue_size():
     finally:
         with contextlib.suppress(FileNotFoundError):
             os.unlink("/tmp/test")
+
+
+def test_call_sync_a_job_with_lock():
+    with mock("test.test1", """
+        from middlewared.service import job
+
+        def mock(self):
+            return self.middleware.call_sync("test.test2").wait_sync()
+    """):
+        with mock("test.test2", """
+            from middlewared.service import job
+
+            @job(lock="test")
+            def mock(self, job, *args):
+                return 42
+        """):
+            assert call("test.test1") == 42
