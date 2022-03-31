@@ -20,8 +20,7 @@ loops = {
 boot_pool_disks = GET('/boot/get_disks/', controller_a=ha).json()
 all_disks = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 pool_disks = sorted(list(set(all_disks) - set(boot_pool_disks)))
-# ha_pool_disks = [pool_disks[0]] if ha else []
-tank_pool_disks = [pool_disks[1] if ha else pool_disks[0]]
+tank_pool_disks = pool_disks[0]
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -54,45 +53,8 @@ def test_02_wipe_all_pool_disk():
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-# Only read the test on HA
-# if ha:
-#     @pytest.mark.dependency(name="create_ha_pool")
-#     def test_03_creating_ha_pool(request):
-#         depends(request, ["wipe_disk"])
-#         global payload
-#         payload = {
-#             "name": ha_pool_name,
-#             "encryption": False,
-#             "topology": {
-#                 "data": [
-#                     {"type": "STRIPE", "disks": ha_pool_disks}
-#                 ],
-#             }
-#         }
-#         results = POST("/pool/", payload)
-#         assert results.status_code == 200, results.text
-#         job_id = results.json()
-#         job_status = wait_on_job(job_id, 180)
-#         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-#     @pytest.mark.dependency(name="get_ha_pool_id")
-#     def test_04_get_ha_pool_id(request, pool_data):
-#         depends(request, ["create_ha_pool"])
-#         results = GET(f"/pool?name={ha_pool_name}")
-#         assert results.status_code == 200, results.text
-#         assert isinstance(results.json(), list), results.text
-#         pool_data['ha_pool_id'] = results.json()[0]['id']
-
-#     def test_05_get_ha_pool_disks(request, pool_data):
-#         depends(request, ["get_ha_pool_id"])
-#         payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['ha_pool_id']]}
-#         res = make_ws_request(ip, payload)
-#         assert isinstance(res['result'], list), res
-#         assert res['result'] and res['result'] == ha_pool_disks
-
-
 @pytest.mark.dependency(name="pool_04")
-def test_06_creating_a_pool(request):
+def test_03_creating_a_pool(request):
     depends(request, ["wipe_disk"])
     global payload
     payload = {
@@ -112,7 +74,7 @@ def test_06_creating_a_pool(request):
 
 
 @pytest.mark.dependency(name="get_pool_id")
-def test_07_get_pool_id(request, pool_data):
+def test_04_get_pool_id(request, pool_data):
     depends(request, ["pool_04"])
     results = GET(f"/pool?name={pool_name}")
     assert results.status_code == 200, results.text
@@ -120,7 +82,7 @@ def test_07_get_pool_id(request, pool_data):
     pool_data['id'] = results.json()[0]['id']
 
 
-def test_08_get_pool_disks(request, pool_data):
+def test_05_get_pool_disks(request, pool_data):
     depends(request, ["get_pool_id"])
     payload = {'msg': 'method', 'method': 'pool.get_disks', 'params': [pool_data['id']]}
     res = make_ws_request(ip, payload)
@@ -128,7 +90,7 @@ def test_08_get_pool_disks(request, pool_data):
     assert res['result'] and (set(res['result']) == set(tank_pool_disks)), res
 
 
-def test_09_get_pool_id_info(request, pool_data):
+def test_06_get_pool_id_info(request, pool_data):
     depends(request, ["pool_04"])
     results = GET(f"/pool/id/{pool_data['id']}/")
     assert results.status_code == 200, results.text
@@ -138,7 +100,7 @@ def test_09_get_pool_id_info(request, pool_data):
 
 
 @pytest.mark.parametrize('pool_keys', ["name", "topology:data:disks"])
-def test_10_looking_pool_info_of_(request, pool_keys):
+def test_07_looking_pool_info_of_(request, pool_keys):
     depends(request, ["pool_04"])
     results = pool_info
     if ':' in pool_keys:
@@ -156,7 +118,7 @@ def test_10_looking_pool_info_of_(request, pool_keys):
         assert payload[pool_keys] == results.json()[pool_keys], results.text
 
 
-def test_11_test_pool_property_normalization(request):
+def test_08_test_pool_property_normalization(request):
     """
     middleware attempts to normalize certain ZFS dataset properties so that
     importing a foreign pool doesn't break our configuration. Currently we
