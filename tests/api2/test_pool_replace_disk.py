@@ -14,7 +14,6 @@ def disks(topology):
 
 @pytest.mark.parametrize("topology", another_pool_topologies[1:])
 @pytest.mark.parametrize("i", list(range(0, max(topology[0] for topology in another_pool_topologies))))
-@pytest.mark.skip(reason="Global crisis, 8 GB virtual HDDs are temporary out of stock")
 def test_pool_replace_disk(topology, i):
     count = topology[0]
     if i >= count:
