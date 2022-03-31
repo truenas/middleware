@@ -1034,7 +1034,7 @@ class ActiveDirectoryService(ConfigService):
         cmd.append(ad['domainname'])
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
-            await self.set_state(DSStatus['FAULTED'].name)
+            await self.set_state(DSStatus['FAULTED'])
             await self._parse_join_err(netads.stdout.decode().split(':', 1))
 
     @private
@@ -1184,6 +1184,20 @@ class ActiveDirectoryService(ConfigService):
         cmd = [SMBCmd.NET.value, '--json', 'ads', 'info']
         if domain:
             cmd.extend(['-S', domain])
+
+        netads = await run(cmd, check=False)
+        if netads.returncode != 0:
+            err_msg = netads.stderr.decode().strip()
+            if err_msg == "Didn't find the ldap server!":
+                raise CallError(
+                    'Failed to discover Active Directory Domain Controller '
+                    'for domain. This may indicate a DNS misconfiguration.',
+                    errno.ENOENT
+                )
+
+            raise CallError(netads.stderr.decode())
+
+        return json.loads(netads.stdout.decode())
 
     @private
     def get_netbios_domain_name(self):
