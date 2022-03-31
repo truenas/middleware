@@ -640,74 +640,73 @@ class Resource(object):
         elif download_pipe:
             method_kwargs['pipes'] = Pipes(output=download_pipe)
 
-        if True:
-            method_args = []
-            if http_method == 'get' and method['filterable']:
-                if self.parent and 'id' in kwargs:
-                    primary_key = kwargs['id']
-                    if primary_key.isdigit():
-                        primary_key = int(primary_key)
-                    extra = {}
-                    for key, val in list(req.query.items()):
-                        if key.startswith('extra.'):
-                            extra[key[len('extra.'):]] = normalize_query_parameter(val)
+        method_args = []
+        if http_method == 'get' and method['filterable']:
+            if self.parent and 'id' in kwargs:
+                primary_key = kwargs['id']
+                if primary_key.isdigit():
+                    primary_key = int(primary_key)
+                extra = {}
+                for key, val in list(req.query.items()):
+                    if key.startswith('extra.'):
+                        extra[key[len('extra.'):]] = normalize_query_parameter(val)
 
-                    method_args = [
-                        [(self.service_config['datastore_primary_key'], '=', primary_key)],
-                        {'get': True, 'force_sql_filters': True, 'extra': extra}
-                    ]
+                method_args = [
+                    [(self.service_config['datastore_primary_key'], '=', primary_key)],
+                    {'get': True, 'force_sql_filters': True, 'extra': extra}
+                ]
+            else:
+                method_args = self._filterable_args(req)
+
+        if not method_args:
+            # RFC 7231 specifies that a GET request can accept a payload body
+            # This means that all the http methods now ( delete, get, post, put ) accept a payload body
+            try:
+                if not has_request_body:
+                    method_args = []
                 else:
-                    method_args = self._filterable_args(req)
-
-            if not method_args:
-                # RFC 7231 specifies that a GET request can accept a payload body
-                # This means that all the http methods now ( delete, get, post, put ) accept a payload body
-                try:
-                    if not has_request_body:
+                    data = request_body
+                    params = self.__method_params.get(methodname)
+                    if not params and http_method in ('get', 'delete') and not data:
+                        # This will happen when the request body contains empty dict "{}"
+                        # Keeping compatibility with how we used to accept the above case, this
+                        # makes sure that existing client implementations are not affected
                         method_args = []
+                    elif not params or len(params) == 1:
+                        method_args = [data]
                     else:
-                        data = request_body
-                        params = self.__method_params.get(methodname)
-                        if not params and http_method in ('get', 'delete') and not data:
-                            # This will happen when the request body contains empty dict "{}"
-                            # Keeping compatibility with how we used to accept the above case, this
-                            # makes sure that existing client implementations are not affected
-                            method_args = []
-                        elif not params or len(params) == 1:
-                            method_args = [data]
-                        else:
-                            if not isinstance(data, dict):
+                        if not isinstance(data, dict):
+                            resp.set_status(400)
+                            resp.headers['Content-type'] = 'application/json'
+                            resp.body = json.dumps({
+                                'message': 'Endpoint accepts multiple params, object/dict expected.',
+                            })
+                            return resp
+                        method_args = []
+                        for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
+                            if p not in data and options['required']:
                                 resp.set_status(400)
                                 resp.headers['Content-type'] = 'application/json'
                                 resp.body = json.dumps({
-                                    'message': 'Endpoint accepts multiple params, object/dict expected.',
+                                    'message': f'{p} attribute expected.',
                                 })
                                 return resp
-                            method_args = []
-                            for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
-                                if p not in data and options['required']:
-                                    resp.set_status(400)
-                                    resp.headers['Content-type'] = 'application/json'
-                                    resp.body = json.dumps({
-                                        'message': f'{p} attribute expected.',
-                                    })
-                                    return resp
-                                elif p in data:
-                                    method_args.append(data.pop(p))
-                            if data:
-                                resp.set_status(400)
-                                resp.headers['Content-type'] = 'application/json'
-                                resp.body = json.dumps({
-                                    'message': f'The following attributes are not expected: {", ".join(data.keys())}',
-                                })
-                                return resp
-                except Exception as e:
-                    resp.set_status(400)
-                    resp.headers['Content-type'] = 'application/json'
-                    resp.body = json.dumps({
-                        'message': str(e),
-                    })
-                    return resp
+                            elif p in data:
+                                method_args.append(data.pop(p))
+                        if data:
+                            resp.set_status(400)
+                            resp.headers['Content-type'] = 'application/json'
+                            resp.body = json.dumps({
+                                'message': f'The following attributes are not expected: {", ".join(data.keys())}',
+                            })
+                            return resp
+            except Exception as e:
+                resp.set_status(400)
+                resp.headers['Content-type'] = 'application/json'
+                resp.body = json.dumps({
+                    'message': str(e),
+                })
+                return resp
 
         """
         If the method is marked `item_method` then the first argument
