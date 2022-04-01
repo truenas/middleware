@@ -58,7 +58,16 @@ class ReportingService(Service):
             rmtree_one_filesystem(path)
 
         os.makedirs(os.path.join(pwd, 'localhost'), exist_ok=True)
-        os.symlink(os.path.join(pwd, 'localhost'), os.path.join(pwd, self.hostname()))
+
+        dst = os.path.join(pwd, self.hostname())
+        while True:
+            try:
+                os.symlink(os.path.join(pwd, 'localhost'), dst)
+            except FileExistsError:
+                # Running collectd/rrdcached instances might have created this path again
+                rmtree_one_filesystem(dst)
+            else:
+                break
 
         # Let's return a positive value to indicate that necessary collectd operations were performed successfully
         return True
