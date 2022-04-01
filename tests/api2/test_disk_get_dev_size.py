@@ -4,6 +4,9 @@ import pytest
 from pytest_dependency import depends
 
 from middlewared.test.integration.utils import call, ssh
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 @pytest.mark.dependency(name='GET_DISK_INFO')

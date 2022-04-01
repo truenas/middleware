@@ -9,7 +9,9 @@ import os
 import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name
+from auto_config import pool_name, dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_systemdataset_migrate_error(request):
