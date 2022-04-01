@@ -4,7 +4,7 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
-from .restful import RESTfulAPI
+from .restful import copy_multipart_to_pipe, RESTfulAPI
 from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
@@ -529,26 +529,10 @@ class FileApplication(object):
             resp.set_status(405)
             return resp
 
-        def copy():
-            try:
-                try:
-                    while True:
-                        read = asyncio.run_coroutine_threadsafe(
-                            filepart.read_chunk(filepart.chunk_size),
-                            loop=self.loop,
-                        ).result()
-                        if read == b'':
-                            break
-                        job.pipes.input.w.write(read)
-                finally:
-                    job.pipes.input.w.close()
-            except BrokenPipeError:
-                pass
-
         try:
             job = await self.middleware.call(data['method'], *(data.get('params') or []),
                                              pipes=Pipes(input=self.middleware.pipe()))
-            await self.middleware.run_in_thread(copy)
+            await self.middleware.run_in_thread(copy_multipart_to_pipe, self.loop, filepart, job.pipes.input)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
                 status_code = 422
