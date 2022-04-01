@@ -1323,7 +1323,6 @@ class SharingSMBService(SharingService):
             'ctdb socket',
             'socket options',
             'include',
-            'interfaces',
         ]
         freebsd_vfs_objects = [
             'zfsacl',
