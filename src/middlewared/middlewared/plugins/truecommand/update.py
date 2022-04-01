@@ -137,8 +137,19 @@ class TruecommandService(ConfigService):
             await self.set_status(Status.DISABLED.value)
             new['api_key_state'] = Status.DISABLED.value
 
+            if old['api_key'] != new['api_key']:
+                new.update({
+                    'remote_address': None,
+                    'endpoint': None,
+                    'tc_public_key': None,
+                    'wg_address': None,
+                    'wg_public_key': None,
+                    'wg_private_key': None,
+                    'api_key_state': Status.DISABLED.value,
+                })
+
             if new['enabled']:
-                if not old['wg_public_key'] or not old['wg_private_key']:
+                if not new['wg_public_key'] or not new['wg_private_key']:
                     new.update(**(await self.middleware.call('truecommand.generate_wg_keys')))
 
                 if old['api_key'] != new['api_key']:
@@ -150,17 +161,6 @@ class TruecommandService(ConfigService):
                     # Api key hasn't changed and we have wireguard details, let's please start wireguard in this case
                     await self.set_status(Status.CONNECTING.value)
                     new['api_key_state'] = Status.CONNECTED.value
-
-            if old['api_key'] != new['api_key']:
-                new.update({
-                    'remote_address': None,
-                    'endpoint': None,
-                    'tc_public_key': None,
-                    'wg_address': None,
-                    'wg_public_key': None,
-                    'wg_private_key': None,
-                    'api_key_state': Status.DISABLED.value,
-                })
 
             await self.dismiss_alerts(True)
 
