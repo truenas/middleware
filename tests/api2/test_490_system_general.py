@@ -85,7 +85,7 @@ def test_10_Checking_sysloglevel_using_api():
 
 
 def test_11_timezone_choices():
-    timezones_dic = call('system.general.get_timezone_choices')
+    timezones_dic = call('system.general.timezone_choices')
     result = ssh('timedatectl list-timezones')
     missing = []
     for timezone in filter(bool, result.split('\n')):
