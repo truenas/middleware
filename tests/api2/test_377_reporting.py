@@ -1,12 +1,10 @@
 import time
 import pytest
+from middlewared.test.integration.utils import call, mock
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
-# Middleware client need to be installed for the test belo or it will skip
-try:
-    from middlewared.test.integration.utils import *
-except ImportError:
-    Reason = 'middleware client library not installed'
-    pytestmark = pytest.mark.skip(reason=Reason)
 
 def test_cputemp():
     with mock("reporting.cpu_temperatures", return_value={0: 55, 1: 50}):
@@ -17,7 +15,7 @@ def test_cputemp():
             time.sleep(11)
 
             now = int(time.time())
-            result = call("reporting.get_data", [{"name":"cputemp"}], {"start": now - 3600, "end": now})
+            result = call("reporting.get_data", [{"name": "cputemp"}], {"start": now - 3600, "end": now})
 
             data = result[0]["data"]
             if data[-1] == [None, None]:
