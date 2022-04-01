@@ -21,8 +21,8 @@ from functions import (
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
-    AD_USER = fr"AD01\{ADUSERNAME.lower()}"
-    CMD_AD_USER = fr"AD01\\{ADUSERNAME.lower()}"
+    AD_USER = fr"AD02\{ADUSERNAME.lower()}"
+    CMD_AD_USER = fr"AD02\\{ADUSERNAME.lower()}"
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
