@@ -1,4 +1,4 @@
-""merge
+"""merge
 
 Revision ID: 6e73632d6e88
 Revises: d46d345ef8a8, 19eb67dcdee2
