@@ -1,4 +1,4 @@
-from .utils import CERT_TYPE_EXISTING
+from .utils import CERT_TYPE_EXISTING, DEFAULT_CERT_NAME
 
 
 async def setup(middleware):
@@ -14,13 +14,13 @@ async def setup(middleware):
     if not failure and (not system_cert or system_cert['id'] not in [c['id'] for c in certs]):
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
         try:
-            if not any('freenas_default' == c['name'] for c in certs):
+            if not any(DEFAULT_CERT_NAME == c['name'] for c in certs):
                 cert, key = await middleware.call('cryptokey.generate_self_signed_certificate')
 
                 cert_dict = {
                     'certificate': cert,
                     'privatekey': key,
-                    'name': 'freenas_default',
+                    'name': DEFAULT_CERT_NAME,
                     'type': CERT_TYPE_EXISTING,
                 }
 
@@ -36,7 +36,7 @@ async def setup(middleware):
 
                 middleware.logger.debug('Default certificate for System created')
             else:
-                id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
+                id = [c['id'] for c in certs if c['name'] == DEFAULT_CERT_NAME][0]
                 await middleware.call('certificate.cert_services_validation', id, 'certificate')
 
             await middleware.call(
