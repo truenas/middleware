@@ -25,20 +25,25 @@ global header
 header = {'Content-Type': 'application/json', 'Vary': 'accept'}
 global authentication
 authentication = (user, password)
+RE_HTTPS = re.compile(r'^http(:.*)')
 
 
 def GET(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
     url = controller1_api_url if controller_a else api_url
+    complete_uri = testpath if testpath.startswith('http') else f'{url}{testpath}'
+    if optional.get('force_ssl', False):
+        complete_uri = RE_HTTPS.sub(r'https\1', complete_uri)
+
     if testpath.startswith('http'):
-        getit = requests.get(testpath)
+        getit = requests.get(complete_uri)
     else:
         if optional.pop("anonymous", False):
             auth = None
         else:
             auth = authentication
-        getit = requests.get(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                             auth=auth, data=json.dumps(data))
+        getit = requests.get(complete_uri, headers=dict(header, **optional.get("headers", {})),
+                             auth=auth, data=json.dumps(data), verify=False)
     return getit
 
 
