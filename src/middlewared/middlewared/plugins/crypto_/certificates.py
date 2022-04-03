@@ -80,6 +80,7 @@ class CertificateService(CRUDService):
         # General method to check certificate health wrt usage in services
         cert = await self.middleware.call('certificate.query', [['id', '=', id]])
         verrors = ValidationErrors()
+        valid_key_size = {'EC': 28, 'RSA': 2048}
         if cert:
             cert = cert[0]
             if cert['cert_type'] != 'CERTIFICATE' or cert['cert_type_CSR']:
@@ -103,10 +104,10 @@ class CertificateService(CRUDService):
                     schema_name,
                     'Failed to parse certificate\'s private key'
                 )
-            elif cert['key_type'] != 'EC' and cert['key_length'] < 2048:
+            elif cert['key_length'] < valid_key_size[cert['key_type']]:
                 verrors.add(
                     schema_name,
-                    f'{cert["name"]}\'s private key size is less then 2048 bits'
+                    f'{cert["name"]}\'s private key size is less then {valid_key_size[cert["key_type"]]} bits'
                 )
 
             if cert['revoked']:
