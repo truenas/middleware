@@ -95,8 +95,10 @@ class CertificateAuthorityService(Service):
                         'Private key not found for specified CSR.'
                     )
 
-        if verrors:
-            raise verrors
+        if await self.middleware.call('certificate.query', [['name', '=', data['name']]]):
+            verrors.add(f'{schema_name}.name', 'A certificate with this name already exists')
+
+        verrors.check()
 
         serial = await self.middleware.call('certificateauthority.get_serial_for_certificate', ca_data['id'])
 
