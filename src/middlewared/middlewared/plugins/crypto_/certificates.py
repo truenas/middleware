@@ -103,10 +103,10 @@ class CertificateService(CRUDService):
                     schema_name,
                     'Failed to parse certificate\'s private key'
                 )
-            elif cert['key_type'] != 'EC' and cert['key_length'] < 1024:
+            elif cert['key_type'] != 'EC' and cert['key_length'] < 2048:
                 verrors.add(
                     schema_name,
-                    f'{cert["name"]}\'s private key size is less then 1024 bits'
+                    f'{cert["name"]}\'s private key size is less then 2048 bits'
                 )
 
             if cert['revoked']:
@@ -151,7 +151,7 @@ class CertificateService(CRUDService):
             Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
             Int('signedby'),
-            Int('key_length', enum=[1024, 2048, 4096]),
+            Int('key_length', enum=[2048, 4096]),
             Int('renew_days'),
             Int('type'),
             Int('lifetime'),
@@ -175,7 +175,7 @@ class CertificateService(CRUDService):
                 'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
                 'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
                 'CERTIFICATE_CREATE_ACME'], required=True),
-            Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
+            Str('digest_algorithm', enum=['SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
             Ref('cert_extensions'),
             register=True
