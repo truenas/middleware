@@ -164,7 +164,7 @@ class RoutingTable:
                 network,
                 netmask,
                 ipaddress.ip_address(attrs["RTA_GATEWAY"]) if "RTA_GATEWAY" in attrs else None,
-                interfaces[attrs["RTA_OIF"]] if "RTA_OIF" in attrs else None,
+                interfaces[attrs["RTA_OIF"]] if "RTA_OIF" in attrs and attrs["RTA_OIF"] in interfaces else None,
                 table_id=attrs["RTA_TABLE"],
                 preferred_source=attrs.get("RTA_PREFSRC"),
                 scope=r["scope"],
@@ -243,7 +243,7 @@ class RuleTable:
         tables = {t.table_id: t for t in RoutingTable().routing_tables.values()}
         for rule in filter(lambda r: r.get('attrs'), ip.get_rules()):
             attrs = dict(rule['attrs'])
-            if not all(k in attrs for k in ('FRA_TABLE', 'FRA_PRIORITY')):
+            if not all(k in attrs for k in ('FRA_TABLE', 'FRA_PRIORITY')) or attrs.get('FRA_TABLE') not in tables:
                 continue
 
             rules.append({

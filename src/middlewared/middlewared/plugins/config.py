@@ -112,6 +112,7 @@ class ConfigService(Service):
         self.middleware.run_coroutine(self.middleware.call('system.reboot', {'delay': 10}), wait=False)
 
     def __upload(self, config_file_name):
+        tar_error = None
         try:
             """
             First we try to open the file as a tar file.
@@ -126,7 +127,8 @@ class ConfigService(Service):
                     tmpdir = tempfile.mkdtemp(dir='/var/tmp/firmware')
                     tar.extractall(path=tmpdir)
                     config_file_name = os.path.join(tmpdir, 'freenas-v1.db')
-            except tarfile.ReadError:
+            except tarfile.ReadError as e:
+                tar_error = str(e)
                 bundle = False
             # Currently we compare only the number of migrations for south and django
             # of new and current installed database.
@@ -151,6 +153,14 @@ class ConfigService(Service):
                         raise
                 finally:
                     cur.close()
+            except sqlite3.OperationalError as e:
+                if tar_error:
+                    raise CallError(
+                        f"Uploaded file is neither a valid .tar file ({tar_error}) nor valid FreeNAS/TrueNAS database "
+                        f"file ({e})."
+                    )
+                else:
+                    raise CallError(f"Uploaded file is not a valid FreeNAS/TrueNAS database file ({e}).")
             finally:
                 conn.close()
             if alembic_version is not None:

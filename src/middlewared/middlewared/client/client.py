@@ -205,10 +205,8 @@ class Job(object):
         # Otherwise we create a new stub for the job with the Event for when
         # the job event arrives to use existing event.
         with client._jobs_lock:
-            job = client._jobs.get(job_id)
-            self.event = None
-            if job:
-                self.event = job.get('__ready')
+            job = client._jobs[job_id]
+            self.event = job.get('__ready')
             if self.event is None:
                 self.event = job['__ready'] = Event()
             job['__callback'] = callback
@@ -399,6 +397,29 @@ class Client(object):
         })
 
     def on_close(self, code, reason=None):
+        error = f'WebSocket connection closed with code={code!r}, reason={reason!r}'
+
+        for call in self._calls.values():
+            if not call.returned.is_set():
+                call.errno = errno.ECONNABORTED
+                call.error = error
+                call.returned.set()
+
+        for job in self._jobs.values():
+            event = job.get('__ready')
+            if event is None:
+                event = job['__ready'] = Event()
+
+            if not event.is_set():
+                job['error'] = error
+                job['exception'] = error
+                job['exc_info'] = {
+                    'type': 'Exception',
+                    'repr': error,
+                    'extra': None,
+                }
+                event.set()
+
         self._closed.set()
 
     def _register_call(self, call):
@@ -436,41 +457,50 @@ class Client(object):
         self._jobs_watching = True
         self.subscribe('core.get_jobs', self._jobs_callback)
 
-    def call(self, method, *params, **kwargs):
-        timeout = kwargs.pop('timeout', CALL_TIMEOUT)
-        job = kwargs.pop('job', False)
-
+    def call(self, method, *params, background=False, callback=None, job=False, timeout=CALL_TIMEOUT):
         # We need to make sure we are subscribed to receive job updates
         if job and not self._jobs_watching:
             self._jobs_subscribe()
 
         c = Call(method, params)
         self._register_call(c)
-        self._send({
-            'msg': 'method',
-            'method': c.method,
-            'id': c.id,
-            'params': c.params,
-        })
+        try:
+            self._send({
+                'msg': 'method',
+                'method': c.method,
+                'id': c.id,
+                'params': c.params,
+            })
 
-        if not c.returned.wait(timeout):
+            if background:
+                return c
+
+            return self.wait(c, callback=callback, job=job, timeout=timeout)
+        finally:
+            if not background:
+                self._unregister_call(c)
+
+    def wait(self, c, *, callback=None, job=False, timeout=CALL_TIMEOUT):
+        try:
+            if not c.returned.wait(timeout):
+                raise CallTimeout("Call timeout")
+
+            if c.errno:
+                if c.py_exception:
+                    raise c.py_exception
+                if c.trace and c.type == 'VALIDATION':
+                    raise ValidationErrors(c.extra)
+                raise ClientException(c.error, c.errno, c.trace, c.extra)
+
+            if job:
+                jobobj = Job(self, c.result, callback=callback)
+                if job == 'RETURN':
+                    return jobobj
+                return jobobj.result()
+
+            return c.result
+        finally:
             self._unregister_call(c)
-            raise CallTimeout("Call timeout")
-
-        if c.errno:
-            if c.py_exception:
-                raise c.py_exception
-            if c.trace and c.type == 'VALIDATION':
-                raise ValidationErrors(c.extra)
-            raise ClientException(c.error, c.errno, c.trace, c.extra)
-
-        if job:
-            jobobj = Job(self, c.result, callback=kwargs.get('callback'))
-            if job == 'RETURN':
-                return jobobj
-            return jobobj.result()
-
-        return c.result
 
     @staticmethod
     def event_payload():
@@ -523,6 +553,7 @@ class Client(object):
         self._ws.close()
         # Wait for websocketclient thread to close
         self._closed.wait(1)
+        self._ws = None
 
 
 def main():

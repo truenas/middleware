@@ -7,7 +7,7 @@ IMPORTS
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 freeNas MODULE-IDENTITY
-    LAST-UPDATED "202010200000Z"
+    LAST-UPDATED "202005280000Z"
     ORGANIZATION "www.ixsystems.com"
     CONTACT-INFO
         "postal:   2490 Kruse Dr
@@ -16,7 +16,7 @@ freeNas MODULE-IDENTITY
          email:    support@iXsystems.com"
     DESCRIPTION
         ""
-    REVISION     "202010200000Z"
+    REVISION     "202005280000Z"
     DESCRIPTION
         ""
     ::= { enterprises 50536 }
@@ -49,6 +49,10 @@ AlertLevelType ::= TEXTUAL-CONVENTION
                 }
 
 zfs     OBJECT IDENTIFIER ::= { freeNas 1 }
+
+notifications       OBJECT IDENTIFIER ::= { freeNas 2 }
+notificationPrefix  OBJECT IDENTIFIER ::= { notifications 1 }
+notificationObjects OBJECT IDENTIFIER ::= { notifications 2 }
 
 zpool   OBJECT IDENTIFIER ::= { zfs 1 }
 dataset OBJECT IDENTIFIER ::= { zfs 2 }
@@ -528,11 +532,6 @@ zfsZilstatOps10sec OBJECT-TYPE
         "The ops column parsed from the command zilstat 10 1"
     ::= { zil 3 }
 
-
-notifications       OBJECT IDENTIFIER ::= { freeNas 2 }
-notificationPrefix  OBJECT IDENTIFIER ::= { notifications 1 }
-notificationObjects OBJECT IDENTIFIER ::= { notifications 2 }
-
 alert NOTIFICATION-TYPE
     OBJECTS    { alertId, alertLevel, alertMessage }
     STATUS     current
@@ -617,173 +616,5 @@ hddTempValue OBJECT-TYPE
     DESCRIPTION
         "The temperature of this HDD in mC."
     ::= { hddTempEntry 3 }
-
-iftop   OBJECT IDENTIFIER ::= { freeNas 4 }
-
-interfaceTable OBJECT-TYPE
-    SYNTAX      SEQUENCE OF InterfaceEntry
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-        "Table of network interfaces."
-    ::= { iftop 1 }
-
-interfaceEntry OBJECT-TYPE
-    SYNTAX      InterfaceEntry
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-        "An entry containing a network interface."
-    INDEX       { interfaceIndex }
-    ::= { interfaceTable 1 }
-
-InterfaceEntry ::= SEQUENCE {
-    interfaceIndex  Integer32,
-    interfaceName   DisplayString
-}
-
-interfaceIndex OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Reference index for each observed network interface."
-    ::= { interfaceEntry 1 }
-
-interfaceName OBJECT-TYPE
-    SYNTAX      DisplayString
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The name of the network interface."
-    ::= { interfaceEntry 2 }
-
-interfaceTopHostTable OBJECT-TYPE
-    SYNTAX      SEQUENCE OF InterfaceTopHostEntry
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-        "Table of top 10 hosts for each network interface."
-    ::= { iftop 2 }
-
-interfaceTopHostEntry OBJECT-TYPE
-    SYNTAX      InterfaceTopHostEntry
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-        "An entry containing a top host for a network interface."
-    INDEX       { interfaceTopHostIndex }
-    ::= { interfaceTopHostTable 1 }
-
-InterfaceTopHostEntry ::= SEQUENCE {
-    interfaceTopHostIndex           Integer32,
-    interfaceTopHostInterfaceName   DisplayString,
-    interfaceTopHostLocalAddress    DisplayString,
-    interfaceTopHostLocalPort       Integer32,
-    interfaceTopHostRemoteAddress   DisplayString,
-    interfaceTopHostRemotePort      Integer32,
-    inLast2s                        Integer32,
-    outLast2s                       Integer32,
-    inLast10s                       Integer32,
-    outLast10s                      Integer32,
-    inLast40s                       Integer32,
-    outLast40s                      Integer32
-}
-
-interfaceTopHostIndex OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Reference index for each observed top host for a network interface."
-    ::= { interfaceTopHostEntry 1 }
-
-interfaceTopHostInterfaceName OBJECT-TYPE
-    SYNTAX      DisplayString
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The name of the network interface."
-    ::= { interfaceTopHostEntry 2 }
-
-interfaceTopHostLocalAddress OBJECT-TYPE
-    SYNTAX      DisplayString
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Connection local address."
-    ::= { interfaceTopHostEntry 3 }
-
-interfaceTopHostLocalPort OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Connection local port."
-    ::= { interfaceTopHostEntry 4 }
-
-interfaceTopHostRemoteAddress OBJECT-TYPE
-    SYNTAX      DisplayString
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Connection remote address."
-    ::= { interfaceTopHostEntry 5 }
-
-interfaceTopHostRemotePort OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Connection remote port."
-    ::= { interfaceTopHostEntry 6 }
-
-inLast2s OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Incoming bytes for the last 2 seconds."
-    ::= { interfaceTopHostEntry 7 }
-
-outLast2s OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Outgoing bytes for the last 2 seconds."
-    ::= { interfaceTopHostEntry 8 }
-
-inLast10s OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Incoming bytes for the last 10 seconds."
-    ::= { interfaceTopHostEntry 9 }
-
-outLast10s OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Outgoing bytes for the last 10 seconds."
-    ::= { interfaceTopHostEntry 10 }
-
-inLast40s OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Incoming bytes for the last 40 seconds."
-    ::= { interfaceTopHostEntry 11 }
-
-outLast40s OBJECT-TYPE
-    SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Outgoing bytes for the last 40 seconds."
-    ::= { interfaceTopHostEntry 12 }
 
 END

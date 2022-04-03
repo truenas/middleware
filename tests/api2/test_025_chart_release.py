@@ -326,7 +326,7 @@ if not ha:
 
     @pytest.mark.parametrize('key', list(updatechart_catalog.keys()))
     def test_32_verify_updatechart_catalog_object(key):
-        assert results[key] == updatechart_catalog[key], results.text
+        assert results[key] == updatechart_catalog[key], results
 
     def test_33_verify_updatechart_is_in_catalog_list():
         results = GET('/catalog/')

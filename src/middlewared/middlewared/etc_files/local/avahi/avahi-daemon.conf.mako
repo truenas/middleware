@@ -22,6 +22,8 @@
     failover_int = middleware.call_sync("failover.internal_interfaces")
     deny_interfaces.extend(failover_int)
 
+    allow_interfaces = middleware.call_sync("interface.query", [["name", "!^", "macvtap"]])
+
     failover_status = middleware.call_sync('failover.status')
     if failover_status not in ['SINGLE', 'MASTER']:
         raise FileShouldNotExist()
@@ -35,6 +37,7 @@ use-ipv6=${"yes" if ipv6_enabled else "no"}
 ratelimit-interval-usec=1000000
 ratelimit-burst=1000
 deny-interfaces=${", ".join(deny_interfaces)}
+allow-interfaces=${", ".join([x["name"] for x in allow_interfaces])}
 disallow-other-stacks=yes
 
 [wide-area]

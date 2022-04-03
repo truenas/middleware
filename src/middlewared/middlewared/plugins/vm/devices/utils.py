@@ -1,6 +1,6 @@
 import string
 
-from middlewared.plugins.vm.utils import create_element, LIBVIRT_URI # noqa
+from middlewared.plugins.vm.utils import create_element, LIBVIRT_URI, NGINX_PREFIX # noqa
 
 
 def disk_from_number(number):

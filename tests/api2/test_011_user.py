@@ -52,6 +52,12 @@ home_acl = [
 ]
 
 
+def check_config_file(file_name, expected_line):
+    results = SSH_TEST(f'cat {file_name}', user, password, ip)
+    assert results['result'], results['output']
+    assert expected_line in results['output'].splitlines(), results['output']
+
+
 @pytest.mark.dependency(name="user_01")
 def test_01_get_next_uid(request):
     results = GET('/user/get_next_uid/')
@@ -93,7 +99,27 @@ def test_03_verify_post_user_do_not_leak_password_in_middleware_log(request):
 
 def test_04_look_user_is_created(request):
     depends(request, ["user_02", "user_01"])
-    assert len(GET('/user?username=testuser').json()) == 1
+    results = GET('/user?username=testuser')
+    assert len(results.json()) == 1, results.text
+
+    u = results.json()[0]
+    g = u['group']
+    to_check = [
+        {
+            'file': '/etc/shadow',
+            'value': f'testuser:{u["unixhash"]}:18397:0:99999:7:::'
+        },
+        {
+            'file': '/etc/passwd',
+            'value': f'testuser:x:{u["uid"]}:{u["group"]["bsdgrp_gid"]}:{u["full_name"]}:{u["home"]}:{u["shell"]}'
+        },
+        {
+            'file': '/etc/group',
+            'value': f'{g["bsdgrp_group"]}:x:{g["bsdgrp_gid"]}:'
+        }
+    ]
+    for f in to_check:
+        check_config_file(f['file'], f['value'])
 
 
 def test_05_check_user_exists(request):
@@ -110,7 +136,8 @@ def test_05_check_user_exists(request):
         pw = results.json()
         assert pw['pw_uid'] == next_uid, results.text
         assert pw['pw_shell'] == SHELL, results.text
-
+        assert pw['pw_gecos'] == 'Test User', results.txt
+        assert pw['pw_dir'] == '/nonexistent', results.txt
 
 def test_06_get_user_info(request):
     depends(request, ["user_02", "user_01"])
@@ -169,6 +196,13 @@ def test_14_setting_user_groups(request):
     GET('/user?username=testuser').json()[0]['id']
     results = PUT(f"/user/id/{user_id}/", payload)
     assert results.status_code == 200, results.text
+
+    payload = {"username": "testuser", "get_groups": True}
+    results = POST("/user/get_user_obj/", payload)
+    assert results.status_code == 200, results.text
+
+    grouplist = results.json()['grouplist']
+    assert 0 in grouplist, results.text
 
 
 # Update tests
@@ -310,7 +344,7 @@ def test_30_creating_home_dataset(request):
 def test_31_creating_user_with_homedir(request):
     depends(request, ["HOME_DS_CREATED"])
     global user_id
-    payload = {
+    user_payload = {
         "username": "testuser2",
         "full_name": "Test User2",
         "group_create": True,
@@ -321,10 +355,21 @@ def test_31_creating_user_with_homedir(request):
         "home": f'/mnt/{dataset}/testuser2',
         "home_mode": '750'
     }
-    results = POST("/user/", payload)
+    results = POST("/user/", user_payload)
     assert results.status_code == 200, results.text
     user_id = results.json()
     time.sleep(5)
+
+    payload = {"username": "testuser2"}
+    results = POST("/user/get_user_obj/", payload)
+    assert results.status_code == 200, results.text
+
+    pw = results.json()
+    assert pw['pw_dir'] == user_payload['home'], results.text
+    assert pw['pw_name'] == user_payload['username'], results.text
+    assert pw['pw_uid'] == user_payload['uid'], results.text
+    assert pw['pw_shell'] == user_payload['shell'], results.text
+    assert pw['pw_gecos'] == user_payload['full_name'], results.text
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
@@ -380,7 +425,7 @@ def test_37_homedir_testfile_create(request):
     depends(request, ["HOMEDIR_EXISTS", "ssh_password"], scope="session")
     testfile = f'/mnt/{dataset}/testuser2/testfile.txt'
 
-    cmd = f'touch {testfile}'
+    cmd = f'touch {testfile}; chown {next_uid} {testfile}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -396,6 +441,11 @@ def test_38_homedir_move_new_directory(request):
     }
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 200, results.text
+
+    results = GET('/core/get_jobs/?method=user.do_home_copy')
+    assert results.status_code == 200, results.text
+    job_status = wait_on_job(results.json()[-1]['id'], 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/new_home')
     assert results.status_code == 200, results.text
@@ -423,7 +473,8 @@ def test_41_lock_smb_user(request):
     }
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 200, results.text
-    time.sleep(2)
+
+    check_config_file('/etc/shadow', 'testuser2:!:18397:0:99999:7:::')
 
 
 def test_42_verify_locked_smb_user_is_disabled(request):
@@ -564,6 +615,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
     At this point the non-SMB user has been converted to an SMB user. Verify
     that a passdb entry was appropriately generated.
     """
+    global testuser_id
     depends(request, ["NON_SMB_USER_CREATED"], scope="session")
     result = GET(
         '/user', payload={
@@ -574,24 +626,46 @@ def test_52_converted_smb_user_passb_entry_exists(request):
             }
         }
     )
+    testuser_id = result.json()['id']
     assert result.status_code == 200, result.text
     assert result.json()['sid'], result.text
     assert result.json()['nt_name'], result.text
 
 
-def test_53_deleting_non_smb_user(request):
+def test_53_add_user_to_sudoers(request):
+    depends(request, ["ssh_password"], scope="session")
+    results = PUT(f"/user/id/{testuser_id}", {"sudo": True})
+    assert results.status_code == 200, results.text
+
+    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL")
+
+    results = PUT(f"/user/id/{user_id}", {"sudo_nopasswd": True})
+    assert results.status_code == 200, results.text
+
+    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) NOPASSWD: ALL")
+
+
+def test_54_disable_password_auth(request):
+    depends(request, ["ssh_password"], scope="session")
+    results = PUT(f"/user/id/{testuser_id}", {"password_disabled": True})
+    assert results.status_code == 200, results.text
+
+    check_config_file("/etc/shadow", "testuser3:*:18397:0:99999:7:::")
+
+
+def test_55_deleting_non_smb_user(request):
     depends(request, ["NON_SMB_USER_CREATED"])
-    results = DELETE(f"/user/id/{user_id}/", {"delete_group": True})
+    results = DELETE(f"/user/id/{testuser_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
 
-def test_54_destroying_home_dataset(request):
+def test_56_destroying_home_dataset(request):
     depends(request, ["HOME_DS_CREATED"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
-def test_55_check_no_builtin_smb_users(request):
+def test_57_check_no_builtin_smb_users(request):
     """
     We have builtin SMB groups, but should have no builtin
     users. Failure here may indicate an issue with builtin user

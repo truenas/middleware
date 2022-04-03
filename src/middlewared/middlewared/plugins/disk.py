@@ -4,7 +4,7 @@ import re
 import subprocess
 from sqlalchemy.exc import IntegrityError
 
-from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Str
 from middlewared.service import filterable, private, CallError, CRUDService
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -23,6 +23,7 @@ class DiskModel(sa.Model):
     disk_subsystem = sa.Column(sa.String(10), default='')
     disk_number = sa.Column(sa.Integer(), default=1)
     disk_serial = sa.Column(sa.String(30))
+    disk_lunid = sa.Column(sa.String(30), nullable=True)
     disk_size = sa.Column(sa.String(20))
     disk_description = sa.Column(sa.String(120))
     disk_transfermode = sa.Column(sa.String(120), default="Auto")
@@ -41,6 +42,7 @@ class DiskModel(sa.Model):
     disk_type = sa.Column(sa.String(20), default='UNKNOWN')
     disk_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
     disk_zfs_guid = sa.Column(sa.String(20), nullable=True)
+    disk_bus = sa.Column(sa.String(20))
 
 
 class DiskService(CRUDService):
@@ -63,6 +65,7 @@ class DiskService(CRUDService):
         Str('subsystem', required=True),
         Int('number', required=True),
         Str('serial', required=True),
+        Str('lunid', required=True, null=True),
         Int('size', required=True),
         Str('description', required=True),
         Str('transfermode', required=True),
@@ -82,6 +85,7 @@ class DiskService(CRUDService):
         Int('rotationrate', required=True, null=True),
         Str('type', required=True, null=True),
         Str('zfs_guid', required=True, null=True),
+        Str('bus', required=True),
         Str('devname', required=True),
         Dict(
             'enclosure',
@@ -294,25 +298,6 @@ class DiskService(CRUDService):
         if changed:
             asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
-    @accepts(Bool("join_partitions", default=False))
-    @returns(List('unused_disks', items=[Ref('disk_entry')]))
-    async def get_unused(self, join_partitions):
-        """
-        Helper method to get all disks that are not in use, either by the boot
-        pool or the user pools.
-        """
-        disks = await self.query([('devname', 'nin', await self.get_reserved())])
-
-        if join_partitions:
-            for disk in disks:
-                disk['partitions'] = await self.middleware.call('disk.list_partitions', disk['devname'])
-
-        return disks
-
-    @private
-    async def get_reserved(self):
-        return await self.middleware.call('boot.get_disks') + await self.middleware.call('pool.get_disks')
-
     @private
     async def check_clean(self, disk):
         return not bool(await self.middleware.call('disk.list_partitions', disk))
@@ -448,39 +433,6 @@ class DiskService(CRUDService):
             return 'SETUP_FAILED'
 
         return 'SUCCESS'
-
-    @private
-    async def check_disks_availability(self, verrors, disks, schema):
-        """
-        Makes sure the disks are present in the system and not reserved
-        by anything else (boot, pool, iscsi, etc).
-
-        Returns:
-            dict - disk.query for all disks
-        """
-        disks_cache = dict(map(
-            lambda x: (x['devname'], x),
-            await self.middleware.call(
-                'disk.query', [('devname', 'in', disks)]
-            )
-        ))
-
-        disks_set = set(disks)
-        disks_not_in_cache = disks_set - set(disks_cache.keys())
-        if disks_not_in_cache:
-            verrors.add(
-                f'{schema}.topology',
-                f'The following disks were not found in system: {"," .join(disks_not_in_cache)}.'
-            )
-
-        disks_reserved = await self.middleware.call('disk.get_reserved')
-        disks_reserved = disks_set - (disks_set - set(disks_reserved))
-        if disks_reserved:
-            verrors.add(
-                f'{schema}.topology',
-                f'The following disks are already in use: {"," .join(disks_reserved)}.'
-            )
-        return disks_cache
 
     @private
     async def configure_power_management(self):

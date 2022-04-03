@@ -120,7 +120,7 @@ class ApiKeyService(CRUDService):
         """
         reset = data.pop("reset", False)
 
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
 
         new.update(data)
@@ -141,7 +141,7 @@ class ApiKeyService(CRUDService):
 
         await self.load_key(id)
 
-        return self._serve(await self._get_instance(id), key)
+        return self._serve(await self.get_instance(id), key)
 
     @accepts(
         Int("id")

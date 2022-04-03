@@ -5,6 +5,7 @@ import re
 import socket
 import string
 import time
+import warnings
 
 import psutil
 from psutil._common import addr
@@ -413,6 +414,29 @@ class AuthService(Service):
         return False
 
     @cli_private
+    @no_auth_required
+    @accepts(Str('token'))
+    @returns(Bool('successful_login'))
+    @pass_app()
+    async def login_with_token(self, app, token):
+        """
+        Authenticate session using token generated with `auth.generate_token`.
+        """
+        token = self.token_manager.get(token)
+        if token is None:
+            return False
+
+        self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
+        return True
+
+    @private
+    @no_auth_required
+    @pass_app()
+    async def token(self, app, token):
+        warnings.warn("`auth.token` has been deprecated. Use `api.login_with_token`", DeprecationWarning)
+        return await self.login_with_token(app, token)
+
+    @cli_private
     @accepts()
     @returns(Bool('successful_logout'))
     @pass_app()
@@ -422,20 +446,6 @@ class AuthService(Service):
         session.
         """
         self.session_manager.logout(app)
-        return True
-
-    @cli_private
-    @no_auth_required
-    @accepts(Str('token'))
-    @returns(Bool('successful_login'))
-    @pass_app()
-    def token(self, app, token):
-        """Authenticate using a given `token` id."""
-        token = self.token_manager.get(token)
-        if token is None:
-            return False
-
-        self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
         return True
 
 

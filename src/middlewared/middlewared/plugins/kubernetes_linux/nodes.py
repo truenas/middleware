@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 
@@ -39,6 +41,18 @@ class KubernetesNodeService(ConfigService):
         async with api_client({'node': True}) as (api, context):
             for taint in taints:
                 await nodes.add_taint(context['core_api'], taint, context['node'])
+
+        remaining_taints = {t['key'] for t in taints}
+        timeout = 600
+        while remaining_taints and timeout > 0:
+            await asyncio.sleep(3)
+            timeout -= 3
+
+            config = await self.config()
+            if not config['node_configured']:
+                break
+
+            remaining_taints -= {t['key'] for t in (config['spec']['taints'] or [])}
 
     @accepts(
         List('remove_taints', items=[Str('taint_key')]),

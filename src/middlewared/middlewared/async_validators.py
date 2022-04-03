@@ -4,7 +4,6 @@ import socket
 from pathlib import Path
 
 from middlewared.validators import IpAddress
-from middlewared.utils import osc
 
 
 async def check_path_resides_within_volume(verrors, middleware, name, path, gluster_bypass=False):
@@ -22,27 +21,25 @@ async def check_path_resides_within_volume(verrors, middleware, name, path, glus
     ):
         verrors.add(name, "The path must reside within a pool mount point")
 
-    if osc.IS_LINUX:
-        # we must also make sure that any sharing service does not point to
-        # anywhere within the ".glusterfs" dataset since the clients need
-        # to go through the appropriate gluster client to write to the cluster.
-        # If data is modified directly on the gluster resources, then it will
-        # cause a split-brain scenario which means the data that was modified
-        # would not be sync'ed with other nodes in the cluster.
-        rp = Path(rp)
-
-        using_gluster_path = False
-        if rp.is_mount() and rp.name == '.glusterfs':
-            using_gluster_path = True
+    # we must also make sure that any sharing service does not point to
+    # anywhere within the ".glusterfs" dataset since the clients need
+    # to go through the appropriate gluster client to write to the cluster.
+    # If data is modified directly on the gluster resources, then it will
+    # cause a split-brain scenario which means the data that was modified
+    # would not be sync'ed with other nodes in the cluster.
+    rp = Path(rp)
+    for check_path, svc_name in (('.glusterfs', 'Gluster'), ('ix-applications', 'Applications')):
+        in_use = False
+        if rp.is_mount() and rp.name == check_path:
+            in_use = True
         else:
             # subtract 2 here to remove the '/' and 'mnt' parents
             for i in range(0, len(rp.parents) - 2):
-                if rp.parents[i].is_mount() and rp.parents[i].name == ".glusterfs":
-                    using_gluster_path = True
+                if rp.parents[i].is_mount() and rp.parents[i].name == check_path:
+                    in_use = True
                     break
-
-        if using_gluster_path:
-            verrors.add(name, "A path being used by Gluster is not allowed")
+        if in_use:
+            verrors.add(name, f'A path being used by {svc_name} is not allowed')
 
 
 async def resolve_hostname(middleware, verrors, name, hostname):

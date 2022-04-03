@@ -4,6 +4,9 @@ import os
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, Service
 
+from .items_util import get_item_details
+from .questions_utils import normalise_questions
+
 
 class CatalogService(Service):
 
@@ -45,6 +48,7 @@ class CatalogService(Service):
         elif not os.path.isdir(item_location):
             raise CallError(f'{item_location!r} must be a directory')
 
+        questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         if options['cache'] and self.middleware.call_sync(
             'cache.has_key', f'catalog_{options["catalog"]}_train_details'
         ):
@@ -59,8 +63,7 @@ class CatalogService(Service):
                         for feature in versioned_item['required_features']
                     )
                     if needs_normalization:
-                        questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-                        self.middleware.call_sync('catalog.normalise_questions', versioned_item, questions_context)
+                        normalise_questions(versioned_item, questions_context)
                 return item
 
-        return self.middleware.call_sync('catalog.retrieve_item_details', item_location)
+        return get_item_details(item_location, questions_context, {'retrieve_versions': True})

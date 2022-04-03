@@ -29,7 +29,6 @@ class SMBHAMODE(enum.IntEnum):
     'unified' - Single set of state files migrating between controllers. Single netbios name.
     """
     STANDALONE = 0
-    LEGACY = 1
     UNIFIED = 2
     CLUSTERED = 3
 
@@ -233,10 +232,6 @@ class SMBService(TDBWrapConfigService):
 
         if ha_mode in [SMBHAMODE.STANDALONE, SMBHAMODE.CLUSTERED]:
             smb['netbiosname_local'] = smb['netbiosname']
-
-        elif ha_mode == SMBHAMODE.LEGACY:
-            failover_node = await self.middleware.call('failover.node')
-            smb['netbiosname_local'] = smb['netbiosname'] if failover_node == 'A' else smb['netbiosname_b']
 
         elif ha_mode == SMBHAMODE.UNIFIED:
             ngc = await self.middleware.call('network.configuration.config')
@@ -530,6 +525,18 @@ class SMBService(TDBWrapConfigService):
 
         await self.middleware.call('idmap.synchronize')
 
+        """
+        Since some NSS modules will default to setting home directory to /var/empty,
+        verify that this path is immutable during setup for SMB service (prior to
+        initializing directory services).
+        """
+        try:
+            is_immutable = await self.middleware.call('filesystem.is_immutable', '/var/empty')
+            if not is_immutable:
+                await self.middleware.call('filesystem.set_immutable', True, '/var/empty')
+        except Exception:
+            self.logger.warning("Failed to set immutable flag on /var/empty", exc_info=True)
+
         job.set_progress(30, 'Setting up server SID.')
         await self.middleware.call('smb.set_sid', data['cifs_SID'])
 
@@ -580,19 +587,17 @@ class SMBService(TDBWrapConfigService):
 
     @private
     async def get_smb_ha_mode(self):
-        if await self.middleware.call('cache.has_key', 'SMB_HA_MODE'):
+        try:
             return await self.middleware.call('cache.get', 'SMB_HA_MODE')
+        except KeyError:
+            pass
 
         gl_enabled = (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']
 
         if gl_enabled:
             hamode = SMBHAMODE['CLUSTERED'].name
         elif await self.middleware.call('failover.licensed'):
-            system_dataset = await self.middleware.call('systemdataset.config')
-            if system_dataset['pool'] != await self.middleware.call('boot.pool_name'):
-                hamode = SMBHAMODE['UNIFIED'].name
-            else:
-                hamode = SMBHAMODE['LEGACY'].name
+            hamode = SMBHAMODE['UNIFIED'].name
 
         else:
             hamode = SMBHAMODE['STANDALONE'].name
@@ -641,11 +646,6 @@ class SMBService(TDBWrapConfigService):
         except ValidationErrors as errs:
             verrors.add_child('smb_update.smb_options', errs)
 
-        if new.get('multichannel', False) is True:
-            verrors.add(
-                'smb_update.multichannel',
-                'Multichannel SMB is not supported at this time'
-            )
         if new.get('unixcharset') and new['unixcharset'] not in await self.unixcharset_choices():
             verrors.add(
                 'smb_update.unixcharset',
@@ -707,18 +707,7 @@ class SMBService(TDBWrapConfigService):
             verrors.add('smb_update.netbiosname', 'NetBIOS name is required.')
 
         ha_mode = SMBHAMODE[(await self.get_smb_ha_mode())]
-        if ha_mode == SMBHAMODE.LEGACY:
-            if not new.get('netbiosname_b'):
-                verrors.add('smb_update.netbiosname_b',
-                            'NetBIOS name for B controller is required while '
-                            'system dataset is located on boot pool.')
-            if len(new['netbiosalias']) == 0:
-                verrors.add('smb_update.netbiosalias',
-                            'At least one netbios alias is required for active '
-                            'controller while system dataset is located on '
-                            'boot pool.')
-
-        elif ha_mode == SMBHAMODE.UNIFIED:
+        if ha_mode == SMBHAMODE.UNIFIED:
             if not new.get('netbiosname_local'):
                 verrors.add('smb_update.netbiosname',
                             'Virtual Hostname is required for SMB configuration '
@@ -1198,7 +1187,7 @@ class SharingSMBService(SharingService):
         await self.middleware.call("smb.cluster_check")
         ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
         if ha_mode != SMBHAMODE.CLUSTERED:
-            share = await self._get_instance(id)
+            share = await self.get_instance(id)
             result = await self.middleware.call('datastore.delete', self._config.datastore, id)
         else:
             share = await self.query([('id', '=', id)], {'get': True})

@@ -84,7 +84,7 @@ class ACLTemplateService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -98,7 +98,7 @@ class ACLTemplateService(CRUDService):
         """
         update filesystem ACL template with `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()

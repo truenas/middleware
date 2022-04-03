@@ -4,9 +4,10 @@ import re
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
-from middlewared.utils import osc, run
+from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
 
 from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY
@@ -47,6 +48,21 @@ class VMDeviceService(CRUDService):
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
         cli_namespace = 'service.vm.device'
+
+    @accepts()
+    @returns(Dict(additional_attrs=True, example={'vms/test 1': '/dev/zvol/vms/test+1'}))
+    async def disk_choices(self):
+        """
+        Returns disk choices for device type "DISK".
+        """
+        return {
+            zvol_name_to_path(vol['id']): vol['id']
+            for vol in await self.middleware.call(
+                'pool.dataset.query', [['type', '=', 'VOLUME'], ['locked', '=', False]], {
+                    'extra': {'properties': ['encryption', 'keystatus']}
+                }
+            )
+        }
 
     @private
     async def create_resource(self, device, old=None):
@@ -178,7 +194,9 @@ class VMDeviceService(CRUDService):
         if options['zvol']:
             if device['dtype'] != 'DISK':
                 raise CallError('The device is not a disk and has no zvol to destroy.')
-            zvol_id = device['attributes'].get('path', '').rsplit('/dev/zvol/')[-1]
+            if not device['attributes'].get('path', '').startswith('/dev/zvol'):
+                raise CallError('Unable to destroy zvol as disk device has misconfigured path')
+            zvol_id = zvol_path_to_name(device['attributes']['path'])
             if await self.middleware.call('pool.dataset.query', [['id', '=', zvol_id]]):
                 # FIXME: We should use pool.dataset.delete but right now FS attachments will consider
                 # the current device as a valid reference. Also should we stopping the vm only when deleting an
@@ -418,8 +436,6 @@ class VMDeviceService(CRUDService):
             await self.failover_nic_check(device, verrors, 'attributes')
         elif device.get('dtype') == 'PCI':
             pptdev = device['attributes'].get('pptdev')
-            if osc.IS_FREEBSD and not RE_PPTDEV_NAME.findall(pptdev):
-                verrors.add('attribute.pptdev', 'Please specify correct PCI device for passthru.')
             device_details = await self.middleware.call('vm.device.passthrough_device', pptdev)
             if device_details.get('error'):
                 verrors.add(
@@ -430,27 +446,21 @@ class VMDeviceService(CRUDService):
                 verrors.add('attribute.pptdev', 'IOMMU support is required.')
         elif device.get('dtype') == 'DISPLAY':
             if vm_instance:
-                if osc.IS_FREEBSD and vm_instance['bootloader'] != 'UEFI':
-                    verrors.add('dtype', 'Display only works with UEFI bootloader.')
-
                 if not update:
                     vm_instance['devices'].append(device)
 
                 await self.validate_display_devices(verrors, vm_instance)
 
-            if osc.IS_FREEBSD and device['attributes']['type'] != 'VNC':
-                verrors.add('attributes.type', 'Only VNC Display device is supported for this platform.')
-
-            all_ports = [
-                d['attributes'].get('port')
-                for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]))
-                if d['id'] != device.get('id')
-            ]
-            if device['attributes'].get('port'):
-                if device['attributes']['port'] in all_ports:
-                    verrors.add('attributes.port', 'Specified display port is already in use')
-            else:
-                device['attributes']['port'] = (await self.middleware.call('vm.port_wizard'))['port']
+            all_ports = await self.middleware.call(
+                'vm.all_used_display_device_ports', [['id', '!=', device.get('id')]]
+            )
+            new_ports = list((await self.middleware.call('vm.port_wizard')).values())
+            for key in ('port', 'web_port'):
+                if device['attributes'].get(key):
+                    if device['attributes'][key] in all_ports:
+                        verrors.add(f'attributes.{key}', 'Specified display port is already in use')
+                else:
+                    device['attributes'][key] = new_ports.pop(0)
 
         if device['dtype'] in ('RAW', 'DISK') and device['attributes'].get('physical_sectorsize')\
                 and not device['attributes'].get('logical_sectorsize'):

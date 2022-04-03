@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, retur
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
+from middlewared.utils.mako import get_template
 from middlewared.validators import Email
 
 from datetime import datetime, timedelta
@@ -12,7 +13,6 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 import html2text
 from lockfile import LockFile, LockTimeout
-from mako.lookup import TemplateLookup
 
 import base64
 import errno
@@ -293,13 +293,8 @@ class MailService(ConfigService):
             message['text'] = html2text.html2text(message['html'])
 
         if add_html and 'html' not in message:
-            lookup = TemplateLookup(
-                directories=[os.path.join(os.path.dirname(os.path.realpath(__file__)), '../assets/templates')],
-                module_directory="/tmp/mako/templates")
-
-            tmpl = lookup.get_template('mail.html')
-
-            message['html'] = tmpl.render(body=html.escape(message['text']).replace('\n', '<br>\n'))
+            template = get_template('assets/templates/mail.html')
+            message['html'] = template.render(body=html.escape(message['text']).replace('\n', '<br>\n'))
 
         return self.send_raw(job, message, config)
 

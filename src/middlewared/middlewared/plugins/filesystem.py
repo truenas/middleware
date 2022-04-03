@@ -6,6 +6,7 @@ import os
 import pathlib
 import pwd
 import shutil
+import stat as statlib
 import time
 
 import pyinotify
@@ -17,6 +18,7 @@ from middlewared.plugins.filesystem_ import chflags, stat_x
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
 from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list
+from middlewared.plugins.filesystem_.acl_base import ACLType
 
 
 class FilesystemService(Service):
@@ -106,7 +108,7 @@ class FilesystemService(Service):
         Str('name', required=True),
         Path('path', required=True),
         Path('realpath', required=True),
-        Str('type', required=True, enum=['DIRECTORY', 'FILESYSTEM', 'SYMLINK', 'OTHER']),
+        Str('type', required=True, enum=['DIRECTORY', 'FILE', 'SYMLINK', 'OTHER']),
         Int('size', required=True, null=True),
         Int('mode', required=True, null=True),
         Bool('acl', required=True, null=True),
@@ -127,13 +129,45 @@ class FilesystemService(Service):
           name(str): name of the file
           path(str): absolute path of the entry
           realpath(str): absolute real path of the entry (if SYMLINK)
-          type(str): DIRECTORY | FILESYSTEM | SYMLINK | OTHER
+          type(str): DIRECTORY | FILE | SYMLINK | OTHER
           size(int): size of the entry
           mode(int): file mode/permission
           uid(int): user id of entry owner
           gid(int): group id of entry onwer
           acl(bool): extended ACL is present on file
         """
+
+        def stat_entry(entry):
+            out = {'st': None, 'etype': None}
+            try:
+                out['st'] = entry.lstat()
+            except Exception:
+                return None
+
+            if statlib.S_ISDIR(out['st'].st_mode):
+                out['etype'] = 'DIRECTORY'
+
+            elif statlib.S_ISLNK(out['st'].st_mode):
+                out['etype'] = 'SYMLINK'
+                try:
+                    out['st'] = entry.stat()
+                except Exception:
+                    return None
+
+            elif statlib.S_ISREG(out['st'].st_mode):
+                out['etype'] = 'FILE'
+
+            else:
+                out['etype'] = 'OTHER'
+
+            if dir_only and out['etype'] != 'DIRECTORY':
+                return None
+
+            elif file_only and out['etype'] != 'FILE':
+                return None
+
+            return out
+
         path = self.resolve_cluster_path(path)
         path = pathlib.Path(path)
         if not path.exists():
@@ -142,9 +176,33 @@ class FilesystemService(Service):
         if not path.is_dir():
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
+        if 'ix-applications' in path.parts:
+            raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
+
+        file_only = False
+        dir_only = False
+        for filter in filters:
+            if filter[0] not in ['type']:
+                continue
+
+            if filter[1] != '=' and filter[2] not in ['DIRECTORY', 'FILE']:
+                continue
+
+            if filter[2] == 'DIRECTORY':
+                dir_only = True
+            else:
+                file_only = True
+
         rv = []
+        if dir_only and file_only:
+            return rv
+
         only_top_level = path.absolute() == pathlib.Path('/mnt')
         for entry in path.iterdir():
+            st = stat_entry(entry)
+            if st is None:
+                continue
+
             if only_top_level and not entry.is_mount():
                 # sometimes (on failures) the top-level directory
                 # where the zpool is mounted does not get removed
@@ -155,35 +213,29 @@ class FilesystemService(Service):
                 # a path that doesn't exist on a zpool, we'll
                 # filter these here.
                 continue
-            if entry.is_symlink():
-                etype = 'SYMLINK'
-            elif entry.is_dir():
-                etype = 'DIRECTORY'
-            elif entry.is_file():
-                etype = 'FILE'
-            else:
-                etype = 'OTHER'
+            if 'ix-applications' in entry.parts:
+                continue
+
+            etype = st['etype']
+            stat = st['st']
+            realpath = entry.resolve().as_posix() if etype == 'SYMLINK' else entry.absolute().as_posix()
 
             data = {
                 'name': entry.name,
                 'path': entry.as_posix().replace(
                     f'{FuseConfig.FUSE_PATH_BASE.value}/', FuseConfig.FUSE_PATH_SUBST.value
                 ),
-                'realpath': entry.resolve().as_posix() if etype == 'SYMLINK' else entry.absolute().as_posix(),
+                'realpath': realpath,
                 'type': etype,
+                'size': stat.st_size,
+                'mode': stat.st_mode,
+                'acl': False if self.acl_is_trivial(realpath) else True,
+                'uid': stat.st_uid,
+                'gid': stat.st_gid,
             }
-            try:
-                stat = entry.stat()
-                data.update({
-                    'size': stat.st_size,
-                    'mode': stat.st_mode,
-                    'acl': False if self.acl_is_trivial(data["path"]) else True,
-                    'uid': stat.st_uid,
-                    'gid': stat.st_gid,
-                })
-            except FileNotFoundError:
-                data.update({'size': None, 'mode': None, 'acl': None, 'uid': None, 'gid': None})
+
             rv.append(data)
+
         return filter_list(rv, filters=filters or [], options=options or {})
 
     @accepts(Str('path'))
@@ -453,8 +505,10 @@ class FilesystemService(Service):
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 
-        acl = self.middleware.call_sync('filesystem.getacl', path, True)
-        return acl['trivial']
+        acl_xattrs = ACLType.xattr_names()
+        xattrs_present = set(os.listxattr(path))
+
+        return False if (xattrs_present & acl_xattrs) else True
 
 
 class FileFollowTailEventSource(EventSource):

@@ -125,7 +125,7 @@ class SSHKeyPair(KeychainCredentialType):
 
             attributes["private_key"] = (attributes["private_key"].strip()) + "\n"
             with tempfile.NamedTemporaryFile("w+") as f:
-                os.chmod(f.name, 0o600)
+                os.fchmod(f.file.fileno(), 0o600)
 
                 f.write(attributes["private_key"])
                 f.flush()
@@ -153,7 +153,7 @@ class SSHKeyPair(KeychainCredentialType):
             return
 
         with tempfile.NamedTemporaryFile("w+") as f:
-            os.chmod(f.name, 0o600)
+            os.fchmod(f.file.fileno(), 0o600)
 
             f.write(attributes["public_key"])
             f.flush()
@@ -346,7 +346,7 @@ class KeychainCredentialService(CRUDService):
             }
         """
 
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -384,7 +384,7 @@ class KeychainCredentialService(CRUDService):
             }
         """
 
-        instance = await self._get_instance(id)
+        instance = await self.get_instance(id)
 
         for delegate in TYPES[instance["type"]].used_by_delegates:
             delegate = delegate(self.middleware)
@@ -410,7 +410,7 @@ class KeychainCredentialService(CRUDService):
         """
         Returns list of objects that use this credential.
         """
-        instance = await self._get_instance(id)
+        instance = await self.get_instance(id)
 
         result = []
         for delegate in TYPES[instance["type"]].used_by_delegates:

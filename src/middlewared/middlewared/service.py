@@ -20,7 +20,9 @@ import psutil
 
 from middlewared.common.environ import environ_update
 import middlewared.main
-from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns, Str
+from middlewared.schema import (
+    accepts, Any, Bool, convert_schema, Datetime, Dict, Int, List, OROperator, Patch, Ref, returns, Str
+)
 from middlewared.service_exception import (  # noqa
     CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors
 )
@@ -37,18 +39,29 @@ from middlewared.validators import Range, IpAddress
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 get_or_insert_lock = asyncio.Lock()
 LOCKS = defaultdict(asyncio.Lock)
+THREADING_LOCKS = defaultdict(threading.Lock)
 MIDDLEWARE_STARTED_SENTINEL_PATH = "/var/run/middlewared-started"
 
 
 def lock(lock_str):
     def lock_fn(fn):
-        f_lock = LOCKS[lock_str]
+        if asyncio.iscoroutinefunction(fn):
+            f_lock = LOCKS[lock_str]
 
-        @wraps(fn)
-        async def l_fn(*args, **kwargs):
-            async with f_lock:
-                return await fn(*args, **kwargs)
+            @wraps(fn)
+            async def l_fn(*args, **kwargs):
+                async with f_lock:
+                    return await fn(*args, **kwargs)
+        else:
+            f_lock = THREADING_LOCKS[lock_str]
+
+            @wraps(fn)
+            def l_fn(*args, **kwargs):
+                with f_lock:
+                    return fn(*args, **kwargs)
+
         return l_fn
+
     return lock_fn
 
 
@@ -952,17 +965,25 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
         """
-        return await self._get_instance(id, options)
-
-    @accepts(Any('id'), Ref('query-options-get_instance'))
-    async def _get_instance(self, id, options):
-        """
-        Helper method to get an instance from a collection given the `id`.
-        """
         instance = await self.middleware.call(
             f'{self._config.namespace}.query',
             [[self._config.datastore_primary_key, '=', id]],
             options
+        )
+        if not instance:
+            raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')
+        return instance[0]
+
+    @private
+    @accepts(Any('id'), Ref('query-options-get_instance'))
+    def get_instance__sync(self, id, options):
+        """
+        Synchronous implementation of `get_instance`.
+        """
+        instance = self.middleware.call_sync(
+            f'{self._config.namespace}.query',
+            [[self._config.datastore_primary_key, '=', id]],
+            options,
         )
         if not instance:
             raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')
@@ -1489,10 +1510,41 @@ class CoreService(Service):
             }
 
     @filterable
+    @filterable_returns(Dict(
+        'job',
+        Int('id'),
+        Str('method'),
+        List('arguments'),
+        Str('description', null=True),
+        Bool('abortable'),
+        Str('logs_path', null=True),
+        Str('logs_excerpt', null=True),
+        Dict(
+            'progress',
+            Int('percent', null=True),
+            Str('description', null=True),
+            Any('extra', null=True),
+        ),
+        Any('result', null=True),
+        Str('error', null=True),
+        Str('exception', null=True),
+        Dict(
+            'exc_info',
+            Str('repr', null=True),
+            Str('type', null=True),
+            Any('extra', null=True),
+            null=True
+        ),
+        Str('state'),
+        Datetime('time_started', null=True),
+        Datetime('time_finished', null=True),
+        register=True,
+    ))
     def get_jobs(self, filters, options):
         """Get the long running jobs."""
+        raw_result = options['extra'].get('raw_result', True)
         jobs = filter_list([
-            i.__encode__() for i in list(self.middleware.jobs.all().values())
+            i.__encode__(raw_result) for i in list(self.middleware.jobs.all().values())
         ], filters, options)
         return jobs
 
@@ -1572,14 +1624,23 @@ class CoreService(Service):
         job = self.middleware.jobs.all()[id]
         return job.abort()
 
-    @accepts(Bool('cli', default=False))
-    def get_services(self, cli):
+    def _should_list_service(self, name, service, target):
+        if service._config.private is True:
+            if not (target == 'REST' and name == 'resttest'):
+                return False
+
+        if target == 'CLI' and service._config.cli_private:
+            return False
+
+        return True
+
+    @accepts(Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
+    @private
+    def get_services(self, target):
         """Returns a list of all registered services."""
         services = {}
         for k, v in list(self.middleware.get_services().items()):
-            if v._config.private is True:
-                continue
-            if cli and v._config.cli_private:
+            if not self._should_list_service(k, v, target):
                 continue
 
             if is_service_class(v, CRUDService):
@@ -1602,8 +1663,9 @@ class CoreService(Service):
 
         return services
 
-    @accepts(Str('service', default=None, null=True), Bool('cli', default=False))
-    def get_methods(self, service, cli):
+    @accepts(Str('service', default=None, null=True), Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
+    @private
+    def get_methods(self, service, target):
         """
         Return methods metadata of every available service.
 
@@ -1614,10 +1676,7 @@ class CoreService(Service):
             if service is not None and name != service:
                 continue
 
-            # Skip private services
-            if svc._config.private:
-                continue
-            if cli and svc._config.cli_private:
+            if not self._should_list_service(name, svc, target):
                 continue
 
             for attr in dir(svc):
@@ -1669,7 +1728,7 @@ class CoreService(Service):
                 # Skip private methods
                 if hasattr(method, '_private'):
                     continue
-                if cli and hasattr(method, '_cli_private'):
+                if target == 'CLI' and hasattr(method, '_cli_private'):
                     continue
 
                 # terminate is a private method used to clean up a service on shutdown
@@ -1760,9 +1819,7 @@ class CoreService(Service):
                     'job': hasattr(method, '_job'),
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
                     'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
-                    'require_pipes': hasattr(method, '_job') and method._job['check_pipes'] and any(
-                        i in method._job['pipes'] for i in ('input', 'output')
-                    ),
+                    'check_pipes': hasattr(method, '_job') and method._job['pipes'] and method._job['check_pipes'],
                     **method_schemas,
                 }
 

@@ -21,6 +21,7 @@ import string
 import stat
 import time
 from pathlib import Path
+from contextlib import suppress
 
 SKEL_PATH = '/etc/skel/'
 
@@ -129,6 +130,7 @@ class UserService(CRUDService):
     class Config:
         datastore = 'account.bsdusers'
         datastore_extend = 'user.user_extend'
+        datastore_extend_context = 'user.user_extend_context'
         datastore_prefix = 'bsdusr_'
         cli_namespace = 'account.user'
 
@@ -151,27 +153,43 @@ class UserService(CRUDService):
     )
 
     @private
-    async def user_extend(self, user):
+    async def user_extend_context(self, rows, extra):
+        memberships = {}
+        res = await self.middleware.call(
+            'datastore.query', 'account.bsdgroupmembership',
+            [], {'prefix': 'bsdgrpmember_'}
+        )
+
+        for i in res:
+            uid = i['user']['id']
+            if uid in memberships:
+                memberships[uid].append(i['group']['id'])
+            else:
+                memberships[uid] = [i['group']['id']]
+
+        return {"memberships": memberships}
+
+    @private
+    def _read_authorized_keys(self, homedir):
+        keysfile = f'{homedir}/.ssh/authorized_keys'
+        rv = None
+        with suppress(FileNotFoundError):
+            with open(keysfile, 'r') as f:
+                rv = f.read()
+
+        return rv
+
+    @private
+    async def user_extend(self, user, ctx):
 
         # Normalize email, empty is really null
         if user['email'] == '':
             user['email'] = None
 
-        # Get group membership
-        user['groups'] = [gm['group']['id'] for gm in await self.middleware.call(
-            'datastore.query', 'account.bsdgroupmembership',
-            [('user', '=', user['id'])], {'prefix': 'bsdgrpmember_'}
-        )]
-
+        user['groups'] = ctx['memberships'].get(user['id'], [])
         # Get authorized keys
-        keysfile = f'{user["home"]}/.ssh/authorized_keys'
-        user['sshpubkey'] = None
-        if os.path.exists(keysfile):
-            try:
-                with open(keysfile, 'r') as f:
-                    user['sshpubkey'] = f.read()
-            except Exception:
-                pass
+        user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
+
         return user
 
     @private
@@ -466,7 +484,7 @@ class UserService(CRUDService):
         Update attributes of an existing user.
         """
 
-        user = await self._get_instance(pk)
+        user = await self.get_instance(pk)
 
         verrors = ValidationErrors()
 
@@ -482,10 +500,14 @@ class UserService(CRUDService):
             user['group'] = group['id']
 
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
-        updated = data | user
+        updated = user | data
         if updated['microsoft_account'] and not updated['email']:
             verrors.add('user_update.microsoft_account',
                         'The Microsoft Account feature requires an email address.')
+
+        if updated['microsoft_account'] and updated['builtin']:
+            verrors.add('user_update.microsoft_account',
+                        'This property is not permitted for builtin accounts.')
 
         try:
             st = os.stat(user.get("home", "/nonexistent")).st_mode
@@ -667,7 +689,7 @@ class UserService(CRUDService):
         any other user.
         """
 
-        user = await self._get_instance(pk)
+        user = await self.get_instance(pk)
 
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
@@ -773,7 +795,7 @@ class UserService(CRUDService):
 
         e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
         """
-        user = await self._get_instance(pk)
+        user = await self.get_instance(pk)
 
         user['attributes'][key] = value
 
@@ -797,7 +819,7 @@ class UserService(CRUDService):
         """
         Remove user general purpose `attributes` dictionary `key`.
         """
-        user = await self._get_instance(pk)
+        user = await self.get_instance(pk)
 
         if key in user['attributes']:
             user['attributes'].pop(key)
@@ -887,6 +909,9 @@ class UserService(CRUDService):
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
     async def do_home_copy(self, job, home_old, home_new, username, new_mode, uid):
+        if home_old == '/nonexistent':
+            return
+
         if new_mode is not None:
             perm_job = await self.middleware.call('filesystem.setperm', {
                 'uid': uid,
@@ -894,10 +919,16 @@ class UserService(CRUDService):
                 'mode': new_mode,
                 'options': {'stripacl': True},
             })
-            await perm_job.wait()
+        else:
+            current_mode = stat.S_IMODE((await self.middleware.call('filesystem.stat', home_old))['mode'])
+            perm_job = await self.middleware.call('filesystem.setperm', {
+                'uid': uid,
+                'path': home_new,
+                'mode': f'{current_mode:03o}',
+                'options': {'stripacl': True},
+            })
 
-        if home_old == '/nonexistent':
-            return
+        await perm_job.wait()
 
         command = f"/bin/cp -a {shlex.quote(home_old) + '/' + '.'} {shlex.quote(home_new + '/')}"
         do_copy = await run(["/usr/bin/su", "-", username, "-c", command], check=False)
@@ -1014,6 +1045,12 @@ class UserService(CRUDService):
             verrors.add(
                 f'{schema}.full_name',
                 'The ":" character is not allowed in a "Full Name".'
+            )
+
+        if 'full_name' in data and '\n' in data['full_name']:
+            verrors.add(
+                f'{schema}.full_name',
+                'The "\\n" character is not allowed in a "Full Name".'
             )
 
         if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices', pk):
@@ -1153,6 +1190,7 @@ class GroupService(CRUDService):
         datastore = 'account.bsdgroups'
         datastore_prefix = 'bsdgrp_'
         datastore_extend = 'group.group_extend'
+        datastore_extend_context = 'group.group_extend_context'
         cli_namespace = 'account.group'
 
     ENTRY = Patch(
@@ -1168,27 +1206,34 @@ class GroupService(CRUDService):
     )
 
     @private
-    async def group_extend(self, group):
+    async def group_extend_context(self, rows, extra):
+        mem = {}
+        membership = await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'})
+        users = await self.middleware.call('datastore.query', 'account.bsdusers')
+
+        # uid and gid variables here reference database ids rather than OS uid / gid
+        for g in membership:
+            gid = g['group']['id']
+            uid = g['user']['id']
+            if gid in mem:
+                mem[gid].append(uid)
+            else:
+                mem[gid] = [uid]
+
+        for u in users:
+            gid = u['bsdusr_group']['id']
+            uid = u['id']
+            if gid in mem:
+                mem[gid].append(uid)
+            else:
+                mem[gid] = [uid]
+
+        return {"memberships": mem}
+
+    @private
+    async def group_extend(self, group, ctx):
         group['name'] = group['group']
-        # Get group membership
-        group['users'] = [
-            gm['user']['id']
-            for gm in await self.middleware.call(
-                'datastore.query',
-                'account.bsdgroupmembership',
-                [('group', '=', group['id'])],
-                {'prefix': 'bsdgrpmember_'}
-            )
-        ]
-        group['users'] += [
-            gmu['id']
-            for gmu in await self.middleware.call(
-                'datastore.query',
-                'account.bsdusers',
-                [('bsdusr_group_id', '=', group['id'])]
-            )
-            if gmu['id'] not in group['users']
-        ]
+        group['users'] = ctx['memberships'].get(group['id'], [])
         return group
 
     @private
@@ -1344,7 +1389,7 @@ class GroupService(CRUDService):
         Update attributes of an existing group.
         """
 
-        group = await self._get_instance(pk)
+        group = await self.get_instance(pk)
         groupmap_changed = False
 
         verrors = ValidationErrors()
@@ -1416,7 +1461,7 @@ class GroupService(CRUDService):
         The `delete_users` option deletes all users that have this group as their primary group.
         """
 
-        group = await self._get_instance(pk)
+        group = await self.get_instance(pk)
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 

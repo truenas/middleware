@@ -1,4 +1,4 @@
-from middlewared.plugins.system_.dmi import SystemService
+from middlewared.plugins.system.dmi import SystemService
 from middlewared.service import Service
 
 

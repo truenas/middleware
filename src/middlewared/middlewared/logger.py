@@ -27,10 +27,18 @@ logging.getLogger('googleapiclient').setLevel(logging.ERROR)
 # registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
 logging.getLogger('passlib.registry').setLevel(logging.INFO)
 # pyroute2.ndb is chatty....only log errors
-logging.getLogger('pyroute2.ndb').setLevel(logging.ERROR)
+logging.getLogger('pyroute2.ndb').setLevel(logging.CRITICAL)
+logging.getLogger('pyroute2.netlink').setLevel(logging.CRITICAL)
+logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.CRITICAL)
 # It logs each call made to the k8s api server when in debug mode, so we set the level to warn
 logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
 logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
+# ACME is very verbose in logging the request it sends with headers etc, let's not pollute the logs
+# with that much information and raise the log level in this case
+logging.getLogger('acme.client').setLevel(logging.WARN)
+logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARN)
+
 
 FAILSAFE_LOGFILE = '/tmp/failsafe_middlewared.log'
 LOGFILE = '/var/log/middlewared.log'

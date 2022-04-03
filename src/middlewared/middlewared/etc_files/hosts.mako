@@ -7,6 +7,9 @@
 		hostname = middleware.call_sync('smb.config')['netbiosname_local'].lower()
 		domain_name = ad_config['ad_domainname'].lower()
 %>
+% if network_config['hosts']:
+${network_config['hosts']}
+% endif
 127.0.0.1	localhost
 127.0.0.1	${hostname}.${domain_name} ${hostname}
 

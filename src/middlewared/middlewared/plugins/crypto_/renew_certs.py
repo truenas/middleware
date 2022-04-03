@@ -1,5 +1,6 @@
 import datetime
 
+from .generate_self_signed import generate_self_signed_certificate
 from middlewared.service import job, periodic, private, Service
 
 
@@ -37,7 +38,7 @@ class CertificateService(Service):
             # renew cert
             self.logger.debug(f'Renewing certificate {cert["name"]}')
             if not cert.get('acme'):
-                cert_str, key = self.middleware.call_sync('cryptokey.generate_self_signed_certificate')
+                cert_str, key = generate_self_signed_certificate()
                 cert_payload = {
                     'certificate': cert_str,
                     'privatekey': key,

@@ -1,16 +1,15 @@
-from middlewared.utils import osc
-
 from .cifs import CIFSService
 from .docker import DockerService
 from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
+from .haproxy import HAProxyService
 from .iscsitarget import ISCSITargetService
 from .kuberouter import KubeRouterService
 from .kubernetes import KubernetesService
-from .lldp import LLDPService
 from .mdns import MDNSService
 from .netbios import NetBIOSService
 from .nfs import NFSService
+from .nscd import NSCDService
 from .openvpn_client import OpenVPNClientService
 from .openvpn_server import OpenVPNServerService
 from .rsync import RsyncService
@@ -50,12 +49,10 @@ from .pseudo.misc import (
     ResolvConfService,
     RoutingService,
     SslService,
-    SysconsService,
     SysctlService,
     SyslogdService,
     SystemService,
     TimeservicesService,
-    TtysService,
     UserService,
 )
 
@@ -65,10 +62,10 @@ all_services = [
     DynamicDNSService,
     FTPService,
     ISCSITargetService,
-    LLDPService,
     MDNSService,
     NetBIOSService,
     NFSService,
+    NSCDService,
     OpenVPNClientService,
     OpenVPNServerService,
     RsyncService,
@@ -84,12 +81,21 @@ all_services = [
     LdapService,
     NisService,
     IdmapService,
+    KeepalivedService,
+    GlusterdService,
+    GlusterEventsdService,
+    CtdbService,
+    DockerService,
+    KubernetesService,
+    KubeRouterService,
+    OpenVmToolsService,
     CollectDService,
     RRDCacheDService,
     LibvirtdService,
     CronService,
     DiskService,
     KmipService,
+    HAProxyService,
     LoaderService,
     MOTDService,
     HostnameService,
@@ -102,23 +108,10 @@ all_services = [
     ResolvConfService,
     RoutingService,
     SslService,
-    SysconsService,
     SysctlService,
     SyslogdService,
     SystemService,
     TimeservicesService,
     TruecommandService,
-    TtysService,
     UserService,
 ]
-if osc.IS_LINUX:
-    all_services.extend([
-        KeepalivedService,
-        GlusterdService,
-        GlusterEventsdService,
-        CtdbService,
-        DockerService,
-        KubernetesService,
-        KubeRouterService,
-        OpenVmToolsService,
-    ])

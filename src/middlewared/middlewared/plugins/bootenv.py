@@ -241,7 +241,7 @@ class BootEnvService(CRUDService):
         """
         Update `id` boot environment name with a new provided valid `name`.
         """
-        await self._get_instance(oid)
+        await self.get_instance(oid)
 
         verrors = ValidationErrors()
         await self._clean_be_name(verrors, 'bootenv_update', data['name'])
@@ -269,7 +269,7 @@ class BootEnvService(CRUDService):
         """
         Delete `id` boot environment. This removes the clone from the system.
         """
-        be = await self._get_instance(oid)
+        be = await self.get_instance(oid)
         try:
             await run(self.BE_TOOL, 'destroy', '-F', be['id'], encoding='utf8', check=True)
         except subprocess.CalledProcessError as cpe:

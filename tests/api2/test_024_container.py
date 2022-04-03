@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import contextlib
 import os
 import pytest
 import sys
 import time
+from middlewared.test.integration.utils import call
 from pytest_dependency import depends
 # from pytest_dependency import depends
 apifolder = os.getcwd()
@@ -29,6 +31,54 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 # Read all the test below only on non-HA
 if not ha:
+    @contextlib.contextmanager
+    def chart_release(app_name, values):
+        call(
+            "chart.release.create", {
+                "catalog": "OFFICIAL",
+                "item": "ix-chart",
+                "release_name": app_name,
+                "values": values,
+            }, job=True
+        )
+        chart_release_data = call("chart.release.get_instance", app_name, {"extra": {"retrieve_resources": True}})
+        for image_tag in chart_release_data["resources"]["container_images"]:
+            while not call("container.image.query", [["repo_tags", "rin", image_tag]]):
+                time.sleep(10)
+
+        assert_images_exist_for_chart_release(chart_release_data)
+
+        try:
+            yield chart_release_data
+        finally:
+            call("chart.release.delete", app_name, job=True)
+
+    def get_num_of_images(images_tags):
+        return call(
+            "container.image.query", [["OR", [["repo_tags", "rin", tag] for tag in images_tags]]], {"count": True}
+        )
+
+    def assert_images_exist_for_chart_release(chart_release_data):
+        found_images = get_num_of_images(chart_release_data["resources"]["container_images"])
+        assert found_images == len(chart_release_data["resources"]["container_images"])
+
+
+    def test_pruning_existing_chart_release_images():
+        with chart_release("prune-test1", {"image": {"repository": "nginx"}}) as chart_release_data:
+            call("container.prune", {"remove_unused_images": True})
+            assert_images_exist_for_chart_release(chart_release_data)
+
+
+    def test_pruning_for_deleted_chart_release_images():
+        with chart_release("prune-test2", {"image": {"repository": "nginx"}}) as chart_release_data:
+            container_images = chart_release_data["resources"]["container_images"]
+            before_deletion_images = get_num_of_images(container_images)
+            assert before_deletion_images != 0
+
+        call("container.prune", {"remove_unused_images": True})
+        assert get_num_of_images(container_images) == 0
+
+
     def test_01_get_container():
         results = GET('/container/')
         assert results.status_code == 200, results.text

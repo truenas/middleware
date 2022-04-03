@@ -2,7 +2,10 @@ import contextlib
 import subprocess
 
 from middlewared.service import CallError, private, Service
-from middlewared.utils import osc
+
+# from parttypes.cc
+SWAP_PARTHEX = '8200'
+ZFS_PARTHEX = 'BF01'
 
 
 class DiskService(Service):
@@ -25,50 +28,31 @@ class DiskService(Service):
         if job.error:
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
 
+        sectorsize = disk_details['sectorsize'] or 512
+
         # Calculate swap size.
-        swapsize = swapgb * 1024 * 1024 * 1024 / (disk_details["sectorsize"] or 512)
+        swapsize = swapgb * 1024 * 1024 * 1024 / sectorsize
         # Round up to nearest whole integral multiple of 128
         # so next partition starts at mutiple of 128.
         swapsize = (int((swapsize + 127) / 128)) * 128
 
-        commands = [] if osc.IS_LINUX else [('gpart', 'create', '-s', 'gpt', f'/dev/{disk}')]
+        alignment = int(4096 / sectorsize)
         if swapsize > 0:
-            if osc.IS_LINUX:
-                commands.extend([
-                    (
-                        'sgdisk', f'-a{int(4096/disk_details["sectorsize"])}',
-                        f'-n1:128:{swapsize}', '-t1:8200', f'/dev/{disk}'
-                    ),
-                    ('sgdisk', '-n2:0:0', '-t2:BF01', f'/dev/{disk}'),
-                ])
-            else:
-                commands.extend([
-                    ('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-swap', '-s', str(swapsize), disk),
-                    ('gpart', 'add', '-a', '4k', '-t', 'freebsd-zfs', disk),
-                ])
+            commands = [
+                ('sgdisk', f'-a{alignment}', f'-n1:128:{swapsize}', f'-t1:{SWAP_PARTHEX}', f'/dev/{disk}'),
+                ('sgdisk', '-n2:0:0', f'-t2:{ZFS_PARTHEX}', f'/dev/{disk}'),
+            ]
         else:
-            if osc.IS_LINUX:
-                commands.append(
-                    ('sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:0', '-t1:BF01', f'/dev/{disk}'),
-                )
-            else:
-                commands.append(('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-zfs', disk))
+            commands = [('sgdisk', f'-a{alignment}', '-n1:0:0', f'-t1:{ZFS_PARTHEX}', f'/dev/{disk}')]
 
-        # Install a dummy boot block so system gives meaningful message if booting
-        # from the wrong disk.
-        if osc.IS_FREEBSD:
-            commands.append(('gpart', 'bootcode', '-b', '/boot/pmbr-datadisk', f'/dev/{disk}'))
-        # TODO: Let's do the same for linux please ^^^
+        # TODO: Install a dummy boot block so system gives meaningful message if booting from a zpool data disk.
 
-        for command in commands:
-            cp = subprocess.run(
-                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
-            )
+        for cmd in commands:
+            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             if cp.returncode != 0:
                 raise CallError(f'Unable to GPT format the disk "{disk}": {cp.stderr}')
 
-        if osc.IS_LINUX:
-            self.middleware.call_sync('device.settle_udev_events')
+        self.middleware.call_sync('device.settle_udev_events')
 
         for partition in self.middleware.call_sync('disk.list_partitions', disk):
             with contextlib.suppress(CallError):

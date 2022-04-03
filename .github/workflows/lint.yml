@@ -20,11 +20,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8
+        pip install flake8 flake8-import-order
     - name: Get current errors
       run: |
         tmpafter=$(mktemp)
-        find src -name \*.py -exec flake8 --ignore=E402,E501,W504 {} + | egrep -v "alembic/versions/|usr/local/share/pysnmp/mibs/" > $tmpafter
+        find src -name \*.py -exec flake8 --application-import-names middlewared --ignore=I101,E402,E501,W504 {} + | egrep -v "alembic/versions/|usr/local/share/pysnmp/mibs/" > $tmpafter
         num_errors_after=`cat $tmpafter | wc -l`
         echo "CURRENT_ERROR_FILE=${tmpafter}" >> $GITHUB_ENV
         echo "CURRENT_ERRORS=${num_errors_after}" >> $GITHUB_ENV
@@ -35,7 +35,7 @@ jobs:
     - name: Get errors from base branch
       run: |
         tmpbefore=$(mktemp)
-        find src -name \*.py -exec flake8 --ignore=E402,E501,W504 {} + | egrep -v "alembic/versions/|usr/local/share/pysnmp/mibs/" > $tmpbefore
+        find src -name \*.py -exec flake8 --application-import-names middlewared --ignore=E402,E501,W504 {} + | egrep -v "alembic/versions/|usr/local/share/pysnmp/mibs/" > $tmpbefore
         num_errors_before=`cat $tmpbefore | wc -l`
         echo "OLD_ERROR_FILE=${tmpbefore}" >> $GITHUB_ENV
         echo "OLD_ERRORS=${num_errors_before}" >> $GITHUB_ENV

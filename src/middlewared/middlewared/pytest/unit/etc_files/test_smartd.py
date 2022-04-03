@@ -162,6 +162,14 @@ def test__get_smartd_schedule_piece__range_with_divisor():
     assert get_smartd_schedule_piece("3-30/10", 1, 31) == "(10|20|30)"
 
 
+def test__get_smartd_schedule_piece__range_without_divisor():
+    assert get_smartd_schedule_piece("10-15", 1, 31) == "(10|11|12|13|14|15)"
+
+
+def test__get_smartd_schedule_piece__malformed_range_without_divisor():
+    assert get_smartd_schedule_piece("10-1", 1, 31) == "(10)"
+
+
 def test__get_smartd_config():
     assert get_smartd_config({
         "smartctl_args": ["/dev/ada0", "-d", "sat"],

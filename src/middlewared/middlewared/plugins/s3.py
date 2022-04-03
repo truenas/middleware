@@ -1,7 +1,7 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
-from middlewared.validators import Match, Range
+from middlewared.validators import Range, Hostname
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 
@@ -15,6 +15,7 @@ class S3Model(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     s3_bindip = sa.Column(sa.String(128), default='0.0.0.0')
     s3_bindport = sa.Column(sa.SmallInteger(), default=9000)
+    s3_console_bindport = sa.Column(sa.SmallInteger(), default=9001)
     s3_access_key = sa.Column(sa.String(128), default='')
     s3_secret_key = sa.Column(sa.EncryptedText(), default='')
     s3_mode = sa.Column(sa.String(120), default="local")
@@ -35,10 +36,12 @@ class S3Service(SystemServiceService):
     ENTRY = Dict(
         's3_entry',
         Str('bindip', required=True),
-        Int('bindport', validators=[Range(min=1, max=65535)], required=True),
+        Int('bindport', validators=[Range(min=1024, max=65535)], required=True),
+        Int('console_bindport', validators=[Range(min=1024, max=65535)], required=True),
         Str('access_key', max_length=20, required=True),
         Str('secret_key', max_length=40, required=True),
         Bool('browser', required=True),
+        Str('tls_server_uri', null=True, required=True),
         Str('storage_path', required=True),
         Int('certificate', null=True, required=True),
         Int('id', required=True),
@@ -66,11 +69,8 @@ class S3Service(SystemServiceService):
 
     @accepts(Patch(
         's3_entry', 's3_update',
-        ('edit', {'name': 'access_key', 'method': lambda x: setattr(
-            x, 'validators', [Match(r'^\w+$', explanation='Should only contain alphanumeric characters')]
-        )}),
-        ('edit', {'name': 'secret_key', 'method': lambda x: setattr(
-            x, 'validators', [Match(r'^\w+$', explanation='Should only contain alphanumeric characters')]
+        ('edit', {'name': 'tls_server_uri', 'method': lambda x: setattr(
+            x, 'validators', [Hostname(explanation='Should be a valid hostname')]
         )}),
         ('rm', {'name': 'id'}),
         ('attr', {'update': True}),

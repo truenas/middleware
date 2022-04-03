@@ -13,16 +13,16 @@
     if not os.path.exists('/var/log/nginx'):
         os.makedirs('/var/log/nginx')
 
-    if osc.IS_LINUX:
-        with contextlib.suppress(OSError):
-            os.unlink('/var/log/nginx/error.log')
+    with contextlib.suppress(OSError):
+        os.unlink('/var/log/nginx/error.log')
 
-        # nginx unconditionally opens this file and never closes, preventing us from unmounting system dataset
-        os.symlink('/dev/null', '/var/log/nginx/error.log')
+    # nginx unconditionally opens this file and never closes, preventing us from unmounting system dataset
+    os.symlink('/dev/null', '/var/log/nginx/error.log')
 
     general_settings = middleware.call_sync('system.general.config')
     cert = general_settings['ui_certificate']
     dhparams_file = middleware.call_sync('certificate.dhparam')
+    x_frame_options = '' if general_settings['ui_x_frame_options'] == 'ALLOW_ALL' else general_settings['ui_x_frame_options']
 
     # We can't afford nginx not running due to `bind(): Can't assign requested address` so we check that listen
     # addresses exist.
@@ -77,24 +77,13 @@
         disabled_ciphers = ':!SHA1:!SHA256:!SHA384'
     else:
         disabled_ciphers = ''
+    display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
 %>
 #
-#    FreeNAS nginx configuration file
+#    TrueNAS nginx configuration file
 #
-
-% if IS_FREEBSD:
-    load_module /usr/local/libexec/nginx/ngx_http_uploadprogress_module.so;
-% endif
-% if IS_LINUX:
-    load_module modules/ngx_http_uploadprogress_module.so;
-% endif
-
-% if IS_FREEBSD:
-    user www www;
-% endif
-% if IS_LINUX:
-    user www-data www-data;
-% endif
+load_module modules/ngx_http_uploadprogress_module.so;
+user www-data www-data;
 worker_processes  1;
 
 events {
@@ -179,10 +168,23 @@ http {
         add_header X-XSS-Protection "1; mode=block" always;
         add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
         add_header Referrer-Policy "strict-origin" always;
-        add_header X-Frame-Options "SAMEORIGIN" always;
+% if x_frame_options:
+        add_header X-Frame-Options "${x_frame_options}" always;
+% endif
 
         location / {
             rewrite ^.* $scheme://$http_host/ui/ redirect;
+        }
+
+        location ${display_device_path} {
+            rewrite ${display_device_path}/(.*) /$1  break;
+            proxy_pass http://${middleware.call_sync('vm.get_haproxy_uri')}/;
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
         }
 
         location /progress {
@@ -199,11 +201,7 @@ http {
         }
 
         location /api/docs/restful/static {
-% if IS_FREEBSD:
-            alias /usr/local/www/swagger-ui/node_modules/swagger-ui-dist;
-% else:
             alias /usr/local/share/swagger-ui-dist;
-% endif
         }
 
         location /ui {
@@ -211,12 +209,7 @@ http {
                 proxy_pass http://127.0.0.1:6000;
             }
             try_files $uri $uri/ /index.html =404;
-% if IS_FREEBSD:
-            alias /usr/local/www/webui;
-% endif
-% if IS_LINUX:
             alias /usr/share/truenas/webui;
-% endif
             add_header Cache-Control "must-revalidate";
             add_header Etag "${system_version}";
             add_header Strict-Transport-Security "max-age=${63072000 if general_settings['ui_httpsredirect'] else 0}; includeSubDomains; preload" always;
@@ -224,7 +217,9 @@ http {
             add_header X-XSS-Protection "1; mode=block" always;
             add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
             add_header Referrer-Policy "strict-origin" always;
-            add_header X-Frame-Options "SAMEORIGIN" always;
+% if x_frame_options:
+            add_header X-Frame-Options "${x_frame_options}" always;
+% endif
         }
 
         location /websocket {

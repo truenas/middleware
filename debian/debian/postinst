@@ -38,6 +38,7 @@ systemctl disable nmbd
 systemctl disable smbd
 systemctl disable winbind
 systemctl disable wsdd
+systemctl disable walinuxagent
 
 # nvidia-persistenced is not respecting vendor preset file so we disable it explicitly
 systemctl disable nvidia-persistenced
@@ -55,6 +56,9 @@ usermod -a -G dialout nut
 # Usbhid-ups driver does not start and needs nut as the group for it's executable to correctly execute NAS-113642
 chown root:nut /lib/nut/usbhid-ups
 
+# We would like to disable docker-compose to prevent people from foot-shooting
+chmod -x /usr/bin/docker-compose
+
 # Copy to /conf/base
 for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf; do
     mkdir -p "$(dirname "/conf/base/$bit")"
@@ -67,8 +71,10 @@ done
 systemctl daemon-reload
 systemctl enable zfs-zed
 
-# We need to mask libvirtd related sockets so that they don't start automatically
+# We need to mask certain services so that they don't start automatically
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
+systemctl mask exim4-base.service exim4.service
+systemctl mask uuidd.service uuidd.socket
 
 systemctl set-default truenas.target
 

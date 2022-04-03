@@ -1,23 +1,17 @@
 import os
-import shutil
-import subprocess
-import tarfile
-import time
 
-from middlewared.service import private, Service
-from middlewared.utils import osc
-
-
-def get_members(tar, prefix):
-    for tarinfo in tar.getmembers():
-        if tarinfo.name.startswith(prefix):
-            tarinfo.name = tarinfo.name[len(prefix):]
-            yield tarinfo
+from middlewared.service import lock, private, Service
+from middlewared.utils.shutil import rmtree_one_filesystem
 
 
 class ReportingService(Service):
+    @private
+    def hostname(self):
+        network_config = self.middleware.call_sync('network.configuration.config')
+        return f"{network_config['hostname_local']}.{network_config['domain']}"
 
     @private
+    @lock('reporting.setup')
     def setup(self):
         systemdatasetconfig = self.middleware.call_sync('systemdataset.config')
         if not systemdatasetconfig['path']:
@@ -37,64 +31,34 @@ class ReportingService(Service):
                 os.unlink(pwd)
         else:
             if os.path.exists(pwd):
-                shutil.move(pwd, f'{pwd}.{time.strftime("%Y%m%d%H%M%S")}')
+                rmtree_one_filesystem(pwd)
         if not os.path.exists(pwd):
             os.makedirs(base_collectd, exist_ok=True)
             os.symlink(rrd_mount, pwd)
 
-        # Migrate legacy RAMDisk
-        persist_file = '/data/rrd_dir.tar.bz2'
-        if os.path.isfile(persist_file):
-            with tarfile.open(persist_file) as tar:
-                if 'collectd/rrd' in tar.getnames():
-                    tar.extractall(pwd, get_members(tar, 'collectd/rrd/'))
-
-            os.unlink('/data/rrd_dir.tar.bz2')
-
-        network_config = self.middleware.call_sync('network.configuration.config')
-        hostname = f"{network_config['hostname_local']}.{network_config['domain']}"
-
-        # Migrate from old version, where `hostname` was a real directory and `localhost` was a symlink.
-        # Skip the case where `hostname` is "localhost", so symlink was not (and is not) needed.
-        if (
-            hostname != 'localhost' and
-            os.path.isdir(os.path.join(pwd, hostname)) and
-            not os.path.islink(os.path.join(pwd, hostname))
-        ):
-            if os.path.exists(os.path.join(pwd, 'localhost')):
-                if os.path.islink(os.path.join(pwd, 'localhost')):
-                    os.unlink(os.path.join(pwd, 'localhost'))
-                else:
-                    # This should not happen, but just in case
-                    shutil.move(
-                        os.path.join(pwd, 'localhost'),
-                        os.path.join(pwd, f'localhost.bak.{time.strftime("%Y%m%d%H%M%S")}')
-                    )
-            shutil.move(os.path.join(pwd, hostname), os.path.join(pwd, 'localhost'))
-
+        # We want to store all our reporting data in `localhost` directory and make `$hostname` directory
+        # (that collectd uses without offering any alternatives) a symlink to `localhost`.
         for item in os.listdir(pwd):
-            if item == 'localhost' or item.startswith('localhost.bak.'):
-                continue
-
             path = os.path.join(pwd, item)
 
-            if os.path.islink(path):
-                # Remove all symlinks (that are stale if hostname was changed)
-                os.unlink(path)
-            elif os.path.isdir(path):
-                # Remove all directories except "localhost" and its backups (that may be erroneously created by
-                # running collectd before this script)
-                subprocess.run(['rm'] + (['--one-file-system', '-rf'] if osc.IS_LINUX else ['-rfx']) + [path])
-            else:
-                os.unlink(path)
+            if item == 'journal':
+                # Keep rrdcached journal
+                continue
 
-        # Create "localhost" directory if it does not exist
-        if not os.path.exists(os.path.join(pwd, 'localhost')):
-            os.makedirs(os.path.join(pwd, 'localhost'))
+            if item == 'localhost':
+                # `localhost` should be a directory
+                if os.path.islink(path):
+                    os.unlink(path)
 
-        # Create "${hostname}" -> "localhost" symlink if necessary
-        if hostname != 'localhost':
-            os.symlink(os.path.join(pwd, 'localhost'), os.path.join(pwd, hostname))
+                continue
+
+            # Remove all symlinks (that are stale if hostname was changed)
+            # Remove all files and directories except "localhost" (that may be erroneously created by
+            # running collectd before this script)
+            rmtree_one_filesystem(path)
+
+        os.makedirs(os.path.join(pwd, 'localhost'), exist_ok=True)
+        os.symlink(os.path.join(pwd, 'localhost'), os.path.join(pwd, self.hostname()))
 
         # Let's return a positive value to indicate that necessary collectd operations were performed successfully
         return True

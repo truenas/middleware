@@ -13,7 +13,8 @@ import humanfriendly
 from middlewared.service_exception import CallError, ErrnoMixin
 
 
-RRD_BASE_PATH = '/var/db/collectd/rrd/localhost'
+RRD_BASE_DIR_PATH = '/var/db/collectd/rrd'
+RRD_BASE_PATH = os.path.join(RRD_BASE_DIR_PATH, 'localhost')
 RE_COLON = re.compile('(.+):(.+)$')
 RE_LAST_UPDATE = re.compile(r'last_update = (\d+)')
 RE_NAME = re.compile(r'(%name_(\d+)%)')
@@ -70,8 +71,14 @@ class RRDBase(object, metaclass=RRDMeta):
 
     def __init__(self, middleware):
         self.middleware = middleware
-        self._base_path = RRD_BASE_PATH
-        self.base_path = os.path.join(self._base_path, self.plugin)
+
+    @property
+    def _base_path(self):
+        return RRD_BASE_PATH
+
+    @property
+    def base_path(self):
+        return os.path.join(self._base_path, self.plugin)
 
     def __repr__(self):
         return f'<RRD:{self.plugin}>'

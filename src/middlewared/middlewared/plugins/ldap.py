@@ -223,7 +223,7 @@ class LDAPClient(Service):
 
         pyldap.set_option(
             pyldap.OPT_X_TLS_CACERTFILE,
-            '/etc/ssl/truenas_cacerts.pem'
+            '/etc/ssl/certs/ca-certificates.crt'
         )
 
         if data['security']['validate_certificates']:
@@ -878,7 +878,7 @@ class LDAPService(TDBWrapConfigService):
             aux_params = [
                 'map group member uniqueMember',
                 f'base passwd cn=users,cn=accounts,{default_naming_context}',
-                f'base group cn=groupss,cn=accounts,{default_naming_context}',
+                f'base group cn=groups,cn=accounts,{default_naming_context}',
             ]
             data.update({
                 'schema': 'RFC2307BIS',

@@ -318,7 +318,7 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.update_tasks")
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int("id"), Patch(
         "replication_create",
@@ -368,7 +368,7 @@ class ReplicationService(CRUDService):
             }
         """
 
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         if new["ssh_credentials"]:
@@ -400,7 +400,7 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.update_tasks")
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(
         Int("id")
@@ -440,7 +440,7 @@ class ReplicationService(CRUDService):
         Run Replication Task of `id`.
         """
         if really_run:
-            task = await self._get_instance(id)
+            task = await self.get_instance(id)
 
             if not task["enabled"]:
                 raise CallError("Task is not enabled")
@@ -462,6 +462,7 @@ class ReplicationService(CRUDService):
             ("rm", {"name": "schedule"}),
             ("rm", {"name": "only_matching_schedule"}),
             ("rm", {"name": "enabled"}),
+            ("add", Bool("exclude_mountpoint_property", default=True)),
             ("add", Bool("only_from_scratch", default=False)),
         ),
     )

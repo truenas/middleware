@@ -1,4 +1,3 @@
-import os
 import pyudev
 
 from middlewared.service import Service
@@ -12,24 +11,30 @@ class ZFSPoolService(Service):
         process_pool = True
 
     def get_disks(self, name):
-        disks = self.middleware.call_sync('zfs.pool.get_devices', name)
-        mapping = {}
-        for dev in filter(
-            lambda d: not d.sys_name.startswith('sr') and d.get('DEVTYPE') in ('disk', 'partition'),
-            pyudev.Context().list_devices(subsystem='block')
-        ):
-            if dev['DEVTYPE'] == 'disk':
-                mapping[dev.sys_name] = dev.sys_name
-            elif dev.get('ID_PART_ENTRY_UUID'):
-                parent = dev.find_parent('block')
-                mapping[dev.sys_name] = parent.sys_name
-                mapping[os.path.join('disk/by-partuuid', dev['ID_PART_ENTRY_UUID'])] = parent.sys_name
+        sys_devices = {}
+        for dev in pyudev.Context().list_devices(subsystem='block'):
+            if dev.sys_name.startswith('sr') or dev.properties['DEVTYPE'] not in ('disk', 'partition'):
+                continue
 
-        pool_disks = []
-        for dev in disks:
-            # dev can be partition name ( sdb1/sda2 etc ) or raw uuid ( disk/by-partuuid/uuid )
-            if dev in mapping:
-                pool_disks.append(mapping[dev])
-            else:
-                self.logger.debug(f'Could not find disk for {dev}')
-        return pool_disks
+            # this is "sda/sda1/sda2/sda3" etc
+            sys_devices[dev.sys_name] = dev.sys_name
+
+            # zpool could have been created using the raw partition
+            # (i.e. "sda3"). This happens on the "boot-pool" for example.
+            # We need to get the parent device name when this occurs.
+            if dev.sys_number and (parent := dev.find_parent('block')):
+                sys_devices[dev.sys_name] = parent.sys_name
+
+            # these are the the various by-{partuuid/label/id/path} etc labels
+            if dev.properties['DEVTYPE'] == 'partition':
+                for link in (dev.properties['DEVLINKS'] or '').split():
+                    sys_devices[link.removeprefix('/dev/')] = dev.find_parent('block').sys_name
+
+        mapping = {name: set()}
+        for disk in self.middleware.call_sync('zfs.pool.get_devices', name):
+            try:
+                mapping[name].add(sys_devices[disk])
+            except KeyError:
+                continue
+
+        return list(mapping[name])

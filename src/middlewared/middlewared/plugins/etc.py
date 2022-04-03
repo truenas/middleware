@@ -1,23 +1,37 @@
 from mako import exceptions
-from mako.lookup import TemplateLookup
 from middlewared.service import CallError, Service
 from middlewared.utils import osc
 from middlewared.utils.io import write_if_changed
+from middlewared.utils.mako import get_template
+
 
 import asyncio
 from collections import defaultdict
-from pathlib import Path
+from contextlib import suppress
 import grp
 import imp
 import os
 import pwd
+import stat
+import enum
+
+DEFAULT_ETC_PERMS = 0o644
 
 
-UPS_GROUP = 'nut' if osc.IS_LINUX else 'uucp'
-PAM_PATH = Path(f'{Path(__file__).parent.parent}/etc_files/pam.d')
-LINUX_PAM_FILES = set(PAM_PATH.glob('common*'))
-FREEBSD_PAM_FILES = set(PAM_PATH.iterdir()) - LINUX_PAM_FILES
-PAM_FILES = LINUX_PAM_FILES if osc.IS_LINUX else FREEBSD_PAM_FILES
+class EtcUSR(enum.IntEnum):
+    ROOT = 0
+    NSLCD = 110
+    MINIO = 473
+    WEBDAV = 666
+
+
+class EtcGRP(enum.IntEnum):
+    ROOT = 0
+    SHADOW = 42
+    NSLCD = 115
+    NUT = 126
+    MINIO = 473
+    WEBDAV = 666
 
 
 class FileShouldNotExist(Exception):
@@ -29,19 +43,12 @@ class MakoRenderer(object):
     def __init__(self, service):
         self.service = service
 
-    async def render(self, path):
+    async def render(self, path, ctx):
         try:
             # Mako is not asyncio friendly so run it within a thread
             def do():
-                # Split the path into template name and directory
-                name = os.path.basename(path) + ".mako"
-                dir = os.path.dirname(path)
-
-                # This will be where we search for templates
-                lookup = TemplateLookup(directories=[dir], module_directory="/tmp/mako/%s" % dir)
-
                 # Get the template by its relative path
-                tmpl = lookup.get_template(name)
+                tmpl = get_template(os.path.relpath(path, os.path.dirname(os.path.dirname(__file__))) + ".mako")
 
                 # Render the template
                 return tmpl.render(
@@ -50,6 +57,7 @@ class MakoRenderer(object):
                     FileShouldNotExist=FileShouldNotExist,
                     IS_FREEBSD=osc.IS_FREEBSD,
                     IS_LINUX=osc.IS_LINUX,
+                    render_ctx=ctx
                 )
 
             return await self.service.middleware.run_in_thread(do)
@@ -67,30 +75,37 @@ class PyRenderer(object):
     def __init__(self, service):
         self.service = service
 
-    async def render(self, path):
+    async def render(self, path, ctx):
         name = os.path.basename(path)
         find = imp.find_module(name, [os.path.dirname(path)])
         mod = imp.load_module(name, *find)
+        args = [self.service, self.service.middleware]
+        if ctx is not None:
+            args.append(ctx)
+
         if asyncio.iscoroutinefunction(mod.render):
-            return await mod.render(self.service, self.service.middleware)
+            return await mod.render(*args)
         else:
-            return await self.service.middleware.run_in_thread(
-                mod.render, self.service, self.service.middleware,
-            )
+            return await self.service.middleware.run_in_thread(mod.render, *args)
 
 
 class EtcService(Service):
 
-    APACHE_DIR = 'local/apache24' if osc.IS_FREEBSD else 'local/apache2'
-
     GROUPS = {
-        'user': [
-            {'type': 'mako', 'path': 'local/smbusername.map'},
-            {'type': 'mako', 'path': 'group'},
-            {'type': 'mako', 'path': 'master.passwd' if osc.IS_FREEBSD else 'passwd', 'local_path': 'master.passwd'},
-            {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
-            {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': 'shadow', 'mode': 0o0640},
-        ],
+        'user': {
+            'ctx': [
+                {'method': 'user.query'},
+                {'method': 'group.query'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'local/smbusername.map'},
+                {'type': 'mako', 'path': 'group'},
+                {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
+                {'type': 'mako', 'path': 'shadow', 'group': EtcGRP.SHADOW, 'mode': 0o0640},
+                {'type': 'mako', 'path': 'local/sudoers'},
+                {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'}
+            ]
+        },
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure', 'checkpoint_linux': 'post_init'}
@@ -101,41 +116,58 @@ class EtcService(Service):
         ],
         'cron': [
             {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
-            {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
         ],
         'grub': [
-            {'type': 'py', 'path': 'grub', 'platform': 'Linux', 'checkpoint': 'post_init'},
+            {'type': 'py', 'path': 'grub', 'checkpoint': 'post_init'},
         ],
         'keyboard': [
-            {'type': 'mako', 'path': 'default/keyboard', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/keyboard'},
+            {'type': 'mako', 'path': 'vconsole.conf'},
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
             {'type': 'mako', 'path': 'local/nslcd.conf',
-                'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
+                'owner': EtcUSR.NSLCD, 'group': EtcGRP.NSLCD, 'mode': 0o0400},
         ],
-        'network': [
-            {'type': 'mako', 'path': 'dhclient.conf', 'platform': 'FreeBSD'},
+        'dhclient': [
+            {'type': 'mako', 'path': 'dhcp/dhclient.conf', 'local_path': 'dhclient.conf'},
         ],
-        'nfsd': [
-            {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
-            {'type': 'mako', 'path': 'default/nfs-common', 'platform': 'Linux'},
-            {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'},
-        ],
-        'pam': [
-            {'type': 'mako', 'path': os.path.join('pam.d', f.name[:-5])}
-            for f in PAM_FILES
-        ],
+        'nfsd': {
+            'ctx': [
+                {'method': 'sharing.nfs.query', 'args': [[("enabled", "=", True), ("locked", "=", False)]]},
+                {'method': 'nfs.config'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'default/nfs-common'},
+                {'type': 'mako', 'path': 'default/nfs-kernel-server'},
+                {'type': 'mako', 'path': 'default/rpcbind'},
+                {'type': 'mako', 'path': 'idmapd.conf'},
+                {'type': 'mako', 'path': 'exports', 'checkpoint': 'interface_sync'},
+            ]
+        },
+        'pam': {
+            'ctx': [
+                {'method': 'activedirectory.config'},
+                {'method': 'ldap.config'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'pam.d/common-account'},
+                {'type': 'mako', 'path': 'pam.d/common-auth'},
+                {'type': 'mako', 'path': 'pam.d/common-password'},
+                {'type': 'mako', 'path': 'pam.d/common-session-noninteractive'},
+                {'type': 'mako', 'path': 'pam.d/common-session'},
+            ]
+        },
         'ftp': [
-            {'type': 'mako', 'path': 'local/proftpd.conf' if osc.IS_FREEBSD else 'proftpd/proftpd.conf',
+            {'type': 'mako', 'path': 'proftpd/proftpd.conf',
              'local_path': 'local/proftpd.conf'},
             {'type': 'py', 'path': 'local/proftpd'},
         ],
         'kdump': [
-            {'type': 'mako', 'path': 'default/kdump-tools', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/kdump-tools'},
         ],
         'rc': [
-            {'type': 'py', 'path': 'systemd', 'platform': 'Linux'},
+            {'type': 'py', 'path': 'systemd'},
         ],
         'sysctl': [
             {'type': 'py', 'path': 'sysctl_config'},
@@ -151,66 +183,67 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'}
+            {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import'}
         ],
-        'webdav': [
-            {
-                'type': 'mako',
-                'local_path': 'local/apache24/httpd.conf',
-                'path': f'{APACHE_DIR}/{"httpd" if osc.IS_FREEBSD else "apache2"}.conf',
-            },
-            {
-                'type': 'mako',
-                'local_path': 'local/apache24/Includes/webdav.conf',
-                'path': f'{APACHE_DIR}/Includes/webdav.conf',
-                'checkpoint': 'pool_import'
-            },
-            {
-                'type': 'py',
-                'local_path': 'local/apache24/webdav_config',
-                'path': f'{APACHE_DIR}/webdav_config',
-                'checkpoint': 'pool_import',
-            },
-        ],
+        'webdav': {
+            'ctx': [
+                {'method': 'sharing.webdav.query', 'args': [[("enabled", "=", True)]]},
+                {'method': 'webdav.config'},
+            ],
+            'entries': [
+                {
+                    'type': 'mako',
+                    'local_path': 'local/apache24/httpd.conf',
+                    'path': 'local/apache2/apache2.conf',
+                },
+                {
+                    'type': 'mako',
+                    'local_path': 'local/apache24/Includes/webdav.conf',
+                    'path': 'local/apache2/Includes/webdav.conf',
+                    'checkpoint': 'pool_import'
+                },
+                {
+                    'type': 'py',
+                    'local_path': 'local/apache24/webdav_config',
+                    'path': 'local/apache2/webdav_config',
+                    'checkpoint': 'pool_import',
+                },
+            ]
+        },
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf', 'checkpoint': 'interface_sync'}
         ],
-        'pf': [
-            {'type': 'py', 'path': 'pf', 'platform': 'FreeBSD'},
+        'haproxy': [
+            {'type': 'mako', 'path': 'haproxy/haproxy.cfg', 'checkpoint': 'interface_sync'},
         ],
         'glusterd': [
             {
                 'type': 'mako',
                 'path': 'glusterfs/glusterd.vol',
                 'local_path': 'glusterd.conf',
-                'user': 'root', 'group': 'root', 'mode': 0o644,
+                'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
                 'checkpoint': 'pool_import',
-                'platform': 'Linux',
             },
         ],
         'keepalived': [
             {
                 'type': 'mako',
                 'path': 'keepalived/keepalived.conf',
-                'user': 'root', 'group': 'root', 'mode': 0o644,
+                'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
                 'local_path': 'keepalived.conf',
-                'platform': 'Linux',
             },
 
         ],
         'collectd': [
             {
-                'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
+                'type': 'mako', 'path': 'collectd/collectd.conf',
                 'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
             },
-            {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'default/rrdcached', 'checkpoint': 'pool_import'},
         ],
         'docker': [
             {'type': 'mako', 'path': 'systemd/system/docker.service.d/http-proxy.conf', 'checkpoint': None},
-            {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': None},
-        ],
-        'inetd': [
-            {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
+            {'type': 'py', 'path': 'docker', 'checkpoint': None},
         ],
         'motd': [
             {'type': 'mako', 'path': 'motd'}
@@ -219,19 +252,22 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': None},
             {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': None}
         ],
+        'nscd': [
+            {'type': 'mako', 'path': 'nscd.conf'},
+        ],
         'wsd': [
             {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'post_init'},
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
-            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
             {
-                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root',
-                'group': UPS_GROUP, 'mode': 0o440, 'platform': 'Linux',
+                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': EtcUSR.ROOT,
+                'group': EtcGRP.NUT, 'mode': 0o440
             },
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
@@ -251,31 +287,32 @@ class EtcService(Service):
                 'path': 'ctdb/ctdb.conf',
                 'checkpoint': 'pool_import',
                 'local_path': 'ctdb.conf',
-                'platform': 'Linux',
             },
         ],
         'snmpd': [
-            {'type': 'mako', 'path': 'local/snmpd.conf' if osc.IS_FREEBSD else 'snmp/snmpd.conf',
-             'local_path': 'local/snmpd.conf'},
-        ],
-        'sudoers': [
-            {'type': 'mako', 'path': 'local/sudoers'}
+            {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},
         ],
         'syslogd': [
             {'type': 'mako', 'path': 'default/syslog-ng', 'checkpoint': 'pool_import'},
             {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
         ],
-        'hostname': [
-            {'type': 'mako', 'path': 'hosts', 'mode': 0o644},
-            {'type': 'py', 'path': 'hostname', 'checkpoint': 'pre_interface_sync'},
-        ],
-        'ssh': [
-            {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
-            {'type': 'mako', 'path': 'pam.d/sshd', 'platform': 'FreeBSD'},
-            {'type': 'mako', 'path': 'pam.d/sshd', 'local_path': 'pam.d/sshd_linux', 'platform': 'Linux'},
-            {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
-            {'type': 'py', 'path': 'local/ssh/config'},
-        ],
+        'hosts': [{'type': 'mako', 'path': 'hosts', 'mode': 0o644, 'checkpoint': 'pre_interface_sync'}],
+        'hostname': [{'type': 'py', 'path': 'hostname', 'checkpoint': 'pre_interface_sync'}],
+        'ssh': {
+            "ctx": [
+                {'method': 'ssh.config'},
+                {'method': 'activedirectory.config'},
+                {'method': 'ldap.config'},
+                {'method': 'auth.twofactor.config'},
+                {'method': 'interface.query'},
+            ],
+            "entries": [
+                {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
+                {'type': 'mako', 'path': 'pam.d/sshd', 'local_path': 'pam.d/sshd_linux'},
+                {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
+                {'type': 'py', 'path': 'local/ssh/config'},
+            ]
+        },
         'ntpd': [
             {'type': 'mako', 'path': 'ntp.conf'}
         ],
@@ -285,45 +322,39 @@ class EtcService(Service):
         'inadyn': [
             {'type': 'mako', 'path': 'local/inadyn.conf'}
         ],
-        'aliases': [
-            {'type': 'mako', 'path': 'mail/aliases' if osc.IS_FREEBSD else 'aliases', 'local_path': 'mail/aliases'}
-        ],
-        'ttys': [
-            {'type': 'py', 'path': 'ttys_config', 'checkpoint_linux': None}
-        ],
         'openvpn_server': [
             {
                 'type': 'mako', 'local_path': 'local/openvpn/server/openvpn_server.conf',
-                'path': f'local/openvpn/server/{"openvpn_" if osc.IS_FREEBSD else ""}server.conf'
+                'path': 'local/openvpn/server/server.conf'
             }
         ],
         'openvpn_client': [
             {
                 'type': 'mako', 'local_path': 'local/openvpn/client/openvpn_client.conf',
-                'path': f'local/openvpn/client/{"openvpn_" if osc.IS_FREEBSD else ""}client.conf'
+                'path': 'local/openvpn/client/client.conf'
             }
         ],
         'kmip': [
             {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
         ],
         'tftp': [
-            {'type': 'mako', 'path': 'default/tftpd-hpa', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/tftpd-hpa'},
         ],
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/wg0.conf'}
         ],
         'k3s': [
-            {'type': 'py', 'path': 'rancher/k3s/flags', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'py', 'path': 'rancher/node/node_passwd', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'rancher/k3s/flags', 'checkpoint': None},
+            {'type': 'py', 'path': 'rancher/node/node_passwd', 'checkpoint': None},
         ],
         'cni': [
-            {'type': 'py', 'path': 'cni/multus', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'py', 'path': 'cni/kube-router', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'mako', 'path': 'cni/net.d/multus.d/multus.kubeconfig', 'platform': 'Linux', 'checkpoint': None},
-            {'type': 'mako', 'path': 'cni/net.d/kube-router.d/kubeconfig', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'cni/multus', 'checkpoint': None},
+            {'type': 'py', 'path': 'cni/kube-router', 'checkpoint': None},
+            {'type': 'mako', 'path': 'cni/net.d/multus.d/multus.kubeconfig', 'checkpoint': None},
+            {'type': 'mako', 'path': 'cni/net.d/kube-router.d/kubeconfig', 'checkpoint': None},
         ],
         'libvirt': [
-            {'type': 'py', 'path': 'libvirt', 'platform': 'Linux', 'checkpoint': None},
+            {'type': 'py', 'path': 'libvirt', 'checkpoint': None},
         ],
     }
     LOCKS = defaultdict(asyncio.Lock)
@@ -343,13 +374,80 @@ class EtcService(Service):
             'py': PyRenderer(self),
         }
 
+    async def gather_ctx(self, methods):
+        rv = {}
+        for m in methods:
+            method = m['method']
+            args = m.get('args', [])
+            rv[method] = await self.middleware.call(method, *args)
+
+        return rv
+
+    def set_etc_file_perms(self, fd, entry):
+        perm_changed = False
+        uid = entry.get("owner", -1)
+        gid = entry.get("group", -1)
+        mode = entry.get("mode", DEFAULT_ETC_PERMS)
+
+        if uid == -1 and gid == -1 and mode is None:
+            return perm_changed
+
+        if isinstance(uid, str):
+            uid = pwd.getpwnam(entry["owner"]).pw_uid
+
+        if isinstance(gid, str):
+            gid = grp.getgrnam(entry["group"]).gr_gid
+
+        st = os.fstat(fd)
+        uid_to_set = -1
+        gid_to_set = -1
+
+        if uid != -1 and st.st_uid != uid:
+            uid_to_set = uid
+
+        if gid != -1 and st.st_gid != gid:
+            gid_to_set = gid
+
+        if gid_to_set != -1 or uid_to_set != -1:
+            os.fchown(fd, uid_to_set, gid_to_set)
+            perm_changed = True
+
+        if mode and stat.S_IMODE(st.st_mode) != mode:
+            os.fchmod(fd, mode)
+            perm_changed = True
+
+        return perm_changed
+
+    def make_changes(self, full_path, entry, rendered):
+        mode = entry.get('mode', DEFAULT_ETC_PERMS)
+
+        def opener(path, flags):
+            return os.open(path, os.O_CREAT | os.O_RDWR, mode=mode)
+
+        outfile_dirname = os.path.dirname(full_path)
+        if outfile_dirname != '/etc':
+            os.makedirs(outfile_dirname, exist_ok=True)
+
+        with open(full_path, "w", opener=opener) as f:
+            perms_changed = self.set_etc_file_perms(f.fileno(), entry)
+            contents_changed = write_if_changed(f.fileno(), rendered)
+
+        return perms_changed or contents_changed
+
     async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
 
         async with self.LOCKS[name]:
-            for entry in group:
+            if isinstance(group, dict):
+                ctx = await self.gather_ctx(group['ctx'])
+                entries = group['entries']
+            else:
+                ctx = None
+                entries = group
+
+            for entry in entries:
                 renderer = self._renderers.get(entry['type'])
                 if renderer is None:
                     raise ValueError(f'Unknown type: {entry["type"]}')
@@ -368,19 +466,17 @@ class EtcService(Service):
 
                 path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])
                 entry_path = entry['path']
-                if osc.IS_LINUX:
-                    if entry_path.startswith('local/'):
-                        entry_path = entry_path[len('local/'):]
+                if entry_path.startswith('local/'):
+                    entry_path = entry_path[len('local/'):]
                 outfile = f'/etc/{entry_path}'
+
                 try:
-                    rendered = await renderer.render(path)
+                    rendered = await renderer.render(path, ctx)
                 except FileShouldNotExist:
                     self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
 
-                    try:
-                        os.unlink(outfile)
-                    except FileNotFoundError:
-                        pass
+                    with suppress(FileNotFoundError):
+                        await self.middleware.run_in_thread(os.unlink, outfile)
 
                     continue
                 except Exception:
@@ -390,40 +486,7 @@ class EtcService(Service):
                 if rendered is None:
                     continue
 
-                outfile_dirname = os.path.dirname(outfile)
-                if not os.path.exists(outfile_dirname):
-                    os.makedirs(outfile_dirname)
-
-                changes = await self.middleware.run_in_thread(
-                    write_if_changed, outfile, rendered,
-                )
-
-                # If ownership or permissions are specified, see if
-                # they need to be changed.
-                st = os.stat(outfile)
-                if 'owner' in entry and entry['owner']:
-                    try:
-                        pw = await self.middleware.run_in_thread(pwd.getpwnam, entry['owner'])
-                        if st.st_uid != pw.pw_uid:
-                            os.chown(outfile, pw.pw_uid, -1)
-                            changes = True
-                    except Exception:
-                        pass
-                if 'group' in entry and entry['group']:
-                    try:
-                        gr = await self.middleware.run_in_thread(grp.getgrnam, entry['group'])
-                        if st.st_gid != gr.gr_gid:
-                            os.chown(outfile, -1, gr.gr_gid)
-                            changes = True
-                    except Exception:
-                        pass
-                if 'mode' in entry and entry['mode']:
-                    try:
-                        if (st.st_mode & 0x3FF) != entry['mode']:
-                            os.chmod(outfile, entry['mode'])
-                            changes = True
-                    except Exception:
-                        pass
+                changes = await self.middleware.run_in_thread(self.make_changes, outfile, entry, rendered)
 
                 if not changes:
                     self.logger.debug(f'No new changes for {outfile}')

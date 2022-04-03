@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.utils import osc, run
+from middlewared.utils import osc
 
 from middlewared.plugins.service_.services.base import ServiceState, ServiceInterface, SimpleService
 from middlewared.plugins.service_.services.base_freebsd import freebsd_service
@@ -196,21 +196,6 @@ class SslService(PseudoServiceBase):
         pass
 
 
-class SysconsService(SimpleService):
-    name = "syscons"
-
-    etc = ["rc"] if osc.IS_FREEBSD else ["keyboard"]
-    restartable = True
-
-    freebsd_rc = "syscons"
-
-    async def get_state(self):
-        return ServiceState(True, [])
-
-    async def _restart_linux(self):
-        await run(["setupcon"], check=False)
-
-
 class SysctlService(PseudoServiceBase):
     name = "sysctl"
 
@@ -258,29 +243,13 @@ class TimeservicesService(PseudoServiceBase):
         await self.middleware.call("core.environ_update", {"TZ": settings["stg_timezone"]})
 
 
-class TtysService(PseudoServiceBase):
-    name = "ttys"
-
-    etc = ["ttys"]
-
-    async def start(self):
-        pass
-
-
 class DSCacheService(PseudoServiceBase):
     name = "dscache"
 
     async def start(self):
-        ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
-        if ldap_enabled:
-            await systemd_unit("nscd", "restart")
-        else:
-            await systemd_unit("nscd", "stop")
-
         await self.middleware.call('dscache.refresh')
 
     async def stop(self):
-        await systemd_unit("nscd", "stop")
         await self.middleware.call('idmap.clear_idmap_cache')
         await self.middleware.call('dscache.refresh')
 
@@ -288,7 +257,7 @@ class DSCacheService(PseudoServiceBase):
 class UserService(PseudoServiceBase):
     name = "user"
 
-    etc = ["user", "aliases", "sudoers"]
+    etc = ["user"]
     reloadable = True
 
     async def reload(self):

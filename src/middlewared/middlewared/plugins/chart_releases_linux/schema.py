@@ -1,9 +1,12 @@
+import itertools
+
 from copy import deepcopy
 from itertools import chain
+from typing import Union
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.schema import Bool, Cron, Dict, HostPath, Int, IPAddr, List, NOT_PROVIDED, Path, Str
-from middlewared.validators import Match, Range
+from middlewared.schema import Bool, Cron, Dict, HostPath, Int, IPAddr, List, NOT_PROVIDED, Path, Str, URI
+from middlewared.validators import Match, Range, validate_schema
 
 
 mapping = {
@@ -16,7 +19,35 @@ mapping = {
     'dict': Dict,
     'ipaddr': IPAddr,
     'cron': Cron,
+    'uri': URI,
 }
+
+
+def construct_schema(
+    item_version_details: dict, new_values: dict, update: bool, old_values: Union[dict, object] = NOT_PROVIDED
+) -> dict:
+    schema_name = f'chart_release_{"update" if update else "create"}'
+    attrs = list(itertools.chain.from_iterable(
+        get_schema(q, update, old_values) for q in item_version_details['schema']['questions']
+    ))
+    dict_obj = update_conditional_defaults(
+        Dict(schema_name, *attrs, update=update, additional_attrs=True), {
+            'schema': {'attrs': item_version_details['schema']['questions']}
+        }
+    )
+
+    verrors = ValidationErrors()
+    verrors.add_child('values', validate_schema(
+        attrs, new_values, True, dict_kwargs={
+            'conditional_defaults': dict_obj.conditional_defaults, 'update': update,
+        }
+    ))
+    return {
+        'verrors': verrors,
+        'new_values': new_values,
+        'dict_obj': dict_obj,
+        'schema_name': schema_name,
+    }
 
 
 def update_conditional_defaults(dict_obj, variable_details):

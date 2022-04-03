@@ -15,17 +15,15 @@ def test__sharing_nfs_service__validate_hosts_and_networks__host_is_32_network()
         SharingNFSService(middleware).validate_hosts_and_networks(
             [
                 {
-                    "paths": ["/mnt/data/a"],
+                    "path": "/mnt/data/a",
                     "hosts": ["192.168.0.1"],
                     "networks": [],
-                    "alldirs": False,
                 },
             ],
             {
-                "paths": ["/mnt/data/b"],
+                "path": "/mnt/data/b",
                 "hosts": ["192.168.0.1"],
                 "networks": [],
-                "alldirs": False,
             },
             "sharingnfs_update",
             verrors,
@@ -49,17 +47,15 @@ def test__sharing_nfs_service__validate_hosts_and_networks__dataset_is_already_e
         SharingNFSService(middleware).validate_hosts_and_networks(
             [
                 {
-                    "paths": ["/mnt/data/a"],
+                    "path": "/mnt/data/a",
                     "hosts": [],
                     "networks": ["192.168.0.0/24"],
-                    "alldirs": False,
                 },
             ],
             {
-                "paths": ["/mnt/data/b"],
+                "path": "/mnt/data/b",
                 "hosts": [],
                 "networks": ["192.168.0.0/24"],
-                "alldirs": False,
             },
             "sharingnfs_update",
             verrors,
@@ -83,17 +79,15 @@ def test__sharing_nfs_service__validate_hosts_and_networks__fs_is_already_export
         SharingNFSService(middleware).validate_hosts_and_networks(
             [
                 {
-                    "paths": ["/mnt/data/a"],
+                    "path": "/mnt/data/a",
                     "hosts": ["192.168.0.1"],
                     "networks": [],
-                    "alldirs": False,
                 },
             ],
             {
-                "paths": ["/mnt/data/b"],
+                "path": "/mnt/data/b",
                 "hosts": [],
                 "networks": [],
-                "alldirs": False,
             },
             "sharingnfs_update",
             verrors,

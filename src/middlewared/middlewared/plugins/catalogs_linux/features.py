@@ -16,14 +16,17 @@ SUPPORTED_FEATURES = {
     'definitions/nodeIP',
     'validations/containerImage',
     'validations/nodePort',
+    'validations/hostPath',
+    'validations/lockedHostPath',
+    'validations/hostPathAttachments',
 }
 
 
-class CatalogService(Service):
+def version_supported(version_details: dict) -> bool:
+    return not bool(set(version_details['required_features']) - SUPPORTED_FEATURES)
 
-    @private
-    async def version_supported(self, version_details):
-        return not bool(set(version_details['required_features']) - SUPPORTED_FEATURES)
+
+class CatalogService(Service):
 
     @private
     def get_feature_map(self, cache=True):

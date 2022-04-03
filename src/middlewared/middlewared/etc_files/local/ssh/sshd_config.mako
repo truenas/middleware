@@ -1,10 +1,20 @@
 <%
 	import os
 	import ipaddress
+	import stat
+        from middlewared.utils import filter_list
 
-	ssh_config = middleware.call_sync('ssh.config')
-	if not os.path.exists('/root/.ssh'):
-		os.makedirs('/root/.ssh')
+	ssh_config = render_ctx['ssh.config']
+
+	os.makedirs('/root/.ssh', mode=0o700, exist_ok=True)
+	for p in ['/root/.ssh', '/root']:
+		st = os.stat(p)
+		if stat.S_IMODE(st.st_mode) != 0o700:
+			middleware.logger.debug("%s: adjusting permissions to 0o700", p)
+			os.chmod(p, 0o700)
+		if st.st_uid != 0 or st.st_gid != 0:
+			middleware.logger.debug("%s: changing owner to root:root", p)
+			os.chown(p, 0, 0)
 
 	if not ssh_config['sftp_log_level']:
 		ssh_config['sftp_log_level'] = 'ERROR'
@@ -12,7 +22,7 @@
 	if not ssh_config['sftp_log_facility']:
 		ssh_config['sftp_log_facility'] = 'AUTH'
 
-	ifaces = middleware.call_sync('interface.query', [['name', 'in', ssh_config['bindiface']]])
+	ifaces = filter_list(render_ctx['interface.query'], [['name', 'in', ssh_config['bindiface']]])
 	bind_ifaces = []
 	for iface in ifaces:
 		for alias in iface.get('state', {}).get('aliases', []):
@@ -25,15 +35,18 @@
 	if bind_ifaces:
 		bind_ifaces.insert(0, '127.0.0.1')
 
-	twofactor_auth = middleware.call_sync('auth.twofactor.config')
+	twofactor_auth = render_ctx['auth.twofactor.config']
 	twofactor_enabled = twofactor_auth['enabled'] and twofactor_auth['services']['ssh']
 	ad_allow_pam = False
-	ad = middleware.call_sync("activedirectory.config")
+	ldap_enabled = False
+	ad = render_ctx["activedirectory.config"]
 	if ad['enable'] and not ad['restrict_pam']:
 		ad_allow_pam = True
+	if not ad['enable']:
+		ldap_enabled = render_ctx["ldap.config"]["enable"]
 
 %>\
-Subsystem	sftp	${"internal-sftp" if IS_LINUX else "/usr/libexec/sftp-server"} -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
+Subsystem	sftp	internal-sftp -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
 % if 'Protocol' not in ssh_config['options']:
 Protocol 2
 % endif
@@ -87,15 +100,11 @@ GSSAPIAuthentication yes
 % endif
 PubkeyAuthentication yes
 ${ssh_config['options']}
-% if twofactor_enabled or ad_allow_pam:
+% if twofactor_enabled or ad_allow_pam or ldap_enabled:
 # These are forced to be enabled with 2FA
 UsePAM yes
 ChallengeResponseAuthentication yes
-    % if IS_LINUX:
 ## We want to set this to no because in linux we have pam_motd being used as well when we use pam_oath.so resulting in duplicate motd's
 PrintMotd no
-    % endif
 % endif
-% if IS_LINUX:
 SetEnv LC_ALL=C.UTF-8
-% endif

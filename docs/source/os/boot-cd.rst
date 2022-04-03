@@ -16,6 +16,12 @@ already-built GRUB EFI images in `debian-cd_info.tar.gz`. Several smaller change
 `grub-mkrescue`-generated image to ensure it works with Rufus. See `scale-build repo
 <https://github.com/truenas/scale-build>`_ ISO module for more information.
 
+Boot CD has a `mount-cd service
+<https://github.com/truenas/scale-build/blob/master/conf/cd-files/lib/systemd/system/mount-cd.service>`_
+that discovers and mounts installation media at `/cdrom`. Root user autologin is
+configured at tty0 and also serial tty. `.bash_profile` launches `truenas-install
+<https://github.com/truenas/truenas-installer/blob/master/usr/sbin/truenas-install>`_ script.
+
 Testing boot CD
 ---------------
 

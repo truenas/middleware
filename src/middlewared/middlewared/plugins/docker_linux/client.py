@@ -52,7 +52,8 @@ def parse_auth_header(header: str):
     if len(parts) > 1:
         for part in parts[1].split(','):
             key, value = part.split('=')
-            results[adapter[key]] = value.strip('"')
+            if key in adapter:
+                results[adapter[key]] = value.strip('"')
     return results
 
 

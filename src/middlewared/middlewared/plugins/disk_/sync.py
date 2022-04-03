@@ -66,17 +66,22 @@ class DiskService(Service, ServiceChangeMixin):
 
         sys_disks = await self.middleware.call('device.get_disks')
 
-        # output logging information to middlewared.log in case we sync disks
-        # when not all the disks have been resolved
-        log_info = {
-            ok: {
-                ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
-            } for ok, ov in sys_disks.items()
-        }
-        self.logger.info('Found disks: %r', log_info)
+        number_of_disks = len(sys_disks)
+        if number_of_disks <= 25:
+            # output logging information to middlewared.log in case we sync disks
+            # when not all the disks have been resolved
+            log_info = {
+                ok: {
+                    ik: iv for ik, iv in ov.items() if ik in ('lunid', 'serial')
+                } for ok, ov in sys_disks.items()
+            }
+            self.logger.info('Found disks: %r', log_info)
+        else:
+            self.logger.info('Found %d disks', number_of_disks)
 
         seen_disks = {}
-        changed = False
+        changed = set()
+        deleted = set()
         encs = await self.middleware.call('enclosure.query')
         for disk in (
             await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
@@ -92,16 +97,20 @@ class DiskService(Service, ServiceChangeMixin):
                 # If we cant translate the identifier to a device, give up
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
-                    await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
-                    changed = True
+                    await self.middleware.call(
+                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
+                    )
+                    changed.add(disk['disk_identifier'])
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
                     if disk['disk_kmip_uid']:
                         asyncio.ensure_future(self.middleware.call(
                             'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uid']
                         ))
-                    await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
-                    changed = True
+                    await self.middleware.call(
+                        'datastore.delete', 'storage.disk', disk['disk_identifier'], {'send_events': False}
+                    )
+                    deleted.add(disk['disk_identifier'])
                 continue
             else:
                 disk['disk_expiretime'] = None
@@ -117,8 +126,10 @@ class DiskService(Service, ServiceChangeMixin):
             # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
             # when lots of drives are present
             if self._disk_changed(disk, original_disk):
-                await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
-                changed = True
+                await self.middleware.call(
+                    'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
+                )
+                changed.add(disk['disk_identifier'])
 
             try:
                 await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], encs)
@@ -128,15 +139,16 @@ class DiskService(Service, ServiceChangeMixin):
 
             seen_disks[name] = disk
 
+        qs = None
         for name in sys_disks:
             if name not in seen_disks:
                 disk_identifier = await self.middleware.call('disk.device_to_identifier', name, sys_disks)
-                qs = await self.middleware.call(
-                    'datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)]
-                )
-                if qs:
+                if qs is None:
+                    qs = await self.middleware.call('datastore.query', 'storage.disk')
+
+                if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
                     new = False
-                    disk = qs[0]
+                    disk = disk[0]
                 else:
                     new = True
                     disk = {'disk_identifier': disk_identifier}
@@ -148,11 +160,13 @@ class DiskService(Service, ServiceChangeMixin):
                     # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
                     # when lots of drives are present
                     if self._disk_changed(disk, original_disk):
-                        await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
-                        changed = True
+                        await self.middleware.call(
+                            'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
+                        )
+                        changed.add(disk['disk_identifier'])
                 else:
-                    await self.middleware.call('datastore.insert', 'storage.disk', disk)
-                    changed = True
+                    await self.middleware.call('datastore.insert', 'storage.disk', disk, {'send_events': False})
+                    changed.add(disk['disk_identifier'])
 
                 try:
                     await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], encs)
@@ -160,8 +174,14 @@ class DiskService(Service, ServiceChangeMixin):
                     self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
                                                  disk['disk_identifier'], exc_info=True)
 
-        if changed:
+        if changed or deleted:
             await self.middleware.call('disk.restart_services_after_sync')
+            disks = {i['identifier']: i for i in await self.middleware.call('disk.query', [], {'prefix': 'disk_'})}
+            for change in changed:
+                self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
+            for delete in deleted:
+                self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
+
         return 'OK'
 
     def _disk_changed(self, disk, original_disk):
@@ -170,7 +190,7 @@ class DiskService(Service, ServiceChangeMixin):
 
     async def _map_device_disk_to_db(self, db_disk, disk):
         only_update_if_true = ('size',)
-        update_keys = ('serial', 'rotationrate', 'type', 'size', 'subsystem', 'number', 'model')
+        update_keys = ('serial', 'lunid', 'rotationrate', 'type', 'size', 'subsystem', 'number', 'model', 'bus')
         for key in filter(lambda k: k in update_keys and (k not in only_update_if_true or disk[k]), disk):
             db_disk[f'disk_{key}'] = disk[key]
 

@@ -60,6 +60,8 @@ class EnclosureLabelModel(sa.Model):
 
 class EnclosureService(CRUDService):
 
+    ENCLOSURES_NOT_FOUND_LOGGED = False
+
     class Config:
         cli_namespace = 'storage.enclosure'
 
@@ -145,7 +147,7 @@ class EnclosureService(CRUDService):
                 "label": data["label"]
             })
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     def _get_slot(self, slot_filter, enclosure_query=None, enclosure_info=None):
         if enclosure_info is None:
@@ -237,7 +239,9 @@ class EnclosureService(CRUDService):
 
         encs = self.__get_enclosures()
         if len(list(encs)) == 0:
-            self.logger.debug("Enclosure not found, skipping enclosure sync")
+            if not self.ENCLOSURES_NOT_FOUND_LOGGED:
+                self.logger.debug("Enclosure not found, skipping enclosure sync")
+                self.ENCLOSURES_NOT_FOUND_LOGGED = True
             return None
 
         if pool is None:

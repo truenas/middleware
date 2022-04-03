@@ -12,7 +12,7 @@ class DiskService(Service):
     @private
     def _wipe(self, data):
         with open(f'/dev/{data["dev"]}', 'wb') as f:
-            size = os.lseek(f.fileno(), os.SEEK_SET, os.SEEK_END)
+            size = os.lseek(f.fileno(), 0, os.SEEK_END)
             if size == 0:
                 # no size means nothing else will work
                 self.logger.error('Unable to determine size of "%s"', data['dev'])
@@ -24,7 +24,7 @@ class DiskService(Service):
                 return
 
             # seek back to the beginning of the disk
-            os.lseek(f.fileno(), os.SEEK_SET, os.SEEK_SET)
+            os.lseek(f.fileno(), 0, os.SEEK_SET)
 
             # no reason to write more than 1MB at a time
             # or kernel will break them into smaller chunks
@@ -73,4 +73,5 @@ class DiskService(Service):
         """
         await self.middleware.call('disk.swaps_remove_disks', [dev], options)
         await self.middleware.run_in_thread(self._wipe, {'job': job, 'dev': dev, 'mode': mode})
-        await self.middleware.call('disk.sync', dev) if sync else None
+        if sync:
+            await self.middleware.call('disk.sync', dev)

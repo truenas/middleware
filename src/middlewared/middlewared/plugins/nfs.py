@@ -11,7 +11,6 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Match, Range
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 
@@ -95,9 +94,6 @@ class NFSService(SystemServiceService):
     @private
     async def bindip(self, config):
         bindip = [addr for addr in config['bindip'] if addr not in ['0.0.0.0', '::']]
-        if osc.IS_LINUX:
-            bindip = bindip[:1]
-
         if bindip:
             found = False
             for iface in await self.middleware.call('interface.query'):
@@ -190,9 +186,6 @@ class NFSService(SystemServiceService):
                     "domain"
                 )
 
-        if osc.IS_LINUX:
-            if len(new['bindip']) > 1:
-                verrors.add('nfs_update.bindip', 'Listening on more than one address is not supported')
         bindip_choices = await self.bindip_choices()
         for i, bindip in enumerate(new['bindip']):
             if bindip not in bindip_choices:
@@ -232,7 +225,7 @@ class NFSService(SystemServiceService):
 
         await self.nfs_compress(new)
 
-        await self._update_service(old, new)
+        await self._update_service(old, new, "restart")
 
         return await self.config()
 
@@ -241,12 +234,11 @@ class NFSShareModel(sa.Model):
     __tablename__ = 'sharing_nfs_share'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    nfs_paths = sa.Column(sa.JSON(type=list))
+    nfs_path = sa.Column(sa.Text())
     nfs_aliases = sa.Column(sa.JSON(type=list))
     nfs_comment = sa.Column(sa.String(120))
     nfs_network = sa.Column(sa.Text())
     nfs_hosts = sa.Column(sa.Text())
-    nfs_alldirs = sa.Column(sa.Boolean(), default=False)
     nfs_ro = sa.Column(sa.Boolean(), default=False)
     nfs_quiet = sa.Column(sa.Boolean(), default=False)
     nfs_maproot_user = sa.Column(sa.String(120), nullable=True, default='')
@@ -259,7 +251,6 @@ class NFSShareModel(sa.Model):
 
 class SharingNFSService(SharingService):
 
-    path_field = 'paths'
     share_task_type = 'NFS'
 
     class Config:
@@ -276,30 +267,13 @@ class SharingNFSService(SharingService):
         register=True,
     )
 
-    @private
-    async def human_identifier(self, share_task):
-        return ', '.join(share_task[self.path_field])
-
-    @private
-    async def sharing_task_datasets(self, data):
-        return [os.path.relpath(path, '/mnt') for path in data[self.path_field]]
-
-    @private
-    async def sharing_task_determine_locked(self, data, locked_datasets):
-        for path in data[self.path_field]:
-            if await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets):
-                return True
-        else:
-            return False
-
     @accepts(Dict(
         "sharingnfs_create",
-        List("paths", items=[Dir("path")], empty=False),
+        Dir("path", required=True),
         List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
         Str("comment", default=""),
         List("networks", items=[IPAddr("network", network=True)]),
         List("hosts", items=[Str("host")]),
-        Bool("alldirs", default=False),
         Bool("ro", default=False),
         Bool("quiet", default=False),
         Str("maproot_user", required=False, default=None, null=True),
@@ -318,7 +292,7 @@ class SharingNFSService(SharingService):
         """
         Create a NFS Share.
 
-        `paths` is a list of valid paths which are configured to be shared on this share.
+        `path` local path to be exported.
 
         `aliases` IGNORED, for now.
 
@@ -328,8 +302,6 @@ class SharingNFSService(SharingService):
         `hosts` is a list of IP's/hostnames which are allowed to access the share. If empty, all IP's/hostnames are
         allowed.
 
-        `alldirs` is a boolean value which when set indicates that the client can mount any subdirectories of the
-        selected pool or dataset.
         """
         verrors = ValidationErrors()
 
@@ -398,21 +370,10 @@ class SharingNFSService(SharingService):
     async def validate(self, data, schema_name, verrors, old=None):
         if len(data["aliases"]):
             data['aliases'] = []
-            # FIXME: At the time of writing this nfs-ganesha is at version 3.4-1.
-            # Changing the Pseudo option in the ganesha.conf (`aliases`) requires
-            # that the nfs-ganesha service be restarted. It does not allow graceful
-            # reload of the service. The ability to reload the service when this
-            # config param has been changed was added to nfs-ganesha v4.0 but it
-            # is still in development. When v4.0 of nfs-ganesha has been released
-            # as stable, we need to update to that release. The webUI has hidden
-            # the associated `Alias` box for now.
-            #
-            # To keep long-story short, if you have NFSv4 enabled it requires a
-            # Pseudo parameter in the config so we fill it in by default if one
-            # isn't provided. Yet if you try to change this, it will break client
-            # mounts and then require a restart of the service. So for now, we just
-            # default it to the `Path` parameter which is the absolute path to the
-            # directory being shared. This is done in ganesha.conf.mako.
+            # This feature was originally intended to be provided by nfs-ganesha
+            # since we no longer have ganesha, planning will need to be made about
+            # how to implement for kernel NFS server. One candidate is using bind mounts,
+            # but this will require careful design and testing. For now we will keep it disabled.
             """
             if len(data["aliases"]) != len(data["paths"]):
                 verrors.add(
@@ -421,19 +382,10 @@ class SharingNFSService(SharingService):
                 )
             """
 
-        if data["alldirs"] and len(data["paths"]) > 1:
-            verrors.add(f"{schema_name}.alldirs", "This option can only be used for shares that contain single path")
-
-        # if any of the `paths` that were passed to us by user are within the gluster volume
-        # mountpoint then we need to pass the `gluster_bypass` kwarg so that we don't raise a
-        # validation error complaining about using a gluster path within the zpool mountpoint
-        bypass = any('.glusterfs' in i for i in data["paths"] + data["aliases"])
-
         # need to make sure that the nfs share is within the zpool mountpoint
-        for idx, i in enumerate(data["paths"]):
-            await check_path_resides_within_volume(
-                verrors, self.middleware, f'{schema_name}.paths.{idx}', i, gluster_bypass=bypass
-            )
+        await check_path_resides_within_volume(
+            verrors, self.middleware, f'{schema_name}.path', data['path'],
+        )
 
         filters = []
         if old:
@@ -470,10 +422,14 @@ class SharingNFSService(SharingService):
         if data["maproot_user"] and data["mapall_user"]:
             verrors.add(f"{schema_name}.mapall_user", "maproot_user disqualifies mapall_user")
 
-        if data["security"]:
+        v4_sec = list(filter(lambda sec: sec != "SYS", data.get("security", [])))
+        if v4_sec:
             nfs_config = await self.middleware.call("nfs.config")
             if not nfs_config["v4"]:
-                verrors.add(f"{schema_name}.security", "This is not allowed when NFS v4 is disabled")
+                verrors.add(
+                    f"{schema_name}.security",
+                    f"The following security flavor(s) require NFSv4 to be enabled: {','.join(v4_sec)}."
+                )
 
     @private
     async def resolve_hostnames(self, hostnames):
@@ -494,14 +450,14 @@ class SharingNFSService(SharingService):
 
     @private
     def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
-        dev = os.stat(data["paths"][0]).st_dev
+        dev = os.stat(data["path"]).st_dev
 
         used_networks = set()
         for share in other_shares:
             try:
-                share_dev = os.stat(share["paths"][0]).st_dev
+                share_dev = os.stat(share["path"]).st_dev
             except Exception:
-                self.logger.warning("Failed to stat first path for %r", share, exc_info=True)
+                self.logger.warning("Failed to stat path for %r", share, exc_info=True)
                 continue
 
             if share_dev == dev:
@@ -532,15 +488,19 @@ class SharingNFSService(SharingService):
                     used_networks.add(ipaddress.ip_network("::/0"))
 
         for host in set(data["hosts"]):
-            host = dns_cache[host]
-            if host is None:
+            cached_host = dns_cache[host]
+            if cached_host is None:
+                verrors.add(
+                    f"{schema_name}.hosts",
+                    f"Unable to resolve host {host}"
+                )
                 continue
 
-            network = ipaddress.ip_network(host)
+            network = ipaddress.ip_network(cached_host)
             if network in used_networks:
                 verrors.add(
                     f"{schema_name}.hosts",
-                    f"Another NFS share already exports this dataset for {host}"
+                    f"Another NFS share already exports this dataset for {cached_host}"
                 )
 
             used_networks.add(network)
@@ -589,7 +549,7 @@ async def pool_post_import(middleware, pool):
 
     path = f'/mnt/{pool["name"]}'
     for share in await middleware.call('sharing.nfs.query'):
-        if any(filter(lambda x: x == path or x.startswith(f'{path}/'), share['paths'])):
+        if share['path'].startswith(path):
             asyncio.ensure_future(middleware.call('service.reload', 'nfs'))
             break
 
@@ -599,12 +559,6 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     title = 'NFS Share'
     service = 'nfs'
     service_class = SharingNFSService
-
-    async def is_child_of_path(self, resource, path):
-        return any(is_child(nfs_path, path) for nfs_path in resource[self.path_field])
-
-    async def get_attachment_name(self, attachment):
-        return ', '.join(attachment['paths'])
 
     async def restart_reload_services(self, attachments):
         await self._service_change('nfs', 'reload')

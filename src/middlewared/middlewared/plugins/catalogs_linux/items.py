@@ -1,20 +1,26 @@
 import copy
-import itertools
+import concurrent.futures
+import functools
 import json
-import markdown
 import os
-import yaml
 
 from catalog_validation.utils import VALID_TRAIN_REGEX
-from pkg_resources import parse_version
 
 from middlewared.schema import Bool, Dict, List, returns, Str
-from middlewared.service import accepts, job, private, Service, ValidationErrors
+from middlewared.service import accepts, job, private, Service
 
+from .items_util import get_item_details, get_item_version_details
+from .questions_utils import normalise_questions
 from .utils import get_cache_key
 
 
-ITEM_KEYS = ['icon_url']
+def item_details(items, location, questions_context, options, item_key):
+    train = items[item_key]
+    item = item_key.removesuffix(f'_{train}')
+    item_location = os.path.join(location, train, item)
+    return get_item_details(item_location, questions_context, {
+        'retrieve_versions': options['retrieve_versions'],
+    })
 
 
 class CatalogService(Service):
@@ -115,7 +121,7 @@ class CatalogService(Service):
                         version_data = train_data[catalog_item]['versions'][version]
                         if not version_data.get('healthy'):
                             continue
-                        self.normalise_questions(version_data, questions_context)
+                        normalise_questions(version_data, questions_context)
 
                 cached_data[train] = train_data
 
@@ -195,21 +201,22 @@ class CatalogService(Service):
         job.set_progress(8, f'Retrieving {", ".join(trains_to_traverse)!r} train(s) information')
 
         total_items = len(items)
-        for index, item_key in enumerate(items):
-            train = items[item_key]
-            item = item_key.removesuffix(f'_{train}')
-            item_location = os.path.join(location, train, item)
-            job.set_progress(
-                int((index / total_items) * 80) + 10,
-                f'Retrieving information of {item!r} item from {train!r} train'
-            )
-
-            trains[train][item] = self.retrieve_item_details(item_location, {
-                'questions_context': questions_context,
-                'retrieve_versions': options['retrieve_versions'],
-            })
-            if train in preferred_trains and not trains[train][item]['healthy']:
-                unhealthy_apps.add(f'{item} ({train} train)')
+        with concurrent.futures.ProcessPoolExecutor(max_workers=(5 if total_items > 10 else 2)) as exc:
+            for index, result in enumerate(zip(items, exc.map(
+                functools.partial(item_details, items, location, questions_context, options),
+                items, chunksize=(10 if total_items > 10 else 5)
+            ))):
+                item_key = result[0]
+                item_info = result[1]
+                train = items[item_key]
+                item = item_key.removesuffix(f'_{train}')
+                job.set_progress(
+                    int((index / total_items) * 80) + 10,
+                    f'Retrieved information of {item!r} item from {train!r} train'
+                )
+                trains[train][item] = item_info
+                if train in preferred_trains and not trains[train][item]['healthy']:
+                    unhealthy_apps.add(f'{item} ({train} train)')
 
         if unhealthy_apps:
             self.middleware.call_sync(
@@ -222,150 +229,14 @@ class CatalogService(Service):
         return trains
 
     @private
-    def retrieve_item_details(self, item_location, options=None):
-        item = item_location.rsplit('/', 1)[-1]
-        train = item_location.rsplit('/', 2)[-2]
-        options = options or {}
-        questions_context = options.get('questions_context') or self.middleware.call_sync(
-            'catalog.get_normalised_questions_context'
-        )
-        retrieve_versions = options.get('retrieve_versions', True)
-        item_data = {
-            'name': item,
-            'categories': [],
-            'app_readme': None,
-            'location': item_location,
-            'healthy': False,  # healthy means that each version the item hosts is valid and healthy
-            'healthy_error': None,  # An error string explaining why the item is not healthy
-            'versions': {},
-            'latest_version': None,
-            'latest_app_version': None,
-            'latest_human_version': None,
-        }
-
-        schema = f'{train}.{item}'
-        try:
-            self.middleware.call_sync('catalog.validate_catalog_item', item_location, schema, False)
-        except ValidationErrors as verrors:
-            item_data['healthy_error'] = f'Following error(s) were found with {item!r}:\n'
-            for verror in verrors:
-                item_data['healthy_error'] += f'{verror[0]}: {verror[1]}'
-
-            # If the item format is not valid - there is no point descending any further into versions
-            if not retrieve_versions:
-                item_data.pop('versions')
-            return item_data
-
-        item_data.update(self.item_details(item_location, schema, {
-            'retrieve_latest_version': not retrieve_versions,
-            'questions_context': questions_context,
-        }))
-        unhealthy_versions = []
-        for k, v in sorted(item_data['versions'].items(), key=lambda v: parse_version(v[0]), reverse=True):
-            if not v['healthy']:
-                unhealthy_versions.append(k)
-            else:
-                if not item_data['app_readme']:
-                    item_data['app_readme'] = v['app_readme']
-                if not item_data['latest_version']:
-                    item_data['latest_version'] = k
-                    item_data['latest_app_version'] = v['chart_metadata'].get('appVersion')
-                    item_data['latest_human_version'] = ''
-                    if item_data['latest_app_version']:
-                        item_data['latest_human_version'] = f'{item_data["latest_app_version"]}_'
-                    item_data['latest_human_version'] += k
-
-        if unhealthy_versions:
-            item_data['healthy_error'] = f'Errors were found with {", ".join(unhealthy_versions)} version(s)'
-        else:
-            item_data['healthy'] = True
-        if not retrieve_versions:
-            item_data.pop('versions')
-
-        return item_data
-
-    @private
-    def item_details(self, item_path, schema, options):
-        # Each directory under item path represents a version of the item and we need to retrieve details
-        # for each version available under the item
-        questions_context = options['questions_context']
-        retrieve_latest_version = options.get('retrieve_latest_version')
-        item_data = {'versions': {}}
-        with open(os.path.join(item_path, 'item.yaml'), 'r') as f:
-            item_data.update(yaml.safe_load(f.read()))
-
-        item_data.update({k: item_data.get(k) for k in ITEM_KEYS})
-
-        for version in sorted(
-            filter(lambda p: os.path.isdir(os.path.join(item_path, p)), os.listdir(item_path)),
-            reverse=True, key=parse_version,
-        ):
-            item_data['versions'][version] = version_details = {
-                'healthy': False,
-                'supported': False,
-                'healthy_error': None,
-                'location': os.path.join(item_path, version),
-                'required_features': [],
-                'human_version': version,
-                'version': version,
-            }
-            try:
-                self.middleware.call_sync(
-                    'catalog.validate_catalog_item_version', version_details['location'], f'{schema}.{version}'
-                )
-            except ValidationErrors as verrors:
-                version_details['healthy_error'] = f'Following error(s) were found with {schema}.{version!r}:\n'
-                for verror in verrors:
-                    version_details['healthy_error'] += f'{verror[0]}: {verror[1]}'
-
-                # There is no point in trying to see what questions etc the version has as it's invalid
-                continue
-
-            version_details.update({
-                'healthy': True,
-                **self.item_version_details(version_details['location'], questions_context)
-            })
-            if retrieve_latest_version:
-                break
-
-        return item_data
-
-    @private
     def item_version_details(self, version_path, questions_context=None):
         if not questions_context:
             questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-        version_data = {'location': version_path, 'required_features': set()}
-        for key, filename, parser in (
-            ('chart_metadata', 'Chart.yaml', yaml.safe_load),
-            ('schema', 'questions.yaml', yaml.safe_load),
-            ('app_readme', 'app-readme.md', markdown.markdown),
-            ('detailed_readme', 'README.md', markdown.markdown),
-            ('changelog', 'CHANGELOG.md', markdown.markdown),
-        ):
-            if os.path.exists(os.path.join(version_path, filename)):
-                with open(os.path.join(version_path, filename), 'r') as f:
-                    version_data[key] = parser(f.read())
-            else:
-                version_data[key] = None
-
-        # We will normalise questions now so that if they have any references, we render them accordingly
-        # like a field referring to available interfaces on the system
-        self.normalise_questions(version_data, questions_context)
-
-        version_data['supported'] = self.middleware.call_sync('catalog.version_supported', version_data)
-        version_data['required_features'] = list(version_data['required_features'])
-        version_data['values'] = self.middleware.call_sync(
-            'chart.release.construct_schema_for_item_version', version_data, {}, False
-        )['new_values']
-        chart_metadata = version_data['chart_metadata']
-        if chart_metadata['name'] != 'ix-chart' and chart_metadata.get('appVersion'):
-            version_data['human_version'] = f'{chart_metadata["appVersion"]}_{chart_metadata["version"]}'
-
-        return version_data
+        return get_item_version_details(version_path, questions_context)
 
     @private
     async def get_normalised_questions_context(self):
-        k8s_started = await self.middleware.call('service.started', 'kubernetes')
+        k8s_started = await self.middleware.call('kubernetes.validate_k8s_setup', False)
         return {
             'nic_choices': await self.middleware.call('chart.release.nic_choices'),
             'gpus': await self.middleware.call('k8s.gpu.available_gpus') if k8s_started else {},
@@ -375,70 +246,3 @@ class CatalogService(Service):
             'certificate_authorities': await self.middleware.call('chart.release.certificate_authority_choices'),
             'system.general.config': await self.middleware.call('system.general.config'),
         }
-
-    @private
-    def normalise_questions(self, version_data, context):
-        version_data['required_features'] = set()
-        for question in version_data['schema']['questions']:
-            self._normalise_question(question, version_data, context)
-        version_data['required_features'] = list(version_data['required_features'])
-
-    def _normalise_question(self, question, version_data, context):
-        schema = question['schema']
-        for attr in itertools.chain(*[schema.get(k, []) for k in ('attrs', 'items', 'subquestions')]):
-            self._normalise_question(attr, version_data, context)
-
-        if '$ref' not in schema:
-            return
-
-        data = {}
-        for ref in schema['$ref']:
-            version_data['required_features'].add(ref)
-            if ref == 'definitions/interface':
-                data['enum'] = [
-                    {'value': i, 'description': f'{i!r} Interface'} for i in context['nic_choices']
-                ]
-            elif ref == 'definitions/gpuConfiguration':
-                data['attrs'] = []
-                for gpu, quantity in context['gpus'].items():
-                    data['attrs'].append({
-                        'variable': gpu,
-                        'label': f'GPU Resource ({gpu})',
-                        'description': 'Please enter the number of GPUs to allocate',
-                        'schema': {
-                            'type': 'int',
-                            'max': int(quantity),
-                            'enum': [
-                                {'value': i, 'description': f'Allocate {i!r} {gpu} GPU'}
-                                for i in range(int(quantity) + 1)
-                            ],
-                            'default': 0,
-                        }
-                    })
-            elif ref == 'definitions/timezone':
-                data.update({
-                    'enum': [{'value': t, 'description': f'{t!r} timezone'} for t in context['timezones']],
-                    'default': context['system.general.config']['timezone']
-                })
-            elif ref == 'definitions/nodeIP':
-                data['default'] = context['node_ip']
-            elif ref == 'definitions/certificate':
-                data.update({
-                    'enum': [{'value': None, 'description': 'No Certificate'}] + [
-                        {'value': i['id'], 'description': f'{i["name"]!r} Certificate'}
-                        for i in context['certificates']
-                    ],
-                    'default': None,
-                    'null': True,
-                })
-            elif ref == 'definitions/certificateAuthority':
-                data.update({
-                    'enum': [{'value': None, 'description': 'No Certificate Authority'}] + [
-                        {'value': i['id'], 'description': f'{i["name"]!r} Certificate Authority'}
-                        for i in context['certificate_authorities']
-                    ],
-                    'default': None,
-                    'null': True,
-                })
-
-        schema.update(data)

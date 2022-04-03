@@ -24,7 +24,7 @@ GPU_CONFIG = {
                     ],
                     'priorityClassName': 'system-node-critical',
                     'containers': [{
-                        'image': 'nvidia/k8s-device-plugin:v0.9.0',
+                        'image': 'nvidia/k8s-device-plugin:v0.10.0',
                         'name': 'nvidia-device-plugin-ctr',
                         'securityContext': {'allowPrivilegeEscalation': False, 'capabilities': {'drop': ['ALL']}},
                         'volumeMounts': [{'name': 'device-plugin', 'mountPath': '/var/lib/kubelet/device-plugins'}]
@@ -93,10 +93,16 @@ class KubernetesGPUService(Service):
         if not node_config['node_configured']:
             return {}
 
-        return {
-            k: v for k, v in node_config['status']['allocatable'].items()
-            if k.endswith('/gpu') or k.startswith('gpu.intel')
-        }
+        found_gpus = await self.get_system_gpus() if (
+            await self.middleware.call('kubernetes.config')
+        )['configure_gpus'] else set()
+        available_gpus = {}
+        for k, v in filter(
+            lambda i: i[0].endswith('/gpu') or i[0].startswith('gpu.intel'),
+            node_config['status']['allocatable'].items()
+        ):
+            available_gpus[k] = v if any(gpu.lower() in k.lower() for gpu in found_gpus) else '0'
+        return available_gpus
 
     async def setup(self):
         try:

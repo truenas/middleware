@@ -1,6 +1,7 @@
 import errno
 import re
 
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Int, returns, Str
 from middlewared.service import CallError, item_method, Service
 
@@ -101,9 +102,10 @@ class VMService(Service):
                         dev_dict = await self.middleware.call('vm.port_wizard')
                         item['attributes']['port'] = dev_dict['port']
                 if item['dtype'] == 'DISK':
-                    zvol = item['attributes']['path'].replace('/dev/zvol/', '')
-                    clone_dst = await self.__clone_zvol(vm['name'], zvol, created_snaps, created_clones)
-                    item['attributes']['path'] = f'/dev/zvol/{clone_dst}'
+                    zvol = zvol_path_to_name(item['attributes']['path'])
+                    item['attributes']['path'] = zvol_name_to_path(
+                        await self.__clone_zvol(vm['name'], zvol, created_snaps, created_clones)
+                    )
                 if item['dtype'] == 'RAW':
                     item['attributes']['path'] = ''
                     self.logger.warn('For RAW disk you need copy it manually inside your NAS.')

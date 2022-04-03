@@ -29,9 +29,6 @@ class VMService(Service, VMSupervisorMixin):
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
 
-        if not await self.middleware.call('vm.supports_virtualization'):
-            raise CallError('This system does not support virtualization.')
-
         if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
 
@@ -44,6 +41,8 @@ class VMService(Service, VMSupervisorMixin):
             if (await self.middleware.call('vm.get_instance', id))['status']['state'] != 'RUNNING':
                 await self.middleware.call('vm.teardown_guest_vmemory', id)
             raise
+
+        await self.middleware.call('service.reload', 'haproxy')
 
     @item_method
     @accepts(
@@ -114,6 +113,7 @@ async def _event_vms(middleware, event_type, args):
         return
 
     asyncio.ensure_future(middleware.call('vm.teardown_guest_vmemory', args['id']))
+    await middleware.call('service.reload', 'haproxy')
 
 
 async def setup(middleware):

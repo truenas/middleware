@@ -17,7 +17,6 @@ enable syslog-ng.service
 # Disabled services
 disable smbd.service
 disable proftpd.service
-disable ladvd.service
 disable avahi-daemon.service
 disable nmbd.service
 disable nfs*
@@ -43,6 +42,9 @@ disable k3s*
 disable cni*
 disable kube-router*
 disable containerd*
+disable walinuxagent
+disable serial-getty@*
+disable haproxy
 
 # We want middlewared to import pools
 disable zfs-mount.service

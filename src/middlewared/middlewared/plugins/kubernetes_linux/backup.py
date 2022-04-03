@@ -58,7 +58,8 @@ class KubernetesService(Service):
 
             secrets = self.middleware.call_sync(
                 'k8s.secret.query', [
-                    ['type', '=', 'helm.sh/release.v1'], ['metadata.namespace', '=', chart_release['namespace']]
+                    ['type', 'in', ['helm.sh/release.v1', 'Opaque']],
+                    ['metadata.namespace', '=', chart_release['namespace']]
                 ]
             )
             for secret in sorted(secrets, key=lambda d: d['metadata']['name']):
@@ -80,7 +81,8 @@ class KubernetesService(Service):
         job.set_progress(95, 'Taking snapshot of ix-applications')
 
         self.middleware.call_sync(
-            'zfs.snapshot.create', {'dataset': k8s_config['dataset'], 'name': snap_name, 'recursive': True}
+            'zettarepl.create_recursive_snapshot_with_exclude', k8s_config['dataset'],
+            snap_name, [os.path.join(k8s_config['dataset'], 'docker')]
         )
 
         job.set_progress(100, f'Backup {name!r} complete')
@@ -93,7 +95,7 @@ class KubernetesService(Service):
         """
         List existing chart releases backups.
         """
-        if not self.middleware.call_sync('service.started', 'kubernetes'):
+        if not self.middleware.call_sync('kubernetes.validate_k8s_setup', False):
             return {}
 
         k8s_config = self.middleware.call_sync('kubernetes.config')

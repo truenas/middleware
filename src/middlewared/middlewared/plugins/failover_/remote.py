@@ -8,11 +8,11 @@ import time
 from collections import defaultdict
 from functools import partial
 
-from middlewared.client import Client, ClientException, CallTimeout
+from middlewared.client import Client, ClientException, CallTimeout, CALL_TIMEOUT
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import start_daemon_thread
-from middlewared.utils.osc import set_thread_name
+from middlewared.utils.threading import set_thread_name
 
 
 logger = logging.getLogger('failover.remote')
@@ -221,10 +221,10 @@ class FailoverService(Service):
         List('args'),
         Dict(
             'options',
-            Int('timeout'),
+            Int('timeout', default=CALL_TIMEOUT),
             Bool('job', default=False),
             Bool('job_return', default=None, null=True),
-            Any('callback'),
+            Any('callback', default=None, null=True),
         ),
     )
     @returns(Any(null=True))
@@ -233,8 +233,7 @@ class FailoverService(Service):
         Call a method in the other node.
         """
         options = options or {}
-        job_return = options.get('job_return')
-        if job_return is not None:
+        if options.pop('job_return'):
             options['job'] = 'RETURN'
         try:
             return self.CLIENT.call(method, *args, **options)

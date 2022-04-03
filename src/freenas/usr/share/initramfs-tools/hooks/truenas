@@ -1,0 +1,19 @@
+#!/bin/sh
+
+PREREQ="zfs"
+
+prereqs()
+{
+    echo "$PREREQ"
+}
+
+case "$1" in
+    prereqs)
+        prereqs
+        exit 0
+        ;;
+esac
+
+# FreeBSD loader imports boot pool with hostid=0
+# We want to keep this to be able to boot back into FreeBSD in case of an erroneous upgrade
+rm -f ${DESTDIR}/etc/hostid

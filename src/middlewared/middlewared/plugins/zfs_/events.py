@@ -3,7 +3,7 @@ import multiprocessing
 import time
 
 from middlewared.utils import start_daemon_thread
-from middlewared.utils.osc import set_thread_name
+from middlewared.utils.threading import set_thread_name
 
 
 def zfs_events(child_conn):

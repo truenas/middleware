@@ -4,6 +4,7 @@ from middlewared.service_exception import InstanceNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.size import format_size
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 
 try:
     from middlewared.plugins.cluster_linux.utils import CTDBConfig
@@ -93,6 +94,15 @@ class SystemDatasetService(ConfigService):
             config['path'] = SYSDATASET_PATH
 
         return config
+
+    @private
+    async def is_boot_pool(self):
+        pool = (await self.config())['pool']
+        if not pool:
+            raise CallError('System dataset pool is not set. This may prevent '
+                            'system services from functioning properly.')
+
+        return pool in BOOT_POOL_NAME_VALID
 
     @accepts()
     @returns(Dict('systemdataset_pool_choices', additional_attrs=True))
@@ -259,14 +269,10 @@ class SystemDatasetService(ConfigService):
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
-        if config['pool'] != boot_pool and not await self.middleware.call(
-            'pool.query', [('name', '=', config['pool'])]
-        ):
-            self.middleware.logger.debug('Pool %r does not exist, moving system dataset to another pool',
-                                         config['pool'])
-            job = await self.middleware.call('systemdataset.update', {
-                'pool': None, 'pool_exclude': exclude_pool,
-            })
+        filters = [('name', '=', config['pool'])]
+        if config['pool'] != boot_pool and not await self.middleware.call('pool.query', filters):
+            self.logger.debug('Pool %r does not exist, moving system dataset to another pool', config['pool'])
+            job = await self.middleware.call('systemdataset.update', {'pool': None, 'pool_exclude': exclude_pool})
             await job.wait()
             if job.error:
                 raise CallError(job.error)
@@ -276,8 +282,7 @@ class SystemDatasetService(ConfigService):
         # to put it on.
         if not config['pool_set']:
             if pool := await self._query_pool_for_system_dataset(exclude_pool):
-                self.middleware.logger.debug('System dataset pool was not set, moving it to first available pool %r',
-                                             pool['name'])
+                self.logger.debug('Sysdataset pool was not set, moving it to first available pool %r', pool['name'])
                 job = await self.middleware.call('systemdataset.update', {'pool': pool['name']})
                 await job.wait()
                 if job.error:
@@ -288,22 +293,23 @@ class SystemDatasetService(ConfigService):
                                              {'extra': {'retrieve_children': False}})
         if not dataset or dataset[0]['locked']:
             # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
-            self.middleware.logger.debug(
+            self.logger.debug(
                 'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
                 config['pool'],
             )
             self.force_pool = boot_pool
             config = await self.config()
 
-        mounted_pool = None
+        mounted_pool = mounted = None
         for p in psutil.disk_partitions():
             if p.mountpoint == SYSDATASET_PATH:
                 mounted_pool = p.device.split('/')[0]
         if mounted_pool and mounted_pool != config['pool']:
-            self.middleware.logger.debug('Abandoning dataset on %r in favor of %r', mounted_pool, config['pool'])
+            self.logger.debug('Abandoning dataset on %r in favor of %r', mounted_pool, config['pool'])
             async with self._release_system_dataset():
                 await self.__umount(mounted_pool, config['uuid'])
                 await self.__setup_datasets(config['pool'], config['uuid'])
+                mounted = await self.__mount(config['pool'], config['uuid'])
         else:
             await self.__setup_datasets(config['pool'], config['uuid'])
 
@@ -313,14 +319,13 @@ class SystemDatasetService(ConfigService):
             os.makedirs(SYSDATASET_PATH)
 
         acltype = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
-        if acltype and acltype[0]['properties']['acltype']['value'] == 'off':
+        if acltype and acltype[0]['properties']['acltype']['value'] != 'off':
             await self.middleware.call(
-                'zfs.dataset.update',
-                config['basename'],
-                {'properties': {'acltype': {'value': 'off'}}},
+                'zfs.dataset.update', config['basename'], {'properties': {'acltype': {'value': 'off'}}}
             )
 
-        mounted = await self.__mount(config['pool'], config['uuid'])
+        if mounted is None:
+            mounted = await self.__mount(config['pool'], config['uuid'])
 
         corepath = f'{SYSDATASET_PATH}/cores'
         if os.path.exists(corepath):
@@ -431,9 +436,10 @@ class SystemDatasetService(ConfigService):
     async def __umount(self, pool, uuid):
         await run('umount', '/var/lib/systemd/coredump', check=False)
 
+        flags = '-f' if not await self.middleware.call('failover.licensed') else '-l'
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
-                await run('umount', '-f', dataset)
+                await run('umount', flags, dataset)
             except subprocess.CalledProcessError as e:
                 stderr = e.stderr.decode()
                 if 'no mount point specified' in stderr:
@@ -495,8 +501,8 @@ class SystemDatasetService(ConfigService):
             restart.insert(0, 'glusterd')
         if await self.middleware.call('service.started_or_enabled', 'webdav'):
             restart.append('webdav')
-        for service in ['open-vm-tools']:
-            restart.append(service)
+        if await self.middleware.call('service.started', 'open-vm-tools'):
+            restart.append('open-vm-tools')
         if await self.middleware.call('service.started', 'idmap'):
             restart.append('idmap')
 
@@ -542,14 +548,14 @@ async def pool_pre_export(middleware, pool, options, job):
         })
         await sysds_job.wait()
         if sysds_job.error:
-            raise CallError(sysds_job.error)
+            raise CallError(f'This pool contains system dataset, but its reconfiguration failed: {sysds_job.error}')
 
 
 async def setup(middleware):
     middleware.register_hook('pool.post_create', pool_post_create)
     # Reconfigure system dataset first thing after we import a pool.
     middleware.register_hook('pool.post_import', pool_post_import, order=-10000)
-    middleware.register_hook('pool.pre_export', pool_pre_export, order=40)
+    middleware.register_hook('pool.pre_export', pool_pre_export, order=40, raise_error=True)
 
     try:
         if not os.path.exists('/var/cache/nscd') or not os.path.islink('/var/cache/nscd'):

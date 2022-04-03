@@ -1,11 +1,12 @@
+import collections
 import errno
 import os
 
-from middlewared.schema import Dict, Int, List, Ref, Str, returns
+from middlewared.schema import Bool, Dict, Int, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
 
-from .utils import get_namespace, get_storage_class_name, Resources
+from .utils import CHART_NAMESPACE_PREFIX, get_namespace, get_storage_class_name, Resources
 
 
 class ChartReleaseService(Service):
@@ -219,3 +220,58 @@ class ChartReleaseService(Service):
             'status': r_status,
             **status,
         }
+
+    @private
+    async def get_workload_storage_details(self):
+        mapping = {
+            'storage_classes': collections.defaultdict(lambda: None),
+            'persistent_volumes': collections.defaultdict(list),
+        }
+        k8s_config = await self.middleware.call('kubernetes.config')
+        if not k8s_config['dataset']:
+            return mapping
+
+        for storage_class in await self.middleware.call('k8s.storage_class.query'):
+            mapping['storage_classes'][storage_class['metadata']['name']] = storage_class
+
+        # If the chart release was consuming any PV's, they would have to be manually removed from k8s database
+        # because of chart release reclaim policy being retain
+        for pv in await self.middleware.call(
+                'k8s.pv.query', [[
+                    'spec.csi.volume_attributes.openebs\\.io/poolname', '^',
+                    f'{os.path.join(k8s_config["dataset"], "releases")}/'
+                ]]
+        ):
+            dataset = pv['spec']['csi']['volume_attributes']['openebs.io/poolname']
+            rl = dataset.split('/', 4)
+            if len(rl) > 4:
+                mapping['persistent_volumes'][rl[3]].append(pv)
+
+        return mapping
+
+    @accepts(
+        Dict(
+            'options',
+            Bool('resource_events', default=False),
+            List('resources', enum=[r.name for r in Resources]),
+            List('resource_filters'),
+        )
+    )
+    @private
+    async def get_resources_with_workload_mapping(self, options):
+        resources_enum = [Resources[r] for r in options['resources']]
+        resources = {r.value: collections.defaultdict(list) for r in resources_enum}
+        workload_status = collections.defaultdict(lambda: {'desired': 0, 'available': 0})
+        for resource in resources_enum:
+            for r_data in await self.middleware.call(
+                f'k8s.{resource.name.lower()}.query', options['resource_filters'], {
+                    'extra': {'events': options['resource_events']}
+                }
+            ):
+                release_name = r_data['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
+                resources[resource.value][release_name].append(r_data)
+                if resource in (Resources.DEPLOYMENT, Resources.STATEFULSET):
+                    workload_status[release_name]['desired'] += (r_data['status']['replicas'] or 0)
+                    workload_status[release_name]['available'] += (r_data['status']['ready_replicas'] or 0)
+
+        return {'resources': resources, 'workload_status': workload_status}

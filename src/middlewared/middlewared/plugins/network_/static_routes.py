@@ -48,13 +48,13 @@ class StaticRouteService(CRUDService):
 
         await self.middleware.call('service.restart', 'routing')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     async def do_update(self, id, data):
         """
         Update Static Route of `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -67,7 +67,7 @@ class StaticRouteService(CRUDService):
 
         await self.middleware.call('service.restart', 'routing')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     def do_delete(self, id):
         """

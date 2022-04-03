@@ -11,7 +11,9 @@ async def api_client(context=None, api_client_kwargs=None):
     await config.load_kube_config(config_file=KUBECONFIG_FILE)
     context = context or {}
     context['core_api'] = True
-    api_cl = ApiClient(**(api_client_kwargs or {}))
+    api_client_kwargs = api_client_kwargs or {}
+    api_client_kwargs.setdefault('request_timeout', 50)
+    api_cl = ApiClient(**api_client_kwargs)
     user_context = {
         'core_api': client.CoreV1Api(api_cl),
         'apps_api': client.AppsV1Api(api_cl),
@@ -21,11 +23,12 @@ async def api_client(context=None, api_client_kwargs=None):
         'custom_object_api': client.CustomObjectsApi(api_cl),
         'extensions_api': client.ApiextensionsV1Api(api_cl),
     }
-    for k in filter(lambda k: context[k], context):
-        if k == 'node':
-            user_context[k] = await get_node(user_context['core_api'])
 
     try:
+        for k in filter(lambda k: context[k], context):
+            if k == 'node':
+                user_context[k] = await get_node(user_context['core_api'])
+
         yield api_cl, user_context
     finally:
         await api_cl.close()

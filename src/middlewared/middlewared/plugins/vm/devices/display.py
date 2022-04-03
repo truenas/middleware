@@ -7,7 +7,7 @@ from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Range
 
 from .device import Device
-from .utils import create_element
+from .utils import create_element, NGINX_PREFIX
 
 
 class DISPLAY(Device):
@@ -22,6 +22,7 @@ class DISPLAY(Device):
         'attributes',
         Str('resolution', enum=RESOLUTION_ENUM, default='1024x768'),
         Int('port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
+        Int('web_port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
         Str('bind', default='0.0.0.0'),
         Bool('wait', default=False),
         Str('password', default=None, null=True, private=True),
@@ -43,18 +44,19 @@ class DISPLAY(Device):
     def password_configured(self):
         return bool(self.data['attributes'].get('password'))
 
-    def web_uri(self, host, password=None):
-        params = {} if self.is_spice_type() else {'autoconnect': 1}
+    def web_uri(self, host, password=None, protocol='http'):
+        path = self.get_webui_info()['path'][1:]
+        params = {'path': path}
+        if self.is_spice_type():
+            params['autoconnect'] = 1
         if self.password_configured():
             if password != self.data['attributes'].get('password'):
                 return
 
             params['password'] = password
 
-        get_params = f'?{urlencode(params, quote_via=quote_plus)}' if params else ''
-
-        return f'http://{host}:{self.get_web_port(self.data["attributes"]["port"])}/' \
-               f'{"spice_auto" if self.is_spice_type() else "vnc"}.html{get_params}'
+        get_params = f'?{urlencode(params, quote_via=quote_plus)}'
+        return f'{protocol}://{host}/{path}{"spice_auto" if self.is_spice_type() else "vnc"}.html{get_params}'
 
     def is_available(self):
         return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
@@ -85,15 +87,10 @@ class DISPLAY(Device):
             ]
         })
 
-    @staticmethod
-    def get_web_port(port):
-        split_port = int(str(port)[:2]) - 1
-        return int(str(split_port) + str(port)[2:])
-
     def get_start_attrs(self):
         port = self.data['attributes']['port']
         bind = self.data['attributes']['bind']
-        web_port = self.get_web_port(port)
+        web_port = self.data['attributes']['web_port']
         return {
             'web_bind': f':{web_port}' if bind == '0.0.0.0' else f'{bind}:{web_port}',
             'server_addr': f'{bind}:{port}'
@@ -112,3 +109,11 @@ class DISPLAY(Device):
         if self.web_process and psutil.pid_exists(self.web_process.pid):
             self.middleware.call_sync('service.terminate_process', self.web_process.pid)
         self.web_process = None
+
+    def get_webui_info(self):
+        return {
+            'id': self.data['id'],
+            'path': f'{NGINX_PREFIX}/{self.data["id"]}/',
+            'redirect_uri': f'{self.data["attributes"]["bind"]}:'
+                            f'{self.data["attributes"]["web_port"]}',
+        }

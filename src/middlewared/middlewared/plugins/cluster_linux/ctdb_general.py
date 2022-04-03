@@ -13,7 +13,7 @@ class CtdbGeneralService(Service):
 
     class Config:
         namespace = 'ctdb.general'
-        cli_private = True
+        cli_namespace = 'service.ctdb.general'
 
     this_node = None
 

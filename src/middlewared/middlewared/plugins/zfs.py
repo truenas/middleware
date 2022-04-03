@@ -347,12 +347,16 @@ class ZFSPoolService(CRUDService):
 
     @accepts(
         Str('name_or_guid'),
-        Dict('options', additional_attrs=True),
+        Dict('properties', additional_attrs=True),
         Bool('any_host', default=True),
         Str('cachefile', null=True, default=None),
         Str('new_name', null=True, default=None),
+        Dict(
+            'import_options',
+            Bool('missing_log', default=False),
+        ),
     )
-    def import_pool(self, name_or_guid, options, any_host, cachefile, new_name):
+    def import_pool(self, name_or_guid, properties, any_host, cachefile, new_name, import_options):
         found = False
         with libzfs.ZFS() as zfs:
             for pool in zfs.find_import(
@@ -365,10 +369,10 @@ class ZFSPoolService(CRUDService):
             if not found:
                 raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
 
-            missing_log = options.pop('missing_log', False)
+            missing_log = import_options['missing_log']
             pool_name = new_name or found.name
             try:
-                zfs.import_pool(found, pool_name, options, missing_log=missing_log, any_host=any_host)
+                zfs.import_pool(found, pool_name, properties, missing_log=missing_log, any_host=any_host)
             except libzfs.ZFSException as e:
                 # We only log if some datasets failed to mount after pool import
                 if e.code != libzfs.Error.MOUNTFAILED:
@@ -976,7 +980,19 @@ class ZFSDatasetService(CRUDService):
                     raise CallError(f'Property {prop!r} not found.', errno.ENOENT)
                 zprop.inherit(recursive=recursive)
         except libzfs.ZFSException as e:
-            raise CallError(str(e))
+            if prop != 'mountpoint':
+                raise CallError(str(e))
+
+            err = e.code.name
+            if err not in ("SHARENFSFAILED", "SHARESMBFAILED"):
+                raise CallError(str(e))
+
+            # We set /etc/exports.d to be immutable, which
+            # results on inherit of mountpoint failing with
+            # SHARENFSFAILED. We give special return in this case
+            # so that caller can set this property to "off"
+            raise CallError(err, errno.EPROTONOSUPPORT)
+
 
     def destroy_snapshots(self, name, snapshot_spec):
         try:
@@ -999,26 +1015,39 @@ class ZFSSnapshot(CRUDService):
     def query(self, filters, options):
         """
         Query all ZFS Snapshots with `query-filters` and `query-options`.
+
+        `query-options.extra.min_txg` can be specified to limit snapshot retrieval based on minimum transaction group.
+
+        `query-options.extra.max_txg` can be specified to limit snapshot retrieval based on maximum transaction group.
         """
         # Special case for faster listing of snapshot names (#53149)
+        extra = copy.deepcopy(options['extra'])
+        min_txg = extra.get('min_txg', 0)
+        max_txg = extra.get('max_txg', 0)
         if (
-            options and options.get('select') == ['name'] and (
+            (
+                options.get('select') == ['name'] or
+                options.get('count')
+            ) and (
                 not filters or
                 filter_getattrs(filters).issubset({'name', 'pool'})
             )
         ):
             with libzfs.ZFS() as zfs:
-                snaps = zfs.snapshots_serialized(['name'])
+                snaps = zfs.snapshots_serialized(['name'], min_txg=min_txg, max_txg=max_txg)
 
             if filters or len(options) > 1:
                 return filter_list(snaps, filters, options)
             return snaps
 
-        extra = copy.deepcopy(options['extra'])
+        if options['extra'].get('retention'):
+            if 'id' not in filter_getattrs(filters) and not options.get('limit'):
+                raise CallError('`id` or `limit` is required if `retention` is requested', errno.EINVAL)
+
         properties = extra.get('properties')
         with libzfs.ZFS() as zfs:
             # Handle `id` filter to avoid getting all snapshots first
-            kwargs = dict(holds=False, mounted=False, props=properties)
+            kwargs = dict(holds=False, mounted=False, props=properties, min_txg=min_txg, max_txg=max_txg)
             if filters and len(filters) == 1 and len(filters[0]) == 3 and filters[0][0] in (
                 'id', 'name'
             ) and filters[0][1] == '=':
@@ -1030,7 +1059,7 @@ class ZFSSnapshot(CRUDService):
         select = options.pop('select', None)
         result = filter_list(snapshots, filters, options)
 
-        if not select or 'retention' in select:
+        if options['extra'].get('retention'):
             if isinstance(result, list):
                 result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
             elif isinstance(result, dict):
@@ -1050,6 +1079,7 @@ class ZFSSnapshot(CRUDService):
         Str('name', empty=False),
         Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
         Bool('recursive', default=False),
+        List('exclude', items=[Str('dataset')]),
         Bool('vmware_sync', default=False),
         Dict('properties', additional_attrs=True),
     ))
@@ -1060,6 +1090,7 @@ class ZFSSnapshot(CRUDService):
 
         dataset = data['dataset']
         recursive = data['recursive']
+        exclude = data['exclude']
         properties = data['properties']
 
         verrors = ValidationErrors()
@@ -1075,6 +1106,13 @@ class ZFSSnapshot(CRUDService):
         else:
             verrors.add('snapshot_create.naming_schema', 'You must specify either name or naming schema')
 
+        if exclude:
+            if not recursive:
+                verrors.add('snapshot_create.exclude', 'This option has no sense for non-recursive snapshots')
+            for k in ['vmware_sync', 'properties']:
+                if data[k]:
+                    verrors.add(f'snapshot_create.{k}', 'This option is not supported when excluding datasets')
+
         if verrors:
             raise verrors
 
@@ -1083,12 +1121,15 @@ class ZFSSnapshot(CRUDService):
             vmware_context = self.middleware.call_sync('vmware.snapshot_begin', dataset, recursive)
 
         try:
-            with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(dataset)
-                ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
+            if not exclude:
+                with libzfs.ZFS() as zfs:
+                    ds = zfs.get_dataset(dataset)
+                    ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
 
-                if vmware_context and vmware_context['vmsynced']:
-                    ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+                    if vmware_context and vmware_context['vmsynced']:
+                        ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+            else:
+                self.middleware.call_sync('zettarepl.create_recursive_snapshot_with_exclude', dataset, name, exclude)
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
         except libzfs.ZFSException as err:

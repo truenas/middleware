@@ -18,13 +18,19 @@ class PCI(Device):
         super().__init__(*args, **kwargs)
 
     def detach_device(self):
-        cp = subprocess.Popen(['virsh', '-c', LIBVIRT_URI, 'nodedev-detach', self.passthru_device()])
+        cp = subprocess.Popen(
+            ['virsh', '-c', LIBVIRT_URI, 'nodedev-detach', self.passthru_device()],
+            stderr=subprocess.PIPE, stdout=subprocess.DEVNULL
+        )
         stderr = cp.communicate()[1]
         if cp.returncode:
             raise CallError(f'Unable to detach {self.passthru_device()} PCI device: {stderr.decode()}')
 
     def reattach_device(self):
-        cp = subprocess.Popen(['virsh', '-c', LIBVIRT_URI, 'nodedev-reattach', self.passthru_device()])
+        cp = subprocess.Popen(
+            ['virsh', '-c', LIBVIRT_URI, 'nodedev-reattach', self.passthru_device()],
+            stderr=subprocess.PIPE, stdout=subprocess.DEVNULL
+        )
         stderr = cp.communicate()[1]
         if cp.returncode:
             raise CallError(f'Unable to re-attach {self.passthru_device()} PCI device: {stderr.decode()}')
@@ -50,7 +56,9 @@ class PCI(Device):
         return self.middleware.call_sync('vm.query', [['id', 'in', [dev['vm'] for dev in devs]]])
 
     def safe_to_reattach(self):
-        return all(vm['status']['state'] != 'RUNNING' for vm in self.get_vms_using_device())
+        return not self.get_details()['error'] and all(
+            vm['status']['state'] != 'RUNNING' for vm in self.get_vms_using_device()
+        )
 
     def post_stop_vm_linux(self, *args, **kwargs):
         if self.safe_to_reattach():

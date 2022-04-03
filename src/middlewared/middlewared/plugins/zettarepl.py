@@ -686,6 +686,9 @@ class ZettareplService(Service):
         properties_exclude = replication_task["properties_exclude"].copy()
         properties_override = replication_task["properties_override"].copy()
         for property in ["mountpoint", "sharenfs", "sharesmb"]:
+            if property == "mountpoint" and not replication_task.get("exclude_mountpoint_property", True):
+                continue
+
             if property not in properties_override:
                 if property not in properties_exclude:
                     properties_exclude.append(property)
@@ -777,6 +780,11 @@ class ZettareplService(Service):
     async def _get_zettarepl_shell(self, transport, ssh_credentials):
         if transport != "LOCAL":
             await self.middleware.call("network.general.will_perform_activity", "replication")
+
+        if transport == "SSH+NETCAT":
+            # There is no difference shell-wise, but `_define_transport` for `SSH+NETCAT` will fail if we don't
+            # supply `netcat_active_side` and other parameters which are totally unrelated here.
+            transport = "SSH"
 
         transport_definition = await self._define_transport(transport, ssh_credentials)
         transport = create_transport(transport_definition)

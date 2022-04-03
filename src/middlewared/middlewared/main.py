@@ -4,7 +4,7 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
-from .restful import RESTfulAPI
+from .restful import copy_multipart_to_pipe, RESTfulAPI
 from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
@@ -12,15 +12,15 @@ from .service_exception import adapt_exception, CallError, CallException, Valida
 from .utils import osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
-from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 from .utils.plugins import LoadPluginsMixin
 from .utils.profile import profile_wrap
-from .utils.run_in_thread import RunInThreadMixin
 from .utils.service.call import ServiceCallMixin
+from .utils.threading import set_thread_name, IoThreadPoolExecutor
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from .webhooks.cluster_events import ClusterEventsApplication
 from aiohttp import web
+from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
@@ -34,7 +34,6 @@ import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
-import copy
 from dataclasses import dataclass
 import errno
 import fcntl
@@ -106,12 +105,28 @@ class Application(object):
         self.__callbacks[name].append(method)
 
     def _send(self, data):
+        serialized = json.dumps(data)
+        asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
+        _1KB = 1000
+        if len(serialized) > _1KB:
+            # no reason to store data in the deque that
+            # is larger than ~1KB after being serialized.
+            # This gets _really_ painful on systems with
+            # many (100's) of snapshots because running a
+            # simple `zfs.snapshot.query` via midclt from
+            # the cli produces ridiculously large output.
+            # Caching that in the main middleware process
+            # is excessive and only hurts us. Instead we'll
+            # truncate to ~1KB.
+            message = serialized[:_1KB]
+        else:
+            message = serialized
+
         self.middleware.socket_messages_queue.append({
             'type': 'outgoing',
             'session_id': self.session_id,
-            'message': data,
+            'message': message,
         })
-        asyncio.run_coroutine_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
@@ -157,8 +172,7 @@ class Application(object):
 
         try:
             async with self._softhardsemaphore:
-                result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self,
-                                                     io_thread=False)
+                result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -275,19 +289,6 @@ class Application(object):
         self.middleware.unregister_wsclient(self)
 
     async def on_message(self, message):
-        if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
-            log_message = copy.deepcopy(message)
-            log_message['params'] = self.middleware.dump_args(
-                log_message.get('params', []), method_name=log_message['method']
-            )
-        else:
-            log_message = message
-
-        self.middleware.socket_messages_queue.append({
-            'type': 'incoming',
-            'session_id': self.session_id,
-            'message': log_message,
-        })
         # Run callbacks registered in plugins for on_message
         for method in self.__callbacks['on_message']:
             try:
@@ -297,10 +298,7 @@ class Application(object):
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
-                self._send({
-                    'msg': 'failed',
-                    'version': '1',
-                })
+                self._send({'msg': 'failed', 'version': '1'})
             else:
                 features = message.get('features') or []
                 if 'PY_EXCEPTIONS' in features:
@@ -309,62 +307,57 @@ class Application(object):
                 # It is desired to prevent that in this stage in case we are debugging
                 # middlewared via gdb (which makes the program execution a lot slower)
                 await asyncio.shield(self.middleware.call_hook('core.on_connect', app=self))
-                self._send({
-                    'msg': 'connected',
-                    'session': self.session_id,
-                })
+                self._send({'msg': 'connected', 'session': self.session_id})
                 self.handshake = True
-            return
-
-        if not self.handshake:
-            self._send({
-                'msg': 'failed',
-                'version': '1',
-            })
-            return
-
-        if message['msg'] == 'method':
+        elif not self.handshake:
+            self._send({'msg': 'failed', 'version': '1'})
+        elif message['msg'] == 'method':
+            error = False
             if 'method' not in message:
-                self.send_error(message, errno.EINVAL,
-                                "Message is malformed: 'method' is absent.")
-                return
-
-            try:
-                serviceobj, methodobj = self.middleware._method_lookup(message['method'])
-            except CallError as e:
-                self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
-                return
-
-            if not hasattr(methodobj, '_no_auth_required'):
+                self.send_error(message, errno.EINVAL, "Message is malformed: 'method' is absent.")
+                error = True
+            else:
+                try:
+                    serviceobj, methodobj = self.middleware._method_lookup(message['method'])
+                except CallError as e:
+                    self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
+                    error = True
+            if not error and not hasattr(methodobj, '_no_auth_required'):
                 if not self.authenticated:
                     self.send_error(message, errno.EACCES, 'Not authenticated')
-                    return
-
-                if not self.authenticated_credentials.authorize('CALL', message['method']):
+                    error = True
+                elif not self.authenticated_credentials.authorize('CALL', message['method']):
                     self.send_error(message, errno.EACCES, 'Not authorized')
-                    return
-
-            asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
-            return
+                    error = True
+            if not error:
+                asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
             if 'id' in message:
                 pong['id'] = message['id']
             self._send(pong)
-            return
-
-        if not self.authenticated:
+        elif not self.authenticated:
             self.send_error(message, errno.EACCES, 'Not authenticated')
-            return
-
-        if message['msg'] == 'sub':
+        elif message['msg'] == 'sub':
             if not self.authenticated_credentials.authorize('SUBSCRIBE', message['name']):
                 self.send_error(message, errno.EACCES, 'Not authorized')
-                return
-
-            await self.subscribe(message['id'], message['name'])
+            else:
+                await self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
             await self.unsubscribe(message['id'])
+
+        if message.get('msg') == 'method' and message.get('method') and isinstance(message.get('params'), list):
+            log_message = dict(
+                message, params=self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+            )
+        else:
+            log_message = message
+
+        self.middleware.socket_messages_queue.append({
+            'type': 'incoming',
+            'session_id': self.session_id,
+            'message': log_message,
+        })
 
     def __getstate__(self):
         return {}
@@ -536,26 +529,10 @@ class FileApplication(object):
             resp.set_status(405)
             return resp
 
-        def copy():
-            try:
-                try:
-                    while True:
-                        read = asyncio.run_coroutine_threadsafe(
-                            filepart.read_chunk(filepart.chunk_size),
-                            loop=self.loop,
-                        ).result()
-                        if read == b'':
-                            break
-                        job.pipes.input.w.write(read)
-                finally:
-                    job.pipes.input.w.close()
-            except BrokenPipeError:
-                pass
-
         try:
             job = await self.middleware.call(data['method'], *(data.get('params') or []),
                                              pipes=Pipes(input=self.middleware.pipe()))
-            await self.middleware.run_in_thread(copy)
+            await self.middleware.run_in_thread(copy_multipart_to_pipe, self.loop, filepart, job.pipes.input)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
                 status_code = 422
@@ -844,7 +821,7 @@ class PreparedCall:
         self.job = job
 
 
-class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
+class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
@@ -870,14 +847,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.startup_seq_path = startup_seq_path
         self.app = None
         self.loop = None
-        self.run_in_thread_executor = IoThreadPoolExecutor()
         self.__thread_id = threading.get_ident()
-        # Spawn new processes for ProcessPool instead of forking
-        multiprocessing.set_start_method('spawn')
-        self.__ws_threadpool = concurrent.futures.ThreadPoolExecutor(
-            initializer=lambda: osc.set_thread_name('threadpool_ws'),
-            max_workers=10,
-        )
+        self.thread_pool_executor = IoThreadPoolExecutor()
+        multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
         self.__wsclients = {}
         self.__events = Events()
@@ -890,7 +862,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
         self.mocks = {}
-        self.socket_messages_queue = deque(maxlen=1000)
+        self.socket_messages_queue = deque(maxlen=200)
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -911,7 +883,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 return
 
             mod_name = mod.__name__.split('.')
-            setup_plugin = mod_name[mod_name.index('plugins') + 1]
+            setup_plugin = '.'.join(mod_name[mod_name.index('plugins') + 1:])
 
             setup_funcs.append((setup_plugin, mod.setup))
 
@@ -1107,7 +1079,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
     def unregister_wsclient(self, client):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name, method, sync=True, inline=False, order=0):
+    def register_hook(self, name, method, *, inline=False, order=0, raise_error=False, sync=True):
         """
         Register a hook under `name`.
 
@@ -1115,8 +1087,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         Args:
             name(str): name of the hook, e.g. service.hook_name
             method(callable): method to be called
-            sync(bool): whether the method should be called in a sync way
             inline(bool): whether the method should be called in executor's context synchronously
+            order(int): hook execution order
+            raise_error(bool): whether an exception should be raised if a sync hook call fails
+            sync(bool): whether the method should be called in a sync way
         """
 
         if inline:
@@ -1126,11 +1100,16 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             if not sync:
                 raise RuntimeError('Inline hooks are always called in a sync way')
 
+        if raise_error:
+            if not sync:
+                raise RuntimeError('Hooks that raise error must be called in a sync way')
+
         self.__hooks[name].append({
             'method': method,
             'inline': inline,
-            'sync': sync,
             'order': order,
+            'raise_error': raise_error,
+            'sync': sync,
         })
         self.__hooks[name] = sorted(self.__hooks[name], key=lambda hook: hook['order'])
 
@@ -1139,6 +1118,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             try:
                 yield hook, hook['method'](self, *args, **kwargs)
             except Exception:
+                if hook['raise_error']:
+                    raise
+
                 self.logger.error(
                     'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
                 )
@@ -1158,6 +1140,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 else:
                     asyncio.ensure_future(fut)
             except Exception:
+                if hook['raise_error']:
+                    raise
+
                 self.logger.error(
                     'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
                 )
@@ -1181,27 +1166,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
-        if isinstance(pool, IoThreadPoolExecutor) and self.run_in_thread_executor.no_idle_threads:
-            # this means the IoThreadPool has no idle threads so instead of blocking the
-            # main event loop, we'll spin up single-use threads until the threadpool gets
-            # some more idle thread(s)
-            self.logger.trace('Calling %r in single-use thread', method)
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as exc:
-                return await loop.run_in_executor(exc, functools.partial(method, *args, **kwargs))
-
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
-    async def _run_in_conn_threadpool(self, method, *args, **kwargs):
-        """
-        Threads to handle websocket connection are gated on `__ws_threadpool`.
-        Any other calls should use `run_in_thread` as that launches its own thread
-        and does not cause deadlock waiting another thread to finish in the pool
-        (which could happen on the stack call, e.g.
-           service.foo calls something in using the thread pool and something also
-           uses the thread pool. If service.foo is called many times before each thread
-           finishes we will have a deadlock)
-        """
-        return await self.run_in_executor(self.__ws_threadpool, method, *args, **kwargs)
+    async def run_in_thread(self, method, *args, **kwargs):
+        return await self.run_in_executor(self.thread_pool_executor, method, *args, **kwargs)
 
     def __init_procpool(self):
         self.__procpool = concurrent.futures.ProcessPoolExecutor(
@@ -1229,9 +1197,12 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         return Pipe(self, buffered)
 
     def _call_prepare(
-        self, name, serviceobj, methodobj, params, app=None, io_thread=True, job_on_progress_cb=None, pipes=None,
-        threadsafe=False,
+        self, name, serviceobj, methodobj, params, app=None, job_on_progress_cb=None, pipes=None, in_event_loop=True,
     ):
+        """
+        :param in_event_loop: Whether we are in the event loop thread.
+        :return:
+        """
         args = []
         if hasattr(methodobj, '_pass_app'):
             args.append(app)
@@ -1248,12 +1219,19 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             # Create a job instance with required args
             job = Job(self, name, serviceobj, methodobj, args, job_options, pipes, job_on_progress_cb)
             # Add the job to the queue.
-            # At this point an `id` is assinged to the job.
-            if not threadsafe:
-                self.jobs.add(job)
+            # At this point an `id` is assigned to the job.
+            # Job might be replaced with an already existing job if `lock_queue_size` is used.
+            if in_event_loop:
+                job = self.jobs.add(job)
             else:
                 event = threading.Event()
-                self.loop.call_soon_threadsafe(lambda: (self.jobs.add(job), event.set()))
+
+                def cb():
+                    nonlocal job
+                    job = self.jobs.add(job)
+                    event.set()
+
+                self.loop.call_soon_threadsafe(cb)
                 event.wait()
             return PreparedCall(job=job)
 
@@ -1261,10 +1239,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             executor = methodobj._thread_pool
         elif serviceobj._config.thread_pool:
             executor = serviceobj._config.thread_pool
-        elif io_thread:
-            executor = self.run_in_thread_executor
         else:
-            executor = self.__ws_threadpool
+            executor = self.thread_pool_executor
 
         return PreparedCall(args=args, executor=executor)
 
@@ -1315,6 +1291,14 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         return [method.accepts[i].dump(arg) if i < len(method.accepts) else arg
                 for i, arg in enumerate(args)]
 
+    def dump_result(self, result, method):
+        if not hasattr(method, 'returns'):
+            return result
+
+        return [
+            method.returns[i].dump(r) if i < len(method.returns) else r for i, r in enumerate([result])
+        ]
+
     async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None, profile=False):
         serviceobj, methodobj = self._method_lookup(name)
 
@@ -1323,14 +1307,14 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         return await self._call(
             name, serviceobj, methodobj, params,
-            app=app, io_thread=True, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
+            app=app, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
     def call_sync(self, name, *params, job_on_progress_cb=None):
         serviceobj, methodobj = self._method_lookup(name)
 
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb,
-                                           threadsafe=True)
+                                           in_event_loop=True)
 
         if prepared_call.job:
             return prepared_call.job
@@ -1354,7 +1338,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         if isinstance(executor, concurrent.futures.thread.ThreadPoolExecutor):
             return threading.current_thread() in executor._threads
         elif isinstance(executor, IoThreadPoolExecutor):
-            return any(worker.thread == threading.current_thread() for worker in executor.workers)
+            return threading.current_thread().name.startswith(("IoThread", "ExtraIoThread"))
         else:
             raise RuntimeError(f"Unknown executor: {executor!r}")
 
@@ -1463,7 +1447,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 before taking another memory snapshot
         """
         # set the thread name
-        osc.set_thread_name('tracemalloc_monitor')
+        set_thread_name('tracemalloc_monitor')
 
         # initalize tracemalloc
         tracemalloc.start()
@@ -1524,6 +1508,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         if hasattr(methodobj, '_job'):
             f._job = methodobj._job
+        if hasattr(mock, '_job'):
+            f._job = mock._job
 
         self.mocks[name] = f
 
@@ -1549,25 +1535,43 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             async for msg in ws:
                 if msg.type == web.WSMsgType.ERROR:
                     self.logger.error('Websocket error: %r', msg.data)
-                    continue
-
-                if msg.type != web.WSMsgType.TEXT:
-                    self.logger.error('Invalid websocket message type: %r', msg.type)
-                    continue
-
-                if not connection.authenticated and len(msg.data) > 8192:
-                    await ws.close(message='Anonymous connection max message length is 8 kB'.encode('utf-8'))
                     break
 
-                x = json.loads(msg.data)
+                if msg.type != web.WSMsgType.TEXT:
+                    await ws.close(
+                        code=WSCloseCode.UNSUPPORTED_DATA,
+                        message=f'Invalid websocket message type: {msg.type!r}'.encode('utf-8'),
+                    )
+                    break
+
+                if not connection.authenticated and len(msg.data) > 8192:
+                    await ws.close(
+                        code=WSCloseCode.INVALID_TEXT,
+                        message='Anonymous connection max message length is 8 kB'.encode('utf-8'),
+                    )
+                    break
+
                 try:
-                    await connection.on_message(x)
+                    message = json.loads(msg.data)
+                except ValueError as f:
+                    await ws.close(
+                        code=WSCloseCode.INVALID_TEXT,
+                        message=f'{f}'.encode('utf-8'),
+                    )
+                    break
+
+                try:
+                    await connection.on_message(message)
                 except Exception as e:
                     self.logger.error('Connection closed unexpectedly', exc_info=True)
-                    await ws.close(message=str(e).encode('utf-8'))
+                    await ws.close(
+                        code=WSCloseCode.INTERNAL_ERROR,
+                        message=str(e).encode('utf-8'),
+                    )
                     break
         finally:
             await connection.on_close()
+
         return ws
 
     _loop_monitor_ignore_frames = (
@@ -1577,9 +1581,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             'run_in_thread',
         ),
         LoopMonitorIgnoreFrame(
-            re.compile(r'\s+File ".+/asyncio/subprocess\.py", line [0-9]+, in create_subprocess_exec'),
+            re.compile(r'\s+File ".+/asyncio/subprocess\.py", line [0-9]+, in create_subprocess_(exec|shell)'),
             cut_below=True,
-        )
+        ),
     )
 
     def _loop_monitor_thread(self):
@@ -1590,7 +1594,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         DISCLAIMER/TODO: This is not free of race condition so it may show
         false positives.
         """
-        osc.set_thread_name('loop_monitor')
+        set_thread_name('loop_monitor')
         last = None
         while True:
             time.sleep(2)
@@ -1626,7 +1630,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         self._console_write('starting')
 
-        osc.set_thread_name('asyncio_loop')
+        set_thread_name('asyncio_loop')
         self.loop = asyncio.get_event_loop()
 
         if self.loop_debug:

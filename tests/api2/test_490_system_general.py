@@ -2,6 +2,9 @@
 # License: BSD
 
 import pytest
+
+from middlewared.test.integration.utils import call, ssh
+
 import sys
 import os
 from pytest_dependency import depends
@@ -79,3 +82,13 @@ def test_10_Checking_sysloglevel_using_api():
     assert results.status_code == 200, results.text
     data = results.json()
     assert data['sysloglevel'] == SYSLOGLEVEL
+
+
+def test_11_timezone_choices():
+    timezones_dic = call('system.general.timezone_choices')
+    result = ssh('timedatectl list-timezones')
+    missing = []
+    for timezone in filter(bool, result.split('\n')):
+        if not timezones_dic.get(timezone):
+            missing.append(timezone)
+    assert missing == []

@@ -1,13 +1,15 @@
 import asyncio
 import errno
 import re
+import uuid
 import warnings
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
-from middlewared.validators import Range
+from middlewared.validators import Range, UUID
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -40,6 +42,7 @@ class VMModel(sa.Model):
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)
+    uuid = sa.Column(sa.String(255))
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -48,6 +51,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         namespace = 'vm'
         datastore = 'vm.vm'
         datastore_extend = 'vm.extend_vm'
+        datastore_extend_context = 'vm.extend_context'
         cli_namespace = 'service.vm'
 
     ENTRY = Patch(
@@ -63,6 +67,13 @@ class VMService(CRUDService, VMSupervisorMixin):
         ('add', Int('id')),
     )
 
+    @private
+    def extend_context(self, rows, extra):
+        status = {}
+        for row in rows:
+            status[row['id']] = self.status_impl(row)
+        return {'status': status}
+
     @accepts()
     @returns(Dict(
         *[Str(k, enum=[v]) for k, v in BOOT_LOADER_OPTIONS.items()],
@@ -74,9 +85,13 @@ class VMService(CRUDService, VMSupervisorMixin):
         return BOOT_LOADER_OPTIONS
 
     @private
-    async def extend_vm(self, vm):
-        vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
-        vm['status'] = await self.middleware.call('vm.status', vm['id'])
+    async def extend_vm(self, vm, context):
+        vm['devices'] = await self.middleware.call(
+            'vm.device.query',
+            [('vm', '=', vm['id'])],
+            {'force_sql_filters': True},
+        )
+        vm['status'] = context['status'][vm['id']]
         return vm
 
     @accepts(Dict(
@@ -98,6 +113,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('shutdown_timeout', default=90, validators=[Range(min=5, max=300)]),
         Str('arch_type', null=True, default=None),
         Str('machine_type', null=True, default=None),
+        Str('uuid', null=True, default=None, validators=[UUID()]),
         register=True,
     ))
     async def do_create(self, data):
@@ -193,6 +209,9 @@ class VMService(CRUDService, VMSupervisorMixin):
             raise
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
+        if not data.get('uuid'):
+            data['uuid'] = str(uuid.uuid4())
+
         vcpus = data['vcpus'] * data['cores'] * data['threads']
         if vcpus:
             flags = await self.middleware.call('vm.flags')
@@ -389,7 +408,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                     if not zvol['attributes']['path'].startswith('/dev/zvol/'):
                         continue
 
-                    disk_name = zvol['attributes']['path'].rsplit('/dev/zvol/')[-1]
+                    disk_name = zvol_path_to_name(zvol['attributes']['path'])
                     try:
                         await self.middleware.call('zfs.dataset.delete', disk_name, {'recursive': True})
                     except Exception:
@@ -428,6 +447,10 @@ class VMService(CRUDService, VMSupervisorMixin):
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
+        return self.status_impl(vm)
+
+    @private
+    def status_impl(self, vm):
         if self._has_domain(vm['name']):
             try:
                 # Whatever happens, query shouldn't fail

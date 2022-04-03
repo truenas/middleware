@@ -10,15 +10,14 @@ import logging
 from datetime import datetime, time, timedelta
 from pathlib import Path
 import os
-import psutil
 import re
 import secrets
 import shutil
 import subprocess
-import tempfile
 import uuid
 
 from collections import defaultdict
+from io import BytesIO
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.plugins.zfs import ZFSSetPropertyError
@@ -36,7 +35,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, filter_list, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
-from middlewared.utils.shell import join_commandline
+from middlewared.utils.size import MB
 from middlewared.validators import Exact, Match, Or, Range, Time
 
 logger = logging.getLogger(__name__)
@@ -299,6 +298,7 @@ class PoolService(CRUDService):
         ),
         Bool('is_upgraded'),
         Bool('healthy', required=True),
+        Bool('warning', required=True),
         Str('status_detail', required=True, null=True),
         Dict(
             'autotrim',
@@ -561,6 +561,7 @@ class PoolService(CRUDService):
                 'scan': zpool['scan'],
                 'topology': self.transform_topology(zpool['groups']),
                 'healthy': zpool['healthy'],
+                'warning': zpool['warning'],
                 'status_detail': zpool['status_detail'],
                 'autotrim': zpool['properties']['autotrim'],
             })
@@ -570,6 +571,7 @@ class PoolService(CRUDService):
                 'scan': None,
                 'topology': None,
                 'healthy': False,
+                'warning': False,
                 'status_detail': None,
                 'autotrim': {
                     'parsed': 'off',
@@ -644,6 +646,7 @@ class PoolService(CRUDService):
             List('spares', items=[Str('disk')]),
             required=True,
         ),
+        Bool('allow_duplicate_serials', default=False),
         register=True,
     ))
     @job(lock='pool_createupdate')
@@ -731,7 +734,10 @@ class PoolService(CRUDService):
 
         await self.__common_validation(verrors, data, 'pool_create')
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
+        verrors.add_child(
+            'pool_create',
+            await self.middleware.call('disk.check_disks_availability', list(disks), data['allow_duplicate_serials']),
+        )
         verrors.check()
 
         log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
@@ -893,11 +899,15 @@ class PoolService(CRUDService):
         disks = vdevs = None
         if 'topology' in data:
             disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-            await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
+            verrors.add_child(
+                'pool_update',
+                await self.middleware.call('disk.check_disks_availability', list(disks),
+                                           data['allow_duplicate_serials'])
+            )
         verrors.check()
 
         if disks and vdevs:
-            await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': None})
+            await self.middleware.call('pool.format_disks', job, disks)
 
             job.set_progress(90, 'Extending ZFS Pool')
             extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
@@ -1027,13 +1037,10 @@ class PoolService(CRUDService):
         Get all disks in use by pools.
         If `id` is provided only the disks from the given pool `id` will be returned.
         """
-        filters = []
         disks = []
-        if oid:
-            filters.append(('id', '=', oid))
-        for pool in await self.query(filters):
+        for pool in await self.middleware.call('pool.query', [] if not oid else [('id', '=', oid)]):
             if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
-                disks.extend(list(await self.middleware.call('zfs.pool.get_disks', pool['name'])))
+                disks.extend(await self.middleware.call('zfs.pool.get_disks', pool['name']))
         return disks
 
     @item_method
@@ -1237,7 +1244,7 @@ class PoolService(CRUDService):
                 'disk.label_to_disk', disk_path.replace('/dev/', '')
             )
             if disk:
-                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
+                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False)
                 wipe_jobs.append((disk, wipe_job))
 
         job.set_progress(70, 'Wiping disks')
@@ -1339,6 +1346,15 @@ class PoolService(CRUDService):
             result.append(entry)
         return result
 
+    @private
+    async def disable_shares(self, ds):
+        await self.middleware.call('zfs.dataset.update', ds, {
+            'properties': {
+                'sharenfs': {'value': "off"},
+                'sharesmb': {'value': "off"},
+            }
+        })
+
     @accepts(Dict(
         'pool_import',
         Str('guid', required=True),
@@ -1399,8 +1415,26 @@ class PoolService(CRUDService):
         else:
             pool_name = new_name
 
-        # reset top-level zpool `aclinherit` property
-        opts = {'properties': {'aclinherit': {'value': 'passthrough'}}}
+        # set acl properties correctly for given top-level dataset's acltype
+        ds = await self.middleware.call(
+            'pool.dataset.query',
+            [['id', '=', pool_name]],
+            {'get': True, 'extra': {'retrieve_children': False}}
+        )
+        if ds['acltype']['value'] == 'NFSV4':
+            opts = {'properties': {
+                'aclinherit': {'value': 'passthrough'}
+            }}
+        else:
+            opts = {'properties': {
+                'aclinherit': {'value': 'discard'},
+                'aclmode': {'value': 'discard'},
+            }}
+
+        opts['properties'].update({
+            'sharenfs': {'value': "off"}, 'sharesmb': {'value': "off"},
+        })
+
         await self.middleware.call('zfs.dataset.update', pool_name, opts)
 
         # Recursively reset dataset mountpoints for the zpool.
@@ -1413,9 +1447,32 @@ class PoolService(CRUDService):
             try:
                 # Reset all mountpoints
                 await self.middleware.call('zfs.dataset.inherit', child, 'mountpoint', recursive)
+
+            except CallError as e:
+                if e.errno != errno.EPROTONOSUPPORT:
+                    self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
+                    continue
+
+                try:
+                    await self.disable_shares(child)
+                    self.logger.warning('%s: disabling ZFS dataset property-based shares', child)
+                except Exception:
+                    self.logger.warning('%s: failed to disable share: %s.', child, str(e), exc_info=True)
+
             except Exception as e:
                 # Let's not make this fatal
                 self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
+
+        # We want to set immutable flag on all of locked datasets
+        for encrypted_ds in await self.middleware.call(
+            'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
+        ):
+            encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
+            if os.path.exists(encrypted_mountpoint):
+                try:
+                    await self.middleware.call('filesystem.set_immutable', True, encrypted_mountpoint)
+                except Exception as e:
+                    self.logger.warning('Failed to set immutable flag at %r: %r', encrypted_mountpoint, e)
 
         # update db
         pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
@@ -1727,17 +1784,6 @@ class PoolService(CRUDService):
             except Exception:
                 self.logger.warning(
                     'Failed to set cache file for %s', pool['name'], exc_info=True,
-                )
-
-            try:
-                if os.path.isdir('/mnt/mnt'):
-                    # Reset all mountpoints
-                    self.middleware.call_sync(
-                        'zfs.dataset.inherit', pool['name'], 'mountpoint', True
-                    )
-            except Exception:
-                self.logger.warning(
-                    'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
                 )
 
             unlock_job = self.middleware.call_sync(
@@ -2207,24 +2253,14 @@ class PoolDatasetService(CRUDService):
         sync_job.wait_sync()
 
         datasets = self.query_encrypted_roots_keys([['OR', [['name', '=', id], ['name', '^', f'{id}/']]]])
-        temp_path = None
-        try:
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-                temp_path = f.name
-                os.chmod(temp_path, 0o600)
-                f.write(json.dumps(datasets))
-
-            with open(temp_path, 'rb') as f:
-                shutil.copyfileobj(f, job.pipes.output.w)
-        finally:
-            if os.path.exists(temp_path or ''):
-                os.unlink(temp_path)
+        with BytesIO(json.dumps(datasets).encode()) as f:
+            shutil.copyfileobj(f, job.pipes.output.w)
 
     @accepts(
         Str('id'),
         Bool('download', default=False),
     )
-    @returns(Str('key', null=True))
+    @returns(Str('key', null=True, private=True))
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
     def export_key(self, job, id, download):
         """
@@ -2296,7 +2332,8 @@ class PoolDatasetService(CRUDService):
         finally:
             await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
-        await self.middleware.call('filesystem.set_immutable', True, ds['mountpoint'])
+        if ds['mountpoint']:
+            await self.middleware.call('filesystem.set_immutable', True, ds['mountpoint'])
 
         await self.middleware.call_hook('dataset.post_lock', id)
 
@@ -2416,13 +2453,14 @@ class PoolDatasetService(CRUDService):
 
         failed = defaultdict(lambda: dict({'error': None, 'skipped': []}))
         unlocked = []
-        for name in sorted(
+        names = sorted(
             filter(
                 lambda n: n and f'{n}/'.startswith(f'{id}/') and datasets[n]['locked'],
                 (datasets if options['recursive'] else [id])
             ),
             key=lambda v: v.count('/')
-        ):
+        )
+        for name_i, name in enumerate(names):
             skip = False
             for i in range(name.count('/') + 1):
                 check = name.rsplit('/', i)[0]
@@ -2438,6 +2476,7 @@ class PoolDatasetService(CRUDService):
                 failed[name]['error'] = 'Missing key'
                 continue
 
+            job.set_progress(int(name_i / len(names) * 90 + 0.5), f'Unlocking {name!r}')
             try:
                 self.middleware.call_sync(
                     'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': False}
@@ -2469,13 +2508,31 @@ class PoolDatasetService(CRUDService):
                 else:
                     unlocked.append(name)
 
+        for failed_ds in failed:
+            failed_datasets = {}
+            for ds in [failed_ds] + failed[failed_ds]['skipped']:
+                mount_path = os.path.join('/mnt', ds)
+                if os.path.exists(mount_path):
+                    try:
+                        self.middleware.call_sync('filesystem.set_immutable', True, mount_path)
+                    except CallError as e:
+                        failed_datasets[ds] = str(e)
+
+            if failed_datasets:
+                failed[failed_ds]['error'] += '\n\nFailed to set immutable flag on following datasets:\n' + '\n'.join(
+                    f'{i + 1}) {ds} ({failed_datasets[ds]})' for i, ds in enumerate(failed_datasets)
+                )
+
         services_to_restart = set()
         if self.middleware.call_sync('system.ready'):
             services_to_restart.add('disk')
 
         if unlocked:
             if options['toggle_attachments']:
+                job.set_progress(91, 'Handling attachments')
                 self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset, options)
+
+            job.set_progress(92, 'Updating database')
 
             def dataset_data(unlocked_dataset):
                 return {
@@ -2488,8 +2545,10 @@ class PoolDatasetService(CRUDService):
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
 
+            job.set_progress(93, 'Restarting services')
             self.middleware.call_sync('pool.dataset.restart_services_after_unlock', id, services_to_restart)
 
+            job.set_progress(94, 'Running post-unlock tasks')
             self.middleware.call_hook_sync(
                 'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
             )
@@ -2848,7 +2907,7 @@ class PoolDatasetService(CRUDService):
     def _retrieve_keys_from_file(self, job):
         job.check_pipe('input')
         try:
-            data = json.loads(job.pipes.input.r.read(10240))
+            data = json.loads(job.pipes.input.r.read(10 * MB))
         except json.JSONDecodeError:
             raise CallError('Input file must be a valid JSON file')
 
@@ -3041,7 +3100,7 @@ class PoolDatasetService(CRUDService):
         Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']), has_default=False),
         Inheritable(Str('acltype', enum=['OFF', 'NOACL', 'NFSV4', 'NFS4ACL', 'POSIX', 'POSIXACL']), has_default=False),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
-        Inheritable(Str('xattr', enum=['ON', 'SA'])),
+        Inheritable(Str('xattr', default='SA', enum=['ON', 'SA'])),
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
@@ -3565,6 +3624,11 @@ class PoolDatasetService(CRUDService):
                 if attachments:
                     await delegate.delete(attachments)
 
+        if dataset['locked'] and dataset['mountpoint'] and os.path.exists(dataset['mountpoint']):
+            # We would like to remove the immutable flag in this case so that it's mountpoint can be
+            # cleaned automatically when we delete the dataset
+            await self.middleware.call('filesystem.set_immutable', False, dataset['mountpoint'])
+
         result = await self.middleware.call('zfs.dataset.delete', id, {
             'force': options['force'],
             'recursive': options['recursive'],
@@ -3976,16 +4040,8 @@ class PoolDatasetService(CRUDService):
                         )
                 else:
                     id_type = ('user', 'uid') if 'user' in quota_type else ('group', 'gid')
-                    try:
-                        xid_obj = await self.middleware.call(f'{id_type[0]}.get_{id_type[0]}_obj',
-                                                             {id_type[1]: q["id"]})
-                        xid = xid_obj['pw_uid'] if id_type[1] == 'uid' else xid_obj['gr_gid']
-                    except Exception:
-                        self.logger.debug("Failed to convert %s [%s] to id.", id_type[1], q["id"], exc_info=True)
-                        verrors.add(
-                            f'quotas.{i}.id',
-                            f'{quota_type} {q["id"]} is not valid.'
-                        )
+                    xid = int(q["id"])
+
                 if xid == 0:
                     verrors.add(
                         f'quotas.{i}.id',
@@ -4119,43 +4175,11 @@ class PoolDatasetService(CRUDService):
           }
         ]
         """
-        result = []
         dataset = await self.get_instance(oid)
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
-            lsof = await run(
-                'lsof',
-                '-F', 'pcn',  # Output format parseable by `parse_lsof`
-                '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                check=False,
-                encoding='utf8'
-            )
-            for pid, name in parse_lsof(lsof.stdout, [path, zvol_path]):
-                service = await self.middleware.call('service.identify_process', name)
-                if service:
-                    result.append({
-                        "pid": pid,
-                        "name": name,
-                        "service": service,
-                    })
-                else:
-                    try:
-                        cmdline = await self.middleware.run_in_thread(
-                            lambda: psutil.Process(pid).cmdline()
-                        )
-                    except psutil.NoSuchProcess:
-                        pass
-                    else:
-                        result.append({
-                            "pid": pid,
-                            "name": name,
-                            "cmdline": join_commandline(cmdline),
-                        })
-
-        return result
+            return await self.middleware.call('pool.dataset.processes_using_paths', [path, zvol_path])
 
     @private
     async def kill_processes(self, oid, control_services, max_tries=5):
@@ -4493,38 +4517,6 @@ class PoolScrubService(CRUDService):
 
         await self.middleware.call('pool.scrub.scrub', pool['name'])
         return True
-
-
-def parse_lsof(lsof, dirs):
-    pids = {}
-
-    pid = None
-    command = None
-    for line in lsof.split("\n"):
-        if line.startswith("p"):
-            pid = None
-            command = None
-
-            try:
-                pid = int(line[1:])
-            except ValueError:
-                # no reason to continue if we dont have
-                # a PID associated with the process
-                continue
-
-        if line.startswith("c"):
-            command = line[1:]
-
-        if line.startswith("f"):
-            pass
-
-        if line.startswith("n"):
-            path = line[1:].split(" (")[0]
-            if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
-                if pid is not None and command is not None:
-                    pids[pid] = command
-
-    return list(pids.items())
 
 
 def setup(middleware):

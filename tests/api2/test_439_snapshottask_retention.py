@@ -44,7 +44,7 @@ def test_change_retention(request):
     })
     assert result.status_code == 200, result.text
 
-    result = GET("/zfs/snapshot/?id=tank/snapshottask-retention-test@auto-2021-04-12-06-30-1y")
+    result = GET("/zfs/snapshot/?id=tank/snapshottask-retention-test@auto-2021-04-12-06-30-1y&extra.retention=true")
     assert result.status_code == 200, result.text
     assert result.json()[0]["retention"] == {
         "datetime": {
@@ -72,7 +72,7 @@ def test_change_retention(request):
     job_status = wait_on_job(results.json()[-1]['id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-    result = GET("/zfs/snapshot/?id=tank/snapshottask-retention-test@auto-2021-04-12-06-30-1y")
+    result = GET("/zfs/snapshot/?id=tank/snapshottask-retention-test@auto-2021-04-12-06-30-1y&extra.retention=true")
     assert result.status_code == 200, result.text
     assert (
         [v for k, v in result.json()[0]["properties"].items() if k.startswith("org.truenas:destroy_at_")][0]["value"]
@@ -124,7 +124,7 @@ def test_delete_retention(request):
     job_status = wait_on_job(results.json()[-1]['id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-    result = GET("/zfs/snapshot/?id=tank/snapshottask-retention-test-2@auto-2021-04-12-06-30-1y")
+    result = GET("/zfs/snapshot/?id=tank/snapshottask-retention-test-2@auto-2021-04-12-06-30-1y&extra.retention=true")
     assert result.status_code == 200, result.text
     assert (
         [v for k, v in result.json()[0]["properties"].items() if k.startswith("org.truenas:destroy_at_")][0]["value"]

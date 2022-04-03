@@ -148,7 +148,7 @@ system_func()
 	section_footer
 
 	section_header "Middleware Jobs - 'midclt call core.get_jobs'"
-	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' | jq .
+	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' '{"extra": {"raw_result": false}}' | jq .
 	section_footer
 
 	section_header "Middleware Websocket Incoming/Outgoing Message(s) - 'midclt call core.get_websocket_messages'"
@@ -206,5 +206,9 @@ system_func()
 
 	section_header "Failed updates /data/update.failed"
 	sc /data/update.failed
+	section_footer
+
+	section_header "Truecommand connection"
+	midclt call truecommand.connected | jq 'del(.truecommand_ip,.truecommand_url)'
 	section_footer
 }	

@@ -17,93 +17,50 @@ class InterfaceService(Service):
     @private
     def configure(self, data, aliases, options):
         options = options or {}
-
         name = data['int_interface']
         self.logger.info('Configuring interface %r', name)
-
         iface = netif.get_interface(name)
+        addrs_configured = set([a for a in iface.addresses if a.af != netif.AddressFamily.LINK])
+        has_ipv6 = data['int_version'] == 6 or data['int_ipv6auto']
+        if self.middleware.call_sync('failover.node') == 'B':
+            addr_key = 'int_address_b'
+            alias_key = 'alias_address_b'
+        else:
+            addr_key = 'int_address'
+            alias_key = 'alias_address'
 
         addrs_database = set()
-        addrs_configured = set([
-            a for a in iface.addresses
-            if a.af != netif.AddressFamily.LINK
-        ])
+        dhclient_run, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
+        if dhclient_run and not data['int_dhcp']:
+            # dhclient is running on the interface but is marked to not have dhcp configure the interface
+            self.logger.debug('Killing dhclient for %r', name)
+            os.kill(dhclient_pid, signal.SIGTERM)
+        elif dhclient_run and data['int_dhcp'] and (i := self.middleware.call_sync('interface.dhclient_leases', name)):
+            # dhclient is running on the interface and is marked for dhcp AND we have a lease file for it
+            _addr = re.search(r'fixed-address\s+(.+);', i)
+            _net = re.search(r'option subnet-mask\s+(.+);', i)
+            if (_addr and (_addr := _addr.group(1))) and (_net and (_net := _net.group(1))):
+                addrs_database.add(self.alias_to_addr({'address': _addr, 'netmask': _net}))
+            else:
+                self.logger.info('Unable to get address from dhclient lease file for %r', name)
 
-        has_ipv6 = data['int_ipv6auto'] or False
+        if data[addr_key] and not data['int_dhcp']:
+            # TODO: how are we handling int_ipv6auto (is it SLAAC or stateless DHCPv6 or stateful DHCPv6)??
+            addrs_database.add(self.alias_to_addr({'address': data[addr_key], 'netmask': data['int_netmask']}))
 
-        if (
-            self.middleware.call_sync('system.is_enterprise') and self.middleware.call_sync('failover.node') == 'B'
-        ):
-            ipv4_field = 'int_ipv4address_b'
-            ipv6_field = 'int_ipv6address_b'
-            alias_field = 'alias_address_b'
-        else:
-            ipv4_field = 'int_ipv4address'
-            ipv6_field = 'int_ipv6address'
-            alias_field = 'alias_address'
-
-        dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
-        if dhclient_running and data['int_dhcp']:
-            leases = self.middleware.call_sync('interface.dhclient_leases', name)
-            if leases:
-                reg_address = re.search(r'fixed-address\s+(.+);', leases)
-                reg_netmask = re.search(r'option subnet-mask\s+(.+);', leases)
-                if reg_address and reg_netmask:
-                    addrs_database.add(self.alias_to_addr({
-                        'address': reg_address.group(1),
-                        'netmask': reg_netmask.group(1),
-                    }))
-                else:
-                    self.logger.info('Unable to get address from dhclient')
-            if data[ipv6_field] and not has_ipv6:
-                addrs_database.add(self.alias_to_addr({
-                    'address': data[ipv6_field],
-                    'netmask': data['int_v6netmaskbit'],
-                }))
-                has_ipv6 = True
-        else:
-            if data[ipv4_field] and not data['int_dhcp']:
-                addrs_database.add(self.alias_to_addr({
-                    'address': data[ipv4_field],
-                    'netmask': data['int_v4netmaskbit'],
-                }))
-            if data[ipv6_field] and not has_ipv6:
-                addrs_database.add(self.alias_to_addr({
-                    'address': data[ipv6_field],
-                    'netmask': data['int_v6netmaskbit'],
-                }))
-                has_ipv6 = True
-
-        # configure VRRP
-        vip = data.get('int_vip', '')
-        if vip:
-            addrs_database.add(self.alias_to_addr({
-                'address': vip,
-                'netmask': '32',
-            }))
-
-        vipv6 = data.get('int_vipv6address', '')
-        if vipv6:
-            addrs_database.add(self.alias_to_addr({
-                'address': vipv6,
-                'netmask': '128',
-            }))
+        if vip := data.get('int_vip', ''):
+            netmask = '32' if data['int_version'] == 4 else '128'
+            addrs_database.add(self.alias_to_addr({'address': vip, 'netmask': netmask}))
 
         alias_vips = []
         for alias in aliases:
-            if alias[alias_field]:
-                addrs_database.add(self.alias_to_addr({
-                    'address': alias[alias_field],
-                    'netmask': alias['alias_netmask'],
-                }))
-
+            addrs_database.add(self.alias_to_addr({'address': alias[alias_key], 'netmask': alias['alias_netmask']}))
             if alias['alias_vip']:
                 alias_vip = alias['alias_vip']
                 alias_vips.append(alias_vip)
-                addrs_database.add(self.alias_to_addr({
-                    'address': alias_vip,
-                    'netmask': '32' if alias['alias_version'] == 4 else '128',
-                }))
+                addrs_database.add(self.alias_to_addr(
+                    {'address': alias_vip, 'netmask': '32' if alias['alias_version'] == 4 else '128'}
+                ))
 
         if has_ipv6 and not [i for i in map(str, iface.addresses) if i.startswith('fe80::')]:
             # https://tools.ietf.org/html/rfc4291#section-2.5.1
@@ -111,32 +68,25 @@ class InterfaceService(Service):
             mac = iface.link_address.address.address.replace(':', '')
             mac = mac[0:6] + 'fffe' + mac[6:]
             mac = hex(int(mac[0:2], 16) ^ 2)[2:].zfill(2) + mac[2:]
-            link_local = {
-                'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)),
-                'netmask': '64',
-            }
+            link_local = {'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)), 'netmask': '64'}
             addrs_database.add(self.alias_to_addr(link_local))
 
-        if dhclient_running and not data['int_dhcp']:
-            self.logger.debug('Killing dhclient for {}'.format(name))
-            os.kill(dhclient_pid, signal.SIGTERM)
-
-        # Remove addresses configured and not in database
         for addr in addrs_configured:
             address = str(addr.address)
-            # keepalived service is responsible for deleting the VIP(s)
-            if address in (vip, vipv6) or address in alias_vips:
+            if address == vip or address in alias_vips or (has_ipv6 and address.startswith('fe80::')):
+                # keepalived service is responsible for deleting the VIP(s)
+                # dont remove fe80 address if ipv6 is configured since it's needed
                 continue
-            if vipv6 and address.startswith('fe80::'):
-                continue
-            if addr not in addrs_database:
-                self.logger.debug('{}: removing {}'.format(name, addr))
+            elif addr not in addrs_database:
+                # Remove addresses configured and not in database
+                self.logger.debug('%s: removing %s', name, addr)
                 iface.remove_address(addr)
             elif not data['int_dhcp']:
-                self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
+                self.logger.debug('%s: removing possible valid_lft and preferred_lft on %s', name, addr)
                 iface.replace_address(addr)
+            # TODO: what are we doing with ipv6auto??
 
-        if vip or vipv6 or alias_vips:
+        if vip or alias_vips:
             if not self.middleware.call_sync('service.started', 'keepalived'):
                 self.middleware.call_sync('service.start', 'keepalived')
             else:
@@ -147,9 +97,9 @@ class InterfaceService(Service):
         for addr in (addrs_database - addrs_configured):
             address = str(addr.address)
             # keepalived service is responsible for adding the VIP(s)
-            if address in (vip, vipv6) or address in alias_vips:
+            if address == vip or address in alias_vips:
                 continue
-            self.logger.debug('{}: adding {}'.format(name, addr))
+            self.logger.debug('%s: adding %s', name, addr)
             iface.add_address(addr)
 
         # In case there is no MTU in interface and it is currently
@@ -165,13 +115,15 @@ class InterfaceService(Service):
             try:
                 iface.description = data['int_name']
             except Exception:
-                self.logger.warn(f'Failed to set interface {name} description', exc_info=True)
+                self.logger.warning('Failed to set interface description on %s', name, exc_info=True)
 
         if netif.InterfaceFlags.UP not in iface.flags:
             iface.up()
 
-        # If dhclient is not running and dhcp is configured, lets start it
-        return not dhclient_running and data['int_dhcp']
+        # If dhclient is not running and dhcp is configured, the caller should
+        # start it based on what we return here
+        # TODO: what are we doing with ipv6auto??
+        return not dhclient_run and data['int_dhcp']
 
     @private
     def autoconfigure(self, iface, wait_dhcp):

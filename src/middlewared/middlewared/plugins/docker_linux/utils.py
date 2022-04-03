@@ -1,5 +1,7 @@
+import docker
 import re
-from typing import Dict
+from collections import defaultdict
+from typing import Dict, Union
 
 from middlewared.service import CallError
 
@@ -36,6 +38,7 @@ def normalize_reference(reference: str) -> Dict:
 
     # At this point, tag should be included already – we just need to see whether this
     # tag is named or digested and respond accordingly.
+    ref_is_digest = False
     if '@' in tagged_image:
         matches = re.findall(DIGEST_RE, tagged_image)
         if not matches:
@@ -45,6 +48,7 @@ def normalize_reference(reference: str) -> Dict:
         tag_pos = tagged_image.find(tag)
         image = tagged_image[:tag_pos - 1].rsplit(':', 1)[0]
         sep = '@'
+        ref_is_digest = True
     elif ':' in tagged_image:
         image, tag = tagged_image.rsplit(':', 1)
         sep = ':'
@@ -55,4 +59,27 @@ def normalize_reference(reference: str) -> Dict:
         'tag': tag,
         'registry': registry,
         'complete_tag': f'{registry}/{image}{sep}{tag}',
+        'reference_is_digest': ref_is_digest,
     }
+
+
+def get_chart_releases_consuming_image(
+    image_names: Union[list, set], chart_releases: list, get_mapping: bool = False
+) -> Union[dict, list]:
+    chart_releases_consuming_image = defaultdict(list) if get_mapping else set()
+    images = {i['complete_tag']: i for i in map(normalize_reference, image_names)}
+    for chart_release in chart_releases:
+        for image in chart_release['resources']['container_images']:
+            parsed_image = normalize_reference(image)
+            if parsed_image['complete_tag'] in images and images[
+                parsed_image['complete_tag']
+            ]['tag'] == parsed_image['tag']:
+                if get_mapping:
+                    chart_releases_consuming_image[chart_release['name']].append(parsed_image['reference'])
+                else:
+                    chart_releases_consuming_image.add(chart_release['name'])
+    return chart_releases_consuming_image if get_mapping else list(chart_releases_consuming_image)
+
+
+def get_docker_client() -> docker.DockerClient:
+    return docker.from_env()

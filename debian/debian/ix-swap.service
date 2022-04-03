@@ -1,0 +1,18 @@
+[Unit]
+Description=Configure swap filesystem on boot pool
+DefaultDependencies=no
+
+Before=network-pre.target
+
+After=middlewared.service
+Before=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStartSec=300
+ExecStart=midclt call disk.swaps_configure
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

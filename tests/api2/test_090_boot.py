@@ -7,6 +7,7 @@ import pytest
 import sys
 import os
 from time import time, sleep
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET
@@ -15,14 +16,18 @@ from auto_config import dev_test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
+@pytest.mark.dependency(name='BOOT_DISKS')
 def test_01_get_boot_disks():
     results = GET('/boot/get_disks/')
     assert results.status_code == 200, results.text
     disks = results.json()
     assert isinstance(disks, list) is True, results.text
+    assert disks, results.text
 
 
-def test_02_get_boot_state():
+@pytest.mark.dependency(name='BOOT_STATE')
+def test_02_get_boot_state(request):
+    depends(request, ['BOOT_DISKS'])
     results = GET('/boot/get_state/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
@@ -30,7 +35,9 @@ def test_02_get_boot_state():
     boot_state = results.json()
 
 
-def test_03_get_boot_scrub():
+@pytest.mark.dependency(name='BOOT_SCRUB')
+def test_03_get_boot_scrub(request):
+    depends(request, ['BOOT_STATE'])
     global JOB_ID
     results = GET('/boot/scrub/')
     assert results.status_code == 200, results.text
@@ -38,7 +45,8 @@ def test_03_get_boot_scrub():
     JOB_ID = results.json()
 
 
-def test_04_verify_boot_scrub_job():
+def test_04_verify_boot_scrub_job(request):
+    depends(request, ['BOOT_SCRUB'])
     stop_time = time() + 600
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')

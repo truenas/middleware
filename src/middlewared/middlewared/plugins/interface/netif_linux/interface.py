@@ -5,7 +5,7 @@ from .address import AddressFamily, AddressMixin
 from .bridge import BridgeMixin
 from .bits import InterfaceFlags, InterfaceLinkState
 from .lagg import LaggMixin
-from .utils import bitmask_to_set, run
+from .utils import bitmask_to_set, INTERNAL_INTERFACES, run
 from .vlan import VlanMixin
 from .vrrp import VrrpMixin
 from .ethernet_settings import EthernetHardwareSettings
@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["Interface"]
 
-CLONED_PREFIXES = [
-    'lo', 'tun', 'tap', 'br', 'vlan', 'bond', 'docker', 'veth', 'kube-bridge', 'kube-dummy', 'vnet', 'openvpn',
-]
+CLONED_PREFIXES = ["br", "vlan", "bond"] + INTERNAL_INTERFACES
 
 
 class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):

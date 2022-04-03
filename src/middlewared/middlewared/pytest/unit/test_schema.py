@@ -4,7 +4,7 @@ from mock import Mock
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
-    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, UnixPerm,
+    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI, UnixPerm,
 )
 
 
@@ -747,3 +747,24 @@ def test__schema_or_error_handler_attribute_name(schema, attribute):
         meth({})
 
     assert ei.value.errors[0].attribute == attribute
+
+
+@pytest.mark.parametrize('test_value,expected_error', [
+    ('https://google.com', False),
+    ('https:google.com', True),
+    ('https:/google', True),
+    ('https://www.google.com/search?q=truenas', False),
+])
+def test__uri_schema(test_value, expected_error):
+    @accepts(URI('uri'))
+    def strv(self, uri):
+        return uri
+
+    self = Mock()
+
+    if expected_error:
+        with pytest.raises(ValidationErrors) as ei:
+            strv(self, test_value)
+        assert ei.value.errors[0].errmsg == 'Not a valid URI'
+    else:
+        assert strv(self, test_value) == test_value

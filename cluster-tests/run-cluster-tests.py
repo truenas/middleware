@@ -54,7 +54,7 @@ def setup_api_results_dir():
 
 
 def setup_pytest_command(args, results_path):
-    cmd = ['pytest', '-v', '-rfesp', f'--junit-xml={results_path}']
+    cmd = ['pytest', '-v', '-rfesp', '-o', 'junit_family=xunit2', f'--junit-xml={results_path}']
 
     # pytest is clever enough to search the "tests" subdirectory
     # and look at the argument that is passed and figure out if

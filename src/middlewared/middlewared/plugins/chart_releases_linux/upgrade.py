@@ -342,7 +342,7 @@ class ChartReleaseService(Service):
 
         sync_job = await self.middleware.call('catalog.sync_all')
         await sync_job.wait()
-        if not await self.middleware.call('service.started', 'kubernetes'):
+        if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
             return
 
         await self.chart_releases_update_checks_internal()
@@ -417,8 +417,12 @@ class ChartReleaseService(Service):
         )
         for reference in results['resources']['container_images']:
             parsed_reference = await self.middleware.call('container.image.normalize_reference', reference)
+            if parsed_reference['reference_is_digest']:
+                # There is no point in trying to update an image when we have a digest as the tag
+                continue
+
             bulk_pull_params.append([{
-                'from_image': f"{parsed_reference['registry']}/{parsed_reference['image']}",
+                'from_image': parsed_reference['reference'].rsplit(':', 1)[0],
                 'tag': parsed_reference['tag']
             }])
             parsed_references.append(parsed_reference)

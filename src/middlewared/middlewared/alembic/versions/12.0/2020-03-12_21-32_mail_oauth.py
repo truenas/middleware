@@ -1,4 +1,4 @@
-"""empty message
+"""E-Mail OAuth
 
 Revision ID: a06b1946f6a3
 Revises: 32f55c715352

@@ -69,7 +69,7 @@ class KubernetesZFSVolumesService(CRUDService):
 
         return await self.query([
             ['metadata.name', '=', data['metadata']['name']],
-            ['metadata.namespace', '=', data['namespace']],
+            ['metadata.namespace', '=', data['metadata']['namespace']],
         ], {'get': True})
 
 
