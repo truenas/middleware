@@ -15,6 +15,7 @@ CERT_BACKEND_MAPPINGS = {
 # Cert locations
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
+DEFAULT_CERT_NAME = 'truenas_default'
 # This constant defines the default lifetime of certificate ( https://support.apple.com/en-us/HT211025 )
 DEFAULT_LIFETIME_DAYS = 397
 EC_CURVES = [
