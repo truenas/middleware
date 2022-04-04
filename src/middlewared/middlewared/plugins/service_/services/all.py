@@ -17,6 +17,7 @@ from .s3 import S3Service
 from .smartd import SMARTDService
 from .snmp import SNMPService
 from .ssh import SSHService
+from .sysctl import SysctlService
 from .tftp import TFTPService
 from .truecommand import TruecommandService
 from .ups import UPSService
@@ -49,7 +50,6 @@ from .pseudo.misc import (
     ResolvConfService,
     RoutingService,
     SslService,
-    SysctlService,
     SyslogdService,
     SystemService,
     TimeservicesService,

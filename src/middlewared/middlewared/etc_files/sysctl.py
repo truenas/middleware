@@ -1,4 +1,3 @@
-import subprocess
 from pathlib import Path
 
 CONF_FILE = Path('/etc/sysctl.d/tunables.conf')
@@ -19,10 +18,6 @@ def setup(middleware):
     else:
         with CONF_FILE.open('w') as f:
             f.writelines('\n'.join(f'{tunable}={value}' for tunable, value in to_write.items()))
-
-    cp = subprocess.run(['sysctl', '--system'])
-    if cp.returncode:
-        middleware.logger.error('Failed to load custom sysctl values: %d', cp.returncode)
 
 
 def render(service, middleware):

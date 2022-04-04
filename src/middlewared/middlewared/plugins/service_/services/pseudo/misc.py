@@ -196,16 +196,6 @@ class SslService(PseudoServiceBase):
         pass
 
 
-class SysctlService(PseudoServiceBase):
-    name = "sysctl"
-
-    etc = ["sysctl"]
-    reloadable = True
-
-    async def reload(self):
-        pass
-
-
 class SyslogdService(SimpleService):
     name = "syslogd"
 
