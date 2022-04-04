@@ -78,7 +78,7 @@ class TunableService(CRUDService):
             'datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix}
         )
         await self.middleware.call('service.restart', 'sysctl')
-        return await self.get_instace(_id)
+        return await self.get_instance(_id)
 
     async def do_update(self, id, data):
         """
@@ -99,7 +99,7 @@ class TunableService(CRUDService):
             'datastore.update', self._config.datastore, id, new, {'prefix': self._config.datastore_prefix}
         )
         await self.middleware.call('service.restart', 'sysctl')
-        return await self.get_instace(_id)
+        return await self.get_instance(_id)
 
     async def do_delete(self, _id):
         """
