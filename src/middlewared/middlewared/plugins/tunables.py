@@ -1,4 +1,5 @@
 import re
+import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str, ValidationErrors
 from middlewared.service import CRUDService, private
@@ -28,9 +29,7 @@ class TunableService(CRUDService):
         datastore_extend = 'tunable.upper'
         cli_namespace = 'system.tunable'
 
-    def __init__(self, *args, **kwargs):
-        super(TunableService, self).__init__(*args, **kwargs)
-        self.__default_sysctl = {}
+    SYSTEM_DEFAULTS = {}
 
     ENTRY = Patch(
         'tunable_create', 'tunable_entry',
@@ -38,17 +37,22 @@ class TunableService(CRUDService):
     )
 
     @private
-    async def default_sysctl_config(self):
-        return self.__default_sysctl
+    def get_system_defaults(self):
+        if not TunableService.SYSTEM_DEFAULTS:
+            lines = subprocess.run(['sysctl', '-a'], stdout=subprocess.PIPE)
+            for line in filter(lambda x: x, lines.stdout.decode().split('\n')):
+                var, value = line.split(' = ')
+                TunableService.SYSTEM_DEFAULTS[var] = value.strip()
+        return TunableService.SYSTEM_DEFAULTS
 
     @private
     async def get_default_value(self, oid):
-        return self.__default_sysctl[oid]
+        TunableService.SYSTEM_DEFAULTS[oid]
 
     @private
     async def set_default_value(self, oid, value):
-        if oid not in self.__default_sysctl:
-            self.__default_sysctl[oid] = value
+        if oid not in TunableService.SYSTEM_DEFAULTS:
+            TunableService.SYSTEM_DEFAULTS[oid] = value
 
     @accepts()
     @returns(Dict('tunable_type_choices', *[Str(k, enum=[k]) for k in TUNABLE_TYPES]))
@@ -201,11 +205,8 @@ class TunableService(CRUDService):
 
     @private
     async def validate(self, tunable, schema_name):
-        sysctl_re = \
-            re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
-
-        loader_re = \
-            re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+        sysctl_re = re.compile(r'[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+        loader_re = re.compile(r'[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
         verrors = ValidationErrors()
         tun_var = tunable['var'].lower()
