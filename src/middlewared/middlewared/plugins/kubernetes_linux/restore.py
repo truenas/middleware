@@ -260,6 +260,13 @@ class KubernetesService(Service):
             else:
                 restored_chart_releases[release_name]['resources'] = chart_releases[release_name]['resources']
 
+        bulk_job = self.middleware.call_sync('kubernetes.redeploy_chart_releases_consuming_outdated_certs')
+        for index, status in enumerate(bulk_job.wait_sync()):
+            if status['error']:
+                self.middleware.logger.error(
+                    'Failed to redeploy %r chart release: %s', chart_releases[index], status['error']
+                )
+
         job.set_progress(97, 'Scaling scalable workloads')
 
         for chart_release in restored_chart_releases.values():
