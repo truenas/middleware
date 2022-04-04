@@ -1,9 +1,9 @@
+import errno
 import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str, ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 
 
 class TunableModel(sa.Model):
@@ -63,24 +63,24 @@ class TunableService(CRUDService):
     async def do_create(self, data):
         """
         Create a Tunable.
-
-        `var` represents name of the sysctl variable.
-        `value` represents value to be given to the sysctl variable.
         """
-        await self.clean(data, 'tunable_create')
-        await self.validate(data['var'], 'tunable.create')
-        await self.lower(data)
+        verrors = ValidationErrors()
+        if await self.middleware.call('tunable.query', [('var', '=', data['var'])]):
+            verrors.add('tunable.create', f'Tunable {data["var"]!r} already exists.', errno.EEXIST)
 
-        data['id'] = await self.middleware.call(
-            'datastore.insert',
-            self._config.datastore,
-            data,
-            {'prefix': self._config.datastore_prefix}
+        if data['var'] not in TunableService.SYSTEM_DEFAULTS:
+            verrors.add('tunable.create', f'Tunable {data["var"]!r} does not exist.', errno.ENOENT)
+
+        if (comment := data.get('comment', '').strip()):
+            data['comment'] = comment
+
+        _id = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('service.reload', data['type'])
+        await self.middleware.call('etc.generate', 'sysctl')
 
-        return await self.get_instance(data['id'])
+        return _id
 
     async def do_update(self, id, data):
         """
@@ -90,112 +90,25 @@ class TunableService(CRUDService):
 
         new = old.copy()
         new.update(data)
+        if old == new:
+            # nothing updated so return early
+            return old
 
-        await self.clean(new, 'tunable_update', old=old)
-        await self.validate(new, 'tunable_update')
+        if (comment := data.get('comment', '').strip()):
+            new['comment'] = comment
 
-        await self.lower(new)
-
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
+        _id = await self.middleware.call(
+            'datastore.update', self._config.datastore, id, new, {'prefix': self._config.datastore_prefix}
         )
 
-        if old['type'] == 'SYSCTL' and old['var'] in self.__default_sysctl and (
-            old['var'] != new['var'] or old['type'] != new['type']
-        ):
-            default_value = self.__default_sysctl.pop(old['var'])
-            cp = await run(['sysctl', f'{old["var"]}={default_value}'], check=False, encoding='utf8')
-            if cp.returncode:
-                self.middleware.logger.error(
-                    'Failed to set sysctl %r -> %r : %s', old['var'], default_value, cp.stderr
-                )
+        await self.middleware.call('etc.generate', 'sysctl')
 
-        await self.middleware.call('service.reload', new['type'])
-
-        return await self.get_instance(id)
+        return _id
 
     async def do_delete(self, id):
         """
         Delete Tunable of `id`.
         """
-        tunable = await self.get_instance(id)
-        await self.lower(tunable)
-        if tunable['type'] == 'sysctl':
-            # Restore the default value, if it is possible.
-            value_default = self.__default_sysctl.pop(tunable['var'], None)
-            if value_default:
-                cp = await run(['sysctl', f'{tunable["var"]}={value_default}'], check=False, encoding='utf8')
-                if cp.returncode:
-                    self.middleware.logger.error(
-                        'Failed to set sysctl %r -> %r : %s', tunable['var'], value_default, cp.stderr
-                    )
-
-        response = await self.middleware.call(
-            'datastore.delete',
-            self._config.datastore,
-            id
-        )
-
-        await self.middleware.call('service.reload', tunable['type'].lower())
-
-        return response
-
-    @private
-    async def lower(self, data):
-        data['type'] = data['type'].lower()
-
-        return data
-
-    @private
-    async def upper(self, data):
-        data['type'] = data['type'].upper()
-
-        return data
-
-    @private
-    async def clean(self, tunable, schema_name, old=None):
-        verrors = ValidationErrors()
-        skip_dupe = False
-        tun_comment = tunable.get('comment')
-        tun_value = tunable['value']
-        tun_var = tunable['var']
-
-        if tun_comment is not None:
-            tunable['comment'] = tun_comment.strip()
-
-        if '"' in tun_value or "'" in tun_value:
-            verrors.add(f"{schema_name}.value",
-                        'Quotes in value are not allowed')
-
-        if schema_name == 'tunable_update' and old:
-            old_tun_var = old['var']
-
-            if old_tun_var == tun_var:
-                # They aren't trying to change to a new name, just updating
-                skip_dupe = True
-
-        if not skip_dupe:
-            tun_vars = await self.middleware.call(
-                'datastore.query', self._config.datastore, [('tun_var', '=',
-                                                             tun_var)])
-
-            if tun_vars:
-                verrors.add(f"{schema_name}.value",
-                            'This variable already exists')
-
-        if verrors:
-            raise verrors
-
-        return tunable
-
-    @private
-    async def validate(self, tunable, schema_name):
-        verrors = ValidationErrors()
-        tunable = tunable.lower()
-        if tunable not in TunableService.SYSTEM_DEFAULTS:
-            verrors.add(f"{schema_name}", f'{tunable!r} does not exist.')
-        verrors.check()
+        _id = await self.get_instance(id)
+        await self.middleware.call('datastore.delete', self._config.datastore, _id)
+        await self.middleware.call('etc.generate', 'sysctl')
