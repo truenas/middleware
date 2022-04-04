@@ -51,13 +51,10 @@ class TunableService(CRUDService):
             self.__default_sysctl[oid] = value
 
     @accepts()
-    @returns(Dict(
-        'tunable_type_choices',
-        *[Str(k, enum=[k]) for k in TUNABLE_TYPES],
-    ))
+    @returns(Dict('tunable_type_choices', *[Str(k, enum=[k]) for k in TUNABLE_TYPES]))
     async def tunable_type_choices(self):
         """
-        Retrieve tunable type choices supported in the system
+        Retrieve the supported tunable types that can be changed.
         """
         return {k: k for k in TUNABLE_TYPES}
 
