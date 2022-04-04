@@ -77,10 +77,8 @@ class TunableService(CRUDService):
         _id = await self.middleware.call(
             'datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix}
         )
-
         await self.middleware.call('etc.generate', 'sysctl')
-
-        return _id
+        return await self.get_instace(_id)
 
     async def do_update(self, id, data):
         """
@@ -100,15 +98,13 @@ class TunableService(CRUDService):
         _id = await self.middleware.call(
             'datastore.update', self._config.datastore, id, new, {'prefix': self._config.datastore_prefix}
         )
-
         await self.middleware.call('etc.generate', 'sysctl')
+        return await self.get_instace(_id)
 
-        return _id
-
-    async def do_delete(self, id):
+    async def do_delete(self, _id):
         """
         Delete Tunable of `id`.
         """
-        _id = await self.get_instance(id)
+        await self.get_instance(_id)
         await self.middleware.call('datastore.delete', self._config.datastore, _id)
         await self.middleware.call('etc.generate', 'sysctl')
