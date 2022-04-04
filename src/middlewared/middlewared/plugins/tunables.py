@@ -1,4 +1,3 @@
-import re
 import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str, ValidationErrors
@@ -45,11 +44,6 @@ class TunableService(CRUDService):
                 TunableService.SYSTEM_DEFAULTS[var] = value.strip()
         return TunableService.SYSTEM_DEFAULTS
 
-    @private
-    async def set_default_value(self, oid, value):
-        if oid not in TunableService.SYSTEM_DEFAULTS:
-            TunableService.SYSTEM_DEFAULTS[oid] = value
-
     @accepts()
     @returns(Dict('tunable_type_choices', *[Str(k, enum=[k]) for k in TUNABLE_TYPES]))
     async def tunable_type_choices(self):
@@ -75,7 +69,7 @@ class TunableService(CRUDService):
         `value` represents value to be given to the sysctl variable.
         """
         await self.clean(data, 'tunable_create')
-        await self.validate(data, 'tunable_create')
+        await self.validate(data['var'], 'tunable.create')
         await self.lower(data)
 
         data['id'] = await self.middleware.call(
@@ -201,28 +195,8 @@ class TunableService(CRUDService):
 
     @private
     async def validate(self, tunable, schema_name):
-        sysctl_re = re.compile(r'[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
-        loader_re = re.compile(r'[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
-
         verrors = ValidationErrors()
-        tun_var = tunable['var'].lower()
-        tun_type = tunable['type'].lower()
-
-        if tun_type == 'loader' or tun_type == 'rc':
-            err_msg = "Value can start with a letter and end with an alphanumeric. Aphanumeric and underscore" \
-                      " characters are allowed"
-        else:
-            err_msg = 'Value can start with a letter and end with an alphanumeric. A period (.) once is a must.' \
-                      ' Alphanumeric and underscore characters are allowed'
-
-        if (
-            tun_type in ('loader', 'rc') and
-            not loader_re.match(tun_var)
-        ) or (
-            tun_type == 'sysctl' and
-            not sysctl_re.match(tun_var)
-        ):
-            verrors.add(f"{schema_name}.var", err_msg)
-
-        if verrors:
-            raise verrors
+        tunable = tunable.lower()
+        if tunable not in TunableService.SYSTEM_DEFAULTS:
+            verrors.add(f"{schema_name}", f'{tunable!r} does not exist.')
+        verrors.check()
