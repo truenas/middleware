@@ -1,4 +1,4 @@
-from .utils import CERT_TYPE_EXISTING, DEFAULT_CERT_NAME
+from .utils import CERT_TYPE_EXISTING
 
 
 async def setup(middleware):
@@ -14,7 +14,7 @@ async def setup(middleware):
     if not failure and (not system_cert or system_cert['id'] not in [c['id'] for c in certs]):
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
         try:
-            await middleware.call('certificate.setup_self_signed_cert_for_ui', DEFAULT_CERT_NAME)
+            await middleware.call('certificate.setup_self_signed_cert_for_ui')
         except Exception as e:
             failure = True
             middleware.logger.debug(
