@@ -24,7 +24,6 @@ class TunableService(CRUDService):
     class Config:
         datastore = 'system.tunable'
         datastore_prefix = 'tun_'
-        datastore_extend = 'tunable.upper'
         cli_namespace = 'system.tunable'
 
     SYSTEM_DEFAULTS = {}
@@ -70,6 +69,8 @@ class TunableService(CRUDService):
 
         if data['var'] not in TunableService.SYSTEM_DEFAULTS:
             verrors.add('tunable.create', f'Tunable {data["var"]!r} does not exist.', errno.ENOENT)
+
+        verrors.check()
 
         if (comment := data.get('comment', '').strip()):
             data['comment'] = comment
