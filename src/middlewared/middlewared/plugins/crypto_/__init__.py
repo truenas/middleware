@@ -21,6 +21,5 @@ async def setup(middleware):
                 'Failed to set certificate for system.general plugin: %s', e, exc_info=True
             )
 
-
     if not failure:
         middleware.logger.debug('Certificate setup for System complete')
