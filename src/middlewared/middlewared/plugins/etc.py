@@ -170,7 +170,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'systemd'},
         ],
         'sysctl': [
-            {'type': 'py', 'path': 'sysctl_config'},
+            {'type': 'py', 'path': 'sysctl'},
         ],
         's3': [
             {'type': 'py', 'path': 'local/minio/configure', 'checkpoint': 'pool_import'},
