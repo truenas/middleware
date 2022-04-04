@@ -46,10 +46,6 @@ class TunableService(CRUDService):
         return TunableService.SYSTEM_DEFAULTS
 
     @private
-    async def get_default_value(self, oid):
-        TunableService.SYSTEM_DEFAULTS[oid]
-
-    @private
     async def set_default_value(self, oid, value):
         if oid not in TunableService.SYSTEM_DEFAULTS:
             TunableService.SYSTEM_DEFAULTS[oid] = value
