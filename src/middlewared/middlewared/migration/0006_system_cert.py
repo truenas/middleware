@@ -4,5 +4,7 @@ async def migrate(middleware):
     # user might have configured cert for system which might not comply with security level 2 and UI becoming
     # inaccessible in this regard because of that
     system_cert = (await middleware.call('system.general.config'))['ui_certificate']
-    if await middleware.call('certificate.cert_services_validation', system_cert['id'], 'certificate', False):
+    if not system_cert or await middleware.call(
+        'certificate.cert_services_validation', system_cert['id'], 'certificate', False
+    ):
         await middleware.call('certificate.setup_self_signed_cert_for_ui')
