@@ -74,10 +74,8 @@ class TunableService(CRUDService):
         """
         Create a Tunable.
 
-        `var` represents name of the sysctl/loader/rc variable.
-
-        `type` for SCALE should be one of the following:
-        1) SYSCTL     -     Configure `var` for sysctl(8)
+        `var` represents name of the sysctl variable.
+        `value` represents value to be given to the sysctl variable.
         """
         await self.clean(data, 'tunable_create')
         await self.validate(data, 'tunable_create')
