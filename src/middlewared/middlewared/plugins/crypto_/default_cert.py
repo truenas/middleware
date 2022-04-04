@@ -43,7 +43,8 @@ class CertificateService(Service):
             'type': CERT_TYPE_EXISTING,
         }
 
-        # We use datastore.insert to directly insert in db as jobs cannot be waited for at this point
+        # We use datastore.insert to directly insert in db as this is a self-signed cert
+        # and we don't allow that via regular api
         return await self.middleware.call(
             'datastore.insert',
             'system.certificate',
