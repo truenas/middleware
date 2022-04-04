@@ -31,3 +31,6 @@ class TestService(Service):
 
     async def test1(self):
         pass
+
+    async def test2(self):
+        pass

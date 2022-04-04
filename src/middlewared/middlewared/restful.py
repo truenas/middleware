@@ -1,18 +1,19 @@
-from aiohttp import web
-from collections import defaultdict
-
 import asyncio
 import base64
 import binascii
+from collections import defaultdict
 import copy
+import errno
 import traceback
 import types
+
+from aiohttp import web
 
 from .client import ejson as json
 from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
-from .service_exception import adapt_exception, CallError, ValidationError, ValidationErrors, MatchNotFound
+from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
 
 
 async def authenticate(middleware, req, method, resource):
@@ -81,11 +82,15 @@ class RESTfulAPI(object):
         return self.app
 
     async def register_resources(self):
-        for methodname, method in list((await self.middleware.call('core.get_methods')).items()):
+        for methodname, method in list((await self.middleware.call('core.get_methods', None, 'REST')).items()):
             self._methods[methodname] = method
             self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
 
-        for name, service in list((await self.middleware.call('core.get_services')).items()):
+        for name, service in list((await self.middleware.call('core.get_services', 'REST')).items()):
+            openapi = True
+            if name == 'resttest':
+                openapi = False
+
             kwargs = {}
             blacklist_methods = []
             """
@@ -110,7 +115,8 @@ class RESTfulAPI(object):
                     kwargs['put'] = put
                 blacklist_methods.extend(list(kwargs.values()))
 
-            service_resource = Resource(self, self.middleware, name.replace('.', '/'), service['config'], **kwargs)
+            service_resource = Resource(self, self.middleware, name.replace('.', '/'), service['config'], openapi,
+                                        **kwargs)
 
             """
             For CRUD services we also need a direct subresource so we can
@@ -130,7 +136,8 @@ class RESTfulAPI(object):
                     kwargs['put'] = put
                 blacklist_methods.extend(list(kwargs.values()))
                 subresource = Resource(
-                    self, self.middleware, 'id/{id}', service['config'], parent=service_resource, **kwargs
+                    self, self.middleware, 'id/{id}', service['config'], openapi,
+                    parent=service_resource, **kwargs,
                 )
 
             for methodname, method in list(self._methods_by_service[name].items()):
@@ -149,7 +156,7 @@ class RESTfulAPI(object):
                 Methods with not empty accepts list and not filterable
                 are treated as POST HTTP methods.
                 """
-                if method['accepts'] and not method['filterable']:
+                if (method['accepts'] and not method['filterable']) or method['uploadable']:
                     res_kwargs['post'] = methodname
                 else:
                     res_kwargs['get'] = methodname
@@ -158,7 +165,9 @@ class RESTfulAPI(object):
                     # Only allow get for now as that's the only use case we have for now NAS-110243
                     res_kwargs[rest_method] = methodname
 
-                Resource(self, self.middleware, short_methodname, service['config'], parent=parent, **res_kwargs)
+                Resource(self, self.middleware, short_methodname, service['config'], openapi,
+                         parent=parent, **res_kwargs)
+
             await asyncio.sleep(0)  # Force context switch
 
 
@@ -202,18 +211,30 @@ class OpenAPIResource(object):
             'parameters': [],
         }
         method = self.rest._methods.get(methodname)
-        if method and method.get('require_pipes'):
-            return
-        elif method:
-            desc = method.get('description') or ''
-            if method.get('downloadable') or method.get('uploadable'):
-                job_desc = f'\n\nA file can be {"downloaded from" if method.get("downloadable") else "uploaded to"} ' \
-                           'this end point. This end point is special, please refer to Jobs section in ' \
-                           'Websocket API documentation for details.'
-                desc = (desc or '') + job_desc
+        if method:
+            desc = method['description'] or ''
+            if method['downloadable']:
+                if method['check_pipes']:
+                    desc += '\n\nA file will be downloaded from this endpoint.'
+                else:
+                    desc += (
+                        '\n\nA file might be downloaded from this endpoint. Please specify `?download=0` to fetch a '
+                        'method call result instead.'
+                    )
+            if method['uploadable']:
+                if method['check_pipes']:
+                    desc += '\n\nA file must be uploaded to this endpoint. '
+                else:
+                    desc += (
+                        '\n\nA file might be uploaded to this endpoint. '
+                    )
 
-            if desc:
-                opobject['description'] = desc
+                desc += (
+                    'To upload a file, please send a multipart request with two parts. The first, named `data`, should '
+                    'contain a JSON-encoded payload, and the second, named `file`, should contain an uploaded file.'
+                )
+
+            opobject['description'] = desc
 
             accepts = method.get('accepts')
             if method['filterable']:
@@ -343,9 +364,14 @@ class OpenAPIResource(object):
 
         servers = []
         host = req.headers.get('Host')
+        scheme = req.headers.get('X-Scheme') or req.scheme
+        port = int(req.headers.get('X-Server-Port') or 80)
         if host:
+            # This condition is only cosmetic to avoid specifying 80/443 in the uri
+            if port not in [80, 443]:
+                host = f'{host}:{port}'
             servers.append({
-                'url': f'{req.scheme}://{host}/api/v2.0',
+                'url': f'{scheme}://{host}/api/v2.0',
             })
 
         result = {
@@ -377,7 +403,7 @@ class Resource(object):
     put = None
 
     def __init__(
-        self, rest, middleware, name, service_config, parent=None,
+        self, rest, middleware, name, service_config, openapi, parent=None,
         delete=None, get=None, post=None, put=None,
     ):
         self.rest = rest
@@ -403,7 +429,8 @@ class Resource(object):
                 continue
             self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}', getattr(self, f'on_{i}'))
             self.rest.app.router.add_route(i.upper(), f'/api/v2.0/{path}/', getattr(self, f'on_{i}'))
-            self.rest._openapi.add_path(path, i, operation, self.service_config)
+            if openapi:
+                self.rest._openapi.add_path(path, i, operation, self.service_config)
             self.__map_method_params(operation)
 
         self.middleware.logger.trace(f"add route {self.get_path()}")
@@ -529,85 +556,162 @@ class Resource(object):
 
         methodname = getattr(self, http_method)
         method = self.rest._methods[methodname]
-        """
-        Arguments for a method can be grabbed from an override method in
-        the form of "get_{get,post,put,delete}_args", e.g.:
 
-          def get_post_args(self, req, resp, **kwargs):
-              return [await req.json(), True, False]
-        """
-        get_method_args = getattr(self, 'get_{}_args'.format(http_method), None)
-        if get_method_args is not None:
-            method_args = get_method_args(req, resp, **kwargs)
-        else:
-            method_args = []
-            if http_method == 'get' and method['filterable']:
-                if self.parent and 'id' in kwargs:
-                    filterid = kwargs['id']
-                    if filterid.isdigit():
-                        filterid = int(filterid)
-                    extra = {}
-                    for key, val in list(req.query.items()):
-                        if key.startswith('extra.'):
-                            extra[key[len('extra.'):]] = normalize_query_parameter(val)
+        method_kwargs = {}
+        if method.get('pass_application'):
+            method_kwargs['app'] = Application(
+                req.headers.get('X-Real-Remote-Addr'),
+                req.headers.get('X-Real-Remote-Port'),
+            )
 
-                    method_args = [
-                        [(self.service_config['datastore_primary_key'], '=', filterid)],
-                        {'get': True, 'force_sql_filters': True, 'extra': extra}
-                    ]
-                else:
-                    method_args = self._filterable_args(req)
+        has_request_body = False
+        request_body = None
+        upload_pipe = None
+        filepart = None
+        if method['uploadable']:
+            if req.headers.get('Content-Type', '').startswith('multipart/'):
+                reader = await req.multipart()
 
-            if not method_args:
-                # RFC 7231 specifies that a GET request can accept a payload body
-                # This means that all the http methods now ( delete, get, post, put ) accept a payload body
-                try:
-                    text = await req.text()
-                    if not text:
-                        method_args = []
-                    else:
-                        data = await req.json()
-                        params = self.__method_params.get(methodname)
-                        if not params and http_method in ('get', 'delete') and not data:
-                            # This will happen when the request body contains empty dict "{}"
-                            # Keeping compatibility with how we used to accept the above case, this
-                            # makes sure that existing client implementations are not affected
-                            method_args = []
-                        elif not params or len(params) == 1:
-                            method_args = [data]
-                        else:
-                            if not isinstance(data, dict):
-                                resp.set_status(400)
-                                resp.headers['Content-type'] = 'application/json'
-                                resp.body = json.dumps({
-                                    'message': 'Endpoint accepts multiple params, object/dict expected.',
-                                })
-                                return resp
-                            method_args = []
-                            for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
-                                if p not in data and options['required']:
-                                    resp.set_status(400)
-                                    resp.headers['Content-type'] = 'application/json'
-                                    resp.body = json.dumps({
-                                        'message': f'{p} attribute expected.',
-                                    })
-                                    return resp
-                                elif p in data:
-                                    method_args.append(data.pop(p))
-                            if data:
-                                resp.set_status(400)
-                                resp.headers['Content-type'] = 'application/json'
-                                resp.body = json.dumps({
-                                    'message': f'The following attributes are not expected: {", ".join(data.keys())}',
-                                })
-                                return resp
-                except Exception as e:
+                part = await reader.next()
+                if not part or part.name != "data":
                     resp.set_status(400)
                     resp.headers['Content-type'] = 'application/json'
-                    resp.body = json.dumps({
-                        'message': str(e),
-                    })
+                    resp.text = json.dumps({
+                        'message': 'The method accepts multipart requests with two parts (`data` and `file`).',
+                        'errno': errno.EINVAL,
+                    }, indent=True)
                     return resp
+
+                has_request_body = True
+                try:
+                    request_body = json.loads(await part.read())
+                except ValueError as e:
+                    resp.set_status(400)
+                    resp.headers['Content-type'] = 'application/json'
+                    resp.text = json.dumps({
+                        'message': f'`data` json parse error: {e}',
+                        'errno': errno.EINVAL,
+                    }, indent=True)
+                    return resp
+
+                filepart = await reader.next()
+                if not filepart or filepart.name != "file":
+                    resp.set_status(400)
+                    resp.headers['Content-type'] = 'application/json'
+                    resp.text = json.dumps({
+                        'message': ('The method accepts multipart requests with two parts (`data` and `file`). '
+                                    '`file` not found.'),
+                        'errno': errno.EINVAL,
+                    }, indent=True)
+                    return resp
+
+                upload_pipe = self.middleware.pipe()
+            else:
+                if method['check_pipes']:
+                    resp.set_status(400)
+                    resp.headers['Content-type'] = 'application/json'
+                    resp.text = json.dumps({
+                        'message': 'This method accepts only multipart requests.',
+                        'errno': errno.EINVAL,
+                    }, indent=True)
+                    return resp
+                else:
+                    if await req.text():
+                        has_request_body = True
+                        request_body = await req.json()
+        else:
+            if await req.text():
+                has_request_body = True
+                request_body = await req.json()
+
+        download_pipe = None
+        if method['downloadable']:
+            if req.query.get('download', '1') == '1':
+                download_pipe = self.middleware.pipe()
+            else:
+                if method['check_pipes']:
+                    resp.set_status(400)
+                    resp.headers['Content-type'] = 'application/json'
+                    resp.text = json.dumps({
+                        'message': 'JSON response is not supported for this method.',
+                        'errno': errno.EINVAL,
+                    }, indent=True)
+                    return resp
+
+        if upload_pipe and download_pipe:
+            method_kwargs['pipes'] = Pipes(input=upload_pipe, output=download_pipe)
+        elif upload_pipe:
+            method_kwargs['pipes'] = Pipes(input=upload_pipe)
+        elif download_pipe:
+            method_kwargs['pipes'] = Pipes(output=download_pipe)
+
+        method_args = []
+        if http_method == 'get' and method['filterable']:
+            if self.parent and 'id' in kwargs:
+                primary_key = kwargs['id']
+                if primary_key.isdigit():
+                    primary_key = int(primary_key)
+                extra = {}
+                for key, val in list(req.query.items()):
+                    if key.startswith('extra.'):
+                        extra[key[len('extra.'):]] = normalize_query_parameter(val)
+
+                method_args = [
+                    [(self.service_config['datastore_primary_key'], '=', primary_key)],
+                    {'get': True, 'force_sql_filters': True, 'extra': extra}
+                ]
+            else:
+                method_args = self._filterable_args(req)
+
+        if not method_args:
+            # RFC 7231 specifies that a GET request can accept a payload body
+            # This means that all the http methods now ( delete, get, post, put ) accept a payload body
+            try:
+                if not has_request_body:
+                    method_args = []
+                else:
+                    data = request_body
+                    params = self.__method_params.get(methodname)
+                    if not params and http_method in ('get', 'delete') and not data:
+                        # This will happen when the request body contains empty dict "{}"
+                        # Keeping compatibility with how we used to accept the above case, this
+                        # makes sure that existing client implementations are not affected
+                        method_args = []
+                    elif not params or len(params) == 1:
+                        method_args = [data]
+                    else:
+                        if not isinstance(data, dict):
+                            resp.set_status(400)
+                            resp.headers['Content-type'] = 'application/json'
+                            resp.body = json.dumps({
+                                'message': 'Endpoint accepts multiple params, object/dict expected.',
+                            })
+                            return resp
+                        method_args = []
+                        for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
+                            if p not in data and options['required']:
+                                resp.set_status(400)
+                                resp.headers['Content-type'] = 'application/json'
+                                resp.body = json.dumps({
+                                    'message': f'{p} attribute expected.',
+                                })
+                                return resp
+                            elif p in data:
+                                method_args.append(data.pop(p))
+                        if data:
+                            resp.set_status(400)
+                            resp.headers['Content-type'] = 'application/json'
+                            resp.body = json.dumps({
+                                'message': f'The following attributes are not expected: {", ".join(data.keys())}',
+                            })
+                            return resp
+            except Exception as e:
+                resp.set_status(400)
+                resp.headers['Content-type'] = 'application/json'
+                resp.body = json.dumps({
+                    'message': str(e),
+                })
+                return resp
 
         """
         If the method is marked `item_method` then the first argument
@@ -616,19 +720,12 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        if method.get('pass_application'):
-            method_kwargs = {
-                'app': Application(req.headers.get('X-Real-Remote-Addr'), req.headers.get('X-Real-Remote-Port'))
-            }
-        else:
-            method_kwargs = {}
-        download_pipe = None
-        if method['downloadable']:
-            download_pipe = self.middleware.pipe()
-            method_kwargs['pipes'] = Pipes(output=download_pipe)
-
         try:
             result = await self.middleware.call(methodname, *method_args, **method_kwargs)
+            if upload_pipe:
+                await self.middleware.run_in_thread(copy_multipart_to_pipe, self.middleware.loop, filepart, upload_pipe)
+            if method['downloadable'] and download_pipe is None:
+                result = await result.wait()
         except CallError as e:
             resp = web.Response(status=422)
             result = {
@@ -639,10 +736,10 @@ class Resource(object):
             if isinstance(e, (SchemaError, ValidationError)):
                 e = [(e.attribute, e.errmsg, e.errno)]
             result = defaultdict(list)
-            for attr, errmsg, errno in e:
+            for attr, errmsg, errno_ in e:
                 result[attr].append({
                     'message': errmsg,
-                    'errno': errno,
+                    'errno': errno_,
                 })
             resp = web.Response(status=422)
 
@@ -697,3 +794,20 @@ class Resource(object):
         resp.headers['Content-type'] = 'application/json'
         resp.text = json.dumps(result, indent=True)
         return resp
+
+
+def copy_multipart_to_pipe(loop, filepart, pipe):
+    try:
+        try:
+            while True:
+                read = asyncio.run_coroutine_threadsafe(
+                    filepart.read_chunk(filepart.chunk_size),
+                    loop=loop,
+                ).result()
+                if read == b'':
+                    break
+                pipe.w.write(read)
+        finally:
+            pipe.w.close()
+    except BrokenPipeError:
+        pass
