@@ -1,12 +1,12 @@
 from middlewared.service import private, Service
 
-from .utils import CERT_TYPE_EXISTING
+from .utils import CERT_TYPE_EXISTING, DEFAULT_CERT_NAME
 
 
 class CertificateService(Service):
 
     @private
-    async def setup_self_signed_cert_for_ui(self, cert_name):
+    async def setup_self_signed_cert_for_ui(self, cert_name=DEFAULT_CERT_NAME):
         cert_id = None
         index = 1
         while not cert_id:
