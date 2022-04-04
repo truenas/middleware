@@ -4,7 +4,6 @@ from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str, Va
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.validators import Match
 
 
 class TunableModel(sa.Model):
@@ -54,7 +53,7 @@ class TunableService(CRUDService):
 
     @accepts(Dict(
         'tunable_create',
-        Str('var', validators=[Match(r'^[\w\.\-]+$')], required=True),
+        Str('var', required=True),
         Str('value', required=True),
         Str('type', enum=TUNABLE_TYPES, required=True),
         Str('comment'),
