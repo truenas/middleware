@@ -7,7 +7,33 @@ class CertificateService(Service):
 
     @private
     async def setup_self_signed_cert_for_ui(self, cert_name):
-        config = await self.middleware.call('system.general.config')
+        cert_id = None
+        index = 1
+        while not cert_id:
+            cert = await self.middleware.call('certificate.query', [['name', '=', cert_name]])
+            if cert:
+                if await self.middleware.call('certificate.cert_services_validation', cert['id'], 'certificate', False):
+                    cert_name = f'{cert_name}_{index}'
+                    index += 1
+                else:
+                    cert_id = cert['id']
+                    self.logger.debug('Using %r certificate for System UI', cert_name)
+            else:
+                cert_id = await self.setup_self_signed_cert_for_ui_impl(cert_name)
+                self.logger.debug('Default certificate for System created')
+
+        await self.middleware.call(
+            'datastore.update',
+            'system.settings',
+            (await self.middleware.call('system.general.config'))['id'],
+            {'stg_guicertificate': cert_id}
+        )
+
+        await self.middleware.call('service.start', 'ssl')
+        await self.middleware.call('service.reload', 'http')
+
+    @private
+    async def setup_self_signed_cert_for_ui_impl(self, cert_name):
         cert, key = await self.middleware.call('cryptokey.generate_self_signed_certificate')
 
         cert_dict = {
@@ -18,14 +44,9 @@ class CertificateService(Service):
         }
 
         # We use datastore.insert to directly insert in db as jobs cannot be waited for at this point
-        id = await self.middleware.call(
+        return await self.middleware.call(
             'datastore.insert',
             'system.certificate',
             cert_dict,
             {'prefix': 'cert_'}
         )
-
-        await self.middleware.call('datastore.update', 'system.settings', config['id'], {'stg_guicertificate': id})
-
-        await self.middleware.call('service.start', 'ssl')
-        await self.middleware.call('service.reload', 'http')
