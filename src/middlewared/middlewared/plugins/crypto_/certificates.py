@@ -110,6 +110,14 @@ class CertificateService(CRUDService):
                     f'{cert["name"]}\'s private key size is less then {valid_key_size[cert["key_type"]]} bits'
                 )
 
+            if cert['until'] and datetime.datetime.strptime(
+                cert['until'], '%a %b  %d %H:%M:%S %Y'
+            ) < datetime.datetime.now():
+                verrors.add(
+                    schema_name,
+                    f'{cert["name"]!r} has expired ( it was valid until {cert["until"]} )'
+                )
+
             if cert['revoked']:
                 verrors.add(
                     schema_name,
