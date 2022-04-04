@@ -7,97 +7,87 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from pytest_dependency import depends
 from functions import DELETE, GET, POST, PUT
 from auto_config import dev_test
+
+from middlewared.test.integration.utils import call, ssh
+
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 variable = 'aa.22'
 
-
-def test_01_creating_test_tunable():
-    global TUNABLE_ID, payload, results
-    payload = {
-        'var': variable,
-        'value': 'test',
-        'type': 'SYSCTL',
-        'enabled': True
-    }
-    results = POST('/tunable/', payload)
-    assert results.status_code == 200, results.text
-    TUNABLE_ID = results.json()['id']
+TUNABLES_TO_SET = {}
+SYSTEM_DEFAULT_TUNABLES = {}
+TUNABLES_DB = {}
+COMMENT = 'Test Comment'
 
 
-@pytest.mark.parametrize('tun', ['var', 'value', 'type', 'enabled'])
-def test_02_looking_at_tunable_created_object_(tun):
-    assert results.json()[tun] == payload[tun], results.text
+@pytest.mark.dependency(name='GENERATE_TUNABLES_INFO')
+def test_01_generating_tunables_information():
+    global TUNABLES_TO_SET
+    TUNABLES_TO_SET = {}
+    for iface in call('interface.query'):
+        tunable = f'net.ipv4.conf.{iface["name"]}.log_martians'
+        TUNABLES_TO_SET[tunable] = '1'
 
 
-@pytest.mark.parametrize('tun', ['var', 'value', 'type', 'enabled'])
-def test_03_looking_at_tunable_search_id_object_(tun):
-    results = GET(f'/tunable/?id={TUNABLE_ID}')
-    assert results.status_code == 200, results.text
-    assert results.json()[0][tun] == payload[tun], results.text
+@pytest.mark.dependency(name='CREATE_TUNABLES')
+def test_02_creating_test_tunables(request):
+    depends(request, ['GENERATE_TUNABLES_INFO'])
+    global TUNABLES_DB
+    for tunable, value in TUNABLES_TO_SET.items():
+        payload = {'var': tunable, 'value': value, 'type': 'SYSCTL', 'comment': COMMENT}
+        results = POST('/tunable/', payload)
+        assert results.status_code == 200, results.text
+
+        db_info = results.json()
+        TUNABLES_DB[db_info['id']] = db_info
 
 
-@pytest.mark.parametrize('tun', ['var', 'value', 'type', 'enabled'])
-def test_04_looking_at_tunable_id_object_(tun):
-    results = GET(f'/tunable/id/{TUNABLE_ID}/')
-    assert results.status_code == 200, results.text
-    assert results.json()[tun] == payload[tun], results.text
+@pytest.mark.dependency(name='VALIDATE_DB_INFO')
+def test_03_validating_tunables_database_info(request):
+    depends(request, ['CREATE_TUNABLES'])
+    for _id, _ in TUNABLES_DB.items():
+        results = GET(f'/tunable/?id={_id}')
+        assert results.status_code == 200, results.text
+        assert results.json()[0] == TUNABLES_DB[_id], results.text
 
 
-def test_05_disable_tuneable():
-    results = PUT(f'/tunable/id/{TUNABLE_ID}/', {'enabled': False})
-    assert results.status_code == 200, results.text
-    assert results.json()['enabled'] is False, results.text
+@pytest.mark.dependency(name='VALIDATE_CREATED_TUNABLES')
+def test_04_validating_created_tunables_values_match_kernel_values(request):
+    depends(request, ['VALIDATE_DB_INFO'])
+    for tunable, value in TUNABLES_TO_SET.items():
+        assert ssh(['sysctl', tunable]).stdout.split(' = ')[1] == value
 
 
-def test_06_looking_if_tunable_id_disable():
-    results = GET(f'/tunable/id/{TUNABLE_ID}/')
-    assert results.status_code == 200, results.text
-    assert results.json()['enabled'] is False, results.text
+@pytest.mark.dependency(name='DISABLE_TUNABLES')
+def test_05_disabling_test_tunables(request):
+    depends(request, ['VALIDATE_CREATED_TUNABLES'])
+    for _id, _ in TUNABLES_DB.items():
+        results = PUT(f'/tunable/id/{_id}/', {'enabled': False})
+        assert results.status_code == 200, results.text
+        assert results.json()['enabled'] is False, results.text
 
 
-def test_07_updating_variable_name_value_comment_type():
-    global payload, results
-    payload = {
-        'var': variable + '1',
-        'value': 'temp',
-        'comment': 'testing variable',
-        'type': 'SYSCTL',
-        'enabled': True
-    }
-
-    results = PUT(f'/tunable/id/{TUNABLE_ID}/', payload)
-    assert results.status_code == 200, results.text
-    j_resp = results.json()
-    payload['id'] = TUNABLE_ID
-    assert j_resp == payload, results.text
+@pytest.mark.dependency(name='VALIDATE_DISABLED_TUNABLES')
+def test_06_validating_disabled_tunables_values_match_kernel_default_values(request):
+    depends(request, ['DISABLE_TUNABLES'])
+    sys_defaults = call('tunable.get_system_defaults')
+    for tunable, value in TUNABLES_TO_SET.items():
+        assert sys_defaults[tunable] != value
 
 
-@pytest.mark.parametrize('tun', ['var', 'value', 'comment', 'type', 'enabled'])
-def test_08_looking_at_tunable_updated_object_(tun):
-    assert results.json()[tun] == payload[tun], results.text
+@pytest.mark.dependency(name='DELETE_ALL_TUNABLES')
+def test_07_deleting_all_test_tunables(request):
+    depends(request, ['VALIDATE_DISABLED_TUNABLES'])
+    for _id, _ in TUNABLES_DB.items():
+        results = DELETE(f'/tunable/id/{_id}/', None)
+        assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('tun', ['var', 'value', 'comment', 'type', 'enabled'])
-def test_09_looking_at_tunable_id_object_(tun):
-    results = GET(f'/tunable/id/{TUNABLE_ID}/')
-    assert results.status_code == 200, results.text
-    assert results.json()[tun] == payload[tun], results.text
-
-
-def test_10_deleting_tunable():
-    results = DELETE(f'/tunable/id/{TUNABLE_ID}/', None)
-    assert results.status_code == 200, results.text
-
-
-def test_11_ensure_tunalbe_deleted_id_is_not_searchable():
-    results = GET(f'/tunable/?id={TUNABLE_ID}')
-    assert results.status_code == 200, results.text
-    assert results.json() == [], results.text
-
-
-def test_12_ensure_tunnable_does_not_exist():
-    results = GET(f'/tunable/id/{TUNABLE_ID}/')
-    assert results.status_code == 404, results.text
+def test_08_validating_all_tunables_were_deleted(request):
+    depends(request, ['DELETE_ALL_TUNABLES'])
+    for _id, _ in TUNABLES_DB.items():
+        results = GET(f'/tunable/?id={_id}')
+        assert results.status_code == 404, results.text
