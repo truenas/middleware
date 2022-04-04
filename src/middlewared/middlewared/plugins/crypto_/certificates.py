@@ -115,7 +115,7 @@ class CertificateService(CRUDService):
             ) < datetime.datetime.now():
                 verrors.add(
                     schema_name,
-                    f'{cert["name"]!r} has expired ( it was valid until {cert["until"]} )'
+                    f'{cert["name"]!r} has expired (it was valid until {cert["until"]!r})'
                 )
 
             if cert['revoked']:
