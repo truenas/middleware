@@ -45,6 +45,7 @@ class KubernetesService(Service):
             asyncio.ensure_future(self.middleware.call('k8s.event.setup_k8s_events'))
             await self.middleware.call('chart.release.refresh_events_state')
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
+            asyncio.ensure_future(self.redeploy_chart_releases_consuming_outdated_certs())
 
     @private
     async def add_iptables_rules(self):
@@ -66,6 +67,16 @@ class KubernetesService(Service):
                 self.logger.error(
                     'Failed to delete %r iptable rule: %r', ', '.join(rule), cp.stderr.decode(errors='ignore')
                 )
+
+    @private
+    async def redeploy_chart_releases_consuming_outdated_certs(self):
+        return await self.middleware.call(
+            'core.bulk', 'chart.release.update', [
+                [r, {'values': {}}] for r in await self.middleware.call(
+                    'chart.release.get_chart_releases_consuming_outdated_certs'
+                )
+            ]
+        )
 
     @private
     async def iptable_rules(self):
