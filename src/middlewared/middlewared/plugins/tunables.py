@@ -67,7 +67,7 @@ class TunableService(CRUDService):
         if await self.middleware.call('tunable.query', [('var', '=', data['var'])]):
             verrors.add('tunable.create', f'Tunable {data["var"]!r} already exists.', errno.EEXIST)
 
-        if data['var'] not in TunableService.SYSTEM_DEFAULTS:
+        if data['var'] not in await self.middleware.call('tunable.get_system_defaults'):
             verrors.add('tunable.create', f'Tunable {data["var"]!r} does not exist.', errno.ENOENT)
 
         verrors.check()
