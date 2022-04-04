@@ -15,33 +15,16 @@ async def setup(middleware):
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
         try:
             if not any(DEFAULT_CERT_NAME == c['name'] for c in certs):
-                cert, key = await middleware.call('cryptokey.generate_self_signed_certificate')
-
-                cert_dict = {
-                    'certificate': cert,
-                    'privatekey': key,
-                    'name': DEFAULT_CERT_NAME,
-                    'type': CERT_TYPE_EXISTING,
-                }
-
-                # We use datastore.insert to directly insert in db as jobs cannot be waited for at this point
-                id = await middleware.call(
-                    'datastore.insert',
-                    'system.certificate',
-                    cert_dict,
-                    {'prefix': 'cert_'}
-                )
-
-                await middleware.call('service.start', 'ssl')
-
+                await middleware.call('certificate.setup_self_signed_cert_for_ui', DEFAULT_CERT_NAME)
                 middleware.logger.debug('Default certificate for System created')
             else:
                 id = [c['id'] for c in certs if c['name'] == DEFAULT_CERT_NAME][0]
                 await middleware.call('certificate.cert_services_validation', id, 'certificate')
 
-            await middleware.call(
-                'datastore.update', 'system.settings', system_general_config['id'], {'stg_guicertificate': id}
-            )
+
+                await middleware.call(
+                    'datastore.update', 'system.settings', system_general_config['id'], {'stg_guicertificate': id}
+                )
         except Exception as e:
             failure = True
             middleware.logger.debug(
