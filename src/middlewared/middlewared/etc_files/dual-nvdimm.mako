@@ -1,4 +1,6 @@
 <%
+    from packaging import version
+
     info = middleware.call_sync('system.dmidecode_info')
     vers = info['system-version']
     prod = info['system-product-name']
