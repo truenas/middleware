@@ -58,7 +58,7 @@ def test_03_validating_tunables_database_info(request):
 def test_04_validating_created_tunables_values_match_kernel_values(request):
     depends(request, ['VALIDATE_DB_INFO'])
     for tunable, value in TUNABLES_TO_SET.items():
-        assert ssh(f'sysctl {tunable}').split(' = ')[1].strip() == value
+        assert ssh(f'sysctl -n {tunable}').strip() == value
 
 
 @pytest.mark.dependency(name='DISABLE_TUNABLES')
@@ -73,9 +73,8 @@ def test_05_disabling_test_tunables(request):
 @pytest.mark.dependency(name='VALIDATE_DISABLED_TUNABLES')
 def test_06_validating_disabled_tunables_values_match_kernel_default_values(request):
     depends(request, ['DISABLE_TUNABLES'])
-    sys_defaults = call('tunable.get_system_defaults')
-    for tunable, value in TUNABLES_TO_SET.items():
-        assert sys_defaults[tunable] != value
+    for _id, info in TUNABLES_DB.items():
+        assert ssh(f'sysctl -n {info["var"]}').strip() == info['orig_value']
 
 
 @pytest.mark.dependency(name='DELETE_ALL_TUNABLES')
