@@ -28,6 +28,7 @@ def render(service, middleware):
         'audit-log-maxbackup=10',
         'audit-log-maxsize=100',
         'service-account-lookup=true',
+        'feature-gates=MixedProtocolLBService=true',
     ]
     os.makedirs('/etc/rancher/k3s', exist_ok=True)
     with open(FLAGS_PATH, 'w') as f:
