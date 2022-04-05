@@ -4,6 +4,7 @@ from middlewared.service_exception import CallError
 
 from .cloudflare import CloudFlareAuthenticator
 from .route53 import Route53Authenticator
+from .shell import ShellAuthenticator
 
 
 class AuthenticatorFactory:
@@ -27,5 +28,6 @@ auth_factory = AuthenticatorFactory()
 for authenticator in [
     CloudFlareAuthenticator,
     Route53Authenticator,
+    ShellAuthenticator,
 ]:
     auth_factory.register(authenticator)
