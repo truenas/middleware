@@ -449,13 +449,13 @@ class ChartReleaseService(CRUDService):
 
             job.set_progress(75, 'Installing Catalog Item')
 
-            new_values = add_context_to_configuration(new_values, {
+            new_values = await add_context_to_configuration(new_values, {
                 CONTEXT_KEY_NAME: {
                     **get_action_context(data['release_name']),
                     'operation': 'INSTALL',
                     'isInstall': True,
                 }
-            })
+            }, self.middleware)
 
             await self.middleware.call(
                 'chart.release.create_update_storage_class_for_chart_release',
@@ -522,13 +522,13 @@ class ChartReleaseService(CRUDService):
 
         await self.perform_actions(context)
 
-        config = add_context_to_configuration(config, {
+        config = await add_context_to_configuration(config, {
             CONTEXT_KEY_NAME: {
                 **get_action_context(chart_release),
                 'operation': 'UPDATE',
                 'isUpdate': True,
             }
-        })
+        }, self.middleware)
 
         await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 

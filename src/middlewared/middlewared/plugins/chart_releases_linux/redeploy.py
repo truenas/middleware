@@ -28,13 +28,13 @@ class ChartReleaseService(Service):
                 errno=errno.ENOENT
             )
 
-        config = add_context_to_configuration(release['config'], {
+        config = await add_context_to_configuration(release['config'], {
             CONTEXT_KEY_NAME: {
                 **get_action_context(release_name),
                 'operation': 'UPDATE',
                 'isUpdate': True,
             }
-        })
+        }, self.middleware)
         await self.middleware.call('chart.release.helm_action', release_name, chart_path, config, 'update')
 
         job.set_progress(90, 'Syncing secrets for chart release')

@@ -281,7 +281,7 @@ class ChartReleaseService(Service):
         # version it's happening.
         # Helm considers simple config change as an upgrade as well, and we have no way of determining the old/new
         # chart versions during helm upgrade in the helm template, hence the requirement for a context object.
-        config = add_context_to_configuration(config, {
+        config = await add_context_to_configuration(config, {
             CONTEXT_KEY_NAME: {
                 **get_action_context(release_name),
                 'operation': 'UPGRADE',
@@ -292,7 +292,7 @@ class ChartReleaseService(Service):
                     'preUpgradeRevision': release['version'],
                 }
             }
-        })
+        }, self.middleware)
 
         job.set_progress(60, 'Upgrading chart release version')
 
