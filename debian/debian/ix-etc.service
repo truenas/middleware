@@ -5,7 +5,7 @@ DefaultDependencies=no
 Before=network-pre.target
 
 After=middlewared.service
-Before=local-fs.target
+Before=local-fs.target systemd-modules-load.service
 
 [Service]
 Type=oneshot
