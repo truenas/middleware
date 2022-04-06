@@ -118,6 +118,12 @@ class CertificateService(CRUDService):
                     f'{cert["name"]!r} has expired (it was valid until {cert["until"]!r})'
                 )
 
+            if cert['digest_algorithm'] in ['MD5', 'SHA1']:
+                verrors.add(
+                    schema_name,
+                    'Please use a certificate whose digest algorithm has at least 112 security bits'
+                )
+
             if cert['revoked']:
                 verrors.add(
                     schema_name,
