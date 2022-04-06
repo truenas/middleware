@@ -1,5 +1,9 @@
+import pytest
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, mock
+from auto_config import dev_test
+# comment pytestmark for development testing with --dev-test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 def test_snapshot_count_alert():

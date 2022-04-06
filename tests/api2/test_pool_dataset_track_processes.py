@@ -6,9 +6,11 @@ sys.path.append(os.getcwd())
 import pytest
 
 from functions import make_ws_request
-from auto_config import ip
+from auto_config import ip, dev_test
 from middlewared.test.integration.utils import ssh
 from middlewared.test.integration.assets.pool import dataset
+pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+
 
 TEST_DATASET = 'testing_processes'
 
