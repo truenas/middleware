@@ -174,7 +174,7 @@
         for path in share["paths"]:
             p = Path(path)
             if not p.exists():
-                middleware.logger.debug("%s: path does not exist, omitting from NFS exports", path)
+                middleware.logger.debug("%s: path does not exist, omitting from NFS exports", p)
                 continue
 
             anonymous = True
