@@ -179,6 +179,11 @@ class ChartReleaseService(Service):
                 f'during rollback were: {cp.stderr.decode()}'
             )
 
+        if await self.middleware.call(
+            'chart.release.get_chart_releases_consuming_outdated_certs', [['id', '=', release_name]]
+        ):
+            await self.middleware.call('chart.release.update', release_name, {'values': {}})
+
         return await self.middleware.call('chart.release.get_instance', release_name)
 
     @private
