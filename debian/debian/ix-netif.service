@@ -4,7 +4,7 @@ DefaultDependencies=no
 
 Before=network-pre.target
 
-After=middlewared.service
+After=middlewared.service systemd-modules-load.service
 Before=local-fs.target
 Conflicts=systemd-networkd.service
 

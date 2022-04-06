@@ -92,6 +92,9 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
+        'dual-nvdimm': [
+            {'type': 'mako', 'path': 'modprobe.d/truenas-dual-nvdimm.conf', 'local_path': 'dual-nvdimm'}
+        ],
         'user': {
             'ctx': [
                 {'method': 'user.query'},
@@ -261,7 +264,10 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
             {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
             {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
+            {
+                'type': 'mako', 'path': 'local/nut/upssched.conf',
+                'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440
+            },
             {
                 'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': EtcUSR.ROOT,
                 'group': EtcGRP.NUT, 'mode': 0o440
