@@ -18,8 +18,8 @@ loops = {
 nas_disk = GET('/boot/get_disks/', controller_a=ha).json()
 disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 disk_pool = sorted(list(set(disk_list) - set(nas_disk)))
-ha_disk_pool = disk_pool[:1] if ha else None
-tank_disk_pool = disk_pool[1:] if ha else disk_pool
+# Take all disk from ada1 and after to keep ada0 for dataset encryption test.
+tank_disk_pool = (disk_pool[:1])
 
 
 @pytest.fixture(scope='module')
@@ -41,26 +41,6 @@ def test_02_wipe_all_pool_disk():
             "synccache": True
         }
         results = POST('/disk/wipe/', payload)
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-# Exclude for non-HA
-if ha:
-    def test_03_creating_ha_pool():
-        global payload
-        payload = {
-            "name": "ha",
-            "encryption": False,
-            "topology": {
-                "data": [
-                    {"type": "STRIPE", "disks": ha_disk_pool}
-                ],
-            }
-        }
-        results = POST("/pool/", payload)
-        assert results.status_code == 200, results.text
         job_id = results.json()
         job_status = wait_on_job(job_id, 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
