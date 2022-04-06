@@ -42,9 +42,8 @@ class RealtimeEventSource(EventSource):
         data['guest'] = cp_diff[8] / cp_total * 100
         data['guest_nice'] = cp_diff[9] / cp_total * 100
         if sum(cp_diff):
-            # Usage is the sum of all but idle
-            idle = 3
-            data['usage'] = ((cp_total - cp_diff[idle]) / cp_total) * 100
+            # Usage is the sum of all but idle and iowait
+            data['usage'] = ((cp_total - cp_diff[3] - cp_diff[4]) / cp_total) * 100
         else:
             data['usage'] = 0
         return data
