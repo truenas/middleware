@@ -26,6 +26,7 @@ class SystemService(Service):
     @private
     def _parse_dmi(self, lines):
         SystemService.CACHE = {i: '' for i in SystemService.CACHE}
+        SystemService.CACHE['ecc-memory'] = False
         for line in lines:
             if 'DMI type 1,' in line:
                 _type = 'SYSINFO'
