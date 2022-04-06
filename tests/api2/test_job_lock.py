@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from middlewared.test.integration.utils import call, mock
+from middlewared.test.integration.utils import call, mock, ssh
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)
@@ -100,8 +100,7 @@ def test_lock_queue_size():
             call("core.job_wait", j3, job=True)
             call("core.job_wait", j4, job=True)
 
-            with open("/tmp/test") as f:
-                assert f.read() == "a\na\n"
+            assert ssh("cat /tmp/test") == "a\na\n"
 
             assert j3 == j2
             assert j4 == j2
