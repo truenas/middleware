@@ -12,6 +12,7 @@ class CertificateService(Service):
         while not cert_id:
             cert = await self.middleware.call('certificate.query', [['name', '=', cert_name]])
             if cert:
+                cert = cert[0]
                 if await self.middleware.call('certificate.cert_services_validation', cert['id'], 'certificate', False):
                     cert_name = f'{cert_name}_{index}'
                     index += 1
@@ -30,7 +31,6 @@ class CertificateService(Service):
         )
 
         await self.middleware.call('service.start', 'ssl')
-        await self.middleware.call('service.reload', 'http')
 
     @private
     async def setup_self_signed_cert_for_ui_impl(self, cert_name):
