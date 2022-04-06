@@ -80,6 +80,7 @@ class CertificateService(CRUDService):
         # General method to check certificate health wrt usage in services
         cert = await self.middleware.call('certificate.query', [['id', '=', id]])
         verrors = ValidationErrors()
+        valid_key_size = {'EC': 28, 'RSA': 2048}
         if cert:
             cert = cert[0]
             if cert['cert_type'] != 'CERTIFICATE' or cert['cert_type_CSR']:
@@ -103,10 +104,24 @@ class CertificateService(CRUDService):
                     schema_name,
                     'Failed to parse certificate\'s private key'
                 )
-            elif cert['key_type'] != 'EC' and cert['key_length'] < 1024:
+            elif cert['key_length'] < valid_key_size[cert['key_type']]:
                 verrors.add(
                     schema_name,
-                    f'{cert["name"]}\'s private key size is less then 1024 bits'
+                    f'{cert["name"]}\'s private key size is less then {valid_key_size[cert["key_type"]]} bits'
+                )
+
+            if cert['until'] and datetime.datetime.strptime(
+                cert['until'], '%a %b  %d %H:%M:%S %Y'
+            ) < datetime.datetime.now():
+                verrors.add(
+                    schema_name,
+                    f'{cert["name"]!r} has expired (it was valid until {cert["until"]!r})'
+                )
+
+            if cert['digest_algorithm'] in ['MD5', 'SHA1']:
+                verrors.add(
+                    schema_name,
+                    'Please use a certificate whose digest algorithm has at least 112 security bits'
                 )
 
             if cert['revoked']:
@@ -151,7 +166,7 @@ class CertificateService(CRUDService):
             Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
             Int('signedby'),
-            Int('key_length', enum=[1024, 2048, 4096]),
+            Int('key_length', enum=[2048, 4096]),
             Int('renew_days'),
             Int('type'),
             Int('lifetime'),
@@ -175,7 +190,7 @@ class CertificateService(CRUDService):
                 'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
                 'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
                 'CERTIFICATE_CREATE_ACME'], required=True),
-            Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
+            Str('digest_algorithm', enum=['SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
             Ref('cert_extensions'),
             register=True
