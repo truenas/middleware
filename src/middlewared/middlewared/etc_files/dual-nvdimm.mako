@@ -5,21 +5,29 @@
     vers = info['system-version']
     prod = info['system-product-name']
 
-    if (prod and not prod.startswith('TRUENAS-M')) or (vers and vers in ('0123456789', '123456789')):
+    raise_it = False
+    if not all((prod, vers)):
+        raise_it = True
+    elif not prod.startswith('TRUENAS-M'):
         # dual-nvdimm config module is only relevant on gen3 m-series.
+        raise_it = True
+    elif vers in ('0123456789', '123456789'):
         # 0123456789/12345679 are some of the default values that we've
         # seen from supermicro. Before gen3 m-series hardware, we were not
         # changing this value so this is a way to identify gen1/2.
+        raise_it = True
+
+    if raise_it:
 	raise FileShouldNotExist()
 
     try:
-        curr_vers = version.parse(vers)
-        min_vers = version.Version('3.0')
+        curr_vers = version.parse(vers).major
+        min_vers = version.Version('3.0').major
     except Exception as e:
         middleware.logger.error('Failed determining hardware version: %r', e)
         raise FileShouldNotExist()
 
-    if curr_vers.major == min_vers:
+    if curr_vers == min_vers:
         # for now we only check to make sure that the current version is 3 because
         # we quickly found out that the SMBIOS defaults for the system-version value
         # from supermicro aren't very predictable. Since setting these values on a
