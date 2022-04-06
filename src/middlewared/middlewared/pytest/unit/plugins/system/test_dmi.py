@@ -221,7 +221,7 @@ def test__double_colon_dmi():
 
 def test__missing_dmi():
     expected_result = {
-        'ecc-memory': '',
+        'ecc-memory': False,
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
         'system-manufacturer': '',
@@ -266,7 +266,7 @@ def test__missing_dmi_type2():
 
 def test__missing_dmi_type16():
     expected_result = {
-        'ecc-memory': '',
+        'ecc-memory': False,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
         'system-manufacturer': 'QEMU',
