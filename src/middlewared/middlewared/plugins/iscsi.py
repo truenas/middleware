@@ -825,24 +825,15 @@ class iSCSITargetExtentService(SharingService):
         else:
             return naa
 
-    @accepts(List('ignore'))
-    async def disk_choices(self, ignore):
+    @accepts()
+    async def disk_choices(self):
         """
         Return a dict of available zvols that can be used
         when creating an extent.
-
-        `ignore` is a list of paths (i.e. ['zvol/cargo/zvol01',])
-        that will be ignored and included in the returned dict
-        of available zvols even if they are already being used.
-        For example, if zvol/cargo/zvol01 has already been added to
-        an extent, and you pass that path in to this method then it
-        will be returned (even though it's being used).
         """
         diskchoices = {}
 
         zvol_query_filters = [('type', '=', 'DISK')]
-        for i in ignore:
-            zvol_query_filters.append(('path', 'nin', i))
 
         used_zvols = [
             i['path'] for i in (await self.query(zvol_query_filters))
