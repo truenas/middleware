@@ -173,7 +173,7 @@
         params = generate_options(share, global_sec, config)
         p = Path(share['path'])
         if not p.exists():
-            middleware.logger.debug("%s: path does not exist, omitting from NFS exports", path)
+            middleware.logger.debug("%s: path does not exist, omitting from NFS exports", p)
             continue
 
         anonymous = True
