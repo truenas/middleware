@@ -1010,20 +1010,34 @@ class ZFSSnapshot(CRUDService):
         Query all ZFS Snapshots with `query-filters` and `query-options`.
         """
         # Special case for faster listing of snapshot names (#53149)
+        filters_attrs = filter_getattrs(filters)
         if (
             (
                 options.get('select') == ['name'] or
                 options.get('count')
-            ) and (
-                not filters or
-                filter_getattrs(filters).issubset({'name', 'pool'})
-            )
+            ) and filters_attrs.issubset({'name', 'pool', 'dataset'})
         ):
+            kwargs = {}
+            other_filters = []
+            for f in filters:
+                if len(f) == 3 and f[0] in ['pool', 'dataset'] and f[1] in ['=', 'in']:
+                    if f[1] == '=':
+                        kwargs['datasets'] = [f[2]]
+                    else:
+                        kwargs['datasets'] = f[2]
+
+                    if f[0] == 'dataset':
+                        kwargs['recursive'] = False
+                else:
+                    other_filters.append(f)
+            filters = other_filters
+
             with libzfs.ZFS() as zfs:
-                snaps = zfs.snapshots_serialized(['name'])
+                snaps = zfs.snapshots_serialized(['name'], **kwargs)
 
             if filters or len(options) > 1:
                 return filter_list(snaps, filters, options)
+
             return snaps
 
         if options['extra'].get('retention'):
