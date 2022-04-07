@@ -377,6 +377,17 @@ class PeriodicSnapshotTaskService(CRUDService):
         # with too many, then File Explorer will show no snapshots available.
         return 512
 
+    @accepts()
+    @returns(Int())
+    def max_total_count(self):
+        """
+        Returns a maximum amount of snapshots (total) the system can sustain.
+        """
+
+        # Having too many snapshots results in various performance complications (mainly, when listing them).
+        # This is a random round number that is large enough and does not cause issues in most use cases.
+        return 10000
+
     @item_method
     @accepts(Int("id"))
     async def run(self, id):
