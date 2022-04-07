@@ -854,11 +854,13 @@ class iSCSITargetExtentService(SharingService):
             if key not in used_zvols:
                 diskchoices[key] = f'{zvol_name} ({zvol_size})'
 
-        zfs_snaps = await self.middleware.call('zfs.snapshot.query', [], {'select': ['name']})
+        zfs_snaps = await self.middleware.call(
+            'zfs.snapshot.query',
+            [['dataset', 'in', [zvol['name'] for zvol in zvols]]],
+            {'select': ['name']},
+        )
         for snap in zfs_snaps:
-            ds_name, snap_name = snap['name'].rsplit('@', 1)
-            if ds_name in zvol_list:
-                diskchoices[os.path.relpath(zvol_name_to_path(snap['name']), '/dev')] = f'{snap["name"]} [ro]'
+            diskchoices[os.path.relpath(zvol_name_to_path(snap['name']), '/dev')] = f'{snap["name"]} [ro]'
 
         return diskchoices
 
