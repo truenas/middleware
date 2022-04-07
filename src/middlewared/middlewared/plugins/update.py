@@ -233,7 +233,7 @@ class UpdateService(Service):
         if self.middleware.call_sync('failover.licensed'):
 
             # First, let's make sure HA is functional
-            if self.middleware.call_sync('failover.disabled_reasons'):
+            if self.middleware.call_sync('failover.disabled.reasons'):
                 return {'status': 'HA_UNAVAILABLE'}
 
             # If its HA and standby is running old version we assume
