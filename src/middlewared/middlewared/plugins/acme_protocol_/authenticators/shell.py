@@ -1,3 +1,14 @@
+"""
+The authenticator script is called two times during the certificate generation:
+
+1. The validation record creation which is called in the following way:
+   script set domain validation_name validaton_context timeout
+2. The validation record deletion which is called in following way:
+   script unset domain validation_name validation_context
+
+It is up to script implementation to handle both calls and perform the record creation.
+"""
+
 import logging
 import subprocess
 
