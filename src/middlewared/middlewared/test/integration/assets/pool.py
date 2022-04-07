@@ -4,7 +4,7 @@ from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, pool
 
 
-test_pool_topologies = [
+another_pool_topologies = [
     (1, lambda disks: {
         "data": [
             {"type": "STRIPE", "disks": disks[0:1]},
@@ -27,11 +27,11 @@ test_pool_topologies = [
 
 
 @contextlib.contextmanager
-def test_pool(data=None, topology=None):
+def another_pool(data=None, topology=None):
     data = data or {}
 
     if topology is None:
-        topology = test_pool_topologies[0]
+        topology = another_pool_topologies[0]
 
     unused = call("disk.get_unused")
     if len(unused) < topology[0]:
@@ -51,7 +51,7 @@ def test_pool(data=None, topology=None):
 
 
 @contextlib.contextmanager
-def dataset(name, data=None):
+def dataset(name, data=None, pool=pool):
     data = data or {}
 
     dataset = f"{pool}/{name}"
