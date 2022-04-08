@@ -405,6 +405,7 @@ class Job:
                 raise asyncio.CancelledError()
             else:
                 self.set_state('RUNNING')
+                self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
             self.future = asyncio.ensure_future(self.__run_body())
             try:
