@@ -1,11 +1,12 @@
 from middlewared.schema import accepts, returns, List, Str
-from middlewared.service import ConfigService, throttle, pass_app, no_auth_required, private
+from middlewared.service import Service, throttle, pass_app, no_auth_required, private
 from middlewared.plugins.failover_.utils import throttle_condition
 
 
-class FailoverDisabledReasonsService(ConfigService):
+class FailoverDisabledReasonsService(Service):
 
     class Config:
+        cli_namespace = 'system.failover.disabled'
         namespace = 'failover.disabled'
 
     LAST_DISABLED_REASONS = None
