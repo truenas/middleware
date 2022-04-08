@@ -6,7 +6,7 @@ from itertools import chain
 
 import asyncio
 
-from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
+from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import accepts, Bool, Cron, Datetime, Dict, Int, Float, List, Patch, returns, Str
 from middlewared.service import (
     CRUDService, filterable, filterable_returns, filter_list, job, private, SystemServiceService, ValidationErrors
@@ -19,17 +19,20 @@ from middlewared.utils.asyncio_ import asyncio_map
 RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)
 RE_TIME_SCSIPRINT_EXTENDED = re.compile(r'Please wait (\d+) minutes for test to complete')
 
+RE_OF_TEST_REMAINING = re.compile(r'([0-9]+)% of test remaining')
+
 
 async def annotate_disk_smart_tests(middleware, devices, disk):
     if disk["disk"] is None:
         return
 
-    args = await get_smartctl_args(middleware, devices, disk["disk"], disk["smartoptions"])
-    if args:
-        p = await smartctl(args + ["-l", "selftest"], check=False, encoding="utf8")
-        tests = parse_smart_selftest_results(p.stdout)
-        if tests is not None:
-            return dict(tests=tests, **disk)
+    output = await middleware.call("disk.smartctl", disk["disk"], ["-a"], {"silent": True})
+    if output is None:
+        return
+
+    tests = parse_smart_selftest_results(output) or []
+    current_test = parse_current_smart_selftest(output)
+    return dict(tests=tests, current_test=current_test, **disk)
 
 
 def parse_smart_selftest_results(stdout):
@@ -72,7 +75,7 @@ def parse_smart_selftest_results(stdout):
 
             test = {
                 "num": int(line[1:3].strip()),
-                "description": line[5:20].strip(),
+                "description": line[5:22].strip(),
                 "status_verbose": line[23:48].strip(),
                 "segment_number": line[49:52].strip(),
                 "lifetime": line[55:60].strip(),
@@ -102,6 +105,11 @@ def parse_smart_selftest_results(stdout):
             tests.append(test)
 
         return tests
+
+
+def parse_current_smart_selftest(stdout):
+    if remaining := RE_OF_TEST_REMAINING.search(stdout):
+        return {"progress": 100 - int(remaining.group(1))}
 
 
 class SmartTestModel(sa.Model):
@@ -424,18 +432,6 @@ class SMARTTestService(CRUDService):
     async def __manual_test(self, disk):
         output = {'error': None}
 
-        try:
-            new_test_num = max(
-                test['num']
-                for test in (await self.middleware.call(
-                    'smart.test.results',
-                    [['disk', '=', disk['disk']]],
-                    {'get': True}
-                ))['tests']
-            ) + 1
-        except (MatchNotFound, ValueError):
-            new_test_num = 1
-
         args = ['-t', disk['type'].lower()]
         if disk['mode'] == 'FOREGROUND':
             args.extend(['-C'])
@@ -462,7 +458,7 @@ class SMARTTestService(CRUDService):
             if expected_result_time:
                 output['expected_result_time'] = expected_result_time
                 output['job'] = (
-                    await self.middleware.call('smart.test.wait', disk, expected_result_time, new_test_num)
+                    await self.middleware.call('smart.test.wait', disk, expected_result_time)
                 ).id
             else:
                 output['error'] = result
@@ -594,7 +590,7 @@ class SMARTTestService(CRUDService):
 
     @private
     @job()
-    async def wait(self, job, disk, expected_result_time, new_test_num):
+    async def wait(self, job, disk, expected_result_time):
         start = datetime.utcnow()
         if expected_result_time < start:
             raise CallError(f'Invalid expected_result_time {expected_result_time.isoformat()}')
@@ -602,28 +598,30 @@ class SMARTTestService(CRUDService):
         start_monotime = time.monotonic()
         end_monotime = start_monotime + (expected_result_time - start).total_seconds()
 
-        # Check every percent but not more often than every minute
-        interval = max((end_monotime - start_monotime) / 100.0, 60)
         while True:
-            job.set_progress(
-                min(
-                    (time.monotonic() - start_monotime) / (end_monotime - start_monotime),
-                    0.99
-                ) * 100,
-            )
-
             try:
-                tests = (await self.middleware.call(
+                current_test = (await self.middleware.call(
                     'smart.test.results',
                     [['disk', '=', disk['disk']]],
                     {'get': True}
-                ))['tests']
+                ))['current_test']
             except MatchNotFound:
-                tests = []
+                raise CallError(f'No S.M.A.R.T. test results found for {disk["disk"]}')
 
-            for test in tests:
-                if test['num'] == new_test_num:
-                    return test
+            if current_test is None:
+                return
+
+            job.set_progress(current_test['progress'])
+
+            # Check every percent
+            interval = int((end_monotime - start_monotime) / 100)
+
+            if time.monotonic() < end_monotime:
+                # but not more often than every ten seconds
+                interval = max(interval, 10)
+            else:
+                # the test is taking longer than expected, do not poll more often than every minute
+                interval = max(interval, 60)
 
             await asyncio.sleep(interval)
 
