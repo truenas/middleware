@@ -2,7 +2,7 @@ import errno
 import contextlib
 from pathlib import Path
 
-from middlewared.schema import Dict, IPAddr, Int, Str, Bool
+from middlewared.schema import Dict, IPAddr, Int, Str, Bool, List, returns
 from middlewared.service import (accepts, job, filterable,
                                  CRUDService, ValidationErrors, private)
 from middlewared.utils import filter_list, run
@@ -19,6 +19,33 @@ class CtdbPublicIpService(CRUDService):
     class Config:
         namespace = 'ctdb.public.ips'
         cli_namespace = 'service.ctdb.public.ips'
+
+    @accepts(List('exclude_ifaces', items=[Str('exclude_iface')], default=[]))
+    @returns(List(items=[Str('interface')]))
+    async def interface_choices(self, exclude):
+        """
+        Retrieve list of available interface choices that can be used for assigning a ctdbd public ip.
+        """
+        priv_ips = {i['address'] for i in (await self.middleware.call('ctdb.private.ips.query'))}
+        if not priv_ips:
+            raise CallError('No ctdbd private IP addresses were detected', errno.ENOENT)
+
+        filters = [['type', 'nin', ['BRIDGE']]]
+        options = {'select': ['id', 'aliases']}
+        ifaces = await self.middleware.call('interface.query', filters, options)
+        if exclude:
+            ifaces = set([i['id'] for i in ifaces])
+            exclude = set(exclude)
+            if bad := exclude - ifaces:
+                raise CallError(f'Invalid exclude interface(s) {", ".join(bad)}', errno.ENOENT)
+            else:
+                return list(ifaces - exclude)
+
+        choices = []
+        for i in ifaces:
+            for j in filter(lambda x: x['type'] != 'LINK' and x['address'] not in priv_ips, i['aliases']):
+                choices.append(i['id'])
+        return choices
 
     @filterable
     def query(self, filters, options):
