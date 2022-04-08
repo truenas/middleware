@@ -300,7 +300,7 @@ class Client(object):
         self._jobs_watching = False
         self._pings = {}
         self._py_exceptions = py_exceptions
-        self._event_callbacks = {}
+        self._event_callbacks = defaultdict(list)
         if uri is None:
             uri = 'ws+unix:///var/run/middlewared.sock'
         self._closed = Event()
@@ -359,31 +359,36 @@ class Client(object):
         elif msg in ('added', 'changed', 'removed'):
             if self._event_callbacks:
                 if '*' in self._event_callbacks:
-                    event = self._event_callbacks['*']
-                    Thread(
-                        target=event['callback'], args=[msg.upper()], kwargs=message, daemon=True,
-                    ).start()
+                    for event in self._event_callbacks['*']:
+                        self._run_callback(event, [msg.upper()], message)
                 if message['collection'] in self._event_callbacks:
-                    event = self._event_callbacks[message['collection']]
-                    Thread(
-                        target=event['callback'], args=[msg.upper()], kwargs=message, daemon=True,
-                    ).start()
+                    for event in self._event_callbacks[message['collection']]:
+                        self._run_callback(event, [msg.upper()], message)
         elif msg == 'ready':
             for subid in message['subs']:
                 # FIXME: We may need to keep a different index for id
                 # so we don't hve to iterate through all.
                 # This is fine for just a dozen subscriptions
-                for event in self._event_callbacks.values():
-                    if subid == event['id']:
-                        event['ready'].set()
-                        break
+                for events in self._event_callbacks.values():
+                    for event in events:
+                        if subid == event['id']:
+                            event['ready'].set()
+                            break
         elif msg == 'nosub':
             if message['collection'] in self._event_callbacks:
-                event = self._event_callbacks[message['collection']]
-                if 'error' in message:
-                    event['error'] = message['error']['reason'] or message['error']['error']
-                event['ready'].set()
-                event['event'].set()
+                for event in self._event_callbacks[message['collection']]:
+                    if 'error' in message:
+                        event['error'] = message['error']['reason'] or message['error']['error']
+                    event['ready'].set()
+                    event['event'].set()
+
+    def _run_callback(self, event, args, kwargs):
+        if event['sync']:
+            event['callback'](*args, **kwargs)
+        else:
+            Thread(
+                target=event['callback'], args=args, kwargs=kwargs, daemon=True,
+            ).start()
 
     def on_open(self):
         features = []
@@ -439,7 +444,9 @@ class Client(object):
                 job = self._jobs[job_id]
                 job.update(fields)
                 if isinstance(job.get('__callback'), Callable):
-                    job['__callback'](job)
+                    Thread(
+                        target=job['__callback'], args=(job,), daemon=True,
+                    ).start()
                 if mtype == 'CHANGED' and job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'):
                     # If an Event already exist we just set it to mark it finished.
                     # Otherwise we create a new Event.
@@ -455,7 +462,7 @@ class Client(object):
         Subscribe to job updates, calling `_jobs_callback` on every new event.
         """
         self._jobs_watching = True
-        self.subscribe('core.get_jobs', self._jobs_callback)
+        self.subscribe('core.get_jobs', self._jobs_callback, sync=True)
 
     def call(self, method, *params, background=False, callback=None, job=False, timeout=CALL_TIMEOUT):
         # We need to make sure we are subscribed to receive job updates
@@ -507,25 +514,27 @@ class Client(object):
         return {
             'id': str(uuid.uuid4()),
             'callback': None,
+            'sync': False,
             'ready': Event(),
             'error': None,
             'event': Event(),
         }
 
-    def subscribe(self, name, callback, payload=None):
+    def subscribe(self, name, callback, payload=None, sync=False):
         payload = payload or self.event_payload()
         payload.update({
             'callback': callback,
+            'sync': sync,
         })
-        self._event_callbacks[name] = payload
+        self._event_callbacks[name].append(payload)
         self._send({
             'msg': 'sub',
             'id': payload['id'],
             'name': name,
         })
         payload['ready'].wait()
-        if self._event_callbacks[name]['error']:
-            raise ValueError(self._event_callbacks[name]['error'])
+        if payload['error']:
+            raise ValueError(payload['error'])
         return payload['id']
 
     def unsubscribe(self, id):
@@ -533,8 +542,11 @@ class Client(object):
             'msg': 'unsub',
             'id': id,
         })
-        for k, v in list(self._event_callbacks.items()):
-            if v['id'] == id:
+        for k, events in list(self._event_callbacks.items()):
+            events = [v for v in events if v['id'] != id]
+            if events:
+                self._event_callbacks[k] = events
+            else:
                 self._event_callbacks.pop(k)
 
     def ping(self, timeout=10):
