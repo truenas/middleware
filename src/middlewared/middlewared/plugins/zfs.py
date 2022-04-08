@@ -14,6 +14,8 @@ from middlewared.utils import filter_list, filter_getattrs
 from middlewared.utils.path import is_child
 from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
+SEARCH_PATHS = ['/dev/disk/by-partuuid', '/dev']
+
 
 class ZFSSetPropertyError(CallError):
     def __init__(self, property, error):
@@ -343,7 +345,7 @@ class ZFSPoolService(CRUDService):
     @accepts()
     def find_import(self):
         with libzfs.ZFS() as zfs:
-            return [i.__getstate__() for i in zfs.find_import()]
+            return [i.__getstate__() for i in zfs.find_import(search_paths=SEARCH_PATHS)]
 
     @accepts(
         Str('name_or_guid'),
@@ -357,16 +359,12 @@ class ZFSPoolService(CRUDService):
         ),
     )
     def import_pool(self, name_or_guid, properties, any_host, cachefile, new_name, import_options):
-        found = False
         with libzfs.ZFS() as zfs:
-            for pool in zfs.find_import(
-                cachefile=cachefile, search_paths=['/dev/disk/by-partuuid', '/dev']
-            ):
+            for pool in zfs.find_import(cachefile=cachefile, search_paths=SEARCH_PATHS):
                 if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
                     found = pool
                     break
-
-            if not found:
+            else:
                 raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
 
             missing_log = import_options['missing_log']
