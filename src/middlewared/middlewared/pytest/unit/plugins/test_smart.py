@@ -2,7 +2,7 @@ import textwrap
 
 import pytest
 
-from middlewared.plugins.smart import parse_smart_selftest_results
+from middlewared.plugins.smart import parse_smart_selftest_results, parse_current_smart_selftest
 
 
 def test__parse_smart_selftest_results__ataprint__1():
@@ -61,11 +61,11 @@ def test__parse_smart_selftest_results__scsiprint__1():
         SMART Self-test log
         Num  Test              Status                 segment  LifeTime  LBA_first_err [SK ASC ASQ]
              Description                              number   (hours)
-        # 1  Background long   Completed, segment failed   -    3943                 - [-   -    -]
+        # 1  Background short  Completed, segment failed   -    3943                 - [-   -    -]
     """)) == [
         {
             "num": 1,
-            "description": "Background long",
+            "description": "Background short",
             "status": "FAILED",
             "status_verbose": "Completed, segment failed",
             "segment_number": None,
@@ -73,3 +73,35 @@ def test__parse_smart_selftest_results__scsiprint__1():
             "lba_of_first_error": None,
         },
     ]
+
+
+@pytest.mark.parametrize("stdout,result", [
+    # ataprint.cpp
+    (
+        textwrap.dedent("""\
+            === START OF READ SMART DATA SECTION ===
+            Self-test execution status:        41% of test remaining
+            SMART Self-test log
+        """),
+        {"progress": 59},
+    ),
+    # scsiprint.spp
+    (
+        textwrap.dedent("""\
+            Self-test execution status:      (   0)	The previous self-test routine completed
+                                             without error or no self-test has ever 
+                                             been run.
+
+        """),
+        None,
+    ),
+    (
+        textwrap.dedent("""\
+            Self-test execution status:      ( 242)	Self-test routine in progress...
+                                                    20% of test remaining.
+        """),
+        {"progress": 80},
+    ),
+])
+def test__parse_current_smart_selftest(stdout, result):
+    assert parse_current_smart_selftest(stdout) == result
