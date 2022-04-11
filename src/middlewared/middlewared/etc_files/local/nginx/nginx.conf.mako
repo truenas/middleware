@@ -3,12 +3,6 @@
     import ipaddress
     import os
 
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives.asymmetric import dh
-    from cryptography.hazmat.primitives import serialization
-
-    from middlewared.utils import osc
-
     # Let's ensure that /var/log/nginx directory exists
     if not os.path.exists('/var/log/nginx'):
         os.makedirs('/var/log/nginx')
@@ -136,6 +130,7 @@ http {
     #upload_store /var/tmp/firmware;
     client_body_temp_path /var/tmp/firmware;
 
+    access_log off;
     error_log syslog:server=unix:/dev/log,nohostname;
 
     server {
