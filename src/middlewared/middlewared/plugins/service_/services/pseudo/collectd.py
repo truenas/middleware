@@ -11,17 +11,9 @@ class CollectDService(SimpleService):
     etc = ["collectd"]
     restartable = True
 
-    freebsd_rc = "collectd-daemon"
-
     systemd_unit = "collectd"
 
     lock = asyncio.Lock()
-
-    async def _get_state_freebsd(self):
-        return ServiceState(
-            (await self._freebsd_service("collectd-daemon", "status")).returncode == 0,
-            [],
-        )
 
     async def start(self, _lock=True):
         async with (self.lock if _lock else asyncnullcontext()):
@@ -47,8 +39,6 @@ class RRDCacheDService(SimpleService):
     name = "rrdcached"
 
     restartable = True
-
-    freebsd_rc = "rrdcached"
 
     systemd_unit = "rrdcached"
 

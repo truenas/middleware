@@ -7,9 +7,6 @@ class MDNSService(SimpleService):
 
     etc = ["mdns"]
 
-    freebsd_rc = "avahi-daemon"
-    freebsd_pidfile = "/var/run/avahi-daemon/pid"
-
     systemd_unit = "avahi-daemon"
 
     async def start(self):

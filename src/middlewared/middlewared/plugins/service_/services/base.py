@@ -1,102 +1,165 @@
 import logging
+import select
+import subprocess
 
-from middlewared.utils import osc
+from pystemd.base import SDObject
+from pystemd.dbusexc import DBusUnknownObjectError
+from pystemd.dbuslib import DBus
+from pystemd.systemd1 import Unit
+from systemd import journal
 
-from .base_freebsd import SimpleServiceFreeBSD
-from .base_linux import SimpleServiceLinux
-from .base_state import ServiceState  # noqa
+from middlewared.utils import run
+
+from .base_interface import ServiceInterface, IdentifiableServiceInterface
+from .base_state import ServiceState
 
 logger = logging.getLogger(__name__)
 
 
-class ServiceInterface:
-    name = NotImplemented
+class Job(SDObject):
+    def __init__(self, job, bus=None, _autoload=False):
+        super().__init__(
+            destination=b"org.freedesktop.systemd1",
+            path=job,
+            bus=bus,
+            _autoload=_autoload,
+        )
 
-    etc = []
-    restartable = False  # Implements `restart` method instead of `stop` + `start`
-    reloadable = False  # Implements `reload` method
 
-    def __init__(self, middleware):
-        self.middleware = middleware
+class SimpleService(ServiceInterface, IdentifiableServiceInterface):
+    systemd_unit = NotImplemented
+    systemd_async_start = False
+
+    async def systemd_extra_units(self):
+        return []
 
     async def get_state(self):
-        raise NotImplementedError
+        return await self.middleware.run_in_thread(self._get_state_sync)
+
+    def _get_state_sync(self):
+        unit = self._get_systemd_unit()
+
+        state = unit.Unit.ActiveState
+        if state == b"active" or (self.systemd_async_start and state == b"activating"):
+            return ServiceState(True, list(filter(None, [unit.MainPID])))
+
+        else:
+            return ServiceState(False, [])
 
     async def start(self):
-        raise NotImplementedError
-
-    async def before_start(self):
-        pass
-
-    async def after_start(self):
-        pass
+        await self._unit_action("Start")
 
     async def stop(self):
-        raise NotImplementedError
-
-    async def before_stop(self):
-        pass
-
-    async def after_stop(self):
-        pass
+        await self._unit_action("Stop")
 
     async def restart(self):
-        raise NotImplementedError
-
-    async def before_restart(self):
-        pass
-
-    async def after_restart(self):
-        pass
+        await self._unit_action("Restart")
 
     async def reload(self):
-        raise NotImplementedError
-
-    async def before_reload(self):
-        pass
-
-    async def after_reload(self):
-        pass
-
-
-class IdentifiableServiceInterface:
-    async def identify(self, procname):
-        raise NotImplementedError
-
-
-class SimpleService(ServiceInterface, IdentifiableServiceInterface, SimpleServiceLinux, SimpleServiceFreeBSD):
-    async def get_state(self):
-        if osc.IS_LINUX:
-            return await self._get_state_linux()
-        else:
-            return await self._get_state_freebsd()
-
-    async def start(self):
-        if osc.IS_LINUX:
-            return await self._start_linux()
-        else:
-            return await self._start_freebsd()
-
-    async def stop(self):
-        if osc.IS_LINUX:
-            return await self._stop_linux()
-        else:
-            return await self._stop_freebsd()
-
-    async def restart(self):
-        if osc.IS_LINUX:
-            return await self._restart_linux()
-        else:
-            return await self._restart_freebsd()
-
-    async def reload(self):
-        if osc.IS_LINUX:
-            return await self._reload_linux()
-        else:
-            return await self._reload_freebsd()
+        await self._unit_action("Reload")
 
     async def identify(self, procname):
-        if osc.IS_LINUX:
-            return await self._identify_linux(procname)
-        else:
-            return await self._identify_freebsd(procname)
+        pass
+
+    async def failure_logs(self):
+        return await self.middleware.run_in_thread(self._unit_failure_logs)
+
+    def _get_systemd_unit(self):
+        unit = Unit(self._get_systemd_unit_name())
+        unit.load()
+        return unit
+
+    def _get_systemd_unit_name(self):
+        return f"{self.systemd_unit}.service".encode()
+
+    async def _unit_action(self, action, wait=True, timeout=5):
+        return await self.middleware.run_in_thread(self._unit_action_sync, action, wait, timeout)
+
+    def _unit_action_sync(self, action, wait, timeout):
+        unit = self._get_systemd_unit()
+        job = getattr(unit.Unit, action)(b"replace")
+
+        if wait:
+            with DBus() as bus:
+                done = False
+
+                def callback(msg, error=None, userdata=None):
+                    nonlocal done
+
+                    msg.process_reply(True)
+
+                    if msg.body[1] == job:
+                        done = True
+
+                bus.match_signal(
+                    b"org.freedesktop.systemd1",
+                    b"/org/freedesktop/systemd1",
+                    b"org.freedesktop.systemd1.Manager",
+                    b"JobRemoved",
+                    callback,
+                    None,
+                )
+
+                job_object = Job(job, bus)
+                try:
+                    job_object.load()
+                except DBusUnknownObjectError:
+                    # Job has already completed
+                    return
+
+                fd = bus.get_fd()
+                while True:
+                    fds = select.select([fd], [], [], timeout)
+                    if not any(fds):
+                        break
+
+                    bus.process()
+
+                    if done:
+                        break
+
+    async def _systemd_unit(self, unit, verb):
+        await systemd_unit(unit, verb)
+
+    def _unit_failure_logs(self):
+        unit = self._get_systemd_unit()
+        unit_name = self._get_systemd_unit_name()
+
+        j = journal.Reader()
+        j.seek_monotonic(unit.Unit.InactiveExitTimestampMonotonic / 1e6)
+
+        # copied from `https://github.com/systemd/systemd/blob/main/src/shared/logs-show.c`,
+        # `add_matches_for_unit` function
+
+        # Look for messages from the service itself
+        j.add_match(_SYSTEMD_UNIT=unit_name)
+
+        # Look for coredumps of the service
+        j.add_disjunction()
+        j.add_match(MESSAGE_ID=b"fc2e22bc6ee647b6b90729ab34a250b1")
+        j.add_match(_UID=0)
+        j.add_match(COREDUMP_UNIT=unit_name)
+
+        # Look for messages from PID 1 about this service
+        j.add_disjunction()
+        j.add_match(_PID=1)
+        j.add_match(UNIT=unit_name)
+
+        # Look for messages from authorized daemons about this service
+        j.add_disjunction()
+        j.add_match(_UID=0)
+        j.add_match(OBJECT_SYSTEMD_UNIT=unit_name)
+
+        return "\n".join([
+            f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
+            f"{record['_COMM']}[{record['_PID']}]: {record['MESSAGE']}"
+            for record in j
+        ])
+
+
+async def systemd_unit(unit, verb):
+    result = await run("systemctl", verb, unit, check=False, encoding="utf-8", stderr=subprocess.STDOUT)
+    if result.returncode != 0:
+        logger.warning("%s %s failed with code %d: %r", unit, verb, result.returncode, result.stdout)
+
+    return result

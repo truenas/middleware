@@ -1,10 +1,8 @@
 import asyncio
 
-from middlewared.utils import osc
-
-from middlewared.plugins.service_.services.base import ServiceState, ServiceInterface, SimpleService
-from middlewared.plugins.service_.services.base_freebsd import freebsd_service
-from middlewared.plugins.service_.services.base_linux import systemd_unit
+from middlewared.plugins.service_.services.base import SimpleService, systemd_unit
+from middlewared.plugins.service_.services.base_interface import ServiceInterface
+from middlewared.plugins.service_.services.base_state import ServiceState
 
 
 class PseudoServiceBase(ServiceInterface):
@@ -33,11 +31,7 @@ class DiskService(PseudoServiceBase):
         await self.reload()
 
     async def reload(self):
-        if osc.IS_FREEBSD:
-            await freebsd_service("mountlate", "start")
-
         # FIXME: Linux
-
         asyncio.ensure_future(self.middleware.call("service.restart", "collectd"))
 
 
@@ -70,10 +64,6 @@ class MOTDService(PseudoServiceBase):
 
     etc = ["motd"]
 
-    async def start(self):
-        if osc.IS_FREEBSD:
-            await freebsd_service("motd", "start")
-
 
 class HostnameService(PseudoServiceBase):
     name = "hostname"
@@ -94,16 +84,10 @@ class HttpService(PseudoServiceBase):
     reloadable = True
 
     async def restart(self):
-        if osc.IS_FREEBSD:
-            await freebsd_service("nginx", "restart")
-        if osc.IS_LINUX:
-            await systemd_unit("nginx", "restart")
+        await systemd_unit("nginx", "restart")
 
     async def reload(self):
-        if osc.IS_FREEBSD:
-            await freebsd_service("nginx", "reload")
-        if osc.IS_LINUX:
-            await systemd_unit("nginx", "reload")
+        await systemd_unit("nginx", "reload")
 
 
 class NetworkService(PseudoServiceBase):
@@ -130,8 +114,6 @@ class NtpdService(SimpleService):
     etc = ["ntpd"]
     restartable = True
 
-    freebsd_rc = "ntpd"
-
     systemd_unit = "ntp"
 
 
@@ -145,8 +127,6 @@ class PowerdService(SimpleService):
     name = "powerd"
 
     etc = ["rc"]
-
-    freebsd_rc = "powerd"
 
     # FIXME: Linux
 
@@ -178,12 +158,10 @@ class RoutingService(SimpleService):
 
     restartable = True
 
-    freebsd_rc = "routing"
-
     async def get_state(self):
         return ServiceState(True, [])
 
-    async def _restart_linux(self):
+    async def restart(self):
         await self.middleware.call("staticroute.sync")
 
 
@@ -202,8 +180,6 @@ class SyslogdService(SimpleService):
     etc = ["syslogd"]
     restartable = True
     reloadable = True
-
-    freebsd_rc = "syslog-ng"
 
     systemd_unit = "syslog-ng"
 
