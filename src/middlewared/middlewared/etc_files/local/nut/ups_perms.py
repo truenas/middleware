@@ -1,10 +1,10 @@
 import os
 
-from middlewared.utils import osc
+from middlewared.plugins.ups import UPS_POWERDOWN_FLAG_FILE
 
 
-UPS_CONFPATH = '/etc/nut' if osc.IS_LINUX else '/usr/local/etc/nut'
-UPS_VARPATH = '/var/run/nut' if osc.IS_LINUX else '/var/db/nut'
+UPS_CONFPATH = '/etc/nut'
+UPS_VARPATH = '/var/run/nut'
 UPS_CONFIG = f'{UPS_CONFPATH}/ups.conf'
 UPS_MONFILE = f'{UPS_CONFPATH}/upsmon.conf'
 UPS_SCHEDFILE = f'{UPS_CONFPATH}/upssched.conf'
@@ -19,6 +19,9 @@ def ups_config_perms(middleware):
     for file in master_mode_files:
         if ups_config['mode'].lower() != 'master':
             os.remove(file)
+
+    if os.path.exists(UPS_POWERDOWN_FLAG_FILE):
+        os.unlink(UPS_POWERDOWN_FLAG_FILE)
 
 
 def render(service, middleware):
