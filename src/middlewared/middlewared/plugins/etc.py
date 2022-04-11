@@ -29,7 +29,7 @@ class EtcGRP(enum.IntEnum):
     ROOT = 0
     SHADOW = 42
     NSLCD = 115
-    NUT = 126
+    NUT = 128
     MINIO = 473
     WEBDAV = 666
 
