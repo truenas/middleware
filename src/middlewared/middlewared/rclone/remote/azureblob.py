@@ -16,4 +16,5 @@ class AzureBlobRcloneRemote(BaseRcloneRemote):
     credentials_schema = [
         Str("account", title="Account Name", required=True),
         Str("key", title="Account Key", required=True),
+        Str("endpoint", title="Endpoint", default=""),
     ]
