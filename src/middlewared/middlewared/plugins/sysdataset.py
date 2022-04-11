@@ -289,16 +289,17 @@ class SystemDatasetService(ConfigService):
                     raise CallError(job.error)
                 return
 
-        dataset = await self.middleware.call('pool.dataset.query', [['name', '=', config['pool']]],
-                                             {'extra': {'retrieve_children': False}})
-        if not dataset or dataset[0]['locked']:
-            # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
-            self.logger.debug(
-                'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
-                config['pool'],
-            )
-            self.force_pool = boot_pool
-            config = await self.config()
+        if config['pool'] != boot_pool:
+            dataset = await self.middleware.call('pool.dataset.query', [['name', '=', config['pool']]],
+                                                 {'extra': {'retrieve_children': False}})
+            if not dataset or dataset[0]['locked']:
+                # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
+                self.logger.debug(
+                    'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
+                    config['pool'],
+                )
+                self.force_pool = boot_pool
+                config = await self.config()
 
         mounted_pool = mounted = None
         for p in psutil.disk_partitions():
