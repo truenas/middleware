@@ -38,7 +38,7 @@ class UPSModel(sa.Model):
     ups_monpwd = sa.Column(sa.EncryptedText(), default='fixmepass')
     ups_extrausers = sa.Column(sa.Text())
     ups_rmonitor = sa.Column(sa.Boolean(), default=False)
-    ups_powerdown = sa.Column(sa.Boolean(), default=True)
+    ups_powerdown = sa.Column(sa.Boolean(), default=False)
     ups_nocommwarntime = sa.Column(sa.Integer(), nullable=True)
     ups_hostsync = sa.Column(sa.Integer(), default=15)
     ups_shutdowncmd = sa.Column(sa.String(255), nullable=True)
@@ -65,7 +65,7 @@ class UPSService(SystemServiceService):
         Str('extrausers', max_length=None, required=True),
         Str('identifier', empty=False, required=True),
         Str('mode', enum=['MASTER', 'SLAVE'], required=True),
-        Str('monpwd', required=True),
+        Str('monpwd', empty=False, required=True),
         Str('monuser', empty=False, required=True),
         Str('options', max_length=None, required=True),
         Str('optionsupsd', max_length=None, required=True),
@@ -189,9 +189,7 @@ class UPSService(SystemServiceService):
                 )
 
         for field in ['monpwd', 'monuser']:
-            if not data.get(field):
-                verrors.add(f'{schema}.{field}', 'This field is required.')
-            elif re.search(r'[ #]', data[field], re.I):
+            if re.search(r'[ #]', data[field], re.I):
                 verrors.add(f'{schema}.{field}', 'Spaces or number signs are not allowed.')
 
         mode = data.get('mode')
