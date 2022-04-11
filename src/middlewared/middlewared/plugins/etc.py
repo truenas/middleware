@@ -8,6 +8,7 @@ from middlewared.utils.mako import get_template
 import asyncio
 from collections import defaultdict
 from contextlib import suppress
+import errno
 import grp
 import imp
 import os
@@ -90,6 +91,9 @@ class PyRenderer(object):
 
 
 class EtcService(Service):
+
+    SYS_GROUPS = {}
+    SYS_USERS = {}
 
     GROUPS = {
         'dual-nvdimm': [
@@ -509,6 +513,16 @@ class EtcService(Service):
 
     async def get_checkpoints(self):
         return self.checkpoints
+
+    async def get_user_id(self, username):
+        if not self.SYS_USERS:
+            EtcService.SYS_USERS = {u['username']: u['uid'] for u in await self.middleware.call('user.query')}
+        return self.SYS_USERS.get(username)
+
+    async def get_group_id(self, group_name):
+        if not self.SYS_GROUPS:
+            EtcService.SYS_GROUPS = {g['group']: g['gid'] for g in await self.middleware.call('group.query')}
+        return self.SYS_GROUPS.get(group_name)
 
 
 async def __event_system_ready(middleware, event_type, args):
