@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 from middlewared.plugins.ups import UPS_POWERDOWN_FLAG_FILE
 
@@ -20,8 +21,7 @@ def ups_config_perms(middleware):
         if ups_config['mode'].lower() != 'master':
             os.remove(file)
 
-    if os.path.exists(UPS_POWERDOWN_FLAG_FILE):
-        os.unlink(UPS_POWERDOWN_FLAG_FILE)
+    pathlib.Path(UPS_POWERDOWN_FLAG_FILE).unlink(missing_ok=True)
 
 
 def render(service, middleware):
