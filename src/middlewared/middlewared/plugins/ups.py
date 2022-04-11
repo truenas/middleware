@@ -85,10 +85,6 @@ class UPSService(SystemServiceService):
         cli_namespace = 'service.ups'
 
     @private
-    async def get_powerdown_flag_name(self):
-        return UPS_POWERDOWN_FLAG_FILE
-
-    @private
     async def ups_config_extend(self, data):
         data['mode'] = data['mode'].upper()
         data['shutdown'] = data['shutdown'].upper()
