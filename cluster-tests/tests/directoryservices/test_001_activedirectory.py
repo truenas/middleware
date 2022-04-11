@@ -48,10 +48,11 @@ def test_003_join_activedirectory(request):
     depends(request, ['DS_NETWORK_CONFIGURED'])
 
     payload = {
-        "domainname": CLUSTER_ADS['DOMAIN'],
-        "bindname": CLUSTER_ADS['USERNAME'],
-        "bindpw": CLUSTER_ADS['PASSWORD'],
-        "enable": True
+        'netbiosname': CLUSTER_ADS['NETBIOS'],
+        'domainname': CLUSTER_ADS['DOMAIN'],
+        'bindname': CLUSTER_ADS['USERNAME'],
+        'bindpw': CLUSTER_ADS['PASSWORD'],
+        'enable': True
     }
     url = f'http://{CLUSTER_IPS[0]}/api/v2.0/activedirectory/'
     res = make_request('put', url, data=payload)
