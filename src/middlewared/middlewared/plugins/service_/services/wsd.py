@@ -6,6 +6,4 @@ class WSDService(SimpleService):
 
     etc = ["wsd"]
 
-    freebsd_rc = "wsdd"
-
     systemd_unit = "wsdd"

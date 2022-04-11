@@ -118,6 +118,7 @@ class ServiceService(CRUDService):
         Dict(
             'service-control',
             Bool('ha_propagate', default=True),
+            Bool('silent', default=True),
             register=True,
         ),
     )
@@ -125,6 +126,9 @@ class ServiceService(CRUDService):
     async def start(self, service, options):
         """
         Start the service specified by `service`.
+
+        If `silent` is `true` then in case of service startup failure, `false` will be returned. If `silent` is `false`
+        then in case of service startup failure, an exception will be raised.
         """
         service_object = await self.middleware.call('service.object', service)
 
@@ -142,7 +146,11 @@ class ServiceService(CRUDService):
         else:
             self.logger.error("Service %r not running after start", service)
             await self.middleware.call('service.notify_running', service)
-            return False
+            if options['silent']:
+                return False
+            else:
+                raise CallError(await service_object.failure_logs() or 'Service not running after start')
+
 
     @accepts(Str('service'))
     @returns(Bool('service_started', description='Will return `true` if service is running'))

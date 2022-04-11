@@ -8,9 +8,6 @@ class S3Service(SimpleService):
 
     etc = ["s3"]
 
-    freebsd_rc = "minio"
-    freebsd_pidfile = "/var/run/minio.pid"
-
     systemd_unit = "minio"
 
     async def before_start(self):

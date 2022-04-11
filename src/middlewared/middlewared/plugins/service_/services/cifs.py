@@ -7,9 +7,6 @@ class CIFSService(SimpleService):
 
     etc = ["smb", "smb_share"]
 
-    freebsd_rc = "smbd"
-    freebsd_pidfile = "/var/run/samba4/smbd.pid"
-
     systemd_unit = "smbd"
 
     async def start(self):
