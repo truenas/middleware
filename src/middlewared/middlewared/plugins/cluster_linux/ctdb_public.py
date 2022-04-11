@@ -41,7 +41,7 @@ class CtdbPublicIpService(CRUDService):
             for j in filter(lambda x: x['type'] != 'LINK' and x['address'] not in priv_ips, i['aliases']):
                 choices.add(i['id'])
 
-        return list(choices - set(exclude))
+        return sorted(choices - set(exclude))
 
     @filterable
     def query(self, filters, options):
