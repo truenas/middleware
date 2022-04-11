@@ -16,6 +16,7 @@ from middlewared.validators import Range, Port
 RE_DRIVER_CHOICE = re.compile(r'(\S+)\s+(\S+=\S+)?\s*(?:\((.+)\))?$')
 RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
 RE_UPS_STATUS = re.compile(r'ups.status: (.*)')
+UPS_POWERDOWN_FLAG_FILE = '/etc/killpower'
 
 
 class UPSModel(sa.Model):
@@ -82,6 +83,10 @@ class UPSService(SystemServiceService):
         service = 'ups'
         service_verb = 'restart'
         cli_namespace = 'service.ups'
+
+    @private
+    async def get_powerdown_flag_name(self):
+        return UPS_POWERDOWN_FLAG_FILE
 
     @private
     async def ups_config_extend(self, data):
