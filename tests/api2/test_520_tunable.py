@@ -18,7 +18,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 variable = 'aa.22'
 
 TUNABLES_TO_SET = {}
-SYSTEM_DEFAULT_TUNABLES = {}
 TUNABLES_DB = {}
 COMMENT = 'Test Comment'
 

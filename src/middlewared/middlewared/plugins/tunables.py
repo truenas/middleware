@@ -44,14 +44,9 @@ class TunableService(CRUDService):
         return TunableService.SYSTEM_TUNABLES
 
     @private
-    def get_original_value(self, var):
-        with open(f'/proc/sys/{var.replace(".", "/")}') as f:
-            return f.read().strip()
-
-    @private
-    def set_original_value(self, var, orig_value):
-        with open(f'/proc/sys/{var.replace(".", "/")}', 'w') as f:
-            f.write(orig_value)
+    def get_or_set(self, var, value=None):
+        with open(f'/proc/sys/{var.replace(".", "/")}', 'r' if not value else 'w') as f:
+            return f.read().strip() if not value else f.write(value)
 
     @accepts()
     @returns(Dict('tunable_type_choices', *[Str(k, enum=[k]) for k in TUNABLE_TYPES]))
@@ -65,7 +60,7 @@ class TunableService(CRUDService):
         'tunable_create',
         Str('var', required=True),
         Str('value', required=True),
-        Str('type', enum=TUNABLE_TYPES, default='SYSCTL', required=True),
+        Str('type', default='SYSCTL'),
         Str('comment'),
         Bool('enabled', default=True),
         register=True
@@ -81,8 +76,11 @@ class TunableService(CRUDService):
         if data['var'] not in await self.middleware.call('tunable.get_system_tunables'):
             verrors.add('tunable.create', f'Tunable {data["var"]!r} does not exist in kernel.', errno.ENOENT)
 
-        if not (orig_value := (await self.middleware.call('tunable.get_original_value', data['var']))):
+        if not (orig_value := (await self.middleware.call('tunable.get_or_set', data['var']))):
             verrors.add('tunable.create', f'Unable to determine original value of {data["var"]!r}')
+
+        if data['type'] not in await self.middleware.call('tunable.tunable_type_choices'):
+            verrors.add('tunable.create', 'Invalid tunable type.')
 
         verrors.check()
 
@@ -113,8 +111,7 @@ class TunableService(CRUDService):
             new['comment'] = comment
 
         if not new['enabled'] and new['orig_value']:
-            # before we delete from db, let's set the tunable back to it's original value
-            await self.middleware.run_in_thread(self.set_original_value, new['var'], new['orig_value'])
+            await self.middleware.run_in_thread(self.get_or_set, new['var'], new['orig_value'])
 
         _id = await self.middleware.call(
             'datastore.update', self._config.datastore, _id, new, {'prefix': self._config.datastore_prefix}
@@ -129,7 +126,7 @@ class TunableService(CRUDService):
         _id = await self.get_instance(_id)
         if _id['orig_value']:
             # before we delete from db, let's set the tunable back to it's original value
-            await self.middleware.run_in_thread(self.set_original_value, _id['var'], _id['orig_value'])
+            await self.middleware.run_in_thread(self.get_or_set, _id['var'], _id['orig_value'])
 
         await self.middleware.call('datastore.delete', self._config.datastore, _id['id'])
         await self.middleware.call('service.restart', 'sysctl')
