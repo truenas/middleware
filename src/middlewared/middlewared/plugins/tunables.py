@@ -110,8 +110,7 @@ class TunableService(CRUDService):
         if (comment := data.get('comment', '').strip()) and comment != new['comment']:
             new['comment'] = comment
 
-        if not new['enabled']:
-            await self.middleware.run_in_thread(self.get_or_set, new['var'], new['orig_value'])
+        await self.middleware.run_in_thread(self.get_or_set, new['var'], new['orig_value'])
 
         _id = await self.middleware.call(
             'datastore.update', self._config.datastore, _id, new, {'prefix': self._config.datastore_prefix}
@@ -123,10 +122,10 @@ class TunableService(CRUDService):
         """
         Delete Tunable of `id`.
         """
-        _id = await self.get_instance(_id)
+        entry = await self.get_instance(_id)
 
         # before we delete from db, let's set the tunable back to it's original value
-        await self.middleware.run_in_thread(self.get_or_set, _id['var'], _id['orig_value'])
+        await self.middleware.run_in_thread(self.get_or_set, entry['var'], entry['orig_value'])
 
-        await self.middleware.call('datastore.delete', self._config.datastore, _id['id'])
+        await self.middleware.call('datastore.delete', self._config.datastore, entry['id'])
         await self.middleware.call('service.restart', 'sysctl')

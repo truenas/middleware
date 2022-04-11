@@ -20,8 +20,8 @@ def upgrade():
     with op.batch_alter_table('system_tunable', schema=None) as batch_op:
         batch_op.add_column(sa.Column('tun_orig_value', sa.String(length=512), server_default='', nullable=False))
 
-    for key in ('loader', 'rc'):  # these are keys specific to the CORE platform and don't apply on SCALE
-        op.execute(f'DELETE FROM system_tunable WHERE tun_type = "{key}" COLLATE NOCASE')
+    nocase = 'COLLATE NOCASE'
+    op.execute(f'DELETE FROM system_tunable WHERE tun_type = "loader" {nocase} or tun_type = "rc" {nocase}')
 
     conn = op.get_bind()
     for entry in conn.execute('SELECT * FROM system_tunable WHERE tun_type = "sysctl" COLLATE NOCASE').fetchall():
