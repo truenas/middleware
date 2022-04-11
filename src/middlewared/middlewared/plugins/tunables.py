@@ -60,7 +60,7 @@ class TunableService(CRUDService):
         'tunable_create',
         Str('var', required=True),
         Str('value', required=True),
-        Str('type', default='SYSCTL'),
+        Str('type', enum=TUNABLE_TYPES, default='SYSCTL', required=True),
         Str('comment'),
         Bool('enabled', default=True),
         register=True
@@ -76,15 +76,12 @@ class TunableService(CRUDService):
         if data['var'] not in await self.middleware.call('tunable.get_system_tunables'):
             verrors.add('tunable.create', f'Tunable {data["var"]!r} does not exist in kernel.', errno.ENOENT)
 
-        if not (orig_value := (await self.middleware.call('tunable.get_or_set', data['var']))):
-            verrors.add('tunable.create', f'Unable to determine original value of {data["var"]!r}')
-
         if data['type'] not in await self.middleware.call('tunable.tunable_type_choices'):
             verrors.add('tunable.create', 'Invalid tunable type.')
 
         verrors.check()
 
-        data['orig_value'] = orig_value
+        data['orig_value'] = await self.middleware.call('tunable.get_or_set', data['var'])
 
         if (comment := data.get('comment', '').strip()):
             data['comment'] = comment
@@ -95,6 +92,16 @@ class TunableService(CRUDService):
         await self.middleware.call('service.restart', 'sysctl')
         return await self.get_instance(_id)
 
+    @accepts(
+        Int('id', required=True),
+        Patch(
+            'tunable_create',
+            'tunable_update',
+            ('rm', 'var'),
+            ('rm', 'type'),
+            ('attr', {'update': True}),
+        )
+    )
     async def do_update(self, _id, data):
         """
         Update Tunable of `id`.
@@ -110,7 +117,8 @@ class TunableService(CRUDService):
         if (comment := data.get('comment', '').strip()) and comment != new['comment']:
             new['comment'] = comment
 
-        await self.middleware.run_in_thread(self.get_or_set, new['var'], new['orig_value'])
+        if not new['enabled']:
+            await self.middleware.run_in_thread(self.get_or_set, new['var'], new['orig_value'])
 
         _id = await self.middleware.call(
             'datastore.update', self._config.datastore, _id, new, {'prefix': self._config.datastore_prefix}
