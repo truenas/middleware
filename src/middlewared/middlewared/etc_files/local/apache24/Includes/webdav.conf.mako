@@ -5,8 +5,10 @@
 
     from contextlib import suppress
 
-    webdav_uid = middleware.call_sync('webdav.get_webdav_user_id')
-    webdav_gid = middleware.call_sync('webdav.get_webdav_group_id')
+    from middlewared.plugins.webdav import WEBDAV_USER
+
+    webdav_uid = middleware.call_sync('user.get_internal_user_id', WEBDAV_USER)
+    webdav_gid = middleware.call_sync('group.get_internal_group_id', WEBDAV_USER)
 
     # Check to see if there is a webdav lock database directory, if not create
     # one. Take care of necessary permissions whilst creating it!
