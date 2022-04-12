@@ -5,11 +5,13 @@ import hashlib
 import crypt
 
 from contextlib import suppress
-from middlewared.plugins.etc import EtcUSR, EtcGRP
 from string import digits, ascii_uppercase, ascii_lowercase
 
 
-def generate_webdav_auth(middlewared, render_ctx, dirfd):
+def generate_webdav_auth(middleware, render_ctx, dirfd):
+    webdav_uid = middleware.call_sync('webdav.get_webdav_user_id')
+    webdav_gid = middleware.call_sync('webdav.get_webdav_group_id')
+
     def salt():
         letters = f'{ascii_lowercase}{ascii_uppercase}{digits}/.'
         return '$6${0}'.format(''.join([secrets.choice(letters) for i in range(16)]))
@@ -34,7 +36,7 @@ def generate_webdav_auth(middlewared, render_ctx, dirfd):
 
         with open(os.open('webdavhtbasic', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, dir_fd=dirfd), 'w') as f:
             os.fchmod(f.fileno(), 0o600)
-            os.fchown(f.fileno(), EtcUSR.WEBDAV, EtcGRP.WEBDAV)
+            os.fchown(f.fileno(), webdav_uid, webdav_gid)
             f.write(f'webdav:{crypt.crypt(password, salt())}')
 
     elif auth_type == 'DIGEST':
@@ -43,7 +45,7 @@ def generate_webdav_auth(middlewared, render_ctx, dirfd):
 
         with open(os.open('webdavhtdigest', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, dir_fd=dirfd), 'w') as f:
             os.fchmod(f.fileno(), 0o600)
-            os.fchown(f.fileno(), EtcUSR.WEBDAV, EtcGRP.WEBDAV)
+            os.fchown(f.fileno(), webdav_uid, webdav_gid)
             f.write(
                 "webdav:webdav:{0}".format(hashlib.md5(f"webdav:webdav:{password}".encode()).hexdigest())
             )
