@@ -76,9 +76,6 @@ class TunableService(CRUDService):
         if data['var'] not in await self.middleware.call('tunable.get_system_tunables'):
             verrors.add('tunable.create', f'Tunable {data["var"]!r} does not exist in kernel.', errno.ENOENT)
 
-        if data['type'] not in await self.middleware.call('tunable.tunable_type_choices'):
-            verrors.add('tunable.create', 'Invalid tunable type.')
-
         verrors.check()
 
         data['orig_value'] = await self.middleware.call('tunable.get_or_set', data['var'])
