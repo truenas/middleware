@@ -1,10 +1,10 @@
-import re
+import errno
+import subprocess
+from collections import deque
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str, ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
-from middlewared.validators import Match
 
 
 class TunableModel(sa.Model):
@@ -12,7 +12,8 @@ class TunableModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     tun_value = sa.Column(sa.String(512))
-    tun_type = sa.Column(sa.String(20), default='loader')
+    tun_orig_value = sa.Column(sa.String(512))
+    tun_type = sa.Column(sa.String(20))
     tun_comment = sa.Column(sa.String(100))
     tun_enabled = sa.Column(sa.Boolean(), default=True)
     tun_var = sa.Column(sa.String(128), unique=True)
@@ -25,12 +26,9 @@ class TunableService(CRUDService):
     class Config:
         datastore = 'system.tunable'
         datastore_prefix = 'tun_'
-        datastore_extend = 'tunable.upper'
         cli_namespace = 'system.tunable'
 
-    def __init__(self, *args, **kwargs):
-        super(TunableService, self).__init__(*args, **kwargs)
-        self.__default_sysctl = {}
+    SYSTEM_TUNABLES = deque()
 
     ENTRY = Patch(
         'tunable_create', 'tunable_entry',
@@ -38,34 +36,31 @@ class TunableService(CRUDService):
     )
 
     @private
-    async def default_sysctl_config(self):
-        return self.__default_sysctl
+    def get_system_tunables(self):
+        if not TunableService.SYSTEM_TUNABLES:
+            tunables = subprocess.run(['sysctl', '-aN'], stdout=subprocess.PIPE)
+            for tunable in filter(lambda x: x, tunables.stdout.decode().split('\n')):
+                TunableService.SYSTEM_TUNABLES.append(tunable)
+        return TunableService.SYSTEM_TUNABLES
 
     @private
-    async def get_default_value(self, oid):
-        return self.__default_sysctl[oid]
-
-    @private
-    async def set_default_value(self, oid, value):
-        if oid not in self.__default_sysctl:
-            self.__default_sysctl[oid] = value
+    def get_or_set(self, var, value=None):
+        with open(f'/proc/sys/{var.replace(".", "/")}', 'r' if not value else 'w') as f:
+            return f.read().strip() if not value else f.write(value)
 
     @accepts()
-    @returns(Dict(
-        'tunable_type_choices',
-        *[Str(k, enum=[k]) for k in TUNABLE_TYPES],
-    ))
+    @returns(Dict('tunable_type_choices', *[Str(k, enum=[k]) for k in TUNABLE_TYPES]))
     async def tunable_type_choices(self):
         """
-        Retrieve tunable type choices supported in the system
+        Retrieve the supported tunable types that can be changed.
         """
         return {k: k for k in TUNABLE_TYPES}
 
     @accepts(Dict(
         'tunable_create',
-        Str('var', validators=[Match(r'^[\w\.\-]+$')], required=True),
+        Str('var', required=True),
         Str('value', required=True),
-        Str('type', enum=TUNABLE_TYPES, required=True),
+        Str('type', enum=TUNABLE_TYPES, default='SYSCTL', required=True),
         Str('comment'),
         Bool('enabled', default=True),
         register=True
@@ -73,164 +68,69 @@ class TunableService(CRUDService):
     async def do_create(self, data):
         """
         Create a Tunable.
-
-        `var` represents name of the sysctl/loader/rc variable.
-
-        `type` for SCALE should be one of the following:
-        1) SYSCTL     -     Configure `var` for sysctl(8)
         """
-        await self.clean(data, 'tunable_create')
-        await self.validate(data, 'tunable_create')
-        await self.lower(data)
+        verrors = ValidationErrors()
+        if await self.middleware.call('tunable.query', [('var', '=', data['var'])]):
+            verrors.add('tunable.create', f'Tunable {data["var"]!r} already exists in database.', errno.EEXIST)
 
-        data['id'] = await self.middleware.call(
-            'datastore.insert',
-            self._config.datastore,
-            data,
-            {'prefix': self._config.datastore_prefix}
+        if data['var'] not in await self.middleware.call('tunable.get_system_tunables'):
+            verrors.add('tunable.create', f'Tunable {data["var"]!r} does not exist in kernel.', errno.ENOENT)
+
+        verrors.check()
+
+        data['orig_value'] = await self.middleware.call('tunable.get_or_set', data['var'])
+
+        if (comment := data.get('comment', '').strip()):
+            data['comment'] = comment
+
+        _id = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix}
         )
+        await self.middleware.call('service.restart', 'sysctl')
+        return await self.get_instance(_id)
 
-        await self.middleware.call('service.reload', data['type'])
-
-        return await self.get_instance(data['id'])
-
-    async def do_update(self, id, data):
+    @accepts(
+        Int('id', required=True),
+        Patch(
+            'tunable_create',
+            'tunable_update',
+            ('rm', 'var'),
+            ('rm', 'type'),
+            ('attr', {'update': True}),
+        )
+    )
+    async def do_update(self, _id, data):
         """
         Update Tunable of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(_id)
 
         new = old.copy()
         new.update(data)
+        if old == new:
+            # nothing updated so return early
+            return old
 
-        await self.clean(new, 'tunable_update', old=old)
-        await self.validate(new, 'tunable_update')
+        if (comment := data.get('comment', '').strip()) and comment != new['comment']:
+            new['comment'] = comment
 
-        await self.lower(new)
+        if not new['enabled']:
+            await self.middleware.run_in_thread(self.get_or_set, new['var'], new['orig_value'])
 
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
+        _id = await self.middleware.call(
+            'datastore.update', self._config.datastore, _id, new, {'prefix': self._config.datastore_prefix}
         )
+        await self.middleware.call('service.restart', 'sysctl')
+        return await self.get_instance(_id)
 
-        if old['type'] == 'SYSCTL' and old['var'] in self.__default_sysctl and (
-            old['var'] != new['var'] or old['type'] != new['type']
-        ):
-            default_value = self.__default_sysctl.pop(old['var'])
-            cp = await run(['sysctl', f'{old["var"]}={default_value}'], check=False, encoding='utf8')
-            if cp.returncode:
-                self.middleware.logger.error(
-                    'Failed to set sysctl %r -> %r : %s', old['var'], default_value, cp.stderr
-                )
-
-        await self.middleware.call('service.reload', new['type'])
-
-        return await self.get_instance(id)
-
-    async def do_delete(self, id):
+    async def do_delete(self, _id):
         """
         Delete Tunable of `id`.
         """
-        tunable = await self.get_instance(id)
-        await self.lower(tunable)
-        if tunable['type'] == 'sysctl':
-            # Restore the default value, if it is possible.
-            value_default = self.__default_sysctl.pop(tunable['var'], None)
-            if value_default:
-                cp = await run(['sysctl', f'{tunable["var"]}={value_default}'], check=False, encoding='utf8')
-                if cp.returncode:
-                    self.middleware.logger.error(
-                        'Failed to set sysctl %r -> %r : %s', tunable['var'], value_default, cp.stderr
-                    )
+        entry = await self.get_instance(_id)
 
-        response = await self.middleware.call(
-            'datastore.delete',
-            self._config.datastore,
-            id
-        )
+        # before we delete from db, let's set the tunable back to it's original value
+        await self.middleware.run_in_thread(self.get_or_set, entry['var'], entry['orig_value'])
 
-        await self.middleware.call('service.reload', tunable['type'].lower())
-
-        return response
-
-    @private
-    async def lower(self, data):
-        data['type'] = data['type'].lower()
-
-        return data
-
-    @private
-    async def upper(self, data):
-        data['type'] = data['type'].upper()
-
-        return data
-
-    @private
-    async def clean(self, tunable, schema_name, old=None):
-        verrors = ValidationErrors()
-        skip_dupe = False
-        tun_comment = tunable.get('comment')
-        tun_value = tunable['value']
-        tun_var = tunable['var']
-
-        if tun_comment is not None:
-            tunable['comment'] = tun_comment.strip()
-
-        if '"' in tun_value or "'" in tun_value:
-            verrors.add(f"{schema_name}.value",
-                        'Quotes in value are not allowed')
-
-        if schema_name == 'tunable_update' and old:
-            old_tun_var = old['var']
-
-            if old_tun_var == tun_var:
-                # They aren't trying to change to a new name, just updating
-                skip_dupe = True
-
-        if not skip_dupe:
-            tun_vars = await self.middleware.call(
-                'datastore.query', self._config.datastore, [('tun_var', '=',
-                                                             tun_var)])
-
-            if tun_vars:
-                verrors.add(f"{schema_name}.value",
-                            'This variable already exists')
-
-        if verrors:
-            raise verrors
-
-        return tunable
-
-    @private
-    async def validate(self, tunable, schema_name):
-        sysctl_re = \
-            re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
-
-        loader_re = \
-            re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
-
-        verrors = ValidationErrors()
-        tun_var = tunable['var'].lower()
-        tun_type = tunable['type'].lower()
-
-        if tun_type == 'loader' or tun_type == 'rc':
-            err_msg = "Value can start with a letter and end with an alphanumeric. Aphanumeric and underscore" \
-                      " characters are allowed"
-        else:
-            err_msg = 'Value can start with a letter and end with an alphanumeric. A period (.) once is a must.' \
-                      ' Alphanumeric and underscore characters are allowed'
-
-        if (
-            tun_type in ('loader', 'rc') and
-            not loader_re.match(tun_var)
-        ) or (
-            tun_type == 'sysctl' and
-            not sysctl_re.match(tun_var)
-        ):
-            verrors.add(f"{schema_name}.var", err_msg)
-
-        if verrors:
-            raise verrors
+        await self.middleware.call('datastore.delete', self._config.datastore, entry['id'])
+        await self.middleware.call('service.restart', 'sysctl')
