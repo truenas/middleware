@@ -44,7 +44,7 @@ def test_001_create_a_normal_pool(request):
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 120)
+    job_status = wait_on_job(job_id, 240)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     pool_id = job_status['results']['result']['id']
 
@@ -454,7 +454,7 @@ def test_033_create_a_passphrase_encrypted_pool(request):
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 120)
+    job_status = wait_on_job(job_id, 240)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     pool_id = job_status['results']['result']['id']
 
@@ -629,7 +629,7 @@ def test_049_creating_a_key_encrypted_pool(request):
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 120)
+    job_status = wait_on_job(job_id, 240)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     pool_id = job_status['results']['result']['id']
 
