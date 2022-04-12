@@ -375,8 +375,8 @@ class EtcService(Service):
         if all(i is None for i in (user_name, group_name, mode)):
             return perm_changed
 
-        uid = self.middleware.call_sync('etc.get_user_id', user_name)
-        gid = self.middleware.call_sync('etc.get_group_id', group_name)
+        uid = self.middleware.call_sync('user.get_internal_user_id', user_name)
+        gid = self.middleware.call_sync('group.get_internal_group_id', group_name)
         st = os.fstat(fd)
         uid_to_set = -1
         gid_to_set = -1
@@ -482,16 +482,6 @@ class EtcService(Service):
 
     async def get_checkpoints(self):
         return self.checkpoints
-
-    async def get_user_id(self, username):
-        if not self.SYS_USERS:
-            EtcService.SYS_USERS = {u['username']: u['uid'] for u in await self.middleware.call('user.query')}
-        return self.SYS_USERS.get(username)
-
-    async def get_group_id(self, group_name):
-        if not self.SYS_GROUPS:
-            EtcService.SYS_GROUPS = {g['group']: g['gid'] for g in await self.middleware.call('group.query')}
-        return self.SYS_GROUPS.get(group_name)
 
 
 async def __event_system_ready(middleware, event_type, args):
