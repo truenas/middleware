@@ -4,7 +4,6 @@ import os
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, returns, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import SharingService, SystemServiceService, private
-from middlewared.plugins.etc import EtcUSR, EtcGRP
 import middlewared.sqlalchemy as sa
 
 
@@ -88,8 +87,8 @@ class WebDAVSharingService(SharingService):
         if data['perm']:
             await self.middleware.call('filesystem.chown', {
                 'path': data['path'],
-                'uid': EtcUSR.WEBDAV.value,
-                'gid': EtcGRP.WEBDAV.value,
+                'uid': await self.middleware.call('webdav.get_webdav_user_id'),
+                'gid': await self.middleware.call('webdav.get_webdav_group_id'),
                 'options': {'recursive': True}
             })
 
@@ -128,8 +127,8 @@ class WebDAVSharingService(SharingService):
         if not old['perm'] and new['perm']:
             await self.middleware.call('filesystem.chown', {
                 'path': new['path'],
-                'uid': EtcUSR.WEBDAV.value,
-                'gid': EtcGRP.WEBDAV.value,
+                'uid': await self.middleware.call('webdav.get_webdav_user_id'),
+                'gid': await self.middleware.call('webdav.get_webdav_group_id'),
                 'options': {'recursive': True}
             })
 
@@ -170,6 +169,9 @@ class WebDAVService(SystemServiceService):
         datastore_extend = 'webdav.upper'
         cli_namespace = 'service.webdav'
 
+    WEBDAV_GID = None
+    WEBDAV_UID = None
+
     ENTRY = Dict(
         'webdav_entry',
         Str('protocol', enum=['HTTP', 'HTTPS', 'HTTPHTTPS'], required=True),
@@ -180,6 +182,22 @@ class WebDAVService(SystemServiceService):
         Str('htauth', enum=['NONE', 'BASIC', 'DIGEST'], required=True),
         Int('certssl', null=True, required=True),
     )
+
+    @private
+    async def get_webdav_user_id(self):
+        if self.WEBDAV_UID is None:
+            WebDAVService.WEBDAV_UID = (
+                await self.middleware.call('user.query', [['username', '=', 'webdav']], {'get': True})
+            )['uid']
+        return self.WEBDAV_UID
+
+    @private
+    async def get_webdav_group_id(self):
+        if self.WEBDAV_GID is None:
+            WebDAVService.WEBDAV_GID = (
+                await self.middleware.call('group.query', [['group', '=', 'webdav']], {'get': True})
+            )['gid']
+        return self.WEBDAV_GID
 
     async def do_update(self, data):
         """
