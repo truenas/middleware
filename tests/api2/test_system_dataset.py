@@ -1,9 +1,8 @@
-from middlewared.test.integration.utils import call, mock, pool
+from middlewared.test.integration.utils import call, mock, pool, ssh
 
 
 def read_log():
-    with open("/var/log/middlewared.log") as f:
-        return f.read()
+    return ssh("cat /var/log/middlewared.log")
 
 
 def write_to_log(string):
