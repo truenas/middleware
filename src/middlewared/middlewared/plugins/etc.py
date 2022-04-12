@@ -11,25 +11,8 @@ from contextlib import suppress
 import imp
 import os
 import stat
-import enum
 
 DEFAULT_ETC_PERMS = 0o644
-
-
-class EtcUSR(enum.IntEnum):
-    ROOT = 0
-    NSLCD = 110
-    MINIO = 473
-    WEBDAV = 666
-
-
-class EtcGRP(enum.IntEnum):
-    ROOT = 0
-    SHADOW = 42
-    NSLCD = 115
-    NUT = 128
-    MINIO = 473
-    WEBDAV = 666
 
 
 class FileShouldNotExist(Exception):
