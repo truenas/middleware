@@ -8,11 +8,8 @@ from middlewared.utils.mako import get_template
 import asyncio
 from collections import defaultdict
 from contextlib import suppress
-import errno
-import grp
 import imp
 import os
-import pwd
 import stat
 import enum
 
@@ -108,7 +105,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'local/smbusername.map'},
                 {'type': 'mako', 'path': 'group'},
                 {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
-                {'type': 'mako', 'path': 'shadow', 'group': EtcGRP.SHADOW, 'mode': 0o0640},
+                {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
                 {'type': 'mako', 'path': 'local/sudoers'},
                 {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'}
             ]
@@ -133,8 +130,7 @@ class EtcService(Service):
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
-            {'type': 'mako', 'path': 'local/nslcd.conf',
-                'owner': EtcUSR.NSLCD, 'group': EtcGRP.NSLCD, 'mode': 0o0400},
+            {'type': 'mako', 'path': 'local/nslcd.conf', 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
         'dhclient': [
             {'type': 'mako', 'path': 'dhcp/dhclient.conf', 'local_path': 'dhclient.conf'},
@@ -194,7 +190,7 @@ class EtcService(Service):
         ],
         'webdav': {
             'ctx': [
-                {'method': 'sharing.webdav.query', 'args': [[("enabled", "=", True)]]},
+                {'method': 'sharing.webdav.query', 'args': [[('enabled', '=', True)]]},
                 {'method': 'webdav.config'},
             ],
             'entries': [
@@ -228,7 +224,7 @@ class EtcService(Service):
                 'type': 'mako',
                 'path': 'glusterfs/glusterd.vol',
                 'local_path': 'glusterd.conf',
-                'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
+                'user': 'root', 'group': 'root', 'mode': 0o644,
                 'checkpoint': 'pool_import',
             },
         ],
@@ -236,7 +232,7 @@ class EtcService(Service):
             {
                 'type': 'mako',
                 'path': 'keepalived/keepalived.conf',
-                'user': EtcUSR.ROOT, 'group': EtcGRP.ROOT, 'mode': 0o644,
+                'user': 'root', 'group': 'root', 'mode': 0o644,
                 'local_path': 'keepalived.conf',
             },
 
@@ -267,18 +263,12 @@ class EtcService(Service):
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
-            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440},
-            {
-                'type': 'mako', 'path': 'local/nut/upssched.conf',
-                'owner': EtcUSR.ROOT, 'group': EtcGRP.NUT, 'mode': 0o440
-            },
-            {
-                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': EtcUSR.ROOT,
-                'group': EtcGRP.NUT, 'mode': 0o440
-            },
+            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
         'rsync': [
@@ -395,27 +385,23 @@ class EtcService(Service):
 
     def set_etc_file_perms(self, fd, entry):
         perm_changed = False
-        uid = entry.get("owner", -1)
-        gid = entry.get("group", -1)
-        mode = entry.get("mode", DEFAULT_ETC_PERMS)
+        user_name = entry.get('owner')
+        group_name = entry.get('group')
+        mode = entry.get('mode', DEFAULT_ETC_PERMS)
 
-        if uid == -1 and gid == -1 and mode is None:
+        if all(i is None for i in (user_name, group_name, mode)):
             return perm_changed
 
-        if isinstance(uid, str):
-            uid = pwd.getpwnam(entry["owner"]).pw_uid
-
-        if isinstance(gid, str):
-            gid = grp.getgrnam(entry["group"]).gr_gid
-
+        uid = self.middleware.call_sync('etc.get_user_id', user_name)
+        gid = self.middleware.call_sync('etc.get_group_id', group_name)
         st = os.fstat(fd)
         uid_to_set = -1
         gid_to_set = -1
 
-        if uid != -1 and st.st_uid != uid:
+        if uid is not None and st.st_uid != uid:
             uid_to_set = uid
 
-        if gid != -1 and st.st_gid != gid:
+        if gid is not None and st.st_gid != gid:
             gid_to_set = gid
 
         if gid_to_set != -1 or uid_to_set != -1:
