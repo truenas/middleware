@@ -11,8 +11,8 @@ from middlewared.plugins.webdav import WEBDAV_USER
 
 
 def generate_webdav_auth(middleware, render_ctx, dirfd):
-    webdav_uid = middleware.call_sync('user.get_internal_user_id', WEBDAV_USER)
-    webdav_gid = middleware.call_sync('group.get_internal_group_id', WEBDAV_USER)
+    webdav_uid = middleware.call_sync('user.get_builtin_user_id', WEBDAV_USER)
+    webdav_gid = middleware.call_sync('group.get_builtin_group_id', WEBDAV_USER)
 
     def salt():
         letters = f'{ascii_lowercase}{ascii_uppercase}{digits}/.'
