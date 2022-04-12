@@ -1,10 +1,11 @@
 import os
 import shutil
-from middlewared.plugins.etc import EtcUSR, EtcGRP
 
 
 def render_certificates(s3, middleware):
     minio_path = '/usr/local/etc/minio'
+    minio_uid = middleware.call_sync('user.query', [['username', '=', 'minio']], {'get': True})['uid']
+    minio_gid = middleware.call_sync('group.query', [['group', '=', 'minio']], {'get': True})['gid']
 
     cert = s3.get('certificate')
     if not cert:
@@ -22,10 +23,6 @@ def render_certificates(s3, middleware):
 
         minio_certificate = os.path.join(minio_certpath, "public.crt")
         minio_privatekey = os.path.join(minio_certpath, "private.key")
-
-        minio_uid = EtcUSR.MINIO
-        minio_gid = EtcGRP.MINIO
-
         os.makedirs(minio_CApath, mode=0o555, exist_ok=True)
         os.chown(minio_CApath, minio_uid, minio_gid)
         os.chown(minio_path, minio_uid, minio_gid)
