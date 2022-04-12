@@ -89,8 +89,8 @@ class WebDAVSharingService(SharingService):
         if data['perm']:
             await self.middleware.call('filesystem.chown', {
                 'path': data['path'],
-                'uid': await self.middleware.call('user.get_internal_user_id', WEBDAV_USER),
-                'gid': await self.middleware.call('group.get_internal_group_id', WEBDAV_USER),
+                'uid': await self.middleware.call('user.get_builtin_user_id', WEBDAV_USER),
+                'gid': await self.middleware.call('group.get_builtin_group_id', WEBDAV_USER),
                 'options': {'recursive': True}
             })
 
@@ -129,8 +129,8 @@ class WebDAVSharingService(SharingService):
         if not old['perm'] and new['perm']:
             await self.middleware.call('filesystem.chown', {
                 'path': new['path'],
-                'uid': await self.middleware.call('user.get_internal_user_id', WEBDAV_USER),
-                'gid': await self.middleware.call('group.get_internal_group_id', WEBDAV_USER),
+                'uid': await self.middleware.call('user.get_builtin_user_id', WEBDAV_USER),
+                'gid': await self.middleware.call('group.get_builtin_group_id', WEBDAV_USER),
                 'options': {'recursive': True}
             })
 

@@ -4,8 +4,8 @@ import shutil
 
 def render_certificates(s3, middleware):
     minio_path = '/usr/local/etc/minio'
-    minio_uid = middleware.call_sync('user.query', [['username', '=', 'minio']], {'get': True})['uid']
-    minio_gid = middleware.call_sync('group.query', [['group', '=', 'minio']], {'get': True})['gid']
+    minio_uid = middleware.call_sync('user.get_builtin_user_id', 'minio')
+    minio_gid = middleware.call_sync('group.get_builtin_group_id', 'minio')
 
     cert = s3.get('certificate')
     if not cert:
