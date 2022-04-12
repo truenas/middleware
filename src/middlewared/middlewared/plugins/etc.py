@@ -72,9 +72,6 @@ class PyRenderer(object):
 
 class EtcService(Service):
 
-    SYS_GROUPS = {}
-    SYS_USERS = {}
-
     GROUPS = {
         'dual-nvdimm': [
             {'type': 'mako', 'path': 'modprobe.d/truenas-dual-nvdimm.conf', 'local_path': 'dual-nvdimm'}
@@ -375,16 +372,16 @@ class EtcService(Service):
         if all(i is None for i in (user_name, group_name, mode)):
             return perm_changed
 
-        uid = self.middleware.call_sync('user.get_internal_user_id', user_name)
-        gid = self.middleware.call_sync('group.get_internal_group_id', group_name)
+        uid = self.middleware.call_sync('user.get_builtin_user_id', user_name) if user_name else -1
+        gid = self.middleware.call_sync('group.get_builtin_group_id', group_name) if group_name else -1
         st = os.fstat(fd)
         uid_to_set = -1
         gid_to_set = -1
 
-        if uid is not None and st.st_uid != uid:
+        if uid != -1 and st.st_uid != uid:
             uid_to_set = uid
 
-        if gid is not None and st.st_gid != gid:
+        if gid != -1 and st.st_gid != gid:
             gid_to_set = gid
 
         if gid_to_set != -1 or uid_to_set != -1:
