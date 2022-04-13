@@ -11,8 +11,10 @@ It is up to script implementation to handle both calls and perform the record cr
 
 import logging
 import subprocess
+import os
+import pwd
 
-from middlewared.schema import accepts, Dict, Str, ValidationErrors
+from middlewared.schema import accepts, Dict, Str, Int, ValidationErrors
 
 from .base import Authenticator
 
@@ -24,21 +26,49 @@ class ShellAuthenticator(Authenticator):
 
     NAME = 'shell'
     PROPAGATION_DELAY = 60
+
     SCHEMA = Dict(
         'shell',
-        Str('script', empty=False, null=True, title='Script'),
+        Str('script'  , required=True, empty=False, title='Script'),
+        Str('workdir' , default='/tmp', title='Working directory'),
+        Str('user'    , default='nobody', title='User'),
+        Int('timeout' , default=60, title='Timeout'),
+        Int('delay'   , default=60, title='Propagation delay'),
     )
 
     def initialize_credentials(self):
-        self.script = self.attributes.get('script')
+        self.script   = self.attributes.get('script')
+        self.workdir  = self.attributes.get('workdir')
+        self.user     = self.attributes.get('user')
+        self.timeout  = int(self.attributes.get('timeout'))
+        self.PROPAGATION_DELAY = int(self.attributes.get('delay'))
 
     @staticmethod
     @accepts(SCHEMA)
     def validate_credentials(data):
         pass
 
+    def _demote(self, uid, gid):
+        def result():
+            os.setgid(gid)
+            os.setuid(uid)
+        return result
+
+    def _run(self, args):
+        pw_record = pwd.getpwnam(self.user)
+        env = os.environ.copy()
+        env[ 'HOME'    ] = pw_record.pw_dir
+        env[ 'LOGNAME' ] = pw_record.pw_name
+        env[ 'PWD'     ] = self.workdir
+        env[ 'USER'    ] = pw_record.pw_name
+        process = subprocess.Popen(
+            args, preexec_fn=self._demote(pw_record.pw_uid, pw_record.pw_gid), cwd=self.workdir, env=env
+        )
+        result = process.wait(timeout=self.timeout)
+        return result
+
     def _perform(self, domain, validation_name, validation_content):
-	    subprocess.run([self.script, "set", domain, validation_name, validation_content, "600"])
+	    self._run([self.script, "set", domain, validation_name, validation_content, "600"])
 
     def _cleanup(self, domain, validation_name, validation_content):
-	    subprocess.run([self.script, "unset", domain, validation_name, validation_content])
+	    self._run([self.script, "unset", domain, validation_name, validation_content])
