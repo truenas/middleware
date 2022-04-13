@@ -48,7 +48,8 @@ class ShellAuthenticator(Authenticator):
     def validate_credentials(data):
         pass
 
-    def _demote(self, uid, gid):
+    @staticmethod
+    def _demote(uid, gid):
         def result():
             os.setgid(gid)
             os.setuid(uid)
