@@ -94,8 +94,8 @@ class TunableService(CRUDService):
         Patch(
             'tunable_create',
             'tunable_update',
-            ('rm', 'var'),
-            ('rm', 'type'),
+            ('rm', {'name': 'var'}),
+            ('rm', {'name': 'type'}),
             ('attr', {'update': True}),
         )
     )
