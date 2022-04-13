@@ -84,7 +84,10 @@ class S3RcloneRemote(BaseRcloneRemote):
         )
 
         if not task["credentials"]["attributes"].get("skip_region", False):
-            if not task["credentials"]["attributes"].get("region", "").strip():
+            if task["credentials"]["attributes"].get("region", "").strip():
+                if not (task["attributes"].get("region") or "").strip():
+                    result["region"] = task["credentials"]["attributes"]["region"]
+            else:
                 # Some legacy tasks have region=None, it's easier to fix it here than in migration
                 result["region"] = task["attributes"].get("region") or "us-east-1"
         else:
