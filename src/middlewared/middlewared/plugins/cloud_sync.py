@@ -7,6 +7,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
+from middlewared.utils.lang import undefined
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 from middlewared.validators import Range, Time
@@ -71,6 +72,9 @@ class RcloneConfig:
 
         if "attributes" in self.cloud_sync:
             config.update(dict(self.cloud_sync["attributes"], **await self.provider.get_task_extra(self.cloud_sync)))
+            for k, v in list(config.items()):
+                if v is undefined:
+                    config.pop(k)
 
             remote_path = get_remote_path(self.provider, self.cloud_sync["attributes"])
             remote_path = f"remote:{remote_path}"
