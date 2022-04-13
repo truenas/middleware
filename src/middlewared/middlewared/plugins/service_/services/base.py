@@ -15,6 +15,7 @@ class ServiceInterface:
     etc = []
     restartable = False  # Implements `restart` method instead of `stop` + `start`
     reloadable = False  # Implements `reload` method
+    deprecated = False  # Alert if service is running
 
     def __init__(self, middleware):
         self.middleware = middleware
