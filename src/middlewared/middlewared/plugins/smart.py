@@ -482,7 +482,11 @@ class SMARTTestService(CRUDService):
             Float('remaining', required=True),
             Int('lifetime', required=True),
             Str('lba_of_first_error', null=True, required=True),
-        )])
+        )]),
+        Dict('current_test',
+             Int('progress', required=True),
+             null=True,
+        ),
     ))
     async def results(self, filters, options):
         """
