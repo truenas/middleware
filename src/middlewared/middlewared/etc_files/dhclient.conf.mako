@@ -6,13 +6,14 @@
         use_fqdn = True
         hostname = f"{gc['hostname']}.{gc['domain']}"
 %>
+option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
 % if use_fqdn:
-send fqdn.fqdn "${hostname}"
+send fqdn.fqdn "${hostname}";
 % else:
-send host-name "${hostname}"
+send host-name "${hostname}";
 % endif
 % if gc['ipv4gateway']:
-supersede routers ${gc['ipv4gateway']}
+supersede routers ${gc['ipv4gateway']};
 request subnet-mask, broadcast-address, time-offset,
 % else:
 request subnet-mask, broadcast-address, time-offset, routers,
