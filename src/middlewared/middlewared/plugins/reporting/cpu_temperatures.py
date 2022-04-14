@@ -1,9 +1,13 @@
+from collections import defaultdict
 import json
+import re
 import subprocess
 import threading
 import time
 
 from middlewared.service import private, Service
+
+RE_CORE = re.compile(r"^Core ([0-9]+)$")
 
 
 class ReportingService(Service):
@@ -30,25 +34,32 @@ class ReportingService(Service):
 
     @private
     def cpu_temperatures_internal(self):
-        temperature = {}
         cp = subprocess.run(["sensors", "-j"], capture_output=True, text=True)
         sensors = json.loads(cp.stdout)
         amd_sensor = sensors.get("k10temp-pci-00c3")
         if amd_sensor:
-            temperature = self._amd_cpu_temperature(amd_sensor)
+            return self._amd_cpu_temperatures(amd_sensor)
         else:
-            core = 0
-            for chip, value in sensors.items():
-                for name, temps in value.items():
-                    if not name.startswith("Core "):
-                        continue
-                    for temp, value in temps.items():
-                        if "input" in temp:
-                            temperature[core] = value
-                            core += 1
-                            break
+            return self._generic_cpu_temperatures(sensors)
 
-        return temperature
+    def _generic_cpu_temperatures(self, sensors):
+        temperatures = defaultdict(dict)
+        for chip, value in sensors.items():
+            for name, temps in value.items():
+                if not (m := RE_CORE.match(name)):
+                    continue
+                for temp, value in temps.items():
+                    if "input" in temp:
+                        temperatures[chip][int(m.group(1))] = value
+                        break
+
+        return dict(enumerate(sum(
+            [
+                [temperatures[chip][core] for core in sorted(temperatures[chip].keys())]
+                for chip in sorted(temperatures.keys())
+            ],
+            [],
+        )))
 
     AMD_PREFER_TDIE = (
         # https://github.com/torvalds/linux/blob/master/drivers/hwmon/k10temp.c#L121
@@ -62,7 +73,7 @@ class ReportingService(Service):
     )
     AMD_SYSTEM_INFO = None
 
-    def _amd_cpu_temperature(self, amd_sensor):
+    def _amd_cpu_temperatures(self, amd_sensor):
         if self.AMD_SYSTEM_INFO is None:
             self.AMD_SYSTEM_INFO = self.middleware.call_sync("system.cpu_info")
 
@@ -81,11 +92,11 @@ class ReportingService(Service):
             isinstance(list(amd_sensor["Tdie"].values())[0], (int, float))
         )
         if cpu_model.startswith(self.AMD_PREFER_TDIE) and has_tdie:
-            return self._amd_cpu_tdie_temperature(amd_sensor, core_count)
+            return self._amd_cpu_tdie_temperatures(amd_sensor, core_count)
         elif ccds and core_count % len(ccds) == 0:
             return dict(enumerate(sum([[t] * (core_count // len(ccds)) for t in ccds], [])))
         elif has_tdie:
-            return self._amd_cpu_tdie_temperature(amd_sensor, core_count)
+            return self._amd_cpu_tdie_temperatures(amd_sensor, core_count)
         elif (
             "Tctl" in amd_sensor and
             amd_sensor["Tctl"] and
@@ -95,5 +106,5 @@ class ReportingService(Service):
         elif "temp1" in amd_sensor and "temp1_input" in amd_sensor["temp1"]:
             return dict(enumerate([amd_sensor["temp1"]["temp1_input"]] * core_count))
 
-    def _amd_cpu_tdie_temperature(self, amd_sensor, core_count):
+    def _amd_cpu_tdie_temperatures(self, amd_sensor, core_count):
         return dict(enumerate([list(amd_sensor["Tdie"].values())[0]] * core_count))

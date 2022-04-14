@@ -36,8 +36,8 @@ from middlewared.pytest.unit.middleware import Middleware
         }
     }, dict(enumerate([40] * 16))),
 ])
-def test_amd_cpu_temperature(model, core_count, reading, result):
+def test_amd_cpu_temperatures(model, core_count, reading, result):
     middleware = Middleware()
     middleware["system.cpu_info"] = Mock(return_value={"cpu_model": model, "physical_core_count": core_count})
     es = ReportingService(middleware)
-    assert es._amd_cpu_temperature(reading) == result
+    assert es._amd_cpu_temperatures(reading) == result
