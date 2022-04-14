@@ -7,11 +7,13 @@ import textwrap
 from .call import call
 from .ssh import ssh
 
+RESULT_PATH = "/tmp/mocked_binary_launch"
+
 
 class BinaryMock:
     def _load(self):
         try:
-            return json.loads(ssh("cat /tmp/mocked_binary_launch", check=False).strip())
+            return json.loads(ssh(f"cat {RESULT_PATH}", check=False).strip())
         except ValueError:
             return None
 
@@ -30,7 +32,7 @@ class BinaryMock:
 
 @contextlib.contextmanager
 def mock_binary(path, code="", exitcode=1):
-    ssh("rm -f /tmp/mocked_binary_launch")
+    ssh(f"rm -f {RESULT_PATH}")
     ssh(f"mv {path} {path}.bak")
     try:
         call(
@@ -41,15 +43,15 @@ def mock_binary(path, code="", exitcode=1):
                 import json
                 import sys
                 
-                exitcode = %exitcode%
+                exitcode = """ + repr(exitcode) + """
                 result = {
                     "argv": sys.argv,
                 }
                 %code%
-                with open("/tmp/mocked_binary_launch", "w") as f:
+                with open(""" + repr(RESULT_PATH) + """, "w") as f:
                     json.dump(result, f)
                 sys.exit(exitcode)
-            """).replace("%exitcode%", str(exitcode)).replace("%code%", code).encode("utf-8")).decode("ascii"),
+            """).replace("%code%", code).encode("utf-8")).decode("ascii"),
              {"mode": 0o755},
         )
         yield BinaryMock()
