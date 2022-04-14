@@ -42,7 +42,7 @@ def render(service, middleware):
     data_root = os.path.join('/mnt', config['dataset'], 'docker')
     with open('/etc/docker/daemon.json', 'w') as f:
         f.write(json.dumps({
-            'data-root': data_root.replace(' ', r'\ '),
+            'data-root': data_root,
             'exec-opts': ['native.cgroupdriver=cgroupfs'],
             'iptables': False,
             'bridge': 'none',
