@@ -7,9 +7,9 @@
         hostname = f"{gc['hostname']}.{gc['domain']}"
 %>
 % if use_fqdn:
-send fqdn.fqdn "${hostname}"
+send fqdn.fqdn "${hostname}";
 % else:
-send host-name "${hostname}"
+send host-name "${hostname}";
 % endif
 % if gc['ipv4gateway']:
 supersede routers ${gc['ipv4gateway']}
@@ -20,4 +20,4 @@ request subnet-mask, broadcast-address, time-offset, routers,
         domain-name, domain-name-servers, domain-search, host-name,
         dhcp6.name-servers, dhcp6.domain-search, dhcp6.fqdn, dhcp6.sntp-servers,
         netbios-name-servers, netbios-scope, interface-mtu,
-        rfc3442-classless-static-routes, ntp-servers;
+        ntp-servers;
