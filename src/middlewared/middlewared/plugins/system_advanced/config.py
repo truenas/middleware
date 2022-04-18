@@ -270,7 +270,7 @@ class SystemAdvancedService(ConfigService):
 
             generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
             if original_data['motd'] != config_data['motd']:
-                await self.middleware.call('service.start', 'motd')
+                await self.middleware.call('etc.generate', 'motd')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
                 await self.middleware.call('service.restart', 'powerd')
