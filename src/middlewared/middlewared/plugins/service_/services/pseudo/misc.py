@@ -59,12 +59,6 @@ class LoaderService(PseudoServiceBase):
         pass
 
 
-class MOTDService(PseudoServiceBase):
-    name = "motd"
-
-    etc = ["motd"]
-
-
 class HostnameService(PseudoServiceBase):
     name = "hostname"
 
