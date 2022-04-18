@@ -243,7 +243,8 @@ class SMBService(SystemServiceService):
 
         return smb
 
-    async def __validate_netbios_name(self, name):
+    @private
+    async def validate_netbios_name(self, name):
         return RE_NETBIOSNAME.match(name)
 
     async def unixcharset_choices(self):
@@ -538,7 +539,7 @@ class SMBService(SystemServiceService):
 
             if i == 'netbiosalias':
                 for idx, item in enumerate(new[i]):
-                    if not await self.__validate_netbios_name(item):
+                    if not await self.validate_netbios_name(item):
                         verrors.add(f'smb_update.{i}.{idx}', f'Invalid NetBIOS name: {item}')
                     if item.casefold() == new['workgroup'].casefold():
                         verrors.add(
@@ -546,7 +547,7 @@ class SMBService(SystemServiceService):
                             f'NetBIOS alias [{item}] conflicts with workgroup name.'
                         )
             else:
-                if not await self.__validate_netbios_name(new[i]):
+                if not await self.validate_netbios_name(new[i]):
                     verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {new[i]}')
 
                 if i != 'workgroup' and new[i].casefold() == new['workgroup'].casefold():
@@ -594,7 +595,7 @@ class SMBService(SystemServiceService):
                             'Virtual Hostname is required for SMB configuration '
                             'on high-availability servers.')
 
-            elif not await self.__validate_netbios_name(new['netbiosname_local']):
+            elif not await self.validate_netbios_name(new['netbiosname_local']):
                 verrors.add('smb_update.netbiosname',
                             'Virtual hostname does not conform to NetBIOS naming standards.')
 
