@@ -1753,28 +1753,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     middleware.send_event('failover.setup', 'ADDED', fields={})
 
 
-async def hook_sync_geli(middleware, pool=None):
-    """
-    When a new volume is created we need to sync geli file.
-    """
-    if not pool.get('encryptkey_path'):
-        return
-
-    if not await middleware.call('failover.licensed'):
-        return
-
-    try:
-        if await middleware.call(
-            'failover.call_remote', 'failover.status'
-        ) != 'BACKUP':
-            return
-    except Exception:
-        return
-
-    # TODO: failover_sync_peer is overkill as it will sync a bunch of other things
-    await middleware.call('failover.sync_to_peer')
-
-
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
     await middleware.call('enclosure.sync_zpool', pool)
     await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
@@ -1931,7 +1909,6 @@ async def setup(middleware):
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('interface.post_rollback', hook_post_rollback_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
-    middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
