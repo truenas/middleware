@@ -9,7 +9,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, wait_on_job, make_ws_request
 from auto_config import pool_name, ha  # , ha_pool_name
-from middlewared.test.integration.assets.pool import test_pool
+from middlewared.test.integration.assets.pool import another_pool
 
 IMAGES = {}
 loops = {
@@ -130,7 +130,7 @@ def test_08_test_pool_property_normalization(request):
     """
     global tp
     depends(request, ["pool_04"])
-    with test_pool() as tp:
+    with another_pool() as tp:
         payload = {'msg': 'method', 'method': 'zfs.dataset.update', 'params': [
             tp['name'],
             {'properties': {

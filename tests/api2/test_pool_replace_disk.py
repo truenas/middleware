@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.test.integration.assets.pool import test_pool_topologies, test_pool
+from middlewared.test.integration.assets.pool import another_pool_topologies, another_pool
 from middlewared.test.integration.utils import call
 
 
@@ -9,15 +9,15 @@ def disks(topology):
     return [vdev for vdev in flat if vdev["type"] == "DISK"]
 
 
-@pytest.mark.parametrize("topology", test_pool_topologies[1:])
-@pytest.mark.parametrize("i", list(range(0, max(topology[0] for topology in test_pool_topologies))))
+@pytest.mark.parametrize("topology", another_pool_topologies[1:])
+@pytest.mark.parametrize("i", list(range(0, max(topology[0] for topology in another_pool_topologies))))
 @pytest.mark.skip(reason="Global crisis, 8 GB virtual HDDs are temporary out of stock")
 def test_pool_replace_disk(topology, i):
     count = topology[0]
     if i >= count:
         return
 
-    with test_pool(topology=topology) as pool:
+    with another_pool(topology=topology) as pool:
         assert len(disks(pool["topology"])) == count
 
         to_replace_vdev = disks(pool["topology"])[i]
