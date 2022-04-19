@@ -1,0 +1,28 @@
+Source: truenas-devel
+Section: admin
+Priority: optional
+Maintainer: William Grzybowski <william@grzy.org>
+Build-Depends: debhelper-compat (= 12)
+Standards-Version: 4.4.0
+Homepage: http://www.truenas.com
+
+Package: truenas-devel
+Architecture: any
+Depends:
+# Integration and unit test utils, python package management
+ python3-asyncmock,
+ python3-asynctest,
+ python3-pip,
+ python3-pytest,
+ python3-pytest-asyncio,
+ python3-pytest-dependency,
+ python3-pytest-rerunfailures,
+# `snmpwalk` to test `snmp-agent`
+ snmp,
+# Used by the integration test runner
+ sshpass,
+# Unpack core dumps (https://jira.ixsystems.com/browse/NAS-113855)
+ zstd,
+ ${misc:Depends}, ${shlibs:Depends}
+Description: Developer tools for TrueNAS
+ This package depends on various tools that might be useful for truenas developers.
