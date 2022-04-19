@@ -1092,13 +1092,17 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                     'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
                 )
 
+    async def _get_hook_async(self, name):
+        for hook in self.__hooks[name]:
+            yield hook, hook['method']
+
     async def call_hook(self, name, *args, **kwargs):
         """
         Call all hooks registered under `name` passing *args and **kwargs.
         Args:
             name(str): name of the hook, e.g. service.hook_name
         """
-        for hook, fut in self._call_hook_base(name, *args, **kwargs):
+        async for hook, fut in self._get_hook_async(name):
             if hook['block']:
                 self.logger.trace('Not running %r because it has been blocked', name)
                 continue
@@ -1107,12 +1111,12 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
                 if hook['inline']:
                     raise RuntimeError('Inline hooks should be called with call_hook_inline')
                 elif hook['sync']:
-                    await fut
+                    await fut(self, *args, **kwargs)
                 else:
-                    asyncio.ensure_future(fut)
+                    asyncio.ensure_future(fut(self, *args, **kwargs))
             except Exception:
                 self.logger.error(
-                    'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
+                    'Failed to run hook %r: %s(*%s, **%s)', name, hook['method'], args, kwargs, exc_info=True
                 )
 
     def call_hook_sync(self, name, *args, **kwargs):
