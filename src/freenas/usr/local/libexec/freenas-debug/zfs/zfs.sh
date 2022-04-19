@@ -75,8 +75,8 @@ zfs_func()
 	ORDER BY +id"
 	section_footer
 	
-	section_header "zpool list"
-	zpool list
+	section_header "zpool list -v"
+	zpool list -v
 	section_footer
 
 	section_header "zfs list -ro space,refer,mountpoint"
