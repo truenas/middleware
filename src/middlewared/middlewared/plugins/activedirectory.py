@@ -200,9 +200,13 @@ class ActiveDirectoryService(TDBWrapConfigService):
         must_update = False
         for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
             if key in new and old[key] != new[key]:
-                must_update = True if new[key] else False
+                must_update = True
+                break
 
-        if smb_ha_mode == 'STANDALONE' and must_update:
+        if not must_update:
+            return
+
+        if smb_ha_mode != 'UNIFIED':
             await self.middleware.call(
                 'smb.update',
                 {
@@ -211,7 +215,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 }
             )
 
-        elif smb_ha_mode == 'UNIFIED' and must_update:
+        else:
             await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
             await self.middleware.call('network.configuration.update', {'hostname_virtual': new['netbiosname']})
 
