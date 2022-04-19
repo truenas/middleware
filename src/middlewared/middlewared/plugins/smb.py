@@ -827,7 +827,7 @@ class SMBService(TDBWrapConfigService):
             await self.middleware.call("smb.synchronize_group_mappings")
 
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
-            job = await self.middleware.call('smb.synchronize_group_mapping')
+            job = await self.middleware.call('smb.synchronize_group_mappings')
             await job.wait()
 
         await self._service_change(self._config.service, 'restart')
