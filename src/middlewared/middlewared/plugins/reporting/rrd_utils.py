@@ -157,7 +157,7 @@ class RRDBase(object, metaclass=RRDMeta):
             _type, dsname, transform = rrd_type
             path = self.get_rrd_file(rrd_type, identifier)
             path = path.replace(':', r'\:')
-            name = f'{_type}_{dsname}'
+            name = f'{_type}_{dsname}'.replace("if_octets_", "")
             defs[i] = {
                 'name': name,
                 'transform': transform,
