@@ -1073,7 +1073,12 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         return self.__hooks
 
     def update_hook(self, hook_name, block):
-        ignore = ('core.on_connect', 'ha_permission')  # if you block these, you're going to have a bad time
+        # if you block these, you're going to have a bad time
+        ignore = (
+            'core.on_connect',
+            'ha_permission',
+            'datastore.post_execute_write',  # for HA systems
+        )
 
         if hook_name == 'all':
             for rname, rhooks in filter(lambda x: x[0] not in ignore, self.__hooks.copy().items()):
