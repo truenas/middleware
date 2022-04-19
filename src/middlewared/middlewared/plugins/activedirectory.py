@@ -216,7 +216,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             )
 
         elif not await self.middleware.call('smb.validate_netbios_name', new['netbiosname']):
-            raise ValidationError('activedirectory_update.netbiosname', "Invalid  NetBIOS name")
+            raise ValidationError('activedirectory_update.netbiosname', "Invalid NetBIOS name")
 
         else:
             await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
