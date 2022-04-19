@@ -774,7 +774,6 @@ class PoolService(CRUDService):
 
         # There is really no point in waiting all these services to reload so do them
         # in background.
-        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
         asyncio.ensure_future(self.restart_services())
 
         pool = await self.get_instance(pool_id)
