@@ -876,7 +876,6 @@ class LDAPService(TDBWrapConfigService):
 
             default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
             aux_params = [
-                'map group member uniqueMember',
                 f'base passwd cn=users,cn=accounts,{default_naming_context}',
                 f'base group cn=groups,cn=accounts,{default_naming_context}',
             ]
