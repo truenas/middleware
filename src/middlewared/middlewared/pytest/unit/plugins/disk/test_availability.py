@@ -29,6 +29,7 @@ async def test__get_unused():
 
 
 @pytest.mark.parametrize("disks,allow_duplicate_serials,errors", [
+    (["sda", "sda"], False, []),
     (["sdi"], False, ["The following disks were not found in system: sdi."]),
     (["sdb"], False, ["The following disks are already in use: sdb."]),
     (["sdc"], False, []),

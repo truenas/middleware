@@ -84,19 +84,19 @@ class DiskService(Service):
             )
 
         if not allow_duplicate_serials and not verrors:
-            serial_to_disk = defaultdict(list)
+            serial_to_disk = defaultdict(set)
             for disk in disks:
-                serial_to_disk[(disks_cache[disk]['serial'], disks_cache[disk]['lunid'])].append(disk)
+                serial_to_disk[(disks_cache[disk]['serial'], disks_cache[disk]['lunid'])].add(disk)
             for reserved_disk in disks_reserved:
                 reserved_disk_cache = disks_cache.get(reserved_disk)
                 if not reserved_disk_cache:
                     continue
 
-                serial_to_disk[(reserved_disk_cache['serial'], reserved_disk_cache['lunid'])].append(reserved_disk)
+                serial_to_disk[(reserved_disk_cache['serial'], reserved_disk_cache['lunid'])].add(reserved_disk)
 
             if duplicate_serials := {serial for serial, serial_disks in serial_to_disk.items()
                                      if len(serial_disks) > 1}:
-                error = ', '.join(map(lambda serial: f'{serial[0]!r} ({", ".join(serial_to_disk[serial])})',
+                error = ', '.join(map(lambda serial: f'{serial[0]!r} ({", ".join(sorted(serial_to_disk[serial]))})',
                                       duplicate_serials))
                 verrors.add('topology', f'Disks have duplicate serial numbers: {error}.')
 
