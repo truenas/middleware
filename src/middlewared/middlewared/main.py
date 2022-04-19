@@ -1066,7 +1066,22 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             'method': method,
             'inline': inline,
             'sync': sync,
+            'block': False,
         })
+
+    def get_hooks(self):
+        return self.__hooks
+
+    def update_hook(self, hook_name, block):
+        ignore = ('core.on_connect', 'ha_permission')  # if you block these, you're going to have a bad time
+
+        if hook_name == 'all':
+            for rname, rhooks in filter(lambda x: x[0] not in ignore, self.__hooks.copy().items()):
+                for idx, _ in enumerate(rhooks):
+                    self.__hooks[rname][idx]['block'] = block
+        elif hook_name not in ignore:
+            for idx, _ in enumerate(self.__hooks[hook_name][:]):
+                self.__hooks[hook_name][idx]['block'] = block
 
     def _call_hook_base(self, name, *args, **kwargs):
         for hook in self.__hooks[name]:
@@ -1084,6 +1099,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             name(str): name of the hook, e.g. service.hook_name
         """
         for hook, fut in self._call_hook_base(name, *args, **kwargs):
+            if hook['block']:
+                self.logger.trace('Not running %r because it has been blocked', name)
+                continue
+
             try:
                 if hook['inline']:
                     raise RuntimeError('Inline hooks should be called with call_hook_inline')
@@ -1101,7 +1120,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
     def call_hook_inline(self, name, *args, **kwargs):
         for hook, fut in self._call_hook_base(name, *args, **kwargs):
-            if not hook['inline']:
+            if hook['block']:
+                self.logger.trace('Not running %r because it has been blocked', name)
+                continue
+            elif not hook['inline']:
                 raise RuntimeError('Only inline hooks can be called with call_hook_inline')
 
     def register_event_source(self, name, event_source):

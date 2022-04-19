@@ -776,6 +776,15 @@ class ServicePartBase(metaclass=ServicePartBaseMeta):
 
 class CoreService(Service):
 
+    @private
+    @accepts(Dict('hook_info', Str('hook_name', required=True), Bool('block', required=True)))
+    def update_hook(self, data):
+        hook_name = data['hook_name']
+        if hook_name != 'all' and (hook_name not in self.middleware.get_hooks()):
+            raise ValidationError(None, f'{hook_name!r} not found in registered hooks')
+
+        self.middleware.update_hook(hook_name, data['block'])
+
     @accepts(Str('id'), Int('cols'), Int('rows'))
     async def resize_shell(self, id, cols, rows):
         """
