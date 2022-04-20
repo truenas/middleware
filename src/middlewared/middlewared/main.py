@@ -29,6 +29,7 @@ from collections import namedtuple
 import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
+import contextlib
 import errno
 import fcntl
 import functools
