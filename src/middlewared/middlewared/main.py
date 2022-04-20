@@ -1055,13 +1055,13 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             method(callable): method to be called
             sync(bool): whether the method should be called in a sync way
             inline(bool): whether the method should be called in executor's context synchronously
-            blockable(bool): whether the hook can be blocked (using `block_hook` decorator)
+            blockable(bool): whether the hook can be blocked (using `block_hooks` context manager)
         """
 
         for hook in self.__hooks[name]:
             if hook['blockable'] != blockable:
                 raise RuntimeError(
-                    f'Hook {name!r}: {hook["method"]!r} has blockable={hook["blockable"]!r}, but {method!r} has '
+                    f'Hook {name!r}: {hook["method"].__qualname__!r} has blockable={hook["blockable"]!r}, but {method.__qualname__!r} has '
                     f'blockable={blockable!r}'
                 )
 
