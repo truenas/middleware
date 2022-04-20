@@ -1089,7 +1089,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         Args:
             name(str): name of the hook, e.g. service.hook_name
             method(callable): method to be called
-            blockable(bool): whether the hook can be blocked (using `block_hook` decorator)
+            blockable(bool): whether the hook can be blocked (using `block_hooks` context manager)
             inline(bool): whether the method should be called in executor's context synchronously
             order(int): hook execution order
             raise_error(bool): whether an exception should be raised if a sync hook call fails
@@ -1099,7 +1099,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         for hook in self.__hooks[name]:
             if hook['blockable'] != blockable:
                 raise RuntimeError(
-                    f'Hook {name!r}: {hook["method"]!r} has blockable={hook["blockable"]!r}, but {method!r} has '
+                    f'Hook {name!r}: {hook["method"].__qualname__!r} has blockable={hook["blockable"]!r}, but {method.__qualname__!r} has '
                     f'blockable={blockable!r}'
                 )
 
