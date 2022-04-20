@@ -823,6 +823,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
         self.__event_sources = {}
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
+        self.__blocked_hooks = defaultdict(lambda: 0)
+        self.__blocked_hooks_lock = threading.Lock()
         self.__server_threads = []
         self.__init_services()
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
@@ -1043,7 +1045,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
     def unregister_wsclient(self, client):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name, method, sync=True, inline=False):
+    def register_hook(self, name, method, sync=True, inline=False, blockable=False):
         """
         Register a hook under `name`.
 
@@ -1053,7 +1055,15 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             method(callable): method to be called
             sync(bool): whether the method should be called in a sync way
             inline(bool): whether the method should be called in executor's context synchronously
+            blockable(bool): whether the hook can be blocked (using `block_hook` decorator)
         """
+
+        for hook in self.__hooks[name]:
+            if hook['blockable'] != blockable:
+                raise RuntimeError(
+                    f'Hook {name!r}: {hook["method"]!r} has blockable={hook["blockable"]!r}, but {method!r} has '
+                    f'blockable={blockable!r}'
+                )
 
         if inline:
             if asyncio.iscoroutinefunction(method):
@@ -1064,11 +1074,34 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         self.__hooks[name].append({
             'method': method,
+            'blockable': blockable,
             'inline': inline,
             'sync': sync,
         })
 
+    @contextlib.contextmanager
+    def block_hooks(self, *names):
+        for name in names:
+            if not self.__hooks[name]:
+                raise RuntimeError(f'Hook {name!r} does not exist')
+
+            if not self.__hooks[name][0]['blockable']:
+                raise RuntimeError(f'Hook {name!r} is not blockable')
+
+        with self.__blocked_hooks_lock:
+            for name in names:
+                self.__blocked_hooks[name] += 1
+
+        yield
+
+        with self.__blocked_hooks_lock:
+            for name in names:
+                self.__blocked_hooks[name] -= 1
+
     def _call_hook_base(self, name, *args, **kwargs):
+        if self.__blocked_hooks[name] > 0:
+            return
+
         for hook in self.__hooks[name]:
             try:
                 yield hook, hook['method'](self, *args, **kwargs)
