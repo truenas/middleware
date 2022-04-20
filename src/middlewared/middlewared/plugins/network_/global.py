@@ -264,7 +264,7 @@ class NetworkConfigurationService(ConfigService):
                 'NAS is configured as a time machine target. mDNS is required.'
             )
 
-        lhost_changed = config['hostname_local'] != new_config['hostname_local']
+        lhost_changed = config['hostname'] != new_config['hostname']
         bhost_changed = config.get('hostname_b') and config['hostname_b'] != new_config['hostname_b']
         vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
 
