@@ -19,6 +19,7 @@ import uuid
 
 from collections import defaultdict
 
+import sysctl
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
@@ -55,9 +56,6 @@ ZFS_COMPRESSION_ALGORITHM_CHOICES = [
 ]
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
-
-if osc.IS_FREEBSD:
-    import sysctl
 
 
 class ZfsDeadmanAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -1998,6 +1996,32 @@ class PoolDatasetService(CRUDService):
         datastore_primary_key_type = 'string'
         namespace = 'pool.dataset'
 
+    # https://openzfs.github.io/openzfs-docs/Performance%20and%20Tuning/Module%20Parameters.html#zfs-max-recordsize
+    # Maximum supported (at time of writing) is 16MB.
+    DS_RECORDSIZE_MAPPING = {
+        1 << 9: '512B',
+        1 << 10: '1K',
+        1 << 11: '2K',
+        1 << 12: '4K',
+        1 << 13: '8K',
+        1 << 14: '16K',
+        1 << 15: '32K',
+        1 << 16: '64K',
+        1 << 17: '128K',
+        1 << 18: '256K',
+        1 << 19: '512K',
+        1 << 20: '1M',
+        1 << 21: '2M',
+        1 << 22: '4M',
+        1 << 23: '8M',
+        1 << 24: '16M',
+    }
+
+    @accepts()
+    def recordsize_choices(self):
+        val = sysctl.filter('vfs.zfs.max_recordsize')[0].value
+        return [v for k, v in self.DS_RECORDSIZE_MAPPING.items() if k <= val]
+
     @accepts()
     async def checksum_choices(self):
         """
@@ -2913,9 +2937,7 @@ class PoolDatasetService(CRUDService):
         Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
         Str('checksum', enum=ZFS_CHECKSUM_CHOICES),
         Str('readonly', enum=['ON', 'OFF']),
-        Str('recordsize', enum=[
-            '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
-        ]),
+        Str('recordsize'),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('acltype', enum=['NOACL', 'NFS4ACL', 'POSIXACL']),
@@ -3271,6 +3293,11 @@ class PoolDatasetService(CRUDService):
                     f'{schema}.special_small_block_size',
                     'This field can be 0 or multiple of 512, up to 1048576'
                 )
+
+            if rs := data.get('recordsize'):
+                if rs not in await self.middleware.call('pool.dataset.recordsize_choices'):
+                    verrors.add(f'{schema}.recordsize', '{rs!r} is an invalid recordsize.')
+
         elif data['type'] == 'VOLUME':
             if mode == 'CREATE' and 'volsize' not in data:
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
