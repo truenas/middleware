@@ -1,6 +1,0 @@
-minio:x:473:
-builtin_administrators:x:544:
-builtin_users:x:545:
-builtin_guests:x:546:
-apps:x:568:
-webdav:x:666:
