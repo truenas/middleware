@@ -14,7 +14,8 @@ import subprocess
 import os
 import pwd
 
-from middlewared.schema import accepts, Dict, Str, Int, ValidationErrors
+from middlewared.schema import accepts, Dict, Str, Dir, File, Int, ValidationErrors
+from middlewared.async_validators import check_path_resides_within_volume
 
 from .base import Authenticator
 
@@ -29,8 +30,8 @@ class ShellAuthenticator(Authenticator):
 
     SCHEMA = Dict(
         'shell',
-        Str('script'  , required=True, empty=False, title='Script'),
-        Str('workdir' , default='/tmp', title='Working directory'),
+        File('script' , required=True, empty=False, title='Script'),
+        Dir('workdir' , default='/tmp', title='Working directory'),
         Str('user'    , default='nobody', title='User'),
         Int('timeout' , default=60, title='Timeout'),
         Int('delay'   , default=60, title='Propagation delay'),
