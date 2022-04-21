@@ -23,7 +23,7 @@ if not ha:
 
     # ssh_cmd = "uname -r | cut -d '-' -f1,2"
     # plugins_branch = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
-    plugins_branch = 'master'
+    plugins_branch = '12.2-RELEASE'
     repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
     index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{plugins_branch}/INDEX'
 
