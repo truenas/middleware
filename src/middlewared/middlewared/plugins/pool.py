@@ -3151,7 +3151,6 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('compression')),
         ('edit', _add_inherit('deduplication')),
         ('edit', _add_inherit('readonly')),
-        ('edit', _add_inherit('recordsize')),
         ('edit', _add_inherit('snapdir')),
         ('add', Inheritable('quota_warning', value=Int('quota_warning', validators=[Range(0, 100)]))),
         ('add', Inheritable('quota_critical', value=Int('quota_critical', validators=[Range(0, 100)]))),
