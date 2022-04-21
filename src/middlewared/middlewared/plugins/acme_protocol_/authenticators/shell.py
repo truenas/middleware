@@ -30,9 +30,9 @@ class ShellAuthenticator(Authenticator):
 
     SCHEMA = Dict(
         'shell',
-        File('script' , required=True, empty=False, title='Script'),
+        File('script' , required=True, empty=False, title='Authenticator script'),
         Dir('workdir' , default='/tmp', title='Working directory'),
-        Str('user'    , default='nobody', title='User'),
+        Str('user'    , default='nobody', title='Running user'),
         Int('timeout' , default=60, title='Timeout'),
         Int('delay'   , default=60, title='Propagation delay'),
     )
@@ -49,14 +49,13 @@ class ShellAuthenticator(Authenticator):
     def validate_credentials(data):
         pass
 
-    @staticmethod
-    def _demote(uid, gid):
-        def result():
-            os.setgid(gid)
-            os.setuid(uid)
-        return result
-
     def _run(self, args):
+        def demote(uid, gid):
+            def result():
+                os.setgid(gid)
+                os.setuid(uid)
+            return result
+
         pw_record = pwd.getpwnam(self.user)
         env = os.environ.copy()
         env[ 'HOME'    ] = pw_record.pw_dir
@@ -64,7 +63,7 @@ class ShellAuthenticator(Authenticator):
         env[ 'PWD'     ] = self.workdir
         env[ 'USER'    ] = pw_record.pw_name
         process = subprocess.Popen(
-            args, preexec_fn=self._demote(pw_record.pw_uid, pw_record.pw_gid), cwd=self.workdir, env=env
+            args, preexec_fn=demote(pw_record.pw_uid, pw_record.pw_gid), cwd=self.workdir, env=env
         )
         result = process.wait(timeout=self.timeout)
         return result
