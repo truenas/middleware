@@ -1,10 +1,7 @@
 from collections import defaultdict
 import itertools
-import os
-import pkg_resources
 
 from middlewared.service import private, Service
-from middlewared.utils import osc
 
 
 def read_file(path):
@@ -58,14 +55,8 @@ class UserService(Service):
             )
         }
 
-        path = pkg_resources.resource_filename("middlewared", f"assets/account/builtin/{osc.SYSTEM.lower()}")
-        group_file = []
-        passwd_file = []
-        if osc.IS_LINUX:
-            group_file += read_file("/conf/base/etc/group")
-            passwd_file += read_file("/conf/base/etc/passwd")
-        group_file += read_file(os.path.join(path, "group"))
-        passwd_file += read_file(os.path.join(path, "passwd"))
+        group_file = read_file("/conf/base/etc/group")
+        passwd_file = read_file("/conf/base/etc/passwd")
 
         # Insert new groups or update GID for existing groups
 
