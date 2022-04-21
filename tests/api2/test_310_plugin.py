@@ -22,17 +22,17 @@ if not ha:
     test_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 
     # ssh_cmd = "uname -r | cut -d '-' -f1,2"
-    # freebsd_release = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
-    freebsd_release = '12.2-RELEASE'
+    # plugins_branch = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
+    plugins_branch = 'master'
     repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
-    index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{freebsd_release}/INDEX'
+    index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{plugins_branch}/INDEX'
 
     plugin_index = GET(index_url).json()
     plugin_list = list(plugin_index.keys())
 
     # custom URL
     repos_url2 = 'https://github.com/ericbsd/iocage-plugin-index.git'
-    index_url2 = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{freebsd_release}/INDEX'
+    index_url2 = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{plugins_branch}/INDEX'
     plugin_index2 = GET(index_url2).json()
     plugin_list2 = list(plugin_index2.keys())
 
@@ -255,7 +255,7 @@ if not ha:
         global job_results
         payload = {
             "plugin_repository": repos_url2,
-            "branch": freebsd_release
+            "branch": plugins_branch
         }
         results = POST('/plugin/available/', payload)
         assert results.status_code == 200, results.text
