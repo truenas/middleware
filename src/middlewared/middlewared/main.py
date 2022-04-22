@@ -16,6 +16,7 @@ from .utils.plugins import LoadPluginsMixin
 from .utils.profile import profile_wrap
 from .utils.service.call import ServiceCallMixin
 from .utils.threading import set_thread_name, IoThreadPoolExecutor
+from .utils.type import copy_function_metadata
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from .webhooks.cluster_events import ClusterEventsApplication
@@ -1508,8 +1509,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         if hasattr(methodobj, '_job'):
             f._job = methodobj._job
-        if hasattr(mock, '_job'):
-            f._job = mock._job
+        copy_function_metadata(mock, f)
 
         self.mocks[name] = f
 
