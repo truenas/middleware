@@ -20,7 +20,7 @@ non_ha_with_1_v4ip = (
         {
             'address': '1.1.1.1',
             'address_b': '',
-            'netmaskt': 24,
+            'netmask': 24,
             'vip': '',
             'version': 4,
         },
@@ -42,7 +42,7 @@ non_ha_with_1_v6ip = (
         {
             'address': 'aaaa:bbbb:cccc:dddd::1',
             'address_b': '',
-            'netmaskt': 64,
+            'netmask': 64,
             'version': 6,
             'vip': '',
         },
@@ -195,7 +195,7 @@ ha_with_1_v6ip = (
     },
     (
         {
-            '6address': 'aaaa:bbbb:cccc:dddd::1',
+            'address': 'aaaa:bbbb:cccc:dddd::1',
             'address_b': 'aaaa:bbbb:cccc:dddd::2',
             'netmask': 64,
             'version': 6,
@@ -297,7 +297,7 @@ ha_with_2_v6ips = (
     (
         {
             'address': 'aaaa:bbbb:cccc:dddd::1',
-            '6address_b': 'aaaa:bbbb:cccc:dddd::2',
+            'address_b': 'aaaa:bbbb:cccc:dddd::2',
             'netmask': 64,
             'version': 6,
             'vip': 'aaaa:bbbb:cccc:dddd::3',
