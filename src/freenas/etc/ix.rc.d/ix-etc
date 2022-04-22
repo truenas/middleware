@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-etc
 # REQUIRE: middlewared earlykld ix-syncdisks
-# BEFORE: fsck
+# BEFORE: disks
 
 . /etc/rc.subr
 
