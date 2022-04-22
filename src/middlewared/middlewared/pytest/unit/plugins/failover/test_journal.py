@@ -1,7 +1,7 @@
 import errno
 from unittest.mock import MagicMock, Mock, patch
 
-from middlewared.plugins.failover import Journal, JournalSync
+from middlewared.plugins.failover_.journal import Journal, JournalSync
 from middlewared.service import CallError
 from middlewared.pytest.unit.middleware import Middleware
 
