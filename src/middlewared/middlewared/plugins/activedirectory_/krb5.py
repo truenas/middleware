@@ -66,10 +66,30 @@ class ActiveDirectoryService(Service):
         return spnlist
 
     @accepts()
+    async def update_system_keytab(self):
+        """
+        Force an update of the system keytab from AD.  This can be used
+        to retrieve any new or missing SPNs
+        """
+        await self.middleware.call("kerberos.check_ticket")
+        workgroup = (await self.middleware.call('smb.config'))['workgroup']
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-w', workgroup,
+            'ads', 'keytab', 'create'
+        ]
+        netads = await run(cmd, check=False)
+        if netads.returncode != 0:
+            raise CallError(
+                f"Failed to update system keytab: [{netads.stderr.decode().strip()}] "
+                f"stdout: [{netads.stdout.decode().strip()}] "
+            )
+    @accepts()
     async def change_trust_account_pw(self):
         """
-        Force an update of the AD machine account password. This can be used to
-        refresh the Kerberos principals in the server's system keytab.
+        Force an update of the AD machine account password.
         """
         await self.middleware.call("kerberos.check_ticket")
         workgroup = (await self.middleware.call('smb.config'))['workgroup']
@@ -104,7 +124,7 @@ class ActiveDirectoryService(Service):
         if not ok:
             return False
 
-        await self.change_trust_account_pw()
+        await self.update_system_keytab()
         if update_keytab:
             await self.middleware.call('kerberos.keytab.store_samba_keytab')
 
