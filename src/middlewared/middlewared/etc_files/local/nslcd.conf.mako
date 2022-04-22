@@ -57,7 +57,6 @@
     scope 	sub
     timelimit	${ldap['timeout']}
     bind_timelimit ${ldap['dns_timeout']}
-    map passwd loginShell "/bin/sh"
   % if ldap['schema'] == 'RFC2307BIS':
     nss_nested_groups yes
   % endif
