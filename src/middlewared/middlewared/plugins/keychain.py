@@ -2,7 +2,6 @@ import base64
 import enum
 import errno
 import os
-import random
 import re
 import string
 import subprocess
