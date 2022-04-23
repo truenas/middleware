@@ -1,11 +1,11 @@
 import datetime
 import ipaddress
-import random
 import typing
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 
+from middlewared.utils.generate import random_int
 from middlewared.validators import IpAddress
 
 from .utils import DEFAULT_LIFETIME_DAYS
@@ -48,7 +48,7 @@ def generate_builder(options: dict) -> typing.Union[x509.CertificateBuilder, x50
             not_valid_before
         ).not_valid_after(
             not_valid_after
-        ).serial_number(options.get('serial') or random.randint(1000, pow(2, 30)))
+        ).serial_number(options.get('serial') or random_int(1000, pow(2, 30)))
 
     if san:
         cert = cert.add_extension(san, False)
