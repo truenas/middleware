@@ -7,6 +7,7 @@ from middlewared.utils import run, filter_list
 from middlewared.utils.osc import IS_FREEBSD
 from middlewared.validators import Email
 from middlewared.plugins.smb import SMBBuiltin
+from middlewared.utils.generate import random_string
 
 import binascii
 import crypt
@@ -14,10 +15,8 @@ import errno
 import glob
 import hashlib
 import os
-import random
 import shlex
 import shutil
-import string
 import stat
 import time
 from pathlib import Path
@@ -60,9 +59,7 @@ def crypted_password(cleartext):
     """
     Generates an unix hash from `cleartext`.
     """
-    return crypt.crypt(cleartext, '$6$' + ''.join([
-        random.choice(string.ascii_letters + string.digits) for _ in range(16)]
-    ))
+    return crypt.crypt(cleartext, '$6$' + random_string(string_size=16))
 
 
 def nt_password(cleartext):
@@ -780,7 +777,9 @@ class UserService(CRUDService):
         if not data['username'] and data['uid'] is None:
             verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
         verrors.check()
-        return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'])
+        return await self.middleware.call(
+            'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups']
+        )
 
     @item_method
     @accepts(
@@ -1208,7 +1207,9 @@ class GroupService(CRUDService):
     @private
     async def group_extend_context(self, rows, extra):
         mem = {}
-        membership = await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'})
+        membership = await self.middleware.call(
+            'datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'}
+        )
         users = await self.middleware.call('datastore.query', 'account.bsdusers')
 
         # uid and gid variables here reference database ids rather than OS uid / gid
