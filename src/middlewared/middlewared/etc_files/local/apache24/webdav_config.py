@@ -3,7 +3,6 @@ import os
 import hashlib
 
 from contextlib import suppress
-from string import digits, ascii_uppercase, ascii_lowercase
 
 from middlewared.plugins.account import crypted_password
 from middlewared.plugins.webdav import WEBDAV_USER
