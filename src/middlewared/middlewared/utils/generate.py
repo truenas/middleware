@@ -1,4 +1,4 @@
-import random
+import secrets
 from string import ascii_letters, digits, punctuation
 
 
@@ -19,6 +19,6 @@ def random_string(string_size=8, punctuation_chars=False):
         initial_string += punctuation
 
     return ''.join(
-        random.SystemRandom().choice(initial_string)
+        secrets.choice(initial_string)
         for i in range(string_size)
     )

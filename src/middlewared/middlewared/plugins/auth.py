@@ -1,7 +1,7 @@
 import crypt
 from datetime import datetime, timedelta
-import random
 import re
+import secrets
 import socket
 import string
 import time
@@ -65,7 +65,7 @@ class TokenManager:
     def create(self, ttl, attributes=None):
         attributes = attributes or {}
 
-        token = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(64))
+        token = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(64))
         self.tokens[token] = Token(self, token, ttl, attributes)
         return self.tokens[token]
 

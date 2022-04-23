@@ -1,4 +1,4 @@
-import random
+import secrets
 
 from middlewared.plugins.interface.netif import netif
 from middlewared.schema import Dict, Str
@@ -33,8 +33,9 @@ class NIC(Device):
 
     @staticmethod
     def random_mac():
+        rand = secrets.SystemRandom()
         mac_address = [
-            0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)
+            0x00, 0xa0, 0x98, rand.randint(0x00, 0x7f), rand.randint(0x00, 0xff), rand.randint(0x00, 0xff)
         ]
         return ':'.join(['%02x' % x for x in mac_address])
 

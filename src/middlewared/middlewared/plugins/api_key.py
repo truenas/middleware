@@ -1,7 +1,7 @@
 from datetime import datetime
 import fnmatch
-import random
 import re
+import secrets
 import string
 
 from passlib.hash import pbkdf2_sha256
@@ -203,7 +203,7 @@ class ApiKeyService(CRUDService):
             raise verrors
 
     def _generate(self):
-        return "".join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])
+        return "".join([secrets.choice(string.ascii_letters + string.digits) for _ in range(64)])
 
     def _serve(self, data, key):
         if key is None:

@@ -2,8 +2,8 @@ import base64
 import enum
 import errno
 import os
-import random
 import re
+import secrets
 import string
 import subprocess
 import tempfile
@@ -486,7 +486,7 @@ class KeychainCredentialService(CRUDService):
             }
         """
 
-        key = os.path.join("/tmp", "".join(random.choice(string.ascii_letters) for _ in range(32)))
+        key = os.path.join("/tmp", "".join(secrets.choice(string.ascii_letters) for _ in range(32)))
         if os.path.exists(key):
             os.unlink(key)
         if os.path.exists(f"{key}.pub"):
