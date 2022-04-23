@@ -3,7 +3,6 @@ import enum
 import errno
 import os
 import re
-import string
 import subprocess
 import tempfile
 import urllib.parse
