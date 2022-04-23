@@ -1,5 +1,4 @@
-import random
-
+from middlewared.utils.generate import random_bits
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -367,7 +366,7 @@ class CertificateAuthorityService(CRUDService):
     @private
     async def create_internal(self, data):
         cert_info = get_cert_info_from_data(data)
-        cert_info['serial'] = random.getrandbits(24)
+        cert_info['serial'] = random_bits(24)
 
         cert_info['cert_extensions'] = data['cert_extensions']
         (cert, key) = await self.middleware.call(
