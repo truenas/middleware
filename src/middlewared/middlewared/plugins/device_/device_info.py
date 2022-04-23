@@ -115,8 +115,29 @@ class DeviceService(Service):
 
         return self.get_disk_details(block_device, disk, self.retrieve_disks_data())
 
-    @private
-    def get_rotational_rate(self, device_path):
+    def _get_type_and_rotation_rate(self, disk_data, device_path):
+        if disk_data['rota']:
+            if self.HOST_TYPE == 'QEMU':
+                # qemu/kvm guests do not support necessary ioctl for
+                # retrieving rotational rate
+                type = 'HDD'
+                rotation_rate = None
+            else:
+                rotation_rate = self._get_rotation_rate(device_path)
+                if rotation_rate:
+                    type = 'HDD'
+                else:
+                    # Treat rotational devices without rotation rate as SSDs
+                    # (some USB bridges report SSDs as rotational devices, see
+                    # https://jira.ixsystems.com/browse/NAS-112230)
+                    type = 'SSD'
+        else:
+            type = 'SSD'
+            rotation_rate = None
+
+        return type, rotation_rate
+
+    def _get_rotation_rate(self, device_path):
         try:
             disk = libsgio.SCSIDevice(device_path)
             rotation_rate = disk.rotation_rate()
@@ -161,14 +182,7 @@ class DeviceService(Service):
             disk_data = disks_data[device_path]
 
             # get type of disk and rotational rate (if HDD)
-            disk['type'] = 'SSD' if not disk_data['rota'] else 'HDD'
-            if disk['type'] == 'HDD':
-                if self.HOST_TYPE == 'QEMU':
-                    # qemu/kvm guests do not support necessary ioctl for
-                    # retrieving rotational rate
-                    disk['rotationrate'] = None
-                else:
-                    disk['rotationrate'] = self.get_rotational_rate(device_path)
+            disk['type'], disk['rotationrate'] = self._get_type_and_rotation_rate(disk_data, device_path)
 
             # get model and serial
             disk['ident'] = disk['serial'] = (disk_data.get('serial') or '').strip()
