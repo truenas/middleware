@@ -1,9 +1,9 @@
 import asyncio
-import random
 import re
 
 from middlewared.service import Service, filterable
 from middlewared.utils import filter_list, run
+from middlewared.utils.generate import random_uniform
 
 
 class SensorService(Service):
@@ -43,7 +43,7 @@ class SensorService(Service):
                         # randomly probing the status of the PSU's at the same time.
                         for i in range(3):
                             self.logger.info("%r Status = 0x0, rereading", ps)
-                            await asyncio.sleep(random.uniform(1, 3))
+                            await asyncio.sleep(random_uniform(1, 3))
 
                             found = False
                             for sensor_2 in await self._sensor_list():

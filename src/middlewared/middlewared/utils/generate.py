@@ -1,5 +1,7 @@
-import secrets
+from secrets import choice, randbits, SystemRandom
 from string import ascii_letters, digits, punctuation
+
+SR = SystemRandom()
 
 
 def random_string(string_size=8, punctuation_chars=False):
@@ -16,18 +18,25 @@ def random_string(string_size=8, punctuation_chars=False):
     if punctuation_chars:
         initial_string += punctuation
 
-    return ''.join(secrets.choice(initial_string) for i in range(string_size))
+    return ''.join(choice(initial_string) for i in range(string_size))
 
 
 def random_bits(size):
     """
     Generate an integer with `size` random bits.
     """
-    return secrets.randbits(size)
+    return randbits(size)
 
 
 def random_int(start, end):
     """
     Generate a random integer in range [`start`, `end`] inclusive.
     """
-    return secrets.SystemRandom().randint(start, end)
+    return SR.randint(start, end)
+
+
+def random_uniform(a, b):
+    """
+    Get a random number (float) in range [`a`, `b`), or [`a`, `b`] depending on rounding.
+    """
+    return SR.uniform(a, b)
