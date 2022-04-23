@@ -1,5 +1,6 @@
 import crypt
 from datetime import datetime, timedelta
+import hmac
 import random
 import re
 import socket
@@ -334,7 +335,7 @@ class AuthService(Service):
             return False
         if user['bsdusr_unixhash'] in ('x', '*'):
             return False
-        return crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
+        return hmac.compare_digest(crypt.crypt(password, user['bsdusr_unixhash']), user['bsdusr_unixhash'])
 
     @accepts(Int('ttl', default=600, null=True), Dict('attrs', additional_attrs=True))
     @returns(Str('token'))
