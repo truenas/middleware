@@ -60,9 +60,7 @@ def crypted_password(cleartext):
     """
     Generates an unix hash from `cleartext`.
     """
-    return crypt.crypt(cleartext, '$6$' + ''.join([
-        random.choice(string.ascii_letters + string.digits) for _ in range(16)]
-    ))
+    return crypt.crypt(cleartext, crypt.METHOD_BLOWFISH)
 
 
 def nt_password(cleartext):
