@@ -1,10 +1,8 @@
 import crypt
 from datetime import datetime, timedelta
 import hmac
-import random
 import re
 import socket
-import string
 import time
 import warnings
 
@@ -19,6 +17,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.validators import Range
+from middlewared.utils.generate import random_string
 
 
 def get_peer_process(remote_addr, remote_port):
@@ -66,7 +65,7 @@ class TokenManager:
     def create(self, ttl, attributes=None):
         attributes = attributes or {}
 
-        token = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(64))
+        token = random_string(string_size=64)
         self.tokens[token] = Token(self, token, ttl, attributes)
         return self.tokens[token]
 
