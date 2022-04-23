@@ -469,22 +469,13 @@ class KeychainCredentialService(CRUDService):
             }
         """
 
-        key = os.path.join("/tmp", "".join(random.choice(string.ascii_letters) for _ in range(32)))
-        if os.path.exists(key):
-            os.unlink(key)
-        if os.path.exists(f"{key}.pub"):
-            os.unlink(f"{key}.pub")
-        try:
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            key = os.path.join(tmpdirname, "key")
             subprocess.check_call(["ssh-keygen", "-t", "rsa", "-f", key, "-N", "", "-q"])
             with open(key) as f:
                 private_key = f.read()
             with open(f"{key}.pub") as f:
                 public_key = f.read()
-        finally:
-            if os.path.exists(key):
-                os.unlink(key)
-            if os.path.exists(f"{key}.pub"):
-                os.unlink(f"{key}.pub")
 
         return {
             "private_key": private_key,
