@@ -1,6 +1,5 @@
 import json
 import asyncio
-import random
 import aiohttp
 import os
 
@@ -10,6 +9,7 @@ from datetime import datetime
 
 from middlewared.service import Service
 from middlewared.utils import osc
+from middlewared.utils.generate import random_uniform
 
 
 class UsageService(Service):
@@ -52,7 +52,7 @@ class UsageService(Service):
         now = datetime.utcnow()
         scheduled = (
             now.replace(hour=23, minute=59, second=59) - now
-        ).total_seconds() + random.uniform(1, 86400)
+        ).total_seconds() + random_uniform(1, 86400)
 
         event_loop.call_later(
             scheduled,
@@ -583,7 +583,7 @@ async def setup(middleware):
 
     await middleware.call('network.general.register_activity', 'usage', 'Anonymous usage statistics')
     event_loop.call_at(
-        random.uniform(1, (
+        random_uniform(1, (
             now.replace(hour=23, minute=59, second=59) - now
         ).total_seconds()),
         lambda: asyncio.ensure_future(
