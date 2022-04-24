@@ -4,6 +4,7 @@ from .utils import ProgressBar
 from collections import defaultdict, namedtuple, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
+from middlewared.utils.generate import random_sample
 
 import argparse
 from base64 import b64decode
@@ -15,7 +16,6 @@ import socket
 import sys
 import time
 import uuid
-import random
 import platform
 
 
@@ -99,10 +99,9 @@ class WSClient(WebSocketClient):
             # iteration in the for loop
             port_low = 600
             port_high = 1024
+            size = 5
 
-            ports_to_try = random.sample(range(port_low, port_high), 5)
-
-            for port in ports_to_try:
+            for port in random_sample(port_low, port_high, size):
                 try:
                     self.sock.bind(('', port))
                     return

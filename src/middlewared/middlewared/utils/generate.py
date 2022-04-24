@@ -47,3 +47,10 @@ def random_uniform(a, b):
     Get a random number (float) in range [`a`, `b`), or [`a`, `b`] depending on rounding.
     """
     return SR.uniform(a, b)
+
+
+def random_sample(start, end, size):
+    """
+    Returns a list of `size` random elements in range [`start`, `end`] exclusive of `end`.
+    """
+    return SR.sample(range(start, end), size)
