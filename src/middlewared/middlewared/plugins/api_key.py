@@ -1,11 +1,10 @@
 from datetime import datetime
 import fnmatch
-import random
 import re
-import string
 
 from passlib.hash import pbkdf2_sha256
 
+from middlewared.utils.generare import random_string
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Patch
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -203,7 +202,7 @@ class ApiKeyService(CRUDService):
             raise verrors
 
     def _generate(self):
-        return "".join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])
+        return random_string(string_size=64)
 
     def _serve(self, data, key):
         if key is None:
