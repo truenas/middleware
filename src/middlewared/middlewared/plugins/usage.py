@@ -52,7 +52,7 @@ class UsageService(Service):
         now = datetime.utcnow()
         scheduled = (
             now.replace(hour=23, minute=59, second=59) - now
-        ).total_seconds() + random_uniform(1, 86400)
+        ).total_seconds() + await self.middleware.run_in_thread(random_uniform, 1, 86400)
 
         event_loop.call_later(
             scheduled,
