@@ -1,5 +1,4 @@
-import random
-
+from middlewared.utils.generate import random_hex
 from middlewared.plugins.interface.netif import netif
 from middlewared.schema import Dict, Str
 from middlewared.service import CallError
@@ -33,10 +32,7 @@ class NIC(Device):
 
     @staticmethod
     def random_mac():
-        mac_address = [
-            0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)
-        ]
-        return ':'.join(['%02x' % x for x in mac_address])
+        return ':'.join([0x00, 0xa0, 0x98, random_hex(0x00, 0x7f), random_hex(0x00, 0xff), random_hex(0x00, 0xff)])
 
     def setup_nic_attach(self):
         nic_attach = self.data['attributes'].get('nic_attach')

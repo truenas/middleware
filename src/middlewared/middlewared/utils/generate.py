@@ -35,6 +35,13 @@ def random_int(start, end):
     return SR.randint(start, end)
 
 
+def random_hex(start, end):
+    """
+    Generate a random hexadecimal in range [`start`, `end`] inclusive.
+    """
+    return hex(random_int(start, end))
+
+
 def random_uniform(a, b):
     """
     Get a random number (float) in range [`a`, `b`), or [`a`, `b`] depending on rounding.
