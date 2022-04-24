@@ -1,7 +1,22 @@
 from secrets import choice, randbits, SystemRandom
 from string import ascii_letters, digits, punctuation
+from passlib.hash import pbkdf2_sha256, pbkdf2_sha512
 
 SR = SystemRandom()
+
+
+def hash_string_512(string):
+    """
+    Hash `string` using `pbkdf2_sha512` message digest.
+    """
+    return pbkdf2_sha512.hash(string)
+
+
+def hash_string_256(string):
+    """
+    Hash `string` using `pbkdf2_sha256` message digest.
+    """
+    return pbkdf2_sha256.hash(string)
 
 
 def random_string(string_size=8, punctuation_chars=False):

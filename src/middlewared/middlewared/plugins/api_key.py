@@ -4,7 +4,7 @@ import re
 
 from passlib.hash import pbkdf2_sha256
 
-from middlewared.utils.generare import random_string
+from middlewared.utils.generare import random_string, hash_string_256
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Patch
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -87,16 +87,10 @@ class ApiKeyService(CRUDService):
         """
         await self._validate("api_key_create", data)
 
-        key = self._generate()
-        data["key"] = pbkdf2_sha256.encrypt(key)
-
+        key = await self.middleware.run_in_thread(random_string, 64)
+        data["key"] = await self.middleware.run_in_thread(hash_string_256, key)
         data["created_at"] = datetime.utcnow()
-
-        data["id"] = await self.middleware.call(
-            "datastore.insert",
-            self._config.datastore,
-            data
-        )
+        data["id"] = await self.middleware.call("datastore.insert", self._config.datastore, data)
 
         await self.load_key(data["id"])
 
@@ -128,15 +122,10 @@ class ApiKeyService(CRUDService):
 
         key = None
         if reset:
-            key = self._generate()
-            new["key"] = pbkdf2_sha256.encrypt(key)
+            key = await self.middleware.run_in_thread(random_string, 64)
+            new["key"] = await self.middleware.run_in_thread(hash_string_256, key)
 
-        await self.middleware.call(
-            "datastore.update",
-            self._config.datastore,
-            id,
-            new,
-        )
+        await self.middleware.call("datastore.update", self._config.datastore, id, new)
 
         await self.load_key(id)
 
@@ -200,9 +189,6 @@ class ApiKeyService(CRUDService):
 
         if verrors:
             raise verrors
-
-    def _generate(self):
-        return random_string(string_size=64)
 
     def _serve(self, data, key):
         if key is None:
