@@ -366,7 +366,7 @@ class CertificateAuthorityService(CRUDService):
     @private
     async def create_internal(self, data):
         cert_info = get_cert_info_from_data(data)
-        cert_info['serial'] = random_bits(24)
+        cert_info['serial'] = await self.middleware.run_in_thread(random_bits, 24)
 
         cert_info['cert_extensions'] = data['cert_extensions']
         (cert, key) = await self.middleware.call(
