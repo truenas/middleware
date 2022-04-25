@@ -71,13 +71,45 @@ def load_classes(module, base, blacklist):
     return classes
 
 
-class LoadPluginsMixin(object):
+class SchemasMixin:
+    def __init__(self):
+        self._schemas = Schemas()
+
+    def _resolve_methods(self, services, events):
+        from middlewared.schema import resolve_methods  # Lazy import so namespace match
+        to_resolve = []
+        for service in services:
+            for attr in dir(service):
+                method = getattr(service, attr)
+                if not callable(method):
+                    continue
+                to_resolve.append({
+                    'name': attr,
+                    'type': 'method',
+                    'keys': ['accepts', 'returns'],
+                    'has_key': functools.partial(hasattr, method),
+                    'get_attr': functools.partial(getattr, method),
+                })
+
+        for name, attrs in events:
+            to_resolve.append({
+                'name': name,
+                'type': 'event',
+                'keys': ['accepts', 'returns'],
+                'has_key': lambda k: k in attrs,
+                'get_attr': functools.partial(dict.get, attrs),
+            })
+
+        resolve_methods(self._schemas, to_resolve)
+
+
+class LoadPluginsMixin(SchemasMixin):
 
     def __init__(self, overlay_dirs=None):
         self.overlay_dirs = overlay_dirs or []
-        self._schemas = Schemas()
         self._services = {}
         self._services_aliases = {}
+        super().__init__()
 
     def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None):
         from middlewared.service import Service, CompoundService, ABSTRACT_SERVICES
@@ -124,30 +156,7 @@ class LoadPluginsMixin(object):
 
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
-        self._resolve_methods()
-
-    def _resolve_methods(self):
-        from middlewared.schema import resolve_methods  # Lazy import so namespace match
-        to_resolve = []
-        for service in list(self._services.values()):
-            for attr in dir(service):
-                method = getattr(service, attr)
-                if not callable(method):
-                    continue
-                to_resolve.append({
-                    'keys': ['accepts', 'returns'],
-                    'has_key': functools.partial(hasattr, method),
-                    'get_attr': functools.partial(getattr, method),
-                })
-
-        for name, attrs in self.get_events():
-            to_resolve.append({
-                'keys': ['accepts', 'returns'],
-                'has_key': lambda k: k in attrs,
-                'get_attr': functools.partial(dict.get, attrs),
-            })
-
-        resolve_methods(self._schemas, to_resolve)
+        self._resolve_methods(list(self._services.values()), self.get_events())
 
     def add_service(self, service):
         self._services[service._config.namespace] = service

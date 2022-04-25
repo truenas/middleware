@@ -1,15 +1,7 @@
 import functools
-import sys
 from unittest.mock import Mock
 
-from middlewared.utils import osc
 from middlewared.utils.plugins import LoadPluginsMixin
-
-
-# freenasOS
-if osc.IS_FREEBSD:
-    if '/usr/local/lib' not in sys.path:
-        sys.path.append('/usr/local/lib')
 
 
 def load_compound_service(name):
@@ -25,4 +17,10 @@ def _compound_service_wrapper(service, fake_middleware):
     service.middleware = fake_middleware
     for part in service.parts:
         part.middleware = fake_middleware
+    return service
+
+
+def create_service(middleware, cls):
+    service = cls(middleware)
+    middleware._resolve_methods([service], [])
     return service
