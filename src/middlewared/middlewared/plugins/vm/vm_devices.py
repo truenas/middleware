@@ -348,12 +348,6 @@ class VMDeviceService(CRUDService):
             elif path and not os.path.exists(path):
                 verrors.add('attributes.path', f'Disk path {path} does not exist.', errno.ENOENT)
 
-            if path and len(path) > 63:
-                # SPECNAMELEN is not long enough (63) in 12, 13 will be 255
-                verrors.add(
-                    'attributes.path',
-                    f'Disk path {path} is too long, reduce to less than 63 characters', errno.ENAMETOOLONG
-                )
             if not await self.disk_uniqueness_integrity_check(device, vm_instance):
                 verrors.add(
                     'attributes.path',
