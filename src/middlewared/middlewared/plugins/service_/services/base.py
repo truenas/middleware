@@ -152,7 +152,7 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
 
         return "\n".join([
             f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
-            f"{record['_COMM']}[{record['_PID']}]: {record['MESSAGE']}"
+            f"{record.get('_COMM')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
             for record in j
         ])
 
