@@ -2,6 +2,7 @@ import re
 import threading
 from xml.etree import ElementTree as etree
 from itertools import zip_longest
+from collections import defaultdict
 
 import sysctl
 from middlewared.service import Service
@@ -10,9 +11,9 @@ from bsd.disk import get_ident_with_name
 
 
 class GeomCache(Service):
-    DISKS = {}  # formatted cache for geom DISKS (parsed xml)
-    MULTIPATH = {}  # formatted cache for geom MULTIPATH providers (parsed xml)
-    TOPOLOGY = {}  # formatted `camcontrol devlist -v` output
+    DISKS = defaultdict()  # formatted cache for geom DISKS (parsed xml)
+    MULTIPATH = defaultdict()  # formatted cache for geom MULTIPATH providers (parsed xml)
+    TOPOLOGY = defaultdict()  # formatted `camcontrol devlist -v` output
     XML = None  # raw xml cache
     LOCK = threading.Lock()
     RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
@@ -174,9 +175,10 @@ class GeomCache(Service):
         with self.LOCK:
             # wipe/overwrite the current cache
             self.XML = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value)
-            self.MULTIPATH = {}
-            self.DISKS = {}
-            self.TOPOLOGY = self.middleware.call_sync('geom.cache.get_devices_topology')
+            self.MULTIPATH.clear()
+            self.DISKS.clear()
+            self.TOPOLOGY.clear()
+            self.TOPOLOGY.update(self.middleware.call_sync('geom.cache.get_devices_topology'))
 
             # grab the relevant xml classes and refill the cache objects
             _disks = self.XML.findall('.//class[name="DISK"]/geom')
