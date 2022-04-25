@@ -46,9 +46,7 @@ class DISPLAY(Device):
 
     def web_uri(self, host, password=None, protocol='http'):
         path = self.get_webui_info()['path'][1:]
-        params = {'path': path}
-        if self.is_spice_type():
-            params['autoconnect'] = 1
+        params = {'path': path, 'autoconnect': 1}
         if self.password_configured():
             if password != self.data['attributes'].get('password'):
                 return
