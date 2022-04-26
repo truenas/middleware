@@ -63,6 +63,7 @@ if not ha:
         assert isinstance(results, dict), str(job_status['results'])
         ipfs_version = list(results['charts']['ipfs']['versions'].keys())[0]
 
+    @pytest.mark.timeout(600)
     @pytest.mark.dependency(name='release_ipfs')
     def test_06_create_ipfs_chart_release(request):
         depends(request, ['setup_kubernetes', 'ipfs_version'], scope='session')
@@ -128,6 +129,7 @@ if not ha:
         assert isinstance(results.json(), dict), results.text
         assert 'No update is available' in results.text, results.text
 
+    @pytest.mark.timeout(600)
     def test_14_redeploy_ipfs_chart_release(request):
         depends(request, ['release_ipfs'])
         results = POST('/chart/release/redeploy/', 'ipfs')
@@ -197,6 +199,7 @@ if not ha:
         result = POST('/pool/dataset/', {'name': f'{pool_name}/ipfs-data'})
         assert result.status_code == 200, result.text
 
+    @pytest.mark.timeout(600)
     @pytest.mark.dependency(name='ipfs_schema_values')
     def test_21_change_some_ipfs_schema_values(request):
         depends(request, ['release_ipfs', 'hostPath_dataset'])
@@ -290,6 +293,7 @@ if not ha:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
 
+    @pytest.mark.timeout(600)
     def test_29_delete_ipfs_chart_release(request):
         depends(request, ['release_ipfs'])
         results = DELETE(f'/chart/release/id/{release_id}/')
@@ -361,6 +365,7 @@ if not ha:
         new_plex_version = sorted(list(results['charts']['plex']['versions'].keys()))[-1]
         time.sleep(1)
 
+    @pytest.mark.timeout(600)
     @pytest.mark.dependency(name='release_plex')
     def test_36_create_plex_chart_release_with_old_version(request):
         depends(request, ['setup_kubernetes', 'plex_version'], scope='session')
@@ -389,6 +394,7 @@ if not ha:
         assert new_plex_version in results.json()['latest_version'], results.text
         update_version = results.json()['latest_version']
 
+    @pytest.mark.timeout(600)
     @pytest.mark.dependency(name='update_plex')
     def test_38_upgrade_plex_to_the_new_version(request):
         depends(request, ['release_plex'])
@@ -412,6 +418,7 @@ if not ha:
         assert isinstance(results.json(), dict), results.text
         assert results.json()['chart_metadata']['version'] == new_plex_version, results.text
 
+    @pytest.mark.timeout(600)
     @pytest.mark.dependency(name='rollback_plex')
     def test_40_rollback_plex_to_the_old_version(request):
         depends(request, ['update_plex'])
@@ -436,6 +443,7 @@ if not ha:
         assert isinstance(results.json(), dict), results.text
         assert results.json()['chart_metadata']['version'] == old_plex_version, results.text
 
+    @pytest.mark.timeout(600)
     def test_42_delete_plex_chart_release(request):
         depends(request, ['release_plex'])
         results = DELETE(f'/chart/release/id/{plex_id}/')
