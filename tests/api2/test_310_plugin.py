@@ -21,8 +21,6 @@ if not ha:
     is_freenas = GET("/system/is_freenas/").json()
     test_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 
-    # ssh_cmd = "uname -r | cut -d '-' -f1,2"
-    # plugins_branch = SSH_TEST(ssh_cmd, user, password, ip)['output'].strip()
     plugins_branch = '13.1-RELEASE'
     repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
     index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{plugins_branch}/INDEX'
