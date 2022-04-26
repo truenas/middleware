@@ -10,6 +10,7 @@ import errno
 import inspect
 import ipaddress
 import os
+import pprint
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
@@ -923,7 +924,7 @@ class Patch(object):
     def resolve(self, schemas):
         schema = schemas.get(self.schema_name)
         if not schema:
-            raise ResolverError(f'Schema {self.name} not found')
+            raise ResolverError(f'Schema {self.schema_name} not found')
         elif not isinstance(schema, Dict):
             raise ValueError('Patch non-dict is not allowed')
 
@@ -1083,16 +1084,17 @@ def resolver(schemas, obj):
 def resolve_methods(schemas, to_resolve):
     while len(to_resolve) > 0:
         resolved = 0
+        errors = []
         for method in list(to_resolve):
             try:
                 resolver(schemas, method)
-            except ResolverError:
-                pass
+            except ResolverError as e:
+                errors.append((method, e))
             else:
                 to_resolve.remove(method)
                 resolved += 1
         if resolved == 0:
-            raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
+            raise ValueError(f'Not all schemas could be resolved:\n{pprint.pformat(errors)}')
 
 
 def validate_return_type(func, result, schemas):
