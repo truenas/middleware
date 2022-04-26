@@ -67,8 +67,8 @@ if not ha:
         results = POST('/jail/releases_choices/', True)
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert '12.1-RELEASE' in results.json(), results.text
-        RELEASE = '12.1-RELEASE'
+        assert '13.0-RELEASE' in results.json(), results.text
+        RELEASE = '13.0-RELEASE'
 
     def test_07_fetch_FreeBSD(request):
         depends(request, ["pool_04"], scope="session")
@@ -132,7 +132,7 @@ if not ha:
         depends(request, ["pool_04", "ssh_password"], scope="session")
         if freeze is True:
             pytest.skip(freeze_msg)
-        cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 12.1-RELEASE'
+        cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 13.0-RELEASE'
         results = SSH_TEST(cmd1, user, password, ip)
         cmd2 = 'iocage list'
         results2 = SSH_TEST(cmd2, user, password, ip)
