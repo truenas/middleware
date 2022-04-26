@@ -22,7 +22,12 @@ class PoolDatasetService(Service):
             else:
                 try:
                     if path.startswith("/dev/zvol/"):
-                        exact_matches.add(os.path.realpath(path))
+                        if os.path.isdir(path):
+                            for root, dirs, files in os.walk(path):
+                                for f in files:
+                                    exact_matches.add(os.path.realpath(os.path.join(root, f)))
+                        else:
+                            exact_matches.add(os.path.realpath(path))
                     else:
                         include_devs.append(os.stat(path).st_dev)
                 except FileNotFoundError:
