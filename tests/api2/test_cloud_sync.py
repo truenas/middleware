@@ -4,9 +4,9 @@ import time
 
 import pytest
 
+from middlewared.test.integration.assets.cloud_sync import credential, task, local_s3_credential, local_s3_task
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.s3 import s3_server
 from middlewared.test.integration.utils import call, pool, ssh
 
 import sys
@@ -18,88 +18,6 @@ from auto_config import dev_test
 reason = 'Skip for testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
-
-
-@contextlib.contextmanager
-def credential(data):
-    data = {
-        "name": "Test",
-        **data,
-    }
-
-    result = POST("/cloudsync/credentials/", data)
-    assert result.status_code == 200, result.text
-    credential = result.json()
-
-    try:
-        yield credential
-    finally:
-        result = DELETE(f"/cloudsync/credentials/id/{credential['id']}/")
-        assert result.status_code == 200, result.text
-
-
-@contextlib.contextmanager
-def task(data):
-    data = {
-        "description": "Test",
-        "schedule": {
-            "minute": "00",
-            "hour": "00",
-            "dom": "1",
-            "month": "1",
-            "dow": "1",
-        },
-        **data
-    }
-
-    result = POST("/cloudsync/", data)
-    assert result.status_code == 200, result.text
-    task = result.json()
-
-    try:
-        yield task
-    finally:
-        result = DELETE(f"/cloudsync/id/{task['id']}/")
-        assert result.status_code == 200, result.text
-
-
-@contextlib.contextmanager
-def local_s3_credential(credential_params=None):
-    credential_params = credential_params or {}
-
-    with dataset("cloudsync_remote") as remote_dataset:
-        with s3_server(remote_dataset) as s3:
-            with credential({
-                "provider": "S3",
-                "attributes": {
-                    "access_key_id": s3.access_key,
-                    "secret_access_key": s3.secret_key,
-                    "endpoint": "http://localhost:9000",
-                    "skip_region": True,
-                    **credential_params,
-                },
-            }) as c:
-                yield c
-
-@contextlib.contextmanager
-def local_s3_task(params=None, credential_params=None):
-    params = params or {}
-    credential_params = credential_params or {}
-
-    with dataset("cloudsync_local") as local_dataset:
-        with local_s3_credential(credential_params) as c:
-            with task({
-                "direction": "PUSH",
-                "transfer_mode": "COPY",
-                "path": f"/mnt/{local_dataset}",
-                "credentials": c["id"],
-                "attributes": {
-                    "bucket": "bucket",
-                    "folder": "",
-                },
-                **params,
-            }) as t:
-                yield t
 
 
 def run_task(task):

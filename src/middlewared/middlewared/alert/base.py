@@ -7,6 +7,7 @@ import os
 import html2text
 
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.utils.lang import undefined
 
 __all__ = ["UnavailableException",
            "AlertClass", "OneShotAlertClass", "SimpleOneShotAlertClass", "DismissableAlertClass",
@@ -16,8 +17,6 @@ __all__ = ["UnavailableException",
            "format_alerts", "ellipsis"]
 
 logger = logging.getLogger(__name__)
-
-undefined = object()
 
 
 class UnavailableException(Exception):

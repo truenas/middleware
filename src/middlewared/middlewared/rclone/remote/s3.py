@@ -5,6 +5,7 @@ from botocore.client import Config
 
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import Bool, Int, Str
+from middlewared.utils.lang import undefined
 
 
 class S3RcloneRemote(BaseRcloneRemote):
@@ -75,10 +76,18 @@ class S3RcloneRemote(BaseRcloneRemote):
         return result
 
     async def get_task_extra(self, task):
-        result = dict(encryption="", server_side_encryption=task["attributes"].get("encryption") or "")
+        result = dict(
+            encryption=undefined,
+            server_side_encryption=task["attributes"].get("encryption") or "",
+            skip_region=undefined,
+            signatures_v2=undefined,
+        )
 
         if not task["credentials"]["attributes"].get("skip_region", False):
-            if not task["credentials"]["attributes"].get("region", "").strip():
+            if task["credentials"]["attributes"].get("region", "").strip():
+                if not (task["attributes"].get("region") or "").strip():
+                    result["region"] = task["credentials"]["attributes"]["region"]
+            else:
                 # Some legacy tasks have region=None, it's easier to fix it here than in migration
                 result["region"] = task["attributes"].get("region") or "us-east-1"
         else:
