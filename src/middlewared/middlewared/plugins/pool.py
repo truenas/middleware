@@ -1602,49 +1602,51 @@ class PoolService(CRUDService):
 
         # We don't want to configure swap immediately after removing those disks because we might get in a race
         # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
-        await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
+        with self.middleware.block_hooks('devd.devfs', 'devd.zfs'):
+            await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
 
-        sysds = await self.middleware.call('systemdataset.config')
-        if sysds['pool'] == pool['name']:
-            job.set_progress(40, 'Reconfiguring system dataset')
-            sysds_job = await self.middleware.call('systemdataset.update', {
-                'pool': None, 'pool_exclude': pool['name'],
-            })
-            await sysds_job.wait()
-            if sysds_job.error:
-                raise CallError(sysds_job.error)
+            sysds = await self.middleware.call('systemdataset.config')
+            if sysds['pool'] == pool['name']:
+                job.set_progress(40, 'Reconfiguring system dataset')
+                sysds_job = await self.middleware.call('systemdataset.update', {
+                    'pool': None, 'pool_exclude': pool['name'],
+                })
+                await sysds_job.wait()
+                if sysds_job.error:
+                    raise CallError(sysds_job.error)
 
-        if pool['status'] == 'OFFLINE':
-            # Pool exists only in database, its not imported
-            pass
-        elif options['destroy']:
-            with self.middleware.block_hooks('devd.devfs'):
-                job.set_progress(60, 'Destroying pool')
-                await self.middleware.call('zfs.pool.delete', pool['name'])
+            if pool['status'] == 'OFFLINE':
+                # Pool exists only in database, its not imported
+                pass
+            elif options['destroy']:
+                with self.middleware.block_hooks('devd.devfs'):
+                    job.set_progress(60, 'Destroying pool')
+                    await self.middleware.call('zfs.pool.delete', pool['name'])
 
-                job.set_progress(80, 'Cleaning disks')
+                    job.set_progress(80, 'Cleaning disks')
 
-                if pool['encrypt'] > 0:
-                    await self.middleware.call('disk.geli_detach', pool, True)
-                    try:
-                        os.remove(pool['encryptkey_path'])
-                    except OSError:
-                        self.logger.warning('Failed removing encryption key %r', pool['encryptkey_path'], exc_info=True)
-                else:
-                    async def unlabel(disk):
-                        wipe_job = await self.middleware.call(
-                            'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
-                        )
-                        await wipe_job.wait()
-                        if wipe_job.error:
-                            self.logger.warning('Failed to wipe disk %r: %r', disk, wipe_job.error)
-                    await asyncio_map(unlabel, disks, limit=16)
+                    if pool['encrypt'] > 0:
+                        await self.middleware.call('disk.geli_detach', pool, True)
+                        try:
+                            os.remove(pool['encryptkey_path'])
+                        except OSError:
+                            self.logger.warning(
+                                'Failed removing encryption key %r', pool['encryptkey_path'], exc_info=True
+                            )
+                    else:
+                        async def unlabel(disk):
+                            wipe_job = await self.middleware.call(
+                                'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
+                            )
+                            await wipe_job.wait()
+                            if wipe_job.error:
+                                self.logger.warning('Failed to wipe disk %r: %r', disk, wipe_job.error)
+                        await asyncio_map(unlabel, disks, limit=16)
 
-            await self.middleware.call('disk.sync_all')
-        else:
-            job.set_progress(80, 'Exporting pool')
-            await self.middleware.call('zfs.pool.export', pool['name'])
-            if osc.IS_FREEBSD:
+                await self.middleware.call('disk.sync_all')
+            else:
+                job.set_progress(80, 'Exporting pool')
+                await self.middleware.call('zfs.pool.export', pool['name'])
                 await self.middleware.call('disk.geli_detach', pool)
 
         job.set_progress(90, 'Cleaning up')
