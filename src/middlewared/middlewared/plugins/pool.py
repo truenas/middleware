@@ -838,7 +838,7 @@ class PoolService(CRUDService):
         enc_options = {'enc_keypath': enc_keypath}
 
         if disks:
-            with self.middleware.block_hooks('devd.devfs'):
+            with self.middleware.block_hooks('devd.devfs', 'devd.zfs'):
                 await self.middleware.call('pool.format_disks', job, disks)
                 vdevs, enc_disks = await self.middleware.call(
                     'pool.convert_topology_to_vdevs', data['topology'], enc_options
@@ -848,13 +848,9 @@ class PoolService(CRUDService):
                     await self.middleware.call('pool.encrypt_disks', job, enc_disks, enc_options)
                 job.set_progress(90, 'Extending ZFS Pool')
 
-            extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
-            await extend_job.wait()
+                extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
+                await extend_job.wait(raise_error=True)
 
-            if extend_job.error:
-                raise CallError(extend_job.error)
-
-            if osc.IS_FREEBSD:
                 await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
 
                 if pool['encrypt'] >= 2:
