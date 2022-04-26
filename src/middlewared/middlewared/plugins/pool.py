@@ -706,10 +706,9 @@ class PoolService(CRUDService):
             os.makedirs(cachefile_dir)
 
         pool_id = z_pool = encrypted_dataset_pk = None
-        try:
-            job.set_progress(90, 'Creating ZFS Pool')
-
-            with self.middleware.block_hooks('devd.zfs'):
+        with self.middleware.block_hooks('devd.zfs'):
+            try:
+                job.set_progress(90, 'Creating ZFS Pool')
                 z_pool = await self.middleware.call('zfs.pool.create', {
                     'name': data['name'],
                     'vdevs': (await self.middleware.call('pool.convert_topology_to_vdevs', data['topology']))[0],
@@ -728,34 +727,36 @@ class PoolService(CRUDService):
                 })
                 await self.middleware.call('zfs.dataset.mount', data['name'])
 
-            pool_id = await self.middleware.call(
-                'datastore.insert', 'storage.volume',
-                {'name': data['name'], 'guid': z_pool['guid']}, {'prefix': 'vol_'}
-            )
-
-            encrypted_dataset_data = {
-                'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-                'key_format': encryption_dict.get('keyformat')
-            }
-            encrypted_dataset_pk = await self.middleware.call(
-                'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
-            )
-
-            await self.middleware.call('datastore.insert', 'storage.scrub', {'volume': pool_id}, {'prefix': 'scrub_'})
-        except Exception as e:
-            # Something wrong happened, we need to rollback and destroy pool.
-            if z_pool:
-                try:
-                    await self.middleware.call('zfs.pool.delete', data['name'])
-                except Exception:
-                    self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
-            if pool_id:
-                await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
-            if encrypted_dataset_pk:
-                await self.middleware.call(
-                    'pool.dataset.delete_encrypted_datasets_from_db', [['id', '=', encrypted_dataset_pk]]
+                pool_id = await self.middleware.call(
+                    'datastore.insert', 'storage.volume',
+                    {'name': data['name'], 'guid': z_pool['guid']}, {'prefix': 'vol_'}
                 )
-            raise e
+
+                encrypted_dataset_data = {
+                    'name': data['name'], 'encryption_key': encryption_dict.get('key'),
+                    'key_format': encryption_dict.get('keyformat')
+                }
+                encrypted_dataset_pk = await self.middleware.call(
+                    'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
+                )
+
+                await self.middleware.call(
+                    'datastore.insert', 'storage.scrub', {'volume': pool_id}, {'prefix': 'scrub_'}
+                )
+            except Exception as e:
+                # Something wrong happened, we need to rollback and destroy pool.
+                if z_pool:
+                    try:
+                        await self.middleware.call('zfs.pool.delete', data['name'])
+                    except Exception:
+                        self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
+                if pool_id:
+                    await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
+                if encrypted_dataset_pk:
+                    await self.middleware.call(
+                        'pool.dataset.delete_encrypted_datasets_from_db', [['id', '=', encrypted_dataset_pk]]
+                    )
+                raise e
 
         # There is really no point in waiting all these services to reload so do them
         # in background.
