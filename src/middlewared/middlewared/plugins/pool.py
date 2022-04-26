@@ -1635,24 +1635,27 @@ class PoolService(CRUDService):
             # Pool exists only in database, its not imported
             pass
         elif options['destroy']:
-            job.set_progress(60, 'Destroying pool')
-            await self.middleware.call('zfs.pool.delete', pool['name'])
+            with self.middleware.block_hooks('devd.devfs'):
+                job.set_progress(60, 'Destroying pool')
+                await self.middleware.call('zfs.pool.delete', pool['name'])
 
-            job.set_progress(80, 'Cleaning disks')
+                job.set_progress(80, 'Cleaning disks')
 
-            if pool['encrypt'] > 0:
-                await self.middleware.call('disk.geli_detach', pool, True)
-                try:
-                    os.remove(pool['encryptkey_path'])
-                except OSError:
-                    self.logger.warning('Failed to remove encryption key %r', pool['encryptkey_path'], exc_info=True)
-            else:
-                async def unlabel(disk):
-                    wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False, {'configure_swap': False})
-                    await wipe_job.wait()
-                    if wipe_job.error:
-                        self.logger.warning('Failed to wipe disk %r: %r', disk, wipe_job.error)
-                await asyncio_map(unlabel, disks, limit=16)
+                if pool['encrypt'] > 0:
+                    await self.middleware.call('disk.geli_detach', pool, True)
+                    try:
+                        os.remove(pool['encryptkey_path'])
+                    except OSError:
+                        self.logger.warning('Failed removing encryption key %r', pool['encryptkey_path'], exc_info=True)
+                else:
+                    async def unlabel(disk):
+                        wipe_job = await self.middleware.call(
+                            'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
+                        )
+                        await wipe_job.wait()
+                        if wipe_job.error:
+                            self.logger.warning('Failed to wipe disk %r: %r', disk, wipe_job.error)
+                    await asyncio_map(unlabel, disks, limit=16)
 
             await self.middleware.call('disk.sync_all')
         else:
