@@ -706,7 +706,7 @@ class PoolService(CRUDService):
             os.makedirs(cachefile_dir)
 
         pool_id = z_pool = encrypted_dataset_pk = None
-        with self.middleware.block_hooks('devd.zfs'):
+        with self.middleware.block_hooks('devd.zfs', 'zfs.pool.events'):
             try:
                 job.set_progress(90, 'Creating ZFS Pool')
                 z_pool = await self.middleware.call('zfs.pool.create', {
@@ -839,7 +839,7 @@ class PoolService(CRUDService):
         enc_options = {'enc_keypath': enc_keypath}
 
         if disks:
-            with self.middleware.block_hooks('devd.devfs', 'devd.zfs'):
+            with self.middleware.block_hooks('devd.devfs', 'devd.zfs', 'zfs.pool.events'):
                 await self.middleware.call('pool.format_disks', job, disks)
                 vdevs, enc_disks = await self.middleware.call(
                     'pool.convert_topology_to_vdevs', data['topology'], enc_options
@@ -1603,7 +1603,7 @@ class PoolService(CRUDService):
 
         # We don't want to configure swap immediately after removing those disks because we might get in a race
         # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
-        with self.middleware.block_hooks('devd.devfs', 'devd.zfs'):
+        with self.middleware.block_hooks('devd.devfs', 'devd.zfs', 'zfs.pool.events'):
             await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
 
             sysds = await self.middleware.call('systemdataset.config')

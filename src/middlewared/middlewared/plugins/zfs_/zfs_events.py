@@ -171,5 +171,5 @@ async def zfs_events(middleware, data):
 
 def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
-    middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
+    middleware.register_hook('zfs.pool.events', zfs_events, sync=False, blockable=True)
     middleware.register_hook('devd.zfs', devd_zfs_hook, blockable=True)
