@@ -851,7 +851,8 @@ class PoolService(CRUDService):
                 extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
                 await extend_job.wait(raise_error=True)
 
-                await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
+                if enc_disks:
+                    await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
 
                 if pool['encrypt'] >= 2:
                     # FIXME: ask current passphrase and validate
