@@ -7,7 +7,7 @@ import time
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
-from middlewared.utils import osc, start_daemon_thread
+from middlewared.utils import start_daemon_thread
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 
@@ -172,5 +172,4 @@ async def zfs_events(middleware, data):
 def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
     middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
-    if osc.IS_FREEBSD:
-        middleware.register_hook('devd.zfs', devd_zfs_hook)
+    middleware.register_hook('devd.zfs', devd_zfs_hook, blockable=True)

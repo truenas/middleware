@@ -709,33 +709,28 @@ class PoolService(CRUDService):
         try:
             job.set_progress(90, 'Creating ZFS Pool')
 
-            z_pool = await self.middleware.call('zfs.pool.create', {
-                'name': data['name'],
-                'vdevs': (await self.middleware.call('pool.convert_topology_to_vdevs', data['topology']))[0],
-                'options': options,
-                'fsoptions': fsoptions,
-            })
+            with self.middleware.block_hooks('devd.zfs'):
+                z_pool = await self.middleware.call('zfs.pool.create', {
+                    'name': data['name'],
+                    'vdevs': (await self.middleware.call('pool.convert_topology_to_vdevs', data['topology']))[0],
+                    'options': options,
+                    'fsoptions': fsoptions,
+                })
 
-            job.set_progress(95, 'Setting pool options')
+                job.set_progress(95, 'Setting pool options')
 
-            # Inherit mountpoint after create because we set mountpoint on creation
-            # making it a "local" source.
-            await self.middleware.call('zfs.dataset.update', data['name'], {
-                'properties': {
-                    'mountpoint': {'source': 'INHERIT'},
-                },
-            })
-            await self.middleware.call('zfs.dataset.mount', data['name'])
+                # Inherit mountpoint after create because we set mountpoint on creation
+                # making it a "local" source.
+                await self.middleware.call('zfs.dataset.update', data['name'], {
+                    'properties': {
+                        'mountpoint': {'source': 'INHERIT'},
+                    },
+                })
+                await self.middleware.call('zfs.dataset.mount', data['name'])
 
-            pool = {
-                'name': data['name'],
-                'guid': z_pool['guid'],
-            }
             pool_id = await self.middleware.call(
-                'datastore.insert',
-                'storage.volume',
-                pool,
-                {'prefix': 'vol_'},
+                'datastore.insert', 'storage.volume',
+                {'name': data['name'], 'guid': z_pool['guid']}, {'prefix': 'vol_'}
             )
 
             encrypted_dataset_data = {
@@ -746,18 +741,9 @@ class PoolService(CRUDService):
                 'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
             )
 
-            await self.middleware.call(
-                'datastore.insert',
-                'storage.scrub',
-                {'volume': pool_id},
-                {'prefix': 'scrub_'},
-            )
+            await self.middleware.call('datastore.insert', 'storage.scrub', {'volume': pool_id}, {'prefix': 'scrub_'})
         except Exception as e:
             # Something wrong happened, we need to rollback and destroy pool.
-            if osc.IS_LINUX:
-                self.middleware.logger.debug(
-                    'Pool %s failed to create with topology %s', data['name'], data['topology'],
-                )
             if z_pool:
                 try:
                     await self.middleware.call('zfs.pool.delete', data['name'])
