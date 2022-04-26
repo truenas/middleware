@@ -4,8 +4,9 @@ import os
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, returns, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import SharingService, SystemServiceService, private
-from middlewared.plugins.etc import EtcUSR, EtcGRP
 import middlewared.sqlalchemy as sa
+
+WEBDAV_USER = 'webdav'
 
 
 class WebDAVSharingModel(sa.Model):
@@ -88,8 +89,8 @@ class WebDAVSharingService(SharingService):
         if data['perm']:
             await self.middleware.call('filesystem.chown', {
                 'path': data['path'],
-                'uid': EtcUSR.WEBDAV.value,
-                'gid': EtcGRP.WEBDAV.value,
+                'uid': await self.middleware.call('user.get_builtin_user_id', WEBDAV_USER),
+                'gid': await self.middleware.call('group.get_builtin_group_id', WEBDAV_USER),
                 'options': {'recursive': True}
             })
 
@@ -128,8 +129,8 @@ class WebDAVSharingService(SharingService):
         if not old['perm'] and new['perm']:
             await self.middleware.call('filesystem.chown', {
                 'path': new['path'],
-                'uid': EtcUSR.WEBDAV.value,
-                'gid': EtcGRP.WEBDAV.value,
+                'uid': await self.middleware.call('user.get_builtin_user_id', WEBDAV_USER),
+                'gid': await self.middleware.call('group.get_builtin_group_id', WEBDAV_USER),
                 'options': {'recursive': True}
             })
 

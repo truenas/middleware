@@ -4,7 +4,11 @@
     import stat
 
     from contextlib import suppress
-    from middlewared.plugins.etc import EtcUSR, EtcGRP
+
+    from middlewared.plugins.webdav import WEBDAV_USER
+
+    webdav_uid = middleware.call_sync('user.get_builtin_user_id', WEBDAV_USER)
+    webdav_gid = middleware.call_sync('group.get_builtin_group_id', WEBDAV_USER)
 
     # Check to see if there is a webdav lock database directory, if not create
     # one. Take care of necessary permissions whilst creating it!
@@ -15,7 +19,7 @@
     if stat.S_IMODE(os.stat(oscmd).st_mode) != 0o774:
         os.chmod(oscmd, 0o774)
 
-    shutil.chown(oscmd, user=EtcUSR.WEBDAV, group=EtcUSR.WEBDAV)
+    shutil.chown(oscmd, user=webdav_uid, group=webdav_gid)
 
     webdav_config = render_ctx['webdav.config']
     auth_type = webdav_config['htauth'].lower()
