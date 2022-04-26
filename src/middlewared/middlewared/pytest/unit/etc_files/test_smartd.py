@@ -7,7 +7,6 @@ import pytest
 from middlewared.etc_files.smartd import (
     ensure_smart_enabled, annotate_disk_for_smart, get_smartd_schedule, get_smartd_schedule_piece, get_smartd_config
 )
-from middlewared.pytest.unit.middleware import Middleware
 
 
 @pytest.mark.asyncio
@@ -63,54 +62,6 @@ async def test__ensure_smart_enabled__handled_args_properly():
             ["/dev/ada0", "-d", "sat", "-i"], check=False, stderr=subprocess.STDOUT,
             encoding="utf8", errors="ignore",
         )
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_nvd():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    assert await annotate_disk_for_smart(m, {}, "nvd0") is None
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_unknown_device():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    assert await annotate_disk_for_smart(m, {"ada0": {}}, "ada1") is None
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_device_without_args():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = None
-        assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") is None
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_device_with_unavailable_smart():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = ["/dev/ada1", "-d", "sat"]
-        with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
-            ensure_smart_enabled.return_value = False
-            assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") is None
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = ["/dev/ada1", "-d", "sat"]
-        with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
-            ensure_smart_enabled.return_value = True
-            assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") == (
-                "ada1",
-                {"smartctl_args": ["/dev/ada1", "-d", "sat", "-a", "-d", "removable"]},
-            )
 
 
 def test__get_smartd_schedule__need_mapping():
@@ -182,14 +133,13 @@ def test__get_smartd_config():
         "smarttest_daymonth": "*/1",
         "smarttest_dayweek": "*/1",
         "smarttest_hour": "*/1",
-        "disk_smartoptions": "--options",
         "disk_critical": None,
         "disk_difference": None,
         "disk_informational": None,
     }) == textwrap.dedent("""\
         /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/libexec/smart_alert.py\\
         -s S/../.././..\\
-         --options""")
+        """)
 
 
 def test__get_smartd_config_without_schedule():
@@ -199,12 +149,11 @@ def test__get_smartd_config_without_schedule():
         "smart_difference": 0,
         "smart_informational": 1,
         "smart_critical": 2,
-        "disk_smartoptions": "--options",
         "disk_critical": None,
         "disk_difference": None,
         "disk_informational": None,
     }) == textwrap.dedent("""\
-        /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/libexec/smart_alert.py --options""")
+        /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/libexec/smart_alert.py""")
 
 
 def test__get_smartd_config_with_temp():
@@ -214,9 +163,8 @@ def test__get_smartd_config_with_temp():
         "smart_difference": 0,
         "smart_informational": 1,
         "smart_critical": 2,
-        "disk_smartoptions": "--options",
         "disk_critical": 50,
         "disk_difference": 10,
         "disk_informational": 40,
     }) == textwrap.dedent("""\
-        /dev/ada0 -d sat -n never -W 10,40,50 -m root -M exec /usr/local/libexec/smart_alert.py --options""")
+        /dev/ada0 -d sat -n never -W 10,40,50 -m root -M exec /usr/local/libexec/smart_alert.py""")
