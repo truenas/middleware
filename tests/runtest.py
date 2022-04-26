@@ -177,6 +177,7 @@ call([
 ] + callargs + [
     "-o", "junit_family=xunit2",
     "--junitxml",
+    '--timeout=300',
     'results/api_v2_tests_result.xml',
     f"api2/{testName}"
 ])
