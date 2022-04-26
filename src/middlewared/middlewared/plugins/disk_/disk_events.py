@@ -99,4 +99,4 @@ async def devd_devfs_hook(middleware, data):
 
 def setup(middleware):
     # Listen to DEVFS events so we can sync on disk attach/detach
-    middleware.register_hook('devd.devfs', devd_devfs_hook)
+    middleware.register_hook('devd.devfs', devd_devfs_hook, blockable=True)
