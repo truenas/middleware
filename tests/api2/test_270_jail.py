@@ -81,6 +81,7 @@ if not ha:
         assert results.status_code == 200, results.text
         JOB_ID = results.json()
 
+    @pytest.mark.timeout(600)
     def test_08_verify_fetch_job_state(request):
         depends(request, ["pool_04"], scope="session")
         global freeze, freeze_msg
@@ -116,6 +117,7 @@ if not ha:
         assert results.status_code == 200, results.text
         JOB_ID = results.json()
 
+    @pytest.mark.timeout(600)
     def test_11_verify_creation_of_jail(request):
         depends(request, ["pool_04"], scope="session")
         global freeze, freeze_msg
