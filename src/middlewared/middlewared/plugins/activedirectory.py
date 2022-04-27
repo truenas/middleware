@@ -348,6 +348,9 @@ class ActiveDirectoryService(ConfigService):
             )
 
         elif smb_ha_mode == 'UNIFIED' and must_update:
+            if not await self.middleware.call('smb.validate_netbios_name', new['netbiosname']):
+                raise ValidationError('activedirectory_update.netbiosname', "Invalid NetBIOS name")
+
             await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
             await self.middleware.call('network.configuration.update', {'hostname_virtual': new['netbiosname']})
 
