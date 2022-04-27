@@ -156,7 +156,7 @@ class InterfaceService(CRUDService):
         )]),
         Bool('ipv4_dhcp', required=True),
         Bool('ipv6_auto', required=True),
-        Str('description', required=True, null=True),
+        Str('description', required=True),
         Int('mtu', null=True, required=True),
         Str('vlan_parent_interface', null=True),
         Int('vlan_tag', null=True),
@@ -197,7 +197,7 @@ class InterfaceService(CRUDService):
             data[name] = self.iface_extend({
                 'name': config['int_interface'],
                 'orig_name': config['int_interface'],
-                'description': config['int_interface'],
+                'description': config['int_name'],
                 'aliases': [],
                 'link_address': '',
                 'cloned': True,
@@ -230,7 +230,7 @@ class InterfaceService(CRUDService):
             'aliases': [],
             'ipv4_dhcp': False if configs else True,
             'ipv6_auto': False,
-            'description': None,
+            'description': '',
             'mtu': None,
         }
 
@@ -566,7 +566,7 @@ class InterfaceService(CRUDService):
     @accepts(Dict(
         'interface_create',
         Str('name'),
-        Str('description', null=True),
+        Str('description', default=''),
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
@@ -996,7 +996,7 @@ class InterfaceService(CRUDService):
 
     async def __convert_interface_datastore(self, data):
         return {
-            'name': data.get('description') or '',
+            'name': data['description'],
             'dhcp': data['ipv4_dhcp'],
             'ipv6auto': data['ipv6_auto'],
             'vhid': data.get('failover_vhid'),
