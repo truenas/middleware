@@ -123,6 +123,7 @@ if not ha:
                 break
         assert plugin_info[prop] != 'N/A', str(job_results)
 
+    @pytest.mark.timeout(1200)
     def test_10_add_asigra_plugin(request):
         depends(request, ["pool_04"], scope="session")
         payload = {
@@ -135,7 +136,7 @@ if not ha:
         }
         results = POST('/plugin/', payload)
         assert results.status_code == 200, results.text
-        job_status = wait_on_job(results.json(), 2400)
+        job_status = wait_on_job(results.json(), 1200)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_11_search_plugin_asigra_id(request):
@@ -275,6 +276,7 @@ if not ha:
                 break
         assert plugin_info[prop] != 'N/A', str(job_results)
 
+    @pytest.mark.timeout(1200)
     def test_28_add_transmission_plugins(request):
         depends(request, ["pool_04"], scope="session")
         payload = {
@@ -288,7 +290,7 @@ if not ha:
         }
         results = POST('/plugin/', payload)
         assert results.status_code == 200, results.text
-        job_status = wait_on_job(results.json(), 1800)
+        job_status = wait_on_job(results.json(), 1200)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_29_search_plugin_transmission_id(request):
