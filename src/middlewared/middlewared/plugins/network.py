@@ -183,9 +183,9 @@ class NetworkConfigurationService(ConfigService):
             List('domains', items=[Str('domains')]),
             Dict(
                 'service_announcement',
-                Bool('netbios', default=False),
-                Bool('mdns', default=True),
-                Bool('wsd', default=True),
+                Bool('netbios'),
+                Bool('mdns'),
+                Bool('wsd'),
             ),
             IPAddr('ipv4gateway'),
             IPAddr('ipv6gateway', allow_zone_index=True),
@@ -226,7 +226,12 @@ class NetworkConfigurationService(ConfigService):
         new_config = config.copy()
         is_ha = True
         sync_group_mappings = False
-        srv = config['service_announcement'] | data.get('service_announcement', {})
+
+        # Apply on-disk settings and user provided ones to our
+        # defaults to ensure that the JSON stored in db
+        # always has required elements
+        srv = {'netbios': False, 'mdns': True, 'wsd': True}
+        srv |= config['service_announcement'] | data.get('service_announcement', {})
         new_config.update(data)
         new_config['service_announcement'] = srv
 
