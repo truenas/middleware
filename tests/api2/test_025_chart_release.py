@@ -425,7 +425,7 @@ if not ha:
         payload = {
             'release_name': 'plex',
             'rollback_options': {
-                'rollback_snapshot': True,
+                'rollback_snapshot': False,
                 'item_version': old_plex_version
             }
         }
@@ -434,7 +434,7 @@ if not ha:
         assert isinstance(results.json(), int), results.text
         job_status = wait_on_job(results.json(), 600)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        time.sleep(5)
+        time.sleep(10)
 
     def test_41_verify_plex_is_at_the_old_version(request):
         depends(request, ['rollback_plex'])
