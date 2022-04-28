@@ -850,6 +850,9 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
+        if data['timemachine']:
+            await self.middleware.call('service.restart', 'mdns')
+
         return await self.get_instance(data['id'])
 
     @accepts(
@@ -983,6 +986,9 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'restart')
         else:
             await self._service_change('cifs', 'reload')
+
+        if old['timemachine'] != new['timemachine']:
+            await self.middleware.call('service.restart', 'mdns')
 
         return await self.get_instance(id)
 
