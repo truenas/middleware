@@ -292,5 +292,5 @@ async def pool_post_delete(middleware, id):
 
 
 def setup(middleware):
-    middleware.register_hook('devd.zfs', devd_zfs_hook)
+    middleware.register_hook('devd.zfs', devd_zfs_hook, blockable=True)
     middleware.register_hook('pool.post_delete', pool_post_delete)

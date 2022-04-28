@@ -72,5 +72,5 @@ async def hook(middleware, pool):
 
 
 async def setup(middleware):
-    middleware.register_hook("devd.zfs", devd_zfs_hook)
+    middleware.register_hook("devd.zfs", devd_zfs_hook, blockable=True)
     middleware.register_hook("pool.post_create_or_update", hook)
