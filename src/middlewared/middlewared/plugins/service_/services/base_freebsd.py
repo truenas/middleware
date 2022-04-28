@@ -130,7 +130,10 @@ class FreeBSDStartNotify(threading.Thread):
 
 
 async def freebsd_service(rc, verb):
-    r = await run("service", rc, verb, check=False, encoding="utf-8", stderr=subprocess.STDOUT)
+    kwargs = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT}
+    if verb != 'forcestop' and rc == 'wireguard':
+        kwargs = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+    r = await run("service", rc, verb, check=False, encoding="utf-8", **kwargs)
     if verb == 'forcestop' and r.returncode != 0 and f'{rc} not running?' not in r.stdout.strip():
         # we only need to log a warning if we forcestop a service and it was actually running and
         # failed to stop....
