@@ -188,31 +188,34 @@ class SystemDatasetService(ConfigService):
 
         return await self.config()
 
-    @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
+    @accepts(
+        Bool('mount', default=True),
+        Str('exclude_pool', default=None, null=True),
+        Bool('boot_pool', default=None, null=True),
+        Bool('on_active', default=False),
+    )
     @private
-    async def setup(self, mount, exclude_pool=None):
+    async def setup(self, mount, exclude_pool=None, boot_pool=None, on_active=False):
 
-        # FIXME: corefile for LINUX
-        if osc.IS_FREEBSD:
-            # We default kern.corefile value
-            await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
+        # We default kern.corefile value
+        await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
 
         config = await self.config()
         dbconfig = await self.middleware.call(
             'datastore.config', self._config.datastore, {'prefix': self._config.datastore_prefix}
         )
 
-        boot_pool = await self.middleware.call('boot.pool_name')
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.status') == 'BACKUP' and
-            config.get('basename') and config['basename'] != f'{boot_pool}/.system'
-        ):
-            try:
-                os.unlink(SYSDATASET_PATH)
-            except OSError:
-                pass
-            return
+        if not boot_pool:
+            boot_pool = await self.middleware.call('boot.pool_name')
+
+        if await self.middleware.call('failover.licensed') and not on_active:
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                if config.get('basename') and config['basename'] != f'{boot_pool}/.system':
+                    try:
+                        os.unlink(SYSDATASET_PATH)
+                    except OSError:
+                        pass
+                    return
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
