@@ -758,16 +758,48 @@ class PoolService(CRUDService):
                     )
                 raise e
 
-        # There is really no point in waiting all these services to reload so do them
-        # in background.
-        asyncio.ensure_future(self.restart_services())
-
         pool = await self.get_instance(pool_id)
+
+        # Finalize the creation of the zpool
+        await self.finalize_zpool_create_or_import(job, pool)
+
+        job.set_progress(98, 'Running post pool-create operations')
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
+        job.set_progress(99, 'Running root dataset post-create operations')
         await self.middleware.call_hook(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
         return pool
+
+    @private
+    async def finalize_zpool_create_or_import(self, job, pool):
+        job.set_progress(95, 'Generating fstab')
+        await self.middleware.call('etc.generate', 'fstab')
+
+        job.set_progress(95, 'Mounting late filesystems')
+        if (cp := await run('mount', '-a', '-L', check=False)) and cp.returncode:
+            # this does exactly what service mountlate restart does
+            self.logger.warning('Failed running "mount -a -L" with returncode: %d', cp.returncode)
+
+        config_pool = (await self.middleware.call('systemdataset.config'))['pool']
+        boot_pool = await self.middleware.call('boot.pool_name')
+        if config_pool == boot_pool:
+            # this means the system dataset is on the boot-pool and so on enterprise
+            # systems we're forcefully migrating the system dataset from the boot pool
+            # to the first created zpool. If this isn't an enterprise system, then other
+            # logic is applied (`sysdataset.setup` handles all this)
+            mount = True
+            exclude_pool = None
+            on_active = True
+            # this restarts rrdcached and therefore collectd
+            job.set_progress(95, 'Setting up system dataset')
+            await self.middleware.call('sysdataset.setup', mount, exclude_pool, boot_pool, on_active)
+        else:
+            job.set_progress(95, 'Restarting reporting services')
+            asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
+
+        job.set_progress(96, 'Syncing ZFS GUID to disk')
+        await self.middleware.call('disk.sync_zfs_guid', pool)
 
     @private
     async def restart_services(self):
@@ -1502,8 +1534,7 @@ class PoolService(CRUDService):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        await self.middleware.call('service.reload', 'disk')
-        asyncio.ensure_future(self.restart_services())
+        await self.finalize_zpool_create_or_import(job, pool)
         await self.middleware.call_hook(
             'pool.post_import', {
                 'passphrase': data.get('passphrase'),
