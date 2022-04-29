@@ -1529,8 +1529,7 @@ class PoolService(CRUDService):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        await self.middleware.call('service.reload', 'disk')
-        asyncio.ensure_future(self.restart_services())
+        await self.finalize_zpool_create_or_import(job, pool)
         await self.middleware.call_hook(
             'pool.post_import', {
                 'passphrase': data.get('passphrase'),
