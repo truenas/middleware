@@ -790,11 +790,14 @@ class PoolService(CRUDService):
             exclude_pool = None
             on_active = True
             # this restarts rrdcached and therefore collectd
+            job.set_progress(95, 'Setting up system dataset')
             await self.middleware.call('sysdataset.setup', mount, exclude_pool, boot_pool, on_active)
         else:
-            await self.middleware.call('service.restart', 'rrdcached')
+            job.set_progress(95, 'Restarting reporting services')
+            asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
 
-        await self.middleware.call('disk.sync_zfs_guid', pool['topology'])
+        job.set_progress(96, 'Syncing ZFS GUID to disk')
+        await self.middleware.call('disk.sync_zfs_guid', pool)
 
     @private
     async def restart_services(self):
