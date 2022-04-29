@@ -53,19 +53,22 @@ class SystemDatasetService(ConfigService):
             config['basename'] = None
 
         # Make `uuid` point to the uuid of current node
+        licensed = await self.middleware.call('failover.licensed')
+        is_b_node = await self.middleware.call('failover.node') == 'B'
         config['uuid_a'] = config['uuid']
-        if not await self.middleware.call('system.is_freenas'):
-            if await self.middleware.call('failover.node') == 'B':
-                config['uuid'] = config['uuid_b']
+        if licensed and is_b_node:
+            config['uuid'] = config['uuid_b']
 
         if not config['uuid']:
             config['uuid'] = uuid.uuid4().hex
-            if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
+            if licensed and is_b_node:
                 attr = 'uuid_b'
                 config[attr] = config['uuid']
             else:
                 attr = 'uuid'
-            await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], {f'sys_{attr}': config['uuid']})
+            await self.middleware.call(
+                'datastore.update', 'system.systemdataset', config['id'], {f'sys_{attr}': config['uuid']}
+            )
 
         config['syslog'] = config.pop('syslog_usedataset')
 
@@ -384,7 +387,8 @@ class SystemDatasetService(ConfigService):
             return None
 
         restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.status') == 'BACKUP':
+        licensed = await self.middleware.call('failover.licensed')
+        if licensed and await self.middleware.call('failover.status') == 'BACKUP':
             return None
 
         for item in restartfiles:
