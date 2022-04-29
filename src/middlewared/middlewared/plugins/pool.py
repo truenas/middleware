@@ -763,7 +763,9 @@ class PoolService(CRUDService):
         # Finalize the creation of the zpool
         await self.finalize_zpool_create_or_import(job, pool)
 
+        job.set_progress(98, 'Running post pool operations')
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
+        job.set_progress(99, 'Running post pool dataset operations')
         await self.middleware.call_hook(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
