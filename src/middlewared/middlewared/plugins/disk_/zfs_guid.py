@@ -67,10 +67,5 @@ async def devd_zfs_hook(middleware, data):
             pass
 
 
-async def hook(middleware, pool):
-    await middleware.call("disk.sync_zfs_guid", pool)
-
-
 async def setup(middleware):
     middleware.register_hook("devd.zfs", devd_zfs_hook, blockable=True)
-    middleware.register_hook("pool.post_create_or_update", hook)
